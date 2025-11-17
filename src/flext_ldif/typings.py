@@ -96,7 +96,10 @@ class FlextLdifTypes(FlextTypes):
         # Type aliases using forward references
         AclOrString = Union[str, "FlextLdifModels.Acl"]
         ConvertibleModel = Union[
-            str, "FlextLdifModels.Entry", "FlextLdifModels.Acl", "dict[str, object]"
+            str,
+            "FlextLdifModels.Entry",
+            "FlextLdifModels.Acl",
+            "dict[str, object]",
         ]
         ServiceResponseTypes = Union[
             "FlextLdifModels.ParseResponse",

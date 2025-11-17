@@ -102,7 +102,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
                     "write_attribute",
                     "write_objectclass",
                 ],
-            )
+            ),
         )
 
     # ════════════════════════════════════════════════════════════════════════

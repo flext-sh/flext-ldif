@@ -478,8 +478,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             Uses utility DN normalization (RFC 4514 compliant).
             Falls back to lowercase if normalization fails (Tivoli specific).
             """
-            normalized = FlextLdifUtilities.DN.norm(entry_dn)
-            return normalized or entry_dn.lower()
+            norm_result = FlextLdifUtilities.DN.norm(entry_dn)
+            if norm_result.is_success:
+                return norm_result.unwrap()
+            # Fallback to lowercase if normalization fails (Tivoli specific)
+            return entry_dn.lower()
 
         def normalize_attribute_name(self, attr_name: str) -> str:
             """Normalize attribute name for Tivoli DS."""
@@ -534,9 +537,15 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise IBM Tivoli DS entries and attach metadata."""
             try:
-                # Check if entry has DN and attributes
-                if not entry.dn or not entry.attributes:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                # Check if entry has DN and attributes - fast fail if missing
+                if not entry.dn:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        "Entry DN is required for Tivoli DS normalization"
+                    )
+                if not entry.attributes:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        "Entry attributes are required for Tivoli DS normalization"
+                    )
 
                 entry_dn = entry.dn.value
                 attributes = entry.attributes.attributes.copy()

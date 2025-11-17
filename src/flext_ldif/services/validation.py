@@ -180,7 +180,7 @@ class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus])
                     "objectclass_name",
                     "attribute_value",
                 ],
-            )
+            ),
         )
 
     # ════════════════════════════════════════════════════════════════════════

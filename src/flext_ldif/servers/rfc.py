@@ -351,12 +351,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if isinstance(entries, list):
                 if entries and len(entries) > 0:
                     return FlextResult[FlextLdifTypes.EntryOrString].ok(
-                        cast("FlextLdifTypes.EntryOrString", entries[0])
+                        cast("FlextLdifTypes.EntryOrString", entries[0]),
                     )
                 return FlextResult[FlextLdifTypes.EntryOrString].ok("")
             if isinstance(entries, FlextLdifModels.Entry):
                 return FlextResult[FlextLdifTypes.EntryOrString].ok(
-                    cast("FlextLdifTypes.EntryOrString", entries)
+                    cast("FlextLdifTypes.EntryOrString", entries),
                 )
             return FlextResult[FlextLdifTypes.EntryOrString].ok("")
         error_msg: str = parse_result.error or "Parse failed"
@@ -502,7 +502,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     # Validation Methods - Concrete implementations moved from base.py
     # =========================================================================
 
-    def _validate_ldif_text(self, ldif_text: str) -> FlextResult[None]:
+    def _validate_ldif_text(self, ldif_text: str) -> FlextResult[bool]:
         """Validate LDIF text before parsing - handles edge cases.
 
         Edge cases handled:
@@ -514,13 +514,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ldif_text: LDIF content to validate
 
         Returns:
-            FlextResult.ok(None) if valid, FlextResult.fail() if invalid
+            FlextResult[bool] with True if valid, fail() if invalid
 
         """
         # Empty or whitespace-only is valid (will parse to empty list)
         if not ldif_text or not ldif_text.strip():
-            return FlextResult.ok(None)
-        return FlextResult.ok(None)
+            return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(True)
 
     def _validate_entries(
         self,
@@ -686,10 +686,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Check for original format in metadata (for perfect round-trip)
             if attr_data.metadata and attr_data.metadata.extensions.get(
-                "original_format"
+                "original_format",
             ):
                 original_str = cast(
-                    "str", attr_data.metadata.extensions.get("original_format", "")
+                    "str",
+                    attr_data.metadata.extensions.get("original_format", ""),
                 )
                 # If x_origin is in metadata but not in original_format, add it
                 if (
@@ -753,7 +754,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Check for original format in metadata (for perfect round-trip)
             if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
                 original_str = cast(
-                    "str", oc_data.metadata.extensions.get("original_format", "")
+                    "str",
+                    oc_data.metadata.extensions.get("original_format", ""),
                 )
                 # If x_origin is in metadata but not in original_format, add it
                 if (
@@ -1315,9 +1317,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             init_kwargs = {
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
-            type(instance).__init__(
-                instance, schema_service=schema_service, **init_kwargs
-            )  # type: ignore[call-arg]
+            # Use explicit type cast for __init__ call to avoid type checker issues
+            # with dynamic class instantiation
+            instance_type = type(instance)
+            if hasattr(instance_type, "__init__"):
+                instance_type.__init__(
+                    instance, schema_service=schema_service, **init_kwargs
+                )
 
             if cls.auto_execute:
                 attr_def = (
@@ -1579,7 +1585,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             attributes: list[FlextLdifModels.SchemaAttribute],
             available_attrs: set[str],
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Hook for server-specific attribute validation during schema extraction.
 
             Subclasses can override this to perform validation of attribute dependencies
@@ -1592,7 +1598,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 available_attrs: Set of lowercase attribute names available
 
             Returns:
-                FlextResult[None] - Success or failure with validation error
+                FlextResult[bool] with True on success, fail() on failure
 
             Example Override (in OUD):
                 def _hook_validate_attributes(self, attributes, available_attrs):
@@ -1600,13 +1606,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     for attr in attributes:
                         if attr.requires_dependency not in available_attrs:
                             return FlextResult.fail("Missing dependency")
-                    return FlextResult.ok(None)
+                    return FlextResult.ok(True)
 
             """
             # Default: No validation needed
             _ = attributes
             _ = available_attrs
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
@@ -1701,10 +1707,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             server_type_value = self._get_server_type()
 
             # RFC passthrough: store the raw line in the model.
-            acl_model = FlextLdifModels.Acl(  # type: ignore[call-arg]
+            acl_model = FlextLdifModels.Acl(
                 raw_acl=acl_line,
                 server_type=cast(
-                    "FlextLdifConstants.LiteralTypes.ServerType", server_type_value
+                    "FlextLdifConstants.LiteralTypes.ServerType",
+                    server_type_value,
                 ),
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type=server_type_value,
@@ -1933,7 +1940,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             init_kwargs = {
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
-            type(instance).__init__(instance, acl_service=acl_service, **init_kwargs)  # type: ignore[call-arg]
+            # Use explicit type cast for __init__ call to avoid type checker issues
+            # with dynamic class instantiation
+            instance_type = type(instance)
+            if hasattr(instance_type, "__init__"):
+                instance_type.__init__(instance, acl_service=acl_service, **init_kwargs)
 
             if cls.auto_execute:
                 data = (
@@ -2239,8 +2250,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Create Entry model using Entry.create factory method
                 # This ensures proper validation and model construction
+                # dn_obj is DistinguishedName which is compatible with str | DistinguishedName
                 entry_result = FlextLdifModels.Entry.create(
-                    dn=dn_obj,  # type: ignore[arg-type]
+                    dn=cast("str | FlextLdifModels.DistinguishedName", dn_obj),
                     attributes=ldif_attrs,
                 )
 
@@ -2253,7 +2265,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Entry model is already in RFC format with proper metadata
                 entry_model = entry_result.unwrap()
                 return FlextResult[FlextLdifModels.Entry].ok(
-                    cast("FlextLdifModels.Entry", entry_model)
+                    cast("FlextLdifModels.Entry", entry_model),
                 )
 
             except Exception as e:
@@ -2297,8 +2309,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
 
             # Add source file if available in extensions
-            extensions = entry_data.metadata.extensions or {}
-            if source_file := extensions.get("source_file"):
+            # extensions has default_factory=dict, so it should never be None
+            if entry_data.metadata.extensions and (
+                source_file := entry_data.metadata.extensions.get("source_file")
+            ):
                 ldif_lines.append(f"# Source File: {source_file}")
 
             # Add quirk type if available
@@ -2334,8 +2348,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 or not entry_data.metadata
             ):
                 return set()
-            extensions = entry_data.metadata.extensions or {}
-            hidden_list = extensions.get("hidden_attributes")
+            # extensions has default_factory=dict, so it should never be None
+            if not entry_data.metadata.extensions:
+                return set()
+            hidden_list = entry_data.metadata.extensions.get("hidden_attributes")
             return set(hidden_list) if isinstance(hidden_list, list) else set()
 
         @staticmethod
@@ -2486,7 +2502,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 if entry_data.entry_metadata:
                     write_options_obj = entry_data.entry_metadata.get("_write_options")
                     if isinstance(
-                        write_options_obj, FlextLdifModels.WriteFormatOptions
+                        write_options_obj,
+                        FlextLdifModels.WriteFormatOptions,
                     ):
                         write_options = write_options_obj
 
@@ -2609,12 +2626,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
                 if len(parsed_entries) == 1:
                     return FlextResult[FlextLdifModels.Entry | str].ok(
-                        parsed_entries[0]
+                        parsed_entries[0],
                     )
                 if len(parsed_entries) == 0:
                     return FlextResult[FlextLdifModels.Entry | str].ok("")
                 return FlextResult[FlextLdifModels.Entry | str].fail(
-                    f"Parse returned {len(parsed_entries)} entries, but execute() can only return single Entry or str"
+                    f"Parse returned {len(parsed_entries)} entries, but execute() can only return single Entry or str",
                 )
             error_msg: str = parse_result.error or "Parse failed"
             return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
@@ -2752,7 +2769,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     return FlextResult[
                         FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
                     ].ok(parse_result.unwrap())
-                return parse_result  # type: ignore[return-value]
+                # Convert failure result to match return type
+                return FlextResult[
+                    FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
+                ].fail(parse_result.error)
 
             # Route to appropriate handler
             return self._route_entry_operation(data, detected_operation)
@@ -2803,9 +2823,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             init_kwargs = {
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
-            type(instance).__init__(
-                instance, entry_service=entry_service, **init_kwargs
-            )  # type: ignore[call-arg]
+            # Use explicit type cast for __init__ call to avoid type checker issues
+            # with dynamic class instantiation
+            instance_type = type(instance)
+            if hasattr(instance_type, "__init__"):
+                instance_type.__init__(
+                    instance, entry_service=entry_service, **init_kwargs
+                )
 
             if cls.auto_execute:
                 ldif_txt = (
@@ -2893,18 +2917,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             dn_obj = FlextLdifModels.DistinguishedName(value=entry_dn)
 
             # Create Entry model with defaults
-            entry_result = FlextLdifModels.Entry.create(  # type: ignore[arg-type]
-                dn=dn_obj,
+            # dn_obj is DistinguishedName which is compatible with str | DistinguishedName
+            entry_result = FlextLdifModels.Entry.create(
+                dn=cast("str | FlextLdifModels.DistinguishedName", dn_obj),
                 attributes=converted_attrs,
             )
             if entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Failed to create Entry: {entry_result.error}"
+                    f"Failed to create Entry: {entry_result.error}",
                 )
             entry = entry_result.unwrap()
 
             return FlextResult[FlextLdifModels.Entry].ok(
-                cast("FlextLdifModels.Entry", entry)
+                cast("FlextLdifModels.Entry", entry),
             )
 
         def _write_entry_add_format(
@@ -2978,7 +3003,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return FlextResult[str].ok(ldif_text)
 
-        def _write_entry_modify_format(  # noqa: C901
+        def _write_entry_modify_format(
             self,
             entry_data: FlextLdifModels.Entry,
             _write_options: FlextLdifModels.WriteFormatOptions,
@@ -3060,7 +3085,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         except UnicodeEncodeError:
                             # Invalid UTF-8 - encode with error handling
                             str_value = str_value.encode(
-                                "utf-8", errors="replace"
+                                "utf-8",
+                                errors="replace",
                             ).decode("utf-8", errors="replace")
                             logger.debug(
                                 "RFC quirks: Corrected invalid UTF-8 in attribute '%s'",
@@ -3075,11 +3101,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         )
                         # Check if value needs base64 encoding per RFC 2849
                         needs_base64 = is_binary_attr or self._needs_base64_encoding(
-                            str_value
+                            str_value,
                         )
                         if needs_base64:
                             encoded_value = base64.b64encode(
-                                str_value.encode("utf-8")
+                                str_value.encode("utf-8"),
                             ).decode("ascii")
                             ldif_lines.append(f"{attr_name}:: {encoded_value}")
                         else:

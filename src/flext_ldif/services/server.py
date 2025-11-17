@@ -121,7 +121,7 @@ class FlextLdifServer:
         except ImportError as e:
             logger.debug("Could not auto-discover quirks: %s", e)
 
-    def register(self, quirk: FlextLdifServersBase) -> FlextResult[None]:
+    def register(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
         """Register a base quirk instance.
 
         Validates that all nested quirks (schema, acl, entry) satisfy their
@@ -131,7 +131,7 @@ class FlextLdifServer:
             quirk: A FlextLdifServersBase instance to register
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult[bool] with True on success, fail() on failure
 
         """
         try:
@@ -140,14 +140,14 @@ class FlextLdifServer:
                 # Descriptor returns str when accessed
                 server_type = cast("str", quirk.server_type)
             except AttributeError as e:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     f"Quirk missing Constants.SERVER_TYPE: {e}",
                 )
 
             # Validate that all nested quirks satisfy their protocols
             validation_result = self._validate_protocols(quirk)
             if validation_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     f"Protocol validation failed: {validation_result.error}",
                 )
 
@@ -157,30 +157,30 @@ class FlextLdifServer:
                 f"Registered base quirk: {quirk.__class__.__name__} "
                 f"(server_type={server_type})",
             )
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[None].fail(f"Failed to register quirk: {e}")
+            return FlextResult[bool].fail(f"Failed to register quirk: {e}")
 
-    def _validate_protocols(self, quirk: FlextLdifServersBase) -> FlextResult[None]:
+    def _validate_protocols(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
         """Validate that quirk has all required nested quirks (schema, acl, entry).
 
         Args:
             quirk: Quirk instance to validate
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult[bool] with True on success, fail() on failure
 
         """
         try:
             # Check that nested quirk classes exist (capitalized class names)
             quirk_class = type(quirk)
             if not hasattr(quirk_class, "Schema"):
-                return FlextResult[None].fail("Missing Schema nested class")
+                return FlextResult[bool].fail("Missing Schema nested class")
             if not hasattr(quirk_class, "Acl"):
-                return FlextResult[None].fail("Missing Acl nested class")
+                return FlextResult[bool].fail("Missing Acl nested class")
             if not hasattr(quirk_class, "Entry"):
-                return FlextResult[None].fail("Missing Entry nested class")
+                return FlextResult[bool].fail("Missing Entry nested class")
 
             # Verify nested classes are properly defined
             schema_class = getattr(quirk_class, "Schema", None)
@@ -188,18 +188,18 @@ class FlextLdifServer:
             entry_class = getattr(quirk_class, "Entry", None)
 
             if schema_class is None or acl_class is None or entry_class is None:
-                return FlextResult[None].fail("Nested quirk classes not found")
+                return FlextResult[bool].fail("Nested quirk classes not found")
 
             if (
                 not inspect.isclass(schema_class)
                 or not inspect.isclass(acl_class)
                 or not inspect.isclass(entry_class)
             ):
-                return FlextResult[None].fail("Nested quirks are not classes")
+                return FlextResult[bool].fail("Nested quirks are not classes")
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except Exception as e:
-            return FlextResult[None].fail(f"Protocol validation error: {e}")
+            return FlextResult[bool].fail(f"Protocol validation error: {e}")
 
     def _normalize_server_type(self, server_type: str) -> str:
         """Normalize server type to canonical short form."""

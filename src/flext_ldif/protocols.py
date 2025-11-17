@@ -554,6 +554,31 @@ class FlextLdifProtocols(FlextProtocols):
             """Entry attributes as dictionary mapping attribute names to values."""
 
     # =========================================================================
+    # ATTRIBUTE VALUE PROTOCOLS - For attribute value extraction
+    # =========================================================================
+
+    @runtime_checkable
+    class AttributeValueProtocol(Protocol):
+        """Protocol for objects that contain attribute values.
+
+        This protocol defines the minimal interface for attribute value objects
+        that can be processed by the LDIF API. Objects satisfying this protocol
+        have a .values property or can be iterated directly.
+
+        Used by:
+        - FlextLdif.get_attribute_values() for extracting values from various formats
+        - Entry processing operations
+        - Attribute transformation operations
+
+        Implementation:
+        Any object with 'values' attribute or that is iterable/list/string
+        satisfies this protocol through structural typing.
+        """
+
+        values: list[str] | str
+        """Attribute values as list or single string value."""
+
+    # =========================================================================
     # SERVER ACL PROTOCOLS - For server-specific ACL attribute handling
     # =========================================================================
 

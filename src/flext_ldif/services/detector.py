@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -180,7 +179,12 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Priority 3: Manual configuration mode
         if config.quirks_detection_mode == "manual":
-            return config.quirks_server_type or FlextLdifConstants.ServerTypes.RFC
+            # Validate that quirks_server_type is provided in manual mode
+            if config.quirks_server_type is None:
+                return FlextLdifConstants.ServerTypes.RFC
+            if not config.quirks_server_type.strip():
+                return FlextLdifConstants.ServerTypes.RFC
+            return config.quirks_server_type
 
         # Priority 4: Disabled mode falls back to RFC
         if config.quirks_detection_mode == "disabled":
@@ -263,7 +267,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
                         FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
                     )
 
-    def _calculate_scores(self, content: str) -> dict[str, int]:  # noqa: C901
+    def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type.
 
         Args:
@@ -313,7 +317,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # OpenLDAP detection - use registry to get server Constants
         openldap_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.OPENLDAP
+            FlextLdifConstants.ServerTypes.OPENLDAP,
         )
         if openldap_constants:
             self._update_server_scores(
@@ -344,7 +348,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Novell eDirectory detection - use registry to get server Constants
         novell_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.NOVELL
+            FlextLdifConstants.ServerTypes.NOVELL,
         )
         if novell_constants and re.search(
             novell_constants.DETECTION_PATTERN,
@@ -357,7 +361,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         # IBM Tivoli detection - use registry to get server Constants
         # Tivoli uses compiled Pattern, others use string
         tivoli_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.IBM_TIVOLI
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI,
         )
         if tivoli_constants:
             tivoli_pattern = tivoli_constants.DETECTION_PATTERN
@@ -376,10 +380,11 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # 389 DS detection - use registry to get server Constants
         ds389_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.DS_389
+            FlextLdifConstants.ServerTypes.DS_389,
         )
         if ds389_constants and re.search(
-            ds389_constants.DETECTION_PATTERN, content_lower
+            ds389_constants.DETECTION_PATTERN,
+            content_lower,
         ):
             scores[FlextLdifConstants.ServerTypes.DS_389] += (
                 ds389_constants.DETECTION_WEIGHT
@@ -387,7 +392,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Apache DS detection - use registry to get server Constants
         apache_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.APACHE
+            FlextLdifConstants.ServerTypes.APACHE,
         )
         if apache_constants and re.search(
             apache_constants.DETECTION_PATTERN,
@@ -458,7 +463,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         if value.lower() in content_lower:
             patterns.append(description)
 
-    def _extract_patterns(self, content: str) -> list[str]:  # noqa: C901
+    def _extract_patterns(self, content: str) -> list[str]:
         """Extract detected patterns from content.
 
         Args:
@@ -503,7 +508,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # OpenLDAP detection - use registry to get server Constants
         openldap_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.OPENLDAP
+            FlextLdifConstants.ServerTypes.OPENLDAP,
         )
         if openldap_constants:
             self._check_regex_pattern(
@@ -531,7 +536,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Novell eDirectory detection - use registry to get server Constants
         novell_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.NOVELL
+            FlextLdifConstants.ServerTypes.NOVELL,
         )
         if novell_constants:
             self._check_regex_pattern(
@@ -544,7 +549,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         # IBM Tivoli detection - use registry to get server Constants
         # Tivoli uses compiled regex pattern
         tivoli_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.IBM_TIVOLI
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI,
         )
         if tivoli_constants:
             tivoli_pattern = tivoli_constants.DETECTION_PATTERN
@@ -555,7 +560,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # 389 DS detection - use registry to get server Constants
         ds389_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.DS_389
+            FlextLdifConstants.ServerTypes.DS_389,
         )
         if ds389_constants:
             self._check_regex_pattern(
@@ -567,7 +572,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Apache DS detection - use registry to get server Constants
         apache_constants = self._get_server_constants(
-            FlextLdifConstants.ServerTypes.APACHE
+            FlextLdifConstants.ServerTypes.APACHE,
         )
         if apache_constants:
             self._check_regex_pattern(
@@ -580,11 +585,10 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         return patterns
 
     @staticmethod
-    def _get_server_constants(server_type: str) -> Any:  # noqa: ANN401
+    def _get_server_constants(server_type: str) -> type[object] | None:
         """Get server Constants class dynamically via FlextLdifServer registry.
 
         Uses runtime attribute access to get detection constants from server quirk classes.
-        Type is Any because each server quirk has a different Constants nested class structure.
 
         Args:
             server_type: Server type identifier (e.g., "oid", "oud", "openldap")

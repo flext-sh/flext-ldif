@@ -525,13 +525,13 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     acl_data.name or FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
                 permissions = self._extract_acl_permissions(
-                    cast("FlextLdifModels.AclPermissions | None", acl_data.permissions)
+                    cast("FlextLdifModels.AclPermissions | None", acl_data.permissions),
                 )
                 targetattr = self._resolve_acl_targetattr(
-                    cast("FlextLdifModels.AclTarget | None", acl_data.target)
+                    cast("FlextLdifModels.AclTarget | None", acl_data.target),
                 )
                 userdn = self._resolve_acl_userdn(
-                    cast("FlextLdifModels.AclSubject | None", acl_data.subject)
+                    cast("FlextLdifModels.AclSubject | None", acl_data.subject),
                 )
 
                 # Build ACI string from structured fields
@@ -692,7 +692,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 # Store metadata in extensions
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
-                    quirk_type="server_quirk"
+                    quirk_type="server_quirk",
                 )
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY

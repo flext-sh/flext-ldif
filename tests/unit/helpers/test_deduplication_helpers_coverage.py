@@ -766,3 +766,121 @@ class TestAPIRoundtrip:
         assert len(original) == 1
         assert isinstance(written, str)
         assert len(roundtripped) == 1
+
+
+class TestBatchOperations:
+    """Test batch operation helpers."""
+
+    def test_batch_parse_and_assert(self) -> None:
+        """Test batch_parse_and_assert."""
+        from flext_ldif.services.parser import FlextLdifParser
+
+        parser = FlextLdifParser()
+        test_cases = [
+            {
+                "ldif_content": "dn: cn=test1,dc=example,dc=com\ncn: test1\n",
+                "expected_count": 1,
+            },
+            {
+                "ldif_content": "dn: cn=test2,dc=example,dc=com\ncn: test2\n",
+                "expected_count": 1,
+            },
+        ]
+        results = DeduplicationHelpers.batch_parse_and_assert(parser, test_cases)
+        assert len(results) == 2
+        assert all(len(entries) == 1 for entries in results)
+
+    def test_create_entries_batch(self) -> None:
+        """Test create_entries_batch."""
+        entries_data = [
+            {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": ["test1"]}},
+            {"dn": "cn=test2,dc=example,dc=com", "attributes": {"cn": ["test2"]}},
+        ]
+        entries = DeduplicationHelpers.create_entries_batch(entries_data)
+        assert len(entries) == 2
+        assert entries[0].dn.value == "cn=test1,dc=example,dc=com"
+        assert entries[1].dn.value == "cn=test2,dc=example,dc=com"
+
+
+class TestSchemaHelpers:
+    """Test schema helper methods."""
+
+    def test_parse_schema_and_unwrap(self) -> None:
+        """Test parse_schema_and_unwrap."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        quirk = FlextLdifServersRfc()
+        attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
+        attr = DeduplicationHelpers.parse_schema_and_unwrap(quirk.Schema(), attr_def)
+        assert isinstance(attr, FlextLdifModels.SchemaAttribute)
+        assert attr.oid == "2.5.4.3"
+
+    def test_write_schema_and_unwrap(self) -> None:
+        """Test write_schema_and_unwrap."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        quirk = FlextLdifServersRfc()
+        attr = FlextLdifModels.SchemaAttribute(
+            oid="1.2.3.4",
+            name="testAttr",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+        )
+        ldif = DeduplicationHelpers.write_schema_and_unwrap(quirk.Schema(), attr)
+        assert isinstance(ldif, str)
+        assert "testAttr" in ldif
+
+
+class TestEntryHelpers:
+    """Test entry helper methods."""
+
+    def test_parse_entry_and_unwrap(self) -> None:
+        """Test parse_entry_and_unwrap."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        quirk = FlextLdifServersRfc()
+        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
+        entry = DeduplicationHelpers.parse_entry_and_unwrap(
+            quirk.Entry(), ldif_content, expected_dn="cn=test,dc=example,dc=com"
+        )
+        assert entry.dn.value == "cn=test,dc=example,dc=com"
+
+    def test_write_entry_and_unwrap(self) -> None:
+        """Test write_entry_and_unwrap."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        quirk = FlextLdifServersRfc()
+        entry = DeduplicationHelpers.create_entry_from_dict(
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"]},
+        )
+        ldif = DeduplicationHelpers.write_entry_and_unwrap(
+            quirk.Entry(), entry, must_contain="cn: test"
+        )
+        assert "cn: test" in ldif
+
+
+class TestACLHelpers:
+    """Test ACL helper methods."""
+
+    def test_acl_quirk_parse_and_assert(self) -> None:
+        """Test acl_quirk_parse_and_assert."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        quirk = FlextLdifServersRfc()
+        acl_line = "grant(user1) read"
+        acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
+        assert isinstance(acl, FlextLdifModels.Acl)
+
+    def test_acl_quirk_write_and_assert(self) -> None:
+        """Test acl_quirk_write_and_assert."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        quirk = FlextLdifServersRfc()
+        # Create ACL by parsing first
+        acl_line = "grant(user1) read"
+        acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
+        # Then write it
+        ldif = DeduplicationHelpers.acl_quirk_write_and_assert(
+            quirk.Acl(), acl, must_contain=["grant"]
+        )
+        assert "grant" in ldif.lower()

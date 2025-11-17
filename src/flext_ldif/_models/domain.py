@@ -17,7 +17,7 @@ import contextlib
 import logging
 import re
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, Unpack, cast
+from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, Unpack, cast, override
 
 from flext_core import (
     FlextLogger,
@@ -95,7 +95,7 @@ class FlextLdifModelsDomains:
             # Filter out empty components
             return [comp for comp in raw_components if comp]
 
-        @computed_field
+        @property
         def was_base64_encoded(self) -> bool:
             """Check if DN was originally base64-encoded per RFC 2849.
 
@@ -154,7 +154,7 @@ class FlextLdifModelsDomains:
             # Extract flags from metadata if available
             flags = transformation_flags.copy()
             if self.metadata:
-                if self.was_base64_encoded:  # type: ignore[truthy-function]
+                if self.was_base64_encoded:
                     _ = flags.setdefault("was_base64_encoded", True)
                 if self.metadata.get("had_utf8_chars"):
                     _ = flags.setdefault("had_utf8_chars", True)
@@ -165,7 +165,7 @@ class FlextLdifModelsDomains:
                 original_dn=orig_dn,
                 cleaned_dn=clean_dn,
                 normalized_dn=final_dn,
-                transformations=transformations or [],
+                transformations=transformations if transformations is not None else [],
                 **flags,
             )
 
@@ -589,7 +589,8 @@ class FlextLdifModelsDomains:
             """Check if attribute exists."""
             return key in self.attributes
 
-        def __iter__(self) -> Iterator[str]:  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+        @override
+        def __iter__(self) -> Iterator[str]:
             """Iterate over attribute names (intentionally overrides BaseModel).
 
             BaseModel.__iter__ yields (name, value) tuples, but we only yield names
@@ -608,13 +609,21 @@ class FlextLdifModelsDomains:
 
             Args:
                 key: Attribute name
-                default: Default list if not found
+                default: Default list if not found (must be provided explicitly)
 
             Returns:
                 List of values or default
 
+            Raises:
+                KeyError: If key not found and no default provided
+
             """
-            return self.attributes.get(key, default or [])
+            if default is not None:
+                return self.attributes.get(key, default)
+            if key in self.attributes:
+                return self.attributes[key]
+            error_msg = f"Attribute '{key}' not found and no default provided"
+            raise KeyError(error_msg)
 
         def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
             """Get attribute values as a list (same as get()).
@@ -701,7 +710,7 @@ class FlextLdifModelsDomains:
                 Dict compatible with ldap3 library format
 
             """
-            exclude_set = set(exclude or [])
+            exclude_set = set(exclude if exclude is not None else [])
             return {
                 attr_name: values
                 for attr_name, values in self.attributes.items()
@@ -1350,8 +1359,194 @@ class FlextLdifModelsDomains:
             # - Optional transformation or filtering based on application rules
             return self
 
+        def _validate_dn(self, dn_value: str | None) -> list[str]:
+            """Validate DN format per RFC 4514 § 2.3, 2.4."""
+            violations: list[str] = []
+            if dn_value is None:
+                violations.append("RFC 2849 § 2: DN is required (received None)")
+            elif not dn_value or not dn_value.strip():
+                violations.append("RFC 2849 § 2: DN is required (empty or whitespace DN)")
+            else:
+                components = [
+                    comp.strip() for comp in dn_value.split(",") if comp.strip()
+                ]
+                if not components:
+                    violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
+                else:
+                    dn_component_pattern = re.compile(
+                        FlextLdifConstants.LdifPatterns.DN_COMPONENT,
+                        re.IGNORECASE,
+                    )
+                    for idx, comp in enumerate(components):
+                        if not dn_component_pattern.match(comp):
+                            violations.append(
+                                f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format"
+                            )
+            return violations
+
+        def _validate_attributes_required(self) -> list[str]:
+            """Validate that entry has at least one attribute per RFC 2849 § 2."""
+            violations: list[str] = []
+            if self.attributes is None:
+                violations.append(
+                    "RFC 2849 § 2: Entry must have at least one attribute (received None)"
+                )
+            elif not self.attributes.attributes:
+                violations.append(
+                    "RFC 2849 § 2: Entry must have at least one attribute (empty)"
+                )
+            return violations
+
+        def _validate_attribute_descriptions(self) -> list[str]:
+            """Validate attribute descriptions per RFC 4512 § 2.5."""
+            violations: list[str] = []
+            if not self.attributes or not self.attributes.attributes:
+                return violations
+
+            for attr_desc in self.attributes.attributes:
+                # Split base and options
+                if ";" in attr_desc:
+                    base_attr, options_str = attr_desc.split(";", 1)
+                    options = [
+                        opt.strip() for opt in options_str.split(";") if opt.strip()
+                    ]
+                else:
+                    base_attr = attr_desc
+                    options = []
+
+                # Validate base attribute
+                if not base_attr or not base_attr[0].isalpha():
+                    violations.append(
+                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter"
+                    )
+                elif not all(c.isalnum() or c == "-" for c in base_attr):
+                    violations.append(
+                        f"RFC 4512 § 2.5: '{base_attr}' has invalid characters"
+                    )
+
+                # Validate options
+                for option in options:
+                    if not option or not option[0].isalpha():
+                        violations.append(
+                            f"RFC 4512 § 2.5: option '{option}' must start with letter"
+                        )
+                    elif not all(c.isalnum() or c in {"-", "_"} for c in option):
+                        violations.append(
+                            f"RFC 4512 § 2.5: option '{option}' has invalid characters"
+                        )
+            return violations
+
+        def _validate_objectclass(self, dn_value: str | None) -> list[str]:
+            """Validate objectClass presence per RFC 4512 § 2.4.1."""
+            violations: list[str] = []
+            # Schema entries exempt from objectClass requirement
+            is_schema_entry = dn_value and (
+                dn_value.lower().startswith("cn=schema")
+                or dn_value.lower().startswith("cn=subschema")
+            )
+            if is_schema_entry or not self.attributes or not self.attributes.attributes:
+                return violations
+
+            has_objectclass = any(
+                attr_name.lower() == "objectclass"
+                for attr_name in self.attributes.attributes
+            )
+            if not has_objectclass:
+                violations.append("RFC 4512 § 2.4.1: Entry SHOULD have objectClass")
+            return violations
+
+        def _validate_naming_attribute(self, dn_value: str | None) -> list[str]:
+            """Validate naming attribute presence per RFC 4512 § 2.3."""
+            violations: list[str] = []
+            if not dn_value or not self.attributes or not self.attributes.attributes:
+                return violations
+
+            first_rdn = (
+                dn_value.split(",")[0].strip()
+                if "," in dn_value
+                else dn_value.strip()
+            )
+            if "=" not in first_rdn:
+                return violations
+
+            naming_attr = first_rdn.split("=")[0].strip().lower()
+            has_naming_attr = any(
+                attr_name.lower() == naming_attr
+                for attr_name in self.attributes.attributes
+            )
+            if not has_naming_attr:
+                violations.append(
+                    f"RFC 4512 § 2.3: Entry SHOULD have naming attribute '{naming_attr}'"
+                )
+            return violations
+
+        def _validate_binary_options(self) -> list[str]:
+            """Validate binary attribute options per RFC 2849 § 5.2."""
+            violations: list[str] = []
+            if not self.attributes or not self.attributes.attributes:
+                return violations
+
+            for attr_name, attr_values in self.attributes.attributes.items():
+                if ";binary" in attr_name.lower():
+                    continue
+                for value in attr_values:
+                    has_binary = any(
+                        (ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
+                         and c not in "\t\n\r")
+                        or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
+                        for c in value
+                    )
+                    if has_binary:
+                        violations.append(
+                            f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option"
+                        )
+                        break
+            return violations
+
+        def _validate_attribute_syntax(self) -> list[str]:
+            """Validate attribute name/option syntax per RFC 4512 § 2.5.1-2.5.2."""
+            violations: list[str] = []
+            if not self.attributes or not self.attributes.attributes:
+                return violations
+
+            attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
+            for attr_desc in self.attributes.attributes:
+                parts = attr_desc.split(";")
+                base_name = parts[0]
+
+                if not attr_name_pattern.match(base_name):
+                    violations.append(
+                        f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax"
+                    )
+
+                if len(parts) > 1:
+                    invalid_options = [
+                        f"RFC 4512 § 2.5.2: option '{option}' invalid syntax"
+                        for option in parts[1:]
+                        if option and not attr_name_pattern.match(option)
+                    ]
+                    violations.extend(invalid_options)
+            return violations
+
+        def _validate_changetype(self, dn_value: str | None) -> list[str]:  # noqa: ARG002
+            """Validate changetype field per RFC 2849 § 5.7."""
+            violations: list[str] = []
+            if not self.entry_metadata:
+                return violations
+
+            changetype = self.entry_metadata.get("changetype")
+            if changetype is None:
+                return violations
+
+            valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
+            if str(changetype).lower() not in valid_changetypes:
+                violations.append(
+                    f"RFC 2849 § 5.7: changetype '{changetype}' invalid"
+                )
+            return violations
+
         @model_validator(mode="after")
-        def validate_entry_rfc_compliance(self) -> FlextLdifModelsDomains.Entry:  # noqa: C901
+        def validate_entry_rfc_compliance(self) -> FlextLdifModelsDomains.Entry:
             """Validate Entry RFC compliance - capture violations, DON'T reject.
 
             RFC 2849 § 2: DN and at least one attribute required
@@ -1360,216 +1555,21 @@ class FlextLdifModelsDomains:
 
             Strategy: PRESERVE problematic entries for round-trip conversions,
             capture violations in validation_metadata for downstream handling.
-
-            Since Entry is NOT frozen (it's an Entity), we can directly modify
-            self.validation_metadata in this mode="after" validator.
             """
-            violations: list[str] = []
-
-            # RFC 2849 § 2 + RFC 4514 § 2.3, 2.4: DN validation
             dn_value = str(self.dn.value) if self.dn else None
 
-            if dn_value is None:
-                violations.append("RFC 2849 § 2: DN is required (received None)")
-            elif not dn_value or not dn_value.strip():
-                violations.append(
-                    "RFC 2849 § 2: DN is required (empty or whitespace DN)",
-                )
-            else:
-                # Validate DN format (RFC 4514 § 2.3, 2.4)
-                components = [
-                    comp.strip() for comp in dn_value.split(",") if comp.strip()
-                ]
+            # Collect violations from all validators
+            violations: list[str] = []
+            violations.extend(self._validate_dn(dn_value))
+            violations.extend(self._validate_attributes_required())
+            violations.extend(self._validate_attribute_descriptions())
+            violations.extend(self._validate_objectclass(dn_value))
+            violations.extend(self._validate_naming_attribute(dn_value))
+            violations.extend(self._validate_binary_options())
+            violations.extend(self._validate_attribute_syntax())
+            violations.extend(self._validate_changetype(dn_value))
 
-                if not components:
-                    violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
-                else:
-                    # Validate each component format
-                    dn_component_pattern = re.compile(
-                        FlextLdifConstants.LdifPatterns.DN_COMPONENT,
-                        re.IGNORECASE,
-                    )
-                    for idx, comp in enumerate(components):
-                        if not dn_component_pattern.match(comp):
-                            violations.append(
-                                f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format - expected 'attribute=value' pattern",
-                            )
-
-            # RFC 2849 § 2: Attributes validation
-            if self.attributes is None:
-                violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (received None)",
-                )
-            elif not self.attributes.attributes or len(self.attributes.attributes) == 0:
-                violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (empty attributes)",
-                )
-            else:
-                # RFC 4512 § 2.5: Attribute description validation (attribute;options)
-                # Inline validation to avoid circular dependency (domain.py is base module)
-                for attr_desc in self.attributes.attributes:
-                    # Validate full attribute description (base + options)
-                    attr_violations: list[str] = []
-
-                    # Split into base and options
-                    if ";" in attr_desc:
-                        base_attr, options_str = attr_desc.split(";", 1)
-                        options = [
-                            opt.strip() for opt in options_str.split(";") if opt.strip()
-                        ]
-                    else:
-                        base_attr = attr_desc
-                        options = []
-
-                    # Validate base attribute (RFC 4512 § 2.5: must start with letter)
-                    if not base_attr or not base_attr[0].isalpha():
-                        attr_violations.append(
-                            f"Invalid base attribute '{base_attr}' - must start with letter",
-                        )
-                    elif not all(c.isalnum() or c == "-" for c in base_attr):
-                        attr_violations.append(
-                            f"Invalid base attribute '{base_attr}' - must contain only letters, digits, hyphens",
-                        )
-
-                    # Validate each option (RFC 4512 § 2.5)
-                    for option in options:
-                        if not option or not option[0].isalpha():
-                            attr_violations.append(
-                                f"Invalid option '{option}' - must start with letter",
-                            )
-                        elif not all(c.isalnum() or c in {"-", "_"} for c in option):
-                            attr_violations.append(
-                                f"Invalid option '{option}' - must contain only letters, digits, hyphens, underscores",
-                            )
-
-                    if attr_violations:
-                        # Prepend RFC reference to each violation
-                        violations.extend(
-                            f"RFC 4512 § 2.5 violation: {violation}"
-                            for violation in attr_violations
-                        )
-
-            # RFC 4512 § 2.4.1: objectClass presence validation
-            # Exception: Schema entries (cn=schema, cn=subschema) are exempt from objectClass requirement
-            is_schema_entry = dn_value and (
-                dn_value.lower().startswith("cn=schema")
-                or dn_value.lower().startswith("cn=subschema")
-            )
-
-            if not is_schema_entry and self.attributes and self.attributes.attributes:
-                has_objectclass = any(
-                    attr_name.lower() == "objectclass"
-                    for attr_name in self.attributes.attributes
-                )
-                if not has_objectclass:
-                    violations.append(
-                        f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass attribute (DN: {dn_value})",
-                    )
-
-            # ================================================================
-            # RFC 4512 § 2.3: Naming Attribute (RDN) validation
-            # ================================================================
-            # RFC 4512 § 2.3: "The relative distinguished name (RDN) of an entry
-            # is a set of attribute values from the entry." This means the naming
-            # attribute from the RDN SHOULD be present in the entry's attributes.
-            if dn_value and self.attributes and self.attributes.attributes:
-                # Extract naming attribute from first RDN (leftmost component)
-                first_rdn = (
-                    dn_value.split(",")[0].strip()
-                    if "," in dn_value
-                    else dn_value.strip()
-                )
-                if "=" in first_rdn:
-                    # Parse RDN: "cn=REDACTED_LDAP_BIND_PASSWORD" -> naming_attr="cn"
-                    naming_attr = first_rdn.split("=")[0].strip().lower()
-                    # Check if naming attribute exists in entry attributes
-                    has_naming_attr = any(
-                        attr_name.lower() == naming_attr
-                        for attr_name in self.attributes.attributes
-                    )
-                    if not has_naming_attr:
-                        violations.append(
-                            f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}' from RDN in attributes (DN: {dn_value})",
-                        )
-
-            # ================================================================
-            # RFC 2849 § 5.2: Binary Attribute Option validation
-            # ================================================================
-            # RFC 2849 § 5.2: "The ";binary" option MAY be used to indicate that
-            # the value is binary data." This validation detects binary data
-            # without ;binary option and captures as RFC warning (MAY = optional).
-            if self.attributes and self.attributes.attributes:
-                for attr_name, attr_values in self.attributes.attributes.items():
-                    # Skip if already has ;binary option
-                    if ";binary" in attr_name.lower():
-                        continue
-                    # Check each value for binary data (non-printable characters)
-                    for idx, value in enumerate(attr_values):
-                        # Detect binary: any char < ASCII_SPACE_CHAR (except tab/LF/CR) or > ASCII_TILDE_CHAR
-                        # value is always str in attr_values list
-                        has_binary = any(
-                            (
-                                ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
-                                and c not in "\t\n\r"
-                            )
-                            or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
-                            for c in value
-                        )
-                        if has_binary:
-                            violations.append(
-                                f"RFC 2849 § 5.2: Attribute '{attr_name}' MAY use ';binary' option for binary data (value index {idx}, DN: {dn_value})",
-                            )
-                            break  # Only report once per attribute
-
-            # ================================================================
-            # RFC 4512 § 2.5.1: AttributeType Name Syntax validation
-            # ================================================================
-            # RFC 4512 § 2.5.1: "attributetype = LDIGIT *KEYCHAR"
-            # KEYCHAR = ALPHA / DIGIT / HYPHEN
-            # Attribute names must start with letter, contain only letters/digits/hyphens
-            if self.attributes and self.attributes.attributes:
-                attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
-                for attr_desc in self.attributes.attributes:
-                    # Parse attribute description: "cn;lang-pt-BR" -> base_name="cn", options=["lang-pt-BR"]
-                    parts = attr_desc.split(";")
-                    base_name = parts[0]
-
-                    # Validate base attribute name (before options)
-                    if not attr_name_pattern.match(base_name):
-                        violations.append(
-                            f"RFC 4512 § 2.5.1: Attribute name '{base_name}' invalid syntax - must start with letter and contain only letters/digits/hyphens (DN: {dn_value})",
-                        )
-
-                    # ================================================================
-                    # RFC 4512 § 2.5.2: Attribute Options validation
-                    # ================================================================
-                    # RFC 4512 § 2.5.2: "options = option *( SEMI option )"
-                    # Each option must follow same syntax as attribute name
-                    if len(parts) > 1:
-                        # Use list comprehension + extend for PERF401 compliance
-                        option_violations = [
-                            f"RFC 4512 § 2.5.2: Attribute option '{option}' invalid syntax - must start with letter and contain only letters/digits/hyphens (attribute: {attr_desc}, DN: {dn_value})"
-                            for option in parts[1:]
-                            if option and not attr_name_pattern.match(option)
-                        ]
-                        violations.extend(option_violations)
-
-            # ================================================================
-            # RFC 2849 § 5.7: changetype Field Validation
-            # ================================================================
-            # RFC 2849 § 5.7: "changetype = "add" / "delete" / "modify" / "moddn" / "modrdn""
-            # Validate changetype if present in entry_metadata
-            if self.entry_metadata:
-                changetype = self.entry_metadata.get("changetype")
-                if changetype is not None:
-                    valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
-                    changetype_str = str(changetype).lower()
-                    if changetype_str not in valid_changetypes:
-                        violations.append(
-                            f"RFC 2849 § 5.7: changetype '{changetype}' invalid - must be one of: {', '.join(sorted(valid_changetypes))} (DN: {dn_value})",
-                        )
-
-            # ALWAYS initialize validation_metadata as dict (Pydantic 2 pattern: avoid None checks)
+            # ALWAYS initialize validation_metadata as dict (Pydantic 2 pattern)
             if self.validation_metadata is None:
                 self.validation_metadata = {}
 
@@ -1587,130 +1587,126 @@ class FlextLdifModelsDomains:
 
                 # ALSO store violations in metadata.extensions for server conversions
                 if self.metadata is None:
-                    # Use domain model directly to avoid circular dependency
                     self.metadata = FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type="rfc",
                         extensions={},
                     )
-                # extensions has default_factory=dict, never None
-                self.metadata.extensions["rfc_violations"] = violations
+                # Metadata is guaranteed to be non-None after creation above
+                if self.metadata:
+                    self.metadata.extensions["rfc_violations"] = violations
 
             return self
 
+        def _check_objectclass_rule(
+            self,
+            rules: dict[str, object],
+            dn_value: str,
+        ) -> list[str]:
+            """Check objectClass requirement from server rules."""
+            violations: list[str] = []
+            if not rules.get("requires_objectclass"):
+                return violations
+
+            has_objectclass = False
+            if self.attributes and self.attributes.attributes:
+                has_objectclass = any(
+                    attr_name.lower() == "objectclass"
+                    for attr_name in self.attributes.attributes
+                )
+
+            is_schema_entry = dn_value and (
+                dn_value.lower().startswith("cn=schema")
+                or dn_value.lower().startswith("cn=subschema")
+            )
+
+            if not has_objectclass and not is_schema_entry:
+                violations.append("Server requires objectClass attribute")
+            return violations
+
+        def _check_naming_attr_rule(
+            self,
+            rules: dict[str, object],
+            dn_value: str,
+        ) -> list[str]:
+            """Check naming attribute requirement from server rules."""
+            violations: list[str] = []
+            if (
+                not rules.get("requires_naming_attr")
+                or not dn_value
+                or not self.attributes
+                or not self.attributes.attributes
+            ):
+                return violations
+
+            first_rdn = dn_value.split(",", maxsplit=1)[0].strip()
+            if "=" not in first_rdn:
+                return violations
+
+            naming_attr = first_rdn.split("=")[0].strip().lower()
+            has_naming_attr = any(
+                attr_name.lower() == naming_attr
+                for attr_name in self.attributes.attributes
+            )
+            if not has_naming_attr:
+                violations.append(
+                    f"Server requires naming attribute '{naming_attr}'"
+                )
+            return violations
+
+        def _check_binary_option_rule(
+            self,
+            rules: dict[str, object],
+        ) -> list[str]:
+            """Check binary attribute option requirement from server rules."""
+            violations: list[str] = []
+            if (
+                not rules.get("requires_binary_option")
+                or rules.get("auto_detect_binary")
+                or not self.attributes
+                or not self.attributes.attributes
+            ):
+                return violations
+
+            for attr_name, attr_values in self.attributes.attributes.items():
+                if ";binary" in attr_name.lower():
+                    continue
+                for value in attr_values:
+                    if any(
+                        ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
+                        or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
+                        for c in value
+                    ):
+                        violations.append(
+                            f"Server requires ';binary' option for '{attr_name}'"
+                        )
+                        break
+            return violations
+
         @model_validator(mode="after")
-        def validate_server_specific_rules(self) -> FlextLdifModelsDomains.Entry:  # noqa: C901
-            """Validate Entry using server-injected validation rules.
-
-            Server-specific validation rules are INJECTED by servers/* modules
-            via metadata.extensions["validation_rules"]. Entry model has NO
-            hardcoded server logic - it's RFC-only with dynamic rule application.
-
-            Architecture:
-            - servers/* inject rules: metadata.extensions["validation_rules"]
-            - Entry validates dynamically based on injected rules
-            - Entry data = ALWAYS RFC-compliant
-            - Non-RFC data = ALWAYS in metadata.extensions
-
-            Validation rules format (injected by servers/*):
-            {
-                "requires_objectclass": bool,
-                "requires_naming_attr": bool,
-                "requires_binary_option": bool,
-                "allows_missing_objectclass": bool,
-                "allows_missing_naming_attr": bool,
-                "auto_detect_binary": bool,
-                "flexible_schema": bool,
-            }
-
-            Strategy: PRESERVE entries, flag violations in validation_metadata.
-            """
+        def validate_server_specific_rules(self) -> FlextLdifModelsDomains.Entry:
+            """Validate Entry using server-injected validation rules."""
             # Check if server injected validation rules
-            if not self.metadata or "validation_rules" not in self.metadata.extensions:
-                # No rules injected = no server-specific validation
+            if not self.metadata:
+                return self
+            if "validation_rules" not in self.metadata.extensions:
                 return self
 
             # Get server-injected validation rules
             validation_rules = self.metadata.extensions.get("validation_rules")
             if not isinstance(validation_rules, dict):
                 return self
+
             rules: dict[str, object] = validation_rules
-            server_violations: list[str] = []
             dn_value = str(self.dn.value) if self.dn else ""
 
-            # ================================================================
-            # RULE: requires_objectclass
-            # ================================================================
-            if rules.get("requires_objectclass"):
-                # Check objectClass presence regardless of other attributes
-                has_objectclass = False
-                if self.attributes and self.attributes.attributes:
-                    has_objectclass = any(
-                        attr_name.lower() == "objectclass"
-                        for attr_name in self.attributes.attributes
-                    )
-
-                # Schema entries exempt (cn=schema, cn=subschema)
-                is_schema_entry = dn_value and (
-                    dn_value.lower().startswith("cn=schema")
-                    or dn_value.lower().startswith("cn=subschema")
-                )
-
-                if not has_objectclass and not is_schema_entry:
-                    server_violations.append(
-                        f"Server requires objectClass attribute (DN: {dn_value})",
-                    )
-
-            # ================================================================
-            # RULE: requires_naming_attr
-            # ================================================================
-            if (
-                rules.get("requires_naming_attr")
-                and dn_value
-                and self.attributes
-                and self.attributes.attributes
-            ):
-                # Extract naming attribute from first RDN
-                first_rdn = dn_value.split(",")[0].strip()
-                if "=" in first_rdn:
-                    naming_attr = first_rdn.split("=")[0].strip().lower()
-                    # Check if naming attribute exists in attributes
-                    has_naming_attr = any(
-                        attr_name.lower() == naming_attr
-                        for attr_name in self.attributes.attributes
-                    )
-                    if not has_naming_attr:
-                        server_violations.append(
-                            f"Server requires naming attribute '{naming_attr}' in attributes (DN: {dn_value})",
-                        )
-
-            # ================================================================
-            # RULE: requires_binary_option
-            # ================================================================
-            if (
-                rules.get("requires_binary_option")
-                and not rules.get("auto_detect_binary")
-                and self.attributes
-                and self.attributes.attributes
-            ):
-                for attr_name, attr_values in self.attributes.attributes.items():
-                    # Check for binary data without ;binary option
-                    if ";binary" not in attr_name.lower():
-                        for value in attr_values:
-                            # Simple heuristic: check for non-printable characters
-                            # value is always str in attr_values list
-                            if any(
-                                ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
-                                or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
-                                for c in value
-                            ):
-                                server_violations.append(
-                                    f"Server requires ';binary' option for binary attribute '{attr_name}' (DN: {dn_value})",
-                                )
-                                break
+            # Collect violations from all rule checkers
+            server_violations: list[str] = []
+            server_violations.extend(self._check_objectclass_rule(rules, dn_value))
+            server_violations.extend(self._check_naming_attr_rule(rules, dn_value))
+            server_violations.extend(self._check_binary_option_rule(rules))
 
             # ALWAYS store validation_server_type when rules were checked
-            # (independent of having violations or not)
-            if self.metadata:  # Type safety: ensure metadata exists
+            if self.metadata:
                 self.metadata.extensions["validation_server_type"] = (
                     self.metadata.quirk_type
                 )
@@ -1723,12 +1719,10 @@ class FlextLdifModelsDomains:
                 self.validation_metadata["server_specific_violations"] = (
                     server_violations
                 )
-                if self.metadata:  # Type safety
+                if self.metadata:
                     self.validation_metadata["validation_server_type"] = (
                         self.metadata.quirk_type
                     )
-
-                    # ALSO store violations in metadata.extensions for quirk processing
                     self.metadata.extensions["server_specific_violations"] = (
                         server_violations
                     )
@@ -1912,7 +1906,102 @@ class FlextLdifModelsDomains:
             )
 
         @classmethod
-        def _create_entry(  # noqa: C901
+        def _normalize_dn(
+            cls, dn: str | FlextLdifModelsDomains.DistinguishedName
+        ) -> FlextLdifModelsDomains.DistinguishedName:
+            """Normalize DN to DistinguishedName object.
+
+            Args:
+                dn: DN as string or DistinguishedName object
+
+            Returns:
+                DistinguishedName object (validated by Pydantic)
+
+            """
+            if isinstance(dn, str):
+                return FlextLdifModelsDomains.DistinguishedName(value=dn)
+            return dn
+
+        @classmethod
+        def _normalize_attributes(
+            cls,
+            attributes: (
+                dict[str, str | list[str]] | FlextLdifModelsDomains.LdifAttributes
+            ),
+        ) -> FlextLdifModelsDomains.LdifAttributes:
+            """Normalize attributes to LdifAttributes object.
+
+            Args:
+                attributes: Attributes as dict or LdifAttributes object
+
+            Returns:
+                LdifAttributes object with normalized values
+
+            """
+            if isinstance(attributes, dict):
+                attrs_dict: dict[str, list[str]] = {}
+                for attr_name, attr_values in attributes.items():
+                    # Normalize to list if string
+                    values_list: list[str] = (
+                        [str(attr_values)]
+                        if isinstance(attr_values, str)
+                        else [str(v) for v in attr_values]
+                    )
+                    attrs_dict[attr_name] = values_list
+                return FlextLdifModelsDomains.LdifAttributes(
+                    attributes=attrs_dict,
+                )
+            return attributes
+
+        @classmethod
+        def _build_metadata(
+            cls,
+            metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+            server_type: str | None,
+            source_entry: str | None,
+            unconverted_attributes: dict[str, object] | None,
+        ) -> FlextLdifModelsDomains.QuirkMetadata | None:
+            """Build or update metadata with server-specific extensions.
+
+            Args:
+                metadata: Existing metadata or None
+                server_type: Optional server type
+                source_entry: Optional original source entry
+                unconverted_attributes: Optional unconverted attributes
+
+            Returns:
+                Created/updated metadata or None
+
+            """
+            # Check if any new metadata needs to be added
+            has_new_metadata = server_type or source_entry or unconverted_attributes
+
+            if metadata is None and has_new_metadata:
+                # Create new metadata
+                extensions_dict: dict[str, object] = {}
+                if server_type:
+                    extensions_dict["server_type"] = server_type
+                if source_entry:
+                    extensions_dict["source_entry"] = source_entry
+                if unconverted_attributes:
+                    extensions_dict["unconverted_attributes"] = unconverted_attributes
+                return FlextLdifModelsDomains.QuirkMetadata(
+                    quirk_type="entry_builder",
+                    extensions=extensions_dict,
+                )
+            if metadata is not None and has_new_metadata:
+                # Update existing metadata
+                if server_type:
+                    metadata.extensions["server_type"] = server_type
+                if source_entry:
+                    metadata.extensions["source_entry"] = source_entry
+                if unconverted_attributes:
+                    metadata.extensions["unconverted_attributes"] = unconverted_attributes
+
+            return metadata
+
+        @classmethod
+        def _create_entry(
             cls,
             dn: str | FlextLdifModelsDomains.DistinguishedName,
             attributes: (
@@ -1952,59 +2041,16 @@ class FlextLdifModelsDomains:
 
             """
             try:
-                # Convert string DN to DistinguishedName if needed
-                dn_obj: FlextLdifModelsDomains.DistinguishedName
-                if isinstance(dn, str):
-                    # Directly instantiate DistinguishedName - Pydantic will validate
-                    dn_obj = FlextLdifModelsDomains.DistinguishedName(value=dn)
-                else:
-                    dn_obj = dn
+                # Normalize DN to DistinguishedName object
+                dn_obj = cls._normalize_dn(dn)
 
-                # Convert dict[str, object] to LdifAttributes if needed
-                attrs_obj: FlextLdifModelsDomains.LdifAttributes
-                if isinstance(attributes, dict):
-                    # Normalize attribute values to list[str]
-                    attrs_dict: dict[str, list[str]] = {}
-                    for attr_name, attr_values in attributes.items():
-                        # Normalize to list if string
-                        values_list: list[str] = (
-                            [str(attr_values)]
-                            if isinstance(attr_values, str)
-                            else [str(v) for v in attr_values]
-                        )
-                        attrs_dict[attr_name] = values_list
-                    attrs_obj = FlextLdifModelsDomains.LdifAttributes(
-                        attributes=attrs_dict,
-                    )
-                else:
-                    attrs_obj = attributes
+                # Normalize attributes to LdifAttributes object
+                attrs_obj = cls._normalize_attributes(attributes)
 
-                # Handle metadata creation and update
-                if metadata is None:
-                    if server_type or source_entry or unconverted_attributes:
-                        extensions_dict: dict[str, object] = {}
-                        if server_type:
-                            extensions_dict["server_type"] = server_type
-                        if source_entry:
-                            extensions_dict["source_entry"] = source_entry
-                        if unconverted_attributes:
-                            extensions_dict["unconverted_attributes"] = (
-                                unconverted_attributes
-                            )
-                        metadata = FlextLdifModelsDomains.QuirkMetadata(
-                            quirk_type="entry_builder",
-                            extensions=extensions_dict,
-                        )
-                elif server_type or source_entry or unconverted_attributes:
-                    # Update existing metadata if new values are provided
-                    if server_type:
-                        metadata.extensions["server_type"] = server_type
-                    if source_entry:
-                        metadata.extensions["source_entry"] = source_entry
-                    if unconverted_attributes:
-                        metadata.extensions["unconverted_attributes"] = (
-                            unconverted_attributes
-                        )
+                # Build or update metadata
+                metadata = cls._build_metadata(
+                    metadata, server_type, source_entry, unconverted_attributes
+                )
 
                 # Use model_validate to ensure Pydantic handles
                 # default_factory fields. Entity fields have defaults.
@@ -2194,25 +2240,6 @@ class FlextLdifModelsDomains:
             except Exception:
                 return False
 
-        def to_dict(self) -> dict[str, object]:
-            """Convert Entry to dictionary representation.
-
-            Used for serialization and data interchange.
-
-            Returns:
-            Dictionary with all entry fields
-
-            """
-            return {
-                "dn": self.dn.value if self.dn else None,
-                "attributes": self.get_all_attributes(),
-                "metadata": self.metadata,
-                "acls": self.acls,
-                "objectclasses": self.objectclasses,
-                "entry_metadata": self.entry_metadata,
-                "validation_metadata": self.validation_metadata,
-            }
-
         def clone(self) -> FlextLdifModelsDomains.Entry:
             """Create an immutable copy of the entry.
 
@@ -2235,7 +2262,11 @@ class FlextLdifModelsDomains:
                 entry_metadata=dict(self.entry_metadata)
                 if self.entry_metadata
                 else None,
-                validation_metadata=dict(self.validation_metadata or {}),
+                validation_metadata=(
+                    dict(self.validation_metadata)
+                    if self.validation_metadata is not None
+                    else {}
+                ),
             )
 
         @computed_field
@@ -2436,9 +2467,13 @@ class FlextLdifModelsDomains:
             extensions: dict[str, object] | None = None,
         ) -> FlextLdifModelsDomains.QuirkMetadata:
             """Factory method to create QuirkMetadata with extensions."""
+            # Use empty dict as default value, not fallback
+            extensions_dict: dict[str, object] = (
+                extensions if extensions is not None else {}
+            )
             return cls(
                 quirk_type=quirk_type,
-                extensions=extensions or {},
+                extensions=extensions_dict,
             )
 
     class _DNStatisticsFlags(TypedDict, total=False):
@@ -2544,28 +2579,24 @@ class FlextLdifModelsDomains:
                     result.append(item)
             return result
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def was_transformed(self) -> bool:
             """Check if any transformations were applied."""
             return (
                 self.original_dn != self.normalized_dn or len(self.transformations) > 0
             )
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def transformation_count(self) -> int:
             """Count of unique transformations applied."""
             return len(self.transformations)
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def has_warnings(self) -> bool:
             """Check if any validation warnings exist."""
             return len(self.validation_warnings) > 0
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def has_errors(self) -> bool:
             """Check if any validation errors exist."""
             return len(self.validation_errors) > 0
@@ -2605,7 +2636,7 @@ class FlextLdifModelsDomains:
                 original_dn=original_dn,
                 cleaned_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
-                transformations=transformations or [],
+                transformations=transformations if transformations is not None else [],
                 **flags,
             )
 
@@ -2730,8 +2761,7 @@ class FlextLdifModelsDomains:
             description="Confidence score for category assignment",
         )
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def total_attribute_changes(self) -> int:
             """Total count of attribute modifications."""
             return (
@@ -2740,29 +2770,27 @@ class FlextLdifModelsDomains:
                 + len(self.attributes_modified)
             )
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def had_errors(self) -> bool:
             """Check if any errors occurred."""
             return len(self.errors) > 0
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def had_warnings(self) -> bool:
             """Check if any warnings occurred."""
             return len(self.warnings) > 0
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def objectclasses_changed(self) -> bool:
             """Check if objectClass values changed."""
             return set(self.objectclasses_original) != set(self.objectclasses_final)
 
-        @computed_field  # type: ignore[misc]
-        @property
+        @computed_field
         def dn_was_transformed(self) -> bool:
             """Check if DN underwent transformation."""
-            return self.dn_statistics is not None and self.dn_statistics.was_transformed
+            if self.dn_statistics is None:
+                return False
+            return bool(self.dn_statistics.was_transformed)
 
         @field_validator("filters_applied", mode="after")
         @classmethod

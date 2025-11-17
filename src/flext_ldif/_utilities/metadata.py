@@ -69,7 +69,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _set_model_metadata(
-        model: ModelWithValidationMetadata, metadata: dict[str, object]
+        model: ModelWithValidationMetadata,
+        metadata: dict[str, object],
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models).
 
@@ -133,7 +134,8 @@ class FlextLdifUtilitiesMetadata:
 
         # Copy violations from source to target
         FlextLdifUtilitiesMetadata._copy_violations_to_target(
-            source_metadata, target_metadata
+            source_metadata,
+            target_metadata,
         )
 
         # Add transformation to history

@@ -1658,17 +1658,29 @@ class TestInternalNormalization:
     def test_normalize_category_rules_validation_error(self) -> None:
         """Test _normalize_category_rules() with ValidationError."""
         from pydantic import ValidationError
+        from pydantic_core import ValidationError as CoreValidationError
 
         # Force ValidationError by monkeypatching model_validate to raise
         original_validate = FlextLdifModels.CategoryRules.model_validate
 
-        def raise_validation_error(*args, **kwargs) -> None:  # noqa: ANN002, ANN003
-            # Create a proper ValidationError by trying to validate invalid data
-            try:
-                # This will raise ValidationError
-                FlextLdifModels.CategoryRules.model_validate({"invalid": "data"})
-            except ValidationError:
-                raise
+        def raise_validation_error(*args, **kwargs) -> Never:  # noqa: ANN002, ANN003
+            # Create ValidationError directly without calling model_validate (avoids infinite loop)
+            # Pydantic v2 requires 'error' in ctx for from_exception_data
+            errors = [
+                {
+                    "type": "value_error",
+                    "loc": ("user_dn_patterns",),
+                    "msg": "Invalid value",
+                    "input": args[0] if args else {},
+                    "ctx": {"error": "Invalid value"},
+                }
+            ]
+            core_error = CoreValidationError.from_exception_data(
+                "CategoryRules", errors
+            )
+            # Convert pydantic_core.ValidationError to pydantic.ValidationError
+            msg = "CategoryRules"
+            raise ValidationError.from_exception_data(msg, core_error.errors())
 
         # Temporarily replace model_validate
         FlextLdifModels.CategoryRules.model_validate = raise_validation_error  # type: ignore[assignment]
@@ -1686,17 +1698,29 @@ class TestInternalNormalization:
     def test_normalize_whitelist_rules_validation_error(self) -> None:
         """Test _normalize_whitelist_rules() with ValidationError."""
         from pydantic import ValidationError
+        from pydantic_core import ValidationError as CoreValidationError
 
         # Force ValidationError by monkeypatching model_validate to raise
         original_validate = FlextLdifModels.WhitelistRules.model_validate
 
-        def raise_validation_error(*args, **kwargs) -> None:  # noqa: ANN002, ANN003
-            # Create a proper ValidationError by trying to validate invalid data
-            try:
-                # This will raise ValidationError
-                FlextLdifModels.WhitelistRules.model_validate({"invalid": "data"})
-            except ValidationError:
-                raise
+        def raise_validation_error(*args, **kwargs) -> Never:  # noqa: ANN002, ANN003
+            # Create ValidationError directly without calling model_validate (avoids infinite loop)
+            # Pydantic v2 requires 'error' in ctx for from_exception_data
+            errors = [
+                {
+                    "type": "value_error",
+                    "loc": ("blocked_objectclasses",),
+                    "msg": "Invalid value",
+                    "input": args[0] if args else {},
+                    "ctx": {"error": "Invalid value"},
+                }
+            ]
+            core_error = CoreValidationError.from_exception_data(
+                "WhitelistRules", errors
+            )
+            # Convert pydantic_core.ValidationError to pydantic.ValidationError
+            msg = "WhitelistRules"
+            raise ValidationError.from_exception_data(msg, core_error.errors())
 
         # Temporarily replace model_validate
         FlextLdifModels.WhitelistRules.model_validate = raise_validation_error  # type: ignore[assignment]

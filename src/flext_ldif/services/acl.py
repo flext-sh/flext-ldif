@@ -71,19 +71,13 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         Delegates entirely to quirks - no fallback logic.
 
         Args:
-            entry: LDIF entry to extract ACLs from
+            entry: LDIF entry to extract ACLs from (required, not optional)
             server_type: Server type for ACL detection (required, not optional)
 
         Returns:
             FlextResult containing composed AclResponse with extracted ACLs and statistics
 
         """
-        # Handle None entry case
-        if entry is None:
-            return FlextResult[FlextLdifModels.AclResponse].fail(
-                "Invalid entry: Entry is None",
-            )
-
         # Get ACL attribute name for this server type (from quirk)
         acl_attribute_result = self._get_acl_attribute_for_server(server_type)
 
@@ -177,15 +171,15 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
     def _get_acl_attribute_for_server(
         self,
         server_type: str,
-    ) -> FlextResult[str | None]:
+    ) -> FlextResult[str]:
         """Get ACL attribute name for a given server type using quirks.
 
         Args:
             server_type: LDAP server type
 
         Returns:
-            FlextResult containing ACL attribute name or None if server has no ACL attributes
-            Returns FlextResult.fail() if error occurs during quirk lookup
+            FlextResult containing ACL attribute name
+            Returns FlextResult.fail() if server has no ACL attributes or error occurs
 
         """
         # Get ACL attribute name from quirks - no fallback
@@ -196,20 +190,24 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                 for quirk in acls:
                     if hasattr(quirk, "acl_attribute_name"):
                         attr_name = getattr(quirk, "acl_attribute_name", None)
-                        if attr_name:
-                            return FlextResult[str | None].ok(cast("str", attr_name))
+                        if attr_name and isinstance(attr_name, str):
+                            # attr_name is already str from getattr - no cast needed
+                            return FlextResult[str].ok(attr_name)
 
-            # No quirks available for this server type - return success with None
-            # This is a legitimate case (not all servers have ACL attributes)
-            return FlextResult[str | None].ok(None)
+            # No ACL attribute for this server type - explicit failure
+            # Caller must handle this case (not all servers have ACL attributes)
+            return FlextResult[str].fail(
+                f"No ACL attributes available for server type: {server_type}",
+            )
 
         except (AttributeError, TypeError, ValueError) as e:
-            # Error occurred - return failure (not silent None)
+            # Error occurred - return failure
             self._logger.exception(
-                f"Failed to get ACL attribute for server type {server_type}",
+                "Failed to get ACL attribute for server type %s",
+                server_type,
                 exception=e,
             )
-            return FlextResult[str | None].fail(
+            return FlextResult[str].fail(
                 f"Error retrieving ACL attribute for {server_type}: {e}",
             )
 
@@ -324,12 +322,14 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                         f"No ACL quirk available for target server {target_server}",
                     )
 
-                # Cast to Protocol for type safety (hasattr check ensures method exists)
+                # hasattr check ensures method exists - Protocol structural typing handles this
                 if hasattr(target_acl_quirk, "convert_rfc_acl_to_aci"):
-                    target_acl = cast(
-                        "FlextLdifProtocols.Quirks.AclProtocol", target_acl_quirk
+                    # target_acl_quirk satisfies AclProtocol via structural typing
+                    acl_protocol: FlextLdifProtocols.Quirks.AclProtocol = cast(
+                        "FlextLdifProtocols.Quirks.AclProtocol",
+                        target_acl_quirk,
                     )
-                    aci_result = target_acl.convert_rfc_acl_to_aci(
+                    aci_result = acl_protocol.convert_rfc_acl_to_aci(
                         rfc_acl_attrs,
                         target_server,
                     )
@@ -372,9 +372,20 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
         perms_data = acl.permissions
         if isinstance(perms_data, dict):
-            return cast("dict[str, object]", perms_data)
-        if hasattr(perms_data, "model_dump"):
-            return cast("dict[str, object]", perms_data.model_dump())
+            return perms_data
+
+        # Access permissions fields directly from model
+        if isinstance(perms_data, FlextLdifModels.AclPermissions):
+            return {
+                "read": perms_data.read,
+                "write": perms_data.write,
+                "add": perms_data.add,
+                "delete": perms_data.delete,
+                "search": perms_data.search,
+                "compare": perms_data.compare,
+                "self_write": perms_data.self_write,
+                "proxy": perms_data.proxy,
+            }
 
         return {}
 
@@ -434,7 +445,8 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                 # No ACLs means no restrictions - allow by default
                 return FlextResult[bool].ok(True)
 
-            eval_context = context or {}
+            # Use empty dict as default value, not fallback
+            eval_context: dict[str, object] = context if context is not None else {}
 
             # Evaluate each ACL against the context
             for acl in acls:
@@ -457,7 +469,9 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     else None
                 )
                 result = FlextLdifUtilities.DN.validate_dn_with_context(
-                    subject_value, context_subject, "subject DN"
+                    subject_value,
+                    context_subject,
+                    "subject DN",
                 )
                 if result.is_failure:
                     return result
@@ -474,7 +488,9 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     else None
                 )
                 result = FlextLdifUtilities.DN.validate_dn_with_context(
-                    target_dn, context_target, "target DN"
+                    target_dn,
+                    context_target,
+                    "target DN",
                 )
                 if result.is_failure:
                     return result

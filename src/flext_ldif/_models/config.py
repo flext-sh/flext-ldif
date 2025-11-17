@@ -110,6 +110,14 @@ class FlextLdifModelsConfig:
             default=None,
             description="Component name for context",
         )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Correlation ID for tracking related operations across services",
+        )
+        trace_id: str | None = Field(
+            default=None,
+            description="Trace ID for distributed tracing and debugging",
+        )
         # Note: extra="allow" permits additional custom fields without declaring them
 
     class MigrateOptions(FlextModels.Value):
@@ -688,7 +696,8 @@ class FlextLdifModelsConfig:
 
         @classmethod
         def from_config(
-            cls, config: FlextLdifConfig
+            cls,
+            config: FlextLdifConfig,
         ) -> FlextLdifModelsConfig.ConfigInfo:
             """Create ConfigInfo from FlextLdifConfig.
 

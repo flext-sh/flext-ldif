@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import Union, overload
+from typing import overload, override
 
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
@@ -178,7 +178,8 @@ class FlextLdifModelsResults:
             """Return the number of entries (makes EntryResult behave like a list)."""
             return len(self.get_all_entries())
 
-        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:  # type: ignore[override]
+        @override
+        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:
             """Iterate over entries (makes EntryResult behave like a list)."""
             return iter(self.get_all_entries())
 
@@ -189,7 +190,8 @@ class FlextLdifModelsResults:
         def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
 
         def __getitem__(
-            self, key: int | slice
+            self,
+            key: int | slice,
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
             """Get entry by index or slice (makes EntryResult behave like a list)."""
             entries = self.get_all_entries()
@@ -212,7 +214,12 @@ class FlextLdifModelsResults:
                 List of entries in the category, or default if not found.
 
             """
-            return self.entries_by_category.get(category, default or [])
+            if default is not None:
+                return self.entries_by_category.get(category, default)
+            if category in self.entries_by_category:
+                return self.entries_by_category[category]
+            error_msg = f"Category '{category}' not found and no default provided"
+            raise KeyError(error_msg)
 
         @classmethod
         def from_entries(
@@ -234,7 +241,7 @@ class FlextLdifModelsResults:
             """
             # Use class reference to avoid type errors
             stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
-                total=len(entries)
+                total=len(entries),
             )
             return cls(
                 entries_by_category={category: entries},
@@ -256,7 +263,8 @@ class FlextLdifModelsResults:
             )
 
         def merge(
-            self, other: FlextLdifModelsResults.EntryResult
+            self,
+            other: FlextLdifModelsResults.EntryResult,
         ) -> FlextLdifModelsResults.EntryResult:
             """Merge two EntryResults.
 
@@ -273,12 +281,12 @@ class FlextLdifModelsResults:
             """
             # Merge categories - concatenate entries for duplicate categories
             merged_categories: dict[str, list[FlextLdifModelsDomains.Entry]] = {
-                **self.entries_by_category
+                **self.entries_by_category,
             }
             for cat, entries in other.entries_by_category.items():
                 if cat in merged_categories:
                     merged_categories[cat] = list(merged_categories[cat]) + list(
-                        entries
+                        entries,
                     )
                 else:
                     merged_categories[cat] = list(entries)
@@ -296,7 +304,7 @@ class FlextLdifModelsResults:
                 update={
                     "total_entries": self_stats.total_entries
                     + other_stats.total_entries,
-                }
+                },
             )
 
             # Merge file paths
@@ -388,7 +396,8 @@ class FlextLdifModelsResults:
             return self.model_copy(update={"statistics": updated_stats})
 
         def get_events_by_type(
-            self, event_type: type
+            self,
+            event_type: type,
         ) -> list[
             FlextLdifModelsEvents.ParseEvent
             | FlextLdifModelsEvents.FilterEvent
@@ -664,7 +673,7 @@ class FlextLdifModelsResults:
                 schema_attributes=schema_attributes,
                 schema_objectclasses=schema_objectclasses,
                 processing_duration=processing_duration,
-                rejection_reasons=rejection_reasons or {},
+                rejection_reasons=(rejection_reasons if rejection_reasons is not None else {}),
             )
 
         @classmethod
@@ -708,7 +717,8 @@ class FlextLdifModelsResults:
             )
 
         def merge(
-            self, other: FlextLdifModelsResults.Statistics
+            self,
+            other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
             """Merge two Statistics instances."""
             # Merge rejection reasons
@@ -927,7 +937,7 @@ class FlextLdifModelsResults:
             default_factory=list,
             description="List of migrated directory entries (Entry objects or dicts)",
         )
-        stats: Union[dict[str, int], FlextLdifModelsResults.Statistics] = Field(
+        stats: dict[str, int] | FlextLdifModelsResults.Statistics = Field(
             default_factory=dict,
             description="Migration statistics and metrics (Statistics or dict)",
         )
@@ -1197,11 +1207,13 @@ class FlextLdifModelsResults:
 
         def keys(self) -> list[str]:
             """Return list of attribute keys (dict-style access)."""
-            return list(self.model_dump().keys())
+            # Use model_fields_set for Pydantic v2 compatibility
+            return list(self.model_fields_set)
 
         def items(self) -> list[tuple[str, object]]:
             """Return list of (key, value) tuples (dict-style access)."""
-            return list(self.model_dump().items())
+            # Use model_fields_set for Pydantic v2 compatibility
+            return [(key, getattr(self, key)) for key in self.model_fields_set]
 
     class ServiceStatus(DictAccessibleValue):
         """Generic service status model for execute() health checks.
@@ -1361,7 +1373,7 @@ class FlextLdifModelsResults:
         model_config = ConfigDict(frozen=True, validate_default=True)
 
         entries: Sequence[FlextLdifModelsDomains.Entry] = Field(
-            description="Parsed LDIF entries"
+            description="Parsed LDIF entries",
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
             description="Parse operation statistics",
@@ -1377,7 +1389,7 @@ class FlextLdifModelsResults:
         model_config = ConfigDict(frozen=True, validate_default=True)
 
         acls: Sequence[FlextLdifModelsDomains.Acl] = Field(
-            description="Extracted ACL models"
+            description="Extracted ACL models",
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
             description="ACL extraction statistics",

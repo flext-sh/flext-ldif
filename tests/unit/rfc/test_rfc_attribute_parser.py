@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
@@ -252,13 +251,13 @@ class TestSyntaxDefinitionComputedField:
         boolean_attr = attributes[0]
         syntax_boolean = boolean_attr.syntax_definition
         assert syntax_boolean is not None
-        assert isinstance(syntax_boolean, FlextLdifModelsDomains.Syntax)
+        assert isinstance(syntax_boolean, FlextLdifModels.Syntax)
         assert syntax_boolean.is_rfc4517_standard is True
 
         unknown_attr = attributes[4]
         syntax_unknown = unknown_attr.syntax_definition
         assert syntax_unknown is not None
-        assert isinstance(syntax_unknown, FlextLdifModelsDomains.Syntax)
+        assert isinstance(syntax_unknown, FlextLdifModels.Syntax)
         assert syntax_unknown.is_rfc4517_standard is False
 
         length_attr = attributes[5]
@@ -338,8 +337,8 @@ class TestSyntaxDefinitionComputedField:
         syntax2 = attr.syntax_definition
         assert syntax1 is not None
         assert syntax2 is not None
-        assert isinstance(syntax1, FlextLdifModelsDomains.Syntax)
-        assert isinstance(syntax2, FlextLdifModelsDomains.Syntax)
+        assert isinstance(syntax1, FlextLdifModels.Syntax)
+        assert isinstance(syntax2, FlextLdifModels.Syntax)
         assert syntax1.oid == syntax2.oid
         assert syntax1.name == syntax2.name
 
@@ -396,7 +395,7 @@ class TestSyntaxDefinitionIntegration:
             assert attr.name == expected_name
             syntax = attr.syntax_definition
             assert syntax is not None
-            assert isinstance(syntax, FlextLdifModelsDomains.Syntax)
+            assert isinstance(syntax, FlextLdifModels.Syntax)
             assert syntax.name == expected_syntax_name
 
     @pytest.mark.timeout(5)
@@ -406,7 +405,7 @@ class TestSyntaxDefinitionIntegration:
     ) -> None:
         """Test that syntax_definition returns proper Syntax model type.
 
-        NOTE: syntax_definition returns FlextLdifModelsDomains.Syntax (internal class),
+        NOTE: syntax_definition returns FlextLdifModels.Syntax (internal class),
         not FlextLdifModels.Syntax (public subclass), to avoid circular dependencies.
         """
         attr_def = (
@@ -422,7 +421,7 @@ class TestSyntaxDefinitionIntegration:
 
         syntax = attr.syntax_definition
         # Verify against base class (internal) to avoid circular dependency issues
-        assert isinstance(syntax, FlextLdifModelsDomains.Syntax)
+        assert isinstance(syntax, FlextLdifModels.Syntax)
         assert hasattr(syntax, "oid")
         assert hasattr(syntax, "name")
         assert hasattr(syntax, "is_rfc4517_standard")
@@ -755,7 +754,7 @@ class TestTypeSpecificValidators:
         # Verify syntax is recognized as valid
         syntax = attr.syntax_definition
         if syntax is not None:
-            assert isinstance(syntax, FlextLdifModelsDomains.Syntax)
+            assert isinstance(syntax, FlextLdifModels.Syntax)
             assert syntax.name is not None
 
     @pytest.mark.timeout(10)
@@ -813,7 +812,7 @@ class TestTypeSpecificValidators:
         # Verify syntax definition can be resolved
         syntax = attr.syntax_definition
         assert syntax is not None
-        assert isinstance(syntax, FlextLdifModelsDomains.Syntax)
+        assert isinstance(syntax, FlextLdifModels.Syntax)
         assert syntax.name == "boolean"
 
     @pytest.mark.timeout(5)
@@ -835,7 +834,7 @@ class TestTypeSpecificValidators:
         # Verify syntax definition can be resolved
         syntax = attr.syntax_definition
         if syntax is not None:
-            assert isinstance(syntax, FlextLdifModelsDomains.Syntax)
+            assert isinstance(syntax, FlextLdifModels.Syntax)
             assert syntax.oid == "2.5.5.5"
 
 

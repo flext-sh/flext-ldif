@@ -68,7 +68,9 @@ class FlextLdifUtilitiesEntry:
         """
         return [
             FlextLdifUtilitiesEntry._convert_single_boolean_value(
-                value, source_format, target_format
+                value,
+                source_format,
+                target_format,
             )
             for value in values
         ]
@@ -101,7 +103,9 @@ class FlextLdifUtilitiesEntry:
         for attr_name, values in result.items():
             if attr_name.lower() in boolean_attr_names:
                 result[attr_name] = FlextLdifUtilitiesEntry._convert_attribute_values(
-                    values, source_format, target_format
+                    values,
+                    source_format,
+                    target_format,
                 )
 
         return result
@@ -383,6 +387,8 @@ class FlextLdifUtilitiesEntry:
         )
         if result.is_failure:
             return entry
+        # Entry.create returns FlextResult[FlextLdifModels.Entry] - unwrap() returns Entry
+        # Cast to ensure type compatibility between FlextLdifModelsDomains.Entry and FlextLdifModels.Entry
         return cast("FlextLdifModels.Entry", result.unwrap())
 
     @staticmethod
@@ -425,6 +431,8 @@ class FlextLdifUtilitiesEntry:
         )
         if result.is_failure:
             return entry
+        # Entry.create returns FlextResult[FlextLdifModels.Entry] - unwrap() returns Entry
+        # Cast to ensure type compatibility between FlextLdifModelsDomains.Entry and FlextLdifModels.Entry
         return cast("FlextLdifModels.Entry", result.unwrap())
 
 

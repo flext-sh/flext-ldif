@@ -201,7 +201,7 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
                 rfc_compliance="RFC 4517",
                 total_syntaxes=len(self._oid_to_name),
                 common_syntaxes=len(self._common_syntaxes),
-            )
+            ),
         )
 
     # ════════════════════════════════════════════════════════════════════════
@@ -322,40 +322,44 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
                 f"Failed to check RFC 4517 standard: {e}",
             )
 
-    def lookup_oid(self, oid: str) -> FlextResult[str | None]:
+    def lookup_oid(self, oid: str) -> FlextResult[str]:
         """Look up syntax name for a given OID.
 
         Args:
             oid: OID to look up
 
         Returns:
-            FlextResult containing syntax name if found, None otherwise
+            FlextResult[str] containing syntax name if found, fails if not found
 
         Example:
             >>> result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.7")
             >>> if result.is_success:
             >>>     name = result.unwrap()  # "Boolean"
+            >>> else:
+            >>>     print(f"Not found: {result.error}")
 
         """
         if not oid:
-            return FlextResult[str | None].ok(None)
+            return FlextResult[str].fail("OID cannot be empty")
 
         try:
             name = self._oid_to_name.get(oid)
-            return FlextResult[str | None].ok(name)
+            if name is None:
+                return FlextResult[str].fail(f"Syntax name not found for OID: {oid}")
+            return FlextResult[str].ok(name)
         except (TypeError, KeyError) as e:
-            return FlextResult[str | None].fail(
+            return FlextResult[str].fail(
                 f"Failed to lookup OID: {e}",
             )
 
-    def lookup_name(self, name: str) -> FlextResult[str | None]:
+    def lookup_name(self, name: str) -> FlextResult[str]:
         """Look up OID for a given syntax name.
 
         Args:
             name: Syntax name to look up (case-sensitive)
 
         Returns:
-            FlextResult containing OID if found, None otherwise
+            FlextResult containing OID if found, failure otherwise
 
         Example:
             >>> result = service.lookup_name("Boolean")
@@ -364,13 +368,15 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
 
         """
         if not name:
-            return FlextResult[str | None].ok(None)
+            return FlextResult[str].fail("Syntax name cannot be empty")
 
         try:
             oid = self._name_to_oid.get(name)
-            return FlextResult[str | None].ok(oid)
+            if oid is None:
+                return FlextResult[str].fail(f"OID not found for syntax name: {name}")
+            return FlextResult[str].ok(oid)
         except (TypeError, KeyError) as e:
-            return FlextResult[str | None].fail(
+            return FlextResult[str].fail(
                 f"Failed to lookup syntax name: {e}",
             )
 
@@ -432,7 +438,9 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         if desc:
             syntax.desc = desc
 
-        return FlextResult[FlextLdifModels.Syntax].ok(syntax)  # type: ignore[arg-type]
+        # FlextLdifModels.Syntax is alias of FlextLdifModelsDomains.Syntax
+        # No cast needed
+        return FlextResult[FlextLdifModels.Syntax].ok(syntax)
 
     @FlextDecorators.track_performance()
     def validate_value(
@@ -496,7 +504,9 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             )
 
     def _validate_by_category(
-        self, value: str, type_category: str
+        self,
+        value: str,
+        type_category: str,
     ) -> FlextResult[bool]:
         """Validate value using functional validator lookup with error handling.
 
@@ -527,7 +537,7 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         result = FlextResult.ok(value).flat_map(validator)
         if result.is_failure:
             return FlextResult[bool].fail(
-                f"Validation failed for {type_category}: {result.error}"
+                f"Validation failed for {type_category}: {result.error}",
             )
         return result
 
@@ -570,7 +580,8 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             oid: Syntax OID
 
         Returns:
-            FlextResult containing type category (string, integer, binary, dn, time, boolean)
+            FlextResult containing type category
+            (string, integer, binary, dn, time, boolean)
 
         Example:
             >>> result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7")

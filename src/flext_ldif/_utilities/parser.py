@@ -762,7 +762,7 @@ class FlextLdifUtilitiesParser:
 
             # Validate syntax using helper
             syntax_validation_error = FlextLdifUtilitiesParser._validate_syntax_oid(
-                syntax
+                syntax,
             )
 
             # Extract boolean flags
@@ -791,7 +791,7 @@ class FlextLdifUtilitiesParser:
                 syntax_validation_error,
             )
 
-            attribute = FlextLdifModels.SchemaAttribute(  # type: ignore[call-arg]
+            attribute = FlextLdifModels.SchemaAttribute(
                 oid=oid,
                 name=name or oid,
                 desc=desc,
@@ -917,7 +917,7 @@ class FlextLdifUtilitiesParser:
                 else None
             )
 
-            objectclass = FlextLdifModels.SchemaObjectClass(  # type: ignore[call-arg]
+            objectclass = FlextLdifModels.SchemaObjectClass(
                 oid=oid,
                 name=name,
                 desc=desc,

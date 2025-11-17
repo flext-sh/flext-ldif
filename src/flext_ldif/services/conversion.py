@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Sequence
-from typing import Any, ClassVar, Self, Union, cast, override
+from typing import ClassVar, Self, Union, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
@@ -36,27 +36,6 @@ ServerQuirkOrType = Union["FlextLdifServersBase", str]
 
 # Module-level logger
 logger = FlextLogger(__name__)
-
-
-def _resolve_quirk(quirk_or_type: ServerQuirkOrType) -> FlextLdifServersBase:
-    """Resolve server quirk instance from string type or return instance.
-
-    Args:
-        quirk_or_type: Either a server quirk instance or server type string
-
-    Returns:
-        Server quirk instance
-
-    """
-    if isinstance(quirk_or_type, str):
-        server = FlextLdifServer()
-        # Get base quirk from registry
-        resolved = server.quirk(quirk_or_type)
-        if resolved is None:
-            msg = f"Unknown server type: {quirk_or_type}"
-            raise ValueError(msg)
-        return resolved
-    return quirk_or_type
 
 
 class FlextLdifConversion(
@@ -91,7 +70,7 @@ class FlextLdifConversion(
 
     # DN registry for tracking DN case consistency during conversions
     dn_registry: FlextLdifModels.DnRegistry = Field(
-        default_factory=FlextLdifModels.DnRegistry
+        default_factory=FlextLdifModels.DnRegistry,
     )
 
     def __new__(cls) -> Self:
@@ -101,6 +80,30 @@ class FlextLdifConversion(
     def __init__(self) -> None:
         """Initialize the conversion facade with DN case registry."""
         super().__init__()
+
+    @staticmethod
+    def _resolve_quirk(quirk_or_type: ServerQuirkOrType) -> FlextLdifServersBase:
+        """Resolve server quirk instance from string type or return instance.
+
+        Args:
+            quirk_or_type: Either a server quirk instance or server type string
+
+        Returns:
+            Server quirk instance
+
+        Raises:
+            ValueError: If server type string cannot be resolved
+
+        """
+        if isinstance(quirk_or_type, str):
+            server = FlextLdifServer()
+            # Get base quirk from registry
+            resolved = server.quirk(quirk_or_type)
+            if resolved is None:
+                msg = f"Unknown server type: {quirk_or_type}"
+                raise ValueError(msg)
+            return resolved
+        return quirk_or_type
 
     @override
     def execute(
@@ -147,25 +150,20 @@ class FlextLdifConversion(
         self,
         source: ServerQuirkOrType,
         target: ServerQuirkOrType,
-        model_instance_or_data_type: FlextLdifTypes.ConvertibleModel | str,
-        data: str | dict[str, object] | None = None,
-    ) -> (
-        FlextResult[FlextLdifTypes.ConvertibleModel]
-        | FlextResult[str | dict[str, object]]
-    ):
+        model_instance: FlextLdifTypes.ConvertibleModel,
+    ) -> FlextResult[FlextLdifTypes.ConvertibleModel]:
         """Convert a model from a source server format to a target server format.
 
-        Supports both new strategy pattern (model-based) and legacy string-based conversions.
+        Model-based conversion only - no legacy string/dict support.
         Emits ConversionEvent for all conversions (MANDATORY - eventos obrigatórios).
 
         Args:
             source: Source quirk instance
             target: Target quirk instance
-            model_instance_or_data_type: Either a model instance (new pattern) or data type string (legacy)
-            data: Data to convert (legacy pattern only)
+            model_instance: Model instance to convert (Entry, SchemaAttribute, SchemaObjectClass, or Acl)
 
         Returns:
-            FlextResult with converted model or string data
+            FlextResult with converted model
 
         """
         # Track conversion duration (MANDATORY - eventos obrigatórios)
@@ -181,37 +179,12 @@ class FlextLdifConversion(
         else:
             target_format = getattr(target, "server_name", "unknown")
 
-        if isinstance(model_instance_or_data_type, str):
-            # Legacy string-based conversion
-            conversion_operation = f"convert_{model_instance_or_data_type}"
-        else:
-            # Model-based conversion
-            model_type = type(model_instance_or_data_type).__name__
-            conversion_operation = f"convert_{model_type}"
+        # Model-based conversion only
+        model_type = type(model_instance).__name__
+        conversion_operation = f"convert_{model_type}"
 
-        # Execute conversion
-        result: (
-            FlextResult[FlextLdifTypes.ConvertibleModel]
-            | FlextResult[str | dict[str, object]]
-        )
-        if isinstance(model_instance_or_data_type, str) and data is not None:
-            # Legacy string-based conversion
-            result = cast(
-                "FlextResult[FlextLdifTypes.ConvertibleModel] | FlextResult[str | dict[str, object]]",
-                self._convert_legacy(
-                    source,
-                    target,
-                    model_instance_or_data_type,
-                    data,
-                ),
-            )
-        elif data is None and not isinstance(model_instance_or_data_type, str):
-            # New model-based conversion - type guard ensures it's a model
-            result = self._convert_model(source, target, model_instance_or_data_type)
-        else:
-            result = FlextResult.fail(
-                "Invalid arguments: provide either (model) or (data_type, data)",
-            )
+        # Execute model-based conversion
+        result = self._convert_model(source, target, model_instance)
 
         # Calculate duration and emit ConversionEvent (MANDATORY - eventos obrigatórios)
         duration_ms = (time.perf_counter() - start_time) * 1000.0
@@ -230,7 +203,10 @@ class FlextLdifConversion(
             items_failed=items_failed,
             conversion_duration_ms=duration_ms,
             error_details=[
-                FlextLdifModels.ErrorDetail(item=str(data), error=str(result.error))
+                FlextLdifModels.ErrorDetail(
+                    item=model_type,
+                    error=str(result.error),
+                ),
             ]
             if result.is_failure
             else None,
@@ -281,8 +257,8 @@ class FlextLdifConversion(
             _ = self.dn_registry.register_dn(entry_dn)
 
             # Resolve quirks if they are strings
-            source_quirk = _resolve_quirk(source)
-            target_quirk = _resolve_quirk(target)
+            source_quirk = self._resolve_quirk(source)
+            target_quirk = self._resolve_quirk(target)
 
             # Step 1: Write Entry from source server format to RFC LDIF string
             # Use write() which routes to entry quirk internally
@@ -311,9 +287,14 @@ class FlextLdifConversion(
 
             # FASE 3: Preserve validation metadata from source entry to target entry
             converted_entry = parsed_entries[0]
-            converted_entry = FlextLdifUtilities.Metadata.preserve_validation_metadata(  # type: ignore[arg-type]
+            # Type guard: parsed_entries[0] is Entry from parse() result
+            if not isinstance(converted_entry, FlextLdifModels.Entry):
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Entry conversion produced invalid entry type"
+                )
+            converted_entry = FlextLdifUtilities.Metadata.preserve_validation_metadata(
                 source_model=entry,
-                target_model=cast("FlextLdifModels.Entry", converted_entry),
+                target_model=converted_entry,
                 transformation={
                     "step": "convert_entry",
                     "source_server": (
@@ -334,66 +315,6 @@ class FlextLdifConversion(
 
         except Exception as e:
             return FlextResult.fail(f"Entry conversion failed: {e}")
-
-    def _convert_legacy(
-        self,
-        source: Any,  # noqa: ANN401
-        target: Any,  # noqa: ANN401
-        data_type: str,
-        data: str | dict[str, object],
-    ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | str
-        | dict[str, object]
-    ]:
-        """Convert using legacy string-based pattern."""
-        try:
-            # Normalize data_type to lowercase for case-insensitive matching
-            data_type_lower = data_type.lower()
-
-            if data_type_lower == "attribute":
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                    self._convert_attribute(source, target, data),
-                )
-            if data_type_lower in {"objectclass", "objectclasses"}:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                    self._convert_objectclass(source, target, data),
-                )
-            if data_type_lower == "acl":
-                if isinstance(data, str):
-                    acl_result = self._convert_acl(source, target, data)
-                    # Widen return type for legacy method compatibility
-                    if acl_result.is_success:
-                        return cast(
-                            "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                            FlextResult[str | dict[str, object]].ok(
-                                acl_result.unwrap()
-                            ),
-                        )
-                    return cast(
-                        "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                        FlextResult[str | dict[str, object]].fail(
-                            acl_result.error or "ACL conversion failed"
-                        ),
-                    )
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                    FlextResult[str | dict[str, object]].fail(
-                        "ACL conversion requires string input"
-                    ),
-                )
-            if data_type_lower == "entry":
-                # _convert_entry doesn't take source/target/data arguments anymore
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                    self._convert_entry(),
-                )
-            return FlextResult.fail(f"Invalid data_type: {data_type}")
-        except Exception as e:
-            return FlextResult.fail(f"Legacy conversion failed: {e}")
 
     def _extract_and_register_dns(
         self,
@@ -467,7 +388,7 @@ class FlextLdifConversion(
             return FlextResult.ok(source_attr)  # Pass-through if not SchemaAttribute
 
         # Resolve quirk if it's a string
-        source_quirk = _resolve_quirk(source)
+        source_quirk = self._resolve_quirk(source)
 
         # Check if source is already a Schema quirk (has write_attribute directly)
         if hasattr(source_quirk, "write_attribute"):
@@ -507,10 +428,8 @@ class FlextLdifConversion(
 
             parse_result = self._parse_source_attribute(source, data)
             if parse_result.is_failure:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]",
-                    parse_result,
-                )
+                error_msg = parse_result.error or "Failed to parse source attribute"
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(error_msg)
             source_attr = parse_result.unwrap()
 
             # Step 2: Write to RFC string
@@ -526,10 +445,8 @@ class FlextLdifConversion(
             # Step 3: Parse RFC string with target quirk
             target_parse_result = self._parse_target_attribute(target, rfc_value)
             if target_parse_result.is_failure:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]",
-                    target_parse_result,
-                )
+                error_msg = target_parse_result.error or "Failed to parse target attribute"
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(error_msg)
             parsed_attr = target_parse_result.unwrap()
 
             # Step 4: Write target attribute to final format
@@ -544,7 +461,7 @@ class FlextLdifConversion(
         data: str | dict[str, object],
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse source attribute."""
-        source_quirk = _resolve_quirk(source)
+        source_quirk = self._resolve_quirk(source)
 
         # Check if source is already a Schema quirk (has parse_attribute directly)
         if hasattr(source_quirk, "parse_attribute"):
@@ -554,12 +471,12 @@ class FlextLdifConversion(
             source_schema = source_quirk.schema_quirk
         else:
             return FlextResult.fail(
-                "Source quirk must be a Schema quirk or have schema_quirk attribute"
+                "Source quirk must be a Schema quirk or have schema_quirk attribute",
             )
 
         if not hasattr(source_schema, "parse_attribute"):
             return FlextResult.fail(
-                "Source schema quirk must have parse_attribute method"
+                "Source schema quirk must have parse_attribute method",
             )
         # Ensure data is string for parse_attribute
         if isinstance(data, str):
@@ -573,7 +490,7 @@ class FlextLdifConversion(
         rfc_value: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse target attribute from RFC string."""
-        target_quirk = _resolve_quirk(target)
+        target_quirk = self._resolve_quirk(target)
 
         # Check if target is already a Schema quirk (has parse_attribute directly)
         if hasattr(target_quirk, "parse_attribute"):
@@ -583,12 +500,12 @@ class FlextLdifConversion(
             target_schema = target_quirk.schema_quirk
         else:
             return FlextResult.fail(
-                "Target quirk must be a Schema quirk or have schema_quirk attribute"
+                "Target quirk must be a Schema quirk or have schema_quirk attribute",
             )
 
         if not hasattr(target_schema, "parse_attribute"):
             return FlextResult.fail(
-                "Target schema quirk must have parse_attribute method"
+                "Target schema quirk must have parse_attribute method",
             )
         parse_method = target_schema.parse_attribute
         return parse_method(rfc_value)
@@ -603,23 +520,32 @@ class FlextLdifConversion(
         if not isinstance(parsed_attr, FlextLdifModels.SchemaAttribute):
             return FlextResult.ok(parsed_attr)  # Return as-is if not SchemaAttribute
 
-        target_quirk = _resolve_quirk(target)
+        target_quirk = self._resolve_quirk(target)
 
         # Check if target is already a Schema quirk (has write_attribute directly)
         if hasattr(target_quirk, "write_attribute"):
             write_method = target_quirk.write_attribute
-            return cast(
-                "FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]",
-                write_method(parsed_attr),
-            )
+            write_result = write_method(parsed_attr)
+            # write_attribute returns FlextResult[str] - deprecated, use model-based conversion
+            if write_result.is_success:
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                    "String-based attribute conversion is deprecated. Use model-based conversion."
+                )
+            error_msg = write_result.error or "Failed to write attribute"
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(error_msg)
 
         # Check if target is a base quirk with schema_quirk attribute
         if hasattr(target_quirk, "schema_quirk"):
             write_method = getattr(target_quirk.schema_quirk, "write_attribute", None)
             if write_method is not None:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]",
-                    write_method(parsed_attr),
+                write_result = write_method(parsed_attr)
+                # write_attribute returns FlextResult[str] - convert to SchemaAttribute if needed
+                if write_result.is_success:
+                    return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                        "String-based attribute conversion is deprecated. Use model-based conversion."
+                    )
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                    write_result.error or "Failed to write attribute"
                 )
 
         # No schema writer available, return parsed attribute as-is
@@ -641,7 +567,7 @@ class FlextLdifConversion(
             return FlextResult.ok(source_oc)  # Pass-through if not SchemaObjectClass
 
         # Resolve quirk if it's a string
-        source_quirk = _resolve_quirk(source)
+        source_quirk = self._resolve_quirk(source)
 
         # Check if source is already a Schema quirk (has write_objectclass directly)
         if hasattr(source_quirk, "write_objectclass"):
@@ -681,10 +607,8 @@ class FlextLdifConversion(
 
             parse_result = self._parse_source_objectclass(source, data)
             if parse_result.is_failure:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                    parse_result,
-                )
+                error_msg = parse_result.error or "Failed to parse source objectClass"
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(error_msg)
             source_oc = parse_result.unwrap()
 
             # Step 2: Write to RFC string
@@ -700,10 +624,8 @@ class FlextLdifConversion(
             # Step 3: Parse RFC string with target quirk
             target_result = self._parse_target_objectclass(target, rfc_value)
             if target_result.is_failure:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-                    target_result,
-                )
+                error_msg = target_result.error or "Failed to parse target objectClass"
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(error_msg)
             parsed_oc = target_result.unwrap()
 
             # Step 4: Write target objectClass to final format
@@ -718,7 +640,7 @@ class FlextLdifConversion(
         data: str | dict[str, object],
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse source objectClass."""
-        source_quirk = _resolve_quirk(source)
+        source_quirk = self._resolve_quirk(source)
 
         # Check if source is already a Schema quirk (has parse_objectclass directly)
         if hasattr(source_quirk, "parse_objectclass"):
@@ -728,12 +650,12 @@ class FlextLdifConversion(
             source_schema = source_quirk.schema_quirk
         else:
             return FlextResult.fail(
-                "Source quirk must be a Schema quirk or have schema_quirk attribute"
+                "Source quirk must be a Schema quirk or have schema_quirk attribute",
             )
 
         if not hasattr(source_schema, "parse_objectclass"):
             return FlextResult.fail(
-                "Source schema quirk must have parse_objectclass method"
+                "Source schema quirk must have parse_objectclass method",
             )
         # Ensure data is string for parse_objectclass
         if isinstance(data, str):
@@ -747,7 +669,7 @@ class FlextLdifConversion(
         rfc_value: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse target objectClass from RFC string."""
-        target_quirk = _resolve_quirk(target)
+        target_quirk = self._resolve_quirk(target)
 
         # Check if target is already a Schema quirk (has parse_objectclass directly)
         if hasattr(target_quirk, "parse_objectclass"):
@@ -757,12 +679,12 @@ class FlextLdifConversion(
             target_schema = target_quirk.schema_quirk
         else:
             return FlextResult.fail(
-                "Target quirk must be a Schema quirk or have schema_quirk attribute"
+                "Target quirk must be a Schema quirk or have schema_quirk attribute",
             )
 
         if not hasattr(target_schema, "parse_objectclass"):
             return FlextResult.fail(
-                "Target schema quirk must have parse_objectclass method"
+                "Target schema quirk must have parse_objectclass method",
             )
         parse_method = target_schema.parse_objectclass
         return parse_method(rfc_value)
@@ -773,7 +695,7 @@ class FlextLdifConversion(
         parsed_oc: FlextLdifModels.SchemaObjectClass | object,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass | str | dict[str, object]]:
         """Write target objectClass to final format."""
-        target_quirk = _resolve_quirk(target)
+        target_quirk = self._resolve_quirk(target)
 
         # Check if target is already a Schema quirk (has write_objectclass directly)
         if hasattr(target_quirk, "write_objectclass"):
@@ -792,15 +714,19 @@ class FlextLdifConversion(
         if not isinstance(parsed_oc, FlextLdifModels.SchemaObjectClass):
             return FlextResult.ok(parsed_oc)  # Return as-is if not SchemaObjectClass
         write_method = schema_quirk.write_objectclass
-        return cast(
-            "FlextResult[FlextLdifModels.SchemaObjectClass | str | dict[str, object]]",
-            write_method(parsed_oc),
-        )
+        write_result = write_method(parsed_oc)
+        # write_objectclass returns FlextResult[str] - convert to SchemaObjectClass if needed
+        if write_result.is_success:
+            return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
+                "String-based objectClass conversion is deprecated. Use model-based conversion."
+            )
+        error_msg = write_result.error or "Failed to write objectClass"
+        return FlextResult[FlextLdifModels.SchemaObjectClass].fail(error_msg)
 
     def _convert_acl(
         self,
-        source: Any,  # noqa: ANN401
-        target: Any,  # noqa: ANN401
+        source: FlextLdifServersBase,
+        target: FlextLdifServersBase,
         data: str,
     ) -> FlextResult[str]:
         """Convert ACL from source to target quirk.
@@ -896,64 +822,62 @@ class FlextLdifConversion(
 
     def batch_convert(
         self,
-        source: Any,  # noqa: ANN401
-        target: Any,  # noqa: ANN401
-        data_type: str,
-        data_list: Sequence[str | dict[str, object]],
-    ) -> FlextResult[list[str | dict[str, object]]]:
-        """Convert multiple items from source to target quirk via RFC.
+        source: ServerQuirkOrType,
+        target: ServerQuirkOrType,
+        model_list: Sequence[FlextLdifTypes.ConvertibleModel],
+    ) -> FlextResult[list[FlextLdifTypes.ConvertibleModel]]:
+        """Convert multiple models from source to target quirk via RFC.
 
-        This is a convenience method that applies convert() to a list of items.
+        Model-based batch conversion only - no legacy string/dict support.
         DN registry is shared across all conversions to ensure case consistency.
         Emits ConversionEvent with aggregated statistics (MANDATORY - eventos obrigatórios).
 
         Args:
-            source: Source quirk instance (must satisfy QuirksPort protocol)
-            target: Target quirk instance (must satisfy QuirksPort protocol)
-            data_type: Type of data to convert
-            data_list: List of items to convert
+            source: Source quirk instance
+            target: Target quirk instance
+            model_list: List of model instances to convert
 
         Returns:
-            FlextResult containing list of converted items
+            FlextResult containing list of converted models
 
         Examples:
-            >>> attributes = ["( 2.16... )", "( 2.16... )", ...]
-            >>> result = matrix.batch_convert(oud, oid, "attribute", attributes)
+            >>> entries = [entry1, entry2, entry3]
+            >>> result = matrix.batch_convert(oud, oid, entries)
             >>> if result.is_success:
             ...     converted = result.unwrap()
-            ...     print(f"Converted {len(converted)} attributes")
+            ...     print(f"Converted {len(converted)} entries")
 
         """
         # Track batch conversion duration (MANDATORY - eventos obrigatórios)
         start_time = time.perf_counter()
 
         # Get source/target format names
-        source_format = getattr(source, "server_name", "unknown")
-        target_format = getattr(target, "server_name", "unknown")
-        conversion_operation = f"batch_convert_{data_type}"
+        if isinstance(source, str):
+            source_format = source
+        else:
+            source_format = getattr(source, "server_name", "unknown")
+        if isinstance(target, str):
+            target_format = target
+        else:
+            target_format = getattr(target, "server_name", "unknown")
+
+        # Determine model type from first item
+        if not model_list:
+            return FlextResult[list[FlextLdifTypes.ConvertibleModel]].fail(
+                "Empty model list provided"
+            )
+        model_type = type(model_list[0]).__name__
+        conversion_operation = f"batch_convert_{model_type}"
 
         try:
-            converted = []
-            errors = []
-            error_details = []
+            converted: list[FlextLdifTypes.ConvertibleModel] = []
+            errors: list[str] = []
+            error_details: list[FlextLdifModels.ErrorDetail] = []
 
-            for idx, item in enumerate(data_list):
-                result = self.convert(source, target, data_type, item)
+            for idx, model_item in enumerate(model_list):
+                result = self.convert(source, target, model_item)
                 if result.is_success:
-                    unwrapped = result.unwrap()
-                    # Type guard: convert returns ConvertibleModel or str | dict
-                    if isinstance(unwrapped, (str, dict)):
-                        converted.append(unwrapped)
-                    # ConvertibleModel types not expected in batch_convert legacy API
-                    else:
-                        error_msg = "Unexpected model type in legacy batch convert"
-                        errors.append(f"Item {idx}: {error_msg}")
-                        error_details.append(
-                            FlextLdifModels.ErrorDetail(
-                                item=f"batch_item_{idx}",
-                                error=error_msg,
-                            )
-                        )
+                    converted.append(result.unwrap())
                 else:
                     error_msg = str(result.error)
                     errors.append(f"Item {idx}: {error_msg}")
@@ -961,13 +885,13 @@ class FlextLdifConversion(
                         FlextLdifModels.ErrorDetail(
                             item=f"batch_item_{idx}",
                             error=error_msg,
-                        )
+                        ),
                     )
 
             # Calculate duration and emit ConversionEvent (MANDATORY - eventos obrigatórios)
             duration_ms = (time.perf_counter() - start_time) * 1000.0
 
-            items_processed = len(data_list)
+            items_processed = len(model_list)
             items_converted = len(converted)
             items_failed = len(errors)
 
@@ -997,9 +921,11 @@ class FlextLdifConversion(
                     error_msg += (
                         f"\n... and {len(errors) - self.MAX_ERRORS_TO_SHOW} more errors"
                     )
-                return FlextResult[list[str | dict[str, object]]].fail(error_msg)
+                return FlextResult[list[FlextLdifTypes.ConvertibleModel]].fail(
+                    error_msg
+                )
 
-            return FlextResult[list[str | dict[str, object]]].ok(converted)
+            return FlextResult[list[FlextLdifTypes.ConvertibleModel]].ok(converted)
 
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             # Emit ConversionEvent for exception case (MANDATORY - eventos obrigatórios)
@@ -1010,14 +936,15 @@ class FlextLdifConversion(
                 conversion_operation=conversion_operation,
                 source_format=source_format,
                 target_format=target_format,
-                items_processed=len(data_list),
+                items_processed=len(model_list),
                 items_converted=0,
-                items_failed=len(data_list),
+                items_failed=len(model_list),
                 conversion_duration_ms=duration_ms,
                 error_details=[
                     FlextLdifModels.ErrorDetail(
-                        item="batch_conversion", error=f"Batch conversion failed: {e}"
-                    )
+                        item="batch_conversion",
+                        error=f"Batch conversion failed: {e}",
+                    ),
                 ],
             )
             _ = FlextLdifUtilities.Events.log_and_emit_conversion_event(
@@ -1066,7 +993,7 @@ class FlextLdifConversion(
         """
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:  # noqa: ANN401
+    def get_supported_conversions(self, quirk: FlextLdifServersBase) -> dict[str, bool]:
         """Check which data types a quirk supports for conversion.
 
         Args:
@@ -1121,7 +1048,8 @@ class FlextLdifConversion(
 
         # Check attribute support
         if hasattr(quirk_schema, "can_handle_attribute") and hasattr(
-            quirk_schema, "parse_attribute"
+            quirk_schema,
+            "parse_attribute",
         ):
             can_handle_method = quirk_schema.can_handle_attribute
             if can_handle_method(test_attr_def):
@@ -1132,7 +1060,8 @@ class FlextLdifConversion(
 
         # Check objectClass support
         if hasattr(quirk_schema, "can_handle_objectclass") and hasattr(
-            quirk_schema, "parse_objectclass"
+            quirk_schema,
+            "parse_objectclass",
         ):
             can_handle_method = quirk_schema.can_handle_objectclass
             if can_handle_method(test_oc_def):
@@ -1149,7 +1078,10 @@ class FlextLdifConversion(
         support: dict[str, bool],
     ) -> dict[str, bool]:
         """Check ACL support."""
-        acl = getattr(quirk, "acl_quirk", None) or getattr(quirk, "_acl_quirk", None)
+        # No fallback - check both attributes explicitly
+        acl = getattr(quirk, "acl_quirk", None)
+        if acl is None:
+            acl = getattr(quirk, "_acl_quirk", None)
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         if acl and callable(getattr(acl, "parse", None)):
             acl_result = acl.parse(test_acl_def)
@@ -1163,9 +1095,10 @@ class FlextLdifConversion(
         support: dict[str, bool],
     ) -> dict[str, bool]:
         """Check Entry support."""
-        entry = getattr(quirk, "entry_quirk", None) or getattr(
-            quirk, "_entry_quirk", None
-        )
+        # No fallback - check both attributes explicitly
+        entry = getattr(quirk, "entry_quirk", None)
+        if entry is None:
+            entry = getattr(quirk, "_entry_quirk", None)
         if not entry and hasattr(quirk, "parse") and hasattr(quirk, "can_handle_entry"):
             entry = quirk
         if entry and callable(getattr(entry, "parse", None)):

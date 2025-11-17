@@ -20,10 +20,10 @@
 REAL USAGE EXAMPLES
 ═══════════════════════════════════════════════════════════════════════════════
 
-# PATTERN 1: Static Method API (Direct & Simple)
+# PATTERN 1: Direct Classmethod API (Simplified)
 ────────────────────────────────────────────────
 # Filter entries by DN pattern
-result = FlextLdifFilters.filter_by_dn(
+result = FlextLdifFilters.by_dn(
     entries=my_entries,
     pattern="*,ou=users,dc=example,dc=com",
     mode="include"
@@ -31,14 +31,14 @@ result = FlextLdifFilters.filter_by_dn(
 filtered = result.unwrap()
 
 # Filter by objectClass
-result = FlextLdifFilters.filter_by_objectclass(
+result = FlextLdifFilters.by_objectclass(
     entries=my_entries,
     objectclass=("person", "inetOrgPerson"),
     required_attributes=["cn", "mail"]
 )
 
 # Filter by attribute presence
-result = FlextLdifFilters.filter_by_attributes(
+result = FlextLdifFilters.by_attributes(
     entries=my_entries,
     attributes=["mail"],
     match_all=False,  # Has ANY attribute
@@ -170,18 +170,16 @@ import time
 import uuid
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Any, cast
 
 from flext_core import FlextResult, FlextService
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
+class FlextLdifFilters(FlextService):
     """Universal LDIF Entry Filtering and Categorization Service.
 
     ╔══════════════════════════════════════════════════════════════════════════╗
@@ -242,7 +240,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
         if not isinstance(rules, Mapping):
             return FlextResult.fail(
-                "Category rules must be a mapping or CategoryRules model"
+                "Category rules must be a mapping or CategoryRules model",
             )
 
         normalized: dict[str, list[str]] = {}
@@ -271,7 +269,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             )
         except ValidationError as exc:
             return FlextResult.fail(
-                f"Invalid category rules: {exc.errors(include_context=False)}"
+                f"Invalid category rules: {exc.errors(include_context=False)}",
             )
 
     @staticmethod
@@ -287,7 +285,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
         if not isinstance(rules, Mapping):
             return FlextResult.fail(
-                "Whitelist rules must be a mapping or WhitelistRules model"
+                "Whitelist rules must be a mapping or WhitelistRules model",
             )
 
         normalized = {
@@ -305,7 +303,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             )
         except ValidationError as exc:
             return FlextResult.fail(
-                f"Invalid whitelist rules: {exc.errors(include_context=False)}"
+                f"Invalid whitelist rules: {exc.errors(include_context=False)}",
             )
 
     # ════════════════════════════════════════════════════════════════════════
@@ -359,6 +357,59 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 )
 
         @staticmethod
+        def _normalize_objectclass_tuple(oc: str | tuple[str, ...]) -> tuple[str, ...]:
+            """Normalize objectclass to tuple."""
+            return oc if isinstance(oc, tuple) else (oc,)
+
+        @staticmethod
+        def _matches_objectclass_entry(
+            entry: FlextLdifModels.Entry,
+            oc_tuple: tuple[str, ...],
+            required_attributes: list[str] | None,
+        ) -> bool:
+            """Check if entry matches objectclass filter."""
+            has_oc = FlextLdifUtilities.Entry.has_objectclass(entry, oc_tuple)
+            if not has_oc or not required_attributes:
+                return has_oc
+
+            has_attrs = FlextLdifUtilities.Entry.has_all_attributes(
+                entry,
+                required_attributes,
+            )
+            return has_oc and has_attrs
+
+        @staticmethod
+        def _should_include_entry(*, matches: bool, filter_mode: str) -> bool:
+            """Determine if entry should be included based on mode."""
+            return (
+                filter_mode == FlextLdifConstants.Modes.INCLUDE and matches
+            ) or (filter_mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
+
+        @staticmethod
+        def _process_objectclass_entry(
+            entry: FlextLdifModels.Entry,
+            oc_tuple: tuple[str, ...],
+            required_attributes: list[str] | None,
+            filter_mode: str,
+            mark_excluded: bool,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Process single entry with filtering logic."""
+            entry_matches = FlextLdifFilters.ObjectClassFilter._matches_objectclass_entry(
+                entry, oc_tuple, required_attributes
+            )
+            if FlextLdifFilters.ObjectClassFilter._should_include_entry(
+                matches=entry_matches, filter_mode=filter_mode
+            ):
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
+            if mark_excluded:
+                excluded_entry = FlextLdifFilters.Exclusion.mark_excluded(
+                    entry,
+                    f"ObjectClass filter: {oc_tuple}",
+                )
+                return FlextResult[FlextLdifModels.Entry].ok(excluded_entry)
+            return FlextResult[FlextLdifModels.Entry].fail("Entry excluded by filter")
+
+        @staticmethod
         def filter_by_objectclass(
             entries: list[FlextLdifModels.Entry],
             objectclass: str | tuple[str, ...],
@@ -368,55 +419,20 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             mark_excluded: bool,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter by objectClass using functional composition."""
-
-            def normalize_objectclass(oc: str | tuple[str, ...]) -> tuple[str, ...]:
-                """Normalize objectclass to tuple."""
-                return oc if isinstance(oc, tuple) else (oc,)
-
-            def matches_entry(
-                entry: FlextLdifModels.Entry, oc_tuple: tuple[str, ...]
-            ) -> bool:
-                """Check if entry matches objectclass filter."""
-                has_oc = FlextLdifFilters.Filter.has_objectclass(entry, oc_tuple)
-                if not has_oc or not required_attributes:
-                    return has_oc
-
-                has_attrs = FlextLdifFilters.Filter.has_attributes(
-                    entry, required_attributes, match_any=False
-                )
-                return has_oc and has_attrs
-
-            def should_include(*, matches: bool, filter_mode: str) -> bool:
-                """Determine if entry should be included based on mode."""
-                return (
-                    filter_mode == FlextLdifConstants.Modes.INCLUDE and matches
-                ) or (filter_mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
-
-            def process_entry(
-                entry: FlextLdifModels.Entry,
-                oc_tuple: tuple[str, ...],
-                filter_mode: str,
-            ) -> FlextLdifModels.Entry | None:
-                """Process single entry with filtering logic."""
-                entry_matches = matches_entry(entry, oc_tuple)
-                if should_include(matches=entry_matches, filter_mode=filter_mode):
-                    return entry
-                if mark_excluded:
-                    return FlextLdifFilters.Exclusion.mark_excluded(
-                        entry, f"ObjectClass filter: {oc_tuple}"
-                    )
-                # Return None to indicate exclusion (will be filtered out)
-                return None
-
             try:
-                # Functional composition: normalize -> filter -> clean
-                oc_tuple = normalize_objectclass(objectclass)
+                # Normalize objectclass to tuple
+                oc_tuple = FlextLdifFilters.ObjectClassFilter._normalize_objectclass_tuple(
+                    objectclass
+                )
 
-                filtered_entries = [
-                    processed
-                    for entry in entries
-                    if (processed := process_entry(entry, oc_tuple, mode)) is not None
-                ]
+                # Process all entries
+                filtered_entries: list[FlextLdifModels.Entry] = []
+                for entry in entries:
+                    result = FlextLdifFilters.ObjectClassFilter._process_objectclass_entry(
+                        entry, oc_tuple, required_attributes, mode, mark_excluded
+                    )
+                    if result.is_success:
+                        filtered_entries.append(result.unwrap())
 
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
 
@@ -437,12 +453,14 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             """Filter by attribute presence using functional composition."""
 
             def matches_attributes(
-                entry: FlextLdifModels.Entry, attrs: list[str]
+                entry: FlextLdifModels.Entry,
+                attrs: list[str],
             ) -> bool:
                 """Check if entry matches attribute filter."""
-                return FlextLdifFilters.Filter.has_attributes(
-                    entry, attrs, match_any=not match_all
-                )
+                # Use direct utility method - no helper wrapper
+                if match_all:
+                    return FlextLdifUtilities.Entry.has_all_attributes(entry, attrs)
+                return FlextLdifUtilities.Entry.has_any_attributes(entry, attrs)
 
             def should_include_attribute(*, matches: bool, filter_mode: str) -> bool:
                 """Determine inclusion based on mode."""
@@ -451,28 +469,35 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 ) or (filter_mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
 
             def process_attribute_entry(
-                entry: FlextLdifModels.Entry, attrs: list[str], filter_mode: str
-            ) -> FlextLdifModels.Entry | None:
+                entry: FlextLdifModels.Entry,
+                attrs: list[str],
+                filter_mode: str,
+            ) -> FlextResult[FlextLdifModels.Entry]:
                 """Process single entry for attribute filtering."""
                 entry_matches = matches_attributes(entry, attrs)
                 if should_include_attribute(
-                    matches=entry_matches, filter_mode=filter_mode
+                    matches=entry_matches,
+                    filter_mode=filter_mode,
                 ):
-                    return entry
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
                 if mark_excluded:
-                    return FlextLdifFilters.Exclusion.mark_excluded(
-                        entry, f"Attribute filter: {attributes}"
+                    excluded_entry = FlextLdifFilters.Exclusion.mark_excluded(
+                        entry,
+                        f"Attribute filter: {attributes}",
                     )
-                return None
+                    return FlextResult[FlextLdifModels.Entry].ok(excluded_entry)
+                # Entry excluded - return failure to indicate filtering out
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Entry excluded by filter"
+                )
 
             try:
-                # Functional composition with list comprehension
-                filtered_entries = [
-                    processed
-                    for entry in entries
-                    if (processed := process_attribute_entry(entry, attributes, mode))
-                    is not None
-                ]
+                # Functional composition - collect successful results
+                filtered_entries: list[FlextLdifModels.Entry] = []
+                for entry in entries:
+                    result = process_attribute_entry(entry, attributes, mode)
+                    if result.is_success:
+                        filtered_entries.append(result.unwrap())
 
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
 
@@ -512,31 +537,8 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
             return (included, excluded)
 
-        @staticmethod
-        def has_objectclass(
-            entry: FlextLdifModels.Entry,
-            objectclasses: tuple[str, ...],
-        ) -> bool:
-            """Check if entry has any of the objectClasses.
-
-            Uses FlextLdifUtilities.Entry.has_objectclass() for consistent logic.
-            """
-            return FlextLdifUtilities.Entry.has_objectclass(entry, objectclasses)
-
-        @staticmethod
-        def has_attributes(
-            entry: FlextLdifModels.Entry,
-            attributes: list[str],
-            *,
-            match_any: bool = True,
-        ) -> bool:
-            """Check if entry has attributes (ANY or ALL).
-
-            Uses FlextLdifUtilities.Entry helpers for consistent logic.
-            """
-            if match_any:
-                return FlextLdifUtilities.Entry.has_any_attributes(entry, attributes)
-            return FlextLdifUtilities.Entry.has_all_attributes(entry, attributes)
+        # Removed has_objectclass and has_attributes helpers - use FlextLdifUtilities.Entry directly
+        # These were just wrappers without added functionality
 
     class Categorizer:
         """Handles entry categorization into 6 categories.
@@ -637,7 +639,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             try:
                 if entry.attributes is None:
                     return FlextResult[FlextLdifModels.Entry].fail(
-                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes",
                     )
 
                 blocked_lower = {attr.lower() for attr in attributes}
@@ -672,16 +674,19 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 )
 
                 if entry_result.is_failure:
-                    # Cast FlextResult type (Entry inherits from domain Entry)
-                    return cast("FlextResult[FlextLdifModels.Entry]", entry_result)
+                    return entry_result
 
-                # Cast to public type
-                new_entry = cast("FlextLdifModels.Entry", entry_result.unwrap())
+                new_entry = entry_result.unwrap()
 
                 # Store removed attributes with values using model_copy
                 if removed_attrs_with_values:
                     # Preserve existing metadata and add removed attributes
-                    existing_metadata = new_entry.entry_metadata or {}
+                    # Use entry_metadata if available, otherwise empty dict
+                    existing_metadata: dict[str, object] = (
+                        dict(new_entry.entry_metadata)
+                        if new_entry.entry_metadata
+                        else {}
+                    )
                     updated_metadata = {
                         **existing_metadata,
                         "removed_attributes_with_values": removed_attrs_with_values,
@@ -689,14 +694,15 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
                     # Use model_copy to create new entry with updated metadata
                     new_entry = new_entry.model_copy(
-                        update={"entry_metadata": updated_metadata}
+                        update={"entry_metadata": updated_metadata},
                     )
 
                     # Track in statistics (only names) if statistics exist
                     if new_entry.statistics:
                         for attr_name in removed_attrs_with_values:
                             new_entry.statistics.track_attribute_change(
-                                "removed", attr_name
+                                "removed",
+                                attr_name,
                             )
 
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
@@ -715,7 +721,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             try:
                 if entry.attributes is None:
                     return FlextResult[FlextLdifModels.Entry].fail(
-                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes",
                     )
 
                 blocked_lower = {oc.lower() for oc in objectclasses}
@@ -753,23 +759,21 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 )
 
                 if entry_result.is_failure:
-                    # Cast FlextResult type (Entry inherits from domain Entry)
-                    return cast("FlextResult[FlextLdifModels.Entry]", entry_result)
+                    return entry_result
 
-                # Cast to public type
-                new_entry = cast("FlextLdifModels.Entry", entry_result.unwrap())
+                new_entry = entry_result.unwrap()
 
                 # CRITICAL: Preserve entry_metadata from original entry using model_copy
                 # This ensures metadata (including removed_attributes_with_values) is not lost
                 if entry.entry_metadata:
                     new_entry = new_entry.model_copy(
-                        update={"entry_metadata": entry.entry_metadata}
+                        update={"entry_metadata": entry.entry_metadata},
                     )
 
                 # Also preserve statistics if present
                 if entry.statistics:
                     new_entry = new_entry.model_copy(
-                        update={"statistics": entry.statistics}
+                        update={"statistics": entry.statistics},
                     )
 
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
@@ -791,7 +795,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
                 if entry.attributes is None:
                     return FlextResult[FlextLdifModels.Entry].fail(
-                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes",
                     )
 
                 # Create filtered attributes dict
@@ -805,7 +809,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
                 # Create new LdifAttributes
                 attrs_result = FlextLdifModels.LdifAttributes.create(
-                    cast("dict[str, object]", filtered_attrs),
+                    filtered_attrs,
                 )
                 if not attrs_result.is_success:
                     return FlextResult[FlextLdifModels.Entry].fail(attrs_result.error)
@@ -856,7 +860,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
                 # Create new LdifAttributes
                 attrs_result = FlextLdifModels.LdifAttributes.create(
-                    cast("dict[str, object]", filtered_attrs),
+                    filtered_attrs,
                 )
                 if not attrs_result.is_success:
                     return FlextResult[FlextLdifModels.Entry].fail(attrs_result.error)
@@ -921,7 +925,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
         @staticmethod
         def matches_oid_pattern(
-            attributes: dict[str, Any],
+            attributes: dict[str, list[str] | str],
             attribute_keys: list[str],
             allowed_oids: list[str],
         ) -> bool:
@@ -973,11 +977,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             if entry.metadata is None:
                 new_metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="filter_excluded",
-                    extensions={"exclusion_info": exclusion_info.model_dump()},
+                    extensions={"exclusion_info": exclusion_info},
                 )
             else:
                 new_extensions = {**entry.metadata.extensions}
-                new_extensions["exclusion_info"] = exclusion_info.model_dump()
+                new_extensions["exclusion_info"] = exclusion_info
                 new_metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type=entry.metadata.quirk_type,
                     extensions=new_extensions,
@@ -992,11 +996,17 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 return False
 
             exclusion_info = entry.metadata.extensions.get("exclusion_info")
-            if not isinstance(exclusion_info, dict):
+            if exclusion_info is None:
                 return False
 
-            excluded = exclusion_info.get("excluded")
-            return isinstance(excluded, bool) and excluded
+            # Handle both model and dict formats
+            if isinstance(exclusion_info, FlextLdifModels.ExclusionInfo):
+                return exclusion_info.excluded
+            if isinstance(exclusion_info, dict):
+                excluded = exclusion_info.get("excluded")
+                return isinstance(excluded, bool) and excluded
+
+            return False
 
         @staticmethod
         def get_exclusion_reason(entry: FlextLdifModels.Entry) -> str | None:
@@ -1005,15 +1015,21 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 return None
 
             exclusion_info = entry.metadata.extensions.get("exclusion_info")
-            if not isinstance(exclusion_info, dict):
+            if exclusion_info is None:
                 return None
 
             # Only return reason if entry is actually marked as excluded
             if not FlextLdifFilters.Exclusion.is_entry_excluded(entry):
                 return None
 
-            reason = exclusion_info.get("exclusion_reason")
-            return reason if isinstance(reason, str) else None
+            # Handle both model and dict formats
+            if isinstance(exclusion_info, FlextLdifModels.ExclusionInfo):
+                return exclusion_info.exclusion_reason
+            if isinstance(exclusion_info, dict):
+                reason = exclusion_info.get("exclusion_reason")
+                return reason if isinstance(reason, str) else None
+
+            return None
 
         @staticmethod
         def matches_dn_pattern(dn: str | object, patterns: list[str]) -> bool:
@@ -1104,15 +1120,28 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
                     if should_delete:
                         # Mark as virtually deleted (non-destructive)
-                        entry_dict = entry.model_dump()
-                        entry_dict["metadata"] = entry_dict.get("metadata", {})
-                        if isinstance(entry_dict["metadata"], dict):
-                            entry_dict["metadata"]["virtual_deleted"] = True
-                            entry_dict["metadata"]["deletion_timestamp"] = datetime.now(
+                        existing_metadata = entry.metadata
+                        if existing_metadata is None:
+                            new_metadata = FlextLdifModels.QuirkMetadata(
+                                quirk_type="virtual_deleted",
+                                extensions={
+                                    "virtual_deleted": True,
+                                    "deletion_timestamp": datetime.now(UTC).isoformat(),
+                                },
+                            )
+                        else:
+                            new_extensions = {**existing_metadata.extensions}
+                            new_extensions["virtual_deleted"] = True
+                            new_extensions["deletion_timestamp"] = datetime.now(
                                 UTC,
                             ).isoformat()
+                            new_metadata = existing_metadata.model_copy(
+                                update={"extensions": new_extensions},
+                            )
 
-                        deleted_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                        deleted_entry = entry.model_copy(
+                            update={"metadata": new_metadata}
+                        )
                         deleted_entries.append(deleted_entry)
                     else:
                         active_entries.append(entry)
@@ -1143,16 +1172,20 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 restored_entries: list[FlextLdifModels.Entry] = []
 
                 for entry in entries:
-                    entry_dict = entry.model_dump()
-                    metadata = entry_dict.get("metadata", {})
+                    # Remove virtual delete markers from metadata
+                    if entry.metadata is None:
+                        restored_entries.append(entry)
+                        continue
 
-                    # Remove virtual delete markers
-                    if isinstance(metadata, dict):
-                        metadata.pop("virtual_deleted", None)
-                        metadata.pop("deletion_timestamp", None)
-                        entry_dict["metadata"] = metadata
+                    new_extensions = {**entry.metadata.extensions}
+                    new_extensions.pop("virtual_deleted", None)
+                    new_extensions.pop("deletion_timestamp", None)
 
-                    restored_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                    new_metadata = entry.metadata.model_copy(
+                        update={"extensions": new_extensions},
+                    )
+
+                    restored_entry = entry.model_copy(update={"metadata": new_metadata})
                     restored_entries.append(restored_entry)
 
                 return FlextResult[list[FlextLdifModels.Entry]].ok(restored_entries)
@@ -1254,9 +1287,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         """Execute DN pattern filter."""
         if self.dn_pattern is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "dn_pattern is required for dn filter"
+                "dn_pattern is required for dn filter",
             )
-        return self.filter_by_dn(
+        return self.Filter.filter_by_dn(
             self.entries,
             self.dn_pattern,
             self.mode,
@@ -1267,9 +1300,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         """Execute objectClass filter."""
         if self.objectclass is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "objectclass is required for objectclass filter"
+                "objectclass is required for objectclass filter",
             )
-        return self.filter_by_objectclass(
+        return self.Filter.filter_by_objectclass(
             self.entries,
             self.objectclass,
             self.required_attributes,
@@ -1281,9 +1314,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         """Execute attributes filter."""
         if self.attributes is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "attributes is required for attributes filter"
+                "attributes is required for attributes filter",
             )
-        return self.filter_by_attributes(
+        return self.Filter.filter_by_attributes(
             self.entries,
             self.attributes,
             match_all=self.match_all,
@@ -1295,7 +1328,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         """Execute base DN filter."""
         if self.base_dn is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "base_dn is required for base_dn filter"
+                "base_dn is required for base_dn filter",
             )
         included, _excluded = self.filter_by_base_dn(
             self.entries,
@@ -1307,7 +1340,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         """Execute filtering based on filter_criteria and mode."""
         if not self.entries:
             return FlextResult[FlextLdifModels.EntryResult].ok(
-                cast("FlextLdifModels.EntryResult", FlextLdifModels.EntryResult.empty())
+                FlextLdifModels.EntryResult.empty(),
             )
 
         # Track filtering metrics (MANDATORY - eventos obrigatórios)
@@ -1353,7 +1386,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                             "attributes": self.attributes,
                             "base_dn": self.base_dn,
                             "mode": self.mode,
-                        }
+                        },
                     ],
                     filter_duration_ms=filter_duration_ms,
                 )
@@ -1361,15 +1394,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 self._last_event = filter_event
 
                 # Wrap filtered entries in EntryResult for API consistency
-                # Cast public Entry type to internal domain Entry type
                 entry_result = FlextLdifModels.EntryResult.from_entries(
-                    cast(
-                        "list[FlextLdifModelsDomains.Entry]",
-                        filtered_entries,
-                    )
+                    filtered_entries,
                 )
                 return FlextResult[FlextLdifModels.EntryResult].ok(
-                    cast("FlextLdifModels.EntryResult", entry_result)
+                    entry_result,
                 )
 
             # If result is failure, propagate the error
@@ -1443,7 +1472,8 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
     def with_objectclass(self, *classes: str) -> FlextLdifFilters:
         """Set objectClass filter (fluent builder)."""
         self.filter_criteria = "objectclass"
-        self.objectclass = classes or None
+        # Use tuple if classes provided, None if empty
+        self.objectclass = tuple(classes) if classes else None
         return self
 
     def with_required_attributes(self, attributes: list[str]) -> FlextLdifFilters:
@@ -1486,58 +1516,8 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
     # PUBLIC CLASSMETHOD HELPERS (Direct Entry Points)
     # ════════════════════════════════════════════════════════════════════════
 
-    @classmethod
-    def filter_by_dn(
-        cls,
-        entries: list[FlextLdifModels.Entry],
-        pattern: str,
-        mode: str = FlextLdifConstants.Modes.INCLUDE,
-        *,
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by DN pattern."""
-        # Delegate to nested Filter class
-        return cls.Filter.filter_by_dn(
-            entries, pattern, mode, mark_excluded=mark_excluded
-        )
-
-    @classmethod
-    def filter_by_objectclass(
-        cls,
-        entries: list[FlextLdifModels.Entry],
-        objectclass: str | tuple[str, ...],
-        required_attributes: list[str] | None = None,
-        mode: str = FlextLdifConstants.Modes.INCLUDE,
-        *,
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by objectClass."""
-        return cls.Filter.filter_by_objectclass(
-            entries,
-            objectclass,
-            required_attributes,
-            mode,
-            mark_excluded=mark_excluded,
-        )
-
-    @classmethod
-    def filter_by_attributes(
-        cls,
-        entries: list[FlextLdifModels.Entry],
-        attributes: list[str],
-        *,
-        match_all: bool = False,
-        mode: str = FlextLdifConstants.Modes.INCLUDE,
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by attribute presence."""
-        return cls.Filter.filter_by_attributes(
-            entries,
-            attributes,
-            match_all=match_all,
-            mode=mode,
-            mark_excluded=mark_excluded,
-        )
+    # Removed filter_by_dn, filter_by_objectclass, filter_by_attributes helpers
+    # Use Filter.filter_by_* directly or by_* methods
 
     @classmethod
     def filter_by_base_dn(
@@ -1549,7 +1529,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Filter entries by base DN (hierarchy)."""
         return cls.Filter.filter_by_base_dn(
-            entries, base_dn, mark_excluded=mark_excluded
+            entries,
+            base_dn,
+            mark_excluded=mark_excluded,
         )
 
     @classmethod
@@ -1561,9 +1543,13 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         *,
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by DN pattern (alias for filter_entries_by_dn)."""
-        return cls.filter_entries_by_dn(
-            entries, pattern, mode, mark_excluded=mark_excluded
+        """Filter entries by DN pattern."""
+        # Use Filter directly - no intermediate helper
+        return cls.Filter.filter_by_dn(
+            entries,
+            pattern,
+            mode,
+            mark_excluded=mark_excluded,
         )
 
     @classmethod
@@ -1577,6 +1563,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass."""
+        # Use Filter directly - no intermediate helper
         return cls.Filter.filter_by_objectclass(
             entries,
             objectclass,
@@ -1596,6 +1583,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute presence."""
+        # Use Filter directly - no intermediate helper
         return cls.Filter.filter_by_attributes(
             entries,
             attributes,
@@ -1614,7 +1602,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Filter entries by base DN (hierarchy)."""
         return cls.Filter.filter_by_base_dn(
-            entries, base_dn, mark_excluded=mark_excluded
+            entries,
+            base_dn,
+            mark_excluded=mark_excluded,
         )
 
     @classmethod
@@ -1629,7 +1619,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         acl_attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Extract entries with ACL attributes."""
-        filter_acl_attrs = acl_attributes or ["acl", "aci", "olcAccess"]
+        # Use provided acl_attributes or default - no fallback with or
+        if acl_attributes is None:
+            filter_acl_attrs = ["acl", "aci", "olcAccess"]
+        else:
+            filter_acl_attrs = acl_attributes
 
         # Exclude schema entries first
         non_schema_entries = [e for e in entries if not cls.is_schema(e)]
@@ -1662,7 +1656,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
     @classmethod
     def _check_hierarchy_priority(
-        cls, entry: FlextLdifModels.Entry, constants: type
+        cls,
+        entry: FlextLdifModels.Entry,
+        constants: type,
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES.
 
@@ -1682,14 +1678,14 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         return any(oc.lower() in entry_ocs for oc in priority_classes)
 
     @classmethod
-    def _get_server_constants(cls, server_type: str) -> tuple[type, str | None]:
+    def _get_server_constants(cls, server_type: str) -> FlextResult[type]:
         """Get and validate server constants via FlextLdifServer registry.
 
         Args:
             server_type: Server type identifier
 
         Returns:
-            Tuple of (constants_class, error_message)
+            FlextResult with constants class or error message
 
         """
         try:
@@ -1700,22 +1696,28 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             server_quirk = registry.quirk(server_type)
 
             if not server_quirk:
-                return (None, f"Unknown server type: {server_type}")  # type: ignore[return-value]
+                return FlextResult[type].fail(f"Unknown server type: {server_type}")
 
             quirk_class = type(server_quirk)
             if not hasattr(quirk_class, "Constants"):
-                return (None, f"Server type {server_type} missing Constants class")  # type: ignore[return-value]
+                return FlextResult[type].fail(
+                    f"Server type {server_type} missing Constants class"
+                )
 
-            constants = quirk_class.Constants  # type: ignore[attr-defined]
+            constants = quirk_class.Constants
 
             if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
-                return (None, f"Server {server_type} missing CATEGORIZATION_PRIORITY")  # type: ignore[return-value]
+                return FlextResult[type].fail(
+                    f"Server {server_type} missing CATEGORIZATION_PRIORITY"
+                )
             if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
-                return (None, f"Server {server_type} missing CATEGORY_OBJECTCLASSES")  # type: ignore[return-value]
+                return FlextResult[type].fail(
+                    f"Server {server_type} missing CATEGORY_OBJECTCLASSES"
+                )
 
-            return (constants, None)
+            return FlextResult[type].ok(constants)
         except (ImportError, ValueError) as e:
-            return (None, f"Failed to get server constants: {e}")  # type: ignore[return-value]
+            return FlextResult[type].fail(f"Failed to get server constants: {e}")
 
     @classmethod
     def _categorize_by_priority(
@@ -1740,8 +1742,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         for category in priority_order:
             if category == "acl":
                 if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
-                    acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)  # type: ignore[attr-defined]
-                    if cls.Filter.has_attributes(entry, acl_attributes, match_any=True):
+                    acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)
+                    # Use direct utility method - no helper wrapper
+                    if FlextLdifUtilities.Entry.has_any_attributes(
+                        entry, acl_attributes
+                    ):
                         return ("acl", None)
                 continue
 
@@ -1749,7 +1754,10 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             if not category_objectclasses:
                 continue
 
-            if cls.Filter.has_objectclass(entry, tuple(category_objectclasses)):
+            # Use direct utility method - no helper wrapper
+            if FlextLdifUtilities.Entry.has_objectclass(
+                entry, tuple(category_objectclasses)
+            ):
                 return (category, None)
 
         return ("rejected", "No category match")
@@ -1793,9 +1801,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             return ("schema", None)
 
         # Get and validate server constants
-        constants, error = cls._get_server_constants(server_type)
-        if error:
-            return ("rejected", error)
+        constants_result = cls._get_server_constants(server_type)
+        if constants_result.is_failure:
+            return ("rejected", constants_result.error)
+
+        constants = constants_result.unwrap()
 
         # Check for HIERARCHY PRIORITY objectClasses first
         # This solves entries like cn=PERFIS with both orclContainer + orclprivilegegroup
@@ -1803,12 +1813,15 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             return ("hierarchy", None)
 
         # Get server-specific categorization priority and mappings
-        priority_order = constants.CATEGORIZATION_PRIORITY  # type: ignore[attr-defined]
-        category_map = constants.CATEGORY_OBJECTCLASSES  # type: ignore[attr-defined]
+        priority_order = constants.CATEGORIZATION_PRIORITY
+        category_map = constants.CATEGORY_OBJECTCLASSES
 
         # Categorize by priority order
         return cls._categorize_by_priority(
-            entry, constants, priority_order, category_map
+            entry,
+            constants,
+            priority_order,
+            category_map,
         )
 
     @staticmethod
@@ -1816,26 +1829,25 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         allowed_oids: dict[str, list[str]],
     ) -> tuple[list[str], ...]:
         """Extract allowed OIDs for each schema type from config dict."""
-        allowed_attr_oids = (
-            allowed_oids.get("allowed_attribute_oids")
-            or allowed_oids.get("attributes")
-            or []
-        )
-        allowed_oc_oids = (
-            allowed_oids.get("allowed_objectclass_oids")
-            or allowed_oids.get("objectclasses")
-            or []
-        )
-        allowed_mr_oids = (
-            allowed_oids.get("allowed_matchingrule_oids")
-            or allowed_oids.get("matchingrules")
-            or []
-        )
-        allowed_mru_oids = (
-            allowed_oids.get("allowed_matchingruleuse_oids")
-            or allowed_oids.get("matchingruleuse")
-            or []
-        )
+        attr_oids = allowed_oids.get("allowed_attribute_oids")
+        if attr_oids is None:
+            attr_oids = allowed_oids.get("attributes")
+        allowed_attr_oids = attr_oids if attr_oids is not None else []
+
+        oc_oids = allowed_oids.get("allowed_objectclass_oids")
+        if oc_oids is None:
+            oc_oids = allowed_oids.get("objectclasses")
+        allowed_oc_oids = oc_oids if oc_oids is not None else []
+
+        mr_oids = allowed_oids.get("allowed_matchingrule_oids")
+        if mr_oids is None:
+            mr_oids = allowed_oids.get("matchingrules")
+        allowed_mr_oids = mr_oids if mr_oids is not None else []
+
+        mru_oids = allowed_oids.get("allowed_matchingruleuse_oids")
+        if mru_oids is None:
+            mru_oids = allowed_oids.get("matchingruleuse")
+        allowed_mru_oids = mru_oids if mru_oids is not None else []
         return allowed_attr_oids, allowed_oc_oids, allowed_mr_oids, allowed_mru_oids
 
     @classmethod
@@ -1903,33 +1915,39 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
             # Filter each schema type
             cls._filter_schema_attribute(
-                attrs_copy, ("attributeTypes", "attributetypes"), allowed_attr_oids
+                attrs_copy,
+                ("attributeTypes", "attributetypes"),
+                allowed_attr_oids,
             )
             cls._filter_schema_attribute(
-                attrs_copy, ("objectClasses", "objectclasses"), allowed_oc_oids
+                attrs_copy,
+                ("objectClasses", "objectclasses"),
+                allowed_oc_oids,
             )
             cls._filter_schema_attribute(
-                attrs_copy, ("matchingRules", "matchingrules"), allowed_mr_oids
+                attrs_copy,
+                ("matchingRules", "matchingrules"),
+                allowed_mr_oids,
             )
             cls._filter_schema_attribute(
-                attrs_copy, ("matchingRuleUse", "matchingruleuse"), allowed_mru_oids
+                attrs_copy,
+                ("matchingRuleUse", "matchingruleuse"),
+                allowed_mru_oids,
             )
 
             # Only keep entry if it has definitions remaining after filtering
             if cls._has_remaining_definitions(attrs_copy):
                 # Create new entry with filtered attributes
-                # Cast attrs_copy to match Entry.create signature
-                attributes_typed = cast("dict[str, list[str] | str]", attrs_copy)
                 filtered_entry_result = FlextLdifModels.Entry.create(
                     dn=entry.dn.value,
-                    attributes=attributes_typed,
+                    attributes=attrs_copy,
                     entry_metadata=entry.entry_metadata
                     if hasattr(entry, "entry_metadata")
                     else None,
                 )
                 if filtered_entry_result.is_success:
                     filtered.append(
-                        cast("FlextLdifModels.Entry", filtered_entry_result.unwrap())
+                        filtered_entry_result.unwrap(),
                     )
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
@@ -2016,10 +2034,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 case "dn":
                     if self.dn_pattern is None:
                         result = FlextResult[list[FlextLdifModels.Entry]].fail(
-                            "dn_pattern is required"
+                            "dn_pattern is required",
                         )
                     else:
-                        result = self.filter_by_dn(
+                        # Use Filter directly - no intermediate helper
+                        result = self.Filter.filter_by_dn(
                             self.entries,
                             self.dn_pattern,
                             self.mode,
@@ -2028,10 +2047,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 case "objectclass":
                     if self.objectclass is None:
                         result = FlextResult[list[FlextLdifModels.Entry]].fail(
-                            "objectclass is required"
+                            "objectclass is required",
                         )
                     else:
-                        result = self.filter_by_objectclass(
+                        # Use Filter directly - no intermediate helper
+                        result = self.Filter.filter_by_objectclass(
                             self.entries,
                             self.objectclass,
                             self.required_attributes,
@@ -2041,10 +2061,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 case "attributes":
                     if self.attributes is None:
                         result = FlextResult[list[FlextLdifModels.Entry]].fail(
-                            "attributes is required"
+                            "attributes is required",
                         )
                     else:
-                        result = self.filter_by_attributes(
+                        # Use Filter directly - no intermediate helper
+                        result = self.Filter.filter_by_attributes(
                             self.entries,
                             self.attributes,
                             match_all=self.match_all,
@@ -2181,7 +2202,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
         # Delegate to FilterService for main categorization with server_type
         category, reason = FlextLdifFilters.categorize(
-            entry, normalized_rules, effective_server_type
+            entry,
+            normalized_rules,
+            effective_server_type,
         )
 
         # Validate DN patterns for category-specific matching using helper
@@ -2198,57 +2221,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
         return (category, reason)
 
-    @staticmethod
-    def filter_entries_by_dn(
-        entries: list[FlextLdifModels.Entry],
-        pattern: str,
-        mode: str = "include",
-        *,
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by DN pattern."""
-        return FlextLdifFilters.Filter.filter_by_dn(
-            entries,
-            pattern,
-            mode,
-            mark_excluded=mark_excluded,
-        )
-
-    @staticmethod
-    def filter_entries_by_objectclass(
-        entries: list[FlextLdifModels.Entry],
-        objectclass: str | tuple[str, ...],
-        required_attributes: list[str] | None = None,
-        mode: str = "include",
-        *,
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by objectClass."""
-        return FlextLdifFilters.by_objectclass(
-            entries,
-            objectclass,
-            required_attributes,
-            mode,
-            mark_excluded=mark_excluded,
-        )
-
-    @staticmethod
-    def filter_entries_by_attributes(
-        entries: list[FlextLdifModels.Entry],
-        attributes: list[str],
-        *,
-        match_all: bool = False,
-        mode: str = "include",
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by attribute presence."""
-        return FlextLdifFilters.by_attributes(
-            entries,
-            attributes,
-            match_all=match_all,
-            mode=mode,
-            mark_excluded=mark_excluded,
-        )
+    # Removed filter_entries_by_* static methods - use by_* classmethods or Filter.filter_by_* directly
 
     @staticmethod
     def filter_entry_attributes(

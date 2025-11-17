@@ -8,17 +8,16 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Union
+from collections.abc import Callable
 
-from flext_ldif._models.config import FlextLdifModelsConfig
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 logger = logging.getLogger(__name__)
 
 
 # Type for parsed ACL components
-AclComponent = dict[str, Union[str, object]]
+AclComponent = dict[str, str | object]
 
 
 class FlextLdifUtilitiesACL:
@@ -45,7 +44,13 @@ class FlextLdifUtilitiesACL:
             result["format"] = "unknown"
             result["content"] = line
 
-        return result or None
+        # Validate result dict has required content before returning
+        if not result:
+            return None
+        # Result dict should always have at least "format" key
+        if "format" not in result:
+            return None
+        return result
 
     @staticmethod
     def extract_component(content: str, pattern: str, group: int = 1) -> str | None:
@@ -274,7 +279,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        config: FlextLdifModelsConfig.AclMetadataConfig,
+        config: FlextLdifModels.AclMetadataConfig,
     ) -> dict[str, object]:
         """Build QuirkMetadata extensions dict from ACL metadata configuration.
 
@@ -285,7 +290,7 @@ class FlextLdifUtilitiesACL:
             Dict of metadata extensions
 
         Example:
-            >>> config = FlextLdifModelsConfig.AclMetadataConfig(
+            >>> config = FlextLdifModels.AclMetadataConfig(
             ...     line_breaks=[10, 20],
             ...     dn_spaces=True,
             ...     targetscope="subtree",
@@ -457,7 +462,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_target(
-        target: FlextLdifModelsDomains.AclTarget | None,
+        target: FlextLdifModels.AclTarget | None,
     ) -> str:
         """Format OID ACL target clause.
 
@@ -610,89 +615,83 @@ class FlextLdifUtilitiesACL:
 
         # Helper to normalize DN value (removes spaces after commas, preserves case)
         def normalize_dn_value(value: str) -> str:
-            """Normalize DN by removing spaces after commas while preserving case.
-
-            Normalizes DNs that appear INSIDE ACL strings (userdn/groupdn values),
-            not the entry DN itself.
-
-            If base_dn is provided, filters DNs to only include those under base_dn.
-            """
+            """Normalize DN by removing spaces after commas while preserving case."""
             if not value:
                 return value
-            # Remove LDAP URL prefix if present for normalization
             prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
             has_prefix = value.startswith(prefix)
             dn_part = value[len(prefix) :] if has_prefix else value
-
-            # Clean DN: remove spaces after commas (OID quirk fix)
-            # This fixes: "cn=Group, cn=Sub" -> "cn=Group,cn=Sub"
-            # But preserves case: "cn=GROUP" stays "cn=GROUP"
             cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_part)
-
-            # Filter by base_dn if provided (migrate responsibility)
-            if base_dn and cleaned_dn:
-                # Check if DN is under base_dn - if not, return empty to filter it out
-                if not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn):
-                    # Return empty string to indicate DN should be filtered out
-                    # Caller should handle empty DNs appropriately
-                    return ""
-
-            # Restore prefix if it was present
+            if (
+                base_dn
+                and cleaned_dn
+                and not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn)
+            ):
+                return ""
             return f"{prefix}{cleaned_dn}" if has_prefix else cleaned_dn
 
         # Helper to ensure LDAP URL format
         def ensure_ldap_url(value: str) -> str:
             prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
             normalized = normalize_dn_value(value)
-            # If normalized is empty (DN filtered out), return empty
             if not normalized:
                 return ""
             return (
                 normalized if normalized.startswith(prefix) else f"{prefix}{normalized}"
             )
 
-        # Strategy mapping for subject types (reduces 8 returns to 3)
-        if subject_type == FlextLdifConstants.AclSubjectTypes.SELF:
+        # Dispatch handlers for different subject types
+        def handle_self() -> str:
             acl_self = getattr(constants, "ACL_SELF_SUBJECT", "self")
             return f'userdn="{acl_self}";)'
 
-        if subject_type == FlextLdifConstants.AclSubjectTypes.ANONYMOUS:
+        def handle_anonymous() -> str:
             acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
             return f'userdn="{acl_anon}";)'
 
-        # Group handling (group, group_dn) - normalize DN
-        if subject_type in {FlextLdifConstants.AclSubjectTypes.GROUP, "group_dn"}:
+        def handle_group() -> str:
             normalized_value = ensure_ldap_url(subject_value)
-            # If DN was filtered out (empty), return empty string (caller should skip this ACL)
-            if not normalized_value:
-                return ""
-            return f'groupdn="{normalized_value}";)'
+            return "" if not normalized_value else f'groupdn="{normalized_value}";)'
 
-        # Attribute-based subjects (dn_attr, guid_attr, group_attr)
-        if subject_type in {"dn_attr", "guid_attr", "group_attr"}:
+        def handle_attribute() -> str:
             return f'userattr="{subject_value}";)'
 
-        # Bind rules (pass through) - may contain DNs, normalize them
-        bind_rules_type = getattr(
-            constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
-        )
-        if subject_type == bind_rules_type:
-            # Bind rules may contain userdn/groupdn with DNs - normalize them
-            # Pattern: userdn="ldap:///DN" or groupdn="ldap:///DN"
-            # Normalize userdn="..." patterns
+        def handle_bind_rules() -> str:
+            def normalize_match(match: re.Match[str]) -> str:
+                prefix = match.group(2) or ""
+                return (
+                    f'{match.group(1)}="{prefix}{normalize_dn_value(match.group(3))}"'
+                )
+
             normalized_bind = re.sub(
                 r'(userdn|groupdn)="(ldap:///)?([^"]+)"',
-                lambda m: f'{m.group(1)}="{m.group(2) or ""}{normalize_dn_value(m.group(3))}"',
+                normalize_match,
                 subject_value,
             )
             return f"{normalized_bind};)"
 
-        # Default: userdn with LDAP URL - normalize DN
-        normalized_value = ensure_ldap_url(subject_value)
-        # If DN was filtered out (empty), return empty string (caller should skip this ACL)
-        if not normalized_value:
-            return ""
-        return f'userdn="{normalized_value}";)'
+        def handle_default() -> str:
+            normalized_value = ensure_ldap_url(subject_value)
+            return "" if not normalized_value else f'userdn="{normalized_value}";)'
+
+        # Dispatch table mapping subject types to handlers
+        bind_rules_type = getattr(
+            constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
+        )
+        handlers: dict[str, Callable[[], str]] = {
+            FlextLdifConstants.AclSubjectTypes.SELF: handle_self,
+            FlextLdifConstants.AclSubjectTypes.ANONYMOUS: handle_anonymous,
+            FlextLdifConstants.AclSubjectTypes.GROUP: handle_group,
+            "group_dn": handle_group,
+            "dn_attr": handle_attribute,
+            "guid_attr": handle_attribute,
+            "group_attr": handle_attribute,
+            bind_rules_type: handle_bind_rules,
+        }
+
+        # Execute handler or use default
+        handler = handlers.get(subject_type)
+        return handler() if handler else handle_default()
 
     @staticmethod
     def parse_novell_rights(

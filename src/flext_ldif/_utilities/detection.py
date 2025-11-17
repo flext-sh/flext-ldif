@@ -72,7 +72,8 @@ class FlextLdifUtilitiesDetection:
         """
 
         def _get_constants(
-            self, required_attr: str | None = None
+            self,
+            required_attr: str | None = None,
         ) -> type[ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal.
 
@@ -94,9 +95,11 @@ class FlextLdifUtilitiesDetection:
                     constants = cls.Constants
                     # If no required attribute specified, return any Constants class
                     if required_attr is None:
+                        # Constants is a class that satisfies ServerConstantsProtocol
                         return cast("type[ServerConstantsProtocol]", constants)
                     # Otherwise check if it has the required attribute
                     if constants and hasattr(constants, required_attr):
+                        # Constants is a class that satisfies ServerConstantsProtocol
                         return cast("type[ServerConstantsProtocol]", constants)
             return None
 
@@ -386,7 +389,7 @@ class FlextLdifUtilitiesDetection:
                 get_method = getattr(attributes, "get", None)
                 if get_method and callable(get_method):
                     objectclasses = get_method("objectClass") or get_method(
-                        "objectclass"
+                        "objectclass",
                     )
 
             if not objectclasses:
