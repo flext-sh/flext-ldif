@@ -100,26 +100,41 @@ class FlextLdifServer:
                     validation_result = self._validate_protocols(instance)
                     if validation_result.is_failure:
                         logger.warning(
-                            f"Skipping {obj.__name__}: protocol validation failed - "
-                            f"{validation_result.error}",
+                            "Skipping quirk: protocol validation failed",
+                            quirk_name=obj.__name__,
+                            error=str(validation_result.error),
                         )
                         continue
 
                     # Register the base quirk instance
                     self._bases[server_type] = instance
                     logger.debug(
-                        f"Registered base quirk: {obj.__name__} "
-                        f"(server_type={server_type}, priority={priority})",
+                        "Registered base quirk",
+                        quirk_name=obj.__name__,
+                        server_type=server_type,
+                        priority=priority,
                     )
 
                 except TypeError:
                     # Abstract class or instantiation error - skip gracefully
-                    logger.debug(f"Cannot instantiate {obj.__name__} (likely abstract)")
+                    logger.debug(
+                        "Cannot instantiate quirk (likely abstract)",
+                        quirk_name=obj.__name__,
+                    )
                 except Exception as e:
-                    logger.debug(f"Failed to register {obj.__name__}: {e}")
+                    logger.debug(
+                        "Failed to register quirk",
+                        quirk_name=obj.__name__,
+                        error=str(e),
+                        error_type=type(e).__name__,
+                    )
 
         except ImportError as e:
-            logger.debug("Could not auto-discover quirks: %s", e)
+            logger.debug(
+                "Could not auto-discover quirks",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
 
     def register(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
         """Register a base quirk instance.
@@ -154,8 +169,9 @@ class FlextLdifServer:
             # Register in dict by server_type
             self._bases[server_type] = quirk
             logger.info(
-                f"Registered base quirk: {quirk.__class__.__name__} "
-                f"(server_type={server_type})",
+                "Registered base quirk",
+                quirk_name=quirk.__class__.__name__,
+                server_type=server_type,
             )
             return FlextResult[bool].ok(True)
 
@@ -405,7 +421,9 @@ class FlextLdifServer:
 
         """
         acl = self.acl(server_type)
-        if acl and acl.can_handle(acl_line):
+        # Type narrowing: acl is FlextLdifServersBase.Acl
+        # Check if it has can_handle method (all Acl quirks should have it)
+        if acl is not None and hasattr(acl, "can_handle") and acl.can_handle(acl_line):
             return acl
         return None
 

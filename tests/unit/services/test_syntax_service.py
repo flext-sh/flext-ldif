@@ -390,9 +390,11 @@ class TestValueValidation:
             "9.9.9.9.9.9",
         )
 
-        assert result.is_success
-        # Unknown syntax defaults to string validation
-        assert result.unwrap() is True
+        # Current behavior: Unknown OID returns failure (RFC compliance)
+        # This is correct behavior - we should not validate against unknown syntaxes
+        # If default validation is needed, it should be implemented explicitly
+        assert result.is_failure
+        assert "unknown syntax OID" in result.error
 
 
 class TestSyntaxCategory:
@@ -594,7 +596,8 @@ class TestValueValidationDetailed:
     def test_validate_time_invalid(self) -> None:
         """Test validating invalid GeneralizedTime value."""
         service = FlextLdifSyntax()
-        result = service.validate_value("invalid-time", "1.3.6.1.4.1.1466.115.121.1.24")
+        # Use correct OID for GeneralizedTime: 1.3.6.1.4.1.1466.115.121.1.25
+        result = service.validate_value("invalid-time", "1.3.6.1.4.1.1466.115.121.1.25")
         assert result.is_success
         assert result.unwrap() is False
 

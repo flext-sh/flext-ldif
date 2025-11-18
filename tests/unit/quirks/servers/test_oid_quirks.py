@@ -2055,7 +2055,7 @@ class TestOidQuirksWriteObjectclassToRfc:
             kind="STRUCTURAL",
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
-                x_origin="Oracle OID",
+                extensions={"x_origin": "Oracle OID"},
             ),
         )
         result = oid.write(oc_data)
@@ -2703,11 +2703,11 @@ class TestOidQuirksProperties:
         # Access constants from the server class, not nested class
         assert (
             "caseIgnoreSubStringsMatch"
-            in FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+            in FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
         )
         assert (
             "accessDirectiveMatch"
-            in FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+            in FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
         )
 
     def test_syntax_oid_replacements_defined(
@@ -2716,7 +2716,7 @@ class TestOidQuirksProperties:
     ) -> None:
         """Test syntax OID replacements are configured."""
         # Access constants from the server class, not nested class
-        assert len(FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS) > 0
+        assert len(FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC) > 0
 
     def test_skip_objectclass_attributes_handled(
         self,

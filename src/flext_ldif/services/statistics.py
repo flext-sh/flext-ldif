@@ -12,15 +12,22 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _StatisticsServiceStatusType = FlextLdifModels.StatisticsServiceStatus
+else:
+    _StatisticsServiceStatusType = object  # type: ignore[misc]
 
-class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsServiceStatus]):
+
+class FlextLdifStatistics(FlextService[_StatisticsServiceStatusType]):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about
@@ -51,7 +58,9 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsServiceStatus])
     @override
     @FlextDecorators.log_operation("statistics_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[FlextLdifModels.StatisticsServiceStatus]:
+    def execute(
+        self, **kwargs: object
+    ) -> FlextResult[FlextLdifModels.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Returns:

@@ -30,6 +30,7 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -41,6 +42,7 @@ __all__ = [
     "FlextLdifConstants",  # ✅ Constants
     "FlextLdifMigrationPipeline",  # ✅ High-level service (OK to expose)
     "FlextLdifModels",  # ✅ Domain models
+    "FlextLdifParser",  # ✅ Parser service (required by flext-ldap)
     "FlextLdifTypes",  # ✅ Type definitions
     "FlextLdifUtilities",  # ✅ Public helpers
 ]

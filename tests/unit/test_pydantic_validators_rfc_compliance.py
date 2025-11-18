@@ -13,6 +13,13 @@ SPDX-License-Identifier: MIT
 from flext_ldif.models import FlextLdifModels
 
 
+def get_validation_metadata(entry: FlextLdifModels.Entry) -> dict[str, object] | None:
+    """Helper to get validation_metadata from entry.metadata.validation_results."""
+    if not entry.metadata or not entry.metadata.validation_results:
+        return None
+    return entry.metadata.validation_results
+
+
 class TestEntryRfcValidation:
     """Entry model RFC 2849/4512 validation tests."""
 
@@ -39,9 +46,10 @@ class TestEntryRfcValidation:
         assert entry.dn.value == "uid=test,dc=example,dc=com"
 
         # RFC violation CAPTURED in validation_metadata
-        assert entry.validation_metadata is not None
-        assert "rfc_violations" in entry.validation_metadata
-        rfc_violations = entry.validation_metadata["rfc_violations"]
+        validation_metadata = get_validation_metadata(entry)
+        assert validation_metadata is not None
+        assert "rfc_violations" in validation_metadata
+        rfc_violations = validation_metadata["rfc_violations"]
         assert isinstance(rfc_violations, list)
         assert len(rfc_violations) > 0
 
@@ -74,8 +82,9 @@ class TestEntryRfcValidation:
         assert entry.dn.value == "uid=test,dc=example,dc=com"
 
         # NO RFC violations
-        if entry.validation_metadata:
-            assert "rfc_violations" not in entry.validation_metadata
+        validation_metadata = get_validation_metadata(entry)
+        if validation_metadata is not None:
+            assert "rfc_violations" not in validation_metadata
 
     def test_schema_entry_exempt_from_objectclass_requirement(self) -> None:
         """Validate schema entry (cn=schema) is exempt from objectClass requirement.
@@ -102,8 +111,8 @@ class TestEntryRfcValidation:
         assert entry.dn.value == "cn=schema"
 
         # NO RFC violations (schema entry exempt)
-        if entry.validation_metadata:
-            assert "rfc_violations" not in entry.validation_metadata
+        if get_validation_metadata(entry):
+            assert "rfc_violations" not in get_validation_metadata(entry)
 
     def test_entry_preserves_all_attributes_despite_violations(self) -> None:
         """Validate Entry preserves all attributes even with RFC violations.
@@ -132,8 +141,8 @@ class TestEntryRfcValidation:
         assert "_internal_id" in entry.attributes.attributes
 
         # RFC violation captured
-        assert entry.validation_metadata is not None
-        assert "rfc_violations" in entry.validation_metadata
+        assert get_validation_metadata(entry) is not None
+        assert "rfc_violations" in get_validation_metadata(entry)
 
 
 class TestLdifAttributesRfcValidation:
@@ -311,15 +320,16 @@ class TestQuirkMetadataRfcViolations:
         entry = entry_result.unwrap()
 
         # RFC violations captured in both locations
-        assert entry.validation_metadata is not None
-        assert "rfc_violations" in entry.validation_metadata
+        validation_metadata = get_validation_metadata(entry)
+        assert validation_metadata is not None
+        assert "rfc_violations" in validation_metadata
 
         assert entry.metadata is not None
         assert "rfc_violations" in entry.metadata.extensions
 
         # Both should have same violations
         assert (
-            entry.validation_metadata["rfc_violations"]
+            get_validation_metadata(entry)["rfc_violations"]
             == entry.metadata.extensions["rfc_violations"]
         )
 

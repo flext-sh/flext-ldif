@@ -30,10 +30,12 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     """LDIF Sorting Service - Universal Sorting Engine.
 
-    Supports V2 patterns: auto_execute=True enables direct result access.
+    Supports V2 patterns: auto_execute=False requires explicit .execute() calls.
     """
 
-    auto_execute: ClassVar[bool] = True  # Enable V2 auto-execution pattern
+    auto_execute: ClassVar[bool] = (
+        False  # Disable V2 auto-execution (execute() takes no params)
+    )
 
     """Flexible sorting for LDIF entries, attributes, ACL & schemas.
     Supports hierarchy, DN, custom predicate, and schema OID sorting.
@@ -336,7 +338,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
     # CORE EXECUTION (V2 Universal Engine)
 
-    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def execute(self, **_kwargs: object) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute sorting based on sort_target (ultra parametrized dispatch)."""
         if not self.entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
@@ -426,10 +428,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         }
         if acl_attributes is not None:
             kwargs["acl_attributes"] = acl_attributes
-        # With auto_execute=True, instantiation returns unwrapped list
-        # Wrap in FlextResult since this method returns FlextResult[list[Entry]]
-        sorted_list = cls(**kwargs)
-        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_list)
+        # With auto_execute=False, create instance and call execute() explicitly
+        sorting_instance = cls(**kwargs)
+        return sorting_instance.execute()
 
     @classmethod
     def builder(cls) -> FlextLdifSorting:
@@ -448,7 +449,12 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         # Create instance using object.__new__ to bypass auto_execute
         instance = object.__new__(cls)
         # Initialize instance with default parameters
-        type(instance).__init__(instance, entries=[])
+        # Type narrowing: instance is of type Self (FlextLdifSorting)
+        if not isinstance(instance, FlextLdifSorting):
+            msg = f"Instance {instance} is not a FlextLdifSorting"
+            raise TypeError(msg)
+        # Call __init__ with entries parameter - FlextService.__init__ accepts **data
+        instance.__init__(entries=[])
         return instance
 
     def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifSorting:
@@ -791,13 +797,26 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 continue
 
             # Access the actual attributes dict
-            attrs_dict = dict(entry.attributes.attributes)  # Create mutable copy
+            # entry.attributes.attributes is dict[str, list[str]], convert to compatible type
+            attrs_dict_raw = entry.attributes.attributes
+            attrs_dict: dict[str, list[str] | str] = {}
+            for key, value in attrs_dict_raw.items():
+                # Ensure value is list[str] (LdifAttributes expects list[str] | str)
+                if isinstance(value, list):
+                    attrs_dict[key] = value
+                else:
+                    attrs_dict[key] = [str(value)]
             modified = False
 
             # Sort each ACL attribute's values
             for acl_attr in self.acl_attributes:
                 if acl_attr in attrs_dict:
-                    acl_values = attrs_dict[acl_attr]
+                    acl_values_raw = attrs_dict[acl_attr]
+                    # Ensure acl_values is a list
+                    if isinstance(acl_values_raw, list):
+                        acl_values = acl_values_raw
+                    else:
+                        acl_values = [str(acl_values_raw)]
                     if len(acl_values) > 1:
                         attrs_dict[acl_attr] = sorted(
                             acl_values,

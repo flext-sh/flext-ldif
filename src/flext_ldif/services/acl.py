@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import TYPE_CHECKING, cast, override
 
 from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
 
@@ -32,8 +32,15 @@ from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _AclResponseType = FlextLdifModels.AclResponse
+else:
+    _AclResponseType = object  # type: ignore[misc]
 
-class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
+
+class FlextLdifAcl(FlextService[_AclResponseType]):
     """Unified ACL management service.
 
     Provides ACL parsing via quirks and direct context evaluation.
@@ -138,12 +145,15 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     else acl_value
                 )
                 self._logger.error(
-                    "FAILED to parse ACL value %d/%d: %s. Entry DN: %s, Error: %s",
-                    idx + 1,
-                    total_acl_values,
-                    truncated_acl,
-                    entry.dn.value if entry.dn else "Unknown",
-                    parse_result.error,
+                    "FAILED to parse ACL value",
+                    acl_index=idx + 1,
+                    total_acl_values=total_acl_values,
+                    acl_preview=truncated_acl,
+                    entry_dn=entry.dn.value if entry.dn else "Unknown",
+                    error=str(parse_result.error),
+                    error_type=type(parse_result.error).__name__
+                    if parse_result.error
+                    else None,
                 )
                 continue
             acls.append(parse_result.value)
@@ -151,12 +161,13 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         # Log summary if failures occurred
         if failed_acls > 0:
             self._logger.error(
-                "ACL extraction completed with %d FAILURES out of %d ACL values. "
-                "Successful: %d, Failed: %d",
-                failed_acls,
-                total_acl_values,
-                len(acls),
-                failed_acls,
+                "ACL extraction completed with failures",
+                total_acl_values=total_acl_values,
+                successful_acls=len(acls),
+                failed_acls=failed_acls,
+                failure_rate=f"{failed_acls / total_acl_values * 100:.1f}%"
+                if total_acl_values > 0
+                else "0%",
             )
 
         # Create response with statistics
@@ -216,8 +227,11 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
     @override
     @FlextDecorators.log_operation("acl_service_health_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[FlextLdifModels.AclResponse]:
+    def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.AclResponse]:
         """Execute ACL service health check.
+
+        Args:
+            **kwargs: Ignored parameters for FlextService protocol compatibility
 
         FlextDecorators automatically:
         - Log operation start/completion/failure
@@ -267,9 +281,20 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
             # Delegate to quirk for parsing - NO FALLBACK
             # If the quirk can't parse it, the parsing fails
-            # Type guard: registry returns RFC.Acl which has parse method
+            # Type guard: registry returns quirk with parse method
             if hasattr(acl, "parse"):
-                return acl.parse(acl_string)  # type: ignore[attr-defined]
+                # Use cast() to guide type checker - runtime hasattr already verified
+                acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", acl)
+                parse_result = acl_typed.parse(acl_string)
+                # Type narrowing: parse returns FlextResult[object], but we know it's Acl
+                if parse_result.is_success:
+                    parsed_acl = parse_result.unwrap()
+                    if isinstance(parsed_acl, FlextLdifModels.Acl):
+                        return FlextResult[FlextLdifModels.Acl].ok(parsed_acl)
+                    return FlextResult[FlextLdifModels.Acl].fail(
+                        f"ACL parse returned unexpected type: {type(parsed_acl).__name__}"
+                    )
+                return FlextResult[FlextLdifModels.Acl].fail(parse_result.error or "Unknown error")
             return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL quirk for {server_type} does not implement parse method"
             )

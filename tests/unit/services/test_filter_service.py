@@ -632,7 +632,8 @@ class TestSchemaOperations:
 
     def test_is_schema_with_dn(self) -> None:
         """Test is_schema() detects by DN pattern."""
-        entry = create_entry("cn=schema", {})
+        # Schema entries must have attributetypes or objectclasses attributes
+        entry = create_entry("cn=schema", {"attributetypes": ["( 1.2.3 NAME 'test' )"]})
         assert FlextLdifFilters.is_schema(entry)
 
     def test_filter_schema_by_oids(
@@ -2063,21 +2064,22 @@ class TestTransformerEdgeCases:
         assert result.is_success
 
     def test_remove_objectclasses_with_metadata(self) -> None:
-        """Test remove_objectclasses() preserves entry_metadata."""
+        """Test remove_objectclasses() preserves metadata.extensions."""
         entry = create_entry(
             "cn=test,dc=x",
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
-        # Add metadata to entry
-        entry_with_metadata = entry.model_copy(
-            update={"entry_metadata": {"custom": "value"}}
+        # Add custom metadata extension
+        new_metadata = entry.metadata.model_copy(
+            update={"extensions": {"custom": "value"}}
         )
+        entry_with_metadata = entry.model_copy(update={"metadata": new_metadata})
         result = FlextLdifFilters.remove_objectclasses(entry_with_metadata, ["person"])
         assert result.is_success
         modified = result.unwrap()
-        # Metadata should be preserved
-        assert modified.entry_metadata is not None
-        assert modified.entry_metadata.get("custom") == "value"
+        # Metadata extensions should be preserved
+        assert modified.metadata is not None
+        assert modified.metadata.extensions.get("custom") == "value"
 
     def test_remove_objectclasses_with_statistics(self) -> None:
         """Test remove_objectclasses() preserves statistics."""
@@ -2089,12 +2091,13 @@ class TestTransformerEdgeCases:
         from flext_ldif.models import FlextLdifModels
 
         stats = FlextLdifModels.EntryStatistics()
-        entry_with_stats = entry.model_copy(update={"statistics": stats})
+        new_metadata = entry.metadata.model_copy(update={"processing_stats": stats})
+        entry_with_stats = entry.model_copy(update={"metadata": new_metadata})
         result = FlextLdifFilters.remove_objectclasses(entry_with_stats, ["person"])
         assert result.is_success
         modified = result.unwrap()
         # Statistics should be preserved
-        assert modified.statistics is not None
+        assert modified.metadata.processing_stats is not None
 
     def test_remove_objectclasses_entry_no_dn(self) -> None:
         """Test remove_objectclasses() with entry without DN."""
@@ -2125,14 +2128,13 @@ class TestTransformerEdgeCases:
             "cn=test,dc=x",
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
-        entry_with_metadata = entry.model_copy(
-            update={"entry_metadata": {"custom": "value"}}
-        )
+        new_extensions = {**entry.metadata.extensions, "custom": "value"}
+        new_metadata = entry.metadata.model_copy(update={"extensions": new_extensions})
+        entry_with_metadata = entry.model_copy(update={"metadata": new_metadata})
         result = FlextLdifFilters.remove_objectclasses(entry_with_metadata, ["person"])
         assert result.is_success
         modified = result.unwrap()
-        assert modified.entry_metadata is not None
-        assert modified.entry_metadata.get("custom") == "value"
+        assert modified.metadata.extensions.get("custom") == "value"
 
     def test_remove_objectclasses_exception_handling(self) -> None:
         """Test remove_objectclasses() exception handling."""

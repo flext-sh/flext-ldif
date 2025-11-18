@@ -340,7 +340,11 @@ class FlextLdifUtilitiesWriter:
         attr_list: str | list[str] | None,
         keyword: str,
     ) -> None:
-        """Add MUST or MAY clause to objectClass definition parts."""
+        """Add MUST or MAY clause to objectClass definition parts.
+
+        RFC-compliant implementation - passes attribute names as-is from Entry model.
+        Server-specific normalization should happen in quirks layer during parsing.
+        """
         if not attr_list:
             return
 
@@ -537,11 +541,55 @@ class FlextLdifUtilitiesWriter:
 
         # Handle both list and single values
         if isinstance(attr_value, list):
-            # At this point, we know attr_value is a non-empty list with non-empty values
+            # At this point, we know attr_value is a non-empty list
+            # with non-empty values
             non_empty_values = [v for v in attr_value if v]
             return [f"{attr_prefix} {value}" for value in non_empty_values]
 
         return [f"{attr_prefix} {attr_value}"]
+
+    @staticmethod
+    def needs_base64_encoding(value: str) -> bool:
+        """Check if value needs base64 encoding per RFC 2849.
+
+        RFC 2849 section 3 requires base64 encoding for values that:
+        - Start with space ' ', colon ':', or less-than '<'
+        - End with space ' '
+        - Contain null bytes or control characters (< 0x20, > 0x7E)
+
+        Args:
+            value: The attribute value to check
+
+        Returns:
+            True if value needs base64 encoding, False otherwise
+
+        """
+        if not value:
+            return False
+
+        # RFC 2849 unsafe start characters
+        unsafe_start_chars = {" ", ":", "<"}
+
+        # Check if starts with unsafe characters (space, colon, less-than)
+        if value[0] in unsafe_start_chars:
+            return True
+
+        # Check if ends with space
+        if value[-1] == " ":
+            return True
+
+        # RFC 2849 control character boundaries
+        min_printable = 0x20  # Space (first printable ASCII)
+        max_printable = 0x7E  # Tilde (last printable ASCII)
+
+        # Check for control characters or non-printable ASCII
+        for char in value:
+            byte_val = ord(char)
+            # Control chars (< 0x20) or non-ASCII (> 0x7E) require base64
+            if byte_val < min_printable or byte_val > max_printable:
+                return True
+
+        return False
 
     @staticmethod
     def write_modify_operations(
@@ -575,6 +623,40 @@ class FlextLdifUtilitiesWriter:
                 lines.append("-")
 
         return lines
+
+    @staticmethod
+    def format_schema_modify_entry(
+        entry_dn: str,
+        schema_type: str,
+        schema_value: str,
+    ) -> str:
+        r"""Format single schema element as modify-add LDIF entry.
+
+        Args:
+            entry_dn: DN for the entry
+            schema_type: Schema type (attributeTypes, objectClasses, etc.)
+            schema_value: Schema definition string
+
+        Returns:
+            Formatted LDIF entry string
+
+        Example:
+            >>> FlextLdifUtilitiesWriter.format_schema_modify_entry(
+            ...     "cn=subschemasubentry",
+            ...     "attributeTypes",
+            ...     "( 1.2.3.4 NAME 'test' )"
+            ... )
+            'dn: cn=subschemasubentry\nchangetype: modify\n'
+            'add: attributeTypes\n'
+            'attributeTypes: ( 1.2.3.4 NAME \'test\' )\n'
+
+        """
+        return (
+            f"dn: {entry_dn}\n"
+            "changetype: modify\n"
+            f"add: {schema_type}\n"
+            f"{schema_type}: {schema_value}\n"
+        )
 
 
 __all__ = [

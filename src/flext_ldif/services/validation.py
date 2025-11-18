@@ -110,7 +110,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 from pydantic import Field
@@ -119,8 +119,15 @@ from flext_ldif._utilities.constants import FlextLdifUtilitiesConstants
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _ValidationServiceStatusType = FlextLdifModels.ValidationServiceStatus
+else:
+    _ValidationServiceStatusType = object  # type: ignore[misc]
 
-class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus]):
+
+class FlextLdifValidation(FlextService[_ValidationServiceStatusType]):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
     Provides comprehensive validation for LDAP attribute names, object class names,
@@ -158,7 +165,9 @@ class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus])
     @override
     @FlextDecorators.log_operation("validation_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
+    def execute(
+        self, **kwargs: object
+    ) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
         """Execute validation service self-check.
 
         FlextDecorators automatically:

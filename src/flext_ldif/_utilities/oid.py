@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+import operator
 import re
 
 from flext_core import FlextResult
@@ -59,8 +60,7 @@ class FlextLdifUtilitiesOID:
                 return match.group(1)
         except (re.error, AttributeError) as e:
             logger.debug(
-                "Failed to extract OID from definition: %s",
-                e,
+                f"Failed to extract OID from definition: error={e!s}, error_type={type(e).__name__}"
             )
         return None
 
@@ -107,9 +107,13 @@ class FlextLdifUtilitiesOID:
                     if original_fmt and isinstance(original_fmt, str)
                     else "None"
                 )
+                original_format_preview = (
+                    str(original_fmt)[:200]
+                    if original_fmt and isinstance(original_fmt, str)
+                    else None
+                )
                 logger.debug(
-                    "Failed to extract OID from original_format: %s",
-                    debug_msg,
+                    f"Failed to extract OID from original_format: debug_message={debug_msg}, original_format_preview={original_format_preview}"
                 )
 
         # Fallback: Use OID field from model
@@ -324,6 +328,98 @@ class FlextLdifUtilitiesOID:
             return "tivoli"
 
         return None
+
+    @staticmethod
+    def parse_to_tuple(oid: str) -> tuple[int, ...] | None:
+        """Parse OID string to tuple of integers for numeric sorting.
+
+        Converts dot-separated OID string to tuple of integers for comparison.
+        Returns None if OID is malformed or contains non-numeric segments.
+
+        Args:
+            oid: OID string (e.g., "2.16.840.1.113894")
+
+        Returns:
+            Tuple of integers (e.g., (2, 16, 840, 1, 113894)) or None if invalid
+
+        Example:
+            >>> FlextLdifUtilitiesOID.parse_to_tuple("2.16.840.1.113894")
+            (2, 16, 840, 1, 113894)
+            >>> FlextLdifUtilitiesOID.parse_to_tuple("invalid.oid")
+            None
+
+        """
+        try:
+            return tuple(int(x) for x in oid.split("."))
+        except ValueError:
+            return None
+
+    @staticmethod
+    def filter_and_sort_by_oid(
+        values: list[str],
+        *,
+        allowed_oids: set[str] | None = None,
+        oid_pattern: re.Pattern[str] | None = None,
+    ) -> list[tuple[tuple[int, ...], str]]:
+        """Filter schema values by OID whitelist and sort numerically.
+
+        Extracts OIDs from schema definition strings, filters by whitelist,
+        and returns sorted by OID numeric value. Used for consistent schema
+        ordering across server types (OID, OUD, etc.).
+
+        Args:
+            values: List of schema definition strings (RFC format)
+            allowed_oids: Optional set of allowed OIDs for filtering.
+                If None, all values are accepted (no filtering).
+            oid_pattern: Optional compiled regex for OID extraction.
+                If None, uses default pattern: ( number.number.number...
+
+        Returns:
+            List of tuples (oid_tuple, value) sorted by OID numerically.
+            Empty list if no valid OIDs found.
+
+        Example:
+            >>> values = [
+            ...     "( 2.16.840.1.113894.1.1.2 NAME 'attr2' ... )",
+            ...     "( 2.16.840.1.113894.1.1.1 NAME 'attr1' ... )",
+            ... ]
+            >>> result = FlextLdifUtilitiesOID.filter_and_sort_by_oid(
+            ...     values,
+            ...     allowed_oids={"2.16.840.1.113894.1.1.1"},
+            ... )
+            >>> # Returns: [((2, 16, 840, 1, 113894, 1, 1, 1), "( 2.16.840.1.113894.1.1.1 ... )")]
+
+        Note:
+            This replaces duplicated OID filtering/sorting logic in server quirks.
+            Uses Python 3.13 keyword-only args for clarity.
+
+        """
+        # Default OID pattern: ( number.number.number... NAME ...
+        pattern = oid_pattern or re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")
+
+        filtered_values: list[tuple[tuple[int, ...], str]] = []
+
+        for value in values:
+            # Extract OID from RFC format
+            match = pattern.search(value)
+            if not match:
+                continue
+
+            oid_str = match.group(1)
+
+            # Filter by whitelist if provided
+            if allowed_oids is not None and oid_str not in allowed_oids:
+                continue
+
+            # Parse OID for sorting
+            oid_tuple = FlextLdifUtilitiesOID.parse_to_tuple(oid_str)
+            if oid_tuple is None:
+                continue
+
+            filtered_values.append((oid_tuple, value))
+
+        # Sort by OID numerically
+        return sorted(filtered_values, key=operator.itemgetter(0))
 
     # Pre-compiled OID patterns for common LDAP servers
     # These eliminate the need for repeated re.compile() calls in server code

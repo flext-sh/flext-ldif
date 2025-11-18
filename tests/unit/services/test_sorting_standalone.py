@@ -156,11 +156,14 @@ def test_execute_hierarchy() -> None:
         ),
     ]
 
-    sorted_entries = FlextLdifSorting(
+    # FIXED: auto_execute=False requires .execute() call
+    result = FlextLdifSorting(
         entries=entries,
         sort_target="entries",
         sort_by="hierarchy",
-    )
+    ).execute()
+    assert result.is_success
+    sorted_entries = result.unwrap()
     assert sorted_entries[0].dn is not None
     assert sorted_entries[0].dn.value == "dc=example,dc=com"
 
@@ -173,11 +176,14 @@ def test_execute_alphabetical() -> None:
         create_entry("cn=mmm,dc=example,dc=com", {"cn": ["mmm"]}),
     ]
 
-    sorted_entries = FlextLdifSorting(
+    # FIXED: auto_execute=False requires .execute() call
+    result = FlextLdifSorting(
         entries=entries,
         sort_target="entries",
         sort_by="alphabetical",
-    )
+    ).execute()
+    assert result.is_success
+    sorted_entries = result.unwrap()
     dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
     assert dns == sorted(dns)
 
@@ -193,12 +199,15 @@ def test_execute_custom() -> None:
         create_entry("cn=aaa,dc=example,dc=com", {"cn": ["aaa"]}),
     ]
 
-    sorted_entries = FlextLdifSorting(
+    # FIXED: auto_execute=False requires .execute() call
+    result = FlextLdifSorting(
         entries=entries,
         sort_target="entries",
         sort_by="custom",
         custom_predicate=custom_pred,
-    )
+    ).execute()
+    assert result.is_success
+    sorted_entries = result.unwrap()
     assert len(sorted_entries) == 2
     assert sorted_entries[0].dn is not None
     assert sorted_entries[0].dn.value == "cn=aaa,dc=example,dc=com"
@@ -211,7 +220,10 @@ def test_execute_attributes_target() -> None:
         {"zzz": ["z"], "aaa": ["a"], "cn": ["test"]},
     )
 
-    sorted_entries = FlextLdifSorting(entries=[entry], sort_target="attributes")
+    sorting = FlextLdifSorting(entries=[entry], sort_target="attributes")
+    result = sorting.execute()
+    assert result.is_success
+    sorted_entries = result.unwrap()
     assert len(sorted_entries) == 1
     # Verify entry still has attributes
     assert sorted_entries[0].attributes is not None
@@ -229,7 +241,10 @@ def test_execute_acl_target() -> None:
         {"cn": ["test"], "acl": ["zzz-rule", "aaa-rule"]},
     )
 
-    sorted_entries = FlextLdifSorting(entries=[entry], sort_target="acl")
+    # FIXED: auto_execute=False requires .execute() call
+    result = FlextLdifSorting(entries=[entry], sort_target="acl").execute()
+    assert result.is_success
+    sorted_entries = result.unwrap()
     assert len(sorted_entries) == 1
     # Verify ACL values are sorted
     assert sorted_entries[0].attributes is not None
@@ -252,12 +267,15 @@ def test_execute_combined_target() -> None:
         ),
     ]
 
-    sorted_entries = FlextLdifSorting(
+    # FIXED: auto_execute=False requires .execute() call
+    result = FlextLdifSorting(
         entries=entries,
         sort_target="combined",
         sort_by="hierarchy",
         sort_attributes=True,
-    )
+    ).execute()
+    assert result.is_success
+    sorted_entries = result.unwrap()
     assert len(sorted_entries) == 2
 
 

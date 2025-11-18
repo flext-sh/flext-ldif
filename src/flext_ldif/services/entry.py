@@ -163,8 +163,11 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
     # ════════════════════════════════════════════════════════════════════════
 
     @override
-    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def execute(self, **kwargs: object) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute entry transformation operation.
+
+        Args:
+            **kwargs: Ignored parameters for FlextService protocol compatibility
 
         Supported operations:
         - "remove_operational_attributes": Strip COMMON operational attrs
@@ -363,7 +366,9 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             if attr_name.lower() in operational_attrs_lower:
                 if self.logger is not None:
                     self.logger.debug(
-                        f"Removed operational attribute '{attr_name}' from {FlextLdifUtilities.DN.get_dn_value(entry.dn)}",
+                        "Removed operational attribute",
+                        attribute_name=attr_name,
+                        entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
                     )
                 continue
 
@@ -387,8 +392,15 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         if adapted_entry_result.is_failure:
             error_msg = f"Failed to adapt entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {adapted_entry_result.error}"
             if self.logger is not None:
-                self.logger.error(error_msg)
-            return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+                self.logger.error(
+                    "Failed to adapt entry",
+                    entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
+                    error=str(adapted_entry_result.error),
+                    error_type=type(adapted_entry_result.error).__name__
+                    if adapted_entry_result.error
+                    else None,
+                )
+            return FlextResult[FlextLdifModels.Entry].fail(error_msg or "Unknown error")
 
         return adapted_entry_result
 
@@ -423,7 +435,9 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             for attr_name in entry.attributes.attributes:
                 if attr_name.lower() in attrs_to_remove_lower:
                     self.logger.debug(
-                        f"Removed attribute '{attr_name}' from {FlextLdifUtilities.DN.get_dn_value(entry.dn)}",
+                        "Removed attribute",
+                        attribute_name=attr_name,
+                        entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
                     )
 
         # Use utility for core removal logic
@@ -437,7 +451,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             error_msg = f"Failed to clean entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
-            return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            return FlextResult[FlextLdifModels.Entry].fail(error_msg or "Unknown error")
 
 
 __all__ = ["FlextLdifEntry"]

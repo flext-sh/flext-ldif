@@ -78,9 +78,13 @@ class TestFlextServiceV2Patterns:
         entries = create_test_entries()
 
         # V2 AUTO: Direct instantiation returns sorted entries (auto_execute = True)
-        sorted_entries = FlextLdifSorting(entries=entries, sort_by="hierarchy")
+        # Note: FlextLdifSorting has auto_execute=False, so we need to call execute()
+        sorting = FlextLdifSorting(entries=entries, sort_by="hierarchy")
+        result = sorting.execute()
+        assert result.is_success
+        sorted_entries = result.unwrap()
 
-        # Should return list[Entry] directly, not FlextResult or service instance
+        # Should return list[Entry] directly
         assert isinstance(sorted_entries, list)
         assert len(sorted_entries) == 3
         assert all(isinstance(e, FlextLdifModels.Entry) for e in sorted_entries)

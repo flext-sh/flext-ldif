@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -38,7 +38,15 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _ClientStatusType = FlextLdifModels.ClientStatus
+else:
+    _ClientStatusType = object  # type: ignore[misc]
+
+
+class FlextLdifDetector(FlextService[_ClientStatusType]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -160,8 +168,11 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
                 error_msg,
             )
 
-    def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:
+    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.ClientStatus]:
         """Execute server detector self-check (required by FlextService).
+
+        Args:
+            **_kwargs: Ignored parameters for FlextService protocol compatibility
 
         Returns:
             FlextResult with detector status

@@ -341,6 +341,23 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
+            def parse_entry(
+                self,
+                entry_dn: str,
+                entry_attrs: object,
+            ) -> FlextResult[object]:
+                """Parse a single entry from DN and attributes.
+
+                Args:
+                    entry_dn: Entry distinguished name
+                    entry_attrs: Entry attributes mapping
+
+                Returns:
+                    FlextResult[Entry] with parsed entry model
+
+                """
+                ...
+
             def execute(
                 self,
                 data: str | list[object] | object | None = None,

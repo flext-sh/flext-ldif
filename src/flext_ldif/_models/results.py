@@ -230,7 +230,9 @@ class FlextLdifModelsResults:
             """Create EntryResult from list of entries.
 
             Args:
-                entries: List of Entry objects
+                entries: List of Entry objects (domain Entry type)
+                        Public Entry types (FlextLdifModels.Entry) inherit from domain Entry
+                        and are compatible, but lists are invariant so caller must convert.
                 category: Category name for the entries (default: "all")
                 statistics: Optional statistics object (creates default if None)
 

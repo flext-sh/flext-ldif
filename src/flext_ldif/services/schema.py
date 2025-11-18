@@ -37,7 +37,7 @@ References:
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -47,7 +47,15 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger = FlextLogger(__name__)
 
 
-class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _SchemaServiceStatusType = FlextLdifModels.SchemaServiceStatus
+else:
+    _SchemaServiceStatusType = object  # type: ignore[misc]
+
+
+class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
     """Unified schema validation and transformation service.
 
     Centralizes all schema-related operations that were previously scattered
@@ -81,7 +89,9 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
     server_type: str = "rfc"
 
     @override
-    def execute(self) -> FlextResult[FlextLdifModels.SchemaServiceStatus]:
+    def execute(
+        self, **kwargs: object
+    ) -> FlextResult[FlextLdifModels.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
@@ -287,7 +297,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
             # Validate first
             validation = self.validate_attribute(attr)
             if not validation.is_success:
-                return FlextResult.fail(validation.error)
+                return FlextResult.fail(validation.error or "Unknown error")
 
             # Use utilities to write - write_rfc_attribute returns FlextResult[str]
             return FlextLdifUtilities.Writer.write_rfc_attribute(attr)
@@ -314,7 +324,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
             # Validate first
             validation = self.validate_objectclass(oc)
             if not validation.is_success:
-                return FlextResult.fail(validation.error)
+                return FlextResult.fail(validation.error or "Unknown error")
 
             # Use utilities to write - write_rfc_objectclass returns FlextResult[str]
             return FlextLdifUtilities.Writer.write_rfc_objectclass(oc)

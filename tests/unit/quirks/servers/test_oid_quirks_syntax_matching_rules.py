@@ -28,7 +28,7 @@ class TestOidSyntaxOidReplacements:
 
     def test_syntax_replacements_defined(self) -> None:
         """Test that syntax OID replacements are defined."""
-        replacements = FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS
+        replacements = FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
 
         assert len(replacements) > 0
         # Should contain at least ACI List → Directory String
@@ -36,7 +36,7 @@ class TestOidSyntaxOidReplacements:
 
     def test_aci_list_to_directory_string_replacement(self) -> None:
         """Test ACI List syntax is replaced with Directory String."""
-        replacements = FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS
+        replacements = FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
 
         aci_list_oid = "1.3.6.1.4.1.1466.115.121.1.1"
         directory_string_oid = "1.3.6.1.4.1.1466.115.121.1.15"
@@ -121,7 +121,7 @@ class TestOidMatchingRuleReplacements:
 
     def test_matching_rule_replacements_defined(self) -> None:
         """Test that matching rule replacements are defined."""
-        replacements = FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+        replacements = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
 
         assert len(replacements) > 0
         # Should contain at least caseIgnoreSubStringsMatch fix
@@ -129,7 +129,7 @@ class TestOidMatchingRuleReplacements:
 
     def test_case_ignore_substr_fix_replacement(self) -> None:
         """Test caseIgnoreSubStringsMatch is fixed to caseIgnoreSubstringsMatch."""
-        replacements = FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+        replacements = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
 
         # OID format has uppercase S in Strings: caseIgnoreSubStringsMatch
         # Should be fixed to: caseIgnoreSubstringsMatch (lowercase s)
@@ -139,7 +139,7 @@ class TestOidMatchingRuleReplacements:
 
     def test_access_directive_replacement(self) -> None:
         """Test accessDirectiveMatch is replaced with caseIgnoreMatch."""
-        replacements = FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+        replacements = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
 
         # OID-specific rule: accessDirectiveMatch
         # Should be replaced with standard: caseIgnoreMatch
@@ -314,7 +314,7 @@ class TestOidTransformationCompleteness:
     def test_all_replacements_have_valid_targets(self) -> None:
         """Test that all replacement mappings have valid target values."""
         # Syntax replacements
-        syntax_repls = FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS
+        syntax_repls = FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
         for source, target in syntax_repls.items():
             # Both should be OID-like strings
             assert isinstance(source, str)
@@ -323,7 +323,7 @@ class TestOidTransformationCompleteness:
             assert "." in target, f"Invalid target syntax OID: {target}"
 
         # Matching rule replacements
-        rule_repls = FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+        rule_repls = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
         for source, target in rule_repls.items():
             assert isinstance(source, str)
             assert isinstance(target, str)
@@ -332,7 +332,7 @@ class TestOidTransformationCompleteness:
 
     def test_no_circular_transformations(self) -> None:
         """Test that transformations don't create circular mappings."""
-        syntax_repls = FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS
+        syntax_repls = FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
 
         for source, target in syntax_repls.items():
             # Target shouldn't map back to source

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Final, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -27,7 +27,15 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _EntryResultType = FlextLdifModels.EntryResult
+else:
+    _EntryResultType = object  # type: ignore[misc]
+
+
+class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
     """LDIF Migration Pipeline - Direct Implementation.
 
     Zero private methods - pure service orchestration.
@@ -161,7 +169,13 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         for filename in files:
             file_path = self._input_dir / filename
             if not file_path.exists():
-                logger.warning("File not found: %s", file_path)
+                logger.warning(
+                    "File not found",
+                    file_path=str(file_path),
+                    filename=filename,
+                    input_dir=str(self._input_dir),
+                    source="flext-ldif/src/flext_ldif/services/migration.py",
+                )
                 continue
 
             parse_result = self._parser.parse_ldif_file(
@@ -184,9 +198,19 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 if entry.dn and entry.dn.value:
                     _ = self._dn_registry.register_dn(entry.dn.value)
             all_entries.extend(cast("list[FlextLdifModels.Entry]", entries))
-            logger.info(f"Parsed {len(entries)} from {filename}")
+            logger.info(
+                "Parsed entries from file",
+                filename=filename,
+                entries_count=len(entries),
+                source="flext-ldif/src/flext_ldif/services/migration.py",
+            )
 
-        logger.info(f"Total parsed: {len(all_entries)}")
+        logger.info(
+            "Total parsed entries",
+            total_entries=len(all_entries),
+            files_processed=len(files),
+            source="flext-ldif/src/flext_ldif/services/migration.py",
+        )
         return FlextResult[list[FlextLdifModels.Entry]].ok(all_entries)
 
     def _apply_categorization(
@@ -308,7 +332,12 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     .build()
                 )
                 categories[cat] = sorted_entries
-                logger.info("Sorted '%s' hierarchically", cat)
+                logger.info(
+                    "Sorted category hierarchically",
+                    category=cat,
+                    entries_count=len(cat_entries),
+                    source="flext-ldif/src/flext_ldif/services/migration.py",
+                )
 
     def _write_categories(
         self,
@@ -340,7 +369,13 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
 
             file_paths["output"] = str(output_path)
             entry_counts["output"] = len(all_output_entries)
-            logger.info(f"Wrote {len(all_output_entries)} entries to {output_path}")
+            logger.info(
+                "Wrote entries to output file",
+                output_path=str(output_path),
+                entries_count=len(all_output_entries),
+                target_server=self._target_server,
+                source="flext-ldif/src/flext_ldif/services/migration.py",
+            )
         else:
             # Categorized mode: multiple files
             # Map categories to phase numbers for migration headers
@@ -372,7 +407,8 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 elif not isinstance(base_dn_value, str):
                     base_dn_value = str(base_dn_value)
 
-                template_data = {
+                # Create template_data with explicit object type for type compatibility
+                template_data: dict[str, object] = {
                     "phase": phase_num,
                     "phase_name": category.upper(),
                     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -383,7 +419,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     "processed_entries": len(entries),
                     "rejected_entries": 0,
                     "schema_whitelist_enabled": bool(
-                        self._categorization._schema_whitelist_rules,  # noqa: SLF001
+                        self._categorization._schema_whitelist_rules is not None  # noqa: SLF001
                     ),
                     "sort_entries_hierarchically": self._sort_hierarchically,
                     "server_type": self._target_server,
@@ -405,20 +441,20 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     # Add base_dn and dn_registry to entry metadata for ACL DN normalization
                     entries_with_metadata = []
                     for entry in entries:
-                        # Create or update entry metadata
-                        if not entry.entry_metadata:
-                            entry.entry_metadata = {}
-                        if "extensions" not in entry.entry_metadata:
-                            entry.entry_metadata["extensions"] = {}
-                        extensions = entry.entry_metadata["extensions"]
-                        if not isinstance(extensions, dict):
-                            extensions = {}
-                            entry.entry_metadata["extensions"] = extensions
+                        # RFC Compliance: extensions is processing metadata
+                        extensions = dict(entry.metadata.extensions)
                         if base_dn:
                             extensions["base_dn"] = base_dn
                         # Add dn_registry for case normalization
                         extensions["dn_registry"] = self._dn_registry
-                        entries_with_metadata.append(entry)
+                        # Update entry with new extensions
+                        new_metadata = entry.metadata.model_copy(
+                            update={"extensions": extensions}
+                        )
+                        updated_entry = entry.model_copy(
+                            update={"metadata": new_metadata}
+                        )
+                        entries_with_metadata.append(updated_entry)
                     processed_entries = entries_with_metadata
 
                 write_result = self._writer.write(
@@ -438,7 +474,12 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 file_paths[category] = str(output_path)
                 entry_counts[category] = len(entries)
                 logger.info(
-                    f"Wrote {len(entries)} entries to {output_path} ({category})",
+                    "Wrote entries to category file",
+                    output_path=str(output_path),
+                    category=category,
+                    entries_count=len(entries),
+                    target_server=self._target_server,
+                    source="flext-ldif/src/flext_ldif/services/migration.py",
                 )
 
         return FlextResult[tuple[dict[str, str], dict[str, int]]].ok((
@@ -446,14 +487,19 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             entry_counts,
         ))
 
-    def execute(self) -> FlextResult[FlextLdifModels.EntryResult]:
-        """Execute migration - pure railway pattern with public services."""
+    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.EntryResult]:
+        """Execute migration - pure railway pattern with public services.
+
+        Args:
+            **_kwargs: Ignored parameters for FlextService protocol compatibility
+
+        """
         start_time = time.time()
 
         # Step 1: Create output directory
         dir_result = self._create_output_directory()
         if dir_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(dir_result.error)
+            return FlextResult[FlextLdifModels.EntryResult].fail(dir_result.error or "Unknown error")
 
         # Step 2: Determine files to parse
         files = self._determine_files()
@@ -461,13 +507,13 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         # Step 3: Parse all input files
         entries_result = self._parse_files(files)
         if entries_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(entries_result.error)
+            return FlextResult[FlextLdifModels.EntryResult].fail(entries_result.error or "Unknown error")
 
         # Step 4: Apply categorization chain
         categories_result = self._apply_categorization(entries_result.unwrap())
         if categories_result.is_failure:
             return FlextResult[FlextLdifModels.EntryResult].fail(
-                categories_result.error,
+                categories_result.error or "Unknown error",
             )
 
         categories = categories_result.unwrap()
@@ -478,7 +524,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         # Step 6: Write output files
         write_result = self._write_categories(categories)
         if write_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(write_result.error)
+            return FlextResult[FlextLdifModels.EntryResult].fail(write_result.error or "Unknown error")
 
         file_paths, entry_counts = write_result.unwrap()
 

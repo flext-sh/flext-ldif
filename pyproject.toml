@@ -156,6 +156,7 @@ docker = ">=7.1.0"
             "complexity: Complexity tests",
             "concurrency: Concurrency tests",
             "conversion: Quirk conversion operations",
+            "docker: Tests requiring Docker containers",
             "e2e: End-to-end tests",
             "fixtures: Tests using real LDIF fixtures",
             "integration: Integration tests",
