@@ -186,9 +186,9 @@ class TestFlextLdifModels:
         assert entry is not None
 
         # Verify RFC violations were captured
-        assert entry.validation_metadata is not None
-        assert "rfc_violations" in entry.validation_metadata
-        violations = entry.validation_metadata["rfc_violations"]
+        assert entry.metadata.validation_results is not None
+        assert "rfc_violations" in entry.metadata.validation_results
+        violations = entry.metadata.validation_results["rfc_violations"]
 
         # Should have 2 violations: empty DN + no attributes
         assert len(violations) >= 2
@@ -381,9 +381,9 @@ class TestFlextLdifModelsEntry:
         entry = result.unwrap()
 
         # Verify RFC violation was captured in validation_metadata
-        assert entry.validation_metadata is not None
-        assert "rfc_violations" in entry.validation_metadata
-        violations = entry.validation_metadata["rfc_violations"]
+        assert entry.metadata.validation_results is not None
+        assert "rfc_violations" in entry.metadata.validation_results
+        violations = entry.metadata.validation_results["rfc_violations"]
         assert any("RFC 2849" in v and "DN" in v for v in violations)
 
 

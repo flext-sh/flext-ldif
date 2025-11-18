@@ -392,13 +392,13 @@ class FlextLdifUtilitiesEvents:
 
         # Log with appropriate level (common logic for all event types)
         if log_level == "debug":
-            logger.debug(log_message, **log_context)
+            logger.debug(log_message, return_result=False, **log_context)
         elif log_level == "warning":
-            logger.warning(log_message, **log_context)
+            logger.warning(log_message, return_result=False, **log_context)
         elif log_level == "error":
-            logger.error(log_message, **log_context)
+            logger.error(log_message, return_result=False, **log_context)
         else:
-            logger.info(log_message, **log_context)
+            logger.info(log_message, return_result=False, **log_context)
 
     @staticmethod
     def log_and_emit_migration_event(

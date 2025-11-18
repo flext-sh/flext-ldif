@@ -101,11 +101,13 @@ class FlextLdifTypes(FlextTypes):
             "FlextLdifModels.Acl",
             "dict[str, object]",
         ]
+        # Fix: Use actual types instead of string literals to avoid Pydantic v2 forward reference resolution errors
         ServiceResponseTypes = Union[
-            "FlextLdifModels.ParseResponse",
-            "FlextLdifModels.WriteResponse",
-            "FlextLdifModels.MigrationPipelineResult",
-            "FlextLdifModels.ValidationResult",
+            FlextLdifModels.ParseResponse,
+            FlextLdifModels.WriteResponse,
+            FlextLdifModels.MigrationPipelineResult,
+            FlextLdifModels.ValidationResult,
+            FlextLdifModels.EntryResult,  # Added for FlextLdifFilters.execute()
         ]
 
     # =========================================================================

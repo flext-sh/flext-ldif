@@ -121,15 +121,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
+# Type alias to avoid Pydantic v2 forward reference resolution issues
+# FlextLdifModels is a namespace class, not an importable module
+if TYPE_CHECKING:
+    _SyntaxServiceStatusType = FlextLdifModels.SyntaxServiceStatus
+else:
+    _SyntaxServiceStatusType = object  # type: ignore[misc]
 
-class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
+
+class FlextLdifSyntax(FlextService[_SyntaxServiceStatusType]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and
@@ -182,7 +189,9 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
     @override
     @FlextDecorators.log_operation("syntax_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[FlextLdifModels.SyntaxServiceStatus]:
+    def execute(
+        self, **kwargs: object
+    ) -> FlextResult[FlextLdifModels.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 
         FlextDecorators automatically:
@@ -397,6 +406,7 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             oid: Syntax OID (required, must be valid format)
             name: Human-readable syntax name (optional, auto-looked-up if not provided)
             desc: Syntax description (optional)
+            server_type: LDAP server type for quirk metadata
 
         Returns:
             FlextResult containing fully resolved Syntax model
@@ -438,9 +448,23 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         if desc:
             syntax.desc = desc
 
-        # FlextLdifModels.Syntax is alias of FlextLdifModelsDomains.Syntax
-        # No cast needed
-        return FlextResult[FlextLdifModels.Syntax].ok(syntax)
+        # Type narrowing: resolve_syntax_oid returns Domain.Syntax, but we need Models.Syntax
+        # Since Models.Syntax extends Domain.Syntax, we can safely use it
+        if isinstance(syntax, FlextLdifModels.Syntax):
+            return FlextResult[FlextLdifModels.Syntax].ok(syntax)
+        # Convert Domain.Syntax to Models.Syntax if needed
+        # This should not happen in practice, but handle defensively
+        # NOTE: is_rfc4517_standard is a @computed_field, it's automatically calculated from oid
+        models_syntax = FlextLdifModels.Syntax(
+            oid=syntax.oid,
+            name=syntax.name,
+            desc=syntax.desc,
+            type_category=syntax.type_category,
+            max_length=syntax.max_length,
+            validation_pattern=syntax.validation_pattern,
+            metadata=syntax.metadata,  # RFC Compliance: Include quirk metadata from resolve_syntax_oid
+        )
+        return FlextResult[FlextLdifModels.Syntax].ok(models_syntax)
 
     @FlextDecorators.track_performance()
     def validate_value(
@@ -473,11 +497,18 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         if not value or not syntax_oid:
             return FlextResult[bool].ok(True)  # Empty values pass validation
 
+        # Check if syntax OID is known in RFC 4517 standard
+        # For validation purposes, we reject unknown OIDs
+        if syntax_oid not in FlextLdifConstants.RfcSyntaxOids.OID_TO_NAME:
+            return FlextResult[bool].fail(
+                f"Cannot validate - unknown syntax OID: {syntax_oid}",
+            )
+
         # Resolve syntax to get type category
         resolve_result = self.resolve_syntax(syntax_oid)
         if resolve_result.is_failure:
             return FlextResult[bool].fail(
-                f"Cannot validate - unknown syntax OID: {syntax_oid}",
+                f"Cannot validate - failed to resolve syntax OID: {syntax_oid}",
             )
 
         syntax = resolve_result.unwrap()

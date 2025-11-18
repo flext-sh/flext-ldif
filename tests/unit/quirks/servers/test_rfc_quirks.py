@@ -1497,11 +1497,15 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         )
 
         # Set modify format in entry metadata
-        entry_model.entry_metadata = {
+        new_write_options = {
             "_write_options": FlextLdifModels.WriteFormatOptions(
                 ldif_changetype="modify",
-            ),
+            )
         }
+        new_metadata = entry_model.metadata.model_copy(
+            update={"write_options": new_write_options}
+        )
+        entry_model = entry_model.model_copy(update={"metadata": new_metadata})
 
         _ = RfcTestHelpers.test_entry_quirk_write_entry_and_verify(
             rfc_entry_quirk,

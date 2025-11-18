@@ -233,8 +233,13 @@ class FlextLdifDn(FlextService[str]):
             return FlextResult[str].fail("other_dn required for compare operation")
         return self._parser.compare_operation(self.dn, self.other_dn)
 
-    def execute(self) -> FlextResult[str]:
-        """Execute DN operation based on configuration."""
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
+        """Execute DN operation based on configuration.
+
+        Args:
+            **_kwargs: Ignored parameters for FlextService protocol compatibility
+
+        """
         start_time = time.perf_counter() if self.enable_events else 0
 
         try:

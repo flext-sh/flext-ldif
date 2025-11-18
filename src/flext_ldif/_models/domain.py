@@ -326,6 +326,7 @@ class FlextLdifModelsDomains:
             """
             if not self.syntax:
                 return None
+            # Return internal domain type - public layer will wrap if needed
             return FlextLdifModelsDomains.Syntax.resolve_syntax_oid(
                 self.syntax,
                 server_type="rfc",
@@ -1259,41 +1260,28 @@ class FlextLdifModelsDomains:
             extra="allow",  # Allow dynamic fields from conversions and transformations
         )
 
+        # ===================================================================
+        # RFC 2849/4512 COMPLIANT FIELDS ONLY
+        # ===================================================================
+        # Entry model contains ONLY RFC-compliant LDIF entry data.
+        # All processing metadata, validation results, and server-specific
+        # data belong in the metadata field (QuirkMetadata).
+
         dn: FlextLdifModelsDomains.DistinguishedName = Field(
             ...,
-            description="Distinguished Name of the entry (required per RFC 2849 § 2)",
+            description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2)",
         )
         attributes: FlextLdifModelsDomains.LdifAttributes = Field(
             ...,
-            description="Entry attributes container (required per RFC 2849 § 2)",
+            description="Entry attributes container (REQUIRED per RFC 2849 § 2)",
+        )
+        changetype: str | None = Field(
+            default=None,
+            description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
         )
         metadata: FlextLdifModelsDomains.QuirkMetadata = Field(
             default_factory=_create_default_quirk_metadata,
-            description="Quirk-specific metadata for preserving original entry format and server-specific data",
-        )
-        acls: list[FlextLdifModelsDomains.Acl] = Field(
-            default_factory=list,
-            description="Access Control Lists extracted from entry attributes",
-        )
-        objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
-            default_factory=list,
-            description="ObjectClass definitions for schema validation",
-        )
-        attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
-            default_factory=list,
-            description="AttributeType definitions for schema validation",
-        )
-        entry_metadata: dict[str, object] = Field(
-            default_factory=dict,
-            description="Entry-level metadata (changetype, modifyTimestamp, etc.)",
-        )
-        validation_metadata: dict[str, object] | None = Field(
-            default=None,
-            description="Validation results and metadata from entry processing",
-        )
-        statistics: FlextLdifModelsDomains.EntryStatistics | None = Field(
-            default=None,
-            description="Complete statistics tracking for entry transformations and validation",
+            description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
         )
 
         @field_validator("dn", mode="before")
@@ -1491,7 +1479,7 @@ class FlextLdifModelsDomains:
             )
             if not has_naming_attr:
                 violations.append(
-                    f"RFC 4512 § 2.3: Entry SHOULD have naming attribute '{naming_attr}'"
+                    f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'"
                 )
             return violations
 
@@ -1546,16 +1534,15 @@ class FlextLdifModelsDomains:
         def _validate_changetype(self, dn_value: str | None) -> list[str]:  # noqa: ARG002
             """Validate changetype field per RFC 2849 § 5.7."""
             violations: list[str] = []
-            if not self.entry_metadata:
-                return violations
-
-            changetype = self.entry_metadata.get("changetype")
-            if changetype is None:
+            # RFC Compliance: changetype is now a direct field on Entry
+            if not self.changetype:
                 return violations
 
             valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
-            if str(changetype).lower() not in valid_changetypes:
-                violations.append(f"RFC 2849 § 5.7: changetype '{changetype}' invalid")
+            if str(self.changetype).lower() not in valid_changetypes:
+                violations.append(
+                    f"RFC 2849 § 5.7: changetype '{self.changetype}' invalid"
+                )
             return violations
 
         @model_validator(mode="after")
@@ -1583,13 +1570,13 @@ class FlextLdifModelsDomains:
             violations.extend(self._validate_changetype(dn_value))
 
             # ALWAYS initialize validation_metadata as dict (Pydantic 2 pattern)
-            if self.validation_metadata is None:
-                self.validation_metadata = {}
+            if self.metadata.validation_results is None:
+                self.metadata.validation_results = {}
 
             # Capture violations in validation_metadata
             if violations:
-                self.validation_metadata["rfc_violations"] = violations
-                self.validation_metadata["validation_context"] = {
+                self.metadata.validation_results["rfc_violations"] = violations
+                self.metadata.validation_results["validation_context"] = {
                     "validator": "validate_entry_rfc_compliance",
                     "dn": dn_value,
                     "attribute_count": len(self.attributes.attributes)
@@ -1718,14 +1705,14 @@ class FlextLdifModelsDomains:
 
             # Store server-specific violations in validation_metadata (if any)
             if server_violations:
-                if self.validation_metadata is None:
-                    self.validation_metadata = {}
+                if self.metadata.validation_results is None:
+                    self.metadata.validation_results = {}
 
-                self.validation_metadata["server_specific_violations"] = (
+                self.metadata.validation_results["server_specific_violations"] = (
                     server_violations
                 )
                 if self.metadata:
-                    self.validation_metadata["validation_server_type"] = (
+                    self.metadata.validation_results["validation_server_type"] = (
                         self.metadata.quirk_type
                     )
                     self.metadata.extensions["server_specific_violations"] = (
@@ -2298,14 +2285,16 @@ class FlextLdifModelsDomains:
                     else None
                 ),
                 metadata=self.metadata,
-                acls=list(self.acls) if self.acls else None,
-                objectclasses=list(self.objectclasses) if self.objectclasses else None,
-                entry_metadata=dict(self.entry_metadata)
-                if self.entry_metadata
+                acls=list(self.metadata.acls) if self.metadata.acls else None,
+                objectclasses=list(self.metadata.objectclasses)
+                if self.metadata.objectclasses
+                else None,
+                entry_metadata=dict(self.metadata.write_options)
+                if self.metadata.write_options
                 else None,
                 validation_metadata=(
-                    dict(self.validation_metadata)
-                    if self.validation_metadata is not None
+                    dict(self.metadata.validation_results)
+                    if self.metadata.validation_results is not None
                     else {}
                 ),
             )
@@ -2321,7 +2310,7 @@ class FlextLdifModelsDomains:
             True if entry has objectClasses, False otherwise
 
             """
-            return bool(self.objectclasses)
+            return bool(self.metadata.objectclasses)
 
         @computed_field
         def is_acl_entry(self) -> bool:
@@ -2331,7 +2320,7 @@ class FlextLdifModelsDomains:
             True if entry has ACLs, False otherwise
 
             """
-            return bool(self.acls)
+            return bool(self.metadata.acls)
 
         @computed_field
         def has_validation_errors(self) -> bool:
@@ -2341,9 +2330,9 @@ class FlextLdifModelsDomains:
             True if entry has validation errors in validation_metadata, False otherwise
 
             """
-            if not self.validation_metadata:
+            if not self.metadata.validation_results:
                 return False
-            return bool(self.validation_metadata.get("errors"))
+            return bool(self.metadata.validation_results.get("errors"))
 
         def get_objectclass_names(self) -> list[str]:
             """Get list of objectClass attribute values from entry."""
@@ -2499,6 +2488,38 @@ class FlextLdifModelsDomains:
         target_server_type: str | None = Field(
             default=None,
             description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
+        )
+
+        # =====================================================================
+        # PROCESSING METADATA (Migrated from Entry - RFC Compliance)
+        # =====================================================================
+        # These fields were moved from Entry to maintain RFC 2849/4512 purity.
+        # Entry should ONLY contain RFC-compliant fields (dn, attributes, changetype).
+        # All processing metadata belongs in QuirkMetadata.
+
+        acls: list[FlextLdifModelsDomains.Acl] = Field(
+            default_factory=list,
+            description="Access Control Lists extracted from entry attributes during parsing",
+        )
+        objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
+            default_factory=list,
+            description="ObjectClass definitions for schema validation (not RFC LDIF data)",
+        )
+        validation_results: dict[str, object] | None = Field(
+            default=None,
+            description="Validation results and metadata from entry processing (was validation_metadata)",
+        )
+        processing_stats: FlextLdifModelsDomains.EntryStatistics | None = Field(
+            default=None,
+            description="Complete statistics tracking for entry transformations (was statistics)",
+        )
+        write_options: dict[str, object] = Field(
+            default_factory=dict,
+            description="Writer configuration options (was entry_metadata._write_options)",
+        )
+        removed_attributes: dict[str, list[str]] = Field(
+            default_factory=dict,
+            description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
         )
 
         @classmethod

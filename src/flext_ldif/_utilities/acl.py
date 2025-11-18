@@ -588,6 +588,127 @@ class FlextLdifUtilitiesACL:
         return [perm for perm in permissions if perm in supported_set]
 
     @staticmethod
+    def _normalize_dn_for_aci(
+        value: str,
+        constants: object,
+        base_dn: str | None = None,
+    ) -> str:
+        """Normalize DN value for ACI format (helper to reduce complexity).
+
+        Removes spaces after commas, preserves case, and filters by base_dn if provided.
+
+        Args:
+            value: DN value to normalize
+            constants: Constants class with ACL format definitions
+            base_dn: Optional base DN for filtering
+
+        Returns:
+            Normalized DN value or empty string if filtered out
+
+        """
+        if not value:
+            return value
+        # Import here to avoid circular dependency at module level
+        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
+
+        prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
+        has_prefix = value.startswith(prefix)
+        dn_part = value[len(prefix) :] if has_prefix else value
+        cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_part)
+        if (
+            base_dn
+            and cleaned_dn
+            and not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn)
+        ):
+            return ""
+        return f"{prefix}{cleaned_dn}" if has_prefix else cleaned_dn
+
+    @staticmethod
+    def _ensure_ldap_url_format(
+        value: str,
+        constants: object,
+        base_dn: str | None = None,
+    ) -> str:
+        """Ensure value has LDAP URL format (helper to reduce complexity).
+
+        Args:
+            value: Subject value to format
+            constants: Constants class with ACL format definitions
+            base_dn: Optional base DN for filtering
+
+        Returns:
+            Value with LDAP URL prefix or empty string
+
+        """
+        prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
+        normalized = FlextLdifUtilitiesACL._normalize_dn_for_aci(
+            value, constants, base_dn
+        )
+        if not normalized:
+            return ""
+        return normalized if normalized.startswith(prefix) else f"{prefix}{normalized}"
+
+    @staticmethod
+    def _handle_self_subject(constants: object) -> str:
+        """Handle self subject type (helper to reduce complexity)."""
+        acl_self = getattr(constants, "ACL_SELF_SUBJECT", "self")
+        return f'userdn="{acl_self}";)'
+
+    @staticmethod
+    def _handle_anonymous_subject(constants: object) -> str:
+        """Handle anonymous subject type (helper to reduce complexity)."""
+        acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
+        return f'userdn="{acl_anon}";)'
+
+    @staticmethod
+    def _handle_group_subject(
+        subject_value: str,
+        constants: object,
+        base_dn: str | None = None,
+    ) -> str:
+        """Handle group subject type (helper to reduce complexity)."""
+        normalized_value = FlextLdifUtilitiesACL._ensure_ldap_url_format(
+            subject_value, constants, base_dn
+        )
+        return "" if not normalized_value else f'groupdn="{normalized_value}";)'
+
+    @staticmethod
+    def _handle_attribute_subject(subject_value: str) -> str:
+        """Handle attribute subject type (helper to reduce complexity)."""
+        return f'userattr="{subject_value}";)'
+
+    @staticmethod
+    def _handle_bind_rules_subject(
+        subject_value: str,
+        constants: object,
+        base_dn: str | None = None,
+    ) -> str:
+        """Handle bind rules subject type (helper to reduce complexity)."""
+
+        def normalize_match(match: re.Match[str]) -> str:
+            prefix = match.group(2) or ""
+            return f'{match.group(1)}="{prefix}{FlextLdifUtilitiesACL._normalize_dn_for_aci(match.group(3), constants, base_dn)}"'
+
+        normalized_bind = re.sub(
+            r'(userdn|groupdn)="(ldap:///)?([^"]+)"',
+            normalize_match,
+            subject_value,
+        )
+        return f"{normalized_bind};)"
+
+    @staticmethod
+    def _handle_default_subject(
+        subject_value: str,
+        constants: object,
+        base_dn: str | None = None,
+    ) -> str:
+        """Handle default subject type (helper to reduce complexity)."""
+        normalized_value = FlextLdifUtilitiesACL._ensure_ldap_url_format(
+            subject_value, constants, base_dn
+        )
+        return "" if not normalized_value else f'userdn="{normalized_value}";)'
+
+    @staticmethod
     def format_aci_subject(
         subject_type: str,
         subject_value: str,
@@ -610,88 +731,46 @@ class FlextLdifUtilitiesACL:
             Formatted bind rule string with normalized DNs
 
         """
-        # Import here to avoid circular dependency at module level
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
-
-        # Helper to normalize DN value (removes spaces after commas, preserves case)
-        def normalize_dn_value(value: str) -> str:
-            """Normalize DN by removing spaces after commas while preserving case."""
-            if not value:
-                return value
-            prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-            has_prefix = value.startswith(prefix)
-            dn_part = value[len(prefix) :] if has_prefix else value
-            cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_part)
-            if (
-                base_dn
-                and cleaned_dn
-                and not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn)
-            ):
-                return ""
-            return f"{prefix}{cleaned_dn}" if has_prefix else cleaned_dn
-
-        # Helper to ensure LDAP URL format
-        def ensure_ldap_url(value: str) -> str:
-            prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-            normalized = normalize_dn_value(value)
-            if not normalized:
-                return ""
-            return (
-                normalized if normalized.startswith(prefix) else f"{prefix}{normalized}"
-            )
-
-        # Dispatch handlers for different subject types
-        def handle_self() -> str:
-            acl_self = getattr(constants, "ACL_SELF_SUBJECT", "self")
-            return f'userdn="{acl_self}";)'
-
-        def handle_anonymous() -> str:
-            acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
-            return f'userdn="{acl_anon}";)'
-
-        def handle_group() -> str:
-            normalized_value = ensure_ldap_url(subject_value)
-            return "" if not normalized_value else f'groupdn="{normalized_value}";)'
-
-        def handle_attribute() -> str:
-            return f'userattr="{subject_value}";)'
-
-        def handle_bind_rules() -> str:
-            def normalize_match(match: re.Match[str]) -> str:
-                prefix = match.group(2) or ""
-                return (
-                    f'{match.group(1)}="{prefix}{normalize_dn_value(match.group(3))}"'
-                )
-
-            normalized_bind = re.sub(
-                r'(userdn|groupdn)="(ldap:///)?([^"]+)"',
-                normalize_match,
-                subject_value,
-            )
-            return f"{normalized_bind};)"
-
-        def handle_default() -> str:
-            normalized_value = ensure_ldap_url(subject_value)
-            return "" if not normalized_value else f'userdn="{normalized_value}";)'
-
         # Dispatch table mapping subject types to handlers
         bind_rules_type = getattr(
             constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
         )
         handlers: dict[str, Callable[[], str]] = {
-            FlextLdifConstants.AclSubjectTypes.SELF: handle_self,
-            FlextLdifConstants.AclSubjectTypes.ANONYMOUS: handle_anonymous,
-            FlextLdifConstants.AclSubjectTypes.GROUP: handle_group,
-            "group_dn": handle_group,
-            "dn_attr": handle_attribute,
-            "guid_attr": handle_attribute,
-            "group_attr": handle_attribute,
-            bind_rules_type: handle_bind_rules,
+            FlextLdifConstants.AclSubjectTypes.SELF: lambda: FlextLdifUtilitiesACL._handle_self_subject(
+                constants
+            ),
+            FlextLdifConstants.AclSubjectTypes.ANONYMOUS: lambda: FlextLdifUtilitiesACL._handle_anonymous_subject(
+                constants
+            ),
+            FlextLdifConstants.AclSubjectTypes.GROUP: lambda: FlextLdifUtilitiesACL._handle_group_subject(
+                subject_value, constants, base_dn
+            ),
+            "group_dn": lambda: FlextLdifUtilitiesACL._handle_group_subject(
+                subject_value, constants, base_dn
+            ),
+            "dn_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
+                subject_value
+            ),
+            "guid_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
+                subject_value
+            ),
+            "group_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
+                subject_value
+            ),
+            bind_rules_type: lambda: FlextLdifUtilitiesACL._handle_bind_rules_subject(
+                subject_value, constants, base_dn
+            ),
         }
 
         # Execute handler or use default
         handler = handlers.get(subject_type)
-        return handler() if handler else handle_default()
+        return (
+            handler()
+            if handler
+            else FlextLdifUtilitiesACL._handle_default_subject(
+                subject_value, constants, base_dn
+            )
+        )
 
     @staticmethod
     def parse_novell_rights(

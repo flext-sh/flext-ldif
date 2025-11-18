@@ -16,7 +16,8 @@ Notes:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextModels
+from flext_core import FlextLogger, FlextModels, FlextResult
+from pydantic import computed_field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -251,6 +252,53 @@ class FlextLdifModels(FlextModels):
         Represents an LDAP attribute type definition from schema with full RFC 4512 support.
         """
 
+        @computed_field
+        def syntax_definition(self) -> FlextLdifModels.Syntax | None:
+            """Resolve syntax OID to complete public Syntax model.
+
+            Override parent to return public FlextLdifModels.Syntax type instead of
+            internal FlextLdifModelsDomains.Syntax type. This maintains proper type
+            separation between domain layer and public API layer.
+
+            Returns:
+                Public Syntax model or None if syntax cannot be resolved.
+
+            """
+            # Get internal syntax from parent implementation
+            internal_syntax = super().syntax_definition
+            if internal_syntax is None:
+                return None
+
+            # Type guard: ensure internal_syntax is a Pydantic model with model_dump method
+            if not hasattr(internal_syntax, "model_dump"):
+                return None
+
+            # Convert to public type using model_validate
+            # Exclude computed fields since they will be recomputed automatically
+            # Use mode='python' to get plain Python dict, and exclude computed fields
+            dump_data = internal_syntax.model_dump(
+                mode="python",
+                exclude={"is_rfc4517_standard", "syntax_oid_suffix"},
+                exclude_unset=False,
+            )
+            # Filter out any remaining computed fields that might have been included
+            # Only include fields that exist in the Syntax model
+            valid_fields = {
+                "oid",
+                "name",
+                "desc",
+                "type_category",
+                "is_binary",
+                "max_length",
+                "case_insensitive",
+                "allows_multivalued",
+                "encoding",
+                "validation_pattern",
+                "metadata",
+            }
+            filtered_data = {k: v for k, v in dump_data.items() if k in valid_fields}
+            return FlextLdifModels.Syntax.model_validate(filtered_data)
+
     class Syntax(FlextLdifModelsDomains.Syntax):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
 
@@ -265,6 +313,182 @@ class FlextLdifModels(FlextModels):
 
     class Entry(FlextLdifModelsDomains.Entry):
         """LDIF entry domain model - moved to _models/domain.py for organization."""
+
+        @classmethod
+        def _normalize_create_params(
+            cls,
+            dn: str
+            | FlextLdifModels.DistinguishedName
+            | FlextLdifModelsDomains.DistinguishedName,
+            attributes: (
+                dict[str, str | list[str]]
+                | FlextLdifModels.LdifAttributes
+                | FlextLdifModelsDomains.LdifAttributes
+            ),
+            metadata: FlextLdifModels.QuirkMetadata
+            | FlextLdifModelsDomains.QuirkMetadata
+            | None,
+            acls: list[FlextLdifModels.Acl] | list[FlextLdifModelsDomains.Acl] | None,
+            objectclasses: list[FlextLdifModels.SchemaObjectClass]
+            | list[FlextLdifModelsDomains.SchemaObjectClass]
+            | None,
+            attributes_schema: list[FlextLdifModels.SchemaAttribute]
+            | list[FlextLdifModelsDomains.SchemaAttribute]
+            | None,
+            statistics: FlextLdifModels.EntryStatistics
+            | FlextLdifModelsDomains.EntryStatistics
+            | None,
+        ) -> tuple[
+            str | FlextLdifModelsDomains.DistinguishedName,
+            dict[str, str | list[str]] | FlextLdifModelsDomains.LdifAttributes,
+            FlextLdifModelsDomains.QuirkMetadata | None,
+            list[FlextLdifModelsDomains.Acl] | None,
+            list[FlextLdifModelsDomains.SchemaObjectClass] | None,
+            list[FlextLdifModelsDomains.SchemaAttribute] | None,
+            FlextLdifModelsDomains.EntryStatistics | None,
+        ]:
+            """Normalize public types to domain types for parent method call."""
+            # Normalize DN
+            domain_dn: str | FlextLdifModelsDomains.DistinguishedName
+            if isinstance(
+                dn,
+                (
+                    FlextLdifModelsDomains.DistinguishedName,
+                    FlextLdifModels.DistinguishedName,
+                ),
+            ):
+                domain_dn = dn
+            else:
+                domain_dn = dn
+
+            # Normalize attributes
+            domain_attributes: (
+                dict[str, str | list[str]] | FlextLdifModelsDomains.LdifAttributes
+            )
+            if isinstance(
+                attributes,
+                (FlextLdifModelsDomains.LdifAttributes, FlextLdifModels.LdifAttributes),
+            ):
+                domain_attributes = attributes
+            else:
+                domain_attributes = attributes
+
+            # Normalize metadata
+            domain_metadata: FlextLdifModelsDomains.QuirkMetadata | None = metadata
+
+            # Normalize lists (lists are invariant, so we need to convert them)
+            domain_acls: list[FlextLdifModelsDomains.Acl] | None = (
+                list(acls) if acls is not None else None
+            )
+            domain_objectclasses: (
+                list[FlextLdifModelsDomains.SchemaObjectClass] | None
+            ) = list(objectclasses) if objectclasses is not None else None
+            domain_attributes_schema: (
+                list[FlextLdifModelsDomains.SchemaAttribute] | None
+            ) = list(attributes_schema) if attributes_schema is not None else None
+            domain_statistics: FlextLdifModelsDomains.EntryStatistics | None = (
+                statistics
+            )
+
+            return (
+                domain_dn,
+                domain_attributes,
+                domain_metadata,
+                domain_acls,
+                domain_objectclasses,
+                domain_attributes_schema,
+                domain_statistics,
+            )
+
+        @classmethod
+        def create(
+            cls,
+            dn: str
+            | FlextLdifModels.DistinguishedName
+            | FlextLdifModelsDomains.DistinguishedName,
+            attributes: (
+                dict[str, str | list[str]]
+                | FlextLdifModels.LdifAttributes
+                | FlextLdifModelsDomains.LdifAttributes
+            ),
+            metadata: FlextLdifModels.QuirkMetadata
+            | FlextLdifModelsDomains.QuirkMetadata
+            | None = None,
+            acls: list[FlextLdifModels.Acl]
+            | list[FlextLdifModelsDomains.Acl]
+            | None = None,
+            objectclasses: list[FlextLdifModels.SchemaObjectClass]
+            | list[FlextLdifModelsDomains.SchemaObjectClass]
+            | None = None,
+            attributes_schema: list[FlextLdifModels.SchemaAttribute]
+            | list[FlextLdifModelsDomains.SchemaAttribute]
+            | None = None,
+            entry_metadata: dict[str, object] | None = None,
+            validation_metadata: dict[str, object] | None = None,
+            server_type: str | None = None,
+            source_entry: str | None = None,
+            unconverted_attributes: dict[str, object] | None = None,
+            statistics: FlextLdifModels.EntryStatistics
+            | FlextLdifModelsDomains.EntryStatistics
+            | None = None,
+        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+            """Create a new Entry instance (public API wrapper).
+
+            Wraps the domain Entry.create() method to return the public Entry type.
+            Converts public types to domain types for the parent method call.
+            """
+            # Normalize parameters to domain types
+            (
+                domain_dn,
+                domain_attributes,
+                domain_metadata,
+                domain_acls,
+                domain_objectclasses,
+                domain_attributes_schema,
+                domain_statistics,
+            ) = cls._normalize_create_params(
+                dn,
+                attributes,
+                metadata,
+                acls,
+                objectclasses,
+                attributes_schema,
+                statistics,
+            )
+
+            # Call parent create method
+            domain_result = super().create(
+                dn=domain_dn,
+                attributes=domain_attributes,
+                metadata=domain_metadata,
+                acls=domain_acls,
+                objectclasses=domain_objectclasses,
+                attributes_schema=domain_attributes_schema,
+                entry_metadata=entry_metadata,
+                validation_metadata=validation_metadata,
+                server_type=server_type,
+                source_entry=source_entry,
+                unconverted_attributes=unconverted_attributes,
+                statistics=domain_statistics,
+            )
+            if domain_result.is_failure:
+                return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                    domain_result.error
+                )
+
+            domain_entry = domain_result.unwrap()
+            # Convert domain Entry to public Entry type
+            # Since FlextLdifModels.Entry extends FlextLdifModelsDomains.Entry,
+            # we can safely cast it
+            if not isinstance(
+                domain_entry, (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry)
+            ):
+                return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                    "Internal error: Entry.create() returned wrong type"
+                )
+            # Return as domain Entry (parent type) to satisfy type checker
+            # The actual instance is still a FlextLdifModels.Entry at runtime
+            return FlextResult[FlextLdifModelsDomains.Entry].ok(domain_entry)
 
     class LdifAttributes(FlextLdifModelsDomains.LdifAttributes):
         """LDIF attributes container - simplified dict-like interface."""
@@ -284,6 +508,89 @@ class FlextLdifModels(FlextModels):
             file_paths: Output file paths for each category
 
         """
+
+        @classmethod
+        def from_entries(
+            cls,
+            entries: list[FlextLdifModels.Entry] | list[FlextLdifModelsDomains.Entry],
+            category: str = "all",
+            statistics: FlextLdifModels.Statistics
+            | FlextLdifModelsResults.Statistics
+            | None = None,
+        ) -> FlextLdifModels.EntryResult:
+            """Create EntryResult from list of entries (public API wrapper).
+
+            Wraps the domain EntryResult.from_entries() method to accept public Entry types.
+            Converts public Entry list to domain Entry list for internal storage.
+
+            Args:
+                entries: List of Entry objects (public or domain Entry types)
+                category: Category name for the entries (default: "all")
+                statistics: Optional statistics object (creates default if None)
+
+            Returns:
+                New EntryResult instance (public type).
+
+            """
+            # Convert public Entry list to domain Entry list
+            # Public Entry types inherit from domain Entry, so individual instances are compatible
+            domain_entries: list[FlextLdifModelsDomains.Entry] = []
+            for entry in entries:
+                # Each entry is already a FlextLdifModelsDomains.Entry (via inheritance)
+                if isinstance(entry, FlextLdifModelsDomains.Entry):
+                    domain_entries.append(entry)
+                else:
+                    # Should not happen if types are correct, but handle gracefully
+                    return cls(
+                        entries_by_category={},
+                        statistics=FlextLdifModelsResults.Statistics.for_pipeline(
+                            total=0
+                        ),
+                    )
+
+            # Convert statistics to domain type if needed
+            domain_statistics: FlextLdifModelsResults.Statistics | None = None
+            if statistics is not None:
+                if isinstance(statistics, FlextLdifModelsResults.Statistics):
+                    domain_statistics = statistics
+                else:
+                    # Public statistics is already a domain statistics (inheritance)
+                    domain_statistics = statistics
+
+            # Call parent from_entries method with domain types
+            domain_result = super().from_entries(
+                entries=domain_entries,
+                category=category,
+                statistics=domain_statistics,
+            )
+            # The result is already a FlextLdifModels.EntryResult instance because cls is FlextLdifModels.EntryResult
+            # Verify it's the correct type (should always be true due to inheritance)
+            if not isinstance(domain_result, FlextLdifModels.EntryResult):
+                # This should not happen, but create a new instance if needed
+                return cls(
+                    entries_by_category=domain_result.entries_by_category,
+                    statistics=domain_result.statistics,
+                    file_paths=domain_result.file_paths,
+                )
+            return domain_result
+
+        @classmethod
+        def empty(cls) -> FlextLdifModels.EntryResult:
+            """Create empty EntryResult (public API wrapper).
+
+            Returns:
+                Empty EntryResult instance (public type).
+
+            """
+            domain_result = super().empty()
+            # The result is already a FlextLdifModels.EntryResult instance because cls is FlextLdifModels.EntryResult
+            if not isinstance(domain_result, FlextLdifModels.EntryResult):
+                return cls(
+                    entries_by_category={},
+                    statistics=None,
+                    file_paths={},
+                )
+            return domain_result
 
     class Statistics(FlextLdifModelsResults.Statistics):
         """Unified statistics model for all LDIF operations.

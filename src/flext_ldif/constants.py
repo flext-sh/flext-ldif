@@ -2135,7 +2135,7 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_OID_EXTRACTION_START: Final[str] = (
             r"^\s*\(\s*([0-9.]+)"  # For re.search() with ^ anchor (common use case)
         )
-        SCHEMA_NAME: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
+        SCHEMA_NAME: Final[str] = r"(?i)NAME\s+\(?\s*'([^']+)'"
         SCHEMA_DESC: Final[str] = r"DESC\s+'([^']+)'"
         SCHEMA_SYNTAX: Final[str] = r"SYNTAX\s+([\d.]+)"
         SCHEMA_EQUALITY: Final[str] = r"EQUALITY\s+([^\s)]+)"

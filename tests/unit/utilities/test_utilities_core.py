@@ -75,15 +75,20 @@ class TestDnOperationsPure:
         """Test DN component parsing."""
         dn = "cn=John,ou=Users,dc=example"
         result = FlextLdifUtilities.DN.parse(dn)
-        assert result is not None
-        assert len(result) >= 2
+        assert result.is_success
+        parsed = result.unwrap()
+        assert len(parsed) >= 2
 
     def test_compare_dns(self) -> None:
         """Test DN comparison."""
         dn1 = "cn=John,dc=example,dc=com"
         dn2 = "cn=jane,dc=example,dc=com"
         result = FlextLdifUtilities.DN.compare_dns(dn1, dn2)
-        assert isinstance(result, (int, type(None)))
+
+        # compare_dns returns FlextResult[int], not int directly
+        assert result.is_success
+        comparison = result.unwrap()
+        assert isinstance(comparison, int)
 
     def test_escape_dn_value(self) -> None:
         """Test escaping special DN value characters."""

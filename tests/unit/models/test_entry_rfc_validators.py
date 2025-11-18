@@ -12,6 +12,13 @@ from __future__ import annotations
 from flext_ldif.models import FlextLdifModels
 
 
+def get_validation_metadata(entry: FlextLdifModels.Entry) -> dict[str, object] | None:
+    """Helper to get validation_metadata from entry.metadata.validation_results."""
+    if not entry.metadata or not entry.metadata.validation_results:
+        return None
+    return entry.metadata.validation_results
+
+
 class TestEntryRfcComplianceValidator:
     """Test Entry RFC compliance validation with metadata capture."""
 
@@ -28,10 +35,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
-        )
+        assert get_validation_metadata(
+            entry
+        ) is None or "rfc_violations" not in get_validation_metadata(entry)
 
     def test_entry_with_empty_dn_captures_violation(self) -> None:
         """Empty DN should be captured in validation_metadata."""
@@ -42,9 +48,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success  # Entry NOT rejected
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        assert "rfc_violations" in entry.validation_metadata
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        assert "rfc_violations" in get_validation_metadata(entry)
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("RFC 2849 § 2" in v and "DN" in v for v in violations)
 
     def test_entry_with_whitespace_dn_captures_violation(self) -> None:
@@ -56,8 +62,8 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("empty or whitespace DN" in v for v in violations)
 
     def test_entry_with_none_dn_captured(self) -> None:
@@ -70,10 +76,10 @@ class TestEntryRfcComplianceValidator:
             ),
         )
         # Trigger validation by accessing validation_metadata
-        _ = entry.validation_metadata
+        _ = get_validation_metadata(entry)
 
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("RFC 2849 § 2" in v and "DN" in v for v in violations)
 
     # =========================================================================
@@ -89,8 +95,8 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success  # Entry NOT rejected
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("at least one attribute" in v for v in violations)
 
     def test_entry_with_none_attributes_captures_violation(self) -> None:
@@ -103,10 +109,10 @@ class TestEntryRfcComplianceValidator:
             attributes=None,
         )
         # Trigger validation by accessing validation_metadata
-        _ = entry.validation_metadata
+        _ = get_validation_metadata(entry)
 
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("at least one attribute" in v for v in violations)
 
     def test_entry_with_valid_attributes_passes(self) -> None:
@@ -122,10 +128,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
-        )
+        assert get_validation_metadata(
+            entry
+        ) is None or "rfc_violations" not in get_validation_metadata(entry)
 
     # =========================================================================
     # RFC 4512 § 2.5: Attribute Name Format Tests
@@ -145,10 +150,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
-        )
+        assert get_validation_metadata(
+            entry
+        ) is None or "rfc_violations" not in get_validation_metadata(entry)
 
     def test_attribute_name_with_hyphens_passes(self) -> None:
         """Attribute names with hyphens are valid (RFC 4512 § 2.5)."""
@@ -164,10 +168,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
-        )
+        assert get_validation_metadata(
+            entry
+        ) is None or "rfc_violations" not in get_validation_metadata(entry)
 
     def test_attribute_name_with_digits_passes(self) -> None:
         """Attribute names with digits are valid after first character.
@@ -187,10 +190,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
-        )
+        assert get_validation_metadata(
+            entry
+        ) is None or "rfc_violations" not in get_validation_metadata(entry)
 
     def test_attribute_name_starting_with_digit_captures_violation(self) -> None:
         """Attribute name starting with digit should be captured."""
@@ -201,8 +203,8 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success  # Entry NOT rejected
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("RFC 4512 § 2.5" in v and "1invalid" in v for v in violations)
 
     def test_attribute_name_with_special_chars_captures_violation(self) -> None:
@@ -214,8 +216,8 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("invalid@attr" in v and "RFC 4512 § 2.5" in v for v in violations)
 
     def test_attribute_name_with_spaces_captures_violation(self) -> None:
@@ -227,8 +229,8 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
         assert any("invalid attr" in v for v in violations)
 
     # =========================================================================
@@ -247,8 +249,8 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success  # Entry NOT rejected
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        violations = entry.validation_metadata["rfc_violations"]
+        assert get_validation_metadata(entry) is not None
+        violations = get_validation_metadata(entry)["rfc_violations"]
 
         # Should have 3 violations: DN + 2 attributes
         assert len(violations) >= 3
@@ -265,10 +267,10 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert entry.validation_metadata is not None
-        assert "validation_context" in entry.validation_metadata
+        assert get_validation_metadata(entry) is not None
+        assert "validation_context" in get_validation_metadata(entry)
 
-        context = entry.validation_metadata["validation_context"]
+        context = get_validation_metadata(entry)["validation_context"]
         assert context["validator"] == "validate_entry_rfc_compliance"
         assert "dn" in context
         assert "attribute_count" in context
@@ -289,10 +291,10 @@ class TestEntryRfcComplianceValidator:
         assert entry_result.is_success
         entry = entry_result.unwrap()
         # No objectClass requirement violation
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
+        validation_results = (
+            entry.metadata.validation_results if entry.metadata else None
         )
+        assert validation_results is None or "rfc_violations" not in validation_results
 
     def test_entry_with_complex_valid_attributes_passes(self) -> None:
         """Complex valid entry should pass all validations."""
@@ -311,10 +313,9 @@ class TestEntryRfcComplianceValidator:
 
         assert entry_result.is_success
         entry = entry_result.unwrap()
-        assert (
-            entry.validation_metadata is None
-            or "rfc_violations" not in entry.validation_metadata
-        )
+        assert get_validation_metadata(
+            entry
+        ) is None or "rfc_violations" not in get_validation_metadata(entry)
 
     def test_entry_preserves_invalid_data_for_roundtrip(self) -> None:
         """Invalid entries should preserve data (for round-trip conversions)."""
@@ -332,8 +333,8 @@ class TestEntryRfcComplianceValidator:
         assert "cn" in entry.attributes.attributes
 
         # But violations captured
-        assert entry.validation_metadata is not None
-        assert len(entry.validation_metadata["rfc_violations"]) > 0
+        assert get_validation_metadata(entry) is not None
+        assert len(get_validation_metadata(entry)["rfc_violations"]) > 0
 
     def test_validator_uses_correct_regex_pattern(self) -> None:
         """Verify regex pattern matches RFC 4512 § 2.5 spec."""
@@ -352,10 +353,11 @@ class TestEntryRfcComplianceValidator:
             )
             assert entry_result.is_success
             entry = entry_result.unwrap()
-            assert (
-                entry.validation_metadata is None
-                or "rfc_violations" not in entry.validation_metadata
-            ), f"Valid name '{name}' should not have violations"
+            assert get_validation_metadata(
+                entry
+            ) is None or "rfc_violations" not in get_validation_metadata(entry), (
+                f"Valid name '{name}' should not have violations"
+            )
 
         for name in invalid_names:
             entry_result = FlextLdifModels.Entry.create(
@@ -368,10 +370,10 @@ class TestEntryRfcComplianceValidator:
             )
             assert entry_result.is_success
             entry = entry_result.unwrap()
-            assert entry.validation_metadata is not None, (
+            assert get_validation_metadata(entry) is not None, (
                 f"Invalid name '{name}' should have violations"
             )
-            violations = entry.validation_metadata["rfc_violations"]
+            violations = get_validation_metadata(entry)["rfc_violations"]
             assert any(name in v and "RFC 4512 § 2.5" in v for v in violations), (
                 f"Violation should mention invalid attribute name '{name}'"
             )

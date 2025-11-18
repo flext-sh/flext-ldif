@@ -41,7 +41,6 @@ from typing import (
     Self,
     cast,
     overload,
-    override,
 )
 
 from flext_core import FlextLogger, FlextResult, FlextService
@@ -174,12 +173,15 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # def schema(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Schema: ...
 
     @overload
-    def schema(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...  # type: ignore[misc]
+    def schema(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...
 
     @overload
-    def schema(self) -> Self.Schema: ...  # type: ignore[misc]  # Access via self.schema_quirk
+    def schema(self) -> Self.Schema: ...
 
-    def schema(  # type: ignore[override]  # Override FlextService.schema() with different signature
+    # NOTE: This method extends FlextService with schema quirk access.
+    # This is NOT an override - it's a method extension for quirk-specific functionality.
+    # The type checker may complain, but this is intentional - schema() is not part of FlextService.
+    def schema(  # type: ignore[override]  # Intentional extension, not override
         self,
         server_type: str | None = None,
     ) -> Self.Schema | FlextLdifServersBase.Schema | None:
@@ -249,17 +251,17 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # Control auto-execution
     auto_execute: ClassVar[bool] = False
 
-    # NOTE: This method signature differs from FlextService.execute() intentionally.
-    # The protocol (FlextLdifProtocols.Quirks.EntryProtocol) allows parameters,
-    # but FlextService base class doesn't. This is a design decision to support
-    # polymorphic dispatch in quirks while maintaining FlextService compatibility.
-    # We use @override with type: ignore to document this intentional signature difference.
-    @override  # type: ignore[override]  # Intentional signature difference for protocol support
+    # NOTE: This method extends FlextService.execute() with optional parameters for quirk operations.
+    # When called without parameters, it behaves like the base FlextService.execute() (health check).
+    # When called with parameters, it performs quirk-specific operations (parse/write).
+    # This maintains compatibility with FlextService while extending functionality.
+    # This is NOT an override - it's a method extension that supports polymorphic dispatch.
     def execute(
         self,
         ldif_text: str | None = None,
         entries: list[FlextLdifModels.Entry] | None = None,
         operation: Literal["parse", "write"] | None = None,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifModels.Entry | str]:
         r"""Execute quirk operation with auto-detection and V2 modes.
 
@@ -454,6 +456,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         type(instance).__init__(instance, **kwargs)
 
         if cls.auto_execute:
+            # Type narrowing: instance is of type Self (FlextLdifServersBase)
+            if not isinstance(instance, FlextLdifServersBase):
+                msg = f"Instance {instance} is not a FlextLdifServersBase"
+                raise TypeError(msg)
+
             # Extract operation parameters from kwargs
             # Note: kwargs values are dynamically typed as object,
             # type narrowing via isinstance checks
@@ -479,8 +486,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 operation=operation,
             )
             unwrapped: FlextLdifTypes.EntryOrString = result.unwrap()
+            # Type narrowing: unwrapped is EntryOrString, but we need to return Self
+            # This is safe because auto_execute returns the domain result directly
             return cast("Self", unwrapped)
 
+        # Type narrowing: instance is of type Self (FlextLdifServersBase)
+        if not isinstance(instance, FlextLdifServersBase):
+            msg = f"Instance {instance} is not a FlextLdifServersBase"
+            raise TypeError(msg)
         return instance
 
     def _initialize_nested_classes(self) -> None:
@@ -1324,6 +1337,45 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # No parent found - error
             msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
             raise AttributeError(msg)
+
+        @property
+        def server_type(self) -> str:
+            """Get server_type for AclProtocol compliance.
+
+            Returns:
+                Server type identifier from parent Constants.SERVER_TYPE
+
+            """
+            return self._get_server_type()
+
+        @property
+        def priority(self) -> int:
+            """Get priority for AclProtocol compliance.
+
+            Returns:
+                Priority from parent Constants.PRIORITY
+
+            """
+            cls = type(self)
+            # For nested classes, extract parent server class from __qualname__
+            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
+                parent_class_name = cls.__qualname__.split(".")[0]
+                try:
+                    parent_module = __import__(
+                        cls.__module__,
+                        fromlist=[parent_class_name],
+                    )
+                    if hasattr(parent_module, parent_class_name):
+                        parent_server_cls = getattr(parent_module, parent_class_name)
+                        if hasattr(parent_server_cls, "Constants") and hasattr(
+                            parent_server_cls.Constants,
+                            "PRIORITY",
+                        ):
+                            return cast("int", parent_server_cls.Constants.PRIORITY)
+                except (ImportError, AttributeError):
+                    pass
+            # Default priority if not found
+            return 100
 
         # =====================================================================
         # ServerAclProtocol Implementation - Required by Protocol

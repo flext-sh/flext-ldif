@@ -28,6 +28,9 @@ from .support import (
     TestValidators,
 )
 
+# Register docker_manager fixtures plugin
+pytest_plugins = ["tests.fixtures.docker_manager"]
+
 
 class TestFileManager:
     """Simple file manager for tests."""
@@ -55,6 +58,29 @@ def set_test_environment() -> Generator[None]:
     os.environ.pop("FLEXT_LOG_LEVEL", None)
 
 
+@pytest.fixture(autouse=True)
+def reset_flextldif_singleton() -> Generator[None]:
+    """Reset FlextLdif singleton before each test to ensure test isolation.
+
+    This fixture ensures tests are idempotent and parallelizable by preventing
+    state leakage between tests through the FlextLdif singleton instance.
+
+    Addresses requirement: "o testes precisam ser idepontente, paralelizareis
+    par rodar no container compartilhaod e que um nao atrapalhe o outro"
+    (tests must be idempotent, parallelizable, run in shared containers
+    without interfering with each other).
+
+    The fixture runs automatically before each test (autouse=True) and resets
+    the singleton so each test gets a fresh FlextLdif instance.
+
+    """
+    # Reset singleton before test
+    FlextLdif._reset_instance()
+    yield
+    # Reset singleton after test (cleanup)
+    FlextLdif._reset_instance()
+
+
 # ============================================================================
 # DOCKER CONTAINER MANAGEMENT (CENTRALIZED FIXTURES)
 # ============================================================================
@@ -70,17 +96,25 @@ def set_test_environment() -> Generator[None]:
 
 
 @pytest.fixture(scope="module")
-def ldap_container() -> str:
-    """Provide LDAP container connection string.
+def ldap_container(ldap_container_shared: str) -> str:
+    """Provide LDAP container connection string with dynamic port allocation.
+
+    This fixture is an alias for ldap_container_shared from docker_manager.py,
+    providing idempotent and parallelizable tests with automatic Docker
+    container management.
+
+    Args:
+        ldap_container_shared: Dynamic LDAP connection string from docker_manager
 
     Returns:
-        str: LDAP connection URL (e.g., "ldap://localhost:3390")
+        str: LDAP connection URL (e.g., "ldap://localhost:45795")
 
     """
-    # Docker container is expected to be running at localhost:3390
-    # Container name: flext-openldap-test
+    # Pass through the dynamic container connection string
     # Base DN: dc=flext,dc=local
-    return "ldap://localhost:3390"
+    # Admin DN: cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local
+    # Admin Password: REDACTED_LDAP_BIND_PASSWORD123
+    return ldap_container_shared
 
 
 # LDIF processing fixtures - optimized with real services

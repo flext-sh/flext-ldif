@@ -223,6 +223,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
+            *,
+            case_insensitive: bool = False,
+            allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline.
 
@@ -231,6 +234,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             Args:
                 attr_definition: AttributeType definition string
+                case_insensitive: Whether to use case-insensitive pattern matching
+                allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with parsed SchemaAttribute or error
@@ -243,7 +248,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
             # Always try parent's _parse_attribute first (RFC format)
-            parent_result = super()._parse_attribute(attr_definition)
+            parent_result = super()._parse_attribute(
+                attr_definition,
+                case_insensitive=case_insensitive,
+                allow_syntax_quotes=allow_syntax_quotes,
+            )
             if parent_result.is_success:
                 # RFC parser succeeded - enhance metadata as relaxed mode
                 attribute = parent_result.unwrap()
@@ -322,7 +331,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     ),
                 )
             except Exception as e:
-                logger.debug("Relaxed attribute parse exception: %s", e)
+                logger.debug(
+                    "Relaxed attribute parse exception",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 # Return error result for failed parsing
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"Failed to parse attribute definition: {e}",
@@ -748,7 +761,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
             except Exception as e:
-                logger.debug("Relaxed ACL parse failed: %s", e)
+                logger.debug(
+                    "Relaxed ACL parse failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"Failed to parse ACL: {e}",
                 )
@@ -933,7 +950,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
             except Exception as e:
-                logger.debug("Relaxed entry creation failed: %s", e)
+                logger.debug(
+                    "Relaxed entry creation failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to parse entry: {e}",
                 )
@@ -959,7 +980,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
 
             # RFC parser failed - use relaxed mode parsing
-            logger.debug("RFC parser failed, using relaxed mode")
+            logger.debug(
+                "RFC parser failed, using relaxed mode",
+                error=str(parent_result.error) if parent_result.error else None,
+                error_type=type(parent_result.error).__name__
+                if parent_result.error
+                else None,
+            )
             try:
                 entries: list[FlextLdifModels.Entry] = []
 
@@ -981,7 +1008,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
             except (ValueError, TypeError, AttributeError, OSError, Exception) as e:
-                logger.debug("Relaxed LDIF content parse failed: %s", e)
+                logger.debug(
+                    "Relaxed LDIF content parse failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Failed to parse LDIF content: {e}",
                 )
@@ -1007,7 +1038,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
 
             # RFC write failed - use relaxed mode
-            logger.debug("RFC write failed, using relaxed mode")
+            logger.debug(
+                "RFC write failed, using relaxed mode",
+                error=str(parent_result.error) if parent_result.error else None,
+                error_type=type(parent_result.error).__name__
+                if parent_result.error
+                else None,
+            )
             try:
                 # Build LDIF string from Entry model
                 ldif_lines: list[str] = []
@@ -1047,7 +1084,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return FlextResult[str].ok(ldif_text)
 
             except Exception as e:
-                logger.debug("Write entry failed: %s", e)
+                logger.debug(
+                    "Write entry failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return FlextResult[str].fail(f"Failed to write entry: {e}")
 
         def can_handle_attribute(
@@ -1111,7 +1152,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"DN normalization failed for DN: {dn}: {norm_result.error}"
                 )
             except Exception as e:
-                logger.debug("DN normalization exception: %s", e)
+                logger.debug(
+                    "DN normalization exception",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return FlextResult[str].fail(f"DN normalization failed: {e}")
 
 
