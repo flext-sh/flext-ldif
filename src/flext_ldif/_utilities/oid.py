@@ -6,15 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import operator
 import re
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.models import FlextLdifModels
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesOID:
@@ -60,7 +59,8 @@ class FlextLdifUtilitiesOID:
                 return match.group(1)
         except (re.error, AttributeError) as e:
             logger.debug(
-                f"Failed to extract OID from definition: error={e!s}, error_type={type(e).__name__}",
+                "Failed to extract OID from definition",
+                error=str(e),
             )
         return None
 

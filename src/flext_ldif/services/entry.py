@@ -393,12 +393,9 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             error_msg = f"Failed to adapt entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {adapted_entry_result.error}"
             if self.logger is not None:
                 self.logger.error(
-                    "Failed to adapt entry",
+                    "Failed to create adapted entry",
                     entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
                     error=str(adapted_entry_result.error),
-                    error_type=type(adapted_entry_result.error).__name__
-                    if adapted_entry_result.error
-                    else None,
                 )
             return FlextResult[FlextLdifModels.Entry].fail(error_msg or "Unknown error")
 
@@ -450,7 +447,11 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         except Exception as e:
             error_msg = f"Failed to clean entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {e}"
             if self.logger is not None:
-                self.logger.exception(error_msg)
+                self.logger.exception(
+                    "Failed to remove attributes",
+                    entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
+                    error=str(e),
+                )
             return FlextResult[FlextLdifModels.Entry].fail(error_msg or "Unknown error")
 
 

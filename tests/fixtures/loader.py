@@ -15,7 +15,7 @@ from dataclasses import dataclass
 # Python 3.13+
 from enum import StrEnum
 from pathlib import Path
-from typing import Final
+from typing import ClassVar, Final
 
 
 class FlextLdifFixtures:
@@ -29,14 +29,45 @@ class FlextLdifFixtures:
         loader = FlextLdifFixtures.Loader()
         oid_schema = loader.load(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
 
-        # Server-specific loading
-        oid = FlextLdifFixtures.OID()
+        # Server-specific loading (singleton pattern for performance)
+        oid = FlextLdifFixtures.get_oid()  # Cached singleton
         schema = oid.schema()
         acl = oid.acl()
 
         # Metadata inspection
         metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
     """
+
+    # Singleton instances for server-specific loaders
+    _instances: ClassVar[dict[str, object]] = {}
+
+    @classmethod
+    def get_oid(cls) -> FlextLdifFixtures.OID:
+        """Get singleton OID fixture loader."""
+        if "oid" not in cls._instances:
+            cls._instances["oid"] = cls.OID()
+        return cls._instances["oid"]  # type: ignore[return-value]
+
+    @classmethod
+    def get_oud(cls) -> FlextLdifFixtures.OUD:
+        """Get singleton OUD fixture loader."""
+        if "oud" not in cls._instances:
+            cls._instances["oud"] = cls.OUD()
+        return cls._instances["oud"]  # type: ignore[return-value]
+
+    @classmethod
+    def get_openldap(cls) -> FlextLdifFixtures.OpenLDAP:
+        """Get singleton OpenLDAP fixture loader."""
+        if "openldap" not in cls._instances:
+            cls._instances["openldap"] = cls.OpenLDAP()
+        return cls._instances["openldap"]  # type: ignore[return-value]
+
+    @classmethod
+    def get_loader(cls) -> FlextLdifFixtures.Loader:
+        """Get singleton generic fixture loader."""
+        if "loader" not in cls._instances:
+            cls._instances["loader"] = cls.Loader()
+        return cls._instances["loader"]  # type: ignore[return-value]
 
     class ServerType(StrEnum):
         """Supported LDAP server types with quirks."""
@@ -82,6 +113,12 @@ class FlextLdifFixtures:
                 {server_type}_entries_fixtures.ldif
                 {server_type}_integration_fixtures.ldif
         """
+
+        # Class-level caches for performance optimization
+        _content_cache: ClassVar[
+            dict[tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType], str]
+        ] = {}
+        _metadata_cache: ClassVar[dict[Path, FlextLdifFixtures.Metadata]] = {}
 
         def __init__(self, fixtures_root: Path | None = None) -> None:
             """Initialize fixture loader.
@@ -143,8 +180,11 @@ class FlextLdifFixtures:
                 FileNotFoundError: If fixture file doesn't exist
 
             """
-            file_path = self._get_fixture_path(server_type, fixture_type)
-            return file_path.read_text(encoding="utf-8")
+            cache_key = (server_type, fixture_type)
+            if cache_key not in self._content_cache:
+                file_path = self._get_fixture_path(server_type, fixture_type)
+                self._content_cache[cache_key] = file_path.read_text(encoding="utf-8")
+            return self._content_cache[cache_key]
 
         def load_all(
             self,
@@ -246,13 +286,19 @@ class FlextLdifFixtures:
 
             """
             file_path = self._get_fixture_path(server_type, fixture_type)
-            content = file_path.read_text(encoding="utf-8")
+
+            # Use cache if available
+            if file_path in self._metadata_cache:
+                return self._metadata_cache[file_path]
+
+            # Use content cache to avoid double read
+            content = self.load(server_type, fixture_type)
             lines = content.splitlines()
 
             # Count entries (lines starting with "dn:")
             entry_count = sum(1 for line in lines if line.strip().startswith("dn:"))
 
-            return FlextLdifFixtures.Metadata(
+            metadata = FlextLdifFixtures.Metadata(
                 server_type=server_type,
                 fixture_type=fixture_type,
                 file_path=file_path,
@@ -260,6 +306,9 @@ class FlextLdifFixtures:
                 entry_count=entry_count,
                 size_bytes=file_path.stat().st_size,
             )
+
+            self._metadata_cache[file_path] = metadata
+            return metadata
 
         def fixture_exists(
             self,

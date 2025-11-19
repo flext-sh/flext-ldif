@@ -7,13 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-import logging
 import re
 from typing import cast
 
+from flext_core import FlextLogger
+
 from flext_ldif.models import FlextLdifModels
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesEntry:
@@ -99,21 +100,21 @@ class FlextLdifUtilitiesEntry:
             # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
                 return {}
-            result: dict[str, list[str]] = {}
+            normalized_result: dict[str, list[str]] = {}
             for attr_name, values in attributes.items():
                 # Normalize to list[str] - handle all input types
                 if isinstance(values, list):
-                    result[attr_name] = [
+                    normalized_result[attr_name] = [
                         v.decode("utf-8", errors="replace")
                         if isinstance(v, bytes)
                         else str(v)
                         for v in values
                     ]
                 elif isinstance(values, bytes):
-                    result[attr_name] = [values.decode("utf-8", errors="replace")]
+                    normalized_result[attr_name] = [values.decode("utf-8", errors="replace")]
                 else:
-                    result[attr_name] = [str(values)]
-            return result
+                    normalized_result[attr_name] = [str(values)]
+            return normalized_result
 
         result: dict[str, list[str]] = {}
 
@@ -235,7 +236,9 @@ class FlextLdifUtilitiesEntry:
                         break
                     except Exception as e:
                         logger.debug(
-                            f"Base64 validation failed: attribute_name={attr_name}, error={e!s}, error_type={type(e).__name__}",
+                            "Base64 validation failed",
+                            attribute_name=attr_name,
+                            error=str(e),
                         )
 
         return base64_attrs

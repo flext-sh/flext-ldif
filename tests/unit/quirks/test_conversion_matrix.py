@@ -251,13 +251,19 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
         self,
         attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
-        return FlextResult.ok("(test)")
+        # Generate valid LDAP attribute definition with OID
+        oid = attr_data.oid or "1.2.3.4.5"
+        name = attr_data.name or "test"
+        return FlextResult.ok(f"({oid} NAME '{name}')")
 
     def _write_objectclass(
         self,
         oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
-        return FlextResult.ok("(test)")
+        # Generate valid LDAP objectClass definition with OID
+        oid = oc_data.oid or "1.2.3.4.6"
+        name = oc_data.name or "test"
+        return FlextResult.ok(f"({oid} NAME '{name}' SUP top STRUCTURAL)")
 
     def parse(
         self,

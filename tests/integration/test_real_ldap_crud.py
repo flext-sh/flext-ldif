@@ -18,114 +18,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from ldap3 import ALL, Connection, Server
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 
-# LDAP connection details for flext-openldap-test container
-LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
-LDAP_BASE_DN = "dc=flext,dc=local"
-
-
-@pytest.fixture(scope="module")
-def ldap_connection(ldap_container: str) -> Generator[Connection]:
-    """Create connection to real LDAP server via Docker fixture.
-
-    Args:
-        ldap_container: Docker LDAP connection string from conftest fixture
-
-    Yields:
-        Connection: ldap3 connection to LDAP server
-
-    """
-    # ldap_container is a connection URL provided by the Docker fixture
-    # Extract host:port from the connection string
-    # Expected format: "ldap://localhost:3390"
-    host_port = ldap_container.replace("ldap://", "").replace("ldaps://", "")
-
-    server = Server(f"ldap://{host_port}", get_info=ALL)
-    conn = Connection(
-        server,
-        user=LDAP_ADMIN_DN,
-        password=LDAP_ADMIN_PASSWORD,
-    )
-
-    # Check if server is available
-    try:
-        if not conn.bind():
-            pytest.skip(f"LDAP server not available at {host_port}")
-    except Exception as e:
-        pytest.skip(f"LDAP server not available at {host_port}: {e}")
-
-    yield conn
-    conn.unbind()
-
-
-@pytest.fixture
-def clean_test_ou(ldap_connection: Connection) -> Generator[str]:
-    """Create and clean up test OU."""
-    test_ou_dn = f"ou=FlextLdifTests,{LDAP_BASE_DN}"
-
-    # Try to delete existing test OU (ignore errors)
-    try:
-        # Search for all entries under test OU
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            # Delete in reverse order (leaves first)
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    # Ignore delete errors during cleanup - entries may already be deleted
-                    # or dependencies may prevent deletion. Cleanup should not fail tests.
-                    pass
-    except Exception:
-        # OU doesn't exist yet - this is expected for first test run
-        pass
-
-    # Create test OU (or recreate if deleted above)
-    try:
-        ldap_connection.add(
-            test_ou_dn,
-            ["organizationalUnit"],
-            {"ou": "FlextLdifTests"},
-        )
-    except Exception:
-        # OU already exists - this is expected if previous test didn't clean up
-        pass
-
-    yield test_ou_dn
-
-    # Cleanup after test - delete all entries under test OU
-    try:
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    # Ignore cleanup errors - entries may have dependencies or already be deleted
-                    pass
-    except Exception:
-        # Cleanup failed, but that's okay - test should not fail due to cleanup issues
-        pass
+# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
+# They use unique_dn_suffix for isolation and indepotency in parallel execution
 
 
 @pytest.fixture
@@ -145,17 +47,19 @@ class TestRealLdapCRUD:
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Test Create→Read→Update→Delete cycle."""
-        # CREATE: Build entry using FlextLdif API
-        person_dn = f"cn=CRUD Test User,{clean_test_ou}"
+        # CREATE: Build entry using FlextLdif API with isolated username
+        unique_username = make_test_username("CRUDTestUser")
+        person_dn = f"cn={unique_username},{clean_test_ou}"
         person_result = flext_api.create_entry(
             dn=person_dn,
             attributes={
-                "cn": "CRUD Test User",
+                "cn": unique_username,
                 "sn": "User",
                 "mail": "crud@example.com",
-                "uid": "crud_user",
+                "uid": unique_username,
             },
             objectclasses=["inetOrgPerson", "person", "top"],
         )
@@ -213,16 +117,18 @@ class TestRealLdapBatchOperations:
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Create batch of entries using FlextLdif API and write to LDAP."""
-        # Build 20 entries using API (no manual loops!)
+        # Build 20 entries using API with isolated usernames
         entries = []
         for i in range(20):
-            person_dn = f"cn=Batch User {i},{clean_test_ou}"
+            unique_username = make_test_username(f"BatchUser{i}")
+            person_dn = f"cn={unique_username},{clean_test_ou}"
             result = flext_api.create_entry(
                 dn=person_dn,
                 attributes={
-                    "cn": f"Batch User {i}",
+                    "cn": unique_username,
                     "sn": f"User{i}",
                     "mail": f"batch{i}@example.com",
                 },
@@ -277,16 +183,18 @@ class TestRealLdapBatchOperations:
         clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Export batch from LDAP to LDIF file, then reimport."""
-        # Create test data in LDAP
-        for i in range(10):
-            person_dn = f"cn=Export Batch {i},{clean_test_ou}"
+        # Create test data in LDAP with isolated usernames
+        unique_usernames = [make_test_username(f"ExportBatch{i}") for i in range(10)]
+        for i, unique_username in enumerate(unique_usernames):
+            person_dn = f"cn={unique_username},{clean_test_ou}"
             ldap_connection.add(
                 person_dn,
                 ["person", "inetOrgPerson"],
                 {
-                    "cn": f"Export Batch {i}",
+                    "cn": unique_username,
                     "sn": f"Batch{i}",
                     "mail": f"export{i}@example.com",
                 },

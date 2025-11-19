@@ -17,7 +17,7 @@ import contextlib
 import logging
 import re
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, Unpack, cast, override
+from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, Unpack, cast
 
 from flext_core import (
     FlextLogger,
@@ -600,8 +600,7 @@ class FlextLdifModelsDomains:
             """Check if attribute exists."""
             return key in self.attributes
 
-        @override
-        def __iter__(self) -> Iterator[str]:
+        def __iter__(self) -> Iterator[str]:  # type: ignore[override]
             """Iterate over attribute names (intentionally overrides BaseModel).
 
             BaseModel.__iter__ yields (name, value) tuples, but we only yield names
@@ -611,6 +610,10 @@ class FlextLdifModelsDomains:
 
             Returns:
                 Generator of attribute names
+
+            Note:
+                Type ignore is intentional - we override BaseModel.__iter__ with
+                different return type for LDIF-specific dict-like behavior.
 
             """
             yield from self.attributes.keys()
@@ -1269,11 +1272,7 @@ class FlextLdifModelsDomains:
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
                 # Use object.__setattr__ to bypass Pydantic validation and avoid recursion
-                # Also mark field as set to prevent re-validation
-                object.__setattr__(self, "validation_violations", violations)
-                # Mark field as already set to prevent Pydantic from re-validating
-                if hasattr(self, "__pydantic_fields_set__"):
-                    self.__pydantic_fields_set__.add("validation_violations")
+                object.__setattr__(self, "validation_violations", violations)  # noqa: PLC2801
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
@@ -1405,50 +1404,58 @@ class FlextLdifModelsDomains:
             # - Optional transformation or filtering based on application rules
             return self
 
-        def _validate_dn(self, dn_value: str | None) -> list[str]:
-            """Validate DN format per RFC 4514 § 2.3, 2.4."""
+        def _validate_dn(self, dn_value: str) -> list[str]:
+            """Validate DN format per RFC 4514 § 2.3, 2.4.
+
+            Note: dn_value is guaranteed to be non-None since dn field is required.
+            """
             violations: list[str] = []
-            if dn_value is None:
-                violations.append("RFC 2849 § 2: DN is required (received None)")
-            elif not dn_value or not dn_value.strip():
+            if not dn_value or not dn_value.strip():
                 violations.append(
                     "RFC 2849 § 2: DN is required (empty or whitespace DN)",
                 )
-            else:
-                components = [
-                    comp.strip() for comp in dn_value.split(",") if comp.strip()
-                ]
-                if not components:
-                    violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
-                else:
-                    dn_component_pattern = re.compile(
-                        FlextLdifConstants.LdifPatterns.DN_COMPONENT,
-                        re.IGNORECASE,
+                return violations
+
+            components = [comp.strip() for comp in dn_value.split(",") if comp.strip()]
+            if not components:
+                violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
+                return violations
+
+            dn_component_pattern = re.compile(
+                FlextLdifConstants.LdifPatterns.DN_COMPONENT,
+                re.IGNORECASE,
+            )
+            for idx, comp in enumerate(components):
+                if not dn_component_pattern.match(comp):
+                    violations.append(
+                        f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format",
                     )
-                    for idx, comp in enumerate(components):
-                        if not dn_component_pattern.match(comp):
-                            violations.append(
-                                f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format",
-                            )
             return violations
 
         def _validate_attributes_required(self) -> list[str]:
-            """Validate that entry has at least one attribute per RFC 2849 § 2."""
+            """Validate that entry has at least one attribute per RFC 2849 § 2.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
             violations: list[str] = []
             if self.attributes is None:
                 violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (received None)",
+                    "RFC 2849 § 2: Entry must have at least one attribute (missing)",
                 )
-            elif not self.attributes.attributes:
+                return violations
+            if not self.attributes.attributes:
                 violations.append(
                     "RFC 2849 § 2: Entry must have at least one attribute (empty)",
                 )
             return violations
 
         def _validate_attribute_descriptions(self) -> list[str]:
-            """Validate attribute descriptions per RFC 4512 § 2.5."""
+            """Validate attribute descriptions per RFC 4512 § 2.5.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
             violations: list[str] = []
-            if not self.attributes or not self.attributes.attributes:
+            if self.attributes is None or not self.attributes.attributes:
                 return violations
 
             for attr_desc in self.attributes.attributes:
@@ -1484,15 +1491,21 @@ class FlextLdifModelsDomains:
                         )
             return violations
 
-        def _validate_objectclass(self, dn_value: str | None) -> list[str]:
-            """Validate objectClass presence per RFC 4512 § 2.4.1."""
+        def _validate_objectclass(self, dn_value: str) -> list[str]:
+            """Validate objectClass presence per RFC 4512 § 2.4.1.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
             violations: list[str] = []
             # Schema entries exempt from objectClass requirement
-            is_schema_entry = dn_value and (
-                dn_value.lower().startswith("cn=schema")
-                or dn_value.lower().startswith("cn=subschema")
-            )
-            if is_schema_entry or not self.attributes or not self.attributes.attributes:
+            is_schema_entry = dn_value.lower().startswith(
+                "cn=schema"
+            ) or dn_value.lower().startswith("cn=subschema")
+            if (
+                self.attributes is None
+                or is_schema_entry
+                or not self.attributes.attributes
+            ):
                 return violations
 
             has_objectclass = any(
@@ -1505,14 +1518,23 @@ class FlextLdifModelsDomains:
                 )
             return violations
 
-        def _validate_naming_attribute(self, dn_value: str | None) -> list[str]:
-            """Validate naming attribute presence per RFC 4512 § 2.3."""
+        def _validate_naming_attribute(self, dn_value: str) -> list[str]:
+            """Validate naming attribute presence per RFC 4512 § 2.3.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
             violations: list[str] = []
-            if not dn_value or not self.attributes or not self.attributes.attributes:
+            if (
+                not dn_value
+                or self.attributes is None
+                or not self.attributes.attributes
+            ):
                 return violations
 
             first_rdn = (
-                dn_value.split(",")[0].strip() if "," in dn_value else dn_value.strip()
+                dn_value.split(",", maxsplit=1)[0].strip()
+                if "," in dn_value
+                else dn_value.strip()
             )
             if "=" not in first_rdn:
                 return violations
@@ -1529,9 +1551,12 @@ class FlextLdifModelsDomains:
             return violations
 
         def _validate_binary_options(self) -> list[str]:
-            """Validate binary attribute options per RFC 2849 § 5.2."""
+            """Validate binary attribute options per RFC 2849 § 5.2.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
             violations: list[str] = []
-            if not self.attributes or not self.attributes.attributes:
+            if self.attributes is None or not self.attributes.attributes:
                 return violations
 
             for attr_name, attr_values in self.attributes.attributes.items():
@@ -1554,9 +1579,12 @@ class FlextLdifModelsDomains:
             return violations
 
         def _validate_attribute_syntax(self) -> list[str]:
-            """Validate attribute name/option syntax per RFC 4512 § 2.5.1-2.5.2."""
+            """Validate attribute name/option syntax per RFC 4512 § 2.5.1-2.5.2.
+
+            Note: self.attributes may be None when using model_construct (bypasses validation).
+            """
             violations: list[str] = []
-            if not self.attributes or not self.attributes.attributes:
+            if self.attributes is None or not self.attributes.attributes:
                 return violations
 
             attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
@@ -1576,7 +1604,7 @@ class FlextLdifModelsDomains:
                     violations.extend(invalid_options)
             return violations
 
-        def _validate_changetype(self, dn_value: str | None) -> list[str]:
+        def _validate_changetype(self) -> list[str]:
             """Validate changetype field per RFC 2849 § 5.7."""
             violations: list[str] = []
             # RFC Compliance: changetype is now a direct field on Entry
@@ -1601,10 +1629,17 @@ class FlextLdifModelsDomains:
             Strategy: PRESERVE problematic entries for round-trip conversions,
             capture violations in validation_metadata for downstream handling.
             """
-            dn_value = str(self.dn.value) if self.dn else None
-
             # Collect violations from all validators
             violations: list[str] = []
+
+            # Handle case where dn might be None (e.g., model_construct)
+            if self.dn is None:
+                violations.append("RFC 2849 § 2.1: DN is required")
+                # Capture violations in validation_metadata (default_factory ensures dict exists)
+                if violations:
+                    self.metadata.validation_results["rfc_violations"] = violations
+                return self
+            dn_value = str(self.dn.value)
             violations.extend(self._validate_dn(dn_value))
             violations.extend(self._validate_attributes_required())
             violations.extend(self._validate_attribute_descriptions())
@@ -1612,21 +1647,18 @@ class FlextLdifModelsDomains:
             violations.extend(self._validate_naming_attribute(dn_value))
             violations.extend(self._validate_binary_options())
             violations.extend(self._validate_attribute_syntax())
-            violations.extend(self._validate_changetype(dn_value))
+            violations.extend(self._validate_changetype())
 
-            # ALWAYS initialize validation_metadata as dict (Pydantic 2 pattern)
-            if self.metadata.validation_results is None:
-                self.metadata.validation_results = {}
-
-            # Capture violations in validation_metadata
+            # Capture violations in validation_metadata (default_factory ensures dict exists)
             if violations:
                 self.metadata.validation_results["rfc_violations"] = violations
+                attribute_count = (
+                    len(self.attributes.attributes) if self.attributes else 0
+                )
                 self.metadata.validation_results["validation_context"] = {
                     "validator": "validate_entry_rfc_compliance",
                     "dn": dn_value,
-                    "attribute_count": len(self.attributes.attributes)
-                    if self.attributes
-                    else 0,
+                    "attribute_count": attribute_count,
                     "total_violations": len(violations),
                 }
 
@@ -1646,12 +1678,15 @@ class FlextLdifModelsDomains:
             if not rules.get("requires_objectclass"):
                 return violations
 
-            has_objectclass = False
-            if self.attributes and self.attributes.attributes:
-                has_objectclass = any(
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            has_objectclass = (
+                any(
                     attr_name.lower() == "objectclass"
                     for attr_name in self.attributes.attributes
                 )
+                if self.attributes.attributes
+                else False
+            )
 
             is_schema_entry = dn_value and (
                 dn_value.lower().startswith("cn=schema")
@@ -1669,10 +1704,10 @@ class FlextLdifModelsDomains:
         ) -> list[str]:
             """Check naming attribute requirement from server rules."""
             violations: list[str] = []
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
             if (
                 not rules.get("requires_naming_attr")
                 or not dn_value
-                or not self.attributes
                 or not self.attributes.attributes
             ):
                 return violations
@@ -1696,10 +1731,10 @@ class FlextLdifModelsDomains:
         ) -> list[str]:
             """Check binary attribute option requirement from server rules."""
             violations: list[str] = []
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
             if (
                 not rules.get("requires_binary_option")
                 or rules.get("auto_detect_binary")
-                or not self.attributes
                 or not self.attributes.attributes
             ):
                 return violations
@@ -1750,9 +1785,7 @@ class FlextLdifModelsDomains:
 
             # Store server-specific violations in validation_metadata (if any)
             if server_violations:
-                if self.metadata.validation_results is None:
-                    self.metadata.validation_results = {}
-
+                # default_factory ensures dict exists
                 self.metadata.validation_results["server_specific_violations"] = (
                     server_violations
                 )
@@ -2213,8 +2246,7 @@ class FlextLdifModelsDomains:
 
             """
             # Case-insensitive attribute lookup (LDAP standard)
-            if self.attributes is None:
-                return []
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
             attr_name_lower = attribute_name.lower()
             for stored_name, attr_values in self.attributes.attributes.items():
                 if stored_name.lower() == attr_name_lower:
@@ -2256,8 +2288,7 @@ class FlextLdifModelsDomains:
             List of attribute names (case as stored in entry)
 
             """
-            if self.attributes is None:
-                return []
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
             return list(self.attributes.attributes.keys())
 
         def get_all_attributes(self) -> dict[str, list[str]]:
@@ -2267,8 +2298,7 @@ class FlextLdifModelsDomains:
             Dictionary of attribute_name -> list[str] (deep copy)
 
             """
-            if self.attributes is None:
-                return {}
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
             return dict(self.attributes.attributes)
 
         def count_attributes(self) -> int:
@@ -2278,8 +2308,7 @@ class FlextLdifModelsDomains:
             Number of attributes (including multivalued attributes count as 1)
 
             """
-            if self.attributes is None:
-                return 0
+            # Note: self.attributes is guaranteed to be non-None since it's a required field
             return len(self.attributes.attributes)
 
         def get_dn_components(self) -> list[str]:
@@ -2289,6 +2318,7 @@ class FlextLdifModelsDomains:
             List of DN components (e.g., ["cn=REDACTED_LDAP_BIND_PASSWORD", "dc=example", "dc=com"])
 
             """
+            # Note: self.dn is guaranteed to be non-None since it's a required field
             if self.dn is None:
                 return []
             return [comp.strip() for comp in self.dn.value.split(",") if comp.strip()]
@@ -2324,29 +2354,9 @@ class FlextLdifModelsDomains:
             New Entry instance with same values (shallow copy of attributes)
 
             """
-            return FlextLdifModelsDomains.Entry(
-                dn=self.dn,
-                attributes=(
-                    FlextLdifModelsDomains.LdifAttributes(
-                        attributes=dict(self.attributes.attributes),
-                    )
-                    if self.attributes
-                    else None
-                ),
-                metadata=self.metadata,
-                acls=list(self.metadata.acls) if self.metadata.acls else None,
-                objectclasses=list(self.metadata.objectclasses)
-                if self.metadata.objectclasses
-                else None,
-                entry_metadata=dict(self.metadata.write_options)
-                if self.metadata.write_options
-                else None,
-                validation_metadata=(
-                    dict(self.metadata.validation_results)
-                    if self.metadata.validation_results is not None
-                    else {}
-                ),
-            )
+            # Use model_copy to create a copy - all metadata fields are in metadata
+            # Entry only has: dn, attributes, changetype, metadata
+            return self.model_copy(deep=True)
 
         @computed_field
         def is_schema_entry(self) -> bool:
@@ -2379,7 +2389,10 @@ class FlextLdifModelsDomains:
             True if entry has validation errors in validation_metadata, False otherwise
 
             """
-            if not self.metadata.validation_results:
+            if (
+                not self.metadata.validation_results
+                or len(self.metadata.validation_results) == 0
+            ):
                 return False
             return bool(self.metadata.validation_results.get("errors"))
 
@@ -2434,7 +2447,7 @@ class FlextLdifModelsDomains:
         )
         transformation_type: str = Field(
             ...,
-            description="Type of transformation: renamed, removed, modified, added",
+            description="Type of transformation: renamed, removed, modified, added, soft_deleted",
         )
         reason: str = Field(
             default="",
@@ -2445,7 +2458,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def validate_transformation_type(cls, v: str) -> str:
             """Validate transformation type is one of the allowed values."""
-            allowed_types = {"renamed", "removed", "modified", "added"}
+            allowed_types = {"renamed", "removed", "modified", "added", "soft_deleted"}
             if v not in allowed_types:
                 msg = (
                     f"Invalid transformation_type '{v}'. "
@@ -2554,8 +2567,8 @@ class FlextLdifModelsDomains:
             default_factory=list,
             description="ObjectClass definitions for schema validation (not RFC LDIF data)",
         )
-        validation_results: dict[str, object] | None = Field(
-            default=None,
+        validation_results: dict[str, object] = Field(
+            default_factory=dict,
             description="Validation results and metadata from entry processing (was validation_metadata)",
         )
         processing_stats: FlextLdifModelsDomains.EntryStatistics | None = Field(
@@ -2569,6 +2582,143 @@ class FlextLdifModelsDomains:
         removed_attributes: dict[str, list[str]] = Field(
             default_factory=dict,
             description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
+        )
+
+        # =====================================================================
+        # ZERO DATA LOSS TRACKING (Phase 2: Round-trip Support)
+        # =====================================================================
+        # These fields ensure no data is lost during OID↔OUD↔RFC conversions.
+        # All original formats are preserved for perfect round-trip fidelity.
+
+        original_format_details: dict[str, object] = Field(
+            default_factory=dict,
+            description=(
+                "Preservation of original formatting for round-trip: "
+                "{'dn_spacing': 'cn=test, dc=example', "
+                "'boolean_format': '0/1', "
+                "'aci_indentation': [...], "
+                "'objectclass_case': {'person': 'Person'}, "
+                "'syntax_quotes': True, "
+                "'syntax_spacing': '  ', "
+                "'attribute_case': 'attributetypes', "
+                "'objectclass_case': 'objectclasses', "
+                "'name_format': 'single', "
+                "'x_origin_presence': False}"
+            ),
+        )
+        # =====================================================================
+        # SCHEMA FORMATTING DETAILS (Complete Round-trip Fidelity)
+        # =====================================================================
+        # These fields capture EVERY minimal difference in schema definitions
+        # to ensure perfect round-trip conversion between OID/OUD/RFC
+
+        schema_format_details: dict[str, object] = Field(
+            default_factory=dict,
+            description=(
+                "Complete schema formatting preservation for zero data loss: "
+                "{'syntax_quotes': True, "  # OID uses SYNTAX '1.2.3', OUD/RFC use SYNTAX 1.2.3
+                "'syntax_spacing': '  ', "  # Spaces after SYNTAX (OID has 2 spaces, OUD has 0)
+                "'syntax_spacing_before': '', "  # Spaces before SYNTAX keyword
+                "'attribute_case': 'attributetypes', "  # attributetypes vs attributeTypes
+                "'objectclass_case': 'objectclasses', "  # objectclasses vs objectClasses
+                "'name_format': 'single', "  # 'single' vs 'multiple' (NAME 'uid' vs NAME ( 'uid' 'userid' ))
+                "'name_values': ['uid'], "  # Original name values if multiple
+                "'x_origin_presence': False, "  # Whether X-ORIGIN was present
+                "'x_origin_value': None, "  # Original X-ORIGIN value if present
+                "'obsolete_presence': False, "  # Whether OBSOLETE was present
+                "'obsolete_position': None, "  # Position of OBSOLETE in definition
+                "'equality_presence': True, "  # Whether EQUALITY was present
+                "'substr_presence': True, "  # Whether SUBSTR was present
+                "'ordering_presence': False, "  # Whether ORDERING was present
+                "'field_order': ['OID', 'NAME', 'EQUALITY', 'SUBSTR', 'SYNTAX'], "  # Original field order
+                "'spacing_between_fields': {'NAME_EQUALITY': ' ', 'EQUALITY_SUBSTR': ' '}, "  # Spaces between fields
+                "'trailing_spaces': '  ', "  # Trailing spaces after closing paren
+                "'original_string_complete': '( 0.9.2342... )  '}"  # Complete original string with ALL formatting
+            ),
+        )
+        soft_delete_markers: list[str] = Field(
+            default_factory=list,
+            description=(
+                "Attributes soft-deleted during conversion (can be restored). "
+                "Different from removed_attributes: these are intentionally hidden "
+                "for target server but preserved for reverse conversion."
+            ),
+        )
+        original_attribute_case: dict[str, str] = Field(
+            default_factory=dict,
+            description=(
+                "Original case of attribute names: {'objectclass': 'objectClass', "
+                "'cn': 'CN'}. Used to restore original case during reverse conversion."
+            ),
+        )
+        schema_quirks_applied: list[str] = Field(
+            default_factory=list,
+            description=(
+                "List of schema quirks applied during parsing: "
+                "['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']"
+            ),
+        )
+        boolean_conversions: dict[str, dict[str, str]] = Field(
+            default_factory=dict,
+            description=(
+                "Boolean conversion tracking: "
+                "{'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}"
+            ),
+        )
+
+        # =====================================================================
+        # MINIMAL DIFFERENCES TRACKING (Complete Character-Level Preservation)
+        # =====================================================================
+        # Captures EVERY minimal difference for perfect round-trip conversion:
+        # - Character-by-character differences
+        # - Spacing (leading, trailing, internal, between fields)
+        # - Case differences (attribute names, objectClass names, etc.)
+        # - Punctuation (semicolons, commas, colons, parentheses, etc.)
+        # - Quotes (single, double, presence/absence)
+        # - Encoding differences
+        # - Missing/added characters
+        # - String format differences (original vs converted)
+
+        minimal_differences: dict[str, dict[str, object]] = Field(
+            default_factory=dict,
+            description=(
+                "Complete minimal differences tracking for zero data loss: "
+                "{'dn': {'has_differences': True, 'original': 'cn=test, dc=example', "
+                "'converted': 'cn=test,dc=example', 'differences': [...], "
+                "'spacing_changes': {...}, 'case_changes': [...], "
+                "'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, "
+                "'attribute_cn': {'has_differences': False, ...}, "
+                "'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", "
+                "'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', "
+                "'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}"
+            ),
+        )
+
+        # Original strings preservation (NEVER lose original data)
+        original_strings: dict[str, str] = Field(
+            default_factory=dict,
+            description=(
+                "Complete preservation of original strings before ANY conversion: "
+                "{'dn_original': 'cn=test, dc=example;', "
+                "'attribute_cn_original': 'CN', "
+                "'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", "
+                "'acl_original': 'orclaci: { ... }', "
+                "'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}"
+            ),
+        )
+
+        # Conversion history (complete audit trail)
+        conversion_history: list[dict[str, object]] = Field(
+            default_factory=list,
+            description=(
+                "Complete conversion history for audit trail: "
+                "[{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', "
+                "'original': {...}, 'converted': {...}, 'differences': {...}, "
+                "'server_type': 'oid', 'operation': 'parse'}, "
+                "{'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', "
+                "'original': {...}, 'converted': {...}, 'differences': {...}, "
+                "'server_type': 'rfc', 'operation': 'normalize'}, ...]"
+            ),
         )
 
         @classmethod

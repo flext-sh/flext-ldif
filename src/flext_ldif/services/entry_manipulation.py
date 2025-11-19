@@ -63,7 +63,7 @@ class _EntryManipulationConstants:
     class ActiveDirectoryAttributes:
         """Active Directory attribute names."""
 
-        PWD_LAST_SET: Final[str] = "pwdLastSet"
+        PWD_LAST_SET: Final[str] = "pwdLastSet"  # noqa: S105 (not a password, attribute name)
 
     class RegexPatterns:
         """Regular expression patterns for entry manipulation."""
@@ -132,18 +132,22 @@ class EntryManipulationServices:
         return FlextResult[object].ok(attr_dict[attr_name])
 
     @staticmethod
-    def normalize_attribute_value(attr_value: object | None) -> FlextResult[str]:
+    def normalize_attribute_value(attr_value: object) -> FlextResult[str]:
         """Normalize LDAP attribute value to string.
 
         Args:
             attr_value: Raw LDAP attribute value (list or single value).
+                       Type annotation allows object but caller must ensure non-None.
 
         Returns:
             FlextResult with normalized string value or failure if invalid/empty.
 
         """
+        # Defensive check for None values
         if attr_value is None:
-            return FlextResult[str].fail("Attribute value is None")
+            return FlextResult[str].fail(
+                "Attribute value is None - cannot normalize",
+            )
 
         if FlextRuntime.is_list_like(attr_value) and len(attr_value) > 0:
             return FlextResult[str].ok(str(attr_value[0]))
@@ -615,7 +619,11 @@ class EntryManipulationServices:
             retry_count = 0
 
             logger.debug(
-                f"Adding entry with quirks_mode: entry_dn={dn_str}, quirks_mode={quirks_mode}, effective_mode={effectives_mode}, max_retries={max_retries}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
+                "Adding entry",
+                entry_dn=dn_str,
+                quirks_mode=quirks_mode,
+                effective_mode=effectives_mode,
+                max_retries=max_retries,
             )
 
             while retry_count < max_retries:
@@ -628,7 +636,10 @@ class EntryManipulationServices:
                     if success:
                         if removed_attributes:
                             logger.debug(
-                                f"Removed attributes during entry add: entry_dn={dn_str}, removed_attributes={removed_attributes}, removed_count={len(removed_attributes)}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
+                                "Removed undefined attributes and added entry",
+                                entry_dn=dn_str,
+                                removed_attributes=removed_attributes,
+                                removed_count=len(removed_attributes),
                             )
                         return FlextResult[bool].ok(True)
 
@@ -662,7 +673,11 @@ class EntryManipulationServices:
                         if problem_attr_result.is_success:
                             problem_attr = problem_attr_result.unwrap()
                             logger.debug(
-                                f"Exception on undefined attribute: entry_dn={dn_str}, problem_attribute={problem_attr}, error={e!s}, retry_count={retry_count}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
+                                "Undefined attribute error, will retry after removal",
+                                entry_dn=dn_str,
+                                problem_attribute=problem_attr,
+                                error=str(e),
+                                retry_count=retry_count,
                             )
                             del attempted_attributes[problem_attr]
                             removed_attributes.append(problem_attr)
@@ -676,7 +691,11 @@ class EntryManipulationServices:
             )
 
         except Exception as e:
-            logger.exception("Add entry failed")
+            logger.exception(
+                "Failed to add entry",
+                entry_dn=dn_str,
+                error=str(e),
+            )
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     def _attempt_add_entry_internal(
@@ -748,7 +767,9 @@ class EntryManipulationServices:
         if problem_attr_result.is_success:
             problem_attr = problem_attr_result.unwrap()
             logger.debug(
-                f"Removing undefined attribute: problem_attribute={problem_attr}, connection_error={connection.last_error}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
+                "Removing undefined attribute",
+                problem_attribute=problem_attr,
+                connection_error=str(connection.last_error),
             )
             del attempted_attributes[problem_attr]  # This modifies the dict in place
             removed_attributes.append(problem_attr)  # Track removed attribute

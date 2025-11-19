@@ -3,102 +3,67 @@
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Callable
 
-from ldap3 import ALL, Connection, Server
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 
+# Note: ldap_connection fixture is provided by conftest.py
+# It uses unique_dn_suffix for isolation and indepotency in parallel execution
 
-def test_ldap_connection() -> None:
+
+def test_ldap_connection(ldap_connection: Connection) -> None:
     """Test basic LDAP connection."""
-    import pytest
-
-    server = Server("localhost:3390", get_info=ALL)
-    conn = Connection(
-        server,
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        password="REDACTED_LDAP_BIND_PASSWORD123",
-    )
-
-    try:
-        if not conn.bind():
-            pytest.skip("LDAP server not available at localhost:3390")
-    except (ValueError, TypeError, AttributeError):
-        pytest.skip("LDAP server not available at localhost:3390")
-
-    assert conn.bound
-    assert server.info is not None
-    assert "dc=flext,dc=local" in server.info.naming_contexts
-
-    conn.unbind()
+    assert ldap_connection.bound
+    assert ldap_connection.server.info is not None
+    assert "dc=flext,dc=local" in ldap_connection.server.info.naming_contexts
 
 
-def test_simple_ldap_search() -> None:
+def test_simple_ldap_search(
+    ldap_connection: Connection,
+    ldap_container: dict[str, object],
+) -> None:
     """Test simple LDAP search."""
-    import pytest
-
-    server = Server("localhost:3390")
-    conn = Connection(
-        server,
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        password="REDACTED_LDAP_BIND_PASSWORD123",
-    )
-
-    try:
-        if not conn.bind():
-            pytest.skip("LDAP server not available at localhost:3390")
-    except (ValueError, TypeError, AttributeError):
-        pytest.skip("LDAP server not available at localhost:3390")
+    base_dn = str(ldap_container["base_dn"])
 
     # Search for base DN
-    result = conn.search(
-        "dc=flext,dc=local",
+    result = ldap_connection.search(
+        base_dn,
         "(objectClass=*)",
         search_scope="BASE",
     )
 
     assert result is True
-    assert len(conn.entries) >= 1
-
-    conn.unbind()
+    assert len(ldap_connection.entries) >= 1
 
 
-def test_create_and_export_entry() -> None:
+def test_create_and_export_entry(
+    ldap_connection: Connection,
+    ldap_container: dict[str, object],
+    make_test_username: Callable[[str], str],
+) -> None:
     """Create LDAP entry and export to LDIF."""
-    import pytest
-
-    server = Server("localhost:3390")
-    conn = Connection(
-        server,
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        password="REDACTED_LDAP_BIND_PASSWORD123",
-    )
-
-    try:
-        if not conn.bind():
-            pytest.skip("LDAP server not available at localhost:3390")
-    except (ValueError, TypeError, AttributeError):
-        pytest.skip("LDAP server not available at localhost:3390")
-
-    # Create test entry
-    test_dn = "cn=SimpleTest,dc=flext,dc=local"
+    base_dn = str(ldap_container["base_dn"])
+    unique_username = make_test_username("SimpleTest")
+    test_dn = f"cn={unique_username},{base_dn}"
 
     # Delete if exists
     with contextlib.suppress(Exception):
-        conn.delete(test_dn)
+        ldap_connection.delete(test_dn)
 
     # Add entry
-    conn.add(
+    ldap_connection.add(
         test_dn,
         ["person"],
-        {"cn": "SimpleTest", "sn": "Test"},
+        {"cn": unique_username, "sn": "Test"},
     )
 
     # Search for it
-    conn.search(test_dn, "(objectClass=*)", search_scope="BASE", attributes=["*"])
+    ldap_connection.search(test_dn, "(objectClass=*)", search_scope="BASE", attributes=["*"])
 
-    assert len(conn.entries) == 1
-    ldap_entry = conn.entries[0]
+    assert len(ldap_connection.entries) == 1
+    ldap_entry = ldap_connection.entries[0]
 
     # Convert to FlextLdif entry
     api = FlextLdif.get_instance()
@@ -116,9 +81,8 @@ def test_create_and_export_entry() -> None:
     assert write_result.is_success
 
     ldif_output = write_result.unwrap()
-    assert "cn: SimpleTest" in ldif_output
+    assert f"cn: {unique_username}" in ldif_output
     assert "sn: Test" in ldif_output
 
     # Cleanup
-    conn.delete(test_dn)
-    conn.unbind()
+    ldap_connection.delete(test_dn)

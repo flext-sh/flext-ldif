@@ -16,7 +16,7 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -24,6 +24,8 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
+
+logger = FlextLogger(__name__)
 
 # Type alias to avoid Pydantic v2 forward reference resolution issues
 # FlextLdifModels is a namespace class, not an importable module
@@ -256,10 +258,13 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
     class LdifSerializer:
         """Handles LDIF and LDAP3 serialization - replaces _serialize_* methods."""
 
-        def __init__(self, registry: FlextLdifServer) -> None:
-            """Initialize with quirk registry."""
+        def __init__(
+            self, registry: FlextLdifServer, parent_logger: FlextLogger
+        ) -> None:
+            """Initialize with quirk registry and logger."""
             self.registry = registry
             self.post_processor = FlextLdifWriter.LdifPostProcessor()
+            self.logger = parent_logger
 
         def _write_headers(
             self,
@@ -297,15 +302,36 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
             """
             quirk = self.registry.quirk(target_server_type)
             if quirk is None:
+                self.logger.error(
+                    "Quirk not found",
+                    target_server_type=target_server_type,
+                    available_quirks=self.registry.list_registered_servers(),
+                )
                 return FlextResult.fail(
                     f"Invalid server type: '{target_server_type}' - no quirk found",
                 )
 
+            # Debug: trace the entry_quirk retrieval
+            self.logger.info(
+                "DEBUG: Retrieved quirk from registry",
+                quirk_type=type(quirk).__name__,
+                target_server_type=target_server_type,
+            )
             entry_quirk = quirk.entry_quirk
+            self.logger.info(
+                "DEBUG: Retrieved entry_quirk",
+                entry_quirk_type=type(entry_quirk).__name__,
+                entry_quirk_repr=repr(entry_quirk)[:100],
+            )
             if not entry_quirk:
+                self.logger.error(
+                    "Entry quirk not found",
+                    target_server_type=target_server_type,
+                )
                 return FlextResult.fail(
                     f"No entry quirk for server: '{target_server_type}'",
                 )
+
             return FlextResult.ok(entry_quirk)
 
         def _write_all_entries(
@@ -328,7 +354,18 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
 
             """
             # Type narrowing: entry_quirk should be FlextLdifServersBase.Entry
+            # Debug: log type info to trace ModelPrivateAttr error
+            self.logger.debug(
+                "Entry quirk type info",
+                entry_quirk_type=type(entry_quirk).__name__,
+                entry_quirk_module=type(entry_quirk).__module__,
+                has_write=hasattr(entry_quirk, "write"),
+            )
             if not hasattr(entry_quirk, "write"):
+                self.logger.error(
+                    "Entry quirk does not implement write method",
+                    entry_quirk_type=type(entry_quirk).__name__,
+                )
                 return FlextResult.fail("Entry quirk does not have write method")
 
             # Cast after hasattr verification for type safety
@@ -337,7 +374,23 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 entry_quirk,
             )
 
-            for entry in entries:
+            for idx, entry in enumerate(entries):
+                # CRITICAL: Check if we should restore original LDIF from metadata
+                # This enables perfect round-trip conversion
+                if entry.metadata and entry.metadata.original_strings:
+                    original_ldif = entry.metadata.original_strings.get(
+                        "entry_original_ldif"
+                    )
+                    restore_enabled = getattr(
+                        format_options, "restore_original_format", False
+                    )
+                    if original_ldif and restore_enabled:
+                        # Write original LDIF directly (perfect round-trip)
+                        output.write(original_ldif)
+                        if not original_ldif.endswith("\n"):
+                            output.write("\n")
+                        continue
+
                 # Type narrowing: entry_metadata is dict[str, object] | None
                 # Use model_copy to update entry_metadata safely
                 # RFC Compliance: write_options is processing metadata
@@ -351,6 +404,33 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 )
                 updated_entry = entry.model_copy(update={"metadata": new_metadata})
 
+                # CRITICAL: Use metadata to restore original formatting for perfect round-trip
+                # The quirk.write() method will use metadata to restore original format
+
+                # Check if we need to restore original formatting from metadata
+                if updated_entry.metadata:
+                    # Restore original DN if metadata has it
+                    if "original_dn_complete" in updated_entry.metadata.extensions:
+                        original_dn = updated_entry.metadata.extensions[
+                            "original_dn_complete"
+                        ]
+                        if original_dn and updated_entry.dn:
+                            # Restore original DN
+                            updated_entry = updated_entry.model_copy(
+                                update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)}
+                            )
+
+                    # Restore original attribute formatting if available
+                    if (
+                        "original_attributes_complete"
+                        in updated_entry.metadata.extensions
+                    ):
+                        original_attrs = updated_entry.metadata.extensions[
+                            "original_attributes_complete"
+                        ]
+                        if original_attrs and updated_entry.attributes:
+                            pass  # Metadata available for restoration
+
                 # Generate and write comments BEFORE the entry via quirk (DI)
                 if hasattr(entry_quirk_typed, "generate_entry_comments"):
                     entry_comments = entry_quirk_typed.generate_entry_comments(
@@ -361,9 +441,17 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                         output.write(entry_comments)
 
                 # Type narrowing: we've verified entry_quirk has write method
+                # The quirk's write method should use metadata to restore original formatting
                 write_result = entry_quirk_typed.write(updated_entry)
                 if write_result.is_failure:
                     error_msg = f"Failed to write entry {updated_entry.dn}: {write_result.error}"
+                    self.logger.error(
+                        "Entry write failed",
+                        entry_dn=str(updated_entry.dn) if updated_entry.dn else None,
+                        entry_index=idx + 1,
+                        total_entries=len(entries),
+                        error=str(write_result.error),
+                    )
                     return FlextResult.fail(error_msg)
 
                 # Type narrowing: unwrap returns str from FlextResult[str]
@@ -371,6 +459,17 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 output.write(ldif_str)
                 output.write("\n")
 
+                self.logger.debug(
+                    "Wrote entry",
+                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_index=idx + 1,
+                    total_entries=len(entries),
+                )
+
+            self.logger.info(
+                "Wrote all entries",
+                total_entries=len(entries),
+            )
             return FlextResult.ok(True)
 
         def to_ldif_string(
@@ -393,6 +492,11 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 # Get entry quirk for target server
                 quirk_result = self._get_entry_quirk(target_server_type)
                 if quirk_result.is_failure:
+                    self.logger.error(
+                        "Failed to get entry quirk",
+                        target_server_type=target_server_type,
+                        error=str(quirk_result.error),
+                    )
                     return FlextResult.fail(quirk_result.error or "Unknown error")
                 entry_quirk = quirk_result.unwrap()
 
@@ -404,6 +508,11 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                     format_options,
                 )
                 if write_result.is_failure:
+                    self.logger.error(
+                        "Failed to write entries",
+                        target_server_type=target_server_type,
+                        error=str(write_result.error),
+                    )
                     return FlextResult.fail(write_result.error or "Unknown error")
 
                 # Apply post-processing for format options
@@ -412,9 +521,22 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                     format_options,
                 )
 
+                self.logger.info(
+                    "Serialized entries to LDIF string",
+                    entries_count=len(entries),
+                    target_server_type=target_server_type,
+                    ldif_length=len(ldif_content),
+                )
+
                 return FlextResult.ok(ldif_content)
 
             except Exception as e:
+                self.logger.exception(
+                    "Serialization failed",
+                    target_server_type=target_server_type,
+                    entries_count=len(entries),
+                    error=str(e),
+                )
                 return FlextResult.fail(f"LDIF serialization failed: {e}")
 
         def to_ldap3_format(
@@ -433,14 +555,21 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                     result.append((dn_str, attrs_dict))
                 return FlextResult.ok(result)
             except Exception as e:
+                logger.exception(
+                    "LDAP3 format conversion exception",
+                    error=str(e),
+                )
                 return FlextResult.fail(f"LDAP3 conversion failed: {e}")
 
     class OutputRouter:
         """Handles output routing - replaces _route_output and _output_ldif_content."""
 
-        def __init__(self, serializer: FlextLdifWriter.LdifSerializer) -> None:
-            """Initialize with LDIF serializer."""
+        def __init__(
+            self, serializer: FlextLdifWriter.LdifSerializer, parent_logger: FlextLogger
+        ) -> None:
+            """Initialize with LDIF serializer and logger."""
             self.serializer = serializer
+            self.logger = parent_logger
 
         def route_to_target(
             self,
@@ -457,6 +586,7 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
             | list[FlextLdifModels.Entry]
         ]:
             """Route output to appropriate target."""
+
             # Type alias for return type Union
             writer_result_union = (
                 FlextLdifModels.WriteResponse
@@ -508,6 +638,11 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 case "model":
                     return FlextResult[writer_result_union].ok(list(entries))
                 case _:
+                    self.logger.error(
+                        "Unsupported output target",
+                        output_target=output_target,
+                        supported_targets=["string", "file", "ldap3", "model"],
+                    )
                     return FlextResult[writer_result_union].fail(
                         f"Unsupported output target: {output_target}",
                     )
@@ -545,7 +680,11 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
             header: str,
         ) -> FlextResult[FlextLdifModels.WriteResponse]:
             """Write to file."""
+
             if not path:
+                self.logger.error(
+                    "Output path required for file target",
+                )
                 return FlextResult.fail("output_path required for file target")
 
             ldif_result = self.serializer.to_ldif_string(
@@ -554,6 +693,11 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 format_options,
             )
             if ldif_result.is_failure:
+                self.logger.error(
+                    "Failed to serialize LDIF string",
+                    file_path=str(path),
+                    error=str(ldif_result.error),
+                )
                 return cast("FlextResult[FlextLdifModels.WriteResponse]", ldif_result)
 
             try:
@@ -579,9 +723,22 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                         detected_server_type=target_server_type,
                     ),
                 )
+
+                self.logger.info(
+                    "Wrote entries to file",
+                    file_path=str(path),
+                    entries_count=len(entries),
+                    file_size_bytes=len(final_content),
+                )
+
                 return FlextResult.ok(response)
 
             except Exception as e:
+                self.logger.exception(
+                    "Failed to write file",
+                    file_path=str(path),
+                    error=str(e),
+                )
                 return FlextResult.fail(f"Failed to write file {path}: {e}")
 
     class HeaderBuilder:
@@ -705,8 +862,8 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
 
         try:
             # Initialize nested helpers
-            serializer = self.LdifSerializer(self._registry)
-            router = self.OutputRouter(serializer)
+            serializer = self.LdifSerializer(self._registry, self.logger)
+            router = self.OutputRouter(serializer, self.logger)
             header_builder = self.HeaderBuilder()
 
             # Setup format options
@@ -784,9 +941,36 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                     response = response.model_copy(update={"statistics": updated_stats})
                     result = FlextResult.ok(response)
 
+                self.logger.info(
+                    "Write operation completed",
+                    entries_count=entries_count,
+                    target_server_type=target_server_type,
+                    output_target=output_target,
+                    duration_ms=write_duration_ms,
+                )
+            else:
+                write_duration_at_error = (time.perf_counter() - start_time) * 1000.0
+                self.logger.error(
+                    "Write operation failed",
+                    entries_count=entries_count,
+                    target_server_type=target_server_type,
+                    output_target=output_target,
+                    error=str(result.error),
+                    duration_ms=write_duration_at_error,
+                )
+
             return result
 
         except Exception as e:
+            write_duration_at_error = (time.perf_counter() - start_time) * 1000.0
+            self.logger.exception(
+                "Write operation failed",
+                entries_count=entries_count,
+                target_server_type=target_server_type,
+                output_target=output_target,
+                error=str(e),
+                duration_ms=write_duration_at_error,
+            )
             return FlextResult.fail(f"Write operation failed: {e}")
 
     def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.WriteResponse]:

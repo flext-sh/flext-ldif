@@ -223,7 +223,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             self,
             attr_definition: str,
             *,
-            case_insensitive: bool = False,
+            _case_insensitive: bool = False,
             allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline.
@@ -233,7 +233,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             Args:
                 attr_definition: AttributeType definition string
-                case_insensitive: Whether to use case-insensitive pattern matching
+                _case_insensitive: Whether to use case-insensitive pattern matching (unused)
                 allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
@@ -249,7 +249,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             # Always try parent's _parse_attribute first (RFC format)
             parent_result = super()._parse_attribute(
                 attr_definition,
-                case_insensitive=case_insensitive,
+                _case_insensitive=_case_insensitive,
                 allow_syntax_quotes=allow_syntax_quotes,
             )
             if parent_result.is_success:
@@ -280,7 +280,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             # RFC parser failed - use minimal best-effort parsing (no fallback, proper parsing)
             logger.debug(
-                f"RFC parser failed, using best-effort parsing: {parent_result.error}",
+                "RFC parser failed, using best-effort parsing",
+                error=str(parent_result.error),
             )
             try:
                 # Extract OID using helper method with multiple strategies
@@ -645,7 +646,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             # RFC parser failed - use best-effort parsing with utilities
             logger.debug(
-                f"RFC parser failed, using best-effort parsing: {parent_result.error}",
+                "RFC parser failed, using best-effort parsing",
+                error=str(parent_result.error),
             )
             return self._parse_objectclass_relaxed(oc_definition)
 
@@ -847,7 +849,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 logger.debug(
                     "Relaxed ACL parse failed",
                     error=str(e),
-                    error_type=type(e).__name__,
                 )
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"Failed to parse ACL: {e}",
@@ -1027,9 +1028,33 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             attr_dict[str(key)] = [str(value)]
                     ldif_attrs = FlextLdifModels.LdifAttributes(attributes=attr_dict)
 
+                # ZERO DATA LOSS: Create metadata for relaxed mode fallback
+                # Track original attribute case for analysis
+                original_attribute_case: dict[str, str] = {}
+                for attr_name in entry_attrs:
+                    attr_str = str(attr_name)
+                    # In relaxed mode, preserve original case as-is
+                    if attr_str.lower() == "objectclass":
+                        original_attribute_case["objectClass"] = attr_str
+
+                # Create QuirkMetadata for relaxed fallback
+                metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type="relaxed",
+                    original_format_details={
+                        "server_type": "relaxed",
+                        "dn_spacing": entry_dn,
+                        "rfc_parse_failed": True,
+                        "rfc_error": str(parent_result.error)
+                        if parent_result.error
+                        else None,
+                    },
+                    original_attribute_case=original_attribute_case,
+                )
+
                 entry = FlextLdifModels.Entry(
                     dn=effective_dn,
                     attributes=ldif_attrs,
+                    metadata=metadata,
                 )
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
             except Exception as e:

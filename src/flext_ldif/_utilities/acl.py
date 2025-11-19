@@ -6,14 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import re
 from collections.abc import Callable
 
+from flext_core import FlextLogger
+
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 # Type for parsed ACL components
@@ -608,8 +610,6 @@ class FlextLdifUtilitiesACL:
         """
         if not value:
             return value
-        # Import here to avoid circular dependency at module level
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
         prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
         has_prefix = value.startswith(prefix)

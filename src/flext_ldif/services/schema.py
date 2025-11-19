@@ -184,7 +184,10 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
 
         except Exception as e:
             error_msg = f"Error parsing attribute: {e}"
-            logger.exception(error_msg)
+            logger.exception(
+                "Failed to parse attribute definition",
+                error=str(e),
+            )
             return FlextResult.fail(error_msg)
 
     def parse_objectclass(
@@ -210,7 +213,10 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
 
         except Exception as e:
             error_msg = f"Error parsing objectClass: {e}"
-            logger.exception(error_msg)
+            logger.exception(
+                "Failed to parse objectClass definition",
+                error=str(e),
+            )
             return FlextResult.fail(error_msg)
 
     def validate_attribute(
@@ -220,21 +226,25 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
         """Validate attribute model syntax and constraints.
 
         Args:
-            attr: SchemaAttribute model to validate
+            attr: SchemaAttribute model to validate (guaranteed non-None by Pydantic)
 
         Returns:
             FlextResult[bool]: True if valid, error otherwise
 
+        Note:
+            - attr cannot be None (Pydantic Field(...) ensures this)
+            - attr.name and attr.oid are required fields (Pydantic Field(...))
+            - Only validates syntax OID format if present
+
         """
         try:
-            if not attr:
-                return FlextResult.fail("Attribute model is None")
-            # Basic validation
-            if not attr.name:
-                return FlextResult.fail("Attribute has no NAME")
-            if not attr.oid:
-                return FlextResult.fail("Attribute has no OID")
-            # Check syntax if present and validate OID format using utilities
+            # Validate required fields are not empty
+            if not attr.oid or not attr.oid.strip():
+                return FlextResult.fail("Attribute OID is required and cannot be empty")
+            if not attr.name or not attr.name.strip():
+                return FlextResult.fail("Attribute NAME is required and cannot be empty")
+
+            # Validate syntax OID format if present
             if attr.syntax:
                 validation_result = FlextLdifUtilities.OID.validate_format(attr.syntax)
                 if validation_result.is_failure or not validation_result.unwrap():
@@ -243,7 +253,10 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
 
         except Exception as e:
             error_msg = f"Error validating attribute: {e}"
-            logger.exception(error_msg)
+            logger.exception(
+                "Failed to validate attribute",
+                error=str(e),
+            )
             return FlextResult.fail(error_msg)
 
     def validate_objectclass(
@@ -253,32 +266,38 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
         """Validate objectClass model syntax and constraints.
 
         Args:
-            oc: SchemaObjectClass model to validate
+            oc: SchemaObjectClass model to validate (guaranteed non-None by Pydantic)
 
         Returns:
             FlextResult[bool]: True if valid, error otherwise
 
+        Note:
+            - oc cannot be None (Pydantic Field(...) ensures this)
+            - oc.name and oc.oid are required fields (Pydantic Field(...))
+            - Only validates objectclass kind and structure
+
         """
         try:
-            if not oc:
-                return FlextResult.fail("ObjectClass model is None")
-
-            # Basic validation
-            if not oc.name:
-                return FlextResult.fail("ObjectClass has no NAME")
-
-            if not oc.oid:
-                return FlextResult.fail("ObjectClass has no OID")
+            # Validate required fields are not empty
+            if not oc.oid or not oc.oid.strip():
+                return FlextResult.fail("ObjectClass OID is required and cannot be empty")
+            if not oc.name or not oc.name.strip():
+                return FlextResult.fail("ObjectClass NAME is required and cannot be empty")
 
             # Check objectclass kind
             if oc.kind not in {"ABSTRACT", "STRUCTURAL", "AUXILIARY"}:
-                return FlextResult.fail(f"Invalid objectClass KIND: {oc.kind}")
+                return FlextResult.fail(
+                    f"Invalid objectclass kind: {oc.kind}. Must be ABSTRACT, STRUCTURAL, or AUXILIARY",
+                )
 
             return FlextResult.ok(True)
 
         except Exception as e:
-            error_msg = f"Error validating objectClass: {e}"
-            logger.exception(error_msg)
+            error_msg = f"Error validating objectclass: {e}"
+            logger.exception(
+                "Failed to validate objectClass",
+                error=str(e),
+            )
             return FlextResult.fail(error_msg)
 
     def write_attribute(
@@ -305,7 +324,10 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
 
         except Exception as e:
             error_msg = f"Error writing attribute: {e}"
-            logger.exception(error_msg)
+            logger.exception(
+                "Failed to write attribute",
+                error=str(e),
+            )
             return FlextResult.fail(error_msg)
 
     def write_objectclass(
@@ -332,7 +354,10 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
 
         except Exception as e:
             error_msg = f"Error writing objectClass: {e}"
-            logger.exception(error_msg)
+            logger.exception(
+                "Failed to write objectClass",
+                error=str(e),
+            )
             return FlextResult.fail(error_msg)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -355,8 +380,11 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
             # Basic check: looks like an attribute definition
             return "(" in attr_definition and ")" in attr_definition
 
-        except Exception:
-            logger.exception("Error checking if can handle attribute")
+        except Exception as e:
+            logger.exception(
+                "Failed to check if service can handle attribute",
+                error=str(e),
+            )
             return False
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
@@ -379,8 +407,11 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
             # Basic check: looks like an objectClass definition
             return "(" in oc_definition and ")" in oc_definition
 
-        except Exception:
-            logger.exception("Error checking if can handle objectClass")
+        except Exception as e:
+            logger.exception(
+                "Failed to check if service can handle objectClass",
+                error=str(e),
+            )
             return False
 
     def __repr__(self) -> str:

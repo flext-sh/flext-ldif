@@ -1,7 +1,10 @@
+# Test helpers use object for generic quirk/parser handling (no Any types)
 """Comprehensive test deduplication helpers.
 
 This module provides high-level methods that replace massive amounts of duplicated
 test code. Each method replaces 10-50+ lines of repeated test patterns.
+
+Uses FlextLdifProtocols for type-safe quirk handling instead of Any types.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,18 +14,35 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Protocol, TypedDict, cast
+from re import Pattern
+from typing import Protocol, TypedDict, TypeVar, cast
 
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdif
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
 from tests.helpers.test_assertions import TestAssertions
+
+# TypeVar for generic FlextResult unwrapping
+T = TypeVar("T")
+TResult = TypeVar("TResult")
+
+# Type aliases for FlextLdifProtocols (eliminates Any usage)
+SchemaQuirk = FlextLdifProtocols.Quirks.SchemaProtocol
+EntryQuirk = FlextLdifProtocols.Quirks.EntryProtocol
+AclQuirk = FlextLdifProtocols.Quirks.AclProtocol
+QuirksPort = FlextLdifProtocols.Quirks.QuirksPort
+
+# Union types for generic operations
+SchemaOrObjectClass = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+EntryOrList = FlextLdifModels.Entry | list[FlextLdifModels.Entry]
 
 
 # TypedDict for test case structures
@@ -606,14 +626,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_parse_write_roundtrip(
-        quirk: Any,  # noqa: ANN401
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
         input_data: str,
         *,
         parse_method: str = "parse",
         write_method: str | None = None,
-        expected_type: type[Any] | None = None,
+        expected_type: type[TResult] | None = None,
         validate_identical: bool = True,
-    ) -> tuple[Any, Any, Any]:
+    ) -> tuple[TResult, str, TResult]:
         """Complete quirk parse-write-roundtrip test - replaces 40-60 lines.
 
         Args:
@@ -681,7 +701,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def api_parse_write_roundtrip(
-        api: Any,  # noqa: ANN401
+        api: FlextLdif,
         ldif_content: str | Path,
         *,
         expected_count: int | None = None,
@@ -820,7 +840,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_schema_parse_and_assert(
         schema_quirk: FlextLdifServersRfc.Schema,
-        test_cases: list[dict[str, Any]],
+        test_cases: list[dict[str, str | int | list[str] | None]],
     ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
         """Test multiple schema parse operations in batch - replaces 50-150+ lines.
 
@@ -862,7 +882,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def create_entries_batch(
-        entries_data: list[dict[str, Any]],
+        entries_data: list[dict[str, str | list[str] | dict[str, str | list[str]]]],
         *,
         validate_all: bool = True,
     ) -> list[FlextLdifModels.Entry]:
@@ -898,12 +918,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_method_batch(
-        quirk: Any,  # noqa: ANN401
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
         method_name: str,
-        test_cases: list[dict[str, Any]],
+        test_cases: list[dict[str, object]],
         *,
         validate_results: bool = True,
-    ) -> list[Any]:
+    ) -> list[TResult]:
         """Test quirk method with multiple test cases - replaces 50-150+ lines.
 
         Args:
@@ -912,7 +932,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             test_cases: List of test case dicts with keys:
                 - args: tuple (positional args, optional)
                 - kwargs: dict (keyword args, optional)
-                - expected_result: Any | None
+                - expected_result: TResult | None
                 - should_succeed: bool (default: True)
             validate_results: Whether to validate results (default: True)
 
@@ -956,7 +976,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def file_operations_roundtrip(
-        api: Any,  # noqa: ANN401
+        api: FlextLdif,
         ldif_content: str,
         tmp_path: Path,
         *,
@@ -1051,9 +1071,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_success_and_unwrap(
-        result: FlextResult[Any],
+        result: FlextResult[TResult],
         error_msg: str | None = None,
-    ) -> Any:
+    ) -> TResult:
         """Assert success and unwrap - replaces 2-3 lines.
 
         Common pattern: assert result.is_success + result.unwrap()
@@ -1070,10 +1090,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_success_and_unwrap_list(
-        result: FlextResult[list[Any] | Any],
+        result: FlextResult[list[TResult] | TResult],
         expected_length: int | None = None,
         error_msg: str | None = None,
-    ) -> list[Any]:
+    ) -> list[TResult]:
         """Assert success, unwrap and validate list length - replaces 3-5 lines.
 
         Common pattern:
@@ -1193,7 +1213,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_unwrap(
-        parser: Any,
+        parser: FlextLdifParser,
         ldif_content: str | Path,
         *,
         expected_count: int | None = None,
@@ -1236,7 +1256,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_and_unwrap(
-        writer: Any,
+        writer: FlextLdifWriter,
         entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
         *,
         must_contain: list[str] | None = None,
@@ -1271,12 +1291,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_schema_and_unwrap(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str | None = None,
         expected_name: str | None = None,
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
     ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
         """Parse schema and unwrap with validations - replaces 6-10 lines.
 
@@ -1330,7 +1350,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_schema_and_unwrap(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
         must_contain: list[str] | None = None,
@@ -1359,7 +1379,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_and_unwrap(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         ldif_content: str,
         *,
         expected_dn: str | None = None,
@@ -1388,7 +1408,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_entry_and_unwrap(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         must_contain: list[str] | None = None,
@@ -1624,8 +1644,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def oid_validation_and_parse(
-        oid_utility: Any,
-        schema_quirk: Any,
+        oid_utility: type[FlextLdifUtilitiesOID],
+        schema_quirk: SchemaQuirk,
         oid: str,
         schema_def: str,
         *,
@@ -1634,7 +1654,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         check_is_oracle: bool = True,
         extract_from_def: bool = True,
         extract_from_object: bool = True,
-    ) -> tuple[Any, str]:
+    ) -> tuple[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str]:
         """Complete OID validation + parse test - replaces 30-50+ lines.
 
         Args:
@@ -1704,15 +1724,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_parse_from_fixtures(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         fixture_content: str,
-        detection_pattern: Any,
+        detection_pattern: Pattern[str],
         *,
         schema_type: str = "attribute",
         expected_count: int | None = None,
         validate_oids: bool = True,
-        oid_utility: Any | None = None,
-    ) -> list[Any]:
+        oid_utility: type[FlextLdifUtilitiesOID] | None = None,
+    ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
         """Parse schema from fixtures with full validation - replaces 50-80+ lines.
 
         Args:
@@ -1815,14 +1835,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_parse_with_detection_pattern(
-        quirk: Any,
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
         content: str,
-        detection_pattern: Any,
+        detection_pattern: Pattern[str],
         *,
         parse_method: str = "parse",
         should_match: bool = True,
         validate_result: bool = True,
-    ) -> Any:
+    ) -> TResult:
         """Test quirk parse with detection pattern validation - replaces 15-25 lines.
 
         Args:
@@ -1859,12 +1879,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_quirk_parse_with_validation(
-        quirk: Any,
-        test_cases: list[dict[str, Any]],
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        test_cases: list[dict[str, str | bool | Pattern[str] | None]],
         *,
         parse_method: str = "parse",
         validate_all: bool = True,
-    ) -> list[Any]:
+    ) -> list[TResult]:
         """Test multiple quirk parse operations with validation.
 
         Replaces 60-120+ lines.
@@ -1873,9 +1893,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             quirk: Quirk instance
             test_cases: List of test case dicts with keys:
                 - content: str (required)
-                - expected_result: Any | None
+                - expected_result: TResult | None
                 - should_succeed: bool (default: True)
-                - detection_pattern: Any | None (optional)  # noqa: ANN401
+                - detection_pattern: Pattern[str] | None (optional)
                 - should_match: bool (default: True)
             parse_method: Method name for parsing (default: "parse")
             validate_all: Whether to validate all results (default: True)
@@ -1925,8 +1945,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def api_parse_with_server_types_batch(
-        api: Any,
-        test_cases: list[dict[str, Any]],
+        api: FlextLdif,
+        test_cases: list[dict[str, str | int | list[str] | None]],
         *,
         validate_all: bool = True,
     ) -> list[list[FlextLdifModels.Entry]]:
@@ -2002,8 +2022,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_route_write_and_assert(
-        quirk: Any,
-        data: Any,
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        data: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | str,
         *,
         must_contain: str | list[str] | None = None,
         must_not_contain: str | list[str] | None = None,
@@ -2058,8 +2078,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_route_can_handle_and_assert(
-        quirk: Any,
-        data: Any,
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        data: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | str,
         *,
         expected: bool = True,
     ) -> bool:
@@ -2087,8 +2107,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_write_and_assert_content(
-        quirk: Any,
-        data: Any,
+        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        data: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | str,
         *,
         must_contain: str | list[str] | None = None,
         must_not_contain: str | list[str] | None = None,
@@ -2148,12 +2168,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def service_execute_and_assert_fields(
-        service: Any,
+        service: object,
         *,
         expected_fields: dict[str, object] | None = None,
-        expected_type: type[Any] | None = None,
+        expected_type: type[TResult] | None = None,
         must_contain_in_fields: dict[str, object] | None = None,
-    ) -> Any:
+    ) -> TResult:
         """Test service execute and assert fields - replaces 8-12 lines.
 
         Common pattern:
@@ -2300,7 +2320,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_isinstance_schema_attribute(
-        obj: Any,
+        obj: object,
         error_msg: str | None = None,
     ) -> FlextLdifModels.SchemaAttribute:
         """Assert object is SchemaAttribute - replaces 1-2 lines per use.
@@ -2325,7 +2345,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_isinstance_schema_objectclass(
-        obj: Any,
+        obj: object,
         error_msg: str | None = None,
     ) -> FlextLdifModels.SchemaObjectClass:
         """Assert object is SchemaObjectClass - replaces 1-2 lines per use.
@@ -2393,10 +2413,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_result_success_and_type(
-        result: FlextResult[Any],
-        expected_type: type[Any],
+        result: FlextResult[TResult],
+        expected_type: type[TResult],
         error_msg: str | None = None,
-    ) -> Any:
+    ) -> TResult:
         """Assert result is success and unwrapped value is expected type - replaces 2-3 lines.
 
         Common pattern (appears 20+ times):
@@ -2421,7 +2441,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_length_equals(
-        items: list[Any] | str,
+        items: list[TResult] | str | Sequence[TResult],
         expected_length: int,
         error_msg: str | None = None,
     ) -> None:
@@ -2445,7 +2465,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_length_greater_than(
-        items: list[Any] | str,
+        items: list[TResult] | str | Sequence[TResult],
         min_length: int,
         error_msg: str | None = None,
     ) -> None:
@@ -2469,7 +2489,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_length_greater_or_equal(
-        items: list[Any] | str,
+        items: list[TResult] | str | Sequence[TResult],
         min_length: int,
         error_msg: str | None = None,
     ) -> None:
@@ -2493,7 +2513,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_length_zero(
-        items: list[Any] | str,
+        items: list[TResult] | str | Sequence[TResult],
         error_msg: str | None = None,
     ) -> None:
         """Assert length is zero (empty) - replaces 1 line per use.
@@ -2515,7 +2535,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_length_non_zero(
-        items: list[Any] | str,
+        items: list[TResult] | str | Sequence[TResult],
         error_msg: str | None = None,
     ) -> None:
         """Assert length is greater than zero (not empty) - replaces 1 line per use.
@@ -2587,8 +2607,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_any_matches(
-        items: list[Any],
-        predicate: Callable[[Any], bool],
+        items: list[TResult],
+        predicate: Callable[[TResult], bool],
         error_msg: str | None = None,
     ) -> None:
         """Assert any item matches predicate - replaces 1-2 lines per use.
@@ -2610,8 +2630,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_all_match(
-        items: list[Any],
-        predicate: Callable[[Any], bool],
+        items: list[TResult],
+        predicate: Callable[[TResult], bool],
         error_msg: str | None = None,
     ) -> None:
         """Assert all items match predicate - replaces 1-2 lines per use.
@@ -2633,8 +2653,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_in_list(
-        value: Any,
-        items_list: list[Any],
+        value: TResult,
+        items_list: list[TResult],
         error_msg: str | None = None,
     ) -> None:
         """Assert value is in list - replaces 1 line per use.
@@ -2656,8 +2676,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_not_in_list(
-        value: Any,
-        items_list: list[Any],
+        value: TResult,
+        items_list: list[TResult],
         error_msg: str | None = None,
     ) -> None:
         """Assert value is NOT in list - replaces 1 line per use.
@@ -2679,9 +2699,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_key_equals(
-        dictionary: dict[str, Any],
+        dictionary: dict[str, TResult],
         key: str,
-        expected_value: Any,
+        expected_value: TResult,
         error_msg: str | None = None,
     ) -> None:
         """Assert dictionary key equals expected value - replaces 1-2 lines per use.
@@ -2707,8 +2727,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_list_first_equals(
-        items: list[Any],
-        expected_value: Any,
+        items: list[TResult],
+        expected_value: TResult,
         error_msg: str | None = None,
     ) -> None:
         """Assert first list item equals expected - replaces 1-2 lines per use.
@@ -2733,8 +2753,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_list_last_equals(
-        items: list[Any],
-        expected_value: Any,
+        items: list[TResult],
+        expected_value: TResult,
         error_msg: str | None = None,
     ) -> None:
         """Assert last list item equals expected - replaces 1-2 lines per use.
@@ -2759,9 +2779,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_key_isinstance(
-        dictionary: dict[str, Any],
+        dictionary: dict[str, object],
         key: str,
-        expected_type: type[Any],
+        expected_type: type[TResult],
         error_msg: str | None = None,
     ) -> None:
         """Assert dictionary key value is instance of type - replaces 1-2 lines per use.
@@ -2787,7 +2807,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_key_is_not_none(
-        dictionary: dict[str, Any],
+        dictionary: dict[str, object],
         key: str,
         error_msg: str | None = None,
     ) -> None:
@@ -2814,7 +2834,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def assert_entry_attribute_equals(
         entry: FlextLdifModels.Entry,
         attr_name: str,
-        expected_value: Any,
+        expected_value: str | list[str] | object,
         error_msg: str | None = None,
     ) -> None:
         """Assert entry attribute equals expected value - replaces 1-2 lines per use.
@@ -2843,9 +2863,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extension_equals(
-        obj: Any,
+        obj: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         key: str,
-        expected_value: Any,
+        expected_value: str | int | bool | object,
         error_msg: str | None = None,
     ) -> None:
         """Assert metadata extension equals expected value - replaces 1-2 lines per use.
@@ -2875,9 +2895,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extension_get_equals(
-        obj: Any,
+        obj: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         key: str,
-        expected_value: Any,
+        expected_value: str | int | bool | object | None,
         error_msg: str | None = None,
     ) -> None:
         """Assert metadata extension get() equals expected value - replaces 1-2 lines per use.
@@ -2906,9 +2926,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extension_get_isinstance(
-        obj: Any,
+        obj: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         key: str,
-        expected_type: type[Any],
+        expected_type: type[TResult],
         error_msg: str | None = None,
     ) -> None:
         """Assert metadata extension get() is instance of type - replaces 1-2 lines per use.
@@ -3008,9 +3028,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def service_execute_and_unwrap(
-        service: Any,
+        service: object,
         error_msg: str | None = None,
-    ) -> Any:
+    ) -> TResult:
         """Execute service and unwrap result - replaces 2-3 lines per use.
 
         Common pattern (appears 19+ times):
@@ -3125,12 +3145,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_unwrap_simple(
-        parser: Any,
+        parser: FlextLdifParser | SchemaQuirk | EntryQuirk,
         content: str | Path,
         *,
         parse_method: str = "parse",
         expected_count: int | None = None,
-    ) -> Any:
+    ) -> list[FlextLdifModels.Entry] | FlextLdifModels.Entry | TResult:
         """Simple parse and unwrap - replaces 2-3 lines per use.
 
         Common pattern (appears 37+ times):
@@ -3174,8 +3194,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_and_unwrap_simple(
-        writer: Any,
-        data: Any,
+        writer: FlextLdifWriter | SchemaQuirk | EntryQuirk | AclQuirk,
+        data: FlextLdifModels.Entry | list[FlextLdifModels.Entry] | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl,
         *,
         write_method: str = "write",
         must_contain: str | list[str] | None = None,
@@ -3287,7 +3307,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_is_none(
-        value: Any,
+        value: object | None,
         error_msg: str | None = None,
     ) -> None:
         """Assert value is None - replaces 1 line per use.
@@ -3306,7 +3326,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_is_not_none(
-        value: Any,
+        value: object,
         error_msg: str | None = None,
     ) -> None:
         """Assert value is not None - replaces 1 line per use.
@@ -3363,9 +3383,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_get_equals(
-        dictionary: dict[str, Any],
+        dictionary: dict[str, TResult],
         key: str,
-        expected_value: Any,
+        expected_value: TResult,
         error_msg: str | None = None,
     ) -> None:
         """Assert dict.get(key) equals expected - replaces 1-2 lines per use.
@@ -3482,8 +3502,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_list_equals(
-        actual: list[Any],
-        expected: list[Any],
+        actual: list[object],
+        expected: list[object],
         error_msg: str | None = None,
     ) -> None:
         """Assert list equals expected - replaces 1 line per use.
@@ -3505,8 +3525,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_equals(
-        actual: dict[str, Any],
-        expected: dict[str, Any],
+        actual: dict[str, object],
+        expected: dict[str, object],
         error_msg: str | None = None,
     ) -> None:
         """Assert dict equals expected - replaces 1 line per use.
@@ -3528,7 +3548,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_has_key(
-        dictionary: dict[str, Any],
+        dictionary: dict[str, object],
         key: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3552,8 +3572,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_has_value(
-        dictionary: dict[str, Any],
-        value: Any,
+        dictionary: dict[str, object],
+        value: object,
         error_msg: str | None = None,
     ) -> None:
         """Assert dict has value - replaces 1 line per use.
@@ -3575,7 +3595,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extensions_not_none(
-        obj: Any,
+        obj: object,
         error_msg: str | None = None,
     ) -> None:
         """Assert object.metadata.extensions is not None - replaces 1-2 lines per use.
@@ -3597,9 +3617,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extensions_get_equals(
-        obj: Any,
+        obj: object,
         key: str,
-        expected_value: Any,
+        expected_value: object,
         error_msg: str | None = None,
     ) -> None:
         """Assert metadata.extensions.get(key) equals expected - replaces 1-2 lines per use.
@@ -3649,7 +3669,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_quirk_type_equals(
-        obj: Any,
+        obj: object,
         expected_quirk_type: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3674,7 +3694,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_validate_entry_structure(
-        parser: Any,
+        parser: object,
         ldif_content: str | Path,
         *,
         expected_dn: str | None = None,
@@ -3715,7 +3735,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_and_validate_content(
-        writer: Any,
+        writer: object,
         entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
         *,
         must_contain: list[str] | None = None,
@@ -3758,14 +3778,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_method_with_result_validation(
-        quirk: Any,
+        quirk: object,
         method_name: str,
-        *args: Any,
-        expected_result_type: type[Any] | None = None,
-        expected_attributes: dict[str, Any] | None = None,
+        *args: object,
+        expected_result_type: type[object] | None = None,
+        expected_attributes: dict[str, object] | None = None,
         should_succeed: bool = True,
-        **kwargs: Any,
-    ) -> Any:
+        **kwargs: object,
+    ) -> object:
         """Test quirk method with comprehensive result validation - replaces 10-25 lines.
 
         Common pattern:
@@ -3828,8 +3848,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_test_parse_operations(
-        parser: Any,
-        test_cases: list[dict[str, Any]],
+        parser: object,
+        test_cases: list[dict[str, object]],
     ) -> list[list[FlextLdifModels.Entry]]:
         """Test multiple parse operations in batch - replaces 50-200+ lines.
 
@@ -3865,18 +3885,18 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_unwrap_and_assert(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
         expected_oid: str | None = None,
         expected_name: str | None = None,
         expected_dn: str | None = None,
         must_contain: str | list[str] | None = None,
         should_succeed: bool = True,
         error_msg: str | None = None,
-    ) -> Any:
+    ) -> object:
         """Parse, unwrap and assert - replaces 4-8 lines per use.
 
         Common pattern (appears 100+ times):
@@ -3966,8 +3986,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_and_unwrap_direct(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
     ) -> str:
@@ -3999,8 +4019,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_unwrap_and_assert(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         must_contain: str | list[str] | None = None,
@@ -4065,18 +4085,18 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_unwrap_and_assert(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
         expected_oid: str | None = None,
         expected_name: str | None = None,
         expected_dn: str | None = None,
         must_contain: str | list[str] | None = None,
         should_succeed: bool = True,
         error_msg: str | None = None,
-    ) -> Any:
+    ) -> object:
         """Alias for parse_unwrap_and_assert for consistency with test_* naming."""
         return DeduplicationHelpers.parse_unwrap_and_assert(
             parser,
@@ -4093,8 +4113,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_unwrap_and_assert(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         must_contain: str | list[str] | None = None,
@@ -4115,11 +4135,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_unwrap_direct(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-    ) -> Any:
+    ) -> object:
         """Parse and unwrap without assertions - for internal use."""
         method = getattr(parser, parse_method, None)
         if method is None:
@@ -4131,14 +4151,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def route_parse_unwrap_and_assert(
-        quirk: Any,
+        quirk: object,
         content: str,
         *,
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
         expected_oid: str | None = None,
         expected_name: str | None = None,
         should_succeed: bool = True,
-    ) -> Any:
+    ) -> object:
         """Route parse, unwrap and assert - replaces 4-6 lines per use.
 
         Common pattern (appears 20+ times):
@@ -4171,8 +4191,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def route_write_unwrap_and_assert(
-        quirk: Any,
-        data: Any,
+        quirk: object,
+        data: object,
         *,
         must_contain: str | list[str] | None = None,
         should_succeed: bool = True,
@@ -4205,7 +4225,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_result_success_or_failure(
-        result: FlextResult[Any],
+        result: FlextResult[object],
         error_msg: str | None = None,
     ) -> None:
         """Assert result is success or failure - replaces 1-2 lines per use.
@@ -4224,7 +4244,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_attribute_unwrap_and_assert(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         *,
         expected_oid: str | None = None,
@@ -4278,7 +4298,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_objectclass_unwrap_and_assert(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         oc_def: str,
         *,
         expected_oid: str | None = None,
@@ -4332,14 +4352,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_roundtrip_simple(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         parse_method: str | None = None,
         write_method: str | None = None,
         must_contain: list[str] | None = None,
-        validate_fields: dict[str, Any] | None = None,
-    ) -> tuple[Any, str]:
+        validate_fields: dict[str, object] | None = None,
+    ) -> tuple[object, str]:
         """Simple schema roundtrip test - replaces 20-35 lines.
 
         Args:
@@ -4397,7 +4417,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def entry_roundtrip_simple(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         ldif_content: str,
         *,
         must_contain: list[str] | None = None,
@@ -4472,17 +4492,17 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def error_handling_batch(
-        quirk: Any,
-        test_cases: list[dict[str, Any]],
+        quirk: object,
+        test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
-    ) -> list[Any]:
+    ) -> list[object]:
         """Test error handling for multiple invalid inputs - replaces 40-80+ lines.
 
         Args:
             quirk: Quirk instance
             test_cases: List of test case dicts with keys:
-                - input: Any (required) - input to test
+                - input: object (required) - input to test
                 - should_succeed: bool (default: False for error handling)
                 - expected_error_substring: str | None - substring that should be in error
             parse_method: Method name for parsing (default: "parse")
@@ -4516,11 +4536,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_schema_roundtrip(
-        schema_quirk: Any,
-        test_cases: list[dict[str, Any]],
+        schema_quirk: SchemaQuirk,
+        test_cases: list[dict[str, object]],
         *,
         validate_all: bool = True,
-    ) -> list[tuple[Any, str]]:
+    ) -> list[tuple[object, str]]:
         """Test multiple schema roundtrips in batch - replaces 60-150+ lines.
 
         Args:
@@ -4530,7 +4550,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 - parse_method: str | None
                 - write_method: str | None
                 - must_contain: list[str] | None
-                - validate_fields: dict[str, Any] | None
+                - validate_fields: dict[str, object] | None
             validate_all: Whether to validate all results (default: True)
 
         Returns:
@@ -4567,8 +4587,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_entry_roundtrip(
-        entry_quirk: Any,
-        test_cases: list[dict[str, Any]],
+        entry_quirk: EntryQuirk,
+        test_cases: list[dict[str, object]],
         *,
         validate_all: bool = True,
     ) -> list[tuple[FlextLdifModels.Entry, str]]:
@@ -4610,13 +4630,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_validate_fields(
-        quirk: Any,
+        quirk: object,
         content: str,
         *,
         parse_method: str = "parse",
-        expected_fields: dict[str, Any] | None = None,
+        expected_fields: dict[str, object] | None = None,
         must_contain_in_output: list[str] | None = None,
-    ) -> Any:
+    ) -> object:
         """Parse and validate specific fields - replaces 15-25 lines.
 
         Args:
@@ -4675,7 +4695,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_list_length(
-        items: list[Any],
+        items: list[object],
         expected_length: int,
         *,
         error_msg: str | None = None,
@@ -4754,7 +4774,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_assert_basic(
-        parser: Any,
+        parser: object,
         ldif_content: str | Path,
         *,
         expected_count: int | None = None,
@@ -4790,12 +4810,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_parse_and_assert_oid_name(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str,
         expected_name: str,
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
     ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
         """Parse schema and assert OID and name - replaces 6-8 lines.
 
@@ -4827,7 +4847,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_and_assert_contains(
-        writer: Any,
+        writer: object,
         entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
         *,
         must_contain: str | list[str],
@@ -4860,7 +4880,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_and_assert_dn_attributes(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         ldif_content: str,
         *,
         expected_dn: str,
@@ -4896,7 +4916,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_assert_list_lengths(
-        test_cases: list[dict[str, Any]],
+        test_cases: list[dict[str, object]],
         *,
         list_key: str = "items",
         length_key: str = "expected_length",
@@ -4957,12 +4977,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_attribute_and_validate_all_fields(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         *,
-        expected_fields: dict[str, Any],
+        expected_fields: dict[str, object],
         parse_method: str = "parse_attribute",
-    ) -> Any:
+    ) -> object:
         """Parse attribute and validate all expected fields - replaces 20-40+ lines.
 
         Args:
@@ -4994,12 +5014,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_objectclass_and_validate_all_fields(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         oc_def: str,
         *,
-        expected_fields: dict[str, Any],
+        expected_fields: dict[str, object],
         parse_method: str = "parse_objectclass",
-    ) -> Any:
+    ) -> object:
         """Parse objectClass and validate all expected fields - replaces 20-40+ lines.
 
         Args:
@@ -5031,14 +5051,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_minimal_schema_and_validate(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str,
         expected_name: str,
         parse_method: str | None = None,
         optional_fields_should_be_none: list[str] | None = None,
-    ) -> Any:
+    ) -> object:
         """Parse minimal schema and validate required + optional fields - replaces 15-30 lines.
 
         Args:
@@ -5092,19 +5112,19 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_parse_and_validate_fields(
-        quirk: Any,
-        test_cases: list[dict[str, Any]],
+        quirk: object,
+        test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
         validate_all: bool = True,
-    ) -> list[Any]:
+    ) -> list[object]:
         """Test multiple parse operations with field validation - replaces 80-200+ lines.
 
         Args:
             quirk: Quirk instance
             test_cases: List of test case dicts with keys:
                 - content: str (required)
-                - expected_fields: dict[str, Any] (required)
+                - expected_fields: dict[str, object] (required)
                 - parse_method: str | None (optional override)
             parse_method: Default method name for parsing
             validate_all: Whether to validate all results (default: True)
@@ -5144,8 +5164,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_to_file_and_validate(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         output_path: Path,
         *,
         write_method: str = "write",
@@ -5215,7 +5235,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def complete_roundtrip_parse_write_parse(
-        api: Any,
+        api: FlextLdif,
         ldif_content: str | Path,
         tmp_path: Path,
         *,
@@ -5307,7 +5327,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_parse_write_roundtrip(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str | None = None,
@@ -5355,12 +5375,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_attribute_complete(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         *,
         expected_oid: str,
         expected_name: str,
-        expected_fields: dict[str, Any] | None = None,
+        expected_fields: dict[str, object] | None = None,
     ) -> FlextLdifModels.SchemaAttribute:
         """Complete attribute parse test with all validations - replaces 8-15 lines.
 
@@ -5406,12 +5426,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_objectclass_complete(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         oc_def: str,
         *,
         expected_oid: str,
         expected_name: str,
-        expected_fields: dict[str, Any] | None = None,
+        expected_fields: dict[str, object] | None = None,
     ) -> FlextLdifModels.SchemaObjectClass:
         """Complete objectClass parse test with all validations - replaces 8-15 lines.
 
@@ -5457,7 +5477,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_schema_complete(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
         must_contain: list[str],
@@ -5491,7 +5511,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_complete(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         ldif_content: str,
         *,
         expected_dn: str,
@@ -5826,7 +5846,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_entry_complete(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         must_contain: list[str],
@@ -5871,7 +5891,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_entries_and_assert_count_dn(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
@@ -5937,7 +5957,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_api_parse_and_unwrap(
-        api: Any,
+        api: FlextLdif,
         content: str | Path,
         *,
         expected_count: int | None = None,
@@ -5980,7 +6000,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_api_write_and_unwrap(
-        api: Any,
+        api: FlextLdif,
         entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
         *,
         must_contain: str | list[str] | None = None,
@@ -6024,7 +6044,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_single_entry_and_validate(
-        parser: Any,
+        parser: object,
         ldif_content: str,
         *,
         parse_method: str = "parse",
@@ -6077,13 +6097,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_write_and_assert_content(
-        quirk: Any,
+        quirk: object,
         content: str,
         *,
         parse_method: str = "parse",
         write_method: str = "write",
         must_contain_in_output: str | list[str] | None = None,
-    ) -> tuple[Any, str]:
+    ) -> tuple[object, str]:
         """Parse, write and assert content - replaces 8-12 lines per use.
 
         Common pattern (appears 25+ times):
@@ -6121,7 +6141,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_schema_parse_write_and_assert_oid(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str,
@@ -6178,8 +6198,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_file_conditional_success(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         output_path: Path,
         *,
         write_method: str = "write",
@@ -6229,13 +6249,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_failure_with_error_validation(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
         expected_error_substring: str,
         error_must_not_contain: str | list[str] | None = None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Parse failure with comprehensive error validation - replaces 4-7 lines per use.
 
         Common pattern (appears 20+ times):
@@ -6280,8 +6300,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_batch_can_handle_operations(
-        quirk: Any,
-        test_cases: list[dict[str, Any]],
+        quirk: object,
+        test_cases: list[dict[str, object]],
         *,
         can_handle_method: str = "can_handle",
     ) -> list[bool]:
@@ -6290,7 +6310,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Args:
             quirk: Quirk instance
             test_cases: List of test case dicts with keys:
-                - data: Any (required) - data to check  # noqa: ANN401
+                - data: object (required) - data to check
                 - expected: bool (required) - expected result
             can_handle_method: Method name to call (default: "can_handle")
 
@@ -6318,8 +6338,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_batch_write_and_assert_content(
-        writer: Any,
-        test_cases: list[dict[str, Any]],
+        writer: object,
+        test_cases: list[dict[str, object]],
         *,
         write_method: str = "write",
     ) -> list[str]:
@@ -6328,7 +6348,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Args:
             writer: Writer instance
             test_cases: List of test case dicts with keys:
-                - data: Any (required) - data to write  # noqa: ANN401
+                - data: object (required) - data to write  # noqa: ANN401
                 - must_contain: str | list[str] | None
                 - must_not_contain: str | list[str] | None
                 - should_succeed: bool (default: True)
@@ -6367,12 +6387,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_schema_from_entry_attributes(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         entries: list[FlextLdifModels.Entry],
         *,
         schema_type: str = "attribute",
         parse_method: str | None = None,
-    ) -> list[Any]:
+    ) -> list[object]:
         """Parse schemas from entry attributes - replaces 15-30 lines.
 
         Common pattern (appears 10+ times):
@@ -6417,7 +6437,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_unwrap_parse_response(
-        parser: Any,
+        parser: object,
         ldif_content: str,
         *,
         parse_method: str = "parse",
@@ -6456,7 +6476,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_unwrap_entries_list(
-        parser: Any,
+        parser: object,
         ldif_content: str,
         *,
         parse_method: str = "parse",
@@ -6510,7 +6530,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_failure_with_error_check(
-        result: FlextResult[Any],
+        result: FlextResult[object],
         *,
         expected_error_substring: str | None = None,
         error_message: str | None = None,
@@ -6569,7 +6589,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_ldif_and_unwrap(
-        entry_quirk: Any,
+        entry_quirk: EntryQuirk,
         ldif_text: str,
         *,
         parse_method: str = "parse",
@@ -6629,8 +6649,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_parse_entries_with_validation(
-        entry_quirk: Any,
-        test_cases: list[dict[str, Any]],
+        entry_quirk: EntryQuirk,
+        test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
     ) -> list[FlextLdifModels.Entry]:
@@ -6706,7 +6726,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_schema_with_constants(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         *,
         parse_method: str = "parse",
@@ -6755,8 +6775,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_parse_schema_with_constants(
-        schema_quirk: Any,
-        test_cases: list[dict[str, Any]],
+        schema_quirk: SchemaQuirk,
+        test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
     ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
@@ -6818,11 +6838,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_failure_assertions(
-        writer: Any,
-        test_cases: list[dict[str, Any]],
+        writer: object,
+        test_cases: list[dict[str, object]],
         *,
         write_method: str = "write",
-    ) -> list[FlextResult[Any]]:
+    ) -> list[FlextResult[object]]:
         """Test multiple write failures - replaces 20-50+ lines.
 
         Common pattern:
@@ -6834,7 +6854,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Args:
             writer: Writer instance
             test_cases: List of dicts with keys:
-                - data: Any (required) - data to write  # noqa: ANN401
+                - data: object (required) - data to write  # noqa: ANN401
                 - expected_error_substring: str | None
             write_method: Method name (default: "write")
 
@@ -6860,7 +6880,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_entry_simple_and_validate_attributes(
-        parser: Any,
+        parser: object,
         ldif_content: str,
         *,
         parse_method: str = "parse",
@@ -6900,7 +6920,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_and_validate_entry_count_dn_attributes(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
@@ -6942,8 +6962,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_validate_file_content(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         output_path: Path,
         *,
         write_method: str = "write",
@@ -6984,11 +7004,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_result_is_type(
-        result: FlextResult[Any],
-        expected_type: type[Any],
+        result: FlextResult[object],
+        expected_type: type[object],
         *,
         error_msg: str | None = None,
-    ) -> Any:
+    ) -> object:
         """Assert result is success and unwrapped value is of expected type - replaces 2-3 lines.
 
         Common pattern:
@@ -7013,7 +7033,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_and_assert_count_and_dn(
-        parser: Any,
+        parser: object,
         ldif_content: str | Path,
         *,
         expected_count: int,
@@ -7047,8 +7067,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_batch_parse_and_assert_counts(
-        parser: Any,
-        test_cases: list[dict[str, Any]],
+        parser: object,
+        test_cases: list[dict[str, object]],
     ) -> list[list[FlextLdifModels.Entry]]:
         """Test multiple parse operations with count assertions - replaces 30-100+ lines.
 
@@ -7086,11 +7106,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_quirk_method_returns_boolean(
-        quirk: Any,
+        quirk: object,
         method_name: str,
-        *args: Any,
+        *args: object,
         expected_value: bool,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> bool:
         """Test quirk method returns boolean - replaces 4-6 lines.
 
@@ -7120,12 +7140,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_quirk_method_returns_type(
-        quirk: Any,
+        quirk: object,
         method_name: str,
-        *args: Any,
-        expected_type: type[Any],
-        **kwargs: Any,
-    ) -> Any:
+        *args: object,
+        expected_type: type[object],
+        **kwargs: object,
+    ) -> object:
         """Test quirk method returns expected type - replaces 4-6 lines.
 
         Common pattern:
@@ -7155,12 +7175,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_failure_and_assert_error(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
         expected_error_substring: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Parse failure with error validation - replaces 3-5 lines per use.
 
         Common pattern:
@@ -7190,12 +7210,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_failure_and_assert_error(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_error_substring: str | None = None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Write failure with error validation - replaces 3-5 lines per use.
 
         Common pattern:
@@ -7224,7 +7244,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_attribute_and_assert_syntax(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         *,
         parse_method: str = "parse",
@@ -7295,8 +7315,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_count(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_substring: str,
@@ -7335,7 +7355,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_attribute_complete_validation(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         *,
         parse_method: str = "parse",
@@ -7401,13 +7421,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_and_validate_each_item(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
         expected_count: int | None = None,
-        item_validator: Callable[[Any], bool] | None = None,
-    ) -> list[Any]:
+        item_validator: Callable[[object], bool] | None = None,
+    ) -> list[object]:
         """Parse and validate each item in result - replaces 8-15 lines per use.
 
         Common pattern (appears 20+ times):
@@ -7454,8 +7474,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_starts_with(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_prefix: str,
@@ -7491,8 +7511,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_ends_with(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_suffix: str,
@@ -7527,7 +7547,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_attribute_with_all_fields(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         *,
         parse_method: str = "parse",
@@ -7588,12 +7608,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def execute_and_unwrap(
-        quirk: Any,
+        quirk: object,
         *,
-        data: Any = None,
+        data: object | None = None,
         operation: str | None = None,
-        expected_type: type[Any] | None = None,
-    ) -> Any:
+        expected_type: type[object] | None = None,
+    ) -> object:
         """Execute quirk and unwrap result - replaces 2-4 lines per use.
 
         Common pattern:
@@ -7631,12 +7651,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_and_assert_type(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-        expected_type: type[Any],
-    ) -> Any:
+        expected_type: type[object],
+    ) -> object:
         """Parse and assert type - replaces 3-4 lines per use.
 
         Common pattern:
@@ -7665,8 +7685,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_contains(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         must_contain: str | list[str],
@@ -8010,13 +8030,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_write_and_assert_contains(
-        quirk: Any,
+        quirk: object,
         content: str,
         *,
         parse_method: str = "parse",
         write_method: str = "write",
         must_contain: str | list[str],
-    ) -> tuple[Any, str]:
+    ) -> tuple[object, str]:
         """Parse, write and assert contains - replaces 6-10 lines per use.
 
         Common pattern:
@@ -8049,7 +8069,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_entry_and_assert_dn_in_output(
-        parser: Any,
+        parser: object,
         ldif_content: str,
         *,
         parse_method: str = "parse",
@@ -8111,8 +8131,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_line_count(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_line_count: int | None = None,
@@ -8159,12 +8179,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_and_assert_dict_keys(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
         expected_keys: list[str],
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Parse and assert dict has expected keys - replaces 6-10 lines per use.
 
         Common pattern (appears 15+ times):
@@ -8198,12 +8218,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_and_assert_dict_values(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-        expected_key_value_pairs: dict[str, Any],
-    ) -> dict[str, Any]:
+        expected_key_value_pairs: dict[str, object],
+    ) -> dict[str, object]:
         """Parse and assert dict has expected key-value pairs - replaces 8-15 lines per use.
 
         Common pattern (appears 20+ times):
@@ -8240,8 +8260,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_line_contains(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         line_must_contain: str | list[str],
@@ -8286,8 +8306,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_convert_roundtrip_and_assert(
         conversion_matrix: FlextLdifConversion,
-        source: Any,
-        target: Any,
+        source: object,
+        target: object,
         data_type: str,
         original_data: str | dict[str, object],
         *,
@@ -8392,7 +8412,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_get_supported_conversions_and_assert(
         conversion_matrix: FlextLdifConversion,
-        quirk: Any,
+        quirk: object,
         *,
         expected_support: dict[str, bool] | None = None,
         must_have_keys: list[str] | None = None,
@@ -8438,13 +8458,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_result_and_assert_fields(
-        result: FlextResult[Any],
+        result: FlextResult[object],
         *,
-        expected_fields: dict[str, Any] | None = None,
+        expected_fields: dict[str, object] | None = None,
         must_have_attributes: list[str] | None = None,
         should_succeed: bool = True,
-        expected_value: Any | None = None,
-    ) -> Any:
+        expected_value: object | None = None,
+    ) -> object:
         """Validate result and assert multiple fields - replaces 8-15 lines.
 
         Common pattern (appears 30+ times):
@@ -8474,7 +8494,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def schema_parse_with_constant_and_validate(
         schema_quirk: FlextLdifServersBase.Schema,
-        constants_class: type[Any],
+        constants_class: type[object],
         constant_name: str,
         *,
         parse_method: str = "_parse_attribute",
@@ -8663,14 +8683,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_contains_constants(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         constants: object,  # Constants class with dynamic attributes
         *,
         constant_attrs: list[str],
         must_not_contain: list[str] | None = None,
         write_method: str = "write",
-        **kwargs: Any,
+        **kwargs: object,
     ) -> str:
         """Write and assert using constants - replaces 8-12 lines per test.
 
@@ -8773,7 +8793,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_schema_with_constants_and_assert(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         attr_def: str,
         constants: ConstantsClass,
         *,
@@ -8842,7 +8862,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_write_schema_with_constants(
-        schema_quirk: Any,
+        schema_quirk: SchemaQuirk,
         schema_def: str,
         constants: ConstantsClass,
         *,
@@ -8899,7 +8919,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_assert_constants_in_collection(
-        collection: list[Any] | dict[str, Any],
+        collection: list[object] | dict[str, object],
         constants: ConstantsClass,
         *,
         constant_attrs: list[str],
@@ -8953,7 +8973,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         length: int | None = None,
         usage: str | None = None,
         x_origin: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> FlextLdifModels.SchemaAttribute:
         """Create schema attribute using constants - replaces 10-20 lines.
 
@@ -9031,7 +9051,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         must: list[str] | None = None,
         may: list[str] | None = None,
         obsolete: bool = False,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> FlextLdifModels.SchemaObjectClass:
         """Create schema objectClass using constants - replaces 10-20 lines.
 
@@ -9069,7 +9089,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # SchemaObjectClass doesn't have create(), use constructor directly
         # Only pass fields that are not None (except for optional fields)
-        oc_kwargs: dict[str, Any] = {}
+        oc_kwargs: dict[str, object] = {}
         if oid_value is not None:
             oc_kwargs["oid"] = oid_value
         if name_value is not None:
@@ -9175,9 +9195,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_can_handle_and_assert(
-        quirk: Any,
+        quirk: object,
         method_name: str,
-        data: Any,
+        data: object,
         *,
         expected_result: bool = True,
     ) -> bool:
@@ -9206,13 +9226,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_transform_and_assert_fields(
-        quirk: Any,
+        quirk: object,
         transform_method: str,
-        input_data: Any,
+        input_data: object,
         *,
-        expected_fields: dict[str, Any] | None = None,
-        must_not_equal: dict[str, Any] | None = None,
-    ) -> Any:
+        expected_fields: dict[str, object] | None = None,
+        must_not_equal: dict[str, object] | None = None,
+    ) -> object:
         """Test transform_*_for_write methods with field assertions - replaces 8-15 lines.
 
         Common pattern (appears 20+ times):
@@ -9256,7 +9276,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_normalize_and_assert(
-        quirk: Any,
+        quirk: object,
         normalize_method: str,
         input_value: str,
         *,
@@ -9314,8 +9334,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_first_line(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_first_line: str,
@@ -9355,8 +9375,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_write_and_assert_last_line(
-        writer: Any,
-        data: Any,
+        writer: object,
+        data: object,
         *,
         write_method: str = "write",
         expected_last_line: str,
@@ -9396,12 +9416,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_list_and_assert_first_item(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-        item_validator: Any | None = None,
-    ) -> Any:
+        item_validator: object | None = None,
+    ) -> object:
         """Parse list and assert first item - replaces 6-10 lines per use.
 
         Common pattern (appears 20+ times):
@@ -9450,13 +9470,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_list_and_assert_last_item(
-        parser: Any,
+        parser: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
         minimum_count: int = 1,
-        item_validator: Any | None = None,
-    ) -> Any:
+        item_validator: object | None = None,
+    ) -> object:
         """Parse list and assert last item - replaces 6-10 lines per use.
 
         Common pattern (appears 15+ times):
@@ -9698,7 +9718,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def api_parse_fixture_and_assert(
         api: FlextLdif,
-        fixture_loader: Any,
+        fixture_loader: object,
         server_type: str,
         fixture_name: str,
         *,
@@ -9763,14 +9783,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: Any,
+        quirk: object,
         content: str | Path,
         *,
         parse_method: str = "parse",
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
         should_succeed: bool = True,
         expected_error: str | None = None,
-    ) -> Any:
+    ) -> object:
         """Generic quirk parse + assert success + unwrap - replaces 3-5 lines per use.
 
         Common pattern (appears 100+ times):
@@ -9826,8 +9846,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: Any,
-        data: Any,
+        quirk: object,
+        data: object,
         *,
         write_method: str = "write",
         must_contain: list[str] | None = None,
@@ -10008,11 +10028,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_parse_test_cases(
-        quirk: Any,
-        test_cases: list[dict[str, Any]],
+        quirk: object,
+        test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
-        expected_type: type[Any] | None = None,
+        expected_type: type[object] | None = None,
     ) -> None:
         """Test multiple parse cases with a quirk - replaces 10-30 lines.
 

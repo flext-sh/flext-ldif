@@ -168,9 +168,6 @@ class TestConversionMatrixWithRealFixtures:
             pytest.skip("OID schema fixture not available")
         return extract_attributes(schema)
 
-    @pytest.mark.skip(
-        reason="SchemaAttribute conversion not yet supported by FlextLdifConversion"
-    )
     def test_oid_to_oud_conversion_with_real_attributes(
         self,
         matrix: FlextLdifConversion,
@@ -222,9 +219,6 @@ class TestConversionMatrixWithRealFixtures:
         assert len(failures) == 0, f"Conversion failures: {failures}"
         assert successes > 0, "No successful conversions"
 
-    @pytest.mark.skip(
-        reason="SchemaAttribute conversion not yet supported by FlextLdifConversion"
-    )
     def test_roundtrip_oid_oud_oid_with_real_data(
         self,
         matrix: FlextLdifConversion,

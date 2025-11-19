@@ -19,114 +19,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Generator
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from ldap3 import ALL, Connection, Server
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 
-# LDAP connection details for flext-openldap-test container
-LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
-LDAP_BASE_DN = "dc=flext,dc=local"
-
-
-@pytest.fixture(scope="module")
-def ldap_connection(ldap_container: str) -> Generator[Connection]:
-    """Create connection to real LDAP server via Docker fixture.
-
-    Args:
-        ldap_container: Docker LDAP connection string from conftest fixture
-
-    Yields:
-        Connection: ldap3 connection to LDAP server
-
-    """
-    # ldap_container is a connection URL provided by the Docker fixture
-    # Extract host:port from the connection string
-    # Expected format: "ldap://localhost:3390"
-    host_port = ldap_container.replace("ldap://", "").replace("ldaps://", "")
-
-    server = Server(f"ldap://{host_port}", get_info=ALL)
-    conn = Connection(
-        server,
-        user=LDAP_ADMIN_DN,
-        password=LDAP_ADMIN_PASSWORD,
-    )
-
-    # Check if server is available
-    try:
-        if not conn.bind():
-            pytest.skip(f"LDAP server not available at {host_port}")
-    except Exception as e:
-        pytest.skip(f"LDAP server not available at {host_port}: {e}")
-
-    yield conn
-    conn.unbind()
-
-
-@pytest.fixture
-def clean_test_ou(ldap_connection: Connection) -> Generator[str]:
-    """Create and clean up test OU."""
-    test_ou_dn = f"ou=FlextLdifTests,{LDAP_BASE_DN}"
-
-    # Try to delete existing test OU (ignore errors)
-    try:
-        # Search for all entries under test OU
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            # Delete in reverse order (leaves first)
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    # Ignore delete errors during cleanup - entries may already be deleted
-                    # or dependencies may prevent deletion. Cleanup should not fail tests.
-                    pass
-    except Exception:
-        # OU doesn't exist yet - this is expected for first test run
-        pass
-
-    # Create test OU (or recreate if deleted above)
-    try:
-        ldap_connection.add(
-            test_ou_dn,
-            ["organizationalUnit"],
-            {"ou": "FlextLdifTests"},
-        )
-    except Exception:
-        # OU already exists - this is expected if previous test didn't clean up
-        pass
-
-    yield test_ou_dn
-
-    # Cleanup after test - delete all entries under test OU
-    try:
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    # Ignore cleanup errors - entries may have dependencies or already be deleted
-                    pass
-    except Exception:
-        # Cleanup failed, but that's okay - test should not fail due to cleanup issues
-        pass
+# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
+# They use unique_dn_suffix for isolation and indepotency in parallel execution
 
 
 @pytest.fixture
@@ -146,12 +48,15 @@ class TestRealLdapImport:
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF entry to real LDAP server."""
-        ldif_content = f"""dn: cn=Import Test,{clean_test_ou}
+        # Use isolated username for parallel execution
+        unique_username = make_test_username("ImportTest")
+        ldif_content = f"""dn: cn={unique_username},{clean_test_ou}
 objectClass: person
 objectClass: inetOrgPerson
-cn: Import Test
+cn: {unique_username}
 sn: Test
 mail: import@example.com
 """
@@ -206,7 +111,7 @@ mail: import@example.com
             attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
-        assert imported_entry["cn"].value == "Import Test"
+        assert imported_entry["cn"].value == unique_username
         assert imported_entry["mail"].value == "import@example.com"
 
     def test_import_with_binary_attributes(
@@ -214,16 +119,19 @@ mail: import@example.com
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF with binary attributes (base64-encoded)."""
+        # Use isolated username for parallel execution
+        unique_username = make_test_username("BinaryTest")
         # Create entry with binary data (simulated photo)
         binary_data = b"fake_jpeg_data_here"
         encoded_photo = base64.b64encode(binary_data).decode("ascii")
 
-        ldif_content = f"""dn: cn=Binary Test,{clean_test_ou}
+        ldif_content = f"""dn: cn={unique_username},{clean_test_ou}
 objectClass: person
 objectClass: inetOrgPerson
-cn: Binary Test
+cn: {unique_username}
 sn: Test
 jpegPhoto:: {encoded_photo}
 """
@@ -272,14 +180,17 @@ jpegPhoto:: {encoded_photo}
         clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF file to LDAP server."""
+        # Use isolated username for parallel execution
+        unique_username = make_test_username("FileImport")
         # Create LDIF file
         ldif_file = tmp_path / "import.ldif"
-        ldif_content = f"""dn: cn=File Import,{clean_test_ou}
+        ldif_content = f"""dn: cn={unique_username},{clean_test_ou}
 objectClass: person
 objectClass: inetOrgPerson
-cn: File Import
+cn: {unique_username}
 sn: Test
 mail: import@example.com
 """

@@ -364,11 +364,10 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
 
         Args:
             attribute: Attribute value object with .values property, list, or string.
-                      Must not be None - use FlextResult for error handling.
+                      Type annotation guarantees non-None.
 
         Returns:
             FlextResult containing list of attribute values as strings.
-            Fails if attribute is None or invalid format.
 
         Example:
             # Extract values using monadic composition
@@ -379,11 +378,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
                     print(f"Value: {value}")
 
         """
-        # Fast fail if None - no fallback
-        if attribute is None:
-            return FlextResult[list[str]].fail(
-                "Attribute value cannot be None - use FlextResult for error handling",
-            )
+        # Type annotation guarantees attribute is not None - no defensive check needed
 
         # Handle objects with .values property (protocol-based)
         if isinstance(attribute, FlextLdifProtocols.AttributeValueProtocol):

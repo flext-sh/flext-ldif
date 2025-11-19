@@ -4151,104 +4151,39 @@ class TestRfcHandleParseOperationEntryObjectCoverage:
         rfc_quirk: FlextLdifServersRfc,
         sample_entry: FlextLdifModels.Entry,
     ) -> None:
-        """Test _handle_parse_operation when parse_response.entries is an Entry object (not list).
+        """Test _handle_parse_operation with real LDIF data.
 
-        This covers lines 357-361 which handle the case where parse_response.entries
-        is a single Entry object instead of a list. This is defensive code that
-        may not occur in practice, but we test it to ensure 100% coverage.
+        Tests the normal case where parse_response.entries is a list of Entry objects.
+        Uses real LDIF parsing without mocks.
         """
         # Parse valid LDIF to get a real ParseResponse
         ldif_text = TestGeneralConstants.SAMPLE_LDIF_ENTRY
-        parse_result = rfc_quirk.parse(ldif_text)
-        assert parse_result.is_success
+        result = rfc_quirk._handle_parse_operation(ldif_text)
+        
+        assert result.is_success
+        unwrapped = result.unwrap()
+        # Should return the first Entry from the list
+        assert isinstance(unwrapped, FlextLdifModels.Entry)
+        assert unwrapped.dn.value == sample_entry.dn.value
 
-        # Get the parse_response and modify entries to be a single Entry object
-        # This simulates the defensive code path in lines 357-361
-        parse_response = parse_result.unwrap()
-        # Use object.__setattr__ to bypass Pydantic validation and set entries to a single Entry
-        # This is a test-only modification to cover defensive code
-        object.__setattr__(parse_response, "entries", sample_entry)  # noqa: PLC2801
-
-        # Now call _handle_parse_operation with a mock that returns our modified parse_response
-        # We need to mock the parse() method to return our modified parse_response
-        original_parse = rfc_quirk.parse
-
-        def mock_parse(ldif_text: str) -> FlextResult[FlextLdifModels.ParseResponse]:
-            """Mock parse that returns parse_response with Entry object."""
-            # Create a new ParseResponse with entries as a single Entry
-            # ParseResponse is frozen, so we need to use object.__setattr__ to modify
-            mock_response = FlextLdifModels.ParseResponse(
-                entries=[
-                    sample_entry
-                ],  # Start with list to satisfy Pydantic validation
-                statistics=parse_response.statistics,
-                detected_server_type=parse_response.detected_server_type,
-            )
-            # Modify to have Entry object instead of list (defensive code path)
-            object.__setattr__(mock_response, "entries", sample_entry)  # noqa: PLC2801
-            return FlextResult[FlextLdifModels.ParseResponse].ok(mock_response)
-
-        # Temporarily replace parse method
-        rfc_quirk.parse = mock_parse  # type: ignore[method-assign]
-
-        try:
-            # Now _handle_parse_operation should hit the isinstance(entries, Entry) path
-            result = rfc_quirk._handle_parse_operation(ldif_text)
-            assert result.is_success
-            unwrapped = result.unwrap()
-            # Should return the Entry object
-            assert isinstance(unwrapped, FlextLdifModels.Entry)
-            assert unwrapped.dn.value == sample_entry.dn.value
-        finally:
-            # Restore original parse method
-            rfc_quirk.parse = original_parse  # type: ignore[method-assign]
-
-    def test_handle_parse_operation_with_non_list_non_entry_entries(
+    def test_handle_parse_operation_with_empty_entries(
         self,
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
-        """Test _handle_parse_operation when parse_response.entries is neither list nor Entry.
+        """Test _handle_parse_operation when parse_response.entries is empty.
 
-        This covers line 361 which handles the fallback case.
+        Tests the case where parsing results in an empty entry list.
+        Uses real LDIF parsing without mocks.
         """
-        # Parse valid LDIF to get a real ParseResponse
-        ldif_text = TestGeneralConstants.SAMPLE_LDIF_ENTRY
-        parse_result = rfc_quirk.parse(ldif_text)
-        assert parse_result.is_success
-
-        # Get the parse_response for statistics
-        parse_response = parse_result.unwrap()
-
-        # Mock parse to return our modified parse_response with entries as a string (not list or Entry)
-        original_parse = rfc_quirk.parse
-
-        def mock_parse(ldif_text: str) -> FlextResult[FlextLdifModels.ParseResponse]:
-            """Mock parse that returns parse_response with non-list, non-Entry entries."""
-            mock_response = FlextLdifModels.ParseResponse(
-                entries=[],  # Start with empty list
-                statistics=parse_response.statistics,
-                detected_server_type=parse_response.detected_server_type,
-            )
-            # Modify to have a string instead of list or Entry (defensive code path)
-            object.__setattr__(mock_response, "entries", "invalid")  # noqa: PLC2801
-            return FlextResult[FlextLdifModels.ParseResponse].ok(mock_response)
-
-        rfc_quirk.parse = mock_parse  # type: ignore[method-assign]
-
-        try:
-            # Now _handle_parse_operation should hit the fallback path (line 361)
-            result = rfc_quirk._handle_parse_operation(ldif_text)
-            assert result.is_success
-            unwrapped = result.unwrap()
-            # When entries is neither list nor Entry, should return empty string (line 361)
-            # However, if the mock doesn't work correctly, we may get an Entry
-            # So we check for either empty string OR Entry (both are valid results)
-            assert isinstance(unwrapped, (str, FlextLdifModels.Entry))
-            if isinstance(unwrapped, str):
-                assert unwrapped == ""
-        finally:
-            # Restore original parse method
-            rfc_quirk.parse = original_parse  # type: ignore[method-assign]
+        # Parse empty LDIF to get a ParseResponse with empty entries
+        ldif_text = ""
+        result = rfc_quirk._handle_parse_operation(ldif_text)
+        
+        assert result.is_success
+        unwrapped = result.unwrap()
+        # Should return empty string when no entries
+        assert isinstance(unwrapped, str)
+        assert unwrapped == ""
 
 
 # Note: Lines 451, 458, 465, 472 in _route_model_to_write are defensive code paths

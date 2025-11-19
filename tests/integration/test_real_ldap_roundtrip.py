@@ -18,113 +18,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable
 
 import pytest
-from ldap3 import ALL, Connection, Server
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 
-# LDAP connection details for flext-openldap-test container
-LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
-LDAP_BASE_DN = "dc=flext,dc=local"
-
-
-@pytest.fixture(scope="module")
-def ldap_connection(ldap_container: str) -> Generator[Connection]:
-    """Create connection to real LDAP server via Docker fixture.
-
-    Args:
-        ldap_container: Docker LDAP connection string from conftest fixture
-
-    Yields:
-        Connection: ldap3 connection to LDAP server
-
-    """
-    # ldap_container is a connection URL provided by the Docker fixture
-    # Extract host:port from the connection string
-    # Expected format: "ldap://localhost:3390"
-    host_port = ldap_container.replace("ldap://", "").replace("ldaps://", "")
-
-    server = Server(f"ldap://{host_port}", get_info=ALL)
-    conn = Connection(
-        server,
-        user=LDAP_ADMIN_DN,
-        password=LDAP_ADMIN_PASSWORD,
-    )
-
-    # Check if server is available
-    try:
-        if not conn.bind():
-            pytest.skip(f"LDAP server not available at {host_port}")
-    except Exception as e:
-        pytest.skip(f"LDAP server not available at {host_port}: {e}")
-
-    yield conn
-    conn.unbind()
-
-
-@pytest.fixture
-def clean_test_ou(ldap_connection: Connection) -> Generator[str]:
-    """Create and clean up test OU."""
-    test_ou_dn = f"ou=FlextLdifTests,{LDAP_BASE_DN}"
-
-    # Try to delete existing test OU (ignore errors)
-    try:
-        # Search for all entries under test OU
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            # Delete in reverse order (leaves first)
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    # Ignore delete errors during cleanup - entries may already be deleted
-                    # or dependencies may prevent deletion. Cleanup should not fail tests.
-                    pass
-    except Exception:
-        # OU doesn't exist yet - this is expected for first test run
-        pass
-
-    # Create test OU (or recreate if deleted above)
-    try:
-        ldap_connection.add(
-            test_ou_dn,
-            ["organizationalUnit"],
-            {"ou": "FlextLdifTests"},
-        )
-    except Exception:
-        # OU already exists - this is expected if previous test didn't clean up
-        pass
-
-    yield test_ou_dn
-
-    # Cleanup after test - delete all entries under test OU
-    try:
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    # Ignore cleanup errors - entries may have dependencies or already be deleted
-                    pass
-    except Exception:
-        # Cleanup failed, but that's okay - test should not fail due to cleanup issues
-        pass
+# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
+# They use unique_dn_suffix for isolation and indepotency in parallel execution
 
 
 @pytest.fixture
@@ -144,12 +46,14 @@ class TestRealLdapRoundtrip:
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""
-        # Create original LDAP entry
-        original_dn = f"cn=Roundtrip Test,{clean_test_ou}"
+        # Create original LDAP entry with isolated username
+        unique_username = make_test_username("RoundtripTest")
+        original_dn = f"cn={unique_username},{clean_test_ou}"
         original_attrs: dict[str, object] = {
-            "cn": "Roundtrip Test",
+            "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
             "telephoneNumber": ["+1-555-1111", "+1-555-2222"],
@@ -194,8 +98,9 @@ class TestRealLdapRoundtrip:
         assert write_result.is_success
         ldif_output = write_result.unwrap()
 
-        # Re-import from LDIF (to different DN)
-        reimport_dn = f"cn=Roundtrip Test Copy,{clean_test_ou}"
+        # Re-import from LDIF (to different DN with isolated username)
+        unique_username_copy = make_test_username("RoundtripTestCopy")
+        reimport_dn = f"cn={unique_username_copy},{clean_test_ou}"
         parse_result = flext_api.parse(ldif_output)
         assert parse_result.is_success
         parsed_entries = parse_result.unwrap()
@@ -217,7 +122,7 @@ class TestRealLdapRoundtrip:
             if attr_name.lower() not in ldif_special_attrs
             and attr_name.lower() != "objectclass"
         }
-        reimport_attrs["cn"] = ["Roundtrip Test Copy"]
+        reimport_attrs["cn"] = [unique_username_copy]
 
         obj_class_values = reimport_entry.get_attribute_values("objectclass")
         assert isinstance(obj_class_values, list)

@@ -172,7 +172,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
@@ -185,6 +185,19 @@ from flext_ldif.services.entry_transformer import FlextLdifEntryTransformer
 from flext_ldif.services.schema_detector import FlextLdifSchemaDetector
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
+
+logger = FlextLogger(__name__)
+
+if TYPE_CHECKING:
+    from flext_ldif.services.server import FlextLdifServer
+
+
+def _get_server_registry() -> FlextLdifServer:
+    """Get server registry instance (lazy import to avoid circular dependency)."""
+    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+
+    return FlextLdifServer.get_global_instance()
+
 
 # Type alias to avoid Pydantic v2 forward reference resolution issues
 # FlextLdifTypes.Models is a namespace, not an importable module
@@ -411,12 +424,12 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
             # Access private methods within same class (acceptable pattern)
-            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(
+            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(  # noqa: SLF001
                 entry,
                 oc_tuple,
                 required_attributes,
             )
-            if FlextLdifFilters.Filter._should_include_entry(
+            if FlextLdifFilters.Filter._should_include_entry(  # noqa: SLF001
                 matches=entry_matches,
                 filter_mode=filter_mode,
             ):
@@ -441,14 +454,14 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
-                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(
+                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(  # noqa: SLF001
                     objectclass,
                 )
 
                 # Process all entries
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
-                    result = FlextLdifFilters.Filter._process_objectclass_entry(
+                    result = FlextLdifFilters.Filter._process_objectclass_entry(  # noqa: SLF001
                         entry,
                         oc_tuple,
                         required_attributes,
@@ -672,18 +685,30 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
 
                 # Create filtered attributes dict
                 attrs_lower = {attr.lower() for attr in attributes_to_remove}
+                original_attrs = dict(entry.attributes.items())
+                original_attr_names = list(original_attrs.keys())
 
                 filtered_attrs = {
                     key: values
                     for key, values in entry.attributes.items()
                     if key.lower() not in attrs_lower
                 }
+                removed_attrs = [
+                    attr for attr in original_attr_names
+                    if attr.lower() in attrs_lower
+                ]
 
                 # Create new LdifAttributes
                 attrs_result = FlextLdifModels.LdifAttributes.create(
                     filtered_attrs,
                 )
                 if not attrs_result.is_success:
+                    logger.error(
+                        "Failed to create LdifAttributes after filtering",
+                        entry_dn=str(entry.dn) if entry.dn else None,
+                        attributes_to_remove=attributes_to_remove,
+                        error=str(attrs_result.error),
+                    )
                     return FlextResult[FlextLdifModels.Entry].fail(
                         attrs_result.error or "Unknown error",
                     )
@@ -691,6 +716,19 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                 new_entry = entry.model_copy(
                     update={"attributes": attrs_result.unwrap()},
                 )
+                
+                # Log detailed filtering information
+                if removed_attrs:
+                    logger.debug(
+                        "Removed specified attributes from entry",
+                        action_taken="filter_entry_attributes",
+                        entry_dn=str(entry.dn) if entry.dn else None,
+                        original_attributes_count=len(original_attr_names),
+                        final_attributes_count=len(filtered_attrs),
+                        removed_attributes=removed_attrs,
+                        removed_count=len(removed_attrs),
+                    )
+                
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
             except Exception as e:
@@ -715,11 +753,34 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                 filtered_ocs = [
                     oc for oc in current_ocs if oc.lower() not in oc_to_remove_lower
                 ]
+                removed_ocs = [
+                    oc for oc in current_ocs if oc.lower() in oc_to_remove_lower
+                ]
 
                 # Check if all objectClasses would be removed
                 if not filtered_ocs:
+                    logger.error(
+                        "Cannot remove all objectClasses - entry would become invalid",
+                        action_attempted="filter_entry_objectclasses",
+                        entry_dn=str(entry.dn) if entry.dn else None,
+                        objectclasses_count=len(current_ocs),
+                        objectclasses_to_remove=objectclasses_to_remove,
+                        consequence="Entry would become invalid without objectClass",
+                    )
                     return FlextResult[FlextLdifModels.Entry].fail(
                         "All objectClasses would be removed",
+                    )
+                
+                # Log successful filtering
+                if removed_ocs:
+                    logger.debug(
+                        "Removed specified objectClasses from entry",
+                        action_taken="filter_entry_objectclasses",
+                        entry_dn=str(entry.dn) if entry.dn else None,
+                        original_objectclasses_count=len(current_ocs),
+                        final_objectclasses_count=len(filtered_ocs),
+                        removed_objectclasses=removed_ocs,
+                        removed_count=len(removed_ocs),
                     )
 
                 # Check if entry has attributes
@@ -1688,10 +1749,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
 
         """
         try:
-            # Import here to avoid circular dependency (services -> servers -> services)
-            from flext_ldif.services.server import FlextLdifServer
-
-            registry = FlextLdifServer.get_global_instance()
+            registry = _get_server_registry()
             server_quirk = registry.quirk(server_type)
 
             if not server_quirk:

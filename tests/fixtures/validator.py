@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final
+from typing import Final
 
 from flext_core import FlextResult
 
@@ -397,7 +397,9 @@ class FlextLdifFixtureDiscovery:
                 return fixture
         return None
 
-    def load_expected_results(self, metadata: FixtureMetadata) -> dict[str, Any] | None:
+    def load_expected_results(
+        self, metadata: FixtureMetadata
+    ) -> dict[str, object] | None:
         """Load expected results for a fixture.
 
         Args:
@@ -418,15 +420,18 @@ class FlextLdifFixtureDiscovery:
             return None
 
         try:
-            return json.loads(metadata.expected_path.read_text(encoding="utf-8"))
+            result = json.loads(metadata.expected_path.read_text(encoding="utf-8"))
+            if isinstance(result, dict):
+                return result
+            return None
         except (OSError, json.JSONDecodeError):
             return None
 
     def compare_results(
         self,
-        actual: dict[str, Any],
-        expected: dict[str, Any],
-    ) -> dict[str, Any]:
+        actual: dict[str, object],
+        expected: dict[str, object],
+    ) -> dict[str, object]:
         """Compare actual parsing results with expected results.
 
         Args:
@@ -437,21 +442,28 @@ class FlextLdifFixtureDiscovery:
             dict: Comparison results with matches, differences, etc.
 
         """
-        result: dict[str, Any] = {
+        result: dict[str, object] = {
             "matches": True,
             "differences": [],
             "entry_count_matches": False,
             "entries_match": False,
         }
+        differences: list[str] = []
 
         # Compare entry counts
-        actual_count = len(actual.get("entries", []))
-        expected_count = len(expected.get("entries", []))
+        actual_entries = actual.get("entries", [])
+        expected_entries = expected.get("entries", [])
+        if not isinstance(actual_entries, list):
+            actual_entries = []
+        if not isinstance(expected_entries, list):
+            expected_entries = []
+        actual_count = len(actual_entries)
+        expected_count = len(expected_entries)
 
         if actual_count == expected_count:
             result["entry_count_matches"] = True
         else:
-            result["differences"].append(
+            differences.append(
                 f"Entry count mismatch: actual={actual_count}, expected={expected_count}",
             )
             result["matches"] = False
@@ -461,8 +473,8 @@ class FlextLdifFixtureDiscovery:
             entries_match = True
             for i, (actual_entry, expected_entry) in enumerate(
                 zip(
-                    actual.get("entries", []),
-                    expected.get("entries", []),
+                    actual_entries,
+                    expected_entries,
                     strict=False,
                 ),
             ):
@@ -482,7 +494,7 @@ class FlextLdifFixtureDiscovery:
                     expected_dn = expected_dn.get("value")
 
                 if actual_dn != expected_dn:
-                    result["differences"].append(
+                    differences.append(
                         f"Entry {i}: DN mismatch: {actual_dn} != {expected_dn}",
                     )
                     entries_match = False
@@ -499,7 +511,7 @@ class FlextLdifFixtureDiscovery:
                     expected_attrs = expected_attrs.get("attributes", {})
 
                 if actual_attrs != expected_attrs:
-                    result["differences"].append(
+                    differences.append(
                         f"Entry {i}: Attributes mismatch for {actual_dn}",
                     )
                     entries_match = False
@@ -507,6 +519,7 @@ class FlextLdifFixtureDiscovery:
             result["entries_match"] = entries_match
             result["matches"] = result["matches"] and entries_match
 
+        result["differences"] = differences
         return result
 
     def _create_metadata(self, ldif_file: Path) -> FixtureMetadata:

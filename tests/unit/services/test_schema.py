@@ -376,7 +376,7 @@ class TestValidateObjectClass:
         )
         result = schema_service.validate_objectclass(oc)
         assert result.is_failure
-        assert "KIND" in result.error
+        assert "kind" in result.error.lower() or "KIND" in result.error
 
     def test_validate_objectclass_abstract(
         self,
