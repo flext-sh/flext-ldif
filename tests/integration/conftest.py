@@ -20,10 +20,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
 
 from ..fixtures.loader import FlextLdifFixtures
@@ -532,40 +532,46 @@ def conversion_matrix() -> FlextLdifConversion:
 
 
 @pytest.fixture
-def oid_quirk() -> FlextLdifServersOid:
-    """Create OID quirk instance for conversion tests."""
-    from flext_ldif.servers.oid import FlextLdifServersOid
-
-    return FlextLdifServersOid()
+def server() -> FlextLdifServer:
+    """Get FlextLdifServer instance for quirk management."""
+    return FlextLdifServer()
 
 
 @pytest.fixture
-def oud_quirk() -> FlextLdifServersOud:
-    """Create OUD quirk instance for conversion tests."""
-    from flext_ldif.servers.oud import FlextLdifServersOud
-
-    return FlextLdifServersOud()
+def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get OID server quirk via FlextLdifServer API."""
+    quirk = server.quirk("oid")
+    assert quirk is not None, "OID quirk must be registered"
+    return quirk
 
 
 @pytest.fixture
-def oid_schema_quirk(oid_quirk: FlextLdifServersOid) -> object:
+def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get OUD server quirk via FlextLdifServer API."""
+    quirk = server.quirk("oud")
+    assert quirk is not None, "OUD quirk must be registered"
+    return quirk
+
+
+@pytest.fixture
+def oid_schema_quirk(oid_quirk: FlextLdifServersBase) -> object:
     """Create OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
 
 @pytest.fixture
-def oud_schema_quirk(oud_quirk: FlextLdifServersOud) -> object:
+def oud_schema_quirk(oud_quirk: FlextLdifServersBase) -> object:
     """Create OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 
 
 @pytest.fixture
-def oid_acl_quirk(oid_quirk: FlextLdifServersOid) -> object:
+def oid_acl_quirk(oid_quirk: FlextLdifServersBase) -> object:
     """Create OID ACL quirk instance for conversion tests."""
     return oid_quirk.acl_quirk
 
 
 @pytest.fixture
-def oud_acl_quirk(oud_quirk: FlextLdifServersOud) -> object:
+def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> object:
     """Create OUD ACL quirk instance for conversion tests."""
     return oud_quirk.acl_quirk

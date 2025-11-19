@@ -27,7 +27,6 @@ from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
@@ -124,12 +123,10 @@ class FlextLdifConversion(
         self,
         **_kwargs: object,
     ) -> FlextResult[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     ]:
         """Execute conversion service health check.
 
@@ -246,12 +243,10 @@ class FlextLdifConversion(
         target: ServerQuirkOrType,
         model_instance: FlextLdifTypes.ConvertibleModel,
     ) -> FlextResult[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     ]:
         """Convert model between source and target server formats via write→parse pipeline.
 
@@ -273,11 +268,15 @@ class FlextLdifConversion(
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
             if isinstance(model_instance, FlextLdifModels.SchemaAttribute):
                 return self._convert_schema_attribute(
-                    source_quirk, target_quirk, model_instance
+                    source_quirk,
+                    target_quirk,
+                    model_instance,
                 )
             if isinstance(model_instance, FlextLdifModels.SchemaObjectClass):
                 return self._convert_schema_objectclass(
-                    source_quirk, target_quirk, model_instance
+                    source_quirk,
+                    target_quirk,
+                    model_instance,
                 )
             if isinstance(model_instance, FlextLdifModels.Acl):
                 return self._convert_acl(source_quirk, target_quirk, model_instance)
@@ -294,14 +293,19 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     ]:
-        """Convert Entry model via write→parse pipeline."""
+        """Convert Entry model directly without serialization.
+
+        Entry models are already RFC-compliant. Instead of Source.write() → Target.parse()
+        (which fails because parsers expect their own format), we return the model directly.
+        The target.write() will be called by the consumer to serialize to target format.
+
+        Architecture: Entry RFC Model → Target.write() → Target LDIF format
+        """
         try:
             # Validate entry DN using FlextLdifUtilities.DN before conversion
             entry_dn = (
@@ -322,49 +326,28 @@ class FlextLdifConversion(
             # Register entry DN for case consistency during conversion
             _ = self.dn_registry.register_dn(entry_dn)
 
-            # Step 1: Write Entry from source server format to LDIF string
-            write_result = source_quirk.write([entry])
-            if write_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to write entry in source format: {write_result.error}",
+            # Clone the model to avoid mutating the original
+            converted_entry = entry.model_copy(deep=True)
+
+            # Get target server type
+            target_server_type = getattr(target_quirk, "server_name", "unknown")
+
+            # Update metadata to indicate target server
+            if not converted_entry.metadata:
+                converted_entry.metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type=target_server_type
                 )
 
-            ldif_string: str = write_result.unwrap()
-            if not ldif_string or not ldif_string.strip():
-                return FlextResult.fail("Write operation returned empty LDIF")
+            # Add conversion tracking in metadata extensions
+            if not converted_entry.metadata.extensions:
+                converted_entry.metadata.extensions = {}
 
-            # Step 2: Parse LDIF string with target server to get Entry in target format
-            parse_result = target_quirk.parse(ldif_string)
-            if parse_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to parse entry in target format: {parse_result.error}",
-                )
+            source_server_type = getattr(source_quirk, "server_name", "unknown")
+            converted_entry.metadata.extensions[
+                FlextLdifConstants.MetadataKeys.CONVERTED_FROM_SERVER
+            ] = source_server_type
 
-            parse_response = parse_result.unwrap()
-            parsed_entries = parse_response.entries
-            if not parsed_entries:
-                return FlextResult.fail("Parse operation returned empty entry list")
-
-            # Step 3: Preserve validation metadata from source entry to target entry
-            converted_entry = parsed_entries[0]
-            if not isinstance(converted_entry, FlextLdifModels.Entry):
-                return FlextResult.fail("Entry conversion produced invalid entry type")
-
-            converted_entry = FlextLdifUtilities.Metadata.preserve_validation_metadata(
-                source_model=entry,
-                target_model=converted_entry,
-                transformation={
-                    "step": "convert_entry",
-                    "source_server": source_quirk.server_type,
-                    "target_server": target_quirk.server_type,
-                    "changes": [
-                        "Converted via write→parse pipeline",
-                        f"DN registered: {entry_dn}",
-                    ],
-                },
-            )
-
-            # Return as Union type to satisfy type checker
+            # Return RFC model - consumer will call target.write() to serialize
             return FlextResult[
                 Union[
                     FlextLdifModels.Entry,
@@ -388,35 +371,42 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         attribute: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     ]:
-        """Convert SchemaAttribute model via write_attribute→parse_attribute pipeline."""
+        """Convert SchemaAttribute model directly without serialization.
+
+        SchemaAttribute models are already RFC-compliant. Instead of Source.write() → Target.parse()
+        (which fails because parsers expect their own format), we return the model directly.
+        The target.write() will be called by the consumer to serialize to target format.
+
+        Architecture: SchemaAttribute RFC Model → Target.write() → Target LDIF format
+        """
         try:
-            # Step 1: Write attribute from source format to LDIF string
-            write_result = source_quirk.schema_quirk.write_attribute(attribute)
-            if write_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to write attribute in source format: {write_result.error}",
+            # Clone the model to avoid mutating the original
+            converted_attribute = attribute.model_copy(deep=True)
+
+            # Get target server type
+            target_server_type = getattr(target_quirk, "server_name", "unknown")
+
+            # Update metadata to indicate target server
+            if not converted_attribute.metadata:
+                converted_attribute.metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type=target_server_type
                 )
 
-            ldif_string: str = write_result.unwrap()
-            if not ldif_string or not ldif_string.strip():
-                return FlextResult.fail("Write operation returned empty attribute LDIF")
+            # Add conversion tracking in metadata extensions
+            if not converted_attribute.metadata.extensions:
+                converted_attribute.metadata.extensions = {}
 
-            # Step 2: Parse LDIF string with target server to get attribute in target format
-            parse_result = target_quirk.schema_quirk.parse_attribute(ldif_string)
-            if parse_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to parse attribute in target format: {parse_result.error}",
-                )
+            source_server_type = getattr(source_quirk, "server_name", "unknown")
+            converted_attribute.metadata.extensions[
+                FlextLdifConstants.MetadataKeys.CONVERTED_FROM_SERVER
+            ] = source_server_type
 
-            converted_attribute = parse_result.unwrap()
-            # Return as Union type to satisfy type checker
+            # Return RFC model - consumer will call target.write() to serialize
             return FlextResult[
                 Union[
                     FlextLdifModels.Entry,
@@ -440,37 +430,42 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         objectclass: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     ]:
-        """Convert SchemaObjectClass model via write_objectclass→parse_objectclass pipeline."""
+        """Convert SchemaObjectClass model directly without serialization.
+
+        SchemaObjectClass models are already RFC-compliant. Instead of Source.write() → Target.parse()
+        (which fails because parsers expect their own format), we return the model directly.
+        The target.write() will be called by the consumer to serialize to target format.
+
+        Architecture: SchemaObjectClass RFC Model → Target.write() → Target LDIF format
+        """
         try:
-            # Step 1: Write objectclass from source format to LDIF string
-            write_result = source_quirk.schema_quirk.write_objectclass(objectclass)
-            if write_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to write objectclass in source format: {write_result.error}",
+            # Clone the model to avoid mutating the original
+            converted_objectclass = objectclass.model_copy(deep=True)
+
+            # Get target server type
+            target_server_type = getattr(target_quirk, "server_name", "unknown")
+
+            # Update metadata to indicate target server
+            if not converted_objectclass.metadata:
+                converted_objectclass.metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type=target_server_type
                 )
 
-            ldif_string: str = write_result.unwrap()
-            if not ldif_string or not ldif_string.strip():
-                return FlextResult.fail(
-                    "Write operation returned empty objectclass LDIF"
-                )
+            # Add conversion tracking in metadata extensions
+            if not converted_objectclass.metadata.extensions:
+                converted_objectclass.metadata.extensions = {}
 
-            # Step 2: Parse LDIF string with target server to get objectclass in target format
-            parse_result = target_quirk.schema_quirk.parse_objectclass(ldif_string)
-            if parse_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to parse objectclass in target format: {parse_result.error}",
-                )
+            source_server_type = getattr(source_quirk, "server_name", "unknown")
+            converted_objectclass.metadata.extensions[
+                FlextLdifConstants.MetadataKeys.CONVERTED_FROM_SERVER
+            ] = source_server_type
 
-            converted_objectclass = parse_result.unwrap()
-            # Return as Union type to satisfy type checker
+            # Return RFC model - consumer will call target.write() to serialize
             return FlextResult[
                 Union[
                     FlextLdifModels.Entry,
@@ -494,75 +489,42 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         acl: FlextLdifModels.Acl,
     ) -> FlextResult[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     ]:
-        """Convert Acl model via write→parse pipeline."""
+        """Convert Acl model directly without serialization.
+
+        ACL models are already RFC-compliant. Instead of Source.write() → Target.parse()
+        (which fails because parsers expect their own format), we return the model directly.
+        The target.write() will be called by the consumer to serialize to target format.
+
+        Architecture: ACL RFC Model → Target.write() → Target LDIF format
+        """
         try:
-            # Instantiate nested Acl classes from quirks
-            source_class = type(source_quirk)
-            target_class = type(target_quirk)
+            # Clone the model to avoid mutating the original
+            converted_acl = acl.model_copy(deep=True)
 
-            if not hasattr(source_class, "Acl"):
-                return FlextResult.fail(
-                    f"Source quirk {source_class.__name__} does not have Acl nested class",
-                )
-            if not hasattr(target_class, "Acl"):
-                return FlextResult.fail(
-                    f"Target quirk {target_class.__name__} does not have Acl nested class",
-                )
+            # Get target server type
+            target_server_type = getattr(target_quirk, "server_name", "unknown")
 
-            source_acl = source_class.Acl()
-            target_acl = target_class.Acl()
-
-            # Protocols are for STATIC type checking only, not runtime isinstance()
-            # Duck typing: if the quirk has write() and parse() methods, it works
-            # Use cast() to guide type checker without runtime checks
-            source_acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", source_acl)
-            target_acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", target_acl)
-
-            # Step 1: Write ACL from source format to LDIF string
-            write_result = source_acl_typed.write(acl)
-            if write_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to write ACL in source format: {write_result.error}",
+            # Update metadata to indicate target server
+            if not converted_acl.metadata:
+                converted_acl.metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type=target_server_type
                 )
 
-            unwrapped = write_result.unwrap()
-            # Type guard: ensure we got a string, not a model
-            if not isinstance(unwrapped, str):
-                return FlextResult.fail(
-                    f"Write operation returned unexpected type: {type(unwrapped).__name__}, expected str",
-                )
-            ldif_string: str = unwrapped
-            if not ldif_string or not ldif_string.strip():
-                return FlextResult.fail("Write operation returned empty ACL LDIF")
+            # Add conversion tracking in metadata extensions
+            if not converted_acl.metadata.extensions:
+                converted_acl.metadata.extensions = {}
 
-            # Step 2: Parse LDIF string with target server to get ACL in target format
-            parse_result = target_acl_typed.parse(ldif_string)
-            if parse_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to parse ACL in target format: {parse_result.error}",
-                )
+            source_server_type = getattr(source_quirk, "server_name", "unknown")
+            converted_acl.metadata.extensions[
+                FlextLdifConstants.MetadataKeys.CONVERTED_FROM_SERVER
+            ] = source_server_type
 
-            converted_acl = parse_result.unwrap()
-            # Type guard: ensure we got an Acl model
-            if not isinstance(converted_acl, FlextLdifModels.Acl):
-                return FlextResult[
-                    Union[
-                        FlextLdifModels.Entry,
-                        FlextLdifModels.SchemaAttribute,
-                        FlextLdifModels.SchemaObjectClass,
-                        FlextLdifModels.Acl,
-                    ]
-                ].fail(
-                    f"ACL conversion produced invalid type: {type(converted_acl).__name__}, expected Acl",
-                )
-            # Return as Union type to satisfy type checker
+            # Return RFC model - consumer will call target.write() to serialize
             return FlextResult[
                 Union[
                     FlextLdifModels.Entry,
@@ -797,7 +759,7 @@ class FlextLdifConversion(
                 cast(
                     "FlextLdifModels.SchemaAttribute | dict[str, object] | str",
                     parsed_attr,
-                )
+                ),
             )
 
         target_quirk = self._resolve_quirk(target)
@@ -811,7 +773,7 @@ class FlextLdifConversion(
                 return FlextResult[
                     FlextLdifModels.SchemaAttribute | dict[str, object] | str
                 ].fail(
-                    "String-based attribute conversion is deprecated. Use model-based conversion."
+                    "String-based attribute conversion is deprecated. Use model-based conversion.",
                 )
             error_msg = write_result.error or "Failed to write attribute"
             return FlextResult[
@@ -828,7 +790,7 @@ class FlextLdifConversion(
                     return FlextResult[
                         FlextLdifModels.SchemaAttribute | dict[str, object] | str
                     ].fail(
-                        "String-based attribute conversion is deprecated. Use model-based conversion."
+                        "String-based attribute conversion is deprecated. Use model-based conversion.",
                     )
                 return FlextResult[
                     FlextLdifModels.SchemaAttribute | dict[str, object] | str
@@ -839,8 +801,9 @@ class FlextLdifConversion(
             FlextLdifModels.SchemaAttribute | dict[str, object] | str
         ].ok(
             cast(
-                "FlextLdifModels.SchemaAttribute | dict[str, object] | str", parsed_attr
-            )
+                "FlextLdifModels.SchemaAttribute | dict[str, object] | str",
+                parsed_attr,
+            ),
         )
 
     def _write_objectclass_to_rfc(
@@ -865,7 +828,7 @@ class FlextLdifConversion(
                 cast(
                     "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
                     source_oc,
-                )
+                ),
             )
 
         # Resolve quirk if it's a string
@@ -888,7 +851,7 @@ class FlextLdifConversion(
                     cast(
                         "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
                         source_oc,
-                    )
+                    ),
                 )
         else:
             return FlextResult[
@@ -897,7 +860,7 @@ class FlextLdifConversion(
                 cast(
                     "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
                     source_oc,
-                )
+                ),
             )
 
         if write_result.is_failure:
@@ -907,7 +870,7 @@ class FlextLdifConversion(
                 cast(
                     "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
                     source_oc,
-                )
+                ),
             )
 
         write_unwrapped = write_result.unwrap()
@@ -917,7 +880,7 @@ class FlextLdifConversion(
             cast(
                 "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
                 write_unwrapped,
-            )
+            ),
         )
 
     def _convert_objectclass(
@@ -958,7 +921,7 @@ class FlextLdifConversion(
                     cast(
                         "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
                         rfc_value,
-                    )
+                    ),
                 )
 
             # Step 3: Parse RFC string with target quirk
@@ -1046,7 +1009,7 @@ class FlextLdifConversion(
                 cast(
                     "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
                     parsed_oc,
-                )
+                ),
             )
 
         target_quirk = self._resolve_quirk(target)
@@ -1064,7 +1027,7 @@ class FlextLdifConversion(
                 cast(
                     "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
                     parsed_oc,
-                )
+                ),
             )
 
         # Check if schema_quirk has write_objectclass method
@@ -1075,7 +1038,7 @@ class FlextLdifConversion(
                 cast(
                     "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
                     parsed_oc,
-                )
+                ),
             )
 
         # Type narrowing: write_objectclass requires SchemaObjectClass
@@ -1086,7 +1049,7 @@ class FlextLdifConversion(
                 cast(
                     "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
                     parsed_oc,
-                )
+                ),
             )
 
         write_method = schema_quirk.write_objectclass
@@ -1100,7 +1063,7 @@ class FlextLdifConversion(
                 cast(
                     "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
                     written_str,
-                )
+                ),
             )
         error_msg = write_result.error or "Failed to write objectClass"
         return FlextResult[
@@ -1183,7 +1146,7 @@ class FlextLdifConversion(
                         converted.append(unwrapped)
                     else:
                         errors.append(
-                            f"Item {idx}: Converted model is not a valid ConvertibleModel type"
+                            f"Item {idx}: Converted model is not a valid ConvertibleModel type",
                         )
                 else:
                     error_msg = str(result.error)
@@ -1229,7 +1192,7 @@ class FlextLdifConversion(
                         f"\n... and {len(errors) - self.MAX_ERRORS_TO_SHOW} more errors"
                     )
                 return FlextResult[list[FlextLdifTypes.ConvertibleModel]].fail(
-                    error_msg
+                    error_msg,
                 )
 
             # Type guard: converted is list of ConvertibleModel

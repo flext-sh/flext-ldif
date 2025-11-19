@@ -549,11 +549,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 # Check if entry has DN and attributes - fast fail if missing
                 if not entry.dn:
                     return FlextResult[FlextLdifModels.Entry].fail(
-                        "Entry DN is required for Tivoli DS normalization"
+                        "Entry DN is required for Tivoli DS normalization",
                     )
                 if not entry.attributes:
                     return FlextResult[FlextLdifModels.Entry].fail(
-                        "Entry attributes are required for Tivoli DS normalization"
+                        "Entry attributes are required for Tivoli DS normalization",
                     )
 
                 entry_dn = entry.dn.value

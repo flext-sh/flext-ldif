@@ -42,7 +42,8 @@ class FlextLdifAclExtractor(FlextService[FlextLdifTypes.Models.ServiceResponseTy
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -57,7 +58,7 @@ class FlextLdifAclExtractor(FlextService[FlextLdifTypes.Models.ServiceResponseTy
 
         """
         return FlextResult.fail(
-            "FlextLdifAclExtractor does not support generic execute(). Use specific methods instead."
+            "FlextLdifAclExtractor does not support generic execute(). Use specific methods instead.",
         )
 
     @staticmethod

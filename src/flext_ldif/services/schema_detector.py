@@ -47,7 +47,8 @@ class FlextLdifSchemaDetector(FlextService[FlextLdifTypes.Models.ServiceResponse
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -62,7 +63,7 @@ class FlextLdifSchemaDetector(FlextService[FlextLdifTypes.Models.ServiceResponse
 
         """
         return FlextResult.fail(
-            "FlextLdifSchemaDetector does not support generic execute(). Use specific methods instead."
+            "FlextLdifSchemaDetector does not support generic execute(). Use specific methods instead.",
         )
 
     @staticmethod

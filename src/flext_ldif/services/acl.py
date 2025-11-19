@@ -292,11 +292,13 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                     if isinstance(parsed_acl, FlextLdifModels.Acl):
                         return FlextResult[FlextLdifModels.Acl].ok(parsed_acl)
                     return FlextResult[FlextLdifModels.Acl].fail(
-                        f"ACL parse returned unexpected type: {type(parsed_acl).__name__}"
+                        f"ACL parse returned unexpected type: {type(parsed_acl).__name__}",
                     )
-                return FlextResult[FlextLdifModels.Acl].fail(parse_result.error or "Unknown error")
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    parse_result.error or "Unknown error",
+                )
             return FlextResult[FlextLdifModels.Acl].fail(
-                f"ACL quirk for {server_type} does not implement parse method"
+                f"ACL quirk for {server_type} does not implement parse method",
             )
 
         except (ValueError, TypeError, AttributeError) as e:

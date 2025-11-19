@@ -464,27 +464,33 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         # Verify standard rule preserved
         assert parsed_attr.equality == "caseIgnoreMatch"
 
-    def test_write_preserves_syntax_oids(
+    def test_write_denormalizes_syntax_oids(
         self,
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
-        """Test that writing preserves replaced syntax OIDs."""
+        """Test that native OID writer denormalizes syntax OIDs (RFC → OID).
+
+        Architecture: Writer = RFC Models → OID LDIF (denormalization)
+        """
         attr_def = (
             "( 2.16.840.1.113894.1.1.1 NAME 'testAttr' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 )"
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 )"  # OID syntax
         )
 
-        # Parse (applies replacement)
+        # Parse (OID → RFC normalization)
         parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema, attr_def, parse_method="parse_attribute"
         )
+        # Verify parsing normalized to RFC
+        assert "1.3.6.1.4.1.1466.115.121.1.15" in str(parsed_attr.syntax)
 
+        # Write (RFC → OID denormalization)
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema, parsed_attr, write_method="write_attribute"
         )
 
-        # Verify replaced OID is in output
-        assert "1.3.6.1.4.1.1466.115.121.1.15" in written
+        # Verify DENORMALIZATION: Writer restores OID syntax
+        assert "1.3.6.1.4.1.1466.115.121.1.1" in written  # OID syntax (denormalized)
 
 
 class TestOidAttributeNameTransformations:

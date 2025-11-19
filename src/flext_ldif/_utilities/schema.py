@@ -79,15 +79,16 @@ class FlextLdifUtilitiesSchema:
             Tuple of (normalized_equality, normalized_substr)
 
         """
-        if not equality:
-            return equality, substr
-
         result_equality = equality
         result_substr = substr
 
         # Fix SUBSTR rules incorrectly used in EQUALITY field
         # When a SUBSTR rule is found in EQUALITY, move it to SUBSTR and set EQUALITY to default
-        if substr_rules_in_equality and equality in substr_rules_in_equality:
+        if (
+            substr_rules_in_equality
+            and equality
+            and equality in substr_rules_in_equality
+        ):
             # Move the SUBSTR rule from EQUALITY to SUBSTR
             # The original equality value (e.g., "caseIgnoreSubstringsMatch") goes to substr
             result_substr = equality  # The original equality value is a SUBSTR rule
@@ -105,7 +106,7 @@ class FlextLdifUtilitiesSchema:
             result_substr = normalized_substr_values[result_substr]
 
         # Apply server-specific matching rule replacements
-        if replacements and result_equality in replacements:
+        if replacements and result_equality and result_equality in replacements:
             result_equality = replacements[result_equality]
 
         return result_equality, result_substr
@@ -163,7 +164,7 @@ class FlextLdifUtilitiesSchema:
             if isinstance(new_value, FlextResult):
                 if new_value.is_failure:
                     return FlextResult.fail(
-                        f"Transformation of '{field_name}' failed: {new_value.error}"
+                        f"Transformation of '{field_name}' failed: {new_value.error}",
                     )
                 setattr(transformed, field_name, new_value.unwrap())
             else:
@@ -190,10 +191,10 @@ class FlextLdifUtilitiesSchema:
         # Fallback for unknown types
         if isinstance(original_type, FlextLdifModels.SchemaAttribute):
             return FlextResult.fail(
-                f"Unknown schema object type: {type(transformed).__name__}"
+                f"Unknown schema object type: {type(transformed).__name__}",
             )
         return FlextResult.fail(
-            f"Unknown schema object type: {type(transformed).__name__}"
+            f"Unknown schema object type: {type(transformed).__name__}",
         )
 
     @staticmethod
@@ -245,12 +246,18 @@ class FlextLdifUtilitiesSchema:
                 for field_name, transform_fn in field_transforms.items():
                     if hasattr(transformed, field_name):
                         result = FlextLdifUtilitiesSchema._apply_field_transformation(
-                            transformed, field_name, transform_fn
+                            transformed,
+                            field_name,
+                            transform_fn,
                         )
                         if result.is_failure:
                             if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
-                                return FlextResult.fail(result.error)
-                            return FlextResult.fail(result.error)
+                                return FlextResult.fail(
+                                    result.error or "Field transformation failed",
+                                )
+                            return FlextResult.fail(
+                                result.error or "Field transformation failed",
+                            )
                         transformed = result.unwrap()
 
             # Return with proper type based on input

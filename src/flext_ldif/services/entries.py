@@ -49,7 +49,8 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -64,7 +65,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
 
         """
         return FlextResult.fail(
-            "FlextLdifEntries does not support generic execute(). Use specific methods instead."
+            "FlextLdifEntries does not support generic execute(). Use specific methods instead.",
         )
 
     def get_entry_dn(
@@ -149,7 +150,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         for attr_name, attr_values in attrs_container.attributes.items():
             # attr_values is always a list[str] in LdifAttributes
             result_dict[attr_name] = FlextLdifEntries._normalize_attribute_value(
-                attr_values
+                attr_values,
             )
 
         return result_dict
@@ -219,7 +220,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
             # Handle both LdifAttributes and dict-like access
             if isinstance(attrs_container, FlextLdifModels.LdifAttributes):
                 result_dict = FlextLdifEntries._extract_from_ldif_attributes(
-                    attrs_container
+                    attrs_container,
                 )
             elif isinstance(attrs_container, dict):
                 # Normalize dict to expected type - convert values to str | list[str]
@@ -235,7 +236,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
                         # Convert to str
                         normalized_dict[key] = str(value)
                 result_dict = FlextLdifEntries._extract_from_dict_attributes(
-                    normalized_dict
+                    normalized_dict,
                 )
             else:
                 return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
@@ -335,7 +336,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
             attrs_result = self.get_entry_attributes(entry)
             if attrs_result.is_failure:
                 return FlextResult[list[str]].fail(
-                    f"Failed to get entry attributes: {attrs_result.error}"
+                    f"Failed to get entry attributes: {attrs_result.error}",
                 )
 
             attrs = attrs_result.unwrap()
@@ -381,7 +382,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         # Fast fail if None - no fallback
         if attribute is None:
             return FlextResult[list[str]].fail(
-                "Attribute value cannot be None - use FlextResult for error handling"
+                "Attribute value cannot be None - use FlextResult for error handling",
             )
 
         # Handle objects with .values property (protocol-based)
@@ -402,7 +403,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         # Fast fail for unknown types
         return FlextResult[list[str]].fail(
             f"Unsupported attribute type: {type(attribute).__name__}. "
-            "Expected AttributeValueProtocol, list[str], or str."
+            "Expected AttributeValueProtocol, list[str], or str.",
         )
 
 

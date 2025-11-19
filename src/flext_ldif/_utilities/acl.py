@@ -609,7 +609,7 @@ class FlextLdifUtilitiesACL:
         if not value:
             return value
         # Import here to avoid circular dependency at module level
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
+        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
         prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
         has_prefix = value.startswith(prefix)
@@ -642,7 +642,9 @@ class FlextLdifUtilitiesACL:
         """
         prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
         normalized = FlextLdifUtilitiesACL._normalize_dn_for_aci(
-            value, constants, base_dn
+            value,
+            constants,
+            base_dn,
         )
         if not normalized:
             return ""
@@ -668,7 +670,9 @@ class FlextLdifUtilitiesACL:
     ) -> str:
         """Handle group subject type (helper to reduce complexity)."""
         normalized_value = FlextLdifUtilitiesACL._ensure_ldap_url_format(
-            subject_value, constants, base_dn
+            subject_value,
+            constants,
+            base_dn,
         )
         return "" if not normalized_value else f'groupdn="{normalized_value}";)'
 
@@ -704,7 +708,9 @@ class FlextLdifUtilitiesACL:
     ) -> str:
         """Handle default subject type (helper to reduce complexity)."""
         normalized_value = FlextLdifUtilitiesACL._ensure_ldap_url_format(
-            subject_value, constants, base_dn
+            subject_value,
+            constants,
+            base_dn,
         )
         return "" if not normalized_value else f'userdn="{normalized_value}";)'
 
@@ -733,32 +739,40 @@ class FlextLdifUtilitiesACL:
         """
         # Dispatch table mapping subject types to handlers
         bind_rules_type = getattr(
-            constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
+            constants,
+            "ACL_SUBJECT_TYPE_BIND_RULES",
+            "bind_rules",
         )
         handlers: dict[str, Callable[[], str]] = {
             FlextLdifConstants.AclSubjectTypes.SELF: lambda: FlextLdifUtilitiesACL._handle_self_subject(
-                constants
+                constants,
             ),
             FlextLdifConstants.AclSubjectTypes.ANONYMOUS: lambda: FlextLdifUtilitiesACL._handle_anonymous_subject(
-                constants
+                constants,
             ),
             FlextLdifConstants.AclSubjectTypes.GROUP: lambda: FlextLdifUtilitiesACL._handle_group_subject(
-                subject_value, constants, base_dn
+                subject_value,
+                constants,
+                base_dn,
             ),
             "group_dn": lambda: FlextLdifUtilitiesACL._handle_group_subject(
-                subject_value, constants, base_dn
+                subject_value,
+                constants,
+                base_dn,
             ),
             "dn_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
-                subject_value
+                subject_value,
             ),
             "guid_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
-                subject_value
+                subject_value,
             ),
             "group_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
-                subject_value
+                subject_value,
             ),
             bind_rules_type: lambda: FlextLdifUtilitiesACL._handle_bind_rules_subject(
-                subject_value, constants, base_dn
+                subject_value,
+                constants,
+                base_dn,
             ),
         }
 
@@ -768,7 +782,9 @@ class FlextLdifUtilitiesACL:
             handler()
             if handler
             else FlextLdifUtilitiesACL._handle_default_subject(
-                subject_value, constants, base_dn
+                subject_value,
+                constants,
+                base_dn,
             )
         )
 

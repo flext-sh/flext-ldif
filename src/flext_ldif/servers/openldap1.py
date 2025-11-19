@@ -392,8 +392,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 name = oc_data.name
                 desc = oc_data.desc
                 sup = oc_data.sup
+                # NO FALLBACKS - explicit checks
+                kind: str
                 kind = oc_data.kind or "STRUCTURAL"
+                must: list[str]
                 must = oc_data.must if oc_data.must is not None else []
+                may: list[str]
                 may = oc_data.may if oc_data.may is not None else []
 
                 # Build objectClass string (objectclass prefix for OpenLDAP 1.x)

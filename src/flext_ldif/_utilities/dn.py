@@ -303,7 +303,7 @@ class FlextLdifUtilitiesDN:
             return FlextResult[list[tuple[str, str]]].fail("DN string is empty")
         if "=" not in dn_str:
             return FlextResult[list[tuple[str, str]]].fail(
-                f"Invalid DN format: missing '=' separator in '{dn_str}'"
+                f"Invalid DN format: missing '=' separator in '{dn_str}'",
             )
 
         try:
@@ -318,7 +318,7 @@ class FlextLdifUtilitiesDN:
 
             if not result:
                 return FlextResult[list[tuple[str, str]]].fail(
-                    f"Failed to parse DN components from '{dn_str}'"
+                    f"Failed to parse DN components from '{dn_str}'",
                 )
             return FlextResult[list[tuple[str, str]]].ok(result)
         except Exception as e:
@@ -343,11 +343,11 @@ class FlextLdifUtilitiesDN:
         try:
             if not dn_str:
                 return FlextResult[str].fail(
-                    "Failed to normalize DN: DN string is empty"
+                    "Failed to normalize DN: DN string is empty",
                 )
             if "=" not in dn_str:
                 return FlextResult[str].fail(
-                    f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
+                    f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'",
                 )
 
             components = FlextLdifUtilitiesDN.split(dn_str)
@@ -363,7 +363,7 @@ class FlextLdifUtilitiesDN:
 
             if not normalized:
                 return FlextResult[str].fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'"
+                    f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
             return FlextResult[str].ok(",".join(normalized))
         except Exception as e:
@@ -387,7 +387,7 @@ class FlextLdifUtilitiesDN:
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].fail(
-                "DN string is empty or invalid"
+                "DN string is empty or invalid",
             )
         # Use original_dn if provided, otherwise use dn_str
         orig = original_dn or dn_str
@@ -395,7 +395,7 @@ class FlextLdifUtilitiesDN:
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         if not norm_result.is_success:
             return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].fail(
-                norm_result.error or "DN normalization failed"
+                norm_result.error or "DN normalization failed",
             )
         normalized = norm_result.unwrap()
 
@@ -540,12 +540,14 @@ class FlextLdifUtilitiesDN:
         )
         had_spaces_around_comma = bool(
             re.search(
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA, original_dn
+                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
+                original_dn,
             ),
         )
         had_unnecessary_escapes = bool(
             re.search(
-                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, original_dn
+                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                original_dn,
             ),
         )
         had_multiple_spaces = bool(
@@ -692,14 +694,14 @@ class FlextLdifUtilitiesDN:
             norm1_result = FlextLdifUtilitiesDN.norm(dn1)
             if not norm1_result.is_success:
                 return FlextResult[int].fail(
-                    f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}"
+                    f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
                 )
             norm1 = norm1_result.unwrap()
 
             norm2_result = FlextLdifUtilitiesDN.norm(dn2)
             if not norm2_result.is_success:
                 return FlextResult[int].fail(
-                    f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}"
+                    f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
                 )
             norm2 = norm2_result.unwrap()
 
@@ -802,7 +804,7 @@ class FlextLdifUtilitiesDN:
         """
         if not rdn or not isinstance(rdn, str):
             return FlextResult[list[tuple[str, str]]].fail(
-                "RDN must be a non-empty string"
+                "RDN must be a non-empty string",
             )
 
         try:
@@ -832,18 +834,18 @@ class FlextLdifUtilitiesDN:
 
                 if char_at_pos == "=" and not in_value and not current_attr:
                     return FlextResult[list[tuple[str, str]]].fail(
-                        f"Invalid RDN format: unexpected '=' at position {idx}"
+                        f"Invalid RDN format: unexpected '=' at position {idx}",
                     )
 
             if not in_value or not current_attr:
                 return FlextResult[list[tuple[str, str]]].fail(
-                    f"Invalid RDN format: missing attribute or value in '{rdn}'"
+                    f"Invalid RDN format: missing attribute or value in '{rdn}'",
                 )
 
             current_val = current_val.strip()
             if not current_val:
                 return FlextResult[list[tuple[str, str]]].fail(
-                    f"Invalid RDN format: empty value in '{rdn}'"
+                    f"Invalid RDN format: empty value in '{rdn}'",
                 )
             pairs.append((current_attr, current_val))
 
@@ -867,14 +869,14 @@ class FlextLdifUtilitiesDN:
         """
         if not dn or "=" not in dn:
             return FlextResult[str].fail(
-                f"Invalid DN format: missing '=' separator in '{dn}'"
+                f"Invalid DN format: missing '=' separator in '{dn}'",
             )
 
         try:
             components = FlextLdifUtilitiesDN.split(dn)
             if not components:
                 return FlextResult[str].fail(
-                    f"Failed to extract RDN: no components found in '{dn}'"
+                    f"Failed to extract RDN: no components found in '{dn}'",
                 )
             return FlextResult[str].ok(components[0])
         except Exception as e:
@@ -896,14 +898,14 @@ class FlextLdifUtilitiesDN:
         """
         if not dn or "=" not in dn:
             return FlextResult[str].fail(
-                f"Invalid DN format: missing '=' separator in '{dn}'"
+                f"Invalid DN format: missing '=' separator in '{dn}'",
             )
 
         try:
             components = FlextLdifUtilitiesDN.split(dn)
             if len(components) <= 1:
                 return FlextResult[str].fail(
-                    f"Cannot extract parent DN: DN has only one component '{dn}'"
+                    f"Cannot extract parent DN: DN has only one component '{dn}'",
                 )
             return FlextResult[str].ok(",".join(components[1:]))
         except Exception as e:
@@ -1060,7 +1062,7 @@ class FlextLdifUtilitiesDN:
             )
             if not comparison_result.is_success:
                 return FlextResult[bool].fail(
-                    f"DN comparison failed: {comparison_result.error}"
+                    f"DN comparison failed: {comparison_result.error}",
                 )
             comparison_value = comparison_result.unwrap()
             if comparison_value != 0:  # 0 means equal

@@ -47,7 +47,8 @@ class FlextLdifProcessing(FlextService[FlextLdifTypes.Models.ServiceResponseType
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -62,7 +63,7 @@ class FlextLdifProcessing(FlextService[FlextLdifTypes.Models.ServiceResponseType
 
         """
         return FlextResult.fail(
-            "FlextLdifProcessing does not support generic execute(). Use specific methods instead."
+            "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )
 
     def process(
@@ -113,14 +114,16 @@ class FlextLdifProcessing(FlextService[FlextLdifTypes.Models.ServiceResponseType
             processor_result = self._get_processor_function(processor_name)
             if processor_result.is_failure:
                 return FlextResult[list[dict[str, object]]].fail(
-                    processor_result.error,
+                    processor_result.error or "Processor function not found",
                 )
             processor_func = processor_result.unwrap()
 
             # Execute processing based on mode
             if parallel:
                 return self._execute_parallel_processing(
-                    entries, processor_func, max_workers
+                    entries,
+                    processor_func,
+                    max_workers,
                 )
             return self._execute_batch_processing(entries, processor_func, batch_size)
 
@@ -208,7 +211,8 @@ class FlextLdifProcessing(FlextService[FlextLdifTypes.Models.ServiceResponseType
 
     @staticmethod
     def _create_transform_processor() -> Callable[
-        [FlextLdifModels.Entry], dict[str, object]
+        [FlextLdifModels.Entry],
+        dict[str, object],
     ]:
         """Create transform processor function.
 
@@ -233,7 +237,8 @@ class FlextLdifProcessing(FlextService[FlextLdifTypes.Models.ServiceResponseType
 
     @staticmethod
     def _create_validate_processor() -> Callable[
-        [FlextLdifModels.Entry], dict[str, object]
+        [FlextLdifModels.Entry],
+        dict[str, object],
     ]:
         """Create validate processor function.
 

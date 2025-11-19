@@ -1062,17 +1062,30 @@ class TestOudAclQuirk:
         assert acl_quirk is not None
 
     def test_get_acl_attributes(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
-        """Test get_acl_attributes."""
+        """Test get_acl_attributes for OUD native attributes only.
+
+        Note: OUD native ACL attributes are:
+        - RFC 4876 'aci' (inherited from RFC)
+        - OUD 'ds-privilege-name' (OUD-specific)
+
+        'orclaci' is NOT native to OUD - it's an OID format that
+        must be pre-converted via RFC Entry Model before reaching OUD.
+        """
         attrs = acl_quirk.get_acl_attributes()
         assert isinstance(attrs, list)
-        assert "aci" in attrs
-        assert "orclaci" in attrs
+        assert "aci" in attrs  # RFC 4876 standard
+        assert "ds-privilege-name" in attrs  # OUD native privilege system
 
     def test_is_acl_attribute(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
-        """Test is_acl_attribute."""
+        """Test is_acl_attribute for OUD native attributes.
+
+        OUD recognizes 'aci' (RFC 4876) and 'ds-privilege-name' (OUD native).
+        'orclaci' is OID format and NOT recognized by OUD parser directly.
+        """
         assert acl_quirk.is_acl_attribute("aci") is True
         assert acl_quirk.is_acl_attribute("ACI") is True
-        assert acl_quirk.is_acl_attribute("orclaci") is True
+        assert acl_quirk.is_acl_attribute("ds-privilege-name") is True
+        assert acl_quirk.is_acl_attribute("orclaci") is False  # NOT OUD native
         assert acl_quirk.is_acl_attribute("cn") is False
 
     def test_can_handle_aci(self, acl_quirk: FlextLdifServersOud.Acl) -> None:

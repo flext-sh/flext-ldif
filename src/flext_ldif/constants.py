@@ -292,8 +292,12 @@ class FlextLdifConstants(FlextConstants):
     # Text and Binary Processing constants (RFC 2849 § 2)
     ASCII_SPACE_CHAR: Final[int] = 32  # ASCII code for space (first printable char)
     ASCII_TILDE_CHAR: Final[int] = 126  # ASCII code for tilde (last printable char)
+    ASCII_DEL_CHAR: Final[int] = 127  # ASCII code for DEL control character (0x7F)
+    ASCII_NON_ASCII_START: Final[int] = 128  # Start of non-ASCII range (0x80)
     DN_TRUNCATE_LENGTH: Final[int] = 100  # Maximum DN length for error messages
     DN_LOG_PREVIEW_LENGTH: Final[int] = 80  # DN preview length in logging
+    ACI_PREVIEW_LENGTH: Final[int] = 200  # ACI value preview length for logging
+    ACI_LIST_PREVIEW_LIMIT: Final[int] = 3  # Maximum number of ACIs to show in preview
 
     # Search configuration defaults
     DEFAULT_SEARCH_TIME_LIMIT: Final[int] = 30  # Default search time limit in seconds
@@ -1481,14 +1485,195 @@ class FlextLdifConstants(FlextConstants):
         # Server-specific metadata keys should be defined in their respective server Constants classes
 
         # =========================
-        # Schema Extension Metadata
+        # Schema Conversion Metadata (GENERIC for ANY LDAP server bidirectional conversion)
         # =========================
+        # Servers MUST NOT know about each other - only communicate via these GENERIC standardized keys
+        # All Schema conversion metadata MUST use these keys for 100% bidirectional conversion between ANY servers
 
+        # === CORE SCHEMA METADATA (required for ALL servers) ===
+        SCHEMA_ORIGINAL_FORMAT: Final[str] = (
+            "schema_original_format"  # Original schema string format (always preserve)
+        )
+        SCHEMA_SOURCE_SERVER: Final[str] = (
+            "schema_source_server"  # Server that parsed this schema (oid, oud, openldap, etc.)
+        )
+        SCHEMA_SOURCE_SYNTAX_OID: Final[str] = (
+            "schema_source_syntax_oid"  # Original syntax OID from source server
+        )
+        SCHEMA_TARGET_SYNTAX_OID: Final[str] = (
+            "schema_target_syntax_oid"  # Normalized syntax OID for RFC/target
+        )
+        SCHEMA_SOURCE_MATCHING_RULES: Final[str] = (
+            "schema_source_matching_rules"  # Original matching rules (EQUALITY, SUBSTR, ORDERING)
+        )
+        SCHEMA_TARGET_MATCHING_RULES: Final[str] = (
+            "schema_target_matching_rules"  # Normalized matching rules for RFC/target
+        )
+        SCHEMA_SOURCE_ATTRIBUTE_NAME: Final[str] = (
+            "schema_source_attribute_name"  # Original attribute name from source
+        )
+        SCHEMA_TARGET_ATTRIBUTE_NAME: Final[str] = (
+            "schema_target_attribute_name"  # Normalized attribute name for RFC/target
+        )
+
+        # === SCHEMA VALIDATION FLAGS (server-agnostic) ===
         SYNTAX_OID_VALID: Final[str] = "syntax_oid_valid"
         SYNTAX_VALIDATION_ERROR: Final[str] = "syntax_validation_error"
         X_ORIGIN: Final[str] = "x_origin"  # RFC 2252 X-ORIGIN extension
         OBSOLETE: Final[str] = "obsolete"  # RFC 4512 OBSOLETE flag
         COLLECTIVE: Final[str] = "collective"  # RFC 2876 COLLECTIVE flag
+
+        # =========================
+        # Entry Conversion Metadata (GENERIC for ANY LDAP server bidirectional conversion)
+        # =========================
+        # Servers MUST NOT know about each other - only communicate via these GENERIC standardized keys
+        # All Entry conversion metadata MUST use these keys for 100% bidirectional conversion between ANY servers
+
+        # === CORE ENTRY METADATA (required for ALL servers) ===
+        ENTRY_ORIGINAL_FORMAT: Final[str] = (
+            "entry_original_format"  # Original entry format (always preserve)
+        )
+        ENTRY_SOURCE_SERVER: Final[str] = (
+            "entry_source_server"  # Server that parsed this entry (oid, oud, openldap, etc.)
+        )
+        ENTRY_SOURCE_ATTRIBUTES: Final[str] = (
+            "entry_source_attributes"  # Original attribute names from source server
+        )
+        ENTRY_TARGET_ATTRIBUTES: Final[str] = (
+            "entry_target_attributes"  # Normalized attribute names for RFC/target
+        )
+        ENTRY_SOURCE_OBJECTCLASSES: Final[str] = (
+            "entry_source_objectclasses"  # Original objectClass values from source
+        )
+        ENTRY_TARGET_OBJECTCLASSES: Final[str] = (
+            "entry_target_objectclasses"  # Normalized objectClass values for RFC/target
+        )
+        ENTRY_SOURCE_OPERATIONAL_ATTRS: Final[str] = (
+            "entry_source_operational_attrs"  # Original operational attributes
+        )
+        ENTRY_TARGET_OPERATIONAL_ATTRS: Final[str] = (
+            "entry_target_operational_attrs"  # Normalized operational attributes
+        )
+        ENTRY_SOURCE_DN_CASE: Final[str] = (
+            "entry_source_dn_case"  # Original DN case from source server
+        )
+        ENTRY_TARGET_DN_CASE: Final[str] = (
+            "entry_target_dn_case"  # Normalized DN case for RFC/target
+        )
+
+        # === ENTRY PROCESSING FLAGS (server-agnostic) ===
+        BASE64_ATTRS: Final[str] = "_base64_attrs"  # Attributes encoded in base64
+        MODIFY_ADD_ATTRIBUTETYPES: Final[str] = (
+            "_modify_add_attributetypes"  # New attribute types in changetype: modify
+        )
+        MODIFY_ADD_OBJECTCLASSES: Final[str] = (
+            "_modify_add_objectclasses"  # New object classes in changetype: modify
+        )
+        SKIPPED_ATTRIBUTES: Final[str] = (
+            "_skipped_attributes"  # Attributes removed during conversion
+        )
+        CONVERTED_ATTRIBUTES: Final[str] = (
+            "_converted_attributes"  # Attribute names that changed
+        )
+
+        # =========================
+        # ACL Conversion Metadata (GENERIC for ANY LDAP server bidirectional conversion)
+        # =========================
+        # Servers MUST NOT know about each other - only communicate via these GENERIC standardized keys
+        # All ACL conversion metadata MUST use these keys for 100% bidirectional conversion between ANY servers
+
+        # === CORE ACL METADATA (required for ALL servers) ===
+        ACL_ORIGINAL_FORMAT: Final[str] = (
+            "original_format"  # Original ACL string format (always preserve)
+        )
+        ACL_SOURCE_SERVER: Final[str] = (
+            "source_server"  # Server that parsed this ACL (oid, oud, openldap, etc.)
+        )
+        ACL_SOURCE_SUBJECT_TYPE: Final[str] = (
+            "source_subject_type"  # Original subject type from source server
+        )
+        ACL_TARGET_SUBJECT_TYPE: Final[str] = (
+            "target_subject_type"  # Normalized subject type for RFC/target
+        )
+        ACL_ORIGINAL_SUBJECT_VALUE: Final[str] = (
+            "original_subject_value"  # Original subject value before normalization
+        )
+        ACL_SOURCE_PERMISSIONS: Final[str] = (
+            "source_permissions"  # Original permissions list from source (before normalization)
+        )
+        ACL_TARGET_PERMISSIONS: Final[str] = (
+            "target_permissions"  # Normalized permissions for RFC/target
+        )
+        ACL_ACTION_TYPE: Final[str] = (
+            "action_type"  # ACL action type (allow or deny) - for OUD deny rules
+        )
+        ACL_NEGATIVE_PERMISSIONS: Final[str] = (
+            "negative_permissions"  # Negative permissions list (nowrite, noadd, etc.) - for OID
+        )
+
+        # === SERVER-SPECIFIC EXTENSIONS (optional, per-server features) ===
+        # OID-specific
+        ACL_FILTER: Final[str] = "filter"  # OID filter expression
+        ACL_CONSTRAINT: Final[str] = (
+            "added_object_constraint"  # OID entry-level constraint
+        )
+
+        # Generic subject attribute metadata (works for ANY LDAP server - not OID-specific)
+        ACL_DN_ATTR: Final[str] = (
+            "dn_attr"  # DN attribute name (e.g., "manager" from "by dnattr=(manager)")
+        )
+        ACL_GUID_ATTR: Final[str] = (
+            "guid_attr"  # GUID attribute name (e.g., "orclguid" from "by guidattr=(orclguid)")
+        )
+        ACL_GROUP_ATTR: Final[str] = (
+            "group_attr"  # Group attribute name (e.g., "groupattr" from "by groupattr=(uniqueMember)")
+        )
+
+        # Generic permission metadata (works for ANY LDAP server - not OID-specific)
+        ACL_BROWSE_EXPANDED: Final[str] = (
+            "browse_expanded"  # True if "browse" was expanded to "read+search"
+        )
+        ACL_SELFWRITE_NORMALIZED: Final[str] = (
+            "selfwrite_normalized"  # True if "selfwrite" was normalized to "self_write"
+        )
+
+        # OUD/RFC4876-specific (for ACI format servers: OUD, 389DS, OpenLDAP with ACI)
+        ACL_TARGETSCOPE: Final[str] = (
+            "targetscope"  # ACI target scope (base, one, sub, subordinate)
+        )
+        ACL_VERSION: Final[str] = "version"  # ACI version string (e.g., "3.0")
+        ACL_DN_SPACES: Final[str] = (
+            "dn_spaces"  # Whether DN has spaces around comma delimiters (", " vs ",")
+        )
+        ACL_LINE_BREAKS: Final[str] = (
+            "line_breaks"  # Multiline ACI formatting (list of line break positions)
+        )
+        ACL_IS_MULTILINE: Final[str] = "is_multiline"  # Flag: ACL spans multiple lines
+
+        # OpenLDAP-specific (for olcAccess format)
+        ACL_NUMBERING: Final[str] = (
+            "numbering"  # OpenLDAP ACL numbering (e.g., "{0}", "{1}")
+        )
+        ACL_SSFS: Final[str] = (
+            "ssfs"  # OpenLDAP SSFS (Simple Security Framework Syntax)
+        )
+
+        # Active Directory-specific (for nTSecurityDescriptor format)
+        ACL_SDDL: Final[str] = "sddl"  # Security Descriptor Definition Language string
+        ACL_BINARY_SD: Final[str] = "binary_sd"  # Binary security descriptor
+
+        # Server conversion tracking (server-agnostic)
+        CONVERTED_FROM_SERVER: Final[str] = (
+            "converted_from_server"  # Source server type that generated this ACL
+        )
+        CONVERSION_COMMENTS: Final[str] = (
+            "conversion_comments"  # List of conversion comment lines added during transformation
+        )
+
+        # =========================
+        # Legacy/Generic Metadata
+        # =========================
+
         ORIGINAL_FORMAT: Final[str] = (
             "original_format"  # Source format before conversion
         )
@@ -1513,27 +1698,6 @@ class FlextLdifConstants(FlextConstants):
         SUBJECT_BINDING: Final[str] = "subject_binding"  # Subject binding type
 
         # =========================
-        # Entry Extension Metadata
-        # =========================
-
-        BASE64_ATTRS: Final[str] = "_base64_attrs"  # Attributes encoded in base64
-        MODIFY_ADD_ATTRIBUTETYPES: Final[str] = (
-            "_modify_add_attributetypes"  # New attribute types in changetype: modify
-        )
-        MODIFY_ADD_OBJECTCLASSES: Final[str] = (
-            "_modify_add_objectclasses"  # New object classes in changetype: modify
-        )
-        ORACLE_OBJECTCLASSES: Final[str] = (
-            "oracle_objectclasses"  # Oracle-specific objectClasses
-        )
-        SKIPPED_ATTRIBUTES: Final[str] = (
-            "_skipped_attributes"  # Attributes removed during conversion
-        )
-        CONVERTED_ATTRIBUTES: Final[str] = (
-            "_converted_attributes"  # Attribute names that changed
-        )
-
-        # =========================
         # Processing Metadata
         # =========================
 
@@ -1554,12 +1718,23 @@ class FlextLdifConstants(FlextConstants):
         # =========================
         # Conversion/Migration Metadata
         # =========================
+        # NOTE: CONVERTED_FROM_SERVER and CONVERSION_COMMENTS are defined in ACL Conversion Metadata section above
+        # (lines ~1526-1527) - no duplication needed here
 
-        CONVERTED_FROM_SERVER: Final[str] = (
-            "converted_from_server"  # Source server type for conversion
+        # ===== COMPATIBILITY ALIASES (Deprecated - use ACL_* prefixed versions above) =====
+        # Legacy aliases for backward compatibility with existing code
+        # NEW CODE MUST USE: ACL_OID_SUBJECT_TYPE, ACL_OUD_SUBJECT_TYPE, ACL_RFC_SUBJECT_TYPE, ACL_ORIGINAL_SUBJECT_VALUE
+        OID_SUBJECT_TYPE: Final[str] = (
+            "oid_subject_type"  # DEPRECATED: Use ACL_OID_SUBJECT_TYPE
         )
-        CONVERSION_COMMENTS: Final[str] = (
-            "conversion_comments"  # Comments about conversion process
+        OUD_SUBJECT_TYPE: Final[str] = (
+            "oud_subject_type"  # DEPRECATED: Use ACL_OUD_SUBJECT_TYPE
+        )
+        RFC_SUBJECT_TYPE: Final[str] = (
+            "rfc_subject_type"  # DEPRECATED: Use ACL_RFC_SUBJECT_TYPE
+        )
+        ORIGINAL_SUBJECT_VALUE: Final[str] = (
+            "original_subject_value"  # DEPRECATED: Use ACL_ORIGINAL_SUBJECT_VALUE
         )
         ORIGINAL_ENTRY: Final[str] = (
             "original_entry"  # Original entry before conversion
@@ -1603,7 +1778,6 @@ class FlextLdifConstants(FlextConstants):
             BASE64_ATTRS,
             MODIFY_ADD_ATTRIBUTETYPES,
             MODIFY_ADD_OBJECTCLASSES,
-            ORACLE_OBJECTCLASSES,
             SKIPPED_ATTRIBUTES,
             CONVERTED_ATTRIBUTES,
         ])

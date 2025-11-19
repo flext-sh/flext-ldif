@@ -94,20 +94,21 @@ class TestOidSyntaxOidReplacements:
         assert parse_result.is_success
         parsed_attr = parse_result.unwrap()
 
-        # Write (should output replaced syntax)
+        # Write (RFC → OID denormalization - restores OID quirks)
         write_result = oid_schema.write_attribute(parsed_attr)
         assert write_result.is_success
         written = write_result.unwrap()
 
-        # Verify replaced OID in output
+        # Verify DENORMALIZATION: Writer restores OID syntax from RFC
+        # Architecture: Writer = RFC Models → OID LDIF (denormalization)
         # Use word boundary check to avoid false positives from substring matching
-        # Check replaced OID appears (with word boundaries)
-        assert re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.15\b", written), (
-            f"Expected replaced OID 1.3.6.1.4.1.1466.115.121.1.15 not found in: {written}"
+        # Check OID syntax appears (denormalized from RFC)
+        assert re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.1\b", written), (
+            f"Expected OID syntax 1.3.6.1.4.1.1466.115.121.1.1 (denormalized) not found in: {written}"
         )
-        # Check original OID does not appear (with word boundaries)
-        assert not re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.1\b", written), (
-            f"Original OID 1.3.6.1.4.1.1466.115.121.1.1 should not appear in: {written}"
+        # RFC syntax should NOT appear (was denormalized to OID)
+        assert not re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.15\b", written), (
+            f"RFC syntax 1.3.6.1.4.1.1466.115.121.1.15 should be denormalized to OID in: {written}"
         )
 
 
@@ -182,31 +183,36 @@ class TestOidMatchingRuleReplacements:
         # Verify preserved unchanged
         assert parsed_attr.equality == "caseIgnoreMatch"
 
-    def test_write_preserves_fixed_matching_rules(
+    def test_write_denormalizes_matching_rules(
         self,
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
-        """Test that writing preserves fixed matching rules."""
+        """Test that writing denormalizes matching rules (RFC → OID)."""
         attr_def = (
             "( 2.16.840.1.113894.1.1.1 NAME 'testAttr' "
-            "SUBSTR caseIgnoreSubStringsMatch "  # Will be fixed during parse
+            "SUBSTR caseIgnoreSubStringsMatch "  # OID quirk: uppercase S
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
 
-        # Parse (applies fix)
+        # Parse (OID → RFC normalization: uppercase S → lowercase s)
         parse_result = oid_schema.parse_attribute(attr_def)
         assert parse_result.is_success
         parsed_attr = parse_result.unwrap()
+        # Verify parsing normalized to RFC
+        assert parsed_attr.substr == "caseIgnoreSubstringsMatch"  # RFC: lowercase s
 
-        # Write (should output fixed rule)
+        # Write (RFC → OID denormalization: lowercase s → uppercase S)
         write_result = oid_schema.write_attribute(parsed_attr)
         assert write_result.is_success
         written = write_result.unwrap()
 
-        # Verify fixed rule in output
-        assert "caseIgnoreSubstringsMatch" in written  # lowercase s
-        # Original incorrect form should not appear
-        assert "caseIgnoreSubStringsMatch" not in written
+        # Verify DENORMALIZATION: Writer restores OID quirk (uppercase S)
+        # Architecture: Writer = RFC Models → OID LDIF (denormalization)
+        assert "caseIgnoreSubStringsMatch" in written  # OID: uppercase S (denormalized)
+        # RFC form should NOT appear (was denormalized to OID)
+        assert (
+            "caseIgnoreSubstringsMatch" not in written
+        )  # RFC lowercase should be gone
 
 
 class TestOidOudCompatibilityTransformations:
@@ -222,31 +228,39 @@ class TestOidOudCompatibilityTransformations:
         """Create OID fixture loader."""
         return FlextLdifFixtures.OID()
 
-    def test_roundtrip_applies_transformations(
+    def test_roundtrip_denormalizes_to_oid(
         self,
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
-        """Test that roundtrip (parse → write) applies OUD transformations."""
-        # Original has ACI List syntax
+        """Test that native OID roundtrip (parse → write) denormalizes back to OID format."""
+        # Original OID LDIF with OID quirks
         original = (
             "( 2.16.840.1.113894.1.1.1 NAME 'testAttr' "
-            "SUBSTR caseIgnoreSubStringsMatch "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 )"  # ACI List, uppercase S
+            "SUBSTR caseIgnoreSubStringsMatch "  # OID quirk: uppercase S
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 )"  # OID quirk: ACI List syntax
         )
 
-        # Parse (applies fixes)
+        # Parse (OID → RFC normalization)
         parse_result = oid_schema.parse_attribute(original)
         assert parse_result.is_success
         parsed_attr = parse_result.unwrap()
+        # Verify parsing normalized to RFC
+        assert parsed_attr.substr == "caseIgnoreSubstringsMatch"  # RFC: lowercase s
+        assert (
+            parsed_attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
+        )  # RFC: Directory String
 
-        # Write (outputs fixed format)
+        # Write (RFC → OID denormalization - restores OID quirks)
         write_result = oid_schema.write_attribute(parsed_attr)
         assert write_result.is_success
         written = write_result.unwrap()
 
-        # Verify transformations applied
-        assert "caseIgnoreSubstringsMatch" in written  # Fixed capitalization
-        assert "1.3.6.1.4.1.1466.115.121.1.15" in written  # Replaced syntax
+        # Verify DENORMALIZATION: Writer restores original OID quirks
+        # Architecture: OID Native Writer = RFC Models → OID LDIF (denormalization)
+        assert "caseIgnoreSubStringsMatch" in written  # OID quirk restored: uppercase S
+        assert (
+            "1.3.6.1.4.1.1466.115.121.1.1" in written
+        )  # OID quirk restored: ACI List syntax
 
     def test_real_fixture_transformations(
         self,

@@ -58,7 +58,8 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -73,7 +74,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
 
         """
         return FlextResult.fail(
-            "FlextLdifCategorizer does not support generic execute(). Use specific methods instead."
+            "FlextLdifCategorizer does not support generic execute(). Use specific methods instead.",
         )
 
     def is_schema_entry(self, entry: FlextLdifModels.Entry) -> bool:
@@ -137,7 +138,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
         """
         try:
             # Import here to avoid circular dependency (services -> servers -> services)
-            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+            from flext_ldif.services.server import FlextLdifServer
 
             registry = FlextLdifServer.get_global_instance()
             server_quirk = registry.quirk(server_type)
@@ -189,7 +190,8 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
                     acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)
                     # Use direct utility method - no helper wrapper
                     if FlextLdifUtilities.Entry.has_any_attributes(
-                        entry, acl_attributes
+                        entry,
+                        acl_attributes,
                     ):
                         return ("acl", None)
                 continue
@@ -200,7 +202,8 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
 
             # Use direct utility method - no helper wrapper
             if FlextLdifUtilities.Entry.has_objectclass(
-                entry, tuple(category_objectclasses)
+                entry,
+                tuple(category_objectclasses),
             ):
                 return (category, None)
 
@@ -209,7 +212,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
     def categorize_entry(
         self,
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None = None,  # noqa: ARG002
+        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None = None,
         server_type: str = "rfc",
     ) -> tuple[str, str | None]:
         """Categorize entry using SERVER-SPECIFIC rules.
@@ -241,7 +244,8 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
 
         # Type narrowing: verify constants has required attributes
         if not hasattr(constants, "CATEGORIZATION_PRIORITY") or not hasattr(
-            constants, "CATEGORY_OBJECTCLASSES"
+            constants,
+            "CATEGORY_OBJECTCLASSES",
         ):
             return ("rejected", "Server constants missing required attributes")
 

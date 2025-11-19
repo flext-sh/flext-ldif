@@ -173,10 +173,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # def schema(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Schema: ...
 
     @overload
-    def schema(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...
+    def schema(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...  # type: ignore[override]
 
     @overload
-    def schema(self) -> Self.Schema: ...
+    def schema(self) -> Self.Schema: ...  # type: ignore[override]
 
     # NOTE: This method extends FlextService with schema quirk access.
     # This is NOT an override - it's a method extension for quirk-specific functionality.
@@ -187,7 +187,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     ) -> Self.Schema | FlextLdifServersBase.Schema | None:
         """Get schema quirk for a server type, or self.schema_quirk."""
         if server_type:
-            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+            from flext_ldif.services.server import FlextLdifServer
 
             return FlextLdifServer.get_global_instance().schema(server_type)
         return self.schema_quirk
@@ -207,7 +207,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     ) -> Self.Acl | FlextLdifServersBase.Acl | None:
         """Get ACL quirk for a server type, or self.acl_quirk."""
         if server_type:
-            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+            from flext_ldif.services.server import FlextLdifServer
 
             return FlextLdifServer.get_global_instance().acl(server_type)
         return self.acl_quirk
@@ -227,7 +227,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     ) -> Self.Entry | FlextLdifServersBase.Entry | None:
         """Get entry quirk for a server type, or self.entry_quirk."""
         if server_type:
-            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+            from flext_ldif.services.server import FlextLdifServer
 
             return FlextLdifServer.get_global_instance().entry(server_type)
         return self.entry_quirk
@@ -256,7 +256,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # When called with parameters, it performs quirk-specific operations (parse/write).
     # This maintains compatibility with FlextService while extending functionality.
     # This is NOT an override - it's a method extension that supports polymorphic dispatch.
-    def execute(
+    def execute(  # type: ignore[override]  # Intentional extension, not override
         self,
         ldif_text: str | None = None,
         entries: list[FlextLdifModels.Entry] | None = None,
