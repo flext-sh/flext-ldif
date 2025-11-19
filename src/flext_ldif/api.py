@@ -373,7 +373,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         # Check if already registered (container is global singleton)
         if not container.has("migration_pipeline"):
             result = container.register_service(
-                "migration_pipeline", migration_pipeline_factory
+                "migration_pipeline",
+                migration_pipeline_factory,
             )
             if result.is_failure:
                 error_msg = f"Failed to register migration_pipeline: {result.error}"
@@ -401,7 +402,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         service_result = container.get(service_name)
         if service_result.is_failure:
             return FlextResult[ServiceT].fail(
-                f"Service '{service_name}' not found in container"
+                f"Service '{service_name}' not found in container",
             )
 
         service_obj = service_result.unwrap()
@@ -411,7 +412,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         type_name = getattr(expected_type, "__name__", str(expected_type))
         return FlextResult[ServiceT].fail(
-            f"Service '{service_name}' is not of expected type {type_name}"
+            f"Service '{service_name}' is not of expected type {type_name}",
         )
 
     def _register_components(self) -> None:
@@ -640,7 +641,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             server_type_result = self._resolve_parse_server_type(server_type, source)
             if server_type_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    server_type_result.error,
+                    server_type_result.error or "Server type resolution failed",
                 )
             effective_server_type = server_type_result.unwrap()
 
@@ -805,7 +806,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 )
                 if writer_result.is_failure:
                     return FlextResult[str].fail(
-                        f"Failed to retrieve writer service: {writer_result.error}"
+                        f"Failed to retrieve writer service: {writer_result.error}",
                     )
                 self._writer_service = writer_result.unwrap()
 
@@ -844,7 +845,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 # Type narrowing: when output_target="string", result is always str
                 if not isinstance(unwrapped, str):
                     return FlextResult[str].fail(
-                        f"Write operation returned non-string result: {type(unwrapped).__name__}"
+                        f"Write operation returned non-string result: {type(unwrapped).__name__}",
                     )
                 return FlextResult[str].ok(unwrapped)
             return FlextResult[str].fail(string_result.error or "Unknown error")
@@ -891,7 +892,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if self._entries_service is None:
             return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
-                "Entries service not initialized"
+                "Entries service not initialized",
             )
         return self._entries_service.get_entry_attributes(entry)
 
@@ -916,7 +917,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if self._entries_service is None:
             return FlextResult[FlextLdifModels.Entry].fail(
-                "Entries service not initialized"
+                "Entries service not initialized",
             )
         return self._entries_service.create_entry(dn, attributes, objectclasses)
 
@@ -975,7 +976,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if migration_config is None:
             return FlextResult[FlextLdifModels.MigrationConfig].fail(
-                "MigrationConfig cannot be None"
+                "MigrationConfig cannot be None",
             )
         if isinstance(migration_config, dict):
             try:
@@ -983,12 +984,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 return FlextResult[FlextLdifModels.MigrationConfig].ok(model)
             except Exception as e:
                 return FlextResult[FlextLdifModels.MigrationConfig].fail(
-                    f"Failed to validate MigrationConfig from dict: {e}"
+                    f"Failed to validate MigrationConfig from dict: {e}",
                 )
         if isinstance(migration_config, FlextLdifModels.MigrationConfig):
             return FlextResult[FlextLdifModels.MigrationConfig].ok(migration_config)
         return FlextResult[FlextLdifModels.MigrationConfig].fail(
-            f"Invalid MigrationConfig type: {type(migration_config).__name__}"
+            f"Invalid MigrationConfig type: {type(migration_config).__name__}",
         )
 
     def _detect_migration_mode(
@@ -1032,19 +1033,19 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                     return FlextResult[FlextLdifModels.WriteFormatOptions].ok(model)
                 except Exception as e:
                     return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                        f"Failed to validate WriteFormatOptions from dict: {e}"
+                        f"Failed to validate WriteFormatOptions from dict: {e}",
                     )
             if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
                 return FlextResult[FlextLdifModels.WriteFormatOptions].ok(write_options)
             return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                f"Invalid WriteFormatOptions type: {type(write_options).__name__}"
+                f"Invalid WriteFormatOptions type: {type(write_options).__name__}",
             )
 
         match mode:
             case "structured":
                 if config_model is None:
                     return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                        "MigrationConfig required for structured mode"
+                        "MigrationConfig required for structured mode",
                     )
                 return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
                     FlextLdifModels.WriteFormatOptions(
@@ -1052,20 +1053,20 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                         write_removed_attributes_as_comments=(
                             config_model.write_removed_as_comments
                         ),
-                    )
+                    ),
                 )
             case "categorized":
                 return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
-                    FlextLdifModels.WriteFormatOptions(fold_long_lines=False)
+                    FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
                 )
             case "simple":
                 # Simple mode doesn't require write options
                 return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
-                    FlextLdifModels.WriteFormatOptions()
+                    FlextLdifModels.WriteFormatOptions(),
                 )
             case _:
                 return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                    f"Unknown migration mode: {mode}"
+                    f"Unknown migration mode: {mode}",
                 )
 
     def _validate_simple_mode_params(
@@ -1184,7 +1185,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 config_result = self._normalize_migration_config(opts.migration_config)
                 if config_result.is_failure:
                     return FlextResult[FlextLdifModels.EntryResult].fail(
-                        f"Invalid migration config: {config_result.error}"
+                        f"Invalid migration config: {config_result.error}",
                     )
                 config_model = config_result.unwrap()
 
@@ -1197,7 +1198,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
             if write_options_result.is_failure:
                 return FlextResult[FlextLdifModels.EntryResult].fail(
-                    f"Failed to create write options: {write_options_result.error}"
+                    f"Failed to create write options: {write_options_result.error}",
                 )
             write_options = write_options_result.unwrap()
 
@@ -1208,7 +1209,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
             if validation_result.is_failure:
                 return FlextResult[FlextLdifModels.EntryResult].fail(
-                    validation_result.error,
+                    validation_result.error or "Parameter validation failed",
                 )
 
             # Initialize migration pipeline with proper type safety
@@ -1427,7 +1428,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             return FlextResult[
                 tuple[FlextLdifServersBase.Acl, FlextLdifServersBase.Acl]
             ].fail(
-                f"Schema quirks not available for source={source_type} or target={target_type}"
+                f"Schema quirks not available for source={source_type} or target={target_type}",
             )
 
         # Extract ACL quirks from schema quirks
@@ -1438,7 +1439,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             return FlextResult[
                 tuple[FlextLdifServersBase.Acl, FlextLdifServersBase.Acl]
             ].fail(
-                f"ACL quirks not available for source={source_type} or target={target_type}"
+                f"ACL quirks not available for source={source_type} or target={target_type}",
             )
 
         return FlextResult[
@@ -1505,7 +1506,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         dn_value = entry.dn.value
         return FlextResult[FlextLdifModels.Entry].fail(
             f"ACL transformation not yet supported for {source_type}→{target_type}: "
-            f"entry with ACLs requires manual validation (DN: {dn_value})"
+            f"entry with ACLs requires manual validation (DN: {dn_value})",
         )
 
     # =========================================================================
@@ -1529,7 +1530,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if self._analysis_service is None:
             return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(
-                "Analysis service not initialized"
+                "Analysis service not initialized",
             )
         return self._analysis_service.analyze(entries)
 
@@ -1550,7 +1551,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if self._analysis_service is None:
             return FlextResult[FlextLdifModels.ValidationResult].fail(
-                "Analysis service not initialized"
+                "Analysis service not initialized",
             )
 
         # Get validation service from container
@@ -1800,7 +1801,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if self._processing_service is None:
             return FlextResult[list[dict[str, object]]].fail(
-                "Processing service not initialized"
+                "Processing service not initialized",
             )
         return self._processing_service.process(
             processor_name,
@@ -1916,7 +1917,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                             and detected_data.detected_server_type.strip()
                         ):
                             return FlextResult[str].ok(
-                                detected_data.detected_server_type
+                                detected_data.detected_server_type,
                             )
                         # Fall back to configured default if detection returned empty/None
                         return FlextResult[str].ok(config.ldif_default_server_type)

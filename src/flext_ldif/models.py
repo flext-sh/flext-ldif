@@ -473,7 +473,7 @@ class FlextLdifModels(FlextModels):
             )
             if domain_result.is_failure:
                 return FlextResult[FlextLdifModelsDomains.Entry].fail(
-                    domain_result.error
+                    domain_result.error or "Entry creation failed",
                 )
 
             domain_entry = domain_result.unwrap()
@@ -481,10 +481,11 @@ class FlextLdifModels(FlextModels):
             # Since FlextLdifModels.Entry extends FlextLdifModelsDomains.Entry,
             # we can safely cast it
             if not isinstance(
-                domain_entry, (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry)
+                domain_entry,
+                (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry),
             ):
                 return FlextResult[FlextLdifModelsDomains.Entry].fail(
-                    "Internal error: Entry.create() returned wrong type"
+                    "Internal error: Entry.create() returned wrong type",
                 )
             # Return as domain Entry (parent type) to satisfy type checker
             # The actual instance is still a FlextLdifModels.Entry at runtime
@@ -544,7 +545,7 @@ class FlextLdifModels(FlextModels):
                     return cls(
                         entries_by_category={},
                         statistics=FlextLdifModelsResults.Statistics.for_pipeline(
-                            total=0
+                            total=0,
                         ),
                     )
 

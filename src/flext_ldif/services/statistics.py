@@ -59,7 +59,8 @@ class FlextLdifStatistics(FlextService[_StatisticsServiceStatusType]):
     @FlextDecorators.log_operation("statistics_service_check")
     @FlextDecorators.track_performance()
     def execute(
-        self, **kwargs: object
+        self,
+        **kwargs: object,
     ) -> FlextResult[FlextLdifModels.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 

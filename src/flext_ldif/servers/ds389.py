@@ -1,4 +1,20 @@
-"""389 Directory Server quirks implementation."""
+"""389 Directory Server Quirks - Stub Implementation.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+Provides 389 Directory Server-specific quirks for schema, ACL, and entry processing.
+Inherits from RFC baseline without server-specific conversions.
+
+Architecture:
+- Parsers: LDIF → RFC parse_entry() → Entry Model RFC (inherited, no overrides)
+- Writers: Entry Model RFC → RFC _write_entry() → LDIF (inherited, no conversions)
+- RFC baseline: 100% RFC 2849/4512 compliance without 389-specific transformations
+- Auto-discovery: Server detection via quirks metadata only
+
+This is a stub implementation. Server-specific conversions can be added in _write_entry()
+when 389 Directory Server-specific LDIF format requirements are identified.
+"""
 
 from __future__ import annotations
 

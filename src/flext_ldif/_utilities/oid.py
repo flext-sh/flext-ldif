@@ -60,7 +60,7 @@ class FlextLdifUtilitiesOID:
                 return match.group(1)
         except (re.error, AttributeError) as e:
             logger.debug(
-                f"Failed to extract OID from definition: error={e!s}, error_type={type(e).__name__}"
+                f"Failed to extract OID from definition: error={e!s}, error_type={type(e).__name__}",
             )
         return None
 
@@ -113,7 +113,7 @@ class FlextLdifUtilitiesOID:
                     else None
                 )
                 logger.debug(
-                    f"Failed to extract OID from original_format: debug_message={debug_msg}, original_format_preview={original_format_preview}"
+                    f"Failed to extract OID from original_format: debug_message={debug_msg}, original_format_preview={original_format_preview}",
                 )
 
         # Fallback: Use OID field from model

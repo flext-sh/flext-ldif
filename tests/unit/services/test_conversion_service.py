@@ -13,10 +13,12 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif.services.server import FlextLdifServer
 from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -31,21 +33,33 @@ def conversion_service() -> FlextLdifConversion:
 
 
 @pytest.fixture
-def rfc_quirk() -> FlextLdifServersRfc:
-    """Create RFC server quirk."""
-    return FlextLdifServersRfc()
+def server() -> FlextLdifServer:
+    """Create FlextLdifServer instance for getting quirks."""
+    return FlextLdifServer()
 
 
 @pytest.fixture
-def oid_quirk() -> FlextLdifServersOid:
-    """Create OID server quirk."""
-    return FlextLdifServersOid()
+def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get RFC server quirk via FlextLdifServer API."""
+    quirk = server.quirk("rfc")
+    assert quirk is not None, "RFC quirk must be available"
+    return quirk
 
 
 @pytest.fixture
-def oud_quirk() -> FlextLdifServersOud:
-    """Create OUD server quirk."""
-    return FlextLdifServersOud()
+def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get OID server quirk via FlextLdifServer API."""
+    quirk = server.quirk("oid")
+    assert quirk is not None, "OID quirk must be available"
+    return quirk
+
+
+@pytest.fixture
+def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get OUD server quirk via FlextLdifServer API."""
+    quirk = server.quirk("oud")
+    assert quirk is not None, "OUD quirk must be available"
+    return quirk
 
 
 @pytest.fixture

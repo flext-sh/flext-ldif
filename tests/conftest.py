@@ -784,14 +784,88 @@ def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
     return FlextLdifFixtures.OpenLDAP()
 
 
+# ============================================================================
+# SERVER QUIRKS FIXTURES (Via FlextLdifServer API)
+# ============================================================================
+#
+# IMPORTANT: Always use FlextLdifServer().quirk() to get server instances
+# NEVER instantiate servers directly (FlextLdifServersOid(), etc.)
+# This ensures proper registry management and singleton behavior.
+
+
 @pytest.fixture
-def oid() -> object:
-    """OID quirk instance for tests.
+def server() -> FlextLdifServer:
+    """Get FlextLdifServer instance for quirk management.
 
     Returns:
-        FlextLdifServersOid: OID server quirk instance
+        FlextLdifServer: Server instance for getting quirks
+
+    Example:
+        def test_with_server(server: FlextLdifServer):
+            oid = server.quirk("oid")
+            assert oid is not None
 
     """
-    from flext_ldif.servers.oid import FlextLdifServersOid
+    return FlextLdifServer()
 
-    return FlextLdifServersOid()
+
+@pytest.fixture
+def rfc_quirk(server: FlextLdifServer):
+    """Get RFC server quirk via FlextLdifServer API.
+
+    Args:
+        server: FlextLdifServer instance
+
+    Returns:
+        FlextLdifServersBase: RFC server quirk
+
+    """
+    quirk = server.quirk("rfc")
+    assert quirk is not None, "RFC quirk must be registered"
+    return quirk
+
+
+@pytest.fixture
+def oid_quirk(server: FlextLdifServer):
+    """Get OID server quirk via FlextLdifServer API.
+
+    Args:
+        server: FlextLdifServer instance
+
+    Returns:
+        FlextLdifServersBase: OID server quirk
+
+    """
+    quirk = server.quirk("oid")
+    assert quirk is not None, "OID quirk must be registered"
+    return quirk
+
+
+@pytest.fixture
+def oud_quirk(server: FlextLdifServer):
+    """Get OUD server quirk via FlextLdifServer API.
+
+    Args:
+        server: FlextLdifServer instance
+
+    Returns:
+        FlextLdifServersBase: OUD server quirk
+
+    """
+    quirk = server.quirk("oud")
+    assert quirk is not None, "OUD quirk must be registered"
+    return quirk
+
+
+@pytest.fixture
+def oid() -> object:
+    """OID quirk instance for tests (DEPRECATED - use oid_quirk).
+
+    Returns:
+        FlextLdifServersBase: OID server quirk instance
+
+    """
+    server = FlextLdifServer()
+    quirk = server.quirk("oid")
+    assert quirk is not None, "OID quirk must be registered"
+    return quirk

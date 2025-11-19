@@ -97,7 +97,6 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
 
     """
 
-    _logger: FlextLogger
     _config: FlextLdifConfig
     _registry: FlextLdifServer
     _acl_service: FlextLdifAcl
@@ -123,7 +122,6 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
         """
         super().__init__()
         self._config = config if config is not None else FlextLdifConfig()
-        self._logger = FlextLogger(__name__)
         self._enable_events = enable_events
 
         # Initialize parsing components
@@ -172,13 +170,12 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             server_type: str,
         ) -> FlextResult[FlextLdifModels.ParseResponse]:
             """Parse LDIF from string content."""
-            quirks = self.registry.gets(server_type)
-            if not quirks:
+            quirk = self.registry.quirk(server_type)
+            if quirk is None:
                 return FlextResult.fail(
                     f"Internal error: No quirk found for resolved server type '{server_type}'",
                 )
 
-            quirk = quirks[0]
             # quirk.parse() returns FlextResult[FlextLdifModels.ParseResponse]
             # ParseResult is an alias for ParseResponse - return directly
             return quirk.parse(content)
@@ -204,12 +201,11 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             server_type: str,
         ) -> FlextResult[FlextLdifModels.ParseResponse]:
             """Parse LDAP3 search results into Entry models."""
-            quirks = self.registry.gets(server_type)
-            if not quirks:
+            quirk = self.registry.quirk(server_type)
+            if quirk is None:
                 return FlextResult.fail(
                     f"No quirk available for server type: {server_type}",
                 )
-            quirk = quirks[0]
 
             entries = []
             failed_count = 0
@@ -220,11 +216,12 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
                 entry_quirk = quirk.entry_quirk
                 if not hasattr(entry_quirk, "parse_entry"):
                     return FlextResult.fail(
-                        f"Entry quirk for {server_type} does not have parse_entry method"
+                        f"Entry quirk for {server_type} does not have parse_entry method",
                     )
                 # Use cast() to guide type checker - runtime hasattr already verified
                 entry_typed = cast(
-                    "FlextLdifProtocols.Quirks.EntryProtocol", entry_quirk
+                    "FlextLdifProtocols.Quirks.EntryProtocol",
+                    entry_quirk,
                 )
                 entry_result = entry_typed.parse_entry(dn, attrs)
 
@@ -283,18 +280,18 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             config: FlextLdifConfig,
             registry: FlextLdifServer,
             detector: FlextLdifDetector,
-            logger: FlextLogger,
+            parent_logger,
         ) -> None:
             """Initialize with config, registry, detector and logger."""
             self.config = config
             self.registry = registry
             self.detector = detector
-            self.logger = logger
+            self.logger = parent_logger
 
         def _validate_explicit_server_type(self, server_type: str) -> FlextResult[str]:
             """Validate explicitly specified server type."""
-            quirks = self.registry.gets(server_type)
-            if not quirks:
+            quirk = self.registry.quirk(server_type)
+            if quirk is None:
                 return FlextResult.fail(
                     f"No quirk implementation found for server type '{server_type}'. "
                     "Ensure server type is registered in quirks registry.",
@@ -388,14 +385,14 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             acl_extractor: FlextLdifParser.AclExtractor,
             validator: FlextLdifParser.EntryValidator,
             registry: FlextLdifServer,
-            logger: FlextLogger,
+            parent_logger,
         ) -> None:
             """Initialize with schema extractor, ACL extractor, validator, registry and logger."""
             self.schema_extractor = schema_extractor
             self.acl_extractor = acl_extractor
             self.validator = validator
             self.registry = registry
-            self.logger = logger
+            self.logger = parent_logger
 
         def apply_schema_quirks_inline(
             self,
@@ -416,11 +413,10 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
 
             """
             # Get server quirk from registry
-            quirks_list = self.registry.gets(server_type)
-            if not quirks_list:
+            quirk = self.registry.quirk(server_type)
+            if quirk is None:
                 return entry
 
-            quirk = quirks_list[0]
             entry_quirk = quirk.entry_quirk
 
             # Delegate to quirk's normalize_schema_strings_inline if available
@@ -447,9 +443,7 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             validation_errors = []
 
             if options.normalize_dns:
-                processed_entry = self.normalize_entry_dn(
-                    processed_entry, server_type
-                )
+                processed_entry = self.normalize_entry_dn(processed_entry, server_type)
 
             # Apply schema quirks normalization to inline schema attributes
             # Delegates to quirk's normalize_schema_strings_inline method
@@ -499,7 +493,8 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
 
             if not options.include_operational_attrs:
                 processed_entry = self.filter_operational_attributes(
-                    processed_entry, server_type
+                    processed_entry,
+                    server_type,
                 )
 
             filtered_errors = [e for e in validation_errors if e is not None]
@@ -557,11 +552,10 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             server_type: str,
         ) -> FlextLdifModels.Entry:
             """Normalize DN formatting via quirk delegation (DI pattern)."""
-            quirks_list = self.registry.gets(server_type)
-            if not quirks_list:
+            quirk = self.registry.quirk(server_type)
+            if quirk is None:
                 return entry
 
-            quirk = quirks_list[0]
             entry_quirk = quirk.entry_quirk
 
             if hasattr(entry_quirk, "normalize_entry_dn"):
@@ -589,11 +583,10 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             server_type: str,
         ) -> FlextLdifModels.Entry:
             """Filter out operational attributes via quirk delegation (DI pattern)."""
-            quirks_list = self.registry.gets(server_type)
-            if not quirks_list:
+            quirk = self.registry.quirk(server_type)
+            if quirk is None:
                 return entry
 
-            quirk = quirks_list[0]
             entry_quirk = quirk.entry_quirk
 
             if hasattr(entry_quirk, "filter_operational_attributes"):
@@ -618,9 +611,9 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
     class EntryValidator:
         """Handles entry validation - replaces _validate_entry and _validate_entry_* methods."""
 
-        def __init__(self, logger: FlextLogger) -> None:
+        def __init__(self, parent_logger) -> None:
             """Initialize with logger."""
-            self.logger = logger
+            self.logger = parent_logger
 
         def validate_entry(
             self,
@@ -702,10 +695,10 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
     class SchemaExtractor:
         """Handles schema extraction - replaces _parse_attribute_types_from_entry, _parse_objectclasses_from_entry, _parse_schema_entry."""
 
-        def __init__(self, registry: FlextLdifServer, logger: FlextLogger) -> None:
+        def __init__(self, registry: FlextLdifServer, parent_logger) -> None:
             """Initialize with registry and logger."""
             self.registry = registry
-            self.logger = logger
+            self.logger = parent_logger
 
         def parse_schema_entry(
             self,
@@ -714,11 +707,14 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
         ) -> FlextLdifModels.Entry:
             """Parse schema entry attributes into models."""
             try:
-                schemas = self.registry.gets(server_type)
-                if not schemas:
-                    schemas = self.registry.gets(
+                schema_quirk = self.registry.quirk(server_type)
+                if schema_quirk is None:
+                    schema_quirk = self.registry.quirk(
                         FlextLdifConstants.ServerTypes.RFC,
                     )
+
+                # Wrap in list for compatibility with parse methods that iterate quirks
+                schemas = [schema_quirk] if schema_quirk is not None else []
 
                 schema_attributes = self.parse_attribute_types(entry, schemas)
                 schema_objectclasses = self.parse_objectclasses(entry, schemas)
@@ -743,29 +739,83 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
                 )
                 return entry
 
+        def _parse_single_attribute(
+            self,
+            definition: str,
+            schemas: list[FlextLdifServersBase],
+        ) -> FlextLdifModels.SchemaAttribute | None:
+            """Parse single attribute definition using quirks."""
+            for quirk in schemas:
+                if quirk.schema_quirk.can_handle_attribute(definition):
+                    parse_result = quirk.schema_quirk.parse_attribute(definition)
+                    if parse_result.is_success:
+                        return parse_result.unwrap()
+            return None
+
+        def _parse_single_objectclass(
+            self,
+            definition: str,
+            schemas: list[FlextLdifServersBase],
+        ) -> FlextLdifModels.SchemaObjectClass | None:
+            """Parse single objectClass definition using quirks."""
+            for quirk in schemas:
+                if quirk.schema_quirk.can_handle_objectclass(definition):
+                    parse_result = quirk.schema_quirk.parse_objectclass(definition)
+                    if parse_result.is_success:
+                        return parse_result.unwrap()
+            return None
+
+        def _parse_schema_definitions(
+            self,
+            definitions: list[str],
+            schemas: list[FlextLdifServersBase],
+            *,
+            is_attribute: bool,
+        ) -> (
+            list[FlextLdifModels.SchemaAttribute]
+            | list[FlextLdifModels.SchemaObjectClass]
+        ):
+            """Parse schema definitions using quirks (DRY: shared logic for attributes/objectclasses).
+
+            Python 3.13: Type-safe generic parsing with conditional logic.
+            """
+            if not definitions:
+                return []
+
+            # Parse attributes or objectClasses using helper methods
+            if is_attribute:
+                return [
+                    parsed
+                    for definition in definitions
+                    if (parsed := self._parse_single_attribute(definition, schemas))
+                    is not None
+                ]
+
+            return [
+                parsed
+                for definition in definitions
+                if (parsed := self._parse_single_objectclass(definition, schemas))
+                is not None
+            ]
+
         def parse_attribute_types(
             self,
             entry: FlextLdifModels.Entry,
             schemas: list[FlextLdifServersBase],
         ) -> list[FlextLdifModels.SchemaAttribute]:
             """Parse attributeTypes from entry using schema quirks."""
-            schema_attributes: list[FlextLdifModels.SchemaAttribute] = []
             if not entry.attributes:
-                return schema_attributes
+                return []
 
             attr_types = entry.attributes.get(
                 FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES,
                 [],
             )
-            if attr_types:
-                for attr_def in attr_types:
-                    for quirk in schemas:
-                        if quirk.schema_quirk.can_handle_attribute(attr_def):
-                            result = quirk.schema_quirk.parse_attribute(attr_def)
-                            if result.is_success:
-                                schema_attributes.append(result.unwrap())
-                                break
-            return schema_attributes
+            # Type narrowing: cast result to list[SchemaAttribute]
+            return cast(
+                "list[FlextLdifModels.SchemaAttribute]",
+                self._parse_schema_definitions(attr_types, schemas, is_attribute=True),
+            )
 
         def parse_objectclasses(
             self,
@@ -773,31 +823,30 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             schemas: list[FlextLdifServersBase],
         ) -> list[FlextLdifModels.SchemaObjectClass]:
             """Parse objectClasses from entry using schema quirks."""
-            schema_objectclasses: list[FlextLdifModels.SchemaObjectClass] = []
             if not entry.attributes:
-                return schema_objectclasses
+                return []
 
             obj_classes = entry.attributes.get(
                 FlextLdifConstants.SchemaFields.OBJECT_CLASSES,
                 [],
             )
-            if obj_classes:
-                for oc_def in obj_classes:
-                    for quirk in schemas:
-                        if quirk.schema_quirk.can_handle_objectclass(oc_def):
-                            oc_result = quirk.schema_quirk.parse_objectclass(oc_def)
-                            if oc_result.is_success:
-                                schema_objectclasses.append(oc_result.unwrap())
-                                break
-            return schema_objectclasses
+            # Type narrowing: cast result to list[SchemaObjectClass]
+            return cast(
+                "list[FlextLdifModels.SchemaObjectClass]",
+                self._parse_schema_definitions(
+                    obj_classes,
+                    schemas,
+                    is_attribute=False,
+                ),
+            )
 
     class AclExtractor:
         """Handles ACL extraction - replaces _extract_acls method."""
 
-        def __init__(self, acl_service: FlextLdifAcl, logger: FlextLogger) -> None:
+        def __init__(self, acl_service: FlextLdifAcl, parent_logger) -> None:
             """Initialize with ACL service and logger."""
             self.acl_service = acl_service
-            self.logger = logger
+            self.logger = parent_logger
 
         def extract_acls(
             self,
@@ -816,7 +865,7 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
                     if acl_response.acls:
                         # RFC Compliance: ACLs are processing metadata, not RFC LDIF entry data
                         new_metadata = entry.metadata.model_copy(
-                            update={"acls": acl_response.acls}
+                            update={"acls": acl_response.acls},
                         )
                         return entry.model_copy(update={"metadata": new_metadata})
 

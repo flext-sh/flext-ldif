@@ -44,7 +44,8 @@ class FlextLdifAnalysis(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -59,7 +60,7 @@ class FlextLdifAnalysis(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]
 
         """
         return FlextResult.fail(
-            "FlextLdifAnalysis does not support generic execute(). Use specific methods instead."
+            "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
     def analyze(

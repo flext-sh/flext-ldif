@@ -166,7 +166,8 @@ class FlextLdifValidation(FlextService[_ValidationServiceStatusType]):
     @FlextDecorators.log_operation("validation_service_check")
     @FlextDecorators.track_performance()
     def execute(
-        self, **kwargs: object
+        self,
+        **kwargs: object,
     ) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
         """Execute validation service self-check.
 

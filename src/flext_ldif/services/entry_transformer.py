@@ -22,7 +22,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifEntryTransformer(
-    FlextService[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextService[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for entry transformation operations.
 
@@ -50,7 +50,8 @@ class FlextLdifEntryTransformer(
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -65,7 +66,7 @@ class FlextLdifEntryTransformer(
 
         """
         return FlextResult.fail(
-            "FlextLdifEntryTransformer does not support generic execute(). Use specific methods instead."
+            "FlextLdifEntryTransformer does not support generic execute(). Use specific methods instead.",
         )
 
     def remove_attributes(
@@ -134,7 +135,9 @@ class FlextLdifEntryTransformer(
 
             if entry_result.is_failure:
                 # Convert domain Entry result to public Entry result
-                return FlextResult[FlextLdifModels.Entry].fail(entry_result.error or "Unknown error")
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    entry_result.error or "Unknown error",
+                )
 
             new_entry_domain = entry_result.unwrap()
             # Type narrowing: Entry.create returns Domain.Entry, but we need Models.Entry
@@ -157,7 +160,7 @@ class FlextLdifEntryTransformer(
                     **removed_attrs_with_values,
                 }
                 new_metadata = new_entry.metadata.model_copy(
-                    update={"removed_attributes": new_removed}
+                    update={"removed_attributes": new_removed},
                 )
                 new_entry = new_entry.model_copy(update={"metadata": new_metadata})
 
@@ -240,7 +243,9 @@ class FlextLdifEntryTransformer(
             )
 
             if entry_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(entry_result.error or "Unknown error")
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    entry_result.error or "Unknown error",
+                )
 
             new_entry_domain = entry_result.unwrap()
             # Type narrowing: Entry.create returns Domain.Entry, but we need Models.Entry

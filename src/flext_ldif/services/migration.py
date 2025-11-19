@@ -228,7 +228,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
         if categorized_result.is_failure:
             return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
-                categorized_result.error,
+                categorized_result.error or "Categorization failed",
             )
 
         categories = categorized_result.unwrap()
@@ -401,7 +401,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
                 # Build template_data for migration headers
                 phase_num = category_to_phase.get(category, -1)
                 # Validate base_dn - use empty string if None
-                base_dn_value = self._categorization._base_dn  # noqa: SLF001
+                base_dn_value = self._categorization._base_dn
                 if base_dn_value is None:
                     base_dn_value = ""
                 elif not isinstance(base_dn_value, str):
@@ -419,7 +419,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
                     "processed_entries": len(entries),
                     "rejected_entries": 0,
                     "schema_whitelist_enabled": bool(
-                        self._categorization._schema_whitelist_rules is not None  # noqa: SLF001
+                        self._categorization._schema_whitelist_rules is not None,
                     ),
                     "sort_entries_hierarchically": self._sort_hierarchically,
                     "server_type": self._target_server,
@@ -437,7 +437,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
                 # For ACL category: add base_dn and dn_registry to entry metadata
                 if category == FlextLdifConstants.Categories.ACL:
-                    base_dn = self._categorization._base_dn  # noqa: SLF001
+                    base_dn = self._categorization._base_dn
                     # Add base_dn and dn_registry to entry metadata for ACL DN normalization
                     entries_with_metadata = []
                     for entry in entries:
@@ -449,10 +449,10 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
                         extensions["dn_registry"] = self._dn_registry
                         # Update entry with new extensions
                         new_metadata = entry.metadata.model_copy(
-                            update={"extensions": extensions}
+                            update={"extensions": extensions},
                         )
                         updated_entry = entry.model_copy(
-                            update={"metadata": new_metadata}
+                            update={"metadata": new_metadata},
                         )
                         entries_with_metadata.append(updated_entry)
                     processed_entries = entries_with_metadata
@@ -499,7 +499,9 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         # Step 1: Create output directory
         dir_result = self._create_output_directory()
         if dir_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(dir_result.error or "Unknown error")
+            return FlextResult[FlextLdifModels.EntryResult].fail(
+                dir_result.error or "Unknown error",
+            )
 
         # Step 2: Determine files to parse
         files = self._determine_files()
@@ -507,7 +509,9 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         # Step 3: Parse all input files
         entries_result = self._parse_files(files)
         if entries_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(entries_result.error or "Unknown error")
+            return FlextResult[FlextLdifModels.EntryResult].fail(
+                entries_result.error or "Unknown error",
+            )
 
         # Step 4: Apply categorization chain
         categories_result = self._apply_categorization(entries_result.unwrap())
@@ -524,7 +528,9 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         # Step 6: Write output files
         write_result = self._write_categories(categories)
         if write_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(write_result.error or "Unknown error")
+            return FlextResult[FlextLdifModels.EntryResult].fail(
+                write_result.error or "Unknown error",
+            )
 
         file_paths, entry_counts = write_result.unwrap()
 

@@ -1,10 +1,22 @@
-"""Novell eDirectory quirks implementation.
+"""Novell eDirectory Quirks - Stub Implementation.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
 Provides detection and lightweight parsing for Novell/Micro Focus eDirectory
 schema definitions, ACL values, and operational entries. eDirectory uses the
 Novell OID namespace (2.16.840.1.113719) and exposes a number of attributes
 prefixed with ``nspm`` or ``login`` that do not appear in RFC-compliant LDAP
 servers.
+
+Architecture:
+- Parsers: LDIF → RFC parse_entry() → Entry Model RFC (inherited, no overrides)
+- Writers: Entry Model RFC → RFC _write_entry() → LDIF (inherited, no conversions)
+- RFC baseline: 100% RFC 2849/4512 compliance without Novell-specific transformations
+- Auto-discovery: Server detection via quirks metadata (Novell OID namespace)
+
+This is a stub implementation. Server-specific conversions can be added in _write_entry()
+when Novell eDirectory-specific LDIF format requirements are identified.
 """
 
 from __future__ import annotations

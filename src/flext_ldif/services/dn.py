@@ -562,7 +562,7 @@ class FlextLdifDn(FlextService[str]):
             """Parse DN operation (internal)."""
             result = FlextLdifDn.Parser.parse_components(dn)
             if result.is_failure:
-                return FlextResult[str].fail(result.error)
+                return FlextResult[str].fail(result.error or "Parse components failed")
             components = result.unwrap()
             components_str = ", ".join(f"{attr}={value}" for attr, value in components)
             return FlextResult[str].ok(components_str)
@@ -572,7 +572,7 @@ class FlextLdifDn(FlextService[str]):
             """Validate DN operation (internal)."""
             result = FlextLdifDn.Parser.validate_format(dn)
             if result.is_failure:
-                return FlextResult[str].fail(result.error)
+                return FlextResult[str].fail(result.error or "Validation failed")
             is_valid = result.unwrap()
             return FlextResult[str].ok(str(is_valid))
 
@@ -581,7 +581,7 @@ class FlextLdifDn(FlextService[str]):
             """Compare DN operation (internal)."""
             result = FlextLdifDn.Parser.compare_dns(dn1, dn2)
             if result.is_failure:
-                return FlextResult[str].fail(result.error)
+                return FlextResult[str].fail(result.error or "Comparison failed")
             comparison = result.unwrap()
             return FlextResult[str].ok(str(comparison))
 
@@ -590,7 +590,7 @@ class FlextLdifDn(FlextService[str]):
             """Parse RDN operation (internal)."""
             result = FlextLdifDn.Parser.parse_rdn(dn)
             if result.is_failure:
-                return FlextResult[str].fail(result.error)
+                return FlextResult[str].fail(result.error or "Parse RDN failed")
             pairs = result.unwrap()
             pairs_str = ", ".join(f"{attr}={value}" for attr, value in pairs)
             return FlextResult[str].ok(pairs_str)

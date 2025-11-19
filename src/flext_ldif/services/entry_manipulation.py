@@ -63,7 +63,7 @@ class _EntryManipulationConstants:
     class ActiveDirectoryAttributes:
         """Active Directory attribute names."""
 
-        PWD_LAST_SET: Final[str] = "pwdLastSet"  # noqa: S105
+        PWD_LAST_SET: Final[str] = "pwdLastSet"
 
     class RegexPatterns:
         """Regular expression patterns for entry manipulation."""
@@ -118,16 +118,16 @@ class EntryManipulationServices:
         """
         if not entry.attributes or not hasattr(entry.attributes, "attributes"):
             return FlextResult[object].fail(
-                f"Entry has no attributes dictionary for attribute '{attr_name}'"
+                f"Entry has no attributes dictionary for attribute '{attr_name}'",
             )
         attr_dict = entry.attributes.attributes
         if not isinstance(attr_dict, dict):
             return FlextResult[object].fail(
-                f"Entry attributes is not a dictionary for attribute '{attr_name}'"
+                f"Entry attributes is not a dictionary for attribute '{attr_name}'",
             )
         if attr_name not in attr_dict:
             return FlextResult[object].fail(
-                f"Attribute '{attr_name}' not found in entry"
+                f"Attribute '{attr_name}' not found in entry",
             )
         return FlextResult[object].ok(attr_dict[attr_name])
 
@@ -152,7 +152,7 @@ class EntryManipulationServices:
             str_value = str(attr_value).strip()
             if not str_value:
                 return FlextResult[str].fail(
-                    "Attribute value is empty after normalization"
+                    "Attribute value is empty after normalization",
                 )
             return FlextResult[str].ok(str_value)
         except (TypeError, AttributeError) as e:
@@ -174,14 +174,15 @@ class EntryManipulationServices:
 
         """
         raw_value_result = EntryManipulationServices.get_entry_attribute(
-            entry, attr_name
+            entry,
+            attr_name,
         )
         if not raw_value_result.is_success:
             return FlextResult[str].fail(
-                f"Failed to get attribute '{attr_name}': {raw_value_result.error}"
+                f"Failed to get attribute '{attr_name}': {raw_value_result.error}",
             )
         return EntryManipulationServices.normalize_attribute_value(
-            raw_value_result.unwrap()
+            raw_value_result.unwrap(),
         )
 
     @staticmethod
@@ -201,7 +202,7 @@ class EntryManipulationServices:
         """
         if not given_name or not sn:
             return FlextResult[str].fail(
-                "Insufficient name parts: both given_name and sn are required"
+                "Insufficient name parts: both given_name and sn are required",
             )
         return FlextResult[str].ok(f"{given_name} {sn}")
 
@@ -224,7 +225,8 @@ class EntryManipulationServices:
         # Build display name from parts if both are available
         if given_name_result.is_success and sn_result.is_success:
             display_name_result = self.build_display_name_from_parts(
-                given_name_result.unwrap(), sn_result.unwrap()
+                given_name_result.unwrap(),
+                sn_result.unwrap(),
             )
         else:
             display_name_result = FlextResult[str].fail("Insufficient name parts")
@@ -273,7 +275,7 @@ class EntryManipulationServices:
                 continue
 
             normalized_result = self.normalize_attribute_value(
-                attr_value_result.unwrap()
+                attr_value_result.unwrap(),
             )
             if normalized_result.is_failure:
                 continue
@@ -370,7 +372,7 @@ class EntryManipulationServices:
 
         if "REDACTED_LDAP_BIND_PASSWORD" in group_cn.lower() and not user_email:
             return FlextResult[bool].fail(
-                "Admin group members must have email addresses"
+                "Admin group members must have email addresses",
             )
 
         return FlextResult[bool].ok(True)
@@ -613,7 +615,7 @@ class EntryManipulationServices:
             retry_count = 0
 
             logger.debug(
-                f"Adding entry with quirks_mode: entry_dn={dn_str}, quirks_mode={quirks_mode}, effective_mode={effectives_mode}, max_retries={max_retries}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py"
+                f"Adding entry with quirks_mode: entry_dn={dn_str}, quirks_mode={quirks_mode}, effective_mode={effectives_mode}, max_retries={max_retries}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
             )
 
             while retry_count < max_retries:
@@ -626,7 +628,7 @@ class EntryManipulationServices:
                     if success:
                         if removed_attributes:
                             logger.debug(
-                                f"Removed attributes during entry add: entry_dn={dn_str}, removed_attributes={removed_attributes}, removed_count={len(removed_attributes)}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py"
+                                f"Removed attributes during entry add: entry_dn={dn_str}, removed_attributes={removed_attributes}, removed_count={len(removed_attributes)}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
                             )
                         return FlextResult[bool].ok(True)
 
@@ -660,7 +662,7 @@ class EntryManipulationServices:
                         if problem_attr_result.is_success:
                             problem_attr = problem_attr_result.unwrap()
                             logger.debug(
-                                f"Exception on undefined attribute: entry_dn={dn_str}, problem_attribute={problem_attr}, error={e!s}, retry_count={retry_count}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py"
+                                f"Exception on undefined attribute: entry_dn={dn_str}, problem_attribute={problem_attr}, error={e!s}, retry_count={retry_count}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
                             )
                             del attempted_attributes[problem_attr]
                             removed_attributes.append(problem_attr)
@@ -720,7 +722,7 @@ class EntryManipulationServices:
         problem_attr = error_parts[-1].strip()
         if problem_attr not in attempted_attributes:
             return FlextResult[str].fail(
-                f"Attribute '{problem_attr}' not found in attempted attributes"
+                f"Attribute '{problem_attr}' not found in attempted attributes",
             )
         return FlextResult[str].ok(problem_attr)
 
@@ -746,7 +748,7 @@ class EntryManipulationServices:
         if problem_attr_result.is_success:
             problem_attr = problem_attr_result.unwrap()
             logger.debug(
-                f"Removing undefined attribute: problem_attribute={problem_attr}, connection_error={connection.last_error}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py"
+                f"Removing undefined attribute: problem_attribute={problem_attr}, connection_error={connection.last_error}, source=flext-ldif/src/flext_ldif/services/entry_manipulation.py",
             )
             del attempted_attributes[problem_attr]  # This modifies the dict in place
             removed_attributes.append(problem_attr)  # Track removed attribute

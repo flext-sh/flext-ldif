@@ -67,6 +67,10 @@ class FlextLdifModelsConfig:
             default="3.0",
             description="Default version to compare against",
         )
+        action_type: str | None = Field(
+            default="allow",
+            description="ACL action type (allow or deny) - for OUD deny rules support",
+        )
 
     class LogContextExtras(FlextModels.Value):
         """Additional context fields for logging events.

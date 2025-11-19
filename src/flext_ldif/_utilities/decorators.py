@@ -242,7 +242,7 @@ class FlextLdifUtilitiesDecorators:
                 except Exception as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(
-                        error_msg
+                        error_msg,
                     )  # Log exception with traceback and message
                     return FlextResult.fail(error_msg)
 

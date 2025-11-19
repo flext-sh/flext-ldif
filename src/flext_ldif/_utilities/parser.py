@@ -601,7 +601,7 @@ class FlextLdifUtilitiesParser:
     def _extract_syntax_and_length(
         definition: str,
         *,
-        allow_syntax_quotes: bool = False,  # noqa: ARG004
+        allow_syntax_quotes: bool = False,
     ) -> tuple[str | None, int | None]:
         """Extract syntax OID and optional length from definition.
 

@@ -15,9 +15,13 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+# Metadata keys for testing relaxed mode
+meta_keys = FlextLdifConstants.MetadataKeys
 
 
 class TestRelaxedSchemas:
@@ -70,10 +74,8 @@ class TestRelaxedSchemas:
         )
         assert (
             parsed.metadata
-            and parsed.metadata.extensions.get(
-                FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED,
-            )
-            is True
+            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
+            == "relaxed"
         )
         assert parsed.oid == "2.5.4.3"
 
@@ -93,10 +95,8 @@ class TestRelaxedSchemas:
         )
         assert (
             parsed.metadata
-            and parsed.metadata.extensions.get(
-                FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED,
-            )
-            is True
+            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
+            == "relaxed"
         )
 
     def test_parse_attribute_returns_definition(
@@ -131,10 +131,8 @@ class TestRelaxedSchemas:
         )
         assert (
             parsed.metadata
-            and parsed.metadata.extensions.get(
-                FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED,
-            )
-            is True
+            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
+            == "relaxed"
         )
 
     def test_can_handle_any_objectclass_definition(
@@ -168,7 +166,7 @@ class TestRelaxedSchemas:
                 quirk_type="relaxed",
                 original_format=definition,
                 extensions={
-                    FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
+                    meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
                 },
             ),
         )
@@ -428,8 +426,7 @@ class TestRelaxedModeIntegration:
         assert hasattr(parsed, "name")
         assert (
             parsed.metadata
-            and FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-            in parsed.metadata.extensions
+            and meta_keys.SCHEMA_SOURCE_SERVER in parsed.metadata.extensions
         )
 
     def test_relaxed_mode_logs_warnings_on_parse_failure(self) -> None:
@@ -520,10 +517,8 @@ class TestRelaxedQuirksParseAttribute:
         assert parsed.oid == "1.2.3.4"
         assert (
             parsed.metadata
-            and parsed.metadata.extensions.get(
-                FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED,
-            )
-            is True
+            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
+            == "relaxed"
         )
 
     def test_parse_attribute_malformed_oid(
@@ -592,8 +587,7 @@ class TestRelaxedQuirksParseAttribute:
         assert result.is_success
         parsed = result.unwrap()
         assert parsed.metadata and (
-            FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-            in parsed.metadata.extensions
+            meta_keys.SCHEMA_SOURCE_SERVER in parsed.metadata.extensions
             or "original_format" in parsed.metadata.extensions
         )
 
@@ -633,10 +627,8 @@ class TestRelaxedQuirksParseObjectclass:
         assert parsed.oid == "1.2.3.4"
         assert (
             parsed.metadata
-            and parsed.metadata.extensions.get(
-                FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED,
-            )
-            is True
+            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
+            == "relaxed"
         )
 
     def test_parse_objectclass_malformed_oid(
@@ -680,8 +672,7 @@ class TestRelaxedQuirksParseObjectclass:
         assert result.is_success  # Succeeds with numeric OID
         parsed = result.unwrap()
         assert parsed.metadata and (
-            FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-            in (parsed.metadata.extensions or {})
+            meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
             or parsed.metadata.extensions.get("original_format") is not None
         )
 
@@ -821,8 +812,7 @@ class TestRelaxedQuirksErrorRecovery:
         parsed = result.unwrap()
         assert parsed.metadata and (
             parsed.metadata.extensions.get("original_format") is not None
-            or FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-            in (parsed.metadata.extensions or {})
+            or meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
         )
 
     def test_parse_objectclass_logs_failures_but_recovers(
@@ -840,8 +830,7 @@ class TestRelaxedQuirksErrorRecovery:
             parsed = result.unwrap()
             assert parsed.metadata and (
                 parsed.metadata.extensions.get("original_format") is not None
-                or FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-                in (parsed.metadata.extensions or {})
+                or meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
             )
 
     def test_relaxed_mode_priority_very_low(

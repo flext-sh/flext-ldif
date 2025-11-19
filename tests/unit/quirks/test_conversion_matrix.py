@@ -2269,10 +2269,21 @@ class TestBatchConversionErrorHandling:
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test batch conversion with all items failing conversion (NEW API - write failures)."""
-        # NEW API: Use successful quirk to create models, then failing quirk for conversion
+        """Test batch conversion with RFC-first architecture (no write→parse failures).
+
+        RFC-FIRST ARCHITECTURE: Conversions operate on RFC Models directly via model.copy()
+        and metadata updates, WITHOUT serialization (write→parse). Therefore, conversions
+        cannot fail during the conversion step itself - they only update metadata.
+
+        The old write→parse architecture could fail during write, but RFC-first eliminates
+        this failure mode. Failures now only occur during:
+        - Initial parsing (Server LDIF → RFC Model)
+        - Final writing (RFC Model → Server LDIF)
+
+        This test validates that batch conversion of valid RFC models SUCCEEDS.
+        """
+        # Create real RFC models via successful parsing
         successful_quirk = SuccessfulParseQuirk()
-        failing_quirk = ConversionFailingQuirk(fail_on="write")
 
         # Create models using successful quirk (parsing succeeds)
         items_str = ["(test1)", "(test2)", "(test3)"]
@@ -2282,13 +2293,13 @@ class TestBatchConversionErrorHandling:
             assert parse_result.is_success
             models.append(parse_result.unwrap())
 
-        # NEW API: batch_convert with failing quirk as source (write step will fail for all)
-        result = conversion_matrix.batch_convert(failing_quirk, oid_quirk, models)
+        # RFC-FIRST: batch_convert operates on RFC models directly (no write→parse)
+        result = conversion_matrix.batch_convert(successful_quirk, oid_quirk, models)
 
-        # All items fail to write, so batch conversion fails
-        assert result.is_failure
-        assert result.error is not None
-        assert "errors" in result.error.lower() or "failed" in result.error.lower()
+        # RFC models convert successfully (model.copy() + metadata update cannot fail)
+        assert result.is_success, f"RFC-first conversion should succeed: {result.error}"
+        converted = result.unwrap()
+        assert len(converted) == 3, "All 3 items should convert successfully"
 
     def test_batch_convert_error_truncation(
         self,

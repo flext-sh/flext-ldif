@@ -90,7 +90,8 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
 
     @override
     def execute(
-        self, **kwargs: object
+        self,
+        **kwargs: object,
     ) -> FlextResult[FlextLdifModels.SchemaServiceStatus]:
         """Execute schema service self-check.
 

@@ -1119,16 +1119,61 @@ class FlextLdifModelsDomains:
     # =========================================================================
 
     class AclPermissions(FlextModels.ArbitraryTypesModel):
-        """ACL permissions for LDAP operations."""
+        """ACL permissions for LDAP operations.
 
+        Supports:
+        - Standard RFC permissions (read, write, add, delete, search, compare)
+        - Server-specific permissions (self_write, proxy, browse, auth)
+        - Negative permissions (no_write, no_add, no_delete, no_browse, no_self_write)
+        - Compound permissions (all)
+        """
+
+        # Standard RFC permissions
         read: bool = Field(default=False, description="Read permission")
         write: bool = Field(default=False, description="Write permission")
         add: bool = Field(default=False, description="Add permission")
         delete: bool = Field(default=False, description="Delete permission")
         search: bool = Field(default=False, description="Search permission")
         compare: bool = Field(default=False, description="Compare permission")
-        self_write: bool = Field(default=False, description="Self-write permission")
-        proxy: bool = Field(default=False, description="Proxy permission")
+
+        # Server-specific extended permissions
+        self_write: bool = Field(
+            default=False,
+            description="Self-write permission (OID, OUD)",
+        )
+        proxy: bool = Field(
+            default=False,
+            description="Proxy permission (OID, OUD, 389DS)",
+        )
+        browse: bool = Field(
+            default=False,
+            description="Browse permission (OID) - maps to read+search",
+        )
+        auth: bool = Field(
+            default=False,
+            description="Auth permission (OID) - authentication access",
+        )
+        all: bool = Field(
+            default=False,
+            description="All permissions (compound permission)",
+        )
+
+        # Negative permissions (OID-specific)
+        # These represent denial of specific permissions
+        no_write: bool = Field(default=False, description="Deny write permission (OID)")
+        no_add: bool = Field(default=False, description="Deny add permission (OID)")
+        no_delete: bool = Field(
+            default=False,
+            description="Deny delete permission (OID)",
+        )
+        no_browse: bool = Field(
+            default=False,
+            description="Deny browse permission (OID)",
+        )
+        no_self_write: bool = Field(
+            default=False,
+            description="Deny self-write permission (OID)",
+        )
 
     class AclTarget(FlextModels.ArbitraryTypesModel):
         """ACL target specification."""
@@ -1225,7 +1270,7 @@ class FlextLdifModelsDomains:
             if violations:
                 # Use object.__setattr__ to bypass Pydantic validation and avoid recursion
                 # Also mark field as set to prevent re-validation
-                object.__setattr__(self, "validation_violations", violations)  # noqa: PLC2801
+                object.__setattr__(self, "validation_violations", violations)
                 # Mark field as already set to prevent Pydantic from re-validating
                 if hasattr(self, "__pydantic_fields_set__"):
                     self.__pydantic_fields_set__.add("validation_violations")
@@ -1367,7 +1412,7 @@ class FlextLdifModelsDomains:
                 violations.append("RFC 2849 § 2: DN is required (received None)")
             elif not dn_value or not dn_value.strip():
                 violations.append(
-                    "RFC 2849 § 2: DN is required (empty or whitespace DN)"
+                    "RFC 2849 § 2: DN is required (empty or whitespace DN)",
                 )
             else:
                 components = [
@@ -1383,7 +1428,7 @@ class FlextLdifModelsDomains:
                     for idx, comp in enumerate(components):
                         if not dn_component_pattern.match(comp):
                             violations.append(
-                                f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format"
+                                f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format",
                             )
             return violations
 
@@ -1392,11 +1437,11 @@ class FlextLdifModelsDomains:
             violations: list[str] = []
             if self.attributes is None:
                 violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (received None)"
+                    "RFC 2849 § 2: Entry must have at least one attribute (received None)",
                 )
             elif not self.attributes.attributes:
                 violations.append(
-                    "RFC 2849 § 2: Entry must have at least one attribute (empty)"
+                    "RFC 2849 § 2: Entry must have at least one attribute (empty)",
                 )
             return violations
 
@@ -1420,22 +1465,22 @@ class FlextLdifModelsDomains:
                 # Validate base attribute
                 if not base_attr or not base_attr[0].isalpha():
                     violations.append(
-                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter"
+                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter",
                     )
                 elif not all(c.isalnum() or c == "-" for c in base_attr):
                     violations.append(
-                        f"RFC 4512 § 2.5: '{base_attr}' has invalid characters"
+                        f"RFC 4512 § 2.5: '{base_attr}' has invalid characters",
                     )
 
                 # Validate options
                 for option in options:
                     if not option or not option[0].isalpha():
                         violations.append(
-                            f"RFC 4512 § 2.5: option '{option}' must start with letter"
+                            f"RFC 4512 § 2.5: option '{option}' must start with letter",
                         )
                     elif not all(c.isalnum() or c in {"-", "_"} for c in option):
                         violations.append(
-                            f"RFC 4512 § 2.5: option '{option}' has invalid characters"
+                            f"RFC 4512 § 2.5: option '{option}' has invalid characters",
                         )
             return violations
 
@@ -1456,7 +1501,7 @@ class FlextLdifModelsDomains:
             )
             if not has_objectclass:
                 violations.append(
-                    f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})"
+                    f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})",
                 )
             return violations
 
@@ -1479,7 +1524,7 @@ class FlextLdifModelsDomains:
             )
             if not has_naming_attr:
                 violations.append(
-                    f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'"
+                    f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'",
                 )
             return violations
 
@@ -1503,7 +1548,7 @@ class FlextLdifModelsDomains:
                     )
                     if has_binary:
                         violations.append(
-                            f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option"
+                            f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option",
                         )
                         break
             return violations
@@ -1531,7 +1576,7 @@ class FlextLdifModelsDomains:
                     violations.extend(invalid_options)
             return violations
 
-        def _validate_changetype(self, dn_value: str | None) -> list[str]:  # noqa: ARG002
+        def _validate_changetype(self, dn_value: str | None) -> list[str]:
             """Validate changetype field per RFC 2849 § 5.7."""
             violations: list[str] = []
             # RFC Compliance: changetype is now a direct field on Entry
@@ -1541,7 +1586,7 @@ class FlextLdifModelsDomains:
             valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
             if str(self.changetype).lower() not in valid_changetypes:
                 violations.append(
-                    f"RFC 2849 § 5.7: changetype '{self.changetype}' invalid"
+                    f"RFC 2849 § 5.7: changetype '{self.changetype}' invalid",
                 )
             return violations
 
@@ -1669,7 +1714,7 @@ class FlextLdifModelsDomains:
                         for c in value
                     ):
                         violations.append(
-                            f"Server requires ';binary' option for '{attr_name}'"
+                            f"Server requires ';binary' option for '{attr_name}'",
                         )
                         break
             return violations
@@ -1899,7 +1944,8 @@ class FlextLdifModelsDomains:
 
         @classmethod
         def _normalize_dn(
-            cls, dn: str | FlextLdifModelsDomains.DistinguishedName
+            cls,
+            dn: str | FlextLdifModelsDomains.DistinguishedName,
         ) -> FlextLdifModelsDomains.DistinguishedName:
             """Normalize DN to DistinguishedName object.
 
@@ -2065,7 +2111,10 @@ class FlextLdifModelsDomains:
 
                 # Build or update metadata
                 metadata = cls._build_metadata(
-                    metadata, server_type, source_entry, unconverted_attributes
+                    metadata,
+                    server_type,
+                    source_entry,
+                    unconverted_attributes,
                 )
 
                 # Use model_validate to ensure Pydantic handles

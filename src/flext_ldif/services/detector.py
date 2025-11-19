@@ -339,7 +339,9 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
                     content_lower,
                     scores,
                     objectclasses=getattr(
-                        oud_constants, "DETECTION_OBJECTCLASS_NAMES", None
+                        oud_constants,
+                        "DETECTION_OBJECTCLASS_NAMES",
+                        None,
                     ),
                 )
 
@@ -359,7 +361,9 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
                     content_lower,
                     scores,
                     objectclasses=getattr(
-                        openldap_constants, "DETECTION_OBJECTCLASS_NAMES", None
+                        openldap_constants,
+                        "DETECTION_OBJECTCLASS_NAMES",
+                        None,
                     ),
                 )
 
@@ -378,7 +382,9 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
                     scores,
                     case_sensitive=True,
                     objectclasses=getattr(
-                        ad_constants, "DETECTION_OBJECTCLASS_NAMES", None
+                        ad_constants,
+                        "DETECTION_OBJECTCLASS_NAMES",
+                        None,
                     ),
                 )
 
@@ -397,7 +403,9 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
                 )
             ):
                 scores[FlextLdifConstants.ServerTypes.NOVELL] += getattr(
-                    novell_constants, "DETECTION_WEIGHT", 6
+                    novell_constants,
+                    "DETECTION_WEIGHT",
+                    6,
                 )
 
         # IBM Tivoli detection - use registry to get server Constants
@@ -447,7 +455,9 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
                 )
             ):
                 scores[FlextLdifConstants.ServerTypes.APACHE] += getattr(
-                    apache_constants, "DETECTION_WEIGHT", 6
+                    apache_constants,
+                    "DETECTION_WEIGHT",
+                    6,
                 )
 
         return scores
@@ -570,7 +580,9 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         )
         if openldap_constants:
             openldap_pattern = getattr(
-                openldap_constants, "DETECTION_OID_PATTERN", None
+                openldap_constants,
+                "DETECTION_OID_PATTERN",
+                None,
             )
             if openldap_pattern and isinstance(openldap_pattern, str):
                 self._check_regex_pattern(
@@ -671,7 +683,7 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         """
         try:
             # Import here to avoid circular dependency (services -> servers -> services)
-            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+            from flext_ldif.services.server import FlextLdifServer
 
             registry = FlextLdifServer.get_global_instance()
             server_quirk = registry.quirk(server_type)

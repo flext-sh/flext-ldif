@@ -36,6 +36,9 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
 
+# Metadata keys for schema source server tracking
+meta_keys = FlextLdifConstants.MetadataKeys
+
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server quirks for non-compliant LDIF."""
@@ -80,13 +83,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         # Entry writing constants (migrated from _write_entry method)
         LDIF_DN_PREFIX: ClassVar[str] = "dn: "
-        LDIF_ATTR_SEPARATOR: ClassVar[str] = ": "
-
-        # Metadata extension keys (migrated from parsing methods)
-        METADATA_RELAXED_PARSED: ClassVar[str] = "relaxed_parsed"
-        METADATA_RFC_PARSED: ClassVar[str] = "rfc_parsed"
-
-        # Encoding constants (migrated from _parse_entry method)
+        LDIF_ATTR_SEPARATOR: ClassVar[str] = (
+            ": "  # Encoding constants (migrated from _parse_entry method)
+        )
         ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_ERROR_HANDLING: ClassVar[str] = "replace"
 
@@ -256,27 +255,27 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 # RFC parser succeeded - enhance metadata as relaxed mode
                 attribute = parent_result.unwrap()
+
                 if not attribute.metadata:
                     attribute.metadata = FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
                         extensions={
                             "original_format": attr_definition.strip(),
-                            FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
-                            FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: True,
+                            meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
                         },
                     )
                 else:
                     if not attribute.metadata.extensions:
                         attribute.metadata.extensions = {}
-                    attribute.metadata.extensions[
-                        FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-                    ] = True
                     attribute.metadata.quirk_type = self._get_server_type()
-                    # Ensure original_format is set
+                    # Ensure original_format and source_server are set
                     if not attribute.metadata.extensions.get("original_format"):
                         attribute.metadata.extensions["original_format"] = (
                             attr_definition.strip()
                         )
+                    attribute.metadata.extensions[meta_keys.SCHEMA_SOURCE_SERVER] = (
+                        "relaxed"
+                    )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
 
             # RFC parser failed - use minimal best-effort parsing (no fallback, proper parsing)
@@ -303,8 +302,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     quirk_type=self._get_server_type(),
                     extensions={
                         "original_format": attr_definition.strip(),
-                        FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
-                        FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: False,
+                        meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
                     },
                 )
 
@@ -378,23 +376,165 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     quirk_type=self._get_server_type(),
                     extensions={
                         "original_format": original_definition.strip(),
-                        FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
-                        FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: True,
+                        meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
                     },
                 )
             else:
                 if not objectclass.metadata.extensions:
                     objectclass.metadata.extensions = {}
-                objectclass.metadata.extensions[
-                    FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-                ] = True
                 objectclass.metadata.quirk_type = self._get_server_type()
-                # Ensure original_format is set
+                # Ensure original_format and source_server are set
                 if not objectclass.metadata.extensions.get("original_format"):
                     objectclass.metadata.extensions["original_format"] = (
                         original_definition.strip()
                     )
+                objectclass.metadata.extensions[meta_keys.SCHEMA_SOURCE_SERVER] = (
+                    "relaxed"
+                )
             return objectclass
+
+        def _extract_oid_with_fallback_patterns(
+            self,
+            definition: str,
+        ) -> str | None:
+            """Extract OID using multiple fallback patterns for relaxed mode.
+
+            Tries in order:
+            1. Standard utility extraction
+            2. Numeric OID with parentheses
+            3. Numeric OID anywhere
+            4. Alphanumeric identifier (relaxed)
+
+            Args:
+                definition: Schema definition string
+
+            Returns:
+                Extracted OID or None if not found
+
+            """
+            # Try standard extraction first
+            oid = FlextLdifUtilities.Parser.extract_oid(definition)
+            if oid:
+                return oid
+
+            # Try relaxed pattern for numeric OID
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
+                definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            # Look for any numeric OID pattern
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
+                definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            # Relaxed mode: try alphanumeric identifier
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
+                definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            return None
+
+        def _extract_sup_from_objectclass(
+            self,
+            oc_definition: str,
+        ) -> str | None:
+            """Extract SUP (superior) field from objectClass definition.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                SUP value or None
+
+            """
+            sup_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
+                oc_definition,
+            )
+            if not sup_match:
+                return None
+
+            # Extract matched group value
+            if sup_match.group(1):
+                sup_value = sup_match.group(1).strip()
+            elif sup_match.group(2):
+                sup_value = sup_match.group(2).strip()
+            else:
+                sup_value = ""
+
+            # Handle separator if present
+            if FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR in sup_value:
+                return next(
+                    s.strip()
+                    for s in sup_value.split(
+                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
+                    )
+                )
+            return sup_value
+
+        def _extract_must_may_from_objectclass(
+            self,
+            oc_definition: str,
+        ) -> tuple[list[str] | None, list[str] | None]:
+            """Extract MUST and MAY fields from objectClass definition.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                Tuple of (must, may) lists or None
+
+            """
+            # Extract MUST
+            must = None
+            must_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+                oc_definition,
+            )
+            if must_match:
+                if must_match.group(1):
+                    must_value = must_match.group(1).strip()
+                elif must_match.group(2):
+                    must_value = must_match.group(2).strip()
+                else:
+                    must_value = ""
+                must = [
+                    m.strip()
+                    for m in must_value.split(
+                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
+                    )
+                ]
+
+            # Extract MAY
+            may = None
+            may_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
+                oc_definition,
+            )
+            if may_match:
+                if may_match.group(1):
+                    may_value = may_match.group(1).strip()
+                elif may_match.group(2):
+                    may_value = may_match.group(2).strip()
+                else:
+                    may_value = ""
+                may = [
+                    m.strip()
+                    for m in may_value.split(
+                        FlextLdifServersRelaxed.Constants.SCHEMA_MAY_SEPARATOR,
+                    )
+                ]
+
+            return (must, may)
 
         def _parse_objectclass_relaxed(
             self,
@@ -411,40 +551,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 FlextResult with parsed SchemaObjectClass or error
 
             """
-            # Extract OID using utilities first (numeric OID)
-            oid = FlextLdifUtilities.Parser.extract_oid(oc_definition)
-            if not oid:
-                # Try relaxed pattern for numeric OID
-                oid_match = re.search(
-                    FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
-                    oc_definition,
-                )
-                if oid_match:
-                    oid = oid_match.group(1)
-                else:
-                    # Look for any numeric OID pattern
-                    oid_match = re.search(
-                        FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
-                        oc_definition,
-                    )
-                    if oid_match:
-                        oid = oid_match.group(1)
-                # Relaxed mode: if no numeric OID found, try alphanumeric identifier
-                if not oid:
-                    # Match alphanumeric identifier after opening paren (relaxed mode)
-                    oid_match = re.search(
-                        FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
-                        oc_definition,
-                    )
-                    if oid_match:
-                        oid = oid_match.group(1)
-
+            # Extract OID using multiple fallback patterns
+            oid = self._extract_oid_with_fallback_patterns(oc_definition)
             if not oid:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                     "Failed to extract OID from objectClass definition",
                 )
 
-            # Extract fields using utilities
+            # Extract basic fields
             name = FlextLdifUtilities.Parser.extract_optional_field(
                 oc_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
@@ -455,31 +569,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
             )
 
-            # Extract SUP
-            sup = None
-            sup_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
-                oc_definition,
-            )
-            if sup_match:
-                # Check which group matched - no fallback with or
-                if sup_match.group(1):
-                    sup_value = sup_match.group(1).strip()
-                elif sup_match.group(2):
-                    sup_value = sup_match.group(2).strip()
-                else:
-                    sup_value = ""
-                sup = (
-                    next(
-                        s.strip()
-                        for s in sup_value.split(
-                            FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
-                        )
-                    )
-                    if FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR
-                    in sup_value
-                    else sup_value
-                )
+            # Extract SUP field
+            sup = self._extract_sup_from_objectclass(oc_definition)
 
             # Determine kind
             kind_match = re.search(
@@ -493,59 +584,20 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 else FlextLdifConstants.Schema.STRUCTURAL
             )
 
-            # Extract MUST/MAY
-            must = None
-            must_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
-                oc_definition,
-            )
-            if must_match:
-                # Check which group matched - no fallback with or
-                if must_match.group(1):
-                    must_value = must_match.group(1).strip()
-                elif must_match.group(2):
-                    must_value = must_match.group(2).strip()
-                else:
-                    must_value = ""
-                must = [
-                    m.strip()
-                    for m in must_value.split(
-                        FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
-                    )
-                ]
-
-            may = None
-            may_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
-                oc_definition,
-            )
-            if may_match:
-                # Check which group matched - no fallback with or
-                if may_match.group(1):
-                    may_value = may_match.group(1).strip()
-                elif may_match.group(2):
-                    may_value = may_match.group(2).strip()
-                else:
-                    may_value = ""
-                may = [
-                    m.strip()
-                    for m in may_value.split(
-                        FlextLdifServersRelaxed.Constants.SCHEMA_MAY_SEPARATOR,
-                    )
-                ]
+            # Extract MUST/MAY fields
+            must, may = self._extract_must_may_from_objectclass(oc_definition)
 
             # Build metadata
             extensions = FlextLdifUtilities.Parser.extract_extensions(oc_definition)
-            extensions[FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED] = True
-            extensions[FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED] = False
             extensions["original_format"] = oc_definition.strip()
+            extensions[meta_keys.SCHEMA_SOURCE_SERVER] = "relaxed"
 
             metadata = FlextLdifModels.QuirkMetadata(
                 quirk_type=self._get_server_type(),
                 extensions=extensions,
             )
 
-            # Use name if available, otherwise use OID - no fallback with or
+            # Use name if available, otherwise use OID
             objectclass_name = name or oid
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                 FlextLdifModels.SchemaObjectClass(
@@ -603,6 +655,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         ) -> FlextResult[str]:
             """Write attribute to RFC format - stringify in relaxed mode.
 
+            RULE: Server LDIF → RFC Model + Metadata → Server LDIF
+            NEVER use source server - rely ONLY on metadata
+
+            Only uses original_format if data came from relaxed (via metadata).
+
             Args:
                 attr_data: SchemaAttribute model
 
@@ -614,20 +671,33 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._write_attribute(attr_data)
             if parent_result.is_success:
                 return parent_result
-            # Use original format from metadata if available
-            if attr_data.metadata and attr_data.metadata.extensions.get(
-                "original_format",
+
+            # Check if data came from relaxed (via metadata)
+            source_server = None
+            if attr_data.metadata and attr_data.metadata.extensions:
+                source_server = attr_data.metadata.extensions.get(
+                    meta_keys.SCHEMA_SOURCE_SERVER
+                )
+
+            # Only use original_format if source was relaxed
+            if (
+                source_server == "relaxed"
+                and attr_data.metadata
+                and attr_data.metadata.extensions.get("original_format")
             ):
+                # Data came from relaxed → use original_format as fallback
                 return FlextResult[str].ok(
                     cast(
                         "str",
                         attr_data.metadata.extensions.get("original_format", ""),
                     ),
                 )
-            # Format from model data
+
+            # Data did NOT come from relaxed → write RFC pure (minimal format)
             if not attr_data.oid:
                 return FlextResult[str].fail("Attribute OID is required for writing")
-            # Use name if available, otherwise use OID - no fallback with or
+            # Use name if available, otherwise use OID
+            attr_name: str
             attr_name = attr_data.name or attr_data.oid
             return FlextResult[str].ok(f"( {attr_data.oid} NAME '{attr_name}' )")
 
@@ -636,6 +706,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             oc_data: FlextLdifModels.SchemaObjectClass,
         ) -> FlextResult[str]:
             """Write objectClass to RFC format - stringify in relaxed mode.
+
+            RULE: Server LDIF → RFC Model + Metadata → Server LDIF
+            NEVER use source server - rely ONLY on metadata
+
+            Only uses original_format if data came from relaxed (via metadata).
 
             Args:
                 oc_data: SchemaObjectClass model
@@ -648,17 +723,36 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._write_objectclass(oc_data)
             if parent_result.is_success:
                 return parent_result
-            # Use original format from metadata if available
-            if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
-                return FlextResult[str].ok(
-                    cast("str", oc_data.metadata.extensions.get("original_format", "")),
+
+            # Check if data came from relaxed (via metadata)
+            source_server = None
+            if oc_data.metadata and oc_data.metadata.extensions:
+                source_server = oc_data.metadata.extensions.get(
+                    meta_keys.SCHEMA_SOURCE_SERVER
                 )
-            # Format from model data
+
+            # Only use original_format if source was relaxed
+            if (
+                source_server == "relaxed"
+                and oc_data.metadata
+                and oc_data.metadata.extensions.get("original_format")
+            ):
+                # Data came from relaxed → use original_format as fallback
+                return FlextResult[str].ok(
+                    cast(
+                        "str",
+                        oc_data.metadata.extensions.get("original_format", ""),
+                    ),
+                )
+
+            # Data did NOT come from relaxed → write RFC pure (minimal format)
             if not oc_data.oid:
                 return FlextResult[str].fail("ObjectClass OID is required for writing")
-            # Use name if available, otherwise use OID - no fallback with or
-            oc_name: str = oc_data.name or oc_data.oid
-            # Use kind if available, otherwise use STRUCTURAL - no fallback with or
+            # Use name if available, otherwise use OID
+            oc_name: str
+            oc_name = oc_data.name or oc_data.oid
+            # Use kind if available, otherwise use STRUCTURAL
+            oc_kind: str
             oc_kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
             return FlextResult[str].ok(f"( {oc_data.oid} NAME '{oc_name}' {oc_kind} )")
 
@@ -723,18 +817,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     if not acl.metadata:
                         acl.metadata = FlextLdifModels.QuirkMetadata(
                             quirk_type=self._get_server_type(),
-                            extensions={
-                                "original_format": acl_line.strip(),
-                                FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
-                                FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: True,
-                            },
+                            extensions={"original_format": acl_line.strip()},
                         )
                     else:
                         if not acl.metadata.extensions:
                             acl.metadata.extensions = {}
-                        acl.metadata.extensions[
-                            FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
-                        ] = True
                         acl.metadata.quirk_type = self._get_server_type()
                     return FlextResult[FlextLdifModels.Acl].ok(acl)
                 # Create minimal Acl model with relaxed parsing
@@ -752,11 +839,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     raw_acl=acl_line,
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        extensions={
-                            "original_format": acl_line.strip(),
-                            FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
-                            FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: False,
-                        },
+                        extensions={"original_format": acl_line.strip()},
                     ),
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
@@ -1149,7 +1232,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     return FlextResult[str].ok(norm_result.unwrap())
                 # No fallback - return error if normalization fails
                 return FlextResult[str].fail(
-                    f"DN normalization failed for DN: {dn}: {norm_result.error}"
+                    f"DN normalization failed for DN: {dn}: {norm_result.error}",
                 )
             except Exception as e:
                 logger.debug(

@@ -65,7 +65,8 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
     """
 
     def execute(
-        self, **_kwargs: object
+        self,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute method required by FlextService abstract base class.
 
@@ -80,7 +81,7 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
 
         """
         return FlextResult.fail(
-            "FlextLdifFilterEngine does not support generic execute(). Use specific methods instead."
+            "FlextLdifFilterEngine does not support generic execute(). Use specific methods instead.",
         )
 
     def filter_by_dn(
@@ -200,7 +201,9 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
             filtered_entries: list[FlextLdifModels.Entry] = []
             for entry in entries:
                 matches = self._matches_objectclass_entry(
-                    entry, oc_tuple, required_attributes
+                    entry,
+                    oc_tuple,
+                    required_attributes,
                 )
                 include = (mode == FlextLdifConstants.Modes.INCLUDE and matches) or (
                     mode == FlextLdifConstants.Modes.EXCLUDE and not matches
@@ -266,11 +269,13 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
             for entry in entries:
                 if match_all:
                     matches = FlextLdifUtilities.Entry.has_all_attributes(
-                        entry, attributes
+                        entry,
+                        attributes,
                     )
                 else:
                     matches = FlextLdifUtilities.Entry.has_any_attributes(
-                        entry, attributes
+                        entry,
+                        attributes,
                     )
 
                 include = (mode == FlextLdifConstants.Modes.INCLUDE and matches) or (

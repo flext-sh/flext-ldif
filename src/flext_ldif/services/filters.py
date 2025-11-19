@@ -170,7 +170,7 @@ import time
 import uuid
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextResult, FlextService
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
@@ -411,11 +411,14 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
             # Access private methods within same class (acceptable pattern)
-            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(  # noqa: SLF001
-                entry, oc_tuple, required_attributes
+            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(
+                entry,
+                oc_tuple,
+                required_attributes,
             )
-            if FlextLdifFilters.Filter._should_include_entry(  # noqa: SLF001
-                matches=entry_matches, filter_mode=filter_mode
+            if FlextLdifFilters.Filter._should_include_entry(
+                matches=entry_matches,
+                filter_mode=filter_mode,
             ):
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
             if mark_excluded:
@@ -438,14 +441,14 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
-                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(  # noqa: SLF001
-                    objectclass
+                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(
+                    objectclass,
                 )
 
                 # Process all entries
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
-                    result = FlextLdifFilters.Filter._process_objectclass_entry(  # noqa: SLF001
+                    result = FlextLdifFilters.Filter._process_objectclass_entry(
                         entry,
                         oc_tuple,
                         required_attributes,
@@ -509,7 +512,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     return FlextResult[FlextLdifModels.Entry].ok(excluded_entry)
                 # Entry excluded - return failure to indicate filtering out
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    "Entry excluded by filter"
+                    "Entry excluded by filter",
                 )
 
             try:
@@ -681,7 +684,9 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     filtered_attrs,
                 )
                 if not attrs_result.is_success:
-                    return FlextResult[FlextLdifModels.Entry].fail(attrs_result.error or "Unknown error")
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        attrs_result.error or "Unknown error",
+                    )
 
                 new_entry = entry.model_copy(
                     update={"attributes": attrs_result.unwrap()},
@@ -732,7 +737,9 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     filtered_attrs,
                 )
                 if not attrs_result.is_success:
-                    return FlextResult[FlextLdifModels.Entry].fail(attrs_result.error or "Unknown error")
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        attrs_result.error or "Unknown error",
+                    )
 
                 new_entry = entry.model_copy(
                     update={"attributes": attrs_result.unwrap()},
@@ -1009,7 +1016,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                             )
 
                         deleted_entry = entry.model_copy(
-                            update={"metadata": new_metadata}
+                            update={"metadata": new_metadata},
                         )
                         deleted_entries.append(deleted_entry)
                     else:
@@ -1205,8 +1212,16 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
         )
         return FlextResult[list[FlextLdifModels.Entry]].ok(included)
 
-    def execute(self) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
-        """Execute filtering based on filter_criteria and mode."""
+    def execute(
+        self,
+        **_kwargs: object,
+    ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
+        """Execute filtering based on filter_criteria and mode.
+
+        Args:
+            **_kwargs: Unused keyword arguments for FlextService compatibility.
+
+        """
         if not self.entries:
             return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].ok(
                 FlextLdifModels.EntryResult.empty(),
@@ -1272,12 +1287,12 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
 
             # If result is failure, propagate the error
             return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].fail(
-                result.error
+                result.error or "Filter operation failed",
             )
 
         except Exception as e:
             return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].fail(
-                f"Filter failed: {e}"
+                f"Filter failed: {e}",
             )
 
     def get_last_event(self) -> FlextLdifModels.FilterEvent | None:
@@ -1383,8 +1398,6 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
 
     def build(self) -> FlextLdifModels.EntryResult:
         """Execute and return unwrapped result (fluent terminal)."""
-        from typing import cast
-
         # execute() returns ServiceResponseTypes but we know it's always EntryResult for FlextLdifFilters
         result = self.execute().unwrap()
         # Fix: Use type directly instead of string to avoid Pydantic v2 forward reference issues
@@ -1676,7 +1689,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
         """
         try:
             # Import here to avoid circular dependency (services -> servers -> services)
-            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+            from flext_ldif.services.server import FlextLdifServer
 
             registry = FlextLdifServer.get_global_instance()
             server_quirk = registry.quirk(server_type)
@@ -1687,18 +1700,18 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             quirk_class = type(server_quirk)
             if not hasattr(quirk_class, "Constants"):
                 return FlextResult[type].fail(
-                    f"Server type {server_type} missing Constants class"
+                    f"Server type {server_type} missing Constants class",
                 )
 
             constants = quirk_class.Constants
 
             if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
                 return FlextResult[type].fail(
-                    f"Server {server_type} missing CATEGORIZATION_PRIORITY"
+                    f"Server {server_type} missing CATEGORIZATION_PRIORITY",
                 )
             if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
                 return FlextResult[type].fail(
-                    f"Server {server_type} missing CATEGORY_OBJECTCLASSES"
+                    f"Server {server_type} missing CATEGORY_OBJECTCLASSES",
                 )
 
             return FlextResult[type].ok(constants)
@@ -1731,7 +1744,8 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)
                     # Use direct utility method - no helper wrapper
                     if FlextLdifUtilities.Entry.has_any_attributes(
-                        entry, acl_attributes
+                        entry,
+                        acl_attributes,
                     ):
                         return ("acl", None)
                 continue
@@ -1742,7 +1756,8 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
 
             # Use direct utility method - no helper wrapper
             if FlextLdifUtilities.Entry.has_objectclass(
-                entry, tuple(category_objectclasses)
+                entry,
+                tuple(category_objectclasses),
             ):
                 return (category, None)
 
@@ -1897,8 +1912,6 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             if cls._has_remaining_definitions(attrs_copy):
                 # Create new entry with filtered attributes
                 # Type cast: attrs_copy is dict[str, list[str]] but Entry.create() accepts dict[str, list[str] | str]
-                from typing import cast
-
                 attrs_typed = cast("dict[str, list[str] | str]", attrs_copy)
 
                 filtered_entry_result = FlextLdifModels.Entry.create(
@@ -2003,7 +2016,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                         )
                     # Use static method if available (allows monkeypatch in tests), otherwise use Filter
                     elif hasattr(FlextLdifFilters, "filter_by_dn") and callable(
-                        getattr(FlextLdifFilters, "filter_by_dn", None)
+                        getattr(FlextLdifFilters, "filter_by_dn", None),
                     ):
                         result = FlextLdifFilters.filter_by_dn(
                             self.entries,

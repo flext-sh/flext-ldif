@@ -11,11 +11,10 @@ import pytest
 from flext_ldif.api import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
 from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
@@ -31,25 +30,33 @@ def ldif_api() -> FlextLdif:
 
 
 @pytest.fixture
-def rfc_quirk() -> FlextLdifServersRfc:
-    """Provides RFC quirk instance for tests."""
-    return FlextLdifServersRfc()
+def server() -> FlextLdifServer:
+    """Provides FlextLdifServer instance for getting quirks."""
+    return FlextLdifServer()
 
 
 @pytest.fixture
-def rfc_schema_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Schema:
+def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Provides RFC quirk instance via FlextLdifServer API."""
+    quirk = server.quirk("rfc")
+    assert quirk is not None, "RFC quirk must be registered"
+    return quirk
+
+
+@pytest.fixture
+def rfc_schema_quirk(rfc_quirk: FlextLdifServersBase) -> object:
     """Provides RFC Schema quirk instance for tests."""
     return rfc_quirk.schema_quirk
 
 
 @pytest.fixture
-def rfc_entry_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Entry:
+def rfc_entry_quirk(rfc_quirk: FlextLdifServersBase) -> object:
     """Provides RFC Entry quirk instance for tests."""
     return rfc_quirk.entry_quirk
 
 
 @pytest.fixture
-def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
+def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> object:
     """Provides RFC ACL quirk instance for tests."""
     return rfc_quirk.acl_quirk
 
@@ -207,25 +214,29 @@ def conversion_matrix() -> object:
 
 
 @pytest.fixture
-def oid_quirk() -> object:
-    """Provides OID quirk instance for conversion tests."""
-    return FlextLdifServersOid()
+def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Provides OID quirk instance via FlextLdifServer API."""
+    quirk = server.quirk("oid")
+    assert quirk is not None, "OID quirk must be registered"
+    return quirk
 
 
 @pytest.fixture
-def oud_quirk() -> object:
-    """Provides OUD quirk instance for conversion tests."""
-    return FlextLdifServersOud()
+def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Provides OUD quirk instance via FlextLdifServer API."""
+    quirk = server.quirk("oud")
+    assert quirk is not None, "OUD quirk must be registered"
+    return quirk
 
 
 @pytest.fixture
-def oid_schema_quirk(oid_quirk: object) -> object:
+def oid_schema_quirk(oid_quirk: FlextLdifServersBase) -> object:
     """Provides OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
 
 @pytest.fixture
-def oud_schema_quirk(oud_quirk: object) -> object:
+def oud_schema_quirk(oud_quirk: FlextLdifServersBase) -> object:
     """Provides OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 

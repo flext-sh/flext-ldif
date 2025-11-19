@@ -642,9 +642,7 @@ class FlextLdifUtilitiesWriter:
 
         Example:
             >>> FlextLdifUtilitiesWriter.format_schema_modify_entry(
-            ...     "cn=subschemasubentry",
-            ...     "attributeTypes",
-            ...     "( 1.2.3.4 NAME 'test' )"
+            ...     "cn=subschemasubentry", "attributeTypes", "( 1.2.3.4 NAME 'test' )"
             ... )
             'dn: cn=subschemasubentry\nchangetype: modify\n'
             'add: attributeTypes\n'

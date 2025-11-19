@@ -190,7 +190,8 @@ class FlextLdifSyntax(FlextService[_SyntaxServiceStatusType]):
     @FlextDecorators.log_operation("syntax_service_check")
     @FlextDecorators.track_performance()
     def execute(
-        self, **kwargs: object
+        self,
+        **kwargs: object,
     ) -> FlextResult[FlextLdifModels.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 

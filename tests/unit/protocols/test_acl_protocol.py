@@ -87,13 +87,19 @@ class TestOudAclProtocol:
         assert "aclEntry" in attrs
 
     def test_oud_acl_has_oud_extensions(self) -> None:
-        """OUD ACL should include Oracle OUD-specific extensions."""
+        """OUD ACL should include Oracle OUD-specific extensions.
+
+        Note: OUD native attributes are:
+        - aci: RFC 4876 ACI format (inherited from RFC)
+        - ds-privilege-name: OUD-specific privilege names
+
+        orclaci/orclentrylevelaci are OID formats, NOT OUD native!
+        """
         acl = FlextLdifServersOud.Acl()
         attrs = acl.get_acl_attributes()
 
-        # OUD extensions
-        assert "orclaci" in attrs
-        assert "orclentrylevelaci" in attrs
+        # OUD-specific extensions (not inherited from RFC)
+        assert "ds-privilege-name" in attrs
 
     def test_oud_acl_should_not_have_oid_only_attributes(self) -> None:
         """OUD ACL should NOT have OID-only attributes."""
@@ -104,16 +110,28 @@ class TestOudAclProtocol:
         assert "orclContainerLevelACL" not in attrs
 
     def test_oud_acl_is_acl_attribute_case_insensitive(self) -> None:
-        """OUD ACL should detect ACL attributes case-insensitively."""
+        """OUD ACL should detect ACL attributes case-insensitively.
+
+        OUD native ACL attributes:
+        - aci: RFC 4876 format
+        - ds-privilege-name: OUD-specific
+
+        orclaci is OID format, NOT recognized by OUD parser!
+        """
         acl = FlextLdifServersOud.Acl()
 
-        # Case-insensitive checks
+        # Case-insensitive checks for native OUD attributes
         assert acl.is_acl_attribute("aci")
         assert acl.is_acl_attribute("ACI")
         assert acl.is_acl_attribute("Aci")
 
-        assert acl.is_acl_attribute("orclaci")
-        assert acl.is_acl_attribute("ORCLACI")
+        # OUD-specific attribute (case-insensitive)
+        assert acl.is_acl_attribute("ds-privilege-name")
+        assert acl.is_acl_attribute("DS-PRIVILEGE-NAME")
+
+        # OID-specific attributes should NOT be recognized by OUD
+        assert not acl.is_acl_attribute("orclaci")
+        assert not acl.is_acl_attribute("ORCLACI")
 
         # Non-ACL attributes
         assert not acl.is_acl_attribute("cn")
@@ -131,10 +149,19 @@ class TestOudAclProtocol:
         assert len(FlextLdifServersOud.Acl.RFC_ACL_ATTRIBUTES) == 5
 
     def test_oud_acl_oud_attributes_constant(self) -> None:
-        """OUD ACL should have OUD_ACL_ATTRIBUTES class variable."""
+        """OUD ACL should have OUD_ACL_ATTRIBUTES class variable.
+
+        OUD-specific ACL attributes:
+        - ds-privilege-name: OUD privilege system (config-read, password-reset, etc.)
+
+        orclaci/orclentrylevelaci are OID formats, NOT OUD native!
+        """
         assert hasattr(FlextLdifServersOud.Acl, "OUD_ACL_ATTRIBUTES")
         assert isinstance(FlextLdifServersOud.Acl.OUD_ACL_ATTRIBUTES, list)
-        assert len(FlextLdifServersOud.Acl.OUD_ACL_ATTRIBUTES) == 2
+        assert (
+            len(FlextLdifServersOud.Acl.OUD_ACL_ATTRIBUTES) == 1
+        )  # Only ds-privilege-name
+        assert "ds-privilege-name" in FlextLdifServersOud.Acl.OUD_ACL_ATTRIBUTES
 
 
 class TestAclProtocolComparison:

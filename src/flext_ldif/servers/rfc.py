@@ -34,6 +34,8 @@ from flext_core import FlextLogger, FlextResult
 # type ReplacementMap = Mapping[str, str]  # Mapping for substitutions/normalization
 # type DetectionConfig = Mapping[str, str | int | frozenset[str]]  # Detection config
 # type AclConfig = Mapping[str, str | int | frozenset[str]]  # ACL format config
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
+from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -159,6 +161,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # =====================================================================
         ACL_FORMAT: ClassVar[str] = "rfc_generic"  # RFC generic ACL format
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # RFC 4876 ACI attribute (generic)
+
+        # === ACL METADATA KEYS (Standardized for OID↔OUD conversion) ===
+        # These keys MUST be used consistently for bidirectional conversion
+        # OID and OUD MUST NOT know about each other - only communicate via metadata
+        ACL_METADATA_KEY_FILTER: ClassVar[str] = "filter"
+        ACL_METADATA_KEY_CONSTRAINT: ClassVar[str] = "added_object_constraint"
+        ACL_METADATA_KEY_ORIGINAL_FORMAT: ClassVar[str] = "original_format"
 
         # === ACL PERMISSION NAMES (RFC 4876 Standard) ===
         # Standard LDAP permission names (RFC baseline)
@@ -640,8 +649,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if syntax is None or not syntax.strip():
                 return None
 
-            from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-
             validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
             if validate_result.is_failure:
                 return f"Syntax OID validation failed: {validate_result.error}"
@@ -667,8 +674,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 QuirkMetadata or None
 
             """
-            from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-
             metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
                 attr_definition,
             )
@@ -775,15 +780,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     is not None
                 )
 
-                no_user_modification = False
-                if case_insensitive:
-                    no_user_modification = (
-                        re.search(
-                            FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
-                            attr_definition,
-                        )
-                        is not None
+                # NO-USER-MODIFICATION detection (RFC 4512 standard, always check)
+                no_user_modification = (
+                    re.search(
+                        FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+                        attr_definition,
                     )
+                    is not None
+                )
 
                 # Build metadata using helper
                 metadata = self._build_attribute_metadata(
@@ -905,8 +909,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         may = [m.strip() for m in may_value.split("$")]
                     else:
                         may = [may_value]
-
-                from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 
                 metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
                     oc_definition,
@@ -1225,27 +1227,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     f"Invalid attribute type: expected SchemaAttribute, got {type(attr_data).__name__}",
                 )
 
-            # Check for original format in metadata (for perfect round-trip)
-            if attr_data.metadata and attr_data.metadata.extensions.get(
-                "original_format",
-            ):
-                original_str = cast(
-                    "str",
-                    attr_data.metadata.extensions.get("original_format", ""),
-                )
-                # If x_origin is in metadata but not in original_format, add it
-                if (
-                    attr_data.metadata.extensions.get("x_origin")
-                    and ")" in original_str
-                    and "X-ORIGIN" not in original_str
-                ):
-                    x_origin_str = (
-                        f" X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'"
-                    )
-                    original_str = original_str.rstrip(")") + x_origin_str + ")"
-                return FlextResult[str].ok(original_str)
-
-            # Transform attribute data using subclass hooks
+            # NEVER use original_format - it's just historical curiosity
+            # ALWAYS transform using subclass hooks and write from RFC Model
             transformed_attr = self._transform_attribute_for_write(attr_data)
 
             # Write to RFC format using newly added helper methods (Phase 5)
@@ -1302,30 +1285,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     f"Invalid objectClass type: expected SchemaObjectClass, got {type(oc_data).__name__}",
                 )
 
-            # Check for original format in metadata (for perfect round-trip)
-            if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
-                original_str = cast(
-                    "str",
-                    oc_data.metadata.extensions.get("original_format", ""),
-                )
-                # If x_origin is in metadata but not in original_format, add it
-                # Support both field access (metadata.x_origin) and dict access (metadata.extensions["x_origin"])
-                x_origin_value = None
-                if hasattr(oc_data.metadata, "x_origin") and oc_data.metadata.x_origin:
-                    x_origin_value = oc_data.metadata.x_origin
-                elif oc_data.metadata.extensions.get("x_origin"):
-                    x_origin_value = oc_data.metadata.extensions.get("x_origin")
-
-                if (
-                    x_origin_value
-                    and ")" in original_str
-                    and "X-ORIGIN" not in original_str
-                ):
-                    x_origin_str = f" X-ORIGIN '{x_origin_value}'"
-                    original_str = original_str.rstrip(")") + x_origin_str + ")"
-                return FlextResult[str].ok(original_str)
-
-            # Transform objectClass data using subclass hooks
+            # NEVER use original_format - it's just historical curiosity
+            # ALWAYS transform using subclass hooks and write from RFC Model
             transformed_oc = self._transform_objectclass_for_write(oc_data)
 
             # Write to RFC format using newly added helper methods (Phase 5)
@@ -1359,7 +1320,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     # Then try dict access (extensions)
                     elif transformed_oc.metadata.extensions.get("x_origin"):
                         x_origin_value = transformed_oc.metadata.extensions.get(
-                            "x_origin"
+                            "x_origin",
                         )
 
                 if x_origin_value and ")" in transformed_str:
@@ -2283,7 +2244,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Type guard: ensure acl_line is a string
             if not isinstance(acl_line, str):
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    f"ACL line must be a string, got {type(acl_line).__name__}"
+                    f"ACL line must be a string, got {type(acl_line).__name__}",
                 )
             if not acl_line or not acl_line.strip():
                 return FlextResult.fail("ACL line must be a non-empty string.")
@@ -2336,7 +2297,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def convert_rfc_acl_to_aci(
             self,
             rfc_acl_attrs: dict[str, list[str]],
-            target_server: str,  # noqa: ARG002
+            target_server: str,
         ) -> FlextResult[dict[str, list[str]]]:
             """Convert RFC ACL format to server-specific ACI format.
 
@@ -2610,7 +2571,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             RFC 2849 requires base64 encoding for values that:
             - Start with space, colon, or less-than
             - End with space
-            - Contain control characters (< 0x20) except LF
+            - Contain control characters (0x00-0x1F, 0x7F)
             - Contain non-ASCII characters (>= 0x80)
 
             Args:
@@ -2624,21 +2585,24 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return False
 
             # Check first character (space, colon, less-than)
-            if value[0] in (" ", ":", "<"):
+            if value[0] in {" ", ":", "<"}:
                 return True
 
             # Check last character (space)
             if value.endswith(" "):
                 return True
 
-            # Check for control characters (< 0x20) and non-ASCII (>= 0x80)
+            # Check for control characters (0x00-0x1F, 0x7F) and non-ASCII (>= 0x80)
             for char in value:
                 char_ord = ord(char)
-                # Control characters (except LF which is 0x0A)
-                if char_ord < 0x20 and char_ord != 0x0A:
+                # Control characters including newline, tab, etc.
+                if (
+                    char_ord < FlextLdifConstants.ASCII_SPACE_CHAR
+                    or char_ord == FlextLdifConstants.ASCII_DEL_CHAR
+                ):
                     return True
                 # Non-ASCII
-                if char_ord >= 0x80:
+                if char_ord >= FlextLdifConstants.ASCII_NON_ASCII_START:
                     return True
 
             return False
@@ -3016,7 +2980,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
 
             # Only apply base64 encoding if enabled AND value needs it
-            if base64_enabled and FlextLdifUtilities.Writer.needs_base64_encoding(value):
+            if base64_enabled and FlextLdifUtilities.Writer.needs_base64_encoding(
+                value,
+            ):
                 # Encode to base64
                 encoded_value = base64.b64encode(value.encode("utf-8")).decode("ascii")
                 ldif_lines.append(f"{attr_name}:: {encoded_value}")
@@ -3103,7 +3069,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 write_options: FlextLdifModels.WriteFormatOptions | None = None
                 if entry_data.metadata.write_options:
                     write_options_obj = entry_data.metadata.write_options.get(
-                        "_write_options"
+                        "_write_options",
                     )
                     if isinstance(
                         write_options_obj,
@@ -3193,7 +3159,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry
 
             is_schema_entry = FlextLdifUtilities.Entry.is_schema_entry(
-                entry, strict=False
+                entry,
+                strict=False,
             )
 
             operational_attrs = {
@@ -3220,8 +3187,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         attributes=filtered_attrs,
                         attribute_metadata=entry.attributes.attribute_metadata,
                         metadata=entry.attributes.metadata,
-                    )
-                }
+                    ),
+                },
             )
 
         def generate_entry_comments(
@@ -3326,8 +3293,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return entry.model_copy(
                 update={
-                    "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs)
-                }
+                    "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
+                },
             )
 
         def write(self, entry: FlextLdifModels.Entry) -> FlextResult[str]:
@@ -3515,7 +3482,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # for entry quirks. The base FlextService.execute() has no parameters, but entry quirks
         # need parameters for parse/write operations. This is an architectural extension.
         # Do NOT use @override decorator as this is an extension, not an override.
-        def execute(
+        def execute(  # type: ignore[override]  # Intentional extension, not override
             self,
             data: str | list[FlextLdifModels.Entry] | None = None,
             operation: Literal["parse", "write"] | None = None,
@@ -3636,7 +3603,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             instance_type = type(instance)
             if hasattr(instance_type, "__init__"):
                 instance_type.__init__(
-                    instance, entry_service=entry_service, **init_kwargs
+                    instance,
+                    entry_service=entry_service,
+                    **init_kwargs,
                 )
 
             if cls.auto_execute:
@@ -3897,13 +3866,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                                 errors="replace",
                             ).decode("utf-8", errors="replace")
                             original_preview = (
-                                value[:100] if len(value) > 100 else value
+                                value[
+                                    : FlextLdifConstants.Format.CONTENT_PREVIEW_LENGTH
+                                ]
+                                if len(value)
+                                > FlextLdifConstants.Format.CONTENT_PREVIEW_LENGTH
+                                else value
                             )
                             corrected_preview = (
-                                str_value[:100] if len(str_value) > 100 else str_value
+                                str_value[
+                                    : FlextLdifConstants.Format.CONTENT_PREVIEW_LENGTH
+                                ]
+                                if len(str_value)
+                                > FlextLdifConstants.Format.CONTENT_PREVIEW_LENGTH
+                                else str_value
                             )
                             logger.debug(
-                                f"RFC quirks: Corrected invalid UTF-8 in attribute: attribute_name={attr_name}, original_value_preview={original_preview}, corrected_value_preview={corrected_preview}, value_length={len(value)}, correction_type=utf8_encoding_fix"
+                                f"RFC quirks: Corrected invalid UTF-8 in attribute: attribute_name={attr_name}, original_value_preview={original_preview}, corrected_value_preview={corrected_preview}, value_length={len(value)}, correction_type=utf8_encoding_fix",
                             )
 
                         # Check if attribute is a known binary attribute (RFC 4522)
@@ -3913,8 +3892,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             in FlextLdifConstants.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
                         )
                         # Check if value needs base64 encoding per RFC 2849
-                        needs_base64 = is_binary_attr or FlextLdifUtilities.Writer.needs_base64_encoding(
-                            str_value,
+                        needs_base64 = (
+                            is_binary_attr
+                            or FlextLdifUtilities.Writer.needs_base64_encoding(
+                                str_value,
+                            )
                         )
                         if needs_base64:
                             encoded_value = base64.b64encode(
