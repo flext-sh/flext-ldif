@@ -2321,14 +2321,12 @@ class RfcTestHelpers:
         if expected_desc:
             # data is already SchemaAttribute | SchemaObjectClass from type annotation
             assert data.desc == expected_desc
-        if expected_syntax:
+        if expected_syntax and isinstance(data, FlextLdifModels.SchemaAttribute):
             # Only SchemaAttribute has syntax attribute
-            if isinstance(data, FlextLdifModels.SchemaAttribute):
-                assert data.syntax == expected_syntax
-        if expected_kind:
+            assert data.syntax == expected_syntax
+        if expected_kind and isinstance(data, FlextLdifModels.SchemaObjectClass):
             # Only SchemaObjectClass has kind attribute
-            if isinstance(data, FlextLdifModels.SchemaObjectClass):
-                assert data.kind == expected_kind
+            assert data.kind == expected_kind
         if expected_sup:
             if hasattr(data, "sup") and isinstance(
                 data, FlextLdifModels.SchemaAttribute

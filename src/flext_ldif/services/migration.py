@@ -170,11 +170,9 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
             file_path = self._input_dir / filename
             if not file_path.exists():
                 logger.warning(
-                    "File not found",
+                    "LDIF file not found, skipping",
                     file_path=str(file_path),
                     filename=filename,
-                    input_dir=str(self._input_dir),
-                    source="flext-ldif/src/flext_ldif/services/migration.py",
                 )
                 continue
 
@@ -202,18 +200,16 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
                 "Parsed entries from file",
                 filename=filename,
                 entries_count=len(entries),
-                source="flext-ldif/src/flext_ldif/services/migration.py",
             )
 
         logger.info(
-            "Total parsed entries",
+            "Parsed all files",
             total_entries=len(all_entries),
             files_processed=len(files),
-            source="flext-ldif/src/flext_ldif/services/migration.py",
         )
         return FlextResult[list[FlextLdifModels.Entry]].ok(all_entries)
 
-    def _apply_categorization(
+    def _categorize_entries_chain(
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
@@ -231,81 +227,120 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
                 categorized_result.error or "Categorization failed",
             )
 
-        categories = categorized_result.unwrap()
+        return FlextResult.ok(categorized_result.unwrap())
 
-        # Apply FlextLdifFilters directly - remove forbidden attributes/objectclasses
+    def _filter_forbidden_attributes(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> None:
+        """Remove forbidden attributes and objectclasses from entries."""
         forbidden_attrs = self._categorization.forbidden_attributes
         forbidden_ocs = self._categorization.forbidden_objectclasses
 
-        if forbidden_attrs or forbidden_ocs:
-            for category, cat_entries in categories.items():
-                # Don't modify rejected entries (audit trail)
-                if category != FlextLdifConstants.Categories.REJECTED:
-                    filtered_entries = []
-                    for entry in cat_entries:
-                        filtered_entry = entry
+        if not forbidden_attrs and not forbidden_ocs:
+            return
 
-                        # Apply attribute filtering
-                        if forbidden_attrs:
-                            attr_result = FlextLdifFilters.remove_attributes(
-                                filtered_entry,
-                                forbidden_attrs,
-                            )
-                            if attr_result.is_success:
-                                filtered_entry = attr_result.unwrap()
+        for category, cat_entries in categories.items():
+            # Don't modify rejected entries (audit trail)
+            if category == FlextLdifConstants.Categories.REJECTED:
+                continue
 
-                        # Apply objectClass filtering
-                        if forbidden_ocs:
-                            oc_result = FlextLdifFilters.remove_objectclasses(
-                                filtered_entry,
-                                forbidden_ocs,
-                            )
-                            if oc_result.is_success:
-                                filtered_entry = oc_result.unwrap()
+            filtered_entries = []
+            for entry in cat_entries:
+                filtered_entry = entry
 
-                        filtered_entries.append(filtered_entry)
+                # Apply attribute filtering
+                if forbidden_attrs:
+                    attr_result = FlextLdifFilters.remove_attributes(
+                        filtered_entry,
+                        forbidden_attrs,
+                    )
+                    if attr_result.is_success:
+                        filtered_entry = attr_result.unwrap()
 
-                    # Replace category entries with filtered entries
-                    categories[category] = filtered_entries
+                # Apply objectClass filtering
+                if forbidden_ocs:
+                    oc_result = FlextLdifFilters.remove_objectclasses(
+                        filtered_entry,
+                        forbidden_ocs,
+                    )
+                    if oc_result.is_success:
+                        filtered_entry = oc_result.unwrap()
 
-        # Filter schema by OIDs if needed
-        if FlextLdifConstants.Categories.SCHEMA in categories:
-            schema_result = self._categorization.filter_schema_by_oids(
-                categories[FlextLdifConstants.Categories.SCHEMA],
+                filtered_entries.append(filtered_entry)
+
+            # Replace category entries with filtered entries
+            categories[category] = filtered_entries
+
+    def _filter_schema_by_oids(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> None:
+        """Filter schema entries by OIDs if needed."""
+        if FlextLdifConstants.Categories.SCHEMA not in categories:
+            return
+
+        schema_result = self._categorization.filter_schema_by_oids(
+            categories[FlextLdifConstants.Categories.SCHEMA],
+        )
+        if schema_result.is_success:
+            categories[FlextLdifConstants.Categories.SCHEMA] = (
+                schema_result.unwrap()
             )
-            if schema_result.is_success:
-                categories[FlextLdifConstants.Categories.SCHEMA] = (
-                    schema_result.unwrap()
-                )
 
-        # DUPLICATE entries with ACL attributes to ACL category
-        # Entries categorized as hierarchy/users/groups that have ACL attributes
-        # must appear in BOTH their primary category (without ACL) AND acl category (with ACL)
-        acl_attr_names = {
-            "aci",
-        }  # Normalized ACL attribute names (orclaci→aci already transformed)
-        for category in [
+    def _duplicate_acl_entries(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> None:
+        """Duplicate entries with ACL attributes to ACL category."""
+        acl_attr_names = {"aci"}  # Normalized ACL attribute names
+        acl_categories = [
             FlextLdifConstants.Categories.HIERARCHY,
             FlextLdifConstants.Categories.USERS,
             FlextLdifConstants.Categories.GROUPS,
-        ]:
+        ]
+
+        for category in acl_categories:
             if category not in categories:
                 continue
 
             for entry in categories[category]:
                 # Check if entry has ACL attributes
-                if entry.attributes:
-                    attrs_dict = entry.attributes.attributes
-                    has_acl = any(
-                        attr_name.lower() in acl_attr_names for attr_name in attrs_dict
-                    )
+                if not entry.attributes:
+                    continue
 
-                    if has_acl:
-                        # Duplicate entry to ACL category (deep copy to avoid shared references)
-                        acl_copy = entry.model_copy(deep=True)
-                        if FlextLdifConstants.Categories.ACL not in categories:
-                            categories[FlextLdifConstants.Categories.ACL] = []
-                        categories[FlextLdifConstants.Categories.ACL].append(acl_copy)
+                attrs_dict = entry.attributes.attributes
+                has_acl = any(
+                    attr_name.lower() in acl_attr_names for attr_name in attrs_dict
+                )
+
+                if has_acl:
+                    # Duplicate entry to ACL category (deep copy to avoid shared references)
+                    acl_copy = entry.model_copy(deep=True)
+                    if FlextLdifConstants.Categories.ACL not in categories:
+                        categories[FlextLdifConstants.Categories.ACL] = []
+                    categories[FlextLdifConstants.Categories.ACL].append(acl_copy)
+
+    def _apply_categorization(
+        self,
+        entries: list[FlextLdifModels.Entry],
+    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+        """Apply categorization chain using railway pattern."""
+        # Step 1: Categorize entries
+        categorize_result = self._categorize_entries_chain(entries)
+        if categorize_result.is_failure:
+            return categorize_result
+
+        categories = categorize_result.unwrap()
+
+        # Step 2: Filter forbidden attributes/objectclasses
+        self._filter_forbidden_attributes(categories)
+
+        # Step 3: Filter schema by OIDs
+        self._filter_schema_by_oids(categories)
+
+        # Step 4: Duplicate entries with ACL attributes
+        self._duplicate_acl_entries(categories)
 
         return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
 
@@ -333,159 +368,175 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
                 )
                 categories[cat] = sorted_entries
                 logger.info(
-                    "Sorted category hierarchically",
+                    "Sorted category entries hierarchically",
                     category=cat,
                     entries_count=len(cat_entries),
-                    source="flext-ldif/src/flext_ldif/services/migration.py",
                 )
+
+    def _write_simple_mode(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
+        """Write all entries to a single file in simple mode."""
+        output_path = self._output_dir / self._output_filename
+        all_output_entries = [
+            entry for entries in categories.values() for entry in entries
+        ]
+
+        write_result = self._writer.write(
+            entries=all_output_entries,
+            target_server_type=self._target_server,
+            output_target="file",
+            output_path=output_path,
+            format_options=self._write_opts,
+        )
+
+        if write_result.is_failure:
+            return FlextResult[tuple[dict[str, str], dict[str, int]]].fail(
+                f"Write failed: {write_result.error}",
+            )
+
+        file_paths: dict[str, str] = {"output": str(output_path)}
+        entry_counts: dict[str, int] = {"output": len(all_output_entries)}
+        
+        logger.info(
+            "Wrote entries to file",
+            output_path=str(output_path),
+            entries_count=len(all_output_entries),
+            target_server=self._target_server,
+        )
+        
+        return FlextResult.ok((file_paths, entry_counts))
+
+    def _build_template_data(
+        self,
+        category: str,
+        phase_num: int,
+        entries: list[FlextLdifModels.Entry],
+    ) -> dict[str, object]:
+        """Build template data for migration headers."""
+        # Validate base_dn - use empty string if None
+        base_dn_value = self._categorization._base_dn  # noqa: SLF001
+        if base_dn_value is None:
+            base_dn_value = ""
+        elif not isinstance(base_dn_value, str):
+            base_dn_value = str(base_dn_value)
+
+        return {
+            "phase": phase_num,
+            "phase_name": category.upper(),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "source_server": self._source_server,
+            "target_server": self._target_server,
+            "base_dn": base_dn_value,
+            "total_entries": len(entries),
+            "processed_entries": len(entries),
+            "rejected_entries": 0,
+            "schema_whitelist_enabled": bool(
+                self._categorization._schema_whitelist_rules is not None  # noqa: SLF001
+            ),
+            "sort_entries_hierarchically": self._sort_hierarchically,
+            "server_type": self._target_server,
+        }
+
+    def _prepare_acl_entries(
+        self,
+        entries: list[FlextLdifModels.Entry],
+    ) -> list[FlextLdifModels.Entry]:
+        """Prepare ACL entries with metadata for DN normalization."""
+        base_dn = self._categorization._base_dn  # noqa: SLF001
+        entries_with_metadata = []
+        for entry in entries:
+            # RFC Compliance: extensions is processing metadata
+            extensions = dict(entry.metadata.extensions)
+            if base_dn:
+                extensions["base_dn"] = base_dn
+            # Add dn_registry for case normalization
+            extensions["dn_registry"] = self._dn_registry
+            # Update entry with new extensions
+            new_metadata = entry.metadata.model_copy(
+                update={"extensions": extensions},
+            )
+            updated_entry = entry.model_copy(
+                update={"metadata": new_metadata},
+            )
+            entries_with_metadata.append(updated_entry)
+        return entries_with_metadata
+
+    def _write_structured_mode(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
+        """Write categorized entries to multiple files in structured mode."""
+        file_paths: dict[str, str] = {}
+        entry_counts: dict[str, int] = {}
+        
+        # Map categories to phase numbers for migration headers
+        category_to_phase = {
+            FlextLdifConstants.Categories.SCHEMA: 0,
+            FlextLdifConstants.Categories.HIERARCHY: 1,
+            FlextLdifConstants.Categories.USERS: 2,
+            FlextLdifConstants.Categories.GROUPS: 3,
+            FlextLdifConstants.Categories.ACL: 4,
+            FlextLdifConstants.Categories.REJECTED: 5,
+        }
+
+        for category, entries in categories.items():
+            if not entries:
+                continue
+
+            output_filename = self._output_files.get(category)
+            if not output_filename:
+                continue
+
+            output_path = self._output_dir / output_filename
+            phase_num = category_to_phase.get(category, -1)
+            template_data = self._build_template_data(category, phase_num, entries)
+
+            # Create category-specific WriteFormatOptions for phase-aware processing
+            category_write_opts = self._write_opts.model_copy(
+                update={"entry_category": category},
+            )
+
+            # Prepare entries (add metadata for ACL category)
+            processed_entries = entries
+            if category == FlextLdifConstants.Categories.ACL:
+                processed_entries = self._prepare_acl_entries(entries)
+
+            write_result = self._writer.write(
+                entries=processed_entries,
+                target_server_type=self._target_server,
+                output_target="file",
+                output_path=output_path,
+                format_options=category_write_opts,
+                template_data=template_data,
+            )
+
+            if write_result.is_failure:
+                return FlextResult[tuple[dict[str, str], dict[str, int]]].fail(
+                    f"Write {category} failed: {write_result.error}",
+                )
+
+            file_paths[category] = str(output_path)
+            entry_counts[category] = len(entries)
+            logger.info(
+                "Wrote entries to category file",
+                output_path=str(output_path),
+                category=category,
+                entries_count=len(entries),
+                target_server=self._target_server,
+            )
+
+        return FlextResult.ok((file_paths, entry_counts))
 
     def _write_categories(
         self,
         categories: dict[str, list[FlextLdifModels.Entry]],
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
         """Write categorized entries to output files."""
-        file_paths: dict[str, str] = {}
-        entry_counts: dict[str, int] = {}
-
         if self._mode == "simple":
-            # Single file output
-            output_path = self._output_dir / self._output_filename
-            all_output_entries = [
-                entry for entries in categories.values() for entry in entries
-            ]
-
-            write_result = self._writer.write(
-                entries=all_output_entries,
-                target_server_type=self._target_server,
-                output_target="file",
-                output_path=output_path,
-                format_options=self._write_opts,
-            )
-
-            if write_result.is_failure:
-                return FlextResult[tuple[dict[str, str], dict[str, int]]].fail(
-                    f"Write failed: {write_result.error}",
-                )
-
-            file_paths["output"] = str(output_path)
-            entry_counts["output"] = len(all_output_entries)
-            logger.info(
-                "Wrote entries to output file",
-                output_path=str(output_path),
-                entries_count=len(all_output_entries),
-                target_server=self._target_server,
-                source="flext-ldif/src/flext_ldif/services/migration.py",
-            )
-        else:
-            # Categorized mode: multiple files
-            # Map categories to phase numbers for migration headers
-            category_to_phase = {
-                FlextLdifConstants.Categories.SCHEMA: 0,
-                FlextLdifConstants.Categories.HIERARCHY: 1,
-                FlextLdifConstants.Categories.USERS: 2,
-                FlextLdifConstants.Categories.GROUPS: 3,
-                FlextLdifConstants.Categories.ACL: 4,
-                FlextLdifConstants.Categories.REJECTED: 5,
-            }
-
-            for category, entries in categories.items():
-                if not entries:
-                    continue
-
-                output_filename = self._output_files.get(category)
-                if not output_filename:
-                    continue
-
-                output_path = self._output_dir / output_filename
-
-                # Build template_data for migration headers
-                phase_num = category_to_phase.get(category, -1)
-                # Validate base_dn - use empty string if None
-                base_dn_value = self._categorization._base_dn
-                if base_dn_value is None:
-                    base_dn_value = ""
-                elif not isinstance(base_dn_value, str):
-                    base_dn_value = str(base_dn_value)
-
-                # Create template_data with explicit object type for type compatibility
-                template_data: dict[str, object] = {
-                    "phase": phase_num,
-                    "phase_name": category.upper(),
-                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    "source_server": self._source_server,
-                    "target_server": self._target_server,
-                    "base_dn": base_dn_value,
-                    "total_entries": len(entries),
-                    "processed_entries": len(entries),
-                    "rejected_entries": 0,
-                    "schema_whitelist_enabled": bool(
-                        self._categorization._schema_whitelist_rules is not None,
-                    ),
-                    "sort_entries_hierarchically": self._sort_hierarchically,
-                    "server_type": self._target_server,
-                }
-
-                # Create category-specific WriteFormatOptions for phase-aware processing
-                # This allows OUD quirks to apply different formatting based on output file category
-                category_write_opts = self._write_opts.model_copy(
-                    update={"entry_category": category},
-                )
-
-                # Initialize processed_entries with base entries
-                # Will be updated for ACL category below
-                processed_entries = entries
-
-                # For ACL category: add base_dn and dn_registry to entry metadata
-                if category == FlextLdifConstants.Categories.ACL:
-                    base_dn = self._categorization._base_dn
-                    # Add base_dn and dn_registry to entry metadata for ACL DN normalization
-                    entries_with_metadata = []
-                    for entry in entries:
-                        # RFC Compliance: extensions is processing metadata
-                        extensions = dict(entry.metadata.extensions)
-                        if base_dn:
-                            extensions["base_dn"] = base_dn
-                        # Add dn_registry for case normalization
-                        extensions["dn_registry"] = self._dn_registry
-                        # Update entry with new extensions
-                        new_metadata = entry.metadata.model_copy(
-                            update={"extensions": extensions},
-                        )
-                        updated_entry = entry.model_copy(
-                            update={"metadata": new_metadata},
-                        )
-                        entries_with_metadata.append(updated_entry)
-                    processed_entries = entries_with_metadata
-
-                write_result = self._writer.write(
-                    entries=processed_entries,
-                    target_server_type=self._target_server,
-                    output_target="file",
-                    output_path=output_path,
-                    format_options=category_write_opts,  # ← Category-specific options
-                    template_data=template_data,
-                )
-
-                if write_result.is_failure:
-                    return FlextResult[tuple[dict[str, str], dict[str, int]]].fail(
-                        f"Write {category} failed: {write_result.error}",
-                    )
-
-                file_paths[category] = str(output_path)
-                entry_counts[category] = len(entries)
-                logger.info(
-                    "Wrote entries to category file",
-                    output_path=str(output_path),
-                    category=category,
-                    entries_count=len(entries),
-                    target_server=self._target_server,
-                    source="flext-ldif/src/flext_ldif/services/migration.py",
-                )
-
-        return FlextResult[tuple[dict[str, str], dict[str, int]]].ok((
-            file_paths,
-            entry_counts,
-        ))
+            return self._write_simple_mode(categories)
+        return self._write_structured_mode(categories)
 
     def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.EntryResult]:
         """Execute migration - pure railway pattern with public services.

@@ -8,12 +8,10 @@ from __future__ import annotations
 
 import base64
 import contextlib
-import logging
 import re
 from collections.abc import Callable
-from typing import Any
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
@@ -24,7 +22,7 @@ _BASE64_INDICATOR = FlextLdifConstants.LDIF_BASE64_INDICATOR
 _REGULAR_INDICATOR = FlextLdifConstants.LDIF_REGULAR_INDICATOR
 _DEFAULT_ENCODING = FlextLdifConstants.LDIF_DEFAULT_ENCODING
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesParser:
@@ -36,7 +34,7 @@ class FlextLdifUtilitiesParser:
     """
 
     @staticmethod
-    def ext(metadata: dict[str, Any]) -> dict[str, Any]:
+    def ext(metadata: dict[str, object]) -> dict[str, object]:
         """Extract extension information from parsed metadata."""
         result = metadata.get("extensions", {})
         return result if isinstance(result, dict) else {}
@@ -159,7 +157,7 @@ class FlextLdifUtilitiesParser:
         return parts
 
     @staticmethod
-    def extract_extensions(definition: str) -> dict[str, Any]:
+    def extract_extensions(definition: str) -> dict[str, object]:
         """Extract extension information from schema definition string.
 
         Simple helper to extract X- extensions, DESC, ORDERING, SUBSTR from
@@ -170,7 +168,7 @@ class FlextLdifUtilitiesParser:
         if not definition or not isinstance(definition, str):
             return {}
 
-        extensions: dict[str, Any] = {}
+        extensions: dict[str, object] = {}
 
         # Extract X- extensions (custom properties)
         x_pattern = re.compile(
@@ -247,6 +245,8 @@ class FlextLdifUtilitiesParser:
         For "dn:: Y249...", it produced key="dn:", value=": Y249..." (extra colon!)
         This caused base64.b64decode(": Y249...") to fail silently.
 
+        ZERO DATA LOSS: Preserves original line string in metadata for round-trip.
+
         Args:
             line: Unfolded LDIF line
             current_dn: Current entry DN (or None if no entry yet)
@@ -269,6 +269,9 @@ class FlextLdifUtilitiesParser:
 
         if _REGULAR_INDICATOR not in line:
             return current_dn, current_attrs
+
+        # ZERO DATA LOSS: Store original line string for metadata preservation
+        original_line = line
 
         # RFC 2849: Detect base64 (::) vs regular (:) indicator
         is_base64 = False
@@ -299,10 +302,18 @@ class FlextLdifUtilitiesParser:
             if is_base64:
                 # Store metadata flag for server layer to preserve
                 new_attrs["_base64_dn"] = ["true"]
+            
+            # ZERO DATA LOSS: Store original DN line for metadata
+            new_attrs["_original_dn_line"] = [original_line]
 
             return value, new_attrs
 
         # Regular attribute line (add to current entry)
+        # ZERO DATA LOSS: Store original line for each attribute
+        if "_original_lines" not in current_attrs:
+            current_attrs["_original_lines"] = []
+        current_attrs["_original_lines"].append(original_line)
+        
         current_attrs.setdefault(key, []).append(value)
         return current_dn, current_attrs
 
@@ -500,14 +511,14 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse(
         ldif_lines: list[str],
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, object]]:
         """Parse list of LDIF lines into entries (simple version).
 
         # LEGACY: Original simple parser (kept for backward compat if needed)
         # Use: FlextLdifParser for full parsing with quirks
         """
-        entries = []
-        current_entry: dict[str, Any] = {}
+        entries: list[dict[str, object]] = []
+        current_entry: dict[str, object] = {}
 
         for line in ldif_lines:
             if not line.strip():
@@ -548,7 +559,7 @@ class FlextLdifUtilitiesParser:
             List of successfully parsed schema objects
 
         """
-        definitions: list[Any] = []
+        definitions: list[object] = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
@@ -600,15 +611,11 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def _extract_syntax_and_length(
         definition: str,
-        *,
-        allow_syntax_quotes: bool = False,
     ) -> tuple[str | None, int | None]:
         """Extract syntax OID and optional length from definition.
 
         Args:
             definition: Schema definition string
-            allow_syntax_quotes: Whether to allow quoted syntax values
-                (used by quirks for quote handling, not by parser itself)
 
         Returns:
             Tuple of (syntax_oid, length)
@@ -625,10 +632,9 @@ class FlextLdifUtilitiesParser:
 
         # ARCHITECTURE: Parser ONLY captures data, does NOT transform
         # Quirks are responsible for cleaning/normalizing syntax OIDs
-        # - OID quirk: removes quotes during parse (if allow_syntax_quotes=True)
+        # - OID quirk: removes quotes during parse
         # - OUD quirk: ensures no quotes during write
         # Parser preserves raw syntax value from LDIF
-        # allow_syntax_quotes is passed to quirks for quote handling
 
         length = int(syntax_match.group(2)) if syntax_match.group(2) else None
 
@@ -704,14 +710,12 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         *,
         case_insensitive: bool = False,
-        allow_syntax_quotes: bool = False,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse RFC 4512 attribute definition.
 
         Args:
             attr_definition: RFC 4512 attribute definition string
             case_insensitive: Whether to use case-insensitive pattern matching
-            allow_syntax_quotes: Whether to allow quoted syntax values (for lenient parsing)
 
         """
         try:
@@ -757,7 +761,6 @@ class FlextLdifUtilitiesParser:
             # Extract syntax and length using helper
             syntax, length = FlextLdifUtilitiesParser._extract_syntax_and_length(
                 attr_definition,
-                allow_syntax_quotes=allow_syntax_quotes,
             )
 
             # Validate syntax using helper
@@ -815,7 +818,12 @@ class FlextLdifUtilitiesParser:
             return FlextResult.ok(attribute)
 
         except (ValueError, TypeError, AttributeError) as e:
-            logger.exception("RFC attribute parsing exception")
+            logger.exception(
+                "RFC attribute parsing exception",
+                attr_definition=attr_definition[:100] if attr_definition else None,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult.fail(f"RFC attribute parsing failed: {e}")
 
     @staticmethod
@@ -931,7 +939,12 @@ class FlextLdifUtilitiesParser:
             return FlextResult.ok(objectclass)
 
         except (ValueError, TypeError, AttributeError) as e:
-            logger.exception("RFC objectClass parsing exception")
+            logger.exception(
+                "RFC objectClass parsing exception",
+                oc_definition=oc_definition[:100] if oc_definition else None,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult.fail(f"RFC objectClass parsing failed: {e}")
 
 

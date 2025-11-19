@@ -51,8 +51,16 @@ from flext_ldif.typings import FlextLdifTypes
 
 if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
+    from flext_ldif.services.server import FlextLdifServer
 
 logger = FlextLogger(__name__)
+
+
+def _get_server_registry() -> FlextLdifServer:
+    """Get server registry instance (lazy import to avoid circular dependency)."""
+    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+
+    return FlextLdifServer.get_global_instance()
 
 
 # NOTE: BaseServerConstants has been consolidated into FlextLdifServersRfc.Constants
@@ -123,9 +131,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         super().__init__(**kwargs)
         # Instantiate nested quirks, passing self as parent_quirk
         # Use private attributes as properties are read-only
-        self._schema_quirk = self.Schema(parent_quirk=self)
-        self._acl_quirk = self.Acl(parent_quirk=self)
-        self._entry_quirk = self.Entry(parent_quirk=self)
+        # Type ignore: Concrete subclasses (e.g., FlextLdifServersRfc) implement execute
+        self._schema_quirk = self.Schema(parent_quirk=self)  # type: ignore[abstract]
+        self._acl_quirk = self.Acl(parent_quirk=self)  # type: ignore[abstract]
+        self._entry_quirk = self.Entry(parent_quirk=self)  # type: ignore[abstract]
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -155,7 +164,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         # Get Constants - use getattr with cast to avoid type ignore
         # hasattr validates at runtime, so we can safely get the attribute
-        constants_class = cast("type[object]", cls.Constants)
+        constants_class = cls.Constants
 
         # Validate required attributes exist
         if not hasattr(constants_class, "SERVER_TYPE"):
@@ -166,30 +175,40 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             raise AttributeError(msg)
 
         # Set descriptors for server_type and priority
-        cls.server_type = _ServerTypeDescriptor(constants_class.SERVER_TYPE)
-        cls.priority = _PriorityDescriptor(constants_class.PRIORITY)
+        # Use getattr to access attributes safely after hasattr validation
+        server_type_value = constants_class.SERVER_TYPE
+        priority_value = constants_class.PRIORITY
+        cls.server_type = _ServerTypeDescriptor(server_type_value)
+        cls.priority = _PriorityDescriptor(priority_value)
 
     # @overload
     # def schema(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Schema: ...
 
     @overload
-    def schema(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...  # type: ignore[override]
+    def get_schema_quirk(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...
 
     @overload
-    def schema(self) -> Self.Schema: ...  # type: ignore[override]
+    def get_schema_quirk(self) -> FlextLdifServersBase.Schema: ...
 
-    # NOTE: This method extends FlextService with schema quirk access.
-    # This is NOT an override - it's a method extension for quirk-specific functionality.
-    # The type checker may complain, but this is intentional - schema() is not part of FlextService.
-    def schema(  # type: ignore[override]  # Intentional extension, not override
+    def get_schema_quirk(
         self,
         server_type: str | None = None,
-    ) -> Self.Schema | FlextLdifServersBase.Schema | None:
-        """Get schema quirk for a server type, or self.schema_quirk."""
-        if server_type:
-            from flext_ldif.services.server import FlextLdifServer
+    ) -> FlextLdifServersBase.Schema | None:
+        """Get schema quirk for a server type, or self.schema_quirk.
+        
+        This method provides access to server-specific schema quirks.
+        It does NOT override Pydantic's BaseModel.schema() method.
+        
+        Args:
+            server_type: Optional server type (e.g., 'rfc', 'oid', 'oud')
+            
+        Returns:
+            Schema quirk instance or None
 
-            return FlextLdifServer.get_global_instance().schema(server_type)
+        """
+        if server_type:
+            registry = _get_server_registry()
+            return registry.schema(server_type)
         return self.schema_quirk
 
     # @overload
@@ -199,17 +218,16 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def acl(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Acl: ...
 
     @overload
-    def acl(self) -> Self.Acl: ...  # Access via self.acl_quirk
+    def acl(self) -> FlextLdifServersBase.Acl: ...  # Access via self.acl_quirk
 
     def acl(
         self,
         server_type: str | None = None,
-    ) -> Self.Acl | FlextLdifServersBase.Acl | None:
+    ) -> FlextLdifServersBase.Acl | None:
         """Get ACL quirk for a server type, or self.acl_quirk."""
         if server_type:
-            from flext_ldif.services.server import FlextLdifServer
-
-            return FlextLdifServer.get_global_instance().acl(server_type)
+            registry = _get_server_registry()
+            return registry.acl(server_type)
         return self.acl_quirk
 
     # @overload
@@ -219,17 +237,16 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def entry(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Entry: ...
 
     @overload
-    def entry(self) -> Self.Entry: ...  # Access via self.entry_quirk
+    def entry(self) -> FlextLdifServersBase.Entry: ...  # Access via self.entry_quirk
 
     def entry(
         self,
         server_type: str | None = None,
-    ) -> Self.Entry | FlextLdifServersBase.Entry | None:
+    ) -> FlextLdifServersBase.Entry | None:
         """Get entry quirk for a server type, or self.entry_quirk."""
         if server_type:
-            from flext_ldif.services.server import FlextLdifServer
-
-            return FlextLdifServer.get_global_instance().entry(server_type)
+            registry = _get_server_registry()
+            return registry.entry(server_type)
         return self.entry_quirk
 
     # =========================================================================
@@ -310,6 +327,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             return self._execute_write(entries)
 
         # Should not reach here
+        logger.warning(
+            "Execute called without operation parameters",
+        )
         return FlextResult[FlextLdifModels.Entry | str].fail(
             "No operation parameters provided",
         )
@@ -355,7 +375,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 )
             return FlextResult[FlextLdifModels.Entry | str].ok("")
         if parse_result.error:
+            logger.error(
+                "Parse operation failed",
+                error=parse_result.error,
+            )
             return FlextResult[FlextLdifModels.Entry | str].fail(parse_result.error)
+        logger.error(
+            "Parse operation failed with unknown error",
+        )
         return FlextResult[FlextLdifModels.Entry | str].fail("Parse operation failed")
 
     def _execute_write(
@@ -373,7 +400,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             written_text: str = write_result.unwrap()
             return FlextResult[FlextLdifModels.Entry | str].ok(written_text)
         if write_result.error:
+            logger.error(
+                "Write operation failed",
+                error=write_result.error,
+            )
             return FlextResult[FlextLdifModels.Entry | str].fail(write_result.error)
+        logger.error(
+            "Write operation failed with unknown error",
+        )
         return FlextResult[FlextLdifModels.Entry | str].fail("Write operation failed")
 
     @overload
@@ -521,9 +555,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """
         # Initialize nested class instances with private names to avoid
         # Pydantic conflicts. Concrete implementations in subclasses.
-        self._schema_quirk = self.Schema()
-        self._acl_quirk = self.Acl()
-        self._entry_quirk = self.Entry()
+        # Type ignore: Concrete subclasses (e.g., FlextLdifServersRfc) implement execute
+        self._schema_quirk = self.Schema()  # type: ignore[abstract]
+        self._acl_quirk = self.Acl()  # type: ignore[abstract]
+        self._entry_quirk = self.Entry()  # type: ignore[abstract]
 
         # Use schema_quirk, acl_quirk, entry_quirk properties
         # Old: object.__setattr__(self, "schema", self._schema_quirk) - removed per zero-tolerance policy

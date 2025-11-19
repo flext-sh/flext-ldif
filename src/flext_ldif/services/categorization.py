@@ -209,9 +209,8 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                     )
                 # Use structured logging to avoid base64 encoding
                 logger.debug(
-                    "Invalid DN (RFC 4514)",
+                    "Entry DN failed RFC 4514 validation",
                     entry_dn=dn_str,
-                    validation_error="rfc4514_invalid",
                 )
                 continue
 
@@ -303,7 +302,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                         rejection_reason,
                     )
                 logger.debug(
-                    "Entry rejected",
+                    "Entry rejected during categorization",
                     entry_dn=str(entry.dn) if entry.dn else None,
                     rejection_reason=reason,
                 )
@@ -375,7 +374,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
                 if excluded:
                     logger.info(
-                        "Base DN filter applied",
+                        "Applied base DN filter",
                         category=category,
                         total_entries=len(entries),
                         kept_entries=len(included),
@@ -419,7 +418,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         if result.is_success:
             filtered = result.unwrap()
             logger.info(
-                "Schema OID filter applied",
+                "Applied schema OID whitelist filter",
                 total_entries=len(schema_entries),
                 filtered_entries=len(filtered),
                 removed_entries=len(schema_entries) - len(filtered),

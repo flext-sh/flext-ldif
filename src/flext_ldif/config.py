@@ -14,6 +14,7 @@ from typing import Protocol
 
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
+from pydantic_settings import SettingsConfigDict
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -31,26 +32,51 @@ class ValidationInfoProtocol(Protocol):
     def mode(self) -> str: ...
 
 
-class FlextLdifConfig(FlextConfig):
-    """Pydantic 2 Settings class for flext-ldif using FlextConfig as configuration source.
+@FlextConfig.auto_register("ldif")
+class FlextLdifConfig(FlextConfig.AutoConfig):
+    """Pydantic v2 configuration for LDIF operations (nested config pattern).
 
-    Leverages FlextConfig's newer features:
-    - Centralized configuration management through FlextConfig
-    - Enhanced singleton pattern with proper lifecycle management
-    - Integrated environment variable handling
-    - validation and type safety
-    - Automatic dependency injection integration
-    - Built-in configuration validation and consistency checks
+    **ARCHITECTURAL PATTERN**: Zero-Boilerplate Auto-Registration
 
-    All flext-ldif specific configuration flows through FlextConfig,
-    eliminating duplication and ensuring consistency across the FLEXT ecosystem.
+    This class uses FlextConfig.AutoConfig for automatic:
+    - Singleton pattern (thread-safe)
+    - Namespace registration (accessible via config.ldif)
+    - Test reset capability (_reset_instance)
+
+    **Features**:
+    - Pydantic v2 BaseModel for nested configuration
+    - Generic LDIF field names (ldif_*) - RFC 2849/4512 compliant
+    - Automatic singleton via FlextConfig.AutoConfig
+    - Complete type safety and validation
+    - Supports both direct instantiation and nested usage
+
+    **Usage**:
+        # Get singleton instance
+        config = FlextLdifConfig.get_instance()
+
+        # Or via FlextConfig namespace
+        from flext_core import FlextConfig
+        config = FlextConfig.get_global_instance()
+        ldif_config = config.ldif
     """
 
-    # Override model_config to disable str_strip_whitespace for LDIF fields that need whitespace
-    model_config = FlextConfig.model_config.copy()
-    model_config["str_strip_whitespace"] = False
+    # Model configuration (disable str_strip_whitespace for LDIF fields that need whitespace)
+    # env_prefix enables automatic loading from FLEXT_LDIF_* environment variables
+    model_config = SettingsConfigDict(
+        env_prefix="FLEXT_LDIF_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        str_strip_whitespace=False,
+        validate_assignment=True,
+        validate_default=True,
+        frozen=False,
+        arbitrary_types_allowed=True,
+        extra="ignore",
+    )
 
     # LDIF Format Configuration using FlextLdifConstants for defaults
+    # Note: Fields like max_workers, debug, trace, log_verbosity come from root FlextConfig
+    # when used in nested pattern (config.ldif references root config.max_workers)
     ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingType = Field(
         default="utf-8",
         description="Character encoding for LDIF files",
@@ -102,22 +128,6 @@ class FlextLdifConfig(FlextConfig):
         ge=FlextLdifConstants.MIN_MEMORY_MB,
         le=FlextLdifConstants.MAX_MEMORY_MB,
         description="Memory limit in MB",
-    )
-
-    enable_performance_optimizations: bool = Field(
-        default=FlextLdifConstants.ConfigDefaults.ENABLE_PERFORMANCE_OPTIMIZATIONS,
-        description="Enable performance optimizations",
-    )
-
-    enable_parallel_processing: bool = Field(
-        default=FlextLdifConstants.ConfigDefaults.ENABLE_PARALLEL_PROCESSING,
-        description="Enable parallel processing",
-    )
-
-    parallel_threshold: int = Field(
-        default=FlextLdifConstants.SMALL_ENTRY_COUNT_THRESHOLD,
-        ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
-        description="Threshold for enabling parallel processing",
     )
 
     # Analytics Configuration
@@ -293,6 +303,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConstants.ServerTypes.OUD,
             FlextLdifConstants.ServerTypes.OPENLDAP,
             FlextLdifConstants.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.ServerTypes.OPENLDAP2,
             FlextLdifConstants.ServerTypes.AD,
             FlextLdifConstants.ServerTypes.DS_389,  # Fixed: DS_389 not DS389
             FlextLdifConstants.ServerTypes.APACHE,
@@ -433,6 +444,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConstants.ServerTypes.OUD,
             FlextLdifConstants.ServerTypes.OPENLDAP,
             FlextLdifConstants.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.ServerTypes.OPENLDAP2,
             FlextLdifConstants.ServerTypes.AD,
             FlextLdifConstants.ServerTypes.DS_389,
             FlextLdifConstants.ServerTypes.APACHE,
@@ -485,6 +497,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConstants.ServerTypes.OUD,
             FlextLdifConstants.ServerTypes.OPENLDAP,
             FlextLdifConstants.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.ServerTypes.OPENLDAP2,
             FlextLdifConstants.ServerTypes.AD,
             FlextLdifConstants.ServerTypes.DS_389,
             FlextLdifConstants.ServerTypes.APACHE,
@@ -508,38 +521,11 @@ class FlextLdifConfig(FlextConfig):
 
     @model_validator(mode="after")
     def validate_ldif_configuration_consistency(self) -> FlextLdifConfig:
-        """Validate LDIF configuration consistency."""
-        # Validate performance configuration consistency
-        if self.enable_performance_optimizations:
-            if (
-                self.max_workers
-                < FlextLdifConstants.ValidationRules.MIN_WORKERS_PERFORMANCE_RULE
-            ):
-                msg = (
-                    f"Performance mode requires at least "
-                    f"{FlextLdifConstants.ValidationRules.MIN_WORKERS_PERFORMANCE_RULE} workers"
-                )
-                raise ValueError(msg)
+        """Validate LDIF configuration consistency.
 
-            if (
-                self.ldif_chunk_size
-                < FlextLdifConstants.ValidationRules.MIN_CHUNK_SIZE_PERFORMANCE_RULE
-            ):
-                msg = (
-                    f"Performance mode requires chunk size >= "
-                    f"{FlextLdifConstants.ValidationRules.MIN_CHUNK_SIZE_PERFORMANCE_RULE}"
-                )
-                raise ValueError(msg)
-
-        # Validate debug mode consistency (use inherited debug fields from FlextConfig)
-        # NO environment-mode-specific behavior - log_level should NOT affect other parameters
-        if (self.debug or self.trace) and self.enable_performance_optimizations:
-            # Debug mode conflicts with performance optimizations
-            # Disable performance mode only
-            self.enable_performance_optimizations = False
-        # max_workers is NOT affected by log_level or environment mode
-        # Only respect explicit debug/trace flags, NOT log_level
-
+        Note: Validations that require root config fields (max_workers, debug, trace)
+        should be performed at the root config level (e.g., AlgarOudMigConfig).
+        """
         # Validate analytics configuration
         if (
             self.ldif_enable_analytics
@@ -547,18 +533,6 @@ class FlextLdifConfig(FlextConfig):
             <= FlextLdifConstants.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
         ):
             msg = "Analytics cache size must be positive when analytics is enabled"
-            raise ValueError(msg)
-
-        # Validate parallel processing threshold
-        if (
-            self.enable_parallel_processing
-            and self.parallel_threshold
-            < FlextLdifConstants.ValidationRules.MIN_PARALLEL_THRESHOLD_RULE
-        ):
-            msg = (
-                "Parallel threshold must be positive when parallel processing "
-                "is enabled"
-            )
             raise ValueError(msg)
 
         # Validate quirks configuration
@@ -586,54 +560,6 @@ class FlextLdifConfig(FlextConfig):
         if self.server_type == FlextLdifConstants.ServerTypes.AD:
             return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
         return self.ldif_encoding
-
-    def get_effective_workers(self, entry_count: int) -> int:
-        """Calculate effective number of workers based on entry count and configuration.
-
-        Args:
-        entry_count: Number of entries to process
-
-        Returns:
-        Effective number of workers to use
-
-        """
-        if not self.enable_parallel_processing:
-            return 1
-
-        if entry_count < self.parallel_threshold:
-            return 1
-        if entry_count < FlextLdifConstants.MEDIUM_ENTRY_COUNT_THRESHOLD:
-            return min(
-                FlextLdifConstants.LdifProcessing.MIN_WORKERS_FOR_PARALLEL,
-                self.max_workers,
-            )
-        return self.max_workers
-
-    def is_performance_optimized(self) -> bool:
-        """Check if configuration is optimized for performance."""
-        return (
-            self.enable_performance_optimizations
-            and self.max_workers
-            >= FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
-            and self.ldif_chunk_size
-            >= FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE
-            and self.memory_limit_mb
-            >= FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD
-        )
-
-    def is_development_optimized(self) -> bool:
-        """Check if configuration is optimized for development.
-
-        Uses inherited fields from FlextConfig:
-        - self.debug (replaces debug_mode)
-        - self.log_verbosity (replaces verbose_logging - checks for "detailed" or "full")
-        - self.max_workers
-        """
-        return (
-            self.debug
-            and self.log_verbosity in {"detailed", "full"}
-            and self.max_workers <= FlextLdifConstants.DEBUG_MAX_WORKERS
-        )
 
 
 __all__ = ["FlextLdifConfig"]

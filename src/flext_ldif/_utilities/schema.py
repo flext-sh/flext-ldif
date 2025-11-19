@@ -7,12 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import copy
-import logging
 import re
 from collections.abc import Callable
-from typing import Any
+from typing import TypedDict
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -20,7 +19,40 @@ from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
+
+
+# TypedDicts for parse methods return types (replaces dict[str, Any])
+class ParsedAttributeDict(TypedDict, total=False):
+    """Type-safe dictionary structure for parsed attribute definitions."""
+
+    oid: str
+    name: str | None
+    desc: str | None
+    syntax: str | None
+    length: int | None
+    equality: str | None
+    ordering: str | None
+    substr: str | None
+    single_value: bool
+    no_user_modification: bool
+    sup: str | None
+    usage: str | None
+    metadata_extensions: dict[str, object]
+    syntax_validation: dict[str, object] | None
+
+
+class ParsedObjectClassDict(TypedDict, total=False):
+    """Type-safe dictionary structure for parsed objectClass definitions."""
+
+    oid: str
+    name: str | None
+    desc: str | None
+    sup: str | None
+    kind: str
+    must: list[str] | None
+    may: list[str] | None
+    metadata_extensions: dict[str, object]
 
 
 class FlextLdifUtilitiesSchema:
@@ -172,30 +204,122 @@ class FlextLdifUtilitiesSchema:
 
             return FlextResult.ok(transformed)
         except Exception as e:
+            logger.exception(
+                "Schema field transformation failed",
+                field_name=field_name,
+            )
             return FlextResult.fail(f"Transformation of '{field_name}' error: {e}")
 
     @staticmethod
     def _return_result(
         transformed: object,
-        original_type: FlextLdifModels.SchemaAttribute
+        _original_type: FlextLdifModels.SchemaAttribute
         | FlextLdifModels.SchemaObjectClass,
-    ) -> (
-        FlextResult[FlextLdifModels.SchemaAttribute]
-        | FlextResult[FlextLdifModels.SchemaObjectClass]
-    ):
-        """Wrap transformation result with proper type."""
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
+        """Wrap transformation result with proper type.
+        
+        Args:
+            transformed: The transformed schema object
+            _original_type: Original type (unused, kept for API compatibility)
+
+        """
         if isinstance(transformed, FlextLdifModels.SchemaAttribute):
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(transformed)
+            return FlextResult.ok(transformed)
         if isinstance(transformed, FlextLdifModels.SchemaObjectClass):
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(transformed)
+            return FlextResult.ok(transformed)
         # Fallback for unknown types
-        if isinstance(original_type, FlextLdifModels.SchemaAttribute):
-            return FlextResult.fail(
-                f"Unknown schema object type: {type(transformed).__name__}",
-            )
         return FlextResult.fail(
             f"Unknown schema object type: {type(transformed).__name__}",
         )
+
+    @staticmethod
+    def _create_schema_copy(
+        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+        """Create a copy of the schema object."""
+        if hasattr(schema_obj, "model_copy"):
+            return schema_obj.model_copy()
+        return copy.copy(schema_obj)
+
+    @staticmethod
+    def _validate_transformation_result(
+        unwrapped: object,
+        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+        """Validate that transformation result matches input type."""
+        if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
+            if isinstance(unwrapped, FlextLdifModels.SchemaAttribute):
+                return FlextResult.ok(unwrapped)
+            return FlextResult.fail(
+                "Field transformation returned unexpected type for SchemaAttribute",
+            )
+        if isinstance(schema_obj, FlextLdifModels.SchemaObjectClass):
+            if isinstance(unwrapped, FlextLdifModels.SchemaObjectClass):
+                return FlextResult.ok(unwrapped)
+            return FlextResult.fail(
+                "Field transformation returned unexpected type for SchemaObjectClass",
+            )
+        return FlextResult.fail(f"Unknown schema object type: {type(schema_obj).__name__}")
+
+    @staticmethod
+    def _apply_field_transforms(
+        transformed: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        field_transforms: dict[str, Callable[[object], object] | str | list[str] | None],
+        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+        """Apply all field transformations."""
+        # Declare variable with explicit type to help type checker
+        current: (
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ) = transformed
+        
+        for field_name, transform_fn in field_transforms.items():
+            if not hasattr(current, field_name):
+                continue
+            
+            result = FlextLdifUtilitiesSchema._apply_field_transformation(
+                current,
+                field_name,
+                transform_fn,
+            )
+            if result.is_failure:
+                return FlextResult.fail(
+                    result.error or "Field transformation failed",
+                )
+            
+            unwrapped = result.unwrap()
+            validation_result = FlextLdifUtilitiesSchema._validate_transformation_result(
+                unwrapped,
+                schema_obj,
+            )
+            if validation_result.is_failure:
+                return validation_result
+            unwrapped_validated = validation_result.unwrap()
+            # Type narrowing: validate and narrow type explicitly
+            if isinstance(
+                unwrapped_validated,
+                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            ):
+                current = unwrapped_validated
+            else:
+                return FlextResult.fail(
+                    f"Unexpected type after transformation: {type(unwrapped_validated).__name__}",
+                )
+        
+        # Type narrowing: current is now guaranteed to be SchemaAttribute | SchemaObjectClass
+        # Validate type to help type checker understand the type
+        if not isinstance(
+            current,
+            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+        ):
+            return FlextResult.fail(
+                f"Type narrowing failed: {type(current).__name__}",
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ].ok(current)
 
     @staticmethod
     def apply_transformations(
@@ -214,59 +338,44 @@ class FlextLdifUtilitiesSchema:
             ]
             | None
         ) = None,
-    ) -> (
-        FlextResult[FlextLdifModels.SchemaAttribute]
-        | FlextResult[FlextLdifModels.SchemaObjectClass]
-    ):
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Apply transformation pipeline to schema object.
 
         Generic transformation pipeline accepting optional transformer callables.
 
         Args:
-            schema_obj: SchemaAttribute or SchemaObjectClass (required, not optional)
+            schema_obj: SchemaAttribute or SchemaObjectClass (type annotation guarantees non-None)
             field_transforms: Dict of {field_name: transform_callable}
 
         Returns:
-            FlextResult with transformed schema object or error if schema_obj is None
+            FlextResult with transformed schema object
 
         """
-        # Fast fail if None - no fallback
-        if schema_obj is None:
-            return FlextResult.fail("Schema object cannot be None")
+        # Type annotation guarantees schema_obj is not None - no defensive check needed
 
         try:
-            # Create copy using model_copy if available
-            if hasattr(schema_obj, "model_copy"):
-                transformed = schema_obj.model_copy()
-            else:
-                transformed = copy.copy(schema_obj)
+            transformed = FlextLdifUtilitiesSchema._create_schema_copy(schema_obj)
 
             # Apply transformations with monadic chaining
             if field_transforms:
-                for field_name, transform_fn in field_transforms.items():
-                    if hasattr(transformed, field_name):
-                        result = FlextLdifUtilitiesSchema._apply_field_transformation(
-                            transformed,
-                            field_name,
-                            transform_fn,
-                        )
-                        if result.is_failure:
-                            if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
-                                return FlextResult.fail(
-                                    result.error or "Field transformation failed",
-                                )
-                            return FlextResult.fail(
-                                result.error or "Field transformation failed",
-                            )
-                        transformed = result.unwrap()
+                transform_result = FlextLdifUtilitiesSchema._apply_field_transforms(
+                    transformed,
+                    field_transforms,
+                    schema_obj,
+                )
+                if transform_result.is_failure:
+                    return transform_result
+                transformed = transform_result.unwrap()
 
             # Return with proper type based on input
             return FlextLdifUtilitiesSchema._return_result(transformed, schema_obj)
         except Exception as e:
-            # Return error with proper type based on input
-            if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
-                return FlextResult.fail(f"Failed to apply transformations: {e}")
-            return FlextResult.fail(f"Failed to apply transformations: {e}")
+            logger.exception(
+                "Transformation pipeline error",
+            )
+            return FlextResult.fail(f"Transformation pipeline error: {e}")
 
     @staticmethod
     def set_server_type(
@@ -308,14 +417,24 @@ class FlextLdifUtilitiesSchema:
 
             return FlextResult.ok(result)
         except Exception as e:
+            logger.exception(
+                "Failed to set server type",
+            )
             return FlextResult.fail(f"Failed to set server type: {e}")
 
     @staticmethod
     def _extract_schema_items_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], FlextResult[Any]],
+        parse_callback: Callable[
+            [str],
+            FlextResult[
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+            ],
+        ]
+        | Callable[[str], FlextResult[FlextLdifModels.SchemaAttribute]]
+        | Callable[[str], FlextResult[FlextLdifModels.SchemaObjectClass]],
         line_prefix: str,
-    ) -> list[Any]:
+    ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
         """Generic extraction of schema items from LDIF content lines.
 
         Consolidated logic for extracting both attributes and objectClasses.
@@ -331,7 +450,9 @@ class FlextLdifUtilitiesSchema:
             List of successfully parsed schema items
 
         """
-        items: list[Any] = []
+        items: list[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ] = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
@@ -341,10 +462,13 @@ class FlextLdifUtilitiesSchema:
                 item_def = line.split(":", 1)[1].strip()
                 result = parse_callback(item_def)
                 if hasattr(result, "is_success") and result.is_success:
-                    items.append(result.unwrap())
-                elif isinstance(result, dict) or hasattr(result, "oid"):
-                    # Handle both FlextResult and raw dict returns
-                    items.append(result)
+                    unwrapped = result.unwrap()
+                    # Type narrowing: unwrapped is guaranteed to be SchemaAttribute | SchemaObjectClass
+                    if isinstance(
+                        unwrapped,
+                        (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                    ):
+                        items.append(unwrapped)
 
         return items
 
@@ -365,11 +489,17 @@ class FlextLdifUtilitiesSchema:
             List of successfully parsed attribute models
 
         """
-        return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
+        items = FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "attributetypes:",
         )
+        # Type narrowing: filter to only SchemaAttribute instances
+        return [
+            item
+            for item in items
+            if isinstance(item, FlextLdifModels.SchemaAttribute)
+        ]
 
     @staticmethod
     def extract_objectclasses_from_lines(
@@ -388,11 +518,17 @@ class FlextLdifUtilitiesSchema:
             List of successfully parsed objectClass models
 
         """
-        return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
+        items = FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "objectclasses:",
         )
+        # Type narrowing: filter to only SchemaObjectClass instances
+        return [
+            item
+            for item in items
+            if isinstance(item, FlextLdifModels.SchemaObjectClass)
+        ]
 
     @staticmethod
     def build_available_attributes_set(
@@ -443,7 +579,7 @@ class FlextLdifUtilitiesSchema:
     def build_metadata(
         definition: str,
         additional_extensions: dict[str, object] | None = None,
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Build metadata extensions dictionary for schema definitions.
 
         Generic method to build metadata from schema definition string.
@@ -476,7 +612,7 @@ class FlextLdifUtilitiesSchema:
         _case_insensitive: bool = False,
         _allow_syntax_quotes: bool = False,
         validate_syntax: bool = True,
-    ) -> dict[str, Any]:
+    ) -> ParsedAttributeDict:
         """Parse RFC 4512 attribute definition into structured data.
 
         Generic parsing method that extracts all fields from attribute definition.
@@ -627,7 +763,7 @@ class FlextLdifUtilitiesSchema:
         oc_definition: str,
         *,
         _case_insensitive: bool = False,
-    ) -> dict[str, Any]:
+    ) -> ParsedObjectClassDict:
         """Parse RFC 4512 objectClass definition into structured data.
 
         Generic parsing method that extracts all fields from objectClass definition.

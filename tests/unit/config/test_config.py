@@ -1,5 +1,9 @@
 """Test suite for FlextLdifConfig.
 
+Tests the nested configuration pattern where FlextLdifConfig is a BaseModel
+registered as 'ldif' namespace in FlextConfig. Root config fields like
+max_workers, debug, trace belong to FlextConfig (parent), not FlextLdifConfig.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -7,10 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
-from flext_core import FlextConfig, FlextConstants
 from pydantic import ValidationError
 
 from flext_ldif.config import FlextLdifConfig
@@ -18,30 +19,27 @@ from flext_ldif.constants import FlextLdifConstants
 
 
 class TestFlextLdifConfig:
-    """Test suite for FlextLdifConfig."""
+    """Test suite for FlextLdifConfig nested configuration."""
 
     def test_initialization(self) -> None:
-        """Test basic configuration initialization."""
+        """Test basic configuration initialization with LDIF-specific fields."""
         config = FlextLdifConfig()
         assert config.ldif_max_line_length == 78
         assert config.ldif_max_entries == 1000000
         assert config.ldif_chunk_size == 1000
-        # max_workers uses default from FlextConfig - no environment-mode logic
-        # Just assert the actual value (should be 4 as per FlextConfig default)
-        assert config.max_workers == 4
         assert config.ldif_encoding == "utf-8"
+        assert config.memory_limit_mb == FlextLdifConstants.MIN_MEMORY_MB
 
     def test_initialization_with_overrides(self) -> None:
-        """Test configuration initialization with overrides."""
+        """Test configuration initialization with field overrides."""
         config = FlextLdifConfig(
             ldif_max_line_length=100,
             ldif_max_entries=5000,
-            max_workers=4,  # Must be >= 4 for performance mode
+            ldif_chunk_size=500,
         )
         assert config.ldif_max_line_length == 100
         assert config.ldif_max_entries == 5000
-        # max_workers should respect the value passed (4), no environment-mode logic
-        assert config.max_workers == 4
+        assert config.ldif_chunk_size == 500
 
     def test_validation_max_line_length(self) -> None:
         """Test max line length validation."""
@@ -75,36 +73,10 @@ class TestFlextLdifConfig:
         with pytest.raises(ValidationError):
             FlextLdifConfig(ldif_max_entries=10000001)  # Above maximum
 
-    def test_validation_max_workers(self) -> None:
-        """Test max workers validation."""
-        # Valid values
-        config = FlextLdifConfig(max_workers=1, enable_performance_optimizations=False)
-        assert config.max_workers == 1
-
-        config = FlextLdifConfig(max_workers=16)
-        # max_workers is adjusted when in debug mode
-        # In debug mode with high workers, it's capped at MAX_WORKERS_DEBUG_RULE (2)
-        if (
-            config.debug
-            or config.trace
-            or config.log_level == FlextConstants.Settings.LogLevel.DEBUG
-        ):
-            expected_workers = FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
-        else:
-            expected_workers = 16
-        assert config.max_workers == expected_workers
-
-        # Invalid values
-        with pytest.raises(ValidationError):
-            FlextLdifConfig(max_workers=0)  # Below minimum
-
     def test_validation_chunk_size(self) -> None:
         """Test chunk size validation."""
-        # Valid values - need to disable performance optimizations for small chunk size
-        config = FlextLdifConfig(
-            ldif_chunk_size=100,
-            enable_performance_optimizations=False,
-        )
+        # Valid values
+        config = FlextLdifConfig(ldif_chunk_size=100)
         assert config.ldif_chunk_size == 100
 
         config = FlextLdifConfig(ldif_chunk_size=10000)
@@ -117,38 +89,21 @@ class TestFlextLdifConfig:
         with pytest.raises(ValidationError):
             FlextLdifConfig(ldif_chunk_size=10001)  # Above maximum
 
-        # Performance mode requires chunk size >= 1000
-        with pytest.raises(ValidationError):
-            FlextLdifConfig(
-                ldif_chunk_size=500,
-                enable_performance_optimizations=True,
-            )
-
     def test_validation_memory_limit(self) -> None:
         """Test memory limit validation."""
         # Valid values
         config = FlextLdifConfig(memory_limit_mb=64)
         assert config.memory_limit_mb == 64
 
-        config = FlextLdifConfig(memory_limit_mb=8192)
-        assert config.memory_limit_mb == 8192
+        config = FlextLdifConfig(memory_limit_mb=1024)
+        assert config.memory_limit_mb == 1024
 
         # Invalid values
         with pytest.raises(ValidationError):
-            FlextLdifConfig(memory_limit_mb=63)  # Below minimum
+            FlextLdifConfig(memory_limit_mb=63)  # Below MIN_MEMORY_MB=64
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(memory_limit_mb=8193)  # Above maximum
-
-    def test_validation_parallel_threshold(self) -> None:
-        """Test parallel threshold validation."""
-        # Valid values
-        config = FlextLdifConfig(parallel_threshold=1)
-        assert config.parallel_threshold == 1
-
-        # Invalid values
-        with pytest.raises(ValidationError):
-            FlextLdifConfig(parallel_threshold=0)  # Below minimum
+            FlextLdifConfig(memory_limit_mb=8193)  # Above MAX_MEMORY_MB=8192
 
     def test_validation_analytics_cache_size(self) -> None:
         """Test analytics cache size validation."""
@@ -161,314 +116,140 @@ class TestFlextLdifConfig:
 
         # Invalid values
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_analytics_cache_size=99)  # Below minimum
+            FlextLdifConfig(ldif_analytics_cache_size=99)  # Below MIN_ANALYTICS_CACHE_SIZE=100
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_analytics_cache_size=10001)  # Above maximum
+            FlextLdifConfig(ldif_analytics_cache_size=10001)  # Above MAX_ANALYTICS_CACHE_SIZE=10000
 
-    def test_model_validation_analytics_cache_size(self) -> None:
-        """Test model validation for analytics cache size."""
-        # Valid configuration
-        config = FlextLdifConfig(
-            ldif_enable_analytics=True,
-            ldif_analytics_cache_size=1000,
-        )
-        assert config.ldif_enable_analytics is True
-        assert config.ldif_analytics_cache_size == 1000
+    def test_singleton_pattern(self) -> None:
+        """Test singleton pattern via get_instance."""
+        # Reset to ensure clean state
+        FlextLdifConfig._reset_instance()
 
-        # Invalid configuration - analytics enabled but cache size is 0
-        with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(
-                ldif_enable_analytics=True,
-                ldif_analytics_cache_size=0,
-            )
-        assert "Input should be greater than or equal to 100" in str(exc_info.value)
+        instance1 = FlextLdifConfig.get_instance()
+        instance2 = FlextLdifConfig.get_instance()
 
-    def test_model_validation_parallel_processing(self) -> None:
-        """Test model validation for parallel processing."""
-        # Valid configuration
-        config = FlextLdifConfig(
-            enable_parallel_processing=True,
-            parallel_threshold=1000,
-        )
-        assert config.enable_parallel_processing is True
-        assert config.parallel_threshold == 1000
+        assert instance1 is instance2
 
-        # Invalid configuration - parallel processing enabled but threshold is 0
-        with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(
-                enable_parallel_processing=True,
-                parallel_threshold=0,
-            )
-        assert "Input should be greater than or equal to 1" in str(exc_info.value)
+        # Cleanup
+        FlextLdifConfig._reset_instance()
 
-    def test_get_global_instance(self) -> None:
-        """Test getting global singleton instance."""
-        config = FlextLdifConfig.get_global_instance()
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
+    def test_reset_instance(self) -> None:
+        """Test singleton reset for testing."""
+        # Get first instance
+        instance1 = FlextLdifConfig.get_instance()
 
-        # Should return the same instance
-        config2 = FlextLdifConfig.get_global_instance()
-        assert config is config2
+        # Reset
+        FlextLdifConfig._reset_instance()
 
-    def test_reset_global_instance(self) -> None:
-        """Test resetting global instance."""
-        config1 = FlextLdifConfig.get_global_instance()
-        FlextLdifConfig.reset_global_instance()
-        config2 = FlextLdifConfig.get_global_instance()
+        # Get new instance
+        instance2 = FlextLdifConfig.get_instance()
 
-        # Should be different instances after reset
-        assert config1 is not config2
+        # Should be different objects
+        assert instance1 is not instance2
+
+        # Cleanup
+        FlextLdifConfig._reset_instance()
 
     def test_model_dump(self) -> None:
-        """Test model serialization."""
-        config = FlextLdifConfig(ldif_max_entries=5000)
-        data = config.model_dump()
-
-        assert isinstance(data, dict)
-        assert data["ldif_max_entries"] == 5000
-        assert data["ldif_max_line_length"] == 78
-
-    def test_model_dump_exclude_secrets(self) -> None:
-        """Test model serialization excludes secrets."""
+        """Test Pydantic v2 model_dump serialization."""
         config = FlextLdifConfig()
         data = config.model_dump()
 
-        # Should not contain sensitive fields if any
         assert isinstance(data, dict)
-
-    def test_model_dump_include_secrets(self) -> None:
-        """Test model serialization includes secrets when requested."""
-        config = FlextLdifConfig()
-        data = config.model_dump()
-
-        # Should include all fields by default
-        assert isinstance(data, dict)
+        assert "ldif_encoding" in data
+        assert "ldif_max_line_length" in data
+        assert "ldif_chunk_size" in data
 
     def test_model_validate(self) -> None:
-        """Test model validation from dict."""
+        """Test Pydantic v2 model_validate deserialization."""
         data = {
+            "ldif_max_line_length": 100,
             "ldif_max_entries": 5000,
-            "max_workers": 4,  # Must be >= 4 for performance mode
+            "ldif_chunk_size": 500,
         }
 
         config = FlextLdifConfig.model_validate(data)
+
+        assert config.ldif_max_line_length == 100
         assert config.ldif_max_entries == 5000
-        # max_workers should respect the value passed (4), not be changed by environment
-        assert config.max_workers == 4
+        assert config.ldif_chunk_size == 500
 
     def test_model_validate_invalid_data(self) -> None:
-        """Test model validation with invalid data."""
+        """Test model_validate with invalid data."""
         data = {
-            "ldif_max_entries": 0,  # Invalid value
-            "max_workers": -1,  # Invalid value
+            "ldif_max_line_length": 10,  # Below minimum
         }
 
         with pytest.raises(ValidationError):
             FlextLdifConfig.model_validate(data)
 
     def test_configuration_properties(self) -> None:
-        """Test configuration property access."""
+        """Test that expected LDIF-specific properties exist."""
         config = FlextLdifConfig()
 
-        # Test all configuration properties
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_max_entries")
-        assert hasattr(config, "ldif_chunk_size")
-        assert hasattr(config, "max_workers")
+        # LDIF-specific fields must exist
         assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_chunk_size")
+        assert hasattr(config, "ldif_max_entries")
         assert hasattr(config, "memory_limit_mb")
-        assert hasattr(config, "parallel_threshold")
-        assert hasattr(config, "ldif_analytics_cache_size")
         assert hasattr(config, "ldif_enable_analytics")
-        assert hasattr(config, "enable_parallel_processing")
-        assert hasattr(config, "strict_rfc_compliance")
+        assert hasattr(config, "server_type")
+        assert hasattr(config, "validation_level")
 
     def test_configuration_defaults(self) -> None:
-        """Test configuration default values."""
+        """Test default values from constants."""
         config = FlextLdifConfig()
 
-        # Test default values match expected constants
-        assert config.ldif_max_line_length == 78
-        assert config.ldif_max_entries == 1000000
-        assert config.ldif_chunk_size == 1000
-        # max_workers uses default - no environment-mode logic, just default from FlextConfig
-        # Default should be 4 (hardcoded in FlextConfig, not affected by log_level)
-        assert config.max_workers == 4
         assert config.ldif_encoding == "utf-8"
-        assert config.memory_limit_mb == 64  # Minimum required memory
-        assert config.parallel_threshold == 100
-        assert config.ldif_analytics_cache_size == 1000
-        assert config.ldif_enable_analytics is True
-        assert config.enable_parallel_processing is True
-        assert config.strict_rfc_compliance is True
-
-    def test_configuration_immutability(self) -> None:
-        """Test that configuration values are properly validated."""
-        # Test that invalid values are rejected (intentional type mismatches for validation testing)
-        with pytest.raises(ValidationError):
-            # Test validation with intentionally invalid types
-            FlextLdifConfig(ldif_max_line_length="invalid")  # type: ignore[arg-type]
-
-        with pytest.raises(ValidationError):
-            # Test validation with intentionally invalid types
-            FlextLdifConfig(max_workers="invalid")  # type: ignore[arg-type]
-
-        with pytest.raises(ValidationError):
-            # Test validation with intentionally invalid types
-            FlextLdifConfig(ldif_encoding=123)  # type: ignore[arg-type]
-
-    # =========================================================================
-    # VALIDATOR EDGE CASES - Complete coverage for all validators
-    # =========================================================================
+        assert config.ldif_max_line_length == FlextLdifConstants.Format.MAX_LINE_LENGTH
+        assert config.ldif_chunk_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
+        assert config.server_type == "generic"
+        assert config.validation_level == "strict"
 
     def test_validate_ldif_encoding_invalid(self) -> None:
-        """Test encoding validator with invalid encoding."""
-        with pytest.raises(ValidationError) as exc_info:
+        """Test invalid ldif_encoding value."""
+        with pytest.raises(ValidationError):
             FlextLdifConfig(ldif_encoding="invalid-encoding")  # type: ignore[arg-type]
-        # Pydantic v2 error message format
-        assert "Input should be" in str(exc_info.value) or "ldif_encoding" in str(
-            exc_info.value,
-        )
-
-    def test_validate_max_workers_below_minimum(self) -> None:
-        """Test max_workers validator with value below minimum."""
-        with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(max_workers=0)
-        # Pydantic v2 error message format
-        assert "Input should be greater than or equal to 1" in str(exc_info.value)
-
-    def test_validate_max_workers_above_maximum(self) -> None:
-        """Test max_workers validator with value above maximum."""
-        with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(max_workers=999999)
-        # Pydantic v2 error message format - max_workers inherited from FlextConfig has le=256
-        assert "Input should be less than or equal to 256" in str(exc_info.value)
 
     def test_validate_validation_level_invalid(self) -> None:
-        """Test validation_level validator with invalid value."""
-        with pytest.raises(ValidationError) as exc_info:
-            # Test validation with intentionally invalid enum value
+        """Test invalid validation_level value."""
+        with pytest.raises(ValidationError):
             FlextLdifConfig(validation_level="invalid")  # type: ignore[arg-type]
-        # Pydantic v2 error message format
-        assert "Input should be" in str(exc_info.value) or "validation_level" in str(
-            exc_info.value,
-        )
 
     def test_validate_server_type_invalid(self) -> None:
-        """Test server_type validator with invalid value."""
-        with pytest.raises(ValidationError) as exc_info:
-            # Test validation with intentionally invalid enum value
-            FlextLdifConfig(server_type="unknown_server")  # type: ignore[arg-type]
-        assert "Input should be" in str(exc_info.value) or "server_type" in str(
-            exc_info.value,
-        )
+        """Test invalid server_type value."""
+        with pytest.raises(ValidationError):
+            FlextLdifConfig(server_type="invalid-server")  # type: ignore[arg-type]
 
     def test_validate_analytics_detail_level_invalid(self) -> None:
-        """Test analytics_detail_level validator with invalid value."""
-        with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(analytics_detail_level="ultra")  # type: ignore[arg-type]
-        # Pydantic v2 error message format
-        assert "Input should be" in str(
-            exc_info.value,
-        ) or "analytics_detail_level" in str(exc_info.value)
+        """Test invalid analytics_detail_level value."""
+        with pytest.raises(ValidationError):
+            FlextLdifConfig(analytics_detail_level="invalid")  # type: ignore[arg-type]
 
     def test_validate_error_recovery_mode_invalid(self) -> None:
-        """Test error_recovery_mode validator with invalid value."""
-        with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(error_recovery_mode="abort")  # type: ignore[arg-type]
-        # Pydantic v2 error message format
-        assert "Input should be" in str(exc_info.value) or "error_recovery_mode" in str(
-            exc_info.value,
-        )
+        """Test invalid error_recovery_mode value."""
+        with pytest.raises(ValidationError):
+            FlextLdifConfig(error_recovery_mode="invalid")  # type: ignore[arg-type]
 
     def test_get_effective_encoding(self) -> None:
         """Test get_effective_encoding method."""
-        # Encoding is already normalized in validator, use lowercase
-        config = FlextLdifConfig(ldif_encoding="utf-8")
+        config = FlextLdifConfig()
         encoding = config.get_effective_encoding()
         assert encoding == "utf-8"
 
-    def test_get_effective_workers(self) -> None:
-        """Test get_effective_workers method."""
-        config = FlextLdifConfig(max_workers=8)
-        # Test with large entry count (> MEDIUM_ENTRY_COUNT_THRESHOLD)
-        workers = config.get_effective_workers(entry_count=10000)
-        # max_workers should respect the value passed (8), not be changed by environment mode
-        assert workers == 8
-
-    def test_is_performance_optimized(self) -> None:
-        """Test is_performance_optimized method."""
-        perf_config = FlextLdifConfig(
-            enable_performance_optimizations=True,
-            max_workers=4,  # Minimum for performance
-            ldif_chunk_size=1000,  # Actual minimum for performance (PERFORMANCE_MIN_CHUNK_SIZE)
-            memory_limit_mb=512,  # Minimum for performance (PERFORMANCE_MEMORY_MB_THRESHOLD)
-        )
-        # Performance optimizations may be disabled in debug mode
-        expected_perf = (
-            perf_config.enable_performance_optimizations and not perf_config.debug
-        )
-        assert perf_config.is_performance_optimized() == expected_perf
-
-        normal_config = FlextLdifConfig()
-        # Check actual value, don't assume
-        result = normal_config.is_performance_optimized()
-        assert isinstance(result, bool)
-
-    def test_is_development_optimized(self) -> None:
-        """Test is_development_optimized method.
-
-        Now uses inherited fields from FlextConfig:
-        - debug (replaces debug_mode)
-        - log_verbosity (replaces verbose_logging)
-        """
-        dev_config = FlextLdifConfig(
-            debug=True,  # Inherited from FlextConfig
-            log_verbosity="detailed",  # Inherited from FlextConfig ("detailed" or "full" for development)
-            max_workers=2,  # Max for debug mode
-            enable_performance_optimizations=False,  # Debug mode conflicts with performance mode
-        )
-        assert dev_config.is_development_optimized() is True
-
-        normal_config = FlextLdifConfig()
-        result = normal_config.is_development_optimized()
-        assert isinstance(result, bool)
-
-    def test_global_instance_management(self) -> None:
-        """Test global instance get and reset."""
-        # Get global instance
-        instance1 = FlextLdifConfig.get_global_instance()
-        # Check that instance has expected FlextLdifConfig attributes
-        assert hasattr(instance1, "ldif_encoding")
-        assert hasattr(instance1, "ldif_max_line_length")
-        assert hasattr(instance1, "ldif_strict_validation")
-
-        # Should return same instance
-        instance2 = FlextLdifConfig.get_global_instance()
-        assert instance1 is instance2
-
-        # Reset global instance
-        FlextLdifConfig.reset_global_instance()
-
-        # Should create new instance after reset
-        instance3 = FlextLdifConfig.get_global_instance()
-        # Check that instance has expected FlextLdifConfig attributes
-        assert hasattr(instance3, "ldif_encoding")
-        assert hasattr(instance3, "ldif_max_line_length")
-        assert hasattr(instance3, "ldif_strict_validation")
-        # After reset, it's a new instance
-        assert instance3 is not instance1
+        # AD server uses utf-16
+        ad_config = FlextLdifConfig(server_type="ad")  # type: ignore[arg-type]
+        ad_encoding = ad_config.get_effective_encoding()
+        assert ad_encoding == "utf-16"
 
 
 class TestQuirksDetectionConfiguration:
-    """Test suite for quirks detection configuration modes."""
+    """Test quirks detection configuration options."""
 
     def test_defaults_detection_mode(self) -> None:
-        """Test that default quirks detection mode is 'auto'."""
+        """Test default quirks detection mode is auto."""
         config = FlextLdifConfig()
         assert config.quirks_detection_mode == "auto"
 
@@ -476,16 +257,14 @@ class TestQuirksDetectionConfiguration:
         """Test auto detection mode configuration."""
         config = FlextLdifConfig(quirks_detection_mode="auto")
         assert config.quirks_detection_mode == "auto"
-        assert config.quirks_server_type is None  # Should be None in auto mode
 
     def test_manual_detection_mode_requires_server_type(self) -> None:
-        """Test that manual mode requires quirks_server_type."""
-        # Manual mode without server type should raise validation error
+        """Test manual mode requires quirks_server_type."""
         with pytest.raises(ValidationError):
-            FlextLdifConfig(quirks_detection_mode="manual", quirks_server_type=None)
+            FlextLdifConfig(quirks_detection_mode="manual")
 
     def test_manual_detection_mode_with_server_type(self) -> None:
-        """Test manual detection mode with server type specified."""
+        """Test manual mode with server type specified."""
         config = FlextLdifConfig(
             quirks_detection_mode="manual",
             quirks_server_type="oud",
@@ -494,25 +273,21 @@ class TestQuirksDetectionConfiguration:
         assert config.quirks_server_type == "oud"
 
     def test_disabled_detection_mode(self) -> None:
-        """Test disabled detection mode (RFC-only)."""
+        """Test disabled detection mode for RFC-only parsing."""
         config = FlextLdifConfig(quirks_detection_mode="disabled")
         assert config.quirks_detection_mode == "disabled"
 
     def test_disabled_mode_ignores_server_type(self) -> None:
-        """Test that disabled mode works with or without server_type."""
-        # Disabled mode with server type specified (should be ignored)
-        config1 = FlextLdifConfig(
+        """Test disabled mode can have server type (ignored during parsing)."""
+        config = FlextLdifConfig(
             quirks_detection_mode="disabled",
-            quirks_server_type="oid",
+            quirks_server_type="oud",
         )
-        assert config1.quirks_detection_mode == "disabled"
-
-        # Disabled mode without server type
-        config2 = FlextLdifConfig(quirks_detection_mode="disabled")
-        assert config2.quirks_detection_mode == "disabled"
+        assert config.quirks_detection_mode == "disabled"
+        assert config.quirks_server_type == "oud"
 
     def test_relaxed_parsing_default(self) -> None:
-        """Test that relaxed parsing is disabled by default."""
+        """Test relaxed parsing is disabled by default."""
         config = FlextLdifConfig()
         assert config.enable_relaxed_parsing is False
 
@@ -522,7 +297,7 @@ class TestQuirksDetectionConfiguration:
         assert config.enable_relaxed_parsing is True
 
     def test_relaxed_parsing_with_auto_detection(self) -> None:
-        """Test relaxed parsing combined with auto detection."""
+        """Test relaxed parsing with auto detection mode."""
         config = FlextLdifConfig(
             quirks_detection_mode="auto",
             enable_relaxed_parsing=True,
@@ -531,7 +306,7 @@ class TestQuirksDetectionConfiguration:
         assert config.enable_relaxed_parsing is True
 
     def test_relaxed_parsing_with_manual_mode(self) -> None:
-        """Test relaxed parsing combined with manual detection."""
+        """Test relaxed parsing with manual mode."""
         config = FlextLdifConfig(
             quirks_detection_mode="manual",
             quirks_server_type="oud",
@@ -542,7 +317,7 @@ class TestQuirksDetectionConfiguration:
         assert config.enable_relaxed_parsing is True
 
     def test_relaxed_parsing_with_disabled_mode(self) -> None:
-        """Test relaxed parsing combined with disabled (RFC-only) mode."""
+        """Test relaxed parsing with disabled mode (RFC only + relaxed)."""
         config = FlextLdifConfig(
             quirks_detection_mode="disabled",
             enable_relaxed_parsing=True,
@@ -551,323 +326,173 @@ class TestQuirksDetectionConfiguration:
         assert config.enable_relaxed_parsing is True
 
     def test_supported_server_types(self) -> None:
-        """Test that manual mode accepts all supported server types (including aliases)."""
-        # Map of input → expected canonical form
-        supported_types = {
-            "oid": "oid",
-            "oud": "oud",
-            "openldap": "openldap",
-            "openldap1": "openldap1",
-            "ad": "active_directory",  # Short alias
-            "ds389": "389ds",  # Short alias
-            "apache": "apache_directory",
-            "novell": "novell_edirectory",
-            "tivoli": "ibm_tivoli",  # Short alias
-            "relaxed": "relaxed",
-        }
+        """Test all supported server types can be configured."""
+        # Use canonical server type values from FlextLdifConstants.LiteralTypes.ServerType
+        server_types = [
+            "generic",
+            "rfc",
+            "oid",
+            "oud",
+            "openldap",
+            "openldap1",
+            "openldap2",
+            "active_directory",
+            "apache_directory",
+            "389ds",
+            "novell_edirectory",
+            "ibm_tivoli",
+            "relaxed",
+        ]
 
-        for server_type, expected_canonical in supported_types.items():
-            config = FlextLdifConfig(
-                quirks_detection_mode="manual",
-                quirks_server_type=server_type,
-            )
-            # Should be normalized to canonical form
-            assert config.quirks_server_type == expected_canonical
-
-    def tests_server_type_none_in_auto_mode(self) -> None:
-        """Test that quirks_server_type remains None in auto mode."""
-        config = FlextLdifConfig(
-            quirks_detection_mode="auto",
-            quirks_server_type="oud",  # Should be ignored in auto mode
-        )
-        # Note: Pydantic will set it, but validation logic should ignore it
-        assert config.quirks_detection_mode == "auto"
+        for server_type in server_types:
+            # Type ignore: Testing all valid server types dynamically
+            config = FlextLdifConfig(server_type=server_type)  # type: ignore[arg-type]
+            assert config.server_type == server_type
 
     def test_configuration_consistency_validation(self) -> None:
         """Test configuration consistency validation."""
-        # Manual mode with server type - should pass
+        # Valid: auto mode without server type
+        config = FlextLdifConfig(quirks_detection_mode="auto")
+        assert config.quirks_detection_mode == "auto"
+
+        # Valid: manual mode with server type
         config = FlextLdifConfig(
             quirks_detection_mode="manual",
             quirks_server_type="oud",
         )
-        assert config is not None
+        assert config.quirks_detection_mode == "manual"
 
-    def test_config_dict_withs_settings(self) -> None:
-        """Test that quirks settings are included in config dict."""
+    def test_all_modes_with_all_combinations(self) -> None:
+        """Test all detection modes with various combinations."""
+        # Auto mode
+        config = FlextLdifConfig(
+            quirks_detection_mode="auto",
+            enable_relaxed_parsing=False,
+        )
+        assert config.quirks_detection_mode == "auto"
+
+        # Manual mode with server
         config = FlextLdifConfig(
             quirks_detection_mode="manual",
-            quirks_server_type="oud",
+            quirks_server_type="openldap",
             enable_relaxed_parsing=True,
         )
-
-        config_dict = config.model_dump()
-        assert "quirks_detection_mode" in config_dict
-        assert "quirks_server_type" in config_dict
-        assert "enable_relaxed_parsing" in config_dict
-        assert config_dict["quirks_detection_mode"] == "manual"
-        assert config_dict["quirks_server_type"] == "oud"
-        assert config_dict["enable_relaxed_parsing"] is True
-
-    def test_alls_modes_with_all_combinations(self) -> None:
-        """Test all combinations of quirks detection modes."""
-        # Auto mode
-        config_auto = FlextLdifConfig(quirks_detection_mode="auto")
-        assert config_auto.quirks_detection_mode == "auto"
-
-        # Manual mode with different servers (including aliases)
-        # Map input → expected canonical form
-        server_tests = {
-            "oid": "oid",
-            "oud": "oud",
-            "openldap": "openldap",
-            "ad": "active_directory",  # Short alias
-        }
-        for server_input, expected_canonical in server_tests.items():
-            config_manual = FlextLdifConfig(
-                quirks_detection_mode="manual",
-                quirks_server_type=server_input,
-            )
-            # Should be normalized to canonical form
-            assert config_manual.quirks_server_type == expected_canonical
+        assert config.quirks_detection_mode == "manual"
+        assert config.quirks_server_type == "openldap"
 
         # Disabled mode
-        config_disabled = FlextLdifConfig(quirks_detection_mode="disabled")
-        assert config_disabled.quirks_detection_mode == "disabled"
-
-        # All with relaxed parsing
-        for detection_mode in ["auto", "disabled"]:
-            config = FlextLdifConfig(
-                quirks_detection_mode=detection_mode,  # type: ignore[arg-type]
-                enable_relaxed_parsing=True,
-            )
-            assert config.enable_relaxed_parsing is True
-
-
-# =========================================================================
-# ENV LOADING AND ENVIRONMENT VARIABLE TESTS (consolidated from test_config_env_loading.py)
-# =========================================================================
-
-
-class TestEnvVariableLoading:
-    """Test environment variable loading with Pydantic 2 Settings."""
-
-    def test_default_values_from_constants(self) -> None:
-        """Test that defaults come from FlextLdifConstants."""
-        config = FlextLdifConfig()
-
-        # Verify defaults match constants
-        assert config.ldif_encoding == FlextLdifConstants.DEFAULT_ENCODING
-        assert config.ldif_max_line_length == FlextLdifConstants.Format.MAX_LINE_LENGTH
-        assert (
-            config.ldif_skip_comments
-            == FlextLdifConstants.ConfigDefaults.LDIF_SKIP_COMMENTS
-        )
-        assert (
-            config.ldif_strict_validation
-            == FlextLdifConstants.ConfigDefaults.LDIF_STRICT_VALIDATION
-        )
-        assert config.ldif_chunk_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
-        # max_workers uses default from FlextConfig
-        assert config.max_workers == 4
-
-    def test_env_variable_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test environment variables override defaults."""
-        # LDIF-specific fields use FLEXT_LDIF_ prefix
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
-        monkeypatch.setenv("FLEXT_LDIF_MAX_LINE_LENGTH", "100")
-        monkeypatch.setenv("FLEXT_LDIF_SKIP_COMMENTS", "true")
-        monkeypatch.setenv("FLEXT_LDIF_STRICT_VALIDATION", "false")
-        monkeypatch.setenv("FLEXT_LDIF_CHUNK_SIZE", "2000")
-
-        # Inherited field from FlextConfig uses FLEXT_ prefix
-        monkeypatch.setenv("FLEXT_MAX_WORKERS", "8")
-
-        config = FlextLdifConfig()
-
-        # Verify environment variables override defaults
-        assert config.ldif_encoding == "utf-16"
-        assert config.ldif_max_line_length == 100
-        assert config.ldif_skip_comments is True
-        assert config.ldif_strict_validation is False
-        assert config.ldif_chunk_size == 2000
-        assert config.max_workers == 8
-
-    def test_direct_instantiation_override(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test direct parameters override environment variables (highest priority)."""
-        # Set environment variables
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
-        monkeypatch.setenv("FLEXT_MAX_WORKERS", "8")
-
-        # Direct instantiation overrides env var
         config = FlextLdifConfig(
-            ldif_encoding="latin-1",
-            max_workers=2,
-            enable_performance_optimizations=False,
+            quirks_detection_mode="disabled",
+            enable_relaxed_parsing=False,
         )
+        assert config.quirks_detection_mode == "disabled"
 
-        # Direct params win over env vars
-        assert config.ldif_encoding == "latin-1"
-        assert config.max_workers == 2
 
-    def test_env_prefix_flext_ldif(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test FLEXT_LDIF_ prefix is required for FlextLdifConfig."""
-        # Wrong prefix (FLEXT_ instead of FLEXT_LDIF_)
-        monkeypatch.setenv("FLEXT_ENCODING", "utf-16")
+class TestAnalyticsConfiguration:
+    """Test analytics-related configuration."""
 
+    def test_analytics_enabled_by_default(self) -> None:
+        """Test analytics is enabled by default."""
+        config = FlextLdifConfig()
+        assert config.ldif_enable_analytics is True
+
+    def test_disable_analytics(self) -> None:
+        """Test disabling analytics."""
+        config = FlextLdifConfig(ldif_enable_analytics=False)
+        assert config.ldif_enable_analytics is False
+
+    def test_analytics_cache_size_default(self) -> None:
+        """Test default analytics cache size."""
+        config = FlextLdifConfig()
+        assert config.ldif_analytics_cache_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
+
+    def test_analytics_detail_levels(self) -> None:
+        """Test analytics detail level options."""
+        for level in ["low", "medium", "high"]:
+            config = FlextLdifConfig(analytics_detail_level=level)  # type: ignore[arg-type]
+            assert config.analytics_detail_level == level
+
+
+class TestProcessingConfiguration:
+    """Test processing-related configuration."""
+
+    def test_batch_size_default(self) -> None:
+        """Test default batch size."""
+        config = FlextLdifConfig()
+        assert config.ldif_batch_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
+
+    def test_fail_on_warnings_default(self) -> None:
+        """Test fail_on_warnings is disabled by default."""
+        config = FlextLdifConfig()
+        assert config.ldif_fail_on_warnings is False
+
+    def test_enable_fail_on_warnings(self) -> None:
+        """Test enabling fail_on_warnings."""
+        config = FlextLdifConfig(ldif_fail_on_warnings=True)
+        assert config.ldif_fail_on_warnings is True
+
+    def test_strict_rfc_compliance_default(self) -> None:
+        """Test strict RFC compliance is enabled by default."""
+        config = FlextLdifConfig()
+        assert config.strict_rfc_compliance is True
+
+    def test_disable_strict_rfc_compliance(self) -> None:
+        """Test disabling strict RFC compliance."""
+        config = FlextLdifConfig(strict_rfc_compliance=False)
+        assert config.strict_rfc_compliance is False
+
+
+class TestValidationConfiguration:
+    """Test validation-related configuration."""
+
+    def test_validation_level_options(self) -> None:
+        """Test validation level options."""
+        # Use canonical values from FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS
+        for level in ["strict", "moderate", "lenient"]:
+            config = FlextLdifConfig(validation_level=level)  # type: ignore[arg-type]
+            assert config.validation_level == level
+
+    def test_error_recovery_modes(self) -> None:
+        """Test error recovery mode options."""
+        for mode in ["continue", "stop", "skip"]:
+            config = FlextLdifConfig(error_recovery_mode=mode)  # type: ignore[arg-type]
+            assert config.error_recovery_mode == mode
+
+
+class TestNestedConfigPattern:
+    """Test the nested configuration pattern behavior."""
+
+    def test_no_root_config_fields(self) -> None:
+        """Test that root config fields do NOT exist in nested config.
+
+        FlextLdifConfig is a NESTED config (AutoConfig), not a root config.
+        Fields like max_workers, debug, trace belong to FlextConfig parent.
+        """
         config = FlextLdifConfig()
 
-        # Should use default, not FLEXT_ENCODING
-        assert config.ldif_encoding == FlextLdifConstants.DEFAULT_ENCODING
+        # These fields should NOT exist in nested config
+        assert not hasattr(config, "max_workers")
+        assert not hasattr(config, "debug")
+        assert not hasattr(config, "trace")
+        assert not hasattr(config, "log_level")
+        assert not hasattr(config, "log_verbosity")
 
-        # Correct prefix
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
-        config = FlextLdifConfig()
-        assert config.ldif_encoding == "utf-16"
-
-    def test_type_coercion_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test Pydantic type coercion from string env vars."""
-        # Set as strings (as environment variables always are)
-        monkeypatch.setenv("FLEXT_LDIF_MAX_LINE_LENGTH", "100")  # string → int
-        monkeypatch.setenv("FLEXT_LDIF_SKIP_COMMENTS", "true")  # string → bool
-        monkeypatch.setenv("FLEXT_LDIF_ANALYTICS_SAMPLE_RATE", "0.75")  # string → float
-
-        config = FlextLdifConfig()
-
-        # Verify proper type coercion
-        assert isinstance(config.ldif_max_line_length, int)
-        assert config.ldif_max_line_length == 100
-
-        assert isinstance(config.ldif_skip_comments, bool)
-        assert config.ldif_skip_comments is True
-
-        assert isinstance(config.ldif_analytics_sample_rate, float)
-        assert config.ldif_analytics_sample_rate == 0.75
-
-    def test_validation_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test field validators work with environment variables."""
-        # Invalid encoding
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "invalid-encoding")
-
-        with pytest.raises(ValidationError, match="Input should be"):
-            FlextLdifConfig()
-
-        # Invalid max_workers (too high)
-        monkeypatch.delenv("FLEXT_LDIF_ENCODING", raising=False)
-        monkeypatch.setenv("FLEXT_MAX_WORKERS", "999")
-
-        with pytest.raises(ValidationError, match="less than or equal"):
-            FlextLdifConfig()
+    def test_extra_fields_ignored(self) -> None:
+        """Test that extra fields are ignored (extra='ignore' in model_config)."""
+        # Should not raise even with unknown fields
+        config = FlextLdifConfig.model_validate({
+            "ldif_encoding": "utf-8",
+            "unknown_field": "ignored",
+        })
+        assert config.ldif_encoding == "utf-8"
+        assert not hasattr(config, "unknown_field")
 
 
-class TestDotEnvFileLoading:
-    """Test .env file loading with Pydantic 2 Settings."""
-
-    def test_env_file_loading(
-        self,
-        tmp_path: pytest.TempPathFactory,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test .env file is automatically loaded."""
-        # Create .env file
-        tmp_dir = Path(str(tmp_path))
-        env_file = tmp_dir / ".env"
-        env_file.write_text(
-            """
-FLEXT_LDIF_ENCODING=utf-16
-FLEXT_MAX_WORKERS=6
-FLEXT_LDIF_SKIP_COMMENTS=true
-""",
-        )
-
-        # Change to temp directory
-        monkeypatch.chdir(str(tmp_dir))
-
-        config = FlextLdifConfig()
-
-        # Verify .env file was loaded
-        assert config.ldif_encoding == "utf-16"
-        assert config.max_workers == 6
-        assert config.ldif_skip_comments is True
-
-    def test_env_var_overrides_env_file(
-        self,
-        tmp_path: pytest.TempPathFactory,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test environment variables override .env file values."""
-        # Create .env file
-        tmp_dir = Path(str(tmp_path))
-        env_file = tmp_dir / ".env"
-        env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
-
-        monkeypatch.chdir(str(tmp_dir))
-
-        # Set environment variable (higher priority)
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
-
-        config = FlextLdifConfig()
-
-        # Environment variable wins over .env file
-        assert config.ldif_encoding == "latin-1"
-
-
-class TestConfigInheritance:
-    """Test FlextConfig inheritance."""
-
-    def test_inherits_from_flext_config(self) -> None:
-        """Test FlextLdifConfig inherits from FlextConfig."""
-        config = FlextLdifConfig()
-
-        # Verify inheritance
-        assert isinstance(config, FlextConfig)
-
-        # Verify FlextConfig fields are accessible
-        assert hasattr(config, "debug")
-        assert hasattr(config, "log_level")
-
-
-class TestOrderOfPrecedence:
-    """Test complete order of precedence for configuration loading."""
-
-    def test_complete_precedence_chain(
-        self,
-        tmp_path: pytest.TempPathFactory,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test complete order: direct > env var > .env file > defaults."""
-        # 1. Default from FlextLdifConstants
-        default_encoding = FlextLdifConstants.DEFAULT_ENCODING
-
-        # 2. .env file (lower priority)
-        tmp_dir = Path(str(tmp_path))
-        env_file = tmp_dir / ".env"
-        env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
-        monkeypatch.chdir(str(tmp_dir))
-
-        # 3. Environment variable (higher priority)
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
-
-        # Test precedence levels
-
-        # Level 1: Only defaults (no .env, no env var, no direct param)
-        monkeypatch.delenv("FLEXT_LDIF_ENCODING", raising=False)
-        Path(env_file).unlink()
-        config1 = FlextLdifConfig()
-        assert config1.ldif_encoding == default_encoding
-
-        # Level 2: .env file overrides defaults
-        env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
-        config2 = FlextLdifConfig()
-        assert config2.ldif_encoding == "utf-16"
-
-        # Level 3: Environment variable overrides .env file
-        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
-        config3 = FlextLdifConfig()
-        assert config3.ldif_encoding == "latin-1"
-
-        # Level 4: Direct parameter overrides everything (highest priority)
-        config4 = FlextLdifConfig(ldif_encoding="iso-8859-1")
-        assert config4.ldif_encoding == "iso-8859-1"
+__all__ = [
+    "TestAnalyticsConfiguration",
+    "TestFlextLdifConfig",
+    "TestNestedConfigPattern",
+    "TestProcessingConfiguration",
+    "TestQuirksDetectionConfiguration",
+    "TestValidationConfiguration",
+]

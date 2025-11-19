@@ -16,99 +16,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from ldap3 import ALL, Connection, Server
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 
-# LDAP connection details for flext-openldap-test container
-LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "admin123"
-LDAP_BASE_DN = "dc=flext,dc=local"
-
-
-@pytest.fixture(scope="module")
-def ldap_connection(ldap_container: str) -> Generator[Connection]:
-    """Create connection to real LDAP server via Docker fixture.
-
-    Args:
-        ldap_container: Docker LDAP connection string from conftest fixture
-
-    Yields:
-        Connection: ldap3 connection to LDAP server
-
-    """
-    host_port = ldap_container.replace("ldap://", "").replace("ldaps://", "")
-
-    server = Server(f"ldap://{host_port}", get_info=ALL)
-    conn = Connection(
-        server,
-        user=LDAP_ADMIN_DN,
-        password=LDAP_ADMIN_PASSWORD,
-    )
-
-    try:
-        if not conn.bind():
-            pytest.skip(f"LDAP server not available at {host_port}")
-    except Exception as e:
-        pytest.skip(f"LDAP server not available at {host_port}: {e}")
-
-    yield conn
-    conn.unbind()
-
-
-@pytest.fixture
-def clean_test_ou(ldap_connection: Connection) -> Generator[str]:
-    """Create and clean up test OU."""
-    test_ou_dn = f"ou=FlextLdifTests,{LDAP_BASE_DN}"
-
-    try:
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-    try:
-        ldap_connection.add(
-            test_ou_dn,
-            ["organizationalUnit"],
-            {"ou": "FlextLdifTests"},
-        )
-    except Exception:
-        pass
-
-    yield test_ou_dn
-
-    try:
-        found = ldap_connection.search(
-            test_ou_dn,
-            "(objectClass=*)",
-            search_scope="SUBTREE",
-            attributes=["*"],
-        )
-        if found:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
-                try:
-                    ldap_connection.delete(dn)
-                except Exception:
-                    pass
-    except Exception:
-        pass
+# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
+# They use unique_dn_suffix for isolation and indepotency in parallel execution
 
 
 @pytest.fixture
@@ -128,14 +45,17 @@ class TestRealLdapExport:
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Export single LDAP entry to LDIF."""
-        person_dn = f"cn=Test User,{clean_test_ou}"
+        # Use isolated username for parallel execution
+        unique_username = make_test_username("TestUser")
+        person_dn = f"cn={unique_username},{clean_test_ou}"
         ldap_connection.add(
             person_dn,
             ["person", "inetOrgPerson"],
             {
-                "cn": "Test User",
+                "cn": unique_username,
                 "sn": "User",
                 "mail": "test@example.com",
                 "telephoneNumber": "+1-555-1234",
@@ -144,7 +64,7 @@ class TestRealLdapExport:
 
         ldap_connection.search(
             clean_test_ou,
-            "(cn=Test User)",
+            f"(cn={unique_username})",
             attributes=["*"],
         )
 
@@ -186,8 +106,8 @@ class TestRealLdapExport:
         assert write_result.is_success
         ldif_output = write_result.unwrap()
 
-        assert "dn: cn=Test User" in ldif_output
-        assert "cn: Test User" in ldif_output
+        assert f"dn: cn={unique_username}" in ldif_output
+        assert f"cn: {unique_username}" in ldif_output
         assert "sn: User" in ldif_output
         assert "mail: test@example.com" in ldif_output
 
@@ -196,15 +116,19 @@ class TestRealLdapExport:
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Export multiple LDAP entries to LDIF."""
-        for i in range(5):
-            person_dn = f"cn=User{i},{clean_test_ou}"
+        # Use isolated usernames for parallel execution
+        unique_usernames = [make_test_username(f"User{i}") for i in range(5)]
+        
+        for i, unique_username in enumerate(unique_usernames):
+            person_dn = f"cn={unique_username},{clean_test_ou}"
             ldap_connection.add(
                 person_dn,
                 ["person", "inetOrgPerson"],
                 {
-                    "cn": f"User{i}",
+                    "cn": unique_username,
                     "sn": f"Surname{i}",
                     "mail": f"user{i}@example.com",
                 },
@@ -255,35 +179,39 @@ class TestRealLdapExport:
         assert write_result.is_success
         ldif_output = write_result.unwrap()
 
-        for i in range(5):
-            assert f"cn: User{i}" in ldif_output
-            assert f"user{i}@example.com" in ldif_output
+        for unique_username in unique_usernames:
+            assert f"cn: {unique_username}" in ldif_output
 
     def test_export_hierarchical_structure(
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Export hierarchical LDAP structure to LDIF."""
+        # Use isolated usernames for parallel execution
+        unique_person_name = make_test_username("Alice")
+        unique_group_name = make_test_username("Admins")
+        
         groups_ou_dn = f"ou=Groups,{clean_test_ou}"
         people_ou_dn = f"ou=People,{clean_test_ou}"
 
         ldap_connection.add(groups_ou_dn, ["organizationalUnit"], {"ou": "Groups"})
         ldap_connection.add(people_ou_dn, ["organizationalUnit"], {"ou": "People"})
 
-        person_dn = f"cn=Alice,{people_ou_dn}"
+        person_dn = f"cn={unique_person_name},{people_ou_dn}"
         ldap_connection.add(
             person_dn,
             ["person", "inetOrgPerson"],
-            {"cn": "Alice", "sn": "Johnson"},
+            {"cn": unique_person_name, "sn": "Johnson"},
         )
 
-        group_dn = f"cn=Admins,{groups_ou_dn}"
+        group_dn = f"cn={unique_group_name},{groups_ou_dn}"
         ldap_connection.add(
             group_dn,
             ["groupOfNames"],
-            {"cn": "Admins", "member": person_dn},
+            {"cn": unique_group_name, "member": person_dn},
         )
 
         ldap_connection.search(
@@ -332,8 +260,8 @@ class TestRealLdapExport:
 
         assert "ou=Groups" in ldif_output
         assert "ou=People" in ldif_output
-        assert "cn=Alice" in ldif_output
-        assert "cn=Admins" in ldif_output
+        assert f"cn={unique_person_name}" in ldif_output
+        assert f"cn={unique_group_name}" in ldif_output
 
     def test_export_to_file(
         self,
@@ -341,13 +269,16 @@ class TestRealLdapExport:
         clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Export LDAP data to LDIF file."""
-        person_dn = f"cn=File Export,{clean_test_ou}"
+        # Use isolated username for parallel execution
+        unique_username = make_test_username("FileExport")
+        person_dn = f"cn={unique_username},{clean_test_ou}"
         ldap_connection.add(
             person_dn,
             ["person", "inetOrgPerson"],
-            {"cn": "File Export", "sn": "Test", "mail": "export@example.com"},
+            {"cn": unique_username, "sn": "Test", "mail": "export@example.com"},
         )
 
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
@@ -378,7 +309,7 @@ class TestRealLdapExport:
 
         assert output_file.exists()
         content = output_file.read_text()
-        assert "cn: File Export" in content
+        assert f"cn: {unique_username}" in content
 
 
 __all__ = [

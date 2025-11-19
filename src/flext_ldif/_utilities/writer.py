@@ -7,17 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-import logging
 from pathlib import Path
-from typing import Any
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 from jinja2 import Environment
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilitiesWriter:
@@ -199,6 +197,9 @@ class FlextLdifUtilitiesWriter:
             rendered = template.render(**context)
             return FlextResult[str].ok(rendered)
         except Exception as e:
+            logger.exception(
+                "Template rendering failed",
+            )
             return FlextResult[str].fail(f"Template rendering failed: {e}")
 
     @staticmethod
@@ -228,14 +229,18 @@ class FlextLdifUtilitiesWriter:
             # Create parent directories if they don't exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding=encoding)
-            stats = {
+            stats: dict[str, object] = {
                 "bytes_written": len(content.encode(encoding)),
                 "path": str(file_path),
                 "encoding": encoding,
             }
-            return FlextResult[dict[str, Any]].ok(stats)
+            return FlextResult[dict[str, object]].ok(stats)
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"File write failed: {e}")
+            logger.exception(
+                "File write failed",
+                file_path=str(file_path),
+            )
+            return FlextResult[dict[str, object]].fail(f"File write failed: {e}")
 
     @staticmethod
     def add_attribute_matching_rules(

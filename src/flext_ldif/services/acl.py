@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, override
 
-from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -50,7 +50,6 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
 
     """
 
-    _logger: FlextLogger
     _config: FlextLdifConfig
     _registry: FlextLdifServer
 
@@ -64,8 +63,20 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
 
         """
         super().__init__()
-        self._config = config if config is not None else FlextLdifConfig()
-        self._logger = FlextLogger(__name__)
+        if config is not None:
+            self._config = config
+        else:
+            # Use new config pattern with automatic namespaces via FlextMixins
+            # FlextLdifConfig is imported at top-level (line 28) to ensure @FlextConfig.auto_register("ldif") decorator executes
+            # Access via super().config (from FlextMixins) -> namespace
+            # NOTE: Must use super().config, not self.config, to get FlextConfig instance
+            # which has the .ldif namespace attribute
+            global_config = super().config  # FlextConfig instance from FlextMixins
+            ldif_namespace = getattr(global_config, "ldif", None)
+            if ldif_namespace is None:
+                msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
+                raise RuntimeError(msg)
+            self._config = cast("FlextLdifConfig", ldif_namespace)
         self._registry = FlextLdifServer()
 
     def extract_acls_from_entry(
@@ -78,13 +89,22 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
         Delegates entirely to quirks - no fallback logic.
 
         Args:
-            entry: LDIF entry to extract ACLs from (required, not optional)
+            entry: LDIF entry to extract ACLs from (guaranteed non-None by type)
             server_type: Server type for ACL detection (required, not optional)
 
         Returns:
             FlextResult containing composed AclResponse with extracted ACLs and statistics
 
+        Note:
+            - Uses FlextResult for error handling - no None returns
+
         """
+        # Defensive check for None entry
+        if entry is None:
+            return FlextResult[FlextLdifModels.AclResponse].fail(
+                "Entry is None - cannot extract ACLs",
+            )
+
         # Get ACL attribute name for this server type (from quirk)
         acl_attribute_result = self._get_acl_attribute_for_server(server_type)
 
@@ -109,10 +129,7 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                 ),
             )
 
-        # Validate entry is not None
-        if entry is None:
-            return FlextResult[FlextLdifModels.AclResponse].fail("Entry cannot be None")
-
+        # Type annotation guarantees entry is not None - no defensive check needed
         acl_values: list[str] = entry.get_attribute_values(acl_attribute)
 
         if not acl_values:
@@ -144,44 +161,29 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                     if len(acl_value) > max_acl_log_length
                     else acl_value
                 )
-                self._logger.error(
-                    "FAILED to parse ACL value",
+                self.logger.warning(
+                    "Failed to parse ACL value",
                     acl_index=idx + 1,
                     total_acl_values=total_acl_values,
-                    acl_preview=truncated_acl,
-                    entry_dn=entry.dn.value if entry.dn else "Unknown",
+                    server_type=server_type,
+                    entry_dn=entry.dn.value if entry.dn else "unknown",
                     error=str(parse_result.error),
-                    error_type=type(parse_result.error).__name__
-                    if parse_result.error
-                    else None,
                 )
                 continue
-            acls.append(parse_result.value)
 
-        # Log summary if failures occurred
-        if failed_acls > 0:
-            self._logger.error(
-                "ACL extraction completed with failures",
-                total_acl_values=total_acl_values,
-                successful_acls=len(acls),
-                failed_acls=failed_acls,
-                failure_rate=f"{failed_acls / total_acl_values * 100:.1f}%"
-                if total_acl_values > 0
-                else "0%",
-            )
+            acls.append(parse_result.unwrap())
 
-        # Create response with statistics
-        response = FlextLdifModels.AclResponse(
-            acls=acls,
-            statistics=FlextLdifModels.Statistics(
-                processed_entries=1,
-                acls_extracted=len(acls),
-                acls_failed=failed_acls,
-                acl_attribute_name=acl_attribute,
+        return FlextResult[FlextLdifModels.AclResponse].ok(
+            FlextLdifModels.AclResponse(
+                acls=acls,
+                statistics=FlextLdifModels.Statistics(
+                    processed_entries=1,
+                    acls_extracted=len(acls),
+                    acl_attribute_name=acl_attribute,
+                    failed_acls=failed_acls,
+                ),
             ),
         )
-
-        return FlextResult[FlextLdifModels.AclResponse].ok(response)
 
     def _get_acl_attribute_for_server(
         self,
@@ -217,8 +219,10 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
 
         except (AttributeError, TypeError, ValueError) as e:
             # Error occurred - return failure
-            self._logger.exception(
-                f"Failed to get ACL attribute for server type {server_type}",
+            self.logger.exception(
+                "Failed to get ACL attribute",
+                server_type=server_type,
+                error=str(e),
             )
             return FlextResult[str].fail(
                 f"Error retrieving ACL attribute for {server_type}: {e}",
@@ -294,6 +298,12 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                     return FlextResult[FlextLdifModels.Acl].fail(
                         f"ACL parse returned unexpected type: {type(parsed_acl).__name__}",
                     )
+                self.logger.warning(
+                    "Failed to parse ACL",
+                    server_type=server_type,
+                    error=str(parse_result.error),
+                    acl_preview=acl_string[:50] if len(acl_string) > 50 else acl_string,
+                )
                 return FlextResult[FlextLdifModels.Acl].fail(
                     parse_result.error or "Unknown error",
                 )

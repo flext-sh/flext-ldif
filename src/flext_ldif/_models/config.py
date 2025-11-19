@@ -368,6 +368,15 @@ class FlextLdifModelsConfig:
             default=True,
             description="If True, folds lines longer than line_width according to RFC 2849.",
         )
+        restore_original_format: bool = Field(
+            default=False,
+            description=(
+                "If True, restores original LDIF format from metadata for perfect round-trip. "
+                "When enabled, uses entry.metadata.original_strings['entry_original_ldif'] "
+                "to write the exact original format, preserving all minimal differences "
+                "(spacing, case, punctuation, quotes, etc.). CRITICAL for zero data loss."
+            ),
+        )
         write_empty_values: bool = Field(
             default=True,
             description="If True, writes attributes with empty values. If False, omits them.",
@@ -712,13 +721,18 @@ class FlextLdifModelsConfig:
                 ConfigInfo with values extracted from config
 
             """
+            # Get global config for root-level settings
+            from flext_core import FlextConfig
+
+            global_config = FlextConfig.get_global_instance()
+
             return cls(
                 ldif_encoding=config.ldif_encoding,
                 strict_rfc_compliance=config.strict_rfc_compliance,
                 ldif_chunk_size=config.ldif_chunk_size,
-                max_workers=config.max_workers,
-                debug=config.debug,
-                log_level=config.log_level,
+                max_workers=global_config.max_workers,
+                debug=global_config.debug,
+                log_level=global_config.log_level,
                 quirks_detection_mode=config.quirks_detection_mode,
                 quirks_server_type=config.quirks_server_type,
                 enable_relaxed_parsing=config.enable_relaxed_parsing,

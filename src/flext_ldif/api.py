@@ -125,8 +125,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
     """
 
-    # Private attributes (initialized in __init__ and model_post_init)
+    # Private attributes (initialized in model_post_init)
     # Using PrivateAttr() for Pydantic v2 compatibility
+    # Note: These are always initialized in model_post_init, but type checker needs Optional for PrivateAttr
     _dispatcher: FlextDispatcher | None = PrivateAttr(default=None)
     _registry: FlextRegistry | None = PrivateAttr(default=None)
     _logger: FlextLogger | None = PrivateAttr(default=None)
@@ -134,7 +135,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     _acl_service: FlextLdifAcl | None = PrivateAttr(default=None)
     _writer_service: FlextLdifWriter | None = PrivateAttr(default=None)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
-    # New focused services for SRP compliance
+    # New focused services for SRP compliance (always initialized in model_post_init)
     _entries_service: FlextLdifEntries | None = PrivateAttr(default=None)
     _analysis_service: FlextLdifAnalysis | None = PrivateAttr(default=None)
     _processing_service: FlextLdifProcessing | None = PrivateAttr(default=None)
@@ -145,13 +146,14 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     _context: dict[str, object] = PrivateAttr(default_factory=dict)
     _handlers: dict[str, object] = PrivateAttr(default_factory=dict)
     _init_config_value: FlextLdifConfig | None = PrivateAttr(default=None)
-    _initialized: bool = PrivateAttr(default=False)
 
     # Direct class access for builders and services (no wrappers)
     AclService: ClassVar[type[FlextLdifAcl]] = FlextLdifAcl
 
     # Singleton instance storage
     _instance: ClassVar[FlextLdif | None] = None
+    # Class-level initialization guard to prevent redundant initialization
+    _class_initialized: ClassVar[bool] = False
 
     @classmethod
     def get_instance(cls, config: FlextLdifConfig | None = None) -> FlextLdif:
@@ -191,9 +193,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         WARNING: This method is intended for testing purposes only.
         Do not use in production code as it breaks the singleton pattern.
 
-        Clears the singleton instance, allowing a fresh instance to be created
-        on the next call to get_instance(). This ensures test isolation and
-        idempotency by preventing state leakage between tests.
+        Clears the singleton instance and initialization flag, allowing a fresh
+        instance to be created on the next call to get_instance(). This ensures
+        test isolation and idempotency by preventing state leakage between tests.
 
         Example:
             # In test fixture
@@ -202,6 +204,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         cls._instance = None
+        cls._class_initialized = False
 
     def __init__(self, **kwargs: object) -> None:
         """Initialize LDIF facade - the sole entry point for all LDIF operations.
@@ -242,12 +245,16 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         - Default quirk registration for all supported LDAP servers
         - Context and handler initialization
 
-        Pydantic v2 calls this method exactly once per instance, so no guard is needed.
+        Uses class-level initialization guard to prevent redundant initialization
+        across ALL instances (singleton pattern).
 
         Args:
             __context: Pydantic's validation context dictionary or None (unused).
 
         """
+        # Initialize services for this instance (each instance needs its own services)
+        # Note: We don't use class-level guard here because each instance needs its own services
+
         # Initialize dispatcher, registry, and logger FIRST
         # These are needed by _register_components() below
         dispatcher = FlextDispatcher()
@@ -255,9 +262,24 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         self._registry = FlextRegistry(dispatcher=dispatcher)
         self._logger = FlextLogger(__name__)
 
-        # Initialize private attributes
+        # Initialize private attributes using new config with automatic namespaces
+        # FlextLdifConfig is imported at top-level (line 29) to ensure @FlextConfig.auto_register("ldif") decorator executes
+
         init_config = getattr(self, "_init_config_value", None)
-        config = init_config if init_config is not None else FlextLdifConfig()
+        if init_config is not None:
+            config = init_config
+        else:
+            # Use new config pattern with automatic namespaces via FlextMixins
+            # super().config (from FlextMixins) returns FlextConfig.get_global_instance()
+            # Access namespace via .ldif attribute (registered by @auto_register decorator)
+            # NOTE: Must use super().config, not self.config, because self.config is overridden
+            # to return FlextLdifConfig, but we need FlextConfig here to access .ldif namespace
+            global_config = super().config  # FlextConfig instance from FlextMixins
+            ldif_namespace = getattr(global_config, "ldif", None)
+            if ldif_namespace is None:
+                msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
+                raise RuntimeError(msg)
+            config = cast("FlextLdifConfig", ldif_namespace)
         self._config = config
         self._context = {}
         self._handlers = {}
@@ -266,6 +288,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         self._parser_service = FlextLdifParser(config=config)
         # Note: FlextLdifAcl no longer requires server_type parameter
         self._acl_service = FlextLdifAcl()
+        # Initialize writer service
+        self._writer_service = FlextLdifWriter()
 
         # Initialize new focused services for SRP compliance
         self._entries_service = FlextLdifEntries()
@@ -278,8 +302,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         # Register LDIF components with FlextRegistry
         self._register_components()
 
-        # Log config initialization
-        if self.logger and self._config:
+        # Mark this instance as initialized
+        # Note: Each instance initializes its own services
+
+        # Log config initialization ONCE (only on first initialization)
+        # _config is guaranteed to be set above, but check logger availability
+        if self.logger is not None:
             self.logger.debug(
                 "FlextLdif facade initialized",
                 config_available=self._config is not None,
@@ -309,7 +337,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """Register core infrastructure services."""
         # Register quirk registry (check if already exists - container is global)
         if not container.has("quirk_registry"):
-            quirk_registry = FlextLdifServer()
+            # Use singleton to avoid creating multiple instances
+            quirk_registry = FlextLdifServer.get_global_instance()
             result = container.register_service("quirk_registry", quirk_registry)
             if result.is_failure:
                 error_msg = f"Failed to register quirk_registry: {result.error}"
@@ -461,30 +490,10 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             msg = f"Failed to register LDIF components: {e}"
             raise RuntimeError(msg) from e
 
-        # Log initialization with structured context
+        # Log initialization
         if self._logger is not None:
-            self._logger.info(
-                "FlextLdif initialized with complete Flext ecosystem integration",
-                service_type="LDIF Processing Facade",
-                correlation_id=getattr(self.context, "correlation_id", None),
-                flext_components=[
-                    "FlextContainer",
-                    "FlextLogger",
-                    "FlextContext",
-                    "FlextDispatcher",
-                    "FlextRegistry",
-                    "FlextExceptions",
-                    "FlextProtocols",
-                ],
-                ldif_features=[
-                    "rfc_2849_parsing",
-                    "rfc_4512_compliance",
-                    "servers",
-                    "generic_migration",
-                    "schema_validation",
-                    "acl_processing",
-                    "entry_building",
-                ],
+            self._logger.debug(
+                "FlextLdif initialized",
             )
 
     @override
@@ -870,9 +879,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing DN as string
 
         """
-        if self._entries_service is None:
+        # _entries_service is always initialized in model_post_init
+        # Type narrowing: _entries_service is never None after model_post_init
+        entries_service = self._entries_service
+        if entries_service is None:
             return FlextResult[str].fail("Entries service not initialized")
-        return self._entries_service.get_entry_dn(entry)
+        return entries_service.get_entry_dn(entry)
 
     def get_entry_attributes(
         self,
@@ -890,11 +902,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             str | list[str] values matching FlextLdifTypes definition.
 
         """
-        if self._entries_service is None:
+        # _entries_service is always initialized in model_post_init
+        entries_service = self._entries_service
+        if entries_service is None:
             return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
                 "Entries service not initialized",
             )
-        return self._entries_service.get_entry_attributes(entry)
+        return entries_service.get_entry_attributes(entry)
 
     def create_entry(
         self,
@@ -915,11 +929,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing new FlextLdifModels.Entry
 
         """
-        if self._entries_service is None:
+        # _entries_service is always initialized in model_post_init
+        entries_service = self._entries_service
+        if entries_service is None:
             return FlextResult[FlextLdifModels.Entry].fail(
                 "Entries service not initialized",
             )
-        return self._entries_service.create_entry(dn, attributes, objectclasses)
+        return entries_service.create_entry(dn, attributes, objectclasses)
 
     def get_entry_objectclasses(
         self,
@@ -936,9 +952,11 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing list of objectClass values
 
         """
-        if self._entries_service is None:
+        # _entries_service is always initialized in model_post_init
+        entries_service = self._entries_service
+        if entries_service is None:
             return FlextResult[list[str]].fail("Entries service not initialized")
-        return self._entries_service.get_entry_objectclasses(entry)
+        return entries_service.get_entry_objectclasses(entry)
 
     def get_attribute_values(
         self,
@@ -955,9 +973,11 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing list of attribute values as strings.
 
         """
-        if self._entries_service is None:
+        # _entries_service is always initialized in model_post_init
+        entries_service = self._entries_service
+        if entries_service is None:
             return FlextResult[list[str]].fail("Entries service not initialized")
-        return self._entries_service.get_attribute_values(attribute)
+        return entries_service.get_attribute_values(attribute)
 
     def _normalize_migration_config(
         self,
@@ -1946,7 +1966,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         return FlextLdifModels
 
     @property
-    def config(self) -> FlextLdifConfig:
+    @override
+    def config(self) -> FlextLdifConfig:  # type: ignore[override]
         """Access to LDIF configuration instance with lazy initialization.
 
         Returns:
@@ -1956,11 +1977,27 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             encoding = ldif.config.ldif_encoding
             max_workers = ldif.config.max_workers
 
+        Note:
+            This overrides FlextMixins.config to return FlextLdifConfig instead of FlextConfig.
+            This is intentional as FlextLdifConfig provides LDIF-specific configuration.
+
         """
         if self._config is None:
-            self._config = (
-                getattr(self, "_init_config_value", None) or FlextLdifConfig()
-            )
+            init_config = getattr(self, "_init_config_value", None)
+            if init_config is not None:
+                self._config = init_config
+            else:
+                # Use new config pattern with automatic namespaces via FlextMixins
+                # FlextLdifConfig is imported at top-level (line 29) to ensure @FlextConfig.auto_register("ldif") decorator executes
+                # self.config (from FlextMixins) returns FlextConfig.get_global_instance()
+                # Access namespace via .ldif attribute (registered by @auto_register decorator)
+                # Use getattr to access dynamic namespace (pyrefly doesn't understand __getattr__)
+                global_config = super().config  # FlextConfig instance from FlextMixins
+                ldif_namespace = getattr(global_config, "ldif", None)
+                if ldif_namespace is None:
+                    msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
+                    raise RuntimeError(msg)
+                self._config = cast("FlextLdifConfig", ldif_namespace)
         # Type narrowing: _config cannot be None after initialization above
         if self._config is None:
             msg = "Configuration initialization failed"

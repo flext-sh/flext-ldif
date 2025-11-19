@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import overload, override
+from typing import overload
 
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
@@ -178,9 +178,14 @@ class FlextLdifModelsResults:
             """Return the number of entries (makes EntryResult behave like a list)."""
             return len(self.get_all_entries())
 
-        @override
-        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:
-            """Iterate over entries (makes EntryResult behave like a list)."""
+        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:  # type: ignore[override]
+            """Iterate over entries (makes EntryResult behave like a list).
+            
+            Note:
+                Type ignore is intentional - we override BaseModel.__iter__ with
+                different return type for list-like behavior.
+
+            """
             return iter(self.get_all_entries())
 
         @overload
@@ -898,7 +903,7 @@ class FlextLdifModelsResults:
             }
 
         @computed_field
-        def schema_summary(self) -> dict[str, int | str]:
+        def schema_summary(self) -> dict[str, object]:
             """Summary of schema contents.
 
             Returns:

@@ -379,14 +379,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             self,
             attr_definition: str,
             *,
-            case_insensitive: bool = False,
+            _case_insensitive: bool = False,
             allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute definition and add AD metadata.
 
             Args:
                 attr_definition: Attribute definition string
-                case_insensitive: Whether to use case-insensitive pattern matching
+                _case_insensitive: Whether to use case-insensitive pattern matching
                 allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
@@ -395,7 +395,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """
             result = super()._parse_attribute(
                 attr_definition,
-                case_insensitive=case_insensitive,
+                _case_insensitive=_case_insensitive,
                 allow_syntax_quotes=allow_syntax_quotes,
             )
             if result.is_success:

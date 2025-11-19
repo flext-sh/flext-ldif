@@ -28,13 +28,13 @@ class FlextLdifUtilitiesValidation:
 
     @staticmethod
     def validate_encoding(
-        value: str,
+        value: object,
         allowed_encodings: list[str],
     ) -> tuple[bool, list[str]]:
         """Validate string encoding.
 
         Args:
-            value: String value to validate
+            value: Value to validate (must be string)
             allowed_encodings: List of allowed encodings (e.g., ["utf-8", "iso-8859-1"])
 
         Returns:
@@ -66,11 +66,11 @@ class FlextLdifUtilitiesValidation:
         return (len(violations) == 0, violations)
 
     @staticmethod
-    def validate_base64(value: str) -> tuple[bool, list[str]]:
+    def validate_base64(value: object) -> tuple[bool, list[str]]:
         """Validate base64 format.
 
         Args:
-            value: Base64 string to validate
+            value: Value to validate (must be string)
 
         Returns:
             (is_valid, violations) tuple
@@ -110,11 +110,11 @@ class FlextLdifUtilitiesValidation:
         return (len(violations) == 0, violations)
 
     @staticmethod
-    def validate_email(value: str) -> bool:
+    def validate_email(value: object) -> bool:
         """Validate email format (RFC 5321 simplified).
 
         Args:
-            value: Email address to validate
+            value: Value to validate (must be string)
 
         Returns:
             True if valid email format

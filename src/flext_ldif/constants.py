@@ -257,6 +257,9 @@ class FlextLdifConstants(FlextConstants):
         MAX_CHUNK_SIZE: Final[int] = 10000  # Maximum chunk size
         PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000  # Minimum for performance
 
+        # Failure rate thresholds
+        HIGH_FAILURE_RATE_THRESHOLD: Final[float] = 50.0  # Percentage threshold for high severity
+
     # Entry limits
     MIN_ENTRIES: Final[int] = 1000
     MAX_ENTRIES_ABSOLUTE: Final[int] = 10000000  # 10 million entry hard limit
@@ -1494,8 +1497,54 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_ORIGINAL_FORMAT: Final[str] = (
             "schema_original_format"  # Original schema string format (always preserve)
         )
+        SCHEMA_ORIGINAL_STRING_COMPLETE: Final[str] = (
+            "schema_original_string_complete"  # Complete original string with ALL formatting preserved
+        )
         SCHEMA_SOURCE_SERVER: Final[str] = (
             "schema_source_server"  # Server that parsed this schema (oid, oud, openldap, etc.)
+        )
+        # === SCHEMA FORMATTING DETAILS (Zero Data Loss) ===
+        SCHEMA_SYNTAX_QUOTES: Final[str] = (
+            "schema_syntax_quotes"  # Whether SYNTAX had quotes (OID: True, OUD/RFC: False)
+        )
+        SCHEMA_SYNTAX_SPACING: Final[str] = (
+            "schema_syntax_spacing"  # Spaces after SYNTAX keyword (OID: '  ', OUD: '', RFC: ' ')
+        )
+        SCHEMA_SYNTAX_SPACING_BEFORE: Final[str] = (
+            "schema_syntax_spacing_before"  # Spaces before SYNTAX keyword
+        )
+        SCHEMA_ATTRIBUTE_CASE: Final[str] = (
+            "schema_attribute_case"  # Case of attributeTypes keyword (attributetypes vs attributeTypes)
+        )
+        SCHEMA_OBJECTCLASS_CASE: Final[str] = (
+            "schema_objectclass_case"  # Case of objectClasses keyword (objectclasses vs objectClasses)
+        )
+        SCHEMA_NAME_FORMAT: Final[str] = (
+            "schema_name_format"  # Format: 'single' (NAME 'uid') vs 'multiple' (NAME ( 'uid' 'userid' ))
+        )
+        SCHEMA_NAME_VALUES: Final[str] = (
+            "schema_name_values"  # Original name values if multiple (['uid', 'userid'])
+        )
+        SCHEMA_X_ORIGIN_PRESENCE: Final[str] = (
+            "schema_x_origin_presence"  # Whether X-ORIGIN was present in original
+        )
+        SCHEMA_X_ORIGIN_VALUE: Final[str] = (
+            "schema_x_origin_value"  # Original X-ORIGIN value if present
+        )
+        SCHEMA_OBSOLETE_PRESENCE: Final[str] = (
+            "schema_obsolete_presence"  # Whether OBSOLETE was present
+        )
+        SCHEMA_OBSOLETE_POSITION: Final[str] = (
+            "schema_obsolete_position"  # Position of OBSOLETE in definition (for order preservation)
+        )
+        SCHEMA_FIELD_ORDER: Final[str] = (
+            "schema_field_order"  # Original field order in definition
+        )
+        SCHEMA_SPACING_BETWEEN_FIELDS: Final[str] = (
+            "schema_spacing_between_fields"  # Spaces between fields (dict of field pairs)
+        )
+        SCHEMA_TRAILING_SPACES: Final[str] = (
+            "schema_trailing_spaces"  # Trailing spaces after closing paren
         )
         SCHEMA_SOURCE_SYNTAX_OID: Final[str] = (
             "schema_source_syntax_oid"  # Original syntax OID from source server

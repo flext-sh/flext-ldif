@@ -12,12 +12,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
+
+if TYPE_CHECKING:
+    from flext_ldif.services.server import FlextLdifServer
+
+
+def _get_server_registry() -> FlextLdifServer:
+    """Get server registry instance (lazy import to avoid circular dependency)."""
+    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+
+    return FlextLdifServer.get_global_instance()
 
 
 class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
@@ -137,10 +148,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
 
         """
         try:
-            # Import here to avoid circular dependency (services -> servers -> services)
-            from flext_ldif.services.server import FlextLdifServer
-
-            registry = FlextLdifServer.get_global_instance()
+            registry = _get_server_registry()
             server_quirk = registry.quirk(server_type)
 
             if not server_quirk:
@@ -212,7 +220,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
     def categorize_entry(
         self,
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None = None,
+        _rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None = None,
         server_type: str = "rfc",
     ) -> tuple[str, str | None]:
         """Categorize entry using SERVER-SPECIFIC rules.
@@ -222,7 +230,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
 
         Args:
             entry: LDIF entry to categorize
-            rules: Category rules (currently unused, server constants take precedence)
+            _rules: Category rules (unused, server constants take precedence)
             server_type: Server type ("oid", "oud", "rfc") determines constants
 
         Returns:

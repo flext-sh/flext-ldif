@@ -95,12 +95,6 @@ def configuration_from_env_example() -> None:
     effective_workers = api.config.get_effective_workers(entries_count)
     print(f"Effective workers for {entries_count} entries: {effective_workers}")
 
-    # Performance optimization based on config
-    if api.config.is_performance_optimized():
-        print("✓ Running in performance-optimized mode")
-    elif api.config.is_development_optimized():
-        print("✓ Running in development-optimized mode")
-
 
 def complete_ldif_processing_workflow() -> None:
     """End-to-end LDIF processing: parse → validate → analyze → write."""

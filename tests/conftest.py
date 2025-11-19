@@ -7,15 +7,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_core import FlextConstants, FlextResult
+from flext_tests.docker import FlextTestDocker
 
 from flext_ldif.api import FlextLdif
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
@@ -28,8 +30,286 @@ from .support import (
     TestValidators,
 )
 
-# Register docker_manager fixtures plugin
-pytest_plugins = ["tests.fixtures.docker_manager"]
+if TYPE_CHECKING:
+    from ldap3 import Connection
+
+# =============================================================================
+# TEST DATA CONSTANTS (Pre-built for performance)
+# =============================================================================
+
+# Pre-defined test users to avoid repeated dictionary creation
+_TEST_USERS: list[dict[str, str]] = [
+    {"name": "Test User 1", "email": "user1@example.com"},
+    {"name": "Test User 2", "email": "user2@example.com"},
+    {"name": "Test User 3", "email": "user3@example.com"},
+]
+
+# Pre-built LDIF test entries (computed once at module load)
+_LDIF_TEST_ENTRIES: list[dict[str, object]] = [
+    {
+        "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
+        "attributes": {
+            "objectclass": ["inetOrgPerson", "person"],
+            "cn": [user.get("name", "Test User")],
+            "sn": [
+                (
+                    user.get("name", "User").split()[-1]
+                    if " " in user.get("name", "")
+                    else "User"
+                ),
+            ],
+            "mail": [user.get("email", f"test{i}@example.com")],
+            "uid": [f"testuser{i}"],
+        },
+    }
+    for i, user in enumerate(_TEST_USERS)
+] + [
+    {
+        "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
+        "attributes": {
+            "objectclass": ["groupOfNames"],
+            "cn": ["Test Group"],
+            "description": ["Test group for LDIF processing"],
+            "member": [
+                f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
+                for i, user in enumerate(_TEST_USERS)
+            ],
+        },
+    }
+]
+
+# =============================================================================
+# FLEXT TEST DOCKER INTEGRATION (SHARED CONTAINER)
+# =============================================================================
+
+
+@pytest.fixture(scope="session")
+def docker_control() -> FlextTestDocker:
+    """Provide FlextTestDocker instance for container management.
+
+    Session-scoped to reuse across all tests.
+    """
+    return FlextTestDocker()
+
+
+@pytest.fixture(scope="session")
+def worker_id(request: pytest.FixtureRequest) -> str:
+    """Get pytest-xdist worker ID for DN namespacing.
+
+    Returns:
+        str: Worker ID (e.g., "gw0", "gw1", "master")
+            - "master": single-process execution
+            - "gw0", "gw1", ...: parallel workers from pytest-xdist
+
+    """
+    worker_input = getattr(request.config, "workerinput", {})
+    return worker_input.get("workerid", "master")
+
+
+@pytest.fixture(scope="session")
+def session_id() -> str:
+    """Unique session ID for this test run.
+
+    Returns:
+        str: Timestamp in milliseconds as string
+
+    Used for DN namespacing to ensure test isolation.
+
+    """
+    import time
+
+    return str(int(time.time() * 1000))
+
+
+@pytest.fixture
+def unique_dn_suffix(
+    worker_id: str,
+    session_id: str,
+    request: pytest.FixtureRequest,
+) -> str:
+    """Generate unique DN suffix for this worker and test.
+
+    Combines worker ID, session ID, test function name, and microsecond timestamp
+    to create globally unique DN suffix that prevents conflicts in parallel execution.
+    This ensures complete isolation between tests even when running in parallel.
+
+    Args:
+        worker_id: pytest-xdist worker ID (e.g., "gw0", "master")
+        session_id: Test session timestamp
+        request: Pytest request object for test identification
+
+    Returns:
+        str: Unique suffix (e.g., "gw0-1733000000-test_function-123456")
+
+    Example:
+        >>> suffix = unique_dn_suffix
+        >>> dn = f"uid=testuser-{suffix},ou=people,dc=flext,dc=local"
+
+    """
+    import time
+
+    # Get test function name for additional isolation
+    test_name = request.node.name if hasattr(request, "node") else "unknown"
+    # Sanitize test name (remove special chars that could break DN)
+    allowed_chars = {"-", "_"}
+    test_name_clean = "".join(
+        c if c.isalnum() or c in allowed_chars else "-" for c in test_name
+    )[:20]
+
+    # Microsecond precision for intra-second uniqueness
+    test_id = int(time.time() * 1000000) % 1000000
+
+    return f"{worker_id}-{session_id}-{test_name_clean}-{test_id}"
+
+
+@pytest.fixture
+def make_user_dn(
+    unique_dn_suffix: str,
+    ldap_container: dict[str, object],
+) -> Callable[[str], str]:
+    """Factory to create unique user DNs with base DN isolation.
+
+    Uses the base_dn from ldap_container to ensure complete isolation.
+    This allows multiple tests to run in parallel without conflicts.
+
+    Args:
+        unique_dn_suffix: Unique suffix from fixture
+        ldap_container: Container configuration with base_dn
+
+    Returns:
+        callable: Factory function that takes uid and returns unique DN
+
+    Example:
+        >>> make_dn = make_user_dn
+        >>> dn = make_dn("testuser")  # uid=testuser-gw0-...,ou=people,dc=flext,dc=local
+
+    """
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
+
+    def _make(uid: str) -> str:
+        """Create unique user DN.
+
+        Args:
+            uid: User ID (e.g., "testuser")
+
+        Returns:
+            str: Unique DN (e.g., "uid=testuser-gw0-123...,ou=people,dc=flext,dc=local")
+
+        """
+        return f"uid={uid}-{unique_dn_suffix},ou=people,{base_dn}"
+
+    return _make
+
+
+@pytest.fixture
+def make_group_dn(
+    unique_dn_suffix: str,
+    ldap_container: dict[str, object],
+) -> Callable[[str], str]:
+    """Factory to create unique group DNs with base DN isolation.
+
+    Uses the base_dn from ldap_container to ensure complete isolation.
+    This allows multiple tests to run in parallel without conflicts.
+
+    Args:
+        unique_dn_suffix: Unique suffix from fixture
+        ldap_container: Container configuration with base_dn
+
+    Returns:
+        callable: Factory function that takes cn and returns unique DN
+
+    Example:
+        >>> make_dn = make_group_dn
+        >>> dn = make_dn("testgroup")  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
+
+    """
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
+
+    def _make(cn: str) -> str:
+        """Create unique group DN.
+
+        Args:
+            cn: Common name (e.g., "testgroup")
+
+        Returns:
+            str: Unique DN (e.g., "cn=testgroup-gw0-123...,ou=groups,dc=flext,dc=local")
+
+        """
+        return f"cn={cn}-{unique_dn_suffix},ou=groups,{base_dn}"
+
+    return _make
+
+
+@pytest.fixture
+def make_test_base_dn(
+    unique_dn_suffix: str,
+    ldap_container: dict[str, object],
+) -> Callable[[str], str]:
+    """Factory to create unique base DNs for test isolation.
+
+    Uses the base_dn from ldap_container to ensure complete isolation.
+    This allows multiple tests to run in parallel without conflicts.
+
+    Args:
+        unique_dn_suffix: Unique suffix from fixture
+        ldap_container: Container configuration with base_dn
+
+    Returns:
+        callable: Factory function that takes ou and returns unique base DN
+
+    Example:
+        >>> make_base = make_test_base_dn
+        >>> base_dn = make_base("test")  # ou=test-gw0-...,dc=flext,dc=local
+
+    """
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
+
+    def _make(ou: str) -> str:
+        """Create unique base DN.
+
+        Args:
+            ou: Organizational unit name (e.g., "test")
+
+        Returns:
+            str: Unique base DN (e.g., "ou=test-gw0-123...,dc=flext,dc=local")
+
+        """
+        return f"ou={ou}-{unique_dn_suffix},{base_dn}"
+
+    return _make
+
+
+@pytest.fixture
+def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Factory to create unique usernames for test isolation.
+
+    Ensures idempotency and parallel test execution by namespacing
+    usernames with worker-specific suffix.
+
+    Args:
+        unique_dn_suffix: Unique suffix from fixture
+
+    Returns:
+        callable: Factory function that takes username and returns unique username
+
+    Example:
+        >>> make_user = make_test_username
+        >>> username = make_user("testuser")  # testuser-gw0-123...
+
+    """
+    def _make(username: str) -> str:
+        """Create unique username.
+
+        Args:
+            username: Base username (e.g., "testuser")
+
+        Returns:
+            str: Unique username (e.g., "testuser-gw0-123...")
+
+        """
+        return f"{username}-{unique_dn_suffix}"
+
+    return _make
 
 
 class TestFileManager:
@@ -48,14 +328,19 @@ class TestFileManager:
 
 
 # Test environment setup
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def set_test_environment() -> Generator[None]:
-    """Set test environment variables."""
+    """Set test environment variables.
+
+    Session-scoped for performance - environment doesn't change between tests.
+    """
     # NO environment-specific modes - remove all dev/test/prod mode logic
+    # Use FlextConfig for environment variable management instead of os.environ
     yield
-    # Cleanup
-    os.environ.pop("FLEXT_ENV", None)
-    os.environ.pop("FLEXT_LOG_LEVEL", None)
+    # Cleanup - reset config instances instead of manipulating os.environ
+    from flext_core import FlextConfig
+    # Reset global config instance to clear any test-specific state
+    FlextConfig.reset_global_instance()
 
 
 @pytest.fixture(autouse=True)
@@ -86,35 +371,284 @@ def reset_flextldif_singleton() -> Generator[None]:
 # ============================================================================
 #
 # Docker fixtures provide container connection strings for testing.
-# The ldap_container fixture provides connection to OpenLDAP server (port 3390).
+# The ldap_container_shared fixture provides connection to OpenLDAP server (port 3390).
+# All tests use the shared container with indepotency via unique username/basedn.
 #
 # Example usage:
-#   def test_ldif_with_ldap(ldap_container: str):
-#       # ldap_container provides connection string like "ldap://localhost:3390"
+#   def test_ldif_with_ldap(ldap_container_shared: str, unique_dn_suffix: str):
+#       # ldap_container_shared provides connection string "ldap://localhost:3390"
+#       # unique_dn_suffix provides isolation (e.g., "gw0-abc123")
+#       # Use unique_dn_suffix to create isolated test data
 #       pass
 #
 
 
-@pytest.fixture(scope="module")
-def ldap_container(ldap_container_shared: str) -> str:
-    """Provide LDAP container connection string with dynamic port allocation.
+@pytest.fixture(scope="session")
+def ldap_container(
+    docker_control: FlextTestDocker,
+    worker_id: str,
+) -> dict[str, object]:
+    """Session-scoped LDAP container configuration with worker isolation.
 
-    This fixture is an alias for ldap_container_shared from docker_manager.py,
-    providing idempotent and parallelizable tests with automatic Docker
-    container management.
+    Uses FlextTestDocker to manage flext-openldap-test container on port 3390.
+    Container is automatically started/stopped by FlextTestDocker.
+    All tests share the SAME container but use unique DNs for isolation.
+
+    IMPORTANT: This fixture uses ONLY flext-openldap-test on port 3390.
+    NO random ports, NO dynamic containers. All tests share the same container
+    but are isolated by unique DNs (via unique_dn_suffix fixture).
 
     Args:
-        ldap_container_shared: Dynamic LDAP connection string from docker_manager
+        docker_control: FlextTestDocker instance from fixture
+        worker_id: Worker ID for logging (e.g., "gw0", "master")
 
     Returns:
-        str: LDAP connection URL (e.g., "ldap://localhost:45795")
+        dict with connection parameters including base_dn
 
     """
-    # Pass through the dynamic container connection string
-    # Base DN: dc=flext,dc=local
-    # Admin DN: cn=admin,dc=flext,dc=local
-    # Admin Password: admin123
-    return ldap_container_shared
+    from flext_core import FlextLogger
+
+    logger = FlextLogger(__name__)
+
+    # Use the actual container name from SHARED_CONTAINERS
+    container_name = "flext-openldap-test"
+    container_config = FlextTestDocker.SHARED_CONTAINERS.get(container_name)
+
+    if not container_config:
+        pytest.skip(f"Container {container_name} not found in SHARED_CONTAINERS")
+
+    # Get compose file path
+    compose_file = str(container_config["compose_file"])
+    if not compose_file.startswith("/"):
+        # Relative path, make it absolute from workspace root
+        workspace_root = Path("/home/marlonsc/flext")
+        compose_file = str(workspace_root / "flext-ldap" / compose_file)
+
+    # REGRA: Só recriar se estiver dirty, senão apenas iniciar se não estiver rodando
+    is_dirty = docker_control.is_container_dirty(container_name)
+
+    if is_dirty:
+        # Container está dirty - recriar completamente (down -v + up)
+        logger.info(
+            f"Container {container_name} is dirty, recreating with fresh volumes",
+        )
+        cleanup_result = docker_control.cleanup_dirty_containers()
+        if cleanup_result.is_failure:
+            pytest.skip(
+                f"Failed to recreate dirty container {container_name}: {cleanup_result.error}",
+            )
+    else:
+        # Container não está dirty - apenas verificar se está rodando e iniciar se necessário
+        status = docker_control.get_container_status(container_name)
+        if not status.is_success or (
+            isinstance(status.value, FlextTestDocker.ContainerInfo)
+            and status.value.status != FlextTestDocker.ContainerStatus.RUNNING
+        ):
+            # Container não está rodando mas não está dirty - apenas iniciar (sem recriar)
+            logger.info(
+                f"Container {container_name} is not running (but not dirty), starting...",
+            )
+            start_result = docker_control.start_compose_stack(compose_file)
+            if start_result.is_failure:
+                pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+
+    # AGUARDAR container estar pronto antes de permitir testes
+    import time
+
+    max_wait = 30  # segundos
+    wait_interval = 0.5  # segundos
+    waited = 0
+
+    while waited < max_wait:
+        # Verificar se container está realmente pronto tentando uma conexão simples
+        try:
+            from ldap3 import Connection, Server
+
+            server = Server("ldap://localhost:3390", get_info="NONE")
+            test_conn = Connection(
+                server,
+                user="cn=admin,dc=flext,dc=local",
+                password="admin",
+                auto_bind=False,
+            )
+            # Tentar bind com timeout curto
+            if test_conn.bind(timeout=2):
+                test_conn.unbind()
+                logger.debug(f"Container {container_name} is ready after {waited:.1f}s")
+                break
+            test_conn.unbind()
+        except Exception:
+            # Container ainda não está pronto, continuar aguardando
+            pass
+
+        time.sleep(wait_interval)
+        waited += wait_interval
+
+    if waited >= max_wait:
+        pytest.skip(
+            f"Container {container_name} did not become ready within {max_wait}s",
+        )
+
+    # Provide connection info (matches docker-compose.yml)
+    # ALWAYS use port 3390 - NO random ports
+    container_info: dict[str, object] = {
+        "server_url": "ldap://localhost:3390",
+        "host": "localhost",
+        "bind_dn": "cn=admin,dc=flext,dc=local",
+        "password": "admin",  # From docker-compose.yml
+        "base_dn": "dc=flext,dc=local",
+        "port": 3390,  # FIXED PORT - NO RANDOM PORTS
+        "use_ssl": False,
+        "worker_id": worker_id,  # For logging/debugging
+    }
+
+    logger.info(
+        f"LDAP container configured for worker {worker_id}: "
+        f"{container_name} on port 3390",
+    )
+
+    return container_info
+
+
+@pytest.fixture(scope="module")
+def ldap_container_shared(ldap_container: dict[str, object]) -> str:
+    """Provide LDAP container connection string (alias for compatibility).
+
+    This fixture provides the connection URL string for backward compatibility.
+    New code should use ldap_container dict directly.
+
+    Args:
+        ldap_container: Container configuration dict
+
+    Returns:
+        str: LDAP connection URL (e.g., "ldap://localhost:3390")
+
+    """
+    return str(ldap_container["server_url"])
+
+
+# ============================================================================
+# LDAP CONNECTION FIXTURES (SHARED WITH ISOLATION)
+# ============================================================================
+
+
+@pytest.fixture(scope="module")
+def ldap_connection(ldap_container: dict[str, object]) -> Generator[Connection]:
+    """Create connection to real LDAP server via Docker fixture with isolation.
+
+    **INDEPOTENCY**: This fixture provides a shared LDAP connection. Tests must
+    use unique_dn_suffix and make_test_base_dn/make_test_username fixtures to
+    create isolated test data and avoid conflicts in parallel execution.
+
+    Args:
+        ldap_container: Container configuration dict with connection parameters
+
+    Yields:
+        Connection: ldap3 connection to LDAP server
+
+    """
+    from ldap3 import ALL, Connection, Server
+
+    # Extract connection parameters from container config
+    host = str(ldap_container["host"])
+    port = int(ldap_container["port"])
+    bind_dn = str(ldap_container["bind_dn"])
+    password = str(ldap_container["password"])
+
+    server = Server(f"ldap://{host}:{port}", get_info=ALL)
+    conn = Connection(
+        server,
+        user=bind_dn,
+        password=password,
+    )
+
+    # Check if server is available
+    try:
+        if not conn.bind():
+            pytest.skip(f"LDAP server not available at {host}:{port}")
+    except Exception as e:
+        pytest.skip(f"LDAP server not available at {host}:{port}: {e}")
+
+    yield conn
+    conn.unbind()
+
+
+@pytest.fixture
+def clean_test_ou(
+    ldap_connection: Connection,
+    make_test_base_dn: Callable[[str], str],
+) -> Generator[str]:
+    """Create and clean up isolated test OU with automatic cleanup.
+
+    **INDEPOTENCY**: Uses make_test_base_dn to create unique OU DNs per test
+    execution, ensuring parallel tests don't interfere with each other.
+
+    Args:
+        ldap_connection: LDAP connection from fixture
+        make_test_base_dn: Factory to create unique base DNs
+
+    Yields:
+        str: Isolated test OU DN (e.g., "ou=test-gw0-abc123,dc=flext,dc=local")
+
+    """
+    # Create isolated test OU using unique suffix
+    test_ou_dn = make_test_base_dn("FlextLdifTests")
+
+    # Try to delete existing test OU (ignore errors - may not exist)
+    try:
+        # Search for all entries under test OU
+        found = ldap_connection.search(
+            test_ou_dn,
+            "(objectClass=*)",
+            search_scope="SUBTREE",
+            attributes=["*"],
+        )
+        if found:
+            # Delete in reverse order (leaves first)
+            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+            for dn in reversed(dns_to_delete):
+                try:
+                    ldap_connection.delete(dn)
+                except Exception:
+                    # Ignore delete errors during cleanup - entries may already be deleted
+                    # or dependencies may prevent deletion. Cleanup should not fail tests.
+                    pass
+    except Exception:
+        # OU doesn't exist yet - this is expected for first test run
+        pass
+
+    # Create test OU (or recreate if deleted above)
+    try:
+        ldap_connection.add(
+            test_ou_dn,
+            ["organizationalUnit"],
+            {"ou": "FlextLdifTests"},
+        )
+    except Exception:
+        # OU already exists - this is expected if previous test didn't clean up
+        pass
+
+    yield test_ou_dn
+
+    # Cleanup after test - delete all entries under test OU
+    try:
+        found = ldap_connection.search(
+            test_ou_dn,
+            "(objectClass=*)",
+            search_scope="SUBTREE",
+            attributes=["*"],
+        )
+        if found:
+            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+            for dn in reversed(dns_to_delete):
+                try:
+                    ldap_connection.delete(dn)
+                except Exception:
+                    # Ignore cleanup errors - entries may have dependencies or already be deleted
+                    pass
+    except Exception:
+        # Cleanup failed, but that's okay - test should not fail due to cleanup issues
+        pass
 
 
 # LDIF processing fixtures - optimized with real services
@@ -508,51 +1042,13 @@ def flext_matchers() -> LocalTestMatchers:
 # LDIF-specific test data using FlextTests patterns
 @pytest.fixture
 def ldif_test_entries() -> list[dict[str, object]]:
-    """Generate LDIF test entries using FlextTests domain patterns."""
-    # Create realistic LDIF entries using domain patterns
-    # Create test users using FlextTestsDomains patterns
-    users: list[dict[str, str]] = [
-        {"name": "Test User 1", "email": "user1@example.com"},
-        {"name": "Test User 2", "email": "user2@example.com"},
-        {"name": "Test User 3", "email": "user3@example.com"},
-    ]
-    entries: list[dict[str, object]] = []
+    """Generate LDIF test entries using FlextTests domain patterns.
 
-    for i, user in enumerate(users):
-        entry: dict[str, object] = {
-            "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
-            "attributes": {
-                "objectclass": ["inetOrgPerson", "person"],
-                "cn": [user.get("name", "Test User")],
-                "sn": [
-                    (
-                        user.get("name", "User").split()[-1]
-                        if " " in user.get("name", "")
-                        else "User"
-                    ),
-                ],
-                "mail": [user.get("email", f"test{i}@example.com")],
-                "uid": [f"testuser{i}"],
-            },
-        }
-        entries.append(entry)
+    Returns a copy of pre-built entries for performance.
+    """
+    import copy
 
-    # Add a group entry
-    group_entry: dict[str, object] = {
-        "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-        "attributes": {
-            "objectclass": ["groupOfNames"],
-            "cn": ["Test Group"],
-            "description": ["Test group for LDIF processing"],
-            "member": [
-                f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
-                for i, user in enumerate(users)
-            ],
-        },
-    }
-    entries.append(group_entry)
-
-    return entries
+    return copy.deepcopy(_LDIF_TEST_ENTRIES)
 
 
 @pytest.fixture
@@ -810,7 +1306,7 @@ def server() -> FlextLdifServer:
 
 
 @pytest.fixture
-def rfc_quirk(server: FlextLdifServer):
+def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get RFC server quirk via FlextLdifServer API.
 
     Args:
@@ -826,7 +1322,7 @@ def rfc_quirk(server: FlextLdifServer):
 
 
 @pytest.fixture
-def oid_quirk(server: FlextLdifServer):
+def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API.
 
     Args:
@@ -842,7 +1338,7 @@ def oid_quirk(server: FlextLdifServer):
 
 
 @pytest.fixture
-def oud_quirk(server: FlextLdifServer):
+def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API.
 
     Args:

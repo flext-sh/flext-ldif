@@ -37,6 +37,7 @@ class FlextLdifServer:
     - Singleton pattern for global registry
     - Server-agnostic API for quirk operations
     - Supports RFC 4514 DN operations via quirks
+    - Idempotent registration: quirks registered only once per process
 
     Example:
         registry = FlextLdifServer()
@@ -46,15 +47,34 @@ class FlextLdifServer:
 
     Note:
         All quirks are auto-discovered and registered during __init__.
-        No manual registration required.
+        No manual registration required. Quirks are cached at class level
+        for efficient reuse across multiple instances.
 
     """
 
+    # Class-level cache for idempotent registration (shared across all instances)
+    _quirks_cache: dict[str, FlextLdifServersBase] | None = None
+    _registration_complete: bool = False
+
     def __init__(self) -> None:
-        """Initialize quirk registry with auto-discovery."""
+        """Initialize quirk registry with auto-discovery (idempotent)."""
         super().__init__()
-        self._bases: dict[str, FlextLdifServersBase] = {}
-        self._auto_discover_and_register()
+
+        # Use class-level cache if already initialized
+        if FlextLdifServer._quirks_cache is not None:
+            self._bases = FlextLdifServer._quirks_cache
+            # Quirks already cached - no logging needed (reduces verbosity)
+        else:
+            # First initialization - perform auto-discovery and cache results
+            self._bases = {}
+            self._auto_discover_and_register()
+            # Cache at class level for all future instances
+            FlextLdifServer._quirks_cache = self._bases
+            FlextLdifServer._registration_complete = True
+            logger.info(
+                "Quirks registry initialized and cached for reuse",
+                quirks_count=len(self._bases),
+            )
 
     def _auto_discover_and_register(self) -> None:
         """Discover and register all base quirk classes.
@@ -92,7 +112,9 @@ class FlextLdifServer:
                         priority = cast("int", instance.priority)
                     except AttributeError as e:
                         logger.warning(
-                            f"Skipping {obj.__name__}: missing Constants - {e}",
+                            "Skipping quirk: missing Constants",
+                            quirk_name=obj.__name__,
+                            error=str(e),
                         )
                         continue
 
@@ -126,14 +148,12 @@ class FlextLdifServer:
                         "Failed to register quirk",
                         quirk_name=obj.__name__,
                         error=str(e),
-                        error_type=type(e).__name__,
                     )
 
         except ImportError as e:
             logger.debug(
                 "Could not auto-discover quirks",
                 error=str(e),
-                error_type=type(e).__name__,
             )
 
     def register(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:

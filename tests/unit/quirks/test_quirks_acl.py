@@ -624,9 +624,6 @@ class TestOUDSubjectTypesConversion:
         assert "orclaci:" in oid_acl.lower()
         assert "self" in oid_acl.lower()
 
-    @pytest.mark.skip(
-        reason="ACL model conversion not yet supported by FlextLdifConversion"
-    )
     def test_oud_userattr_ldapurl_to_oid(
         self,
         conversion: FlextLdifConversion,
@@ -835,7 +832,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with default format
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -869,7 +866,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with oneline format
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -904,7 +901,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with default format
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -935,7 +932,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with oneline format
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -971,7 +968,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with default format
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1008,7 +1005,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with oneline format
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1051,7 +1048,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with oneline format
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1086,7 +1083,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with default format
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1119,7 +1116,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with oneline format
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1154,7 +1151,7 @@ class TestOIDWriterFormatting:
         )
 
         # Write with default format
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1202,7 +1199,7 @@ class TestOIDWriterComprehensive:
             ),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1231,7 +1228,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1258,7 +1255,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1286,7 +1283,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True, write=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1313,7 +1310,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(write=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1340,7 +1337,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1366,7 +1363,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1393,7 +1390,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1420,7 +1417,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1450,7 +1447,7 @@ class TestOIDWriterComprehensive:
             raw_acl=raw_orclaci,
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1478,7 +1475,7 @@ class TestOIDWriterComprehensive:
             permissions=FlextLdifModels.AclPermissions(read=True),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="oneline")
+        result = oid_acl_handler._write_acl(acl, _format_option="oneline")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1510,7 +1507,7 @@ class TestOIDWriterComprehensive:
             ),
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 
@@ -1534,7 +1531,7 @@ class TestOIDWriterComprehensive:
             permissions=None,
         )
 
-        result = oid_acl_handler._write_acl(acl, format_option="default")
+        result = oid_acl_handler._write_acl(acl, _format_option="default")
         assert result.is_success
         oid_acl = result.unwrap()
 

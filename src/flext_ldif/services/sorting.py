@@ -17,14 +17,16 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, cast
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
+
+logger = FlextLogger(__name__)
 
 
 class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
@@ -429,7 +431,20 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         if acl_attributes is not None:
             kwargs["acl_attributes"] = acl_attributes
         # With auto_execute=False, create instance and call execute() explicitly
-        sorting_instance = cls(**kwargs)
+        # Type narrowing: ensure kwargs match FlextLdifSorting constructor
+        sorting_instance = cls(
+            entries=cast("list[FlextLdifModels.Entry]", kwargs.get("entries", [])),
+            sort_target=cast("str", kwargs.get("sort_target", "entries")),
+            sort_by=cast("str", kwargs.get("sort_by", "hierarchy")),
+            custom_predicate=cast(
+                "Callable[[FlextLdifModels.Entry], str | int | float] | None",
+                kwargs.get("custom_predicate"),
+            ),
+            sort_attributes=cast("bool", kwargs.get("sort_attributes", False)),
+            attribute_order=cast("list[str] | None", kwargs.get("attribute_order")),
+            acl_attributes=cast("list[str]", kwargs.get("acl_attributes", [])),
+            sort_acl=cast("bool", kwargs.get("sort_acl", False)),
+        )
         return sorting_instance.execute()
 
     @classmethod
@@ -453,8 +468,12 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         if not isinstance(instance, FlextLdifSorting):
             msg = f"Instance {instance} is not a FlextLdifSorting"
             raise TypeError(msg)
-        # Call __init__ with entries parameter - FlextService.__init__ accepts **data
-        instance.__init__(entries=[])
+        # Initialize instance attributes directly instead of calling __init__
+        # This avoids mypy error about accessing __init__ on instance
+        # Use object.__setattr__ to set Pydantic model fields
+        object.__setattr__(instance, "entries", [])  # noqa: PLC2801 (Pydantic pattern)
+        # Call parent __init__ through super() to properly initialize FlextService
+        super(FlextLdifSorting, instance).__init__()
         return instance
 
     def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifSorting:
@@ -777,6 +796,22 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
             if not result.is_success:
                 error_msg = result.error or "Unknown error"
+                original_attrs = (
+                    list(entry.attributes.attributes.keys())
+                    if entry.attributes
+                    else []
+                )
+                logger.error(
+                    "Failed to sort entry attributes",
+                    action_attempted="sort_entry_attributes",
+                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_index=len(processed) + 1,
+                    total_entries=len(entries),
+                    error=str(error_msg),
+                    error_type=type(result.error).__name__ if result.error else None,
+                    attributes_count=len(original_attrs),
+                    consequence="Entry attributes were not sorted",
+                )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Attribute sort failed: {error_msg}",
                 )
@@ -797,11 +832,11 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 continue
 
             # Access the actual attributes dict
-            # entry.attributes.attributes is dict[str, list[str]], convert to compatible type
+            # entry.attributes.attributes is dict[str, list[str]], ensure correct type
             attrs_dict_raw = entry.attributes.attributes
-            attrs_dict: dict[str, list[str] | str] = {}
+            attrs_dict: dict[str, list[str]] = {}
             for key, value in attrs_dict_raw.items():
-                # Ensure value is list[str] (LdifAttributes expects list[str] | str)
+                # Ensure value is list[str] (LdifAttributes.attributes is dict[str, list[str]])
                 if isinstance(value, list):
                     attrs_dict[key] = value
                 else:
@@ -1176,13 +1211,23 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             sorted_items = sorted(attrs_dict.items(), key=lambda x: x[0].lower())
 
         # Create dict with correct type - attrs_dict is dict[str, list[str]]
+        original_attr_order = list(attrs_dict.keys())
         sorted_dict: dict[str, list[str]] = dict(sorted_items)
         sorted_attrs = FlextLdifModels.LdifAttributes(
             attributes=sorted_dict,
         )
-        return FlextResult[FlextLdifModels.Entry].ok(
-            entry.model_copy(update={"attributes": sorted_attrs}),
-        )
+        new_entry = entry.model_copy(update={"attributes": sorted_attrs})
+        
+        # Log detailed sorting information if attributes were reordered
+        new_attr_order = list(sorted_dict.keys())
+        if original_attr_order != new_attr_order:
+            logger.debug(
+                "Sorted entry attributes",
+                entry_dn=str(entry.dn) if entry.dn else None,
+                attributes_count=len(original_attr_order),
+            )
+        
+        return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
     def _sort_entry_attributes_by_order(
         self,
@@ -1197,17 +1242,32 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         attrs_dict = entry.attributes.attributes  # Get the actual attributes dict
         order = self.attribute_order
+        original_attr_order = list(attrs_dict.keys())
         ordered = [(k, attrs_dict[k]) for k in order if k in attrs_dict]
         remaining = sorted(
             [(k, v) for k, v in attrs_dict.items() if k not in order],
             key=lambda x: x[0].lower(),
         )
+        sorted_dict = dict(ordered + remaining)
         sorted_attrs = FlextLdifModels.LdifAttributes(
-            attributes=dict(ordered + remaining),
+            attributes=sorted_dict,
         )
-        return FlextResult[FlextLdifModels.Entry].ok(
-            entry.model_copy(update={"attributes": sorted_attrs}),
-        )
+        new_entry = entry.model_copy(update={"attributes": sorted_attrs})
+        
+        # Log detailed sorting information if attributes were reordered
+        new_attr_order = list(sorted_dict.keys())
+        if original_attr_order != new_attr_order:
+            ordered_attrs = [k for k, _ in ordered]
+            remaining_attrs = [k for k, _ in remaining]
+            logger.debug(
+                "Sorted entry attributes by custom order",
+                entry_dn=str(entry.dn) if entry.dn else None,
+                attributes_count=len(original_attr_order),
+                ordered_count=len(ordered_attrs),
+                remaining_count=len(remaining_attrs),
+            )
+        
+        return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
     @staticmethod
     def attributes_by_order(
