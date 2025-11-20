@@ -41,38 +41,46 @@ class TestZeroDataLossOidOud:
         loader = FlextLdifFixtures.OUD()
         return loader.entries()
 
-    def test_oid_parse_preserves_original_ldif(self, api: FlextLdif, oid_fixture: str) -> None:
+    def test_oid_parse_preserves_original_ldif(
+        self, api: FlextLdif, oid_fixture: str
+    ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success, f"Parse failed: {result.error}"
-        
+
         entries = result.unwrap()
         assert len(entries) > 0, "No entries parsed"
-        
+
         # Verify ALL entries have original LDIF preserved
         for entry in entries:
             assert entry.metadata is not None, "Entry missing metadata"
-            assert entry.metadata.original_strings is not None, "Entry missing original_strings"
+            assert entry.metadata.original_strings is not None, (
+                "Entry missing original_strings"
+            )
             assert "entry_original_ldif" in entry.metadata.original_strings, (
                 f"Entry {entry.dn} missing original LDIF preservation"
             )
-            
+
             original_ldif = entry.metadata.original_strings["entry_original_ldif"]
             assert len(original_ldif) > 0, "Original LDIF is empty"
             assert "dn:" in original_ldif.lower(), "Original LDIF missing DN"
 
-    def test_oud_parse_preserves_original_ldif(self, api: FlextLdif, oud_fixture: str) -> None:
+    def test_oud_parse_preserves_original_ldif(
+        self, api: FlextLdif, oud_fixture: str
+    ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
         result = api.parse(oud_fixture, server_type="oud")
         assert result.is_success, f"Parse failed: {result.error}"
-        
+
         entries = result.unwrap()
         assert len(entries) > 0, "No entries parsed"
-        
+
         # Verify ALL entries have original LDIF preserved
         for entry in entries:
             assert entry.metadata is not None, "Entry missing metadata"
-            assert entry.metadata.original_strings is not None, "Entry missing original_strings"
+            assert entry.metadata.original_strings is not None, (
+                "Entry missing original_strings"
+            )
             assert "entry_original_ldif" in entry.metadata.original_strings, (
                 f"Entry {entry.dn} missing original LDIF preservation"
             )
@@ -85,26 +93,33 @@ class TestZeroDataLossOidOud:
         """Test that boolean conversions are tracked in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success
-        
+
         entries = result.unwrap()
-        
+
         # Find entries with boolean attributes
         boolean_entries = [
-            e for e in entries
+            e
+            for e in entries
             if e.metadata
             and e.metadata.boolean_conversions
             and len(e.metadata.boolean_conversions) > 0
         ]
-        
+
         if boolean_entries:
             entry = boolean_entries[0]
             for attr_name, conversion in entry.metadata.boolean_conversions.items():
-                assert "original" in conversion, f"Missing original value for {attr_name}"
-                assert "converted" in conversion, f"Missing converted value for {attr_name}"
-                assert "format" in conversion, f"Missing format direction for {attr_name}"
-                
+                assert "original" in conversion, (
+                    f"Missing original value for {attr_name}"
+                )
+                assert "converted" in conversion, (
+                    f"Missing converted value for {attr_name}"
+                )
+                assert "format" in conversion, (
+                    f"Missing format direction for {attr_name}"
+                )
+
                 # Verify conversion direction
-                assert conversion["format"] in ["OID->RFC", "RFC->OID"], (
+                assert conversion["format"] in {"OID->RFC", "RFC->OID"}, (
                     f"Invalid format direction: {conversion['format']}"
                 )
 
@@ -118,31 +133,33 @@ class TestZeroDataLossOidOud:
         parse_result = api.parse(oid_fixture, server_type="oid")
         assert parse_result.is_success
         oid_entries = parse_result.unwrap()
-        
+
         # Convert to OUD (via RFC intermediate)
         # Write OID entries
         write_result = api.write(oid_entries, target_server_type="rfc")
         assert write_result.is_success
         rfc_ldif = write_result.unwrap()
-        
+
         # Parse as OUD
         parse_oud_result = api.parse(rfc_ldif, server_type="oud")
         assert parse_oud_result.is_success
         oud_entries = parse_oud_result.unwrap()
-        
+
         # Verify metadata preservation
         assert len(oid_entries) == len(oud_entries), "Entry count mismatch"
-        
-        for oid_entry, oud_entry in zip(oid_entries, oud_entries):
+
+        for oid_entry, oud_entry in zip(oid_entries, oud_entries, strict=False):
             # Verify original strings preserved
             assert oid_entry.metadata is not None
             assert oud_entry.metadata is not None
-            
+
             # Original OID LDIF should be preserved
             if "entry_original_ldif" in oid_entry.metadata.original_strings:
-                original_oid_ldif = oid_entry.metadata.original_strings["entry_original_ldif"]
+                original_oid_ldif = oid_entry.metadata.original_strings[
+                    "entry_original_ldif"
+                ]
                 assert len(original_oid_ldif) > 0, "Original OID LDIF lost"
-            
+
             # Verify no data loss using utility function
             no_loss, lost_attrs = FlextLdifUtilitiesMetadata.assert_no_data_loss(
                 original_entry=oid_entry,
@@ -160,16 +177,16 @@ class TestZeroDataLossOidOud:
         parse_oid = api.parse(oid_fixture, server_type="oid")
         assert parse_oid.is_success
         original_entries = parse_oid.unwrap()
-        
+
         # OID → OUD
         write_oud = api.write(original_entries, target_server_type="oud")
         assert write_oud.is_success
         oud_ldif = write_oud.unwrap()
-        
+
         parse_oud = api.parse(oud_ldif, server_type="oud")
         assert parse_oud.is_success
         oud_entries = parse_oud.unwrap()
-        
+
         # OUD → OID (round-trip)
         write_oid = api.write(
             oud_entries,
@@ -180,22 +197,30 @@ class TestZeroDataLossOidOud:
         )
         assert write_oid.is_success
         roundtrip_ldif = write_oid.unwrap()
-        
+
         parse_roundtrip = api.parse(roundtrip_ldif, server_type="oid")
         assert parse_roundtrip.is_success
         roundtrip_entries = parse_roundtrip.unwrap()
-        
+
         # Verify entry count preserved
         assert len(original_entries) == len(roundtrip_entries)
-        
+
         # Verify metadata preservation
-        for orig, roundtrip in zip(original_entries, roundtrip_entries):
+        for orig, roundtrip in zip(original_entries, roundtrip_entries, strict=False):
             # Original LDIF should be preserved
-            if orig.metadata and "entry_original_ldif" in orig.metadata.original_strings:
+            if (
+                orig.metadata
+                and "entry_original_ldif" in orig.metadata.original_strings
+            ):
                 original_ldif = orig.metadata.original_strings["entry_original_ldif"]
                 # When restore_original_format=True, roundtrip should match original
-                if roundtrip.metadata and "entry_original_ldif" in roundtrip.metadata.original_strings:
-                    roundtrip_original = roundtrip.metadata.original_strings["entry_original_ldif"]
+                if (
+                    roundtrip.metadata
+                    and "entry_original_ldif" in roundtrip.metadata.original_strings
+                ):
+                    roundtrip_original = roundtrip.metadata.original_strings[
+                        "entry_original_ldif"
+                    ]
                     # Original formatting should be preserved
                     assert len(original_ldif) > 0
                     assert len(roundtrip_original) > 0
@@ -208,9 +233,9 @@ class TestZeroDataLossOidOud:
         """Test that minimal differences are tracked for all conversions."""
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success
-        
+
         entries = result.unwrap()
-        
+
         for entry in entries:
             if entry.metadata:
                 # Check DN differences
@@ -219,13 +244,17 @@ class TestZeroDataLossOidOud:
                     if dn_diff.get("has_differences", False):
                         assert "original" in dn_diff, "Missing original DN"
                         assert "differences" in dn_diff, "Missing differences list"
-                
+
                 # Check attribute differences
                 for attr_name, attr_diff in entry.metadata.minimal_differences.items():
                     if attr_name != "dn" and isinstance(attr_diff, dict):
                         if attr_diff.get("has_differences", False):
-                            assert "original" in attr_diff, f"Missing original for {attr_name}"
-                            assert "differences" in attr_diff, f"Missing differences for {attr_name}"
+                            assert "original" in attr_diff, (
+                                f"Missing original for {attr_name}"
+                            )
+                            assert "differences" in attr_diff, (
+                                f"Missing differences for {attr_name}"
+                            )
 
     def test_soft_delete_tracking(
         self,
@@ -235,9 +264,9 @@ class TestZeroDataLossOidOud:
         """Test that soft-deleted attributes are tracked in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success
-        
+
         entries = result.unwrap()
-        
+
         # Check if any entries have soft-deleted attributes
         for entry in entries:
             if entry.metadata:
@@ -261,9 +290,9 @@ class TestZeroDataLossOidOud:
         """Test that conversion history is tracked in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success
-        
+
         entries = result.unwrap()
-        
+
         # After parsing, conversion_history should be populated
         for entry in entries:
             if entry.metadata:
@@ -283,23 +312,25 @@ class TestZeroDataLossOidOud:
         """Test that ALL original strings are preserved in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success
-        
+
         entries = result.unwrap()
-        
+
         for entry in entries:
             assert entry.metadata is not None
             assert entry.metadata.original_strings is not None
-            
+
             # Verify entry_original_ldif is preserved
             assert "entry_original_ldif" in entry.metadata.original_strings, (
                 f"Entry {entry.dn} missing entry_original_ldif"
             )
-            
+
             original_ldif = entry.metadata.original_strings["entry_original_ldif"]
             assert len(original_ldif) > 0, "Original LDIF is empty"
-            
+
             # Verify DN original is preserved if DN was modified
-            if entry.metadata.minimal_differences.get("dn", {}).get("has_differences", False):
+            if entry.metadata.minimal_differences.get("dn", {}).get(
+                "has_differences", False
+            ):
                 assert "dn_original" in entry.metadata.original_strings, (
                     "DN differences detected but dn_original not preserved"
                 )
@@ -314,7 +345,7 @@ class TestZeroDataLossOidOud:
         parse_result = api.parse(oid_fixture, server_type="oid")
         assert parse_result.is_success
         entries = parse_result.unwrap()
-        
+
         # Write with restore_original_format=True
         write_result = api.write(
             entries,
@@ -325,10 +356,13 @@ class TestZeroDataLossOidOud:
         )
         assert write_result.is_success
         restored_ldif = write_result.unwrap()
-        
+
         # Verify restored LDIF matches original for entries with preserved originals
         for entry in entries:
-            if entry.metadata and "entry_original_ldif" in entry.metadata.original_strings:
+            if (
+                entry.metadata
+                and "entry_original_ldif" in entry.metadata.original_strings
+            ):
                 original_ldif = entry.metadata.original_strings["entry_original_ldif"]
                 # Restored LDIF should contain the original entry
                 assert original_ldif.strip() in restored_ldif, (

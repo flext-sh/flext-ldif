@@ -154,35 +154,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     # =========================================================================
     # NOTE: server_type and priority are accessed via properties in base.py
     # which read from Constants.SERVER_TYPE and Constants.PRIORITY
-
-    def __getattr__(self, name: str) -> object:
-        """Delegate method calls to nested Schema, Acl, or Entry instances.
-
-        This enables calling schema/acl/entry methods directly on the main
-        server instance.
-
-        Args:
-            name: Method or attribute name to look up
-
-        Returns:
-            Method or attribute from nested instance
-
-        Raises:
-            AttributeError: If attribute not found in any nested instance
-
-        """
-        # Try schema methods first (most common)
-        if hasattr(self.schema_quirk, name):
-            return getattr(self.schema_quirk, name)
-        # Try acl methods
-        if hasattr(self.acl_quirk, name):
-            return getattr(self.acl_quirk, name)
-        # Try entry methods
-        if hasattr(self.entry_quirk, name):
-            return getattr(self.entry_quirk, name)
-        # Not found in any nested instance
-        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
-        raise AttributeError(msg)
+    # NOTE: __getattr__ delegation is inherited from FlextLdifServersBase
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Apache Directory Server (ApacheDS).
@@ -482,12 +454,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
             # RFC write failed - return parent error
             return parent_result
-
-        @staticmethod
-        def _splitacl_line(acl_line: str) -> tuple[str, str]:
-            """Split an ACL line into attribute name and payload."""
-            attr_name, _, remainder = acl_line.partition(":")
-            return attr_name.strip(), remainder.strip()
 
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for Apache Directory Server.

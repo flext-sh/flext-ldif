@@ -54,17 +54,19 @@ class TestRealLdapConfigurationFromEnv:
         # FlextLdifConfig is nested config - LDIF-specific fields only
         assert config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
         assert isinstance(config.ldif_strict_validation, bool)
-        
+
         # max_workers is in root FlextConfig, not nested FlextLdifConfig
         # Access via super().config to get root config
         from flext_core import FlextConfig
+
         root_config = FlextConfig.get_global_instance()
         assert root_config.max_workers >= 1
 
         # Verify LDAP-specific config from environment using FlextLdapConfig
         from flext_ldap.config import FlextLdapConfig
+
         ldap_config = FlextLdapConfig.get_instance()
-        
+
         assert ldap_config.host is not None
         assert ldap_config.port > 0
         assert ldap_config.port <= 65535
@@ -76,11 +78,12 @@ class TestRealLdapConfigurationFromEnv:
         """Test dynamic worker calculation based on config and entry count."""
         # max_workers is in root FlextConfig, not nested FlextLdifConfig
         from flext_core import FlextConfig
+
         root_config = FlextConfig.get_global_instance()
-        
+
         # Verify max_workers is accessible from root config
         assert root_config.max_workers >= 1
-        
+
         # For small datasets, typically use 1 worker
         # For large datasets, use up to max_workers
         # This test validates that root config is accessible

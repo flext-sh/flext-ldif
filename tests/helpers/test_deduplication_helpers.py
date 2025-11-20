@@ -41,7 +41,9 @@ AclQuirk = FlextLdifProtocols.Quirks.AclProtocol
 QuirksPort = FlextLdifProtocols.Quirks.QuirksPort
 
 # Union types for generic operations
-SchemaOrObjectClass = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+SchemaOrObjectClass = (
+    FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+)
 EntryOrList = FlextLdifModels.Entry | list[FlextLdifModels.Entry]
 
 
@@ -388,9 +390,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
-            result = schema_quirk._write_attribute(schema_obj)  # type: ignore[attr-defined,protected-access]
+            result = schema_quirk._write_attribute(schema_obj)
         else:
-            result = schema_quirk._write_objectclass(schema_obj)  # type: ignore[attr-defined,protected-access]
+            result = schema_quirk._write_objectclass(schema_obj)
 
         ldif = TestAssertions.assert_success(result, "Schema write should succeed")
         assert isinstance(ldif, str), "Write should return string"
@@ -504,7 +506,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Parsed Acl model
 
         """
-        result = acl_quirk.parse_acl(acl_line)  # type: ignore[attr-defined]
+        result = acl_quirk.parse_acl(acl_line)
         acl = TestAssertions.assert_success(result, "ACL parse should succeed")
         assert isinstance(acl, FlextLdifModels.Acl), "Parse should return Acl"
         assert acl.server_type == expected_server_type
@@ -534,7 +536,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written ACL string
 
         """
-        result = acl_quirk._write_acl(acl)  # type: ignore[attr-defined,protected-access]
+        result = acl_quirk._write_acl(acl)
         acl_str = TestAssertions.assert_success(result, "ACL write should succeed")
         assert isinstance(acl_str, str), "Write should return string"
 
@@ -607,7 +609,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if route_method is None:
             msg = "Quirk does not have _route_operation method"
             raise AttributeError(msg)
-        result = route_method(data, operation=operation)  # type: ignore[misc]
+        result = route_method(data, operation=operation)
 
         if should_succeed:
             unwrapped = TestAssertions.assert_success(result)
@@ -671,7 +673,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 write_method = "write"
 
         write_func = getattr(quirk, write_method)
-        write_result = write_func(parsed)  # type: ignore[misc]
+        write_result = write_func(parsed)
         written = TestAssertions.assert_success(write_result, "Write should succeed")
         assert isinstance(written, str), "Write should return string"
 
@@ -1562,7 +1564,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             List of parsed entries
 
         """
-        result = entry_quirk._parse_content(ldif_content)  # type: ignore[attr-defined,protected-access]
+        result = entry_quirk._parse_content(ldif_content)
         entries = DeduplicationHelpers.assert_success_and_unwrap_list(
             result, expected_length=expected_count
         )
@@ -1598,7 +1600,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        result = entry_quirk._write_entry(entry)  # type: ignore[attr-defined,protected-access]
+        result = entry_quirk._write_entry(entry)
         return DeduplicationHelpers.assert_success_and_unwrap_string(
             result, must_contain=must_contain
         )
@@ -1634,7 +1636,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if parse_method is None:
             msg = "Entry quirk does not have _parse_entry_model method"
             raise AttributeError(msg)
-        result = parse_method(entry_model)  # type: ignore[misc]
+        result = parse_method(entry_model)
         ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
 
         if expected_dn:
@@ -1654,7 +1656,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         check_is_oracle: bool = True,
         extract_from_def: bool = True,
         extract_from_object: bool = True,
-    ) -> tuple[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str]:
+    ) -> tuple[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str
+    ]:
         """Complete OID validation + parse test - replaces 30-50+ lines.
 
         Args:
@@ -2023,7 +2027,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def quirk_route_write_and_assert(
         quirk: SchemaQuirk | EntryQuirk | AclQuirk,
-        data: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | str,
+        data: FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
+        | str,
         *,
         must_contain: str | list[str] | None = None,
         must_not_contain: str | list[str] | None = None,
@@ -2047,7 +2055,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        result = quirk._route_write(data)  # type: ignore[attr-defined,protected-access]
+        result = quirk._route_write(data)
 
         if should_succeed:
             written = TestAssertions.assert_success(
@@ -2079,7 +2087,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def quirk_route_can_handle_and_assert(
         quirk: SchemaQuirk | EntryQuirk | AclQuirk,
-        data: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | str,
+        data: FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
+        | str,
         *,
         expected: bool = True,
     ) -> bool:
@@ -2098,7 +2110,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Boolean result from _route_can_handle
 
         """
-        result = quirk._route_can_handle(data)  # type: ignore[attr-defined,protected-access]
+        result = quirk._route_can_handle(data)
         assert isinstance(result, bool), "_route_can_handle should return bool"
         assert result == expected, (
             f"Expected _route_can_handle to return {expected}, got {result}"
@@ -2108,7 +2120,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def quirk_write_and_assert_content(
         quirk: SchemaQuirk | EntryQuirk | AclQuirk,
-        data: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | str,
+        data: FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
+        | str,
         *,
         must_contain: str | list[str] | None = None,
         must_not_contain: str | list[str] | None = None,
@@ -2139,7 +2155,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = f"Method {write_method} not found on quirk"
             raise AttributeError(msg)
 
-        result = method(data)  # type: ignore[misc]
+        result = method(data)
 
         if should_succeed:
             written = TestAssertions.assert_success(result, "Write should succeed")
@@ -2863,7 +2879,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extension_equals(
-        obj: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        obj: FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
         key: str,
         expected_value: str | int | bool | object,
         error_msg: str | None = None,
@@ -2895,7 +2913,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extension_get_equals(
-        obj: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        obj: FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
         key: str,
         expected_value: str | int | bool | object | None,
         error_msg: str | None = None,
@@ -2926,7 +2946,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_metadata_extension_get_isinstance(
-        obj: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        obj: FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
         key: str,
         expected_type: type[TResult],
         error_msg: str | None = None,
@@ -3195,7 +3217,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def write_and_unwrap_simple(
         writer: FlextLdifWriter | SchemaQuirk | EntryQuirk | AclQuirk,
-        data: FlextLdifModels.Entry | list[FlextLdifModels.Entry] | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl,
+        data: FlextLdifModels.Entry
+        | list[FlextLdifModels.Entry]
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl,
         *,
         write_method: str = "write",
         must_contain: str | list[str] | None = None,
@@ -4012,7 +4038,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = f"Method {write_method} not found on writer"
             raise AttributeError(msg)
 
-        result = method(data)  # type: ignore[misc]
+        result = method(data)
         written = TestAssertions.assert_success(result, "Write should succeed")
         assert isinstance(written, str), "Write should return string"
         return written
@@ -4054,7 +4080,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = f"Method {write_method} not found on writer"
             raise AttributeError(msg)
 
-        result = method(data)  # type: ignore[misc]
+        result = method(data)
 
         if should_succeed:
             written = TestAssertions.assert_success(
@@ -4395,7 +4421,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Write
         write_func = getattr(schema_quirk, write_method)
-        write_result = write_func(parsed)  # type: ignore[misc]
+        write_result = write_func(parsed)
         written = TestAssertions.assert_success(write_result, "Write should succeed")
         assert isinstance(written, str), "Write should return string"
 
@@ -5202,10 +5228,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Call write method with output_path
         if write_method == "write" and hasattr(writer, "write"):
-            result = writer.write(data, output_path=output_path)  # type: ignore[misc]
+            result = writer.write(data, output_path=output_path)
         else:
             # For other methods, try calling with output_path as kwarg
-            result = method(data, output_path=output_path)  # type: ignore[misc]
+            result = method(data, output_path=output_path)
 
         if should_succeed:
             TestAssertions.assert_success(result, "Write to file should succeed")
@@ -6231,9 +6257,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             raise AttributeError(msg)
 
         if write_method == "write" and hasattr(writer, "write"):
-            result = writer.write(data, output_path=output_path)  # type: ignore[misc]
+            result = writer.write(data, output_path=output_path)
         else:
-            result = method(data, output_path=output_path)  # type: ignore[misc]
+            result = method(data, output_path=output_path)
 
         if result.is_success:
             assert output_path.exists(), f"Output file should exist: {output_path}"
@@ -6871,7 +6897,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 msg = f"Test case {i} missing 'data'"
                 raise ValueError(msg)
 
-            result = method(data)  # type: ignore[misc]
+            result = method(data)
             expected_error = test_case.get("expected_error_substring")
             TestAssertions.assert_failure(result, expected_error)
             results.append(result)
@@ -7238,7 +7264,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = f"Method {write_method} not found on writer"
             raise AttributeError(msg)
 
-        result = method(data)  # type: ignore[misc]
+        result = method(data)
         TestAssertions.assert_failure(result, expected_error_substring)
         return result
 
@@ -7299,16 +7325,16 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         )
 
         if expected_syntax is not None:
-            assert attr.syntax == expected_syntax, (  # type: ignore[attr-defined]
-                f"Expected syntax '{expected_syntax}', got '{attr.syntax}'"  # type: ignore[attr-defined]
+            assert attr.syntax == expected_syntax, (
+                f"Expected syntax '{expected_syntax}', got '{attr.syntax}'"
             )
 
         if expected_syntax_definition is not None:
             assert hasattr(attr, "syntax_definition"), (
                 "Attribute must have syntax_definition"
             )
-            assert attr.syntax_definition == expected_syntax_definition, (  # type: ignore[attr-defined]
-                f"Expected syntax_definition '{expected_syntax_definition}', got '{attr.syntax_definition}'"  # type: ignore[attr-defined]
+            assert attr.syntax_definition == expected_syntax_definition, (
+                f"Expected syntax_definition '{expected_syntax_definition}', got '{attr.syntax_definition}'"
             )
 
         return attr
@@ -7407,14 +7433,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             assert hasattr(attr, "single_value"), (
                 "Attribute must have single_value attribute"
             )
-            assert attr.single_value == expected_single_value, (  # type: ignore[attr-defined]
-                f"Expected single_value={expected_single_value}, got {attr.single_value}"  # type: ignore[attr-defined]
+            assert attr.single_value == expected_single_value, (
+                f"Expected single_value={expected_single_value}, got {attr.single_value}"
             )
 
         if expected_equality is not None:
             assert hasattr(attr, "equality"), "Attribute must have equality attribute"
-            assert attr.equality == expected_equality, (  # type: ignore[attr-defined]
-                f"Expected equality='{expected_equality}', got '{attr.equality}'"  # type: ignore[attr-defined]
+            assert attr.equality == expected_equality, (
+                f"Expected equality='{expected_equality}', got '{attr.equality}'"
             )
 
         return attr
@@ -7594,14 +7620,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if expected_desc is not None:
             assert hasattr(attr, "desc"), "Attribute must have desc attribute"
-            assert attr.desc == expected_desc, (  # type: ignore[attr-defined]
-                f"Expected desc='{expected_desc}', got '{attr.desc}'"  # type: ignore[attr-defined]
+            assert attr.desc == expected_desc, (
+                f"Expected desc='{expected_desc}', got '{attr.desc}'"
             )
 
         if expected_equality is not None:
             assert hasattr(attr, "equality"), "Attribute must have equality attribute"
-            assert attr.equality == expected_equality, (  # type: ignore[attr-defined]
-                f"Expected equality='{expected_equality}', got '{attr.equality}'"  # type: ignore[attr-defined]
+            assert attr.equality == expected_equality, (
+                f"Expected equality='{expected_equality}', got '{attr.equality}'"
             )
 
         return attr
@@ -8555,7 +8581,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert parse_func is not None, (
             f"Method {parse_method} not found on schema_quirk"
         )
-        result = parse_func(constant_value)  # type: ignore[misc]
+        result = parse_func(constant_value)
 
         # Assert success and get parsed object
         parsed = TestAssertions.assert_success(result, f"{parse_method} should succeed")
@@ -8640,7 +8666,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Cast to HasParseMethod since FlextLdif has compatible methods (with overloads)
         from tests.helpers.test_rfc_helpers import HasParseMethod, RfcTestHelpers
 
-        ldif_api_protocol: HasParseMethod = cast("HasParseMethod", ldif_api)  # type: ignore[assignment]
+        ldif_api_protocol: HasParseMethod = cast("HasParseMethod", ldif_api)
         entries = RfcTestHelpers.test_api_parse_and_assert(
             ldif_api_protocol, ldif_content, server_type=server_type
         )
@@ -8774,7 +8800,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 if isinstance(attr_value, str):
                     attributes[attr_name] = [attr_value]
                 else:
-                    attributes[attr_name] = attr_value  # type: ignore[assignment]
+                    attributes[attr_name] = attr_value
 
         if objectclass_constants:
             oc_values = [
@@ -9143,18 +9169,18 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         if expected_oid is not None and hasattr(schema_item, "oid"):
-            assert schema_item.oid == expected_oid, (  # type: ignore[attr-defined]
-                f"OID mismatch: expected {expected_oid}, got {schema_item.oid}"  # type: ignore[attr-defined]
+            assert schema_item.oid == expected_oid, (
+                f"OID mismatch: expected {expected_oid}, got {schema_item.oid}"
             )
 
         if expected_name is not None and hasattr(schema_item, "name"):
-            assert schema_item.name == expected_name, (  # type: ignore[attr-defined]
-                f"Name mismatch: expected {expected_name}, got {schema_item.name}"  # type: ignore[attr-defined]
+            assert schema_item.name == expected_name, (
+                f"Name mismatch: expected {expected_name}, got {schema_item.name}"
             )
 
         if expected_sup is not None and hasattr(schema_item, "sup"):
-            assert schema_item.sup == expected_sup, (  # type: ignore[attr-defined]
-                f"Sup mismatch: expected {expected_sup}, got {schema_item.sup}"  # type: ignore[attr-defined]
+            assert schema_item.sup == expected_sup, (
+                f"Sup mismatch: expected {expected_sup}, got {schema_item.sup}"
             )
 
         # Type narrowing: kind is only available in SchemaObjectClass
@@ -9166,8 +9192,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             )
 
         if expected_desc is not None and hasattr(schema_item, "desc"):
-            assert schema_item.desc == expected_desc, (  # type: ignore[attr-defined]
-                f"Desc mismatch: expected {expected_desc}, got {schema_item.desc}"  # type: ignore[attr-defined]
+            assert schema_item.desc == expected_desc, (
+                f"Desc mismatch: expected {expected_desc}, got {schema_item.desc}"
             )
 
         # Type narrowing: equality and syntax are only available in SchemaAttribute
@@ -9222,7 +9248,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert result is expected_result, (
             f"{method_name} returned {result}, expected {expected_result}"
         )
-        return result  # type: ignore[return-value]
+        return result
 
     @staticmethod
     def helper_transform_and_assert_fields(

@@ -20,7 +20,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -521,6 +521,152 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             except Exception as e:
                 return FlextResult[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
 
+        # ===== _parse_acl HELPER METHODS (DRY refactoring) =====
+
+        def _strip_acl_prefix_and_index(self, acl_line: str) -> str:
+            """Remove olcAccess: prefix and {n} index from ACL line.
+
+            Args:
+                acl_line: Raw ACL line
+
+            Returns:
+                ACL content without prefix and index
+
+            """
+            acl_content = acl_line
+            if acl_line.startswith(
+                f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
+            ):
+                acl_content = acl_line[
+                    len(FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":") :
+                ].strip()
+
+            # Remove {n} index if present
+            index_match = re.match(
+                FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN,
+                acl_content,
+            )
+            if index_match:
+                acl_content = index_match.group(2)
+
+            return acl_content
+
+        def _parse_what_clause(self, acl_content: str) -> tuple[str | None, list[str]]:
+            """Parse "to <what>" clause and extract attributes.
+
+            Args:
+                acl_content: ACL content without prefix
+
+            Returns:
+                Tuple of (what_clause, attributes_list) or (None, []) if no match
+
+            """
+            to_match = re.match(
+                FlextLdifServersOpenldap.Constants.ACL_TO_BY_PATTERN,
+                acl_content,
+                re.IGNORECASE,
+            )
+            if not to_match:
+                return None, []
+
+            what = to_match.group(1).strip()
+
+            # Extract attributes from "what" clause
+            attributes: list[str] = []
+            attrs_match = re.search(
+                FlextLdifServersOpenldap.Constants.ACL_ATTRS_PATTERN,
+                what,
+                re.IGNORECASE,
+            )
+            if attrs_match:
+                attr_string = attrs_match.group(1)
+                attributes = [
+                    attr.strip()
+                    for attr in attr_string.split(
+                        FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR,
+                    )
+                ]
+
+            return what, attributes
+
+        def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:
+            """Parse "by <who> <access>" clauses.
+
+            Args:
+                acl_content: ACL content without prefix
+
+            Returns:
+                Tuple of (subject_value, access)
+
+            """
+            by_matches = list(
+                re.finditer(
+                    FlextLdifServersOpenldap.Constants.ACL_BY_PATTERN,
+                    acl_content,
+                    re.IGNORECASE,
+                ),
+            )
+
+            subject_value = (
+                by_matches[0].group(1)
+                if by_matches
+                else FlextLdifServersOpenldap.Constants.ACL_SUBJECT_ANONYMOUS
+            )
+
+            access = (
+                by_matches[0].group(2)
+                if by_matches
+                else FlextLdifServersOpenldap.Constants.ACL_DEFAULT_ACCESS
+            )
+
+            return subject_value, access
+
+        def _build_openldap_acl_model(
+            self,
+            what: str,
+            attributes: list[str],
+            subject_value: str,
+            access: str,
+            acl_line: str,
+        ) -> FlextLdifModels.Acl:
+            """Build OpenLDAP Acl model from parsed components.
+
+            Args:
+                what: Target DN/what clause
+                attributes: Target attributes list
+                subject_value: Subject who clause
+                access: Access permissions string
+                acl_line: Original ACL line
+
+            Returns:
+                Acl model
+
+            """
+            return FlextLdifModels.Acl(
+                name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
+                target=FlextLdifModels.AclTarget(
+                    target_dn=what,
+                    attributes=attributes,
+                ),
+                subject=FlextLdifModels.AclSubject(
+                    subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
+                    subject_value=subject_value,
+                ),
+                permissions=FlextLdifModels.AclPermissions(
+                    read="read" in access,
+                    write="write" in access,
+                    add="write" in access,
+                    delete="write" in access,
+                    search="read" in access,
+                    compare="read" in access,
+                ),
+                metadata=FlextLdifModels.QuirkMetadata.create_for(
+                    self._get_server_type(),
+                    extensions={"original_format": acl_line},
+                ),
+                raw_acl=acl_line,
+            )
+
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse OpenLDAP 2.x ACL definition (internal).
 
@@ -534,36 +680,15 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 FlextResult with parsed OpenLDAP 2.x ACL data
 
             """
-            # Moved from parse() method to follow base.py pattern
             try:
-                # Remove olcAccess: prefix if present
-                acl_content = acl_line
-                if acl_line.startswith(
-                    f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
-                ):
-                    acl_content = acl_line[
-                        len(
-                            FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":",
-                        ) :
-                    ].strip()
+                # Strip prefix and index using helper (DRY refactoring)
+                acl_content = self._strip_acl_prefix_and_index(acl_line)
 
-                # Remove {n} index if present
-                index_match = re.match(
-                    FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN,
-                    acl_content,
-                )
-                if index_match:
-                    acl_content = index_match.group(2)
+                # Parse "to <what>" clause using helper (DRY refactoring)
+                what, attributes = self._parse_what_clause(acl_content)
 
-                # Parse "to <what>" clause
-                to_match = re.match(
-                    FlextLdifServersOpenldap.Constants.ACL_TO_BY_PATTERN,
-                    acl_content,
-                    re.IGNORECASE,
-                )
-                if not to_match:
+                if what is None:
                     # ACL parser accepts incomplete ACLs and stores as raw
-                    # (validation beyond basic parsing is not in scope)
                     return FlextResult[FlextLdifModels.Acl].ok(
                         FlextLdifModels.Acl(
                             name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
@@ -581,75 +706,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         ),
                     )
 
-                what = to_match.group(1).strip()
+                # Parse "by <who> <access>" using helper (DRY refactoring)
+                subject_value, access = self._parse_by_clauses(acl_content)
 
-                # Extract attributes from "what" clause if present
-                # OpenLDAP ACLs can specify: "to attrs=attr1,attr2 by ..."
-                attributes: list[str] = []
-                attrs_match = re.search(
-                    FlextLdifServersOpenldap.Constants.ACL_ATTRS_PATTERN,
-                    what,
-                    re.IGNORECASE,
-                )
-                if attrs_match:
-                    attr_string = attrs_match.group(1)
-                    attributes = [
-                        attr.strip()
-                        for attr in attr_string.split(
-                            FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR,
-                        )
-                    ]
-
-                # Parse "by <who> <access>" clauses - extract first by clause for model
-                by_matches = list(
-                    re.finditer(
-                        FlextLdifServersOpenldap.Constants.ACL_BY_PATTERN,
-                        acl_content,
-                        re.IGNORECASE,
-                    ),
-                )
-
-                # Extract subject from first by clause
-                subject_value = (
-                    by_matches[0].group(1)
-                    if by_matches
-                    else FlextLdifServersOpenldap.Constants.ACL_SUBJECT_ANONYMOUS
-                )
-
-                # Extract access permissions from first by clause
-                access = (
-                    by_matches[0].group(2)
-                    if by_matches
-                    else FlextLdifServersOpenldap.Constants.ACL_DEFAULT_ACCESS
-                )
-
-                # Build Acl model
-                # Note: "access" is OpenLDAP 1.x format, OpenLDAP 2.x uses "olcAccess"
-                # This is for compatibility/translation,
-                # actual format is from Constants.ACL_ATTRIBUTE_NAME
-                acl = FlextLdifModels.Acl(
-                    name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
-                    target=FlextLdifModels.AclTarget(
-                        target_dn=what,  # OpenLDAP: "what" is target
-                        attributes=attributes,  # OpenLDAP: extracted from what clause
-                    ),
-                    subject=FlextLdifModels.AclSubject(
-                        subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
-                        subject_value=subject_value,
-                    ),
-                    permissions=FlextLdifModels.AclPermissions(
-                        read="read" in access,
-                        write="write" in access,
-                        add="write" in access,  # OpenLDAP: write includes add
-                        delete="write" in access,  # OpenLDAP: write includes delete
-                        search="read" in access,  # OpenLDAP: read includes search
-                        compare="read" in access,  # OpenLDAP: read includes compare
-                    ),
-                    metadata=FlextLdifModels.QuirkMetadata.create_for(
-                        self._get_server_type(),
-                        extensions={"original_format": acl_line},
-                    ),
-                    raw_acl=acl_line,
+                # Build Acl model using helper (DRY refactoring)
+                acl = self._build_openldap_acl_model(
+                    what, attributes, subject_value, access, acl_line
                 )
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
@@ -718,7 +780,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             # Check for OpenLDAP 2.x object classes
             object_classes = attributes.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
-            if not isinstance(object_classes, list):
+            if not FlextRuntime.is_list_like(object_classes):
                 object_classes = [object_classes] if object_classes else []
 
             has_olc_classes = any(

@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core.models import FlextModels
 
 from flext_ldif.models import FlextLdifModels
 
@@ -227,8 +228,8 @@ class TestDnCaseNormalizationScenarios:
         assert result.is_success
         assert result.unwrap() is False  # Has inconsistencies
         assert result.metadata is not None
-        assert isinstance(result.metadata, dict)
-        assert "warning" in result.metadata
+        assert isinstance(result.metadata, FlextModels.Metadata)
+        assert "warning" in result.metadata.attributes
 
     def test_hierarchical_dn_references(
         self,

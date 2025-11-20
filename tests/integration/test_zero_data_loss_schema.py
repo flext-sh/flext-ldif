@@ -63,9 +63,13 @@ class TestSchemaDeviationsSyntaxQuotes:
         format_details = attr.metadata.schema_format_details
         assert "syntax_quotes" in format_details, "Missing syntax_quotes tracking"
         assert format_details["syntax_quotes"] is True, "Should detect syntax quotes"
-        assert format_details.get("syntax_quote_char") == "'", "Should detect single quotes"
+        assert format_details.get("syntax_quote_char") == "'", (
+            "Should detect single quotes"
+        )
 
-        logger.debug(f"OID syntax quotes tracked: {format_details.get('syntax_quotes')}")
+        logger.debug(
+            f"OID syntax quotes tracked: {format_details.get('syntax_quotes')}"
+        )
 
     def test_oud_syntax_no_quotes_tracked(
         self,
@@ -90,9 +94,13 @@ class TestSchemaDeviationsSyntaxQuotes:
         # Verify syntax_quotes is tracked as False
         format_details = attr.metadata.schema_format_details
         assert "syntax_quotes" in format_details, "Missing syntax_quotes tracking"
-        assert format_details["syntax_quotes"] is False, "Should detect no syntax quotes"
+        assert format_details["syntax_quotes"] is False, (
+            "Should detect no syntax quotes"
+        )
 
-        logger.debug(f"OUD syntax quotes tracked: {format_details.get('syntax_quotes')}")
+        logger.debug(
+            f"OUD syntax quotes tracked: {format_details.get('syntax_quotes')}"
+        )
 
 
 class TestSchemaDeviationsXOrigin:
@@ -128,10 +136,14 @@ class TestSchemaDeviationsXOrigin:
 
         # Verify X-ORIGIN is tracked as absent
         format_details = attr.metadata.schema_format_details
-        assert "x_origin_presence" in format_details, "Missing x_origin_presence tracking"
+        assert "x_origin_presence" in format_details, (
+            "Missing x_origin_presence tracking"
+        )
         assert format_details["x_origin_presence"] is False, "Should detect no X-ORIGIN"
 
-        logger.debug(f"OID X-ORIGIN presence: {format_details.get('x_origin_presence')}")
+        logger.debug(
+            f"OID X-ORIGIN presence: {format_details.get('x_origin_presence')}"
+        )
 
     def test_oud_x_origin_tracked(
         self,
@@ -154,9 +166,13 @@ class TestSchemaDeviationsXOrigin:
 
         # Verify X-ORIGIN is tracked with value
         format_details = attr.metadata.schema_format_details
-        assert "x_origin_presence" in format_details, "Missing x_origin_presence tracking"
+        assert "x_origin_presence" in format_details, (
+            "Missing x_origin_presence tracking"
+        )
         assert format_details["x_origin_presence"] is True, "Should detect X-ORIGIN"
-        assert format_details.get("x_origin_value") == "RFC 4519", "Should preserve X-ORIGIN value"
+        assert format_details.get("x_origin_value") == "RFC 4519", (
+            "Should preserve X-ORIGIN value"
+        )
 
         logger.debug(f"OUD X-ORIGIN: {format_details.get('x_origin_value')}")
 
@@ -192,8 +208,12 @@ class TestSchemaDeviationsNameAliases:
         assert attr.metadata is not None, "Missing metadata"
 
         format_details = attr.metadata.schema_format_details
-        assert format_details.get("name_format") == "single", "Should detect single NAME format"
-        assert format_details.get("name_values") == ["uid"], "Should preserve name value"
+        assert format_details.get("name_format") == "single", (
+            "Should detect single NAME format"
+        )
+        assert format_details.get("name_values") == ["uid"], (
+            "Should preserve name value"
+        )
 
         logger.debug(f"OID NAME format: {format_details.get('name_format')}")
 
@@ -215,11 +235,15 @@ class TestSchemaDeviationsNameAliases:
         assert attr.metadata is not None, "Missing metadata"
 
         format_details = attr.metadata.schema_format_details
-        assert format_details.get("name_format") == "multiple", "Should detect multiple NAME format"
+        assert format_details.get("name_format") == "multiple", (
+            "Should detect multiple NAME format"
+        )
 
         # Name values should include all aliases
         name_values = format_details.get("name_values", [])
-        assert "uid" in name_values or len(name_values) > 0, "Should preserve name values"
+        assert "uid" in name_values or len(name_values) > 0, (
+            "Should preserve name values"
+        )
 
         logger.debug(f"OUD NAME values: {name_values}")
 
@@ -250,11 +274,15 @@ class TestSchemaDeviationsObsolete:
         assert attr.metadata is not None, "Missing metadata"
 
         format_details = attr.metadata.schema_format_details
-        assert "obsolete_presence" in format_details, "Missing obsolete_presence tracking"
+        assert "obsolete_presence" in format_details, (
+            "Missing obsolete_presence tracking"
+        )
         assert format_details["obsolete_presence"] is True, "Should detect OBSOLETE"
         assert "obsolete_position" in format_details, "Should track OBSOLETE position"
 
-        logger.debug(f"OBSOLETE tracked: position={format_details.get('obsolete_position')}")
+        logger.debug(
+            f"OBSOLETE tracked: position={format_details.get('obsolete_position')}"
+        )
 
     def test_no_obsolete_tracked(
         self,
@@ -274,7 +302,9 @@ class TestSchemaDeviationsObsolete:
         assert attr.metadata is not None
 
         format_details = attr.metadata.schema_format_details
-        assert format_details.get("obsolete_presence") is False, "Should detect no OBSOLETE"
+        assert format_details.get("obsolete_presence") is False, (
+            "Should detect no OBSOLETE"
+        )
 
 
 class TestSchemaDeviationsSpacing:
@@ -305,7 +335,9 @@ class TestSchemaDeviationsSpacing:
         format_details = attr.metadata.schema_format_details
         assert "trailing_spaces" in format_details, "Missing trailing_spaces tracking"
 
-        logger.debug(f"Trailing spaces tracked: '{format_details.get('trailing_spaces')}'")
+        logger.debug(
+            f"Trailing spaces tracked: '{format_details.get('trailing_spaces')}'"
+        )
 
     def test_field_order_tracked(
         self,
@@ -436,7 +468,9 @@ class TestSchemaDeviationsRoundTrip:
 
         # These fields are essential for restoring OID format
         assert "syntax_quotes" in format_details, "Missing syntax_quotes for round-trip"
-        assert "original_string_complete" in format_details, "Missing original for round-trip"
+        assert "original_string_complete" in format_details, (
+            "Missing original for round-trip"
+        )
 
         logger.debug(f"Metadata fields preserved: {list(format_details.keys())}")
 
@@ -465,7 +499,9 @@ class TestSchemaDeviationsRoundTrip:
         # These fields are essential for restoring OUD format
         assert "x_origin_presence" in format_details, "Missing x_origin for round-trip"
         assert "name_format" in format_details, "Missing name_format for round-trip"
-        assert "original_string_complete" in format_details, "Missing original for round-trip"
+        assert "original_string_complete" in format_details, (
+            "Missing original for round-trip"
+        )
 
         logger.debug(f"Metadata fields preserved: {list(format_details.keys())}")
 
@@ -523,7 +559,9 @@ class TestSchemaDeviationsUtilities:
         # Verify OUD-specific fields
         assert details["syntax_quotes"] is False, "OUD should not have syntax quotes"
         assert details["x_origin_presence"] is True, "OUD should have X-ORIGIN"
-        assert details.get("x_origin_value") == "RFC 4519", "Should preserve X-ORIGIN value"
+        assert details.get("x_origin_value") == "RFC 4519", (
+            "Should preserve X-ORIGIN value"
+        )
 
         logger.debug(f"OUD fields: X-ORIGIN={details.get('x_origin_value')}")
 
@@ -555,7 +593,9 @@ class TestSchemaDeviationsMissingSpaces:
         if result.is_success:
             attr = result.unwrap()
             if attr.metadata and attr.metadata.schema_format_details:
-                original = attr.metadata.schema_format_details.get("original_string_complete")
+                original = attr.metadata.schema_format_details.get(
+                    "original_string_complete"
+                )
                 assert "SYNTAX1.3.6.1" in (original or ""), (
                     "Original malformed string should be preserved"
                 )
@@ -623,10 +663,10 @@ class TestSchemaDeviationsComplete:
 
         # OID deviations that MUST be tracked
         oid_must_track = [
-            "syntax_quotes",       # OID uses quotes
+            "syntax_quotes",  # OID uses quotes
             "original_string_complete",  # For exact restoration
-            "field_order",         # For identical field ordering
-            "oid_value",           # OID number
+            "field_order",  # For identical field ordering
+            "oid_value",  # OID number
         ]
 
         missing = [f for f in oid_must_track if f not in format_details]
@@ -660,9 +700,9 @@ class TestSchemaDeviationsComplete:
 
         # OUD deviations that MUST be tracked
         oud_must_track = [
-            "syntax_quotes",       # OUD doesn't use quotes
-            "x_origin_presence",   # OUD has X-ORIGIN
-            "name_format",         # OUD uses multiple names
+            "syntax_quotes",  # OUD doesn't use quotes
+            "x_origin_presence",  # OUD has X-ORIGIN
+            "name_format",  # OUD uses multiple names
             "original_string_complete",  # For exact restoration
         ]
 
@@ -670,7 +710,9 @@ class TestSchemaDeviationsComplete:
         assert not missing, f"Missing OUD deviation tracking: {missing}"
 
         # Verify OUD-specific values
-        assert format_details["syntax_quotes"] is False, "OUD syntax should not be quoted"
+        assert format_details["syntax_quotes"] is False, (
+            "OUD syntax should not be quoted"
+        )
         assert format_details["x_origin_presence"] is True, "OUD should have X-ORIGIN"
 
         logger.info(f"All OUD deviations tracked: {len(format_details)} fields")

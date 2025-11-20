@@ -20,7 +20,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -409,10 +409,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 if sup:
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
-                if must and isinstance(must, list):
+                if must and FlextRuntime.is_list_like(must):
                     must_attrs = " $ ".join(must)
                     oc_str += f" MUST ( {must_attrs} )"
-                if may and isinstance(may, list):
+                if may and FlextRuntime.is_list_like(may):
                     may_attrs = " $ ".join(may)
                     oc_str += f" MAY ( {may_attrs} )"
                 oc_str += " )"

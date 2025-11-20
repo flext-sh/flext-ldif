@@ -1879,7 +1879,7 @@ class TestErrorHandling:
         result = conversion_matrix.convert(
             oud_quirk,
             oid_quirk,
-            invalid_model,  # type: ignore[arg-type]
+            invalid_model,
         )
 
         assert result.is_failure
@@ -2218,7 +2218,7 @@ cn: test
 sn: user"""
 
         # NEW API: Strings are not accepted - should fail with type error
-        result = conversion_matrix.convert(source, target, ldif_string)  # type: ignore[arg-type]
+        result = conversion_matrix.convert(source, target, ldif_string)
         assert result.is_failure
         assert result.error is not None
         # Should reject non-Entry model types
@@ -2239,7 +2239,7 @@ sn: user"""
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
 
         # NEW API: Dicts are not accepted - should fail with type error
-        result = conversion_matrix.convert(source, target, entry_data)  # type: ignore[arg-type]
+        result = conversion_matrix.convert(source, target, entry_data)
         assert result.is_failure
         assert result.error is not None
         # Should reject non-Entry model types
@@ -2260,7 +2260,7 @@ sn: user"""
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
 
         # NEW API: Dicts are not accepted - should fail with type error
-        result = conversion_matrix.convert(source, target, entry_data)  # type: ignore[arg-type]
+        result = conversion_matrix.convert(source, target, entry_data)
         assert result.is_failure
         assert result.error is not None
         # Should reject non-Entry model types

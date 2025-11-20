@@ -245,7 +245,7 @@ class TestValidateAttribute:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating None attribute."""
-        result = schema_service.validate_attribute(None)  # type: ignore[arg-type]
+        result = schema_service.validate_attribute(None)
         assert result.is_failure
         assert "None" in result.error
 
@@ -332,7 +332,7 @@ class TestValidateObjectClass:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test validating None objectClass."""
-        result = schema_service.validate_objectclass(None)  # type: ignore[arg-type]
+        result = schema_service.validate_objectclass(None)
         assert result.is_failure
         assert "None" in result.error
 

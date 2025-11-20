@@ -23,11 +23,10 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import UTC, datetime
 from functools import wraps
 from typing import TypeVar, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextUtilities
 
 from flext_ldif.models import FlextLdifModels
 
@@ -90,7 +89,7 @@ class FlextLdifUtilitiesDecorators:
             quirk_type=quirk_type,
             extensions={
                 "server_type": server_type,
-                "parsed_timestamp": datetime.now(UTC).isoformat(),
+                "parsed_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
             },
         )
 

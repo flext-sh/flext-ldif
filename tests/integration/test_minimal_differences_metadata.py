@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
 
 
 class TestMinimalDifferencesOidOud:
@@ -26,18 +26,25 @@ class TestMinimalDifferencesOidOud:
         return FlextLdifParser()
 
     @pytest.fixture
-    def writer(self) -> FlextLdifWriter:
-        """Create writer instance."""
-        return FlextLdifWriter()
+    def writer(self) -> FlextLdif:
+        """Create writer instance via FlextLdif."""
+        from flext_ldif import FlextLdif
+
+        return FlextLdif()
 
     def test_oid_fixture_all_differences_captured(
         self,
         parser: FlextLdifParser,
-        writer: FlextLdifWriter,
+        writer: FlextLdif,
     ) -> None:
         """Test that ALL minimal differences in OID fixtures are captured in metadata."""
         # Load OID fixture
-        fixture_path = Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        fixture_path = (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
         if not fixture_path.exists():
             pytest.skip(f"OID fixture not found: {fixture_path}")
 
@@ -59,28 +66,37 @@ class TestMinimalDifferencesOidOud:
         assert len(entries) > 0, "No entries parsed from OID fixture"
 
         # Validate that ALL entries have metadata with minimal differences
-        for entry in entries:
+        for entry_protocol in entries:
+            # Cast to Entry model to access metadata and dn attributes
+            entry = cast("FlextLdifModels.Entry", entry_protocol)
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            
+
             # Check that original DN is preserved
-            assert "original_dn_complete" in entry.metadata.extensions, \
+            assert "original_dn_complete" in entry.metadata.extensions, (
                 f"Entry {entry.dn} missing original_dn_complete in metadata"
-            
+            )
+
             # Check that minimal differences are tracked
-            assert "minimal_differences_dn" in entry.metadata.extensions, \
+            assert "minimal_differences_dn" in entry.metadata.extensions, (
                 f"Entry {entry.dn} missing minimal_differences_dn in metadata"
-            
+            )
+
             # Check that original attributes are preserved
-            assert "original_attributes_complete" in entry.metadata.extensions, \
+            assert "original_attributes_complete" in entry.metadata.extensions, (
                 f"Entry {entry.dn} missing original_attributes_complete in metadata"
-            
+            )
+
             # Validate metadata completeness
-            original_attrs = entry.metadata.extensions.get("original_attributes_complete", {})
+            original_attrs = entry.metadata.extensions.get(
+                "original_attributes_complete", {}
+            )
             if isinstance(original_attrs, dict):
                 expected_transformations = list(original_attrs.keys())
-                is_complete, missing = FlextLdifUtilitiesMetadata.validate_metadata_completeness(
-                    metadata=entry.metadata,
-                    expected_transformations=expected_transformations,
+                is_complete, missing = (
+                    FlextLdifUtilities.Metadata.validate_metadata_completeness(
+                        metadata=entry.metadata,
+                        expected_transformations=expected_transformations,
+                    )
                 )
                 if not is_complete:
                     pytest.fail(
@@ -91,11 +107,16 @@ class TestMinimalDifferencesOidOud:
     def test_oud_fixture_all_differences_captured(
         self,
         parser: FlextLdifParser,
-        writer: FlextLdifWriter,
+        writer: FlextLdif,
     ) -> None:
         """Test that ALL minimal differences in OUD fixtures are captured in metadata."""
         # Load OUD fixture
-        fixture_path = Path(__file__).parent.parent / "fixtures" / "oud" / "oud_entries_fixtures.ldif"
+        fixture_path = (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oud"
+            / "oud_entries_fixtures.ldif"
+        )
         if not fixture_path.exists():
             pytest.skip(f"OUD fixture not found: {fixture_path}")
 
@@ -117,17 +138,21 @@ class TestMinimalDifferencesOidOud:
         assert len(entries) > 0, "No entries parsed from OUD fixture"
 
         # Validate that ALL entries have metadata with minimal differences
-        for entry in entries:
+        for entry_protocol in entries:
+            # Cast to Entry model to access metadata and dn attributes
+            entry = cast("FlextLdifModels.Entry", entry_protocol)
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            assert "original_dn_complete" in entry.metadata.extensions, \
+            assert "original_dn_complete" in entry.metadata.extensions, (
                 f"Entry {entry.dn} missing original_dn_complete"
-            assert "minimal_differences_dn" in entry.metadata.extensions, \
+            )
+            assert "minimal_differences_dn" in entry.metadata.extensions, (
                 f"Entry {entry.dn} missing minimal_differences_dn"
+            )
 
     def test_round_trip_oid_preserves_all_differences(
         self,
         parser: FlextLdifParser,
-        writer: FlextLdifWriter,
+        writer: FlextLdif,
     ) -> None:
         """Test round-trip: OID -> RFC -> OID preserves ALL differences."""
         # Sample OID entry with known differences
@@ -147,12 +172,14 @@ orcldasisenabled: 1
         assert parse_result.is_success
         entries = parse_result.unwrap().entries
         assert len(entries) == 1
-        original_entry = entries[0]
+        original_entry_protocol = entries[0]
+        # Cast to Entry model to access metadata and dn attributes
+        original_entry = cast("FlextLdifModels.Entry", original_entry_protocol)
 
         # Verify metadata captured differences
         assert original_entry.metadata is not None
         assert "original_dn_complete" in original_entry.metadata.extensions
-        
+
         # Write back to OID format
         write_result = writer.write(
             entries=[original_entry],
@@ -160,12 +187,12 @@ orcldasisenabled: 1
             output_target="string",
         )
         assert write_result.is_success
-        
+
         written_ldif = write_result.unwrap()
         assert isinstance(written_ldif, str)
-        
+
         # Verify no data loss
-        no_loss, lost = FlextLdifUtilitiesMetadata.assert_no_data_loss(
+        no_loss, lost = FlextLdifUtilities.Metadata.assert_no_data_loss(
             original_entry=original_entry,
             converted_entry=original_entry,  # Same entry, but metadata should preserve all
         )
@@ -195,7 +222,7 @@ cn: test
         # Check that spacing differences are tracked
         assert entry.metadata is not None
         dn_differences = entry.metadata.extensions.get("minimal_differences_dn", {})
-        
+
         if isinstance(dn_differences, dict) and dn_differences.get("has_differences"):
             spacing_changes = dn_differences.get("spacing_changes", {})
             assert spacing_changes is not None, "Spacing changes should be tracked"
@@ -223,9 +250,11 @@ cn: test
 
         # Check that original case is preserved
         assert entry.metadata is not None
-        original_attrs = entry.metadata.extensions.get("original_attributes_complete", {})
+        original_attrs = entry.metadata.extensions.get(
+            "original_attributes_complete", {}
+        )
         assert isinstance(original_attrs, dict)
-        
+
         # Check that original attribute case is tracked
         if entry.metadata.original_attribute_case:
             assert len(entry.metadata.original_attribute_case) > 0
@@ -281,9 +310,10 @@ pwdlockout: 0
 
         # Check that boolean conversions are tracked
         assert entry.metadata is not None
-        assert len(entry.metadata.boolean_conversions) > 0, \
+        assert len(entry.metadata.boolean_conversions) > 0, (
             "Boolean conversions should be tracked in metadata"
-        
+        )
+
         # Verify specific conversions
         if "orcldasisenabled" in entry.metadata.boolean_conversions:
             conv = entry.metadata.boolean_conversions["orcldasisenabled"]
@@ -320,8 +350,8 @@ createTimestamp: 20250101000000Z
         assert entry.metadata is not None
         # Operational attributes should be in soft_delete_markers or removed_attributes
         assert (
-            len(entry.metadata.soft_delete_markers) > 0 or
-            len(entry.metadata.removed_attributes) > 0
+            len(entry.metadata.soft_delete_markers) > 0
+            or len(entry.metadata.removed_attributes) > 0
         ), "Soft-deleted operational attributes should be tracked in metadata"
 
 

@@ -23,7 +23,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar, cast
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -646,12 +646,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             return FlextResult[str].ok(acl_str)
 
-        @staticmethod
-        def _splitacl_line(acl_line: str) -> tuple[str, str]:
-            """Split an ACL line into attribute name and payload."""
-            attr_name, _, remainder = acl_line.partition(":")
-            return attr_name.strip(), remainder.strip()
-
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for 389 Directory Server."""
 
@@ -690,7 +684,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             object_classes = (
                 object_classes_raw
-                if isinstance(object_classes_raw, list)
+                if FlextRuntime.is_list_like(object_classes_raw)
                 else [object_classes_raw]
             )
             return bool(

@@ -11,7 +11,7 @@ import contextlib
 import re
 from collections.abc import Callable
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
@@ -37,7 +37,7 @@ class FlextLdifUtilitiesParser:
     def ext(metadata: dict[str, object]) -> dict[str, object]:
         """Extract extension information from parsed metadata."""
         result = metadata.get("extensions", {})
-        return result if isinstance(result, dict) else {}
+        return result if FlextRuntime.is_dict_like(result) else {}
 
     @staticmethod
     def extract_oid(definition: str) -> str | None:
@@ -113,48 +113,6 @@ class FlextLdifUtilitiesParser:
             pattern = re.compile(pattern)
 
         return re.search(pattern, definition) is not None
-
-    @staticmethod
-    def split_and_clean(
-        value: str,
-        sep: str = ",",
-        *,
-        strip: bool = True,
-        remove_empty: bool = True,
-    ) -> list[str]:
-        """Split string and clean parts.
-
-        Generic utility to split a string by separator and clean the resulting parts.
-        Commonly used for parsing comma-separated values in LDIF/schema definitions.
-
-        Args:
-            value: String to split and clean
-            sep: Separator character (default: ",")
-            strip: Whether to strip whitespace from parts (default: True)
-            remove_empty: Whether to remove empty strings from result (default: True)
-
-        Returns:
-            List of cleaned string parts
-
-        Example:
-            >>> FlextLdifUtilitiesParser.split_and_clean("cn, sn, uid")
-            ['cn', 'sn', 'uid']
-            >>> FlextLdifUtilitiesParser.split_and_clean("a,  , b,c", remove_empty=True)
-            ['a', 'b', 'c']
-
-        """
-        if not value or not isinstance(value, str):
-            return []
-
-        parts = value.split(sep)
-
-        if strip:
-            parts = [p.strip() for p in parts]
-
-        if remove_empty:
-            parts = [p for p in parts if p]
-
-        return parts
 
     @staticmethod
     def extract_extensions(definition: str) -> dict[str, object]:
@@ -302,7 +260,7 @@ class FlextLdifUtilitiesParser:
             if is_base64:
                 # Store metadata flag for server layer to preserve
                 new_attrs["_base64_dn"] = ["true"]
-            
+
             # ZERO DATA LOSS: Store original DN line for metadata
             new_attrs["_original_dn_line"] = [original_line]
 
@@ -313,7 +271,7 @@ class FlextLdifUtilitiesParser:
         if "_original_lines" not in current_attrs:
             current_attrs["_original_lines"] = []
         current_attrs["_original_lines"].append(original_line)
-        
+
         current_attrs.setdefault(key, []).append(value)
         return current_dn, current_attrs
 
@@ -427,7 +385,7 @@ class FlextLdifUtilitiesParser:
 
         # Convert to list if needed
         existing = entry_dict[attr_name]
-        if not isinstance(existing, list):
+        if not FlextRuntime.is_list_like(existing):
             entry_dict[attr_name] = [existing, attr_value]
         else:
             existing.append(attr_value)
@@ -587,14 +545,14 @@ class FlextLdifUtilitiesParser:
         return definitions
 
     @staticmethod
-    def _extract_regex_field(
+    def extract_regex_field(
         definition: str,
         pattern: str,
         default: str | None = None,
     ) -> str | None:
         """Extract field from definition using regex pattern.
 
-        Generic helper to reduce duplication in schema parsing.
+        Generic helper to reduce duplication in schema parsing. Made public for use by RFC parsers.
 
         Args:
             definition: Schema definition string
@@ -609,10 +567,10 @@ class FlextLdifUtilitiesParser:
         return match.group(1) if match else default
 
     @staticmethod
-    def _extract_syntax_and_length(
+    def extract_syntax_and_length(
         definition: str,
     ) -> tuple[str | None, int | None]:
-        """Extract syntax OID and optional length from definition.
+        """Extract syntax OID and optional length from definition. Made public for use by RFC parsers.
 
         Args:
             definition: Schema definition string
@@ -728,38 +686,38 @@ class FlextLdifUtilitiesParser:
             oid = oid_match.group(1)
 
             # Extract all string fields using helper
-            name = FlextLdifUtilitiesParser._extract_regex_field(
+            name = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
                 default=oid,
             )
-            desc = FlextLdifUtilitiesParser._extract_regex_field(
+            desc = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
             )
-            equality = FlextLdifUtilitiesParser._extract_regex_field(
+            equality = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
             )
-            substr = FlextLdifUtilitiesParser._extract_regex_field(
+            substr = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
             )
-            ordering = FlextLdifUtilitiesParser._extract_regex_field(
+            ordering = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
             )
-            sup = FlextLdifUtilitiesParser._extract_regex_field(
+            sup = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
             )
-            usage = FlextLdifUtilitiesParser._extract_regex_field(
+            usage = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
             )
 
             # Extract syntax and length using helper
-            syntax, length = FlextLdifUtilitiesParser._extract_syntax_and_length(
+            syntax, length = FlextLdifUtilitiesParser.extract_syntax_and_length(
                 attr_definition,
             )
 

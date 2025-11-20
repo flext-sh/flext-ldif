@@ -220,7 +220,9 @@ def make_group_dn(
 
     Example:
         >>> make_dn = make_group_dn
-        >>> dn = make_dn("testgroup")  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
+        >>> dn = make_dn(
+        ...     "testgroup"
+        ... )  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
 
     """
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -297,6 +299,7 @@ def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
         >>> username = make_user("testuser")  # testuser-gw0-123...
 
     """
+
     def _make(username: str) -> str:
         """Create unique username.
 
@@ -339,6 +342,7 @@ def set_test_environment() -> Generator[None]:
     yield
     # Cleanup - reset config instances instead of manipulating os.environ
     from flext_core import FlextConfig
+
     # Reset global config instance to clear any test-specific state
     FlextConfig.reset_global_instance()
 

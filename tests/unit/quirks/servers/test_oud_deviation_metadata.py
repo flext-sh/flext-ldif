@@ -108,7 +108,9 @@ class TestOudObjectClassCaseMetadata:
         # Check that casing is preserved for objectClasses
         # "Top" -> objectclass_case_top = "Top"
         if "objectclass_case_top" in entry.metadata.original_format_details:
-            assert entry.metadata.original_format_details["objectclass_case_top"] == "Top"
+            assert (
+                entry.metadata.original_format_details["objectclass_case_top"] == "Top"
+            )
 
 
 class TestMetadataUtilitiesIntegration:

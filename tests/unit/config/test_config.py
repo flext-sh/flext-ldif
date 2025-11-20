@@ -116,10 +116,14 @@ class TestFlextLdifConfig:
 
         # Invalid values
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_analytics_cache_size=99)  # Below MIN_ANALYTICS_CACHE_SIZE=100
+            FlextLdifConfig(
+                ldif_analytics_cache_size=99
+            )  # Below MIN_ANALYTICS_CACHE_SIZE=100
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_analytics_cache_size=10001)  # Above MAX_ANALYTICS_CACHE_SIZE=10000
+            FlextLdifConfig(
+                ldif_analytics_cache_size=10001
+            )  # Above MAX_ANALYTICS_CACHE_SIZE=10000
 
     def test_singleton_pattern(self) -> None:
         """Test singleton pattern via get_instance."""
@@ -211,27 +215,27 @@ class TestFlextLdifConfig:
     def test_validate_ldif_encoding_invalid(self) -> None:
         """Test invalid ldif_encoding value."""
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_encoding="invalid-encoding")  # type: ignore[arg-type]
+            FlextLdifConfig(ldif_encoding="invalid-encoding")
 
     def test_validate_validation_level_invalid(self) -> None:
         """Test invalid validation_level value."""
         with pytest.raises(ValidationError):
-            FlextLdifConfig(validation_level="invalid")  # type: ignore[arg-type]
+            FlextLdifConfig(validation_level="invalid")
 
     def test_validate_server_type_invalid(self) -> None:
         """Test invalid server_type value."""
         with pytest.raises(ValidationError):
-            FlextLdifConfig(server_type="invalid-server")  # type: ignore[arg-type]
+            FlextLdifConfig(server_type="invalid-server")
 
     def test_validate_analytics_detail_level_invalid(self) -> None:
         """Test invalid analytics_detail_level value."""
         with pytest.raises(ValidationError):
-            FlextLdifConfig(analytics_detail_level="invalid")  # type: ignore[arg-type]
+            FlextLdifConfig(analytics_detail_level="invalid")
 
     def test_validate_error_recovery_mode_invalid(self) -> None:
         """Test invalid error_recovery_mode value."""
         with pytest.raises(ValidationError):
-            FlextLdifConfig(error_recovery_mode="invalid")  # type: ignore[arg-type]
+            FlextLdifConfig(error_recovery_mode="invalid")
 
     def test_get_effective_encoding(self) -> None:
         """Test get_effective_encoding method."""
@@ -240,7 +244,7 @@ class TestFlextLdifConfig:
         assert encoding == "utf-8"
 
         # AD server uses utf-16
-        ad_config = FlextLdifConfig(server_type="ad")  # type: ignore[arg-type]
+        ad_config = FlextLdifConfig(server_type="ad")
         ad_encoding = ad_config.get_effective_encoding()
         assert ad_encoding == "utf-16"
 
@@ -346,7 +350,7 @@ class TestQuirksDetectionConfiguration:
 
         for server_type in server_types:
             # Type ignore: Testing all valid server types dynamically
-            config = FlextLdifConfig(server_type=server_type)  # type: ignore[arg-type]
+            config = FlextLdifConfig(server_type=server_type)
             assert config.server_type == server_type
 
     def test_configuration_consistency_validation(self) -> None:
@@ -409,7 +413,7 @@ class TestAnalyticsConfiguration:
     def test_analytics_detail_levels(self) -> None:
         """Test analytics detail level options."""
         for level in ["low", "medium", "high"]:
-            config = FlextLdifConfig(analytics_detail_level=level)  # type: ignore[arg-type]
+            config = FlextLdifConfig(analytics_detail_level=level)
             assert config.analytics_detail_level == level
 
 
@@ -449,13 +453,13 @@ class TestValidationConfiguration:
         """Test validation level options."""
         # Use canonical values from FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS
         for level in ["strict", "moderate", "lenient"]:
-            config = FlextLdifConfig(validation_level=level)  # type: ignore[arg-type]
+            config = FlextLdifConfig(validation_level=level)
             assert config.validation_level == level
 
     def test_error_recovery_modes(self) -> None:
         """Test error recovery mode options."""
         for mode in ["continue", "stop", "skip"]:
-            config = FlextLdifConfig(error_recovery_mode=mode)  # type: ignore[arg-type]
+            config = FlextLdifConfig(error_recovery_mode=mode)
             assert config.error_recovery_mode == mode
 
 

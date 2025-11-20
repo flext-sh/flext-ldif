@@ -54,7 +54,7 @@ def pytest_runtest_makereport(
 
     """
     outcome = yield
-    report = outcome.get_result()  # type: ignore[attr-defined]
+    report = outcome.get_result()
 
     # Only process failures during test execution (not setup/teardown)
     if report.when != "call" or not report.failed:

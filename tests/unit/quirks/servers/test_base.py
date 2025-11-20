@@ -150,7 +150,7 @@ class TestFlextLdifServersBaseExecute:
         rfc = FlextLdifServersRfc()
         # When operation="write" is provided but entries is None,
         # we need to avoid health check by providing non-None ldif_text
-        result = rfc.execute(ldif_text="dn: test\n", entries=None, operation="write")  # type: ignore[arg-type]
+        result = rfc.execute(ldif_text="dn: test\n", entries=None, operation="write")
         # This should fail because write operation requires entries
         assert result.is_failure
         assert "write operation requires entries" in (result.error or "")
@@ -418,7 +418,7 @@ class TestFlextLdifServersBaseMroMethods:
     def test_get_server_type_from_mro_failure(self) -> None:
         """Test _get_server_type_from_mro with invalid quirk class."""
 
-        class InvalidQuirk:  # type: ignore[unused-class]
+        class InvalidQuirk:
             pass
 
         with pytest.raises(AttributeError, match="Cannot find SERVER_TYPE"):
@@ -435,7 +435,7 @@ class TestFlextLdifServersBaseMroMethods:
     def test_get_priority_from_mro_failure(self) -> None:
         """Test _get_priority_from_mro with invalid quirk class."""
 
-        class InvalidQuirk:  # type: ignore[unused-class]
+        class InvalidQuirk:
             pass
 
         with pytest.raises(AttributeError, match="Cannot find PRIORITY"):
@@ -833,7 +833,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # When both ldif_text and entries are None/empty, health check triggers first
         # So we need to provide a non-empty ldif_text to avoid health check
         # But operation="write" should take precedence
-        result = rfc.execute(ldif_text="dn: cn=test\n", entries=None, operation="write")  # type: ignore[arg-type]
+        result = rfc.execute(ldif_text="dn: cn=test\n", entries=None, operation="write")
         # This should fail because entries is None for write operation
         assert result.is_failure
         assert "entries" in (result.error or "").lower()
@@ -954,7 +954,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             dn=TestsRfcConstants.TEST_DN,
             attributes={"cn": ["test"]},
         )
-        result = rfc.execute(ldif_text=None, entries=[entry], operation="parse")  # type: ignore[arg-type]
+        result = rfc.execute(ldif_text=None, entries=[entry], operation="parse")
         # This should fail because parse operation requires ldif_text
         assert result.is_failure
         assert "parse operation requires ldif_text" in (result.error or "")
@@ -977,7 +977,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # the health check will trigger because "" is falsy
         # To avoid health check, we pass a non-empty string, but then operation="write"
         # should force write path
-        result = rfc.execute(ldif_text="dn: test\n", entries=None, operation="write")  # type: ignore[arg-type]
+        result = rfc.execute(ldif_text="dn: test\n", entries=None, operation="write")
         # This should fail because write operation requires entries
         assert result.is_failure
         assert "write operation requires entries" in (result.error or "")
@@ -2589,7 +2589,7 @@ class TestFlextLdifServersBaseCoverage:
         """
         # Create a real server instance - Entry class always exists
         server = FlextLdifServersRfc()
-        
+
         # The defensive code checks for Entry class availability.
         # In normal operation, Entry always exists, so parse should succeed.
         # This test validates the code path exists and handles the normal case.

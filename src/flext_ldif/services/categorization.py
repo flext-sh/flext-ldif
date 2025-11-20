@@ -9,9 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -21,7 +21,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]]]):
+class FlextLdifCategorization(FlextService[FlextLdifModels.FlexibleCategories]):
     """LDIF Entry Categorization Service.
 
     Public API for categorizing LDIF entries into 6 categories:
@@ -62,24 +62,24 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
     def execute(
         self,
         **_kwargs: object,
-    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+    ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
         """Execute empty categorization (placeholder - use individual methods).
 
         This service provides multiple public methods for categorization steps.
         Use validate_dns(), categorize_entries(), etc. instead of execute().
 
         Returns:
-            FlextResult with empty categories dict
+            FlextResult with empty FlexibleCategories
 
         """
-        return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok({
-            FlextLdifConstants.Categories.SCHEMA: [],
-            FlextLdifConstants.Categories.HIERARCHY: [],
-            FlextLdifConstants.Categories.USERS: [],
-            FlextLdifConstants.Categories.GROUPS: [],
-            FlextLdifConstants.Categories.ACL: [],
-            FlextLdifConstants.Categories.REJECTED: [],
-        })
+        categories = FlextLdifModels.FlexibleCategories()
+        categories[FlextLdifConstants.Categories.SCHEMA] = []
+        categories[FlextLdifConstants.Categories.HIERARCHY] = []
+        categories[FlextLdifConstants.Categories.USERS] = []
+        categories[FlextLdifConstants.Categories.GROUPS] = []
+        categories[FlextLdifConstants.Categories.ACL] = []
+        categories[FlextLdifConstants.Categories.REJECTED] = []
+        return FlextResult[FlextLdifModels.FlexibleCategories].ok(categories)
 
     def __init__(
         self,
@@ -115,26 +115,36 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         self._server_type: str
         self._rejection_tracker: dict[str, list[FlextLdifModels.Entry]]
 
-        # Convert dict to model if needed (backward compatibility)
-        if isinstance(categorization_rules, dict):
+        # Convert dict to model if needed
+        if FlextRuntime.is_dict_like(categorization_rules):
+            # Type narrowing: is_dict_like ensures dict[str, object]
+            rules_dict = dict(categorization_rules)
             self._categorization_rules = FlextLdifModels.CategoryRules(
-                **categorization_rules,
+                **rules_dict,
             )
         elif categorization_rules is None:
             self._categorization_rules = FlextLdifModels.CategoryRules()
-        else:
+        elif isinstance(categorization_rules, FlextLdifModels.CategoryRules):
+            # Type narrowing: isinstance ensures CategoryRules
             self._categorization_rules = categorization_rules
+        else:
+            self._categorization_rules = FlextLdifModels.CategoryRules()
 
-        if isinstance(schema_whitelist_rules, dict):
+        if FlextRuntime.is_dict_like(schema_whitelist_rules):
+            # Type narrowing: is_dict_like ensures dict[str, object]
+            whitelist_dict = dict(schema_whitelist_rules)
             self._schema_whitelist_rules = FlextLdifModels.WhitelistRules(
-                **schema_whitelist_rules,
+                **whitelist_dict,
             )
         elif schema_whitelist_rules is None:
             # Keep None - don't create empty WhitelistRules
             # Empty WhitelistRules with [] for all fields means "allow nothing"
             self._schema_whitelist_rules = None
-        else:
+        elif isinstance(schema_whitelist_rules, FlextLdifModels.WhitelistRules):
+            # Type narrowing: isinstance ensures WhitelistRules
             self._schema_whitelist_rules = schema_whitelist_rules
+        else:
+            self._schema_whitelist_rules = None
         self._forbidden_attributes = (
             forbidden_attributes if forbidden_attributes is not None else []
         )
@@ -178,6 +188,26 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
         """
         return self._forbidden_objectclasses
+
+    @property
+    def base_dn(self) -> str | None:
+        """Get base DN (read-only).
+
+        Returns:
+            Base DN string or None if not set
+
+        """
+        return self._base_dn
+
+    @property
+    def schema_whitelist_rules(self) -> FlextLdifModels.WhitelistRules | None:
+        """Get schema whitelist rules (read-only).
+
+        Returns:
+            WhitelistRules model or None if not set
+
+        """
+        return self._schema_whitelist_rules
 
     def validate_dns(
         self,
@@ -255,7 +285,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
     def categorize_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+    ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
         """Categorize entries into 6 categories using FlextLdifFilters.
 
         Public method delegating directly to filters service.
@@ -264,17 +294,16 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
             entries: Validated entries with normalized DNs
 
         Returns:
-            FlextResult with dict[category -> entries]
+            FlextResult with FlexibleCategories
 
         """
-        categories: dict[str, list[FlextLdifModels.Entry]] = {
-            FlextLdifConstants.Categories.SCHEMA: [],
-            FlextLdifConstants.Categories.HIERARCHY: [],
-            FlextLdifConstants.Categories.USERS: [],
-            FlextLdifConstants.Categories.GROUPS: [],
-            FlextLdifConstants.Categories.ACL: [],
-            FlextLdifConstants.Categories.REJECTED: [],
-        }
+        categories = FlextLdifModels.FlexibleCategories()
+        categories[FlextLdifConstants.Categories.SCHEMA] = []
+        categories[FlextLdifConstants.Categories.HIERARCHY] = []
+        categories[FlextLdifConstants.Categories.USERS] = []
+        categories[FlextLdifConstants.Categories.GROUPS] = []
+        categories[FlextLdifConstants.Categories.ACL] = []
+        categories[FlextLdifConstants.Categories.REJECTED] = []
 
         for entry in entries:
             category, reason = FlextLdifFilters.categorize_entry(
@@ -284,29 +313,45 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 server_type=self._server_type,
             )
 
-            categories[category].append(entry)
-
-            # Track category assignment in statistics
+            # Track category assignment in statistics before appending
+            entry_to_append = entry
             if entry.metadata.processing_stats:
-                entry.metadata.processing_stats.category_assigned = category
+                # EntryStatistics is frozen, use model_copy to update
+                updated_stats = entry.metadata.processing_stats.model_copy(
+                    update={"category_assigned": category}
+                )
+                # Update metadata with new stats instance
+                updated_metadata = entry.metadata.model_copy(
+                    update={"processing_stats": updated_stats}
+                )
+                # Create updated entry with new metadata
+                entry_to_append = entry.model_copy(
+                    update={"metadata": updated_metadata}
+                )
+
+            categories[category].append(entry_to_append)
 
             if category == FlextLdifConstants.Categories.REJECTED:
-                self._rejection_tracker["categorization_rejected"].append(entry)
+                self._rejection_tracker["categorization_rejected"].append(
+                    entry_to_append
+                )
                 # Track rejection in statistics
-                if entry.metadata.processing_stats:
+                if entry_to_append.metadata.processing_stats:
                     rejection_reason = (
                         reason if reason is not None else "No category match"
                     )
-                    entry.metadata.processing_stats.mark_rejected(
+                    entry_to_append.metadata.processing_stats.mark_rejected(
                         FlextLdifConstants.RejectionCategory.NO_CATEGORY_MATCH,
                         rejection_reason,
                     )
                 logger.debug(
                     "Entry rejected during categorization",
-                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_dn=str(entry_to_append.dn) if entry_to_append.dn else None,
                     rejection_reason=reason,
                 )
 
+        # category_names is a computed_field property that returns list[str]
+        # Iterate using items() method for proper type safety
         for cat, cat_entries in categories.items():
             if cat_entries:
                 logger.info(
@@ -315,28 +360,28 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                     entries_count=len(cat_entries),
                 )
 
-        return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
+        return FlextResult[FlextLdifModels.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
-    ) -> dict[str, list[FlextLdifModels.Entry]]:
+        categories: FlextLdifModels.FlexibleCategories,
+    ) -> FlextLdifModels.FlexibleCategories:
         """Filter entries by base DN (if configured).
 
         Applies to data categories only (not schema/rejected).
         Public method using FlextLdifFilters.by_base_dn service.
 
         Args:
-            categories: Entries grouped by category
+            categories: FlexibleCategories with entries grouped by category
 
         Returns:
-            dict with filtered entries (rejected entries tracked separately)
+            FlexibleCategories with filtered entries (rejected entries tracked separately)
 
         """
         if not self._base_dn:
             return categories
 
-        filtered: dict[str, list[FlextLdifModels.Entry]] = {}
+        filtered = FlextLdifModels.FlexibleCategories()
 
         for category, entries in categories.items():
             if not entries:
@@ -350,8 +395,19 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 FlextLdifConstants.Categories.GROUPS,
                 FlextLdifConstants.Categories.ACL,
             }:
-                included, excluded = FlextLdifFilters.by_base_dn(entries, self._base_dn)
-                filtered[category] = included
+                # Convert domain entries to models entries for by_base_dn
+                model_entries: list[FlextLdifModels.Entry] = [
+                    entry
+                    if isinstance(entry, FlextLdifModels.Entry)
+                    else FlextLdifModels.Entry.model_validate(entry.model_dump())
+                    for entry in entries
+                ]
+                included, excluded = FlextLdifFilters.by_base_dn(
+                    model_entries, self._base_dn
+                )
+                # FlexibleCategories expects list[FlextLdifModels.Entry]
+                # Type narrowing: all entries in included are FlextLdifModels.Entry
+                filtered[category] = cast("list[FlextLdifModels.Entry]", included)
                 self._rejection_tracker["base_dn_filter"].extend(excluded)
 
                 # Track filter results in statistics

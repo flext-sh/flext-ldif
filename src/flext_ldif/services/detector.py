@@ -17,24 +17,20 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import Protocol, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-if TYPE_CHECKING:
-    from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.server import FlextLdifServer
 
 logger = FlextLogger(__name__)
 
 
 def _get_server_registry() -> FlextLdifServer:
-    """Get server registry instance (lazy import to avoid circular dependency)."""
-    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
-
+    """Get server registry instance."""
     return FlextLdifServer.get_global_instance()
 
 
@@ -48,15 +44,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _ClientStatusType = FlextLdifModels.ClientStatus
-else:
-    _ClientStatusType = object  # type: ignore[misc]
-
-
-class FlextLdifDetector(FlextService[_ClientStatusType]):
+class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -255,7 +243,10 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
                 )
                 if detection_result.is_success:
                     result = detection_result.unwrap()
-                    if isinstance(result, dict) and "detected_server_type" in result:
+                    if (
+                        FlextRuntime.is_dict_like(result)
+                        and "detected_server_type" in result
+                    ):
                         server_type = result["detected_server_type"]
                         return FlextResult[str].ok(server_type)
 
@@ -312,11 +303,11 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         """Process server detection using OID pattern."""
         if not constants or not hasattr(constants, "DETECTION_OID_PATTERN"):
             return
-        
+
         pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
         if not pattern or not isinstance(pattern, str):
             return
-        
+
         self._update_server_scores(
             server_type,
             pattern,
@@ -341,11 +332,11 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         """Process server detection using pattern attribute."""
         if not constants or not hasattr(constants, pattern_attr):
             return
-        
+
         pattern = getattr(constants, pattern_attr, None)
         if not pattern:
             return
-        
+
         if isinstance(pattern, re.Pattern):
             if pattern.search(content_lower):
                 scores[server_type] += getattr(constants, "DETECTION_WEIGHT", 6)
@@ -549,7 +540,7 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         """Extract patterns using OID pattern."""
         if not constants or not pattern or not isinstance(pattern, str):
             return
-        
+
         search_content = content if case_sensitive else content_lower
         self._check_regex_pattern(pattern, search_content, description, patterns)
 
@@ -562,7 +553,7 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         """Extract OID-specific patterns (ACLs, etc.)."""
         if not constants:
             return
-        
+
         orclaci = getattr(constants, "ORCLACI", None)
         if orclaci and isinstance(orclaci, str):
             self._check_substring_pattern(
@@ -592,7 +583,7 @@ class FlextLdifDetector(FlextService[_ClientStatusType]):
         constants = self._get_server_constants(server_type)
         if not constants or not hasattr(constants, pattern_attr):
             return
-        
+
         pattern = getattr(constants, pattern_attr, None)
         if pattern and isinstance(pattern, str):
             self._check_regex_pattern(pattern, content_lower, description, patterns)

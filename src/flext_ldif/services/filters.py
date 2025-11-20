@@ -1,161 +1,9 @@
 """FLEXT LDIF Filters Service - Universal Entry Filtering and Categorization Engine.
 
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  COMPREHENSIVE ENTRY FILTERING, CATEGORIZATION & TRANSFORMATION ENGINE      ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║  ✅ DN pattern matching (wildcard/fnmatch syntax)                           ║
-║  ✅ ObjectClass-based filtering with required attributes                    ║
-║  ✅ Attribute presence/absence filtering                                    ║
-║  ✅ Attribute and objectClass removal (entry transformation)                ║
-║  ✅ Entry categorization (6-category: users/groups/hierarchy/schema/ACL)   ║
-║  ✅ Schema entry detection and filtering by OID patterns                    ║
-║  ✅ ACL attribute detection and extraction                                  ║
-║  ✅ Exclusion metadata marking with reason tracking                         ║
-║  ✅ Fluent builder pattern for complex multi-condition filtering            ║
-║  ✅ Multiple API patterns (static, classmethod, builder, helpers)           ║
-║  ✅ 100% server-agnostic design (works with any LDAP server)               ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+Provides DN pattern matching, objectClass filtering, attribute filtering,
+entry transformation, and categorization for LDIF entries.
 
-═══════════════════════════════════════════════════════════════════════════════
-REAL USAGE EXAMPLES
-═══════════════════════════════════════════════════════════════════════════════
-
-# PATTERN 1: Direct Classmethod API (Simplified)
-────────────────────────────────────────────────
-# Filter entries by DN pattern
-result = FlextLdifFilters.by_dn(
-    entries=my_entries,
-    pattern="*,ou=users,dc=example,dc=com",
-    mode="include"
-)
-filtered = result.unwrap()
-
-# Filter by objectClass
-result = FlextLdifFilters.by_objectclass(
-    entries=my_entries,
-    objectclass=("person", "inetOrgPerson"),
-    required_attributes=["cn", "mail"]
-)
-
-# Filter by attribute presence
-result = FlextLdifFilters.by_attributes(
-    entries=my_entries,
-    attributes=["mail"],
-    match_all=False,  # Has ANY attribute
-    mode="include"
-)
-
-# PATTERN 2: Classmethod for Composable/Chainable Operations
-──────────────────────────────────────────────────────────────
-result = (
-    FlextLdifFilters.filter(
-        entries=my_entries,
-        criteria="dn",
-        pattern="*,ou=users,*"
-    )
-    .map(lambda e: e[:10])  # Take first 10
-    .and_then(lambda e: FlextLdifFilters.filter(e, criteria="objectclass", objectclass="person"))
-)
-
-# PATTERN 3: Fluent Builder Pattern
-───────────────────────────────────
-filtered_result = (
-    FlextLdifFilters.builder()
-    .with_entries(my_entries)
-    .with_dn_pattern("*,ou=users,dc=example,dc=com")
-    .with_objectclass("person")
-    .with_required_attributes(["cn", "mail"])
-    .build()  # Returns list[Entry] directly
-)
-
-# PATTERN 4: Public Classmethod Helpers (Most Direct)
-────────────────────────────────────────────────────
-# Filter by DN pattern
-result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
-filtered = result.unwrap()
-
-# Filter by objectClass
-result = FlextLdifFilters.by_objectclass(
-    entries, ("person", "inetOrgPerson")
-)
-
-# Filter by attributes
-result = FlextLdifFilters.by_attributes(
-    entries, ["mail"], match_all=False
-)
-
-# Filter by base DN
-included, excluded = FlextLdifFilters.by_base_dn(
-    entries, "dc=example,dc=com"
-)
-
-# Extract ACL entries
-result = FlextLdifFilters.extract_acl_entries(entries)
-
-# Categorize entry
-category, reason = FlextLdifFilters.categorize(entry, rules)
-
-# PATTERN 5: Transformation (Remove Attributes/ObjectClasses)
-──────────────────────────────────────────────────────────────
-# Remove temporary attributes
-result = FlextLdifFilters.remove_attributes(
-    entry=my_entry,
-    attributes=["tempAttribute", "debugInfo"]
-)
-
-# Remove unwanted objectClasses
-result = FlextLdifFilters.remove_objectclasses(
-    entry=my_entry,
-    objectclasses=["temporaryClass"]
-)
-
-# PATTERN 6: Schema & Advanced Operations
-───────────────────────────────────────────
-# Check if entry is schema
-is_schema = FlextLdifFilters.is_schema(entry)
-
-# Filter schema by OID whitelist
-result = FlextLdifFilters.filter_schema_by_oids(
-    entries=schema_entries,
-    allowed_oids={
-        "attributes": ["2.5.4.*"],
-        "objectclasses": ["2.5.6.*"]
-    }
-)
-
-═══════════════════════════════════════════════════════════════════════════════
-QUICK REFERENCE
-═══════════════════════════════════════════════════════════════════════════════
-
-Most Common Use Cases:
-
-# Filter entries by DN pattern
-result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
-filtered = result.unwrap()
-
-# Filter by objectClass
-result = FlextLdifFilters.by_objectclass(
-    entries, ("person", "inetOrgPerson")
-)
-
-# Combine multiple conditions (builder)
-filtered_result = (
-    FlextLdifFilters.builder()
-    .with_entries(entries)
-    .with_dn_pattern("*,ou=users,*")
-    .with_objectclass("person")
-    .build()
-)
-
-# Check if schema entry
-is_schema = FlextLdifFilters.is_schema(entry)
-
-# Extract ACL entries
-result = FlextLdifFilters.extract_acl_entries(entries)
-acl_entries = result.unwrap()
-
-# Categorize entry
-category, reason = FlextLdifFilters.categorize(entry, rules)
+For detailed usage examples and API documentation, see docs/FILTERS.md.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -167,12 +15,17 @@ from __future__ import annotations
 import fnmatch
 import re
 import time
-import uuid
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import (
+    FlextLogger,
+    FlextResult,
+    FlextRuntime,
+    FlextService,
+    FlextUtilities,
+)
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
@@ -183,31 +36,19 @@ from flext_ldif.services.acl_extractor import FlextLdifAclExtractor
 from flext_ldif.services.categorizer import FlextLdifCategorizer
 from flext_ldif.services.entry_transformer import FlextLdifEntryTransformer
 from flext_ldif.services.schema_detector import FlextLdifSchemaDetector
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
 
-if TYPE_CHECKING:
-    from flext_ldif.services.server import FlextLdifServer
-
 
 def _get_server_registry() -> FlextLdifServer:
-    """Get server registry instance (lazy import to avoid circular dependency)."""
-    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
-
+    """Get server registry instance."""
     return FlextLdifServer.get_global_instance()
 
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifTypes.Models is a namespace, not an importable module
-if TYPE_CHECKING:
-    _ServiceResponseType = FlextLdifTypes.Models.ServiceResponseTypes
-else:
-    _ServiceResponseType = object  # type: ignore[misc]
-
-
-class FlextLdifFilters(FlextService[_ServiceResponseType]):
+class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     """Universal LDIF Entry Filtering and Categorization Service.
 
     ╔══════════════════════════════════════════════════════════════════════════╗
@@ -423,13 +264,13 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             mark_excluded: bool,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
-            # Access private methods within same class (acceptable pattern)
-            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(  # noqa: SLF001
+            # Call static methods within same nested class (accessing private members is acceptable)
+            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(
                 entry,
                 oc_tuple,
                 required_attributes,
             )
-            if FlextLdifFilters.Filter._should_include_entry(  # noqa: SLF001
+            if FlextLdifFilters.Filter._should_include_entry(
                 matches=entry_matches,
                 filter_mode=filter_mode,
             ):
@@ -454,14 +295,14 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
-                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(  # noqa: SLF001
+                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(
                     objectclass,
                 )
 
                 # Process all entries
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
-                    result = FlextLdifFilters.Filter._process_objectclass_entry(  # noqa: SLF001
+                    result = FlextLdifFilters.Filter._process_objectclass_entry(
                         entry,
                         oc_tuple,
                         required_attributes,
@@ -694,8 +535,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     if key.lower() not in attrs_lower
                 }
                 removed_attrs = [
-                    attr for attr in original_attr_names
-                    if attr.lower() in attrs_lower
+                    attr for attr in original_attr_names if attr.lower() in attrs_lower
                 ]
 
                 # Create new LdifAttributes
@@ -716,7 +556,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                 new_entry = entry.model_copy(
                     update={"attributes": attrs_result.unwrap()},
                 )
-                
+
                 # Log detailed filtering information
                 if removed_attrs:
                     logger.debug(
@@ -728,7 +568,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                         removed_attributes=removed_attrs,
                         removed_count=len(removed_attrs),
                     )
-                
+
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
             except Exception as e:
@@ -770,7 +610,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     return FlextResult[FlextLdifModels.Entry].fail(
                         "All objectClasses would be removed",
                     )
-                
+
                 # Log successful filtering
                 if removed_ocs:
                     logger.debug(
@@ -872,7 +712,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                     continue
 
                 values = attributes[key]
-                if not isinstance(values, list):
+                if not FlextRuntime.is_list_like(values):
                     continue
 
                 for val in values:
@@ -908,7 +748,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             exclusion_info = FlextLdifModels.ExclusionInfo(
                 excluded=True,
                 exclusion_reason=reason,
-                timestamp=datetime.now(UTC).isoformat(),
+                timestamp=FlextUtilities.Generators.generate_iso_timestamp(),
             )
 
             if entry.metadata is None:
@@ -939,7 +779,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             # Handle both model and dict formats
             if isinstance(exclusion_info, FlextLdifModels.ExclusionInfo):
                 return exclusion_info.excluded
-            if isinstance(exclusion_info, dict):
+            if FlextRuntime.is_dict_like(exclusion_info):
                 excluded = exclusion_info.get("excluded")
                 return isinstance(excluded, bool) and excluded
 
@@ -962,7 +802,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
             # Handle both model and dict formats
             if isinstance(exclusion_info, FlextLdifModels.ExclusionInfo):
                 return exclusion_info.exclusion_reason
-            if isinstance(exclusion_info, dict):
+            if FlextRuntime.is_dict_like(exclusion_info):
                 reason = exclusion_info.get("exclusion_reason")
                 return reason if isinstance(reason, str) else None
 
@@ -1063,15 +903,15 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                                 quirk_type="virtual_deleted",
                                 extensions={
                                     "virtual_deleted": True,
-                                    "deletion_timestamp": datetime.now(UTC).isoformat(),
+                                    "deletion_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
                                 },
                             )
                         else:
                             new_extensions = {**existing_metadata.extensions}
                             new_extensions["virtual_deleted"] = True
-                            new_extensions["deletion_timestamp"] = datetime.now(
-                                UTC,
-                            ).isoformat()
+                            new_extensions["deletion_timestamp"] = (
+                                FlextUtilities.Generators.generate_iso_timestamp()
+                            )
                             new_metadata = existing_metadata.model_copy(
                                 update={"extensions": new_extensions},
                             )
@@ -1314,9 +1154,9 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
                 entries_after = len(filtered_entries)
 
                 filter_event = FlextLdifModels.FilterEvent(
-                    unique_id=f"filter_{uuid.uuid4().hex[:8]}",
+                    unique_id=f"filter_{FlextUtilities.Generators.generate_short_id(8)}",
                     event_type="ldif.filter",
-                    aggregate_id=f"filter_{uuid.uuid4().hex[:8]}",
+                    aggregate_id=f"filter_{FlextUtilities.Generators.generate_short_id(8)}",
                     created_at=datetime.now(UTC),
                     filter_operation=f"filter_by_{self.filter_criteria}",
                     entries_before=entries_before,
@@ -2162,7 +2002,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
         Accepts WhitelistRules model or dict for backward compatibility.
         """
         # Convert dict to model if needed
-        if isinstance(whitelist_rules, dict):
+        if FlextRuntime.is_dict_like(whitelist_rules):
             rules_model = FlextLdifModels.WhitelistRules(**whitelist_rules)
         elif whitelist_rules is None:
             rules_model = None
@@ -2185,7 +2025,7 @@ class FlextLdifFilters(FlextService[_ServiceResponseType]):
         Accepts CategoryRules model or dict for backward compatibility.
         """
         # Convert dict to model if needed
-        if isinstance(rules, dict):
+        if FlextRuntime.is_dict_like(rules):
             rules_model = FlextLdifModels.CategoryRules(**rules)
         else:
             rules_model = rules

@@ -110,29 +110,6 @@ class FlextLdifUtilitiesValidation:
         return (len(violations) == 0, violations)
 
     @staticmethod
-    def validate_email(value: object) -> bool:
-        """Validate email format (RFC 5321 simplified).
-
-        Args:
-            value: Value to validate (must be string)
-
-        Returns:
-            True if valid email format
-
-        """
-        if not isinstance(value, str):
-            return False
-
-        # RFC 5321 § 4.1.2: Simplified email pattern
-        # local-part@domain
-        # Allow common characters, no full RFC 5322 complexity
-        email_pattern = re.compile(
-            r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
-        )
-
-        return bool(email_pattern.match(value))
-
-    @staticmethod
     def validate_dn(value: str) -> bool:
         """Validate DN format (RFC 4514 simplified).
 
@@ -168,38 +145,3 @@ class FlextLdifUtilitiesValidation:
                 return False
 
         return True
-
-    @staticmethod
-    def validate_telephone(value: str) -> bool:
-        """Validate telephone number format (RFC 4517 § 3.3.31 simplified).
-
-        Args:
-            value: Telephone number to validate
-
-        Returns:
-            True if valid telephone format
-
-        """
-        if not isinstance(value, str) or not value.strip():
-            return False
-
-        # RFC 4517 § 3.3.31: Telephone Number syntax
-        # PrintableString format: digits, spaces, hyphens, parentheses, plus
-        # Simplified: allow common telephone formats
-        # Examples: +1-555-1234, (555) 123-4567, +33 1 23 45 67 89
-
-        # Remove common separators
-        cleaned = (
-            value.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
-        )
-
-        # Must start with + for international or digit for local
-        if not cleaned:
-            return False
-
-        if cleaned.startswith("+"):
-            # International format: +[digits]
-            return bool(re.match(r"^\+\d{1,15}$", cleaned))
-
-        # Local format: [digits]
-        return bool(re.match(r"^\d{1,15}$", cleaned))

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
@@ -97,7 +97,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         """
         try:
             # Handle dict
-            if isinstance(entry, dict):
+            if FlextRuntime.is_dict_like(entry):
                 dn_val = entry.get("dn")
                 if not dn_val:
                     return FlextResult[str].fail("Dict entry missing 'dn' key")
@@ -171,7 +171,7 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         result_dict: FlextLdifTypes.CommonDict.AttributeDict = {}
 
         for attr_name, attr_val in attrs_container.items():
-            if isinstance(attr_val, list):
+            if FlextRuntime.is_list_like(attr_val):
                 # Return list as-is or single item if length==1
                 result_dict[attr_name] = FlextLdifEntries._normalize_attribute_value([
                     str(v) for v in attr_val
@@ -222,13 +222,13 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
                 result_dict = FlextLdifEntries._extract_from_ldif_attributes(
                     attrs_container,
                 )
-            elif isinstance(attrs_container, dict):
+            elif FlextRuntime.is_dict_like(attrs_container):
                 # Normalize dict to expected type - convert values to str | list[str]
                 normalized_dict: dict[str, str | list[str]] = {}
                 for key, value in attrs_container.items():
-                    if isinstance(value, list):
-                        # Type narrowing: value is list[str]
-                        normalized_dict[key] = value
+                    if FlextRuntime.is_list_like(value):
+                        # Type narrowing: value is list[object], convert to list[str]
+                        normalized_dict[key] = [str(v) for v in value]
                     elif isinstance(value, str):
                         # Type narrowing: value is str
                         normalized_dict[key] = value
@@ -280,7 +280,8 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
             # Normalize attributes to ensure all values are lists
             normalized_attrs: FlextLdifTypes.CommonDict.AttributeDict = {}
             for key, value in attributes.items():
-                if isinstance(value, list):
+                if FlextRuntime.is_list_like(value):
+                    # Type narrowing: value is list[object], convert to list[str]
                     normalized_attrs[key] = [str(v) for v in value]
                 else:
                     normalized_attrs[key] = [str(value)]
@@ -383,12 +384,13 @@ class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         # Handle objects with .values property (protocol-based)
         if isinstance(attribute, FlextLdifProtocols.AttributeValueProtocol):
             values = attribute.values
-            if isinstance(values, list):
+            if FlextRuntime.is_list_like(values):
                 return FlextResult[list[str]].ok([str(v) for v in values])
             return FlextResult[list[str]].ok([str(values)])
 
         # Handle lists directly
-        if isinstance(attribute, list):
+        if FlextRuntime.is_list_like(attribute):
+            # Type narrowing: attribute is list[object], convert to list[str]
             return FlextResult[list[str]].ok([str(v) for v in attribute])
 
         # Handle single string values

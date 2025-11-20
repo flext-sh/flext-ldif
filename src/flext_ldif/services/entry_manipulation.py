@@ -11,16 +11,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import re
 from enum import StrEnum
 from typing import ClassVar, Final
 
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 from ldap3 import Connection
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
+
+logger = FlextLogger(__name__)
 
 
 # Local constants for entry manipulation - NO DEPENDENCY ON flext-ldap
@@ -63,7 +64,7 @@ class _EntryManipulationConstants:
     class ActiveDirectoryAttributes:
         """Active Directory attribute names."""
 
-        PWD_LAST_SET: Final[str] = "pwdLastSet"  # noqa: S105 (not a password, attribute name)
+        PWD_LAST_SET: Final[str] = "pwdLastSet"
 
     class RegexPatterns:
         """Regular expression patterns for entry manipulation."""
@@ -121,7 +122,7 @@ class EntryManipulationServices:
                 f"Entry has no attributes dictionary for attribute '{attr_name}'",
             )
         attr_dict = entry.attributes.attributes
-        if not isinstance(attr_dict, dict):
+        if not FlextRuntime.is_dict_like(attr_dict):
             return FlextResult[object].fail(
                 f"Entry attributes is not a dictionary for attribute '{attr_name}'",
             )
@@ -573,7 +574,7 @@ class EntryManipulationServices:
         dn: FlextLdifModels.DistinguishedName | str,
         attributes: FlextLdifModels.LdifAttributes | dict[str, str | list[str]],
         quirks_mode: str | None = None,
-        logger: logging.Logger | None = None,
+        logger_instance: FlextLogger | None = None,
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol.
 
@@ -585,14 +586,16 @@ class EntryManipulationServices:
             dn: Distinguished name for new entry.
             attributes: Entry attributes (FlextLdifModels.LdifAttributes or dict).
             quirks_mode: Override default quirks mode for this operation.
-            logger: Optional logger instance for logging.
+            logger_instance: Optional FlextLogger instance for logging.
 
         Returns:
             FlextResult[bool]: Success if entry was added.
 
         """
-        if logger is None:
-            logger = logging.getLogger(__name__)
+        # Convert DN to string early for error handling (before try block)
+        dn_str = (
+            dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else str(dn)
+        )
 
         try:
             # Determine effective quirks mode
@@ -606,11 +609,6 @@ class EntryManipulationServices:
 
             # Convert attributes to ldap3 format
             ldap3_attributes = self.convert_ldif_attributes_to_ldap3_format(attributes)
-
-            # Convert DN to string
-            dn_str = (
-                dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
-            )
 
             # Retry logic with undefined attribute handling
             attempted_attributes = ldap3_attributes.copy()
@@ -644,11 +642,12 @@ class EntryManipulationServices:
                         return FlextResult[bool].ok(True)
 
                     # Try to handle undefined attribute error
+                    log = logger_instance if logger_instance is not None else logger
                     if self._handle_undefined_attribute_error_internal(
                         connection,
                         attempted_attributes,
                         removed_attributes,
-                        logger,
+                        log,
                     ):
                         retry_count += 1
                         continue
@@ -750,7 +749,7 @@ class EntryManipulationServices:
         connection: Connection,
         attempted_attributes: dict[str, list[str]],
         removed_attributes: list[str],
-        logger: logging.Logger,
+        logger_instance: FlextLogger | None = None,
     ) -> bool:
         """Handle undefined attribute error by removing problematic attribute (internal helper)."""
         error_msg = str(connection.last_error).lower()
@@ -766,7 +765,8 @@ class EntryManipulationServices:
         )
         if problem_attr_result.is_success:
             problem_attr = problem_attr_result.unwrap()
-            logger.debug(
+            log = logger_instance if logger_instance is not None else logger
+            log.debug(
                 "Removing undefined attribute",
                 problem_attribute=problem_attr,
                 connection_error=str(connection.last_error),

@@ -12,22 +12,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-if TYPE_CHECKING:
-    from flext_ldif.services.server import FlextLdifServer
-
 
 def _get_server_registry() -> FlextLdifServer:
-    """Get server registry instance (lazy import to avoid circular dependency)."""
-    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
-
+    """Get server registry instance."""
     return FlextLdifServer.get_global_instance()
 
 
@@ -268,7 +263,9 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
         category_map = constants.CATEGORY_OBJECTCLASSES
 
         # Type validation: ensure they are the correct types
-        if not isinstance(priority_order, list) or not isinstance(category_map, dict):
+        if not FlextRuntime.is_list_like(
+            priority_order
+        ) or not FlextRuntime.is_dict_like(category_map):
             return ("rejected", "Invalid constants type")
 
         # Categorize by priority order

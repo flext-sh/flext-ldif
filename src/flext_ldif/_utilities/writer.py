@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 from jinja2 import Environment
 
 from flext_ldif.constants import FlextLdifConstants
@@ -120,28 +121,6 @@ class FlextLdifUtilitiesWriter:
                 break
 
         return folded
-
-    @staticmethod
-    def norm_ws(value_str: str) -> str:
-        """Normalize whitespace in LDIF value string.
-
-        Removes leading/trailing whitespace and normalizes internal whitespace.
-
-        Args:
-            value_str: Value string to normalize
-
-        Returns:
-            Normalized value string
-
-        Example:
-            >>> LdifWriter.norm_ws("  hello   world  ")
-            'hello world'
-
-        """
-        if not value_str:
-            return ""
-        # Normalize internal whitespace (multiple spaces to single)
-        return " ".join(value_str.split())
 
     @staticmethod
     def fmt_attr(attr_name: str, value_str: str, *, use_base64: bool = False) -> str:
@@ -353,11 +332,12 @@ class FlextLdifUtilitiesWriter:
         if not attr_list:
             return
 
-        if isinstance(attr_list, list):
-            if len(attr_list) == 1:
-                parts.append(f"{keyword} {attr_list[0]}")
+        if FlextRuntime.is_list_like(attr_list):
+            attr_list_str = cast("list[str]", attr_list)
+            if len(attr_list_str) == 1:
+                parts.append(f"{keyword} {attr_list_str[0]}")
             else:
-                attrs_str = " $ ".join(attr_list)
+                attrs_str = " $ ".join(attr_list_str)
                 parts.append(f"{keyword} ( {attrs_str} )")
         else:
             parts.append(f"{keyword} {attr_list}")
@@ -382,9 +362,10 @@ class FlextLdifUtilitiesWriter:
 
         if oc_data.sup:
             # Handle SUP as string or list
-            if isinstance(oc_data.sup, list):
+            if FlextRuntime.is_list_like(oc_data.sup):
                 # Multiple SUP values: format as ( value1 $ value2 $ ... )
-                sup_str = " $ ".join(oc_data.sup)
+                sup_list_str = cast("list[str]", oc_data.sup)
+                sup_str = " $ ".join(sup_list_str)
                 parts.append(f"SUP ( {sup_str} )")
             else:
                 # Single SUP value
@@ -446,10 +427,14 @@ class FlextLdifUtilitiesWriter:
                 if hasattr(extensions, "get")
                 else None
             )
-        elif isinstance(metadata, dict):
-            attr_order = metadata.get("extensions", {}).get("attribute_order")
+        elif FlextRuntime.is_dict_like(metadata):
+            extensions_dict = cast("dict[str, object]", metadata.get("extensions", {}))
+            if FlextRuntime.is_dict_like(extensions_dict):
+                attr_order = extensions_dict.get("attribute_order")
+            else:
+                attr_order = None
 
-        if attr_order is None or not isinstance(attr_order, list):
+        if attr_order is None or not FlextRuntime.is_list_like(attr_order):
             return None
 
         # Build ordered list from attr_order
@@ -482,9 +467,10 @@ class FlextLdifUtilitiesWriter:
 
         base64_data = entry_data["_base64_attrs"]
         if isinstance(base64_data, set):
-            return base64_data
-        if isinstance(base64_data, list):
-            return set(base64_data)
+            return cast("set[str]", base64_data)
+        if FlextRuntime.is_list_like(base64_data):
+            base64_list_str = cast("list[str]", base64_data)
+            return set(base64_list_str)
 
         return set()
 
@@ -527,7 +513,7 @@ class FlextLdifUtilitiesWriter:
 
         """
         # Skip empty-valued attributes per RFC 2849
-        if isinstance(attr_value, list):
+        if FlextRuntime.is_list_like(attr_value):
             # Filter out empty strings from list
             non_empty_values = [v for v in attr_value if v]
             if not non_empty_values:
@@ -545,7 +531,7 @@ class FlextLdifUtilitiesWriter:
         attr_prefix = f"{mapped_attr_name}::" if is_base64 else f"{mapped_attr_name}:"
 
         # Handle both list and single values
-        if isinstance(attr_value, list):
+        if FlextRuntime.is_list_like(attr_value):
             # At this point, we know attr_value is a non-empty list
             # with non-empty values
             non_empty_values = [v for v in attr_value if v]
@@ -614,7 +600,7 @@ class FlextLdifUtilitiesWriter:
         # Write modify-add operations for attributetypes
         if "_modify_add_attributetypes" in entry_data:
             attr_types = entry_data["_modify_add_attributetypes"]
-            if isinstance(attr_types, list) and attr_types:
+            if FlextRuntime.is_list_like(attr_types) and attr_types:
                 lines.append("add: attributetypes")
                 lines.extend(f"attributetypes: {attr_type}" for attr_type in attr_types)
                 lines.append("-")
@@ -622,7 +608,7 @@ class FlextLdifUtilitiesWriter:
         # Write modify-add operations for objectclasses
         if "_modify_add_objectclasses" in entry_data:
             obj_classes = entry_data["_modify_add_objectclasses"]
-            if isinstance(obj_classes, list) and obj_classes:
+            if FlextRuntime.is_list_like(obj_classes) and obj_classes:
                 lines.append("add: objectclasses")
                 lines.extend(f"objectclasses: {obj_class}" for obj_class in obj_classes)
                 lines.append("-")

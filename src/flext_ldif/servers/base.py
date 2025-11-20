@@ -43,24 +43,28 @@ from typing import (
     overload,
 )
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 from pydantic import ConfigDict, Field
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
 
+# Server implementations (needed for type hints in overloaded methods)
 if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
-    from flext_ldif.services.server import FlextLdifServer
 
 logger = FlextLogger(__name__)
 
 
-def _get_server_registry() -> FlextLdifServer:
-    """Get server registry instance (lazy import to avoid circular dependency)."""
-    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+def _get_server_registry() -> object:
+    """Get server registry instance using protocol to avoid circular dependency."""
+    # Import at function level to break circular dependency
+    # This is the only acceptable lazy import per strict rules
+    # base.py -> services/server.py -> base.py (circular dependency)
+    import flext_ldif.services.server as server_module  # noqa: PLC0415
 
-    return FlextLdifServer.get_global_instance()
+    return server_module.FlextLdifServer.get_global_instance()
 
 
 # NOTE: BaseServerConstants has been consolidated into FlextLdifServersRfc.Constants
@@ -131,10 +135,54 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         super().__init__(**kwargs)
         # Instantiate nested quirks, passing self as parent_quirk
         # Use private attributes as properties are read-only
-        # Type ignore: Concrete subclasses (e.g., FlextLdifServersRfc) implement execute
-        self._schema_quirk = self.Schema(parent_quirk=self)  # type: ignore[abstract]
-        self._acl_quirk = self.Acl(parent_quirk=self)  # type: ignore[abstract]
-        self._entry_quirk = self.Entry(parent_quirk=self)  # type: ignore[abstract]
+        self._schema_quirk = self.Schema(parent_quirk=self)
+        self._acl_quirk = self.Acl(parent_quirk=self)
+        self._entry_quirk = self.Entry(parent_quirk=self)
+
+    def __getattr__(self, name: str) -> object:
+        """Delegate method calls to nested Schema, Acl, or Entry instances.
+
+        This enables calling schema/acl/entry methods directly on the main
+        server instance.
+
+        Args:
+            name: Method or attribute name to look up
+
+        Returns:
+            Method or attribute from nested instance
+
+        Raises:
+            AttributeError: If attribute not found in any nested instance
+
+        """
+        # Use object.__getattribute__ to avoid recursion when checking for nested quirks
+        # Try schema methods first (most common)
+        try:
+            schema_quirk = object.__getattribute__(self, "_schema_quirk")
+            if schema_quirk is not None and hasattr(schema_quirk, name):
+                return getattr(schema_quirk, name)
+        except AttributeError:
+            pass
+
+        # Try acl methods
+        try:
+            acl_quirk = object.__getattribute__(self, "_acl_quirk")
+            if acl_quirk is not None and hasattr(acl_quirk, name):
+                return getattr(acl_quirk, name)
+        except AttributeError:
+            pass
+
+        # Try entry methods
+        try:
+            entry_quirk = object.__getattribute__(self, "_entry_quirk")
+            if entry_quirk is not None and hasattr(entry_quirk, name):
+                return getattr(entry_quirk, name)
+        except AttributeError:
+            pass
+
+        # Not found in any nested instance
+        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+        raise AttributeError(msg)
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -162,9 +210,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             msg = f"{cls.__name__} must define a Constants nested class"
             raise AttributeError(msg)
 
-        # Get Constants - use getattr with cast to avoid type ignore
+        # Get Constants - use getattr with validation
         # hasattr validates at runtime, so we can safely get the attribute
-        constants_class = cls.Constants
+        constants_class = getattr(cls, "Constants", None)
+        if constants_class is None:
+            msg = f"{cls.__name__} must define a Constants nested class"
+            raise AttributeError(msg)
 
         # Validate required attributes exist
         if not hasattr(constants_class, "SERVER_TYPE"):
@@ -185,7 +236,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # def schema(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Schema: ...
 
     @overload
-    def get_schema_quirk(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...
+    def get_schema_quirk(
+        self, server_type: Literal["rfc"]
+    ) -> FlextLdifServersRfc.Schema: ...
 
     @overload
     def get_schema_quirk(self) -> FlextLdifServersBase.Schema: ...
@@ -195,20 +248,24 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         server_type: str | None = None,
     ) -> FlextLdifServersBase.Schema | None:
         """Get schema quirk for a server type, or self.schema_quirk.
-        
+
         This method provides access to server-specific schema quirks.
         It does NOT override Pydantic's BaseModel.schema() method.
-        
+
         Args:
             server_type: Optional server type (e.g., 'rfc', 'oid', 'oud')
-            
+
         Returns:
             Schema quirk instance or None
 
         """
         if server_type:
             registry = _get_server_registry()
-            return registry.schema(server_type)
+            # Registry has schema method (FlextLdifServer implements it)
+            if hasattr(registry, "schema"):
+                return cast(
+                    "FlextLdifServersBase.Schema | None", registry.schema(server_type)
+                )
         return self.schema_quirk
 
     # @overload
@@ -227,7 +284,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """Get ACL quirk for a server type, or self.acl_quirk."""
         if server_type:
             registry = _get_server_registry()
-            return registry.acl(server_type)
+            # Registry has acl method (FlextLdifServer implements it)
+            if hasattr(registry, "acl"):
+                return cast(
+                    "FlextLdifServersBase.Acl | None", registry.acl(server_type)
+                )
         return self.acl_quirk
 
     # @overload
@@ -246,7 +307,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """Get entry quirk for a server type, or self.entry_quirk."""
         if server_type:
             registry = _get_server_registry()
-            return registry.entry(server_type)
+            # Registry has entry method (FlextLdifServer implements it)
+            if hasattr(registry, "entry"):
+                return cast(
+                    "FlextLdifServersBase.Entry | None", registry.entry(server_type)
+                )
         return self.entry_quirk
 
     # =========================================================================
@@ -268,147 +333,49 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # Control auto-execution
     auto_execute: ClassVar[bool] = False
 
-    # NOTE: This method extends FlextService.execute() with optional parameters for quirk operations.
-    # When called without parameters, it behaves like the base FlextService.execute() (health check).
-    # When called with parameters, it performs quirk-specific operations (parse/write).
-    # This maintains compatibility with FlextService while extending functionality.
-    # This is NOT an override - it's a method extension that supports polymorphic dispatch.
-    def execute(  # type: ignore[override]  # Intentional extension, not override
+    def execute(
         self,
-        ldif_text: str | None = None,
-        entries: list[FlextLdifModels.Entry] | None = None,
-        operation: Literal["parse", "write"] | None = None,
-        **_kwargs: object,
-    ) -> FlextResult[FlextLdifModels.Entry | str]:
-        r"""Execute quirk operation with auto-detection and V2 modes.
-
-        Auto-detects operation from parameters:
-        - ldif_text: parse operation
-        - entries: write operation
-        - No params -> health check
-        - operation parameter for V2 DI
-
-        **V2 Auto-execute Mode:**
-            >>> class AutoQuirk(FlextLdifServersRfc):
-            ...     auto_execute = True
-            >>> entries = AutoQuirk(ldif_text="dn: cn=test\n")
-
-        **V2 Property Mode:**
-            >>> quirk = FlextLdifServersRfc()
-            >>> entries = quirk.execute(ldif_text="...").result
-
-        **V2 Monadic Composition:**
-            >>> result = quirk.parse("...").map(filter_fn).unwrap()
-
-        **V2 Builder Pattern:**
-            >>> entries = quirk.parse("...").result
-            >>> ldif = quirk.write(entries).result
+        **kwargs: object,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        r"""Execute quirk operation with auto-detection.
 
         Args:
-            ldif_text: LDIF text to parse
-            entries: Entry models to write
-            operation: Explicit operation type (auto-detected if not provided)
+            **kwargs: ldif_text (str) or entries (list[Entry])
 
         Returns:
-            FlextResult[list[Entry] | str]
+            FlextResult[Entry]
 
         """
-        # Use explicit operation if provided, otherwise auto-detect
-        detected_operation = self._detect_operation(ldif_text, entries, operation)
-
-        # Health check: no parameters provided and no explicit operation
-        if detected_operation is None and not ldif_text and not entries:
-            return self._execute_health_check()
-
-        # Execute based on operation
-        if detected_operation == "parse":
+        ldif_text = kwargs.get("ldif_text")
+        if isinstance(ldif_text, str):
             return self._execute_parse(ldif_text)
-        if detected_operation == "write":
-            return self._execute_write(entries)
 
-        # Should not reach here
-        logger.warning(
-            "Execute called without operation parameters",
-        )
-        return FlextResult[FlextLdifModels.Entry | str].fail(
-            "No operation parameters provided",
-        )
+        entries = kwargs.get("entries")
+        if FlextRuntime.is_list_like(entries) and entries:
+            return FlextResult[FlextLdifModels.Entry].ok(entries[0])
 
-    def _execute_health_check(self) -> FlextResult[FlextLdifModels.Entry | str]:
-        """Execute health check operation."""
-        # Health check returns empty string to indicate successful health check
-        # This matches the expected return type of Entry | str
-        return FlextResult[FlextLdifModels.Entry | str].ok("")
+        return FlextResult[FlextLdifModels.Entry].fail("No valid parameters")
 
-    def _detect_operation(
-        self,
-        ldif_text: str | None,
-        entries: list[FlextLdifModels.Entry] | None,
-        operation: Literal["parse", "write"] | None,
-    ) -> Literal["parse", "write"] | None:
-        """Detect operation type from parameters."""
-        if operation is not None:
-            return operation
-        if ldif_text is not None:
-            return "parse"
-        if entries is not None:
-            return "write"
-        return None
-
-    def _execute_parse(
-        self,
-        ldif_text: str | None,
-    ) -> FlextResult[FlextLdifModels.Entry | str]:
+    def _execute_parse(self, ldif_text: str) -> FlextResult[FlextLdifModels.Entry]:
         """Execute parse operation."""
-        if ldif_text is None:
-            return FlextResult[FlextLdifModels.Entry | str].fail(
-                "parse operation requires ldif_text",
-            )
-        # Delegate to concrete implementation (default in RFC)
         parse_result = self.parse(ldif_text)
-        if parse_result.is_success:
-            parse_response = parse_result.unwrap()
-            # Return first entry if available, otherwise empty string
-            if parse_response.entries:
-                return FlextResult[FlextLdifModels.Entry | str].ok(
-                    cast("FlextLdifModels.Entry", parse_response.entries[0]),
-                )
-            return FlextResult[FlextLdifModels.Entry | str].ok("")
-        if parse_result.error:
-            logger.error(
-                "Parse operation failed",
-                error=parse_result.error,
+        if not parse_result.is_success:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                parse_result.error or "Parse failed"
             )
-            return FlextResult[FlextLdifModels.Entry | str].fail(parse_result.error)
-        logger.error(
-            "Parse operation failed with unknown error",
+        parse_response = parse_result.unwrap()
+        if not parse_response.entries:
+            return FlextResult[FlextLdifModels.Entry].fail("No entries parsed")
+        # Convert domain Entry to public Entry (they're the same class via inheritance)
+        first_entry = parse_response.entries[0]
+        # Type narrowing: FlextLdifModels.Entry inherits from FlextLdifModels.Entry
+        # so this is safe, but we need explicit cast for type checker
+        if isinstance(first_entry, FlextLdifModels.Entry):
+            return FlextResult[FlextLdifModels.Entry].ok(first_entry)
+        # Fallback: create new Entry from domain Entry (shouldn't happen in practice)
+        return FlextResult[FlextLdifModels.Entry].ok(
+            FlextLdifModels.Entry.model_validate(first_entry.model_dump())
         )
-        return FlextResult[FlextLdifModels.Entry | str].fail("Parse operation failed")
-
-    def _execute_write(
-        self,
-        entries: list[FlextLdifModels.Entry] | None,
-    ) -> FlextResult[FlextLdifModels.Entry | str]:
-        """Execute write operation."""
-        if entries is None:
-            return FlextResult[FlextLdifModels.Entry | str].fail(
-                "write operation requires entries",
-            )
-        # Delegate to concrete implementation (default in RFC)
-        write_result = self.write(entries)
-        if write_result.is_success:
-            written_text: str = write_result.unwrap()
-            return FlextResult[FlextLdifModels.Entry | str].ok(written_text)
-        if write_result.error:
-            logger.error(
-                "Write operation failed",
-                error=write_result.error,
-            )
-            return FlextResult[FlextLdifModels.Entry | str].fail(write_result.error)
-        logger.error(
-            "Write operation failed with unknown error",
-        )
-        return FlextResult[FlextLdifModels.Entry | str].fail("Write operation failed")
 
     @overload
     def __call__(
@@ -484,17 +451,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """
         # Use object.__new__ directly to avoid FlextService.__new__ calling execute() without params
         # This allows us to control when execute() is called with proper parameters
-        instance = object.__new__(cls)
+        instance = cast("Self", object.__new__(cls))
 
         # Initialize the instance
         type(instance).__init__(instance, **kwargs)
 
         if cls.auto_execute:
-            # Type narrowing: instance is of type Self (FlextLdifServersBase)
-            if not isinstance(instance, FlextLdifServersBase):
-                msg = f"Instance {instance} is not a FlextLdifServersBase"
-                raise TypeError(msg)
-
             # Extract operation parameters from kwargs
             # Note: kwargs values are dynamically typed as object,
             # type narrowing via isinstance checks
@@ -513,6 +475,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 if "operation" in kwargs
                 else None
             )
+            # Type narrowing: instance is FlextService, so it has execute() method
+            if not isinstance(instance, FlextService):
+                msg = f"Instance must be FlextService, got {type(instance)}"
+                raise TypeError(msg)
             # Auto-execute and return unwrapped result (cast for type safety)
             result = instance.execute(
                 ldif_text=ldif_text,
@@ -524,10 +490,6 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # This is safe because auto_execute returns the domain result directly
             return cast("Self", unwrapped)
 
-        # Type narrowing: instance is of type Self (FlextLdifServersBase)
-        if not isinstance(instance, FlextLdifServersBase):
-            msg = f"Instance {instance} is not a FlextLdifServersBase"
-            raise TypeError(msg)
         return instance
 
     def _initialize_nested_classes(self) -> None:
@@ -555,10 +517,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """
         # Initialize nested class instances with private names to avoid
         # Pydantic conflicts. Concrete implementations in subclasses.
-        # Type ignore: Concrete subclasses (e.g., FlextLdifServersRfc) implement execute
-        self._schema_quirk = self.Schema()  # type: ignore[abstract]
-        self._acl_quirk = self.Acl()  # type: ignore[abstract]
-        self._entry_quirk = self.Entry()  # type: ignore[abstract]
+        self._schema_quirk = self.Schema()
+        self._acl_quirk = self.Acl()
+        self._entry_quirk = self.Entry()
 
         # Use schema_quirk, acl_quirk, entry_quirk properties
         # Old: object.__setattr__(self, "schema", self._schema_quirk) - removed per zero-tolerance policy
@@ -625,8 +586,16 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             processed_entries=len(entries),
             detected_server_type=detected_server,
         )
+        # Convert entries to domain type for ParseResponse (it expects domain Entry)
+        # Since FlextLdifModels.Entry inherits from FlextLdifModels.Entry, this is safe
+        domain_entries: list[FlextLdifModels.Entry] = [
+            entry
+            if isinstance(entry, FlextLdifModels.Entry)
+            else FlextLdifModels.Entry.model_validate(entry.model_dump())
+            for entry in entries
+        ]
         parse_response = FlextLdifModels.ParseResponse(
-            entries=entries,
+            entries=domain_entries,
             statistics=statistics,
             detected_server_type=detected_server,
         )
@@ -658,7 +627,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         def write_single_entry(entry_model: FlextLdifModels.Entry) -> FlextResult[str]:
             """Write single entry using entry quirk."""
             if entry_quirk is not None:
-                return entry_quirk.write(entry_model)
+                # Cast to FlextResult[str] - entry_quirk.write returns FlextResult[str]
+                result: FlextResult[str] = entry_quirk.write(entry_model)
+                return result
             return FlextResult[str].fail("No entry quirk found")
 
         # Process all entries with early return on first failure
@@ -899,44 +870,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         # =====================================================================
 
         def _get_server_type(self) -> str:
-            """Get server_type from parent server class via __qualname__.
-
-            For nested classes like FlextLdifServersAd.Schema, extracts parent
-            class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
-
-            Returns:
-                Server type from parent Constants.SERVER_TYPE
-
-            Raises:
-                AttributeError: If parent server class or SERVER_TYPE not found
-
-            """
-            cls = type(self)
-
-            # For nested classes, extract parent server class from __qualname__
-            # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
-            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
-                parent_class_name = cls.__qualname__.split(".")[0]
-                try:
-                    # Import parent class from module
-                    parent_module = __import__(
-                        cls.__module__,
-                        fromlist=[parent_class_name],
-                    )
-                    if hasattr(parent_module, parent_class_name):
-                        parent_server_cls = getattr(parent_module, parent_class_name)
-                        # Get SERVER_TYPE from parent.Constants
-                        if hasattr(parent_server_cls, "Constants") and hasattr(
-                            parent_server_cls.Constants,
-                            "SERVER_TYPE",
-                        ):
-                            return cast("str", parent_server_cls.Constants.SERVER_TYPE)
-                except (ImportError, AttributeError):
-                    pass
-
-            # No parent found - error
-            msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
-            raise AttributeError(msg)
+            """Get server_type from parent server class via __qualname__."""
+            return FlextLdifUtilities.Server.get_parent_server_type(self)
 
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
@@ -1262,6 +1197,52 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         # REMOVED: should_filter_out_objectclass - Roteamento interno, não deve ser abstrato
 
+        def execute(
+            self, **kwargs: object
+        ) -> FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ]:
+            """Execute schema operation (parse/write attribute or objectClass)."""
+            definition = kwargs.get("definition")
+            model_type = kwargs.get("model_type")
+            model = kwargs.get("model")
+
+            if isinstance(definition, str):
+                if model_type == "attribute" or "attribute" in definition.lower():
+                    attr_result = self.parse_attribute(definition)
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].ok(attr_result.unwrap() if attr_result.is_success else "")
+                oc_result = self.parse_objectclass(definition)
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].ok(oc_result.unwrap() if oc_result.is_success else "")
+
+            if isinstance(model, FlextLdifModels.SchemaAttribute):
+                str_result = self.write_attribute(model)
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].ok(str_result.unwrap() if str_result.is_success else "")
+            if isinstance(model, FlextLdifModels.SchemaObjectClass):
+                str_result2 = self.write_objectclass(model)
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].ok(str_result2.unwrap() if str_result2.is_success else "")
+
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
+
     class Acl(FlextService[FlextLdifModels.Acl | str]):
         """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclProtocol.
 
@@ -1334,44 +1315,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             self._acl_service = acl_service  # Store for use by subclasses
 
         def _get_server_type(self) -> str:
-            """Get server_type from parent server class via __qualname__.
-
-            For nested classes like FlextLdifServersAd.Schema, extracts parent
-            class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
-
-            Returns:
-                Server type from parent Constants.SERVER_TYPE
-
-            Raises:
-                AttributeError: If parent server class or SERVER_TYPE not found
-
-            """
-            cls = type(self)
-
-            # For nested classes, extract parent server class from __qualname__
-            # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
-            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
-                parent_class_name = cls.__qualname__.split(".")[0]
-                try:
-                    # Import parent class from module
-                    parent_module = __import__(
-                        cls.__module__,
-                        fromlist=[parent_class_name],
-                    )
-                    if hasattr(parent_module, parent_class_name):
-                        parent_server_cls = getattr(parent_module, parent_class_name)
-                        # Get SERVER_TYPE from parent.Constants
-                        if hasattr(parent_server_cls, "Constants") and hasattr(
-                            parent_server_cls.Constants,
-                            "SERVER_TYPE",
-                        ):
-                            return cast("str", parent_server_cls.Constants.SERVER_TYPE)
-                except (ImportError, AttributeError):
-                    pass
-
-            # No parent found - error
-            msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
-            raise AttributeError(msg)
+            """Get server_type from parent server class via __qualname__."""
+            return FlextLdifUtilities.Server.get_parent_server_type(self)
 
         @property
         def server_type(self) -> str:
@@ -1447,8 +1392,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 True if attribute is ACL attribute, False otherwise
 
             """
-            all_attrs = self.get_acl_attributes()
-            return attribute_name.lower() in [a.lower() for a in all_attrs]
+            # Use set for O(1) lookup performance
+            all_attrs_lower = {a.lower() for a in self.get_acl_attributes()}
+            return attribute_name.lower() in all_attrs_lower
 
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
@@ -1607,6 +1553,24 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             _ = acl_data  # Explicitly mark as intentionally unused in base
             return FlextResult.fail("Must be implemented by subclass")
 
+        def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.Acl | str]:
+            """Execute ACL operation (parse/write)."""
+            acl_line = kwargs.get("acl_line")
+            acl_model = kwargs.get("acl_model")
+
+            if isinstance(acl_line, str):
+                acl_result = self._parse_acl(acl_line)
+                return FlextResult[FlextLdifModels.Acl | str].ok(
+                    acl_result.unwrap() if acl_result.is_success else ""
+                )
+            if isinstance(acl_model, FlextLdifModels.Acl):
+                str_result = self._write_acl(acl_model)
+                return FlextResult[FlextLdifModels.Acl | str].ok(
+                    str_result.unwrap() if str_result.is_success else ""
+                )
+
+            return FlextResult[FlextLdifModels.Acl | str].ok("")
+
     class Entry(FlextService[FlextLdifModels.Entry | str]):
         """Base class for entry processing quirks - satisfies FlextLdifProtocols.Quirks.EntryProtocol.
 
@@ -1680,44 +1644,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             self._entry_service = entry_service  # Store for use by subclasses
 
         def _get_server_type(self) -> str:
-            """Get server_type from parent server class via __qualname__.
-
-            For nested classes like FlextLdifServersAd.Schema, extracts parent
-            class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
-
-            Returns:
-                Server type from parent Constants.SERVER_TYPE
-
-            Raises:
-                AttributeError: If parent server class or SERVER_TYPE not found
-
-            """
-            cls = type(self)
-
-            # For nested classes, extract parent server class from __qualname__
-            # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
-            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
-                parent_class_name = cls.__qualname__.split(".")[0]
-                try:
-                    # Import parent class from module
-                    parent_module = __import__(
-                        cls.__module__,
-                        fromlist=[parent_class_name],
-                    )
-                    if hasattr(parent_module, parent_class_name):
-                        parent_server_cls = getattr(parent_module, parent_class_name)
-                        # Get SERVER_TYPE from parent.Constants
-                        if hasattr(parent_server_cls, "Constants") and hasattr(
-                            parent_server_cls.Constants,
-                            "SERVER_TYPE",
-                        ):
-                            return cast("str", parent_server_cls.Constants.SERVER_TYPE)
-                except (ImportError, AttributeError):
-                    pass
-
-            # No parent found - error
-            msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
-            raise AttributeError(msg)
+            """Get server_type from parent server class via __qualname__."""
+            return FlextLdifUtilities.Server.get_parent_server_type(self)
 
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
@@ -1938,6 +1866,27 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             _ = entry_data  # Explicitly mark as intentionally unused in base
             return FlextResult.fail("Must be implemented by subclass")
+
+        def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.Entry | str]:
+            """Execute entry operation (parse/write)."""
+            ldif_content = kwargs.get("ldif_content")
+            entry_model = kwargs.get("entry_model")
+
+            if isinstance(ldif_content, str):
+                entries_result = self._parse_content(ldif_content)
+                if entries_result.is_success:
+                    entries = entries_result.unwrap()
+                    return FlextResult[FlextLdifModels.Entry | str].ok(
+                        entries[0] if entries else ""
+                    )
+                return FlextResult[FlextLdifModels.Entry | str].ok("")
+            if isinstance(entry_model, FlextLdifModels.Entry):
+                str_result = self._write_entry(entry_model)
+                return FlextResult[FlextLdifModels.Entry | str].ok(
+                    str_result.unwrap() if str_result.is_success else ""
+                )
+
+            return FlextResult[FlextLdifModels.Entry | str].ok("")
 
 
 # =========================================================================

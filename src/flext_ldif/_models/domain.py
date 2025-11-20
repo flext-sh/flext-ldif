@@ -16,13 +16,15 @@ import base64
 import contextlib
 import logging
 import re
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, Unpack, cast
+from collections.abc import Callable, Mapping
+from typing import ClassVar, Self, TypedDict, Unpack, cast
 
 from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextRuntime,
+    FlextUtilities,
 )
 from pydantic import (
     BaseModel,
@@ -33,10 +35,11 @@ from pydantic import (
     model_validator,
 )
 
+from flext_ldif._models.base import (
+    AclElement,
+    SchemaElement,
+)
 from flext_ldif.constants import FlextLdifConstants
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Mapping
 
 # Logger for domain models
 logger = FlextLogger(__name__)
@@ -218,10 +221,16 @@ class FlextLdifModelsDomains:
             description="ISO 8601 timestamp when exclusion was marked",
         )
 
-    class SchemaAttribute(FlextModels.ArbitraryTypesModel):
+    class SchemaAttribute(SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant).
 
         Represents an LDAP attribute type definition from schema with full RFC 4512 support.
+
+        Inherits from SchemaElement:
+        - model_config (strict=True, validate_default=True, validate_assignment=True)
+        - has_metadata computed field
+        - server_type computed field
+        - has_server_extensions computed field
         """
 
         name: str = Field(..., description="Attribute name")
@@ -332,10 +341,16 @@ class FlextLdifModelsDomains:
                 server_type="rfc",
             )
 
-    class Syntax(FlextModels.ArbitraryTypesModel):
+    class Syntax(SchemaElement):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
 
         Represents an LDAP attribute syntax OID and its validation rules per RFC 4517.
+
+        Inherits from SchemaElement:
+        - model_config (strict=True, validate_default=True, validate_assignment=True)
+        - has_metadata computed field
+        - server_type computed field
+        - has_server_extensions computed field
         """
 
         oid: str = Field(
@@ -480,10 +495,16 @@ class FlextLdifModelsDomains:
                 # This prevents the model from being invalid due to service failures
                 return None
 
-    class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
+    class SchemaObjectClass(SchemaElement):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
         Represents an LDAP object class definition from schema with full RFC 4512 support.
+
+        Inherits from SchemaElement:
+        - model_config (strict=True, validate_default=True, validate_assignment=True)
+        - has_metadata computed field
+        - server_type computed field
+        - has_server_extensions computed field
         """
 
         name: str = Field(..., description="Object class name")
@@ -600,23 +621,9 @@ class FlextLdifModelsDomains:
             """Check if attribute exists."""
             return key in self.attributes
 
-        def __iter__(self) -> Iterator[str]:  # type: ignore[override]
-            """Iterate over attribute names (intentionally overrides BaseModel).
-
-            BaseModel.__iter__ yields (name, value) tuples, but we only yield names
-            for dict-like behavior. This is intentional for LDIF attribute access.
-
-            Allows: for name in entry.attributes: ...
-
-            Returns:
-                Generator of attribute names
-
-            Note:
-                Type ignore is intentional - we override BaseModel.__iter__ with
-                different return type for LDIF-specific dict-like behavior.
-
-            """
-            yield from self.attributes.keys()
+        # NOTE: __iter__ method REMOVED - was incompatible with BaseModel type signature
+        # Use: entry.attributes.keys() for iteration over attribute names
+        # Use: entry.model_dump() for Pydantic default iteration behavior
 
         def get(self, key: str, default: list[str] | None = None) -> list[str]:
             """Get attribute values with optional default.
@@ -746,7 +753,7 @@ class FlextLdifModelsDomains:
                 # Normalize values to list[str]
                 normalized_attrs: dict[str, list[str]] = {}
                 for key, val in attrs_data.items():
-                    if isinstance(val, list):
+                    if FlextRuntime.is_list_like(val):
                         normalized_attrs[key] = [str(v) for v in val]
                     elif isinstance(val, str):
                         normalized_attrs[key] = [val]
@@ -791,7 +798,7 @@ class FlextLdifModelsDomains:
             # Use existing attribute_metadata dict
             self.attribute_metadata[attribute_name] = {
                 "status": "deleted",
-                "deleted_at": datetime.now(UTC).isoformat(),
+                "deleted_at": FlextUtilities.Generators.generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": self.attributes[attribute_name].copy(),
@@ -973,10 +980,12 @@ class FlextLdifModelsDomains:
 
             if inconsistencies:
                 result = FlextResult[bool].ok(False)
-                result.metadata = {
-                    "inconsistencies": inconsistencies,
-                    "warning": f"Found {len(inconsistencies)} DNs with case inconsistencies",
-                }
+                result.metadata = FlextModels.Metadata(
+                    attributes={
+                        "inconsistencies": inconsistencies,
+                        "warning": f"Found {len(inconsistencies)} DNs with case inconsistencies",
+                    }
+                )
                 return result
 
             return FlextResult[bool].ok(True)
@@ -1018,7 +1027,7 @@ class FlextLdifModelsDomains:
                         normalized_data[field_name] = self._normalize_single_dn(
                             field_value,
                         )
-                    elif isinstance(field_value, list):
+                    elif FlextRuntime.is_list_like(field_value):
                         normalized_data[field_name] = self._normalize_dn_list(
                             field_value,
                         )
@@ -1193,14 +1202,17 @@ class FlextLdifModelsDomains:
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
         subject_value: str = Field(..., description="Subject value/pattern")
 
-    class Acl(FlextModels.ArbitraryTypesModel):
-        """Universal ACL model for all LDAP server types."""
+    class Acl(AclElement):
+        """Universal ACL model for all LDAP server types.
 
-        model_config = ConfigDict(
-            strict=True,
-            validate_default=True,
-            validate_assignment=True,
-        )
+        Inherits from AclElement:
+        - model_config (strict=True, validate_default=True, validate_assignment=True)
+        - server_type field with default "rfc"
+        - metadata field (QuirkMetadata | None)
+        - validation_violations field (list[str])
+        - is_valid computed field
+        - has_server_quirks computed field
+        """
 
         name: str = Field(default="", description="ACL name")
         target: FlextLdifModelsDomains.AclTarget | None = Field(
@@ -1215,16 +1227,12 @@ class FlextLdifModelsDomains:
             default=None,
             description="ACL permissions",
         )
-        server_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.RFC,
-            description="LDAP server type (openldap, openldap2, openldap1, oid, oud, 389ds)",
-        )
+        # server_type inherited from AclElement (default="rfc")
         raw_line: str = Field(default="", description="Original raw ACL line from LDIF")
         raw_acl: str = Field(default="", description="Original ACL string from LDIF")
-        validation_violations: list[str] = Field(
-            default_factory=list,
-            description="Validation violations captured during ACL processing",
-        )
+        # validation_violations inherited from AclElement (default_factory=list)
+
+        # Metadata field override with specific type (type narrowing from object to QuirkMetadata)
         metadata: FlextLdifModelsDomains.QuirkMetadata | None = Field(
             default=None,
             description="Quirk-specific metadata for ACL processing",
@@ -1765,7 +1773,7 @@ class FlextLdifModelsDomains:
 
             # Get server-injected validation rules
             validation_rules = self.metadata.extensions.get("validation_rules")
-            if not isinstance(validation_rules, dict):
+            if not FlextRuntime.is_dict_like(validation_rules):
                 return self
 
             rules: dict[str, object] = validation_rules
@@ -1807,7 +1815,7 @@ class FlextLdifModelsDomains:
                 if self.metadata
                 else {}
             )
-            return result if isinstance(result, dict) else {}
+            return result if FlextRuntime.is_dict_like(result) else {}
 
         class Builder:
             """Builder pattern for Entry creation (reduces complexity, improves readability)."""
@@ -2028,23 +2036,30 @@ class FlextLdifModelsDomains:
                 msg = "Attributes cannot be None (required per RFC 2849 § 2)"
                 raise ValueError(msg)
 
-            if isinstance(attributes, dict):
+            if FlextRuntime.is_dict_like(attributes):
                 # Lenient processing: Accept empty dict (violation captured in validation_metadata)
                 # Empty dict is valid LdifAttributes (Pydantic allows it)
                 attrs_dict: dict[str, list[str]] = {}
                 for attr_name, attr_values in attributes.items():
                     # Normalize to list if string
-                    values_list: list[str] = (
-                        [str(attr_values)]
-                        if isinstance(attr_values, str)
-                        else [str(v) for v in attr_values]
-                    )
+                    if isinstance(attr_values, str):
+                        values_list: list[str] = [str(attr_values)]
+                    elif FlextRuntime.is_list_like(attr_values):
+                        values_list = [str(v) for v in attr_values]
+                    else:
+                        # Single value - convert to list
+                        values_list = [str(attr_values)]
                     attrs_dict[attr_name] = values_list
                 return FlextLdifModelsDomains.LdifAttributes(
                     attributes=attrs_dict,
                 )
 
-            return attributes
+            # Already LdifAttributes instance
+            if isinstance(attributes, FlextLdifModelsDomains.LdifAttributes):
+                return attributes
+            # Should not reach here, but ensure return type
+            msg = f"Attributes must be dict or LdifAttributes, got {type(attributes).__name__}"
+            raise TypeError(msg)
 
         @classmethod
         def _build_metadata(
@@ -2213,7 +2228,7 @@ class FlextLdifModelsDomains:
                 # entry_attrs_raw is always dict from ldap3_entry.entry_attributes_as_dict
                 if entry_attrs_raw:
                     for attr_name, attr_value_list in entry_attrs_raw.items():
-                        if isinstance(attr_value_list, list):
+                        if FlextRuntime.is_list_like(attr_value_list):
                             attrs_dict[str(attr_name)] = [
                                 str(v) for v in attr_value_list
                             ]
@@ -2766,7 +2781,7 @@ class FlextLdifModelsDomains:
         validation_warnings: list[str]
         validation_errors: list[str]
 
-    class DNStatistics(BaseModel):
+    class DNStatistics(FlextModels.Statistics):
         """Statistics tracking for DN transformations and validation.
 
         Immutable value object capturing complete DN transformation history
@@ -2775,6 +2790,10 @@ class FlextLdifModelsDomains:
 
         All DN transformation operations should populate this model to
         maintain a complete audit trail.
+
+        Inherits from FlextModels.Statistics (flext-core):
+        - model_config (frozen=True, validate_default=True, validate_assignment=True)
+        - aggregate() classmethod (automatic statistics aggregation)
         """
 
         model_config = ConfigDict(frozen=True, extra="ignore")
@@ -2916,7 +2935,7 @@ class FlextLdifModelsDomains:
                 **flags,
             )
 
-    class EntryStatistics(BaseModel):
+    class EntryStatistics(FlextModels.Statistics):
         """Statistics tracking for entry-level transformations and validation.
 
         Tracks complete entry lifecycle from parsing through validation,
@@ -2925,9 +2944,13 @@ class FlextLdifModelsDomains:
 
         Designed for aggregation across large LDIF files to provide
         comprehensive migration diagnostics.
+
+        Inherits from FlextModels.Statistics (flext-core):
+        - model_config (frozen=True, validate_default=True, validate_assignment=True)
+        - aggregate() classmethod (automatic statistics aggregation)
         """
 
-        model_config = ConfigDict(frozen=False, extra="ignore")
+        model_config = ConfigDict(frozen=True, extra="ignore")
 
         # Entry lifecycle tracking
         was_parsed: bool = Field(
@@ -3110,56 +3133,108 @@ class FlextLdifModelsDomains:
                 dn_statistics=dn_statistics,
             )
 
-        def mark_validated(self) -> None:
-            """Mark entry as validated."""
-            self.was_validated = True
+        def mark_validated(self) -> FlextLdifModelsDomains.EntryStatistics:
+            """Mark entry as validated.
 
-        def mark_filtered(self, filter_type: str, *, passed: bool) -> None:
+            Returns new instance with was_validated=True (frozen model).
+            """
+            return self.model_copy(update={"was_validated": True})
+
+        def mark_filtered(
+            self, filter_type: str, *, passed: bool
+        ) -> FlextLdifModelsDomains.EntryStatistics:
             """Mark entry as filtered with result.
 
             Args:
                 filter_type: Type of filter applied
                 passed: Whether entry passed the filter (keyword-only)
 
+            Returns new instance with updated filter state (frozen model).
+
             """
-            self.was_filtered = True
-            self.filters_applied.append(filter_type)
-            self.filter_results[filter_type] = passed
+            filters_applied = [*self.filters_applied, filter_type]
+            filter_results = {**self.filter_results, filter_type: passed}
+            return self.model_copy(
+                update={
+                    "was_filtered": True,
+                    "filters_applied": filters_applied,
+                    "filter_results": filter_results,
+                }
+            )
 
         def mark_rejected(
             self,
             category: str,
             reason: str,
-        ) -> None:
-            """Mark entry as rejected."""
-            self.was_rejected = True
-            self.rejection_category = category
-            self.rejection_reason = reason
+        ) -> FlextLdifModelsDomains.EntryStatistics:
+            """Mark entry as rejected.
 
-        def add_error(self, error: str) -> None:
-            """Add error message."""
-            self.errors.append(error)
+            Returns new instance with rejection details (frozen model).
+            """
+            return self.model_copy(
+                update={
+                    "was_rejected": True,
+                    "rejection_category": category,
+                    "rejection_reason": reason,
+                }
+            )
 
-        def add_warning(self, warning: str) -> None:
-            """Add warning message."""
-            self.warnings.append(warning)
+        def add_error(self, error: str) -> FlextLdifModelsDomains.EntryStatistics:
+            """Add error message.
+
+            Returns new instance with error added (frozen model).
+            """
+            errors = [*self.errors, error]
+            return self.model_copy(update={"errors": errors})
+
+        def add_warning(self, warning: str) -> FlextLdifModelsDomains.EntryStatistics:
+            """Add warning message.
+
+            Returns new instance with warning added (frozen model).
+            """
+            warnings = [*self.warnings, warning]
+            return self.model_copy(update={"warnings": warnings})
 
         def track_attribute_change(
             self,
             attr_name: str,
             change_type: str,
-        ) -> None:
-            """Track attribute modification."""
-            if change_type == "added":
-                self.attributes_added.append(attr_name)
-            elif change_type == "removed":
-                self.attributes_removed.append(attr_name)
-            elif change_type == "modified":
-                self.attributes_modified.append(attr_name)
-            elif change_type == "filtered":
-                self.attributes_filtered.append(attr_name)
+        ) -> FlextLdifModelsDomains.EntryStatistics:
+            """Track attribute modification.
 
-        def apply_quirk(self, quirk_type: str) -> None:
-            """Record quirk application."""
-            self.quirks_applied.append(quirk_type)
-            self.quirk_transformations += 1
+            Returns new instance with attribute change tracked (frozen model).
+            """
+            if change_type == "added":
+                attributes_added = [*self.attributes_added, attr_name]
+                return self.model_copy(update={"attributes_added": attributes_added})
+            if change_type == "removed":
+                attributes_removed = [*self.attributes_removed, attr_name]
+                return self.model_copy(
+                    update={"attributes_removed": attributes_removed}
+                )
+            if change_type == "modified":
+                attributes_modified = [*self.attributes_modified, attr_name]
+                return self.model_copy(
+                    update={"attributes_modified": attributes_modified}
+                )
+            if change_type == "filtered":
+                attributes_filtered = [*self.attributes_filtered, attr_name]
+                return self.model_copy(
+                    update={"attributes_filtered": attributes_filtered}
+                )
+            return self  # No change for unknown type
+
+        def apply_quirk(
+            self, quirk_type: str
+        ) -> FlextLdifModelsDomains.EntryStatistics:
+            """Record quirk application.
+
+            Returns new instance with quirk recorded (frozen model).
+            """
+            quirks_applied = [*self.quirks_applied, quirk_type]
+            return self.model_copy(
+                update={
+                    "quirks_applied": quirks_applied,
+                    "quirk_transformations": self.quirk_transformations + 1,
+                }
+            )

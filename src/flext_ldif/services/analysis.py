@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
@@ -233,7 +233,7 @@ class FlextLdifAnalysis(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]
 
         # Validate objectClass values
         oc_values = entry.attributes.attributes.get("objectClass", [])
-        if isinstance(oc_values, list):
+        if FlextRuntime.is_list_like(oc_values):
             for oc in oc_values:
                 oc_result = validation_service.validate_objectclass_name(oc)
                 if oc_result.is_failure or not oc_result.unwrap():

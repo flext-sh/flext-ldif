@@ -88,7 +88,7 @@ class TestOperations:
             result = parser.parse(ldif_content)
 
         # Type narrowing: result is FlextResult[list[Entry]], but assert_parse_success accepts broader type
-        return TestAssertions.assert_parse_success(result, expected_count)  # type: ignore[arg-type]
+        return TestAssertions.assert_parse_success(result, expected_count)
 
     @staticmethod
     def write_and_validate(

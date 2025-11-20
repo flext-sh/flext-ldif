@@ -26,7 +26,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -1005,7 +1005,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     # Create LdifAttributes from dict - convert values to lists if needed
                     attr_dict: dict[str, list[str]] = {}
                     for key, value in entry_attrs.items():
-                        if isinstance(value, list):
+                        if FlextRuntime.is_list_like(value):
                             attr_dict[str(key)] = [
                                 (
                                     v.decode(
@@ -1087,7 +1087,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
 
-            # RFC parser failed - use relaxed mode parsing
+            # RFC parser failed - use relaxed mode with generalized parser
             logger.debug(
                 "RFC parser failed, using relaxed mode",
                 error=str(parent_result.error) if parent_result.error else None,
@@ -1095,35 +1095,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if parent_result.error
                 else None,
             )
-            try:
-                entries: list[FlextLdifModels.Entry] = []
 
-                # Handle empty/whitespace-only content gracefully
-                if not ldif_content.strip():
-                    return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-                # Use shared RFC 2849-compliant LDIF parser
-                parsed_entries = FlextLdifUtilities.Parser.parse_ldif_lines(
-                    ldif_content,
-                )
-
-                # Convert parsed (dn, attrs) tuples to Entry models
-                for dn, attrs in parsed_entries:
-                    entry_result = self._parse_entry(dn, attrs)
-                    if entry_result.is_success:
-                        entries.append(entry_result.unwrap())
-
-                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-            except (ValueError, TypeError, AttributeError, OSError, Exception) as e:
-                logger.debug(
-                    "Relaxed LDIF content parse failed",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to parse LDIF content: {e}",
-                )
+            # Use generalized parser with relaxed configuration
+            return FlextLdifUtilities.Parsers.Content.parse(
+                ldif_content,
+                self._get_server_type(),
+                self._parse_entry,
+            )
 
         def _write_entry(
             self,
@@ -1170,7 +1148,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         attr_name,
                         attr_values,
                     ) in entry_data.attributes.attributes.items():
-                        if isinstance(attr_values, list):
+                        if FlextRuntime.is_list_like(attr_values):
                             ldif_lines.extend(
                                 f"{attr_name}{FlextLdifServersRelaxed.Constants.LDIF_ATTR_SEPARATOR}{value}"
                                 for value in attr_values

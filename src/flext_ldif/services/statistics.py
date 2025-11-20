@@ -12,22 +12,15 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, override
+from typing import override
 
-from flext_core import FlextDecorators, FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _StatisticsServiceStatusType = FlextLdifModels.StatisticsServiceStatus
-else:
-    _StatisticsServiceStatusType = object  # type: ignore[misc]
 
-
-class FlextLdifStatistics(FlextService[_StatisticsServiceStatusType]):
+class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsServiceStatus]):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about
@@ -191,7 +184,7 @@ class FlextLdifStatistics(FlextService[_StatisticsServiceStatusType]):
 
             for entry in rejected_entries:
                 attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                if isinstance(attrs, dict) and "rejectionReason" in attrs:
+                if FlextRuntime.is_dict_like(attrs) and "rejectionReason" in attrs:
                     reason_value = attrs["rejectionReason"]
                     if (
                         isinstance(reason_value, str)

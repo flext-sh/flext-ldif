@@ -27,7 +27,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -627,7 +627,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
             # Ensure object_classes is a list
             object_classes: list[str] = (
-                object_classes_raw if isinstance(object_classes_raw, list) else []
+                object_classes_raw
+                if FlextRuntime.is_list_like(object_classes_raw)
+                else []
             )
             return bool(
                 any(

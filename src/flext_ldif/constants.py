@@ -258,7 +258,9 @@ class FlextLdifConstants(FlextConstants):
         PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000  # Minimum for performance
 
         # Failure rate thresholds
-        HIGH_FAILURE_RATE_THRESHOLD: Final[float] = 50.0  # Percentage threshold for high severity
+        HIGH_FAILURE_RATE_THRESHOLD: Final[float] = (
+            50.0  # Percentage threshold for high severity
+        )
 
     # Entry limits
     MIN_ENTRIES: Final[int] = 1000

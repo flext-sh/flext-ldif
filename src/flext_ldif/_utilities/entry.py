@@ -10,7 +10,7 @@ import base64
 import re
 from typing import cast
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextRuntime
 
 from flext_ldif.models import FlextLdifModels
 
@@ -103,7 +103,7 @@ class FlextLdifUtilitiesEntry:
             normalized_result: dict[str, list[str]] = {}
             for attr_name, values in attributes.items():
                 # Normalize to list[str] - handle all input types
-                if isinstance(values, list):
+                if FlextRuntime.is_list_like(values):
                     normalized_result[attr_name] = [
                         v.decode("utf-8", errors="replace")
                         if isinstance(v, bytes)
@@ -111,7 +111,9 @@ class FlextLdifUtilitiesEntry:
                         for v in values
                     ]
                 elif isinstance(values, bytes):
-                    normalized_result[attr_name] = [values.decode("utf-8", errors="replace")]
+                    normalized_result[attr_name] = [
+                        values.decode("utf-8", errors="replace")
+                    ]
                 else:
                     normalized_result[attr_name] = [str(values)]
             return normalized_result
@@ -121,7 +123,7 @@ class FlextLdifUtilitiesEntry:
         for attr_name, values in attributes.items():
             # Normalize values to list[str] first - convert bytes to str immediately
             str_values: list[str]
-            if isinstance(values, list):
+            if FlextRuntime.is_list_like(values):
                 # Convert bytes to str if needed
                 str_values = [
                     v.decode("utf-8", errors="replace")
@@ -147,27 +149,6 @@ class FlextLdifUtilitiesEntry:
                 result[attr_name] = str_values
 
         return result
-
-    @staticmethod
-    def validate_telephone_numbers(
-        telephone_values: list[str],
-    ) -> list[str]:
-        """Validate telephone numbers - must contain at least one digit.
-
-        Args:
-            telephone_values: List of telephone number values
-
-        Returns:
-            Filtered list containing only valid telephone numbers
-
-        """
-        if not telephone_values:
-            return []
-
-        # Telephone numbers must contain at least one digit
-        return [
-            value for value in telephone_values if any(char.isdigit() for char in value)
-        ]
 
     @staticmethod
     def normalize_attribute_names(
@@ -425,8 +406,7 @@ class FlextLdifUtilitiesEntry:
         )
         if result.is_failure:
             return entry
-        # Entry.create returns FlextResult[FlextLdifModels.Entry] - unwrap() returns Entry
-        # Cast to ensure type compatibility between FlextLdifModelsDomains.Entry and FlextLdifModels.Entry
+        # Entry.create returns FlextResult[FlextLdifModels.Entry]
         return cast("FlextLdifModels.Entry", result.unwrap())
 
     @staticmethod
@@ -469,8 +449,7 @@ class FlextLdifUtilitiesEntry:
         )
         if result.is_failure:
             return entry
-        # Entry.create returns FlextResult[FlextLdifModels.Entry] - unwrap() returns Entry
-        # Cast to ensure type compatibility between FlextLdifModelsDomains.Entry and FlextLdifModels.Entry
+        # Entry.create returns FlextResult[FlextLdifModels.Entry]
         return cast("FlextLdifModels.Entry", result.unwrap())
 
 

@@ -22,7 +22,17 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, Literal, Self, cast, overload
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
+
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
+
+logger = FlextLogger(__name__)
+
+# Import for type checking in __new__ method
 
 # ===== TYPE ALIASES (Python 3.13 semantic types) =====
 # These document the semantic purpose of constants without formal definitions
@@ -34,17 +44,6 @@ from flext_core import FlextLogger, FlextResult
 # type ReplacementMap = Mapping[str, str]  # Mapping for substitutions/normalization
 # type DetectionConfig = Mapping[str, str | int | frozenset[str]]  # Detection config
 # type AclConfig = Mapping[str, str | int | frozenset[str]]  # ACL format config
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
-
-logger = FlextLogger(__name__)
-
-# Import for type checking in __new__ method
 
 
 class FlextLdifServersRfc(FlextLdifServersBase):
@@ -637,7 +636,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if syntax is None or not syntax.strip():
                 return None
 
-            validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
+            validate_result = FlextLdifUtilities.OID.validate_format(syntax)
             if validate_result.is_failure:
                 return f"Syntax OID validation failed: {validate_result.error}"
             if not validate_result.unwrap():
@@ -662,11 +661,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 QuirkMetadata or None
 
             """
-            from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                FlextLdifUtilitiesMetadata,
-            )
-
-            metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
+            metadata_extensions = FlextLdifUtilities.Parser.extract_extensions(
                 attr_definition,
             )
 
@@ -698,7 +693,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
 
             # Preserve ALL schema formatting details for zero data loss
-            FlextLdifUtilitiesMetadata.preserve_schema_formatting(
+            FlextLdifUtilities.Metadata.preserve_schema_formatting(
                 metadata, attr_definition
             )
 
@@ -724,14 +719,45 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             attr_definition: str,
             *,
             _case_insensitive: bool = False,
-            allow_syntax_quotes: bool = False,  # noqa: ARG002 (unused in RFC but used by subclasses)
+            allow_syntax_quotes: bool = False,  # noqa: ARG002
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Parse RFC 4512 attribute definition (implements abstract method).
+            """Parse RFC 4512 attribute definition using generalized parser.
 
             Args:
                 attr_definition: RFC 4512 attribute definition string
-                _case_insensitive: Whether to use case-insensitive pattern matching (unused in RFC)
-                allow_syntax_quotes: Whether to allow quoted syntax values (for lenient parsing)
+                _case_insensitive: Whether to use case-insensitive pattern matching
+                allow_syntax_quotes: Whether to allow quoted syntax values
+
+            Returns:
+                FlextResult with parsed SchemaAttribute model
+
+            """
+            # Get server type with fallback for test classes
+            try:
+                server_type = self._get_server_type()
+            except AttributeError:
+                server_type = "rfc"
+
+            # Wrap method to match ParseCoreHook protocol
+            def parse_core_hook(
+                definition: str,
+            ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+                return self._parse_attribute_core(definition)
+
+            return FlextLdifUtilities.Parsers.Attribute.parse(
+                attr_definition,
+                server_type,
+                parse_core_hook,
+            )
+
+        def _parse_attribute_core(
+            self,
+            attr_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Core RFC 4512 attribute parsing logic.
+
+            Args:
+                attr_definition: RFC 4512 attribute definition string
 
             Returns:
                 FlextResult with parsed SchemaAttribute model
@@ -749,39 +775,38 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 oid = oid_match.group(1)
 
                 # Extract all string fields using helper
-                # Note: Accessing private methods is intentional for utility reuse
-                name = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                name = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
                     default=oid,
                 )
-                desc = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                desc = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
                 )
-                equality = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                equality = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
                 )
-                substr = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                substr = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
                 )
-                ordering = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                ordering = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
                 )
-                sup = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                sup = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
                 )
-                usage = FlextLdifUtilities.Parser._extract_regex_field(  # noqa: SLF001
+                usage = FlextLdifUtilities.Parser.extract_regex_field(
                     attr_definition,
                     FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
                 )
 
                 # Extract syntax and length using helper
-                syntax, length = FlextLdifUtilities.Parser._extract_syntax_and_length(  # noqa: SLF001
+                syntax, length = FlextLdifUtilities.Parser.extract_syntax_and_length(
                     attr_definition,
                 )
 
@@ -797,7 +822,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     is not None
                 )
 
-                # NO-USER-MODIFICATION detection (RFC 4512 standard, always check)
+                # NO-USER-MODIFICATION detection (RFC 4512 standard)
                 no_user_modification = (
                     re.search(
                         FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
@@ -846,7 +871,38 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Parse RFC 4512 objectClass definition (implements abstract method).
+            """Parse RFC 4512 objectClass definition using generalized parser.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                FlextResult with parsed SchemaObjectClass model
+
+            """
+            # Get server type with fallback for test classes
+            try:
+                server_type = self._get_server_type()
+            except AttributeError:
+                server_type = "rfc"
+
+            # Wrap method to match ParseCoreHook protocol
+            def parse_core_hook(
+                definition: str,
+            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+                return self._parse_objectclass_core(definition)
+
+            return FlextLdifUtilities.Parsers.ObjectClass.parse(
+                oc_definition,
+                server_type,
+                parse_core_hook,
+            )
+
+        def _parse_objectclass_core(
+            self,
+            oc_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Core RFC 4512 objectClass parsing logic.
 
             Args:
                 oc_definition: ObjectClass definition string
@@ -927,7 +983,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else:
                         may = [may_value]
 
-                metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
+                metadata_extensions = FlextLdifUtilities.Parser.extract_extensions(
                     oc_definition,
                 )
 
@@ -1107,7 +1163,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else:
                         parts.append(f"{keyword} {value}")
 
-        def _build_attribute_parts(  # noqa: C901 - complexity justified for zero data loss
+        def _build_attribute_parts(
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
         ) -> list[str]:
@@ -1153,7 +1209,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 field_order_ = attr_data.metadata.schema_format_details.get(
                     "field_order"
                 )
-                if isinstance(field_order_, list):
+                if FlextRuntime.is_list_like(field_order_):
                     field_order = field_order_
 
             # Add standard fields using DRY helper (Python 3.13 optimized)
@@ -1165,7 +1221,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 name_values_ = attr_data.metadata.schema_format_details.get(
                     "name_values", []
                 )
-                name_values = name_values_ if isinstance(name_values_, list) else []
+                name_values = (
+                    name_values_ if FlextRuntime.is_list_like(name_values_) else []
+                )
                 if name_format == "multiple" and name_values:
                     # Restore multiple names: NAME ( 'uid' 'userid' )
                     names_str = " ".join(f"'{n}'" for n in name_values)
@@ -1262,11 +1320,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not attr_list:
                 return
 
-            if isinstance(attr_list, list):
-                if len(attr_list) == 1:
-                    parts.append(f"{keyword} {attr_list[0]}")
+            if FlextRuntime.is_list_like(attr_list):
+                attr_list_str = cast(list[str], attr_list)
+                if len(attr_list_str) == 1:
+                    parts.append(f"{keyword} {attr_list_str[0]}")
                 else:
-                    attrs_str = " $ ".join(attr_list)
+                    attrs_str = " $ ".join(attr_list_str)
                     parts.append(f"{keyword} ( {attrs_str} )")
             else:
                 parts.append(f"{keyword} {attr_list}")
@@ -1304,9 +1363,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Handle SUP - can be single string or list (for multiple inheritance)
             if oc_data.sup:
-                if isinstance(oc_data.sup, list):
+                if FlextRuntime.is_list_like(oc_data.sup):
                     # Multiple SUP values: format as ( value1 $ value2 $ ... )
-                    sup_str = " $ ".join(oc_data.sup)
+                    sup_list_str = cast(list[str], oc_data.sup)
+                    sup_str = " $ ".join(sup_list_str)
                     parts.append(f"SUP ( {sup_str} )")
                 else:
                     # Single SUP value
@@ -1461,20 +1521,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 transformed_str = self._post_write_objectclass(written_str)
 
                 # Include extended attributes from metadata
-                # Support both field access (metadata.x_origin) and dict access (metadata.extensions["x_origin"])
+                # Get x_origin from extensions (metadata.extensions["x_origin"])
                 x_origin_value = None
-                if transformed_oc.metadata:
-                    # Try field access first (direct attribute)
-                    if (
-                        hasattr(transformed_oc.metadata, "x_origin")
-                        and transformed_oc.metadata.x_origin
-                    ):
-                        x_origin_value = transformed_oc.metadata.x_origin
-                    # Then try dict access (extensions)
-                    elif transformed_oc.metadata.extensions.get("x_origin"):
-                        x_origin_value = transformed_oc.metadata.extensions.get(
-                            "x_origin",
-                        )
+                if transformed_oc.metadata and transformed_oc.metadata.extensions:
+                    x_origin_raw = transformed_oc.metadata.extensions.get("x_origin")
+                    if isinstance(x_origin_raw, str):
+                        x_origin_value = x_origin_raw
 
                 if x_origin_value and ")" in transformed_str:
                     # Insert X-ORIGIN before closing paren
@@ -1831,17 +1883,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             msg = f"Unknown operation: {operation}"
             raise AssertionError(msg)
 
-        def execute(  # type: ignore[override]  # Intentional extension with typed parameters
-            self,
-            data: (
-                str
-                | FlextLdifModels.SchemaAttribute
-                | FlextLdifModels.SchemaObjectClass
-                | None
-            ) = None,
-            operation: Literal["parse", "write"] | None = None,
-            **_kwargs: object,
-        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
+        def execute(
+            self, **kwargs: object
+        ) -> FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ]:
             """Execute schema quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -1853,23 +1899,50 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             **V2 Usage - Maximum Automation:**
                 >>> schema = FlextLdifServersRfc.Schema()
                 >>> # Parse: pass schema definition string
-                >>> attr = schema.execute(
-                ...     "( 2.5.4.3 NAME 'cn' ...)"
-                ... )  # -> SchemaAttribute
+                >>> attr = schema.execute(data="( 2.5.4.3 NAME 'cn' ...)")
                 >>> # Write: pass model
-                >>> text = schema.execute(attr)  # -> str
+                >>> text = schema.execute(data=attr)
                 >>> # Auto-detect which type of schema definition
-                >>> attr_or_oc = schema.execute("( 2.5.6.6 ... )")  # Detects & parses
+                >>> attr_or_oc = schema.execute(data="( 2.5.6.6 ... )")
 
             Args:
-                data: Schema definition string OR SchemaAttribute OR SchemaObjectClass model
-                      (operation auto-detected from type)
-                operation: Force operation type (overrides auto-detection)
+                **kwargs: May contain:
+                    - data: Schema definition string OR SchemaAttribute OR SchemaObjectClass model
+                    - operation: Force operation type (overrides auto-detection)
 
             Returns:
                 FlextResult[SchemaAttribute | SchemaObjectClass | str] depending on operation
 
             """
+            # Extract parameters from kwargs with type narrowing
+            data_raw = kwargs.get("data")
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | None
+            ) = (
+                data_raw
+                if isinstance(
+                    data_raw,
+                    (
+                        str,
+                        FlextLdifModels.SchemaAttribute,
+                        FlextLdifModels.SchemaObjectClass,
+                        type(None),
+                    ),
+                )
+                else None
+            )
+            operation_raw = kwargs.get("operation")
+            # Type narrowing: check if operation_raw is a valid Literal value
+            if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
+                operation: Literal["parse", "write"] | None = cast(
+                    "Literal['parse', 'write']", operation_raw
+                )
+            else:
+                operation = None
+
             # Health check: no data provided
             if data is None:
                 empty_str: str = ""
@@ -2014,9 +2087,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             schema_instance = cast("Self", instance)
             # Initialize using super() to avoid mypy error about accessing __init__ on instance
             # Use FlextLdifServersBase.Schema as the base class for super()
-            # Import at module level would cause circular dependency, so import here
-            from flext_ldif.servers.base import FlextLdifServersBase  # noqa: PLC0415
-
             if schema_service is not None:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
                     schema_service=schema_service, **init_kwargs
@@ -2396,6 +2466,20 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             _ = objectclass  # Unused - ACL quirk doesn't handle objectClasses
             return False
 
+        @staticmethod
+        def _splitacl_line(acl_line: str) -> tuple[str, str]:
+            """Split an ACL line into attribute name and payload.
+
+            Args:
+                acl_line: The raw ACL line string.
+
+            Returns:
+                Tuple of (attribute_name, payload).
+
+            """
+            attr_name, _, remainder = acl_line.partition(":")
+            return attr_name.strip(), remainder.strip()
+
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse RFC-compliant ACL line (implements abstract method).
 
@@ -2555,12 +2639,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             error_msg: str = write_result.error or "Write ACL failed"
             return FlextResult[FlextLdifModels.Acl | str].fail(error_msg)
 
-        def execute(  # type: ignore[override]  # Intentional extension with typed parameters
-            self,
-            data: str | FlextLdifModels.Acl | None = None,
-            operation: Literal["parse", "write"] | None = None,
-            **_kwargs: object,
-        ) -> FlextResult[FlextLdifModels.Acl | str]:
+        def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.Acl | str]:
             """Execute ACL quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -2571,22 +2650,38 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             **V2 Usage - Maximum Automation:**
                 >>> acl = FlextLdifServersRfc.Acl()
                 >>> # Parse: pass ACL line string
-                >>> acl_model = acl.execute("(target=...)")  # -> Acl
+                >>> acl_model = acl.execute(data="(target=...)")
                 >>> # Write: pass model
-                >>> acl_text = acl.execute(acl_model)  # -> str
+                >>> acl_text = acl.execute(data=acl_model)
                 >>> # Or use as callable processor
                 >>> acl_model = acl("(target=...)")  # Parse
                 >>> acl_text = acl(acl_model)  # Write
 
             Args:
-                data: ACL line string OR Acl model
-                      (operation auto-detected from type)
-                operation: Force operation type (overrides auto-detection)
+                **kwargs: May contain:
+                    - data: ACL line string OR Acl model
+                    - operation: Force operation type (overrides auto-detection)
 
             Returns:
                 FlextResult[Acl | str] depending on operation
 
             """
+            # Extract parameters from kwargs with type narrowing
+            data_raw = kwargs.get("data")
+            data: str | FlextLdifModels.Acl | None = (
+                data_raw
+                if isinstance(data_raw, (str, FlextLdifModels.Acl, type(None)))
+                else None
+            )
+            operation_raw = kwargs.get("operation")
+            # Type narrowing: check if operation_raw is a valid Literal value
+            if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
+                operation: Literal["parse", "write"] | None = cast(
+                    "Literal['parse', 'write']", operation_raw
+                )
+            else:
+                operation = None
+
             # Health check: no data provided
             if data is None:
                 empty_acl: FlextLdifModels.Acl = FlextLdifModels.Acl()
@@ -2871,17 +2966,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             CRITICAL: Preserves complete original LDIF content in metadata BEFORE any parsing.
             This ensures zero data loss and perfect round-trip conversion.
 
-            This is the PRIMARY interface - parser.py calls this with raw LDIF content.
-            This method internally uses ldif3 to iterate and parse all entries.
-
-            Implementation:
-            1. Preserve original LDIF content in metadata (CRITICAL - NEVER lose this)
-            2. Use shared RFC 2849-compliant LDIF parser from FlextLdifUtilities
-            3. For each (dn, attrs) pair from ldif3:
-               - Reconstruct original entry LDIF for preservation
-               - Call _parse_entry() to transform into Entry model
-               - Preserve original in entry metadata
-            4. Return list of all parsed entries with complete metadata
+            Uses generalized FlextLdifUtilities.Parsers.Content with hook-based customization.
+            Python 3.13+ optimized implementation.
 
             Args:
                 ldif_content: Raw LDIF content as string (NEVER lose this)
@@ -2890,116 +2976,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 FlextResult with list of parsed Entry objects (all with original preserved)
 
             """
-            logger.debug(
-                "Parsing RFC LDIF content",
-                content_length=len(ldif_content),
-                content_lines=ldif_content.count("\n") + 1,
+
+            # Wrap method to match CreateEntryHook protocol
+            def create_entry_hook(
+                dn: str, attrs: Mapping[str, list[str]]
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                return self._parse_entry(dn, attrs)
+
+            # Use generalized parser with nested class pattern (Python 3.13+)
+            return FlextLdifUtilities.Parsers.Content.parse(
+                ldif_content,
+                self._get_server_type(),
+                create_entry_hook,
             )
-
-            try:
-                entries: list[FlextLdifModels.Entry] = []
-
-                # Handle empty/whitespace-only content gracefully
-                if not ldif_content.strip():
-                    logger.debug(
-                        "Empty LDIF content",
-                    )
-                    return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-                # CRITICAL: Preserve complete original LDIF content
-                # This will be attached to each entry's metadata during parsing
-                from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                    FlextLdifUtilitiesMetadata,
-                )
-
-                logger.debug(
-                    "Preserving original LDIF content",
-                    content_length=len(ldif_content),
-                )
-
-                # Use shared RFC 2849-compliant LDIF parser from FlextLdifUtilities
-                parsed_entries = FlextLdifUtilities.Parser.parse_ldif_lines(
-                    ldif_content,
-                )
-
-                logger.debug(
-                    "Parsed LDIF content into entries",
-                    entries_count=len(parsed_entries),
-                )
-
-                # Convert parsed (dn, attrs) tuples to Entry models
-                # CRITICAL: Preserve original LDIF for each entry
-                for idx, (dn, attrs) in enumerate(parsed_entries):
-                    logger.debug(
-                        "Processing entry",
-                        entry_dn=dn[:50] if dn else None,
-                        entry_index=idx + 1,
-                        total_entries=len(parsed_entries),
-                        attributes_count=len(attrs),
-                    )
-
-                    # Reconstruct original entry LDIF for preservation
-                    original_entry_ldif_lines = [f"dn: {dn}"]
-                    original_entry_ldif_lines.extend(
-                        f"{attr_name}: {value}"
-                        for attr_name, attr_values in attrs.items()
-                        for value in attr_values
-                    )
-                    original_entry_ldif = "\n".join(original_entry_ldif_lines) + "\n"
-
-                    entry_result = self._parse_entry(dn, attrs)
-                    if entry_result.is_success:
-                        entry = entry_result.unwrap()
-
-                        # CRITICAL: Preserve original LDIF content in entry metadata
-                        if entry.metadata:
-                            FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
-                                metadata=entry.metadata,
-                                ldif_content=original_entry_ldif,
-                                context="entry_original_ldif",
-                            )
-                            logger.debug(
-                                "Preserved original entry LDIF in metadata",
-                                entry_dn=dn[:50] if dn else None,
-                                entry_index=idx + 1,
-                            )
-                        else:
-                            logger.warning(
-                                "Entry metadata missing",
-                                entry_dn=dn[:50] if dn else None,
-                                entry_index=idx + 1,
-                            )
-
-                        entries.append(entry)
-                    else:
-                        logger.error(
-                            "Failed to parse entry",
-                            entry_dn=dn[:50] if dn else None,
-                            entry_index=idx + 1,
-                            error=str(entry_result.error),
-                        )
-
-                logger.debug(
-                    "Parsed RFC LDIF content",
-                    total_entries=len(entries),
-                    entries_with_original=sum(
-                        1
-                        for e in entries
-                        if e.metadata
-                        and e.metadata.original_strings
-                        and "entry_original_ldif" in e.metadata.original_strings
-                    ),
-                )
-
-                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-            except (ValueError, TypeError, AttributeError, OSError, Exception) as e:
-                logger.exception(
-                    "Failed to parse LDIF content",
-                )
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to parse LDIF content: {e}",
-                )
 
         def _normalize_attribute_name(self, attr_name: str) -> str:
             """Normalize attribute name to RFC 2849 canonical form.
@@ -3025,7 +3014,231 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Other attributes: preserve as-is (cn, mail, uid, etc.)
             return attr_name
 
-        def _parse_entry(  # noqa: C901 - complexity justified for zero data loss
+        # ===== _parse_entry HELPER METHODS (DRY refactoring) =====
+
+        def _convert_raw_attributes(
+            self,
+            entry_attrs: Mapping[str, object],
+        ) -> dict[str, list[str]]:
+            """Convert raw LDIF attributes to dict[str, list[str]] format.
+
+            Handles bytes values from ldif3 parser and normalizes attribute names.
+
+            Args:
+                entry_attrs: Raw attributes mapping from LDIF parser
+
+            Returns:
+                Converted attributes with normalized names and string values
+
+            """
+            converted_attrs: dict[str, list[str]] = {}
+            for attr_name, attr_values in entry_attrs.items():
+                # Normalize attribute name to canonical case (RFC 2849)
+                canonical_attr_name = self._normalize_attribute_name(attr_name)
+
+                # Convert values to strings
+                string_values: list[str] = []
+                if FlextRuntime.is_list_like(attr_values):
+                    string_values = [
+                        (
+                            value.decode("utf-8", errors="replace")
+                            if isinstance(value, bytes)
+                            else str(value)
+                        )
+                        for value in attr_values
+                    ]
+                elif isinstance(attr_values, bytes):
+                    string_values = [
+                        attr_values.decode("utf-8", errors="replace"),
+                    ]
+                else:
+                    string_values = [str(attr_values)]
+
+                # RFC 2849: If attribute already exists, append values
+                if canonical_attr_name in converted_attrs:
+                    converted_attrs[canonical_attr_name].extend(string_values)
+                else:
+                    converted_attrs[canonical_attr_name] = string_values
+
+            return converted_attrs
+
+        def _extract_original_lines(
+            self,
+            converted_attrs: dict[str, list[str]],
+        ) -> tuple[str | None, list[str], bool]:
+            """Extract original lines from converted attributes.
+
+            Pops internal keys (_base64_dn, _original_dn_line, _original_lines)
+            from converted_attrs and returns the extracted values.
+
+            Args:
+                converted_attrs: Converted attributes dict (will be modified)
+
+            Returns:
+                Tuple of (original_dn_line, original_attr_lines, dn_was_base64)
+
+            """
+            # Check if DN was base64-encoded
+            dn_was_base64 = converted_attrs.pop("_base64_dn", None) is not None
+
+            # Extract original DN line
+            original_dn_line: str | None = None
+            if "_original_dn_line" in converted_attrs:
+                original_dn_lines = converted_attrs.pop("_original_dn_line", [])
+                if original_dn_lines and FlextRuntime.is_list_like(original_dn_lines):
+                    original_dn_line = (
+                        original_dn_lines[0] if original_dn_lines else None
+                    )
+
+            # Extract original attribute lines
+            original_attr_lines: list[str] = []
+            if "_original_lines" in converted_attrs:
+                original_lines = converted_attrs.pop("_original_lines", [])
+                if original_lines and FlextRuntime.is_list_like(original_lines):
+                    original_attr_lines = original_lines.copy()
+
+            return original_dn_line, original_attr_lines, dn_was_base64
+
+        def _analyze_entry_differences(
+            self,
+            entry_attrs: Mapping[str, object],
+            converted_attrs: dict[str, list[str]],
+            original_entry_dn: str,
+            cleaned_dn: str,
+        ) -> tuple[
+            dict[str, object],
+            dict[str, dict[str, object]],
+            dict[str, object],
+            dict[str, str],
+        ]:
+            """Analyze DN and attribute differences for round-trip support.
+
+            Args:
+                entry_attrs: Original raw attributes
+                converted_attrs: Converted attributes
+                original_entry_dn: Original DN string
+                cleaned_dn: Cleaned/normalized DN
+
+            Returns:
+                Tuple of (dn_differences, attribute_differences, original_attrs_complete, original_case)
+
+            """
+            # Analyze DN differences
+            dn_differences = FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                original=original_entry_dn,
+                converted=cleaned_dn if cleaned_dn != original_entry_dn else None,
+                context="dn",
+            )
+
+            # Track original attribute case
+            original_attribute_case: dict[str, str] = {}
+            for attr_name in entry_attrs:
+                attr_str = str(attr_name)
+                canonical = self._normalize_attribute_name(attr_str)
+                if canonical != attr_str:
+                    original_attribute_case[canonical] = attr_str
+
+            # Analyze attribute differences
+            attribute_differences: dict[str, dict[str, object]] = {}
+            original_attributes_complete: dict[str, object] = {}
+
+            for attr_name, attr_values in entry_attrs.items():
+                original_attr_name = str(attr_name)
+                canonical_name = self._normalize_attribute_name(original_attr_name)
+
+                # Preserve original values
+                original_values = (
+                    list(attr_values)
+                    if isinstance(attr_values, (list, tuple))
+                    else [attr_values]
+                    if attr_values is not None
+                    else []
+                )
+                original_attributes_complete[original_attr_name] = original_values
+
+                converted_values = converted_attrs.get(canonical_name, [])
+
+                # Build string representations
+                original_str = f"{original_attr_name}: {', '.join(str(v) for v in original_values)}"
+                converted_str = (
+                    f"{canonical_name}: {', '.join(str(v) for v in converted_values)}"
+                    if converted_values
+                    else None
+                )
+
+                # Analyze differences
+                attr_diff = FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                    original=original_str,
+                    converted=converted_str if converted_str != original_str else None,
+                    context="attribute",
+                )
+                attribute_differences[canonical_name] = attr_diff
+
+            return (
+                dn_differences,
+                attribute_differences,
+                original_attributes_complete,
+                original_attribute_case,
+            )
+
+        def _build_parse_entry_metadata(
+            self,
+            original_entry_dn: str,
+            original_dn_line: str | None,
+            original_attr_lines: list[str],
+            *,
+            dn_was_base64: bool,
+            original_attribute_case: dict[str, str],
+            dn_differences: dict[str, object],
+            attribute_differences: dict[str, dict[str, object]],
+            original_attributes_complete: dict[str, object],
+        ) -> FlextLdifModels.QuirkMetadata:
+            """Build QuirkMetadata for parsed entry with format details.
+
+            Args:
+                original_entry_dn: Original DN string
+                original_dn_line: Original DN line from parser
+                original_attr_lines: Original attribute lines from parser
+                dn_was_base64: Whether DN was base64-encoded
+                original_attribute_case: Map of canonical to original case
+                dn_differences: DN difference analysis
+                attribute_differences: Attribute difference analysis
+                original_attributes_complete: Complete original attributes
+
+            Returns:
+                QuirkMetadata with all format details for round-trip support
+
+            """
+            metadata = FlextLdifModels.QuirkMetadata(
+                quirk_type="rfc",
+                original_format_details={
+                    "server_type": "rfc",
+                    "dn_spacing": original_entry_dn,
+                    "dn_was_base64": dn_was_base64,
+                    "original_dn_line": original_dn_line,
+                    "original_attr_lines": original_attr_lines,
+                    "original_entry_dn_complete": original_entry_dn,
+                },
+                original_attribute_case=original_attribute_case,
+            )
+
+            # Store minimal differences in metadata extensions
+            if not metadata.extensions:
+                metadata.extensions = {}
+            metadata.extensions["minimal_differences_dn"] = dn_differences
+            metadata.extensions["minimal_differences_attributes"] = (
+                attribute_differences
+            )
+            metadata.extensions["original_dn_complete"] = original_entry_dn
+            metadata.extensions["original_attributes_complete"] = (
+                original_attributes_complete
+            )
+            metadata.extensions["original_dn_line_complete"] = original_dn_line
+            metadata.extensions["original_attr_lines_complete"] = original_attr_lines
+
+            return metadata
+
+        def _parse_entry(
             self,
             entry_dn: str,
             entry_attrs: Mapping[str, object],
@@ -3062,69 +3275,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Clean/normalize DN using DN utility
                 cleaned_dn = FlextLdifUtilities.DN.clean_dn(entry_dn)
 
-                # Convert raw attributes to dict[str, list[str]] format
-                # Handle bytes values from ldif3 parser
-                # RFC 2849 COMPLIANCE: Normalize attribute names to canonical form
-                converted_attrs: dict[str, list[str]] = {}
-                for attr_name, attr_values in entry_attrs.items():
-                    # Normalize attribute name to canonical case (RFC 2849 case-insensitive)
-                    canonical_attr_name = self._normalize_attribute_name(attr_name)
+                # Convert raw attributes using helper (DRY refactoring)
+                converted_attrs = self._convert_raw_attributes(entry_attrs)
 
-                    # Convert values to strings
-                    string_values: list[str] = []
-                    if isinstance(attr_values, list):
-                        string_values = [
-                            (
-                                value.decode("utf-8", errors="replace")
-                                if isinstance(value, bytes)
-                                else str(value)
-                            )
-                            for value in attr_values
-                        ]
-                    elif isinstance(attr_values, bytes):
-                        string_values = [
-                            attr_values.decode("utf-8", errors="replace"),
-                        ]
-                    else:
-                        string_values = [str(attr_values)]
-
-                    # RFC 2849: If attribute already exists (case-insensitive), append values
-                    # This handles cases where LDIF has both "objectclass: top" and "objectClass: person"
-                    if canonical_attr_name in converted_attrs:
-                        converted_attrs[canonical_attr_name].extend(string_values)
-                    else:
-                        converted_attrs[canonical_attr_name] = string_values
-
-                # Check if DN was base64-encoded (parser sets _base64_dn flag)
-                dn_was_base64 = converted_attrs.pop("_base64_dn", None) is not None
-
-                # ZERO DATA LOSS: Extract original lines from parser - PRESERVE EVERYTHING
-                original_dn_line = None
-                original_dn_line_complete = (
-                    None  # Complete original line with ALL details
+                # Extract original lines using helper (DRY refactoring)
+                original_dn_line, original_attr_lines_complete, dn_was_base64 = (
+                    self._extract_original_lines(converted_attrs)
                 )
-                if "_original_dn_line" in converted_attrs:
-                    original_dn_lines = converted_attrs.pop("_original_dn_line", [])
-                    if original_dn_lines and isinstance(original_dn_lines, list):
-                        original_dn_line = (
-                            original_dn_lines[0] if original_dn_lines else None
-                        )
-                        original_dn_line_complete = (
-                            original_dn_line  # Preserve complete original
-                        )
 
-                original_attr_lines_complete: list[
-                    str
-                ] = []  # Complete original lines with ALL details
-                if "_original_lines" in converted_attrs:
-                    original_lines = converted_attrs.pop("_original_lines", [])
-                    if original_lines and isinstance(original_lines, list):
-                        # original_attr_lines preserved in original_attr_lines_complete
-                        original_attr_lines_complete = (
-                            original_lines.copy()
-                        )  # Preserve complete originals
-
-                # CRITICAL: Preserve original entry_dn EXACTLY as-is (including ;, spaces, case, etc.)
+                # CRITICAL: Preserve original entry_dn EXACTLY as-is
                 original_entry_dn_complete = entry_dn
 
                 # Create LdifAttributes directly from converted_attrs
@@ -3134,9 +3293,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Create DistinguishedName with metadata if it was base64-encoded
                 if dn_was_base64:
                     # Preserve RFC 2849 base64 indicator for round-trip
+                    metadata_dict: dict[str, object] = {"original_format": "base64"}
                     dn_obj = FlextLdifModels.DistinguishedName(
                         value=cleaned_dn,
-                        metadata={"original_format": "base64"},
+                        metadata=metadata_dict,
                     )
                 else:
                     # Entry.create will coerce string to DistinguishedName
@@ -3159,116 +3319,31 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Entry model is already in RFC format with proper metadata
                 entry_model = entry_result.unwrap()
 
-                # ZERO DATA LOSS: Create metadata for round-trip support
-                # Track original attribute case for reverse conversion
-                original_attribute_case: dict[str, str] = {}
-                for attr_name in entry_attrs:
-                    attr_str = str(attr_name)
-                    canonical = self._normalize_attribute_name(attr_str)
-                    if canonical != attr_str:
-                        original_attribute_case[canonical] = attr_str
-
-                # CRITICAL: Analyze ALL minimal differences for perfect round-trip
-                from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                    FlextLdifUtilitiesMetadata,
+                # Analyze differences using helper (DRY refactoring)
+                (
+                    dn_differences,
+                    attribute_differences,
+                    original_attributes_complete,
+                    original_attribute_case,
+                ) = self._analyze_entry_differences(
+                    entry_attrs, converted_attrs, original_entry_dn_complete, cleaned_dn
                 )
 
-                # Analyze DN differences - capture EVERY detail (;, spaces, case, etc.)
-                dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                    original=original_entry_dn_complete,  # Use complete original
-                    converted=cleaned_dn
-                    if cleaned_dn != original_entry_dn_complete
-                    else None,
-                    context="dn",
-                )
-
-                # Analyze attribute differences for each attribute - capture EVERY detail
-                attribute_differences: dict[str, dict[str, object]] = {}
-                original_attributes_complete_dict: dict[str, object] = {}
-
-                for attr_name, attr_values in entry_attrs.items():
-                    # PRESERVE original attribute name EXACTLY (case, spacing, etc.)
-                    original_attr_name_complete = str(attr_name)
-                    canonical_name = self._normalize_attribute_name(
-                        original_attr_name_complete
-                    )
-
-                    # PRESERVE original values EXACTLY (including type, encoding, etc.)
-                    original_values_complete = (
-                        list(attr_values)
-                        if isinstance(attr_values, (list, tuple))
-                        else [attr_values]
-                        if attr_values is not None
-                        else []
-                    )
-                    original_attributes_complete_dict[original_attr_name_complete] = (
-                        original_values_complete
-                    )
-
-                    converted_values = converted_attrs.get(canonical_name, [])
-
-                    # Build original string representation with COMPLETE details
-                    original_attr_str = f"{original_attr_name_complete}: {', '.join(str(v) for v in original_values_complete)}"
-                    converted_attr_str = (
-                        f"{canonical_name}: {', '.join(str(v) for v in converted_values)}"
-                        if converted_values
-                        else None
-                    )
-
-                    # Analyze ALL minimal differences (;, spaces, case, punctuation, etc.)
-                    attr_diff = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                        original=original_attr_str,
-                        converted=converted_attr_str
-                        if converted_attr_str != original_attr_str
-                        else None,
-                        context="attribute",
-                    )
-                    attribute_differences[canonical_name] = attr_diff
-
-                    # Track in metadata if there are differences
-                    if attr_diff.get("has_differences", False):
-                        # Will be tracked when metadata is created
-                        pass
-
-                # Create QuirkMetadata with format details and minimal differences
-                metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type="rfc",
-                    original_format_details={
-                        "server_type": "rfc",
-                        "dn_spacing": original_entry_dn_complete,  # Complete original DN
-                        "dn_was_base64": dn_was_base64,
-                        "original_dn_line": original_dn_line_complete,  # ZERO DATA LOSS: Complete original DN line
-                        "original_attr_lines": original_attr_lines_complete,  # ZERO DATA LOSS: Complete original attribute lines
-                        "original_entry_dn_complete": original_entry_dn_complete,  # CRITICAL: Preserve EXACT original DN
-                    },
+                # Build metadata using helper (DRY refactoring)
+                metadata = self._build_parse_entry_metadata(
+                    original_entry_dn=original_entry_dn_complete,
+                    original_dn_line=original_dn_line,
+                    original_attr_lines=original_attr_lines_complete,
+                    dn_was_base64=dn_was_base64,
                     original_attribute_case=original_attribute_case,
-                )
-
-                # Store minimal differences in metadata extensions - PRESERVE EVERYTHING
-                if not metadata.extensions:
-                    metadata.extensions = {}
-                metadata.extensions["minimal_differences_dn"] = dn_differences
-                metadata.extensions["minimal_differences_attributes"] = (
-                    attribute_differences
-                )
-                metadata.extensions["original_dn_complete"] = (
-                    original_entry_dn_complete  # Complete original
-                )
-                metadata.extensions["original_attributes_complete"] = (
-                    original_attributes_complete_dict  # Complete originals
-                )
-
-                # CRITICAL: Store original lines COMPLETE for perfect round-trip
-                metadata.extensions["original_dn_line_complete"] = (
-                    original_dn_line_complete
-                )
-                metadata.extensions["original_attr_lines_complete"] = (
-                    original_attr_lines_complete
+                    dn_differences=dn_differences,
+                    attribute_differences=attribute_differences,
+                    original_attributes_complete=original_attributes_complete,
                 )
 
                 # Track minimal differences using utility function
                 if dn_differences.get("has_differences", False):
-                    FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
+                    FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
                         metadata=metadata,
                         original=original_entry_dn_complete,
                         converted=cleaned_dn,
@@ -3282,7 +3357,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         original_attr_str = attr_diff.get("original", "")
                         converted = attr_diff.get("converted")
                         converted_attr_str = str(converted) if converted else None
-                        FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
+                        FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
                             metadata=metadata,
                             original=original_attr_str
                             if isinstance(original_attr_str, str)
@@ -3366,7 +3441,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """Write hidden attributes as comments if in hidden set. Returns True if written."""
             if attr_name not in hidden_attrs:
                 return False
-            if isinstance(attr_values, list):
+            if FlextRuntime.is_list_like(attr_values):
                 ldif_lines.extend(f"# {attr_name}: {value}" for value in attr_values)
             else:
                 ldif_lines.append(f"# {attr_name}: {attr_values}")
@@ -3387,7 +3462,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not entry_data.metadata.extensions:
                 return set()
             hidden_list = entry_data.metadata.extensions.get("hidden_attributes")
-            return set(hidden_list) if isinstance(hidden_list, list) else set()
+            return set(hidden_list) if FlextRuntime.is_list_like(hidden_list) else set()
 
         def _write_entry_attribute_value(
             self,
@@ -3436,7 +3511,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Single line value
                 ldif_lines.append(f"{attr_name}: {value}")
 
-        def _write_entry_process_attributes(  # noqa: C901
+        def _write_entry_process_attributes(
             self,
             ldif_lines: list[str],
             entry_data: FlextLdifModels.Entry,
@@ -3451,133 +3526,376 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not (entry_data.attributes and entry_data.attributes.attributes):
                 return
 
-            # ZERO DATA LOSS: Check if original attribute lines are available
+            # Get original attribute lines using helper (DRY refactoring)
+            original_attr_lines_complete = self._get_original_attr_lines_from_metadata(
+                entry_data
+            )
+
+            # Get minimal differences using helper (DRY refactoring)
+            minimal_differences_attrs = self._get_minimal_differences_from_metadata(
+                entry_data
+            )
+
+            if original_attr_lines_complete:
+                # Write original lines using helper (DRY refactoring)
+                self._write_original_attr_lines(
+                    ldif_lines,
+                    entry_data,
+                    original_attr_lines_complete,
+                    write_options,
+                )
+            else:
+                # Write fallback using helper (DRY refactoring)
+                self._write_fallback_attr_lines(
+                    ldif_lines,
+                    entry_data,
+                    hidden_attrs,
+                    minimal_differences_attrs,
+                    write_options,
+                )
+
+        # ===== _write_entry_process_attributes HELPER METHODS (DRY refactoring) =====
+
+        def _get_original_attr_lines_from_metadata(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> list[str] | None:
+            """Get original attribute lines from entry metadata.
+
+            Args:
+                entry_data: Entry with metadata
+
+            Returns:
+                List of original attribute lines or None
+
+            """
+            if not entry_data.metadata:
+                return None
+
+            # Check original_format_details first
             original_attr_lines = None
-            if entry_data.metadata and entry_data.metadata.original_format_details:
+            if entry_data.metadata.original_format_details:
                 original_attr_lines = entry_data.metadata.original_format_details.get(
                     "original_attr_lines", []
                 )
 
-            # CRITICAL: Restore original lines from metadata if available (perfect round-trip)
-            original_attr_lines_complete: list[str] | None = None
-            if entry_data.metadata and entry_data.metadata.extensions:
-                # Try to get complete original lines first
+            # Try to get complete original lines from extensions
+            if entry_data.metadata.extensions:
                 orig_lines = entry_data.metadata.extensions.get(
                     "original_attr_lines_complete"
                 )
-                if isinstance(orig_lines, list):
-                    original_attr_lines_complete = orig_lines
-                elif original_attr_lines and isinstance(original_attr_lines, list):
-                    # Fallback to original_attr_lines
-                    original_attr_lines_complete = original_attr_lines
+                if FlextRuntime.is_list_like(orig_lines):
+                    return orig_lines
+                if original_attr_lines and FlextRuntime.is_list_like(
+                    original_attr_lines
+                ):
+                    return original_attr_lines
 
-            # CRITICAL: Get minimal differences for each attribute to restore formatting
-            minimal_differences_attrs = {}
-            if entry_data.metadata:
-                if entry_data.metadata.minimal_differences:
-                    minimal_differences_attrs = entry_data.metadata.minimal_differences
-                elif entry_data.metadata.extensions:
-                    attr_diffs = entry_data.metadata.extensions.get(
-                        "minimal_differences_attributes", {}
-                    )
-                    if isinstance(attr_diffs, dict):
-                        minimal_differences_attrs = attr_diffs
+            return None
 
-            if original_attr_lines_complete:
-                # Get set of current attribute names (lowercase) for filtering
-                current_attrs = set()
-                if entry_data.attributes and entry_data.attributes.attributes:
-                    current_attrs = {
-                        attr_name.lower()
-                        for attr_name in entry_data.attributes.attributes
-                    }
+        def _get_minimal_differences_from_metadata(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> dict[str, object]:
+            """Get minimal differences for attributes from metadata.
 
-                # Use original attribute lines exactly as parsed (preserves spacing, case, ;, etc.)
-                for original_line in original_attr_lines_complete:
-                    # Skip DN line if it appears in original lines (already written)
-                    if original_line.lower().startswith("dn:"):
-                        continue
-                    # Skip comments unless write_metadata_as_comments is True
-                    if original_line.strip().startswith("#") and not (
-                        write_options
-                        and getattr(write_options, "write_metadata_as_comments", False)
-                    ):
-                        continue
+            Args:
+                entry_data: Entry with metadata
 
-                    # CRITICAL: Only restore lines for attributes that still exist
-                    # This respects filtering of operational attributes, etc.
-                    if ":" in original_line:
-                        attr_name_part = original_line.split(":", 1)[0].strip().lower()
-                        # Remove base64/URL markers (e.g., "attr::value" or "attr:<url")
-                        attr_name_part = attr_name_part.removesuffix(":")
-                        attr_name_part = attr_name_part.removeprefix("<")
-                        # Skip if attribute was filtered out
-                        if current_attrs and attr_name_part not in current_attrs:
-                            continue
+            Returns:
+                Dictionary of minimal differences
 
-                    # Use original line as-is - PRESERVES EVERYTHING (;, spaces, case, etc.)
-                    ldif_lines.append(original_line)
+            """
+            if not entry_data.metadata:
+                return {}
 
-                logger.debug(
-                    "Restored original attribute lines from metadata",
-                    entry_dn=entry_data.dn.value[:50] if entry_data.dn else None,
-                    original_lines_count=len(original_attr_lines_complete),
+            if entry_data.metadata.minimal_differences:
+                minimal_diffs = entry_data.metadata.minimal_differences
+                # Ensure return type is dict[str, object] not dict[str, dict[str, object]]
+                if FlextRuntime.is_dict_like(minimal_diffs):
+                    return dict(minimal_diffs)
+                return {}
+
+            if entry_data.metadata.extensions:
+                attr_diffs = entry_data.metadata.extensions.get(
+                    "minimal_differences_attributes", {}
                 )
-            else:
-                # Fallback to standard attribute writing with minimal differences restoration
-                for attr_name, attr_values in entry_data.attributes.attributes.items():
-                    # CRITICAL: Check if we have minimal differences for this attribute
-                    attr_diff = minimal_differences_attrs.get(
-                        attr_name
-                    ) or minimal_differences_attrs.get(f"attribute_{attr_name}")
-                    original_attr_str = None
-                    if isinstance(attr_diff, dict) and attr_diff.get("has_differences"):
-                        original_attr_str = attr_diff.get("original")
-                        if original_attr_str and isinstance(original_attr_str, str):
-                            # Restore original attribute line exactly (preserves ;, spaces, case, etc.)
-                            ldif_lines.append(original_attr_str)
-                            logger.debug(
-                                "Restored original attribute line",
-                                attribute_name=attr_name,
-                            )
-                            continue
+                if FlextRuntime.is_dict_like(attr_diffs):
+                    return attr_diffs
 
-                    # If no original line available, write standard format
-                    # Write hidden attributes as comments if requested
-                    if self._write_entry_hidden_attrs(
-                        ldif_lines,
-                        attr_name,
-                        attr_values,
-                        hidden_attrs,
-                    ):
+            return {}
+
+        def _write_original_attr_lines(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            original_attr_lines_complete: list[str],
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> None:
+            """Write original attribute lines preserving exact formatting.
+
+            Args:
+                ldif_lines: Output lines list
+                entry_data: Entry data
+                original_attr_lines_complete: Original attribute lines
+                write_options: Write format options
+
+            """
+            # Get set of current attribute names (lowercase) for filtering
+            current_attrs = set()
+            if entry_data.attributes and entry_data.attributes.attributes:
+                current_attrs = {
+                    attr_name.lower() for attr_name in entry_data.attributes.attributes
+                }
+
+            for original_line in original_attr_lines_complete:
+                # Skip DN line if it appears in original lines
+                if original_line.lower().startswith("dn:"):
+                    continue
+                # Skip comments unless write_metadata_as_comments is True
+                if original_line.strip().startswith("#") and not (
+                    write_options
+                    and getattr(write_options, "write_metadata_as_comments", False)
+                ):
+                    continue
+
+                # Only restore lines for attributes that still exist
+                if ":" in original_line:
+                    attr_name_part = original_line.split(":", 1)[0].strip().lower()
+                    attr_name_part = attr_name_part.removesuffix(":")
+                    attr_name_part = attr_name_part.removeprefix("<")
+                    if current_attrs and attr_name_part not in current_attrs:
                         continue
 
-                    # Write normal attributes
-                    if isinstance(attr_values, list):
-                        for value in attr_values:
-                            self._write_entry_attribute_value(
-                                ldif_lines,
-                                attr_name,
-                                value,
-                                write_options,
-                            )
-                    elif attr_values:
-                        # Single non-list value
-                        # CORRECT: Ensure value is string for RFC 2849 compliance
-                        str_value = (
-                            str(attr_values)
-                            if not isinstance(attr_values, str)
-                            else attr_values
+                ldif_lines.append(original_line)
+
+            logger.debug(
+                "Restored original attribute lines from metadata",
+                entry_dn=entry_data.dn.value[:50] if entry_data.dn else None,
+                original_lines_count=len(original_attr_lines_complete),
+            )
+
+        def _write_fallback_attr_lines(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            hidden_attrs: set[str],
+            minimal_differences_attrs: dict[str, object],
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> None:
+            """Write attributes with fallback to standard format.
+
+            Args:
+                ldif_lines: Output lines list
+                entry_data: Entry data
+                hidden_attrs: Hidden attributes set
+                minimal_differences_attrs: Minimal differences dictionary
+                write_options: Write format options
+
+            """
+            if not (entry_data.attributes and entry_data.attributes.attributes):
+                return
+
+            for attr_name, attr_values in entry_data.attributes.attributes.items():
+                # Check for minimal differences
+                attr_diff = minimal_differences_attrs.get(
+                    attr_name
+                ) or minimal_differences_attrs.get(f"attribute_{attr_name}")
+                if FlextRuntime.is_dict_like(attr_diff) and attr_diff.get(
+                    "has_differences"
+                ):
+                    original_attr_str = attr_diff.get("original")
+                    if original_attr_str and isinstance(original_attr_str, str):
+                        ldif_lines.append(original_attr_str)
+                        logger.debug(
+                            "Restored original attribute line",
+                            attribute_name=attr_name,
                         )
-                        # Use _write_entry_attribute_value to ensure proper RFC 2849 encoding
+                        continue
+
+                # Write hidden attributes as comments if requested
+                if self._write_entry_hidden_attrs(
+                    ldif_lines, attr_name, attr_values, hidden_attrs
+                ):
+                    continue
+
+                # Write normal attributes
+                if FlextRuntime.is_list_like(attr_values):
+                    for value in attr_values:
                         self._write_entry_attribute_value(
-                            ldif_lines,
-                            attr_name,
-                            str_value,
-                            write_options,
+                            ldif_lines, attr_name, value, write_options
+                        )
+                elif attr_values:
+                    str_value = (
+                        str(attr_values)
+                        if not isinstance(attr_values, str)
+                        else attr_values
+                    )
+                    self._write_entry_attribute_value(
+                        ldif_lines, attr_name, str_value, write_options
+                    )
+
+        # ===== _write_entry HELPER METHODS (DRY refactoring) =====
+
+        def _restore_original_dn(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Restore original DN from metadata for round-trip support.
+
+            Args:
+                entry_data: Entry model to restore
+
+            Returns:
+                Entry with restored original DN if available
+
+            """
+            if not (
+                entry_data.metadata and entry_data.metadata.extensions and entry_data.dn
+            ):
+                return entry_data
+
+            original_dn = entry_data.metadata.extensions.get("original_dn_complete")
+            if not (original_dn and isinstance(original_dn, str)):
+                return entry_data
+
+            dn_differences = entry_data.metadata.extensions.get(
+                "minimal_differences_dn", {}
+            )
+            if not (
+                FlextRuntime.is_dict_like(dn_differences)
+                and dn_differences.get("has_differences")
+            ):
+                return entry_data
+
+            logger.debug(
+                "Restored original DN from metadata",
+                original_dn=original_dn,
+                current_dn=str(entry_data.dn),
+            )
+            return entry_data.model_copy(
+                update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)}
+            )
+
+        def _restore_original_attributes(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Restore original attributes from metadata for round-trip support.
+
+            Args:
+                entry_data: Entry model to restore
+
+            Returns:
+                Entry with restored original attributes if available
+
+            """
+            if not (
+                entry_data.metadata
+                and entry_data.metadata.extensions
+                and entry_data.attributes
+            ):
+                return entry_data
+
+            original_attrs = entry_data.metadata.extensions.get(
+                "original_attributes_complete"
+            )
+            if not (original_attrs and FlextRuntime.is_dict_like(original_attrs)):
+                return entry_data
+
+            attr_differences = entry_data.metadata.extensions.get(
+                "minimal_differences_attributes", {}
+            )
+            if not (
+                FlextRuntime.is_dict_like(attr_differences)
+                and len(attr_differences) > 0
+            ):
+                return entry_data
+
+            if not entry_data.metadata.original_attribute_case:
+                return entry_data
+
+            restored_attrs: dict[str, list[str]] = {}
+            for attr_name, attr_values in entry_data.attributes.attributes.items():
+                original_case = entry_data.metadata.original_attribute_case.get(
+                    attr_name.lower(), attr_name
+                )
+                if original_case in original_attrs:
+                    original_val = original_attrs[original_case]
+                    restored_attrs[original_case] = (
+                        original_val
+                        if FlextRuntime.is_list_like(original_val)
+                        else [str(original_val)]
+                    )
+                else:
+                    restored_attrs[original_case] = attr_values
+
+            if restored_attrs:
+                return entry_data.model_copy(
+                    update={
+                        "attributes": FlextLdifModels.LdifAttributes(
+                            attributes=restored_attrs,
+                            attribute_metadata=entry_data.attributes.attribute_metadata,
+                            metadata=entry_data.attributes.metadata,
+                        )
+                    }
+                )
+            return entry_data
+
+        def _restore_boolean_values(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Restore original boolean values from metadata.
+
+            Args:
+                entry_data: Entry model to restore
+
+            Returns:
+                Entry with restored boolean values if available
+
+            """
+            if not (entry_data.metadata and entry_data.metadata.boolean_conversions):
+                return entry_data
+
+            restored_attrs = (
+                dict(entry_data.attributes.attributes) if entry_data.attributes else {}
+            )
+            for (
+                attr_name,
+                conversion,
+            ) in entry_data.metadata.boolean_conversions.items():
+                if attr_name in restored_attrs:
+                    original_val = conversion.get("original", "")
+                    if original_val:
+                        restored_attrs[attr_name] = [original_val]
+                        logger.debug(
+                            "Restoring original boolean value from metadata",
+                            operation="_write_entry",
+                            attribute_name=attr_name,
+                            original_value=original_val,
                         )
 
-        def _write_entry(  # noqa: C901 - complexity justified for zero data loss
+            current_attrs = (
+                entry_data.attributes.attributes if entry_data.attributes else {}
+            )
+            if restored_attrs != current_attrs:
+                return entry_data.model_copy(
+                    update={
+                        "attributes": FlextLdifModels.LdifAttributes(
+                            attributes=restored_attrs,
+                            attribute_metadata=entry_data.attributes.attribute_metadata
+                            if entry_data.attributes
+                            else {},
+                            metadata=entry_data.attributes.metadata
+                            if entry_data.attributes
+                            else {},
+                        )
+                    }
+                )
+            return entry_data
+
+        def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
         ) -> FlextResult[str]:
@@ -3601,134 +3919,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             try:
                 # CRITICAL: Restore original formatting from metadata BEFORE writing
-
-                entry_to_write = entry_data
-
-                # Restore original DN from metadata if available
-                if entry_data.metadata and entry_data.metadata.extensions:
-                    original_dn = entry_data.metadata.extensions.get(
-                        "original_dn_complete"
-                    )
-                    if original_dn and isinstance(original_dn, str) and entry_data.dn:
-                        # Check if we should restore original DN
-                        dn_differences = entry_data.metadata.extensions.get(
-                            "minimal_differences_dn", {}
-                        )
-                        if isinstance(dn_differences, dict) and dn_differences.get(
-                            "has_differences"
-                        ):
-                            logger.debug(
-                                "Restored original DN from metadata",
-                                original_dn=original_dn,
-                                current_dn=str(entry_data.dn),
-                            )
-                            # Restore original DN
-                            entry_to_write = entry_to_write.model_copy(
-                                update={
-                                    "dn": FlextLdifModels.DistinguishedName(
-                                        value=original_dn
-                                    )
-                                }
-                            )
-
-                    # Restore original attributes from metadata if available
-                    original_attrs = entry_data.metadata.extensions.get(
-                        "original_attributes_complete"
-                    )
-                    if (
-                        original_attrs
-                        and isinstance(original_attrs, dict)
-                        and entry_data.attributes
-                    ):
-                        # Check if we should restore original attributes
-                        attr_differences = entry_data.metadata.extensions.get(
-                            "minimal_differences_attributes", {}
-                        )
-                        if (
-                            isinstance(attr_differences, dict)
-                            and len(attr_differences) > 0
-                        ):
-                            logger.debug(
-                                "Original attributes available in metadata",
-                                original_attrs_count=len(original_attrs),
-                                current_attrs_count=len(
-                                    entry_data.attributes.attributes
-                                ),
-                            )
-                            # Restore original attribute case from metadata
-                            if entry_data.metadata.original_attribute_case:
-                                restored_attrs: dict[str, list[str]] = {}
-                                for (
-                                    attr_name,
-                                    attr_values,
-                                ) in entry_data.attributes.attributes.items():
-                                    # Get original case from metadata
-                                    original_case = (
-                                        entry_data.metadata.original_attribute_case.get(
-                                            attr_name.lower(), attr_name
-                                        )
-                                    )
-                                    # Get original values if available
-                                    if original_case in original_attrs:
-                                        restored_attrs[original_case] = (
-                                            original_attrs[original_case]
-                                            if isinstance(
-                                                original_attrs[original_case], list
-                                            )
-                                            else [str(original_attrs[original_case])]
-                                        )
-                                    else:
-                                        restored_attrs[original_case] = attr_values
-
-                                if restored_attrs:
-                                    entry_to_write = entry_to_write.model_copy(
-                                        update={
-                                            "attributes": FlextLdifModels.LdifAttributes(
-                                                attributes=restored_attrs,
-                                                attribute_metadata=entry_data.attributes.attribute_metadata,
-                                                metadata=entry_data.attributes.metadata,
-                                            )
-                                        }
-                                    )
-
-                    # Restore boolean values from metadata if available
-                    if entry_data.metadata.boolean_conversions:
-                        restored_attrs = (
-                            dict(entry_to_write.attributes.attributes)
-                            if entry_to_write.attributes
-                            else {}
-                        )
-                        for (
-                            attr_name,
-                            conversion,
-                        ) in entry_data.metadata.boolean_conversions.items():
-                            if attr_name in restored_attrs:
-                                original_val = conversion.get("original", "")
-                                if original_val:
-                                    # Restore original boolean format
-                                    restored_attrs[attr_name] = [original_val]
-                                    logger.debug(
-                                        "Restoring original boolean value from metadata",
-                                        operation="_write_entry",
-                                        attribute_name=attr_name,
-                                        original_value=original_val,
-                                        converted_value=conversion.get("converted", ""),
-                                    )
-
-                        if restored_attrs != (
-                            entry_to_write.attributes.attributes
-                            if entry_to_write.attributes
-                            else {}
-                        ):
-                            entry_to_write = entry_to_write.model_copy(
-                                update={
-                                    "attributes": FlextLdifModels.LdifAttributes(
-                                        attributes=restored_attrs,
-                                        attribute_metadata=entry_to_write.attributes.attribute_metadata,
-                                        metadata=entry_to_write.attributes.metadata,
-                                    )
-                                }
-                            )
+                # Using helper methods (DRY refactoring)
+                entry_to_write = self._restore_original_dn(entry_data)
+                entry_to_write = self._restore_original_attributes(entry_to_write)
+                entry_to_write = self._restore_boolean_values(entry_to_write)
 
                 # RFC Compliance: Extract WriteFormatOptions from metadata.write_options
                 write_options: FlextLdifModels.WriteFormatOptions | None = None
@@ -3903,7 +4097,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 and entry.metadata.removed_attributes
             ):
                 removed_attrs = entry.metadata.removed_attributes
-                if removed_attrs and isinstance(removed_attrs, dict):
+                if removed_attrs and FlextRuntime.is_dict_like(removed_attrs):
                     if comment_lines:
                         comment_lines.append(
                             FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY,
@@ -3919,7 +4113,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         for attr_name, attr_values in removed_attrs.items()
                         for value in (
                             attr_values
-                            if isinstance(attr_values, list)
+                            if FlextRuntime.is_list_like(attr_values)
                             else [attr_values]
                         )
                     ])
@@ -4041,51 +4235,40 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _handle_parse_entry(
             self,
             ldif_text: str,
-        ) -> FlextResult[FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle parse operation for entry quirk."""
             parse_result = self._route_parse(ldif_text)
             if parse_result.is_success:
                 parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
+                # Return first entry or empty string (matching base class behavior)
                 if len(parsed_entries) == 1:
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].ok(parsed_entries[0])
+                    return FlextResult[FlextLdifModels.Entry | str].ok(
+                        parsed_entries[0]
+                    )
                 if len(parsed_entries) == 0:
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].ok("")
-                return FlextResult[
-                    FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                ].ok(parsed_entries)
+                    return FlextResult[FlextLdifModels.Entry | str].ok("")
+                # Multiple entries: return first one
+                return FlextResult[FlextLdifModels.Entry | str].ok(parsed_entries[0])
             error_msg: str = parse_result.error or "Parse failed"
-            return FlextResult[
-                FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-            ].fail(error_msg)
+            return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
 
         def _handle_write_entry(
             self,
             entries_to_write: list[FlextLdifModels.Entry],
-        ) -> FlextResult[FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle write operation for entry quirk."""
             write_result = self._route_write_many(entries_to_write)
             if write_result.is_success:
                 written_text: str = write_result.unwrap()
-                return FlextResult[
-                    FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                ].ok(written_text)
+                return FlextResult[FlextLdifModels.Entry | str].ok(written_text)
             error_msg: str = write_result.error or "Write failed"
-            return FlextResult[
-                FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-            ].fail(error_msg)
+            return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
 
         def _auto_detect_entry_operation(
             self,
             data: str | list[FlextLdifModels.Entry],
             operation: Literal["parse", "write"] | None,
-        ) -> (
-            Literal["parse", "write"]
-            | FlextResult[FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]]
-        ):
+        ) -> Literal["parse", "write"]:
             """Auto-detect entry operation from data type.
 
             If operation is forced (not None), uses it. Otherwise detects from type:
@@ -4107,11 +4290,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Validate that all items in list are Entry models
             for item in data:
                 if not isinstance(item, FlextLdifModels.Entry):
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].fail(
-                        f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}",
-                    )
+                    # Invalid data type - will be handled by caller
+                    return "write"  # Default to write, caller will handle error
 
             return "write"
 
@@ -4119,7 +4299,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             data: str | list[FlextLdifModels.Entry],
             operation: Literal["parse", "write"],
-        ) -> FlextResult[FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Route entry data to appropriate parse or write handler.
 
             Validates data type matches operation, then delegates to handler.
@@ -4127,37 +4307,48 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             if operation == "parse":
                 if not isinstance(data, str):
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].fail(
+                    return FlextResult[FlextLdifModels.Entry | str].fail(
                         f"parse operation requires str, got {type(data).__name__}",
                     )
-                return self._handle_parse_entry(data)
+                parse_result = self._handle_parse_entry(data)
+                # Convert to base return type
+                if parse_result.is_success:
+                    parse_value = parse_result.unwrap()
+                    if FlextRuntime.is_list_like(parse_value):
+                        return FlextResult[FlextLdifModels.Entry | str].ok(
+                            parse_value[0] if parse_value else ""
+                        )
+                    if isinstance(parse_value, FlextLdifModels.Entry):
+                        return FlextResult[FlextLdifModels.Entry | str].ok(parse_value)
+                    if isinstance(parse_value, str):
+                        return FlextResult[FlextLdifModels.Entry | str].ok(parse_value)
+                    return FlextResult[FlextLdifModels.Entry | str].ok("")
+                return FlextResult[FlextLdifModels.Entry | str].fail(
+                    parse_result.error or "Unknown error"
+                )
 
             if operation == "write":
-                if not isinstance(data, list):
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].fail(
+                if not FlextRuntime.is_list_like(data):
+                    return FlextResult[FlextLdifModels.Entry | str].fail(
                         f"write operation requires list[Entry], got {type(data).__name__}",
                     )
-                return self._handle_write_entry(data)
+                write_result = self._handle_write_entry(data)
+                # Convert to base return type
+                if write_result.is_success:
+                    write_value = write_result.unwrap()
+                    if isinstance(write_value, str):
+                        return FlextResult[FlextLdifModels.Entry | str].ok(write_value)
+                    # Should not happen for write operations
+                    return FlextResult[FlextLdifModels.Entry | str].ok("")
+                return FlextResult[FlextLdifModels.Entry | str].fail(
+                    write_result.error or "Unknown error"
+                )
 
             # Should not reach here (Literal type ensures only parse or write)
             msg = f"Unknown operation: {operation}"
             raise AssertionError(msg)
 
-        # NOTE: This method extends FlextService.execute() with parameters for entry operations.
-        # It is NOT an override - it's a method extension that supports polymorphic dispatch
-        # for entry quirks. The base FlextService.execute() has no parameters, but entry quirks
-        # need parameters for parse/write operations. This is an architectural extension.
-        # Do NOT use @override decorator as this is an extension, not an override.
-        def execute(  # type: ignore[override]  # Intentional extension, not override
-            self,
-            data: str | list[FlextLdifModels.Entry] | None = None,
-            operation: Literal["parse", "write"] | None = None,
-            **_kwargs: object,
-        ) -> FlextResult[FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]]:
+        def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.Entry | str]:
             r"""Execute entry quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -4168,21 +4359,21 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             **V2 Usage as Processor - Maximum Automation:**
                 >>> entry = FlextLdifServersRfc.Entry()
                 >>> # Parse: pass LDIF string
-                >>> entries = entry.execute("dn: cn=test\n...")
+                >>> entries = entry.execute(data="dn: cn=test\n...")
                 >>> # Write: pass Entry list
-                >>> ldif = entry.execute([entry1, entry2])
+                >>> ldif = entry.execute(data=[entry1, entry2])
                 >>> # Or use as callable processor
                 >>> entries = entry("dn: cn=test\n...")  # Parse
                 >>> ldif = entry([entry1, entry2])  # Write
 
             Args:
-                data: LDIF content string OR list of Entry models
-                      (operation auto-detected from type)
-                operation: Force operation type (overrides auto-detection)
+                **kwargs: May contain:
+                    - data: LDIF content string OR list of Entry models
+                    - operation: Force operation type (overrides auto-detection)
 
             Returns:
-                FlextResult[list[Entry] | str] depending on operation
-                - When operation="parse": returns list[Entry]
+                FlextResult[Entry | str] depending on operation
+                - When operation="parse": returns Entry (first entry) or str (empty)
                 - When operation="write": returns str
                 - When operation=None: auto-detects and returns appropriate type
 
@@ -4190,37 +4381,73 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 Returns fail() if data type is unknown or operation fails
 
             """
+            # Extract parameters from kwargs with type narrowing
+            data_raw = kwargs.get("data")
+            data: str | list[FlextLdifModels.Entry] | None = (
+                data_raw if isinstance(data_raw, (str, list, type(None))) else None
+            )
+            operation_raw = kwargs.get("operation")
+            # Type narrowing: check if operation_raw is a valid Literal value
+            if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
+                operation: Literal["parse", "write"] | None = cast(
+                    "Literal['parse', 'write']", operation_raw
+                )
+            else:
+                operation = None
+
             # Health check: no data provided
             if data is None:
-                return FlextResult[
-                    FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                ].ok("")
+                return FlextResult[FlextLdifModels.Entry | str].ok("")
 
             # Auto-detect operation from data type
             detected_operation = self._auto_detect_entry_operation(data, operation)
-            if isinstance(detected_operation, FlextResult):
-                return detected_operation
 
-            # When operation="parse" is explicitly specified, return list directly
+            # When operation="parse" is explicitly specified, return first entry or empty string
             if detected_operation == "parse" and operation == "parse":
                 if not isinstance(data, str):
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].fail(
+                    return FlextResult[FlextLdifModels.Entry | str].fail(
                         f"parse operation requires str, got {type(data).__name__}",
                     )
                 parse_result = self._route_parse(data)
                 if parse_result.is_success:
-                    return FlextResult[
-                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                    ].ok(parse_result.unwrap())
-                # Convert failure result to match return type
-                return FlextResult[
-                    FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
-                ].fail(parse_result.error or "Unknown error")
+                    entries = parse_result.unwrap()
+                    # Return first entry or empty string (matching base class behavior)
+                    return FlextResult[FlextLdifModels.Entry | str].ok(
+                        entries[0] if entries else ""
+                    )
+                return FlextResult[FlextLdifModels.Entry | str].fail(
+                    parse_result.error or "Unknown error"
+                )
 
-            # Route to appropriate handler
-            return self._route_entry_operation(data, detected_operation)
+            # Route to appropriate handler and convert to base return type
+            route_result = self._route_entry_operation(data, detected_operation)
+            if route_result.is_success:
+                route_value = route_result.unwrap()
+                # Convert to base return type: Entry | str
+                if FlextRuntime.is_list_like(route_value):
+                    # For write operations, return the string result
+                    # For parse operations with multiple entries, return first entry
+                    if detected_operation == "write":
+                        # route_value should be str for write operations
+                        return FlextResult[FlextLdifModels.Entry | str].ok(
+                            route_value if isinstance(route_value, str) else ""
+                        )
+                    # Parse operation: return first entry
+                    if route_value and isinstance(
+                        route_value[0], FlextLdifModels.Entry
+                    ):
+                        return FlextResult[FlextLdifModels.Entry | str].ok(
+                            route_value[0]
+                        )
+                    return FlextResult[FlextLdifModels.Entry | str].ok("")
+                if isinstance(route_value, FlextLdifModels.Entry):
+                    return FlextResult[FlextLdifModels.Entry | str].ok(route_value)
+                if isinstance(route_value, str):
+                    return FlextResult[FlextLdifModels.Entry | str].ok(route_value)
+                return FlextResult[FlextLdifModels.Entry | str].ok("")
+            return FlextResult[FlextLdifModels.Entry | str].fail(
+                route_result.error or "Unknown error"
+            )
 
         @overload
         def __call__(
@@ -4379,7 +4606,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 cast("FlextLdifModels.Entry", entry),
             )
 
-        def _write_entry_add_format(  # noqa: C901 - complexity justified for zero data loss
+        def _write_entry_add_format(
             self,
             entry_data: FlextLdifModels.Entry,
             write_options: FlextLdifModels.WriteFormatOptions | None,
@@ -4397,7 +4624,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 FlextResult with LDIF string in ADD format (original format restored if available)
 
             """
-
             # CRITICAL: Check if we should restore original LDIF from metadata
             restore_enabled = write_options and getattr(
                 write_options, "restore_original_format", False

@@ -26,7 +26,7 @@ class FlextLdifModelsEvents:
 
     # Event configuration classes would go here
 
-    class DnEventConfig(FlextModels.Value):
+    class DnEventConfig(FlextModels.Config):
         """Configuration for DN event creation.
 
         Consolidates parameters for create_dn_event utility function.
@@ -42,11 +42,6 @@ class FlextLdifModelsEvents:
             event = FlextLdifUtilities.Events.create_dn_event(config)
 
         """
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
 
         dn_operation: str = Field(
             ...,
@@ -73,7 +68,7 @@ class FlextLdifModelsEvents:
             description="Parsed DN components",
         )
 
-    class MigrationEventConfig(FlextModels.Value):
+    class MigrationEventConfig(FlextModels.Config):
         """Configuration for migration event creation.
 
         Consolidates parameters for create_migration_event utility function.
@@ -133,7 +128,7 @@ class FlextLdifModelsEvents:
             )
         )
 
-    class ConversionEventConfig(FlextModels.Value):
+    class ConversionEventConfig(FlextModels.Config):
         """Configuration for conversion event creation.
 
         Consolidates parameters for create_conversion_event utility function.
@@ -608,7 +603,7 @@ class FlextLdifModelsEvents:
             description="Schema processing throughput in items per second",
         )
 
-    class SchemaEventConfig(FlextModels.Value):
+    class SchemaEventConfig(FlextModels.Config):
         """Configuration for schema event creation."""
 
         schema_operation: str = Field(description="Schema operation name")
