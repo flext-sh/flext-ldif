@@ -22,12 +22,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextModels, FlextRuntime
 
-if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
 
@@ -104,6 +103,78 @@ class FlextLdifUtilitiesMetadata:
             # Ignore if attribute cannot be set
             pass
 
+    # =========================================================================
+    # UNIFIED PARAMETERIZED METADATA TRACKER
+    # =========================================================================
+
+    @staticmethod
+    def _track_metadata_item(
+        model: ModelT,
+        metadata_key: str,
+        item_data: dict[str, object],
+        *,
+        append_to_list: bool = True,
+        update_conversion_path: str | None = None,
+    ) -> ModelT:
+        """Generic helper to track items in model validation_metadata.
+
+        Consolidates common pattern of get-or-init metadata, add item, set back.
+
+        Args:
+            model: Model to update
+            metadata_key: Key in metadata to update (e.g., "transformations")
+            item_data: Data to add
+            append_to_list: If True, append to list; if False, set as dict
+            update_conversion_path: If set, update conversion_path with this server
+
+        Returns:
+            Model with updated metadata
+
+        """
+        # Get or initialize validation_metadata
+        metadata_obj = getattr(model, "validation_metadata", None)
+        if metadata_obj is None:
+            metadata_obj = FlextModels.Metadata(attributes={})
+        metadata: dict[str, object] = metadata_obj.attributes
+
+        # Initialize key if not present
+        if metadata_key not in metadata:
+            metadata[metadata_key] = [] if append_to_list else {}
+
+        # Add item with proper type narrowing
+        if append_to_list:
+            value = metadata[metadata_key]
+            if FlextRuntime.is_list_like(value):
+                value.append(item_data)
+            else:
+                metadata[metadata_key] = [item_data]
+        else:
+            value = metadata[metadata_key]
+            if FlextRuntime.is_dict_like(value):
+                value.update(item_data)
+            else:
+                metadata[metadata_key] = (
+                    dict(item_data) if hasattr(item_data, "items") else {item_data}
+                )
+
+        # Update conversion_path if requested
+        if update_conversion_path:
+            if "conversion_path" not in metadata:
+                metadata["conversion_path"] = update_conversion_path
+            else:
+                current_path_obj = metadata["conversion_path"]
+                if (
+                    isinstance(current_path_obj, str)
+                    and update_conversion_path not in current_path_obj
+                ):
+                    metadata["conversion_path"] = (
+                        f"{current_path_obj}->{update_conversion_path}"
+                    )
+
+        # Set metadata back on model
+        FlextLdifUtilitiesMetadata._set_model_metadata(model, metadata)
+        return model
+
     @staticmethod
     def preserve_validation_metadata(
         source_model: ModelT,
@@ -144,9 +215,10 @@ class FlextLdifUtilitiesMetadata:
             return target_model
 
         # Get or initialize target metadata
-        target_metadata = getattr(target_model, "validation_metadata", None)
-        if target_metadata is None:
-            target_metadata = {}
+        target_metadata_obj = getattr(target_model, "validation_metadata", None)
+        if target_metadata_obj is None:
+            target_metadata_obj = FlextModels.Metadata(attributes={})
+        target_metadata: dict[str, object] = target_metadata_obj.attributes
 
         # Copy violations from source to target
         FlextLdifUtilitiesMetadata._copy_violations_to_target(
@@ -158,7 +230,11 @@ class FlextLdifUtilitiesMetadata:
         if "transformations" not in target_metadata:
             target_metadata["transformations"] = []
 
-        target_metadata["transformations"].append(transformation)
+        transformations_obj = target_metadata["transformations"]
+        if FlextRuntime.is_list_like(transformations_obj):
+            transformations_obj.append(transformation)
+        else:
+            target_metadata["transformations"] = [transformation]
 
         # Set conversion path if not already set
         if "conversion_path" not in target_metadata:
@@ -203,19 +279,19 @@ class FlextLdifUtilitiesMetadata:
         # Extract direct RFC violations
         if "rfc_violations" in metadata:
             rfc_violations = metadata["rfc_violations"]
-            if isinstance(rfc_violations, list):
+            if FlextRuntime.is_list_like(rfc_violations):
                 violations.extend(rfc_violations)
 
         # Extract DN violations
         if "dn_violations" in metadata:
             dn_violations = metadata["dn_violations"]
-            if isinstance(dn_violations, list):
+            if FlextRuntime.is_list_like(dn_violations):
                 violations.extend(dn_violations)
 
         # Extract attribute violations
         if "attribute_violations" in metadata:
             attr_violations = metadata["attribute_violations"]
-            if isinstance(attr_violations, list):
+            if FlextRuntime.is_list_like(attr_violations):
                 violations.extend(attr_violations)
 
         return violations
@@ -250,35 +326,12 @@ class FlextLdifUtilitiesMetadata:
             ... )
 
         """
-        # Get or initialize validation_metadata
-        metadata = getattr(model, "validation_metadata", None)
-        if metadata is None:
-            metadata = {}
-
-        # Initialize transformations list if not present
-        if "transformations" not in metadata:
-            metadata["transformations"] = []
-
-        # Add conversion step
-        transformation = {
-            "step": step,
-            "server": server,
-            "changes": changes,
-        }
-        metadata["transformations"].append(transformation)
-
-        # Update conversion_path
-        if "conversion_path" not in metadata:
-            metadata["conversion_path"] = server
-        else:
-            current_path = metadata["conversion_path"]
-            if server not in current_path:
-                metadata["conversion_path"] = f"{current_path}->{server}"
-
-        # Set metadata on model
-        FlextLdifUtilitiesMetadata._set_model_metadata(model, metadata)
-
-        return model
+        return FlextLdifUtilitiesMetadata._track_metadata_item(
+            model=model,
+            metadata_key="transformations",
+            item_data={"step": step, "server": server, "changes": changes},
+            update_conversion_path=server,
+        )
 
     # =========================================================================
     # ZERO DATA LOSS TRACKING (Phase 2)
@@ -286,7 +339,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_transformation(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         original_name: str,
         target_name: str | None,
         original_values: list[str],
@@ -323,14 +376,7 @@ class FlextLdifUtilitiesMetadata:
             ... )
 
         """
-        # Import here to avoid circular imports at module level
-        # This is a runtime import, not a type-only import
-        # Note: PLC0415 suppressed - this import must be deferred to avoid circular dependency
-        from flext_ldif._models.domain import (  # noqa: PLC0415
-            FlextLdifModelsDomains,
-        )
-
-        transformation = FlextLdifModelsDomains.AttributeTransformation(
+        transformation = FlextLdifModels.AttributeTransformation(
             original_name=original_name,
             target_name=target_name,
             original_values=original_values,
@@ -350,7 +396,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_original_format(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         format_key: str,
         original_value: object,
     ) -> None:
@@ -380,6 +426,303 @@ class FlextLdifUtilitiesMetadata:
         metadata.original_format_details[format_key] = original_value
 
     @staticmethod
+    def _extract_prefix_details(definition: str) -> dict[str, object]:
+        """Extract attribute/ObjectClass prefix details."""
+        details: dict[str, object] = {}
+        if "attributetypes:" in definition.lower():
+            attr_match = re.search(
+                r"(attributetypes|attributeTypes):", definition, re.IGNORECASE
+            )
+            if attr_match:
+                details["attribute_case"] = attr_match.group(1)
+                colon_pos = definition.find(":")
+                if colon_pos >= 0 and colon_pos + 1 < len(definition):
+                    after_colon = definition[colon_pos + 1 :]
+                    spacing_match = re.match(r"(\s*)", after_colon)
+                    if spacing_match:
+                        details["attribute_prefix_spacing"] = spacing_match.group(1)
+        if "objectclasses:" in definition.lower() or "objectClasses:" in definition:
+            oc_match = re.search(
+                r"(objectclasses|objectClasses):", definition, re.IGNORECASE
+            )
+            if oc_match:
+                details["objectclass_case"] = oc_match.group(1)
+                colon_pos = definition.find(":")
+                if colon_pos >= 0 and colon_pos + 1 < len(definition):
+                    after_colon = definition[colon_pos + 1 :]
+                    spacing_match = re.match(r"(\s*)", after_colon)
+                    if spacing_match:
+                        details["objectclass_prefix_spacing"] = spacing_match.group(1)
+        return details
+
+    @staticmethod
+    def _extract_oid_details(definition: str) -> dict[str, object]:
+        """Extract OID and spacing details."""
+        details: dict[str, object] = {}
+        oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
+        if oid_match:
+            details["oid_value"] = oid_match.group(1)
+            details["oid_spacing_after"] = oid_match.group(2)
+        return details
+
+    @staticmethod
+    def _extract_syntax_details(definition: str) -> dict[str, object]:
+        """Extract SYNTAX formatting details."""
+        details: dict[str, object] = {}
+        syntax_match = re.search(
+            r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?",
+            definition,
+            re.IGNORECASE,
+        )
+        if syntax_match:
+            details["syntax_quotes"] = bool(
+                syntax_match.group(1) or syntax_match.group(3)
+            )
+            details["syntax_quote_char"] = (
+                syntax_match.group(1) or syntax_match.group(3) or ""
+            )
+            details["syntax_oid"] = syntax_match.group(2)
+            details["syntax_length"] = syntax_match.group(4) or None
+            syntax_pos = definition.find("SYNTAX")
+            if syntax_pos >= 0:
+                after_syntax = definition[syntax_pos + 6 :]
+                spacing_match = re.match(r"(\s*)", after_syntax)
+                if spacing_match:
+                    details["syntax_spacing"] = spacing_match.group(1)
+                before_syntax = definition[:syntax_pos]
+                before_match = re.search(r"(\s+)$", before_syntax)
+                details["syntax_spacing_before"] = (
+                    before_match.group(1) if before_match else ""
+                )
+        return details
+
+    @staticmethod
+    def _extract_name_details(definition: str) -> dict[str, object]:
+        """Extract NAME format details."""
+        details: dict[str, object] = {}
+        name_match = re.search(
+            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?", definition
+        )
+        if name_match:
+            has_parens = bool(name_match.group(1))
+            name_quote_start = name_match.group(2) or ""
+            name_value = name_match.group(3)
+            name_quote_end = name_match.group(4) or ""
+            multiple_match = re.search(
+                r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
+                definition,
+            )
+            if multiple_match or (has_parens and " " in name_value):
+                details["name_format"] = "multiple"
+                all_name_matches = re.findall(
+                    r"([\"'])([^\"']+)([\"'])",
+                    definition[name_match.start() : name_match.end() + 50],
+                )
+                details["name_values"] = [m[1] for m in all_name_matches]
+                details["name_quotes"] = (
+                    [m[0] for m in all_name_matches] if all_name_matches else []
+                )
+                name_section = definition[name_match.start() : name_match.end() + 50]
+                name_spacing = re.findall(r"[\"']\s+([\"'])", name_section)
+                details["name_spacing_between"] = name_spacing
+            else:
+                details["name_format"] = "single"
+                details["name_values"] = [name_value]
+                quote_char = name_quote_start or name_quote_end
+                details["name_quotes"] = [quote_char] if quote_char else []
+            name_pos = definition.find("NAME")
+            if name_pos >= 0:
+                before_name = definition[:name_pos]
+                before_match = re.search(r"(\s+)$", before_name)
+                details["name_spacing_before"] = (
+                    before_match.group(1) if before_match else ""
+                )
+        return details
+
+    @staticmethod
+    def _extract_desc_details(definition: str) -> dict[str, object]:
+        """Extract DESC details."""
+        details: dict[str, object] = {}
+        desc_match = re.search(
+            r"DESC\s+([\"']?)([^\"']+)([\"']?)", definition, re.IGNORECASE
+        )
+        if desc_match:
+            details["desc_presence"] = True
+            details["desc_quotes"] = desc_match.group(1) or desc_match.group(3) or ""
+            details["desc_value"] = desc_match.group(2)
+            desc_pos = definition.find("DESC")
+            if desc_pos >= 0:
+                before_desc = definition[:desc_pos]
+                before_match = re.search(r"(\s+)$", before_desc)
+                details["desc_spacing_before"] = (
+                    before_match.group(1) if before_match else ""
+                )
+        else:
+            details["desc_presence"] = False
+        return details
+
+    @staticmethod
+    def _extract_x_origin_details(definition: str) -> dict[str, object]:
+        """Extract X-ORIGIN details."""
+        details: dict[str, object] = {}
+        x_origin_match = re.search(
+            r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)",
+            definition,
+            re.IGNORECASE,
+        )
+        if x_origin_match:
+            details["x_origin_presence"] = True
+            details["x_origin_quotes"] = (
+                x_origin_match.group(1) or x_origin_match.group(3) or ""
+            )
+            details["x_origin_value"] = x_origin_match.group(2)
+            x_origin_pos = definition.find("X-ORIGIN")
+            if x_origin_pos >= 0:
+                before_x_origin = definition[:x_origin_pos]
+                before_match = re.search(r"(\s+)$", before_x_origin)
+                details["x_origin_spacing_before"] = (
+                    before_match.group(1) if before_match else ""
+                )
+        else:
+            details["x_origin_presence"] = False
+            details["x_origin_value"] = None
+            details["x_origin_quotes"] = ""
+        return details
+
+    @staticmethod
+    def _extract_obsolete_details(definition: str) -> dict[str, object]:
+        """Extract OBSOLETE details."""
+        details: dict[str, object] = {}
+        obsolete_match = re.search(r"\bOBSOLETE\b", definition, re.IGNORECASE)
+        if obsolete_match:
+            details["obsolete_presence"] = True
+            details["obsolete_position"] = obsolete_match.start()
+            before_obsolete = definition[: obsolete_match.start()]
+            before_match = re.search(r"(\s+)$", before_obsolete)
+            details["obsolete_spacing_before"] = (
+                before_match.group(1) if before_match else ""
+            )
+        else:
+            details["obsolete_presence"] = False
+            details["obsolete_position"] = None
+        return details
+
+    @staticmethod
+    def _extract_field_order(definition: str) -> tuple[list[str], dict[str, int]]:
+        """Extract field order and positions."""
+        field_patterns = {
+            "OID": r"\(\s*([0-9.]+)",
+            "NAME": r"NAME",
+            "DESC": r"DESC",
+            "EQUALITY": r"EQUALITY",
+            "SUBSTR": r"SUBSTR",
+            "ORDERING": r"ORDERING",
+            "SYNTAX": r"SYNTAX",
+            "SUP": r"SUP",
+            "SINGLE-VALUE": r"SINGLE-VALUE",
+            "OBSOLETE": r"OBSOLETE",
+            "X-ORIGIN": r"X-ORIGIN",
+        }
+        field_order: list[str] = []
+        field_positions: dict[str, int] = {}
+        for field_name, pattern in field_patterns.items():
+            match = re.search(pattern, definition, re.IGNORECASE)
+            if match:
+                field_order.append(field_name)
+                field_positions[field_name] = match.start()
+        return (field_order, field_positions)
+
+    @staticmethod
+    def _extract_spacing_between_fields(
+        definition: str,
+        field_order: list[str],
+        field_positions: dict[str, int],
+        field_patterns: dict[str, str],
+    ) -> dict[str, str]:
+        """Extract spacing between fields."""
+        spacing_between: dict[str, str] = {}
+        for i in range(len(field_order) - 1):
+            field1 = field_order[i]
+            field2 = field_order[i + 1]
+            pos1 = field_positions.get(field1)
+            pos2 = field_positions.get(field2)
+            if pos1 is not None and pos2 is not None:
+                field1_end_match = re.search(
+                    field_patterns[field1],
+                    definition[pos1:],
+                    re.IGNORECASE,
+                )
+                if field1_end_match:
+                    field1_end = pos1 + field1_end_match.end()
+                    spacing = definition[field1_end:pos2]
+                    spacing_between[f"{field1}_{field2}"] = spacing
+        return spacing_between
+
+    @staticmethod
+    def _extract_leading_trailing_spaces(definition: str) -> dict[str, object]:
+        """Extract leading and trailing spaces."""
+        details: dict[str, object] = {}
+        trailing_match = re.search(r"\)\s*$", definition)
+        details["trailing_spaces"] = (
+            definition[trailing_match.end() :] if trailing_match else ""
+        )
+        leading_match = re.search(r"^\s*\(", definition)
+        details["leading_spaces"] = leading_match.group(0)[:-1] if leading_match else ""
+        return details
+
+    @staticmethod
+    def _extract_matching_rule_details(definition: str) -> dict[str, object]:
+        """Extract EQUALITY/SUBSTR/ORDERING details."""
+        details: dict[str, object] = {}
+        for rule_name in ["EQUALITY", "SUBSTR", "ORDERING"]:
+            rule_match = re.search(rf"\b{rule_name}\b", definition, re.IGNORECASE)
+            if rule_match:
+                details[f"{rule_name.lower()}_presence"] = True
+                before_rule = definition[: rule_match.start()]
+                before_match = re.search(r"(\s+)$", before_rule)
+                details[f"{rule_name.lower()}_spacing_before"] = (
+                    before_match.group(1) if before_match else ""
+                )
+            else:
+                details[f"{rule_name.lower()}_presence"] = False
+        return details
+
+    @staticmethod
+    def _extract_sup_details(definition: str) -> dict[str, object]:
+        """Extract SUP details."""
+        details: dict[str, object] = {}
+        sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
+        if sup_match:
+            details["sup_presence"] = True
+            details["sup_value"] = sup_match.group(1)
+            sup_pos = definition.find("SUP")
+            if sup_pos >= 0:
+                before_sup = definition[:sup_pos]
+                before_match = re.search(r"(\s+)$", before_sup)
+                details["sup_spacing_before"] = (
+                    before_match.group(1) if before_match else ""
+                )
+        else:
+            details["sup_presence"] = False
+        return details
+
+    @staticmethod
+    def _extract_single_value_details(definition: str) -> dict[str, object]:
+        """Extract SINGLE-VALUE details."""
+        details: dict[str, object] = {}
+        single_value_match = re.search(r"SINGLE-VALUE", definition, re.IGNORECASE)
+        if single_value_match:
+            details["single_value_presence"] = True
+            before_sv = definition[: single_value_match.start()]
+            before_match = re.search(r"(\s+)$", before_sv)
+            details["single_value_spacing_before"] = (
+                before_match.group(1) if before_match else ""
+            )
+        else:
+            details["single_value_presence"] = False
+        return details
+
+    @staticmethod
     def analyze_schema_formatting(
         definition: str,
     ) -> dict[str, object]:
@@ -404,202 +747,19 @@ class FlextLdifUtilitiesMetadata:
         Returns:
             Dictionary with ALL formatting details captured
 
-        Example:
-            >>> details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
-            ...     "attributetypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
-            ... )
-            >>> # Returns: {
-            ... #     'syntax_quotes': True,
-            ... #     'syntax_spacing': ' ',
-            ... #     'attribute_case': 'attributetypes',
-            ... #     'name_format': 'single',
-            ... #     'trailing_spaces': '  ',
-            ... #     'original_string_complete': '...',
-            ... #     'oid_spacing_after': ' ',
-            ... #     'name_quotes': "'",
-            ... #     'x_origin_spacing_before': ' ',
-            ... #     ...
-            ... # }
-
         """
-        details: dict[str, object] = {}
+        details: dict[str, object] = {"original_string_complete": definition}
 
-        # Store complete original string (CRITICAL: preserve EXACTLY as-is)
-        details["original_string_complete"] = definition
+        # Extract all details using helper methods
+        details.update(FlextLdifUtilitiesMetadata._extract_prefix_details(definition))
+        details.update(FlextLdifUtilitiesMetadata._extract_oid_details(definition))
+        details.update(FlextLdifUtilitiesMetadata._extract_syntax_details(definition))
+        details.update(FlextLdifUtilitiesMetadata._extract_name_details(definition))
+        details.update(FlextLdifUtilitiesMetadata._extract_desc_details(definition))
+        details.update(FlextLdifUtilitiesMetadata._extract_x_origin_details(definition))
+        details.update(FlextLdifUtilitiesMetadata._extract_obsolete_details(definition))
 
-        # Detect attribute/ObjectClass case and prefix
-        if "attributetypes:" in definition.lower():
-            attr_match = re.search(
-                r"(attributetypes|attributeTypes):", definition, re.IGNORECASE
-            )
-            if attr_match:
-                details["attribute_case"] = attr_match.group(1)
-                # Capture spacing after colon
-                colon_pos = definition.find(":")
-                if colon_pos >= 0 and colon_pos + 1 < len(definition):
-                    after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\s*)", after_colon)
-                    if spacing_match:
-                        details["attribute_prefix_spacing"] = spacing_match.group(1)
-        if "objectclasses:" in definition.lower() or "objectClasses:" in definition:
-            oc_match = re.search(
-                r"(objectclasses|objectClasses):", definition, re.IGNORECASE
-            )
-            if oc_match:
-                details["objectclass_case"] = oc_match.group(1)
-                # Capture spacing after colon
-                colon_pos = definition.find(":")
-                if colon_pos >= 0 and colon_pos + 1 < len(definition):
-                    after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\s*)", after_colon)
-                    if spacing_match:
-                        details["objectclass_prefix_spacing"] = spacing_match.group(1)
-
-        # Extract OID and spacing after OID
-        oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
-        if oid_match:
-            details["oid_value"] = oid_match.group(1)
-            details["oid_spacing_after"] = oid_match.group(2)
-
-        # Extract SYNTAX details with COMPLETE formatting
-        syntax_match = re.search(
-            r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?",
-            definition,
-            re.IGNORECASE,
-        )
-        if syntax_match:
-            details["syntax_quotes"] = bool(
-                syntax_match.group(1) or syntax_match.group(3)
-            )
-            details["syntax_quote_char"] = (
-                syntax_match.group(1) or syntax_match.group(3) or ""
-            )
-            details["syntax_oid"] = syntax_match.group(2)
-            details["syntax_length"] = syntax_match.group(4) or None
-            # Extract EXACT spacing after SYNTAX keyword
-            syntax_pos = definition.find("SYNTAX")
-            if syntax_pos >= 0:
-                after_syntax = definition[syntax_pos + 6 :]
-                spacing_match = re.match(r"(\s*)", after_syntax)
-                if spacing_match:
-                    details["syntax_spacing"] = spacing_match.group(1)
-                # Extract EXACT spacing before SYNTAX
-                before_syntax = definition[:syntax_pos]
-                before_match = re.search(r"(\s+)$", before_syntax)
-                if before_match:
-                    details["syntax_spacing_before"] = before_match.group(1)
-                else:
-                    details["syntax_spacing_before"] = ""
-
-        # Extract NAME format with COMPLETE details
-        name_match = re.search(
-            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?", definition
-        )
-        if name_match:
-            has_parens = bool(name_match.group(1))
-            name_quote_start = name_match.group(2) or ""
-            name_value = name_match.group(3)
-            name_quote_end = name_match.group(4) or ""
-
-            # Check if it's multiple names: NAME ( 'uid' 'userid' )
-            multiple_match = re.search(
-                r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
-                definition,
-            )
-            if multiple_match or (has_parens and " " in name_value):
-                details["name_format"] = "multiple"
-                # Extract ALL name values with quotes
-                all_name_matches = re.findall(
-                    r"([\"'])([^\"']+)([\"'])",
-                    definition[name_match.start() : name_match.end() + 50],
-                )
-                details["name_values"] = [m[1] for m in all_name_matches]
-                details["name_quotes"] = (
-                    [m[0] for m in all_name_matches] if all_name_matches else []
-                )
-                # Extract spacing between names
-                name_section = definition[name_match.start() : name_match.end() + 50]
-                name_spacing = re.findall(r"[\"']\s+([\"'])", name_section)
-                details["name_spacing_between"] = name_spacing
-            else:
-                details["name_format"] = "single"
-                details["name_values"] = [name_value]
-                # Use name_quote_end if name_quote_start is empty (handles both quote positions)
-                quote_char = name_quote_start or name_quote_end
-                details["name_quotes"] = [quote_char] if quote_char else []
-            # Extract spacing before NAME
-            name_pos = definition.find("NAME")
-            if name_pos >= 0:
-                before_name = definition[:name_pos]
-                before_match = re.search(r"(\s+)$", before_name)
-                if before_match:
-                    details["name_spacing_before"] = before_match.group(1)
-                else:
-                    details["name_spacing_before"] = ""
-
-        # Extract DESC with quotes and spacing
-        desc_match = re.search(
-            r"DESC\s+([\"']?)([^\"']+)([\"']?)", definition, re.IGNORECASE
-        )
-        if desc_match:
-            details["desc_presence"] = True
-            details["desc_quotes"] = desc_match.group(1) or desc_match.group(3) or ""
-            details["desc_value"] = desc_match.group(2)
-            # Extract spacing before DESC
-            desc_pos = definition.find("DESC")
-            if desc_pos >= 0:
-                before_desc = definition[:desc_pos]
-                before_match = re.search(r"(\s+)$", before_desc)
-                if before_match:
-                    details["desc_spacing_before"] = before_match.group(1)
-                else:
-                    details["desc_spacing_before"] = ""
-        else:
-            details["desc_presence"] = False
-
-        # Extract X-ORIGIN with COMPLETE formatting
-        x_origin_match = re.search(
-            r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)",
-            definition,
-            re.IGNORECASE,
-        )
-        if x_origin_match:
-            details["x_origin_presence"] = True
-            details["x_origin_quotes"] = (
-                x_origin_match.group(1) or x_origin_match.group(3) or ""
-            )
-            details["x_origin_value"] = x_origin_match.group(2)
-            # Extract spacing before X-ORIGIN
-            x_origin_pos = definition.find("X-ORIGIN")
-            if x_origin_pos >= 0:
-                before_x_origin = definition[:x_origin_pos]
-                before_match = re.search(r"(\s+)$", before_x_origin)
-                if before_match:
-                    details["x_origin_spacing_before"] = before_match.group(1)
-                else:
-                    details["x_origin_spacing_before"] = ""
-        else:
-            details["x_origin_presence"] = False
-            details["x_origin_value"] = None
-            details["x_origin_quotes"] = ""
-
-        # Extract OBSOLETE with position and spacing
-        obsolete_match = re.search(r"\bOBSOLETE\b", definition, re.IGNORECASE)
-        if obsolete_match:
-            details["obsolete_presence"] = True
-            details["obsolete_position"] = obsolete_match.start()
-            # Extract spacing before OBSOLETE
-            before_obsolete = definition[: obsolete_match.start()]
-            before_match = re.search(r"(\s+)$", before_obsolete)
-            if before_match:
-                details["obsolete_spacing_before"] = before_match.group(1)
-            else:
-                details["obsolete_spacing_before"] = ""
-        else:
-            details["obsolete_presence"] = False
-            details["obsolete_position"] = None
-
-        # Extract field order
+        # Extract field order and spacing
         field_patterns = {
             "OID": r"\(\s*([0-9.]+)",
             "NAME": r"NAME",
@@ -613,101 +773,30 @@ class FlextLdifUtilitiesMetadata:
             "OBSOLETE": r"OBSOLETE",
             "X-ORIGIN": r"X-ORIGIN",
         }
-        field_order: list[str] = []
-        field_positions: dict[str, int] = {}
-        for field_name, pattern in field_patterns.items():
-            match = re.search(pattern, definition, re.IGNORECASE)
-            if match:
-                field_order.append(field_name)
-                field_positions[field_name] = match.start()
+        field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
+            definition
+        )
         details["field_order"] = field_order
         details["field_positions"] = field_positions
+        details["spacing_between_fields"] = (
+            FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
+                definition, field_order, field_positions, field_patterns
+            )
+        )
 
-        # Extract EXACT spacing between fields
-        spacing_between: dict[str, str] = {}
-        for i in range(len(field_order) - 1):
-            field1 = field_order[i]
-            field2 = field_order[i + 1]
-            pos1 = field_positions.get(field1)
-            pos2 = field_positions.get(field2)
-            if pos1 is not None and pos2 is not None:
-                # Find the end of field1
-                field1_end_match = re.search(
-                    field_patterns[field1],
-                    definition[pos1:],
-                    re.IGNORECASE,
-                )
-                if field1_end_match:
-                    field1_end = pos1 + field1_end_match.end()
-                    # Extract everything between field1 end and field2 start
-                    spacing = definition[field1_end:pos2]
-                    spacing_between[f"{field1}_{field2}"] = spacing
-        details["spacing_between_fields"] = spacing_between
+        # Extract remaining details
+        details.update(
+            FlextLdifUtilitiesMetadata._extract_leading_trailing_spaces(definition)
+        )
+        details.update(
+            FlextLdifUtilitiesMetadata._extract_matching_rule_details(definition)
+        )
+        details.update(FlextLdifUtilitiesMetadata._extract_sup_details(definition))
+        details.update(
+            FlextLdifUtilitiesMetadata._extract_single_value_details(definition)
+        )
 
-        # Extract trailing spaces after closing paren
-        trailing_match = re.search(r"\)\s*$", definition)
-        if trailing_match:
-            trailing_spaces = definition[trailing_match.end() :]
-            details["trailing_spaces"] = trailing_spaces
-        else:
-            details["trailing_spaces"] = ""
-
-        # Extract leading spaces before opening paren
-        leading_match = re.search(r"^\s*\(", definition)
-        if leading_match:
-            details["leading_spaces"] = leading_match.group(0)[:-1]  # Exclude the (
-        else:
-            details["leading_spaces"] = ""
-
-        # Extract EQUALITY/SUBSTR/ORDERING presence and spacing
-        for rule_name in ["EQUALITY", "SUBSTR", "ORDERING"]:
-            rule_match = re.search(rf"\b{rule_name}\b", definition, re.IGNORECASE)
-            if rule_match:
-                details[f"{rule_name.lower()}_presence"] = True
-                # Extract spacing before
-                before_rule = definition[: rule_match.start()]
-                before_match = re.search(r"(\s+)$", before_rule)
-                if before_match:
-                    details[f"{rule_name.lower()}_spacing_before"] = before_match.group(
-                        1
-                    )
-                else:
-                    details[f"{rule_name.lower()}_spacing_before"] = ""
-            else:
-                details[f"{rule_name.lower()}_presence"] = False
-
-        # Extract SUP with spacing
-        sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
-        if sup_match:
-            details["sup_presence"] = True
-            details["sup_value"] = sup_match.group(1)
-            # Extract spacing before SUP
-            sup_pos = definition.find("SUP")
-            if sup_pos >= 0:
-                before_sup = definition[:sup_pos]
-                before_match = re.search(r"(\s+)$", before_sup)
-                if before_match:
-                    details["sup_spacing_before"] = before_match.group(1)
-                else:
-                    details["sup_spacing_before"] = ""
-        else:
-            details["sup_presence"] = False
-
-        # Extract SINGLE-VALUE with spacing
-        single_value_match = re.search(r"SINGLE-VALUE", definition, re.IGNORECASE)
-        if single_value_match:
-            details["single_value_presence"] = True
-            # Extract spacing before
-            before_sv = definition[: single_value_match.start()]
-            before_match = re.search(r"(\s+)$", before_sv)
-            if before_match:
-                details["single_value_spacing_before"] = before_match.group(1)
-            else:
-                details["single_value_spacing_before"] = ""
-        else:
-            details["single_value_presence"] = False
-
-        # Log all captured deviations at DEBUG level for verification
+        # Log all captured deviations at DEBUG level
         preview_len = _CONTENT_PREVIEW_LENGTH
         logger.debug(
             "Schema formatting analyzed",
@@ -729,7 +818,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip.
@@ -763,7 +852,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,
@@ -808,7 +897,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_schema_quirk(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         quirk_name: str,
     ) -> None:
         """Track a schema quirk that was applied during parsing.
@@ -830,7 +919,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def soft_delete_attribute(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         attr_name: str,
         original_values: list[str],
     ) -> None:
@@ -860,7 +949,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_attribute_case(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         normalized_name: str,
         original_case: str,
     ) -> None:
@@ -886,7 +975,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def validate_metadata_completeness(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         expected_transformations: list[str],
     ) -> tuple[bool, list[str]]:
         """Validate that all expected transformations are tracked.
@@ -922,8 +1011,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def assert_no_data_loss(
-        original_entry: FlextLdifModelsDomains.Entry,
-        converted_entry: FlextLdifModelsDomains.Entry,
+        original_entry: FlextLdifModels.Entry,
+        converted_entry: FlextLdifModels.Entry,
     ) -> tuple[bool, list[str]]:
         """Assert that no data was lost during conversion.
 
@@ -976,7 +1065,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_original_ldif_content(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         ldif_content: str,
         context: str = "entry_original_ldif",
     ) -> None:
@@ -1016,9 +1105,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def restore_from_metadata(
-        entry: FlextLdifModelsDomains.Entry,
+        entry: FlextLdifModels.Entry,
         target_server: str,
-    ) -> FlextLdifModelsDomains.Entry:
+    ) -> FlextLdifModels.Entry:
         """Restore original values from metadata for reverse conversion.
 
         Uses metadata tracking to restore original values during
@@ -1068,6 +1157,265 @@ class FlextLdifUtilitiesMetadata:
         entry.attributes.attributes = new_attrs
 
         return entry
+
+    @staticmethod
+    def _categorize_char_difference(
+        orig_char: str | None,
+        conv_char: str | None,
+        position: int,
+        spacing_removed: list[int],
+        spacing_added: list[int],
+        case_changes: list[dict[str, object]],
+        punctuation_changes: list[dict[str, object]],
+        differences: dict[str, object],
+    ) -> dict[str, object]:
+        """Categorize difference between two characters."""
+        diff_entry: dict[str, object] = {
+            "position": position,
+            "original": orig_char,
+            "converted": conv_char,
+        }
+
+        if orig_char == " " and conv_char != " ":
+            spacing_removed.append(position)
+            diff_entry["type"] = "spacing_removed"
+        elif orig_char != " " and conv_char == " ":
+            spacing_added.append(position)
+            diff_entry["type"] = "spacing_added"
+        elif orig_char and conv_char and orig_char.lower() == conv_char.lower():
+            case_changes.append({
+                "position": position,
+                "original": orig_char,
+                "converted": conv_char,
+            })
+            diff_entry["type"] = "case_change"
+        elif (
+            orig_char
+            and conv_char
+            and orig_char in ",;:()[]{}"
+            and conv_char in ",;:()[]{}"
+        ):
+            punctuation_changes.append({
+                "position": position,
+                "original": orig_char,
+                "converted": conv_char,
+            })
+            diff_entry["type"] = "punctuation_change"
+        elif orig_char is None:
+            diff_entry["type"] = "added"
+            added_chars_obj = differences.get("added_chars", [])
+            if FlextRuntime.is_list_like(added_chars_obj):
+                added_chars_obj.append({"position": position, "char": conv_char})
+            else:
+                differences["added_chars"] = [{"position": position, "char": conv_char}]
+        elif conv_char is None:
+            diff_entry["type"] = "removed"
+            missing_chars_obj = differences.get("missing_chars", [])
+            if FlextRuntime.is_list_like(missing_chars_obj):
+                missing_chars_obj.append({"position": position, "char": orig_char})
+            else:
+                differences["missing_chars"] = [
+                    {"position": position, "char": orig_char}
+                ]
+        else:
+            diff_entry["type"] = "character_change"
+
+        return diff_entry
+
+    @staticmethod
+    def _compare_char_by_char(
+        original: str,
+        converted: str,
+        differences: dict[str, object],
+    ) -> tuple[
+        list[dict[str, object]],
+        list[int],
+        list[int],
+        list[dict[str, object]],
+        list[dict[str, object]],
+    ]:
+        """Compare strings character by character."""
+        original_chars = list(original)
+        converted_chars = list(converted)
+        max_len = max(len(original_chars), len(converted_chars))
+
+        char_differences: list[dict[str, object]] = []
+        spacing_removed: list[int] = []
+        spacing_added: list[int] = []
+        case_changes: list[dict[str, object]] = []
+        punctuation_changes: list[dict[str, object]] = []
+
+        for i in range(max_len):
+            orig_char = original_chars[i] if i < len(original_chars) else None
+            conv_char = converted_chars[i] if i < len(converted_chars) else None
+
+            if orig_char != conv_char:
+                diff_entry = FlextLdifUtilitiesMetadata._categorize_char_difference(
+                    orig_char,
+                    conv_char,
+                    i,
+                    spacing_removed,
+                    spacing_added,
+                    case_changes,
+                    punctuation_changes,
+                    differences,
+                )
+                char_differences.append(diff_entry)
+
+        return (
+            char_differences,
+            spacing_removed,
+            spacing_added,
+            case_changes,
+            punctuation_changes,
+        )
+
+    @staticmethod
+    def _analyze_leading_trailing_spaces(
+        original: str,
+        converted: str | None,
+    ) -> dict[str, object]:
+        """Analyze leading and trailing spaces."""
+        details: dict[str, object] = {}
+        details["leading_spaces_original"] = len(original) - len(original.lstrip())
+        details["trailing_spaces_original"] = len(original) - len(original.rstrip())
+        details["leading_spaces_converted"] = (
+            len(converted) - len(converted.lstrip()) if converted else 0
+        )
+        details["trailing_spaces_converted"] = (
+            len(converted) - len(converted.rstrip()) if converted else 0
+        )
+        return details
+
+    @staticmethod
+    def _analyze_punctuation_counts(
+        original: str,
+        converted: str | None,
+    ) -> dict[str, object]:
+        """Analyze punctuation count differences."""
+        details: dict[str, object] = {}
+        punctuation_map: dict[str, dict[str, int]] = {}
+        for char in ",;:()[]{}":
+            orig_count = original.count(char)
+            conv_count = converted.count(char) if converted else 0
+            if orig_count != conv_count:
+                punctuation_map[char] = {
+                    "original": orig_count,
+                    "converted": conv_count,
+                }
+        if punctuation_map:
+            details["punctuation_counts"] = punctuation_map
+        return details
+
+    @staticmethod
+    def _analyze_quote_counts(
+        original: str,
+        converted: str | None,
+    ) -> dict[str, object]:
+        """Analyze quote count differences."""
+        details: dict[str, object] = {}
+        quote_analysis: dict[str, object] = {}
+        single_quote_orig = original.count("'")
+        double_quote_orig = original.count('"')
+        single_quote_conv = converted.count("'") if converted else 0
+        double_quote_conv = converted.count('"') if converted else 0
+
+        if (
+            single_quote_orig != single_quote_conv
+            or double_quote_orig != double_quote_conv
+        ):
+            quote_analysis["single_quotes"] = {
+                "original": single_quote_orig,
+                "converted": single_quote_conv,
+            }
+            quote_analysis["double_quotes"] = {
+                "original": double_quote_orig,
+                "converted": double_quote_conv,
+            }
+        if quote_analysis:
+            details["quote_analysis"] = quote_analysis
+        return details
+
+    @staticmethod
+    def _analyze_case_change_details(
+        original: str,
+        case_changes: list[dict[str, object]],
+    ) -> dict[str, object]:
+        """Analyze case change details with context."""
+        details: dict[str, object] = {}
+        case_change_details: list[dict[str, object]] = []
+        for case_change in case_changes:
+            pos_obj = case_change.get("position", -1)
+            orig_char_obj = case_change.get("original", "")
+            conv_char_obj = case_change.get("converted", "")
+            pos = pos_obj if isinstance(pos_obj, int) else -1
+            orig_char = orig_char_obj if isinstance(orig_char_obj, str) else ""
+            conv_char = conv_char_obj if isinstance(conv_char_obj, str) else ""
+            if orig_char and conv_char and orig_char.lower() == conv_char.lower():
+                context_before_start = max(0, pos - 5) if pos >= 0 else 0
+                context_before_end = max(pos, 0)
+                context_after_start = (
+                    pos + 1 if pos >= 0 and pos + 1 < len(original) else len(original)
+                )
+                context_after_end = (
+                    pos + 6 if pos >= 0 and pos + 6 < len(original) else len(original)
+                )
+                case_change_details.append({
+                    "position": pos,
+                    "original": orig_char,
+                    "converted": conv_char,
+                    "context_before": original[context_before_start:context_before_end],
+                    "context_after": original[context_after_start:context_after_end],
+                })
+        if case_change_details:
+            details["case_change_details"] = case_change_details
+        return details
+
+    @staticmethod
+    def _detect_boolean_conversions(
+        original: str,
+        converted: str | None,
+        context: str,
+    ) -> dict[str, object]:
+        """Detect boolean conversions automatically."""
+        details: dict[str, object] = {}
+        boolean_patterns = {
+            ("0", "FALSE"): "boolean_false_conversion",
+            ("1", "TRUE"): "boolean_true_conversion",
+            ("FALSE", "0"): "boolean_false_reverse",
+            ("TRUE", "1"): "boolean_true_reverse",
+        }
+
+        original_upper = original.upper().strip()
+        converted_upper = converted.upper().strip() if converted else ""
+
+        for (orig_pattern, conv_pattern), conversion_type in boolean_patterns.items():
+            if original_upper == orig_pattern and converted_upper == conv_pattern:
+                details["boolean_conversion"] = {
+                    "type": conversion_type,
+                    "original": original,
+                    "converted": converted,
+                    "detected": True,
+                }
+                logger.debug(
+                    "Boolean conversion detected",
+                    context=context,
+                    conversion_type=conversion_type,
+                )
+                break
+
+        if original and (not converted or not converted.strip()):
+            details["soft_delete_detected"] = {
+                "detected": True,
+                "original": original,
+                "converted": converted or "",
+            }
+            logger.debug(
+                "Soft delete pattern detected",
+                context=context,
+            )
+
+        return details
 
     @staticmethod
     def analyze_minimal_differences(
@@ -1130,70 +1478,16 @@ class FlextLdifUtilitiesMetadata:
 
         differences["has_differences"] = True
 
-        # Character-by-character comparison
-        original_chars = list(original)
-        converted_chars = list(converted)
-        max_len = max(len(original_chars), len(converted_chars))
-
-        char_differences: list[dict[str, object]] = []
-        spacing_removed: list[int] = []
-        spacing_added: list[int] = []
-        case_changes: list[dict[str, object]] = []
-        punctuation_changes: list[dict[str, object]] = []
-
-        for i in range(max_len):
-            orig_char = original_chars[i] if i < len(original_chars) else None
-            conv_char = converted_chars[i] if i < len(converted_chars) else None
-
-            if orig_char != conv_char:
-                diff_entry: dict[str, object] = {
-                    "position": i,
-                    "original": orig_char,
-                    "converted": conv_char,
-                }
-
-                # Categorize the difference
-                if orig_char == " " and conv_char != " ":
-                    spacing_removed.append(i)
-                    diff_entry["type"] = "spacing_removed"
-                elif orig_char != " " and conv_char == " ":
-                    spacing_added.append(i)
-                    diff_entry["type"] = "spacing_added"
-                elif orig_char and conv_char and orig_char.lower() == conv_char.lower():
-                    case_changes.append({
-                        "position": i,
-                        "original": orig_char,
-                        "converted": conv_char,
-                    })
-                    diff_entry["type"] = "case_change"
-                elif (
-                    orig_char
-                    and conv_char
-                    and orig_char in ",;:()[]{}"
-                    and conv_char in ",;:()[]{}"
-                ):
-                    punctuation_changes.append({
-                        "position": i,
-                        "original": orig_char,
-                        "converted": conv_char,
-                    })
-                    diff_entry["type"] = "punctuation_change"
-                elif orig_char is None:
-                    diff_entry["type"] = "added"
-                    differences["added_chars"].append({
-                        "position": i,
-                        "char": conv_char,
-                    })
-                elif conv_char is None:
-                    diff_entry["type"] = "removed"
-                    differences["missing_chars"].append({
-                        "position": i,
-                        "char": orig_char,
-                    })
-                else:
-                    diff_entry["type"] = "character_change"
-
-                char_differences.append(diff_entry)
+        # Character-by-character comparison using helper method
+        (
+            char_differences,
+            spacing_removed,
+            spacing_added,
+            case_changes,
+            punctuation_changes,
+        ) = FlextLdifUtilitiesMetadata._compare_char_by_char(
+            original, converted, differences
+        )
 
         differences["differences"] = char_differences
         differences["spacing_changes"] = {
@@ -1205,112 +1499,28 @@ class FlextLdifUtilitiesMetadata:
         differences["case_changes"] = case_changes
         differences["punctuation_changes"] = punctuation_changes
 
-        # Analyze leading/trailing spaces
-        differences["leading_spaces_original"] = len(original) - len(original.lstrip())
-        differences["trailing_spaces_original"] = len(original) - len(original.rstrip())
-        differences["leading_spaces_converted"] = (
-            len(converted) - len(converted.lstrip()) if converted else 0
-        )
-        differences["trailing_spaces_converted"] = (
-            len(converted) - len(converted.rstrip()) if converted else 0
-        )
-
-        # CRITICAL: Capture ALL punctuation differences (semicolons, commas, colons, etc.)
-        punctuation_map: dict[str, int] = {}
-        for char in ",;:()[]{}":
-            orig_count = original.count(char)
-            conv_count = converted.count(char) if converted else 0
-            if orig_count != conv_count:
-                punctuation_map[char] = {
-                    "original": orig_count,
-                    "converted": conv_count,
-                }
-        if punctuation_map:
-            differences["punctuation_counts"] = punctuation_map
-
-        # CRITICAL: Capture quote differences (single vs double, presence/absence)
-        quote_analysis: dict[str, object] = {}
-        single_quote_orig = original.count("'")
-        double_quote_orig = original.count('"')
-        single_quote_conv = converted.count("'") if converted else 0
-        double_quote_conv = converted.count('"') if converted else 0
-
-        if (
-            single_quote_orig != single_quote_conv
-            or double_quote_orig != double_quote_conv
-        ):
-            quote_analysis["single_quotes"] = {
-                "original": single_quote_orig,
-                "converted": single_quote_conv,
-            }
-            quote_analysis["double_quotes"] = {
-                "original": double_quote_orig,
-                "converted": double_quote_conv,
-            }
-        if quote_analysis:
-            differences["quote_analysis"] = quote_analysis
-
-        # CRITICAL: Capture case differences in detail (which characters changed case)
-        case_change_details: list[dict[str, object]] = []
-        for case_change in case_changes:
-            pos = case_change.get("position", -1)
-            orig_char = case_change.get("original", "")
-            conv_char = case_change.get("converted", "")
-            if orig_char and conv_char and orig_char.lower() == conv_char.lower():
-                case_change_details.append({
-                    "position": pos,
-                    "original": orig_char,
-                    "converted": conv_char,
-                    "context_before": original[max(0, pos - 5) : pos]
-                    if pos >= 0
-                    else "",
-                    "context_after": original[pos + 1 : pos + 6]
-                    if pos >= 0 and pos + 1 < len(original)
-                    else "",
-                })
-        if case_change_details:
-            differences["case_change_details"] = case_change_details
-
-        # CRITICAL: Detect boolean conversions automatically (0/1 <-> TRUE/FALSE)
-        boolean_patterns = {
-            ("0", "FALSE"): "boolean_false_conversion",
-            ("1", "TRUE"): "boolean_true_conversion",
-            ("FALSE", "0"): "boolean_false_reverse",
-            ("TRUE", "1"): "boolean_true_reverse",
-        }
-        
-        # Check if entire string is a boolean conversion
-        original_upper = original.upper().strip()
-        converted_upper = converted.upper().strip() if converted else ""
-        
-        for (orig_pattern, conv_pattern), conversion_type in boolean_patterns.items():
-            if original_upper == orig_pattern and converted_upper == conv_pattern:
-                differences["boolean_conversion"] = {
-                    "type": conversion_type,
-                    "original": original,
-                    "converted": converted,
-                    "detected": True,
-                }
-                logger.debug(
-                    "Boolean conversion detected",
-                    context=context,
-                    conversion_type=conversion_type,
-                )
-                break
-
-        # CRITICAL: Detect soft delete patterns (attribute removed but value preserved)
-        # This is detected when original has content but converted is None or empty
-        if original and (not converted or not converted.strip()):
-            differences["soft_delete_detected"] = {
-                "original": original,
-                "converted": converted or "",
-                "detected": True,
-                "note": "Original content preserved but converted is empty - may indicate soft delete",
-            }
-            logger.debug(
-                "Potential soft delete detected",
-                context=context,
+        # Analyze additional details using helper methods
+        differences.update(
+            FlextLdifUtilitiesMetadata._analyze_leading_trailing_spaces(
+                original, converted
             )
+        )
+        differences.update(
+            FlextLdifUtilitiesMetadata._analyze_punctuation_counts(original, converted)
+        )
+        differences.update(
+            FlextLdifUtilitiesMetadata._analyze_quote_counts(original, converted)
+        )
+        differences.update(
+            FlextLdifUtilitiesMetadata._analyze_case_change_details(
+                original, case_changes
+            )
+        )
+        differences.update(
+            FlextLdifUtilitiesMetadata._detect_boolean_conversions(
+                original, converted, context
+            )
+        )
 
         # CRITICAL: Detect semicolon removal (common in DN normalization)
         if original.endswith(";") and converted and not converted.endswith(";"):
@@ -1328,8 +1538,48 @@ class FlextLdifUtilitiesMetadata:
         return differences
 
     @staticmethod
+    def _auto_track_conversions(
+        metadata: FlextLdifModels.QuirkMetadata,
+        differences: dict[str, object],
+        original: str,
+        converted: str | None,
+        context: str,
+        attribute_name: str | None,
+        key: str,
+    ) -> None:
+        """Auto-track boolean conversions and soft deletes from differences."""
+        if "boolean_conversion" in differences:
+            bool_conv = differences["boolean_conversion"]
+            if FlextRuntime.is_dict_like(bool_conv) and bool_conv.get("detected"):
+                attr_name_for_bool = attribute_name or key
+                metadata.boolean_conversions[attr_name_for_bool] = {
+                    "original": bool_conv.get("original", original),
+                    "converted": bool_conv.get("converted", converted or ""),
+                    "format": f"{context}_auto_detected",
+                }
+                logger.debug(
+                    "Boolean conversion auto-tracked",
+                    context=context,
+                    attribute_name=attribute_name,
+                )
+
+        if "soft_delete_detected" in differences:
+            soft_del = differences["soft_delete_detected"]
+            if FlextRuntime.is_dict_like(soft_del) and soft_del.get("detected"):
+                attr_name_for_soft = attribute_name or key
+                if attr_name_for_soft not in metadata.soft_delete_markers:
+                    metadata.soft_delete_markers.append(attr_name_for_soft)
+                if attr_name_for_soft not in metadata.removed_attributes:
+                    metadata.removed_attributes[attr_name_for_soft] = [original]
+                logger.debug(
+                    "Soft delete auto-tracked",
+                    context=context,
+                    attribute_name=attribute_name,
+                )
+
+    @staticmethod
     def track_minimal_differences_in_metadata(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         original: str,
         converted: str | None = None,
         context: str = "entry",
@@ -1400,38 +1650,10 @@ class FlextLdifUtilitiesMetadata:
             # Store converted string in extensions for easy access
             metadata.extensions[f"converted_string_{key}"] = converted
 
-            # CRITICAL: Auto-track boolean conversions if detected
-            if "boolean_conversion" in differences:
-                bool_conv = differences["boolean_conversion"]
-                if isinstance(bool_conv, dict) and bool_conv.get("detected"):
-                    # Track in boolean_conversions field for round-trip
-                    attr_name_for_bool = attribute_name or key
-                    metadata.boolean_conversions[attr_name_for_bool] = {
-                        "original": bool_conv.get("original", original),
-                        "converted": bool_conv.get("converted", converted or ""),
-                        "format": f"{context}_auto_detected",
-                    }
-                    logger.debug(
-                        "Boolean conversion auto-tracked",
-                        context=context,
-                        attribute_name=attribute_name,
-                    )
-
-            # CRITICAL: Auto-track soft deletes if detected
-            if "soft_delete_detected" in differences:
-                soft_del = differences["soft_delete_detected"]
-                if isinstance(soft_del, dict) and soft_del.get("detected"):
-                    attr_name_for_soft = attribute_name or key
-                    if attr_name_for_soft not in metadata.soft_delete_markers:
-                        metadata.soft_delete_markers.append(attr_name_for_soft)
-                    # Preserve original value in removed_attributes
-                    if attr_name_for_soft not in metadata.removed_attributes:
-                        metadata.removed_attributes[attr_name_for_soft] = [original]
-                    logger.debug(
-                        "Soft delete auto-tracked",
-                        context=context,
-                        attribute_name=attribute_name,
-                    )
+            # Auto-track boolean conversions and soft deletes using helper method
+            FlextLdifUtilitiesMetadata._auto_track_conversions(
+                metadata, differences, original, converted, context, attribute_name, key
+            )
 
             # Log differences found
             if differences.get("has_differences", False):

@@ -9,9 +9,9 @@ from __future__ import annotations
 import copy
 import re
 from collections.abc import Callable
-from typing import TypedDict
+from typing import TypedDict, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -219,7 +219,7 @@ class FlextLdifUtilitiesSchema:
         FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
     ]:
         """Wrap transformation result with proper type.
-        
+
         Args:
             transformed: The transformed schema object
             _original_type: Original type (unused, kept for API compatibility)
@@ -247,7 +247,9 @@ class FlextLdifUtilitiesSchema:
     def _validate_transformation_result(
         unwrapped: object,
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Validate that transformation result matches input type."""
         if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
             if isinstance(unwrapped, FlextLdifModels.SchemaAttribute):
@@ -261,24 +263,31 @@ class FlextLdifUtilitiesSchema:
             return FlextResult.fail(
                 "Field transformation returned unexpected type for SchemaObjectClass",
             )
-        return FlextResult.fail(f"Unknown schema object type: {type(schema_obj).__name__}")
+        return FlextResult.fail(
+            f"Unknown schema object type: {type(schema_obj).__name__}"
+        )
 
     @staticmethod
     def _apply_field_transforms(
-        transformed: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
-        field_transforms: dict[str, Callable[[object], object] | str | list[str] | None],
+        transformed: FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
+        field_transforms: dict[
+            str, Callable[[object], object] | str | list[str] | None
+        ],
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Apply all field transformations."""
         # Declare variable with explicit type to help type checker
-        current: (
-            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
-        ) = transformed
-        
+        current: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass = (
+            transformed
+        )
+
         for field_name, transform_fn in field_transforms.items():
             if not hasattr(current, field_name):
                 continue
-            
+
             result = FlextLdifUtilitiesSchema._apply_field_transformation(
                 current,
                 field_name,
@@ -288,11 +297,13 @@ class FlextLdifUtilitiesSchema:
                 return FlextResult.fail(
                     result.error or "Field transformation failed",
                 )
-            
+
             unwrapped = result.unwrap()
-            validation_result = FlextLdifUtilitiesSchema._validate_transformation_result(
-                unwrapped,
-                schema_obj,
+            validation_result = (
+                FlextLdifUtilitiesSchema._validate_transformation_result(
+                    unwrapped,
+                    schema_obj,
+                )
             )
             if validation_result.is_failure:
                 return validation_result
@@ -307,7 +318,7 @@ class FlextLdifUtilitiesSchema:
                 return FlextResult.fail(
                     f"Unexpected type after transformation: {type(unwrapped_validated).__name__}",
                 )
-        
+
         # Type narrowing: current is now guaranteed to be SchemaAttribute | SchemaObjectClass
         # Validate type to help type checker understand the type
         if not isinstance(
@@ -466,7 +477,10 @@ class FlextLdifUtilitiesSchema:
                     # Type narrowing: unwrapped is guaranteed to be SchemaAttribute | SchemaObjectClass
                     if isinstance(
                         unwrapped,
-                        (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                        (
+                            FlextLdifModels.SchemaAttribute,
+                            FlextLdifModels.SchemaObjectClass,
+                        ),
                     ):
                         items.append(unwrapped)
 
@@ -496,9 +510,7 @@ class FlextLdifUtilitiesSchema:
         )
         # Type narrowing: filter to only SchemaAttribute instances
         return [
-            item
-            for item in items
-            if isinstance(item, FlextLdifModels.SchemaAttribute)
+            item for item in items if isinstance(item, FlextLdifModels.SchemaAttribute)
         ]
 
     @staticmethod
@@ -909,6 +921,40 @@ class FlextLdifUtilitiesSchema:
         return parts
 
     @staticmethod
+    def _write_schema_element(
+        data: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        expected_type: type,
+        type_name: str,
+        parts_builder: Callable[..., list[str]],
+    ) -> str:
+        """Generic helper for writing schema elements (DRY pattern).
+
+        Args:
+            data: Schema model (attribute or objectclass)
+            expected_type: Expected type for validation
+            type_name: Name for error messages
+            parts_builder: Function to build parts list
+
+        Returns:
+            RFC 4512 formatted string
+
+        Raises:
+            TypeError: If data is wrong type
+            ValueError: If OID is missing
+
+        """
+        if not isinstance(data, expected_type):
+            msg = f"{type_name} must be {expected_type.__name__} model"
+            raise TypeError(msg)
+
+        if not data.oid:
+            msg = f"RFC {type_name} writing failed: missing OID"
+            raise ValueError(msg)
+
+        parts = parts_builder(data)
+        return " ".join(parts)
+
+    @staticmethod
     def write_attribute(
         attr_data: FlextLdifModels.SchemaAttribute,
     ) -> str:
@@ -927,17 +973,12 @@ class FlextLdifUtilitiesSchema:
             ValueError: If OID is missing
 
         """
-        if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
-            msg = "attr_data must be SchemaAttribute model"
-            raise TypeError(msg)
-
-        # OID is required
-        if not attr_data.oid:
-            msg = "RFC attribute writing failed: missing OID"
-            raise ValueError(msg)
-
-        parts = FlextLdifUtilitiesSchema._build_attribute_parts_from_model(attr_data)
-        return " ".join(parts)
+        return FlextLdifUtilitiesSchema._write_schema_element(
+            attr_data,
+            FlextLdifModels.SchemaAttribute,
+            "attr_data",
+            FlextLdifUtilitiesSchema._build_attribute_parts_from_model,
+        )
 
     @staticmethod
     def _add_objectclass_sup(
@@ -946,11 +987,12 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            if isinstance(oc_data.sup, list):
-                if len(oc_data.sup) == 1:
-                    parts.append(f"SUP {oc_data.sup[0]}")
+            if FlextRuntime.is_list_like(oc_data.sup):
+                sup_list_str = cast("list[str]", oc_data.sup)
+                if len(sup_list_str) == 1:
+                    parts.append(f"SUP {sup_list_str[0]}")
                 else:
-                    sup_str = " $ ".join(oc_data.sup)
+                    sup_str = " $ ".join(sup_list_str)
                     parts.append(f"SUP ( {sup_str} )")
             else:
                 parts.append(f"SUP {oc_data.sup}")
@@ -962,21 +1004,23 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            if isinstance(oc_data.must, list):
-                if len(oc_data.must) == 1:
-                    parts.append(f"MUST {oc_data.must[0]}")
+            if FlextRuntime.is_list_like(oc_data.must):
+                must_list_str = cast("list[str]", oc_data.must)
+                if len(must_list_str) == 1:
+                    parts.append(f"MUST {must_list_str[0]}")
                 else:
-                    must_str = " $ ".join(oc_data.must)
+                    must_str = " $ ".join(must_list_str)
                     parts.append(f"MUST ( {must_str} )")
             else:
                 parts.append(f"MUST {oc_data.must}")
 
         if oc_data.may:
-            if isinstance(oc_data.may, list):
-                if len(oc_data.may) == 1:
-                    parts.append(f"MAY {oc_data.may[0]}")
+            if FlextRuntime.is_list_like(oc_data.may):
+                may_list_str = cast("list[str]", oc_data.may)
+                if len(may_list_str) == 1:
+                    parts.append(f"MAY {may_list_str[0]}")
                 else:
-                    may_str = " $ ".join(oc_data.may)
+                    may_str = " $ ".join(may_list_str)
                     parts.append(f"MAY ( {may_str} )")
             else:
                 parts.append(f"MAY {oc_data.may}")
@@ -1032,17 +1076,12 @@ class FlextLdifUtilitiesSchema:
             ValueError: If OID is missing
 
         """
-        if not isinstance(oc_data, FlextLdifModels.SchemaObjectClass):
-            msg = "oc_data must be SchemaObjectClass model"
-            raise TypeError(msg)
-
-        # OID is required and must not be empty
-        if not oc_data.oid:
-            msg = "RFC objectClass writing failed: missing OID"
-            raise ValueError(msg)
-
-        parts = FlextLdifUtilitiesSchema._build_objectclass_parts_from_model(oc_data)
-        return " ".join(parts)
+        return FlextLdifUtilitiesSchema._write_schema_element(
+            oc_data,
+            FlextLdifModels.SchemaObjectClass,
+            "oc_data",
+            FlextLdifUtilitiesSchema._build_objectclass_parts_from_model,
+        )
 
     @staticmethod
     def normalize_attribute_name(

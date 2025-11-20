@@ -21,14 +21,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Python 3.13 compatibility: Ensure ldif3 library compatibility
-# Note: ldif3 should be updated to use base64.decodebytes instead of deprecated decodestring
-# This is handled by the ldif3 library itself
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, cast, override
+from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -42,15 +39,8 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _ParseResponseType = FlextLdifModels.ParseResponse
-else:
-    _ParseResponseType = object  # type: ignore[misc]
 
-
-class FlextLdifParser(FlextService[_ParseResponseType]):
+class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
     r"""LDIF parsing service - PARSING ONLY with SRP-compliant nested classes.
 
     PARSING MONOPOLY: All operations are parsing-related. File I/O, writing, and
@@ -231,7 +221,8 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
                         "Some entries missing original content preservation",
                         total_entries=len(parse_response.entries),
                         entries_with_original=entries_with_original,
-                        missing_count=len(parse_response.entries) - entries_with_original,
+                        missing_count=len(parse_response.entries)
+                        - entries_with_original,
                     )
             else:
                 self.logger.error(
@@ -293,13 +284,8 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             failed_details: list[str] = []
 
             for idx, (dn, attrs) in enumerate(results):
-
                 # CRITICAL: Preserve original LDAP3 entry data before parsing
                 # Reconstruct original LDIF-like representation for preservation
-                from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                    FlextLdifUtilitiesMetadata,
-                )
-
                 # Build original LDIF representation from LDAP3 data
                 original_ldif_lines = [f"dn: {dn}"]
                 original_ldif_lines.extend(
@@ -331,7 +317,7 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
                 if entry_result.is_success:
                     entry = entry_result.unwrap()
                     if isinstance(entry, FlextLdifModels.Entry) and entry.metadata:
-                        FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
+                        FlextLdifUtilities.Metadata.preserve_original_ldif_content(
                             metadata=entry.metadata,
                             ldif_content=original_ldif_content,
                             context="entry_original_ldif",
@@ -550,7 +536,6 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
 
             # Delegate to quirk's normalize_schema_strings_inline if available
             if hasattr(entry_quirk, "normalize_schema_strings_inline"):
-
                 result = entry_quirk.normalize_schema_strings_inline(entry)
                 # Type narrowing: result should be Entry
                 if isinstance(result, FlextLdifModels.Entry):
@@ -560,7 +545,163 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
 
             return entry
 
-        def process_single_entry(  # noqa: C901 - complexity justified for zero data loss
+        def _normalize_entry_dn_if_needed(
+            self,
+            entry: FlextLdifModels.Entry,
+            server_type: str,
+            *,
+            normalize: bool,
+        ) -> FlextLdifModels.Entry:
+            """Normalize entry DN if normalization is enabled."""
+            if not normalize:
+                return entry
+
+            original_dn = str(entry.dn) if entry.dn else None
+            self.logger.debug(
+                "Normalizing entry DN",
+                entry_dn=original_dn,
+            )
+            dn_before = str(entry.dn) if entry.dn else None
+            normalized_entry = self.normalize_entry_dn(entry, server_type)
+            dn_after = str(normalized_entry.dn) if normalized_entry.dn else None
+
+            # Track DN normalization differences
+            if (
+                normalized_entry.metadata
+                and dn_before
+                and dn_after
+                and dn_before != dn_after
+            ):
+                FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
+                    metadata=normalized_entry.metadata,
+                    original=dn_before,
+                    converted=dn_after,
+                    context="dn_normalization",
+                    attribute_name="dn",
+                )
+                self.logger.debug(
+                    "Tracked DN normalization difference",
+                    original_dn=dn_before,
+                    normalized_dn=dn_after,
+                )
+            return normalized_entry
+
+        def _parse_schema_if_needed(
+            self,
+            entry: FlextLdifModels.Entry,
+            server_type: str,
+            *,
+            auto_parse: bool,
+        ) -> tuple[FlextLdifModels.Entry, int, int]:
+            """Parse schema entry if auto-parsing is enabled and entry is schema entry."""
+            if auto_parse and FlextLdifUtilities.Entry.is_schema_entry(
+                entry,
+                strict=False,
+            ):
+                parsed_entry = self.schema_extractor.parse_schema_entry(
+                    entry,
+                    server_type,
+                )
+                return parsed_entry, 1, 0
+            return entry, 0, 1
+
+        def _validate_entry_if_needed(
+            self,
+            entry: FlextLdifModels.Entry,
+            *,
+            validate: bool,
+            strict: bool,
+        ) -> list[str]:
+            """Validate entry and return list of validation errors."""
+            if not validate:
+                return []
+
+            validation_result = self.validator.validate_entry(entry, strict=strict)
+            if validation_result.is_failure:
+                dn_value = entry.dn.value if entry.dn else "unknown"
+                if strict:
+                    msg = f"Strict validation failed for entry {dn_value}: {validation_result.error}"
+                    self.logger.error(
+                        "Strict validation failed",
+                        entry_dn=dn_value,
+                        error=str(validation_result.error),
+                    )
+                    raise ValueError(msg)
+                self.logger.warning(
+                    "Entry validation warning",
+                    entry_dn=dn_value,
+                    error=str(validation_result.error),
+                )
+                return [validation_result.error]
+            return []
+
+        def _filter_operational_attrs_if_needed(
+            self,
+            entry: FlextLdifModels.Entry,
+            server_type: str,
+            *,
+            include_operational: bool,
+        ) -> FlextLdifModels.Entry:
+            """Filter operational attributes if needed and track in metadata."""
+            if include_operational:
+                return entry
+
+            attrs_before = dict(entry.attributes.attributes) if entry.attributes else {}
+            filtered_entry = self.filter_operational_attributes(entry, server_type)
+            attrs_after = (
+                dict(filtered_entry.attributes.attributes)
+                if filtered_entry.attributes
+                else {}
+            )
+
+            # Track removed operational attributes in metadata for zero data loss
+            if filtered_entry.metadata:
+                removed_attrs = set(attrs_before.keys()) - set(attrs_after.keys())
+                for removed_attr in removed_attrs:
+                    original_values = attrs_before.get(removed_attr, [])
+                    if original_values:
+                        FlextLdifUtilities.Metadata.soft_delete_attribute(
+                            metadata=filtered_entry.metadata,
+                            attr_name=removed_attr,
+                            original_values=original_values,
+                        )
+                        FlextLdifUtilities.Metadata.track_transformation(
+                            metadata=filtered_entry.metadata,
+                            original_name=removed_attr,
+                            target_name=None,
+                            original_values=original_values,
+                            target_values=None,
+                            transformation_type="soft_deleted",
+                            reason=f"Operational attribute filtered for {server_type}",
+                        )
+                        self.logger.debug(
+                            "Operational attribute filtered",
+                            attribute_name=removed_attr,
+                            entry_dn=str(filtered_entry.dn)
+                            if filtered_entry.dn
+                            else None,
+                            values_count=len(original_values),
+                        )
+
+                # Validate metadata completeness
+                if removed_attrs and filtered_entry.metadata:
+                    expected_transformations = list(removed_attrs)
+                    is_complete, missing = (
+                        FlextLdifUtilities.Metadata.validate_metadata_completeness(
+                            metadata=filtered_entry.metadata,
+                            expected_transformations=expected_transformations,
+                        )
+                    )
+                    if not is_complete:
+                        self.logger.warning(
+                            "Metadata completeness check found untracked attributes",
+                            missing_attributes=missing,
+                            total_expected=len(expected_transformations),
+                            total_tracked=len(expected_transformations) - len(missing),
+                        )
+            return filtered_entry
+
+        def process_single_entry(
             self,
             entry: FlextLdifModels.Entry,
             server_type: str,
@@ -571,161 +712,48 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             CRITICAL: Preserves ALL minimal differences in metadata throughout processing.
             Every transformation is tracked to ensure zero data loss and perfect round-trip.
             """
-            from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                FlextLdifUtilitiesMetadata,
+            # Step 1: Normalize DN if needed
+            processed_entry = self._normalize_entry_dn_if_needed(
+                entry,
+                server_type,
+                normalize=options.normalize_dns,
             )
 
-            original_dn = str(entry.dn) if entry.dn else None
-            processed_entry = entry
-            schema_count = 0
-            data_count = 0
-            validation_errors = []
-
-            if options.normalize_dns:
-                self.logger.debug(
-                    "Normalizing entry DN",
-                    entry_dn=original_dn,
-                )
-                dn_before = str(processed_entry.dn) if processed_entry.dn else None
-                processed_entry = self.normalize_entry_dn(processed_entry, server_type)
-                dn_after = str(processed_entry.dn) if processed_entry.dn else None
-
-                # Track DN normalization differences
-                if (
-                    processed_entry.metadata
-                    and dn_before
-                    and dn_after
-                    and dn_before != dn_after
-                ):
-                    FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
-                        metadata=processed_entry.metadata,
-                        original=dn_before,
-                        converted=dn_after,
-                        context="dn_normalization",
-                        attribute_name="dn",
-                    )
-                    self.logger.debug(
-                        "Tracked DN normalization difference",
-                        original_dn=dn_before,
-                        normalized_dn=dn_after,
-                    )
-
-            # Apply schema quirks normalization to inline schema attributes
-            # Delegates to quirk's normalize_schema_strings_inline method
+            # Step 2: Apply schema quirks normalization
             processed_entry = self.apply_schema_quirks_inline(
                 processed_entry,
                 server_type,
             )
 
-            if options.auto_parse_schema and FlextLdifUtilities.Entry.is_schema_entry(
+            # Step 3: Parse schema if needed
+            processed_entry, schema_count, data_count = self._parse_schema_if_needed(
                 processed_entry,
-                strict=False,
-            ):
-                schema_count = 1
-                processed_entry = self.schema_extractor.parse_schema_entry(
-                    processed_entry,
-                    server_type,
-                )
-            else:
-                data_count = 1
+                server_type,
+                auto_parse=options.auto_parse_schema,
+            )
 
+            # Step 4: Extract ACLs if needed
             if options.auto_extract_acls:
                 processed_entry = self.acl_extractor.extract_acls(
                     processed_entry,
                     server_type,
                 )
 
-            if options.validate_entries:
-                validation_result = self.validator.validate_entry(
-                    processed_entry,
-                    strict=options.strict_schema_validation,
-                )
-                if validation_result.is_failure:
-                    # Get readable DN value for logging
-                    dn_value = (
-                        processed_entry.dn.value if processed_entry.dn else "unknown"
-                    )
-                    if options.strict_schema_validation:
-                        msg = f"Strict validation failed for entry {dn_value}: {validation_result.error}"
-                        self.logger.error(
-                            "Strict validation failed",
-                            entry_dn=dn_value,
-                            error=str(validation_result.error),
-                        )
-                        raise ValueError(msg)
-                    self.logger.warning(
-                        "Entry validation warning",
-                        entry_dn=dn_value,
-                        error=str(validation_result.error),
-                    )
-                    validation_errors.append(validation_result.error)
+            # Step 5: Validate entry if needed
+            validation_errors = self._validate_entry_if_needed(
+                processed_entry,
+                validate=options.validate_entries,
+                strict=options.strict_schema_validation,
+            )
 
-            if not options.include_operational_attrs:
-                attrs_before = (
-                    dict(processed_entry.attributes.attributes)
-                    if processed_entry.attributes
-                    else {}
-                )
-                processed_entry = self.filter_operational_attributes(
-                    processed_entry,
-                    server_type,
-                )
-                attrs_after = (
-                    dict(processed_entry.attributes.attributes)
-                    if processed_entry.attributes
-                    else {}
-                )
-
-                # CRITICAL: Track removed operational attributes in metadata for zero data loss
-                if processed_entry.metadata:
-                    removed_attrs = set(attrs_before.keys()) - set(attrs_after.keys())
-                    for removed_attr in removed_attrs:
-                        original_values = attrs_before.get(removed_attr, [])
-                        if original_values:
-                            # Track as soft-deleted for round-trip (preserves values for restoration)
-                            FlextLdifUtilitiesMetadata.soft_delete_attribute(
-                                metadata=processed_entry.metadata,
-                                attr_name=removed_attr,
-                                original_values=original_values,
-                            )
-
-                            # Also track as transformation for complete audit trail
-                            FlextLdifUtilitiesMetadata.track_transformation(
-                                metadata=processed_entry.metadata,
-                                original_name=removed_attr,
-                                target_name=None,  # Removed (soft-deleted)
-                                original_values=original_values,
-                                target_values=None,  # Removed
-                                transformation_type="soft_deleted",
-                                reason=f"Operational attribute filtered for {server_type}",
-                            )
-
-                            self.logger.debug(
-                                "Operational attribute filtered",
-                                attribute_name=removed_attr,
-                                entry_dn=str(processed_entry.dn) if processed_entry.dn else None,
-                                values_count=len(original_values),
-                            )
-
-                    # Validate that removed attributes are properly tracked in metadata
-                    if removed_attrs and processed_entry.metadata:
-                        expected_transformations = list(removed_attrs)
-                        is_complete, missing = (
-                            FlextLdifUtilitiesMetadata.validate_metadata_completeness(
-                                metadata=processed_entry.metadata,
-                                expected_transformations=expected_transformations,
-                            )
-                        )
-                        if not is_complete:
-                            self.logger.warning(
-                                "Metadata completeness check found untracked attributes",
-                                missing_attributes=missing,
-                                total_expected=len(expected_transformations),
-                                total_tracked=len(expected_transformations) - len(missing),
-                            )
+            # Step 6: Filter operational attributes if needed
+            processed_entry = self._filter_operational_attrs_if_needed(
+                processed_entry,
+                server_type,
+                include_operational=options.include_operational_attrs,
+            )
 
             filtered_errors = [e for e in validation_errors if e is not None]
-
             return processed_entry, schema_count, data_count, filtered_errors
 
         def post_process_entries(
@@ -755,7 +783,9 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
                     parse_errors += 1
                     self.logger.exception(
                         "Failed to process entry",
-                        entry_dn=str(entry.dn) if hasattr(entry, 'dn') and entry.dn else "unknown",
+                        entry_dn=str(entry.dn)
+                        if hasattr(entry, "dn") and entry.dn
+                        else "unknown",
                         error=str(e),
                         parse_errors_count=parse_errors,
                     )
@@ -917,7 +947,9 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             for attr_name, attr_value in entry.attributes.attributes.items():
                 # LdifAttributes.attributes is dict[str, list[str]]
                 # Type narrowing: attr_value is always list[str]
-                values: list[str] = attr_value if isinstance(attr_value, list) else []
+                values: list[str] = (
+                    attr_value if FlextRuntime.is_list_like(attr_value) else []
+                )
 
                 if (not values or all(not v for v in values)) and strict:
                     errors.append(f"Attribute '{attr_name}' has empty values")
@@ -1257,7 +1289,7 @@ class FlextLdifParser(FlextService[_ParseResponseType]):
             encoding=encoding,
             content_type=type(content).__name__,
             content_length=len(content)
-            if isinstance(content, (str, list))
+            if isinstance(content, str) or FlextRuntime.is_list_like(content)
             else "file_path",
             format_options=bool(format_options),
         )

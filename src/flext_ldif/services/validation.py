@@ -110,24 +110,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 from pydantic import Field
 
-from flext_ldif._utilities.constants import FlextLdifUtilitiesConstants
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _ValidationServiceStatusType = FlextLdifModels.ValidationServiceStatus
-else:
-    _ValidationServiceStatusType = object  # type: ignore[misc]
+from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifValidation(FlextService[_ValidationServiceStatusType]):
+class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus]):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
     Provides comprehensive validation for LDAP attribute names, object class names,
@@ -259,7 +252,7 @@ class FlextLdifValidation(FlextService[_ValidationServiceStatusType]):
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
 
-        Uses FlextLdifUtilitiesConstants.validate_attribute_name() for core validation logic.
+        Uses FlextLdifUtilities.Constants.validate_attribute_name() for core validation logic.
 
         RFC 4512 Section 2.5: Attribute Type Definitions
         - AttributeType names must start with a letter
@@ -285,7 +278,7 @@ class FlextLdifValidation(FlextService[_ValidationServiceStatusType]):
 
         """
         try:
-            is_valid = FlextLdifUtilitiesConstants.validate_attribute_name(name)
+            is_valid = FlextLdifUtilities.Constants.validate_attribute_name(name)
             return FlextResult[bool].ok(is_valid)
 
         except Exception as e:

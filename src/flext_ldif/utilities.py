@@ -14,6 +14,7 @@ from flext_core import FlextLogger
 from flext_ldif._utilities import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
+    FlextLdifUtilitiesConstants,
     FlextLdifUtilitiesDecorators,
     FlextLdifUtilitiesDetection,
     FlextLdifUtilitiesDN,
@@ -23,7 +24,9 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
+    FlextLdifUtilitiesParsers,
     FlextLdifUtilitiesSchema,
+    FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
@@ -36,6 +39,7 @@ class FlextLdifUtilities:
 
     ACL = FlextLdifUtilitiesACL
     Attribute = FlextLdifUtilitiesAttribute
+    Constants = FlextLdifUtilitiesConstants
     Decorators = FlextLdifUtilitiesDecorators
     Detection = FlextLdifUtilitiesDetection
     DN = FlextLdifUtilitiesDN
@@ -45,7 +49,9 @@ class FlextLdifUtilities:
     ObjectClass = FlextLdifUtilitiesObjectClass
     OID = FlextLdifUtilitiesOID
     Parser = FlextLdifUtilitiesParser
+    Parsers = FlextLdifUtilitiesParsers
     Schema = FlextLdifUtilitiesSchema
+    Server = FlextLdifUtilitiesServer
     Validation = FlextLdifUtilitiesValidation
     Writer = FlextLdifUtilitiesWriter
 

@@ -29,20 +29,33 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.detector import FlextLdifDetector
+from flext_ldif.services.entry_manipulation import EntryManipulationServices
+from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.sorting import FlextLdifSorting
+from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 __email__ = "dev@flext.com"
 
 __all__ = [
+    # ✅ Entry manipulation service (required by flext-ldap)
+    "EntryManipulationServices",
     "FlextLdif",  # ✅ Facade (single entry point)
+    "FlextLdifCategorization",  # ✅ Categorization service (public API)
     "FlextLdifConfig",  # ✅ Configuration
     "FlextLdifConstants",  # ✅ Constants
+    "FlextLdifDetector",  # ✅ Detector service (required by flext-ldap)
+    "FlextLdifFilters",  # ✅ Filters service (public API)
     "FlextLdifMigrationPipeline",  # ✅ High-level service (OK to expose)
     "FlextLdifModels",  # ✅ Domain models
     "FlextLdifParser",  # ✅ Parser service (required by flext-ldap)
+    "FlextLdifSorting",  # ✅ Sorting service (public API)
     "FlextLdifTypes",  # ✅ Type definitions
     "FlextLdifUtilities",  # ✅ Public helpers
+    "FlextLdifWriter",  # ✅ Writer service (public API)
 ]

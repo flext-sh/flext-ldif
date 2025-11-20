@@ -15,9 +15,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import fnmatch
-from datetime import UTC, datetime
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult, FlextService, FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -125,7 +124,7 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
                     exclusion_info = FlextLdifModels.ExclusionInfo(
                         excluded=True,
                         exclusion_reason=f"DN pattern: {dn_pattern}",
-                        timestamp=datetime.now(UTC).isoformat(),
+                        timestamp=FlextUtilities.Generators.generate_iso_timestamp(),
                     )
 
                     if entry.metadata is None:
@@ -216,7 +215,7 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
                     exclusion_info = FlextLdifModels.ExclusionInfo(
                         excluded=True,
                         exclusion_reason=f"ObjectClass filter: {oc_tuple}",
-                        timestamp=datetime.now(UTC).isoformat(),
+                        timestamp=FlextUtilities.Generators.generate_iso_timestamp(),
                     )
 
                     if entry.metadata is None:
@@ -290,7 +289,7 @@ class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTy
                     exclusion_info = FlextLdifModels.ExclusionInfo(
                         excluded=True,
                         exclusion_reason=f"Attributes ({match_type}): {attributes}",
-                        timestamp=datetime.now(UTC).isoformat(),
+                        timestamp=FlextUtilities.Generators.generate_iso_timestamp(),
                     )
 
                     if entry.metadata is None:

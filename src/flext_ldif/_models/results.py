@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from typing import overload
 
-from flext_core import FlextModels
+from flext_core import FlextModels, FlextRuntime
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -118,7 +118,7 @@ class FlextLdifModelsResults:
                 f"{self.pattern_count} patterns detected"
             )
 
-    class EntryResult(FlextModels.Value):
+    class EntryResult(FlextModels.Results):
         """Result of LDIF processing containing categorized entries and statistics.
 
         This is the UNIFIED result model for all LDIF operations. Contains entries
@@ -178,12 +178,11 @@ class FlextLdifModelsResults:
             """Return the number of entries (makes EntryResult behave like a list)."""
             return len(self.get_all_entries())
 
-        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:  # type: ignore[override]
-            """Iterate over entries (makes EntryResult behave like a list).
-            
-            Note:
-                Type ignore is intentional - we override BaseModel.__iter__ with
-                different return type for list-like behavior.
+        def entries_iter(self) -> Iterator[FlextLdifModelsDomains.Entry]:
+            """Iterate over entries (alternative to __iter__ to avoid BaseModel conflict).
+
+            Returns:
+                Iterator over all entries from all categories combined.
 
             """
             return iter(self.get_all_entries())
@@ -446,13 +445,8 @@ class FlextLdifModelsResults:
             """
             return list({type(e).__name__ for e in self.events})
 
-    class Statistics(FlextModels.Value):
+    class Statistics(FlextModels.Statistics):
         """Unified statistics model for all LDIF operations."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_default=True,
-        )
 
         # CORE COUNTERS
         total_entries: int = Field(
@@ -816,7 +810,7 @@ class FlextLdifModelsResults:
                 events=list(self.events) + [event],
             )
 
-    class SchemaBuilderResult(FlextModels.Value):
+    class SchemaBuilderResult(FlextModels.Results):
         """Result of schema builder build() operation.
 
         Contains attributes, object classes, server type, and metadata about the schema.
@@ -917,7 +911,7 @@ class FlextLdifModelsResults:
                 "entry_count": self.entry_count,
             }
 
-    class MigrationPipelineResult(FlextModels.Value):
+    class MigrationPipelineResult(FlextModels.Results):
         """Result of migration pipeline execution.
 
         Contains migrated schema, entries, statistics, and output file paths
@@ -964,18 +958,26 @@ class FlextLdifModelsResults:
             """
             # Compute directly instead of accessing computed field properties
             # stats can be dict or MigrationStatistics object
-            if isinstance(self.stats, dict):
+            if FlextRuntime.is_dict_like(self.stats):
+                stats_dict = self.stats
+                total_schema_attrs = stats_dict.get("total_schema_attributes", 0)
+                total_schema_ocs = stats_dict.get("total_schema_objectclasses", 0)
+                total_entries_val = stats_dict.get("total_entries", 0)
+                # Ensure values are int for comparison
                 has_schema = (
-                    self.stats.get("total_schema_attributes", 0) > 0
-                    or self.stats.get("total_schema_objectclasses", 0) > 0
+                    (int(total_schema_attrs) if isinstance(total_schema_attrs, (int, str)) else 0) > 0
+                    or (int(total_schema_ocs) if isinstance(total_schema_ocs, (int, str)) else 0) > 0
                 )
-                has_entries = self.stats.get("total_entries", 0) > 0
+                has_entries = (
+                    int(total_entries_val) if isinstance(total_entries_val, (int, str)) else 0
+                ) > 0
             else:
+                # Statistics object with attributes
                 has_schema = (
-                    self.stats.schema_attributes > 0
-                    or self.stats.schema_objectclasses > 0
+                    getattr(self.stats, "schema_attributes", 0) > 0
+                    or getattr(self.stats, "schema_objectclasses", 0) > 0
                 )
-                has_entries = self.stats.total_entries > 0
+                has_entries = getattr(self.stats, "total_entries", 0) > 0
             return not has_schema and not has_entries
 
         @computed_field
@@ -1032,7 +1034,7 @@ class FlextLdifModelsResults:
             description="Active configuration settings",
         )
 
-    class ValidationResult(FlextModels.Value):
+    class ValidationResult(FlextModels.Results):
         """Entry validation result."""
 
         model_config = ConfigDict(
@@ -1059,7 +1061,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return (self.valid_entries / self.total_entries) * 100.0
 
-    class MigrationEntriesResult(FlextModels.Value):
+    class MigrationEntriesResult(FlextModels.Results):
         """Result from migrating entries between servers."""
 
         model_config = ConfigDict(
@@ -1083,7 +1085,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return (self.migrated_entries / self.total_entries) * 100.0
 
-    class EntryAnalysisResult(FlextModels.Value):
+    class EntryAnalysisResult(FlextModels.Results):
         """Result from entry analysis operations."""
 
         model_config = ConfigDict(
@@ -1106,7 +1108,7 @@ class FlextLdifModelsResults:
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(FlextModels.Value):
+    class ServerDetectionResult(FlextModels.Results):
         """Result from LDAP server type detection."""
 
         model_config = ConfigDict(
@@ -1138,7 +1140,7 @@ class FlextLdifModelsResults:
             description="Reason for fallback to RFC mode",
         )
 
-    class StatisticsResult(FlextModels.Value):
+    class StatisticsResult(FlextModels.Results):
         """Statistics result from LDIF processing pipeline.
 
         Contains comprehensive statistics about categorized entries, rejections,
@@ -1339,7 +1341,7 @@ class FlextLdifModelsResults:
             description="Service version",
         )
 
-    class SyntaxLookupResult(FlextModels.Value):
+    class SyntaxLookupResult(FlextModels.Results):
         """Result of syntax OID/name lookup operations.
 
         Contains results from bidirectional OID ↔ name lookups
@@ -1387,7 +1389,7 @@ class FlextLdifModelsResults:
             description="List of supported validation types",
         )
 
-    class ValidationBatchResult(FlextModels.Value):
+    class ValidationBatchResult(FlextModels.Results):
         """Result of batch validation operations.
 
         Contains validation results for multiple attribute names
@@ -1411,7 +1413,8 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(frozen=True, validate_default=True)
 
-        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(
+        entries: list[FlextLdifModelsDomains.Entry] = Field(
+            default_factory=list,
             description="Parsed LDIF entries",
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
@@ -1427,7 +1430,8 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(frozen=True, validate_default=True)
 
-        acls: Sequence[FlextLdifModelsDomains.Acl] = Field(
+        acls: list[FlextLdifModelsDomains.Acl] = Field(
+            default_factory=list,
             description="Extracted ACL models",
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
@@ -1597,3 +1601,10 @@ class FlextLdifModelsResults:
                 f"{self.total_objectclasses} object classes from "
                 f"{self.entry_count} entries ({self.server_type})"
             )
+
+    class FlexibleCategories(FlextModels.Categories[FlextLdifModelsDomains.Entry]):
+        """Flexible entry categorization with dynamic categories.
+
+        Replaces dict[str, list[Entry]] pattern with type-safe model.
+        Supports arbitrary category names (schema, hierarchy, users, groups, acl, rejected, etc.)
+        """

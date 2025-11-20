@@ -13,15 +13,17 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, cast, overload, override
+from typing import ClassVar, cast, overload, override
 
 from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDispatcher,
     FlextLogger,
+    FlextModels,
     FlextRegistry,
     FlextResult,
+    FlextRuntime,
     FlextService,
 )
 from pydantic import PrivateAttr
@@ -45,12 +47,8 @@ from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes, ServiceT
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifTypes.Models is a namespace, not an importable module
-if TYPE_CHECKING:
-    _ServiceResponseType = FlextLdifTypes.Models.ServiceResponseTypes
-else:
-    _ServiceResponseType = object  # type: ignore[misc]
+# Type alias for service response type
+_ServiceResponseType = FlextLdifTypes.Models.ServiceResponseTypes
 
 
 class FlextLdif(FlextService[_ServiceResponseType]):
@@ -280,7 +278,6 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
                 raise RuntimeError(msg)
             config = cast("FlextLdifConfig", ldif_namespace)
-        self._config = config
         self._context = {}
         self._handlers = {}
 
@@ -306,15 +303,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         # Note: Each instance initializes its own services
 
         # Log config initialization ONCE (only on first initialization)
-        # _config is guaranteed to be set above, but check logger availability
         if self.logger is not None:
-            self.logger.debug(
-                "FlextLdif facade initialized",
-                config_available=self._config is not None,
-            )
-            self.logger.debug(
-                "Services setup and default quirks registered",
-            )
+            self.logger.debug("FlextLdif facade initialized")
+            self.logger.debug("Services setup and default quirks registered")
 
     # =========================================================================
     # PRIVATE: Service Setup and Handler Initialization (from client.py)
@@ -452,23 +443,29 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 self._registry.register(
                     "ldif_parser_service",
                     self._parser_service,
-                    metadata={
-                        "type": "service",
-                        "domain": "parser",
-                        "description": "Unified LDIF parsing",
-                    },
+                    metadata=FlextModels.Metadata(
+                        attributes={
+                            "type": "service",
+                            "domain": "parser",
+                            "description": "Unified LDIF parsing",
+                        }
+                    ),
                 )
 
                 # Register configuration and constants
                 self._registry.register(
                     "ldif_config",
-                    self.config,
-                    metadata={"type": "config", "domain": "ldif"},
+                    cast("FlextLdifConfig", self.config.ldif),
+                    metadata=FlextModels.Metadata(
+                        attributes={"type": "config", "domain": "ldif"}
+                    ),
                 )
                 self._registry.register(
                     "ldif_constants",
                     FlextLdifConstants,
-                    metadata={"type": "constants", "domain": "ldif"},
+                    metadata=FlextModels.Metadata(
+                        attributes={"type": "constants", "domain": "ldif"}
+                    ),
                 )
 
                 if self._logger:
@@ -576,7 +573,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         if not hasattr(self, "_parser_service") or self._parser_service is None:
-            self._parser_service = FlextLdifParser(config=self.config)
+            self._parser_service = FlextLdifParser(
+                config=cast("FlextLdifConfig", self.config.ldif)
+            )
         return self._parser_service
 
     def _execute_parse_with_service(
@@ -607,10 +606,14 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         # Extract entries from ParseResponse
         if parse_result.is_success:
             parse_response = parse_result.unwrap()
-            entries_list = list(parse_response.entries)
-            # Cast to ensure type compatibility between FlextLdifModelsDomains.Entry and FlextLdifModels.Entry
-            entries_list_casted = cast("list[FlextLdifModels.Entry]", entries_list)
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries_list_casted)
+            # Convert domain Entry to public Entry (they're the same class via inheritance)
+            entries_list: list[FlextLdifModels.Entry] = [
+                entry
+                if isinstance(entry, FlextLdifModels.Entry)
+                else FlextLdifModels.Entry.model_validate(entry.model_dump())
+                for entry in parse_response.entries
+            ]
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries_list)
         return FlextResult.fail(parse_result.error or "Unknown error")
 
     def parse(
@@ -699,7 +702,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         # Case 1: Path object - read file
         if isinstance(source, Path):
-            return source.read_text(encoding=self.config.ldif_encoding)
+            return source.read_text(
+                encoding=cast("FlextLdifConfig", self.config.ldif).ldif_encoding
+            )
 
         # Case 2: String - detect if it's a file path or LDIF content
         if isinstance(source, str):
@@ -740,7 +745,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 if not file_path.is_file():
                     error_msg = f"Path is not a file: {source}"
                     raise OSError(error_msg)
-                return file_path.read_text(encoding=self.config.ldif_encoding)
+                return file_path.read_text(
+                    encoding=cast("FlextLdifConfig", self.config.ldif).ldif_encoding
+                )
 
             # Default: treat as LDIF content if ambiguous
             return source
@@ -998,7 +1005,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             return FlextResult[FlextLdifModels.MigrationConfig].fail(
                 "MigrationConfig cannot be None",
             )
-        if isinstance(migration_config, dict):
+        if FlextRuntime.is_dict_like(migration_config):
             try:
                 model = FlextLdifModels.MigrationConfig.model_validate(migration_config)
                 return FlextResult[FlextLdifModels.MigrationConfig].ok(model)
@@ -1015,7 +1022,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     def _detect_migration_mode(
         self,
         config_model: FlextLdifModels.MigrationConfig | None,
-        categorization_rules: dict[str, list[str]] | None,
+        categorization_rules: FlextLdifModels.CategoryRules | None,
     ) -> str:
         """Auto-detect migration mode based on parameters."""
         if config_model is not None:
@@ -1045,7 +1052,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         if write_options is not None:
             # Convert dict to WriteFormatOptions if necessary
-            if isinstance(write_options, dict):
+            if FlextRuntime.is_dict_like(write_options):
                 try:
                     model = FlextLdifModels.WriteFormatOptions.model_validate(
                         write_options,
@@ -1210,7 +1217,17 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 config_model = config_result.unwrap()
 
             # Auto-detect mode and create write options
-            mode = self._detect_migration_mode(config_model, opts.categorization_rules)
+            # Convert config CategoryRules to models CategoryRules if needed
+            categorization_rules: FlextLdifModels.CategoryRules | None = None
+            if opts.categorization_rules is not None:
+                if isinstance(opts.categorization_rules, FlextLdifModels.CategoryRules):
+                    categorization_rules = opts.categorization_rules
+                else:
+                    # Convert from config type to models type
+                    categorization_rules = FlextLdifModels.CategoryRules.model_validate(
+                        opts.categorization_rules.model_dump()
+                    )
+            mode = self._detect_migration_mode(config_model, categorization_rules)
             write_options_result = self._get_write_options_for_mode(
                 mode,
                 opts.write_options,
@@ -1234,7 +1251,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
             # Initialize migration pipeline with proper type safety
             # All parameters passed directly with correct types
-            # Type cast mode to satisfy MyPy (mode is always one of the three literals)
+            # Mode is validated to be one of the three literals (simple/categorized/structured)
             migration_pipeline = FlextLdifMigrationPipeline(
                 input_dir=input_dir,
                 output_dir=output_dir,
@@ -1246,10 +1263,20 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 base_dn=opts.base_dn,
                 sort_entries_hierarchically=opts.sort_entries_hierarchically,
                 write_options=write_options,
-                categorization_rules=opts.categorization_rules,
+                categorization_rules=categorization_rules,
                 input_files=opts.input_files,
                 output_files=opts.output_files,
-                schema_whitelist_rules=opts.schema_whitelist_rules,
+                # Convert config WhitelistRules to models WhitelistRules if needed
+                schema_whitelist_rules=(
+                    opts.schema_whitelist_rules
+                    if isinstance(
+                        opts.schema_whitelist_rules, FlextLdifModels.WhitelistRules
+                    )
+                    or opts.schema_whitelist_rules is None
+                    else FlextLdifModels.WhitelistRules.model_validate(
+                        opts.schema_whitelist_rules.model_dump()
+                    )
+                ),
                 input_filename=opts.input_filename,
                 output_filename=(opts.output_filename or "migrated.ldif"),
             )
@@ -1650,7 +1677,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             return FlextResult[bool].fail("ACL service not initialized")
         # Convert context to dict[str, object] for ACL service
         eval_context: dict[str, object] = (
-            dict(context) if isinstance(context, dict) else {}
+            dict(context) if FlextRuntime.is_dict_like(context) else {}
         )
         return self._acl_service.evaluate_acl_context(
             acls,
@@ -1907,46 +1934,34 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         try:
-            config = self.config
+            config = cast("FlextLdifConfig", self.config.ldif)
 
-            # Use structural pattern matching for server type resolution (Python 3.13)
-            match config:
-                case FlextLdifConfig(enable_relaxed_parsing=True):
-                    return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RELAXED)
+            # Relaxed mode takes highest priority
+            if config.enable_relaxed_parsing:
+                return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RELAXED)
 
-                case FlextLdifConfig(
-                    quirks_detection_mode="manual",
-                    quirks_server_type=str() as server_type,
-                ):
-                    return FlextResult[str].ok(server_type)
-
-                case FlextLdifConfig(quirks_detection_mode="manual"):
+            # Manual mode - use configured server type
+            if config.quirks_detection_mode == "manual":
+                if not config.quirks_server_type:
                     return FlextResult[str].fail(
-                        "Manual mode requires quirks_server_type to be set",
+                        "Manual mode requires quirks_server_type to be set"
                     )
+                return FlextResult[str].ok(config.quirks_server_type)
 
-                case FlextLdifConfig(quirks_detection_mode="auto") if ldif_path:
-                    detector = FlextLdifDetector()
-                    detection_result = detector.detect_server_type(ldif_path=ldif_path)
-                    if detection_result.is_success:
-                        detected_data = detection_result.unwrap()
-                        # ServerDetectionResult is now a Pydantic model
-                        # Validate detected_server_type is not None/empty
-                        if (
-                            detected_data.detected_server_type
-                            and detected_data.detected_server_type.strip()
-                        ):
-                            return FlextResult[str].ok(
-                                detected_data.detected_server_type,
-                            )
-                        # Fall back to configured default if detection returned empty/None
-                        return FlextResult[str].ok(config.ldif_default_server_type)
-                    # Auto-detection failed, fall back to configured server type
-                    return FlextResult[str].ok(config.ldif_default_server_type)
+            # Auto mode - detect from LDIF content
+            if config.quirks_detection_mode == "auto" and ldif_path:
+                detector = FlextLdifDetector()
+                detection_result = detector.detect_server_type(ldif_path=ldif_path)
+                if detection_result.is_success:
+                    detected_data = detection_result.unwrap()
+                    if (
+                        detected_data.detected_server_type
+                        and detected_data.detected_server_type.strip()
+                    ):
+                        return FlextResult[str].ok(detected_data.detected_server_type)
 
-                case _:
-                    # Default to configured server type
-                    return FlextResult[str].ok(config.ldif_default_server_type)
+            # Default fallback
+            return FlextResult[str].ok(config.ldif_default_server_type)
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Error determining server type: {e}")
@@ -1964,45 +1979,6 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         return FlextLdifModels
-
-    @property
-    @override
-    def config(self) -> FlextLdifConfig:  # type: ignore[override]
-        """Access to LDIF configuration instance with lazy initialization.
-
-        Returns:
-            Current FlextLdifConfig instance
-
-        Example:
-            encoding = ldif.config.ldif_encoding
-            max_workers = ldif.config.max_workers
-
-        Note:
-            This overrides FlextMixins.config to return FlextLdifConfig instead of FlextConfig.
-            This is intentional as FlextLdifConfig provides LDIF-specific configuration.
-
-        """
-        if self._config is None:
-            init_config = getattr(self, "_init_config_value", None)
-            if init_config is not None:
-                self._config = init_config
-            else:
-                # Use new config pattern with automatic namespaces via FlextMixins
-                # FlextLdifConfig is imported at top-level (line 29) to ensure @FlextConfig.auto_register("ldif") decorator executes
-                # self.config (from FlextMixins) returns FlextConfig.get_global_instance()
-                # Access namespace via .ldif attribute (registered by @auto_register decorator)
-                # Use getattr to access dynamic namespace (pyrefly doesn't understand __getattr__)
-                global_config = super().config  # FlextConfig instance from FlextMixins
-                ldif_namespace = getattr(global_config, "ldif", None)
-                if ldif_namespace is None:
-                    msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
-                    raise RuntimeError(msg)
-                self._config = cast("FlextLdifConfig", ldif_namespace)
-        # Type narrowing: _config cannot be None after initialization above
-        if self._config is None:
-            msg = "Configuration initialization failed"
-            raise RuntimeError(msg)
-        return self._config
 
     @property
     def constants(self) -> type[FlextLdifConstants]:
@@ -2058,7 +2034,6 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         if not self._context:
             # Initialize with empty dict
             self._context = {}
-        # Return as FlextContext type (which is a dict-like context object)
         return cast("FlextContext", self._context)
 
 

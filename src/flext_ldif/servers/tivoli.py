@@ -8,7 +8,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, cast
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -465,12 +465,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[str].fail(f"IBM Tivoli DS ACL write failed: {exc}")
 
-        @staticmethod
-        def _splitacl_line(acl_line: str) -> tuple[str, str]:
-            """Split an ACL line into attribute name and payload."""
-            attr_name, _, remainder = acl_line.partition(":")
-            return attr_name.strip(), remainder.strip()
-
     class Entry(FlextLdifServersRfc.Entry):
         """IBM Tivoli DS entry quirk."""
 
@@ -529,7 +523,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
             object_classes = (
                 object_classes_raw
-                if isinstance(object_classes_raw, list)
+                if FlextRuntime.is_list_like(object_classes_raw)
                 else [object_classes_raw]
             )
             return bool(

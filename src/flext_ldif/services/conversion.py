@@ -22,7 +22,7 @@ import traceback
 from collections.abc import Sequence
 from typing import ClassVar, Self, Union, cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -38,9 +38,6 @@ ServerQuirkOrType = Union["FlextLdifServersBase", str]
 
 # Type alias for ConvertibleModel Union (used in return types)
 # Use string literals for forward references to avoid import issues
-if False:  # TYPE_CHECKING equivalent for runtime
-    from flext_ldif.models import FlextLdifModels
-
 ConvertibleModelUnion = Union[
     "FlextLdifModels.Entry",
     "FlextLdifModels.SchemaAttribute",
@@ -372,9 +369,9 @@ class FlextLdifConversion(
 
         # Analyze boolean conversions for target compatibility
         boolean_conversions = getattr(source_metadata, "boolean_conversions", {})
-        if boolean_conversions and isinstance(boolean_conversions, dict):
+        if boolean_conversions and FlextRuntime.is_dict_like(boolean_conversions):
             for attr_name, conv_info in boolean_conversions.items():
-                if isinstance(conv_info, dict):
+                if FlextRuntime.is_dict_like(conv_info):
                     original_format = conv_info.get("format", "")
                     conversion_analysis[f"boolean_{attr_name}"] = {
                         "source_format": original_format,
@@ -386,7 +383,9 @@ class FlextLdifConversion(
         original_attribute_case = getattr(
             source_metadata, "original_attribute_case", {}
         )
-        if original_attribute_case and isinstance(original_attribute_case, dict):
+        if original_attribute_case and FlextRuntime.is_dict_like(
+            original_attribute_case
+        ):
             conversion_analysis["attribute_case"] = {
                 "source_case": original_attribute_case,
                 "target_server": target_server_type,
@@ -397,7 +396,9 @@ class FlextLdifConversion(
         original_format_details = getattr(
             source_metadata, "original_format_details", {}
         )
-        if original_format_details and isinstance(original_format_details, dict):
+        if original_format_details and FlextRuntime.is_dict_like(
+            original_format_details
+        ):
             dn_spacing = original_format_details.get("dn_spacing")
             if dn_spacing:
                 conversion_analysis["dn_format"] = {
@@ -661,8 +662,8 @@ class FlextLdifConversion(
             )
 
         # Type ignore: Concrete subclasses (e.g., FlextLdifServersRfc) implement execute
-        source_acl = source_class.Acl()  # type: ignore[abstract]
-        target_acl = target_class.Acl()  # type: ignore[abstract]
+        source_acl = source_class.Acl()
+        target_acl = target_class.Acl()
 
         # Protocols are for STATIC type checking only, not runtime isinstance()
         # Duck typing: if the quirk has write() and parse() methods, it works
@@ -816,7 +817,7 @@ class FlextLdifConversion(
             return FlextResult.ok(converted_acl)
 
         except Exception as e:
-            tb_str = traceback.format_exc()
+            traceback.format_exc()
             logger.exception(
                 "Failed to convert ACL model",
                 error=str(e),
@@ -958,7 +959,7 @@ class FlextLdifConversion(
             parsed_attr = target_parse_result.unwrap()
 
             # Step 4: Write target attribute to final format
-            return self._write_target_attribute(target, parsed_attr)
+            return self._write_target_attribute(parsed_attr)
 
         except (AttributeError, ValueError, TypeError, RuntimeError, Exception) as e:
             return FlextResult.fail(f"Attribute conversion failed: {e}")
@@ -1002,7 +1003,6 @@ class FlextLdifConversion(
 
     def _write_target_attribute(
         self,
-        target: ServerQuirkOrType,
         parsed_attr: FlextLdifModels.SchemaAttribute | object,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]:
         """Write target attribute to final format."""
@@ -1018,33 +1018,16 @@ class FlextLdifConversion(
                 ),
             )
 
-        target_quirk = self._resolve_quirk(target)
-
-        # Get target schema quirk with proper type narrowing
-        try:
-            schema_quirk = _get_schema_quirk(target_quirk, needs_write=True)
-            write_result = schema_quirk.write_attribute(parsed_attr)
-            # write_attribute returns FlextResult[str] - deprecated, use model-based conversion
-            if write_result.is_success:
-                return FlextResult[
-                    FlextLdifModels.SchemaAttribute | dict[str, object] | str
-                ].fail(
-                    "String-based attribute conversion is deprecated. Use model-based conversion.",
-                )
-            error_msg = write_result.error or "Failed to write attribute"
-            return FlextResult[
-                FlextLdifModels.SchemaAttribute | dict[str, object] | str
-            ].fail(error_msg)
-        except TypeError:
-            # No schema writer available, return parsed attribute as-is
-            return FlextResult[
-                FlextLdifModels.SchemaAttribute | dict[str, object] | str
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaAttribute | dict[str, object] | str",
-                    parsed_attr,
-                ),
-            )
+        # Model-based conversion - return parsed attribute as-is
+        # Schema quirks write via model conversion, not string-based
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | dict[str, object] | str
+        ].ok(
+            cast(
+                "FlextLdifModels.SchemaAttribute | dict[str, object] | str",
+                parsed_attr,
+            ),
+        )
 
     def _write_objectclass_to_rfc(
         self,
@@ -1503,19 +1486,112 @@ class FlextLdifConversion(
         # Check Entry support
         return self._check_entry_support(quirk, support)
 
+    def _get_schema_quirk_for_support_check(
+        self,
+        quirk: FlextLdifServersBase,
+    ) -> object | None:
+        """Get schema quirk from base quirk for support checking.
+
+        Args:
+            quirk: Base quirk instance
+
+        Returns:
+            Schema quirk instance or None if not available
+
+        """
+        # Check if quirk is already a Schema quirk (has parse_attribute directly)
+        if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
+            return quirk
+        # Check if quirk is a base quirk with schema_quirk attribute
+        schema_quirk = getattr(quirk, "schema_quirk", None)
+        if schema_quirk is not None:
+            return schema_quirk
+        return None
+
+    def _check_attribute_support(
+        self,
+        quirk_schema: object,
+        test_attr_def: str,
+        support: dict[str, bool],
+    ) -> dict[str, bool]:
+        """Check attribute support for schema quirk.
+
+        Args:
+            quirk_schema: Schema quirk instance
+            test_attr_def: Test attribute definition string
+            support: Support dictionary to update
+
+        Returns:
+            Updated support dictionary
+
+        """
+        if not hasattr(quirk_schema, "can_handle_attribute"):
+            return support
+        if not hasattr(quirk_schema, "parse_attribute"):
+            return support
+
+        can_handle_attr = getattr(quirk_schema, "can_handle_attribute", None)
+        if can_handle_attr is None or not callable(can_handle_attr):
+            return support
+        if not can_handle_attr(test_attr_def):
+            return support
+
+        parse_attr = getattr(quirk_schema, "parse_attribute", None)
+        if parse_attr is None or not callable(parse_attr):
+            return support
+
+        attr_result = parse_attr(test_attr_def)
+        if isinstance(attr_result, FlextResult) and attr_result.is_success:
+            support["attribute"] = True
+
+        return support
+
+    def _check_objectclass_support(
+        self,
+        quirk_schema: object,
+        test_oc_def: str,
+        support: dict[str, bool],
+    ) -> dict[str, bool]:
+        """Check objectClass support for schema quirk.
+
+        Args:
+            quirk_schema: Schema quirk instance
+            test_oc_def: Test objectClass definition string
+            support: Support dictionary to update
+
+        Returns:
+            Updated support dictionary
+
+        """
+        if not hasattr(quirk_schema, "can_handle_objectclass"):
+            return support
+        if not hasattr(quirk_schema, "parse_objectclass"):
+            return support
+
+        can_handle_oc = getattr(quirk_schema, "can_handle_objectclass", None)
+        if can_handle_oc is None or not callable(can_handle_oc):
+            return support
+        if not can_handle_oc(test_oc_def):
+            return support
+
+        parse_oc = getattr(quirk_schema, "parse_objectclass", None)
+        if parse_oc is None or not callable(parse_oc):
+            return support
+
+        oc_result = parse_oc(test_oc_def)
+        if isinstance(oc_result, FlextResult) and oc_result.is_success:
+            support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
+
+        return support
+
     def _check_schema_support(
         self,
         quirk: FlextLdifServersBase,
         support: dict[str, bool],
     ) -> dict[str, bool]:
         """Check schema (attribute and objectClass) support."""
-        # Check if quirk is already a Schema quirk (has parse_attribute directly)
-        if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
-            quirk_schema = quirk
-        # Check if quirk is a base quirk with schema_quirk attribute
-        elif hasattr(quirk, "schema_quirk"):
-            quirk_schema = quirk.schema_quirk
-        else:
+        quirk_schema = self._get_schema_quirk_for_support_check(quirk)
+        if quirk_schema is None:
             return support
 
         # Use quirk_schema for checks
@@ -1525,30 +1601,10 @@ class FlextLdifConversion(
         )
 
         # Check attribute support
-        if hasattr(quirk_schema, "can_handle_attribute") and hasattr(
-            quirk_schema,
-            "parse_attribute",
-        ):
-            can_handle_attr = quirk_schema.can_handle_attribute
-            if can_handle_attr(test_attr_def):
-                parse_attr = quirk_schema.parse_attribute
-                attr_result = parse_attr(test_attr_def)
-                if attr_result.is_success:
-                    support["attribute"] = True
+        support = self._check_attribute_support(quirk_schema, test_attr_def, support)
 
         # Check objectClass support
-        if hasattr(quirk_schema, "can_handle_objectclass") and hasattr(
-            quirk_schema,
-            "parse_objectclass",
-        ):
-            can_handle_oc = quirk_schema.can_handle_objectclass
-            if can_handle_oc(test_oc_def):
-                parse_oc = quirk_schema.parse_objectclass
-                oc_result = parse_oc(test_oc_def)
-                if oc_result.is_success:
-                    support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
-
-        return support
+        return self._check_objectclass_support(quirk_schema, test_oc_def, support)
 
     def _check_acl_support(
         self,

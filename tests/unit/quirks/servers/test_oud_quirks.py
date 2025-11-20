@@ -88,7 +88,7 @@ class OudTestHelpers:
             if isinstance(attr_value, str):
                 return [attr_value]
             # Handle list/sequence types
-            return [str(v) for v in attr_value]  # type: ignore[arg-type]
+            return [str(v) for v in attr_value]
         if hasattr(attr_value, "values"):
             values_attr = getattr(attr_value, "values", None)
             if values_attr is not None:

@@ -258,8 +258,7 @@ class TestRfcSchemaQuirk:
     ) -> None:
         """Test Schema.can_handle_attribute with string."""
         assert (
-            rfc_schema_quirk.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN)  # type: ignore[attr-defined]
-            is True
+            rfc_schema_quirk.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN) is True
         )
 
     def test_schema_can_handle_attribute_model(
@@ -637,7 +636,7 @@ class TestRfcAclQuirk:
         """Test Acl.create_metadata."""
         metadata = rfc_acl_quirk.create_metadata(
             "aci: test", extensions={"extra": "value"}
-        )  # type: ignore[attr-defined]
+        )
         assert metadata is not None
         assert metadata.quirk_type == "rfc"
         assert metadata.extensions.get("extra") == "value"
@@ -647,7 +646,7 @@ class TestRfcAclQuirk:
         self, rfc_acl_quirk: FlextLdifServersRfc.Acl
     ) -> None:
         """Test Acl.create_metadata without extensions."""
-        metadata = rfc_acl_quirk.create_metadata("aci: test")  # type: ignore[attr-defined]
+        metadata = rfc_acl_quirk.create_metadata("aci: test")
         assert metadata is not None
         assert metadata.quirk_type == "rfc"
 
@@ -798,7 +797,7 @@ class TestRfcEntryQuirk:
         """Test Entry._parse_content with empty content."""
         from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        result = rfc_entry_quirk._parse_content("")  # type: ignore[arg-type]
+        result = rfc_entry_quirk._parse_content("")
         entries = RfcTestHelpers.test_result_success_and_unwrap(result)
         assert isinstance(entries, list)
         assert len(entries) == 0
@@ -967,7 +966,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         self, rfc_entry_quirk: FlextLdifServersRfc.Entry
     ) -> None:
         """Test Entry._parse_entry with base64 DN flag."""
-        result = rfc_entry_quirk._parse_entry(  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_entry(
             TestGeneralConstants.SAMPLE_DN,
             {
                 "_base64_dn": [True],
@@ -992,9 +991,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             include_dn_comments=True,
         )
         ldif_lines: list[str] = []
-        rfc_entry_quirk._write_entry_comments_dn(  # type: ignore[attr-defined]
-            ldif_lines, entry_model, write_options
-        )
+        rfc_entry_quirk._write_entry_comments_dn(ldif_lines, entry_model, write_options)
 
         assert len(ldif_lines) == 1
         assert "# Complex DN:" in ldif_lines[0]
@@ -1248,7 +1245,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             base64_encode_binary=False,
         )
 
-        rfc_entry_quirk._write_entry_attribute_value(  # type: ignore[attr-defined]
+        rfc_entry_quirk._write_entry_attribute_value(
             ldif_lines,
             "description",
             " starts with space",
@@ -1357,9 +1354,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             ),
         )
 
-        result = rfc_entry_quirk._write_entry_add_format(  # type: ignore[attr-defined]
-            entry_model, None
-        )
+        result = rfc_entry_quirk._write_entry_add_format(entry_model, None)
 
         assert result.is_failure
         assert result.error is not None
@@ -1603,7 +1598,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         )
 
         ldif_lines: list[str] = []
-        rfc_entry_quirk._write_entry_process_attributes(  # type: ignore[attr-defined]
+        rfc_entry_quirk._write_entry_process_attributes(
             ldif_lines,
             entry_model,
             set(),
@@ -1631,7 +1626,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         entry_model.attributes.attributes["description"] = ["single value"]
 
         ldif_lines: list[str] = []
-        rfc_entry_quirk._write_entry_process_attributes(  # type: ignore[attr-defined]
+        rfc_entry_quirk._write_entry_process_attributes(
             ldif_lines,
             entry_model,
             set(),
@@ -2129,7 +2124,7 @@ class TestRfcSchemaQuirkMethods:
                 },
             ),
         )
-        result = rfc_schema_quirk._write_attribute(attr)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._write_attribute(attr)
         assert result.is_success
         written = result.unwrap()
         assert "X-ORIGIN" in written or "x_origin" in written.lower()
@@ -2154,7 +2149,7 @@ class TestRfcSchemaQuirkMethods:
             ),
         )
 
-        result = rfc_schema_quirk._write_objectclass(oc)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._write_objectclass(oc)
         assert result.is_success
         written = result.unwrap()
         # Should include X-ORIGIN in the output
@@ -2166,35 +2161,35 @@ class TestRfcSchemaQuirkMethods:
     ) -> None:
         """Test _detect_schema_type with objectclass-specific keywords."""
         # Test STRUCTURAL keyword
-        result = rfc_schema_quirk._detect_schema_type(TestsRfcConstants.OC_DEF_PERSON)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(TestsRfcConstants.OC_DEF_PERSON)
         assert result == "objectclass"
 
         # Test AUXILIARY keyword
         oc_def_aux = f"({TestsRfcConstants.OC_OID_PERSON} NAME '{TestsRfcConstants.OC_NAME_PERSON}' AUXILIARY )"
         result = rfc_schema_quirk._detect_schema_type(
             oc_def_aux,
-        )  # type: ignore[attr-defined]
+        )
         assert result == "objectclass"
 
         # Test ABSTRACT keyword
         oc_def_abstract = f"({TestsRfcConstants.OC_OID_PERSON} NAME '{TestsRfcConstants.OC_NAME_PERSON}' ABSTRACT )"
         result = rfc_schema_quirk._detect_schema_type(
             oc_def_abstract,
-        )  # type: ignore[attr-defined]
+        )
         assert result == "objectclass"
 
         # Test MUST keyword
         oc_def_must = f"({TestsRfcConstants.OC_OID_PERSON} NAME '{TestsRfcConstants.OC_NAME_PERSON}' MUST ( {TestsRfcConstants.ATTR_NAME_CN} ) )"
         result = rfc_schema_quirk._detect_schema_type(
             oc_def_must,
-        )  # type: ignore[attr-defined]
+        )
         assert result == "objectclass"
 
         # Test MAY keyword
         oc_def_may = f"({TestsRfcConstants.OC_OID_PERSON} NAME '{TestsRfcConstants.OC_NAME_PERSON}' MAY ( {TestsRfcConstants.ATTR_NAME_SN} ) )"
         result = rfc_schema_quirk._detect_schema_type(
             oc_def_may,
-        )  # type: ignore[attr-defined]
+        )
         assert result == "objectclass"
 
     def test_detect_schema_type_attribute_keywords(
@@ -2204,19 +2199,19 @@ class TestRfcSchemaQuirkMethods:
     ) -> None:
         """Test _detect_schema_type with attribute-specific keywords."""
         # Test EQUALITY keyword
-        result = rfc_schema_quirk._detect_schema_type(  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(
             TestsRfcConstants.ATTR_DEF_CN_FULL,
         )
         assert result == "attribute"
 
         # Test SUBSTR keyword
-        result = rfc_schema_quirk._detect_schema_type(  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(
             "( 2.5.4.3 NAME 'cn' SUBSTR caseIgnoreSubstringsMatch )",
         )
         assert result == "attribute"
 
         # Test ORDERING keyword
-        result = rfc_schema_quirk._detect_schema_type(  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(
             "( 2.5.4.3 NAME 'cn' ORDERING caseIgnoreOrderingMatch )",
         )
         assert result == "attribute"
@@ -2224,25 +2219,25 @@ class TestRfcSchemaQuirkMethods:
         # Test SYNTAX keyword
         result = rfc_schema_quirk._detect_schema_type(
             "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        )  # type: ignore[attr-defined]
+        )
         assert result == "attribute"
 
         # Test USAGE keyword
         result = rfc_schema_quirk._detect_schema_type(
             "( 2.5.4.3 NAME 'cn' USAGE userApplications )",
-        )  # type: ignore[attr-defined]
+        )
         assert result == "attribute"
 
         # Test SINGLE-VALUE keyword
         result = rfc_schema_quirk._detect_schema_type(
             "( 2.5.4.3 NAME 'cn' SINGLE-VALUE )",
-        )  # type: ignore[attr-defined]
+        )
         assert result == "attribute"
 
         # Test NO-USER-MODIFICATION keyword
         result = rfc_schema_quirk._detect_schema_type(
             "( 2.5.4.3 NAME 'cn' NO-USER-MODIFICATION )",
-        )  # type: ignore[attr-defined]
+        )
         assert result == "attribute"
 
     def test_detect_schema_type_legacy_objectclass(
@@ -2253,14 +2248,14 @@ class TestRfcSchemaQuirkMethods:
         oc_def_objclass = f"({TestsRfcConstants.OC_OID_PERSON} NAME '{TestsRfcConstants.OC_NAME_PERSON}' objectclass )"
         result = rfc_schema_quirk._detect_schema_type(
             oc_def_objclass,
-        )  # type: ignore[attr-defined]
+        )
         assert result == "objectclass"
 
         # Test oclass keyword
         oc_def_oclass = f"({TestsRfcConstants.OC_OID_PERSON} NAME '{TestsRfcConstants.OC_NAME_PERSON}' oclass )"
         result = rfc_schema_quirk._detect_schema_type(
             oc_def_oclass,
-        )  # type: ignore[attr-defined]
+        )
         assert result == "objectclass"
 
     def test_detect_schema_type_default_attribute(
@@ -2271,7 +2266,7 @@ class TestRfcSchemaQuirkMethods:
     ) -> None:
         """Test _detect_schema_type defaults to attribute when ambiguous."""
         # Test ambiguous definition (no clear keywords)
-        result = rfc_schema_quirk._detect_schema_type(TestsRfcConstants.ATTR_DEF_CN)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(TestsRfcConstants.ATTR_DEF_CN)
         assert result == "attribute"
 
     def test_detect_schema_type_with_model(
@@ -2283,12 +2278,12 @@ class TestRfcSchemaQuirkMethods:
         """Test _detect_schema_type with model objects."""
         # Test with SchemaAttribute model
         attr = sample_schema_attribute
-        result = rfc_schema_quirk._detect_schema_type(attr)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(attr)
         assert result == "attribute"
 
         # Test with SchemaObjectClass model
         oc = sample_schema_objectclass
-        result = rfc_schema_quirk._detect_schema_type(oc)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._detect_schema_type(oc)
         assert result == "objectclass"
 
     def test_route_parse_objectclass(
@@ -3364,7 +3359,7 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
     ) -> None:
         """Test Acl.execute with write operation and invalid data type."""
         result = rfc_acl_quirk.execute(
-            data="not an Acl",  # type: ignore[arg-type]
+            data="not an Acl",
             operation="write",
         )
         assert result.is_failure
@@ -3692,7 +3687,7 @@ class TestRfcCoverage100Percent:
             ),  # Empty DN will fail
             attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
-        result = rfc_entry_quirk._route_write_many([sample_entry, invalid_entry])  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._route_write_many([sample_entry, invalid_entry])
         # Should handle failure gracefully
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -3702,7 +3697,7 @@ class TestRfcCoverage100Percent:
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._route_write_many with empty list."""
-        result = rfc_entry_quirk._route_write_many([])  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._route_write_many([])
         ldif_text: str = RfcTestHelpers.test_result_success_and_unwrap(result)
         # Empty list should return empty string
         assert ldif_text == ""
@@ -3713,7 +3708,7 @@ class TestRfcCoverage100Percent:
         sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test Entry._route_write_many with single entry without newline."""
-        result = rfc_entry_quirk._route_write_many([sample_entry])  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._route_write_many([sample_entry])
         ldif_text = RfcTestHelpers.test_result_success_and_unwrap(result)
         # Should add newline if not present
         assert ldif_text.endswith("\n")
@@ -3725,7 +3720,7 @@ class TestRfcCoverage100Percent:
         """Test Entry._handle_parse_entry with parse failure."""
         # Use content that will cause parse to fail
         invalid_content = "\x00\x01\x02"
-        result = rfc_entry_quirk._handle_parse_entry(invalid_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._handle_parse_entry(invalid_content)
         assert isinstance(result, FlextResult)
         if result.is_failure:
             assert result.error is not None
@@ -3744,7 +3739,7 @@ class TestRfcCoverage100Percent:
             ),  # Empty DN will fail
             attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
-        result = rfc_entry_quirk._handle_write_entry([invalid_entry])  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._handle_write_entry([invalid_entry])
         assert isinstance(result, FlextResult)
         if result.is_failure:
             assert result.error is not None
@@ -3790,7 +3785,7 @@ class TestRfcCoverage100Percent:
         """Test Acl._handle_parse_acl with parse failure."""
         # Use invalid ACL that will cause parse to fail
         invalid_acl = "invalid acl format"
-        result = rfc_acl_quirk._handle_parse_acl(invalid_acl)  # type: ignore[attr-defined]
+        result = rfc_acl_quirk._handle_parse_acl(invalid_acl)
         assert isinstance(result, FlextResult)
         if result.is_failure:
             assert result.error is not None
@@ -3802,7 +3797,7 @@ class TestRfcCoverage100Percent:
         """Test Acl._handle_write_acl with write failure."""
         # Create invalid ACL that will cause write to fail
         invalid_acl = FlextLdifModels.Acl()
-        result = rfc_acl_quirk._handle_write_acl(invalid_acl)  # type: ignore[attr-defined]
+        result = rfc_acl_quirk._handle_write_acl(invalid_acl)
         # May succeed or fail depending on implementation
         assert isinstance(result, FlextResult)
 
@@ -3827,7 +3822,7 @@ class TestRfcCoverage100Percent:
         """Test Entry._parse_content with content that causes exception."""
         # Use content that will cause an exception
         invalid_content = "\x00\x01\x02" * 1000
-        result = rfc_entry_quirk._parse_content(invalid_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(invalid_content)
         # Should handle exception gracefully
         assert isinstance(result, FlextResult)
 
@@ -3842,7 +3837,7 @@ class TestRfcCoverage100Percent:
             f"dn: {TestGeneralConstants.SAMPLE_DN}\n"
             f"{TestGeneralConstants.ATTR_NAME_CN}:: {hex_value}\n"
         )
-        result = rfc_entry_quirk._parse_content(ldif_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(ldif_content)
         # Should handle bytes gracefully
         assert isinstance(result, FlextResult)
 
@@ -3857,7 +3852,7 @@ class TestRfcCoverage100Percent:
             f"dn: {TestGeneralConstants.SAMPLE_DN}\n"
             f"{TestGeneralConstants.ATTR_NAME_CN}:: {hex_value}\n"
         )
-        result = rfc_entry_quirk._parse_content(ldif_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(ldif_content)
         # Should handle single bytes gracefully
         assert isinstance(result, FlextResult)
 
@@ -3871,7 +3866,7 @@ class TestRfcCoverage100Percent:
             f"dn: {TestGeneralConstants.SAMPLE_DN}\n"
             f"{TestGeneralConstants.ATTR_NAME_CN}: 123\n"
         )
-        result = rfc_entry_quirk._parse_content(ldif_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(ldif_content)
         # Should handle non-string gracefully
         assert isinstance(result, FlextResult)
 
@@ -3885,7 +3880,7 @@ class TestRfcCoverage100Percent:
         invalid_content = (
             f"dn: {TestGeneralConstants.SAMPLE_DN}\ninvalid: \x00\x01\x02\n"
         )
-        result = rfc_entry_quirk._parse_content(invalid_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(invalid_content)
         # May succeed or fail depending on implementation
         assert isinstance(result, FlextResult)
 
@@ -3915,7 +3910,7 @@ class TestRfcCoverage100Percent:
                 extensions={"x_origin": TestsRfcConstants.TEST_ORIGIN},
             ),
         )
-        result = rfc_schema_quirk._write_attribute(attr)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._write_attribute(attr)
         assert result.is_success
         written = result.unwrap()
         # Should include X-ORIGIN in the written string
@@ -3927,7 +3922,7 @@ class TestRfcCoverage100Percent:
         """Test _write_attribute without x_origin in metadata."""
         # Create attribute without x_origin
         attr = RfcTestHelpers.test_create_schema_attribute_minimal()
-        result = rfc_schema_quirk._write_attribute(attr)  # type: ignore[attr-defined]
+        result = rfc_schema_quirk._write_attribute(attr)
         _ = result.is_success
         assert result.is_success
         written = result.unwrap()
@@ -3994,7 +3989,7 @@ attributeTypes: ( 1.2.3.4 NAME 'testAttr' INVALID )
             f"dn: {TestGeneralConstants.SAMPLE_DN}\n"
             f"{TestGeneralConstants.ATTR_NAME_CN}:: {hex_value}\n"
         )
-        result = rfc_entry_quirk._parse_content(ldif_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(ldif_content)
         # Should handle bytes list gracefully
         assert isinstance(result, FlextResult)
 
@@ -4008,7 +4003,7 @@ attributeTypes: ( 1.2.3.4 NAME 'testAttr' INVALID )
         invalid_content = (
             f"dn: {TestGeneralConstants.SAMPLE_DN}\ninvalid: \x00\x01\x02\n"
         )
-        result = rfc_entry_quirk._parse_content(invalid_content)  # type: ignore[attr-defined]
+        result = rfc_entry_quirk._parse_content(invalid_content)
         # Should handle error gracefully
         assert isinstance(result, FlextResult)
         if result.is_failure:
@@ -4029,7 +4024,7 @@ class TestRfcSchemaAutoExecuteCoverage:
         class AutoExecuteSchema(FlextLdifServersRfc.Schema):
             """Schema with auto_execute enabled for testing."""
 
-            auto_execute: ClassVar[bool] = True  # type: ignore[misc,assignment]
+            auto_execute: ClassVar[bool] = True
 
         # Use real attribute definition from fixtures
         attr_def = TestsRfcConstants.ATTR_DEF_CN_FULL
@@ -4050,7 +4045,7 @@ class TestRfcSchemaAutoExecuteCoverage:
         class AutoExecuteSchema(FlextLdifServersRfc.Schema):
             """Schema with auto_execute enabled for testing."""
 
-            auto_execute: ClassVar[bool] = True  # type: ignore[misc,assignment]
+            auto_execute: ClassVar[bool] = True
 
         # Use real objectClass definition from fixtures
         oc_def = TestsRfcConstants.OC_DEF_PERSON
@@ -4071,7 +4066,7 @@ class TestRfcSchemaAutoExecuteCoverage:
         class AutoExecuteSchema(FlextLdifServersRfc.Schema):
             """Schema with auto_execute enabled for testing."""
 
-            auto_execute: ClassVar[bool] = True  # type: ignore[misc,assignment]
+            auto_execute: ClassVar[bool] = True
 
         # Use real SchemaAttribute from fixtures
         # Instantiate with attr_model - should auto-execute write
@@ -4093,7 +4088,7 @@ class TestRfcSchemaAutoExecuteCoverage:
         class AutoExecuteSchema(FlextLdifServersRfc.Schema):
             """Schema with auto_execute enabled for testing."""
 
-            auto_execute: ClassVar[bool] = True  # type: ignore[misc,assignment]
+            auto_execute: ClassVar[bool] = True
 
         # Use real SchemaObjectClass from fixtures
         # Instantiate with oc_model - should auto-execute write
@@ -4114,7 +4109,7 @@ class TestRfcSchemaAutoExecuteCoverage:
         class AutoExecuteSchema(FlextLdifServersRfc.Schema):
             """Schema with auto_execute enabled for testing."""
 
-            auto_execute: ClassVar[bool] = True  # type: ignore[misc,assignment]
+            auto_execute: ClassVar[bool] = True
 
         # Use real attribute definition from fixtures
         attr_def = TestsRfcConstants.ATTR_DEF_CN_FULL
@@ -4133,7 +4128,7 @@ class TestRfcSchemaAutoExecuteCoverage:
         class AutoExecuteSchema(FlextLdifServersRfc.Schema):
             """Schema with auto_execute enabled for testing."""
 
-            auto_execute: ClassVar[bool] = True  # type: ignore[misc,assignment]
+            auto_execute: ClassVar[bool] = True
 
         # When auto_execute=True and no auto-execute kwargs, execute() is called with data=None
         # which triggers health check and returns empty string
@@ -4159,7 +4154,7 @@ class TestRfcHandleParseOperationEntryObjectCoverage:
         # Parse valid LDIF to get a real ParseResponse
         ldif_text = TestGeneralConstants.SAMPLE_LDIF_ENTRY
         result = rfc_quirk._handle_parse_operation(ldif_text)
-        
+
         assert result.is_success
         unwrapped = result.unwrap()
         # Should return the first Entry from the list
@@ -4178,7 +4173,7 @@ class TestRfcHandleParseOperationEntryObjectCoverage:
         # Parse empty LDIF to get a ParseResponse with empty entries
         ldif_text = ""
         result = rfc_quirk._handle_parse_operation(ldif_text)
-        
+
         assert result.is_success
         unwrapped = result.unwrap()
         # Should return empty string when no entries

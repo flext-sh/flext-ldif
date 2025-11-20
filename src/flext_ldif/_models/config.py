@@ -124,7 +124,47 @@ class FlextLdifModelsConfig:
         )
         # Note: extra="allow" permits additional custom fields without declaring them
 
-    class MigrateOptions(FlextModels.Value):
+    class CategoryRules(FlextModels.Rules):
+        """Rules for entry categorization.
+
+        Contains DN patterns and objectClass lists for each category.
+        Replaces dict[str, Any] with type-safe Pydantic model.
+        """
+
+        user_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for user entries (e.g., '*,ou=users,*')",
+        )
+        group_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for group entries",
+        )
+        hierarchy_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for organizational hierarchy",
+        )
+        schema_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for schema entries",
+        )
+        user_objectclasses: list[str] = Field(
+            default_factory=lambda: ["person", "inetOrgPerson", "orclUser"],
+            description="ObjectClasses identifying user entries",
+        )
+        group_objectclasses: list[str] = Field(
+            default_factory=lambda: ["groupOfUniqueNames", "groupOfNames", "orclGroup"],
+            description="ObjectClasses identifying group entries",
+        )
+        hierarchy_objectclasses: list[str] = Field(
+            default_factory=lambda: ["organizationalUnit", "organization"],
+            description="ObjectClasses identifying organizational units",
+        )
+        acl_attributes: list[str] = Field(
+            default_factory=lambda: ["orclaci", "orclentrylevelaci"],
+            description="Attribute names containing ACL information",
+        )
+
+    class MigrateOptions(FlextModels.Options):
         """Options for FlextLdif.migrate() operation.
 
         Consolidates 12+ optional parameters into single typed Model.
@@ -153,7 +193,7 @@ class FlextLdifModelsConfig:
         )
 
         # Categorized mode parameters (legacy)
-        categorization_rules: dict[str, list[str]] | None = Field(
+        categorization_rules: FlextLdifModelsConfig.CategoryRules | None = Field(
             default=None,
             description="Entry categorization rules (enables categorized mode)",
         )
@@ -165,7 +205,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Category to filename mapping (categorized mode)",
         )
-        schema_whitelist_rules: dict[str, list[str]] | None = Field(
+        schema_whitelist_rules: FlextLdifModelsConfig.WhitelistRules | None = Field(
             default=None,
             description="Allowed schema elements whitelist (categorized mode)",
         )
@@ -241,47 +281,7 @@ class FlextLdifModelsConfig:
             description="Mode: 'include' keep, 'exclude' remove",
         )
 
-    class CategoryRules(FlextModels.ArbitraryTypesModel):
-        """Rules for entry categorization.
-
-        Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, Any] with type-safe Pydantic model.
-        """
-
-        user_dn_patterns: list[str] = Field(
-            default_factory=list,
-            description="DN patterns for user entries (e.g., '*,ou=users,*')",
-        )
-        group_dn_patterns: list[str] = Field(
-            default_factory=list,
-            description="DN patterns for group entries",
-        )
-        hierarchy_dn_patterns: list[str] = Field(
-            default_factory=list,
-            description="DN patterns for organizational hierarchy",
-        )
-        schema_dn_patterns: list[str] = Field(
-            default_factory=list,
-            description="DN patterns for schema entries",
-        )
-        user_objectclasses: list[str] = Field(
-            default_factory=lambda: ["person", "inetOrgPerson", "orclUser"],
-            description="ObjectClasses identifying user entries",
-        )
-        group_objectclasses: list[str] = Field(
-            default_factory=lambda: ["groupOfUniqueNames", "groupOfNames", "orclGroup"],
-            description="ObjectClasses identifying group entries",
-        )
-        hierarchy_objectclasses: list[str] = Field(
-            default_factory=lambda: ["organizationalUnit", "organization"],
-            description="ObjectClasses identifying organizational units",
-        )
-        acl_attributes: list[str] = Field(
-            default_factory=lambda: ["orclaci", "orclentrylevelaci"],
-            description="Attribute names containing ACL information",
-        )
-
-    class WhitelistRules(FlextModels.ArbitraryTypesModel):
+    class WhitelistRules(FlextModels.Rules):
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
@@ -321,7 +321,7 @@ class FlextLdifModelsConfig:
             description="OID patterns for allowed matchingRuleUse definitions",
         )
 
-    class WriteFormatOptions(FlextModels.Value):
+    class WriteFormatOptions(FlextModels.Options):
         """Formatting options for LDIF serialization.
 
         Provides detailed control over the output format, including line width
@@ -510,7 +510,7 @@ class FlextLdifModelsConfig:
             description="Data to pass to header template",
         )
 
-    class ParseFormatOptions(FlextModels.Value):
+    class ParseFormatOptions(FlextModels.Options):
         """Formatting options for LDIF parsing."""
 
         model_config = ConfigDict(frozen=True)

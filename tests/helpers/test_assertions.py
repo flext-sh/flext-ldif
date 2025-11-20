@@ -33,7 +33,7 @@ class TestAssertions:
         | FlextResult[str]
         | FlextResult[list]
         | FlextResult,
-        error_msg: str | None = None,  # type: ignore[type-arg]
+        error_msg: str | None = None,
     ) -> object:
         """Assert result is success and return unwrapped value.
 
@@ -60,7 +60,7 @@ class TestAssertions:
         | FlextResult[str]
         | FlextResult[list]
         | FlextResult,
-        expected_error: str | None = None,  # type: ignore[type-arg]
+        expected_error: str | None = None,
     ) -> str:
         """Assert result is failure and return error message.
 

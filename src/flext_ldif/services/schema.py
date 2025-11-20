@@ -37,7 +37,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -47,15 +47,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger = FlextLogger(__name__)
 
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _SchemaServiceStatusType = FlextLdifModels.SchemaServiceStatus
-else:
-    _SchemaServiceStatusType = object  # type: ignore[misc]
-
-
-class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
+class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
     """Unified schema validation and transformation service.
 
     Centralizes all schema-related operations that were previously scattered
@@ -242,7 +234,9 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
             if not attr.oid or not attr.oid.strip():
                 return FlextResult.fail("Attribute OID is required and cannot be empty")
             if not attr.name or not attr.name.strip():
-                return FlextResult.fail("Attribute NAME is required and cannot be empty")
+                return FlextResult.fail(
+                    "Attribute NAME is required and cannot be empty"
+                )
 
             # Validate syntax OID format if present
             if attr.syntax:
@@ -280,9 +274,13 @@ class FlextLdifSchema(FlextService[_SchemaServiceStatusType]):
         try:
             # Validate required fields are not empty
             if not oc.oid or not oc.oid.strip():
-                return FlextResult.fail("ObjectClass OID is required and cannot be empty")
+                return FlextResult.fail(
+                    "ObjectClass OID is required and cannot be empty"
+                )
             if not oc.name or not oc.name.strip():
-                return FlextResult.fail("ObjectClass NAME is required and cannot be empty")
+                return FlextResult.fail(
+                    "ObjectClass NAME is required and cannot be empty"
+                )
 
             # Check objectclass kind
             if oc.kind not in {"ABSTRACT", "STRUCTURAL", "AUXILIARY"}:

@@ -269,7 +269,7 @@ class TestConversionServiceConvert:
         # Use a plain string (unsupported type) to test error handling
         invalid_model = "this is not a valid model"
 
-        result = conversion_service.convert(rfc_quirk, rfc_quirk, invalid_model)  # type: ignore[arg-type]
+        result = conversion_service.convert(rfc_quirk, rfc_quirk, invalid_model)
 
         # Should fail with unsupported model type error
         assert result.is_failure

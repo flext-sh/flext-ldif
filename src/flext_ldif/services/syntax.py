@@ -121,22 +121,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _SyntaxServiceStatusType = FlextLdifModels.SyntaxServiceStatus
-else:
-    _SyntaxServiceStatusType = object  # type: ignore[misc]
 
-
-class FlextLdifSyntax(FlextService[_SyntaxServiceStatusType]):
+class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and

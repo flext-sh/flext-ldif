@@ -449,7 +449,7 @@ class TestQuirksConversionMatrixFacade:
         # Use a plain dict instead of a proper model to trigger validation error
         invalid_model: dict[str, str] = {"invalid": "data"}
 
-        result = conversion_matrix.convert(oud_quirk, oid_quirk, invalid_model)  # type: ignore[arg-type]
+        result = conversion_matrix.convert(oud_quirk, oid_quirk, invalid_model)
 
         assert result.is_failure
         assert result.error is not None

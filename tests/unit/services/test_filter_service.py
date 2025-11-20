@@ -1106,7 +1106,7 @@ class TestCategorizationWithServerTypes:
         """Test categorize() with invalid rules."""
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Pass invalid rules type
-        category, reason = FlextLdifFilters.categorize(entry, "invalid_rules")  # type: ignore[arg-type]
+        category, reason = FlextLdifFilters.categorize(entry, "invalid_rules")
         assert category == "rejected"
         assert reason is not None
 
@@ -1373,7 +1373,7 @@ class TestExclusionHelpers:
         # Create metadata with exclusion_info as string (not dict)
         metadata = FlextLdifModels.QuirkMetadata(
             quirk_type="test",
-            extensions={"exclusion_info": "not_a_dict"},  # type: ignore[dict-item]
+            extensions={"exclusion_info": "not_a_dict"},
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
         reason = FlextLdifFilters.Exclusion.get_exclusion_reason(entry_with_metadata)
@@ -1418,7 +1418,7 @@ class TestExclusionHelpers:
         # Create metadata with exclusion_info but reason is not string
         metadata = FlextLdifModels.QuirkMetadata(
             quirk_type="filter_excluded",
-            extensions={"exclusion_info": {"excluded": True, "exclusion_reason": 123}},  # type: ignore[dict-item]
+            extensions={"exclusion_info": {"excluded": True, "exclusion_reason": 123}},
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
         reason = FlextLdifFilters.Exclusion.get_exclusion_reason(entry_with_metadata)
@@ -1637,7 +1637,7 @@ class TestInternalNormalization:
         # Pass string as rules (will be normalized)
         category, reason = FlextLdifFilters.categorize(
             entry, "invalid", server_type="rfc"
-        )  # type: ignore[arg-type]
+        )
         assert category == "rejected"
         assert reason is not None
 
@@ -1684,7 +1684,7 @@ class TestInternalNormalization:
             raise ValidationError.from_exception_data(msg, core_error.errors())
 
         # Temporarily replace model_validate
-        FlextLdifModels.CategoryRules.model_validate = raise_validation_error  # type: ignore[assignment]
+        FlextLdifModels.CategoryRules.model_validate = raise_validation_error
 
         try:
             invalid_rules = {"user_dn_patterns": ["test"]}
@@ -1724,7 +1724,7 @@ class TestInternalNormalization:
             raise ValidationError.from_exception_data(msg, core_error.errors())
 
         # Temporarily replace model_validate
-        FlextLdifModels.WhitelistRules.model_validate = raise_validation_error  # type: ignore[assignment]
+        FlextLdifModels.WhitelistRules.model_validate = raise_validation_error
 
         try:
             invalid_rules = {"blocked_objectclasses": ["test"]}
@@ -1819,7 +1819,7 @@ class TestInternalExecuteMethods:
         builder = (
             FlextLdifFilters.builder()
             .with_entries([create_entry("cn=test,dc=x", {"cn": ["test"]})])
-            .with_dn_pattern(None)  # type: ignore[arg-type]
+            .with_dn_pattern(None)
             .exclude_matching()
         )
         # Should handle gracefully - might fail or return empty
@@ -1891,7 +1891,7 @@ class TestCategorizerEdgeCases:
         """Test check_blocked_objectclasses() with rules failure."""
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Pass invalid rules that cause normalization failure
-        invalid_rules = "not_a_dict"  # type: ignore[arg-type]
+        invalid_rules = "not_a_dict"
         is_blocked, reason = FlextLdifFilters.Categorizer.check_blocked_objectclasses(
             entry, invalid_rules
         )
@@ -1901,7 +1901,7 @@ class TestCategorizerEdgeCases:
     def test_validate_category_dn_pattern_failure(self) -> None:
         """Test validate_category_dn_pattern() with rules failure."""
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
-        invalid_rules = "not_a_dict"  # type: ignore[arg-type]
+        invalid_rules = "not_a_dict"
         is_invalid, reason = FlextLdifFilters.Categorizer.validate_category_dn_pattern(
             entry, "users", invalid_rules
         )
@@ -1989,7 +1989,7 @@ class TestSchemaFilteringEdgeCases:
         # Test with entry that has None DN
         entry = create_entry("cn=schema", {"attributeTypes": ["( 2.5.4.3 NAME 'cn' )"]})
         # Manually set DN to None to test edge case
-        entry_without_dn = entry.model_copy(update={"dn": None})  # type: ignore[arg-type]
+        entry_without_dn = entry.model_copy(update={"dn": None})
         result = FlextLdifFilters.filter_schema_by_oids(
             [entry_without_dn], {"attributes": ["2.5.4.*"]}
         )
@@ -2106,7 +2106,7 @@ class TestTransformerEdgeCases:
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
         # Create entry without DN
-        entry_no_dn = entry.model_copy(update={"dn": None})  # type: ignore[arg-type]
+        entry_no_dn = entry.model_copy(update={"dn": None})
         result = FlextLdifFilters.remove_objectclasses(entry_no_dn, ["person"])
         assert result.is_failure
         assert "Entry has no DN" in result.error
@@ -2212,9 +2212,7 @@ class TestCategorizeEntryComplete:
         )
         # Add metadata with quirk_type
         entry_with_metadata = entry.model_copy(
-            update={
-                "metadata": type("obj", (object,), {"quirk_type": "oid"})()  # type: ignore[assignment]
-            }
+            update={"metadata": type("obj", (object,), {"quirk_type": "oid"})()}
         )
         category, _reason = FlextLdifFilters.categorize_entry(
             entry_with_metadata, {}, None, server_type="rfc"
@@ -2238,7 +2236,7 @@ class TestCategorizeEntryComplete:
     def test_categorize_entry_with_rules_failure(self) -> None:
         """Test categorize_entry() with rules normalization failure."""
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
-        invalid_rules = "not_a_dict"  # type: ignore[arg-type]
+        invalid_rules = "not_a_dict"
         category, reason = FlextLdifFilters.categorize_entry(
             entry, invalid_rules, None, server_type="rfc"
         )
@@ -2255,7 +2253,7 @@ class TestCategorizeEntryComplete:
         from types import SimpleNamespace
 
         metadata_obj = SimpleNamespace(quirk_type="oid")
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata_obj})  # type: ignore[arg-type]
+        entry_with_metadata = entry.model_copy(update={"metadata": metadata_obj})
         category, _reason = FlextLdifFilters.categorize_entry(
             entry_with_metadata, {}, None, server_type="rfc"
         )
@@ -2295,7 +2293,7 @@ class TestApplyExcludeFilterComplete:
         builder = (
             FlextLdifFilters.builder()
             .with_entries([create_entry("cn=test,dc=x", {"cn": ["test"]})])
-            .with_dn_pattern(None)  # type: ignore[arg-type]
+            .with_dn_pattern(None)
             .exclude_matching()
         )
         # Should handle gracefully
@@ -2580,7 +2578,7 @@ class TestNormalizeHelpersEdgeCases:
         # Test via categorize with rules containing bytes
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Bytes in rules should be filtered out
-        rules = {"user_objectclasses": [b"person"]}  # type: ignore[dict-item]
+        rules = {"user_objectclasses": [b"person"]}
         category, _ = FlextLdifFilters.categorize(entry, rules, server_type="rfc")
         # Should handle gracefully
         assert category in {"users", "rejected", "hierarchy"}
@@ -2588,7 +2586,7 @@ class TestNormalizeHelpersEdgeCases:
     def test_ensure_str_list_with_none(self) -> None:
         """Test _ensure_str_list() with None."""
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
-        rules = {"user_objectclasses": None}  # type: ignore[dict-item]
+        rules = {"user_objectclasses": None}
         category, _ = FlextLdifFilters.categorize(entry, rules, server_type="rfc")
         assert category in {"users", "rejected", "hierarchy"}
 
@@ -2596,7 +2594,7 @@ class TestNormalizeHelpersEdgeCases:
         """Test _ensure_str_list() with non-sequence value."""
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Pass integer which is not a sequence
-        rules = {"user_objectclasses": 123}  # type: ignore[dict-item]
+        rules = {"user_objectclasses": 123}
         category, _ = FlextLdifFilters.categorize(entry, rules, server_type="rfc")
         # Should handle gracefully
         assert category in {"users", "rejected", "hierarchy"}
@@ -2726,7 +2724,7 @@ class TestNormalizeHelpersEdgeCases:
             dn_pattern="*,dc=x",
         )
         # Break entries to cause exception in execute - use list with invalid entry
-        invalid_entry = "not_an_entry"  # type: ignore[assignment]
+        invalid_entry = "not_an_entry"
         # Use object.__setattr__ to bypass Pydantic validation for testing
         object.__setattr__(service, "entries", [invalid_entry])  # noqa: PLC2801
         result = service.execute()

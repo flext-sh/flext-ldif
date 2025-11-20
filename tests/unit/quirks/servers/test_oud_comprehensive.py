@@ -280,9 +280,9 @@ class TestOudSchemaQuirk:
             )
         # Additional validations
         if hasattr(parsed, "sup"):
-            assert parsed.sup == "top"  # type: ignore[attr-defined]
+            assert parsed.sup == "top"
         if hasattr(parsed, "kind"):
-            assert parsed.kind == "STRUCTURAL"  # type: ignore[attr-defined]
+            assert parsed.kind == "STRUCTURAL"
 
     def test_parse_objectclass_invalid(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -442,10 +442,10 @@ class TestOudSchemaQuirk:
         cleaned = FlextLdifServersOud.Schema.clean_syntax_quotes(value)
         assert cleaned == value
 
-    def test_add_ldif_block(self, schema_quirk: FlextLdifServersOud.Schema) -> None:
-        """Test _add_ldif_block."""
+    def test_add_ldif_block_static(self) -> None:
+        """Test _add_ldif_block_static."""
         ldif_lines: list[str] = []
-        result = schema_quirk._add_ldif_block(
+        result = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "attributetypes", "test value", is_first_block=True
         )
         assert result is False, f"Expected False, got {result}"
@@ -456,28 +456,24 @@ class TestOudSchemaQuirk:
             "Should contain 'attributetypes: test value'"
         )
 
-    def test_add_ldif_block_not_first(
-        self, schema_quirk: FlextLdifServersOud.Schema
-    ) -> None:
-        """Test _add_ldif_block with is_first_block=False."""
+    def test_add_ldif_block_static_not_first(self) -> None:
+        """Test _add_ldif_block_static with is_first_block=False."""
         ldif_lines: list[str] = []
-        _ = schema_quirk._add_ldif_block(
+        _ = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "attributetypes", "test value", is_first_block=True
         )
-        result = schema_quirk._add_ldif_block(
+        result = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "objectclasses", "test oc", is_first_block=False
         )
         assert result is False, f"Expected False, got {result}"
         ldif_str = "\n".join(ldif_lines)
         assert "-" in ldif_str, "Should contain '-' separator"
 
-    def test_add_ldif_block_bytes(
-        self, schema_quirk: FlextLdifServersOud.Schema
-    ) -> None:
-        """Test _add_ldif_block with bytes value."""
+    def test_add_ldif_block_static_bytes(self) -> None:
+        """Test _add_ldif_block_static with bytes value."""
         ldif_lines: list[str] = []
         binary_value = b"binary data"
-        result = schema_quirk._add_ldif_block(
+        result = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "attributetypes", binary_value, is_first_block=True
         )
         assert result is False
@@ -1883,13 +1879,11 @@ class TestOudEntryQuirk:
         # matchingRules should be excluded
         assert "matchingrules" not in ldif.lower() or "testMatch" not in ldif
 
-    def test_add_ldif_block_entry_bytes(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
-        """Test _add_ldif_block with bytes value in Entry class."""
+    def test_add_ldif_block_static_entry_bytes(self) -> None:
+        """Test _add_ldif_block_static with bytes value."""
         ldif_lines: list[str] = []
         binary_value = b"binary data"
-        result = entry_quirk._add_ldif_block(
+        result = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "attributetypes", binary_value, is_first_block=True
         )
         assert result is False
@@ -1897,15 +1891,13 @@ class TestOudEntryQuirk:
         # Should be base64 encoded
         assert "::" in ldif_lines[-1]  # Base64 encoding uses ::
 
-    def test_add_ldif_block_entry_not_first(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
-        """Test _add_ldif_block with is_first_block=False in Entry class."""
+    def test_add_ldif_block_static_entry_not_first(self) -> None:
+        """Test _add_ldif_block_static with is_first_block=False."""
         ldif_lines: list[str] = []
-        _ = entry_quirk._add_ldif_block(
+        _ = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "attributetypes", "test value", is_first_block=True
         )
-        result = entry_quirk._add_ldif_block(
+        result = FlextLdifServersOud._add_ldif_block_static(
             ldif_lines, "objectclasses", "test oc", is_first_block=False
         )
         assert result is False
@@ -3356,7 +3348,7 @@ class TestOudCoverageGaps:
         """Test _hook_post_parse_objectclass with None oc (line 605)."""
         # Test with None to cover early return in line 605
         # When oc is None, should fail (not return FlextResult[None])
-        result = schema_quirk._hook_post_parse_objectclass(None)  # type: ignore[arg-type]
+        result = schema_quirk._hook_post_parse_objectclass(None)
         assert result.is_failure
         assert "ObjectClass is None or empty" in result.error
 

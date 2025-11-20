@@ -18,13 +18,11 @@ from __future__ import annotations
 import enum as enum_module
 import re
 from collections.abc import Mapping
-from datetime import UTC, datetime
 from functools import reduce
 from typing import ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
 
-from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -691,13 +689,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         return FlextLdifServersRfc.Constants.SCHEMA_DN
 
     @classmethod
-    def get_categorization_rules(cls) -> dict[str, list[str]]:
+    def get_categorization_rules(cls) -> FlextLdifModels.CategoryRules:
         """Get categorization rules for entry classification.
 
-        Returns dict compatible with FlextLdif.migrate() categorization_rules parameter.
+        Returns CategoryRules model compatible with FlextLdif.migrate() parameter.
 
         Returns:
-            Dict with categorization rules for OID server quirks
+            CategoryRules model with OID server quirks
 
         """
         # Python 3.13: Dict comprehension with list comprehensions
@@ -709,12 +707,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ),
         )
 
-        return {
-            "hierarchy_objectclasses": hierarchy_ocs,
-            "user_objectclasses": list(category_map.get("users", frozenset())),
-            "group_objectclasses": list(category_map.get("groups", frozenset())),
-            "acl_attributes": list(cls.Constants.CATEGORIZATION_ACL_ATTRIBUTES),
-        }
+        return FlextLdifModels.CategoryRules(
+            hierarchy_objectclasses=hierarchy_ocs,
+            user_objectclasses=list(category_map.get("users", frozenset())),
+            group_objectclasses=list(category_map.get("groups", frozenset())),
+            acl_attributes=list(cls.Constants.CATEGORIZATION_ACL_ATTRIBUTES),
+        )
 
     def extract_schemas_from_ldif(
         self,
@@ -743,7 +741,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     class Schema(
         FlextLdifServersRfc.Schema,
-        FlextLdifUtilitiesDetection.OidPatternMixin,
+        FlextLdifUtilities.Detection.OidPatternMixin,
     ):
         """Oracle OID schema quirks implementation.
 
@@ -906,24 +904,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             return attr_data
 
-        def _capture_source_values(
+        def _capture_attribute_values(
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
         ) -> dict[str, str | None]:
-            """Capture source values before transformations."""
-            return {
-                "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,
-                "equality": attr_data.equality,
-                "substr": attr_data.substr,
-                "ordering": attr_data.ordering,
-                "name": attr_data.name,
-            }
+            """Capture attribute values for metadata tracking.
 
-        def _capture_target_values(
-            self,
-            attr_data: FlextLdifModels.SchemaAttribute,
-        ) -> dict[str, str | None]:
-            """Capture target values after transformations."""
+            Used both before and after transformations to track source/target state.
+            """
             return {
                 "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,
                 "equality": attr_data.equality,
@@ -1017,9 +1005,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 ] = target_rules
 
             # Timestamp
-            attr_data.metadata.extensions["parsed_timestamp"] = datetime.now(
-                UTC,
-            ).isoformat()
+            attr_data.metadata.extensions["parsed_timestamp"] = (
+                FlextUtilities.Generators.generate_iso_timestamp()
+            )
 
         def _parse_attribute(
             self,
@@ -1059,13 +1047,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 attr_data = result.unwrap()
 
                 # Preserve SOURCE values BEFORE transformations
-                source_values = self._capture_source_values(attr_data)
+                source_values = self._capture_attribute_values(attr_data)
 
                 # Apply OID-specific enhancements
                 attr_data = self._apply_oid_transformations(attr_data)
 
                 # Preserve TARGET values AFTER transformations
-                target_values = self._capture_target_values(attr_data)
+                target_values = self._capture_attribute_values(attr_data)
 
                 # Ensure metadata is preserved with GENERIC metadata (NO *_OID_* keys!)
                 if not attr_data.metadata:
@@ -1073,10 +1061,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                 # Add GENERIC metadata keys for 100% bidirectional conversion
                 if attr_data.metadata:
-                    from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                        FlextLdifUtilitiesMetadata,
-                    )
-
                     meta_keys = FlextLdifConstants.MetadataKeys
                     attr_data.metadata.extensions[meta_keys.SCHEMA_ORIGINAL_FORMAT] = (
                         attr_definition.strip()
@@ -1089,7 +1073,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     )
 
                     # Preserve ALL schema formatting details for zero data loss
-                    FlextLdifUtilitiesMetadata.preserve_schema_formatting(
+                    FlextLdifUtilities.Metadata.preserve_schema_formatting(
                         attr_data.metadata,
                         attr_definition,
                     )
@@ -1153,7 +1137,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
 
             # 1. Denormalizar matching rules: RFC → OID
-            if source_rules and isinstance(source_rules, dict):
+            if source_rules and FlextRuntime.is_dict_like(source_rules):
                 # Preferir valores SOURCE do metadata (se vieram de OID originalmente)
                 oid_equality = source_rules.get("equality", attr_copy.equality)
                 oid_substr = source_rules.get("substr", attr_copy.substr)
@@ -1463,9 +1447,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                 # Attach timestamp metadata (Python 3.13: type guard)
                 if oc_data.metadata:
-                    oc_data.metadata.extensions["parsed_timestamp"] = datetime.now(
-                        UTC,
-                    ).isoformat()
+                    oc_data.metadata.extensions["parsed_timestamp"] = (
+                        FlextUtilities.Generators.generate_iso_timestamp()
+                    )
 
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
 
@@ -1726,19 +1710,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """
             return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
 
-        def is_acl_attribute(self, attribute_name: str) -> bool:
-            """Check if ACL attribute (case-insensitive).
-
-            Args:
-                attribute_name: Attribute name to check
-
-            Returns:
-                True if attribute is ACL attribute, False otherwise
-
-            """
-            # Python 3.13: Set comprehension for efficient lookup
-            all_attrs_lower = {a.lower() for a in self.get_acl_attributes()}
-            return attribute_name.lower() in all_attrs_lower
+        # is_acl_attribute inherited from base class (uses set for O(1) lookup)
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with Oracle OID-specific logic:
@@ -2326,7 +2298,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         def _convert_boolean_attributes_to_rfc(
             self,
             entry_attributes: dict[str, list[str]],
-        ) -> tuple[dict[str, list[str]], set[str], dict[str, dict[str, list[str] | str]]]:
+        ) -> tuple[
+            dict[str, list[str]], set[str], dict[str, dict[str, list[str] | str]]
+        ]:
             """Convert OID boolean attribute values to RFC format.
 
             OID uses "0"/"1" for boolean values, RFC4517 requires "TRUE"/"FALSE".
@@ -2623,7 +2597,126 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 target_format="0/1",
             )
 
-        def _write_entry(  # noqa: C901 - complexity justified for zero data loss
+        # ===== _write_entry HELPER METHODS (DRY refactoring) =====
+
+        def _restore_oid_boolean_values(
+            self,
+            attributes: dict[str, list[str]],
+            metadata: FlextLdifModels.QuirkMetadata | None,
+        ) -> dict[str, list[str]]:
+            """Restore original OID boolean values from metadata.
+
+            Args:
+                attributes: Current attributes
+                metadata: Entry metadata with boolean conversions
+
+            Returns:
+                Attributes with restored boolean values
+
+            """
+            if not (metadata and metadata.boolean_conversions):
+                return attributes
+
+            restored_attrs = dict(attributes)
+            for attr_name, conversion in metadata.boolean_conversions.items():
+                if attr_name in restored_attrs:
+                    original_val = conversion.get("original", "")
+                    if original_val:
+                        restored_attrs[attr_name] = [original_val]
+                        logger.debug(
+                            "Restored original OID boolean value from metadata",
+                            attribute_name=attr_name,
+                        )
+            return restored_attrs
+
+        def _denormalize_oid_attributes(
+            self,
+            oid_attributes: dict[str, list[str]],
+            metadata: FlextLdifModels.QuirkMetadata | None,
+        ) -> dict[str, list[str]]:
+            """Denormalize attributes from RFC to OID format.
+
+            Args:
+                oid_attributes: Attributes with OID boolean format
+                metadata: Entry metadata with original attributes
+
+            Returns:
+                Denormalized attributes with original names restored
+
+            """
+            original_attrs = None
+            if metadata and metadata.extensions:
+                original_attrs = metadata.extensions.get("original_attributes_complete")
+
+            denormalized: dict[str, list[str]] = {}
+            for attr_name, attr_values in oid_attributes.items():
+                if original_attrs and FlextRuntime.is_dict_like(original_attrs):
+                    # Try to find original attribute name
+                    for orig_name, orig_values in original_attrs.items():
+                        if self._normalize_attribute_name(str(orig_name)) == attr_name:
+                            denormalized[str(orig_name)] = (
+                                orig_values
+                                if FlextRuntime.is_list_like(orig_values)
+                                else [str(orig_values)]
+                            )
+                            break
+                    else:
+                        denormalized[self._denormalize_attribute_name(attr_name)] = (
+                            attr_values
+                        )
+                else:
+                    denormalized[self._denormalize_attribute_name(attr_name)] = (
+                        attr_values
+                    )
+            return denormalized
+
+        def _restore_oid_original_dn(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.DistinguishedName:
+            """Restore original OID DN from metadata.
+
+            Args:
+                entry_data: Entry with metadata
+
+            Returns:
+                Original or denormalized DN
+
+            """
+            meta_keys = FlextLdifConstants.MetadataKeys
+            # Ensure we use the correct type from models.py
+            oid_dn = (
+                FlextLdifModels.DistinguishedName(value=entry_data.dn.value)
+                if entry_data.dn
+                else FlextLdifModels.DistinguishedName(value="")
+            )
+
+            if entry_data.metadata and entry_data.metadata.extensions:
+                original_dn = entry_data.metadata.extensions.get("original_dn_complete")
+                if original_dn and isinstance(original_dn, str):
+                    oid_dn = FlextLdifModels.DistinguishedName(value=original_dn)
+                else:
+                    source_dn = entry_data.metadata.extensions.get(
+                        meta_keys.ENTRY_SOURCE_DN_CASE
+                    )
+                    if source_dn:
+                        oid_dn = FlextLdifModels.DistinguishedName(
+                            value=cast("str", source_dn)
+                        )
+
+            # Denormalize schema DN if needed
+            if (
+                entry_data.dn
+                and entry_data.dn.value.lower()
+                == FlextLdifServersRfc.Constants.SCHEMA_DN.lower()
+            ):
+                oid_dn = FlextLdifModels.DistinguishedName(
+                    value=FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK
+                )
+
+            return oid_dn
+
+        def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
         ) -> FlextResult[str]:
@@ -2648,124 +2741,34 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # No attributes - delegate to RFC writer
                 return super()._write_entry(entry_data)
 
-            meta_keys = FlextLdifConstants.MetadataKeys
-
             logger.debug(
                 "Writing OID entry",
                 entry_dn=entry_data.dn.value[:50] if entry_data.dn else None,
             )
 
-            # CRITICAL: Restore original boolean values from metadata FIRST
-            # This ensures we use the original OID format (0/1) instead of RFC format (TRUE/FALSE)
-            attributes_to_convert = entry_data.attributes.attributes
-            if entry_data.metadata and entry_data.metadata.boolean_conversions:
-                # Restore original boolean values from metadata
-                restored_attrs = dict(attributes_to_convert)
-                for (
-                    attr_name,
-                    conversion,
-                ) in entry_data.metadata.boolean_conversions.items():
-                    logger.debug(
-                        "Restored original boolean value from metadata",
-                        attribute_name=attr_name,
-                        converted_value=conversion.get("converted", ""),
-                    )
-                    if attr_name in restored_attrs:
-                        original_val = conversion.get("original", "")
-                        if original_val:
-                            # Restore original OID boolean format (0/1)
-                            restored_attrs[attr_name] = [original_val]
-                            logger.debug(
-                                "Restored original OID boolean value from metadata",
-                                attribute_name=attr_name,
-                            )
-                attributes_to_convert = restored_attrs
-
-            # ✅ SEMPRE converte RFC+metadata → OID LDIF (SEM verificar source_server!)
-            # Entry model é SEMPRE RFC: "TRUE"/"FALSE", "aci"
-            # Convertemos para OID: "0"/"1", "orclaci"
-            oid_attributes = self._convert_boolean_attributes_to_oid(
-                attributes_to_convert,
+            # Restore original boolean values using helper (DRY refactoring)
+            # Convert metadata to correct type from models.py if needed
+            metadata = (
+                entry_data.metadata
+                if isinstance(entry_data.metadata, FlextLdifModels.QuirkMetadata)
+                else None
+            )
+            attributes_to_convert = self._restore_oid_boolean_values(
+                entry_data.attributes.attributes, metadata
             )
 
-            # Denormalize ACL attribute name from RFC to OID format
-            # CRITICAL: Restore original attribute names from metadata if available
-            denormalized_attributes: dict[str, list[str]] = {}
-            original_attrs = None
-            if entry_data.metadata and entry_data.metadata.extensions:
-                original_attrs = entry_data.metadata.extensions.get(
-                    "original_attributes_complete"
-                )
+            # Convert boolean attributes RFC→OID
+            oid_attributes = self._convert_boolean_attributes_to_oid(
+                attributes_to_convert
+            )
 
-            for attr_name, attr_values in oid_attributes.items():
-                # Try to restore original attribute name from metadata
-                if original_attrs and isinstance(original_attrs, dict):
-                    # Check if we have original name in metadata
-                    for orig_name, orig_values in original_attrs.items():
-                        # Normalize both to compare
-                        if self._normalize_attribute_name(str(orig_name)) == attr_name:
-                            # Use original attribute name (preserves case, spacing, etc.)
-                            denormalized_attributes[str(orig_name)] = (
-                                orig_values
-                                if isinstance(orig_values, list)
-                                else [str(orig_values)]
-                            )
-                            logger.debug(
-                                "Restored original attribute name from metadata",
-                                normalized_name=attr_name,
-                                original_name=str(orig_name),
-                            )
-                            break
-                    else:
-                        # No original found, use denormalized name
-                        denormalized_name = self._denormalize_attribute_name(attr_name)
-                        denormalized_attributes[denormalized_name] = attr_values
-                else:
-                    # No metadata, use standard denormalization
-                    denormalized_name = self._denormalize_attribute_name(attr_name)
-                    denormalized_attributes[denormalized_name] = attr_values
+            # Denormalize attributes using helper (DRY refactoring)
+            denormalized_attributes = self._denormalize_oid_attributes(
+                oid_attributes, metadata
+            )
 
-            # CRITICAL: Restaurar DN original do metadata (se disponível) para 100% fidelidade
-            # Usa original_dn_complete para restaurar EXATAMENTE como estava (;, spaces, case, etc.)
-            oid_dn = entry_data.dn
-            if entry_data.metadata and entry_data.metadata.extensions:
-                # Try original_dn_complete first (most complete)
-                original_dn_complete = entry_data.metadata.extensions.get(
-                    "original_dn_complete"
-                )
-                if original_dn_complete and isinstance(original_dn_complete, str):
-                    oid_dn = FlextLdifModels.DistinguishedName(
-                        value=original_dn_complete
-                    )
-                    logger.debug(
-                        "Restored original OID DN from metadata",
-                        original_dn=original_dn_complete,
-                        current_dn=str(entry_data.dn),
-                    )
-                else:
-                    # Fallback to ENTRY_SOURCE_DN_CASE
-                    source_dn_raw = entry_data.metadata.extensions.get(
-                        meta_keys.ENTRY_SOURCE_DN_CASE,
-                    )
-                    if source_dn_raw:
-                        source_dn_str = cast("str", source_dn_raw)
-                        oid_dn = FlextLdifModels.DistinguishedName(value=source_dn_str)
-
-            # Denormalize schema DN from RFC to OID format se necessário
-            # RFC uses "cn=schema", OID uses "cn=subschemasubentry"
-            if (
-                entry_data.dn
-                and entry_data.dn.value.lower()
-                == FlextLdifServersRfc.Constants.SCHEMA_DN.lower()
-            ):
-                oid_dn = FlextLdifModels.DistinguishedName(
-                    value=FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK,
-                )
-                logger.debug(
-                    "RFC→OID transform: Denormalizing schema DN",
-                    original_dn=entry_data.dn.value,
-                    oid_dn=oid_dn.value,
-                )
+            # Restore original DN using helper (DRY refactoring)
+            oid_dn = self._restore_oid_original_dn(entry_data)
 
             # Create entry copy with OID-formatted attributes and DN
             oid_entry = entry_data.model_copy(
@@ -2780,7 +2783,180 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Delegate to RFC writer (which handles LDIF formatting)
             return super()._write_entry(oid_entry)
 
-        def _create_entry_result_with_metadata(  # noqa: C901 - complexity justified for zero data loss
+        # =====================================================================
+        # METADATA BUILDER HELPERS (DRY refactoring)
+        # =====================================================================
+
+        def _build_conversion_metadata(
+            self,
+            cleaned_dn: str,
+            converted_attrs: set[str],
+            boolean_conversions: dict[str, dict[str, list[str] | str]],
+        ) -> dict[str, object]:
+            """Build boolean conversion metadata."""
+            if not converted_attrs:
+                return {}
+            logger.debug(
+                "Converted OID boolean attributes to RFC format",
+                entry_dn=cleaned_dn,
+                attributes_count=len(converted_attrs),
+                attributes=list(converted_attrs),
+                conversions=boolean_conversions,
+            )
+            return {"boolean_attributes_converted": list(converted_attrs)}
+
+        def _build_dn_metadata(
+            self,
+            original_dn: str,
+            cleaned_dn: str,
+            dn_stats: FlextLdifModels.DNStatistics,
+        ) -> dict[str, object]:
+            """Build DN cleaning metadata."""
+            if original_dn == cleaned_dn:
+                return {}
+            logger.debug(
+                "Cleaned OID DN quirks",
+                original_dn=original_dn,
+                cleaned_dn=cleaned_dn,
+                transformations=dn_stats.transformations,
+                had_tab_chars=dn_stats.had_tab_chars,
+                had_extra_spaces=dn_stats.had_extra_spaces,
+                had_utf8_chars=dn_stats.had_utf8_chars,
+                had_escape_sequences=dn_stats.had_escape_sequences,
+                validation_status=dn_stats.validation_status,
+                validation_warnings=dn_stats.validation_warnings or None,
+                validation_errors=dn_stats.validation_errors or None,
+            )
+            return {
+                "original_dn": original_dn,
+                "cleaned_dn": cleaned_dn,
+                "dn_was_cleaned": True,
+            }
+
+        def _build_generic_metadata(
+            self,
+            original_dn: str,
+            cleaned_dn: str,
+            converted_attrs: set[str],
+            boolean_conversions: dict[str, dict[str, list[str] | str]],
+            converted_attributes: dict[str, list[str]],
+            original_entry: FlextLdifModels.Entry,
+        ) -> dict[str, object]:
+            """Build generic metadata for bidirectional conversion."""
+            meta_keys = FlextLdifConstants.MetadataKeys
+            return {
+                meta_keys.ENTRY_SOURCE_SERVER: "oid",
+                meta_keys.ENTRY_ORIGINAL_FORMAT: f"OID Entry with {len(converted_attrs)} boolean conversions",
+                meta_keys.ENTRY_SOURCE_DN_CASE: original_dn,
+                meta_keys.ENTRY_SOURCE_ATTRIBUTES: list(
+                    original_entry.attributes.attributes.keys()
+                )
+                if original_entry.attributes
+                else [],
+                meta_keys.ENTRY_SOURCE_OBJECTCLASSES: original_entry.attributes.attributes.get(
+                    "objectClass", []
+                )
+                if original_entry.attributes
+                else [],
+                meta_keys.ENTRY_TARGET_DN_CASE: cleaned_dn,
+                meta_keys.ENTRY_TARGET_ATTRIBUTES: list(converted_attributes.keys()),
+                meta_keys.ENTRY_TARGET_OBJECTCLASSES: converted_attributes.get(
+                    "objectClass", []
+                ),
+                meta_keys.ENTRY_SOURCE_OPERATIONAL_ATTRS: [
+                    attr
+                    for attr in (
+                        original_entry.attributes.attributes.keys()
+                        if original_entry.attributes
+                        else []
+                    )
+                    if attr.lower()
+                    in {
+                        a.lower()
+                        for a in FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES
+                    }
+                ],
+                meta_keys.CONVERTED_ATTRIBUTES: {
+                    "boolean_conversions": boolean_conversions,
+                    "attribute_name_conversions": {"orclaci": "aci"}
+                    if "aci" in converted_attributes
+                    and "orclaci"
+                    in (
+                        original_entry.attributes.attributes.keys()
+                        if original_entry.attributes
+                        else []
+                    )
+                    else {},
+                },
+            }
+
+        def _build_original_format_details(
+            self,
+            original_dn: str,
+            cleaned_dn: str,
+            converted_attrs: set[str],
+            boolean_conversions: dict[str, dict[str, list[str] | str]],
+            converted_attributes: dict[str, list[str]],
+            original_entry: FlextLdifModels.Entry,
+        ) -> dict[str, object]:
+            """Build original format details for round-trip support."""
+            # Preserve original lines from RFC parser
+            original_dn_line = None
+            original_attr_lines: list[str] = []
+            if (
+                original_entry.metadata
+                and original_entry.metadata.original_format_details
+            ):
+                original_dn_line = original_entry.metadata.original_format_details.get(
+                    "original_dn_line"
+                )
+                orig_attr_lines = original_entry.metadata.original_format_details.get(
+                    "original_attr_lines", []
+                )
+                if FlextRuntime.is_list_like(orig_attr_lines):
+                    original_attr_lines = orig_attr_lines
+
+            return {
+                "dn_spacing": original_dn,
+                "dn_cleaned": cleaned_dn,
+                "dn_was_modified": original_dn != cleaned_dn,
+                "boolean_format": "0/1" if boolean_conversions else "RFC",
+                "server_type": "oid",
+                "original_dn_line": original_dn_line,
+                "original_attr_lines": original_attr_lines,
+                "original_attributes_dict": {
+                    k: list(v)
+                    if isinstance(v, (list, tuple))
+                    else [str(v)]
+                    if v is not None
+                    else []
+                    for k, v in (
+                        original_entry.attributes.attributes.items()
+                        if original_entry.attributes
+                        else {}
+                    )
+                },
+                "converted_attributes_dict": converted_attributes,
+                "all_conversions": {
+                    "boolean_attributes": list(converted_attrs),
+                    "boolean_conversions": boolean_conversions,
+                    "attribute_name_conversions": {
+                        "orclaci": "aci"
+                        if "aci" in converted_attributes
+                        and "orclaci"
+                        in (
+                            original_entry.attributes.attributes.keys()
+                            if original_entry.attributes
+                            else []
+                        )
+                        else None
+                    },
+                },
+                "removed_attributes": [],
+                "removed_attributes_count": 0,
+            }
+
+        def _create_entry_result_with_metadata(
             self,
             _entry: FlextLdifModels.Entry,  # Unused: kept for signature
             cleaned_dn: str,
@@ -2813,176 +2989,34 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with Entry including metadata
 
             """
-            # Build metadata (Python 3.13: dict comprehension)
-            conversion_metadata: dict[str, object] = (
-                {"boolean_attributes_converted": list(converted_attrs)}
-                if converted_attrs
-                else {}
+            # Build metadata using helper methods (DRY refactoring)
+            conversion_metadata = self._build_conversion_metadata(
+                cleaned_dn, converted_attrs, boolean_conversions
             )
-            if converted_attrs:
-                logger.debug(
-                    "Converted OID boolean attributes to RFC format",
-                    entry_dn=cleaned_dn,
-                    attributes_count=len(converted_attrs),
-                    attributes=list(converted_attrs),
-                    conversions=boolean_conversions,
-                )
+            dn_metadata = self._build_dn_metadata(original_dn, cleaned_dn, dn_stats)
 
-            # Add DN cleaning metadata (Python 3.13: dict comprehension)
-            dn_metadata: dict[str, object] = (
-                {
-                    "original_dn": original_dn,
-                    "cleaned_dn": cleaned_dn,
-                    "dn_was_cleaned": True,
-                }
-                if original_dn != cleaned_dn
-                else {}
+            # Build RFC compliance metadata using helper (DRY refactoring)
+            rfc_compliance_metadata = self._build_rfc_compliance_metadata(
+                rfc_violations,
+                attribute_conflicts,
+                boolean_conversions,
+                converted_attributes,
+                original_entry,
+                cleaned_dn,
             )
-            if original_dn != cleaned_dn:
-                logger.debug(
-                    "Cleaned OID DN quirks",
-                    original_dn=original_dn,
-                    cleaned_dn=cleaned_dn,
-                    transformations=dn_stats.transformations,
-                    had_tab_chars=dn_stats.had_tab_chars,
-                    had_extra_spaces=dn_stats.had_extra_spaces,
-                    had_utf8_chars=dn_stats.had_utf8_chars,
-                    had_escape_sequences=dn_stats.had_escape_sequences,
-                    validation_status=dn_stats.validation_status,
-                    validation_warnings=dn_stats.validation_warnings or None,
-                    validation_errors=dn_stats.validation_errors or None,
-                )
 
-            # Add RFC compliance metadata (Python 3.13: dict comprehension)
-            # Include ALL changes tracking
-            rfc_compliance_metadata: dict[str, object] = (
-                {
-                    "rfc_violations": rfc_violations,
-                    "attribute_conflicts": attribute_conflicts,
-                    "has_rfc_violations": True,
-                    "attribute_value_changes": boolean_conversions or {},
-                    "attribute_value_changes_count": len(boolean_conversions),
-                }
-                if rfc_violations or attribute_conflicts or boolean_conversions
-                else {}
+            # Build generic metadata using helper
+            generic_metadata = self._build_generic_metadata(
+                original_dn,
+                cleaned_dn,
+                converted_attrs,
+                boolean_conversions,
+                converted_attributes,
+                original_entry,
             )
-            if rfc_violations or attribute_conflicts:
-                # Build detailed violation information
-                violation_details: list[dict[str, object]] = [
-                    {
-                        "type": "rfc_violation",
-                        "description": violation,
-                        "severity": "warning",
-                    }
-                    for violation in rfc_violations
-                ]
 
-                for conflict in attribute_conflicts:
-                    attr_name = str(conflict.get("attribute", "unknown"))
-                    original_values = (
-                        original_entry.attributes.attributes.get(attr_name, [])
-                        if original_entry.attributes
-                        else []
-                    )
-                    conflict_values = conflict.get("values", [])
-                    # Check if attribute was removed (not in converted output)
-                    was_removed = attr_name not in converted_attributes
-
-                    violation_details.append({
-                        "type": "attribute_conflict",
-                        "attribute": attr_name,
-                        "reason": str(conflict.get("reason", "Unknown conflict")),
-                        "conflicting_objectclass": str(
-                            conflict.get("conflicting_objectclass", "")
-                        ),
-                        "original_values": original_values,
-                        "conflict_values": conflict_values,
-                        "was_removed": was_removed,
-                        "action_taken": "removed"
-                        if was_removed
-                        else "kept_with_warning",
-                        # Capture exact original string for round-trip
-                        "original_values_string": str(original_values),
-                        "conflict_values_string": str(conflict_values),
-                    })
-
-                # Calculate attribute changes for logging
-                original_attr_set = set(
-                    original_entry.attributes.attributes.keys()
-                    if original_entry.attributes
-                    else []
-                )
-                final_attr_set = set(converted_attributes.keys())
-                removed_attrs = list(original_attr_set - final_attr_set)
-
-                logger.debug(
-                    "OID entry converted with RFC adjustments",
-                    entry_dn=cleaned_dn,
-                    violations_count=len(rfc_violations),
-                    violations=rfc_violations or None,
-                    attributes_removed=removed_attrs or None,
-                    boolean_conversions=len(boolean_conversions),
-                )
-
-            meta_keys = FlextLdifConstants.MetadataKeys
-
-            # Build GENERIC metadata for 100% bidirectional conversion (NO *_OID_* keys!)
-            generic_metadata = {
-                # CORE ENTRY METADATA (required for ALL servers)
-                meta_keys.ENTRY_SOURCE_SERVER: "oid",  # OID parsed this entry
-                meta_keys.ENTRY_ORIGINAL_FORMAT: f"OID Entry with {len(converted_attrs)} boolean conversions",
-                # SOURCE values (original OID format - BEFORE transformation)
-                meta_keys.ENTRY_SOURCE_DN_CASE: original_dn,  # Original OID DN
-                meta_keys.ENTRY_SOURCE_ATTRIBUTES: list(
-                    original_entry.attributes.attributes.keys(),
-                )
-                if original_entry.attributes
-                else [],
-                meta_keys.ENTRY_SOURCE_OBJECTCLASSES: original_entry.attributes.attributes.get(
-                    "objectClass",
-                    [],
-                )
-                if original_entry.attributes
-                else [],
-                # TARGET values (RFC format - AFTER transformation)
-                meta_keys.ENTRY_TARGET_DN_CASE: cleaned_dn,  # Normalized RFC DN
-                meta_keys.ENTRY_TARGET_ATTRIBUTES: list(converted_attributes.keys()),
-                meta_keys.ENTRY_TARGET_OBJECTCLASSES: converted_attributes.get(
-                    "objectClass",
-                    [],
-                ),
-                # Operational attributes tracking
-                meta_keys.ENTRY_SOURCE_OPERATIONAL_ATTRS: [
-                    attr
-                    for attr in (
-                        original_entry.attributes.attributes.keys()
-                        if original_entry.attributes
-                        else []
-                    )
-                    if attr.lower()
-                    in {
-                        a.lower()
-                        for a in FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES
-                    }
-                ],
-                # Attribute conversions tracking
-                meta_keys.CONVERTED_ATTRIBUTES: {
-                    "boolean_conversions": boolean_conversions,
-                    "attribute_name_conversions": {
-                        "orclaci": "aci",  # OID → RFC ACL attribute name
-                    }
-                    if "aci" in converted_attributes
-                    and "orclaci"
-                    in (
-                        original_entry.attributes.attributes.keys()
-                        if original_entry.attributes
-                        else []
-                    )
-                    else {},
-                },
-            }
-
-            metadata = FlextLdifModels.QuirkMetadata.create_for(
+            # Create metadata using domain class, then ensure correct type from models.py
+            domain_metadata = FlextLdifModels.QuirkMetadata.create_for(
                 self._get_server_type(),
                 extensions={
                     **conversion_metadata,
@@ -2992,113 +3026,27 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     "original_entry": original_entry,
                 },
             )
+            # Convert to models.py type (QuirkMetadata in models.py inherits from domain)
+            metadata = FlextLdifModels.QuirkMetadata.model_validate(
+                domain_metadata.model_dump()
+            )
 
             # =====================================================================
             # ZERO DATA LOSS: Populate dedicated metadata fields for round-trip
             # =====================================================================
 
-            # Populate boolean_conversions field with proper format for reverse
-            # CRITICAL: Use utility function to track conversions properly
-            if boolean_conversions:
-                from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                    FlextLdifUtilitiesMetadata,
-                )
+            # Track boolean conversions using helper (DRY refactoring)
+            self._track_boolean_conversions_in_metadata(metadata, boolean_conversions)
 
-                for attr_name, conv_data in boolean_conversions.items():
-                    original_vals = conv_data.get("original", [])
-                    converted_vals = conv_data.get("converted", [])
-
-                    # Use utility function for consistent tracking
-                    if original_vals and converted_vals:
-                        original_val = (
-                            original_vals[0]
-                            if len(original_vals) == 1
-                            else str(original_vals)
-                        )
-                        converted_val = (
-                            converted_vals[0]
-                            if len(converted_vals) == 1
-                            else str(converted_vals)
-                        )
-
-                        FlextLdifUtilitiesMetadata.track_boolean_conversion(
-                            metadata=metadata,
-                            attr_name=attr_name,
-                            original_value=original_val,
-                            converted_value=converted_val,
-                            format_direction="OID->RFC",
-                        )
-
-                        logger.debug(
-                            "Boolean conversion tracked in metadata",
-                            operation="_create_entry_result_with_metadata",
-                            attribute_name=attr_name,
-                            original_value=original_val,
-                            converted_value=converted_val,
-                        )
-
-            # ZERO DATA LOSS: Preserve original lines from RFC parser
-            original_dn_line = None
-            original_attr_lines: list[str] = []
-            if (
-                original_entry.metadata
-                and original_entry.metadata.original_format_details
-            ):
-                original_dn_line = original_entry.metadata.original_format_details.get(
-                    "original_dn_line"
-                )
-                orig_attr_lines = original_entry.metadata.original_format_details.get(
-                    "original_attr_lines", []
-                )
-                if isinstance(orig_attr_lines, list):
-                    original_attr_lines = orig_attr_lines
-
-            # Populate original_format_details for complete round-trip support
-            # Capture ALL minimal differences: spacing, punctuation, case, etc.
-            metadata.original_format_details = {
-                "dn_spacing": original_dn,  # Original DN with OID spacing
-                "dn_cleaned": cleaned_dn,  # Cleaned DN for comparison
-                "dn_was_modified": original_dn != cleaned_dn,
-                "boolean_format": "0/1" if boolean_conversions else "RFC",
-                "server_type": "oid",
-                "original_dn_line": original_dn_line,  # ZERO DATA LOSS: Original DN line from parser
-                "original_attr_lines": original_attr_lines,  # ZERO DATA LOSS: Original attribute lines from parser
-                # Capture ALL attribute differences
-                "original_attributes_dict": {
-                    k: (
-                        list(v)
-                        if isinstance(v, (list, tuple))
-                        else [str(v)]
-                        if v is not None
-                        else []
-                    )
-                    for k, v in (
-                        original_entry.attributes.attributes.items()
-                        if original_entry.attributes
-                        else {}
-                    )
-                },
-                "converted_attributes_dict": converted_attributes,
-                # Track ALL conversions (not just boolean)
-                "all_conversions": {
-                    "boolean_attributes": list(converted_attrs),
-                    "boolean_conversions": boolean_conversions,
-                    "attribute_name_conversions": {
-                        "orclaci": "aci"
-                        if "aci" in converted_attributes
-                        and "orclaci"
-                        in (
-                            original_entry.attributes.attributes.keys()
-                            if original_entry.attributes
-                            else []
-                        )
-                        else None,
-                    },
-                },
-                # Track ALL removals (placeholder - not yet implemented)
-                "removed_attributes": [],
-                "removed_attributes_count": 0,
-            }
+            # Build original_format_details using helper
+            metadata.original_format_details = self._build_original_format_details(
+                original_dn,
+                cleaned_dn,
+                converted_attrs,
+                boolean_conversions,
+                converted_attributes,
+                original_entry,
+            )
 
             # Track schema quirk if schema DN was normalized
             if (
@@ -3123,7 +3071,272 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             return FlextResult[FlextLdifModels.Entry].ok(entry_with_conversions)
 
-        def _parse_entry(  # noqa: C901
+        # ===== _create_entry_result_with_metadata HELPER METHODS (DRY refactoring) =====
+
+        def _build_rfc_compliance_metadata(
+            self,
+            rfc_violations: list[str],
+            attribute_conflicts: list[dict[str, object]],
+            boolean_conversions: dict[str, dict[str, list[str] | str]],
+            converted_attributes: dict[str, list[str]],
+            original_entry: FlextLdifModels.Entry,
+            cleaned_dn: str,
+        ) -> dict[str, object]:
+            """Build RFC compliance metadata with violation details.
+
+            Args:
+                rfc_violations: List of RFC violations
+                attribute_conflicts: List of attribute conflicts
+                boolean_conversions: Boolean conversion details
+                converted_attributes: Converted attributes mapping
+                original_entry: Original entry before conversions
+                cleaned_dn: Cleaned DN for logging
+
+            Returns:
+                RFC compliance metadata dictionary
+
+            """
+            if not (rfc_violations or attribute_conflicts or boolean_conversions):
+                return {}
+
+            rfc_compliance_metadata: dict[str, object] = {
+                "rfc_violations": rfc_violations,
+                "attribute_conflicts": attribute_conflicts,
+                "has_rfc_violations": True,
+                "attribute_value_changes": boolean_conversions or {},
+                "attribute_value_changes_count": len(boolean_conversions),
+            }
+
+            if rfc_violations or attribute_conflicts:
+                # Build detailed violation information
+                violation_details: list[dict[str, object]] = [
+                    {
+                        "type": "rfc_violation",
+                        "description": violation,
+                        "severity": "warning",
+                    }
+                    for violation in rfc_violations
+                ]
+
+                for conflict in attribute_conflicts:
+                    attr_name = str(conflict.get("attribute", "unknown"))
+                    original_values = (
+                        original_entry.attributes.attributes.get(attr_name, [])
+                        if original_entry.attributes
+                        else []
+                    )
+                    conflict_values = conflict.get("values", [])
+                    was_removed = attr_name not in converted_attributes
+
+                    violation_details.append({
+                        "type": "attribute_conflict",
+                        "attribute": attr_name,
+                        "reason": str(conflict.get("reason", "Unknown conflict")),
+                        "conflicting_objectclass": str(
+                            conflict.get("conflicting_objectclass", "")
+                        ),
+                        "original_values": original_values,
+                        "conflict_values": conflict_values,
+                        "was_removed": was_removed,
+                        "action_taken": "removed"
+                        if was_removed
+                        else "kept_with_warning",
+                        "original_values_string": str(original_values),
+                        "conflict_values_string": str(conflict_values),
+                    })
+
+                # Calculate attribute changes for logging
+                original_attr_set = set(
+                    original_entry.attributes.attributes.keys()
+                    if original_entry.attributes
+                    else []
+                )
+                final_attr_set = set(converted_attributes.keys())
+                removed_attrs = list(original_attr_set - final_attr_set)
+
+                logger.debug(
+                    "OID entry converted with RFC adjustments",
+                    entry_dn=cleaned_dn,
+                    violations_count=len(rfc_violations),
+                    violations=rfc_violations or None,
+                    attributes_removed=removed_attrs or None,
+                    boolean_conversions=len(boolean_conversions),
+                )
+
+            return rfc_compliance_metadata
+
+        def _track_boolean_conversions_in_metadata(
+            self,
+            metadata: FlextLdifModels.QuirkMetadata,
+            boolean_conversions: dict[str, dict[str, list[str] | str]],
+        ) -> None:
+            """Track boolean conversions in metadata for round-trip support.
+
+            Args:
+                metadata: QuirkMetadata to update
+                boolean_conversions: Boolean conversion details
+
+            """
+            if not boolean_conversions:
+                return
+
+            for attr_name, conv_data in boolean_conversions.items():
+                original_vals = conv_data.get("original", [])
+                converted_vals = conv_data.get("converted", [])
+
+                if original_vals and converted_vals:
+                    original_val = (
+                        original_vals[0]
+                        if len(original_vals) == 1
+                        else str(original_vals)
+                    )
+                    converted_val = (
+                        converted_vals[0]
+                        if len(converted_vals) == 1
+                        else str(converted_vals)
+                    )
+
+                    FlextLdifUtilities.Metadata.track_boolean_conversion(
+                        metadata=metadata,
+                        attr_name=attr_name,
+                        original_value=original_val,
+                        converted_value=converted_val,
+                        format_direction="OID->RFC",
+                    )
+
+                    logger.debug(
+                        "Boolean conversion tracked in metadata",
+                        operation="_create_entry_result_with_metadata",
+                        attribute_name=attr_name,
+                        original_value=original_val,
+                        converted_value=converted_val,
+                    )
+
+        # ===== _parse_entry HELPER METHODS (DRY refactoring) =====
+
+        def _analyze_oid_entry_differences(
+            self,
+            entry_attrs: Mapping[str, object],
+            normalized_attributes: dict[str, list[str]],
+            original_dn: str,
+            normalized_dn: str,
+        ) -> tuple[dict[str, object], dict[str, dict[str, object]], dict[str, object]]:
+            """Analyze DN and attribute differences for OID entries.
+
+            Args:
+                entry_attrs: Original raw attributes
+                normalized_attributes: Normalized attributes after conversion
+                original_dn: Original DN string
+                normalized_dn: Normalized DN after cleaning
+
+            Returns:
+                Tuple of (dn_differences, attribute_differences, original_attrs_complete)
+
+            """
+            # Analyze DN differences
+            dn_differences = FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                original=original_dn,
+                converted=normalized_dn if normalized_dn != original_dn else None,
+                context="dn",
+            )
+
+            # Analyze attribute differences
+            attribute_differences: dict[str, dict[str, object]] = {}
+            original_attributes_complete: dict[str, object] = {}
+
+            for attr_name, attr_values in entry_attrs.items():
+                original_attr_name = str(attr_name)
+                normalized_name = self._normalize_attribute_name(original_attr_name)
+
+                # Preserve original values
+                original_values = (
+                    list(attr_values)
+                    if isinstance(attr_values, (list, tuple))
+                    else [attr_values]
+                    if attr_values is not None
+                    else []
+                )
+                original_attributes_complete[original_attr_name] = original_values
+
+                converted_values = normalized_attributes.get(normalized_name, [])
+
+                # Build string representations
+                original_str = f"{original_attr_name}: {', '.join(str(v) for v in original_values)}"
+                converted_str = (
+                    f"{normalized_name}: {', '.join(str(v) for v in converted_values)}"
+                    if converted_values
+                    else None
+                )
+
+                # Analyze differences
+                attr_diff = FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                    original=original_str,
+                    converted=converted_str if converted_str != original_str else None,
+                    context="attribute",
+                )
+                attribute_differences[normalized_name] = attr_diff
+
+            return dn_differences, attribute_differences, original_attributes_complete
+
+        def _store_oid_minimal_differences(
+            self,
+            metadata: FlextLdifModels.QuirkMetadata,
+            dn_differences: dict[str, object],
+            attribute_differences: dict[str, dict[str, object]],
+            original_dn: str,
+            normalized_dn: str,
+            original_attributes_complete: dict[str, object],
+        ) -> None:
+            """Store minimal differences in OID entry metadata.
+
+            Args:
+                metadata: QuirkMetadata to update
+                dn_differences: DN difference analysis
+                attribute_differences: Attribute difference analysis
+                original_dn: Original DN string
+                normalized_dn: Normalized DN string
+                original_attributes_complete: Complete original attributes
+
+            """
+            if not metadata.extensions:
+                metadata.extensions = {}
+
+            # Store in extensions
+            metadata.extensions["minimal_differences_dn"] = dn_differences
+            metadata.extensions["minimal_differences_attributes"] = (
+                attribute_differences
+            )
+            metadata.extensions["original_dn_complete"] = original_dn
+            metadata.extensions["original_attributes_complete"] = (
+                original_attributes_complete
+            )
+
+            # Track DN differences
+            if dn_differences.get("has_differences"):
+                FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
+                    metadata=metadata,
+                    original=original_dn,
+                    converted=normalized_dn if normalized_dn != original_dn else None,
+                    context="dn",
+                    attribute_name="dn",
+                )
+
+            # Track attribute differences
+            for attr_name, attr_diff in attribute_differences.items():
+                if attr_diff.get("has_differences", False):
+                    original_attr_str = attr_diff.get("original", "")
+                    converted = attr_diff.get("converted")
+                    converted_attr_str = str(converted) if converted else None
+                    if isinstance(original_attr_str, str):
+                        FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
+                            metadata=metadata,
+                            original=original_attr_str,
+                            converted=converted_attr_str,
+                            context="attribute",
+                            attribute_name=attr_name,
+                        )
+
+        def _parse_entry(
             self,
             entry_dn: str,
             entry_attrs: Mapping[str, object],
@@ -3199,124 +3412,45 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 normalized_attributes,
             )
 
-            # CRITICAL: Analyze ALL minimal differences for perfect round-trip
-            from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                FlextLdifUtilitiesMetadata,
+            # Analyze differences using helper (DRY refactoring)
+            dn_differences, attribute_differences, original_attributes_complete_dict = (
+                self._analyze_oid_entry_differences(
+                    entry_attrs, normalized_attributes, original_dn, normalized_dn
+                )
             )
 
-            # Analyze DN differences (original vs normalized)
-            dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                original=original_dn,
-                converted=normalized_dn if normalized_dn != original_dn else None,
-                context="dn",
-            )
-
-            # Analyze attribute differences for each attribute - capture EVERY detail
-            attribute_differences: dict[str, dict[str, object]] = {}
-            original_attributes_complete_dict: dict[str, object] = {}
-
-            for attr_name, attr_values in entry_attrs.items():
-                # PRESERVE original attribute name EXACTLY (case, spacing, etc.)
-                original_attr_name_complete = str(attr_name)
-                normalized_name = self._normalize_attribute_name(
-                    original_attr_name_complete
-                )
-
-                # PRESERVE original values EXACTLY (including type, encoding, etc.)
-                original_values_complete = (
-                    list(attr_values)
-                    if isinstance(attr_values, (list, tuple))
-                    else [attr_values]
-                    if attr_values is not None
-                    else []
-                )
-                original_attributes_complete_dict[original_attr_name_complete] = (
-                    original_values_complete
-                )
-
-                # Get converted values (after boolean conversion and normalization)
-                converted_values = normalized_attributes.get(normalized_name, [])
-
-                # Build original string representation with COMPLETE details
-                original_attr_str = f"{original_attr_name_complete}: {', '.join(str(v) for v in original_values_complete)}"
-                converted_attr_str = (
-                    f"{normalized_name}: {', '.join(str(v) for v in converted_values)}"
-                    if converted_values
-                    else None
-                )
-
-                # Analyze ALL minimal differences (;, spaces, case, punctuation, etc.)
-                attr_diff = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                    original=original_attr_str,
-                    converted=converted_attr_str
-                    if converted_attr_str != original_attr_str
-                    else None,
-                    context="attribute",
-                )
-                attribute_differences[normalized_name] = attr_diff
-
-                # Track in metadata if there are differences
-                if attr_diff.get("has_differences", False):
-                    # Use metadata from original_entry (created by RFC parser)
-                    if not original_entry.metadata:
-                        original_entry.metadata = (
-                            FlextLdifModels.QuirkMetadata.create_for(
-                                self._get_server_type(), extensions={}
-                            )
-                        )
-                    FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
-                        metadata=original_entry.metadata,
-                        original=original_attr_str,
-                        converted=converted_attr_str,
-                        context="attribute",
-                        attribute_name=normalized_name,
-                    )
-
-            # Store minimal differences in metadata before creating result
+            # Store minimal differences using helper (DRY refactoring)
             if not original_entry.metadata:
-                original_entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
+                domain_metadata = FlextLdifModels.QuirkMetadata.create_for(
                     self._get_server_type(), extensions={}
                 )
-            if not original_entry.metadata.extensions:
-                original_entry.metadata.extensions = {}
-
-            # Store minimal differences in extensions (for compatibility)
-            original_entry.metadata.extensions["minimal_differences_dn"] = (
-                dn_differences
-            )
-            original_entry.metadata.extensions["minimal_differences_attributes"] = (
-                attribute_differences
-            )
-            original_entry.metadata.extensions["original_dn_complete"] = original_dn
-            original_entry.metadata.extensions["original_attributes_complete"] = (
-                original_attributes_complete_dict
-            )
-
-            # CRITICAL: Track minimal differences using utility function for perfect round-trip
-            # This populates metadata.minimal_differences and metadata.original_strings
-            if dn_differences.get("has_differences", False):
-                FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
-                    metadata=original_entry.metadata,
-                    original=original_dn,
-                    converted=normalized_dn if normalized_dn != original_dn else None,
-                    context="dn",
-                    attribute_name="dn",
+                original_entry.metadata = FlextLdifModels.QuirkMetadata.model_validate(
+                    domain_metadata.model_dump()
                 )
-
-            # Track attribute differences (already done in loop above, but ensure all are tracked)
-            for attr_name, attr_diff in attribute_differences.items():
-                if attr_diff.get("has_differences", False):
-                    original_attr_str = attr_diff.get("original", "")
-                    converted = attr_diff.get("converted")
-                    converted_attr_str = str(converted) if converted else None
-                    if isinstance(original_attr_str, str):
-                        FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
-                            metadata=original_entry.metadata,
-                            original=original_attr_str,
-                            converted=converted_attr_str,
-                            context="attribute",
-                            attribute_name=attr_name,
-                        )
+            # Ensure metadata is the correct type from models.py
+            entry_metadata = (
+                original_entry.metadata
+                if isinstance(original_entry.metadata, FlextLdifModels.QuirkMetadata)
+                else (
+                    FlextLdifModels.QuirkMetadata.model_validate(
+                        original_entry.metadata.model_dump()
+                    )
+                    if original_entry.metadata
+                    else FlextLdifModels.QuirkMetadata.model_validate(
+                        FlextLdifModels.QuirkMetadata.create_for(
+                            self._get_server_type(), extensions={}
+                        ).model_dump()
+                    )
+                )
+            )
+            self._store_oid_minimal_differences(
+                metadata=entry_metadata,
+                dn_differences=dn_differences,
+                attribute_differences=attribute_differences,
+                original_dn=original_dn,
+                normalized_dn=normalized_dn,
+                original_attributes_complete=original_attributes_complete_dict,
+            )
 
             logger.debug(
                 "OID entry parsed with complete minimal differences analysis",

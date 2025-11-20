@@ -21,9 +21,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, override
+from typing import cast, override
 
-from flext_core import FlextDecorators, FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -32,15 +32,8 @@ from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _AclResponseType = FlextLdifModels.AclResponse
-else:
-    _AclResponseType = object  # type: ignore[misc]
 
-
-class FlextLdifAcl(FlextService[_AclResponseType]):
+class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
     """Unified ACL management service.
 
     Provides ACL parsing via quirks and direct context evaluation.
@@ -156,7 +149,7 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
             )
             if not parse_result.is_success:
                 failed_acls += 1
-                truncated_acl = (
+                (
                     acl_value[:max_acl_log_length]
                     if len(acl_value) > max_acl_log_length
                     else acl_value
@@ -173,6 +166,8 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
 
             acls.append(parse_result.unwrap())
 
+        # FlextLdifModels.Acl inherits from FlextLdifModelsDomains.Acl
+        # No conversion needed - use directly
         return FlextResult[FlextLdifModels.AclResponse].ok(
             FlextLdifModels.AclResponse(
                 acls=acls,
@@ -180,7 +175,7 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                     processed_entries=1,
                     acls_extracted=len(acls),
                     acl_attribute_name=acl_attribute,
-                    failed_acls=failed_acls,
+                    failed_entries=failed_acls,
                 ),
             ),
         )
@@ -302,7 +297,9 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                     "Failed to parse ACL",
                     server_type=server_type,
                     error=str(parse_result.error),
-                    acl_preview=acl_string[:50] if len(acl_string) > 50 else acl_string,
+                    acl_preview=acl_string[: FlextLdifConstants.ACI_PREVIEW_LENGTH]
+                    if len(acl_string) > FlextLdifConstants.ACI_PREVIEW_LENGTH
+                    else acl_string,
                 )
                 return FlextResult[FlextLdifModels.Acl].fail(
                     parse_result.error or "Unknown error",
@@ -345,13 +342,23 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
 
             # Check if entry has ACL attributes to convert
             acl_attrs = entry_data.get("_acl_attributes")
-            if not acl_attrs or not isinstance(acl_attrs, dict):
+            if not acl_attrs or not FlextRuntime.is_dict_like(acl_attrs):
                 # No ACL attributes to convert, return as-is
                 return FlextResult[dict[str, object]].ok(converted_data)
 
             # Step 1: ACLs are expected to be in RFC-compliant format already
-            # Use only private _parse_acl() method for format conversions
-            rfc_acl_attrs = acl_attrs
+            # Convert to dict[str, list[str]] format required by protocol
+            # Type narrowing: acl_attrs is dict[str, object] from is_dict_like check
+            # Convert values to list[str] format
+            rfc_acl_attrs: dict[str, list[str]] = {}
+            for key, value in acl_attrs.items():
+                if FlextRuntime.is_list_like(value):
+                    # Type narrowing: is_list_like ensures list[object]
+                    rfc_acl_attrs[key] = [str(v) for v in value]
+                elif isinstance(value, str):
+                    rfc_acl_attrs[key] = [value]
+                else:
+                    rfc_acl_attrs[key] = [str(value)]
 
             # Step 2: Convert RFC ACLs to target server ACI format using target server ACL quirks
             if target_server.lower() == FlextLdifConstants.ServerTypes.RFC:
@@ -381,7 +388,9 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
                         return FlextResult[dict[str, object]].fail(
                             f"RFC ACL to target ACI conversion failed: {aci_result.error}",
                         )
-                    final_aci_attrs = aci_result.unwrap()
+                    # Convert result back to dict[str, object] for entry_data
+                    aci_result_dict = aci_result.unwrap()
+                    final_aci_attrs = cast("dict[str, object]", aci_result_dict)
                 else:
                     return FlextResult[dict[str, object]].fail(
                         f"Target server ACL quirk {target_server} does not support RFC to ACI conversion",
@@ -415,8 +424,9 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
             return {}
 
         perms_data = acl.permissions
-        if isinstance(perms_data, dict):
-            return perms_data
+        if FlextRuntime.is_dict_like(perms_data):
+            # Type narrowing: is_dict_like ensures dict[str, object]
+            return dict(perms_data)
 
         # Access permissions fields directly from model
         if isinstance(perms_data, FlextLdifModels.AclPermissions):
@@ -459,10 +469,15 @@ class FlextLdifAcl(FlextService[_AclResponseType]):
             # Check if permission is in context
             context_perms = context.get("permissions", {})
 
-            if isinstance(context_perms, dict):
-                if not context_perms.get(perm_name, False):
+            if FlextRuntime.is_dict_like(context_perms):
+                # Type narrowing: is_dict_like ensures dict[str, object]
+                perms_dict = dict(context_perms)
+                if not perms_dict.get(perm_name):
                     return FlextResult[bool].fail(f"Permission {perm_name} not granted")
-            elif isinstance(context_perms, list) and perm_name not in context_perms:
+            elif (
+                FlextRuntime.is_list_like(context_perms)
+                and perm_name not in context_perms
+            ):
                 return FlextResult[bool].fail(f"Permission {perm_name} not granted")
 
         return FlextResult[bool].ok(True)

@@ -410,7 +410,7 @@ class TestApacheDirectoryAcls:
             acl_line,
             parse_method="parse",
         )
-        assert acl.can_handle_acl(acl_model) is False  # type: ignore[attr-defined]
+        assert acl.can_handle_acl(acl_model) is False
 
     def test__can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
@@ -418,7 +418,7 @@ class TestApacheDirectoryAcls:
         acl = main.acl_quirk
         acl_line = ""
         # Empty string should return False for can_handle
-        assert acl.can_handle_acl(acl_line) is False  # type: ignore[attr-defined]
+        assert acl.can_handle_acl(acl_line) is False
 
     def test_parse_success(self) -> None:
         """Test parsing Apache DS ACI definition."""
@@ -555,7 +555,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -576,7 +576,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -597,7 +597,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -618,7 +618,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -640,7 +640,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -662,7 +662,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -683,7 +683,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -705,6 +705,6 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)  # type: ignore[attr-defined]
+        result = entry.parse(ldif)
         # Non-Apache entries may parse but Apache quirk won't be selected
         assert hasattr(result, "is_success")

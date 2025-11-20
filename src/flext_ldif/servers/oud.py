@@ -13,14 +13,14 @@ import operator
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import ClassVar, TypedDict, cast
+from typing import ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextMixins, FlextResult, FlextRuntime
+from pydantic import BaseModel
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
@@ -31,23 +31,23 @@ logger = FlextLogger(__name__)
 MetaKeys = FlextLdifConstants.MetadataKeys
 
 
-# Type definitions for validation rules structure
-class EncodingRulesDict(TypedDict):
-    """Encoding rules structure."""
+# Pydantic models for validation rules structure
+class EncodingRules(BaseModel):
+    """Encoding rules for server validation."""
 
     default_encoding: str
     allowed_encodings: list[str]
 
 
-class DnCaseRulesDict(TypedDict):
-    """DN case rules structure."""
+class DnCaseRules(BaseModel):
+    """DN case rules for server validation."""
 
     preserve_case: bool
     normalize_to: str | None
 
 
-class AclFormatRulesDict(TypedDict):
-    """ACL format rules structure."""
+class AclFormatRules(BaseModel):
+    """ACL format rules for server validation."""
 
     format: str
     attribute_name: str
@@ -55,15 +55,15 @@ class AclFormatRulesDict(TypedDict):
     requires_subject: bool
 
 
-class ValidationRulesDict(TypedDict):
-    """Validation rules structure for server-specific validation."""
+class ValidationRules(BaseModel):
+    """Validation rules for server-specific validation."""
 
     requires_objectclass: bool
     requires_naming_attr: bool
     requires_binary_option: bool
-    encoding_rules: EncodingRulesDict
-    dn_case_rules: DnCaseRulesDict
-    acl_format_rules: AclFormatRulesDict
+    encoding_rules: EncodingRules
+    dn_case_rules: DnCaseRules
+    acl_format_rules: AclFormatRules
     track_deletions: bool
     track_modifications: bool
     track_conversions: bool
@@ -439,7 +439,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         DETECTION_PATTERN: ClassVar[str] = (
             r"(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"  # OUD-specific attributes
         )
-        # Legacy alias kept for backwards compatibility (deprecated - use DETECTION_PATTERN)
+        # Alias for DETECTION_PATTERN (maintained for compatibility with detector service)
         DETECTION_OID_PATTERN: ClassVar[str] = DETECTION_PATTERN
         DETECTION_WEIGHT: ClassVar[int] = (
             14  # Detection confidence weight (increased to overcome
@@ -545,17 +545,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         return cls.Constants.SCHEMA_DN
 
     @classmethod
-    def get_categorization_rules(cls) -> dict[str, list[str]]:
+    def get_categorization_rules(cls) -> FlextLdifModels.CategoryRules:
         """Get categorization rules for entry classification.
 
-        Returns dict compatible with FlextLdif.migrate() categorization_rules parameter:
+        Returns CategoryRules model compatible with FlextLdif.migrate() parameter:
         - hierarchy_objectclasses: List of objectClasses for hierarchy entries
         - user_objectclasses: List of objectClasses for user entries
         - group_objectclasses: List of objectClasses for group entries
         - acl_attributes: List of ACL attribute names
 
         Returns:
-            Dict with categorization rules for OUD server quirks
+            CategoryRules model with OUD server quirks
 
         """
         # Extract objectClasses from CATEGORY_OBJECTCLASSES dict
@@ -571,57 +571,57 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         hierarchy_ocs = list(dict.fromkeys(hierarchy_ocs))
         acl_attrs = list(cls.Constants.CATEGORIZATION_ACL_ATTRIBUTES)
 
-        return {
-            "hierarchy_objectclasses": hierarchy_ocs,
-            "user_objectclasses": user_ocs,
-            "group_objectclasses": group_ocs,
-            "acl_attributes": acl_attrs,
-        }
+        return FlextLdifModels.CategoryRules(
+            hierarchy_objectclasses=hierarchy_ocs,
+            user_objectclasses=user_ocs,
+            group_objectclasses=group_ocs,
+            acl_attributes=acl_attrs,
+        )
 
     # =========================================================================
     # SHARED HELPER METHODS - Used by both Schema and Entry nested classes
     # =========================================================================
 
     @staticmethod
-    def _build_oud_validation_rules() -> ValidationRulesDict:
-        """Build OUD-specific validation rules dictionary.
+    def _build_oud_validation_rules() -> ValidationRules:
+        """Build OUD-specific validation rules model.
 
         Returns:
-            ValidationRulesDict with OUD-specific validation rules
+            ValidationRules model with OUD-specific validation rules
 
         """
         server_type = FlextLdifConstants.ServerTypes.OUD
-        return {
-            "requires_objectclass": (
+        return ValidationRules(
+            requires_objectclass=(
                 server_type
                 in FlextLdifConstants.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS
             ),
-            "requires_naming_attr": (
+            requires_naming_attr=(
                 server_type
                 in FlextLdifConstants.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS
             ),
-            "requires_binary_option": (
+            requires_binary_option=(
                 server_type
                 in FlextLdifConstants.ServerValidationRules.BINARY_OPTION_REQUIRED_SERVERS
             ),
-            "encoding_rules": {
-                "default_encoding": "utf-8",
-                "allowed_encodings": ["utf-8", "utf-16", "ascii"],
-            },
-            "dn_case_rules": {
-                "preserve_case": False,
-                "normalize_to": "lowercase",
-            },
-            "acl_format_rules": {
-                "format": "aci",
-                "attribute_name": "aci",
-                "requires_target": True,
-                "requires_subject": True,
-            },
-            "track_deletions": True,
-            "track_modifications": True,
-            "track_conversions": True,
-        }
+            encoding_rules=EncodingRules(
+                default_encoding="utf-8",
+                allowed_encodings=["utf-8", "utf-16", "ascii"],
+            ),
+            dn_case_rules=DnCaseRules(
+                preserve_case=False,
+                normalize_to="lowercase",
+            ),
+            acl_format_rules=AclFormatRules(
+                format="aci",
+                attribute_name="aci",
+                requires_target=True,
+                requires_subject=True,
+            ),
+            track_deletions=True,
+            track_modifications=True,
+            track_conversions=True,
+        )
 
     @staticmethod
     def _inject_validation_rules_static(
@@ -648,7 +648,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 },
             )
 
-        entry.metadata.extensions["validation_rules"] = validation_rules
+        # Use flext-core helper for consistent model serialization
+        entry.metadata.extensions["validation_rules"] = (
+            FlextMixins.ModelConversion.to_dict(validation_rules)
+        )
 
         return entry
 
@@ -671,7 +674,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         for attr_name, attr_values in attrs_dict.items():
             # Convert to list[str] - handle bytes conversion
             values_list: list[str]
-            if isinstance(attr_values, list):
+            if FlextRuntime.is_list_like(attr_values):
                 values_list = [
                     v.decode("utf-8", errors="replace")
                     if isinstance(v, bytes)
@@ -713,7 +716,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         attribute_name=attr_name,
                         original_value_preview=(
                             value[: FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH]
-                            if len(value) > FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH
+                            if len(value)
+                            > FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH
                             else value
                         ),
                     )
@@ -727,7 +731,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         return FlextResult[dict[str, object]].ok(result_dict)
 
     @staticmethod
-    def _get_oud_schema_quirk(parent_quirk: object | None) -> object:
+    def _get_oud_schema_quirk(
+        parent_quirk: object | None,
+    ) -> FlextLdifServersBase.Schema:
         """Get OUD schema_quirk from parent or create new instance.
 
         Extracted helper to reduce complexity of _write_entry_modify_add_format_helper.
@@ -736,7 +742,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             parent_quirk: Optional parent quirk instance
 
         Returns:
-            OUD schema_quirk instance with write_attribute/write_objectclass methods
+            Schema quirk instance with parse_attribute, write_attribute,
+            parse_objectclass, write_objectclass methods
+
+        Note:
+            Returns FlextLdifServersBase.Schema (base type) which is the common
+            type for both parent_quirk.schema_quirk and new instance.
 
         """
         if parent_quirk and isinstance(parent_quirk, FlextLdifServersOud):
@@ -764,7 +775,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # Parse as attribute using RFC quirks (OUD inherits from RFC)
         # Get OUD schema quirk which inherits from RFC
         oud_schema_quirk = FlextLdifServersOud._get_oud_schema_quirk(parent_quirk)
-        parse_result = oud_schema_quirk.parse_attribute(value_to_parse)  # type: ignore[attr-defined]
+        parse_result = oud_schema_quirk.parse_attribute(value_to_parse)
 
         if not parse_result.is_success:
             return FlextResult[str].fail(
@@ -774,7 +785,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         attr_model = parse_result.unwrap()
 
         # Write using OUD quirks - transformations applied automatically by _transform_attribute_for_write hook
-        write_result = oud_schema_quirk.write_attribute(attr_model)  # type: ignore[attr-defined]
+        write_result = oud_schema_quirk.write_attribute(attr_model)
 
         if not write_result.is_success:
             return FlextResult[str].fail(
@@ -809,7 +820,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # Parse as objectClass using RFC quirks (OUD inherits from RFC)
         # Get OUD schema quirk which inherits from RFC
         oud_schema_quirk = FlextLdifServersOud._get_oud_schema_quirk(parent_quirk)
-        parse_result = oud_schema_quirk.parse_objectclass(value_to_parse)  # type: ignore[attr-defined]
+        parse_result = oud_schema_quirk.parse_objectclass(value_to_parse)
 
         if not parse_result.is_success:
             return FlextResult[str].fail(
@@ -819,7 +830,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         oc_model = parse_result.unwrap()
 
         # Write using OUD quirks - transformations applied automatically by _transform_objectclass_for_write hook
-        write_result = oud_schema_quirk.write_objectclass(oc_model)  # type: ignore[attr-defined]
+        write_result = oud_schema_quirk.write_objectclass(oc_model)
 
         if not write_result.is_success:
             return FlextResult[str].fail(
@@ -1021,14 +1032,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return acl_attrs
 
         transformations = entry_data.metadata.extensions.get("acl_transformations")
-        if not transformations or not isinstance(transformations, dict):
+        if not transformations or not FlextRuntime.is_dict_like(transformations):
             return acl_attrs
 
         # transformations is dict[str, AttributeTransformation]
         # Key is original_name, value has original_values
         original_names: dict[str, list[str]] = {}
         for orig_name, transformation in transformations.items():
-            if isinstance(transformation, dict):
+            if FlextRuntime.is_dict_like(transformation):
                 # AttributeTransformation serialized as dict
                 original_names[orig_name] = transformation.get(
                     "original_values",
@@ -1068,7 +1079,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             {},
         )
 
-        if isinstance(removed_attrs, dict):
+        if FlextRuntime.is_dict_like(removed_attrs):
             removed_attrs.update(acl_attrs)
         else:
             removed_attrs = acl_attrs
@@ -1109,7 +1120,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # Step 1: Validate ACI macros if present (syntax validation)
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and isinstance(aci_attrs, list):
+        if aci_attrs and FlextRuntime.is_list_like(aci_attrs):
             for aci_value in aci_attrs:
                 if isinstance(aci_value, str):
                     validation_result = validate_aci_macros(aci_value)
@@ -1131,15 +1142,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         syntax_corrections = corrected_data.get("syntax_corrections")
         if (
             syntax_corrections
-            and isinstance(syntax_corrections, list)
+            and FlextRuntime.is_list_like(syntax_corrections)
             and len(syntax_corrections) > 0
         ):
             # Type narrowing for corrected_attributes
             corrected_attrs = corrected_data.get("corrected_attributes")
-            if isinstance(corrected_attrs, dict):
+            if FlextRuntime.is_dict_like(corrected_attrs):
                 # Type narrowing: corrected_attrs is dict[str, list[str]] from _correct_rfc_syntax_in_attributes
                 attrs_for_model: dict[str, list[str]] = {
-                    k: v if isinstance(v, list) else [str(v)]
+                    k: v if FlextRuntime.is_list_like(v) else [str(v)]
                     for k, v in corrected_attrs.items()
                     if isinstance(v, (list, str))
                 }
@@ -1158,7 +1169,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     corrections_count=len(syntax_corrections),
                     corrections=syntax_corrections,
                     corrected_attributes=list(corrected_attrs.keys())
-                    if isinstance(corrected_attrs, dict)
+                    if FlextRuntime.is_dict_like(corrected_attrs)
                     else None,
                 )
                 return FlextResult[FlextLdifModels.Entry].ok(corrected_entry)
@@ -1490,10 +1501,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             attr_definition: str,
         ) -> None:
             """Add source metadata fields."""
-            from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                FlextLdifUtilitiesMetadata,
-            )
-
             # Ensure metadata exists
             if not validated_attr.metadata:
                 validated_attr.metadata = FlextLdifModels.QuirkMetadata(
@@ -1513,7 +1520,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             validated_attr.metadata.extensions[meta_keys.SCHEMA_SOURCE_SERVER] = "oud"
 
             # Preserve ALL schema formatting details for zero data loss
-            FlextLdifUtilitiesMetadata.preserve_schema_formatting(
+            FlextLdifUtilities.Metadata.preserve_schema_formatting(
                 validated_attr.metadata,
                 attr_definition,
             )
@@ -1734,7 +1741,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             must_attrs = oc_data.must
             if must_attrs:
                 must_list: list[str] = (
-                    must_attrs if isinstance(must_attrs, list) else [str(must_attrs)]
+                    must_attrs
+                    if FlextRuntime.is_list_like(must_attrs)
+                    else [str(must_attrs)]
                 )
                 missing_attrs.extend(
                     [
@@ -1753,7 +1762,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             may_attrs = oc_data.may
             if may_attrs:
                 may_list: list[str] = (
-                    may_attrs if isinstance(may_attrs, list) else [str(may_attrs)]
+                    may_attrs
+                    if FlextRuntime.is_list_like(may_attrs)
+                    else [str(may_attrs)]
                 )
                 missing_attrs.extend(
                     [
@@ -1989,27 +2000,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Replace quoted SYNTAX OID with unquoted version
             return syntax_pattern.sub(r"SYNTAX \1", value)
 
-        def _add_ldif_block(
-            self,
-            ldif_lines: list[str],
-            schema_type: str,
-            value: str | bytes,
-            *,
-            is_first_block: bool,
-        ) -> bool:
-            """Add a single LDIF block for schema value.
-
-            Returns:
-                False (next block won't be first)
-
-            """
-            return FlextLdifServersOud._add_ldif_block_static(
-                ldif_lines,
-                schema_type,
-                value,
-                is_first_block=is_first_block,
-            )
-
         def _write_entry_modify_add_format(
             self,
             entry_data: FlextLdifModels.Entry,
@@ -2188,13 +2178,23 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return
 
             dn = str(entry_dict.pop(FlextLdifConstants.DictKeys.DN))
-            # Use Entry quirk's _parse_entry via instance (returns Entry RFC canonical)
-            # Create Entry instance to access _parse_entry
-            # Note: Accessing private method is intentional for internal reuse
-            entry_instance = FlextLdifServersOud.Entry()
-            result = entry_instance._parse_entry(dn, entry_dict)  # noqa: SLF001
-            if result.is_success:
-                entries_list.append(result.unwrap())
+            # Use Entry quirk's parse_entry method via parent quirk
+            # Access entry_quirk from parent (Schema) instance using public property
+            parent_quirk = getattr(self, "parent_quirk", None)
+            if parent_quirk and hasattr(parent_quirk, "entry_quirk"):
+                # Use public entry_quirk property
+                entry_quirk = parent_quirk.entry_quirk
+                # Convert entry_dict to proper format for parse_entry
+                entry_attrs: dict[str, list[str]] = {
+                    k: [str(v)]
+                    if not FlextRuntime.is_list_like(v)
+                    else [str(item) for item in v]
+                    for k, v in entry_dict.items()
+                }
+                # Use public parse_entry method
+                result = entry_quirk.parse_entry(dn, entry_attrs)
+                if result.is_success:
+                    entries_list.append(result.unwrap())
 
         def extract_entries_from_ldif(
             self,
@@ -2333,18 +2333,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             return self.RFC_ACL_ATTRIBUTES + self.OUD_ACL_ATTRIBUTES
 
-        def is_acl_attribute(self, attribute_name: str) -> bool:
-            """Check if ACL attribute (case-insensitive).
-
-            Args:
-                attribute_name: Attribute name to check
-
-            Returns:
-                True if attribute is ACL attribute, False otherwise
-
-            """
-            all_attrs = self.get_acl_attributes()
-            return attribute_name.lower() in [a.lower() for a in all_attrs]
+        # is_acl_attribute inherited from base class (uses set for O(1) lookup)
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with Oracle OUD-specific logic:
@@ -2733,6 +2722,105 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     f"Failed to build OUD ACL model: {e}",
                 )
 
+        # ===== _create_acl_from_context HELPER METHODS (DRY refactoring) =====
+
+        def _build_oud_permissions(
+            self,
+            permissions_list: list[str],
+        ) -> dict[str, bool]:
+            """Build OUD permissions dictionary with 'all' handling.
+
+            Args:
+                permissions_list: List of permission strings
+
+            Returns:
+                Permissions dict with bool values
+
+            """
+            perm_map = {
+                "read": FlextLdifServersOud.Constants.PERMISSION_READ,
+                "write": FlextLdifServersOud.Constants.PERMISSION_WRITE,
+                "add": FlextLdifServersOud.Constants.PERMISSION_ADD,
+                "delete": FlextLdifServersOud.Constants.PERMISSION_DELETE,
+                "search": FlextLdifServersOud.Constants.PERMISSION_SEARCH,
+                "compare": FlextLdifServersOud.Constants.PERMISSION_COMPARE,
+                "selfwrite": FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE,
+                "self_write": FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE,
+                "proxy": FlextLdifServersOud.Constants.PERMISSION_PROXY,
+            }
+            permissions_data = FlextLdifUtilities.ACL.build_permissions_dict(
+                permissions_list, perm_map
+            )
+
+            # Handle "all" permission special case
+            if FlextLdifUtilities.Schema.is_attribute_in_list(
+                FlextLdifServersOud.Constants.PERMISSION_ALL, permissions_list
+            ):
+                permissions_data = dict.fromkeys(permissions_data, True)
+
+            return permissions_data
+
+        def _build_oud_subject(
+            self,
+            bind_rules_data: list[dict[str, str]],
+        ) -> tuple[str, str]:
+            """Build OUD ACL subject from bind rules.
+
+            Args:
+                bind_rules_data: List of bind rule dicts with 'type' and 'value' keys
+                    (matches extract_bind_rules return type)
+
+            Returns:
+                Tuple of (subject_type, subject_value)
+
+            """
+            subject_type_map = {
+                FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_USERDN: FlextLdifServersOud.Constants.ACL_SUBJECT_TYPE_BIND_RULES,
+                FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_GROUPDN: "group",
+            }
+            special_values = {
+                FlextLdifServersOud.Constants.ACL_SELF_SUBJECT: (
+                    "self",
+                    FlextLdifServersOud.Constants.ACL_SELF_SUBJECT,
+                ),
+                "self": ("self", FlextLdifServersOud.Constants.ACL_SELF_SUBJECT),
+                FlextLdifServersOud.Constants.ACL_ANONYMOUS_SUBJECT: ("anonymous", "*"),
+                "anyone": ("anonymous", "*"),
+                FlextLdifServersOud.Constants.ACL_ANONYMOUS_SUBJECT_ALT: (
+                    "anonymous",
+                    "*",
+                ),
+                "*": ("anonymous", "*"),
+            }
+            return FlextLdifUtilities.ACL.build_acl_subject(
+                bind_rules_data, subject_type_map, special_values
+            )
+
+        def _parse_targetattr(
+            self,
+            targetattr_str: str,
+        ) -> tuple[list[str], str]:
+            """Parse targetattr string to attributes list and target DN.
+
+            Args:
+                targetattr_str: Target attribute string
+
+            Returns:
+                Tuple of (target_attributes, target_dn)
+
+            """
+            if targetattr_str and "||" in targetattr_str:
+                # Multiple attributes: "cn || sn || mail" -> ["cn", "sn", "mail"]
+                target_attributes = [
+                    attr.strip() for attr in targetattr_str.split("||") if attr.strip()
+                ]
+                return target_attributes, "*"
+            if targetattr_str and targetattr_str != "*":
+                # Single attribute
+                return [targetattr_str.strip()], "*"
+            # Wildcard
+            return [], "*"
+
         def _create_acl_from_context(
             self,
             context: dict[str, object],
@@ -2741,8 +2829,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Acl]:
             """Create ACL model from context using functional composition."""
             try:
-                # Extract values from context
-
                 # Extract permissions and bind rules from aci_content
                 permissions_list = FlextLdifUtilities.ACL.extract_permissions(
                     aci_content,
@@ -2756,92 +2842,16 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     dict(FlextLdifServersOud.Constants.ACL_BIND_PATTERNS),
                 )
 
-                # Build permissions and subject using functional utilities
-                perm_map = {
-                    "read": FlextLdifServersOud.Constants.PERMISSION_READ,
-                    "write": FlextLdifServersOud.Constants.PERMISSION_WRITE,
-                    "add": FlextLdifServersOud.Constants.PERMISSION_ADD,
-                    "delete": FlextLdifServersOud.Constants.PERMISSION_DELETE,
-                    "search": FlextLdifServersOud.Constants.PERMISSION_SEARCH,
-                    "compare": FlextLdifServersOud.Constants.PERMISSION_COMPARE,
-                    "selfwrite": FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE,
-                    "self_write": FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE,
-                    "proxy": FlextLdifServersOud.Constants.PERMISSION_PROXY,
-                }
+                # Build permissions using helper (DRY refactoring)
+                permissions_data = self._build_oud_permissions(permissions_list)
 
-                permissions_data = FlextLdifUtilities.ACL.build_permissions_dict(
-                    permissions_list,
-                    perm_map,
-                )
+                # Build subject using helper (DRY refactoring)
+                subject_type, subject_value = self._build_oud_subject(bind_rules_data)
 
-                # Handle "all" permission special case
-                if FlextLdifUtilities.Schema.is_attribute_in_list(
-                    FlextLdifServersOud.Constants.PERMISSION_ALL,
-                    permissions_list,
-                ):
-                    permissions_data = dict.fromkeys(permissions_data, True)
-
-                # Build subject using functional utilities
-                subject_type_map = {
-                    FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_USERDN: FlextLdifServersOud.Constants.ACL_SUBJECT_TYPE_BIND_RULES,
-                    FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_GROUPDN: "group",  # OUD usa "group" para groupdn
-                }
-                special_values = {
-                    # Map both with and without ldap:/// prefix
-                    FlextLdifServersOud.Constants.ACL_SELF_SUBJECT: (
-                        "self",
-                        FlextLdifServersOud.Constants.ACL_SELF_SUBJECT,
-                    ),
-                    "self": (
-                        "self",
-                        FlextLdifServersOud.Constants.ACL_SELF_SUBJECT,
-                    ),
-                    FlextLdifServersOud.Constants.ACL_ANONYMOUS_SUBJECT: (
-                        "anonymous",
-                        "*",
-                    ),
-                    "anyone": (
-                        "anonymous",
-                        "*",
-                    ),
-                    FlextLdifServersOud.Constants.ACL_ANONYMOUS_SUBJECT_ALT: (
-                        "anonymous",
-                        "*",
-                    ),
-                    "*": (
-                        "anonymous",
-                        "*",
-                    ),
-                }
-                subject_type, subject_value = FlextLdifUtilities.ACL.build_acl_subject(
-                    bind_rules_data,
-                    subject_type_map,
-                    special_values,
-                )
-
-                # Create ACL model using functional composition
+                # Parse targetattr using helper (DRY refactoring)
                 acl_line = context.get("original_acl_line", "")
-
-                # Parse targetattr: split by "||" separator if present, otherwise use as single attribute
                 targetattr_str = cast("str", context["targetattr"])
-                if targetattr_str and "||" in targetattr_str:
-                    # Multiple attributes: "cn || sn || mail" -> ["cn", "sn", "mail"]
-                    target_attributes = [
-                        attr.strip()
-                        for attr in targetattr_str.split("||")
-                        if attr.strip()
-                    ]
-                    target_dn = (
-                        "*"  # Multiple attributes means entry-level, not DN-specific
-                    )
-                elif targetattr_str and targetattr_str != "*":
-                    # Single attribute: "cn" -> ["cn"]
-                    target_attributes = [targetattr_str.strip()]
-                    target_dn = "*"
-                else:
-                    # Wildcard: "*" -> []
-                    target_attributes = []
-                    target_dn = "*"
+                target_attributes, target_dn = self._parse_targetattr(targetattr_str)
 
                 # Padronizar metadados GENÉRICOS para conversão bidirecional
                 # Preservar tipo original do subject no metadata para que QUALQUER quirk possa escrever corretamente
@@ -2917,29 +2927,25 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Formatted target attributes string
 
             """
-            # Try to get target from model field, fallback to metadata if None
-            # This enables server-agnostic conversion where source stores target in metadata
+            # Get target from model field or metadata
             target = acl_data.target
 
             if not target and acl_data.metadata:
                 # Reconstruct target from acl_target_target metadata
-                # This is set during conversion from source server (e.g., OID→OUD)
                 target_dict = acl_data.metadata.extensions.get("acl_target_target")
-                if isinstance(target_dict, dict):
+                if FlextRuntime.is_dict_like(target_dict):
                     target = FlextLdifModels.AclTarget(**target_dict)
 
             if not target:
                 return '(targetattr="*")'
 
-            # Use attributes list if available (from cross-server conversion or multi-attribute ACI)
+            # Use attributes list if available
             if target.attributes:
-                # Multiple attributes: join with " || " separator
                 target_attr_str = " || ".join(target.attributes)
                 return f'(targetattr="{target_attr_str}")'
 
-            # Fallback to target_dn if no attributes list
+            # Use target_dn if no attributes list
             if target.target_dn and target.target_dn != "*":
-                # Single attribute or DN stored in target_dn
                 target_attr = target.target_dn
                 return f'(targetattr="{target_attr}")'
 
@@ -2959,8 +2965,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult with formatted permissions string
 
             """
-            # Try to get permissions from model field, fallback to metadata if None
-            # This enables server-agnostic conversion where source stores permissions in metadata
+            # Get permissions from model field or metadata
             perms = acl_data.permissions
 
             if not perms and acl_data.metadata:
@@ -2969,7 +2974,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 target_perms_dict = acl_data.metadata.extensions.get(
                     FlextLdifConstants.MetadataKeys.ACL_TARGET_PERMISSIONS,
                 )
-                if isinstance(target_perms_dict, dict):
+                if FlextRuntime.is_dict_like(target_perms_dict):
                     perms = FlextLdifModels.AclPermissions(**target_perms_dict)
 
             if not perms:
@@ -3093,7 +3098,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             )
 
             # If no subject parsed, try to get from metadata
-            if not subject_value_for_format and acl_data.metadata and acl_data.metadata.extensions:
+            if (
+                not subject_value_for_format
+                and acl_data.metadata
+                and acl_data.metadata.extensions
+            ):
                 subject_value_raw = acl_data.metadata.extensions.get(
                     MetaKeys.ORIGINAL_SUBJECT_VALUE
                 )
@@ -3129,7 +3138,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             )
 
             # Get subject value
-            subject_value_str = self._get_subject_value(acl_data, subject_type_for_format)
+            subject_value_str = self._get_subject_value(
+                acl_data, subject_type_for_format
+            )
 
             # Default to self if no subject type
             if not subject_type_for_format or subject_type_for_format == "self":
@@ -3406,7 +3417,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Convert Mapping to dict for attribute access
             entry_attrs = (
-                dict(attributes) if not isinstance(attributes, dict) else attributes
+                dict(attributes)
+                if not FlextRuntime.is_dict_like(attributes)
+                else attributes
             )
 
             # Use utility methods for DN pattern matching
@@ -3521,7 +3534,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if attr_lower in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES:
                 # Convert to list[str] - fast-fail if cannot convert
                 values_list: list[str]
-                if isinstance(attr_values, list):
+                if FlextRuntime.is_list_like(attr_values):
                     # Convert bytes to str if needed
                     values_list = [
                         v.decode("utf-8", errors="replace")
@@ -3552,7 +3565,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 attr_lower == "telephonenumber"
             ):  # Note: this is a standard RFC attribute name
                 # Ensure attr_values is list[str] for validation - convert bytes to str
-                if isinstance(attr_values, list):
+                if FlextRuntime.is_list_like(attr_values):
                     telephone_values = [
                         v.decode("utf-8", errors="replace")
                         if isinstance(v, bytes)
@@ -3564,9 +3577,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     telephone_values = [attr_values.decode("utf-8", errors="replace")]
                 else:
                     telephone_values = [str(attr_values)]
-                valid_numbers = FlextLdifUtilities.Entry.validate_telephone_numbers(
-                    telephone_values,
-                )
+                valid_numbers = [
+                    v for v in telephone_values if FlextRuntime.is_valid_phone(v)
+                ]
                 if valid_numbers:
                     return valid_numbers
 
@@ -3574,7 +3587,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return [
                 str(val)
                 for val in (
-                    [attr_values] if not isinstance(attr_values, list) else attr_values
+                    [attr_values]
+                    if not FlextRuntime.is_list_like(attr_values)
+                    else attr_values
                 )
             ]
 
@@ -3686,15 +3701,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     )
                     or attr_name
                 )
-                final_attributes[normalized_name] = (
-                    self._process_attribute_value(normalized_name, attr_values)
+                final_attributes[normalized_name] = self._process_attribute_value(
+                    normalized_name, attr_values
                 )
             return final_attributes
 
         def _populate_roundtrip_metadata(
             self,
             entry: FlextLdifModels.Entry,
-            new_metadata: FlextLdifModelsDomains.QuirkMetadata,
+            new_metadata: FlextLdifModels.QuirkMetadata,
             entry_dn: str,
         ) -> None:
             """Populate metadata fields for complete round-trip support.
@@ -3705,9 +3720,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 entry_dn: Original DN string
 
             """
-            original_attrs = (
-                entry.attributes.attributes if entry.attributes else {}
-            )
+            original_attrs = entry.attributes.attributes if entry.attributes else {}
             for attr_name in original_attrs:
                 normalized = FlextLdifServersOud.Constants.ATTRIBUTE_CASE_MAP.get(
                     attr_name.lower(), attr_name
@@ -3727,7 +3740,104 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             new_metadata.original_format_details["server_type"] = "oud"
             new_metadata.original_format_details["dn_spacing"] = entry_dn
 
-        def _parse_entry(  # noqa: C901 - complexity justified for zero data loss
+        # ===== _parse_entry HELPER METHODS (DRY refactoring) =====
+
+        def _analyze_oud_entry_differences(
+            self,
+            original_entry_dict: dict[str, object],
+            final_attributes: dict[str, list[str]],
+            original_dn: str,
+            parsed_dn: str | None,
+        ) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
+            """Analyze DN and attribute differences for OUD entries.
+
+            Args:
+                original_entry_dict: Original entry attributes
+                final_attributes: Final processed attributes
+                original_dn: Original DN string
+                parsed_dn: Parsed DN value
+
+            Returns:
+                Tuple of (dn_differences, attribute_differences)
+
+            """
+            # Analyze DN differences
+            dn_differences = FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                original=original_dn,
+                converted=parsed_dn if parsed_dn and parsed_dn != original_dn else None,
+                context="dn",
+            )
+
+            # Analyze attribute differences
+            attribute_differences: dict[str, dict[str, object]] = {}
+
+            for attr_name, attr_values in original_entry_dict.items():
+                parsed_values = final_attributes.get(attr_name, [])
+
+                # Build string representations
+                original_str = f"{attr_name}: {', '.join(str(v) for v in (attr_values if FlextRuntime.is_list_like(attr_values) else [attr_values]))}"
+                parsed_str = (
+                    f"{attr_name}: {', '.join(str(v) for v in parsed_values)}"
+                    if parsed_values
+                    else None
+                )
+
+                attr_diff = FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                    original=original_str,
+                    converted=parsed_str if parsed_str != original_str else None,
+                    context="attribute",
+                )
+                attribute_differences[attr_name] = attr_diff
+
+            return dn_differences, attribute_differences
+
+        def _store_oud_minimal_differences(
+            self,
+            metadata: FlextLdifModels.QuirkMetadata,
+            dn_differences: dict[str, object],
+            attribute_differences: dict[str, dict[str, object]],
+            original_dn: str,
+            parsed_dn: str | None,
+        ) -> None:
+            """Store minimal differences in OUD entry metadata.
+
+            Args:
+                metadata: QuirkMetadata to update (internal domain type)
+                dn_differences: DN difference analysis
+                attribute_differences: Attribute difference analysis
+                original_dn: Original DN string
+                parsed_dn: Parsed DN value
+
+            """
+            # Track DN differences
+            if dn_differences.get("has_differences"):
+                FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
+                    metadata=metadata,
+                    original=original_dn,
+                    converted=parsed_dn
+                    if parsed_dn and parsed_dn != original_dn
+                    else None,
+                    context="dn",
+                    attribute_name="dn",
+                )
+
+            # Track attribute differences
+            for attr_name, attr_diff in attribute_differences.items():
+                if attr_diff.get("has_differences", False):
+                    original_attr_str = attr_diff.get("original", "")
+                    converted = attr_diff.get("converted")
+                    converted_attr_str = str(converted) if converted else None
+                    FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
+                        metadata=metadata,
+                        original=original_attr_str
+                        if isinstance(original_attr_str, str)
+                        else str(original_attr_str),
+                        converted=converted_attr_str,
+                        context="attribute",
+                        attribute_name=attr_name,
+                    )
+
+        def _parse_entry(
             self,
             entry_dn: str,
             entry_attrs: Mapping[str, object],
@@ -3759,14 +3869,18 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 original_dn_line = None
                 original_attr_lines: list[str] = []
                 if entry.metadata and entry.metadata.original_format_details:
-                    original_dn_line = entry.metadata.original_format_details.get("original_dn_line")
-                    orig_attr_lines = entry.metadata.original_format_details.get("original_attr_lines", [])
-                    if isinstance(orig_attr_lines, list):
+                    original_dn_line = entry.metadata.original_format_details.get(
+                        "original_dn_line"
+                    )
+                    orig_attr_lines = entry.metadata.original_format_details.get(
+                        "original_attr_lines", []
+                    )
+                    if FlextRuntime.is_list_like(orig_attr_lines):
                         original_attr_lines = orig_attr_lines
-                
+
                 # Preserve original entry_dict for minimal differences analysis
                 original_entry_dict = dict(entry_attrs)
-                
+
                 processed_attrs_dict = self._preserve_internal_attributes(entry)
                 final_attributes = self._normalize_and_process_attributes(entry)
 
@@ -3787,44 +3901,30 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     final_attributes,
                 )
                 metadata_extensions["original_entry"] = entry
-                
-                # CRITICAL: Analyze ALL minimal differences for perfect round-trip
-                from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                    FlextLdifUtilitiesMetadata,
-                )
 
-                # Analyze DN differences (original vs parsed)
+                # Analyze differences using helper (DRY refactoring)
                 original_dn = entry_dn
                 parsed_dn = entry.dn.value if entry.dn else None
-                dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                    original=original_dn,
-                    converted=parsed_dn if parsed_dn and parsed_dn != original_dn else None,
-                    context="dn"
-                )
-                
-                # Analyze attribute differences for each attribute
-                attribute_differences: dict[str, dict[str, object]] = {}
-                
-                for attr_name, attr_values in original_entry_dict.items():
-                    parsed_values = final_attributes.get(attr_name, [])
-                    
-                    # Build original string representation
-                    original_attr_str = f"{attr_name}: {', '.join(str(v) for v in (attr_values if isinstance(attr_values, list) else [attr_values]))}"
-                    parsed_attr_str = f"{attr_name}: {', '.join(str(v) for v in parsed_values)}" if parsed_values else None
-                    
-                    attr_diff = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                        original=original_attr_str,
-                        converted=parsed_attr_str if parsed_attr_str != original_attr_str else None,
-                        context="attribute"
+                dn_differences, attribute_differences = (
+                    self._analyze_oud_entry_differences(
+                        original_entry_dict, final_attributes, original_dn, parsed_dn
                     )
-                    attribute_differences[attr_name] = attr_diff
-                
+                )
+
                 # Store minimal differences in metadata_extensions
                 metadata_extensions["minimal_differences_dn"] = dn_differences
-                metadata_extensions["minimal_differences_attributes"] = attribute_differences
+                metadata_extensions["minimal_differences_attributes"] = (
+                    attribute_differences
+                )
                 metadata_extensions["original_dn_complete"] = original_dn
                 metadata_extensions["original_attributes_complete"] = {
-                    str(k): (list(v) if isinstance(v, (list, tuple)) else [str(v)] if v is not None else [])
+                    str(k): (
+                        list(v)
+                        if isinstance(v, (list, tuple))
+                        else [str(v)]
+                        if v is not None
+                        else []
+                    )
                     for k, v in original_entry_dict.items()
                 }
 
@@ -3836,37 +3936,30 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # ZERO DATA LOSS: Preserve original lines in metadata
                 if not new_metadata.original_format_details:
                     new_metadata.original_format_details = {}
-                new_metadata.original_format_details["original_dn_line"] = original_dn_line
-                new_metadata.original_format_details["original_attr_lines"] = original_attr_lines
-                new_metadata.original_format_details["minimal_differences_dn"] = dn_differences
-                new_metadata.original_format_details["minimal_differences_attributes"] = attribute_differences
-                
-                # CRITICAL: Track minimal differences using utility function for perfect round-trip
-                if dn_differences.get("has_differences", False):
-                    FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
-                        metadata=new_metadata,
-                        original=original_dn,
-                        converted=parsed_dn if parsed_dn and parsed_dn != original_dn else None,
-                        context="dn",
-                        attribute_name="dn"
-                    )
-                
-                # Track attribute differences
-                for attr_name, attr_diff in attribute_differences.items():
-                    if attr_diff.get("has_differences", False):
-                        original_attr_str = attr_diff.get("original", "")
-                        converted = attr_diff.get("converted")
-                        converted_attr_str = str(converted) if converted else None
-                        FlextLdifUtilitiesMetadata.track_minimal_differences_in_metadata(
-                            metadata=new_metadata,
-                            original=original_attr_str if isinstance(original_attr_str, str) else str(original_attr_str),
-                            converted=converted_attr_str,
-                            context="attribute",
-                            attribute_name=attr_name
-                        )
+                new_metadata.original_format_details["original_dn_line"] = (
+                    original_dn_line
+                )
+                new_metadata.original_format_details["original_attr_lines"] = (
+                    original_attr_lines
+                )
+                new_metadata.original_format_details["minimal_differences_dn"] = (
+                    dn_differences
+                )
+                new_metadata.original_format_details[
+                    "minimal_differences_attributes"
+                ] = attribute_differences
+
+                # Track minimal differences using helper (DRY refactoring)
+                self._store_oud_minimal_differences(
+                    metadata=new_metadata,
+                    dn_differences=dn_differences,
+                    attribute_differences=attribute_differences,
+                    original_dn=original_dn,
+                    parsed_dn=parsed_dn,
+                )
 
                 self._populate_roundtrip_metadata(entry, new_metadata, entry_dn)
-                
+
                 logger.debug(
                     "OUD entry parsed with complete minimal differences analysis",
                     entry_dn=original_dn[:50] if original_dn else None,
@@ -3876,8 +3969,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     original_attributes_count=len(original_entry_dict),
                     parsed_attributes_count=len(final_attributes),
                     # What was preserved
-                    minimal_differences_dn_captured=bool(dn_differences.get("has_differences", False)),
-                    minimal_differences_attributes_captured=len(attribute_differences) > 0,
+                    minimal_differences_dn_captured=bool(
+                        dn_differences.get("has_differences", False)
+                    ),
+                    minimal_differences_attributes_captured=len(attribute_differences)
+                    > 0,
                 )
 
                 if entry.dn is None:
@@ -4002,27 +4098,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 values,
                 allowed_oids=allowed_oids,
                 oid_pattern=oid_pattern,
-            )
-
-        def _add_ldif_block(
-            self,
-            ldif_lines: list[str],
-            schema_type: str,
-            value: str | bytes,
-            *,
-            is_first_block: bool,
-        ) -> bool:
-            """Add a single LDIF block for schema value.
-
-            Returns:
-                False (next block won't be first)
-
-            """
-            return FlextLdifServersOud._add_ldif_block_static(
-                ldif_lines,
-                schema_type,
-                value,
-                is_first_block=is_first_block,
             )
 
         def _write_entry_modify_add_format(
@@ -4165,7 +4240,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Try extensions if write_options doesn't have base_dn
             if base_dn is None and entry_data.metadata.extensions:
                 extensions = entry_data.metadata.extensions
-                if isinstance(extensions, dict):
+                if FlextRuntime.is_dict_like(extensions):
                     base_dn_ext = extensions.get("base_dn")
                     if isinstance(base_dn_ext, str):
                         base_dn = base_dn_ext
@@ -4242,7 +4317,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 """Replace DN in alternative ACL format ACL string."""
                 dn_value = match.group(2)
                 # Clean DN: remove spaces after commas (server-specific quirk fix)
-                cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_value)
+                cleaned_dn = FlextLdifUtilities.DN.clean_dn(dn_value)
 
                 # Normalize case using dn_registry if available
                 if dn_registry and (
@@ -4254,7 +4329,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 if (
                     base_dn
                     and cleaned_dn
-                    and not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn)
+                    and not FlextLdifUtilities.DN.is_under_base(cleaned_dn, base_dn)
                 ):
                     dn_was_filtered[0] = True
                     return match.group(0)  # Keep original if filtered
@@ -4400,7 +4475,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             # Clean DN: remove spaces after commas (server-specific quirk fix)
             # This fixes: "cn=Group, cn=Sub" -> "cn=Group,cn=Sub"
-            cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_value)
+            cleaned_dn = FlextLdifUtilities.DN.clean_dn(dn_value)
 
             # Normalize case using dn_registry if available
             if dn_registry:
@@ -4412,7 +4487,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if (
                 base_dn
                 and cleaned_dn
-                and not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn)
+                and not FlextLdifUtilities.DN.is_under_base(cleaned_dn, base_dn)
             ):
                 # DN filtered out - return empty string to signal filtering
                 return ""
@@ -4420,7 +4495,106 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Return normalized ACL bind rule
             return f'{acl_type}="{prefix}{cleaned_dn}"'
 
-        def _write_entry(  # noqa: C901 - complexity justified for zero data loss
+        def _restore_original_dn(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Restore original DN from metadata if available."""
+            if not (entry_data.metadata and entry_data.metadata.extensions):
+                return entry_data
+
+            original_dn = entry_data.metadata.extensions.get("original_dn_complete")
+            if not (original_dn and isinstance(original_dn, str) and entry_data.dn):
+                return entry_data
+
+            dn_differences = entry_data.metadata.extensions.get(
+                "minimal_differences_dn", {}
+            )
+            if not (
+                FlextRuntime.is_dict_like(dn_differences)
+                and dn_differences.get("has_differences")
+            ):
+                return entry_data
+
+            logger.debug(
+                "Restored original OUD DN from metadata",
+                original_dn=original_dn,
+                current_dn=str(entry_data.dn),
+            )
+            return entry_data.model_copy(
+                update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)}
+            )
+
+        def _restore_original_attributes(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Restore original attributes from metadata if available."""
+            if not (
+                entry_data.metadata
+                and entry_data.metadata.extensions
+                and entry_data.attributes
+                and entry_data.metadata.original_attribute_case
+            ):
+                return entry_data
+
+            original_attrs = entry_data.metadata.extensions.get(
+                "original_attributes_complete"
+            )
+            if not (original_attrs and FlextRuntime.is_dict_like(original_attrs)):
+                return entry_data
+
+            restored_attrs: dict[str, list[str]] = {}
+            for (
+                attr_name,
+                attr_values,
+            ) in entry_data.attributes.attributes.items():
+                original_case = entry_data.metadata.original_attribute_case.get(
+                    attr_name.lower(), attr_name
+                )
+                if original_case in original_attrs:
+                    restored_attrs[original_case] = (
+                        original_attrs[original_case]
+                        if FlextRuntime.is_list_like(original_attrs[original_case])
+                        else [str(original_attrs[original_case])]
+                    )
+                else:
+                    restored_attrs[original_case] = attr_values
+
+            if not restored_attrs:
+                return entry_data
+
+            logger.debug(
+                "Restored original OUD attributes from metadata",
+                original_attrs_count=len(original_attrs),
+                restored_attrs_count=len(restored_attrs),
+            )
+            return entry_data.model_copy(
+                update={
+                    "attributes": FlextLdifModels.LdifAttributes(
+                        attributes=restored_attrs,
+                        attribute_metadata=entry_data.attributes.attribute_metadata,
+                        metadata=entry_data.attributes.metadata,
+                    )
+                }
+            )
+
+        def _extract_write_options(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.WriteFormatOptions | None:
+            """Extract write options from entry metadata."""
+            if not entry_data.metadata.write_options:
+                return None
+
+            write_options_obj = entry_data.metadata.write_options.get(
+                MetaKeys.WRITE_OPTIONS,
+            )
+            if isinstance(write_options_obj, FlextLdifModels.WriteFormatOptions):
+                return write_options_obj
+            return None
+
+        def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
         ) -> FlextResult[str]:
@@ -4442,108 +4616,39 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult with LDIF string (with original formatting restored when possible)
 
             """
-            # CRITICAL: Restore original formatting from metadata BEFORE processing
-            entry_to_write = entry_data
-            
-            # Restore original DN from metadata if available
-            if entry_data.metadata and entry_data.metadata.extensions:
-                original_dn = entry_data.metadata.extensions.get("original_dn_complete")
-                if original_dn and isinstance(original_dn, str) and entry_data.dn:
-                    # Check if we should restore original DN
-                    dn_differences = entry_data.metadata.extensions.get("minimal_differences_dn", {})
-                    if isinstance(dn_differences, dict) and dn_differences.get("has_differences"):
-                        logger.debug(
-                            "Restored original OUD DN from metadata",
-                            original_dn=original_dn,
-                            current_dn=str(entry_data.dn),
-                        )
-                        # Restore original DN
-                        entry_to_write = entry_to_write.model_copy(
-                            update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)}
-                        )
-                
-                # Restore original attributes from metadata if available
-                original_attrs = entry_data.metadata.extensions.get("original_attributes_complete")
-                if (
-                    original_attrs
-                    and isinstance(original_attrs, dict)
-                    and entry_data.attributes
-                    and entry_data.metadata.original_attribute_case
-                ):
-                    # Restore original attribute case from metadata
-                    restored_attrs: dict[str, list[str]] = {}
-                    for attr_name, attr_values in entry_data.attributes.attributes.items():
-                        # Get original case from metadata
-                        original_case = entry_data.metadata.original_attribute_case.get(
-                            attr_name.lower(), attr_name
-                        )
-                        # Get original values if available
-                        if original_case in original_attrs:
-                            restored_attrs[original_case] = (
-                                original_attrs[original_case]
-                                if isinstance(original_attrs[original_case], list)
-                                else [str(original_attrs[original_case])]
-                            )
-                        else:
-                            restored_attrs[original_case] = attr_values
+            # Restore original formatting from metadata
+            entry_to_write = self._restore_original_dn(entry_data)
+            entry_to_write = self._restore_original_attributes(entry_to_write)
 
-                    if restored_attrs:
-                        entry_to_write = entry_to_write.model_copy(
-                            update={
-                                "attributes": FlextLdifModels.LdifAttributes(
-                                    attributes=restored_attrs,
-                                    attribute_metadata=entry_data.attributes.attribute_metadata,
-                                    metadata=entry_data.attributes.metadata,
-                                )
-                            }
-                        )
-                        logger.debug(
-                                "Restored original OUD attributes from metadata",
-                                original_attrs_count=len(original_attrs),
-                                restored_attrs_count=len(restored_attrs),
-                            )
+            # Extract write options
+            write_options = self._extract_write_options(entry_to_write)
 
-            # Extract write options from entry metadata
-            write_options: FlextLdifModels.WriteFormatOptions | None = None
-            if entry_to_write.metadata.write_options:
-                write_options_obj = entry_to_write.metadata.write_options.get(
-                    MetaKeys.WRITE_OPTIONS,
-                )
-                if isinstance(write_options_obj, FlextLdifModels.WriteFormatOptions):
-                    write_options = write_options_obj
-
-            # Build LDIF output (may include multiple blocks)
+            # Build LDIF output
             ldif_parts: list[str] = []
-
-            # FEATURE 1: Write original entry as comment
             ldif_parts.extend(
                 self._add_original_entry_comments(entry_data, write_options),
             )
 
-            # FEATURE 2: Phase-aware ACL attribute handling
+            # Apply phase-aware ACL handling
             entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)
 
-            # FEATURE 2.5: Normalize and filter DNs in ACL values (userdn/groupdn inside ACL strings)
-            # Only normalize if ACL_NORMALIZE_DNS_IN_VALUES is True
-            # OUD accepts spaces in DNs (e.g., "cn=Group, cn=Context") per fixture requirements
+            # Normalize DNs in ACL values if enabled
             if FlextLdifServersOud.Constants.ACL_NORMALIZE_DNS_IN_VALUES:
                 entry_data = self._normalize_acl_dns(entry_data)
 
-            # FEATURE 3: Schema entries use modify-add format (OUD requirement)
+            # Write entry in appropriate format
             if self._is_schema_entry(entry_data):
                 allowed_oids: frozenset[str] | None = None
                 if write_options:
                     allowed_oids = getattr(write_options, "allowed_schema_oids", None)
                 result = self._write_entry_modify_add_format(entry_data, allowed_oids)
             else:
-                # FEATURE 4: Non-schema entries use RFC implementation
                 result = super()._write_entry(entry_data)
 
             if result.is_failure:
                 return result
 
             ldif_parts.append(result.unwrap())
-
             return FlextResult[str].ok("\n".join(ldif_parts))
 
         def _write_entry_as_comment(
@@ -4706,7 +4811,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Validate ACI macros if present
             aci_attrs = attrs_dict.get("aci")
-            if aci_attrs and isinstance(aci_attrs, list):
+            if aci_attrs and FlextRuntime.is_list_like(aci_attrs):
                 has_macros = False
                 for aci_value in aci_attrs:
                     if isinstance(aci_value, str):
@@ -4726,7 +4831,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     logger.debug(
                         "Entry contains OUD ACI macros - preserved for runtime expansion",
                         entry_dn=entry.dn.value if entry.dn else None,
-                        aci_count=len(aci_attrs) if isinstance(aci_attrs, list) else 1,
+                        aci_count=len(aci_attrs)
+                        if FlextRuntime.is_list_like(aci_attrs)
+                        else 1,
                         aci_preview=[
                             aci[: FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH]
                             if len(aci)
@@ -4734,13 +4841,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             else aci
                             for aci in (
                                 aci_attrs[: FlextLdifConstants.ACI_LIST_PREVIEW_LIMIT]
-                                if isinstance(aci_attrs, list)
+                                if FlextRuntime.is_list_like(aci_attrs)
                                 and len(aci_attrs)
                                 > FlextLdifConstants.ACI_LIST_PREVIEW_LIMIT
                                 else aci_attrs
                             )
                         ]
-                        if isinstance(aci_attrs, list)
+                        if FlextRuntime.is_list_like(aci_attrs)
                         else [
                             str(aci_attrs)[
                                 : FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH
@@ -4819,61 +4926,74 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             dn = str(entry_dict.pop(FlextLdifConstants.DictKeys.DN))
             # Preserve original entry_dict for minimal differences analysis
             original_entry_dict = dict(entry_dict)
-            
+
             # Use _parse_entry which returns Entry RFC canonical
             result = self._parse_entry(dn, entry_dict)
             if result.is_success:
                 entry = result.unwrap()
-                
-                # CRITICAL: Analyze ALL minimal differences for perfect round-trip
-                from flext_ldif._utilities.metadata import (  # noqa: PLC0415
-                    FlextLdifUtilitiesMetadata,
-                )
 
+                # CRITICAL: Analyze ALL minimal differences for perfect round-trip
                 # Analyze DN differences (original vs parsed)
                 original_dn = dn
                 parsed_dn = entry.dn.value if entry.dn else None
-                dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                    original=original_dn,
-                    converted=parsed_dn if parsed_dn and parsed_dn != original_dn else None,
-                    context="dn"
+                dn_differences = (
+                    FlextLdifUtilities.Metadata.analyze_minimal_differences(
+                        original=original_dn,
+                        converted=parsed_dn
+                        if parsed_dn and parsed_dn != original_dn
+                        else None,
+                        context="dn",
+                    )
                 )
-                
+
                 # Analyze attribute differences for each attribute
                 attribute_differences: dict[str, dict[str, object]] = {}
                 parsed_attrs = entry.attributes.attributes if entry.attributes else {}
-                
+
                 for attr_name, attr_values in original_entry_dict.items():
                     parsed_values = parsed_attrs.get(attr_name, [])
-                    
+
                     # Build original string representation
-                    original_attr_str = f"{attr_name}: {', '.join(str(v) for v in (attr_values if isinstance(attr_values, list) else [attr_values]))}"
-                    parsed_attr_str = f"{attr_name}: {', '.join(str(v) for v in parsed_values)}" if parsed_values else None
-                    
-                    attr_diff = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
+                    original_attr_str = f"{attr_name}: {', '.join(str(v) for v in (attr_values if FlextRuntime.is_list_like(attr_values) else [attr_values]))}"
+                    parsed_attr_str = (
+                        f"{attr_name}: {', '.join(str(v) for v in parsed_values)}"
+                        if parsed_values
+                        else None
+                    )
+
+                    attr_diff = FlextLdifUtilities.Metadata.analyze_minimal_differences(
                         original=original_attr_str,
-                        converted=parsed_attr_str if parsed_attr_str != original_attr_str else None,
-                        context="attribute"
+                        converted=parsed_attr_str
+                        if parsed_attr_str != original_attr_str
+                        else None,
+                        context="attribute",
                     )
                     attribute_differences[attr_name] = attr_diff
-                
+
                 # Store minimal differences in metadata
                 if not entry.metadata:
                     entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
-                        "oud",
-                        extensions={}
+                        "oud", extensions={}
                     )
                 if not entry.metadata.extensions:
                     entry.metadata.extensions = {}
-                
+
                 entry.metadata.extensions["minimal_differences_dn"] = dn_differences
-                entry.metadata.extensions["minimal_differences_attributes"] = attribute_differences
+                entry.metadata.extensions["minimal_differences_attributes"] = (
+                    attribute_differences
+                )
                 entry.metadata.extensions["original_dn_complete"] = original_dn
                 entry.metadata.extensions["original_attributes_complete"] = {
-                    str(k): (list(v) if isinstance(v, (list, tuple)) else [str(v)] if v is not None else [])
+                    str(k): (
+                        list(v)
+                        if isinstance(v, (list, tuple))
+                        else [str(v)]
+                        if v is not None
+                        else []
+                    )
                     for k, v in original_entry_dict.items()
                 }
-                
+
                 logger.debug(
                     "OUD entry parsed with complete minimal differences analysis",
                     entry_dn=original_dn[:50] if original_dn else None,
@@ -4883,13 +5003,16 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     original_attributes_count=len(original_entry_dict),
                     parsed_attributes_count=len(parsed_attrs),
                     # What was preserved
-                    minimal_differences_dn_captured=bool(dn_differences.get("has_differences", False)),
-                    minimal_differences_attributes_captured=len(attribute_differences) > 0,
+                    minimal_differences_dn_captured=bool(
+                        dn_differences.get("has_differences", False)
+                    ),
+                    minimal_differences_attributes_captured=len(attribute_differences)
+                    > 0,
                     # Status
                     metadata_preserved=True,
                     all_data_preserved=True,
                 )
-                
+
                 entries_list.append(entry)
 
         def extract_entries_from_ldif(

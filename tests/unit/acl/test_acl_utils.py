@@ -394,7 +394,7 @@ class TestComponentFactory:
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type="invalid_server_type",  # type: ignore[arg-type]
+            server_type="invalid_server_type",
             raw_acl="(access to *)",
         )
 

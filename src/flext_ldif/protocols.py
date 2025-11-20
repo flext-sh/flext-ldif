@@ -564,10 +564,10 @@ class FlextLdifProtocols(FlextProtocols):
             protocol through structural typing (duck typing).
             """
 
-            dn: str | object  # Can be str or object with .value property
+            dn: object  # Can be str or object with .value property
             """Entry distinguished name (DN). Can be string or object with .value."""
 
-            attributes: dict[str, list[str]] | object  # Entry attributes dictionary
+            attributes: object  # Entry attributes dictionary or LdifAttributes
             """Entry attributes as dictionary mapping attribute names to values."""
 
     # =========================================================================

@@ -9,14 +9,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-import uuid
 from collections.abc import Sequence
-from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextUtilities
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -27,15 +25,8 @@ from flext_ldif.services.statistics import FlextLdifStatistics
 
 logger = FlextLogger(__name__)
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _WriteResponseType = FlextLdifModels.WriteResponse
-else:
-    _WriteResponseType = object  # type: ignore[misc]
 
-
-class FlextLdifWriter(FlextService[_WriteResponseType]):
+class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
     """Unified, stateless LDIF Writer Service.
 
     This service acts as a versatile serializer, converting Entry models into
@@ -286,7 +277,7 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 )
 
             if format_options.include_timestamps:
-                timestamp = datetime.now(UTC).isoformat()
+                timestamp = FlextUtilities.Generators.generate_iso_timestamp()
                 output.write(f"# Generated on: {timestamp}\n")
                 output.write(f"# Total entries: {entry_count}\n\n")
 
@@ -312,13 +303,13 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 )
 
             # Debug: trace the entry_quirk retrieval
-            self.logger.info(
+            self.logger.debug(
                 "DEBUG: Retrieved quirk from registry",
                 quirk_type=type(quirk).__name__,
                 target_server_type=target_server_type,
             )
             entry_quirk = quirk.entry_quirk
-            self.logger.info(
+            self.logger.debug(
                 "DEBUG: Retrieved entry_quirk",
                 entry_quirk_type=type(entry_quirk).__name__,
                 entry_quirk_repr=repr(entry_quirk)[:100],
@@ -333,6 +324,132 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 )
 
             return FlextResult.ok(entry_quirk)
+
+        def _validate_entry_quirk(
+            self,
+            entry_quirk: object,
+        ) -> FlextResult[FlextLdifProtocols.Quirks.EntryProtocol]:
+            """Validate entry quirk has write method."""
+            self.logger.debug(
+                "Entry quirk type info",
+                entry_quirk_type=type(entry_quirk).__name__,
+                entry_quirk_module=type(entry_quirk).__module__,
+                has_write=hasattr(entry_quirk, "write"),
+            )
+            if not hasattr(entry_quirk, "write"):
+                self.logger.error(
+                    "Entry quirk does not implement write method",
+                    entry_quirk_type=type(entry_quirk).__name__,
+                )
+                return FlextResult.fail("Entry quirk does not have write method")
+            return FlextResult.ok(
+                cast("FlextLdifProtocols.Quirks.EntryProtocol", entry_quirk)
+            )
+
+        def _restore_original_ldif_if_available(
+            self,
+            output: StringIO,
+            entry: FlextLdifModels.Entry,
+            format_options: FlextLdifModels.WriteFormatOptions,
+        ) -> bool:
+            """Restore original LDIF if available and enabled. Returns True if restored."""
+            if not entry.metadata or not entry.metadata.original_strings:
+                return False
+
+            original_ldif = entry.metadata.original_strings.get("entry_original_ldif")
+            restore_enabled = getattr(format_options, "restore_original_format", False)
+            if original_ldif and restore_enabled:
+                output.write(original_ldif)
+                if not original_ldif.endswith("\n"):
+                    output.write("\n")
+                return True
+            return False
+
+        def _update_entry_metadata_with_write_options(
+            self,
+            entry: FlextLdifModels.Entry,
+            format_options: FlextLdifModels.WriteFormatOptions,
+        ) -> FlextLdifModels.Entry:
+            """Update entry metadata with write options."""
+            new_write_options = {
+                **entry.metadata.write_options,
+                "_write_options": format_options,
+            }
+            new_metadata = entry.metadata.model_copy(
+                update={"write_options": new_write_options},
+            )
+            return entry.model_copy(update={"metadata": new_metadata})
+
+        def _restore_original_formatting_from_metadata(
+            self,
+            entry: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Restore original DN formatting from metadata if available."""
+            if not entry.metadata:
+                return entry
+
+            # Restore original DN if metadata has it
+            if "original_dn_complete" in entry.metadata.extensions:
+                original_dn = entry.metadata.extensions["original_dn_complete"]
+                if original_dn and entry.dn:
+                    original_dn_str = (
+                        str(original_dn)
+                        if not isinstance(original_dn, str)
+                        else original_dn
+                    )
+                    return entry.model_copy(
+                        update={
+                            "dn": FlextLdifModels.DistinguishedName(
+                                value=original_dn_str
+                            )
+                        }
+                    )
+            return entry
+
+        def _write_entry_with_quirk(
+            self,
+            output: StringIO,
+            entry: FlextLdifModels.Entry,
+            entry_quirk: FlextLdifProtocols.Quirks.EntryProtocol,
+            format_options: FlextLdifModels.WriteFormatOptions,
+            idx: int,
+            total: int,
+        ) -> FlextResult[bool]:
+            """Write single entry using quirk."""
+            # Generate and write comments BEFORE the entry via quirk
+            if hasattr(entry_quirk, "generate_entry_comments"):
+                entry_comments = entry_quirk.generate_entry_comments(
+                    entry,
+                    format_options,
+                )
+                if entry_comments:
+                    output.write(entry_comments)
+
+            # Write entry via quirk
+            write_result = entry_quirk.write(entry)
+            if write_result.is_failure:
+                error_msg = f"Failed to write entry {entry.dn}: {write_result.error}"
+                self.logger.error(
+                    "Entry write failed",
+                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_index=idx + 1,
+                    total_entries=total,
+                    error=str(write_result.error),
+                )
+                return FlextResult.fail(error_msg)
+
+            # Write LDIF string to output
+            ldif_str: str = str(write_result.unwrap())
+            output.write(ldif_str)
+            output.write("\n")
+
+            self.logger.debug(
+                "Wrote entry",
+                entry_dn=str(entry.dn) if entry.dn else None,
+                entry_index=idx + 1,
+                total_entries=total,
+            )
+            return FlextResult.ok(True)
 
         def _write_all_entries(
             self,
@@ -353,118 +470,42 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 FlextResult with True on success or error
 
             """
-            # Type narrowing: entry_quirk should be FlextLdifServersBase.Entry
-            # Debug: log type info to trace ModelPrivateAttr error
-            self.logger.debug(
-                "Entry quirk type info",
-                entry_quirk_type=type(entry_quirk).__name__,
-                entry_quirk_module=type(entry_quirk).__module__,
-                has_write=hasattr(entry_quirk, "write"),
-            )
-            if not hasattr(entry_quirk, "write"):
-                self.logger.error(
-                    "Entry quirk does not implement write method",
-                    entry_quirk_type=type(entry_quirk).__name__,
-                )
-                return FlextResult.fail("Entry quirk does not have write method")
+            # Validate entry quirk
+            quirk_result = self._validate_entry_quirk(entry_quirk)
+            if quirk_result.is_failure:
+                return quirk_result
+            entry_quirk_typed = quirk_result.unwrap()
 
-            # Cast after hasattr verification for type safety
-            entry_quirk_typed = cast(
-                "FlextLdifProtocols.Quirks.EntryProtocol",
-                entry_quirk,
-            )
-
+            # Write each entry
             for idx, entry in enumerate(entries):
-                # CRITICAL: Check if we should restore original LDIF from metadata
-                # This enables perfect round-trip conversion
-                if entry.metadata and entry.metadata.original_strings:
-                    original_ldif = entry.metadata.original_strings.get(
-                        "entry_original_ldif"
-                    )
-                    restore_enabled = getattr(
-                        format_options, "restore_original_format", False
-                    )
-                    if original_ldif and restore_enabled:
-                        # Write original LDIF directly (perfect round-trip)
-                        output.write(original_ldif)
-                        if not original_ldif.endswith("\n"):
-                            output.write("\n")
-                        continue
+                # Try to restore original LDIF first
+                if self._restore_original_ldif_if_available(
+                    output, entry, format_options
+                ):
+                    continue
 
-                # Type narrowing: entry_metadata is dict[str, object] | None
-                # Use model_copy to update entry_metadata safely
-                # RFC Compliance: write_options is processing metadata
-                # Store WriteFormatOptions object in _write_options key for quirk extraction
-                new_write_options = {
-                    **entry.metadata.write_options,
-                    "_write_options": format_options,
-                }
-                new_metadata = entry.metadata.model_copy(
-                    update={"write_options": new_write_options},
+                # Update entry with write options
+                updated_entry = self._update_entry_metadata_with_write_options(
+                    entry,
+                    format_options,
                 )
-                updated_entry = entry.model_copy(update={"metadata": new_metadata})
 
-                # CRITICAL: Use metadata to restore original formatting for perfect round-trip
-                # The quirk.write() method will use metadata to restore original format
+                # Restore original formatting from metadata
+                updated_entry = self._restore_original_formatting_from_metadata(
+                    updated_entry
+                )
 
-                # Check if we need to restore original formatting from metadata
-                if updated_entry.metadata:
-                    # Restore original DN if metadata has it
-                    if "original_dn_complete" in updated_entry.metadata.extensions:
-                        original_dn = updated_entry.metadata.extensions[
-                            "original_dn_complete"
-                        ]
-                        if original_dn and updated_entry.dn:
-                            # Restore original DN
-                            updated_entry = updated_entry.model_copy(
-                                update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)}
-                            )
-
-                    # Restore original attribute formatting if available
-                    if (
-                        "original_attributes_complete"
-                        in updated_entry.metadata.extensions
-                    ):
-                        original_attrs = updated_entry.metadata.extensions[
-                            "original_attributes_complete"
-                        ]
-                        if original_attrs and updated_entry.attributes:
-                            pass  # Metadata available for restoration
-
-                # Generate and write comments BEFORE the entry via quirk (DI)
-                if hasattr(entry_quirk_typed, "generate_entry_comments"):
-                    entry_comments = entry_quirk_typed.generate_entry_comments(
-                        updated_entry,
-                        format_options,
-                    )
-                    if entry_comments:
-                        output.write(entry_comments)
-
-                # Type narrowing: we've verified entry_quirk has write method
-                # The quirk's write method should use metadata to restore original formatting
-                write_result = entry_quirk_typed.write(updated_entry)
+                # Write entry using quirk
+                write_result = self._write_entry_with_quirk(
+                    output,
+                    updated_entry,
+                    entry_quirk_typed,
+                    format_options,
+                    idx,
+                    len(entries),
+                )
                 if write_result.is_failure:
-                    error_msg = f"Failed to write entry {updated_entry.dn}: {write_result.error}"
-                    self.logger.error(
-                        "Entry write failed",
-                        entry_dn=str(updated_entry.dn) if updated_entry.dn else None,
-                        entry_index=idx + 1,
-                        total_entries=len(entries),
-                        error=str(write_result.error),
-                    )
-                    return FlextResult.fail(error_msg)
-
-                # Type narrowing: unwrap returns str from FlextResult[str]
-                ldif_str: str = str(write_result.unwrap())
-                output.write(ldif_str)
-                output.write("\n")
-
-                self.logger.debug(
-                    "Wrote entry",
-                    entry_dn=str(entry.dn) if entry.dn else None,
-                    entry_index=idx + 1,
-                    total_entries=len(entries),
-                )
+                    return write_result
 
             self.logger.info(
                 "Wrote all entries",
@@ -586,7 +627,6 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
             | list[FlextLdifModels.Entry]
         ]:
             """Route output to appropriate target."""
-
             # Type alias for return type Union
             writer_result_union = (
                 FlextLdifModels.WriteResponse
@@ -680,7 +720,6 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
             header: str,
         ) -> FlextResult[FlextLdifModels.WriteResponse]:
             """Write to file."""
-
             if not path:
                 self.logger.error(
                     "Output path required for file target",
@@ -785,7 +824,9 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                 )
                 data.setdefault("entry_count", len(entries))
                 data.setdefault("total_entries", len(entries))
-                data.setdefault("timestamp", datetime.now(UTC).isoformat())
+                data.setdefault(
+                    "timestamp", FlextUtilities.Generators.generate_iso_timestamp()
+                )
                 data.setdefault("phase", "unknown")
                 data.setdefault("source_server", "unknown")
                 data.setdefault("target_server", "unknown")
@@ -852,6 +893,17 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
         """
         start_time = time.perf_counter()
         entries_count = len(entries)
+
+        # DEBUG: Trace entry into FlextLdifWriter.write()
+        self.logger.debug(
+            "DEBUG: FlextLdifWriter.write() ENTRY",
+            entries_count=entries_count,
+            target_server_type=target_server_type,
+            output_target=output_target,
+            output_path=str(output_path) if output_path else None,
+            registry_type=type(self._registry).__name__,
+            has_quirk=self._registry.quirk(target_server_type) is not None,
+        )
 
         # Validation
         if output_target == "file" and not output_path:
@@ -932,7 +984,7 @@ class FlextLdifWriter(FlextService[_WriteResponseType]):
                     event_type="ldif.write",
                     aggregate_id=str(output_path)
                     if output_path
-                    else f"write_{uuid.uuid4().hex[:8]}",
+                    else f"write_{FlextUtilities.Generators.generate_short_id(8)}",
                 )
 
                 response = result.unwrap()

@@ -4,10 +4,11 @@ This module provides helper functions for working with FlextLdifConstants and
 server-specific Constants classes defined in server quirks modules.
 
 Provides:
-- Get server constants by server type
-- Validate permission values against server capabilities
-- Look up ACL configurations and metadata
-- Helper methods for permission and action validation
+- Parameterized validation for any category of values
+- Get valid values by category
+- Bulk validation with detailed error reporting
+
+DRY Refactoring: All validation methods consolidated into parameterized functions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,40 +17,34 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
+from enum import StrEnum
+from typing import ClassVar
 
 from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifUtilitiesConstants:
-    """Utilities for accessing and validating standardized constants."""
+    """Utilities for accessing and validating standardized constants.
 
-    # SECTION 1: SERVER TYPE VALIDATION
+    All validation is done via parameterized methods that accept a category.
+    This eliminates duplication across is_valid_*, get_*, and validate_* methods.
+    """
+
+    # SECTION 1: VALIDATION CATEGORIES (RFC BASELINE VALUES)
     # =========================================================================
-    #
-    # NOTE: Server-specific constants access removed due to architectural constraints.
-    # Core modules (_utilities/*) cannot import from services/* or servers/*.
-    # Methods below provide RFC baseline only. For server-specific constants,
-    # use services layer (e.g., FlextLdifServer registry).
 
-    @staticmethod
-    def is_valid_server_type(server_type: str) -> bool:
-        """Check if server type is recognized.
+    class Category(StrEnum):
+        """Categories of values that can be validated."""
 
-        Args:
-            server_type: Server type to validate
+        SERVER_TYPE = "server_type"
+        PERMISSION = "permission"
+        ACL_ACTION = "acl_action"
+        ENCODING = "encoding"
 
-        Returns:
-            True if server type is valid, False otherwise
-
-        Example:
-            >>> FlextLdifUtilitiesConstants.is_valid_server_type("oid")
-            True
-            >>> FlextLdifUtilitiesConstants.is_valid_server_type("unknown")
-            False
-
-        """
-        valid_types = {
+    # Registry of valid values per category
+    _VALID_VALUES: ClassVar[dict[str, set[str]]] = {
+        "server_type": {
             "rfc",
             "oid",
             "oud",
@@ -61,55 +56,8 @@ class FlextLdifUtilitiesConstants:
             "novell",
             "tivoli",
             "relaxed",
-        }
-        return server_type.lower() in valid_types
-
-    @staticmethod
-    def get_all_server_types() -> set[str]:
-        """Get all recognized server types.
-
-        Returns:
-            Set of all valid server type strings
-
-        Example:
-            >>> types = FlextLdifUtilitiesConstants.get_all_server_types()
-            >>> "oid" in types
-            True
-
-        """
-        return {
-            "rfc",
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "ad",
-            "apache",
-            "389ds",
-            "novell",
-            "tivoli",
-            "relaxed",
-        }
-
-    # SECTION 2: PERMISSION VALIDATION
-    # =========================================================================
-
-    @staticmethod
-    def get_server_permissions() -> set[str]:
-        """Get all valid ACL permissions (RFC baseline).
-
-        Returns RFC baseline permissions only. Core modules cannot access server-specific constants.
-
-        Returns:
-            Set of RFC baseline permission strings
-
-        Note:
-            This method returns RFC baseline only due to architectural constraints.
-            For server-specific permissions, use services layer (FlextLdifServer registry).
-
-        """
-        # Return RFC baseline permissions
-        return {
+        },
+        "permission": {
             "read",
             "write",
             "add",
@@ -119,85 +67,9 @@ class FlextLdifUtilitiesConstants:
             "auth",
             "all",
             "none",
-        }
-
-    @staticmethod
-    def is_valid_permission(permission: str) -> bool:
-        """Check if a permission is valid (RFC baseline).
-
-        Args:
-            permission: Permission string to validate
-
-        Returns:
-            True if permission is valid, False otherwise
-
-        Example:
-            >>> FlextLdifUtilitiesConstants.is_valid_permission("read")
-            True
-            >>> FlextLdifUtilitiesConstants.is_valid_permission("invalid")
-            False
-
-        """
-        valid_perms = FlextLdifUtilitiesConstants.get_server_permissions()
-        return permission.lower() in valid_perms
-
-    # SECTION 3: ACL ACTION VALIDATION
-    # =========================================================================
-
-    @staticmethod
-    def get_server_acl_actions() -> set[str]:
-        """Get valid ACL actions (RFC baseline).
-
-        Returns RFC baseline ACL actions only. Core modules cannot access server-specific constants.
-
-        Returns:
-            Set of RFC baseline ACL action strings
-
-        Note:
-            This method returns RFC baseline only due to architectural constraints.
-            For server-specific actions, use services layer (FlextLdifServer registry).
-
-        """
-        # Return RFC baseline ACL actions
-        return {"allow", "deny"}
-
-    @staticmethod
-    def is_valid_acl_action(action: str) -> bool:
-        """Check if an ACL action is valid (RFC baseline).
-
-        Args:
-            action: ACL action string to validate
-
-        Returns:
-            True if action is valid, False otherwise
-
-        Example:
-            >>> FlextLdifUtilitiesConstants.is_valid_acl_action("allow")
-            True
-
-        """
-        valid_actions = FlextLdifUtilitiesConstants.get_server_acl_actions()
-        return action.lower() in valid_actions
-
-    # SECTION 4: ENCODING UTILITIES
-    # =========================================================================
-
-    @staticmethod
-    def get_server_encodings() -> set[str]:
-        """Get supported encodings (RFC baseline).
-
-        Returns RFC baseline encodings only. Core modules cannot access server-specific constants.
-
-        Returns:
-            Set of RFC baseline encoding strings
-
-        Note:
-            This method returns RFC baseline only due to architectural constraints.
-            For server-specific encodings, use services layer (FlextLdifServer registry).
-
-        """
-        # Return RFC baseline encodings
-        return {
+        },
+        "acl_action": {"allow", "deny"},
+        "encoding": {
             "utf-8",
             "utf-16",
             "utf-16-le",
@@ -206,122 +78,150 @@ class FlextLdifUtilitiesConstants:
             "latin-1",
             "cp1252",
             "iso-8859-1",
-        }
+        },
+    }
 
-    @staticmethod
-    def is_valid_encoding(encoding: str) -> bool:
-        """Check if an encoding is valid (RFC baseline).
-
-        Args:
-            encoding: Encoding string to validate
-
-        Returns:
-            True if encoding is valid, False otherwise
-
-        Example:
-            >>> FlextLdifUtilitiesConstants.is_valid_encoding("utf-8")
-            True
-
-        """
-        valid_encodings = FlextLdifUtilitiesConstants.get_server_encodings()
-        return encoding.lower() in valid_encodings
-
-    # SECTION 5: BULK VALIDATION
+    # SECTION 2: UNIFIED PARAMETERIZED VALIDATION
     # =========================================================================
 
     @staticmethod
-    def _validate_items(
-        items: set[str],
-        get_valid_items: Callable[[], set[str]],
-    ) -> tuple[bool, list[str]]:
-        """Generic validation helper for permissions, actions, etc.
-
-        Internal helper to reduce duplication between validate_permissions
-        and validate_acl_actions methods (eliminates 44 lines of duplication).
+    def get_valid_values(category: str | Category) -> set[str]:
+        """Get all valid values for a category.
 
         Args:
-            items: Set of items to validate
-            get_valid_items: Callable that returns set of valid items
+            category: Category name or Category enum value
 
         Returns:
-            Tuple of (is_valid, invalid_items)
+            Set of valid values for the category
 
-        """
-        valid_items = get_valid_items()
-        invalid = [item for item in items if item.lower() not in valid_items]
-        return len(invalid) == 0, invalid
-
-    @staticmethod
-    def validate_permissions(permissions: set[str]) -> tuple[bool, list[str]]:
-        """Validate a set of permissions (RFC baseline).
-
-        Args:
-            permissions: Set of permission strings to validate
-
-        Returns:
-            Tuple of (is_valid, invalid_permissions)
+        Raises:
+            KeyError: If category is not recognized
 
         Example:
-            >>> is_valid, invalid = FlextLdifUtilitiesConstants.validate_permissions({
-            ...     "read",
-            ...     "write",
-            ...     "invalid",
-            ... })
+            >>> FlextLdifUtilitiesConstants.get_valid_values("server_type")
+            {'rfc', 'oid', 'oud', ...}
+            >>> FlextLdifUtilitiesConstants.get_valid_values(Category.PERMISSION)
+            {'read', 'write', 'add', ...}
+
+        """
+        key = str(category).lower()
+        if key not in FlextLdifUtilitiesConstants._VALID_VALUES:
+            msg = f"Unknown category: {category}"
+            raise KeyError(msg)
+        return FlextLdifUtilitiesConstants._VALID_VALUES[key].copy()
+
+    @staticmethod
+    def is_valid(value: str, category: str | Category) -> bool:
+        """Check if a value is valid for the given category.
+
+        Args:
+            value: Value to validate
+            category: Category to validate against
+
+        Returns:
+            True if value is valid, False otherwise
+
+        Example:
+            >>> FlextLdifUtilitiesConstants.is_valid("oid", "server_type")
+            True
+            >>> FlextLdifUtilitiesConstants.is_valid("read", Category.PERMISSION)
+            True
+            >>> FlextLdifUtilitiesConstants.is_valid("invalid", "encoding")
+            False
+
+        """
+        try:
+            valid_values = FlextLdifUtilitiesConstants.get_valid_values(category)
+            return value.lower() in valid_values
+        except KeyError:
+            return False
+
+    @staticmethod
+    def validate_many(
+        values: set[str],
+        category: str | Category,
+    ) -> tuple[bool, list[str]]:
+        """Validate multiple values against a category.
+
+        Args:
+            values: Set of values to validate
+            category: Category to validate against
+
+        Returns:
+            Tuple of (all_valid, list_of_invalid_values)
+
+        Example:
+            >>> is_valid, invalid = FlextLdifUtilitiesConstants.validate_many(
+            ...     {"read", "write", "invalid"}, "permission"
+            ... )
             >>> is_valid
             False
             >>> invalid
             ['invalid']
 
         """
-        return FlextLdifUtilitiesConstants._validate_items(
-            permissions,
-            FlextLdifUtilitiesConstants.get_server_permissions,
-        )
+        valid_values = FlextLdifUtilitiesConstants.get_valid_values(category)
+        invalid = [v for v in values if v.lower() not in valid_values]
+        return len(invalid) == 0, invalid
+
+    # SECTION 3: CONVENIENCE METHODS (Delegate to parameterized)
+    # =========================================================================
+    # These provide backward compatibility and clearer API for common cases
+
+    @staticmethod
+    def is_valid_server_type(server_type: str) -> bool:
+        """Check if server type is recognized."""
+        return FlextLdifUtilitiesConstants.is_valid(server_type, "server_type")
+
+    @staticmethod
+    def get_all_server_types() -> set[str]:
+        """Get all recognized server types."""
+        return FlextLdifUtilitiesConstants.get_valid_values("server_type")
+
+    @staticmethod
+    def get_server_permissions() -> set[str]:
+        """Get all valid ACL permissions (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.get_valid_values("permission")
+
+    @staticmethod
+    def is_valid_permission(permission: str) -> bool:
+        """Check if a permission is valid (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.is_valid(permission, "permission")
+
+    @staticmethod
+    def get_server_acl_actions() -> set[str]:
+        """Get valid ACL actions (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.get_valid_values("acl_action")
+
+    @staticmethod
+    def is_valid_acl_action(action: str) -> bool:
+        """Check if an ACL action is valid (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.is_valid(action, "acl_action")
+
+    @staticmethod
+    def get_server_encodings() -> set[str]:
+        """Get supported encodings (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.get_valid_values("encoding")
+
+    @staticmethod
+    def is_valid_encoding(encoding: str) -> bool:
+        """Check if an encoding is valid (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.is_valid(encoding, "encoding")
+
+    @staticmethod
+    def validate_permissions(permissions: set[str]) -> tuple[bool, list[str]]:
+        """Validate a set of permissions (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.validate_many(permissions, "permission")
 
     @staticmethod
     def validate_acl_actions(actions: set[str]) -> tuple[bool, list[str]]:
-        """Validate a set of ACL actions (RFC baseline).
-
-        Args:
-            actions: Set of action strings to validate
-
-        Returns:
-            Tuple of (is_valid, invalid_actions)
-
-        Example:
-            >>> is_valid, invalid = FlextLdifUtilitiesConstants.validate_acl_actions({
-            ...     "allow",
-            ...     "deny",
-            ...     "invalid",
-            ... })
-            >>> is_valid
-            False
-
-        """
-        return FlextLdifUtilitiesConstants._validate_items(
-            actions,
-            FlextLdifUtilitiesConstants.get_server_acl_actions,
-        )
+        """Validate a set of ACL actions (RFC baseline)."""
+        return FlextLdifUtilitiesConstants.validate_many(actions, "acl_action")
 
     @staticmethod
     def get_permission_mapping() -> Mapping[str, str]:
-        """Get permission mapping (RFC baseline identity).
-
-        All servers share the same permission names (RFC baseline),
-        so returns identity mapping for all permissions.
-
-        Returns:
-            Identity mapping of RFC baseline permissions
-
-        Example:
-            >>> mapping = FlextLdifUtilitiesConstants.get_permission_mapping()
-            >>> mapping.get("read")
-            'read'
-
-        """
-        # All servers share the same permission names (RFC baseline)
-        # Returns identity mapping for RFC baseline permissions
-        rfc_perms = FlextLdifUtilitiesConstants.get_server_permissions()
+        """Get permission mapping (RFC baseline identity)."""
+        rfc_perms = FlextLdifUtilitiesConstants.get_valid_values("permission")
         return {perm: perm for perm in rfc_perms}
 
     @staticmethod

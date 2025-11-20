@@ -121,7 +121,7 @@ class TestRealLdapExport:
         """Export multiple LDAP entries to LDIF."""
         # Use isolated usernames for parallel execution
         unique_usernames = [make_test_username(f"User{i}") for i in range(5)]
-        
+
         for i, unique_username in enumerate(unique_usernames):
             person_dn = f"cn={unique_username},{clean_test_ou}"
             ldap_connection.add(
@@ -193,7 +193,7 @@ class TestRealLdapExport:
         # Use isolated usernames for parallel execution
         unique_person_name = make_test_username("Alice")
         unique_group_name = make_test_username("Admins")
-        
+
         groups_ou_dn = f"ou=Groups,{clean_test_ou}"
         people_ou_dn = f"ou=People,{clean_test_ou}"
 

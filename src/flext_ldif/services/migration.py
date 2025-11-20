@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, cast
+from typing import Final, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -27,15 +27,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-# Type alias to avoid Pydantic v2 forward reference resolution issues
-# FlextLdifModels is a namespace class, not an importable module
-if TYPE_CHECKING:
-    _EntryResultType = FlextLdifModels.EntryResult
-else:
-    _EntryResultType = object  # type: ignore[misc]
-
-
-class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
+class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
     """LDIF Migration Pipeline - Direct Implementation.
 
     Zero private methods - pure service orchestration.
@@ -73,10 +65,10 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         mode: FlextLdifConstants.LiteralTypes.MigrationMode = "simple",
         input_filename: str | None = None,
         output_filename: str = "migrated.ldif",
-        categorization_rules: dict[str, list[str]] | None = None,
+        categorization_rules: FlextLdifModels.CategoryRules | None = None,
         input_files: list[str] | None = None,
         output_files: dict[str, str] | None = None,
-        schema_whitelist_rules: dict[str, list[str]] | None = None,
+        schema_whitelist_rules: FlextLdifModels.WhitelistRules | None = None,
         source_server: str = FlextLdifConstants.ServerTypes.RFC,
         target_server: str = FlextLdifConstants.ServerTypes.RFC,
         forbidden_attributes: list[str] | None = None,
@@ -188,7 +180,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
             parse_response = parse_result.unwrap()
             entries = (
                 parse_response
-                if isinstance(parse_response, list)
+                if FlextRuntime.is_list_like(parse_response)
                 else parse_response.entries
             )
             # Register all DNs in registry for case normalization
@@ -212,7 +204,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
     def _categorize_entries_chain(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+    ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
         """Apply categorization chain using railway pattern."""
         categorized_result = (
             FlextResult[list[FlextLdifModels.Entry]]
@@ -223,15 +215,17 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         )
 
         if categorized_result.is_failure:
-            return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
+            return FlextResult[FlextLdifModels.FlexibleCategories].fail(
                 categorized_result.error or "Categorization failed",
             )
 
-        return FlextResult.ok(categorized_result.unwrap())
+        return FlextResult[FlextLdifModels.FlexibleCategories].ok(
+            categorized_result.unwrap()
+        )
 
     def _filter_forbidden_attributes(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> None:
         """Remove forbidden attributes and objectclasses from entries."""
         forbidden_attrs = self._categorization.forbidden_attributes
@@ -274,7 +268,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
     def _filter_schema_by_oids(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> None:
         """Filter schema entries by OIDs if needed."""
         if FlextLdifConstants.Categories.SCHEMA not in categories:
@@ -284,13 +278,11 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
             categories[FlextLdifConstants.Categories.SCHEMA],
         )
         if schema_result.is_success:
-            categories[FlextLdifConstants.Categories.SCHEMA] = (
-                schema_result.unwrap()
-            )
+            categories[FlextLdifConstants.Categories.SCHEMA] = schema_result.unwrap()
 
     def _duplicate_acl_entries(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> None:
         """Duplicate entries with ACL attributes to ACL category."""
         acl_attr_names = {"aci"}  # Normalized ACL attribute names
@@ -324,7 +316,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
     def _apply_categorization(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+    ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
         """Apply categorization chain using railway pattern."""
         # Step 1: Categorize entries
         categorize_result = self._categorize_entries_chain(entries)
@@ -342,11 +334,11 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         # Step 4: Duplicate entries with ACL attributes
         self._duplicate_acl_entries(categories)
 
-        return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
+        return FlextResult[FlextLdifModels.FlexibleCategories].ok(categories)
 
     def _sort_categories(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> None:
         """Sort hierarchical categories in-place if configured."""
         if not self._sort_hierarchically:
@@ -375,7 +367,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
     def _write_simple_mode(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
         """Write all entries to a single file in simple mode."""
         output_path = self._output_dir / self._output_filename
@@ -398,14 +390,14 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
         file_paths: dict[str, str] = {"output": str(output_path)}
         entry_counts: dict[str, int] = {"output": len(all_output_entries)}
-        
+
         logger.info(
             "Wrote entries to file",
             output_path=str(output_path),
             entries_count=len(all_output_entries),
             target_server=self._target_server,
         )
-        
+
         return FlextResult.ok((file_paths, entry_counts))
 
     def _build_template_data(
@@ -416,10 +408,11 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
     ) -> dict[str, object]:
         """Build template data for migration headers."""
         # Validate base_dn - use empty string if None
-        base_dn_value = self._categorization._base_dn  # noqa: SLF001
+        base_dn_value = self._categorization.base_dn
         if base_dn_value is None:
             base_dn_value = ""
         elif not isinstance(base_dn_value, str):
+            # Convert to string if not already (defensive programming)
             base_dn_value = str(base_dn_value)
 
         return {
@@ -433,7 +426,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
             "processed_entries": len(entries),
             "rejected_entries": 0,
             "schema_whitelist_enabled": bool(
-                self._categorization._schema_whitelist_rules is not None  # noqa: SLF001
+                self._categorization.schema_whitelist_rules is not None
             ),
             "sort_entries_hierarchically": self._sort_hierarchically,
             "server_type": self._target_server,
@@ -444,7 +437,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
         entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Prepare ACL entries with metadata for DN normalization."""
-        base_dn = self._categorization._base_dn  # noqa: SLF001
+        base_dn = self._categorization.base_dn
         entries_with_metadata = []
         for entry in entries:
             # RFC Compliance: extensions is processing metadata
@@ -465,12 +458,12 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
     def _write_structured_mode(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
         """Write categorized entries to multiple files in structured mode."""
         file_paths: dict[str, str] = {}
         entry_counts: dict[str, int] = {}
-        
+
         # Map categories to phase numbers for migration headers
         category_to_phase = {
             FlextLdifConstants.Categories.SCHEMA: 0,
@@ -531,7 +524,7 @@ class FlextLdifMigrationPipeline(FlextService[_EntryResultType]):
 
     def _write_categories(
         self,
-        categories: dict[str, list[FlextLdifModels.Entry]],
+        categories: FlextLdifModels.FlexibleCategories,
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
         """Write categorized entries to output files."""
         if self._mode == "simple":

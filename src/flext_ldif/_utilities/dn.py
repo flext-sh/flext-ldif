@@ -13,7 +13,6 @@ from typing import cast, overload
 
 from flext_core import FlextResult
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -514,8 +513,9 @@ class FlextLdifUtilitiesDN:
 
         # Track transformations and flags
         transformations: list[str] = []
-        # Use proper TypedDict type for transformation flags
-        transformation_flags: FlextLdifModelsDomains._DNStatisticsFlags = {
+        # Transformation flags as dict for DNStatistics.create_with_transformation
+        # Type-safe flags matching _DNStatisticsFlags TypedDict
+        transformation_flags: dict[str, bool | str | list[str]] = {
             "had_tab_chars": False,
             "had_trailing_spaces": False,
             "had_leading_spaces": False,
@@ -617,19 +617,29 @@ class FlextLdifUtilitiesDN:
             transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
             transformation_flags["had_extra_spaces"] = True
 
-        # Create statistics
-        # Pass flags as keyword arguments directly - TypedDict can be unpacked directly
-        stats_domains = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
+        # Create statistics using FlextLdifModels.DNStatistics
+        # Pass flags explicitly to ensure type safety
+        # Values are already correct types, use cast to help type checker
+        validation_warnings_list = cast("list[str]", transformation_flags["validation_warnings"])
+        validation_errors_list = cast("list[str]", transformation_flags["validation_errors"])
+        stats_domain = FlextLdifModels.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
-            normalized_dn=result,  # Will be updated by norm() if called
+            normalized_dn=result,
             transformations=transformations,
-            **transformation_flags,
+            had_tab_chars=cast("bool", transformation_flags["had_tab_chars"]),
+            had_trailing_spaces=cast("bool", transformation_flags["had_trailing_spaces"]),
+            had_leading_spaces=cast("bool", transformation_flags["had_leading_spaces"]),
+            had_extra_spaces=cast("bool", transformation_flags["had_extra_spaces"]),
+            was_base64_encoded=cast("bool", transformation_flags["was_base64_encoded"]),
+            had_utf8_chars=cast("bool", transformation_flags["had_utf8_chars"]),
+            had_escape_sequences=cast("bool", transformation_flags["had_escape_sequences"]),
+            validation_status=cast("str", transformation_flags["validation_status"]),
+            validation_warnings=validation_warnings_list,
+            validation_errors=validation_errors_list,
         )
-
-        # create_with_transformation returns FlextLdifModelsDomains.DNStatistics
-        # Cast to FlextLdifModels.DNStatistics for type compatibility
-        stats = cast("FlextLdifModels.DNStatistics", stats_domains)
+        # Cast to expected return type (FlextLdifModels.DNStatistics extends domain type)
+        stats = cast("FlextLdifModels.DNStatistics", stats_domain)
         return result, stats
 
     @staticmethod

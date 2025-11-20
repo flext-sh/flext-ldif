@@ -48,6 +48,8 @@ import re
 from collections.abc import Mapping
 from typing import Protocol, cast
 
+from flext_core import FlextRuntime
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -90,7 +92,7 @@ class FlextLdifUtilitiesDetection:
                 if (
                     cls.__name__.startswith("FlextLdifServers")
                     and hasattr(cls, "Constants")
-                    and not isinstance(getattr(cls, "Constants", None), dict)
+                    and not FlextRuntime.is_dict_like(getattr(cls, "Constants", None))
                 ):
                     constants = cls.Constants
                     # If no required attribute specified, return any Constants class

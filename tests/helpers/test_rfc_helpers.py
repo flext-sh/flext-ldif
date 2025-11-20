@@ -584,7 +584,7 @@ class RfcTestHelpers:
             expected: Expected result (default: True)
 
         """
-        result = entry_quirk.can_handle_entry(entry)  # type: ignore[attr-defined]
+        result = entry_quirk.can_handle_entry(entry)
         assert result == expected, f"Expected can_handle_entry={expected}, got {result}"
 
     @staticmethod
@@ -636,7 +636,7 @@ class RfcTestHelpers:
             Written LDIF string
 
         """
-        result = entry_quirk.write(entry)  # type: ignore[attr-defined]
+        result = entry_quirk.write(entry)
         ldif_text = TestAssertions.assert_success(result, "Entry write should succeed")
         assert isinstance(ldif_text, str), "Write should return string"
         assert len(ldif_text) > 0, "Written LDIF should not be empty"
@@ -669,7 +669,7 @@ class RfcTestHelpers:
             Written LDIF string
 
         """
-        result = entry_quirk._write_entry(entry)  # type: ignore[attr-defined]
+        result = entry_quirk._write_entry(entry)
         ldif_text = TestAssertions.assert_success(result, "Entry write should succeed")
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -698,7 +698,7 @@ class RfcTestHelpers:
             List of parsed entries
 
         """
-        result = entry_quirk._parse_content(ldif_content)  # type: ignore[attr-defined]
+        result = entry_quirk._parse_content(ldif_content)
         entries = TestAssertions.assert_success(result, "Parse content should succeed")
         assert isinstance(entries, list), "Parse should return list"
         # Only check len > 0 if expected_count is None or > 0
@@ -732,7 +732,7 @@ class RfcTestHelpers:
             Parsed Entry model
 
         """
-        result = entry_quirk._parse_entry(dn, attributes)  # type: ignore[attr-defined]
+        result = entry_quirk._parse_entry(dn, attributes)
         entry = TestAssertions.assert_success(result, "Parse entry should succeed")
         assert isinstance(entry, FlextLdifModels.Entry), "Parse should return Entry"
         expected = expected_dn or dn
@@ -844,7 +844,7 @@ class RfcTestHelpers:
             Parsed SchemaAttribute or SchemaObjectClass
 
         """
-        result = schema_quirk._route_parse(schema_def)  # type: ignore[attr-defined]
+        result = schema_quirk._route_parse(schema_def)
         schema_obj_untyped = TestAssertions.assert_success(
             result, "Route parse should succeed"
         )
@@ -885,7 +885,7 @@ class RfcTestHelpers:
             Written LDIF string
 
         """
-        result = schema_quirk._route_write(schema_obj)  # type: ignore[attr-defined]
+        result = schema_quirk._route_write(schema_obj)
         ldif_text = TestAssertions.assert_success(result, "Route write should succeed")
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -982,7 +982,7 @@ class RfcTestHelpers:
             Written LDIF string
 
         """
-        result = acl_quirk._write_acl(acl)  # type: ignore[attr-defined]
+        result = acl_quirk._write_acl(acl)
         ldif_text = TestAssertions.assert_success(result, "ACL write should succeed")
         assert isinstance(ldif_text, str), "Write should return string"
         if expected_content:

@@ -22,7 +22,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -257,34 +257,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     # =========================================================================
     # NOTE: server_type and priority are accessed via properties in base.py
     # which read from Constants.SERVER_TYPE and Constants.PRIORITY
-
-    def __getattr__(self, name: str) -> object:
-        """Delegate method calls to nested Schema, Acl, or Entry.
-
-        Enables calling schema/acl/entry methods on the main server instance.
-
-        Args:
-            name: Method or attribute name to look up
-
-        Returns:
-            Method or attribute from nested instance
-
-        Raises:
-            AttributeError: If attribute not found in any nested instance
-
-        """
-        # Try schema methods first (most common)
-        if hasattr(self.schema_quirk, name):
-            return getattr(self.schema_quirk, name)
-        # Try acl methods
-        if hasattr(self.acl_quirk, name):
-            return getattr(self.acl_quirk, name)
-        # Try entry methods
-        if hasattr(self.entry_quirk, name):
-            return getattr(self.entry_quirk, name)
-        # Not found in any nested instance
-        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
-        raise AttributeError(msg)
+    # NOTE: __getattr__ delegation is inherited from FlextLdifServersBase
 
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema quirk."""
@@ -294,86 +267,23 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
-            if isinstance(attr_definition, str):
-                # Check OID pattern from constants
-                if re.search(
-                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-                    attr_definition,
-                ):
-                    return True
-                attr_lower = attr_definition.lower()
-                detection_str = (
-                    FlextLdifServersAd.Constants.DETECTION_MICROSOFT_ACTIVE_DIRECTORY
-                )
-                if detection_str in attr_lower:
-                    return True
-                if attr_lower in FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES:
-                    return True
-
-                return any(
-                    marker in attr_lower
-                    for marker in FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES
-                )
-            if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                # Check OID pattern from constants
-                if re.search(
-                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-                    attr_definition.oid,
-                ):
-                    return True
-
-                attr_name_lower = attr_definition.name.lower()
-                detection_str = (
-                    FlextLdifServersAd.Constants.DETECTION_MICROSOFT_ACTIVE_DIRECTORY
-                )
-                if detection_str in attr_name_lower:
-                    return True
-
-                if (
-                    attr_name_lower
-                    in FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES
-                ):
-                    return True
-
-                return any(
-                    marker in attr_name_lower
-                    for marker in FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES
-                )
-            return False
+            return FlextLdifUtilities.Server.matches_server_patterns(
+                value=attr_definition,
+                oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
+                detection_names=FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES,
+                detection_string=FlextLdifServersAd.Constants.DETECTION_MICROSOFT_ACTIVE_DIRECTORY,
+            )
 
         def can_handle_objectclass(
             self,
             oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, str):
-                if re.search(
-                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-                    oc_definition,
-                ):
-                    return True
-                oc_lower = oc_definition.lower()
-                if oc_lower in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES:
-                    return True
-                oc_names = FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
-                return any(marker in oc_lower for marker in oc_names)
-            if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                if re.search(
-                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-                    oc_definition.oid,
-                ):
-                    return True
-
-                oc_name_lower = oc_definition.name.lower()
-                if (
-                    oc_name_lower
-                    in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
-                ):
-                    return True
-
-                oc_names = FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
-                return any(marker in oc_name_lower for marker in oc_names)
-            return False
+            return FlextLdifUtilities.Server.matches_server_patterns(
+                value=oc_definition,
+                oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
+                detection_names=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
+            )
 
         def _parse_attribute(
             self,
@@ -659,7 +569,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             object_classes = (
                 raw_object_classes
-                if isinstance(raw_object_classes, list)
+                if FlextRuntime.is_list_like(raw_object_classes)
                 else [raw_object_classes]
             )
             return bool(
