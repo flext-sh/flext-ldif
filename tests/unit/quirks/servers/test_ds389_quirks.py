@@ -65,7 +65,7 @@ class TestDs389Schemas:
         """Test parsing 389 DS attribute definition."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' DESC 'Directory suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk.schema_quirk,
@@ -81,7 +81,7 @@ class TestDs389Schemas:
         """Test parsing attribute with syntax length specification."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.2 NAME 'nsslapd-database' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk.schema_quirk,
@@ -128,7 +128,7 @@ class TestDs389Schemas:
         """Test parsing STRUCTURAL objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' DESC 'Container class' SUP top STRUCTURAL MUST ( cn ) MAY ( nsslapd-port ) )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk.schema_quirk,
@@ -145,7 +145,7 @@ class TestDs389Schemas:
         """Test parsing AUXILIARY objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk.schema_quirk,

@@ -19,7 +19,8 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
-from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import DeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES

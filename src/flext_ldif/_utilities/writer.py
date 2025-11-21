@@ -445,11 +445,15 @@ class FlextLdifUtilitiesWriter:
             "_acl_attributes",
         }
 
-        return [
-            (key, entry_data[key])
-            for key in attr_order
-            if key in entry_data and key not in skip_keys
-        ]
+        # Type narrowing: ensure tuple elements are (str, object) for return type
+        return cast(
+            "list[tuple[str, object]]",
+            [
+                (key, entry_data[cast("str", key)])
+                for key in attr_order
+                if key in entry_data and key not in skip_keys
+            ],
+        )
 
     @staticmethod
     def extract_base64_attrs(entry_data: dict[str, object]) -> set[str]:

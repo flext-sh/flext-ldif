@@ -12,9 +12,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
 
-from flext_core import FlextResult, FlextRuntime, FlextService
+from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
@@ -26,7 +28,9 @@ def _get_server_registry() -> FlextLdifServer:
     return FlextLdifServer.get_global_instance()
 
 
-class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
+class FlextLdifCategorizer(
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+):
     """Service for entry categorization.
 
     Provides methods for:
@@ -164,7 +168,7 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
                 return FlextResult[type].fail(error_msg)
 
             return FlextResult[type].ok(constants)
-        except (ImportError, ValueError) as e:
+        except ValueError as e:
             error_msg = f"Failed to get server constants: {e}"
             return FlextResult[type].fail(error_msg)
 
@@ -272,8 +276,8 @@ class FlextLdifCategorizer(FlextService[FlextLdifTypes.Models.ServiceResponseTyp
         return self._categorize_by_priority(
             entry,
             constants,
-            priority_order,
-            category_map,
+            cast("list[str]", priority_order),
+            cast("dict[str, frozenset[str]]", category_map),
         )
 
 

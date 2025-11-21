@@ -19,11 +19,12 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests.helpers import FixtureTestHelpers
-from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
-from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+from ....helpers import FixtureTestHelpers
+from ....helpers.test_assertions import TestAssertions
+from ....helpers.test_rfc_helpers import RfcTestHelpers
+from .fixtures.general_constants import TestGeneralConstants
+from .fixtures.rfc_constants import TestsRfcConstants
 
 
 class TestRfcQuirksWithRealFixtures:
@@ -317,7 +318,7 @@ class TestRfcSchemaQuirk:
         self, rfc_schema_quirk: FlextLdifServersRfc.Schema
     ) -> None:
         """Test Schema._parse_attribute."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             rfc_schema_quirk,
@@ -335,7 +336,7 @@ class TestRfcSchemaQuirk:
         self, rfc_schema_quirk: FlextLdifServersRfc.Schema
     ) -> None:
         """Test Schema._parse_objectclass."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         parsed_oc = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             rfc_schema_quirk,
@@ -397,7 +398,7 @@ class TestRfcSchemaQuirk:
         self, rfc_schema_quirk: FlextLdifServersRfc.Schema
     ) -> None:
         """Test Schema._post_write_attribute."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         _ = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             rfc_schema_quirk,
@@ -795,7 +796,7 @@ class TestRfcEntryQuirk:
         self, rfc_entry_quirk: FlextLdifServersRfc.Entry
     ) -> None:
         """Test Entry._parse_content with empty content."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         result = rfc_entry_quirk._parse_content("")
         entries = RfcTestHelpers.test_result_success_and_unwrap(result)
@@ -2770,7 +2771,7 @@ class TestRfcSchemaQuirkMethods:
         sample_schema_attribute: FlextLdifModels.SchemaAttribute,
     ) -> None:
         """Test execute method with write operation."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         attr = sample_schema_attribute
         result = rfc_schema_quirk.write(attr)

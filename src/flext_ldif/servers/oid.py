@@ -741,7 +741,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     class Schema(
         FlextLdifServersRfc.Schema,
-        FlextLdifUtilities.Detection.OidPatternMixin,
     ):
         """Oracle OID schema quirks implementation.
 
@@ -1074,7 +1073,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                     # Preserve ALL schema formatting details for zero data loss
                     FlextLdifUtilities.Metadata.preserve_schema_formatting(
-                        attr_data.metadata,
+                        cast("FlextLdifModels.QuirkMetadata", attr_data.metadata),
                         attr_definition,
                     )
 
@@ -2654,10 +2653,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     # Try to find original attribute name
                     for orig_name, orig_values in original_attrs.items():
                         if self._normalize_attribute_name(str(orig_name)) == attr_name:
-                            denormalized[str(orig_name)] = (
+                            denormalized[str(orig_name)] = cast(
+                                "list[str]",
                                 orig_values
                                 if FlextRuntime.is_list_like(orig_values)
-                                else [str(orig_values)]
+                                else [str(orig_values)],
                             )
                             break
                     else:
@@ -2914,7 +2914,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     "original_attr_lines", []
                 )
                 if FlextRuntime.is_list_like(orig_attr_lines):
-                    original_attr_lines = orig_attr_lines
+                    original_attr_lines = cast("list[str]", orig_attr_lines)
 
             return {
                 "dn_spacing": original_dn,
@@ -3015,6 +3015,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 original_entry,
             )
 
+            # Merge extensions from original_entry.metadata if it exists
+            original_extensions: dict[str, object] = {}
+            if original_entry.metadata and original_entry.metadata.extensions:
+                original_extensions = original_entry.metadata.extensions.copy()
+
             # Create metadata using domain class, then ensure correct type from models.py
             domain_metadata = FlextLdifModels.QuirkMetadata.create_for(
                 self._get_server_type(),
@@ -3023,6 +3028,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     **dn_metadata,
                     **rfc_compliance_metadata,
                     **generic_metadata,  # Add GENERIC metadata
+                    **original_extensions,  # Include original extensions (original_dn_complete, etc.)
                     "original_entry": original_entry,
                 },
             )
@@ -3286,6 +3292,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             original_dn: str,
             normalized_dn: str,
             original_attributes_complete: dict[str, object],
+            original_dn_line: str | None = None,
+            original_attr_lines: list[str] | None = None,
         ) -> None:
             """Store minimal differences in OID entry metadata.
 
@@ -3296,6 +3304,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 original_dn: Original DN string
                 normalized_dn: Normalized DN string
                 original_attributes_complete: Complete original attributes
+                original_dn_line: Original DN line from LDIF (optional)
+                original_attr_lines: Original attribute lines from LDIF (optional)
 
             """
             if not metadata.extensions:
@@ -3310,6 +3320,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             metadata.extensions["original_attributes_complete"] = (
                 original_attributes_complete
             )
+            # Store original lines if provided
+            if original_dn_line is not None:
+                metadata.extensions["original_dn_line_complete"] = original_dn_line
+            if original_attr_lines is not None:
+                metadata.extensions["original_attr_lines_complete"] = (
+                    original_attr_lines
+                )
 
             # Track DN differences
             if dn_differences.get("has_differences"):
@@ -3443,6 +3460,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     )
                 )
             )
+            # Extract original lines from metadata for round-trip support
+            original_dn_line: str | None = None
+            original_attr_lines: list[str] | None = None
+            if entry.metadata and entry.metadata.original_format_details:
+                original_dn_line = entry.metadata.original_format_details.get(
+                    "original_dn_line"
+                )
+                orig_attr_lines = entry.metadata.original_format_details.get(
+                    "original_attr_lines"
+                )
+                if FlextRuntime.is_list_like(orig_attr_lines):
+                    original_attr_lines = cast("list[str]", orig_attr_lines)
+            # Store minimal differences in metadata
             self._store_oid_minimal_differences(
                 metadata=entry_metadata,
                 dn_differences=dn_differences,
@@ -3450,7 +3480,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 original_dn=original_dn,
                 normalized_dn=normalized_dn,
                 original_attributes_complete=original_attributes_complete_dict,
+                original_dn_line=original_dn_line,
+                original_attr_lines=original_attr_lines,
             )
+
+            # Ensure entry uses the modified metadata
+            original_entry.metadata = entry_metadata
 
             logger.debug(
                 "OID entry parsed with complete minimal differences analysis",
@@ -3474,6 +3509,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             )
 
             # Create result with metadata (use normalized_dn for RFC format)
+            # Original_entry.metadata now contains minimal differences from _store_oid_minimal_differences
             return self._create_entry_result_with_metadata(
                 entry,
                 normalized_dn,

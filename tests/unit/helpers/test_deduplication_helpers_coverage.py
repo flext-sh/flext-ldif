@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
-from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.schema import FlextLdifSchema
+
+from ...helpers.test_deduplication_helpers import DeduplicationHelpers
 
 
 class TestBasicAssertions:

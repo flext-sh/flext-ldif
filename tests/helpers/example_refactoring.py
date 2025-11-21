@@ -46,7 +46,7 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
 # ✅ DEPOIS - Testes concisos usando helpers:
 """
 from tests.helpers import TestOperations
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 def test_schema_parse_attribute(self, rfc_schema_quirk) -> None:
     TestOperations.parse_attribute_and_validate(
@@ -81,7 +81,7 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
 """
 import pytest
 from tests.helpers import TestOperations
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 @pytest.mark.parametrize("attr_def,expected_oid,expected_name", [
     (TestsRfcConstants.ATTR_DEF_CN_COMPLETE, TestsRfcConstants.ATTR_OID_CN, TestsRfcConstants.ATTR_NAME_CN),

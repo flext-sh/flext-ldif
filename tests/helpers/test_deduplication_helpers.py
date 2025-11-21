@@ -28,7 +28,8 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
-from tests.helpers.test_assertions import TestAssertions
+
+from ...helpers.test_assertions import TestAssertions
 
 # TypeVar for generic FlextResult unwrapping
 T = TypeVar("T")
@@ -8664,7 +8665,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Parse initial LDIF
         # Type narrowing: FlextLdif implements the protocol but type checker doesn't recognize it
         # Cast to HasParseMethod since FlextLdif has compatible methods (with overloads)
-        from tests.helpers.test_rfc_helpers import HasParseMethod, RfcTestHelpers
+        from ...helpers.test_rfc_helpers import HasParseMethod, RfcTestHelpers
 
         ldif_api_protocol: HasParseMethod = cast("HasParseMethod", ldif_api)
         entries = RfcTestHelpers.test_api_parse_and_assert(

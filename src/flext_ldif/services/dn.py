@@ -94,9 +94,10 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult
 from pydantic import Field, PrivateAttr, field_validator
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -104,7 +105,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 type DN = str
 
 
-class FlextLdifDn(FlextService[str]):
+class FlextLdifDn(FlextLdifServiceBase[str]):
     r"""RFC 4514 Compliant DN Operations Service with Nested Classes.
 
     Handles Distinguished Name parsing, validation, normalization, and escaping

@@ -64,7 +64,7 @@ class _EntryManipulationConstants:
     class ActiveDirectoryAttributes:
         """Active Directory attribute names."""
 
-        PWD_LAST_SET: Final[str] = "pwdLastSet"
+        PWD_LAST_SET: Final[str] = "pwdLastSet"  # noqa: S105
 
     class RegexPatterns:
         """Regular expression patterns for entry manipulation."""

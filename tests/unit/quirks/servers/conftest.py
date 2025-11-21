@@ -16,8 +16,9 @@ from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
-from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+from ...unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 
 @pytest.fixture(scope="module")

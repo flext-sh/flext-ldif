@@ -15,7 +15,8 @@ from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests.helpers.test_assertions import TestAssertions
+
+from ...helpers.test_assertions import TestAssertions
 
 
 class OudTestHelpers:

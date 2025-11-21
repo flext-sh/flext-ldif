@@ -11,7 +11,8 @@ import pytest
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.ad import FlextLdifServersAd
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestActiveDirectorySchemas:
@@ -97,7 +98,7 @@ class TestActiveDirectorySchemas:
             "DESC 'SAM Account Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
             "EQUALITY caseIgnoreMatch SINGLE-VALUE )"
         )
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         attr_data = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_attribute(attr_def),
@@ -201,7 +202,7 @@ class TestActiveDirectorySchemas:
         """Test parsing AUXILIARY objectClass."""
         quirk = ad_schema
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         oc_def = "( 1.2.840.113556.1.5.10 NAME 'adGroup' AUXILIARY )"
         oc_data = RfcTestHelpers.test_result_success_and_unwrap(
@@ -237,7 +238,7 @@ class TestActiveDirectorySchemas:
             single_value=True,
         )
 
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,
@@ -263,7 +264,7 @@ class TestActiveDirectorySchemas:
             may=["sAMAccountName"],
         )
 
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,

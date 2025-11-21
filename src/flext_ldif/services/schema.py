@@ -39,15 +39,14 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
-logger = FlextLogger(__name__)
 
-
-class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
+class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus]):
     """Unified schema validation and transformation service.
 
     Centralizes all schema-related operations that were previously scattered
@@ -176,7 +175,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
 
         except Exception as e:
             error_msg = f"Error parsing attribute: {e}"
-            logger.exception(
+            self.logger.exception(
                 "Failed to parse attribute definition",
                 error=str(e),
             )
@@ -205,7 +204,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
 
         except Exception as e:
             error_msg = f"Error parsing objectClass: {e}"
-            logger.exception(
+            self.logger.exception(
                 "Failed to parse objectClass definition",
                 error=str(e),
             )
@@ -247,7 +246,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
 
         except Exception as e:
             error_msg = f"Error validating attribute: {e}"
-            logger.exception(
+            self.logger.exception(
                 "Failed to validate attribute",
                 error=str(e),
             )
@@ -292,7 +291,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
 
         except Exception as e:
             error_msg = f"Error validating objectclass: {e}"
-            logger.exception(
+            self.logger.exception(
                 "Failed to validate objectClass",
                 error=str(e),
             )
@@ -322,7 +321,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
 
         except Exception as e:
             error_msg = f"Error writing attribute: {e}"
-            logger.exception(
+            self.logger.exception(
                 "Failed to write attribute",
                 error=str(e),
             )
@@ -352,7 +351,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
 
         except Exception as e:
             error_msg = f"Error writing objectClass: {e}"
-            logger.exception(
+            self.logger.exception(
                 "Failed to write objectClass",
                 error=str(e),
             )
@@ -379,7 +378,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
             return "(" in attr_definition and ")" in attr_definition
 
         except Exception as e:
-            logger.exception(
+            self.logger.exception(
                 "Failed to check if service can handle attribute",
                 error=str(e),
             )
@@ -406,7 +405,7 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
             return "(" in oc_definition and ")" in oc_definition
 
         except Exception as e:
-            logger.exception(
+            self.logger.exception(
                 "Failed to check if service can handle objectClass",
                 error=str(e),
             )

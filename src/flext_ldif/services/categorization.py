@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final, cast
+from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
@@ -21,7 +23,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifCategorization(FlextService[FlextLdifModels.FlexibleCategories]):
+class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCategories]):
     """LDIF Entry Categorization Service.
 
     Public API for categorizing LDIF entries into 6 categories:
@@ -118,9 +120,49 @@ class FlextLdifCategorization(FlextService[FlextLdifModels.FlexibleCategories]):
         # Convert dict to model if needed
         if FlextRuntime.is_dict_like(categorization_rules):
             # Type narrowing: is_dict_like ensures dict[str, object]
-            rules_dict = dict(categorization_rules)
+            rules_dict: dict[str, object] = dict(categorization_rules)
+            # Extract list fields with type guards - CategoryRules uses different field names
+            user_dn_patterns = rules_dict.get("user_dn_patterns") or rules_dict.get(
+                "users"
+            )
+            group_dn_patterns = rules_dict.get("group_dn_patterns") or rules_dict.get(
+                "groups"
+            )
+            hierarchy_dn_patterns = rules_dict.get(
+                "hierarchy_dn_patterns"
+            ) or rules_dict.get("hierarchy")
+            schema_dn_patterns = rules_dict.get("schema_dn_patterns") or rules_dict.get(
+                "schema"
+            )
+            user_objectclasses = rules_dict.get("user_objectclasses", [])
+            group_objectclasses = rules_dict.get("group_objectclasses", [])
+            hierarchy_objectclasses = rules_dict.get("hierarchy_objectclasses", [])
+            acl_attributes = rules_dict.get("acl_attributes") or rules_dict.get("acl")
             self._categorization_rules = FlextLdifModels.CategoryRules(
-                **rules_dict,
+                user_dn_patterns=list(user_dn_patterns)
+                if isinstance(user_dn_patterns, list)
+                else [],
+                group_dn_patterns=list(group_dn_patterns)
+                if isinstance(group_dn_patterns, list)
+                else [],
+                hierarchy_dn_patterns=list(hierarchy_dn_patterns)
+                if isinstance(hierarchy_dn_patterns, list)
+                else [],
+                schema_dn_patterns=list(schema_dn_patterns)
+                if isinstance(schema_dn_patterns, list)
+                else [],
+                user_objectclasses=list(user_objectclasses)
+                if isinstance(user_objectclasses, list)
+                else [],
+                group_objectclasses=list(group_objectclasses)
+                if isinstance(group_objectclasses, list)
+                else [],
+                hierarchy_objectclasses=list(hierarchy_objectclasses)
+                if isinstance(hierarchy_objectclasses, list)
+                else [],
+                acl_attributes=list(acl_attributes)
+                if isinstance(acl_attributes, list)
+                else [],
             )
         elif categorization_rules is None:
             self._categorization_rules = FlextLdifModels.CategoryRules()
@@ -132,9 +174,13 @@ class FlextLdifCategorization(FlextService[FlextLdifModels.FlexibleCategories]):
 
         if FlextRuntime.is_dict_like(schema_whitelist_rules):
             # Type narrowing: is_dict_like ensures dict[str, object]
-            whitelist_dict = dict(schema_whitelist_rules)
+            whitelist_dict: dict[str, object] = dict(schema_whitelist_rules)
+            # Extract list fields with type guards
+            blocked_objectclasses = whitelist_dict.get("blocked_objectclasses")
             self._schema_whitelist_rules = FlextLdifModels.WhitelistRules(
-                **whitelist_dict,
+                blocked_objectclasses=list(blocked_objectclasses)
+                if isinstance(blocked_objectclasses, list)
+                else [],
             )
         elif schema_whitelist_rules is None:
             # Keep None - don't create empty WhitelistRules
@@ -405,9 +451,16 @@ class FlextLdifCategorization(FlextService[FlextLdifModels.FlexibleCategories]):
                 included, excluded = FlextLdifFilters.by_base_dn(
                     model_entries, self._base_dn
                 )
-                # FlexibleCategories expects list[FlextLdifModels.Entry]
+                # FlexibleCategories expects list[FlextLdifModelsDomains.Entry]
                 # Type narrowing: all entries in included are FlextLdifModels.Entry
-                filtered[category] = cast("list[FlextLdifModels.Entry]", included)
+                # Convert to domain Entry type for FlexibleCategories
+                domain_entries = [
+                    FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
+                    if isinstance(entry, FlextLdifModels.Entry)
+                    else entry
+                    for entry in included
+                ]
+                filtered[category] = domain_entries
                 self._rejection_tracker["base_dn_filter"].extend(excluded)
 
                 # Track filter results in statistics

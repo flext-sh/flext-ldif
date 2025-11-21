@@ -13,8 +13,10 @@ import time
 from pathlib import Path
 from typing import Final, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.categorization import FlextLdifCategorization
@@ -27,7 +29,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
+class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResult]):
     """LDIF Migration Pipeline - Direct Implementation.
 
     Zero private methods - pure service orchestration.
@@ -184,7 +186,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 else parse_response.entries
             )
             # Register all DNs in registry for case normalization
-            for entry in entries:
+            # Type narrowing: entries is list[object], cast to proper Entry type
+            typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+            for entry in typed_entries:
                 if entry.dn and entry.dn.value:
                     _ = self._dn_registry.register_dn(entry.dn.value)
             all_entries.extend(cast("list[FlextLdifModels.Entry]", entries))
@@ -245,8 +249,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
 
                 # Apply attribute filtering
                 if forbidden_attrs:
+                    # Type narrowing: filtered_entry from Categories is domain model, cast to public
                     attr_result = FlextLdifFilters.remove_attributes(
-                        filtered_entry,
+                        cast("FlextLdifModels.Entry", filtered_entry),
                         forbidden_attrs,
                     )
                     if attr_result.is_success:
@@ -254,8 +259,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
 
                 # Apply objectClass filtering
                 if forbidden_ocs:
+                    # Type narrowing: mixed Entry type from previous operation, cast to public
                     oc_result = FlextLdifFilters.remove_objectclasses(
-                        filtered_entry,
+                        cast("FlextLdifModels.Entry", filtered_entry),
                         forbidden_ocs,
                     )
                     if oc_result.is_success:
@@ -274,11 +280,24 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         if FlextLdifConstants.Categories.SCHEMA not in categories:
             return
 
+        # Type narrowing: Categories stores domain models, cast to public for function
         schema_result = self._categorization.filter_schema_by_oids(
-            categories[FlextLdifConstants.Categories.SCHEMA],
+            cast(
+                "list[FlextLdifModels.Entry]",
+                categories[FlextLdifConstants.Categories.SCHEMA],
+            ),
         )
         if schema_result.is_success:
-            categories[FlextLdifConstants.Categories.SCHEMA] = schema_result.unwrap()
+            # Type narrowing: Result returns public models
+            # Convert to domain Entry type for FlexibleCategories
+            public_entries = schema_result.unwrap()
+            domain_entries = [
+                FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
+                if isinstance(entry, FlextLdifModels.Entry)
+                else entry
+                for entry in public_entries
+            ]
+            categories[FlextLdifConstants.Categories.SCHEMA] = domain_entries
 
     def _duplicate_acl_entries(
         self,
@@ -351,14 +370,29 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         }:
             cat_entries = categories.get(cat)
             if cat_entries:
+                # Convert domain Entry to public Entry for sorting
+                # cat_entries is list[FlextLdifModelsDomains.Entry], need to convert
+                public_entries: list[FlextLdifModels.Entry] = [
+                    FlextLdifModels.Entry.model_validate(entry.model_dump())
+                    if isinstance(entry, FlextLdifModelsDomains.Entry)
+                    else entry
+                    for entry in cat_entries
+                ]
                 sorted_entries = (
                     FlextLdifSorting.builder()
-                    .with_entries(cat_entries)
+                    .with_entries(public_entries)
                     .with_target("entries")
                     .with_strategy("hierarchy")
                     .build()
                 )
-                categories[cat] = sorted_entries
+                # Convert back to domain Entry for FlexibleCategories
+                domain_sorted = [
+                    FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
+                    if isinstance(entry, FlextLdifModels.Entry)
+                    else entry
+                    for entry in sorted_entries
+                ]
+                categories[cat] = domain_sorted
                 logger.info(
                     "Sorted category entries hierarchically",
                     category=cat,
@@ -375,8 +409,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             entry for entries in categories.values() for entry in entries
         ]
 
+        # Type narrowing: Categories contains domain models, cast to public for writer
         write_result = self._writer.write(
-            entries=all_output_entries,
+            entries=cast("list[FlextLdifModels.Entry]", all_output_entries),
             target_server_type=self._target_server,
             output_target="file",
             output_path=output_path,
@@ -484,7 +519,12 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
 
             output_path = self._output_dir / output_filename
             phase_num = category_to_phase.get(category, -1)
-            template_data = self._build_template_data(category, phase_num, entries)
+            # Type narrowing: entries from Categories are domain models, cast to public
+            template_data = self._build_template_data(
+                category,
+                phase_num,
+                cast("list[FlextLdifModels.Entry]", entries),
+            )
 
             # Create category-specific WriteFormatOptions for phase-aware processing
             category_write_opts = self._write_opts.model_copy(
@@ -492,12 +532,14 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             )
 
             # Prepare entries (add metadata for ACL category)
-            processed_entries = entries
+            # Type narrowing: entries from Categories are domain models, cast to public
+            processed_entries = cast("list[FlextLdifModels.Entry]", entries)
             if category == FlextLdifConstants.Categories.ACL:
-                processed_entries = self._prepare_acl_entries(entries)
+                processed_entries = self._prepare_acl_entries(processed_entries)
 
+            # Type narrowing: processed_entries may be mixed type, cast to public for writer
             write_result = self._writer.write(
-                entries=processed_entries,
+                entries=cast("list[FlextLdifModels.Entry]", processed_entries),
                 target_server_type=self._target_server,
                 output_target="file",
                 output_path=output_path,

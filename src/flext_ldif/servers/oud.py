@@ -1041,13 +1041,18 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         for orig_name, transformation in transformations.items():
             if FlextRuntime.is_dict_like(transformation):
                 # AttributeTransformation serialized as dict
-                original_names[orig_name] = transformation.get(
-                    "original_values",
-                    [],
+                original_names[orig_name] = cast(
+                    "list[str]",
+                    transformation.get(
+                        "original_values",
+                        [],
+                    ),
                 )
             elif hasattr(transformation, "original_values"):
                 # AttributeTransformation object
-                original_names[orig_name] = transformation.original_values
+                original_names[orig_name] = cast(
+                    "list[str]", transformation.original_values
+                )
 
         # Validate original_names - use acl_attrs if empty
         if not original_names:
@@ -1149,11 +1154,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             corrected_attrs = corrected_data.get("corrected_attributes")
             if FlextRuntime.is_dict_like(corrected_attrs):
                 # Type narrowing: corrected_attrs is dict[str, list[str]] from _correct_rfc_syntax_in_attributes
-                attrs_for_model: dict[str, list[str]] = {
-                    k: v if FlextRuntime.is_list_like(v) else [str(v)]
-                    for k, v in corrected_attrs.items()
-                    if isinstance(v, (list, str))
-                }
+                attrs_for_model: dict[str, list[str]] = cast(
+                    "dict[str, list[str]]",
+                    {
+                        k: v if FlextRuntime.is_list_like(v) else [str(v)]
+                        for k, v in corrected_attrs.items()
+                        if isinstance(v, (list, str))
+                    },
+                )
                 corrected_ldif_attrs = FlextLdifModels.LdifAttributes(
                     attributes=attrs_for_model,
                 )
@@ -1356,16 +1364,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         """
 
-        def __init__(self, **kwargs: object) -> None:
+        def __init__(
+            self,
+            schema_service: object | None = None,
+            **kwargs: object,
+        ) -> None:
             """Initialize OUD schema quirk.
 
             OUD extends RFC baseline with Oracle-specific enhancements.
 
             Args:
-                **kwargs: Passed to parent for compatibility (ignored)
+                schema_service: Injected FlextLdifSchema service (optional)
+                **kwargs: Passed to parent for compatibility
 
             """
-            super().__init__(**kwargs)
+            super().__init__(schema_service=schema_service, **kwargs)
 
         def _hook_post_parse_attribute(
             self,
@@ -1521,7 +1534,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Preserve ALL schema formatting details for zero data loss
             FlextLdifUtilities.Metadata.preserve_schema_formatting(
-                validated_attr.metadata,
+                cast("FlextLdifModels.QuirkMetadata", validated_attr.metadata),
                 attr_definition,
             )
 
@@ -1740,10 +1753,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # PHASE 1: Check MUST attributes (required - failure if missing)
             must_attrs = oc_data.must
             if must_attrs:
-                must_list: list[str] = (
+                must_list: list[str] = cast(
+                    "list[str]",
                     must_attrs
                     if FlextRuntime.is_list_like(must_attrs)
-                    else [str(must_attrs)]
+                    else [str(must_attrs)],
                 )
                 missing_attrs.extend(
                     [
@@ -1761,10 +1775,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Missing MAY attributes cause: "No attribute type matching this name or OID exists"
             may_attrs = oc_data.may
             if may_attrs:
-                may_list: list[str] = (
+                may_list: list[str] = cast(
+                    "list[str]",
                     may_attrs
                     if FlextRuntime.is_list_like(may_attrs)
-                    else [str(may_attrs)]
+                    else [str(may_attrs)],
                 )
                 missing_attrs.extend(
                     [
@@ -2344,14 +2359,19 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # Oracle OUD server configuration defaults
 
-        def __init__(self, **kwargs: object) -> None:
+        def __init__(
+            self,
+            acl_service: object | None = None,
+            **kwargs: object,
+        ) -> None:
             """Initialize OUD ACL quirk.
 
             Args:
-                **kwargs: Passed to parent for compatibility (ignored)
+                acl_service: Injected FlextLdifAcl service (optional)
+                **kwargs: Passed to parent for compatibility
 
             """
-            super().__init__(**kwargs)
+            super().__init__(acl_service=acl_service, **kwargs)
             # NOTE: Hook registration was removed - AclConverter was moved to services/acl.py
             # Use FlextLdifAcl instead for ACL conversion operations
 
@@ -2934,7 +2954,18 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Reconstruct target from acl_target_target metadata
                 target_dict = acl_data.metadata.extensions.get("acl_target_target")
                 if FlextRuntime.is_dict_like(target_dict):
-                    target = FlextLdifModels.AclTarget(**target_dict)
+                    # Type narrowing: ensure dict has correct types
+                    target_data: dict[str, object] = dict(target_dict)
+                    # Extract known fields with type guards
+                    attributes = target_data.get("attributes")
+                    target_dn = target_data.get("target_dn")
+                    # AclTarget only has target_dn (required) and attributes (optional list)
+                    target = FlextLdifModels.AclTarget(
+                        target_dn=str(target_dn) if isinstance(target_dn, str) else "*",
+                        attributes=list(attributes)
+                        if isinstance(attributes, list)
+                        else [],
+                    )
 
             if not target:
                 return '(targetattr="*")'
@@ -2975,7 +3006,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     FlextLdifConstants.MetadataKeys.ACL_TARGET_PERMISSIONS,
                 )
                 if FlextRuntime.is_dict_like(target_perms_dict):
-                    perms = FlextLdifModels.AclPermissions(**target_perms_dict)
+                    # Type narrowing: ensure dict has correct types
+                    perms_data: dict[str, object] = dict(target_perms_dict)
+                    # Extract boolean fields with type guards - only use fields that exist in AclPermissions
+                    perms = FlextLdifModels.AclPermissions(
+                        read=bool(perms_data.get("read")),
+                        write=bool(perms_data.get("write")),
+                        add=bool(perms_data.get("add")),
+                        delete=bool(perms_data.get("delete")),
+                        search=bool(perms_data.get("search")),
+                        compare=bool(perms_data.get("compare")),
+                        self_write=bool(
+                            perms_data.get("self_write") or perms_data.get("selfwrite")
+                        ),
+                        proxy=bool(perms_data.get("proxy")),
+                    )
 
             if not perms:
                 return FlextResult[str].fail("ACL model has no permissions object")
@@ -3376,14 +3421,19 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         """
 
-        def __init__(self, **kwargs: object) -> None:
+        def __init__(
+            self,
+            entry_service: object | None = None,
+            **kwargs: object,
+        ) -> None:
             """Initialize OUD entry quirk.
 
             Args:
-                **kwargs: Passed to parent for compatibility (ignored)
+                entry_service: Injected FlextLdifEntry service (optional)
+                **kwargs: Passed to parent for compatibility
 
             """
-            super().__init__(**kwargs)
+            super().__init__(entry_service=entry_service, **kwargs)
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Oracle OUD-specific logic:
@@ -3876,7 +3926,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         "original_attr_lines", []
                     )
                     if FlextRuntime.is_list_like(orig_attr_lines):
-                        original_attr_lines = orig_attr_lines
+                        original_attr_lines = cast("list[str]", orig_attr_lines)
 
                 # Preserve original entry_dict for minimal differences analysis
                 original_entry_dict = dict(entry_attrs)
@@ -4553,10 +4603,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     attr_name.lower(), attr_name
                 )
                 if original_case in original_attrs:
-                    restored_attrs[original_case] = (
+                    restored_attrs[original_case] = cast(
+                        "list[str]",
                         original_attrs[original_case]
                         if FlextRuntime.is_list_like(original_attrs[original_case])
-                        else [str(original_attrs[original_case])]
+                        else [str(original_attrs[original_case])],
                     )
                 else:
                     restored_attrs[original_case] = attr_values
@@ -4748,6 +4799,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def write(
             self,
             entry: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions | None = None,
         ) -> FlextResult[str]:
             r"""Public API: Write OUD entry to LDIF format.
 
@@ -4773,7 +4825,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             normalized_entry = hook_result.unwrap()
 
-            # Step 2: Call OUD _write_entry() which handles schema entries specially
+            # Step 2: Check if modify format is requested
+            if write_options and write_options.ldif_changetype == "modify":
+                return self._write_entry_modify_format(normalized_entry, write_options)
+
+            # Step 3: Call OUD _write_entry() which handles schema entries specially
             # For schema entries, uses modify-add format
             # For other entries, delegates to RFC implementation
             return self._write_entry(normalized_entry)
@@ -4835,10 +4891,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         if FlextRuntime.is_list_like(aci_attrs)
                         else 1,
                         aci_preview=[
-                            aci[: FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH]
-                            if len(aci)
+                            cast("str", aci)[
+                                : FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH
+                            ]
+                            if len(cast("str", aci))
                             > FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH
-                            else aci
+                            else cast("str", aci)
                             for aci in (
                                 aci_attrs[: FlextLdifConstants.ACI_LIST_PREVIEW_LIMIT]
                                 if FlextRuntime.is_list_like(aci_attrs)
@@ -4849,7 +4907,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         ]
                         if FlextRuntime.is_list_like(aci_attrs)
                         else [
-                            str(aci_attrs)[
+                            cast("str", aci_attrs)[
                                 : FlextLdifServersOud.Constants.MAX_LOG_LINE_LENGTH
                             ],
                         ],

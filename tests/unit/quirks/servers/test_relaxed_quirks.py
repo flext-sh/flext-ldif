@@ -18,7 +18,8 @@ import pytest
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # Metadata keys for testing relaxed mode
 meta_keys = FlextLdifConstants.MetadataKeys
@@ -67,7 +68,7 @@ class TestRelaxedSchemas:
         # Malformed attribute missing closing paren
         malformed = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse(malformed),
@@ -88,7 +89,7 @@ class TestRelaxedSchemas:
         # But if it has a valid OID pattern, should work
         non_standard = "( 2.5.4.999 NAME 'attr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse_attribute(non_standard),
@@ -106,7 +107,7 @@ class TestRelaxedSchemas:
         """Test that parsed attribute includes original definition."""
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse_attribute(attr_def),
@@ -124,7 +125,7 @@ class TestRelaxedSchemas:
         # Malformed objectClass
         malformed = "( 2.5.6.0 NAME 'top' ABSTRACT MUST objectClass"
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse(malformed),

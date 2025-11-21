@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Generator, Mapping
 from dataclasses import dataclass
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, cast
 
 import structlog
 from flext_core import FlextResult, FlextRuntime
@@ -257,8 +257,11 @@ class FlextLdifUtilitiesParsers:
                             )
                             stats.with_metadata += 1
                         elif entry.metadata:
+                            # Type cast: FlextLdifModelsDomains.QuirkMetadata → FlextLdifModels.QuirkMetadata
                             FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
-                                metadata=entry.metadata,
+                                metadata=cast(
+                                    "FlextLdifModels.QuirkMetadata", entry.metadata
+                                ),
                                 ldif_content=original_ldif,
                                 context="entry_original_ldif",
                             )
@@ -429,9 +432,10 @@ class FlextLdifUtilitiesParsers:
                         if isinstance(objectclass.sup, str)
                         else []
                     )
+                    # Type narrowing: list[object] | list[str] → list[str]
                     validate_structural_hook(
                         objectclass.kind or "STRUCTURAL",
-                        sup_list,
+                        cast("list[str]", sup_list),
                     )
 
                 # Transform SUP if hook provided
@@ -444,7 +448,8 @@ class FlextLdifUtilitiesParsers:
                         if isinstance(objectclass.sup, str)
                         else []
                     )
-                    objectclass.sup = transform_sup_hook(sup_list)
+                    # Type narrowing: list[object] | list[str] → list[str]
+                    objectclass.sup = transform_sup_hook(cast("list[str]", sup_list))
 
                 # Enrich metadata if hook provided
                 if enrich_metadata_hook:

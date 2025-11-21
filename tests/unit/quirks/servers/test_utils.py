@@ -13,7 +13,8 @@ from pathlib import Path
 
 from flext_ldif.api import FlextLdif
 from flext_ldif.models import FlextLdifModels
-from tests.helpers.test_assertions import TestAssertions
+
+from ...helpers.test_assertions import TestAssertions
 
 
 class FlextLdifTestUtils:

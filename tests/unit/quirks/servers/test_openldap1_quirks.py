@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestOpenLDAP1xSchemas:
@@ -30,7 +31,7 @@ class TestOpenLDAP1xSchemas:
         attr_def = "attributetype ( 1.2.3.4 NAME 'test' )"
         # Parse string definition into model object
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_parse_success_and_unwrap(quirk, attr_def)
         assert quirk.can_handle_attribute(attr_def) is True
@@ -43,7 +44,7 @@ class TestOpenLDAP1xSchemas:
         attr_def = "attributetype ( 1.2.3.4 NAME 'olcTest' )"
         # Parse string definition into model object
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_parse_success_and_unwrap(quirk, attr_def)
         assert quirk.can_handle_attribute(attr_def) is False
@@ -53,7 +54,7 @@ class TestOpenLDAP1xSchemas:
         quirk = FlextLdifServersOpenldap1.Schema()
 
         attr_def = "attributetype ( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_schema_quirk_parse_and_assert(
             quirk,
@@ -85,7 +86,7 @@ class TestOpenLDAP1xSchemas:
         oc_def = "objectclass ( 1.2.3.4 NAME 'testClass' )"
         # Parse string definition into model object
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_parse_success_and_unwrap(quirk, oc_def)
         assert quirk.can_handle_objectclass(oc_def) is True
@@ -97,7 +98,7 @@ class TestOpenLDAP1xSchemas:
         oc_def = "objectclass ( 1.2.3.4 NAME 'olcTestClass' )"
         # Parse string definition into model object
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_parse_success_and_unwrap(quirk, oc_def)
         assert quirk.can_handle_objectclass(oc_def) is False
@@ -107,7 +108,7 @@ class TestOpenLDAP1xSchemas:
         quirk = FlextLdifServersOpenldap1.Schema()
 
         oc_def = "objectclass ( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST ( cn $ sn ) MAY ( description ) )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         oc_data = RfcTestHelpers.test_schema_quirk_parse_and_assert(
             quirk,
@@ -127,7 +128,7 @@ class TestOpenLDAP1xSchemas:
         quirk = FlextLdifServersOpenldap1.Schema()
 
         oc_def = "objectclass ( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_schema_quirk_parse_and_assert(
             quirk,
@@ -140,7 +141,7 @@ class TestOpenLDAP1xSchemas:
         quirk = FlextLdifServersOpenldap1.Schema()
 
         oc_def = "objectclass ( 1.2.3.6 NAME 'absClass' ABSTRACT )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_schema_quirk_parse_and_assert(
             quirk,

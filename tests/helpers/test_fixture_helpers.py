@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 from pathlib import Path
 
-from tests.helpers.test_assertions import TestAssertions
+from ...helpers.test_assertions import TestAssertions
 
 
 class FixtureTestHelpers:
@@ -60,7 +60,7 @@ class FixtureTestHelpers:
             assert len(entries) > 0
 
         """
-        from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+        from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
 
         entries = FlextLdifTestUtils.load_fixture(
             ldif_api,
@@ -186,7 +186,7 @@ class FixtureTestHelpers:
             assert identical, "Roundtrip should preserve entries"
 
         """
-        from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+        from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
 
         original_entries, roundtrip_entries, is_identical = (
             FlextLdifTestUtils.run_roundtrip_test(

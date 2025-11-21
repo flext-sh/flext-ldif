@@ -20,7 +20,8 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
-from tests.helpers.test_assertions import TestAssertions
+
+from ...helpers.test_assertions import TestAssertions
 
 
 class HasParseMethod(Protocol):

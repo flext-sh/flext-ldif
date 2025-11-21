@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from flext_ldif import FlextLdif
 
@@ -65,7 +66,9 @@ mail: railway@example.com
     # Handle final result
     if result.is_success:
         ldif_output, stats = result.unwrap()
-        print(f"✓ Processed {stats.get('total_entries', 0)} entries")
+        # stats is EntryAnalysisResult model, access attributes directly
+        total_entries = getattr(stats, "total_entries", 0)
+        print(f"✓ Processed {total_entries} entries")
         print(f"✓ LDIF output: {len(ldif_output)} characters")
     else:
         print(f"✗ Processing failed: {result.error}")
@@ -92,8 +95,9 @@ def configuration_from_env_example() -> None:
 
     # Configuration affects behavior automatically
     entries_count = 1000
-    effective_workers = api.config.get_effective_workers(entries_count)
-    print(f"Effective workers for {entries_count} entries: {effective_workers}")
+    # Use max_workers from config (no get_effective_workers method)
+    max_workers = getattr(api.config, "max_workers", 4)
+    print(f"Max workers configured: {max_workers} for {entries_count} entries")
 
 
 def complete_ldif_processing_workflow() -> None:
@@ -140,10 +144,10 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         _ = validation_result.error
         return
 
-    validation_report: dict[str, object] = validation_result.unwrap()
-
-    if not validation_report.get("is_valid"):
-        _ = validation_report.get("errors", [])
+    validation_report = validation_result.unwrap()
+    # validation_report is ValidationResult model, access attributes directly
+    if not validation_report.is_valid:
+        _ = validation_report.errors
         return
 
     # Step 3: Analyze entries
@@ -154,8 +158,8 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     stats = analysis_result.unwrap()
-    stats_dict: dict[str, object] = stats
-    _ = stats_dict.get("total_entries", 0)
+    # stats is EntryAnalysisResult model, access attributes directly
+    _ = stats.total_entries
 
     # Step 4: Write validated entries to file
     output_path = Path("examples/workflow_output.ldif")
@@ -185,7 +189,8 @@ sn: User
 mail: migration@example.com
 """
 
-    (source_dir / "source.ldif").write_text(source_ldif)
+    source_file = source_dir / "source.ldif"
+    _ = source_file.write_text(source_ldif)
 
     # Step 2: Validate source data
     source_parse = api.parse(source_ldif, server_type="oid")
@@ -212,18 +217,14 @@ mail: migration@example.com
         _ = migration_result.error
         return
 
-    migration_stats: dict[str, object] = migration_result.unwrap()
+    # migration_result is EntryResult model, access attributes directly
+    migration_stats = migration_result.unwrap()
 
     # Step 4: Verify migrated data
-    migrated_files = migration_stats.get("output_files", [])
-    if not isinstance(migrated_files, list):
-        print(f"ERROR: Expected list migrated_files, got {type(migrated_files)}")
-        return
-
+    # file_paths is dict[str, str] mapping category to file path
+    migrated_files = list(migration_stats.file_paths.values())
     for file_path in migrated_files:
-        if not isinstance(file_path, (str, Path)):
-            print(f"ERROR: Expected str/Path file_path, got {type(file_path)}")
-            continue
+        # file_path is already str from dict values
         verify_result = api.parse(Path(file_path), server_type="oud")
 
         if verify_result.is_success:
@@ -236,11 +237,14 @@ def entry_building_and_processing_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Step 1: Build entries using direct API methods (no builder instantiation!)
-    person_result = api.build_person_entry(
-        cn="Workflow User",
-        sn="User",
-        base_dn="ou=People,dc=example,dc=com",
-        mail="workflow@example.com",
+    person_result = api.create_entry(
+        dn="cn=Workflow User,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person", "inetOrgPerson", "top"],
+            "cn": ["Workflow User"],
+            "sn": ["User"],
+            "mail": ["workflow@example.com"],
+        },
     )
 
     if person_result.is_failure:
@@ -251,10 +255,13 @@ def entry_building_and_processing_workflow() -> None:
     # Convert DN to string for members list
     member_dns = [str(person.dn)]
 
-    group_result = api.build_group_entry(
-        cn="Workflow Group",
-        base_dn="ou=Groups,dc=example,dc=com",
-        members=member_dns,
+    group_result = api.create_entry(
+        dn="cn=Workflow Group,ou=Groups,dc=example,dc=com",
+        attributes={
+            "objectClass": ["groupOfNames", "top"],
+            "cn": ["Workflow Group"],
+            "member": member_dns,
+        },
     )
 
     if group_result.is_failure:
@@ -295,19 +302,16 @@ def schema_driven_workflow() -> None:
     """Schema-first workflow using direct methods (no class instantiation!)."""
     api = FlextLdif.get_instance()
 
-    # Step 1: Build schema using direct API method
-    schema_result = api.build_person_schema()
-
-    if schema_result.is_failure:
-        return
-
-    # Step 2: Create entries following schema using direct API methods
+    # Step 1: Create entries using direct API methods
     entries = []
     for i in range(5):
-        person_result = api.build_person_entry(
-            cn=f"User {i}",
-            sn=f"Surname {i}",
-            base_dn="ou=People,dc=example,dc=com",
+        person_result = api.create_entry(
+            dn=f"cn=User {i},ou=People,dc=example,dc=com",
+            attributes={
+                "objectClass": ["person", "inetOrgPerson", "top"],
+                "cn": [f"User {i}"],
+                "sn": [f"Surname {i}"],
+            },
         )
 
         if person_result.is_success:
@@ -342,11 +346,18 @@ sn: Test
         acl_result = api.extract_acls(entry)
 
         if acl_result.is_success:
-            acls = acl_result.unwrap()
+            acl_response = acl_result.unwrap()
+            # Extract ACLs list from AclResponse
+            # AclResponse from API returns public models, but type checker sees domain models
+            # Cast to expected type since models are compatible at runtime
+            acls_list = acl_response.acls if hasattr(acl_response, "acls") else []
+            # Type cast needed because domain and public Acl models are structurally compatible
+            # Use api.models.Acl for type hint since we have access to api object
+            public_acls = cast("list[api.models.Acl]", acls_list)
 
-            if acls:
+            if public_acls:
                 # Evaluate ACL rules using direct API method
-                eval_result = api.evaluate_acl_rules(acls)
+                eval_result = api.evaluate_acl_rules(public_acls)
 
                 if eval_result.is_success:
                     _ = eval_result.unwrap()
@@ -467,28 +478,29 @@ cn: test
         _ = validation_result.error
         return
 
-    validation_report: dict[str, object] = validation_result.unwrap()
+    validation_report = validation_result.unwrap()
+    # validation_report is ValidationResult model, access attributes directly
 
-    if not validation_report.get("is_valid"):
+    if not validation_report.is_valid:
         # Handle validation errors and attempt recovery by fixing entries
         for entry in entries:
             # Add missing required attribute
-            obj_class_values = entry.attributes.get("objectClass", [])
-            if not isinstance(obj_class_values, list):
-                print(
-                    f"ERROR: Expected list obj_class_values, got {type(obj_class_values)}",
-                )
-                continue
-            if "person" in obj_class_values and "sn" not in entry.attributes.attributes:
-                entry.attributes.add_attribute("sn", "recovered")
+            if entry.attributes:
+                obj_class_attr = entry.attributes.attributes.get("objectClass", [])
+                # obj_class_attr is already a list from .get() default
+                if (
+                    "person" in obj_class_attr
+                    and "sn" not in entry.attributes.attributes
+                ):
+                    entry.attributes.add_attribute("sn", "recovered")
 
         # Retry validation
         retry_result = api.validate_entries(entries)
 
         if retry_result.is_success:
             retry_report = retry_result.unwrap()
-            retry_report_dict: dict[str, object] = retry_report
-            _ = retry_report_dict.get("is_valid", False)
+            # retry_report is ValidationResult model, access attributes directly
+            _ = retry_report.is_valid
         else:
             # All entries valid
             _ = entries

@@ -16,10 +16,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
 create_test_entry = TestDeduplicationHelpers.create_entry_from_dict

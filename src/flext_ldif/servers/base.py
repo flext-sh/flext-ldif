@@ -32,7 +32,7 @@ PROTOCOL COMPLIANCE:
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import (
     TYPE_CHECKING,
     ClassVar,
@@ -352,7 +352,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         entries = kwargs.get("entries")
         if FlextRuntime.is_list_like(entries) and entries:
-            return FlextResult[FlextLdifModels.Entry].ok(entries[0])
+            first_entry = entries[0]
+            if isinstance(first_entry, FlextLdifModels.Entry):
+                return FlextResult[FlextLdifModels.Entry].ok(first_entry)
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Invalid entry type: {type(first_entry).__name__}"
+            )
 
         return FlextResult[FlextLdifModels.Entry].fail("No valid parameters")
 
@@ -588,14 +593,15 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         )
         # Convert entries to domain type for ParseResponse (it expects domain Entry)
         # Since FlextLdifModels.Entry inherits from FlextLdifModels.Entry, this is safe
-        domain_entries: list[FlextLdifModels.Entry] = [
+
+        domain_entries: Sequence[FlextLdifModels.Entry] = [
             entry
             if isinstance(entry, FlextLdifModels.Entry)
             else FlextLdifModels.Entry.model_validate(entry.model_dump())
             for entry in entries
         ]
         parse_response = FlextLdifModels.ParseResponse(
-            entries=domain_entries,
+            entries=list(domain_entries),
             statistics=statistics,
             detected_server_type=detected_server,
         )
@@ -1352,7 +1358,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                             "PRIORITY",
                         ):
                             return cast("int", parent_server_cls.Constants.PRIORITY)
-                except (ImportError, AttributeError):
+                except AttributeError:
                     pass
             # Default priority if not found
             return 100

@@ -13,7 +13,8 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
-from tests.helpers.test_fixture_helpers import FixtureTestHelpers
+
+from ...helpers.test_fixture_helpers import FixtureTestHelpers
 
 # Fixtures are automatically discovered from conftest files in parent directories
 

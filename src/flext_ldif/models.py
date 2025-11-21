@@ -16,15 +16,13 @@ Notes:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextModels
+from flext_core import FlextModels
 from pydantic import computed_field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.results import FlextLdifModelsResults
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdifModels(FlextModels):
@@ -246,10 +244,11 @@ class FlextLdifModels(FlextModels):
     class SchemaDiscoveryResult(FlextLdifModelsResults.SchemaDiscoveryResult):
         """Result of schema discovery operations."""
 
-    class FlexibleCategories(FlextLdifModelsResults.FlexibleCategories):
+    class FlexibleCategories(FlextModels.Categories[FlextLdifModelsDomains.Entry]):
         """Flexible entry categorization with dynamic categories.
 
         Replaces dict[str, list[Entry]] pattern with type-safe model.
+        Uses public FlextLdifModels.Entry (not domain Entry) for type safety.
         """
 
     class SchemaAttribute(FlextLdifModelsDomains.SchemaAttribute):

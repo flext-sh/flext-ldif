@@ -19,7 +19,6 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDispatcher,
-    FlextLogger,
     FlextModels,
     FlextRegistry,
     FlextResult,
@@ -28,7 +27,7 @@ from flext_core import (
 )
 from pydantic import PrivateAttr
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.config import FlextLdifConfig, LdifFlextConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
@@ -128,7 +127,6 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     # Note: These are always initialized in model_post_init, but type checker needs Optional for PrivateAttr
     _dispatcher: FlextDispatcher | None = PrivateAttr(default=None)
     _registry: FlextRegistry | None = PrivateAttr(default=None)
-    _logger: FlextLogger | None = PrivateAttr(default=None)
     _parser_service: FlextLdifParser | None = PrivateAttr(default=None)
     _acl_service: FlextLdifAcl | None = PrivateAttr(default=None)
     _writer_service: FlextLdifWriter | None = PrivateAttr(default=None)
@@ -258,31 +256,15 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         dispatcher = FlextDispatcher()
         self._dispatcher = dispatcher
         self._registry = FlextRegistry(dispatcher=dispatcher)
-        self._logger = FlextLogger(__name__)
 
-        # Initialize private attributes using new config with automatic namespaces
+        # Initialize private attributes
+        # Config is accessed via self.config.ldif (LdifFlextConfig singleton)
         # FlextLdifConfig is imported at top-level (line 29) to ensure @FlextConfig.auto_register("ldif") decorator executes
-
-        init_config = getattr(self, "_init_config_value", None)
-        if init_config is not None:
-            config = init_config
-        else:
-            # Use new config pattern with automatic namespaces via FlextMixins
-            # super().config (from FlextMixins) returns FlextConfig.get_global_instance()
-            # Access namespace via .ldif attribute (registered by @auto_register decorator)
-            # NOTE: Must use super().config, not self.config, because self.config is overridden
-            # to return FlextLdifConfig, but we need FlextConfig here to access .ldif namespace
-            global_config = super().config  # FlextConfig instance from FlextMixins
-            ldif_namespace = getattr(global_config, "ldif", None)
-            if ldif_namespace is None:
-                msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
-                raise RuntimeError(msg)
-            config = cast("FlextLdifConfig", ldif_namespace)
         self._context = {}
         self._handlers = {}
 
-        # Initialize service instances (using config for parser)
-        self._parser_service = FlextLdifParser(config=config)
+        # Initialize service instances (config via LdifServiceBase.config.ldif)
+        self._parser_service = FlextLdifParser()
         # Note: FlextLdifAcl no longer requires server_type parameter
         self._acl_service = FlextLdifAcl()
         # Initialize writer service
@@ -455,7 +437,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 # Register configuration and constants
                 self._registry.register(
                     "ldif_config",
-                    cast("FlextLdifConfig", self.config.ldif),
+                    self.config.ldif,
                     metadata=FlextModels.Metadata(
                         attributes={"type": "config", "domain": "ldif"}
                     ),
@@ -468,19 +450,18 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                     ),
                 )
 
-                if self._logger:
-                    self._logger.debug(
-                        "LDIF components registered with FlextRegistry",
-                        correlation_id=getattr(
-                            self.context,
-                            "correlation_id",
-                            None,
-                        ),
-                        registered_components=[
-                            "ldif_config",
-                            "ldif_constants",
-                        ],
-                    )
+                self.logger.debug(
+                    "LDIF components registered with FlextRegistry",
+                    correlation_id=getattr(
+                        self.context,
+                        "correlation_id",
+                        None,
+                    ),
+                    registered_components=[
+                        "ldif_config",
+                        "ldif_constants",
+                    ],
+                )
 
         except (ValueError, TypeError, AttributeError) as e:
             # Use FlextExceptions for error handling
@@ -488,10 +469,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             raise RuntimeError(msg) from e
 
         # Log initialization
-        if self._logger is not None:
-            self._logger.debug(
-                "FlextLdif initialized",
-            )
+        self.logger.debug("FlextLdif initialized")
 
     @override
     def execute(
@@ -573,9 +551,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         if not hasattr(self, "_parser_service") or self._parser_service is None:
-            self._parser_service = FlextLdifParser(
-                config=cast("FlextLdifConfig", self.config.ldif)
-            )
+            self._parser_service = FlextLdifParser(enable_events=True)
         return self._parser_service
 
     def _execute_parse_with_service(
@@ -702,9 +678,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         """
         # Case 1: Path object - read file
         if isinstance(source, Path):
-            return source.read_text(
-                encoding=cast("FlextLdifConfig", self.config.ldif).ldif_encoding
-            )
+            return source.read_text(encoding=self.config.ldif.ldif_encoding)
 
         # Case 2: String - detect if it's a file path or LDIF content
         if isinstance(source, str):
@@ -745,9 +719,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 if not file_path.is_file():
                     error_msg = f"Path is not a file: {source}"
                     raise OSError(error_msg)
-                return file_path.read_text(
-                    encoding=cast("FlextLdifConfig", self.config.ldif).ldif_encoding
-                )
+                return file_path.read_text(encoding=self.config.ldif.ldif_encoding)
 
             # Default: treat as LDIF content if ambiguous
             return source
@@ -1934,7 +1906,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         try:
-            config = cast("FlextLdifConfig", self.config.ldif)
+            config = self.config.ldif
 
             # Relaxed mode takes highest priority
             if config.enable_relaxed_parsing:
@@ -1967,6 +1939,19 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             return FlextResult[str].fail(f"Error determining server type: {e}")
 
     @property
+    def config(self) -> LdifFlextConfig:
+        """Config tipado com namespace ldif.
+
+        Returns:
+            LdifFlextConfig: FlextConfig tipado com acesso via .ldif
+
+        Example:
+            encoding = ldif.config.ldif.ldif_encoding
+
+        """
+        return LdifFlextConfig.get_global_instance()
+
+    @property
     def models(self) -> type[FlextLdifModels]:
         """Access to all LDIF Pydantic models.
 
@@ -1993,6 +1978,16 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         return FlextLdifConstants
+
+    @property
+    def ldif_config(self) -> FlextLdifConfig:
+        """Get FlextLdifConfig via FlextConfig namespace (typed access).
+
+        Returns:
+            FlextLdifConfig: LDIF configuration with typed access
+
+        """
+        return self.config.get_namespace("ldif", FlextLdifConfig)
 
     # INTERNAL: bus property is hidden from public API
     # Use models, config, constants for public access instead

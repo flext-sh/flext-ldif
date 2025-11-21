@@ -12,7 +12,6 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
 
@@ -27,9 +26,8 @@ class TestFlextLdifAcl:
 
     @pytest.fixture
     def acl_service_with_config(self) -> FlextLdifAcl:
-        """Create ACL service with custom config."""
-        config = FlextLdifConfig()
-        return FlextLdifAcl(config=config)
+        """Create ACL service (config via LdifServiceBase.config.ldif)."""
+        return FlextLdifAcl()
 
     def test_initialization_default(self, acl_service: FlextLdifAcl) -> None:
         """Test ACL service initialization with default config."""

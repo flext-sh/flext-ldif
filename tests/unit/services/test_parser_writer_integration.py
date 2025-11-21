@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
@@ -24,7 +23,7 @@ class TestParserWriterIntegration:
     @pytest.fixture
     def parser_service(self) -> FlextLdifParser:
         """Create parser service instance."""
-        return FlextLdifParser(config=FlextLdifConfig())
+        return FlextLdifParser()
 
     @pytest.fixture
     def writer_service(self) -> FlextLdifWriter:
@@ -78,7 +77,7 @@ mail: jane.smith@example.com
         complex_ldif_content: str,
     ) -> None:
         """Test basic parse -> write roundtrip."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         write_options = FlextLdifModels.WriteFormatOptions(
             base64_encode_binary=False,
@@ -114,7 +113,7 @@ mail: test@example.com
 telephoneNumber: 123-456-7890
 """
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parse_options = FlextLdifModels.ParseFormatOptions(
             preserve_attribute_order=True,

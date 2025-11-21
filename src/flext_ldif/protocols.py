@@ -329,11 +329,15 @@ class FlextLdifProtocols(FlextProtocols):
             def write(
                 self,
                 entry_data: object,
+                write_options: object | None = None,
             ) -> FlextResult[object]:
                 """Write Entry model to RFC-compliant LDIF string.
 
                 Args:
                     entry_data: FlextLdifModels.Entry or list[Entry]
+                    write_options: Optional WriteFormatOptions for controlling output format
+                        - ldif_changetype: 'add' (default), 'modify', 'delete', 'modrdn'
+                        - ldif_modify_operation: 'add', 'replace', 'delete' (for changetype=modify)
 
                 Returns:
                     FlextResult[str] with LDIF string

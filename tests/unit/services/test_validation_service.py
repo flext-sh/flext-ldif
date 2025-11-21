@@ -396,7 +396,7 @@ class TestValidationServiceExecute:
         validation_service: FlextLdifValidation,
     ) -> None:
         """Test execute returns successful status."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.service_execute_and_assert_fields(
             validation_service,

@@ -1633,9 +1633,13 @@ class FlextLdifConversion(
         entry = getattr(quirk, "entry_quirk", None)
         if entry is None:
             entry = getattr(quirk, "_entry_quirk", None)
-        if not entry and hasattr(quirk, "parse") and hasattr(quirk, "can_handle_entry"):
+        if (
+            entry is None
+            and hasattr(quirk, "parse")
+            and hasattr(quirk, "can_handle_entry")
+        ):
             entry = quirk
-        if entry and callable(getattr(entry, "parse", None)):
+        if entry is not None and callable(getattr(entry, "parse", None)):
             support["entry"] = True
         return support
 

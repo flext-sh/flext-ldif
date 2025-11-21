@@ -11,14 +11,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextRuntime, FlextService
+from typing import cast
 
+from flext_core import FlextResult, FlextRuntime
+
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAnalysis(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
+class FlextLdifAnalysis(
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+):
     """Service for entry analysis and validation.
 
     Provides methods for:
@@ -235,7 +240,9 @@ class FlextLdifAnalysis(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]
         oc_values = entry.attributes.attributes.get("objectClass", [])
         if FlextRuntime.is_list_like(oc_values):
             for oc in oc_values:
-                oc_result = validation_service.validate_objectclass_name(oc)
+                oc_result = validation_service.validate_objectclass_name(
+                    cast("str", oc)
+                )
                 if oc_result.is_failure or not oc_result.unwrap():
                     errors.append(f"Entry {dn_str}: Invalid objectClass '{oc}'")
                     is_entry_valid = False

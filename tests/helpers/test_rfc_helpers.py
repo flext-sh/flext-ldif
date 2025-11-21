@@ -18,7 +18,8 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
-from tests.helpers.test_assertions import TestAssertions
+
+from ...helpers.test_assertions import TestAssertions
 
 T = TypeVar("T")
 
@@ -2636,7 +2637,8 @@ class RfcTestHelpers:
 
         """
         from flext_ldif.models import FlextLdifModels
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         return FlextLdifModels.SchemaAttribute(
             oid=oid or TestsRfcConstants.ATTR_OID_CN,
@@ -2680,7 +2682,8 @@ class RfcTestHelpers:
 
         """
         from flext_ldif.models import FlextLdifModels
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         return FlextLdifModels.SchemaObjectClass(
             oid=oid or TestsRfcConstants.OC_OID_PERSON,
@@ -2711,7 +2714,8 @@ class RfcTestHelpers:
 
         """
         from flext_ldif.models import FlextLdifModels
-        from tests.unit.quirks.servers.fixtures.general_constants import (
+
+        from ...unit.quirks.servers.fixtures.general_constants import (
             TestGeneralConstants,
         )
 
@@ -2833,7 +2837,8 @@ class RfcTestHelpers:
 
         """
         from flext_ldif.models import FlextLdifModels
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         if oid is None:
             oid = TestsRfcConstants.ATTR_OID_CN
@@ -2879,7 +2884,8 @@ class RfcTestHelpers:
 
         """
         from flext_ldif.models import FlextLdifModels
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         if oid is None:
             oid = TestsRfcConstants.OC_OID_PERSON

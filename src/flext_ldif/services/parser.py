@@ -22,11 +22,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from pathlib import Path
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -37,10 +39,8 @@ from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
-logger = FlextLogger(__name__)
 
-
-class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
+class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
     r"""LDIF parsing service - PARSING ONLY with SRP-compliant nested classes.
 
     PARSING MONOPOLY: All operations are parsing-related. File I/O, writing, and
@@ -89,21 +89,18 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
     """
 
-    _config: FlextLdifConfig
     _registry: FlextLdifServer
     _acl_service: FlextLdifAcl
     _detector: FlextLdifDetector
 
     def __init__(
         self,
-        config: FlextLdifConfig | None = None,
         *,
         enable_events: bool = False,
     ) -> None:
         """Initialize parser service with direct quirks usage.
 
         Args:
-            config: Optional FlextLdifConfig instance. If None, uses default config.
             enable_events: Enable domain event emission (default: False for backward compatibility).
 
         Initializes:
@@ -111,22 +108,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             - FlextLdifAcl: For ACL extraction
             - FlextLdifDetector: For server type detection
 
+        Config is accessed via self.config.ldif (inherited from LdifServiceBase).
+
         """
         super().__init__()
-        if config is not None:
-            self._config = config
-        else:
-            # Use new config pattern with automatic namespaces via FlextMixins
-            # FlextLdifConfig is imported at top-level (line 33) to ensure @FlextConfig.auto_register("ldif") decorator executes
-            # Access via super().config (from FlextMixins) -> namespace
-            # NOTE: Must use super().config, not self.config, to get FlextConfig instance
-            # which has the .ldif namespace attribute
-            global_config = super().config  # FlextConfig instance from FlextMixins
-            ldif_namespace = getattr(global_config, "ldif", None)
-            if ldif_namespace is None:
-                msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
-                raise RuntimeError(msg)
-            self._config = cast("FlextLdifConfig", ldif_namespace)
         self._enable_events = enable_events
 
         # Initialize parsing components
@@ -200,12 +185,20 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 parse_response = result.unwrap()
 
                 # Verify original content preservation in entries
+                def has_original(entry: object) -> int:
+                    """Check if entry has original content."""
+                    if (
+                        hasattr(entry, "metadata")
+                        and entry.metadata
+                        and hasattr(entry.metadata, "original_strings")
+                        and entry.metadata.original_strings
+                        and "entry_original_ldif" in entry.metadata.original_strings
+                    ):
+                        return 1
+                    return 0
+
                 entries_with_original = sum(
-                    1
-                    for entry in parse_response.entries
-                    if entry.metadata
-                    and entry.metadata.original_strings
-                    and "entry_original_ldif" in entry.metadata.original_strings
+                    has_original(entry) for entry in parse_response.entries
                 )
 
                 self.logger.debug(
@@ -317,8 +310,11 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 if entry_result.is_success:
                     entry = entry_result.unwrap()
                     if isinstance(entry, FlextLdifModels.Entry) and entry.metadata:
+                        # Type narrowing: entry.metadata is domain model, cast to public
                         FlextLdifUtilities.Metadata.preserve_original_ldif_content(
-                            metadata=entry.metadata,
+                            metadata=cast(
+                                "FlextLdifModels.QuirkMetadata", entry.metadata
+                            ),
                             ldif_content=original_ldif_content,
                             context="entry_original_ldif",
                         )
@@ -360,7 +356,9 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             )
 
             response = FlextLdifModels.ParseResponse(
-                entries=typed_entries,
+                entries=list(typed_entries)
+                if isinstance(typed_entries, Sequence)
+                else typed_entries,
                 statistics=stats,
                 detected_server_type=server_type,
             )
@@ -572,8 +570,11 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 and dn_after
                 and dn_before != dn_after
             ):
+                # Type narrowing: normalized_entry.metadata is domain model, cast to public
                 FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
-                    metadata=normalized_entry.metadata,
+                    metadata=cast(
+                        "FlextLdifModels.QuirkMetadata", normalized_entry.metadata
+                    ),
                     original=dn_before,
                     converted=dn_after,
                     context="dn_normalization",
@@ -632,7 +633,9 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                     entry_dn=dn_value,
                     error=str(validation_result.error),
                 )
-                return [validation_result.error]
+                # Type narrowing: validation_result.error can be None, provide fallback
+                error_msg = validation_result.error or "Entry validation failed"
+                return [error_msg]
             return []
 
         def _filter_operational_attrs_if_needed(
@@ -660,13 +663,18 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 for removed_attr in removed_attrs:
                     original_values = attrs_before.get(removed_attr, [])
                     if original_values:
+                        # Type narrowing: filtered_entry.metadata is domain model, cast to public
                         FlextLdifUtilities.Metadata.soft_delete_attribute(
-                            metadata=filtered_entry.metadata,
+                            metadata=cast(
+                                "FlextLdifModels.QuirkMetadata", filtered_entry.metadata
+                            ),
                             attr_name=removed_attr,
                             original_values=original_values,
                         )
                         FlextLdifUtilities.Metadata.track_transformation(
-                            metadata=filtered_entry.metadata,
+                            metadata=cast(
+                                "FlextLdifModels.QuirkMetadata", filtered_entry.metadata
+                            ),
                             original_name=removed_attr,
                             target_name=None,
                             original_values=original_values,
@@ -686,9 +694,12 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 # Validate metadata completeness
                 if removed_attrs and filtered_entry.metadata:
                     expected_transformations = list(removed_attrs)
+                    # Type narrowing: filtered_entry.metadata is domain model, cast to public
                     is_complete, missing = (
                         FlextLdifUtilities.Metadata.validate_metadata_completeness(
-                            metadata=filtered_entry.metadata,
+                            metadata=cast(
+                                "FlextLdifModels.QuirkMetadata", filtered_entry.metadata
+                            ),
                             expected_transformations=expected_transformations,
                         )
                     )
@@ -946,9 +957,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
             for attr_name, attr_value in entry.attributes.attributes.items():
                 # LdifAttributes.attributes is dict[str, list[str]]
-                # Type narrowing: attr_value is always list[str]
-                values: list[str] = (
-                    attr_value if FlextRuntime.is_list_like(attr_value) else []
+                # Type narrowing: attr_value is always list[str], cast from union
+                values: list[str] = cast(
+                    "list[str]",
+                    attr_value if FlextRuntime.is_list_like(attr_value) else [],
                 )
 
                 if (not values or all(not v for v in values)) and strict:
@@ -1307,7 +1319,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
             router = self.InputRouter(self._registry, self.logger)
             resolver = self.ServerTypeResolver(
-                self._config,
+                self.config.ldif,
                 self._registry,
                 self._detector,
                 self.logger,
@@ -1364,9 +1376,13 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 effective_type=effective_type,
             )
 
+            # Type narrowing: content parameter cast to expected union type
             entries_result = router.route_and_parse(
                 input_source,
-                content,
+                cast(
+                    "str | Path | list[tuple[str, dict[str, list[str]]]]",
+                    content,
+                ),
                 effective_type,
                 encoding,
             )
@@ -1416,6 +1432,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             # Calculate parse duration and finalize statistics
             parse_duration_ms = (time.perf_counter() - start_time) * 1000.0
 
+            # Type narrowing: content parameter cast to expected union type
             stats = stats_builder.finalize(
                 stats,
                 failed_count,
@@ -1423,7 +1440,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 processed_entries,
                 parse_duration_ms,
                 input_source,
-                content,
+                cast(
+                    "str | Path | list[tuple[str, dict[str, list[str]]]]",
+                    content,
+                ),
                 effective_type,
             )
 
@@ -1431,7 +1451,9 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
             # Create ParseResponse with entries and statistics
             response = FlextLdifModels.ParseResponse(
-                entries=processed_entries,
+                entries=list(processed_entries)
+                if isinstance(processed_entries, Sequence)
+                else processed_entries,
                 statistics=stats,
                 detected_server_type=effective_type,
             )

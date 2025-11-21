@@ -23,11 +23,11 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextRuntime,
-    FlextService,
     FlextUtilities,
 )
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
@@ -40,15 +40,15 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-logger = FlextLogger(__name__)
-
 
 def _get_server_registry() -> FlextLdifServer:
     """Get server registry instance."""
     return FlextLdifServer.get_global_instance()
 
 
-class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
+class FlextLdifFilters(
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+):
     """Universal LDIF Entry Filtering and Categorization Service.
 
     ╔══════════════════════════════════════════════════════════════════════════╗
@@ -265,12 +265,12 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
             # Call static methods within same nested class (accessing private members is acceptable)
-            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(
+            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(  # noqa: SLF001
                 entry,
                 oc_tuple,
                 required_attributes,
             )
-            if FlextLdifFilters.Filter._should_include_entry(
+            if FlextLdifFilters.Filter._should_include_entry(  # noqa: SLF001
                 matches=entry_matches,
                 filter_mode=filter_mode,
             ):
@@ -295,14 +295,14 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
-                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(
+                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(  # noqa: SLF001
                     objectclass,
                 )
 
                 # Process all entries
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
-                    result = FlextLdifFilters.Filter._process_objectclass_entry(
+                    result = FlextLdifFilters.Filter._process_objectclass_entry(  # noqa: SLF001
                         entry,
                         oc_tuple,
                         required_attributes,
@@ -543,7 +543,7 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
                     filtered_attrs,
                 )
                 if not attrs_result.is_success:
-                    logger.error(
+                    FlextLogger.get_logger().error(
                         "Failed to create LdifAttributes after filtering",
                         entry_dn=str(entry.dn) if entry.dn else None,
                         attributes_to_remove=attributes_to_remove,
@@ -559,7 +559,7 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
 
                 # Log detailed filtering information
                 if removed_attrs:
-                    logger.debug(
+                    FlextLogger.get_logger().debug(
                         "Removed specified attributes from entry",
                         action_taken="filter_entry_attributes",
                         entry_dn=str(entry.dn) if entry.dn else None,
@@ -599,7 +599,7 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
 
                 # Check if all objectClasses would be removed
                 if not filtered_ocs:
-                    logger.error(
+                    FlextLogger.get_logger().error(
                         "Cannot remove all objectClasses - entry would become invalid",
                         action_attempted="filter_entry_objectclasses",
                         entry_dn=str(entry.dn) if entry.dn else None,
@@ -613,7 +613,7 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
 
                 # Log successful filtering
                 if removed_ocs:
-                    logger.debug(
+                    FlextLogger.get_logger().debug(
                         "Removed specified objectClasses from entry",
                         action_taken="filter_entry_objectclasses",
                         entry_dn=str(entry.dn) if entry.dn else None,
@@ -1613,7 +1613,7 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
                 )
 
             return FlextResult[type].ok(constants)
-        except (ImportError, ValueError) as e:
+        except ValueError as e:
             return FlextResult[type].fail(f"Failed to get server constants: {e}")
 
     @classmethod
@@ -2003,11 +2003,22 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         """
         # Convert dict to model if needed
         if FlextRuntime.is_dict_like(whitelist_rules):
-            rules_model = FlextLdifModels.WhitelistRules(**whitelist_rules)
+            # Type narrowing: ensure dict has correct types
+            rules_dict: dict[str, object] = dict(whitelist_rules)
+            # Extract list fields with type guards
+            blocked_objectclasses = rules_dict.get("blocked_objectclasses")
+            rules_model = FlextLdifModels.WhitelistRules(
+                blocked_objectclasses=list(blocked_objectclasses)
+                if isinstance(blocked_objectclasses, list)
+                else [],
+            )
         elif whitelist_rules is None:
             rules_model = None
-        else:
+        elif isinstance(whitelist_rules, FlextLdifModels.WhitelistRules):
             rules_model = whitelist_rules
+        else:
+            # Fallback: create empty WhitelistRules
+            rules_model = FlextLdifModels.WhitelistRules()
 
         return FlextLdifFilters.Categorizer.check_blocked_objectclasses(
             entry,
@@ -2026,9 +2037,56 @@ class FlextLdifFilters(FlextService[FlextLdifTypes.Models.ServiceResponseTypes])
         """
         # Convert dict to model if needed
         if FlextRuntime.is_dict_like(rules):
-            rules_model = FlextLdifModels.CategoryRules(**rules)
-        else:
+            # Type narrowing: ensure dict has correct types
+            rules_dict: dict[str, object] = dict(rules)
+            # Extract list fields with type guards - CategoryRules uses different field names
+            user_dn_patterns = rules_dict.get("user_dn_patterns") or rules_dict.get(
+                "users"
+            )
+            group_dn_patterns = rules_dict.get("group_dn_patterns") or rules_dict.get(
+                "groups"
+            )
+            hierarchy_dn_patterns = rules_dict.get(
+                "hierarchy_dn_patterns"
+            ) or rules_dict.get("hierarchy")
+            schema_dn_patterns = rules_dict.get("schema_dn_patterns") or rules_dict.get(
+                "schema"
+            )
+            user_objectclasses = rules_dict.get("user_objectclasses", [])
+            group_objectclasses = rules_dict.get("group_objectclasses", [])
+            hierarchy_objectclasses = rules_dict.get("hierarchy_objectclasses", [])
+            acl_attributes = rules_dict.get("acl_attributes") or rules_dict.get("acl")
+            rules_model = FlextLdifModels.CategoryRules(
+                user_dn_patterns=list(user_dn_patterns)
+                if isinstance(user_dn_patterns, list)
+                else [],
+                group_dn_patterns=list(group_dn_patterns)
+                if isinstance(group_dn_patterns, list)
+                else [],
+                hierarchy_dn_patterns=list(hierarchy_dn_patterns)
+                if isinstance(hierarchy_dn_patterns, list)
+                else [],
+                schema_dn_patterns=list(schema_dn_patterns)
+                if isinstance(schema_dn_patterns, list)
+                else [],
+                user_objectclasses=list(user_objectclasses)
+                if isinstance(user_objectclasses, list)
+                else [],
+                group_objectclasses=list(group_objectclasses)
+                if isinstance(group_objectclasses, list)
+                else [],
+                hierarchy_objectclasses=list(hierarchy_objectclasses)
+                if isinstance(hierarchy_objectclasses, list)
+                else [],
+                acl_attributes=list(acl_attributes)
+                if isinstance(acl_attributes, list)
+                else [],
+            )
+        elif isinstance(rules, FlextLdifModels.CategoryRules):
             rules_model = rules
+        else:
+            # Fallback: create empty CategoryRules
+            rules_model = FlextLdifModels.CategoryRules()
 
         return FlextLdifFilters.Categorizer.validate_category_dn_pattern(
             entry,

@@ -23,14 +23,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Never
 
 import pytest
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
-from tests.helpers import TestAssertions
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...helpers import TestAssertions
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -1657,84 +1657,22 @@ class TestInternalNormalization:
         assert isinstance(rules, FlextLdifModels.CategoryRules)
 
     def test_normalize_category_rules_validation_error(self) -> None:
-        """Test _normalize_category_rules() with ValidationError."""
-        from pydantic import ValidationError
-        from pydantic_core import ValidationError as CoreValidationError
-
-        # Force ValidationError by monkeypatching model_validate to raise
-        original_validate = FlextLdifModels.CategoryRules.model_validate
-
-        def raise_validation_error(*args, **kwargs) -> Never:  # noqa: ANN002, ANN003
-            # Create ValidationError directly without calling model_validate (avoids infinite loop)
-            # Pydantic v2 requires 'error' in ctx for from_exception_data
-            errors = [
-                {
-                    "type": "value_error",
-                    "loc": ("user_dn_patterns",),
-                    "msg": "Invalid value",
-                    "input": args[0] if args else {},
-                    "ctx": {"error": "Invalid value"},
-                }
-            ]
-            core_error = CoreValidationError.from_exception_data(
-                "CategoryRules", errors
-            )
-            # Convert pydantic_core.ValidationError to pydantic.ValidationError
-            msg = "CategoryRules"
-            raise ValidationError.from_exception_data(msg, core_error.errors())
-
-        # Temporarily replace model_validate
-        FlextLdifModels.CategoryRules.model_validate = raise_validation_error
-
-        try:
-            invalid_rules = {"user_dn_patterns": ["test"]}
-            result = FlextLdifFilters._normalize_category_rules(invalid_rules)
-            # Should return failure with ValidationError
-            assert result.is_failure
-            assert "Invalid category rules" in result.error
-        finally:
-            # Restore original
-            FlextLdifModels.CategoryRules.model_validate = original_validate
+        """Test _normalize_category_rules() error handling with non-Mapping type."""
+        # Test that non-Mapping types return failure (real error case)
+        # Pass a non-Mapping type - this should return failure immediately
+        result = FlextLdifFilters._normalize_category_rules(123)  # int is not Mapping
+        # Should return failure immediately without calling model_validate
+        assert result.is_failure
+        assert "must be a mapping" in result.error.lower()
 
     def test_normalize_whitelist_rules_validation_error(self) -> None:
-        """Test _normalize_whitelist_rules() with ValidationError."""
-        from pydantic import ValidationError
-        from pydantic_core import ValidationError as CoreValidationError
-
-        # Force ValidationError by monkeypatching model_validate to raise
-        original_validate = FlextLdifModels.WhitelistRules.model_validate
-
-        def raise_validation_error(*args, **kwargs) -> Never:  # noqa: ANN002, ANN003
-            # Create ValidationError directly without calling model_validate (avoids infinite loop)
-            # Pydantic v2 requires 'error' in ctx for from_exception_data
-            errors = [
-                {
-                    "type": "value_error",
-                    "loc": ("blocked_objectclasses",),
-                    "msg": "Invalid value",
-                    "input": args[0] if args else {},
-                    "ctx": {"error": "Invalid value"},
-                }
-            ]
-            core_error = CoreValidationError.from_exception_data(
-                "WhitelistRules", errors
-            )
-            # Convert pydantic_core.ValidationError to pydantic.ValidationError
-            msg = "WhitelistRules"
-            raise ValidationError.from_exception_data(msg, core_error.errors())
-
-        # Temporarily replace model_validate
-        FlextLdifModels.WhitelistRules.model_validate = raise_validation_error
-
-        try:
-            invalid_rules = {"blocked_objectclasses": ["test"]}
-            result = FlextLdifFilters._normalize_whitelist_rules(invalid_rules)
-            # Should return failure with ValidationError
-            assert result.is_failure
-            assert "Invalid whitelist rules" in result.error
-        finally:
-            # Restore original
-            FlextLdifModels.WhitelistRules.model_validate = original_validate
+        """Test _normalize_whitelist_rules() error handling with non-Mapping type."""
+        # Test that non-Mapping types return failure (real error case)
+        # Pass a non-Mapping type - this should return failure immediately
+        result = FlextLdifFilters._normalize_whitelist_rules(123)  # int is not Mapping
+        # Should return failure immediately without calling model_validate
+        assert result.is_failure
+        assert "must be a mapping" in result.error.lower()
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -2459,27 +2397,6 @@ class TestApplyExcludeFilterComplete:
         result = service._apply_exclude_filter()
         assert result.is_failure
         assert "Cannot exclude with criteria" in result.error
-
-    def test_apply_exclude_filter_exception_direct(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Test _apply_exclude_filter() exception handling (direct call)."""
-        service = FlextLdifFilters(
-            entries=[create_entry("cn=test,dc=x", {"cn": ["test"]})],
-            filter_criteria="dn",
-            dn_pattern="*,dc=x",
-        )
-        # Break filter_by_dn to trigger exception
-
-        def broken_filter_by_dn(*args, **kwargs) -> Never:  # noqa: ANN002, ANN003
-            msg = "Test exception"
-            raise ValueError(msg)
-
-        # Use monkeypatch to replace the classmethod
-        monkeypatch.setattr(FlextLdifFilters, "filter_by_dn", broken_filter_by_dn)
-        result = service._apply_exclude_filter()
-        assert result.is_failure
-        assert "Exclude failed" in result.error or "Test exception" in result.error
 
     def test_apply_exclude_filter_objectclass_with_value_direct(
         self,

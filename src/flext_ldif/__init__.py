@@ -26,7 +26,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.api import FlextLdif
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.base import FlextLdifServiceBase, LdifServiceBase
+from flext_ldif.config import FlextLdifConfig, LdifFlextConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.categorization import FlextLdifCategorization
@@ -47,15 +48,18 @@ __all__ = [
     "EntryManipulationServices",
     "FlextLdif",  # ✅ Facade (single entry point)
     "FlextLdifCategorization",  # ✅ Categorization service (public API)
-    "FlextLdifConfig",  # ✅ Configuration
+    "FlextLdifConfig",  # ✅ Configuration (namespace registered)
     "FlextLdifConstants",  # ✅ Constants
     "FlextLdifDetector",  # ✅ Detector service (required by flext-ldap)
     "FlextLdifFilters",  # ✅ Filters service (public API)
     "FlextLdifMigrationPipeline",  # ✅ High-level service (OK to expose)
     "FlextLdifModels",  # ✅ Domain models
     "FlextLdifParser",  # ✅ Parser service (required by flext-ldap)
+    "FlextLdifServiceBase",  # ✅ Base class for services (alias for LdifServiceBase)
     "FlextLdifSorting",  # ✅ Sorting service (public API)
     "FlextLdifTypes",  # ✅ Type definitions
     "FlextLdifUtilities",  # ✅ Public helpers
     "FlextLdifWriter",  # ✅ Writer service (public API)
+    "LdifFlextConfig",  # ✅ Typed FlextConfig with ldif namespace
+    "LdifServiceBase",  # ✅ Base class for services with typed config
 ]

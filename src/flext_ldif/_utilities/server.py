@@ -81,7 +81,7 @@ class FlextLdifUtilitiesServer:
                         "SERVER_TYPE",
                     ):
                         return cast("str", parent_server_cls.Constants.SERVER_TYPE)
-            except (ImportError, AttributeError):
+            except AttributeError:
                 pass
 
         # No parent found - error

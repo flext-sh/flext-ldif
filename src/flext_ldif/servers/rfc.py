@@ -1163,7 +1163,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else:
                         parts.append(f"{keyword} {value}")
 
-        def _build_attribute_parts(
+        def _build_attribute_parts(  # noqa: C901
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
         ) -> list[str]:
@@ -1210,7 +1210,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     "field_order"
                 )
                 if FlextRuntime.is_list_like(field_order_):
-                    field_order = field_order_
+                    field_order = cast("list[str]", field_order_)
 
             # Add standard fields using DRY helper (Python 3.13 optimized)
             # RESTORE NAME format from metadata if available
@@ -1321,7 +1321,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return
 
             if FlextRuntime.is_list_like(attr_list):
-                attr_list_str = cast(list[str], attr_list)
+                attr_list_str = cast("list[str]", attr_list)
                 if len(attr_list_str) == 1:
                     parts.append(f"{keyword} {attr_list_str[0]}")
                 else:
@@ -1365,7 +1365,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if oc_data.sup:
                 if FlextRuntime.is_list_like(oc_data.sup):
                     # Multiple SUP values: format as ( value1 $ value2 $ ... )
-                    sup_list_str = cast(list[str], oc_data.sup)
+                    sup_list_str = cast("list[str]", oc_data.sup)
                     sup_str = " $ ".join(sup_list_str)
                     parts.append(f"SUP ( {sup_str} )")
                 else:
@@ -3086,8 +3086,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if "_original_dn_line" in converted_attrs:
                 original_dn_lines = converted_attrs.pop("_original_dn_line", [])
                 if original_dn_lines and FlextRuntime.is_list_like(original_dn_lines):
-                    original_dn_line = (
-                        original_dn_lines[0] if original_dn_lines else None
+                    original_dn_line = cast(
+                        "str | None",
+                        cast("list[str]", original_dn_lines)[0]
+                        if original_dn_lines
+                        else None,
                     )
 
             # Extract original attribute lines
@@ -3095,7 +3098,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if "_original_lines" in converted_attrs:
                 original_lines = converted_attrs.pop("_original_lines", [])
                 if original_lines and FlextRuntime.is_list_like(original_lines):
-                    original_attr_lines = original_lines.copy()
+                    original_attr_lines = cast("list[str]", original_lines).copy()
 
             return original_dn_line, original_attr_lines, dn_was_base64
 
@@ -3462,7 +3465,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not entry_data.metadata.extensions:
                 return set()
             hidden_list = entry_data.metadata.extensions.get("hidden_attributes")
-            return set(hidden_list) if FlextRuntime.is_list_like(hidden_list) else set()
+            return (
+                set(cast("list[str]", hidden_list))
+                if FlextRuntime.is_list_like(hidden_list)
+                else set()
+            )
 
         def _write_entry_attribute_value(
             self,
@@ -3585,11 +3592,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     "original_attr_lines_complete"
                 )
                 if FlextRuntime.is_list_like(orig_lines):
-                    return orig_lines
+                    return cast("list[str]", orig_lines)
                 if original_attr_lines and FlextRuntime.is_list_like(
                     original_attr_lines
                 ):
-                    return original_attr_lines
+                    return cast("list[str]", original_attr_lines)
 
             return None
 
@@ -3715,7 +3722,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Write hidden attributes as comments if requested
                 if self._write_entry_hidden_attrs(
-                    ldif_lines, attr_name, attr_values, hidden_attrs
+                    ldif_lines,
+                    attr_name,
+                    cast("list[str] | str", attr_values),
+                    hidden_attrs,
                 ):
                     continue
 
@@ -3723,7 +3733,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 if FlextRuntime.is_list_like(attr_values):
                     for value in attr_values:
                         self._write_entry_attribute_value(
-                            ldif_lines, attr_name, value, write_options
+                            ldif_lines, attr_name, cast("str", value), write_options
                         )
                 elif attr_values:
                     str_value = (
@@ -3822,10 +3832,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
                 if original_case in original_attrs:
                     original_val = original_attrs[original_case]
-                    restored_attrs[original_case] = (
+                    restored_attrs[original_case] = cast(
+                        "list[str]",
                         original_val
                         if FlextRuntime.is_list_like(original_val)
-                        else [str(original_val)]
+                        else [str(original_val)],
                     )
                 else:
                     restored_attrs[original_case] = attr_values
@@ -4161,18 +4172,28 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 },
             )
 
-        def write(self, entry: FlextLdifModels.Entry) -> FlextResult[str]:
+        def write(
+            self,
+            entry: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions | None = None,
+        ) -> FlextResult[str]:
             """Write single Entry model to LDIF string.
 
-            Routes to _write_entry() internally.
+            Routes to _write_entry() or _write_entry_modify_format() based on options.
 
             Args:
                 entry: Entry model to write
+                write_options: Optional format options controlling output:
+                    - ldif_changetype: 'add' (default), 'modify', 'delete', 'modrdn'
+                    - ldif_modify_operation: 'add', 'replace', 'delete' (for changetype=modify)
 
             Returns:
                 FlextResult with LDIF string
 
             """
+            # Check if modify format is requested
+            if write_options and write_options.ldif_changetype == "modify":
+                return self._write_entry_modify_format(entry, write_options)
             return self._write_entry(entry)
 
         def _route_parse(
@@ -4295,7 +4316,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return "write"
 
-        def _route_entry_operation(
+        def _route_entry_operation(  # noqa: C901
             self,
             data: str | list[FlextLdifModels.Entry],
             operation: Literal["parse", "write"],
@@ -4316,7 +4337,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     parse_value = parse_result.unwrap()
                     if FlextRuntime.is_list_like(parse_value):
                         return FlextResult[FlextLdifModels.Entry | str].ok(
-                            parse_value[0] if parse_value else ""
+                            cast(
+                                "FlextLdifModels.Entry | str",
+                                parse_value[0] if parse_value else "",
+                            )
                         )
                     if isinstance(parse_value, FlextLdifModels.Entry):
                         return FlextResult[FlextLdifModels.Entry | str].ok(parse_value)
@@ -4332,7 +4356,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     return FlextResult[FlextLdifModels.Entry | str].fail(
                         f"write operation requires list[Entry], got {type(data).__name__}",
                     )
-                write_result = self._handle_write_entry(data)
+                write_result = self._handle_write_entry(
+                    cast("list[FlextLdifModels.Entry]", data)
+                )
                 # Convert to base return type
                 if write_result.is_success:
                     write_value = write_result.unwrap()
@@ -4348,7 +4374,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             msg = f"Unknown operation: {operation}"
             raise AssertionError(msg)
 
-        def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.Entry | str]:
+        def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.Entry | str]:  # noqa: C901
             r"""Execute entry quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -4606,7 +4632,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 cast("FlextLdifModels.Entry", entry),
             )
 
-        def _write_entry_add_format(
+        def _write_entry_add_format(  # noqa: C901
             self,
             entry_data: FlextLdifModels.Entry,
             write_options: FlextLdifModels.WriteFormatOptions | None,
@@ -4795,16 +4821,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _write_entry_modify_format(
             self,
             entry_data: FlextLdifModels.Entry,
-            _write_options: FlextLdifModels.WriteFormatOptions,
+            write_options: FlextLdifModels.WriteFormatOptions,
         ) -> FlextResult[str]:
             """Write Entry in LDIF modify format (RFC 2849 § 4 - Change Records).
 
             Generates LDIF with changetype: modify and operation directives.
-            For ACL entries, generates one replace: aci block per ACI attribute value.
+            Uses ldif_modify_operation from write_options ('add', 'replace', or 'delete').
 
             Args:
                 entry_data: Entry model to write
-                _write_options: Formatting options (reserved for future use)
+                write_options: Formatting options with ldif_modify_operation
 
             Returns:
                 FlextResult with LDIF string in modify format
@@ -4829,21 +4855,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             attrs_dict = entry_data.attributes.attributes
             first_attr = True
 
-            # For modify format: generate replace operation for each attribute
-            # For ACL entries, each ACI value gets its own replace block
+            # Get modify operation from options (default: 'add' for schema/ACL phases)
+            modify_op = write_options.ldif_modify_operation if write_options else "add"
+
+            # For modify format: generate add/replace/delete operation for each attribute
             for attr_name, values in attrs_dict.items():
                 if not values:
                     continue
 
-                # Generate replace operation for each value in this attribute
+                # Generate operation for each value in this attribute
                 for value in values:
-                    # Add separator between replace blocks (not before first)
+                    # Add separator between blocks (not before first)
                     if not first_attr:
                         ldif_lines.append("-")
                     first_attr = False
 
-                    # Add replace directive
-                    ldif_lines.append(f"replace: {attr_name}")
+                    # Add operation directive (add, replace, or delete)
+                    ldif_lines.append(f"{modify_op}: {attr_name}")
 
                     # Write attribute value using helper method
                     self._write_modify_attribute_value(attr_name, value, ldif_lines)

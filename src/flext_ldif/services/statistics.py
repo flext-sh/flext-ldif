@@ -14,13 +14,16 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextDecorators, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextRuntime
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsServiceStatus]):
+class FlextLdifStatistics(
+    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus]
+):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about

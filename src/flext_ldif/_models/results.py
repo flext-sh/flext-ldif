@@ -965,11 +965,18 @@ class FlextLdifModelsResults:
                 total_entries_val = stats_dict.get("total_entries", 0)
                 # Ensure values are int for comparison
                 has_schema = (
-                    (int(total_schema_attrs) if isinstance(total_schema_attrs, (int, str)) else 0) > 0
-                    or (int(total_schema_ocs) if isinstance(total_schema_ocs, (int, str)) else 0) > 0
-                )
+                    int(total_schema_attrs)
+                    if isinstance(total_schema_attrs, (int, str))
+                    else 0
+                ) > 0 or (
+                    int(total_schema_ocs)
+                    if isinstance(total_schema_ocs, (int, str))
+                    else 0
+                ) > 0
                 has_entries = (
-                    int(total_entries_val) if isinstance(total_entries_val, (int, str)) else 0
+                    int(total_entries_val)
+                    if isinstance(total_entries_val, (int, str))
+                    else 0
                 ) > 0
             else:
                 # Statistics object with attributes
