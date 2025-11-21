@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger
-
 from flext_ldif._utilities import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
@@ -30,8 +28,6 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdifUtilities:

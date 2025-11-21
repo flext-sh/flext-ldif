@@ -13,8 +13,9 @@ import pytest
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests.fixtures.loader import FlextLdifFixtures
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...fixtures.loader import FlextLdifFixtures
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestOidSchemaWriting:
@@ -264,7 +265,7 @@ class TestOidSchemaWriting:
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test writing attribute from real fixture."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         schema_content = oid_fixtures.schema()
 
@@ -299,7 +300,7 @@ class TestOidSchemaWriting:
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test writing objectClass from real fixture."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         schema_content = oid_fixtures.schema()
 

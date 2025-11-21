@@ -19,14 +19,13 @@ import re
 from pathlib import Path
 from typing import Protocol, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
-
-logger = FlextLogger(__name__)
 
 
 def _get_server_registry() -> FlextLdifServer:
@@ -44,7 +43,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
+class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -161,7 +160,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             )
         except (ValueError, TypeError, AttributeError) as e:
             error_msg = f"Server detection failed: {e.__class__.__name__}: {e}"
-            logger.exception(error_msg)
+            self.logger.exception(error_msg)
             return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
                 error_msg,
             )
@@ -248,7 +247,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
                         and "detected_server_type" in result
                     ):
                         server_type = result["detected_server_type"]
-                        return FlextResult[str].ok(server_type)
+                        return FlextResult[str].ok(cast("str", server_type))
 
             # Default to RFC
             return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RFC)
@@ -739,8 +738,8 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
             # Type cast to Protocol for type safety
             return cast("type[ServerDetectionConstants]", constants)
-        except (ValueError, ImportError):
-            # Unknown server type or import error
+        except ValueError:
+            # Unknown server type
             return None
 
 

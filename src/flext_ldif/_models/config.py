@@ -415,7 +415,11 @@ class FlextLdifModelsConfig:
         )
         ldif_changetype: str | None = Field(
             default=None,
-            description="If set to 'modify', writes entries in LDIF modify add format (changetype: modify). Otherwise uses add format.",
+            description="If set to 'modify', writes entries in LDIF modify format (changetype: modify). Otherwise uses add format.",
+        )
+        ldif_modify_operation: str = Field(
+            default="add",
+            description="LDIF modify operation: 'add' or 'replace'. Used when ldif_changetype='modify'. Default 'add' for schema/ACL phases.",
         )
         # NEW FIELDS FOR client-a OUD MIGRATION - Phase-aware ACL handling and original entry commenting
         write_original_entry_as_comment: bool = Field(

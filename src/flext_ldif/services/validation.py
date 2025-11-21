@@ -112,15 +112,18 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDecorators, FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult
 from pydantic import Field
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus]):
+class FlextLdifValidation(
+    FlextLdifServiceBase[FlextLdifModels.ValidationServiceStatus]
+):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
     Provides comprehensive validation for LDAP attribute names, object class names,

@@ -18,7 +18,8 @@ import pytest
 from flext_ldif import FlextLdif
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.models import FlextLdifModels
-from tests.fixtures.loader import FlextLdifFixtures
+
+from ..fixtures.loader import FlextLdifFixtures
 
 
 class TestZeroDataLossOidOud:
@@ -247,14 +248,17 @@ class TestZeroDataLossOidOud:
 
                 # Check attribute differences
                 for attr_name, attr_diff in entry.metadata.minimal_differences.items():
-                    if attr_name != "dn" and isinstance(attr_diff, dict):
-                        if attr_diff.get("has_differences", False):
-                            assert "original" in attr_diff, (
-                                f"Missing original for {attr_name}"
-                            )
-                            assert "differences" in attr_diff, (
-                                f"Missing differences for {attr_name}"
-                            )
+                    if (
+                        attr_name != "dn"
+                        and isinstance(attr_diff, dict)
+                        and attr_diff.get("has_differences", False)
+                    ):
+                        assert "original" in attr_diff, (
+                            f"Missing original for {attr_name}"
+                        )
+                        assert "differences" in attr_diff, (
+                            f"Missing differences for {attr_name}"
+                        )
 
     def test_soft_delete_tracking(
         self,

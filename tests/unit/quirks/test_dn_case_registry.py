@@ -404,11 +404,13 @@ class TestOudConsistencyValidation:
 
         result = registry.validate_oud_consistency()
         assert result.metadata is not None
-        assert isinstance(result.metadata, dict)
-        assert "inconsistencies" in result.metadata
-        assert "warning" in result.metadata
+        # Metadata is a FlextModels.Metadata object, not a dict
+        assert hasattr(result.metadata, "attributes")
+        assert result.metadata.attributes is not None
+        assert "inconsistencies" in result.metadata.attributes
+        assert "warning" in result.metadata.attributes
 
-        inconsistencies = result.metadata.get("inconsistencies", [])
+        inconsistencies = result.metadata.attributes.get("inconsistencies", [])
         assert len(inconsistencies) == 1
         assert inconsistencies[0]["variant_count"] == 3
         assert inconsistencies[0]["canonical_case"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"

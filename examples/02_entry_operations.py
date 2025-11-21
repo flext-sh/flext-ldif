@@ -22,39 +22,45 @@ def build_entries_pipeline() -> None:
     api = FlextLdif.get_instance()
 
     # Build person - library handles all validation
-    person_result = api.build(
-        entry_type="person",
-        cn="Alice Johnson",
-        sn="Johnson",
-        base_dn="ou=People,dc=example,dc=com",
-        mail="alice.johnson@example.com",
-        additional_attrs={"telephoneNumber": ["+1-555-0101"]},
+    person_result = api.create_entry(
+        dn="cn=Alice Johnson,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person", "inetOrgPerson", "top"],
+            "cn": ["Alice Johnson"],
+            "sn": ["Johnson"],
+            "mail": ["alice.johnson@example.com"],
+            "telephoneNumber": ["+1-555-0101"],
+        },
     )
     if not person_result.is_success:
         print(f"Failed to build person: {person_result.error}")
         return
 
     # Build group - library handles member validation
-    group_result = api.build(
-        entry_type="group",
-        cn="Admins",
-        base_dn="ou=Groups,dc=example,dc=com",
-        members=[
-            "cn=Alice Johnson,ou=People,dc=example,dc=com",
-            "cn=Bob Williams,ou=People,dc=example,dc=com",
-        ],
-        description="System REDACTED_LDAP_BIND_PASSWORDistrators group",
+    group_result = api.create_entry(
+        dn="cn=Admins,ou=Groups,dc=example,dc=com",
+        attributes={
+            "objectClass": ["groupOfNames", "top"],
+            "cn": ["Admins"],
+            "member": [
+                "cn=Alice Johnson,ou=People,dc=example,dc=com",
+                "cn=Bob Williams,ou=People,dc=example,dc=com",
+            ],
+            "description": ["System REDACTED_LDAP_BIND_PASSWORDistrators group"],
+        },
     )
     if not group_result.is_success:
         print(f"Failed to build group: {group_result.error}")
         return
 
     # Build OU - library handles structure validation
-    ou_result = api.build(
-        entry_type="ou",
-        ou="People",
-        base_dn="dc=example,dc=com",
-        description="Container for person entries",
+    ou_result = api.create_entry(
+        dn="ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["organizationalUnit", "top"],
+            "ou": ["People"],
+            "description": ["Container for person entries"],
+        },
     )
     if not ou_result.is_success:
         print(f"Failed to build OU: {ou_result.error}")
@@ -70,8 +76,7 @@ def build_custom_entry_example() -> None:
     """Build custom entry - library validates structure."""
     api = FlextLdif.get_instance()
 
-    result = api.build(
-        entry_type="custom",
+    result = api.create_entry(
         dn="cn=schema,cn=config",
         attributes={
             "objectClass": ["top", "ldapSubentry", "subschema"],
@@ -154,7 +159,7 @@ def entry_model_usage() -> None:
     entry = entry_result.unwrap()
 
     # Railway pattern - use in write operation
-    ldif_output = api.write([entry])
+    ldif_output = api.write(entries=[entry])
     print(
         f"Wrote {len(ldif_output.unwrap())} bytes"
         if ldif_output.is_success
@@ -167,11 +172,13 @@ def convert_formats_pipeline() -> None:
     api = FlextLdif.get_instance()
 
     # Build entry → convert to dict[str, object] → convert to JSON (chained)
-    build_result = api.build(
-        entry_type="person",
-        cn="Convert Test",
-        sn="Test",
-        base_dn="ou=People,dc=example,dc=com",
+    build_result = api.create_entry(
+        dn="cn=Convert Test,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person", "top"],
+            "cn": ["Convert Test"],
+            "sn": ["Test"],
+        },
     )
     if build_result.is_success:
         entry = build_result.unwrap()
@@ -186,11 +193,13 @@ def convert_formats_pipeline() -> None:
         print("Build failed")
 
     # Batch conversions - library eliminates manual loops!
-    person_result = api.build(
-        entry_type="person",
-        cn="Batch Test",
-        sn="Test",
-        base_dn="ou=People,dc=example,dc=com",
+    person_result = api.create_entry(
+        dn="cn=Batch Test,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person", "top"],
+            "cn": ["Batch Test"],
+            "sn": ["Test"],
+        },
     )
     person = person_result.unwrap() if person_result.is_success else None
 

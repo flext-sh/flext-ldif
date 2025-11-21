@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.parser import FlextLdifParser
 
@@ -23,8 +22,7 @@ class TestParserFormatOptions:
     @pytest.fixture
     def parser_service(self) -> FlextLdifParser:
         """Create parser service instance."""
-        config = FlextLdifConfig()
-        return FlextLdifParser(config=config)
+        return FlextLdifParser()
 
     @pytest.fixture
     def sample_ldif_with_schema(self) -> str:

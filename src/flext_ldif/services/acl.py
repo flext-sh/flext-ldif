@@ -21,11 +21,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import cast, override
 
-from flext_core import FlextDecorators, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextRuntime
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
@@ -33,7 +34,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
+class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
     """Unified ACL management service.
 
     Provides ACL parsing via quirks and direct context evaluation.
@@ -41,35 +42,18 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
     Returns composed AclResponse models with extracted ACLs and statistics.
 
+    Config access via self.config.ldif (inherited from LdifServiceBase).
     """
 
-    _config: FlextLdifConfig
     _registry: FlextLdifServer
 
-    def __init__(self, config: FlextLdifConfig | None = None) -> None:
+    def __init__(self) -> None:
         """Initialize ACL service.
 
         Uses quirks registry for server-specific ACL handling (no fallback).
-
-        Args:
-            config: Optional FlextLdifConfig instance. If None, uses default config.
-
+        Config is accessed via self.config.ldif (inherited from LdifServiceBase).
         """
         super().__init__()
-        if config is not None:
-            self._config = config
-        else:
-            # Use new config pattern with automatic namespaces via FlextMixins
-            # FlextLdifConfig is imported at top-level (line 28) to ensure @FlextConfig.auto_register("ldif") decorator executes
-            # Access via super().config (from FlextMixins) -> namespace
-            # NOTE: Must use super().config, not self.config, to get FlextConfig instance
-            # which has the .ldif namespace attribute
-            global_config = super().config  # FlextConfig instance from FlextMixins
-            ldif_namespace = getattr(global_config, "ldif", None)
-            if ldif_namespace is None:
-                msg = "FlextLdifConfig namespace not registered. Import flext_ldif.config to register."
-                raise RuntimeError(msg)
-            self._config = cast("FlextLdifConfig", ldif_namespace)
         self._registry = FlextLdifServer()
 
     def extract_acls_from_entry(
@@ -170,7 +154,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         # No conversion needed - use directly
         return FlextResult[FlextLdifModels.AclResponse].ok(
             FlextLdifModels.AclResponse(
-                acls=acls,
+                acls=list(acls) if isinstance(acls, Sequence) else acls,
                 statistics=FlextLdifModels.Statistics(
                     processed_entries=1,
                     acls_extracted=len(acls),
@@ -338,7 +322,8 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         """
         try:
             # Make a copy to avoid modifying the original
-            converted_data = dict(entry_data)
+            # Type annotation: entry_data is dict[str, object], converted_data should match
+            converted_data: dict[str, object] = dict(entry_data)
 
             # Check if entry has ACL attributes to convert
             acl_attrs = entry_data.get("_acl_attributes")
@@ -361,9 +346,11 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     rfc_acl_attrs[key] = [str(value)]
 
             # Step 2: Convert RFC ACLs to target server ACI format using target server ACL quirks
+            final_aci_attrs: dict[str, object]
             if target_server.lower() == FlextLdifConstants.ServerTypes.RFC:
                 # Target is RFC, use the RFC ACLs directly
-                final_aci_attrs = rfc_acl_attrs
+                # Convert dict[str, list[str]] to dict[str, object]
+                final_aci_attrs = dict(rfc_acl_attrs)
             else:
                 # Use ACL quirk for the target server to convert RFC ACLs to ACI format
                 # ACL quirks handle the conversion from internal format to server-specific ACI format
@@ -390,7 +377,8 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                         )
                     # Convert result back to dict[str, object] for entry_data
                     aci_result_dict = aci_result.unwrap()
-                    final_aci_attrs = cast("dict[str, object]", aci_result_dict)
+                    # Type narrowing: convert dict[str, list[str]] to dict[str, object]
+                    final_aci_attrs = dict(aci_result_dict)
                 else:
                     return FlextResult[dict[str, object]].fail(
                         f"Target server ACL quirk {target_server} does not support RFC to ACI conversion",

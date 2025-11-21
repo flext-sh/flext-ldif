@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
-from tests.helpers.test_assertions import TestAssertions
+
+from ...helpers.test_assertions import TestAssertions
 
 
 class SchemaTestHelpers:

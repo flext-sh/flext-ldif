@@ -19,17 +19,16 @@ import re
 from collections.abc import Callable
 from typing import ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextResult, FlextRuntime
 from pydantic import Field, field_validator, model_validator
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
-logger = FlextLogger(__name__)
 
-
-class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
+class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
     """LDIF Sorting Service - Universal Sorting Engine.
 
     Flexible sorting for LDIF entries, attributes, ACL & schemas.
@@ -605,7 +604,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort attributes in all entries."""
-        processed = []
+        processed: list[FlextLdifModels.Entry] = []
         for entry in entries:
             if self.attribute_order:
                 result = self._sort_entry_attributes_by_order(entry)
@@ -617,7 +616,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 original_attrs = (
                     list(entry.attributes.attributes.keys()) if entry.attributes else []
                 )
-                logger.error(
+                self.logger.error(
                     "Failed to sort entry attributes",
                     action_attempted="sort_entry_attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
@@ -654,7 +653,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             for key, value in attrs_dict_raw.items():
                 # Ensure value is list[str] (LdifAttributes.attributes is dict[str, list[str]])
                 if FlextRuntime.is_list_like(value):
-                    attrs_dict[key] = value
+                    # Type narrowing: cast list[object] to list[str]
+                    attrs_dict[key] = cast("list[str]", value)
                 else:
                     attrs_dict[key] = [str(value)]
             modified = False
@@ -669,9 +669,13 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     else:
                         acl_values = [str(acl_values_raw)]
                     if len(acl_values) > 1:
-                        attrs_dict[acl_attr] = sorted(
-                            acl_values,
-                            key=lambda x: str(x).lower(),
+                        # Type narrowing: sorted returns list[object], cast to list[str]
+                        attrs_dict[acl_attr] = cast(
+                            "list[str]",
+                            sorted(
+                                acl_values,
+                                key=lambda x: str(x).lower(),
+                            ),
                         )
                         modified = True
 
@@ -1037,7 +1041,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         # Log detailed sorting information if attributes were reordered
         new_attr_order = list(sorted_dict.keys())
         if original_attr_order != new_attr_order:
-            logger.debug(
+            self.logger.debug(
                 "Sorted entry attributes",
                 entry_dn=str(entry.dn) if entry.dn else None,
                 attributes_count=len(original_attr_order),
@@ -1075,7 +1079,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         if original_attr_order != new_attr_order:
             ordered_attrs = [k for k, _ in ordered]
             remaining_attrs = [k for k, _ in remaining]
-            logger.debug(
+            self.logger.debug(
                 "Sorted entry attributes by custom order",
                 entry_dn=str(entry.dn) if entry.dn else None,
                 attributes_count=len(original_attr_order),

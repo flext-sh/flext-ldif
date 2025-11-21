@@ -150,11 +150,12 @@ class FlextLdifServer:
                         error=str(e),
                     )
 
-        except ImportError as e:
-            logger.debug(
-                "Could not auto-discover quirks",
+        except Exception as e:
+            logger.exception(
+                "Failed to auto-discover quirks",
                 error=str(e),
             )
+            raise
 
     def register(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
         """Register a base quirk instance.
@@ -354,7 +355,7 @@ class FlextLdifServer:
         """Get base quirk implementation for a server type."""
         normalized_type = self._normalize_server_type(server_type)
         quirk = self._bases.get(normalized_type)
-        return [quirk] if quirk else []
+        return [quirk] if quirk is not None else []
 
     def get_alls_for_server(
         self,

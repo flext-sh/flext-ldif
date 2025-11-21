@@ -13,14 +13,17 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextResult, FlextRuntime, FlextService
+from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifEntries(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
+class FlextLdifEntries(
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+):
     """Service for entry CRUD operations.
 
     Provides methods for:

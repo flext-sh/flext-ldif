@@ -20,14 +20,15 @@ from flext_ldif import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests.fixtures.loader import FlextLdifFixtures
 from tests.helpers import QuirkTestHelpers, SchemaTestHelpers
-from tests.helpers.test_assertions import TestAssertions
-from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
-from tests.unit.quirks.servers.fixtures.oud_constants import TestsOudConstants
+
+from ...fixtures.loader import FlextLdifFixtures
+from ...helpers.test_assertions import TestAssertions
+from ...unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from ...unit.quirks.servers.fixtures.oud_constants import TestsOudConstants
 
 if TYPE_CHECKING:
-    from tests.helpers.test_rfc_helpers import HasParseMethod
+    from ...helpers.test_rfc_helpers import HasParseMethod
 
 
 @pytest.fixture(scope="module")
@@ -490,7 +491,7 @@ class TestOudSchemaQuirk:
         if not hasattr(schema_quirk, "_write_entry_modify_add_format"):
             pytest.skip("_write_entry_modify_add_format not in Schema class")
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -509,7 +510,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _write_entry_modify_add_format without attributes."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -532,7 +533,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _comment_acl_attributes."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -555,7 +556,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _comment_acl_attributes with no attributes."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -591,7 +592,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _resolve_acl_original_names."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -653,7 +654,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _create_entry_with_acl_comments."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -735,7 +736,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _hook_pre_write_entry with valid entry."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = cast(
             "FlextLdifModels.Entry",
@@ -756,7 +757,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _hook_pre_write_entry with ACI attribute."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry = RfcTestHelpers.test_model_create_and_unwrap(
             FlextLdifModels.Entry,
@@ -1848,7 +1849,7 @@ class TestOudEntryQuirk:
         result = entry_quirk._write_entry_modify_add_format(
             entry_typed, allowed_schema_oids=allowed_oids
         )
-        from tests.helpers.test_assertions import TestAssertions
+        from ...helpers.test_assertions import TestAssertions
 
         ldif = TestAssertions.assert_success(result, "Write should succeed")
         assert isinstance(ldif, str)
@@ -2940,7 +2941,7 @@ class TestOudIntegration:
     ) -> None:
         """Test full parse-write cycle with real OUD fixtures."""
         entries_ldif = oud_fixtures.entries()
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entries = RfcTestHelpers.test_api_parse_and_assert(
             cast("HasParseMethod", ldif_api), entries_ldif, server_type="oud"
@@ -2953,7 +2954,7 @@ class TestOudIntegration:
         assert len(written_ldif) > 0
 
         # Parse again to verify round-trip
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entries2 = RfcTestHelpers.test_api_parse_and_assert(
             cast("HasParseMethod", ldif_api), written_ldif, server_type="oud"
@@ -2966,7 +2967,7 @@ class TestOudIntegration:
         """Test schema parse-write cycle with real OUD fixtures."""
         schema_ldif = oud_fixtures.schema()
         # Parse schema entries using API with OUD server type
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entries = RfcTestHelpers.test_api_parse_and_assert(
             cast("HasParseMethod", ldif_api),
@@ -2975,7 +2976,7 @@ class TestOudIntegration:
         )
         # Write entries back using OUD server type - validates roundtrip
         if len(entries) > 0:
-            from tests.helpers.test_rfc_helpers import RfcTestHelpers
+            from ...helpers.test_rfc_helpers import RfcTestHelpers
 
             written = RfcTestHelpers.test_api_write_and_assert(
                 cast("HasParseMethod", ldif_api),
@@ -2989,7 +2990,7 @@ class TestOudIntegration:
     ) -> None:
         """Test ACL parse-write cycle with real OUD fixtures."""
         acl_ldif = oud_fixtures.acl()
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entries = RfcTestHelpers.test_api_parse_and_assert(
             cast("HasParseMethod", ldif_api),

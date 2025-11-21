@@ -39,7 +39,7 @@ def create_entry(
     attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
-    from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+    from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
     attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)
@@ -229,7 +229,7 @@ class TestExecutePattern:
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test execute() with various operations in batch."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         service1 = FlextLdifEntry(
             entries=entries_batch,

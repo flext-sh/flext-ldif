@@ -28,6 +28,7 @@ from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -1097,10 +1098,20 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
             # Use generalized parser with relaxed configuration
-            return FlextLdifUtilities.Parsers.Content.parse(
+            # Cast to match protocol signature - _parse_entry accepts Mapping[str, object]
+            # but protocol expects Mapping[str, list[str]], so we need to adapt
+
+            def adapted_parse_entry(
+                dn: str, attrs: Mapping[str, list[str]]
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                # Convert Mapping[str, list[str]] to Mapping[str, object] for _parse_entry
+                attrs_obj: Mapping[str, object] = attrs
+                return self._parse_entry(dn, attrs_obj)
+
+            return FlextLdifUtilitiesParsers.Content.parse(
                 ldif_content,
                 self._get_server_type(),
-                self._parse_entry,
+                adapted_parse_entry,
             )
 
         def _write_entry(

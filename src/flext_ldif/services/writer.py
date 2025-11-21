@@ -14,19 +14,17 @@ from io import StringIO
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextUtilities
+from flext_core import FlextLogger, FlextResult, FlextUtilities
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
 
-logger = FlextLogger(__name__)
 
-
-class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
+class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
     """Unified, stateless LDIF Writer Service.
 
     This service acts as a versatile serializer, converting Entry models into
@@ -60,18 +58,15 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
 
     def __init__(
         self,
-        config: FlextLdifConfig | None = None,
         quirk_registry: FlextLdifServer | None = None,
     ) -> None:
         """Initialize the writer service.
 
         Args:
-            config: Optional configuration (primarily for testing/injection)
             quirk_registry: Optional quirk registry (primarily for testing/injection).
                 If None, creates a new FlextLdifServer instance.
 
-        Raises:
-            ValueError: If quirk_registry is provided but is None (invalid state)
+        Config is accessed via self.config.ldif (inherited from LdifServiceBase).
 
         """
         super().__init__()
@@ -81,8 +76,6 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
         else:
             self._registry = quirk_registry
         self._statistics_service = FlextLdifStatistics()
-        # Store config for potential use (not currently utilized in write operations)
-        self._config = config
 
     # ==================== NESTED HELPER CLASSES ====================
     # These replace private methods with composable, testable classes
@@ -425,8 +418,8 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                 if entry_comments:
                     output.write(entry_comments)
 
-            # Write entry via quirk
-            write_result = entry_quirk.write(entry)
+            # Write entry via quirk (pass format_options for changetype/modify_operation)
+            write_result = entry_quirk.write(entry, format_options)
             if write_result.is_failure:
                 error_msg = f"Failed to write entry {entry.dn}: {write_result.error}"
                 self.logger.error(
@@ -473,7 +466,9 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             # Validate entry quirk
             quirk_result = self._validate_entry_quirk(entry_quirk)
             if quirk_result.is_failure:
-                return quirk_result
+                # Convert FlextResult[EntryProtocol] error to FlextResult[bool]
+                error_msg = quirk_result.error or "Entry quirk validation failed"
+                return FlextResult[bool].fail(error_msg)
             entry_quirk_typed = quirk_result.unwrap()
 
             # Write each entry
@@ -596,7 +591,7 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                     result.append((dn_str, attrs_dict))
                 return FlextResult.ok(result)
             except Exception as e:
-                logger.exception(
+                self.logger.exception(
                     "LDAP3 format conversion exception",
                     error=str(e),
                 )
@@ -932,9 +927,15 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             formatted_entries: Sequence[FlextLdifModels.Entry]
             if output_target in {"string", "file"}:
                 quirk = self._registry.quirk(target_server_type)
-                if quirk and hasattr(
-                    (entry_quirk := quirk.entry_quirk),
-                    "format_entry_for_write",
+                # Type narrowing: quirk can be FlextLdifServersBase | bool | None
+                # Only proceed if it's not None or bool
+                if (
+                    quirk is not None
+                    and not isinstance(quirk, bool)
+                    and hasattr(
+                        (entry_quirk := quirk.entry_quirk),
+                        "format_entry_for_write",
+                    )
                 ):
                     formatted_entries = [
                         entry_quirk.format_entry_for_write(entry, options)

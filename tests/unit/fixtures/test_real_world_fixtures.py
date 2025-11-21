@@ -475,7 +475,7 @@ class TestCrossServerFixtures:
 
     def test_fixture_entry_validation(self) -> None:
         """Test that all fixture entries validate successfully."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         servers = {
             "RFC": "tests/fixtures/rfc/rfc_entries_fixtures.ldif",

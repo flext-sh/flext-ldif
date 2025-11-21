@@ -123,13 +123,14 @@ from __future__ import annotations
 import re
 from typing import override
 
-from flext_core import FlextDecorators, FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
+class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and

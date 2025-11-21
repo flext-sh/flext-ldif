@@ -22,12 +22,13 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests.fixtures.loader import FlextLdifFixtures
-from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
-from tests.helpers.test_schema_helpers import SchemaTestHelpers
-from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+
+from ...fixtures.loader import FlextLdifFixtures
+from ...helpers.test_assertions import TestAssertions
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from ...helpers.test_rfc_helpers import RfcTestHelpers
+from ...helpers.test_schema_helpers import SchemaTestHelpers
+from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
 
 
 class TestOidSchemas:
@@ -212,7 +213,7 @@ class TestOidSchemas:
 
         # Use parse which calls can_handle internally
         result = oid.parse_objectclass(oracle_oc)
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_parse_result_success_and_unwrap(result)
 
@@ -238,7 +239,7 @@ class TestOidSchemas:
         oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing basic Oracle objectClass definition."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         oc_def = (
             "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
@@ -340,7 +341,7 @@ class TestOidSchemas:
 
         result = oid.parse_objectclass(auxiliary_oc)
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_parse_result_success_and_unwrap(result)
 
@@ -358,7 +359,7 @@ class TestOidSchemas:
 
         result = oid.parse_objectclass(abstract_oc)
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_parse_result_success_and_unwrap(result)
 
@@ -380,7 +381,7 @@ class TestOidSchemas:
 
         result = oid.parse_objectclass(multi_sup_oc)
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_parse_result_success_and_unwrap(result)
 
@@ -395,7 +396,7 @@ class TestOidSchemas:
 
         result = oid.parse(malformed_oc)
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_parse_result_success_and_unwrap(
             result
@@ -499,7 +500,7 @@ class TestOidSchemas:
             "SUP name )"  # Use name instead of numeric OID for this test
         )
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             oid.parse_attribute(numeric_sup_attr),
@@ -521,7 +522,7 @@ class TestOidSchemas:
         result = oid.parse(malformed_attr)
         # Should still parse basic fields but not syntax_length
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed = RfcTestHelpers.test_parse_result_success_and_unwrap(result)
 
@@ -1178,7 +1179,7 @@ class TestOidSchemaExtractionWithRealFixtures:
         assert "uid" in attr_names, "Standard 'uid' attribute not found"
         assert "dc" in attr_names, "Standard 'dc' attribute not found"
         # Use constants where available
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         # Verify mail attribute exists
         attr_names = {

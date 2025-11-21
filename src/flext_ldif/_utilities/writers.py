@@ -296,13 +296,13 @@ class FlextLdifUtilitiesWriters:
                 # Transform SUP if hook provided
                 if transform_sup_hook and objectclass.sup:
                     # Convert sup to list[str] if it's a string
-                    sup_list: list[str] = (
-                        objectclass.sup
-                        if FlextRuntime.is_list_like(objectclass.sup)
-                        else [objectclass.sup]
-                        if objectclass.sup
-                        else []
-                    )
+                    sup_value = objectclass.sup
+                    if FlextRuntime.is_list_like(sup_value):
+                        sup_list: list[str] = [str(item) for item in sup_value]
+                    elif isinstance(sup_value, str):
+                        sup_list = [sup_value]
+                    else:
+                        sup_list = [str(sup_value)]
                     objectclass.sup = transform_sup_hook(sup_list)
 
                 # Build parts using hook

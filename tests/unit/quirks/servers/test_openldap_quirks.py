@@ -13,7 +13,8 @@ import pytest
 from flext_ldif import FlextLdifModels
 from flext_ldif.api import FlextLdif
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+
+from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +28,7 @@ class TestOpenLdapFixtures:
 
     def test_parse_openldap_schema_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of OpenLDAP schema fixture in cn=config format."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         fixture_path = FlextLdifTestUtils.get_fixture_path(
             "openldap",
@@ -99,7 +100,7 @@ class TestOpenLDAP2xSchemas:
         attr_def = "( 1.2.3.4 NAME 'test' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def) is True
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed_attr = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_attribute(attr_def),
@@ -118,7 +119,7 @@ class TestOpenLDAP2xSchemas:
         # Test can_handle_attribute with plain RFC definition
         assert quirk.can_handle_attribute(attr_def) is True
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed_attr = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_attribute(attr_def),
@@ -131,7 +132,7 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test successful attribute parsing."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         attr_def = "( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
         RfcTestHelpers.test_schema_quirk_parse_and_assert(
@@ -171,7 +172,7 @@ class TestOpenLDAP2xSchemas:
         oc_def = "( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST cn MAY description )"
         assert quirk.can_handle_objectclass(oc_def) is True
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed_oc = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_objectclass(oc_def),
@@ -190,7 +191,7 @@ class TestOpenLDAP2xSchemas:
         # Test can_handle_objectclass with plain RFC definition
         assert quirk.can_handle_objectclass(oc_def) is True
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         parsed_oc = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_objectclass(oc_def),
@@ -203,7 +204,7 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test successful objectClass parsing."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         oc_def = "( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST ( cn $ sn ) MAY ( description ) )"
         oc_data = RfcTestHelpers.test_schema_quirk_parse_and_assert(
@@ -226,7 +227,7 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test parsing different objectClass kinds in batch."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         oc_aux = "( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
         RfcTestHelpers.test_schema_quirk_parse_and_assert(
@@ -261,7 +262,7 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC string format."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         attr_model = RfcTestHelpers.test_create_schema_attribute_from_dict(
             {
@@ -273,7 +274,7 @@ class TestOpenLDAP2xSchemas:
                 "single_value": True,
             },
         )
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,
@@ -294,7 +295,7 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC string format."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         oc_model = RfcTestHelpers.test_create_schema_objectclass_from_dict(
             {
@@ -307,7 +308,7 @@ class TestOpenLDAP2xSchemas:
                 "may": ["description"],
             },
         )
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,
@@ -341,14 +342,14 @@ class TestOpenLDAP2xAcls:
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
         # Parse string ACL into model object
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_result_success_and_unwrap(acl.parse(acl_line))
         assert acl.can_handle(acl_line) is True
 
     def test__can_handle_with_olcaccess(self) -> None:
         """Test ACL detection with olcAccess prefix."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         openldap_server = FlextLdifServersOpenldap()
         acl = openldap_server.Acl()
@@ -361,7 +362,7 @@ class TestOpenLDAP2xAcls:
         openldap_server = FlextLdifServersOpenldap()
         acl = openldap_server.Acl()
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         acl_line = "random text"
         parse_result = acl.parse(acl_line)
@@ -377,7 +378,7 @@ class TestOpenLDAP2xAcls:
         acl = openldap_server.acl_quirk
 
         acl_line = "to attrs=userPassword by self write by * read"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         assert acl_model.raw_acl == acl_line
@@ -391,7 +392,7 @@ class TestOpenLDAP2xAcls:
         acl = openldap_server.acl_quirk
 
         acl_line = "{0}to * by * read"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         assert isinstance(acl_model, FlextLdifModels.Acl)
@@ -403,7 +404,7 @@ class TestOpenLDAP2xAcls:
         acl = openldap_server.acl_quirk
 
         acl_line = 'olcAccess: to dn.base="" by * read'
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         assert acl_model.raw_acl == acl_line
@@ -416,7 +417,7 @@ class TestOpenLDAP2xAcls:
         # ACL parser accepts any non-empty string as a raw ACL
         # Validation of complete "to" clause is beyond parse scope
         acl_line = "by * read"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         # Raw ACL stores the incomplete rule as-is
@@ -686,8 +687,8 @@ class TestOpenldapSchemaWriteAttribute:
         openldap: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC format string."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         attr_data = RfcTestHelpers.test_create_schema_attribute_from_dict(
             {
@@ -698,7 +699,7 @@ class TestOpenldapSchemaWriteAttribute:
                 "single_value": False,
             },
         )
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         attr_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
             openldap,
@@ -725,8 +726,8 @@ class TestOpenldapSchemaWriteObjectClass:
         openldap: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC format string."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
-        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
+        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
         oc_data = RfcTestHelpers.test_create_schema_objectclass_from_dict(
             {
@@ -738,7 +739,7 @@ class TestOpenldapSchemaWriteObjectClass:
                 "may": ["userPassword"],
             },
         )
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         oc_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
             openldap,

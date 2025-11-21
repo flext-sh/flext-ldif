@@ -1550,7 +1550,7 @@ class TestGetSupportedConversions:
         oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions for OUD quirk."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
@@ -1565,7 +1565,7 @@ class TestGetSupportedConversions:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test checking supported conversions for OID quirk."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
@@ -1586,7 +1586,7 @@ class TestAttributeConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OUD attribute to OID via matrix."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
@@ -1606,7 +1606,7 @@ class TestAttributeConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OID attribute to OUD via matrix."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
@@ -1626,7 +1626,7 @@ class TestAttributeConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting attribute with complex syntax."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
@@ -1678,7 +1678,7 @@ class TestObjectClassConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OUD objectClass to OID via matrix."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
@@ -1698,7 +1698,7 @@ class TestObjectClassConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OID objectClass to OUD via matrix."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
@@ -1718,7 +1718,7 @@ class TestObjectClassConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting objectClass with MAY attributes."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
@@ -1742,7 +1742,7 @@ class TestBatchConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test batch conversion of multiple attributes."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         oid_attrs = TestDeduplicationHelpers.helper_batch_convert_and_assert(
             conversion_matrix,
@@ -1766,7 +1766,7 @@ class TestBatchConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test batch conversion of multiple objectClasses."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         oid_ocs = TestDeduplicationHelpers.helper_batch_convert_and_assert(
             conversion_matrix,
@@ -1827,7 +1827,7 @@ class TestBidirectionalConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test attribute round-trip: OUD → OID → OUD."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_roundtrip_and_assert(
             conversion_matrix,
@@ -1846,7 +1846,7 @@ class TestBidirectionalConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test objectClass round-trip: OID → OUD → OID."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_convert_roundtrip_and_assert(
             conversion_matrix,
@@ -1950,7 +1950,7 @@ class TestDnCaseRegistryIntegration:
         self, conversion_matrix: FlextLdifConversion
     ) -> None:
         """Test OUD conversion validation."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_result_and_assert_fields(
             conversion_matrix.validate_oud_conversion(),
@@ -2375,7 +2375,7 @@ class TestSupportCheckingEdgeCases:
         conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with minimal functionality."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
@@ -2393,7 +2393,7 @@ class TestSupportCheckingEdgeCases:
         conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with partial functionality."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
@@ -2410,7 +2410,7 @@ class TestSupportCheckingEdgeCases:
         self, conversion_matrix: FlextLdifConversion
     ) -> None:
         """Test support checking for quirk with ACL support."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
@@ -2427,7 +2427,7 @@ class TestSupportCheckingEdgeCases:
         self, conversion_matrix: FlextLdifConversion
     ) -> None:
         """Test support checking for quirk with entry support."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,

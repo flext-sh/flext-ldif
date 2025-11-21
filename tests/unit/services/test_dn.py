@@ -321,7 +321,7 @@ class TestDnServiceExecutePattern:
 
     def test_execute_operations_batch(self, dn_service: FlextLdifDn) -> None:
         """Execute various DN operations in batch."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         service1 = FlextLdifDn(dn="CN=Admin,DC=Example,DC=Com", operation="normalize")
         RfcTestHelpers.test_service_execute_and_assert(service1)
@@ -380,7 +380,7 @@ class TestCaseRegistry:
         dn_service: FlextLdifDn,
     ) -> None:
         """Validate OUD consistency in batch."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         registry1 = FlextLdifModels.DnRegistry()
         registry1.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")

@@ -626,11 +626,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 [],
             )
             # Ensure object_classes is a list
-            object_classes: list[str] = (
-                object_classes_raw
-                if FlextRuntime.is_list_like(object_classes_raw)
-                else []
-            )
+            if FlextRuntime.is_list_like(object_classes_raw):
+                object_classes: list[str] = [str(item) for item in object_classes_raw]
+            else:
+                object_classes = []
             return bool(
                 any(
                     str(oc).lower()

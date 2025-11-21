@@ -13,7 +13,8 @@ from __future__ import annotations
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestTivoliSchemas:
@@ -67,7 +68,7 @@ class TestTivoliSchemas:
             "EQUALITY caseIgnoreMatch "
             "SINGLE-VALUE )"
         )
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         data = RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -101,7 +102,7 @@ class TestTivoliSchemas:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
             "ORDERING generalizedTimeOrderingMatch )"
         )
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -118,7 +119,7 @@ class TestTivoliSchemas:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
             "SUBSTR caseIgnoreSubstringsMatch )"
         )
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -131,7 +132,7 @@ class TestTivoliSchemas:
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         attr_def = "( 1.3.18.0.2.4.4 NAME 'ibm-code' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -144,7 +145,7 @@ class TestTivoliSchemas:
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         attr_def = "( 1.3.18.0.2.4.5 NAME 'ibm-specialAttr' SUP name )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -184,7 +185,7 @@ class TestTivoliSchemas:
             "MUST ( cn $ ibm-serverVersion ) "
             "MAY ( ibm-serverPort $ description ) )"
         )
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         data = RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -215,7 +216,7 @@ class TestTivoliSchemas:
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         oc_def = "( 1.3.18.0.2.6.2 NAME 'ibm-filterentry' AUXILIARY )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
@@ -228,7 +229,7 @@ class TestTivoliSchemas:
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         oc_def = "( 1.3.18.0.2.6.3 NAME 'ibm-baseClass' ABSTRACT )"
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,

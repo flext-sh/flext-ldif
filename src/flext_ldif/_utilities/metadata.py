@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, cast
 
 from flext_core import FlextLogger, FlextModels, FlextRuntime
 
@@ -280,19 +280,22 @@ class FlextLdifUtilitiesMetadata:
         if "rfc_violations" in metadata:
             rfc_violations = metadata["rfc_violations"]
             if FlextRuntime.is_list_like(rfc_violations):
-                violations.extend(rfc_violations)
+                # Type narrowing: list_like object → list[str] for extend
+                violations.extend(cast("list[str]", rfc_violations))
 
         # Extract DN violations
         if "dn_violations" in metadata:
             dn_violations = metadata["dn_violations"]
             if FlextRuntime.is_list_like(dn_violations):
-                violations.extend(dn_violations)
+                # Type narrowing: list_like object → list[str] for extend
+                violations.extend(cast("list[str]", dn_violations))
 
         # Extract attribute violations
         if "attribute_violations" in metadata:
             attr_violations = metadata["attribute_violations"]
             if FlextRuntime.is_list_like(attr_violations):
-                violations.extend(attr_violations)
+                # Type narrowing: list_like object → list[str] for extend
+                violations.extend(cast("list[str]", attr_violations))
 
         return violations
 
@@ -1552,11 +1555,15 @@ class FlextLdifUtilitiesMetadata:
             bool_conv = differences["boolean_conversion"]
             if FlextRuntime.is_dict_like(bool_conv) and bool_conv.get("detected"):
                 attr_name_for_bool = attribute_name or key
-                metadata.boolean_conversions[attr_name_for_bool] = {
-                    "original": bool_conv.get("original", original),
-                    "converted": bool_conv.get("converted", converted or ""),
-                    "format": f"{context}_auto_detected",
-                }
+                # Type narrowing: ensure dict values are str for boolean_conversions
+                metadata.boolean_conversions[attr_name_for_bool] = cast(
+                    "dict[str, str]",
+                    {
+                        "original": bool_conv.get("original", original),
+                        "converted": bool_conv.get("converted", converted or ""),
+                        "format": f"{context}_auto_detected",
+                    },
+                )
                 logger.debug(
                     "Boolean conversion auto-tracked",
                     context=context,

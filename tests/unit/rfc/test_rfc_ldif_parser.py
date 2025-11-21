@@ -19,9 +19,10 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from ...helpers.test_rfc_helpers import RfcTestHelpers
+from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed

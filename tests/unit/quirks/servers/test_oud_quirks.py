@@ -18,10 +18,11 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests.helpers import FixtureTestHelpers
-from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+
+from ....helpers import FixtureTestHelpers
+from ....helpers.test_assertions import TestAssertions
+from ....helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from .test_utils import FlextLdifTestUtils
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed

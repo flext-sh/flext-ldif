@@ -32,9 +32,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifConstants, FlextLdifModels
+from flext_ldif.config import LdifFlextConfig
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from ...helpers.test_rfc_helpers import RfcTestHelpers
 
 # ============================================================================
 # PARSING TESTS - CORE FUNCTIONALITY
@@ -73,7 +76,7 @@ mail: bob@example.com
         simple_ldif_content: str,
     ) -> None:
         """Test parse() with LDIF content string."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers já importado no topo
 
         RfcTestHelpers.test_api_parse_and_assert(
             api,
@@ -92,7 +95,7 @@ mail: bob@example.com
         simple_ldif_content: str,
     ) -> None:
         """Test parse() with file Path object."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         ldif_file = tmp_path / "test.ldif"
         ldif_file.write_text(simple_ldif_content)
@@ -100,13 +103,13 @@ mail: bob@example.com
 
     def test_parse_empty_content_returns_empty_list(self, api: FlextLdif) -> None:
         """Test parse() with empty content returns empty list."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         RfcTestHelpers.test_api_parse_and_assert(api, "", expected_count=0)
 
     def test_parse_variations_batch(self, api: FlextLdif) -> None:
         """Test parse() with various LDIF variations in batch."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         test_cases = [
             (
@@ -175,7 +178,7 @@ objectClass: person
         api: FlextLdif,
     ) -> None:
         """Test parse() with multiple entries and changetype."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         RfcTestHelpers.test_api_parse_and_assert(
             api,
@@ -247,7 +250,7 @@ ds-sync-state: sync
         oud_specific_content: str,
     ) -> None:
         """Test parse() with various server types in batch."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        # TestDeduplicationHelpers already imported at top
 
         test_cases = [
             {
@@ -304,7 +307,7 @@ objectClass: person"""
             for i in range(100)
         )
 
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        # TestDeduplicationHelpers already imported at top
 
         TestDeduplicationHelpers.api_parse_and_unwrap(
             api, entries_content, expected_count=100
@@ -323,7 +326,7 @@ class TestAPIWriting:
     @pytest.fixture
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for writing tests."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        # TestDeduplicationHelpers already imported at top
 
         entries_data = [
             {
@@ -353,7 +356,7 @@ class TestAPIWriting:
         sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test write() returns LDIF string."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        # TestDeduplicationHelpers already imported at top
 
         ldif_string = TestDeduplicationHelpers.api_write_and_unwrap(
             api, sample_entries, must_contain=["Alice", "Bob"]
@@ -540,10 +543,13 @@ class TestAPIProperties:
         assert hasattr(models, "DistinguishedName")
 
     def test_config_property(self, api: FlextLdif) -> None:
-        """Test config property returns configuration."""
+        """Test config property returns typed config with ldif namespace."""
         config = api.config
-        assert isinstance(config, FlextLdifConfig)
-        assert hasattr(config, "quirks_detection_mode")
+        assert isinstance(config, LdifFlextConfig)
+        # Access ldif namespace
+        ldif_config = config.ldif
+        assert isinstance(ldif_config, FlextLdifConfig)
+        assert hasattr(ldif_config, "quirks_detection_mode")
 
     def test_constants_property(self, api: FlextLdif) -> None:
         """Test constants property returns FlextLdifConstants."""
@@ -734,7 +740,7 @@ class TestAPIValidationOperations:
 
     def test_validate_entries_with_empty_list(self, api: FlextLdif) -> None:
         """Test validate_entries() with empty list."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        # TestDeduplicationHelpers already imported at top
 
         TestDeduplicationHelpers.helper_result_and_assert_fields(
             api.validate_entries([]),
@@ -747,7 +753,7 @@ class TestAPIValidationOperations:
         sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test validate_entries() returns proper ValidationResult structure."""
-        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+        # TestDeduplicationHelpers already imported at top
 
         TestDeduplicationHelpers.helper_result_and_assert_fields(
             api.validate_entries(sample_entries),
@@ -1115,7 +1121,7 @@ class TestAPIConversionOperations:
 
     def test_create_entry_from_dict(self, api: FlextLdif) -> None:
         """Test creating entry from attributes dict."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         attributes = {
             "cn": "Test",
@@ -1133,7 +1139,7 @@ class TestAPIConversionOperations:
         sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test writing entries to LDIF string."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         RfcTestHelpers.test_api_write_and_assert(
             api,
@@ -1143,7 +1149,7 @@ class TestAPIConversionOperations:
 
     def test_parse_ldif_string(self, api: FlextLdif) -> None:
         """Test parsing LDIF string."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        # RfcTestHelpers already imported at top
 
         ldif_content = """dn: cn=Test,dc=example,dc=com
 cn: Test

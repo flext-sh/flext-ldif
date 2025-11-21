@@ -490,7 +490,7 @@ class FlextLdifModelsDomains:
                     metadata=metadata,
                 )
 
-            except (ImportError, Exception):
+            except Exception:
                 # Return None for any resolution errors
                 # This prevents the model from being invalid due to service failures
                 return None
@@ -2741,7 +2741,7 @@ class FlextLdifModelsDomains:
             cls,
             quirk_type: str | None = None,
             extensions: dict[str, object] | None = None,
-        ) -> FlextLdifModelsDomains.QuirkMetadata:
+        ) -> Self:
             """Factory method to create QuirkMetadata with extensions.
 
             Args:

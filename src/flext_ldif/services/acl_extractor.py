@@ -11,14 +11,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAclExtractor(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
+class FlextLdifAclExtractor(
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+):
     """Service for ACL entry extraction.
 
     Provides methods for:

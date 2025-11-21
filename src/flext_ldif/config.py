@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import codecs
-from typing import Protocol
+from typing import ClassVar, Protocol, Self
 
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
@@ -562,4 +562,51 @@ class FlextLdifConfig(FlextConfig.AutoConfig):
         return self.ldif_encoding
 
 
-__all__ = ["FlextLdifConfig"]
+class LdifFlextConfig(FlextConfig):
+    """FlextConfig TIPADO com namespace ldif do projeto.
+
+    Padrão consumidor: acesso tipado via self.config.ldif.
+
+    Usage:
+        # Em services que herdam de LdifServiceBase:
+        encoding = self.config.ldif.ldif_encoding
+
+        # Acesso estático fora de services:
+        config = LdifFlextConfig.get_global_instance()
+        encoding = config.ldif.ldif_encoding
+
+        # Testes:
+        LdifFlextConfig.reset_for_testing()
+    """
+
+    _ldif_global: ClassVar[LdifFlextConfig | None] = None
+
+    @property
+    def ldif(self) -> FlextLdifConfig:
+        """Acesso tipado ao namespace ldif."""
+        return self.get_namespace("ldif", FlextLdifConfig)
+
+    @classmethod
+    def get_global_instance(cls) -> LdifFlextConfig:
+        """Retorna singleton tipado."""
+        if cls._ldif_global is None:
+            with cls._lock:
+                if cls._ldif_global is None:
+                    cls._ldif_global = cls()
+        return cls._ldif_global
+
+    def clone(self, **overrides: object) -> Self:
+        """Clona config com overrides."""
+        data = self.model_dump()
+        data.update(overrides)
+        return type(self)(**data)
+
+    @classmethod
+    def reset_for_testing(cls) -> None:
+        """Reset para testes."""
+        cls.reset_global_instance()
+        with cls._lock:
+            cls._ldif_global = None
+
+
+__all__ = ["FlextLdifConfig", "LdifFlextConfig"]

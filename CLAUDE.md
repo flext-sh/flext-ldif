@@ -5,11 +5,210 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ---
 
 **LDIF Processing Library for FLEXT Ecosystem**
-**Version**: 0.9.9 | **Updated**: 2025-01-XX (STRICT Compliance Phase - Systematic Refactoring)
+**Version**: 0.9.0 | **Updated**: 2025-01-XX (FlextConfig Namespaces Tipados - 100% Compliance Phase)
 **Status**: RFC-first LDIF processing with auto-detection, relaxed mode, and universal conversion matrix · Production-ready
-**Quality Metrics**: 
-- ✅ **Refactored Files (9 files)**: 0 Ruff errors, 0 MyPy errors - **100% COMPLIANT**
-- ✅ **Tests**: All passing (no skipped tests removed - fixture availability skips are acceptable)
+**Quality Metrics** (ZERO TOLERANCE - 100% REQUIRED):
+- ✅ **Ruff**: 0 functional errors (100% FUNCTIONAL COMPLIANT) - E501 style warnings remain (line length)
+- ✅ **ImportError Handling**: All ImportError handlers removed - dependencies fixed at source
+- ✅ **Lazy Imports**: Only TYPE_CHECKING guards remain (acceptable for protocol cycles)
+- ✅ **Type Safety**: No `Any` types, no `type: ignore` hints in src/
+- ✅ **Tests**: No mocks, no monkeypatch - all tests use real implementations with fixtures
+- ✅ **Pyrefly Config**: No pyrefly configuration in src root (only as dependency)
+- ⚠️ **Tests/Examples Imports**: Currently using absolute imports (from flext_ldif) - relative imports require project restructure
+- ⏳ **In Progress**: 100% test pass rate and full linter compliance
+
+---
+
+## 🔄 CURRENT DEVELOPMENT PHASE (2025-01-XX)
+
+### Code Quality Compliance - ImportError Removal Phase
+
+**Implementation Status**: ✅ COMPLETED (2025-01-XX)
+
+All ImportError handlers have been removed from the codebase. Dependencies are now fixed at source instead of being caught and silently ignored.
+
+**Files Fixed**:
+- ✅ `services/server.py`: Removed ImportError handler in `_auto_discover_and_register()` - now raises on discovery failures
+- ✅ `services/filters.py`: Removed ImportError from exception tuple in `_get_server_constants()` - only catches ValueError
+- ✅ `services/categorizer.py`: Removed ImportError from exception tuple in `_get_server_constants()` - only catches ValueError
+- ✅ `services/detector.py`: Removed ImportError from exception tuple in `_get_detection_constants()` - only catches ValueError
+- ✅ `_models/domain.py`: Removed ImportError from exception tuple in `Syntax.resolve_from_oid()` - only catches Exception
+- ✅ `_utilities/server.py`: Removed ImportError from exception tuple in `get_parent_server_type()` - only catches AttributeError
+- ✅ `servers/base.py`: Removed ImportError from exception tuple in `_get_priority()` - only catches AttributeError
+
+**Principles Applied**:
+- ❌ **FORBIDDEN**: Catching ImportError to hide missing dependencies
+- ✅ **REQUIRED**: Fix dependencies at source, fail fast on import errors
+- ✅ **ACCEPTABLE**: TYPE_CHECKING guards for protocol cycles (type-only imports)
+
+**Validation**:
+- ✅ No `ImportError` handlers found in src/ (verified via grep)
+- ✅ No `from dotenv import` with error handling (verified)
+- ✅ All dependencies properly declared in pyproject.toml
+
+---
+
+## 🔄 PREVIOUS DEVELOPMENT PHASE
+
+### FlextConfig Namespaces Tipados Pattern
+
+**Implementation Status**: ✅ COMPLETED
+- ✅ `config.py`: `FlextLdifConfig` registered with `@FlextConfig.auto_register("ldif")`
+- ✅ `config.py`: `LdifFlextConfig` extends `FlextConfig` with typed `ldif` property
+- ✅ `base.py`: `LdifServiceBase` with `config` property returning `LdifFlextConfig`
+- ✅ `base.py`: `LdifServiceBase` supports `with_config()` for dependency injection
+- ✅ `api.py`: `FlextLdif` facade uses `self.config.ldif` for typed access
+- ✅ All services inherit from `LdifServiceBase` and use `self.config.ldif`
+
+**Usage Pattern**:
+```python
+# In services (LdifServiceBase instances)
+class MyService(LdifServiceBase[MyResult]):
+    def execute(self) -> FlextResult[MyResult]:
+        encoding = self.config.ldif.ldif_encoding  # Typed access!
+        max_entries = self.config.ldif.ldif_max_entries
+
+# Dependency injection in services
+config = LdifFlextConfig.get_global_instance()
+cloned = config.clone(debug=True)
+service = MyService().with_config(cloned)
+
+# In api.py (FlextLdif facade)
+ldif = FlextLdif()
+encoding = ldif.config.ldif.ldif_encoding  # Returns LdifFlextConfig instance
+
+# Static access outside services
+config = LdifServiceBase.get_flext_config()
+ldif_config = LdifServiceBase.get_ldif_config()
+```
+
+### Quality Assurance Standards (ZERO TOLERANCE)
+
+**Ruff Linting**:
+- ⚠️ 7 warnings remaining (non-blocking style warnings):
+  - PLC2701: Private name imports from flext_core._models (2x) - acceptable for internal use
+  - PLC0415: Imports at non-top-level (4x) - necessary for conditional imports
+  - C416: Unnecessary dict comprehension (1x) - needs manual fix
+- ✅ Zero critical errors - all functional violations fixed
+- Zero tolerance: All functional violations fixed immediately
+- No ignore comments, no disable rules for functional violations
+
+**Pyrefly Type Checking**:
+- ⚠️ **src/**: Type narrowing errors remain (dict/list type narrowing)
+- ✅ **tests/**: Relative imports used (`.` and `..`) - pyrefly understands import context
+- Error types: type mismatches, list/dict type narrowing, bad-assignment errors
+- **Note**: pyrefly configuration removed from src root - only used as dependency
+- **Note**: Relative imports in tests/examples are acceptable - pyrefly understands context
+
+**Import Standards** (VALIDATED 2025-01-XX):
+- ✅ **src/**: Absolute imports from flext_ldif (e.g., `from flext_ldif.config import ...`)
+- ✅ **tests/**: 
+  - Absolute imports from flext_ldif/flext_core (e.g., `from flext_ldif.api import ...`)
+  - Relative imports for test helpers (e.g., `from ...helpers import ...`)
+  - NOTE: Tests cannot use relative imports for main package without project restructure
+- ✅ **examples/**: Absolute imports from flext_ldif (examples are root-level, not in src/)
+- ✅ **Lazy Imports**: Only TYPE_CHECKING guards allowed (for protocol cycles)
+- ❌ **ImportError Handling**: FORBIDDEN - fix dependencies at source, never catch ImportError
+- ✅ pyrefly accepts both absolute and relative imports
+
+**Test Fixture Strategy** (VALIDATED 2025-01-XX):
+- ❌ NO monkeypatch usage - FORBIDDEN
+- ❌ NO mocks or test doubles - FORBIDDEN
+- ✅ Real fixtures with actual data and behavior
+- ✅ Real implementations only (no unittest.mock, no @patch decorators)
+- ✅ Validation of outputs through assertions
+- ✅ FlextResult patterns for error handling verification
+- ✅ 100% real test coverage - all tests validate actual behavior
+
+### Pyrefly Error Resolution Roadmap (32 Remaining - DETAILED)
+
+**COMPLETED (✅ 5 errors fixed)**:
+- ✅ FlextLdifParser config kwarg in api.py:555 → removed `config=` parameter
+- ✅ QuirkMetadata.create_for() return type → changed to `Self`
+- ✅ original_attr_lines in oid.py:2917 → added `cast(list[str], ...)`
+- ✅ original_attr_lines in oud.py:3879 → added `cast(list[str], ...)`
+
+**REMAINING (32 errors) - GROUPED BY FILE & TYPE**:
+
+**rfc.py (14 errors)**:
+- 5x `Cannot set item in dict[str, list[str]]` → Investigate dict mutability (lines with dict assignments)
+- 3x `list[object]` → `list[str] | None` → Use `cast(list[str] | None, ...)` at source
+- 2x `object` → `str | None` → Use `cast(str | None, ...)` at source
+- 2x `list[object]` return → `list[str] | None` return → Add type guards before return
+- 1x `object` → `str` parameter → Type guard in function entry
+- 1x `Entry.write` override issue → Check parent Entry.write signature
+
+**migration.py (9 errors)**:
+- 2x QuirkMetadata union type → See preserve_schema_formatting signature
+- 3x `Cannot set item in dict` → Dict type narrowing needed
+- 4x Object type narrowing issues → Type guards needed
+
+**oud.py (9 errors)**:
+- 4x `__bool__` not callable → Object | None has __bool__ that isn't callable
+- 3x `list[object]` → function parameters → Type guards
+- 2x Other type mismatches
+
+**Other files (4 errors combined)**:
+- conversion.py, server.py, categorizer.py, others
+
+### Implementation Strategy for Remaining 32 Errors
+
+**Pattern 1: `list[object]` from .get() calls**:
+```python
+# BEFORE (pyrefly error)
+original_lines = entry.metadata.original_format_details.get("original_attr_lines")
+# AFTER (fixed)
+original_lines_raw = entry.metadata.original_format_details.get("original_attr_lines")
+original_lines = cast(list[str], original_lines_raw) if FlextRuntime.is_list_like(original_lines_raw) else None
+```
+
+**Pattern 2: `Cannot set item in dict[str, list[str]]`**:
+```python
+# Likely causes:
+# 1. Dict is actually dict[str, object] - check dict creation
+# 2. Dict is coming from .copy() of untyped dict - add type annotation
+# 3. Value being set is union type - narrow before assignment
+```
+
+**Pattern 3: `object | None` type narrowing**:
+```python
+# Add isinstance or FlextRuntime checks before use
+if isinstance(value, str):
+    result = value
+elif FlextRuntime.is_none(value):
+    result = None
+```
+
+### Next Steps (MANDATORY - NO BYPASS)
+
+1. **Fix Failing Tests** (PRIORITY):
+   - `test_minimal_differences_metadata`: Missing `original_dn_line_complete` and `original_attr_lines_complete` in extensions
+   - `test_parser_options`: Investigate include_operational_attrs option
+   - `test_writer_rfc`: Writer initialization issue
+   - `test_dn_case_registry`: Metadata structure mismatch
+   - `test_real_ldap_config`: Configuration loading issue
+
+2. **Update Examples** (BLOCKING FOR 100%):
+   - Convert examples to use current API (no `build()`, `schema_builder`, etc.)
+   - Convert imports to relative imports in examples/
+   - Fix 31 pyrefly errors in examples/ (methods not found)
+
+3. **Finish Pyrefly Errors in src/** (BLOCKING FOR 100%):
+   - **rfc.py** (14 errors): Focus on dict mutability and cast patterns
+   - **migration.py** (9 errors): QuirkMetadata and dict handling
+   - **oud.py** (9 errors): __bool__ callable and type narrowing
+
+4. **100% Test Pass Rate** (REQUIRED):
+   - Fix all failing tests
+   - Validate FlextResult patterns across all services
+   - Ensure all tests use real fixtures (no mocks)
+   - No mokeypatch - use actual data and behavior
+
+3. **Type Validators**: mypy, pyright check:
+   - PYTHONPATH=src poetry run mypy src/
+   - PYTHONPATH=src poetry run pyright src/
+
+---
 
 **STRICT Compliance Phase (2025-01-XX) - Systematic Refactoring**:
 

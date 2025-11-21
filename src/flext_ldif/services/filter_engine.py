@@ -16,15 +16,18 @@ from __future__ import annotations
 
 import fnmatch
 
-from flext_core import FlextResult, FlextService, FlextUtilities
+from flext_core import FlextResult, FlextUtilities
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifFilterEngine(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
+class FlextLdifFilterEngine(
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+):
     """Service for core entry filtering operations.
 
     Provides methods for:

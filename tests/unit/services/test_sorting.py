@@ -25,7 +25,8 @@ from pydantic import ValidationError
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.sorting import FlextLdifSorting
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -315,7 +316,7 @@ class TestClassmethodSort:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test sort() operations in batch."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         RfcTestHelpers.test_result_success_and_unwrap(
             FlextLdifSorting.sort(hierarchy_entries, by="hierarchy"),

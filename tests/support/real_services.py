@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
@@ -28,9 +27,13 @@ class FlextLdifTestFactory:
         def create_ldif_parser(
             params: dict[str, object] | None = None,
         ) -> FlextLdifParser:
-            """Create unified LDIF parser service with optional config."""
-            config = FlextLdifConfig() if params is None else FlextLdifConfig(**params)
-            return FlextLdifParser(config=config)
+            """Create unified LDIF parser service.
+
+            Config is accessed via LdifServiceBase.config.ldif (singleton pattern).
+            """
+            # Note: params ignored - config is accessed via self.config.ldif
+            _ = params  # Unused, kept for signature compatibility
+            return FlextLdifParser()
 
         @staticmethod
         def create_schema_parser(
@@ -40,9 +43,11 @@ class FlextLdifTestFactory:
 
             Note: Schema parsing is now handled by FlextLdifParser.SchemaParser nested class.
             This method returns the same parser for backward compatibility with tests.
+            Config is accessed via LdifServiceBase.config.ldif (singleton pattern).
             """
-            config = FlextLdifConfig() if params is None else FlextLdifConfig(**params)
-            return FlextLdifParser(config=config)
+            # Note: params ignored - config is accessed via self.config.ldif
+            _ = params  # Unused, kept for signature compatibility
+            return FlextLdifParser()
 
         @staticmethod
         def create_ldif_writer(

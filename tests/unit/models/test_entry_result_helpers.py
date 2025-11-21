@@ -11,7 +11,7 @@ class TestEntryResultHelpers:
 
     def test_from_entries_creates_entry_result(self) -> None:
         """Test EntryResult.from_entries() factory method."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         entry1 = RfcTestHelpers.test_entry_create_and_unwrap(
             "cn=user1,dc=example,dc=com",

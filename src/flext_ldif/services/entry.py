@@ -124,15 +124,16 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
+class FlextLdifEntry(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
     """Universal entry transformation and cleanup service.
 
     Handles entry adaptation, DN cleaning, and attribute removal for

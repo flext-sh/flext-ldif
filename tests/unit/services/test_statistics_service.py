@@ -505,7 +505,7 @@ class TestGenerateStatisticsErrorHandling:
         output_dir = Path("/tmp")
         output_files: dict[str, object] = {}
 
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from ...helpers.test_rfc_helpers import RfcTestHelpers
 
         stats = RfcTestHelpers.test_result_success_and_unwrap(
             service.generate_statistics(

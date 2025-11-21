@@ -15,7 +15,8 @@ import pytest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.entry_manipulation import EntryManipulationServices
 from flext_ldif.services.validation import FlextLdifValidation
-from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
+
+from ...helpers.test_deduplication_helpers import DeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES

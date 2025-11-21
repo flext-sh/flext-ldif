@@ -125,10 +125,13 @@ class TestDnCaseRegistry:
         # Check metadata
         assert result.metadata is not None
         metadata = result.metadata
-        assert isinstance(metadata, dict)
-        assert "inconsistencies" in metadata
-        assert "warning" in metadata
-        inconsistencies = metadata["inconsistencies"]
+        # Metadata is a Pydantic model, access attributes directly
+        assert hasattr(metadata, "attributes")
+        assert metadata.attributes is not None
+        assert "inconsistencies" in metadata.attributes
+        assert "warning" in metadata.attributes
+        inconsistencies = metadata.attributes["inconsistencies"]
+        assert isinstance(inconsistencies, list)
         assert len(inconsistencies) == 1
         assert inconsistencies[0]["variant_count"] == 2
 
