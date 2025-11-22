@@ -12,9 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 class TestParserWriterIntegration:
@@ -77,8 +76,6 @@ mail: jane.smith@example.com
         complex_ldif_content: str,
     ) -> None:
         """Test basic parse -> write roundtrip."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         write_options = FlextLdifModels.WriteFormatOptions(
             base64_encode_binary=False,
             include_version_header=True,
@@ -112,9 +109,6 @@ givenName: Test
 mail: test@example.com
 telephoneNumber: 123-456-7890
 """
-
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         parse_options = FlextLdifModels.ParseFormatOptions(
             preserve_attribute_order=True,
         )
@@ -314,7 +308,8 @@ sn: Empty Values
         output = write_result.unwrap()
 
         # Empty attributes should be filtered out
-        assert "cn: \n" not in output and "cn:\n" not in output
+        assert "cn: \n" not in output
+        assert "cn:\n" not in output
 
     def test_roundtrip_file_operations(
         self,

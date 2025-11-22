@@ -13,6 +13,7 @@ Phase 2 refactors the flext-ldif architecture to create a proper service layer w
 ## Current Architecture Problem
 
 ### As Is
+
 ```
 FlextLdifServersRfc
 ├── Schema (nested class)
@@ -40,6 +41,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 ```
 
 **Issues**:
+
 - Logic duplication across 12+ servers
 - Hard to test service logic separately from servers
 - Services in `/services` directory are underutilized (3 usages)
@@ -50,6 +52,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 ## Target Architecture
 
 ### To Be
+
 ```
 FlextLdifSchemaService
 ├── parse_attribute() - uses RFC parser + server config
@@ -92,6 +95,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 ```
 
 **Benefits**:
+
 - ✅ Single source of truth for each service
 - ✅ Services are testable in isolation
 - ✅ Servers become configuration providers
@@ -104,15 +108,18 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 ## Implementation Plan
 
 ### Phase 2.A: Design Service Layer Architecture
+
 - [x] Analyze current service/server relationship
 - [ ] Document service interfaces
 - [ ] Create ServerConfig abstraction
 - [ ] Design service composition pattern
 
 ### Phase 2.B: Create FlextLdiifSchema
+
 **Goal**: Centralize all schema parsing/validation/writing logic
 
 **Key Methods**:
+
 - `parse_attribute(definition: str, config: ServerConfig) -> SchemaAttribute`
 - `parse_objectclass(definition: str, config: ServerConfig) -> SchemaObjectClass`
 - `validate_attribute(attr: SchemaAttribute, config: ServerConfig) -> ValidationResult`
@@ -123,14 +130,17 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - `write_objectclass(oc: SchemaObjectClass, config: ServerConfig) -> str`
 
 **Leverage Existing**:
+
 - `FlextLdifParser` - LDIF parsing
 - `FlextLdifWriter` - LDIF writing
 - `FlextLdifUtilitiesSchema` - Schema utilities
 
 ### Phase 2.C: Create FlextLdifAcl
+
 **Goal**: Centralize all ACL parsing/validation/writing logic
 
 **Key Methods**:
+
 - `parse_acl(acl_line: str, config: ServerConfig) -> Acl`
 - `can_handle_acl(acl_line: str, config: ServerConfig) -> bool`
 - `validate_acl(acl: Acl, config: ServerConfig) -> ValidationResult`
@@ -138,13 +148,16 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - `write_acl(acl: Acl, config: ServerConfig) -> str`
 
 **Leverage Existing**:
+
 - `FlextLdifAcl` - ACL utilities
 - `FlextLdifUtilitiesSchema.normalize_attribute_name()` - Normalization
 
 ### Phase 2.D: Create EntryTransformationService
+
 **Goal**: Centralize all entry parsing/validation/writing logic
 
 **Key Methods**:
+
 - `parse_entry(entry_dn: str, attributes: dict, config: ServerConfig) -> Entry`
 - `can_handle_entry(entry: Entry, config: ServerConfig) -> bool`
 - `validate_entry(entry: Entry, config: ServerConfig) -> ValidationResult`
@@ -152,13 +165,16 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - `write_entry(entry: Entry, config: ServerConfig) -> str`
 
 **Leverage Existing**:
+
 - `FlextLdifEntry` - Entry utilities
 - `FlextLdifWriter` - LDIF writing
 
 ### Phase 2.E: Create ServerConfig Abstraction
+
 **Goal**: Extract server configuration from nested Constants classes
 
 **Properties**:
+
 - `server_type: str` (e.g., "oud", "oid")
 - `server_priority: int`
 - `schema_patterns: dict` - Regex patterns for schema
@@ -171,9 +187,11 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - `constant mappings: dict` - Server-specific constants
 
 ### Phase 2.F: Integrate Services into Servers
+
 **Goal**: Update servers to use services instead of nested classes
 
 **Changes**:
+
 ```python
 # Before
 class FlextLdifServersOud(FlextLdifServersRfc):
@@ -221,21 +239,25 @@ attribute = services.schema.parse_attribute(attr_def)
 ## Migration Path
 
 ### Step 1: Create ServiceConfig abstraction
+
 - Extract Constants from servers
 - Create config classes for each server type
 - Keep backward compatibility with Constants
 
 ### Step 2: Create services with new functionality
+
 - FlextLdiifSchema
 - FlextLdifAcl
 - EntryTransformationService
 
 ### Step 3: Integrate services gradually
+
 - Update RFC base server first
 - Test thoroughly
 - Roll out to other servers
 
 ### Step 4: Deprecate nested classes
+
 - Move nested class logic to services
 - Update all server implementations
 - Remove nested classes

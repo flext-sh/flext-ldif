@@ -12,23 +12,23 @@ Supports hierarchy, DN, custom predicate, and schema OID sorting.
 
 ## What It Sorts (sort_target parameter)
 
-| Target | Description |
-|--------|-------------|
-| `"entries"` | Sort the entry list itself by DN/hierarchy/custom |
+| Target         | Description                                             |
+| -------------- | ------------------------------------------------------- |
+| `"entries"`    | Sort the entry list itself by DN/hierarchy/custom       |
 | `"attributes"` | Sort attributes WITHIN each entry (no entry reordering) |
-| `"acl"` | Sort ACL values WITHIN entries (acl, aci, olcAccess) |
-| `"schema"` | Sort schema entries by OID (for schema exports) |
-| `"combined"` | Sort everything at once (entries + attrs + ACL) |
+| `"acl"`        | Sort ACL values WITHIN entries (acl, aci, olcAccess)    |
+| `"schema"`     | Sort schema entries by OID (for schema exports)         |
+| `"combined"`   | Sort everything at once (entries + attrs + ACL)         |
 
 ## How It Sorts Entries (sort_by parameter)
 
-| Strategy | Description |
-|----------|-------------|
-| `"hierarchy"` | Depth-first: shallow entries first, then alphabetical. Order: dc=com, ou=users,dc=com, cn=john,ou=users,... |
-| `"alphabetical"` | Full DN alphabetical (case-insensitive) |
-| `"dn"` | Alias for alphabetical |
-| `"schema"` | For schema entries: attributeTypes before objectClasses, each sorted by extracted OID number |
-| `"custom"` | Use custom_predicate function to extract sort key |
+| Strategy         | Description                                                                                                 |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `"hierarchy"`    | Depth-first: shallow entries first, then alphabetical. Order: dc=com, ou=users,dc=com, cn=john,ou=users,... |
+| `"alphabetical"` | Full DN alphabetical (case-insensitive)                                                                     |
+| `"dn"`           | Alias for alphabetical                                                                                      |
+| `"schema"`       | For schema entries: attributeTypes before objectClasses, each sorted by extracted OID number                |
+| `"custom"`       | Use custom_predicate function to extract sort key                                                           |
 
 ## Usage Examples
 
@@ -97,12 +97,12 @@ result = FlextLdifSorting.by_schema(schema_entries)
 
 ## Attribute & ACL Sorting Options
 
-### When sort_target="attributes":
+### When sort_target="attributes"
 
 - `sort_attributes=True` - Sort alphabetically (default)
 - `attribute_order=[...]` - Custom order: `["cn", "sn", "mail"]` (remaining attrs sorted alphabetically)
 
-### When sort_target="acl":
+### When sort_target="acl"
 
 - `acl_attributes=[...]` - Which attrs to sort (default: `["acl", "aci", "olcAccess"]`)
 
@@ -147,16 +147,16 @@ result = FlextLdifSorting.by_custom(
 
 ## Public Classmethod API
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `sort(entries, target=..., by=..., predicate=...)` | `FlextResult[list[Entry]]` | For chaining |
-| `by_hierarchy(entries)` | `FlextResult[list[Entry]]` | Depth-first + alphabetical |
-| `by_dn(entries)` | `FlextResult[list[Entry]]` | Alphabetical by full DN |
-| `by_schema(entries)` | `FlextResult[list[Entry]]` | Schema entries by OID |
-| `by_custom(entries, predicate)` | `FlextResult[list[Entry]]` | Custom sort function |
-| `sort_attributes_in_entries(entries, order=None)` | `FlextResult[list[Entry]]` | Sort attrs within entries |
-| `sort_acl_in_entries(entries, acl_attrs=None)` | `FlextResult[list[Entry]]` | Sort ACL values |
-| `builder()` | `FlextLdifSorting` | Fluent builder, terminal: `.build()` |
+| Method                                             | Returns                    | Description                          |
+| -------------------------------------------------- | -------------------------- | ------------------------------------ |
+| `sort(entries, target=..., by=..., predicate=...)` | `FlextResult[list[Entry]]` | For chaining                         |
+| `by_hierarchy(entries)`                            | `FlextResult[list[Entry]]` | Depth-first + alphabetical           |
+| `by_dn(entries)`                                   | `FlextResult[list[Entry]]` | Alphabetical by full DN              |
+| `by_schema(entries)`                               | `FlextResult[list[Entry]]` | Schema entries by OID                |
+| `by_custom(entries, predicate)`                    | `FlextResult[list[Entry]]` | Custom sort function                 |
+| `sort_attributes_in_entries(entries, order=None)`  | `FlextResult[list[Entry]]` | Sort attrs within entries            |
+| `sort_acl_in_entries(entries, acl_attrs=None)`     | `FlextResult[list[Entry]]` | Sort ACL values                      |
+| `builder()`                                        | `FlextLdifSorting`         | Fluent builder, terminal: `.build()` |
 
 ## Quick Reference
 

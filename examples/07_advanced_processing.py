@@ -24,8 +24,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
-from flext_ldif import DnService, FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.services.dn import FlextLdifDn
 
 
 def basic_batch_processing() -> None:
@@ -75,7 +77,7 @@ def parallel_processing() -> None:
     api = FlextLdif.get_instance()
 
     # Create larger dataset for parallel processing benefit
-    entries = []
+    entries: list[FlextLdifModels.Entry] = []
     for i in range(10):
         result = api.models.Entry.create(
             dn=f"cn=User{i},ou=People,dc=example,dc=com",
@@ -86,7 +88,7 @@ def parallel_processing() -> None:
             },
         )
         if result.is_success:
-            entries.append(result.unwrap())
+            entries.append(cast("FlextLdifModels.Entry", result.unwrap()))
 
     # Process in parallel using ThreadPoolExecutor
     parallel_result = api.process("validate", entries, parallel=True)
@@ -99,12 +101,11 @@ def parallel_processing() -> None:
 
 def use_dn_utilities() -> None:
     """Use DN (Distinguished Name) utilities."""
-    # Use DN service directly
-    dn_service = DnService()
+    # Use DN service class methods directly
+    dn = "cn=John Doe,ou=People,dc=example,dc=com"
 
     # Parse DN
-    dn = "cn=John Doe,ou=People,dc=example,dc=com"
-    parse_result = dn_service.parse_components(dn)
+    parse_result = FlextLdifDn.parse_components(dn)
 
     if parse_result.is_success:
         components = parse_result.unwrap()
@@ -112,14 +113,14 @@ def use_dn_utilities() -> None:
         _ = len(components)
 
     # Validate DN
-    validation_result = dn_service.validate_format(dn)
+    validation_result = FlextLdifDn.validate_format(dn)
 
     if validation_result.is_success:
         is_valid = validation_result.unwrap()
         _ = is_valid
 
     # Normalize DN
-    normalize_result = dn_service.normalize(dn)
+    normalize_result = FlextLdifDn.normalize(dn)
 
     if normalize_result.is_success:
         normalized = normalize_result.unwrap()
@@ -255,9 +256,8 @@ sn: User
 
     # Validate using services
     for entry in entries:
-        # Use DnService for DN validation
-        dn_service = DnService()
-        dn_result = dn_service.validate_format(str(entry.dn))
+        # Use FlextLdifDn for DN validation
+        dn_result = FlextLdifDn.validate_format(str(entry.dn))
 
         if dn_result.is_failure:
             continue
@@ -280,7 +280,6 @@ def access_all_utilities() -> None:
     """Demonstrate access to all utility classes."""
     # Use services and standard library for utility functions
     time_utils = datetime.now(UTC)
-    dn_service = DnService()
 
     # Use timestamp utility
     timestamp = time_utils.timestamp()
@@ -296,7 +295,7 @@ def access_all_utilities() -> None:
         formatted_size = f"{size_bytes:.1f} PB"
 
     # Use DN utility
-    dn_result = dn_service.validate_format("cn=test,dc=example,dc=com")
+    dn_result = FlextLdifDn.validate_format("cn=test,dc=example,dc=com")
 
     # All utilities integrated
     _ = (timestamp, formatted_size, dn_result)

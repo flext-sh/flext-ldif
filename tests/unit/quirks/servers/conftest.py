@@ -8,17 +8,19 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.api import FlextLdif
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifConstants,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
-from ...unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
-from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from .fixtures.general_constants import TestGeneralConstants
+from .fixtures.rfc_constants import TestsRfcConstants
 
 
 @pytest.fixture(scope="module")
@@ -102,7 +104,7 @@ def sample_entry() -> FlextLdifModels.Entry:
         dn=TestGeneralConstants.SAMPLE_DN,
         attributes={
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                TestGeneralConstants.OC_NAME_PERSON
+                TestGeneralConstants.OC_NAME_PERSON,
             ],
             TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
         },
@@ -197,7 +199,7 @@ def sample_entry_with_metadata() -> FlextLdifModels.Entry:
         dn=TestGeneralConstants.SAMPLE_DN,
         attributes={
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                TestGeneralConstants.OC_NAME_PERSON
+                TestGeneralConstants.OC_NAME_PERSON,
             ],
             TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
         },

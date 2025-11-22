@@ -15,7 +15,7 @@ from dataclasses import dataclass
 # Python 3.13+
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, Final
+from typing import ClassVar, Final, cast
 
 
 class FlextLdifFixtures:
@@ -46,28 +46,28 @@ class FlextLdifFixtures:
         """Get singleton OID fixture loader."""
         if "oid" not in cls._instances:
             cls._instances["oid"] = cls.OID()
-        return cls._instances["oid"]
+        return cast("FlextLdifFixtures.OID", cls._instances["oid"])
 
     @classmethod
     def get_oud(cls) -> FlextLdifFixtures.OUD:
         """Get singleton OUD fixture loader."""
         if "oud" not in cls._instances:
             cls._instances["oud"] = cls.OUD()
-        return cls._instances["oud"]
+        return cast("FlextLdifFixtures.OUD", cls._instances["oud"])
 
     @classmethod
     def get_openldap(cls) -> FlextLdifFixtures.OpenLDAP:
         """Get singleton OpenLDAP fixture loader."""
         if "openldap" not in cls._instances:
             cls._instances["openldap"] = cls.OpenLDAP()
-        return cls._instances["openldap"]
+        return cast("FlextLdifFixtures.OpenLDAP", cls._instances["openldap"])
 
     @classmethod
     def get_loader(cls) -> FlextLdifFixtures.Loader:
         """Get singleton generic fixture loader."""
         if "loader" not in cls._instances:
             cls._instances["loader"] = cls.Loader()
-        return cls._instances["loader"]
+        return cast("FlextLdifFixtures.Loader", cls._instances["loader"])
 
     class ServerType(StrEnum):
         """Supported LDAP server types with quirks."""
@@ -117,7 +117,8 @@ class FlextLdifFixtures:
         # Class-level caches for performance optimization
         _content_cache: ClassVar[
             dict[
-                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType], str
+                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType],
+                str,
             ]
         ] = {}
         _metadata_cache: ClassVar[dict[Path, FlextLdifFixtures.Metadata]] = {}

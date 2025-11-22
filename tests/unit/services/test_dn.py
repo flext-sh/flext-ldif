@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 @pytest.fixture
@@ -321,8 +322,6 @@ class TestDnServiceExecutePattern:
 
     def test_execute_operations_batch(self, dn_service: FlextLdifDn) -> None:
         """Execute various DN operations in batch."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         service1 = FlextLdifDn(dn="CN=Admin,DC=Example,DC=Com", operation="normalize")
         RfcTestHelpers.test_service_execute_and_assert(service1)
 
@@ -380,8 +379,6 @@ class TestCaseRegistry:
         dn_service: FlextLdifDn,
     ) -> None:
         """Validate OUD consistency in batch."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         registry1 = FlextLdifModels.DnRegistry()
         registry1.register_dn("cn=admin,dc=example,dc=com")
         result1 = RfcTestHelpers.test_result_success_and_unwrap(

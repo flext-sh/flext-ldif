@@ -19,6 +19,7 @@ rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO
 ```
 
 **Problemas**:
+
 - Bypassa o gerenciamento de registro do `FlextLdifServer`
 - Duplica funcionalidade que pertence ao `services/server.py`
 - Quebra o padrão singleton/registry
@@ -42,6 +43,7 @@ rfc_quirk: FlextLdifServersBase = server.quirk("rfc")
 ```
 
 **Benefícios**:
+
 - ✅ Usa o gerenciamento centralizado de servers
 - ✅ Respeita singleton/registry pattern
 - ✅ Facilita mocks em testes
@@ -149,11 +151,13 @@ def my_function(oid: FlextLdifServersBase) -> None:
 ## 📊 Status de Migração
 
 **Arquivos Já Migrados**:
+
 - ✅ `tests/conftest.py` - Fixtures centralizadas criadas
 - ✅ `tests/unit/services/test_conversion_service.py` - Migrado e testado (38/38 tests passing)
 - ✅ `src/flext_ldif/services/conversion.py` - Já usa padrão correto via `_resolve_quirk()`
 
 **Arquivos Pendentes** (~50 arquivos, 231 instanciações diretas):
+
 - ⏳ `tests/unit/quirks/servers/*.py` - Tests de quirks específicos
 - ⏳ `tests/unit/quirks/test_*.py` - Tests de conversão
 - ⏳ `tests/unit/rfc/*.py` - Tests RFC

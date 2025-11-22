@@ -11,17 +11,18 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests.fixtures import FlextLdifFixtures
-
-from ...fixtures.helpers import (
+from tests.fixtures.helpers import (
     extract_attributes,
     extract_name,
     extract_objectclasses,
     extract_oid,
 )
+
+from ...fixtures import FlextLdifFixtures
 
 
 class TestOidQuirksWithRealFixtures:
@@ -81,7 +82,6 @@ class TestOidQuirksWithRealFixtures:
         assert result.is_success, f"Failed to parse attribute: {result.error}"
         parsed = result.unwrap()
         # Parse attribute returns a Pydantic SchemaAttribute model, not dict
-        from flext_ldif import FlextLdifModels
 
         assert isinstance(parsed, FlextLdifModels.SchemaAttribute)
 
@@ -107,7 +107,6 @@ class TestOidQuirksWithRealFixtures:
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
         parsed = result.unwrap()
         # Parse objectclass returns a Pydantic SchemaObjectClass model, not dict
-        from flext_ldif import FlextLdifModels
 
         assert isinstance(parsed, FlextLdifModels.SchemaObjectClass)
 
@@ -204,7 +203,6 @@ class TestConversionMatrixWithRealFixtures:
                 converted_model = result.unwrap()
 
                 # Verify converted is also a SchemaAttribute model
-                from flext_ldif import FlextLdifModels
 
                 assert isinstance(converted_model, FlextLdifModels.SchemaAttribute)
 
@@ -234,8 +232,6 @@ class TestConversionMatrixWithRealFixtures:
         """
         if not oid_conversion_attributes:
             pytest.skip("No OID attributes in fixture")
-
-        from flext_ldif import FlextLdifModels
 
         # Test first attribute only for roundtrip
         original_attr = oid_conversion_attributes[0]

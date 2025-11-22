@@ -92,8 +92,6 @@ objectClass: person
         created using FlextLdifModels.Entry directly or parsed from LDIF.
         This test validates that entries can be created programmatically.
         """
-        from flext_ldif.models import FlextLdifModels
-
         # Create entry using Entry model directly
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(

@@ -11,7 +11,9 @@ All functionality accessed through FlextLdif facade.
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdif
+from typing import cast
+
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def extract_acls_from_entry() -> None:
@@ -93,7 +95,9 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
         "permissions": {"read": True, "write": True},
     }
 
-    evaluation_result = acl_service.evaluate_acl_context(acls, eval_context)
+    # Cast acls to FlextLdifModels.Acl for API compatibility
+    acls_typed = [cast("FlextLdifModels.Acl", acl) for acl in acls]
+    evaluation_result = acl_service.evaluate_acl_context(acls_typed, eval_context)
 
     if evaluation_result.is_success:
         allowed = evaluation_result.unwrap()
@@ -164,7 +168,6 @@ def execute_acl_service() -> None:
         },
     )
     if entry_result.is_failure:
-        print(f"Failed to create entry: {entry_result.error}")
         return
     entry_result.unwrap()
 
@@ -218,7 +221,9 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
         "permissions": {"read": True},
     }
 
-    eval_result = acl_service.evaluate_acl_context(acls, eval_context)
+    # Cast acls to FlextLdifModels.Acl for API compatibility
+    acls_typed = [cast("FlextLdifModels.Acl", acl) for acl in acls]
+    eval_result = acl_service.evaluate_acl_context(acls_typed, eval_context)
 
     if eval_result.is_success:
         # Validate entry

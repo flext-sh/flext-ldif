@@ -34,12 +34,7 @@ mail: john.doe@example.com
         entries = parse_result.unwrap()
         write_result = api.write(entries, Path("output.ldif"))
         if write_result.is_success:
-            content = write_result.unwrap()
-            print(f"Success: {len(content)} bytes written")
-        else:
-            print(f"Write failed: {write_result.error}")
-    else:
-        print(f"Parse failed: {parse_result.error}")
+            write_result.unwrap()
 
 
 def parse_file_example() -> None:
@@ -51,10 +46,7 @@ def parse_file_example() -> None:
         # Single operation - library handles opening, reading, closing
         result = api.parse(sample_file)
         if result.is_success:
-            entries = result.unwrap()
-            print(f"Parsed {len(entries)} entries")
-        else:
-            print(f"Failed to parse: {result.error}")
+            result.unwrap()
 
 
 def write_file_example() -> None:
@@ -71,10 +63,7 @@ sn: User
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
         entries = parse_result.unwrap()
-        write_result = api.write(entries, Path("examples/output.ldif"))
-        print("Written" if write_result.is_success else f"Error: {write_result.error}")
-    else:
-        print(f"Parse error: {parse_result.error}")
+        api.write(entries, Path("examples/output.ldif"))
 
 
 def inspect_entry_model() -> None:
@@ -90,24 +79,15 @@ mail: inspect@example.com
     # Safe access with error handling
     if result.is_success:
         entries = result.unwrap()
-        for entry in entries:
-            print(f"DN: {entry.dn}")
-            print(f"Attributes: {list(entry.attributes.attributes.keys())}")
-    else:
-        print(f"Failed to parse: {result.error}")
+        for _entry in entries:
+            pass
 
 
 if __name__ == "__main__":
-    print("=== FlextLdif Basic Usage Examples ===\n")
-
-    print("1. Parse and Write Pipeline:")
     parse_and_write_pipeline()
 
-    print("\n2. Parse File:")
     parse_file_example()
 
-    print("\n3. Write File:")
     write_file_example()
 
-    print("\n4. Inspect Entry Model:")
     inspect_entry_model()

@@ -12,8 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifModels, FlextLdifParser
 
 
 class TestParserFormatOptions:
@@ -161,7 +160,14 @@ sn:
         acl_entries = [
             e
             for e in response.entries
-            if any("aci" in attr.lower() for attr in e.attributes)
+            if any(
+                "aci" in attr.lower()
+                for attr in (
+                    e.attributes.keys()
+                    if hasattr(e.attributes, "keys")
+                    else e.attributes
+                )
+            )
         ]
         assert len(acl_entries) > 0
 
@@ -188,7 +194,14 @@ sn:
         acl_entries = [
             e
             for e in response.entries
-            if any("aci" in attr.lower() for attr in e.attributes)
+            if any(
+                "aci" in attr.lower()
+                for attr in (
+                    e.attributes.keys()
+                    if hasattr(e.attributes, "keys")
+                    else e.attributes
+                )
+            )
         ]
         assert len(acl_entries) > 0
         assert len(response.entries) > 0

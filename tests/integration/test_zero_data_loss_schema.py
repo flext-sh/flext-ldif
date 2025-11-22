@@ -21,9 +21,9 @@ import logging
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.utilities import FlextLdifUtilities
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,8 @@ class TestSchemaDeviationsSyntaxQuotes:
         )
 
         logger.debug(
-            f"OID syntax quotes tracked: {format_details.get('syntax_quotes')}"
+            "OID syntax quotes tracked: %s",
+            format_details.get("syntax_quotes"),
         )
 
     def test_oud_syntax_no_quotes_tracked(
@@ -99,7 +100,8 @@ class TestSchemaDeviationsSyntaxQuotes:
         )
 
         logger.debug(
-            f"OUD syntax quotes tracked: {format_details.get('syntax_quotes')}"
+            "OUD syntax quotes tracked: %s",
+            format_details.get("syntax_quotes"),
         )
 
 
@@ -142,7 +144,8 @@ class TestSchemaDeviationsXOrigin:
         assert format_details["x_origin_presence"] is False, "Should detect no X-ORIGIN"
 
         logger.debug(
-            f"OID X-ORIGIN presence: {format_details.get('x_origin_presence')}"
+            "OID X-ORIGIN presence: %s",
+            format_details.get("x_origin_presence"),
         )
 
     def test_oud_x_origin_tracked(
@@ -174,7 +177,7 @@ class TestSchemaDeviationsXOrigin:
             "Should preserve X-ORIGIN value"
         )
 
-        logger.debug(f"OUD X-ORIGIN: {format_details.get('x_origin_value')}")
+        logger.debug("OUD X-ORIGIN: %s", format_details.get("x_origin_value"))
 
 
 class TestSchemaDeviationsNameAliases:
@@ -215,7 +218,7 @@ class TestSchemaDeviationsNameAliases:
             "Should preserve name value"
         )
 
-        logger.debug(f"OID NAME format: {format_details.get('name_format')}")
+        logger.debug("OID NAME format: %s", format_details.get("name_format"))
 
     def test_oud_multiple_names_tracked(
         self,
@@ -245,7 +248,7 @@ class TestSchemaDeviationsNameAliases:
             "Should preserve name values"
         )
 
-        logger.debug(f"OUD NAME values: {name_values}")
+        logger.debug("OUD NAME values: %s", name_values)
 
 
 class TestSchemaDeviationsObsolete:
@@ -281,7 +284,8 @@ class TestSchemaDeviationsObsolete:
         assert "obsolete_position" in format_details, "Should track OBSOLETE position"
 
         logger.debug(
-            f"OBSOLETE tracked: position={format_details.get('obsolete_position')}"
+            "OBSOLETE tracked: position=%s",
+            format_details.get("obsolete_position"),
         )
 
     def test_no_obsolete_tracked(
@@ -336,7 +340,8 @@ class TestSchemaDeviationsSpacing:
         assert "trailing_spaces" in format_details, "Missing trailing_spaces tracking"
 
         logger.debug(
-            f"Trailing spaces tracked: '{format_details.get('trailing_spaces')}'"
+            "Trailing spaces tracked: '%s'",
+            format_details.get("trailing_spaces"),
         )
 
     def test_field_order_tracked(
@@ -365,7 +370,7 @@ class TestSchemaDeviationsSpacing:
         assert "NAME" in field_order, "Should track NAME position"
         assert "SYNTAX" in field_order, "Should track SYNTAX position"
 
-        logger.debug(f"Field order: {field_order}")
+        logger.debug("Field order: %s", field_order)
 
 
 class TestSchemaDeviationsOriginalString:
@@ -407,7 +412,7 @@ class TestSchemaDeviationsOriginalString:
             f"  Got: '{original_string}'"
         )
 
-        logger.debug(f"Original string length: {len(original_string or '')}")
+        logger.debug("Original string length: %s", len(original_string or ""))
 
     def test_oud_original_string_preserved(
         self,
@@ -472,7 +477,7 @@ class TestSchemaDeviationsRoundTrip:
             "Missing original for round-trip"
         )
 
-        logger.debug(f"Metadata fields preserved: {list(format_details.keys())}")
+        logger.debug("Metadata fields preserved: %s", list(format_details.keys()))
 
     def test_oud_to_rfc_metadata_preserved(self) -> None:
         """Test OUD→RFC conversion preserves all metadata."""
@@ -503,7 +508,7 @@ class TestSchemaDeviationsRoundTrip:
             "Missing original for round-trip"
         )
 
-        logger.debug(f"Metadata fields preserved: {list(format_details.keys())}")
+        logger.debug("Metadata fields preserved: %s", list(format_details.keys()))
 
 
 class TestSchemaDeviationsUtilities:
@@ -520,7 +525,7 @@ class TestSchemaDeviationsUtilities:
             "SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
         )
 
-        details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
 
         # Verify all expected fields are captured
         expected_fields = [
@@ -541,7 +546,7 @@ class TestSchemaDeviationsUtilities:
         assert details["desc_presence"] is True, "Should detect DESC"
         assert details["oid_value"] == "0.9.2342.19200300.100.1.1", "Should extract OID"
 
-        logger.debug(f"Total fields captured: {len(details)}")
+        logger.debug("Total fields captured: %s", len(details))
 
     def test_analyze_oud_style_formatting(self) -> None:
         """Test analyze_schema_formatting for OUD-style definition."""
@@ -554,7 +559,7 @@ class TestSchemaDeviationsUtilities:
             "X-ORIGIN 'RFC 4519' )"
         )
 
-        details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
 
         # Verify OUD-specific fields
         assert details["syntax_quotes"] is False, "OUD should not have syntax quotes"
@@ -563,7 +568,7 @@ class TestSchemaDeviationsUtilities:
             "Should preserve X-ORIGIN value"
         )
 
-        logger.debug(f"OUD fields: X-ORIGIN={details.get('x_origin_value')}")
+        logger.debug("OUD fields: X-ORIGIN=%s", details.get("x_origin_value"))
 
 
 class TestSchemaDeviationsMissingSpaces:
@@ -594,7 +599,7 @@ class TestSchemaDeviationsMissingSpaces:
             attr = result.unwrap()
             if attr.metadata and attr.metadata.schema_format_details:
                 original = attr.metadata.schema_format_details.get(
-                    "original_string_complete"
+                    "original_string_complete",
                 )
                 assert "SYNTAX1.3.6.1" in (original or ""), (
                     "Original malformed string should be preserved"
@@ -613,13 +618,13 @@ class TestSchemaDeviationsAttributeKeyCasing:
             "SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         )
 
-        details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
 
         assert details.get("attribute_case") == "attributetypes", (
             "Should detect lowercase 'attributetypes'"
         )
 
-        logger.debug(f"OID attribute case: {details.get('attribute_case')}")
+        logger.debug("OID attribute case: %s", details.get("attribute_case"))
 
     def test_oud_mixed_case_attribute_key(self) -> None:
         """Test OUD mixed-case 'attributeTypes:' is tracked."""
@@ -629,13 +634,13 @@ class TestSchemaDeviationsAttributeKeyCasing:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         )
 
-        details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Metadata.analyze_schema_formatting(definition)
 
         assert details.get("attribute_case") == "attributeTypes", (
             "Should detect mixed-case 'attributeTypes'"
         )
 
-        logger.debug(f"OUD attribute case: {details.get('attribute_case')}")
+        logger.debug("OUD attribute case: %s", details.get("attribute_case"))
 
 
 class TestSchemaDeviationsComplete:
@@ -675,7 +680,7 @@ class TestSchemaDeviationsComplete:
         # Verify OID-specific values
         assert format_details["syntax_quotes"] is True, "OID syntax should be quoted"
 
-        logger.info(f"All OID deviations tracked: {len(format_details)} fields")
+        logger.info("All OID deviations tracked: %s fields", len(format_details))
 
     def test_all_oud_deviations_tracked(self) -> None:
         """Test ALL OUD deviations are tracked for zero data loss."""
@@ -715,4 +720,4 @@ class TestSchemaDeviationsComplete:
         )
         assert format_details["x_origin_presence"] is True, "OUD should have X-ORIGIN"
 
-        logger.info(f"All OUD deviations tracked: {len(format_details)} fields")
+        logger.info("All OUD deviations tracked: %s fields", len(format_details))

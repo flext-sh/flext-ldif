@@ -489,7 +489,7 @@ class TestBuilderPattern:
     def test_with_oid_to_lookup(self) -> None:
         """Test with_oid_to_lookup method."""
         service = FlextLdifSyntax.builder().with_oid_to_lookup(
-            "1.3.6.1.4.1.1466.115.121.1.7"
+            "1.3.6.1.4.1.1466.115.121.1.7",
         )
         assert service.oid_to_lookup == "1.3.6.1.4.1.1466.115.121.1.7"
 
@@ -572,7 +572,8 @@ class TestValueValidationDetailed:
         """Test validating valid DN value."""
         service = FlextLdifSyntax()
         result = service.validate_value(
-            "cn=test,dc=example,dc=com", "1.3.6.1.4.1.1466.115.121.1.12"
+            "cn=test,dc=example,dc=com",
+            "1.3.6.1.4.1.1466.115.121.1.12",
         )
         assert result.is_success
         assert result.unwrap() is True
@@ -588,7 +589,8 @@ class TestValueValidationDetailed:
         """Test validating valid GeneralizedTime value."""
         service = FlextLdifSyntax()
         result = service.validate_value(
-            "20250101120000Z", "1.3.6.1.4.1.1466.115.121.1.24"
+            "20250101120000Z",
+            "1.3.6.1.4.1.1466.115.121.1.24",
         )
         assert result.is_success
         assert result.unwrap() is True

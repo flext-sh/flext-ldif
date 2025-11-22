@@ -264,7 +264,7 @@ class FlextLdifUtilitiesSchema:
                 "Field transformation returned unexpected type for SchemaObjectClass",
             )
         return FlextResult.fail(
-            f"Unknown schema object type: {type(schema_obj).__name__}"
+            f"Unknown schema object type: {type(schema_obj).__name__}",
         )
 
     @staticmethod
@@ -272,7 +272,8 @@ class FlextLdifUtilitiesSchema:
         transformed: FlextLdifModels.SchemaAttribute
         | FlextLdifModels.SchemaObjectClass,
         field_transforms: dict[
-            str, Callable[[object], object] | str | list[str] | None
+            str,
+            Callable[[object], object] | str | list[str] | None,
         ],
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[

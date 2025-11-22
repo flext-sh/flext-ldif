@@ -15,8 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 class TestRFCFixtures:
@@ -48,8 +49,6 @@ class TestRFCFixtures:
         unwrapped = result.unwrap()
         assert isinstance(unwrapped, list)
         entries = unwrapped
-
-        from flext_ldif.models import FlextLdifModels
 
         categories: dict[str, list[FlextLdifModels.Entry]] = {
             "domain": [],
@@ -475,8 +474,6 @@ class TestCrossServerFixtures:
 
     def test_fixture_entry_validation(self) -> None:
         """Test that all fixture entries validate successfully."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         servers = {
             "RFC": "tests/fixtures/rfc/rfc_entries_fixtures.ldif",
             "OID": "tests/fixtures/oid/oid_entries_fixtures.ldif",

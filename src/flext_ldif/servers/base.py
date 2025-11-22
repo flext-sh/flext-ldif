@@ -50,21 +50,16 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Server implementations (needed for type hints in overloaded methods)
+logger = FlextLogger(__name__)
+
 if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-logger = FlextLogger(__name__)
-
 
 def _get_server_registry() -> object:
-    """Get server registry instance using protocol to avoid circular dependency."""
-    # Import at function level to break circular dependency
-    # This is the only acceptable lazy import per strict rules
-    # base.py -> services/server.py -> base.py (circular dependency)
-    import flext_ldif.services.server as server_module  # noqa: PLC0415
-
-    return server_module.FlextLdifServer.get_global_instance()
+    """Get server registry instance using lazy module-level import below."""
+    # _FlextLdifServer is imported after class definition to avoid circular import
+    return _FlextLdifServer.get_global_instance()
 
 
 # NOTE: BaseServerConstants has been consolidated into FlextLdifServersRfc.Constants
@@ -237,7 +232,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @overload
     def get_schema_quirk(
-        self, server_type: Literal["rfc"]
+        self,
+        server_type: Literal["rfc"],
     ) -> FlextLdifServersRfc.Schema: ...
 
     @overload
@@ -264,7 +260,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # Registry has schema method (FlextLdifServer implements it)
             if hasattr(registry, "schema"):
                 return cast(
-                    "FlextLdifServersBase.Schema | None", registry.schema(server_type)
+                    "FlextLdifServersBase.Schema | None",
+                    registry.schema(server_type),
                 )
         return self.schema_quirk
 
@@ -287,7 +284,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # Registry has acl method (FlextLdifServer implements it)
             if hasattr(registry, "acl"):
                 return cast(
-                    "FlextLdifServersBase.Acl | None", registry.acl(server_type)
+                    "FlextLdifServersBase.Acl | None",
+                    registry.acl(server_type),
                 )
         return self.acl_quirk
 
@@ -310,7 +308,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # Registry has entry method (FlextLdifServer implements it)
             if hasattr(registry, "entry"):
                 return cast(
-                    "FlextLdifServersBase.Entry | None", registry.entry(server_type)
+                    "FlextLdifServersBase.Entry | None",
+                    registry.entry(server_type),
                 )
         return self.entry_quirk
 
@@ -356,7 +355,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if isinstance(first_entry, FlextLdifModels.Entry):
                 return FlextResult[FlextLdifModels.Entry].ok(first_entry)
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Invalid entry type: {type(first_entry).__name__}"
+                f"Invalid entry type: {type(first_entry).__name__}",
             )
 
         return FlextResult[FlextLdifModels.Entry].fail("No valid parameters")
@@ -366,7 +365,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         parse_result = self.parse(ldif_text)
         if not parse_result.is_success:
             return FlextResult[FlextLdifModels.Entry].fail(
-                parse_result.error or "Parse failed"
+                parse_result.error or "Parse failed",
             )
         parse_response = parse_result.unwrap()
         if not parse_response.entries:
@@ -379,7 +378,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             return FlextResult[FlextLdifModels.Entry].ok(first_entry)
         # Fallback: create new Entry from domain Entry (shouldn't happen in practice)
         return FlextResult[FlextLdifModels.Entry].ok(
-            FlextLdifModels.Entry.model_validate(first_entry.model_dump())
+            FlextLdifModels.Entry.model_validate(first_entry.model_dump()),
         )
 
     @overload
@@ -436,6 +435,18 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
         return result.unwrap()
 
+    @overload
+    def __new__(
+        cls,
+        *,
+        ldif_text: str | None = None,
+        entries: list[FlextLdifModels.Entry] | None = None,
+        operation: Literal["parse", "write"] | None = None,
+    ) -> Self: ...
+
+    @overload
+    def __new__(cls, **kwargs: object) -> Self: ...
+
     def __new__(cls, **kwargs: object) -> Self:
         """Override __new__ to support auto-execute and processor instantiation.
 
@@ -456,7 +467,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """
         # Use object.__new__ directly to avoid FlextService.__new__ calling execute() without params
         # This allows us to control when execute() is called with proper parameters
-        instance = cast("Self", object.__new__(cls))
+        instance: Self = cast("Self", object.__new__(cls))
 
         # Initialize the instance
         type(instance).__init__(instance, **kwargs)
@@ -1204,7 +1215,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         # REMOVED: should_filter_out_objectclass - Roteamento interno, não deve ser abstrato
 
         def execute(
-            self, **kwargs: object
+            self,
+            **kwargs: object,
         ) -> FlextResult[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
         ]:
@@ -1567,12 +1579,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if isinstance(acl_line, str):
                 acl_result = self._parse_acl(acl_line)
                 return FlextResult[FlextLdifModels.Acl | str].ok(
-                    acl_result.unwrap() if acl_result.is_success else ""
+                    acl_result.unwrap() if acl_result.is_success else "",
                 )
             if isinstance(acl_model, FlextLdifModels.Acl):
                 str_result = self._write_acl(acl_model)
                 return FlextResult[FlextLdifModels.Acl | str].ok(
-                    str_result.unwrap() if str_result.is_success else ""
+                    str_result.unwrap() if str_result.is_success else "",
                 )
 
             return FlextResult[FlextLdifModels.Acl | str].ok("")
@@ -1883,17 +1895,23 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 if entries_result.is_success:
                     entries = entries_result.unwrap()
                     return FlextResult[FlextLdifModels.Entry | str].ok(
-                        entries[0] if entries else ""
+                        entries[0] if entries else "",
                     )
                 return FlextResult[FlextLdifModels.Entry | str].ok("")
             if isinstance(entry_model, FlextLdifModels.Entry):
                 str_result = self._write_entry(entry_model)
                 return FlextResult[FlextLdifModels.Entry | str].ok(
-                    str_result.unwrap() if str_result.is_success else ""
+                    str_result.unwrap() if str_result.is_success else "",
                 )
 
             return FlextResult[FlextLdifModels.Entry | str].ok("")
 
+
+# =========================================================================
+# Circular import - import after FlextLdifServersBase class definition
+# to break circular dependency where services.server imports FlextLdifServersBase
+
+from flext_ldif.services.server import FlextLdifServer as _FlextLdifServer  # noqa: E402
 
 # =========================================================================
 

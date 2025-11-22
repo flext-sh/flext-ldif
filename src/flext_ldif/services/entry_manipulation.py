@@ -722,11 +722,13 @@ class EntryManipulationServices:
         # Convert dict[str, list[str]] to dict[str, str | list[str]] for ldap3.add
         # ldap3.add accepts dict[str, str | list[str]], and we have dict[str, list[str]]
         # which is compatible (list[str] is a subtype of str | list[str])
-        return connection.add(
+        # Note: connection.add() is not typed in ldap3
+        result = connection.add(
             dn_str,
             object_class=object_class,
             attributes=attempted_attributes,
-        )
+        )  # type: ignore[no-untyped-call]
+        return bool(result) if result is not None else False
 
     def _extract_undefined_attribute_internal(
         self,

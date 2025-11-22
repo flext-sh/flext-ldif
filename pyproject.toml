@@ -103,6 +103,7 @@
             structlog = "^25.4.0"
             types-docker = "^7.1.0.20250916"
             vulture = ">=2.13"
+        coverage = "^7.12.0"
 
         [tool.poetry.group.test.dependencies]
             
@@ -189,6 +190,14 @@ docker = ">=7.1.0"
             "tests",
         ]
 
+    [tool.pyrefly]
+        search-path = [
+            "src",
+            "tests",
+            "examples",
+            "scripts",
+        ]
+
     [tool.ruff]
         extend = "../ruff-shared.toml"
 
@@ -196,4 +205,3 @@ docker = ">=7.1.0"
             known-first-party = [
                 "flext_ldif",
             ]
-

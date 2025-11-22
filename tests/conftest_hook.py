@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import Any
+from typing import cast
 
 import pytest
 
@@ -32,8 +32,9 @@ LDAP_FAILURE_PATTERNS = [
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(
-    item: pytest.Item, call: pytest.CallInfo[object]
-) -> Generator[Any]:
+    item: pytest.Item,
+    call: pytest.CallInfo[object],
+) -> Generator[object]:
     """Detect LDAP failures and mark container dirty (REGRA 4).
 
     Examines test failures and identifies LDAP service failures vs test logic failures.
@@ -54,14 +55,21 @@ def pytest_runtest_makereport(
 
     """
     outcome = yield
-    report = outcome.get_result()
+    # Type narrowing: outcome from hookwrapper has get_result() method
+    # Use getattr to safely access get_result and cast the result
+    get_result_method = getattr(outcome, "get_result", None)
+    if get_result_method is None:
+        return
+    report = cast("pytest.TestReport", get_result_method())
 
     # Only process failures during test execution (not setup/teardown)
     if report.when != "call" or not report.failed:
         return
 
     # Check if test uses ldap_container fixture
-    if not hasattr(item, "fixturenames") or "ldap_container" not in item.fixturenames:
+    # Type narrowing: item has fixturenames attribute for Function/Class items
+    fixturenames = getattr(item, "fixturenames", None)
+    if fixturenames is None or "ldap_container" not in fixturenames:
         return
 
     # Get exception information
@@ -83,7 +91,7 @@ def pytest_runtest_makereport(
     try:
         # Get docker_control from session fixtures (FlextTestDocker)
         docker_control = item.session._fixturemanager._arg2fixturedefs.get(
-            "docker_control"
+            "docker_control",
         )
 
         if docker_control and len(docker_control) > 0:
@@ -103,12 +111,14 @@ def pytest_runtest_makereport(
 
                     if mark_result.is_success:
                         # Add section to test report
-                        report.sections.append((
-                            "⚠️  LDAP SERVICE FAILURE DETECTED",
-                            f"Container '{container_name}' marked DIRTY for recreation.\n"
-                            f"Error: {exception_message}\n"
-                            f"Next test run will recreate the container.",
-                        ))
+                        report.sections.append(
+                            (
+                                "⚠️  LDAP SERVICE FAILURE DETECTED",
+                                f"Container '{container_name}' marked DIRTY for recreation.\n"
+                                f"Error: {exception_message}\n"
+                                f"Next test run will recreate the container.",
+                            ),
+                        )
 
                         # Log warning
                         if hasattr(docker_instance, "logger"):
@@ -122,15 +132,21 @@ def pytest_runtest_makereport(
                             )
                     else:
                         # Failed to mark dirty - log error
-                        report.sections.append((
-                            "⚠️  LDAP FAILURE WARNING",
-                            f"LDAP failure detected but failed to mark container dirty:\n"
-                            f"{mark_result.error}",
-                        ))
+                        report.sections.append(
+                            (
+                                "⚠️  LDAP FAILURE WARNING",
+                                (
+                                    f"LDAP failure detected but failed to mark container dirty:\n"
+                                    f"{mark_result.error}"
+                                ),
+                            ),
+                        )
 
     except Exception as e:
         # Failed to access docker_control - log but don't fail test
-        report.sections.append((
-            "⚠️  DIRTY MARKING ERROR",
-            f"LDAP failure detected but failed to mark container dirty:\n{e}",
-        ))
+        report.sections.append(
+            (
+                "⚠️  DIRTY MARKING ERROR",
+                f"LDAP failure detected but failed to mark container dirty:\n{e}",
+            ),
+        )

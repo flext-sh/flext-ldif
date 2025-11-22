@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif import FlextLdifMigrationPipeline
 
 
 class TestMigrationPipelineInitialization:

@@ -271,9 +271,9 @@ def count_entries(ldif_content: str) -> int:
         Number of LDAP entries
 
     """
-    return len([
-        line for line in ldif_content.split("\n") if line.lower().startswith("dn:")
-    ])
+    return len(
+        [line for line in ldif_content.split("\n") if line.lower().startswith("dn:")],
+    )
 
 
 # ============================================================================

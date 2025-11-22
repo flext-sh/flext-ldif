@@ -13,9 +13,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib.util
+
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConfig, FlextLdifConstants, FlextLdifModels, services
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.statistics import FlextLdifStatistics
 
@@ -36,8 +38,6 @@ class TestNewServiceAPIs:
 
     def test_models_imported_correctly(self) -> None:
         """Test that FlextLdif models can be imported."""
-        from flext_ldif import FlextLdifModels
-
         assert FlextLdifModels is not None
 
     def test_constants_available(self) -> None:
@@ -46,22 +46,16 @@ class TestNewServiceAPIs:
 
     def test_utilities_module_exists(self) -> None:
         """Test that utilities module exists for newer functionality."""
-        import importlib.util
-
         # Module should be found in the package for newer functionality
         spec = importlib.util.find_spec("flext_ldif.utilities")
         assert spec is not None, "utilities module should exist for newer functionality"
 
     def test_services_module_exists(self) -> None:
         """Test that services module structure is correct."""
-        from flext_ldif import services
-
         assert hasattr(services, "FlextLdifDn")
         assert hasattr(services, "FlextLdifStatistics")
 
     def test_configuration_imports(self) -> None:
         """Test that configuration can be imported."""
-        from flext_ldif import FlextLdifConfig
-
         config = FlextLdifConfig()
         assert config is not None

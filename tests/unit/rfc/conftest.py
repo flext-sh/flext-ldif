@@ -10,12 +10,9 @@ from typing import cast
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.writer import FlextLdifWriter
-
-from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 
 @pytest.fixture

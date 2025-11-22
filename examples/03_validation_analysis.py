@@ -16,51 +16,54 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
 
 
 def validate_entries_example() -> None:
     """Validate LDIF entries using railway pattern."""
     api = FlextLdif.get_instance()
 
-    # Create entries - library handles Pydantic v2 validation
-    entries = [
-        api.models.Entry.create(
-            dn="cn=Valid User,ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person", "inetOrgPerson"],
-                "cn": ["Valid User"],
-                "sn": ["User"],
-                "mail": ["valid@example.com"],
-            },
-        ).unwrap(),
-        api.models.Entry.create(
-            dn="cn=Test,ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": ["Test"],
-                # May be missing 'sn' required by person objectClass
-            },
-        ).unwrap(),
-    ]
+    # Create entries - api.models.Entry.create() returns FlextLdifModelsDomains.Entry
+    # but FlextLdifModels.Entry inherits from it, so cast is safe
+    entry1_result = api.models.Entry.create(
+        dn="cn=Valid User,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person", "inetOrgPerson"],
+            "cn": ["Valid User"],
+            "sn": ["User"],
+            "mail": ["valid@example.com"],
+        },
+    )
+    if entry1_result.is_failure:
+        return
+    entry1 = cast("FlextLdifModels.Entry", entry1_result.unwrap())
+
+    entry2_result = api.models.Entry.create(
+        dn="cn=Test,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person"],
+            "cn": ["Test"],
+            # May be missing 'sn' required by person objectClass
+        },
+    )
+    if entry2_result.is_failure:
+        return
+    entry2 = cast("FlextLdifModels.Entry", entry2_result.unwrap())
+
+    entries = [entry1, entry2]
 
     # Validate - library handles RFC 2849 compliance
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
-        print("Validation failed")
         return
 
     report = validation_result.unwrap()
-    errors_count = len(report.errors) if report.errors else 0
-
-    result_msg = (
-        f"Valid: {report.is_valid}, "
-        f"Errors: {errors_count}, "
-        f"Total entries: {report.total_entries}"
-    )
-    print(result_msg)
+    len(report.errors) if report.errors else 0
 
 
 def analyze_entries_example() -> None:
@@ -95,14 +98,7 @@ ou: People
         entries = parse_result.unwrap()
         analyze_result = api.analyze(entries)
         if analyze_result.is_success:
-            stats = analyze_result.unwrap()
-            print(f"Total entries: {stats.total_entries}")
-            print(f"ObjectClass dist: {stats.objectclass_distribution}")
-            print(f"Patterns detected: {stats.patterns_detected}")
-        else:
-            print("Analysis failed")
-    else:
-        print("Parse failed")
+            analyze_result.unwrap()
 
 
 def railway_validation_pipeline() -> None:
@@ -126,48 +122,60 @@ mail: pipeline@example.com
             validation_report = validate_result.unwrap()
             if validation_report.is_valid:
                 analyze_result = api.analyze(entries)
-                result = analyze_result
+                result = cast("FlextResult[object]", analyze_result)
             else:
-                result = FlextResult[dict[str, object]].fail(
-                    f"Validation failed: {validation_report}",
+                result = cast(
+                    "FlextResult[object]",
+                    FlextResult[dict[str, object]].fail(
+                        f"Validation failed: {validation_report}",
+                    ),
                 )
         else:
-            result = validate_result
+            result = cast("FlextResult[object]", validate_result)
     else:
-        result = parse_result
+        result = cast("FlextResult[object]", parse_result)
 
     if result.is_success:
         stats = result.unwrap()
         if isinstance(stats, FlextLdifModels.EntryAnalysisResult):
-            print(f"Pipeline succeeded: {stats.total_entries} entries analyzed")
-        else:
-            print("Pipeline succeeded")
-    else:
-        print(f"Pipeline failed: {result.error}")
+            pass
 
 
 def validate_and_filter_pipeline() -> None:
     """Validate and filter entries - library automates validation."""
     api = FlextLdif.get_instance()
 
-    entries = [
-        api.models.Entry.create(
-            dn="cn=Valid1,ou=People,dc=example,dc=com",
-            attributes={"objectClass": ["person"], "cn": ["Valid1"], "sn": ["One"]},
-        ).unwrap(),
-        api.models.Entry.create(
-            dn="cn=Valid2,ou=People,dc=example,dc=com",
-            attributes={"objectClass": ["person"], "cn": ["Valid2"], "sn": ["Two"]},
-        ).unwrap(),
-        api.models.Entry.create(
-            dn="cn=MaybeInvalid,ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": ["MaybeInvalid"],
-                # Potentially missing required 'sn'
-            },
-        ).unwrap(),
-    ]
+    # Create entries - api.models.Entry.create() returns FlextLdifModelsDomains.Entry
+    # but FlextLdifModels.Entry inherits from it, so cast is safe
+    entry1_result = api.models.Entry.create(
+        dn="cn=Valid1,ou=People,dc=example,dc=com",
+        attributes={"objectClass": ["person"], "cn": ["Valid1"], "sn": ["One"]},
+    )
+    if entry1_result.is_failure:
+        return
+    entry1 = cast("FlextLdifModels.Entry", entry1_result.unwrap())
+
+    entry2_result = api.models.Entry.create(
+        dn="cn=Valid2,ou=People,dc=example,dc=com",
+        attributes={"objectClass": ["person"], "cn": ["Valid2"], "sn": ["Two"]},
+    )
+    if entry2_result.is_failure:
+        return
+    entry2 = cast("FlextLdifModels.Entry", entry2_result.unwrap())
+
+    entry3_result = api.models.Entry.create(
+        dn="cn=MaybeInvalid,ou=People,dc=example,dc=com",
+        attributes={
+            "objectClass": ["person"],
+            "cn": ["MaybeInvalid"],
+            # Potentially missing required 'sn'
+        },
+    )
+    if entry3_result.is_failure:
+        return
+    entry3 = cast("FlextLdifModels.Entry", entry3_result.unwrap())
+
+    entries = [entry1, entry2, entry3]
 
     # Validate - library provides detailed report
     result = api.validate_entries(entries)
@@ -175,10 +183,7 @@ def validate_and_filter_pipeline() -> None:
     if result.is_success:
         report = result.unwrap()
         if report.is_valid:
-            print(f"All {len(entries)} entries are valid")
-        else:
-            errors_list = report.errors or []
-            print(f"Found {len(errors_list)} validation errors")
+            pass
 
 
 def analyze_by_objectclass_pipeline() -> None:
@@ -217,24 +222,16 @@ member: cn=Person1,ou=People,dc=example,dc=com
                 objectclass_str = str(objectclass)
                 filter_result = api.filter(entries, objectclass=objectclass_str)
                 if filter_result.is_success:
-                    filtered = filter_result.unwrap()
-                    print(f"{objectclass_str}: {len(filtered)} entries")
+                    filter_result.unwrap()
 
 
 if __name__ == "__main__":
-    print("=== FlextLdif Validation and Analysis Examples ===\n")
-
-    print("1. Validate Entries:")
     validate_entries_example()
 
-    print("\n2. Analyze Entries:")
     analyze_entries_example()
 
-    print("\n3. Railway Validation Pipeline:")
     railway_validation_pipeline()
 
-    print("\n4. Validate and Filter:")
     validate_and_filter_pipeline()
 
-    print("\n5. Analyze by ObjectClass:")
     analyze_by_objectclass_pipeline()

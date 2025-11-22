@@ -61,7 +61,10 @@ def test_create_and_export_entry(
 
     # Search for it
     ldap_connection.search(
-        test_dn, "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        test_dn,
+        "(objectClass=*)",
+        search_scope="BASE",
+        attributes=["*"],
     )
 
     assert len(ldap_connection.entries) == 1

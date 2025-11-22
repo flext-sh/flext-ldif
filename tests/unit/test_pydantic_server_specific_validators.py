@@ -15,14 +15,19 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_ldif.models import FlextLdifModels
+from __future__ import annotations
+
+from flext_ldif import FlextLdifModels
 
 
-def get_validation_metadata(entry: FlextLdifModels.Entry) -> dict[str, object] | None:
+def get_validation_metadata(entry: object) -> dict[str, object] | None:
     """Helper to get validation_metadata from entry.metadata.validation_results."""
-    if not entry.metadata or not entry.metadata.validation_results:
+    if not hasattr(entry, "metadata"):
         return None
-    return entry.metadata.validation_results
+    metadata = getattr(entry, "metadata", None)
+    if not metadata or not hasattr(metadata, "validation_results"):
+        return None
+    return getattr(metadata, "validation_results", None)
 
 
 # =============================================================================
@@ -109,7 +114,7 @@ class TestOidServerSpecificValidation:
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(quirk_type="oid"),
         )
@@ -137,7 +142,7 @@ class TestOidServerSpecificValidation:
                     "objectClass": ["person"],
                     "cn": ["test"],
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(quirk_type="oid"),
         )
@@ -185,7 +190,7 @@ class TestOudServerSpecificValidation:
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",
@@ -211,7 +216,7 @@ class TestOudServerSpecificValidation:
                     "objectClass": ["person"],
                     "cn": ["test"],
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",
@@ -237,7 +242,7 @@ class TestOudServerSpecificValidation:
                     "objectClass": ["person"],
                     "cn": ["test"],
                     "userCertificate;binary": ["base64encodeddata"],
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",
@@ -289,7 +294,7 @@ class TestOpenLdapServerSpecificValidation:
                     "objectClass": ["person"],
                     "cn": ["test"],
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="openldap",
@@ -313,7 +318,7 @@ class TestOpenLdapServerSpecificValidation:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "attributeTypes": ["( 1.2.3.4 NAME 'test' )"],
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="openldap",
@@ -362,7 +367,7 @@ class TestActiveDirectoryServerSpecificValidation:
                 attributes={
                     "objectClass": ["user"],
                     # Missing 'cn' attribute
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="ad",
@@ -388,7 +393,7 @@ class TestActiveDirectoryServerSpecificValidation:
                     "objectClass": ["user"],
                     "cn": ["test"],
                     "objectGUID": ["\x00\x01\x02\x03"],  # Binary GUID
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="ad",
@@ -441,7 +446,7 @@ class TestRfcBaselineValidation:
                 attributes={
                     "objectClass": ["person"],
                     # Missing 'cn' attribute
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
@@ -472,7 +477,7 @@ class TestRfcBaselineValidation:
                     "objectClass": ["person"],
                     "cn": ["test"],
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
@@ -500,7 +505,7 @@ class TestRfcBaselineValidation:
                     "objectClass": ["person"],
                     "cn": ["test"],
                     "sn": ["Test"],
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
@@ -526,7 +531,7 @@ class TestMetadataCapture:
                 attributes={
                     "objectClass": ["person"],
                     "cn": ["test"],
-                }
+                },
             ),
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",
@@ -546,7 +551,7 @@ class TestMetadataCapture:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={}
+                attributes={},
             ),  # Missing objectClass and cn
             metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
@@ -570,7 +575,7 @@ class TestMetadataCapture:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={}
+                attributes={},
             ),  # Missing objectClass and cn
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",

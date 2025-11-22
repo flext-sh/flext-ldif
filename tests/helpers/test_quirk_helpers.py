@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 
-from ...helpers.test_schema_helpers import SchemaTestHelpers
+from .test_schema_helpers import SchemaTestHelpers
 
 
 class QuirkTestHelpers:

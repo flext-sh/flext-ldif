@@ -35,8 +35,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif import FlextLdifModels, FlextLdifWriter
 
 
 class TestWriterFormatOptions:
@@ -920,10 +919,12 @@ class TestWriterFormatOptions:
 
         # Should still produce valid LDIF even with very narrow line width
         # Check that key attributes are present (may be folded)
-        assert output and "dn:" in output
+        assert output
+        assert "dn:" in output
         # objectClass may be folded (e.g., "objectClas" on one line, "s:" on next)
         # So check for the pieces that make up the attribute
-        assert "objectClas" in output and "s:" in output
+        assert "objectClas" in output
+        assert "s:" in output
 
         # Verify all lines respect the 10-byte width (RFC 2849 compliance)
         lines = output.split("\n")
@@ -1000,5 +1001,6 @@ class TestWriterFormatOptions:
         # - fold_long_lines=True
         # etc.
         assert "version: 1" in output
-        assert output and "dn:" in output
+        assert output
+        assert "dn:" in output
         assert "objectClass:" in output

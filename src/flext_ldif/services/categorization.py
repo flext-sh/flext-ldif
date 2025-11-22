@@ -123,16 +123,16 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
             rules_dict: dict[str, object] = dict(categorization_rules)
             # Extract list fields with type guards - CategoryRules uses different field names
             user_dn_patterns = rules_dict.get("user_dn_patterns") or rules_dict.get(
-                "users"
+                "users",
             )
             group_dn_patterns = rules_dict.get("group_dn_patterns") or rules_dict.get(
-                "groups"
+                "groups",
             )
             hierarchy_dn_patterns = rules_dict.get(
-                "hierarchy_dn_patterns"
+                "hierarchy_dn_patterns",
             ) or rules_dict.get("hierarchy")
             schema_dn_patterns = rules_dict.get("schema_dn_patterns") or rules_dict.get(
-                "schema"
+                "schema",
             )
             user_objectclasses = rules_dict.get("user_objectclasses", [])
             group_objectclasses = rules_dict.get("group_objectclasses", [])
@@ -279,7 +279,7 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
                 self._rejection_tracker["invalid_dn_rfc4514"].append(entry)
                 # Track rejection in statistics
                 if entry.metadata.processing_stats:
-                    entry.metadata.processing_stats.mark_rejected(
+                    _ = entry.metadata.processing_stats.mark_rejected(
                         FlextLdifConstants.RejectionCategory.INVALID_DN,
                         f"DN validation failed (RFC 4514): {dn_str[:80]}",
                     )
@@ -295,7 +295,7 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
                 self._rejection_tracker["invalid_dn_rfc4514"].append(entry)
                 # Track rejection in statistics
                 if entry.metadata.processing_stats:
-                    entry.metadata.processing_stats.mark_rejected(
+                    _ = entry.metadata.processing_stats.mark_rejected(
                         FlextLdifConstants.RejectionCategory.INVALID_DN,
                         f"DN normalization failed: {norm_result.error or 'Unknown error'}",
                     )
@@ -364,29 +364,29 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
             if entry.metadata.processing_stats:
                 # EntryStatistics is frozen, use model_copy to update
                 updated_stats = entry.metadata.processing_stats.model_copy(
-                    update={"category_assigned": category}
+                    update={"category_assigned": category},
                 )
                 # Update metadata with new stats instance
                 updated_metadata = entry.metadata.model_copy(
-                    update={"processing_stats": updated_stats}
+                    update={"processing_stats": updated_stats},
                 )
                 # Create updated entry with new metadata
                 entry_to_append = entry.model_copy(
-                    update={"metadata": updated_metadata}
+                    update={"metadata": updated_metadata},
                 )
 
             categories[category].append(entry_to_append)
 
             if category == FlextLdifConstants.Categories.REJECTED:
                 self._rejection_tracker["categorization_rejected"].append(
-                    entry_to_append
+                    entry_to_append,
                 )
                 # Track rejection in statistics
                 if entry_to_append.metadata.processing_stats:
                     rejection_reason = (
                         reason if reason is not None else "No category match"
                     )
-                    entry_to_append.metadata.processing_stats.mark_rejected(
+                    _ = entry_to_append.metadata.processing_stats.mark_rejected(
                         FlextLdifConstants.RejectionCategory.NO_CATEGORY_MATCH,
                         rejection_reason,
                     )
@@ -449,15 +449,14 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
                     for entry in entries
                 ]
                 included, excluded = FlextLdifFilters.by_base_dn(
-                    model_entries, self._base_dn
+                    model_entries,
+                    self._base_dn,
                 )
                 # FlexibleCategories expects list[FlextLdifModelsDomains.Entry]
                 # Type narrowing: all entries in included are FlextLdifModels.Entry
                 # Convert to domain Entry type for FlexibleCategories
                 domain_entries = [
                     FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
-                    if isinstance(entry, FlextLdifModels.Entry)
-                    else entry
                     for entry in included
                 ]
                 filtered[category] = domain_entries
@@ -466,17 +465,17 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
                 # Track filter results in statistics
                 for entry in included:
                     if entry.metadata.processing_stats:
-                        entry.metadata.processing_stats.mark_filtered(
+                        _ = entry.metadata.processing_stats.mark_filtered(
                             FlextLdifConstants.FilterType.BASE_DN_FILTER,
                             passed=True,
                         )
                 for entry in excluded:
                     if entry.metadata.processing_stats:
-                        entry.metadata.processing_stats.mark_filtered(
+                        _ = entry.metadata.processing_stats.mark_filtered(
                             FlextLdifConstants.FilterType.BASE_DN_FILTER,
                             passed=False,
                         )
-                        entry.metadata.processing_stats.mark_rejected(
+                        _ = entry.metadata.processing_stats.mark_rejected(
                             FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
                             f"DN not under base DN: {self._base_dn}",
                         )

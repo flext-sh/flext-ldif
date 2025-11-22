@@ -42,11 +42,6 @@ mail: server@example.com
             entries = parse_result.unwrap()
             results[server] = entries if isinstance(entries, list) else []
 
-    print(
-        "Parsed with quirks: "
-        + ", ".join([f"{s}={len(e)}" for s, e in results.items()]),
-    )
-
 
 def compare_server_parsing() -> None:
     """Compare server parsing using list comprehension - library handles iteration."""
@@ -72,8 +67,6 @@ cn: schema
             entries = parse_result.unwrap()
             if isinstance(entries, list):
                 results[server] = len(entries)
-
-    print(f"Comparison: {results}")
 
 
 def migrate_between_servers() -> None:
@@ -102,18 +95,17 @@ cn: schema
     (input_dir / "source.ldif").write_text(source_ldif)
 
     # Library handles: parsing, quirk translation, validation, writing
-    result = api.migrate(
+    api.migrate(
         input_dir=input_dir,
         output_dir=output_dir,
         source_server="oid",  # Oracle Internet Directory
         target_server="oud",  # Oracle Unified Directory
     ).map(
         lambda stats: (
-            f"Migrated {stats.entries_by_category} entries in {len(stats.file_paths)} files"
+            f"Migrated {stats.entries_by_category} entries in "
+            f"{len(stats.file_paths)} files"
         ),
     )
-
-    print(result.unwrap_or("Migration failed"))
 
 
 def migrate_openldap_to_oud() -> None:
@@ -143,10 +135,7 @@ mail: openldap@example.com
     )
 
     if result.is_success:
-        stats = result.unwrap()
-        print(f"OpenLDAP→OUD: {len(stats.file_paths)} files created")
-    else:
-        print(f"Error: {result.error}")
+        result.unwrap()
 
 
 def migrate_to_rfc_compliant() -> None:
@@ -166,14 +155,12 @@ sn: Test
     (input_dir / "server.ldif").write_text(server_ldif)
 
     # Migrate to pure RFC - library strips server quirks automatically
-    result = api.migrate(
+    api.migrate(
         input_dir=input_dir,
         output_dir=output_dir,
         source_server="oid",
         target_server="rfc",
     )
-
-    print("RFC normalization: " + ("Success" if result.is_success else "Failed"))
 
 
 def pipeline_with_servers() -> None:
@@ -211,29 +198,18 @@ sn: Test
     write_result = api.write(entries)
 
     if write_result.is_success:
-        output = write_result.unwrap()
-        print(f"Pipeline: {len(output)} bytes")
-    else:
-        print(f"Error: {write_result.error}")
+        write_result.unwrap()
 
 
 if __name__ == "__main__":
-    print("=== FlextLdif Server-Specific Operations Examples ===\n")
-
-    print("1. Parse with Server Quirks:")
     parse_with_servers_example()
 
-    print("\n2. Compare Server Parsing:")
     compare_server_parsing()
 
-    print("\n3. Migrate Between Servers (OID→OUD):")
     migrate_between_servers()
 
-    print("\n4. Migrate OpenLDAP→OUD:")
     migrate_openldap_to_oud()
 
-    print("\n5. Migrate to RFC Compliant:")
     migrate_to_rfc_compliant()
 
-    print("\n6. Pipeline with Server Quirks:")
     pipeline_with_servers()

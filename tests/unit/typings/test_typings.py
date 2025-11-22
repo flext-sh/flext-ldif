@@ -8,8 +8,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdif
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -66,7 +69,10 @@ class TestFlextLdifTypesNamespace:
 
         # Only flext_ldif.constants and flext_ldif.models should be imported from flext_ldif
         # models is imported to use FlextLdifModels directly without TYPE_CHECKING
-        assert sorted(flext_ldif_imports) == ["flext_ldif.constants", "flext_ldif.models"]
+        assert sorted(flext_ldif_imports) == [
+            "flext_ldif.constants",
+            "flext_ldif.models",
+        ]
 
 
 class TestCommonDictionaryTypes:
@@ -167,7 +173,7 @@ class TestModelsNamespace:
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
         # Real attributes from OID/OUD LDIF
-        attrs: FlextLdifTypes.Models.EntryAttributesDict = {
+        attrs: dict[str, object] = {
             "cn": ["John Doe"],
             "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
             "sn": "Doe",
@@ -186,7 +192,7 @@ class TestModelsNamespace:
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
         # Real attribute definitions from RFC/OID schema
-        data: FlextLdifTypes.Models.AttributesData = {
+        data: dict[str, dict[str, object]] = {
             "cn": {
                 "oid": "2.5.4.3",
                 "syntax": "Directory String",
@@ -216,7 +222,7 @@ class TestModelsNamespace:
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
         # Real objectClass definitions
-        data: FlextLdifTypes.Models.ObjectClassesData = {
+        data: dict[str, dict[str, object]] = {
             "inetOrgPerson": {
                 "oid": "2.16.840.1.113730.3.2.2",
                 "kind": "STRUCTURAL",
@@ -235,7 +241,12 @@ class TestModelsNamespace:
                 "kind": "STRUCTURAL",
                 "sup": "top",
                 "must": ["ou"],
-                "may": ["businessCategory", "description", "userPassword", "searchGuide"],
+                "may": [
+                    "businessCategory",
+                    "description",
+                    "userPassword",
+                    "searchGuide",
+                ],
             },
             "groupOfNames": {
                 "oid": "2.5.6.9",
@@ -248,11 +259,12 @@ class TestModelsNamespace:
         assert isinstance(data, dict)
         assert len(data) == 3
         assert data["inetOrgPerson"]["oid"] == "2.16.840.1.113730.3.2.2"
-        assert "mail" in data["inetOrgPerson"]["may"]
+        may_values = cast(list[str], data["inetOrgPerson"]["may"])
+        assert "mail" in may_values
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        extensions: FlextLdifTypes.Models.QuirkExtensions = {
+        extensions: dict[str, object] = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "version": "1.0.0",
@@ -324,15 +336,17 @@ class TestRemovalOfOverEngineering:
             "Project",
         ]
         for namespace in removed:
-            assert not hasattr(FlextLdifTypes, namespace), f"{namespace} should be removed"
+            assert not hasattr(FlextLdifTypes, namespace), (
+                f"{namespace} should be removed"
+            )
 
     def test_removed_common_dict_types(self) -> None:
         """Unused CommonDict types must be removed."""
         removed = ["ChangeDict", "CategorizedDict", "TreeDict", "HierarchyDict"]
         for type_name in removed:
-            assert not hasattr(
-                FlextLdifTypes.CommonDict, type_name
-            ), f"CommonDict.{type_name} should be removed"
+            assert not hasattr(FlextLdifTypes.CommonDict, type_name), (
+                f"CommonDict.{type_name} should be removed"
+            )
 
     def test_removed_entry_types(self) -> None:
         """Unused Entry types must be removed."""
@@ -345,9 +359,9 @@ class TestRemovalOfOverEngineering:
             "EntryProcessing",
         ]
         for type_name in removed:
-            assert not hasattr(
-                FlextLdifTypes.Entry, type_name
-            ), f"Entry.{type_name} should be removed"
+            assert not hasattr(FlextLdifTypes.Entry, type_name), (
+                f"Entry.{type_name} should be removed"
+            )
 
 
 class TestPhase1StandardizationResults:
@@ -416,7 +430,7 @@ class TestIntegrationWithLdifFixtures:
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
         # Real-world schema attribute data
-        schema_attrs: FlextLdifTypes.Models.AttributesData = {
+        schema_attrs: dict[str, dict[str, object]] = {
             "cn": {
                 "oid": "2.5.4.3",
                 "syntax": "Directory String",

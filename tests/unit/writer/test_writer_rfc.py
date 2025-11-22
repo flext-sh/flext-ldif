@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifWriter
 
 # Import RFC quirks to ensure they are auto-registered
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
 
 @pytest.fixture

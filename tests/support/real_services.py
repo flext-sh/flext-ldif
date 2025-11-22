@@ -7,10 +7,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParser
+import tempfile
+from pathlib import Path
+
+from flext_ldif import (
+    FlextLdifMigrationPipeline,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
 
 class FlextLdifTestFactory:
@@ -65,9 +70,6 @@ class FlextLdifTestFactory:
             target_server_type: str = "oud",
         ) -> FlextLdifMigrationPipeline:
             """Create migration pipeline service."""
-            import tempfile
-            from pathlib import Path
-
             # Create temporary directories for testing
             temp_dir = Path(tempfile.gettempdir())
             input_dir = temp_dir / "ldif_input"

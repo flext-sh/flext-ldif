@@ -13,6 +13,7 @@ Instead of creating 3 separate service classes (FlextLdiifSchema, FlextLdifAcl, 
 ### 1. Eliminated 100+ Lines of DRY Violations
 
 **Before**: 8 nearly identical methods
+
 ```python
 def get_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
     # 5-7 lines of boilerplate
@@ -28,6 +29,7 @@ def get_entry_quirk(self, server_type: str) -> FlextLdifServersBase.Entry | None
 ```
 
 **After**: Single generic method + thin wrappers
+
 ```python
 def _get_attr(self, server_type: str, attr_name: str) -> object | None:
     """Generic method to get quirk attribute (schema, acl, entry).
@@ -45,14 +47,16 @@ def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
     return self._get_attr(server_type, "entry")
 ```
 
-### 2. Simplified Method Names (No "_quirk" Suffix)
+### 2. Simplified Method Names (No "\_quirk" Suffix)
 
 **Old names** (verbose):
+
 - `get_base_quirk()`, `get_schema_quirk()`, `get_acl_quirk()`, `get_entry_quirk()`
 - `get_schema_quirks()`, `get_acl_quirks()`, `get_entrys()`
 - `find_schema_quirk_for_attribute()`, `find_acl_quirk()`, `find_entry_quirk()`
 
 **New names** (clean, thin):
+
 - `quirk()`, `schema()`, `acl()`, `entry()` - Direct access
 - `find_schema_for_attribute()`, `find_acl_for_line()`, `find_entry_handler()` - Purpose-driven
 - `get_base()`, `get_schema()`, `get_acl()` - Backward compatibility aliases
@@ -60,6 +64,7 @@ def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
 ### 3. Server-Agnostic API
 
 **New thin interface**:
+
 ```python
 registry = FlextLdifServer()
 
@@ -80,6 +85,7 @@ servers = registry.list_registered_servers()
 ### 4. Backward Compatibility Preserved
 
 Old method names still work:
+
 ```python
 # These still work for existing code
 base = registry.get_base("rfc")           # → quirk()
@@ -90,6 +96,7 @@ acl = registry.get_acl_quirk("rfc")       # → acl()
 ### 5. Internal Optimization
 
 **Changed storage name**:
+
 ```python
 # Before
 self._base_quirks: dict[str, FlextLdifServersBase] = {}
@@ -102,13 +109,13 @@ More concise while maintaining clarity.
 
 ## Architecture Benefits
 
-| Aspect | Improvement |
-|--------|-------------|
-| **Code Duplication** | Reduced by 70% (100+ lines eliminated) |
-| **API Clarity** | Simple verbs: `schema()`, `acl()`, `entry()` |
-| **Maintainability** | Single `_get_attr()` method handles all attribute access |
-| **Naming** | Clean, no unnecessary "_quirk" suffixes |
-| **Backward Compatibility** | Old method names still work (aliases) |
+| Aspect                     | Improvement                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
+| **Code Duplication**       | Reduced by 70% (100+ lines eliminated)                              |
+| **API Clarity**            | Simple verbs: `schema()`, `acl()`, `entry()`                        |
+| **Maintainability**        | Single `_get_attr()` method handles all attribute access            |
+| **Naming**                 | Clean, no unnecessary "\_quirk" suffixes                            |
+| **Backward Compatibility** | Old method names still work (aliases)                               |
 | **Separation of Concerns** | Registry remains single-purpose: "get me the quirk for this server" |
 
 ## Implementation Details
@@ -176,15 +183,18 @@ entry = registry.get_entry_quirk("openldap")
 ## Code Metrics
 
 ### Reduction in DRY Violations
+
 - **Before**: 8 methods with similar patterns = ~100 lines
 - **After**: 1 generic method + 3 thin wrappers = ~30 lines
 - **Reduction**: ~70%
 
 ### Method Count
+
 - **Before**: 20 public methods
 - **After**: 16 public methods (4 removed, maintained backward compat via aliases)
 
 ### Complexity
+
 - **Before**: O(n) where n = number of quirk types (schema, acl, entry)
 - **After**: O(1) - single dictionary lookup with getattr
 
@@ -193,6 +203,7 @@ entry = registry.get_entry_quirk("openldap")
 All existing tests should pass without modification due to backward compatibility aliases.
 
 New tests should use the cleaner interface:
+
 ```python
 def test_get_schema_quirk_thin_interface():
     registry = FlextLdifServer()
@@ -206,7 +217,7 @@ def test_get_schema_quirk_thin_interface():
 1. **src/flext_ldif/services/server.py**
    - Simplified docstrings
    - Added `_get_attr()` generic method
-   - Renamed public methods (removed "_quirk" suffix)
+   - Renamed public methods (removed "\_quirk" suffix)
    - Added backward compatibility aliases
    - Renamed internal storage: `_base_quirks` → `_bases`
 
@@ -214,7 +225,7 @@ def test_get_schema_quirk_thin_interface():
    - Fixed 8 syntax errors from incomplete line breaks in `_get_dn_value` calls
    - All calls now properly formatted
 
-## Why Not Create Separate Service Classes?
+## Why Not Create Separate Service Classes
 
 **Decision Rationale**:
 
@@ -223,6 +234,7 @@ The user's request to "não crie 3 services, refatore FlextLdifServer e faça el
 Instead, **FlextLdifServer IS the service layer** - it's now thin, DRY, and provides all the functionality needed through a clean interface.
 
 **Advantages of this approach**:
+
 1. **Simplicity**: No need to understand 3 separate classes
 2. **DRY**: Single point of control for all quirk access
 3. **Thin**: No unnecessary abstractions
@@ -232,6 +244,7 @@ Instead, **FlextLdifServer IS the service layer** - it's now thin, DRY, and prov
 ## Next Steps (Phase 2.B+)
 
 Future phases will:
+
 1. Create inline schema/acl/entry processing methods using existing utilities
 2. Continue improving server-agnostic operations
 3. Enhance configuration management

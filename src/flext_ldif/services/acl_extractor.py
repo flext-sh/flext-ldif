@@ -20,7 +20,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifAclExtractor(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for ACL entry extraction.
 

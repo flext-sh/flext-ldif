@@ -243,7 +243,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         """Handles LDIF and LDAP3 serialization - replaces _serialize_* methods."""
 
         def __init__(
-            self, registry: FlextLdifServer, parent_logger: FlextLogger
+            self,
+            registry: FlextLdifServer,
+            parent_logger: FlextLogger,
         ) -> None:
             """Initialize with quirk registry and logger."""
             self.registry = registry
@@ -336,7 +338,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                 )
                 return FlextResult.fail("Entry quirk does not have write method")
             return FlextResult.ok(
-                cast("FlextLdifProtocols.Quirks.EntryProtocol", entry_quirk)
+                cast("FlextLdifProtocols.Quirks.EntryProtocol", entry_quirk),
             )
 
         def _restore_original_ldif_if_available(
@@ -393,9 +395,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                     return entry.model_copy(
                         update={
                             "dn": FlextLdifModels.DistinguishedName(
-                                value=original_dn_str
-                            )
-                        }
+                                value=original_dn_str,
+                            ),
+                        },
                     )
             return entry
 
@@ -475,7 +477,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             for idx, entry in enumerate(entries):
                 # Try to restore original LDIF first
                 if self._restore_original_ldif_if_available(
-                    output, entry, format_options
+                    output,
+                    entry,
+                    format_options,
                 ):
                     continue
 
@@ -487,7 +491,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
 
                 # Restore original formatting from metadata
                 updated_entry = self._restore_original_formatting_from_metadata(
-                    updated_entry
+                    updated_entry,
                 )
 
                 # Write entry using quirk
@@ -601,7 +605,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         """Handles output routing - replaces _route_output and _output_ldif_content."""
 
         def __init__(
-            self, serializer: FlextLdifWriter.LdifSerializer, parent_logger: FlextLogger
+            self,
+            serializer: FlextLdifWriter.LdifSerializer,
+            parent_logger: FlextLogger,
         ) -> None:
             """Initialize with LDIF serializer and logger."""
             self.serializer = serializer
@@ -820,7 +826,8 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                 data.setdefault("entry_count", len(entries))
                 data.setdefault("total_entries", len(entries))
                 data.setdefault(
-                    "timestamp", FlextUtilities.Generators.generate_iso_timestamp()
+                    "timestamp",
+                    FlextUtilities.Generators.generate_iso_timestamp(),
                 )
                 data.setdefault("phase", "unknown")
                 data.setdefault("source_server", "unknown")

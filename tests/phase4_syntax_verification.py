@@ -284,9 +284,9 @@ def verify_test_files() -> bool:
 
         ok, msg = check_file_syntax(test_file)
         if not ok:
-            logger.info(f"❌ {test_file.name} syntax error: {msg}")
+            logger.info("❌ %s syntax error: %s", test_file.name, msg)
             return False
-        logger.info(f"✅ {test_file.name} has valid syntax")
+        logger.info("✅ %s has valid syntax", test_file.name)
 
     # Check config test file was modified
     config_test = Path("tests/unit/test_config.py")

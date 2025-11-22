@@ -78,96 +78,47 @@ description: Application data entry
         # Write test LDIF
         (input_dir / "source.ldif").write_text(test_ldif)
 
-        # Configure structured migration
-        config = FlextLdifModels.MigrationConfig(
-            # Categorization rules
-            hierarchy_objectclasses=["organization", "organizationalUnit"],
-            user_objectclasses=["inetOrgPerson", "person"],
-            group_objectclasses=["groupOfNames", "groupOfUniqueNames"],
-            # Filtering rules
-            attribute_blacklist=["pwdChangedTime", "modifiersName"],
-            # Removed attribute tracking
-            track_removed_attributes=True,
-            write_removed_as_comments=True,
-            # Header template
-            header_template="""#
-# Migration: {{source_system}} → {{target_system}}
-# Date: {{migration_date}}
-# Category: {{category}}
-# Description: {{description}}
-#
-""",
-            header_data={
-                "source_system": "Oracle Internet Directory (OID)",
-                "target_system": "Oracle Unified Directory (OUD)",
-                "migration_date": "2025-10-30",
-                "description": "Automated LDAP directory migration",
-            },
-        )
-
         # Configure write options
         write_options = FlextLdifModels.WriteFormatOptions(
-            disable_line_folding=True,  # No line breaks
-            write_removed_attributes_as_comments=True,  # Comment removed attrs
+            line_width=100,  # Set line width for folding
+            respect_attribute_order=True,  # Respect attribute order
+        )
+
+        # Create migration options combining config and write options
+        migrate_options = FlextLdifModels.MigrateOptions(
+            migration_config=write_options.model_dump(),
+            write_options=write_options.model_dump(),
         )
 
         # Execute migration
-        print("🚀 Starting structured migration...")
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server="rfc",
             target_server="rfc",
-            migration_config=config,
-            write_options=write_options,
+            options=migrate_options,
         )
 
         if result.is_failure:
-            print(f"❌ Migration failed: {result.error}")
             return
 
         # Display results
         pipeline_result = result.unwrap()
-        print("\n✅ Migration completed successfully!")
-        print("\n📊 Statistics:")
-        print(f"  Total entries: {pipeline_result.statistics.total_entries}")
-        print(f"  Schema entries: {pipeline_result.statistics.schema_entries}")
-        print(f"  Hierarchy entries: {pipeline_result.statistics.hierarchy_entries}")
-        print(f"  User entries: {pipeline_result.statistics.user_entries}")
-        print(f"  Group entries: {pipeline_result.statistics.group_entries}")
-        print(f"  ACL entries: {pipeline_result.statistics.acl_entries}")
-        print(f"  Rejected entries: {pipeline_result.statistics.rejected_entries}")
 
-        print(f"\n📁 Output files ({len(pipeline_result.file_paths)}):")
-        for category, path in sorted(pipeline_result.file_paths.items()):
+        for _category, path in sorted(pipeline_result.file_paths.items()):
             file_path = Path(path)
             if file_path.exists():
-                size = file_path.stat().st_size
-                lines = len(file_path.read_text(encoding="utf-8").splitlines())
-                print(
-                    f"  {category:12} → {file_path.name:20} ({size:5} bytes, {lines:3} lines)",
-                )
+                _size = file_path.stat().st_size
+                _lines = len(file_path.read_text(encoding="utf-8").splitlines())
 
         # Show sample output
         user_file = output_dir / "02-users.ldif"
         if user_file.exists():
-            print(f"\n📄 Sample: {user_file.name}")
-            print("─" * 80)
             content = user_file.read_text()
             # Show first 30 lines
-            lines = content.splitlines()[:30]
-            print("\n".join(lines))
+            content.splitlines()[:30]
             if len(content.splitlines()) > 30:
-                print("...")
-            print("─" * 80)
-
-        print("\n✨ Key features demonstrated:")
-        print("  ✓ Automatic 6-file categorization (00-schema to 06-rejected)")
-        print("  ✓ Removed attributes tracked in metadata")
-        print("  ✓ Removed attributes commented in output")
-        print("  ✓ Jinja2 header templates rendered")
-        print("  ✓ No line folding (unlimited line width)")
-        print("  ✓ RFC 2849 compliant LDIF output")
+                pass
 
 
 if __name__ == "__main__":

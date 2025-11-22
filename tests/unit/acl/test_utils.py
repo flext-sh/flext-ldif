@@ -14,8 +14,7 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 

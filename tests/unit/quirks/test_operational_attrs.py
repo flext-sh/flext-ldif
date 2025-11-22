@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.services.entry import FlextLdifEntry
 
 
@@ -36,7 +36,8 @@ class TestOperationalAttributesStripping:
         try:
             dn = FlextLdifModels.DistinguishedName(value=dn_string)
         except (ValueError, TypeError, AttributeError) as e:
-            raise AssertionError(f"Failed to create DN: {e}") from e
+            msg = f"Failed to create DN: {e}"
+            raise AssertionError(msg) from e
 
         # Convert attributes to LdifAttributes format manually
         # LdifAttributes now uses dict[str, list[str]] directly

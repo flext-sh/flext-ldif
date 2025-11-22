@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.services.statistics import FlextLdifStatistics
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 class TestStatisticsServiceInitialization:
@@ -504,9 +505,6 @@ class TestGenerateStatisticsErrorHandling:
         written_counts: dict[str, int] = {}
         output_dir = Path("/tmp")
         output_files: dict[str, object] = {}
-
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         stats = RfcTestHelpers.test_result_success_and_unwrap(
             service.generate_statistics(
                 categorized=categorized,

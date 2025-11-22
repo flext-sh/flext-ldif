@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConstants
 from flext_ldif.services.server import FlextLdifServer
 
 

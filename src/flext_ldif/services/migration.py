@@ -149,9 +149,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 if self._input_filename
                 else sorted([f.name for f in self._input_dir.glob("*.ldif")])
             )
-        return self._input_files or sorted([
-            f.name for f in self._input_dir.glob("*.ldif")
-        ])
+        return self._input_files or sorted(
+            [f.name for f in self._input_dir.glob("*.ldif")],
+        )
 
     def _parse_files(
         self,
@@ -224,7 +224,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             )
 
         return FlextResult[FlextLdifModels.FlexibleCategories].ok(
-            categorized_result.unwrap()
+            categorized_result.unwrap(),
         )
 
     def _filter_forbidden_attributes(
@@ -461,7 +461,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             "processed_entries": len(entries),
             "rejected_entries": 0,
             "schema_whitelist_enabled": bool(
-                self._categorization.schema_whitelist_rules is not None
+                self._categorization.schema_whitelist_rules is not None,
             ),
             "sort_entries_hierarchically": self._sort_hierarchically,
             "server_type": self._target_server,
@@ -539,7 +539,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
 
             # Type narrowing: processed_entries may be mixed type, cast to public for writer
             write_result = self._writer.write(
-                entries=cast("list[FlextLdifModels.Entry]", processed_entries),
+                entries=processed_entries,
                 target_server_type=self._target_server,
                 output_target="file",
                 output_path=output_path,

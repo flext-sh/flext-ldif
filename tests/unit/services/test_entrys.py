@@ -18,16 +18,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
-
 import pytest
 
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from flext_ldif.services.entry import FlextLdifEntry
+from flext_ldif.services.syntax import FlextLdifSyntax
+from flext_ldif.services.validation import FlextLdifValidation
+
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from ...helpers.test_rfc_helpers import RfcTestHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -39,8 +38,6 @@ def create_entry(
     attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
-    from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
     attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)
     return FlextLdifModels.Entry(dn=dn, attributes=attrs)
@@ -229,8 +226,6 @@ class TestExecutePattern:
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test execute() with various operations in batch."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         service1 = FlextLdifEntry(
             entries=entries_batch,
             operation="remove_operational_attributes",
@@ -635,8 +630,6 @@ class TestFlextLdifValidation:
 
     def test_validate_attribute_name_valid(self) -> None:
         """Test validation of valid attribute names."""
-        from flext_ldif.services.validation import FlextLdifValidation
-
         service = FlextLdifValidation()
 
         valid_names = [
@@ -653,8 +646,6 @@ class TestFlextLdifValidation:
 
     def test_validate_attribute_name_invalid(self) -> None:
         """Test validation of invalid attribute names."""
-        from flext_ldif.services.validation import FlextLdifValidation
-
         service = FlextLdifValidation()
 
         invalid_names = ["2invalid", "user name", "", "user@name"]
@@ -665,8 +656,6 @@ class TestFlextLdifValidation:
 
     def test_validate_objectclass_name(self) -> None:
         """Test validation of objectClass names."""
-        from flext_ldif.services.validation import FlextLdifValidation
-
         service = FlextLdifValidation()
 
         result = service.validate_objectclass_name("person")
@@ -679,8 +668,6 @@ class TestFlextLdifValidation:
 
     def test_validate_attribute_value(self) -> None:
         """Test attribute value length validation."""
-        from flext_ldif.services.validation import FlextLdifValidation
-
         service = FlextLdifValidation()
 
         result = service.validate_attribute_value("John Smith")
@@ -693,8 +680,6 @@ class TestFlextLdifValidation:
 
     def test_validate_dn_component(self) -> None:
         """Test DN component validation (RFC 4514)."""
-        from flext_ldif.services.validation import FlextLdifValidation
-
         service = FlextLdifValidation()
 
         result = service.validate_dn_component("cn", "John Smith")
@@ -707,8 +692,6 @@ class TestFlextLdifValidation:
 
     def test_validate_attribute_names_batch(self) -> None:
         """Test batch validation of attribute names."""
-        from flext_ldif.services.validation import FlextLdifValidation
-
         service = FlextLdifValidation()
 
         names = ["cn", "mail", "2invalid", "objectClass"]
@@ -732,8 +715,6 @@ class TestFlextLdifSyntax:
 
     def test_validate_oid_format(self) -> None:
         """Test OID format validation."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         result = syntax.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
@@ -745,8 +726,6 @@ class TestFlextLdifSyntax:
 
     def test_is_rfc4517_standard(self) -> None:
         """Test RFC 4517 standard OID detection."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         # Boolean syntax is RFC 4517 standard
         result = syntax.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
@@ -754,8 +733,6 @@ class TestFlextLdifSyntax:
 
     def test_lookup_syntax_name(self) -> None:
         """Test looking up OID by syntax name."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         # Try with lowercase name (as stored in constants)
         result = syntax.lookup_name("boolean")
@@ -768,8 +745,6 @@ class TestFlextLdifSyntax:
 
     def test_lookup_syntax_oid(self) -> None:
         """Test looking up syntax name by OID."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         result = syntax.lookup_oid("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
@@ -778,8 +753,6 @@ class TestFlextLdifSyntax:
 
     def test_resolve_syntax_oid(self) -> None:
         """Test resolving OID to Syntax model."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         result = syntax.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
@@ -788,8 +761,6 @@ class TestFlextLdifSyntax:
 
     def test_validate_syntax_value(self) -> None:
         """Test value validation against syntax type."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         result = syntax.validate_value(
             "TRUE",
@@ -799,8 +770,6 @@ class TestFlextLdifSyntax:
 
     def test_get_syntax_type(self) -> None:
         """Test getting syntax type category."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         result = syntax.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
@@ -809,8 +778,6 @@ class TestFlextLdifSyntax:
 
     def test_list_all_syntaxes(self) -> None:
         """Test listing all supported RFC 4517 syntaxes."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
         syntax = FlextLdifSyntax()
         result = syntax.list_common_syntaxes()
         assert result.is_success

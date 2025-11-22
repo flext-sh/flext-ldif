@@ -19,8 +19,7 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
-
-from ...helpers.test_deduplication_helpers import DeduplicationHelpers
+from tests.helpers.test_assertions import TestAssertions
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -66,7 +65,7 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 @pytest.fixture
 def simple_entry() -> FlextLdifModels.Entry:
     """Create simple entry for conversion testing."""
-    return DeduplicationHelpers.create_entry_from_dict(
+    return TestAssertions.create_entry(
         "cn=test,dc=example,dc=com",
         {
             "cn": ["test"],
@@ -79,7 +78,7 @@ def simple_entry() -> FlextLdifModels.Entry:
 @pytest.fixture
 def complex_entry() -> FlextLdifModels.Entry:
     """Create complex entry for conversion testing."""
-    return DeduplicationHelpers.create_entry_from_dict(
+    return TestAssertions.create_entry(
         "cn=John Doe,ou=People,dc=example,dc=com",
         {
             "cn": ["John Doe"],
@@ -339,11 +338,11 @@ class TestConversionServiceBatchConvert:
     ) -> None:
         """Test batch_convert with multiple entries."""
         entries = [
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=user1,dc=example,dc=com",
                 {"cn": ["user1"], "objectClass": ["person"]},
             ),
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=user2,dc=example,dc=com",
                 {"cn": ["user2"], "objectClass": ["person"]},
             ),
@@ -362,7 +361,7 @@ class TestConversionServiceBatchConvert:
     ) -> None:
         """Test batch_convert with some entries that may fail."""
         entries = [
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=valid,dc=example,dc=com",
                 {"cn": ["valid"], "objectClass": ["person"]},
             ),
@@ -668,11 +667,11 @@ class TestConversionServiceDnRegistryOperations:
     ) -> None:
         """Test DN registry tracks multiple DNs during batch conversion."""
         entries = [
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=user1,dc=example,dc=com",
                 {"cn": ["user1"]},
             ),
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=user2,dc=example,dc=com",
                 {"cn": ["user2"]},
             ),

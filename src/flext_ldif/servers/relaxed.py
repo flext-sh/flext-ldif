@@ -225,7 +225,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             attr_definition: str,
             *,
             _case_insensitive: bool = False,
-            allow_syntax_quotes: bool = False,
+            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline.
 
@@ -235,7 +235,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             Args:
                 attr_definition: AttributeType definition string
                 _case_insensitive: Whether to use case-insensitive pattern matching (unused)
-                allow_syntax_quotes: Whether to allow quoted syntax values
+                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with parsed SchemaAttribute or error
@@ -251,7 +251,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._parse_attribute(
                 attr_definition,
                 _case_insensitive=_case_insensitive,
-                allow_syntax_quotes=allow_syntax_quotes,
+                _allow_syntax_quotes=_allow_syntax_quotes,
             )
             if parent_result.is_success:
                 # RFC parser succeeded - enhance metadata as relaxed mode
@@ -679,7 +679,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             source_server = None
             if attr_data.metadata and attr_data.metadata.extensions:
                 source_server = attr_data.metadata.extensions.get(
-                    meta_keys.SCHEMA_SOURCE_SERVER
+                    meta_keys.SCHEMA_SOURCE_SERVER,
                 )
 
             # Only use original_format if source was relaxed
@@ -731,7 +731,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             source_server = None
             if oc_data.metadata and oc_data.metadata.extensions:
                 source_server = oc_data.metadata.extensions.get(
-                    meta_keys.SCHEMA_SOURCE_SERVER
+                    meta_keys.SCHEMA_SOURCE_SERVER,
                 )
 
             # Only use original_format if source was relaxed
@@ -1102,7 +1102,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             # but protocol expects Mapping[str, list[str]], so we need to adapt
 
             def adapted_parse_entry(
-                dn: str, attrs: Mapping[str, list[str]]
+                dn: str,
+                attrs: Mapping[str, list[str]],
             ) -> FlextResult[FlextLdifModels.Entry]:
                 # Convert Mapping[str, list[str]] to Mapping[str, object] for _parse_entry
                 attrs_obj: Mapping[str, object] = attrs

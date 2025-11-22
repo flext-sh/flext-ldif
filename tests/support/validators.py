@@ -13,7 +13,7 @@ from typing import TypeVar
 
 from flext_core import FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 T = TypeVar("T")
 

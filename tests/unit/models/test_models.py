@@ -7,11 +7,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import base64
 from typing import cast
 
 from flext_core import FlextModels, FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 
 class TestFlextLdifModels:
@@ -177,7 +178,7 @@ class TestFlextLdifModels:
         # Lenient processing: Empty DN is ACCEPTED but captured in validation_metadata
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=""
+                value="",
             ),  # Empty DN triggers RFC violation
             attributes=FlextLdifModels.LdifAttributes(attributes={}),
         )
@@ -188,7 +189,10 @@ class TestFlextLdifModels:
         # Verify RFC violations were captured
         assert entry.metadata.validation_results is not None
         assert "rfc_violations" in entry.metadata.validation_results
-        violations = entry.metadata.validation_results["rfc_violations"]
+        violations = cast(
+            "list[str]",
+            entry.metadata.validation_results["rfc_violations"],
+        )
 
         # Should have 2 violations: empty DN + no attributes
         assert len(violations) >= 2
@@ -343,8 +347,6 @@ class TestFlextLdifModelsEntry:
 
     def test_entry_with_binary_data(self) -> None:
         """Test Entry with binary attribute data."""
-        import base64
-
         binary_data = b"binary content"
         # Base64 encode the binary data for LDIF compatibility
         encoded_data = base64.b64encode(binary_data).decode("ascii")
@@ -383,7 +385,10 @@ class TestFlextLdifModelsEntry:
         # Verify RFC violation was captured in validation_metadata
         assert entry.metadata.validation_results is not None
         assert "rfc_violations" in entry.metadata.validation_results
-        violations = entry.metadata.validation_results["rfc_violations"]
+        violations = cast(
+            "list[str]",
+            entry.metadata.validation_results["rfc_violations"],
+        )
         assert any("RFC 2849" in v and "DN" in v for v in violations)
 
 

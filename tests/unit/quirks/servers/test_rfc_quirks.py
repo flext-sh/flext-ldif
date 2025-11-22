@@ -15,14 +15,13 @@ from typing import ClassVar, Literal, cast
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.api import FlextLdif
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests.helpers import FixtureTestHelpers
+from tests.helpers.test_assertions import TestAssertions
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-from ....helpers import FixtureTestHelpers
-from ....helpers.test_assertions import TestAssertions
-from ....helpers.test_rfc_helpers import RfcTestHelpers
 from .fixtures.general_constants import TestGeneralConstants
 from .fixtures.rfc_constants import TestsRfcConstants
 
@@ -154,7 +153,9 @@ class TestRfcQuirksWithRealFixtures:
 
     @pytest.mark.timeout(5)
     def test_routing_write_validation_entries(
-        self, ldif_api: FlextLdif, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        ldif_api: FlextLdif,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test that entries are correctly routed through write path.
 
@@ -255,7 +256,8 @@ class TestRfcSchemaQuirk:
     """Test RFC Schema quirk methods."""
 
     def test_schema_can_handle_attribute_string(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_attribute with string."""
         assert (
@@ -273,11 +275,12 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_can_handle_objectclass_string(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_objectclass with string."""
         result = rfc_schema_quirk.can_handle_objectclass(
-            TestsRfcConstants.OC_DEF_PERSON
+            TestsRfcConstants.OC_DEF_PERSON,
         )
         assert result is True
 
@@ -309,17 +312,16 @@ class TestRfcSchemaQuirk:
     ) -> None:
         """Test Schema.should_filter_out_objectclass."""
         result = rfc_schema_quirk.should_filter_out_objectclass(
-            sample_schema_objectclass
+            sample_schema_objectclass,
         )
         assert isinstance(result, bool)
 
     @pytest.mark.timeout(5)
     def test_schema_parse_attribute(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._parse_attribute."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             rfc_schema_quirk,
             TestsRfcConstants.ATTR_DEF_CN_COMPLETE,
@@ -333,11 +335,10 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_parse_objectclass(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._parse_objectclass."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         parsed_oc = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             rfc_schema_quirk,
             TestsRfcConstants.OC_DEF_PERSON_FULL,
@@ -367,7 +368,8 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_post_write_objectclass(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._post_write_objectclass."""
         _ = RfcTestHelpers.test_schema_parse_objectclass(
@@ -395,11 +397,10 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_post_write_attribute(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._post_write_attribute."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         _ = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             rfc_schema_quirk,
             TestsRfcConstants.ATTR_DEF_CN,
@@ -424,7 +425,8 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_attribute_with_original_format(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_attribute with original_format in metadata."""
         attr = RfcTestHelpers.test_create_schema_attribute_minimal()
@@ -439,7 +441,8 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_attribute_with_flags(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_attribute with flags."""
         attr = RfcTestHelpers.test_create_schema_attribute_minimal(single_value=True)
@@ -454,7 +457,8 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_attribute_with_x_origin(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_attribute with X-ORIGIN in metadata."""
         attr = FlextLdifModels.SchemaAttribute(
@@ -486,11 +490,12 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_attribute_invalid_type(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_attribute with invalid type."""
         result = rfc_schema_quirk._write_attribute(
-            cast("FlextLdifModels.SchemaAttribute", "not an attribute")
+            cast("FlextLdifModels.SchemaAttribute", "not an attribute"),
         )
         _ = TestAssertions.assert_failure(result, expected_error="SchemaAttribute")
 
@@ -512,7 +517,8 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_objectclass_with_original_format(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_objectclass with original_format."""
         oc = RfcTestHelpers.test_create_schema_objectclass_minimal()
@@ -527,7 +533,8 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_objectclass_with_x_origin(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_objectclass with X-ORIGIN in metadata."""
         oc = RfcTestHelpers.test_create_schema_objectclass_minimal()
@@ -543,11 +550,12 @@ class TestRfcSchemaQuirk:
 
     @pytest.mark.timeout(5)
     def test_schema_write_objectclass_invalid_type(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema._write_objectclass with invalid type."""
         result = rfc_schema_quirk._write_objectclass(
-            cast("FlextLdifModels.SchemaObjectClass", "not an objectclass")
+            cast("FlextLdifModels.SchemaObjectClass", "not an objectclass"),
         )
         _ = TestAssertions.assert_failure(result, expected_error="SchemaObjectClass")
 
@@ -557,7 +565,8 @@ class TestRfcAclQuirk:
 
     @pytest.mark.timeout(5)
     def test_acl_can_handle_acl_string(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.can_handle_acl with string."""
         result = rfc_acl_quirk.can_handle_acl("aci: test")
@@ -597,7 +606,8 @@ class TestRfcAclQuirk:
 
     @pytest.mark.timeout(5)
     def test_acl_parse_acl_success(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._parse_acl success."""
         acl_line = "aci: access to entry by * (browse)"
@@ -616,7 +626,8 @@ class TestRfcAclQuirk:
 
     @pytest.mark.timeout(5)
     def test_acl_parse_acl_whitespace(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._parse_acl with whitespace only."""
         result = rfc_acl_quirk._parse_acl("   ")
@@ -636,7 +647,8 @@ class TestRfcAclQuirk:
     def test_acl_create_metadata(self, rfc_acl_quirk: FlextLdifServersRfc.Acl) -> None:
         """Test Acl.create_metadata."""
         metadata = rfc_acl_quirk.create_metadata(
-            "aci: test", extensions={"extra": "value"}
+            "aci: test",
+            extensions={"extra": "value"},
         )
         assert metadata is not None
         assert metadata.quirk_type == "rfc"
@@ -644,7 +656,8 @@ class TestRfcAclQuirk:
 
     @pytest.mark.timeout(5)
     def test_acl_create_metadata_no_extensions(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.create_metadata without extensions."""
         metadata = rfc_acl_quirk.create_metadata("aci: test")
@@ -653,19 +666,22 @@ class TestRfcAclQuirk:
 
     @pytest.mark.timeout(5)
     def test_acl_convert_rfc_acl_to_aci(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.convert_rfc_acl_to_aci."""
         rfc_acl_attrs = {"aci": ["test acl"]}
         result = rfc_acl_quirk.convert_rfc_acl_to_aci(rfc_acl_attrs, "target")
         converted = TestAssertions.assert_success(
-            result, "RFC ACL conversion should succeed"
+            result,
+            "RFC ACL conversion should succeed",
         )
         assert converted == rfc_acl_attrs
 
     @pytest.mark.timeout(5)
     def test_acl_write_acl_with_raw_acl(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._write_acl with raw_acl."""
         acl_model = FlextLdifModels.Acl(
@@ -680,7 +696,8 @@ class TestRfcAclQuirk:
 
     @pytest.mark.timeout(5)
     def test_acl_write_acl_with_name(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._write_acl with name only."""
         acl_model = FlextLdifModels.Acl(
@@ -711,8 +728,8 @@ class TestRfcEntryQuirk:
                 TestGeneralConstants.SAMPLE_DN,
                 {
                     TestGeneralConstants.ATTR_NAME_CN: [
-                        TestGeneralConstants.ATTR_VALUE_TEST
-                    ]
+                        TestGeneralConstants.ATTR_VALUE_TEST,
+                    ],
                 },
             )
             is True
@@ -750,14 +767,15 @@ class TestRfcEntryQuirk:
 
     @pytest.mark.timeout(5)
     def test_entry_can_handle_entry_no_dn(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry.can_handle_entry without DN."""
         # Create entry without DN for testing invalid case
         entry_model = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=""),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": [TestGeneralConstants.OC_NAME_PERSON]}
+                attributes={"objectClass": [TestGeneralConstants.OC_NAME_PERSON]},
             ),
         )
         result = rfc_entry_quirk.can_handle_entry(entry_model)
@@ -765,7 +783,8 @@ class TestRfcEntryQuirk:
 
     @pytest.mark.timeout(5)
     def test_entry_can_handle_entry_no_attributes(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry.can_handle_entry without attributes."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap(
@@ -777,14 +796,15 @@ class TestRfcEntryQuirk:
 
     @pytest.mark.timeout(5)
     def test_entry_can_handle_entry_no_objectclass(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry.can_handle_entry without objectClass."""
         entry_model = RfcTestHelpers.test_create_entry_validated(
             dn=TestGeneralConstants.SAMPLE_DN,
             attributes={
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -793,11 +813,10 @@ class TestRfcEntryQuirk:
 
     @pytest.mark.timeout(5)
     def test_entry_parse_content_empty(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_content with empty content."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         result = rfc_entry_quirk._parse_content("")
         entries = RfcTestHelpers.test_result_success_and_unwrap(result)
         assert isinstance(entries, list)
@@ -805,7 +824,8 @@ class TestRfcEntryQuirk:
 
     @pytest.mark.timeout(5)
     def test_entry_parse_content_whitespace(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_content with whitespace only."""
         entries = RfcTestHelpers.test_entry_quirk_parse_content_and_verify(
@@ -817,7 +837,8 @@ class TestRfcEntryQuirk:
 
     @pytest.mark.timeout(5)
     def test_entry_parse_content_valid(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_content with valid LDIF."""
         ldif_content = f"""dn: {TestGeneralConstants.SAMPLE_DN}
@@ -876,7 +897,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
 
     @pytest.mark.timeout(5)
     def test_entry_parse_entry_success_duplicate(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_entry success (duplicate test name fixed)."""
         _ = RfcTestHelpers.test_entry_quirk_parse_entry_and_verify(
@@ -884,10 +906,10 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             TestGeneralConstants.SAMPLE_DN,
             {
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON.encode()
+                    TestGeneralConstants.OC_NAME_PERSON.encode(),
                 ],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST.encode()
+                    TestGeneralConstants.ATTR_VALUE_TEST.encode(),
                 ],
             },
             expected_dn=TestGeneralConstants.SAMPLE_DN,
@@ -895,7 +917,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
 
     @pytest.mark.timeout(5)
     def test_entry_parse_entry_with_string_values(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_entry with string values."""
         entry = RfcTestHelpers.test_entry_quirk_parse_entry_and_verify(
@@ -903,10 +926,10 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             TestGeneralConstants.SAMPLE_DN,
             {
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON.encode()
+                    TestGeneralConstants.OC_NAME_PERSON.encode(),
                 ],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST.encode()
+                    TestGeneralConstants.ATTR_VALUE_TEST.encode(),
                 ],
             },
             expected_dn=TestGeneralConstants.SAMPLE_DN,
@@ -917,7 +940,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
 
     @pytest.mark.timeout(5)
     def test_entry_parse_entry_with_single_value(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_entry with single value (not list)."""
         entry = RfcTestHelpers.test_entry_quirk_parse_entry_and_verify(
@@ -925,10 +949,10 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             TestGeneralConstants.SAMPLE_DN,
             {
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON.encode()
+                    TestGeneralConstants.OC_NAME_PERSON.encode(),
                 ],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST.encode()
+                    TestGeneralConstants.ATTR_VALUE_TEST.encode(),
                 ],
             },
             expected_dn=TestGeneralConstants.SAMPLE_DN,
@@ -937,7 +961,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "objectClass" in entry.attributes.attributes
 
     def test_entry_parse_entry_case_insensitive_merge(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_entry merges case-insensitive attributes."""
         result = rfc_entry_quirk._parse_entry(
@@ -945,7 +970,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             {
                 "objectclass": [TestGeneralConstants.OC_NAME_TOP.encode()],
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON.encode()
+                    TestGeneralConstants.OC_NAME_PERSON.encode(),
                 ],
             },
         )
@@ -964,7 +989,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         )
 
     def test_entry_parse_entry_with_base64_dn(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._parse_entry with base64 DN flag."""
         result = rfc_entry_quirk._parse_entry(
@@ -983,7 +1009,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert entry_model.dn.metadata.get("original_format") == "base64"
 
     def test_entry_write_entry_comments_dn(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_comments_dn."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap()
@@ -998,7 +1025,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "# Complex DN:" in ldif_lines[0]
 
     def test_entry_write_entry_comments_dn_disabled(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_comments_dn when disabled."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap()
@@ -1012,15 +1040,16 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert len(ldif_lines) == 0
 
     def test_entry_write_entry_comments_metadata(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_comments_metadata."""
         entry_model = FlextLdifModels.Entry.create(
             dn=TestGeneralConstants.SAMPLE_DN,
             attributes={
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON
-                ]
+                    TestGeneralConstants.OC_NAME_PERSON,
+                ],
             },
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="rfc",
@@ -1053,7 +1082,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert any("# Quirk Type:" in line for line in ldif_lines)
 
     def test_entry_write_entry_comments_metadata_disabled(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_comments_metadata when disabled."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap()
@@ -1071,7 +1101,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert len(ldif_lines) == 0
 
     def test_entry_write_entry_hidden_attrs(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_hidden_attrs."""
         ldif_lines: list[str] = []
@@ -1112,15 +1143,16 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert len(ldif_lines) == 0
 
     def test_entry_get_hidden_attributes(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._get_hidden_attributes."""
         entry_model = FlextLdifModels.Entry.create(
             dn=TestGeneralConstants.SAMPLE_DN,
             attributes={
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON
-                ]
+                    TestGeneralConstants.OC_NAME_PERSON,
+                ],
             },
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="rfc",
@@ -1156,7 +1188,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert hidden == set()
 
     def test_entry_needs_base64_encoding(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._needs_base64_encoding."""
         # Test empty string
@@ -1185,7 +1218,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert rfc_entry_quirk._needs_base64_encoding("safe value") is False
 
     def test_entry_write_entry_attribute_value_base64(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_attribute_value with base64 encoding."""
         ldif_lines: list[str] = []
@@ -1204,7 +1238,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "description::" in ldif_lines[0]  # Base64 marker
 
     def test_entry_write_entry_attribute_value_plain(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_attribute_value without base64."""
         ldif_lines: list[str] = []
@@ -1223,7 +1258,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "cn: safe value" in ldif_lines[0]
 
     def test_entry_write_entry_attribute_value_pre_encoded(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_attribute_value with pre-encoded base64."""
         ldif_lines: list[str] = []
@@ -1238,7 +1274,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "photo:: dGVzdA==" in ldif_lines[0]
 
     def test_entry_write_entry_attribute_value_base64_disabled(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_attribute_value with base64 disabled."""
         ldif_lines: list[str] = []
@@ -1257,7 +1294,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "description:  starts with space" in ldif_lines[0]
 
     def test_entry_write_entry_process_attributes(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_process_attributes."""
         entry_model = FlextLdifModels.Entry.create(
@@ -1265,7 +1303,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
                 "mail": ["test@example.com"],
             },
@@ -1288,7 +1326,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert any("mail:" in line for line in ldif_lines)
 
     def test_entry_write_entry_process_attributes_hidden(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_process_attributes with hidden attributes."""
         entry_model = FlextLdifModels.Entry.create(
@@ -1296,7 +1335,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
                 "userPassword": ["secret"],
             },
@@ -1320,14 +1359,15 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert not any(line.startswith("userPassword:") for line in ldif_lines)
 
     def test_entry_write_entry_add_format(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_add_format."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap(
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -1341,7 +1381,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "cn:" in ldif_text
 
     def test_entry_write_entry_add_format_no_dn(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_add_format without DN."""
         entry_model = FlextLdifModels.Entry(
@@ -1349,8 +1390,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                        TestGeneralConstants.OC_NAME_PERSON
-                    ]
+                        TestGeneralConstants.OC_NAME_PERSON,
+                    ],
                 },
             ),
         )
@@ -1362,7 +1403,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "DN is required" in result.error
 
     def test_entry_write_entry_add_format_with_changetype(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_add_format with changetype."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap(
@@ -1379,14 +1421,15 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "changetype: modify" in ldif_text
 
     def test_entry_write_entry_modify_format(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_modify_format."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap(
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -1399,7 +1442,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "replace:" in ldif_text
 
     def test_entry_write_entry_modify_format_no_dn(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_modify_format without DN."""
         entry_model = FlextLdifModels.Entry(
@@ -1407,8 +1451,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                        TestGeneralConstants.OC_NAME_PERSON
-                    ]
+                        TestGeneralConstants.OC_NAME_PERSON,
+                    ],
                 },
             ),
         )
@@ -1421,7 +1465,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "DN is required" in result.error
 
     def test_entry_write_entry_modify_format_no_attributes(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_modify_format without attributes."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap(attributes={})
@@ -1435,7 +1480,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert ldif_text.endswith("\n")
 
     def test_entry_write_entry_modify_format_with_bytes(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_modify_format with bytes values."""
         # Create entry with string, then manually set bytes in attributes
@@ -1447,7 +1493,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert entry_model.attributes is not None
         # Convert bytes to strings for attributes
         entry_model.attributes.attributes["photo"] = [
-            b"binary data".decode("utf-8", errors="replace")
+            b"binary data".decode("utf-8", errors="replace"),
         ]
 
         write_options = FlextLdifModels.WriteFormatOptions()
@@ -1459,7 +1505,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert "replace: photo" in ldif_text
 
     def test_entry_write_entry(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry."""
         entry_model = RfcTestHelpers.test_create_entry_validated(
@@ -1467,7 +1514,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -1479,7 +1526,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         )
 
     def test_entry_write_entry_modify_format_via_write(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry with modify format."""
         entry_model = RfcTestHelpers.test_create_entry_validated(
@@ -1487,7 +1535,7 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -1496,10 +1544,10 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         new_write_options = {
             "_write_options": FlextLdifModels.WriteFormatOptions(
                 ldif_changetype="modify",
-            )
+            ),
         }
         new_metadata = entry_model.metadata.model_copy(
-            update={"write_options": new_write_options}
+            update={"write_options": new_write_options},
         )
         entry_model = entry_model.model_copy(update={"metadata": new_metadata})
 
@@ -1558,10 +1606,10 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             TestGeneralConstants.SAMPLE_DN,
             {
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON.encode()
+                    TestGeneralConstants.OC_NAME_PERSON.encode(),
                 ],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST.encode()
+                    TestGeneralConstants.ATTR_VALUE_TEST.encode(),
                 ],
             },
         )
@@ -1576,8 +1624,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             "",
             {
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON.encode()
-                ]
+                    TestGeneralConstants.OC_NAME_PERSON.encode(),
+                ],
             },
         )
 
@@ -1590,7 +1638,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             assert result.is_failure
 
     def test_entry_write_entry_process_attributes_empty(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_process_attributes with empty attributes."""
         entry_model = RfcTestHelpers.test_create_entry_and_unwrap(
@@ -1609,7 +1658,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
         assert len(ldif_lines) == 0
 
     def test_entry_write_entry_process_attributes_non_list_value(
-        self, rfc_entry_quirk: FlextLdifServersRfc.Entry
+        self,
+        rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._write_entry_process_attributes with non-list value."""
         # Create entry and manually set non-list value
@@ -1617,8 +1667,8 @@ objectClass: {TestGeneralConstants.OC_NAME_PERSON}
             dn=TestGeneralConstants.SAMPLE_DN,
             attributes={
                 FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                    TestGeneralConstants.OC_NAME_PERSON
-                ]
+                    TestGeneralConstants.OC_NAME_PERSON,
+                ],
             },
         )
 
@@ -1673,7 +1723,8 @@ class TestRfcRoutingAndValidation:
     """Test RFC routing and validation methods for 100% coverage."""
 
     def test_handle_parse_operation_success(
-        self, rfc_quirk: FlextLdifServersRfc
+        self,
+        rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test _handle_parse_operation with successful parse."""
         result = rfc_quirk._handle_parse_operation(
@@ -1703,7 +1754,7 @@ class TestRfcRoutingAndValidation:
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -1879,7 +1930,7 @@ class TestRfcRoutingAndValidation:
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST
+                    TestGeneralConstants.ATTR_VALUE_TEST,
                 ],
             },
         )
@@ -1898,7 +1949,7 @@ class TestRfcRoutingAndValidation:
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST1
+                    TestGeneralConstants.ATTR_VALUE_TEST1,
                 ],
             },
         )
@@ -1907,7 +1958,7 @@ class TestRfcRoutingAndValidation:
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST2
+                    TestGeneralConstants.ATTR_VALUE_TEST2,
                 ],
             },
         )
@@ -1927,7 +1978,8 @@ class TestRfcRoutingAndValidation:
         assert result.is_failure
 
     def test_route_models_to_write_multiple_entries(
-        self, rfc_quirk: FlextLdifServersRfc
+        self,
+        rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test _route_models_to_write with multiple entries."""
         entry1 = RfcTestHelpers.test_create_entry_and_unwrap(
@@ -1935,7 +1987,7 @@ class TestRfcRoutingAndValidation:
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST1
+                    TestGeneralConstants.ATTR_VALUE_TEST1,
                 ],
             },
         )
@@ -1944,7 +1996,7 @@ class TestRfcRoutingAndValidation:
             attributes={
                 "objectClass": [TestGeneralConstants.OC_NAME_PERSON],
                 TestGeneralConstants.ATTR_NAME_CN: [
-                    TestGeneralConstants.ATTR_VALUE_TEST2
+                    TestGeneralConstants.ATTR_VALUE_TEST2,
                 ],
             },
         )
@@ -2003,14 +2055,15 @@ class TestRfcRoutingAndValidation:
     ) -> None:
         """Test _validate_entries with invalid entry type."""
         result = rfc_quirk._validate_entries(
-            cast("list[FlextLdifModels.Entry]", ["not an Entry"])
+            cast("list[FlextLdifModels.Entry]", ["not an Entry"]),
         )
         assert result.is_failure
         assert result.error is not None
         assert "Invalid entry type" in result.error
 
     def test_write_attribute_with_x_origin(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _write_attribute with x_origin in metadata."""
         # Create attribute with x_origin in metadata
@@ -2091,14 +2144,15 @@ class TestRfcSchemaQuirkMethods:
     ) -> None:
         """Test _validate_entries with invalid entry type."""
         result = rfc_quirk._validate_entries(
-            cast("list[FlextLdifModels.Entry]", ["not an Entry"])
+            cast("list[FlextLdifModels.Entry]", ["not an Entry"]),
         )
         assert result.is_failure
         assert result.error is not None
         assert "Invalid entry type" in result.error
 
     def test_write_attribute_original_format_with_x_origin(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _write_attribute with original_format and x_origin in metadata."""
         attr = FlextLdifModels.SchemaAttribute(
@@ -2132,7 +2186,8 @@ class TestRfcSchemaQuirkMethods:
         assert TestsRfcConstants.TEST_ORIGIN in written
 
     def test_write_objectclass_original_format_with_x_origin(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _write_objectclass with original_format and x_origin in metadata."""
         # Create objectclass with original_format and x_origin in metadata
@@ -2158,7 +2213,8 @@ class TestRfcSchemaQuirkMethods:
         assert "test.ldif" in written
 
     def test_detect_schema_type_objectclass_keywords(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _detect_schema_type with objectclass-specific keywords."""
         # Test STRUCTURAL keyword
@@ -2242,7 +2298,8 @@ class TestRfcSchemaQuirkMethods:
         assert result == "attribute"
 
     def test_detect_schema_type_legacy_objectclass(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _detect_schema_type with legacy objectclass keyword."""
         # Test objectclass keyword
@@ -2288,7 +2345,8 @@ class TestRfcSchemaQuirkMethods:
         assert result == "objectclass"
 
     def test_route_parse_objectclass(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _route_parse with objectclass definition."""
         result = rfc_schema_quirk._route_parse(TestsRfcConstants.OC_DEF_PERSON)
@@ -2381,7 +2439,8 @@ class TestRfcSchemaQuirkMethods:
         assert result is True
 
     def test_route_can_handle_string_objectclass(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _route_can_handle with objectclass string."""
         result = rfc_schema_quirk._route_can_handle(TestsRfcConstants.OC_DEF_PERSON)
@@ -2424,7 +2483,8 @@ class TestRfcSchemaQuirkMethods:
         assert result.is_failure
 
     def test_handle_parse_operation_oc_definition_success(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _handle_parse_operation with oc_definition success."""
         result = rfc_schema_quirk._handle_parse_operation(
@@ -2437,7 +2497,8 @@ class TestRfcSchemaQuirkMethods:
         assert oc.name == "person"
 
     def test_handle_parse_operation_oc_definition_failure(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _handle_parse_operation with oc_definition failure."""
         result = rfc_schema_quirk._handle_parse_operation(
@@ -2447,7 +2508,8 @@ class TestRfcSchemaQuirkMethods:
         assert result.is_failure
 
     def test_handle_parse_operation_no_parameters(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _handle_parse_operation with no parameters."""
         result = rfc_schema_quirk._handle_parse_operation(
@@ -2580,7 +2642,8 @@ class TestRfcSchemaQuirkMethods:
         assert isinstance(result, FlextResult)
 
     def test_handle_write_operation_no_parameters(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _handle_write_operation with no parameters."""
         result = rfc_schema_quirk._handle_write_operation(
@@ -2592,7 +2655,8 @@ class TestRfcSchemaQuirkMethods:
         assert "No write parameter provided" in result.error
 
     def test_auto_detect_operation_with_operation(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _auto_detect_operation with explicit operation."""
         result = rfc_schema_quirk._auto_detect_operation(
@@ -2635,7 +2699,8 @@ class TestRfcSchemaQuirkMethods:
         assert result == "write"
 
     def test_auto_detect_operation_unknown_type(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _auto_detect_operation with unknown data type."""
         result = rfc_schema_quirk._auto_detect_operation(
@@ -2651,7 +2716,8 @@ class TestRfcSchemaQuirkMethods:
         assert "Unknown data type" in result.error
 
     def test_route_operation_parse_string(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _route_operation with parse operation and string."""
         result = rfc_schema_quirk._route_operation(
@@ -2664,7 +2730,8 @@ class TestRfcSchemaQuirkMethods:
         assert attr.name == "cn"
 
     def test_route_operation_parse_non_string(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _route_operation with parse operation and non-string."""
         result = rfc_schema_quirk._route_operation(
@@ -2679,7 +2746,8 @@ class TestRfcSchemaQuirkMethods:
         assert "parse operation requires str" in result.error
 
     def test_route_operation_parse_objectclass(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _route_operation with parse operation and objectclass string."""
         result = rfc_schema_quirk._route_operation(
@@ -2719,7 +2787,8 @@ class TestRfcSchemaQuirkMethods:
         assert TestsRfcConstants.OC_OID_PERSON in written
 
     def test_route_operation_write_invalid_type(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _route_operation with write operation and invalid type."""
         result = rfc_schema_quirk._route_operation("string", operation="write")
@@ -2731,7 +2800,8 @@ class TestRfcSchemaQuirkMethods:
         )
 
     def test_execute_with_none_data(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test execute method with None data."""
         result = rfc_schema_quirk.execute()
@@ -2739,21 +2809,23 @@ class TestRfcSchemaQuirkMethods:
         assert result.unwrap() == ""
 
     def test_execute_auto_detect_failure(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test execute method with auto-detect failure."""
         result = rfc_schema_quirk.execute(
             cast(
                 "str | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | None",
                 123,
-            )
+            ),
         )
         assert result.is_failure
         assert result.error is not None
         assert "Unknown data type" in result.error
 
     def test_execute_parse_string(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test execute method with parse operation."""
         result = rfc_schema_quirk.execute(
@@ -2771,8 +2843,6 @@ class TestRfcSchemaQuirkMethods:
         sample_schema_attribute: FlextLdifModels.SchemaAttribute,
     ) -> None:
         """Test execute method with write operation."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         attr = sample_schema_attribute
         result = rfc_schema_quirk.write(attr)
         written = RfcTestHelpers.test_result_success_and_unwrap(result)
@@ -2795,7 +2865,8 @@ class TestRfcSchemaQuirkMethods:
         assert result.name == "cn"
 
     def test_call_with_oc_definition(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test __call__ method with oc_definition."""
         result = rfc_schema_quirk(
@@ -2854,7 +2925,8 @@ class TestRfcSchemaQuirkMethods:
         assert attr.name == "cn"
 
     def test_parse_objectclass_public_method(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test parse_objectclass public method."""
         result = rfc_schema_quirk.parse_objectclass(TestsRfcConstants.OC_DEF_PERSON)
@@ -2864,7 +2936,8 @@ class TestRfcSchemaQuirkMethods:
         assert oc.name == "person"
 
     def test_create_metadata(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test create_metadata method."""
         metadata = rfc_schema_quirk.create_metadata(
@@ -2877,7 +2950,8 @@ class TestRfcSchemaQuirkMethods:
         assert metadata.extensions["x_origin"] == TestsRfcConstants.TEST_ORIGIN
 
     def test_extract_schemas_from_ldif_success(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with success."""
         result = rfc_schema_quirk.extract_schemas_from_ldif(
@@ -2896,7 +2970,8 @@ class TestRfcSchemaQuirkMethods:
         )
 
     def test_extract_schemas_from_ldif_with_validation(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with validation."""
         result = rfc_schema_quirk.extract_schemas_from_ldif(
@@ -2906,7 +2981,8 @@ class TestRfcSchemaQuirkMethods:
         assert result.is_success
 
     def test_extract_schemas_from_ldif_exception(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with invalid content that causes exception."""
         # Use content that will cause a real exception during parsing
@@ -2950,7 +3026,7 @@ class TestRfcCoverageAdditional:
     ) -> None:
         """Test _handle_parse_operation with valid LDIF."""
         result = rfc_quirk._handle_parse_operation(
-            TestGeneralConstants.SAMPLE_LDIF_ENTRY
+            TestGeneralConstants.SAMPLE_LDIF_ENTRY,
         )
         assert result.is_success
         unwrapped = result.unwrap()
@@ -2997,7 +3073,8 @@ class TestRfcCoverageAdditional:
         assert isinstance(result.unwrap(), str)
 
     def test_write_attribute_with_x_origin(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _write_attribute with X-ORIGIN in metadata."""
         # Create attribute and add metadata with x_origin using create_metadata
@@ -3013,7 +3090,8 @@ class TestRfcCoverageAdditional:
         assert "X-ORIGIN" in written or "x_origin" in written.lower()
 
     def test_acl_execute_with_none_data(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.execute with None data (health check)."""
         result = rfc_acl_quirk.execute()
@@ -3060,7 +3138,8 @@ class TestRfcCoverageAdditional:
         assert isinstance(result.unwrap(), str)
 
     def test_schema_execute_with_attr_def(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.execute with attr_definition."""
         _ = RfcTestHelpers.test_schema_quirk_execute_and_verify(
@@ -3071,7 +3150,8 @@ class TestRfcCoverageAdditional:
         )
 
     def test_schema_execute_with_oc_def(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.execute with oc_definition."""
         _ = RfcTestHelpers.test_schema_quirk_execute_and_verify(
@@ -3148,7 +3228,8 @@ class TestRfcCoverageAdditional:
         assert isinstance(result.unwrap(), str)
 
     def test_acl_execute_with_data_str(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.execute with data as str."""
         acl_line = TestsRfcConstants.ACL_LINE_SAMPLE
@@ -3192,7 +3273,8 @@ class TestRfcCoverageAdditional:
         # Use a dict with invalid value type
         invalid_attrs = {"invalid": None}  # None is not a valid attribute value
         result = rfc_entry_quirk.parse_entry(
-            TestGeneralConstants.SAMPLE_DN, invalid_attrs
+            TestGeneralConstants.SAMPLE_DN,
+            invalid_attrs,
         )
         # May succeed or fail depending on implementation
         assert isinstance(result, FlextResult)
@@ -3222,7 +3304,8 @@ class TestRfcCoverageAdditional:
             )
 
     def test_schema_extract_schemas_validation_failure(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with validation failure."""
         # Create LDIF content that will cause validation to fail
@@ -3273,12 +3356,12 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         invalid_entries = [
             FlextLdifModels.Entry.model_construct(
                 dn=FlextLdifModels.DistinguishedName.model_construct(
-                    value=""
+                    value="",
                 ),  # Empty DN will fail
                 attributes=FlextLdifModels.LdifAttributes.model_construct(
-                    attributes={}
+                    attributes={},
                 ),
-            )
+            ),
         ]
         result = rfc_quirk._handle_write_operation(invalid_entries)
         assert result.is_failure
@@ -3333,18 +3416,19 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         invalid_models: list[object] = [
             FlextLdifModels.Entry.model_construct(
                 dn=FlextLdifModels.DistinguishedName.model_construct(
-                    value=""
+                    value="",
                 ),  # Empty DN will fail
                 attributes=FlextLdifModels.LdifAttributes.model_construct(
-                    attributes={}
+                    attributes={},
                 ),
-            )
+            ),
         ]
         result = rfc_quirk._route_models_to_write(invalid_models)
         assert result.is_failure
 
     def test_acl_execute_parse_with_invalid_data(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.execute with parse operation and invalid data type."""
         result = rfc_acl_quirk.execute(
@@ -3356,7 +3440,8 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         assert "parse operation requires str" in result.error
 
     def test_acl_execute_write_with_invalid_data(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.execute with write operation and invalid data type."""
         result = rfc_acl_quirk.execute(
@@ -3368,7 +3453,8 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         assert "write operation requires Acl" in result.error
 
     def test_acl_execute_auto_detect_parse(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl.execute with auto-detection for parse."""
         acl_line = '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
@@ -3392,7 +3478,8 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
     ) -> None:
         """Test Entry._auto_detect_entry_operation with parse."""
         result = rfc_entry_quirk._auto_detect_entry_operation(
-            TestGeneralConstants.SAMPLE_LDIF_ENTRY, None
+            TestGeneralConstants.SAMPLE_LDIF_ENTRY,
+            None,
         )
         assert result == "parse"
 
@@ -3422,7 +3509,8 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
     ) -> None:
         """Test Entry._route_entry_operation with parse and invalid data."""
         result = rfc_entry_quirk._route_entry_operation(
-            cast("str | list[FlextLdifModels.Entry]", 123), "parse"
+            cast("str | list[FlextLdifModels.Entry]", 123),
+            "parse",
         )
         assert result.is_failure
         assert result.error is not None
@@ -3434,7 +3522,8 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
     ) -> None:
         """Test Entry._route_entry_operation with write and invalid data."""
         result = rfc_entry_quirk._route_entry_operation(
-            cast("str | list[FlextLdifModels.Entry]", "not a list"), "write"
+            cast("str | list[FlextLdifModels.Entry]", "not a list"),
+            "write",
         )
         assert result.is_failure
         assert result.error is not None
@@ -3460,7 +3549,7 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         # Use model_construct to bypass Pydantic validation for testing error paths
         invalid_entry = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName.model_construct(
-                value=""
+                value="",
             ),  # Empty DN will fail
             attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
@@ -3477,13 +3566,15 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         # Use a dict with invalid value type
         invalid_attrs = {"invalid": None}  # None is not a valid attribute value
         result = rfc_entry_quirk.parse_entry(
-            TestGeneralConstants.SAMPLE_DN, invalid_attrs
+            TestGeneralConstants.SAMPLE_DN,
+            invalid_attrs,
         )
         # May succeed or fail depending on implementation
         assert isinstance(result, FlextResult)
 
     def test_schema_extract_schemas_validation_failure_path(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with validation failure path."""
         # Create LDIF that will cause validation to fail
@@ -3492,7 +3583,8 @@ attributeTypes: ( 1.2.3.4 NAME 'testAttr' )
 objectClasses: ( 1.2.3.5 NAME 'testOC' MUST missingAttr )
 """
         result = rfc_schema_quirk.extract_schemas_from_ldif(
-            invalid_ldif, validate_dependencies=True
+            invalid_ldif,
+            validate_dependencies=True,
         )
         # May succeed or fail depending on validation
         assert isinstance(result, FlextResult)
@@ -3502,7 +3594,8 @@ class TestRfcCoverage100Percent:
     """Additional tests to achieve 100% coverage for RFC quirks."""
 
     def test_handle_parse_operation_failure_path(
-        self, rfc_quirk: FlextLdifServersRfc
+        self,
+        rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test _handle_parse_operation with parse failure."""
         # Use LDIF with invalid structure that will cause parse to fail
@@ -3523,7 +3616,8 @@ class TestRfcCoverage100Percent:
         assert result.is_success
 
     def test_handle_parse_operation_single_entry(
-        self, rfc_quirk: FlextLdifServersRfc
+        self,
+        rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test _handle_parse_operation with single Entry object."""
         # This tests the isinstance(entries, Entry) path
@@ -3531,7 +3625,7 @@ class TestRfcCoverage100Percent:
         # This path is covered by other tests that return Entry objects
         # Use valid LDIF that should parse successfully
         result = rfc_quirk._handle_parse_operation(
-            TestGeneralConstants.SAMPLE_LDIF_ENTRY
+            TestGeneralConstants.SAMPLE_LDIF_ENTRY,
         )
         assert result.is_success
 
@@ -3667,7 +3761,7 @@ class TestRfcCoverage100Percent:
         # This path requires parse_response.entries to be an Entry object
         # We'll use a valid LDIF that should parse successfully
         result = rfc_quirk._handle_parse_operation(
-            TestGeneralConstants.SAMPLE_LDIF_ENTRY
+            TestGeneralConstants.SAMPLE_LDIF_ENTRY,
         )
         assert result.is_success
         # The result should be EntryOrString
@@ -3684,7 +3778,7 @@ class TestRfcCoverage100Percent:
         # Use model_construct to bypass Pydantic validation for testing error paths
         invalid_entry = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName.model_construct(
-                value=""
+                value="",
             ),  # Empty DN will fail
             attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
@@ -3736,7 +3830,7 @@ class TestRfcCoverage100Percent:
         # Use model_construct to bypass Pydantic validation for testing error paths
         invalid_entry = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName.model_construct(
-                value=""
+                value="",
             ),  # Empty DN will fail
             attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
@@ -3781,7 +3875,8 @@ class TestRfcCoverage100Percent:
         assert isinstance(result, str)
 
     def test_acl_handle_parse_acl_failure(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._handle_parse_acl with parse failure."""
         # Use invalid ACL that will cause parse to fail
@@ -3793,7 +3888,8 @@ class TestRfcCoverage100Percent:
             assert "Parse ACL failed" in result.error
 
     def test_acl_handle_write_acl_failure(
-        self, rfc_acl_quirk: FlextLdifServersRfc.Acl
+        self,
+        rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
         """Test Acl._handle_write_acl with write failure."""
         # Create invalid ACL that will cause write to fail
@@ -3886,7 +3982,8 @@ class TestRfcCoverage100Percent:
         assert isinstance(result, FlextResult)
 
     def test_write_attribute_with_x_origin_in_metadata(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _write_attribute with x_origin in metadata extensions."""
         # Create attribute with x_origin in metadata.extensions
@@ -3918,7 +4015,8 @@ class TestRfcCoverage100Percent:
         assert "X-ORIGIN" in written or TestsRfcConstants.TEST_ORIGIN in written
 
     def test_write_attribute_with_x_origin_no_metadata(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test _write_attribute without x_origin in metadata."""
         # Create attribute without x_origin
@@ -3931,7 +4029,8 @@ class TestRfcCoverage100Percent:
         assert isinstance(written, str)
 
     def test_schema_execute_unknown_operation(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.execute with unknown operation."""
         # This should raise AssertionError for unknown operation
@@ -3942,7 +4041,8 @@ class TestRfcCoverage100Percent:
             )
 
     def test_extract_schemas_with_exception(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with exception handling."""
         # Use LDIF that will cause an exception
@@ -3955,7 +4055,8 @@ class TestRfcCoverage100Percent:
             assert "Schema extraction failed" in result.error
 
     def test_extract_schemas_validation_failure(
-        self, rfc_schema_quirk: FlextLdifServersRfc.Schema
+        self,
+        rfc_schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test extract_schemas_from_ldif with validation failure."""
         # Use LDIF that will cause validation to fail
@@ -3963,7 +4064,8 @@ class TestRfcCoverage100Percent:
 attributeTypes: ( 1.2.3.4 NAME 'testAttr' INVALID )
 """
         result = rfc_schema_quirk.extract_schemas_from_ldif(
-            invalid_ldif, validate_dependencies=True
+            invalid_ldif,
+            validate_dependencies=True,
         )
         # May succeed or fail depending on validation
         assert isinstance(result, FlextResult)
@@ -4072,7 +4174,8 @@ class TestRfcSchemaAutoExecuteCoverage:
         # Use real SchemaAttribute from fixtures
         # Instantiate with attr_model - should auto-execute write
         result = AutoExecuteSchema(
-            attr_model=sample_schema_attribute, operation="write"
+            attr_model=sample_schema_attribute,
+            operation="write",
         )
         # Should return unwrapped string (written attribute definition)
         assert isinstance(result, str)
@@ -4094,7 +4197,8 @@ class TestRfcSchemaAutoExecuteCoverage:
         # Use real SchemaObjectClass from fixtures
         # Instantiate with oc_model - should auto-execute write
         result = AutoExecuteSchema(
-            oc_model=sample_schema_objectclass, operation="write"
+            oc_model=sample_schema_objectclass,
+            operation="write",
         )
         # Should return unwrapped string (written objectClass definition)
         assert isinstance(result, str)

@@ -113,7 +113,9 @@ class FlextLdifUtilitiesOID:
                     else None
                 )
                 logger.debug(
-                    f"Failed to extract OID from original_format: debug_message={debug_msg}, original_format_preview={original_format_preview}",
+                    "Failed to extract OID from original_format: debug_message=%s, original_format_preview=%s",
+                    debug_msg,
+                    original_format_preview,
                 )
 
         # Fallback: Use OID field from model

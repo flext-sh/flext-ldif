@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -37,7 +37,7 @@ class TestExtractOidFromSchemaObject:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"
+                    "original_format": "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )",
                 },
             ),
         )
@@ -63,7 +63,7 @@ class TestExtractOidFromSchemaObject:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": "( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )"
+                    "original_format": "( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )",
                 },
             ),
         )
@@ -235,7 +235,7 @@ class TestExtractFromDefinition:
 
         # Test with definition that has invalid OID format
         result = FlextLdifUtilities.OID.extract_from_definition(
-            "( invalid.oid NAME 'cn' )"
+            "( invalid.oid NAME 'cn' )",
         )
         # Should return None or the invalid OID depending on implementation
         # The important thing is it doesn't crash
@@ -267,7 +267,7 @@ class TestExtractFromSchemaObjectEdgeCases:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": {"key": "value"}
+                    "original_format": {"key": "value"},
                 },  # Dict instead of string
             ),
         )
@@ -354,7 +354,7 @@ class TestExtractFromSchemaObjectEdgeCases:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": "( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                    "original_format": "( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                 },
             ),
         )

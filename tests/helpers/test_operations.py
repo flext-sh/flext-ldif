@@ -13,22 +13,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, cast
 
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 
-from ...helpers.test_assertions import TestAssertions
+from .test_assertions import TestAssertions
 
 
 class HasParseMethod(Protocol):
     """Protocol for objects with parse method."""
 
     def parse(
-        self, ldif_input: str | Path, server_type: str | None = None
+        self,
+        ldif_input: str | Path,
+        server_type: str | None = None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF content."""
         ...
@@ -38,7 +39,8 @@ class HasWriteMethod(Protocol):
     """Protocol for objects with write method."""
 
     def write(
-        self, entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry
+        self,
+        entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
     ) -> FlextResult[str]:
         """Write entries to LDIF."""
         ...
@@ -88,8 +90,14 @@ class TestOperations:
         else:
             result = parser.parse(ldif_content)
 
-        # Type narrowing: result is FlextResult[list[Entry]], but assert_parse_success accepts broader type
-        return TestAssertions.assert_parse_success(result, expected_count)
+        # Type narrowing: result is FlextResult[list[Entry]], cast to broader type for assert_parse_success
+        return TestAssertions.assert_parse_success(
+            cast(
+                "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry] | str]",
+                result,
+            ),
+            expected_count,
+        )
 
     @staticmethod
     def write_and_validate(
@@ -147,7 +155,9 @@ class TestOperations:
         """
         # Parse original
         original_entries = TestOperations.parse_and_validate(
-            api, ldif_content, expected_count
+            api,
+            ldif_content,
+            expected_count,
         )
 
         # Write to temporary file
@@ -157,12 +167,15 @@ class TestOperations:
 
         # Parse written file
         roundtripped_entries = TestOperations.parse_and_validate(
-            api, output_file, expected_count
+            api,
+            output_file,
+            expected_count,
         )
 
         # Validate roundtrip preserves structure
         TestAssertions.assert_roundtrip_preserves(
-            original_entries, roundtripped_entries
+            original_entries,
+            roundtripped_entries,
         )
 
         return (original_entries, roundtripped_entries)

@@ -381,10 +381,12 @@ class FlextLdifConversion(
 
         # Analyze attribute case for target compatibility
         original_attribute_case = getattr(
-            source_metadata, "original_attribute_case", {}
+            source_metadata,
+            "original_attribute_case",
+            {},
         )
         if original_attribute_case and FlextRuntime.is_dict_like(
-            original_attribute_case
+            original_attribute_case,
         ):
             conversion_analysis["attribute_case"] = {
                 "source_case": original_attribute_case,
@@ -394,10 +396,12 @@ class FlextLdifConversion(
 
         # Analyze DN spacing for target compatibility
         original_format_details = getattr(
-            source_metadata, "original_format_details", {}
+            source_metadata,
+            "original_format_details",
+            {},
         )
         if original_format_details and FlextRuntime.is_dict_like(
-            original_format_details
+            original_format_details,
         ):
             dn_spacing = original_format_details.get("dn_spacing")
             if dn_spacing:
@@ -457,13 +461,14 @@ class FlextLdifConversion(
             # ANALYSIS-BASED CONVERSION: Analyze metadata for intelligent conversion
             # Do NOT directly restore original values - ANALYZE and CONVERT appropriately
             conversion_analysis = self._analyze_metadata_for_conversion(
-                entry.metadata, target_server_type
+                entry.metadata,
+                target_server_type,
             )
 
             # Store analysis in converted entry for downstream processing
             if not converted_entry.metadata:
                 converted_entry.metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type=target_server_type
+                    quirk_type=target_server_type,
                 )
 
             if conversion_analysis:
@@ -477,7 +482,7 @@ class FlextLdifConversion(
             # Update metadata to indicate target server
             if not converted_entry.metadata:
                 converted_entry.metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type=target_server_type
+                    quirk_type=target_server_type,
                 )
 
             # Add conversion tracking in metadata extensions
@@ -603,7 +608,7 @@ class FlextLdifConversion(
             ldif_string: str = write_result.unwrap()
             if not ldif_string or not ldif_string.strip():
                 return FlextResult.fail(
-                    "Write operation returned empty objectclass LDIF"
+                    "Write operation returned empty objectclass LDIF",
                 )
 
             # Step 3: Get target schema quirk with proper type narrowing
@@ -645,7 +650,8 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
     ) -> FlextResult[
         tuple[
-            FlextLdifProtocols.Quirks.AclProtocol, FlextLdifProtocols.Quirks.AclProtocol
+            FlextLdifProtocols.Quirks.AclProtocol,
+            FlextLdifProtocols.Quirks.AclProtocol,
         ]
     ]:
         """Get and validate ACL classes from quirks."""
@@ -738,7 +744,7 @@ class FlextLdifConversion(
                 if not converted_acl.metadata.extensions:
                     converted_acl.metadata.extensions = {}
                 converted_acl.metadata.extensions.update(
-                    original_acl.metadata.extensions
+                    original_acl.metadata.extensions,
                 )
 
     def _convert_acl(
@@ -765,7 +771,7 @@ class FlextLdifConversion(
             # Step 1: Create Entry RFC with Acl in metadata.acls
             # This preserves the Acl model with all its fields (subject, permissions, etc.)
             entry_dn = FlextLdifModels.DistinguishedName(
-                value="cn=acl-conversion,dc=example,dc=com"
+                value="cn=acl-conversion,dc=example,dc=com",
             )
             entry_attributes = FlextLdifModels.LdifAttributes(attributes={})
 
@@ -787,10 +793,7 @@ class FlextLdifConversion(
             # Step 2: Convert Entry using Entry conversion (which preserves metadata.acls)
             entry_result = self._convert_entry(source_quirk, target_quirk, rfc_entry)
             if entry_result.is_failure:
-                return cast(
-                    "FlextResult[FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl]",
-                    entry_result,
-                )
+                return entry_result
 
             converted_entry = entry_result.unwrap()
             if not isinstance(converted_entry, FlextLdifModels.Entry):
@@ -1505,7 +1508,7 @@ class FlextLdifConversion(
         # Check if quirk is a base quirk with schema_quirk attribute
         schema_quirk = getattr(quirk, "schema_quirk", None)
         if schema_quirk is not None:
-            return schema_quirk
+            return cast("object", schema_quirk)
         return None
 
     def _check_attribute_support(

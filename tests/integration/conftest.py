@@ -19,14 +19,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
-
-from ..fixtures.loader import FlextLdifFixtures
+from tests.fixtures.loader import FlextLdifFixtures
 
 if TYPE_CHECKING:
     from flext_ldif.typings import FlextLdifEntry
@@ -526,8 +523,6 @@ def _reset_api_singleton() -> None:
 @pytest.fixture
 def conversion_matrix() -> FlextLdifConversion:
     """Create FlextLdifConversion instance for conversion tests."""
-    from flext_ldif.services.conversion import FlextLdifConversion
-
     return FlextLdifConversion()
 
 

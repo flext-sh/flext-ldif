@@ -17,6 +17,7 @@ Notes:
 from __future__ import annotations
 
 from flext_core import FlextModels
+from flext_core._models.collections import FlextModelsCollections
 from pydantic import computed_field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
@@ -244,7 +245,9 @@ class FlextLdifModels(FlextModels):
     class SchemaDiscoveryResult(FlextLdifModelsResults.SchemaDiscoveryResult):
         """Result of schema discovery operations."""
 
-    class FlexibleCategories(FlextModels.Categories[FlextLdifModelsDomains.Entry]):
+    class FlexibleCategories(
+        FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
+    ):
         """Flexible entry categorization with dynamic categories.
 
         Replaces dict[str, list[Entry]] pattern with type-safe model.
@@ -378,13 +381,19 @@ class FlextLdifModels(FlextModels):
                     )
 
             # Convert statistics to domain type if needed
+            # Accept both FlextModels.Statistics (parent) and FlextLdifModelsResults.Statistics (local)
             domain_statistics: FlextLdifModelsResults.Statistics | None = None
             if statistics is not None:
                 if isinstance(statistics, FlextLdifModelsResults.Statistics):
                     domain_statistics = statistics
+                elif isinstance(statistics, FlextModels.Statistics):
+                    # Convert parent Statistics to domain-specific type
+                    domain_statistics = FlextLdifModelsResults.Statistics(
+                        total_entries=getattr(statistics, "total_entries", 0),
+                    )
                 else:
-                    # Public statistics is already a domain statistics (inheritance)
-                    domain_statistics = statistics
+                    # Unknown statistics type - create default
+                    domain_statistics = None
 
             # Call parent from_entries method with domain types
             domain_result = super().from_entries(
@@ -421,65 +430,8 @@ class FlextLdifModels(FlextModels):
                 )
             return domain_result
 
-    class Statistics(FlextLdifModelsResults.Statistics):
-        """Unified statistics model for all LDIF operations.
-
-        Consolidates PipelineStatistics, ParseStatistics, WriteStatistics,
-        and AclStatistics into a single model following the EntryResult pattern.
-
-        Uses helper methods to create operation-specific statistics while
-        maintaining a single source of truth for all statistical data.
-
-        Attributes:
-            Core counters (all operations):
-                total_entries: Total entries encountered/processed
-                processed_entries: Successfully processed entries
-                failed_entries: Entries that failed processing
-
-            Category counters (pipeline operations):
-                schema_entries: Schema entries categorized
-                data_entries: Data entries (non-schema)
-                hierarchy_entries: Hierarchy/organizational entries
-                user_entries: User entries
-                group_entries: Group entries
-                acl_entries: ACL entries
-
-            Schema migration counters:
-                schema_attributes: Schema attributes migrated
-                schema_objectclasses: Schema object classes migrated
-
-            ACL extraction counters:
-                acls_extracted: Total ACL objects extracted
-                acls_failed: ACL parsing failures
-                acl_attribute_name: Primary ACL attribute name
-
-            Parsing counters:
-                parse_errors: Parse errors encountered
-                detected_server_type: Auto-detected LDAP server type
-
-            Writing counters:
-                entries_written: Entries successfully written
-                output_file: Output file path
-                file_size_bytes: Written file size
-                encoding: File encoding used
-
-            Metadata:
-                processing_duration: Processing time in seconds
-                rejection_reasons: Map of rejection reason to count
-
-        Example:
-            >>> # Parsing statistics
-            >>> stats = Statistics.for_parsing(total=100, schema=10, data=90, errors=2)
-            >>>
-            >>> # Pipeline statistics
-            >>> stats = Statistics.for_pipeline(
-            ...     total=100, processed=98, schema=10, users=50, groups=38
-            ... )
-            >>>
-            >>> # Merge statistics
-            >>> combined = stats1.merge(stats2)
-
-        """
+    # Note: Statistics is inherited from FlextModels (flext-core)
+    # and NOT overridden to avoid type incompatibility with FlextModels.Statistics
 
     class SchemaBuilderResult(FlextLdifModelsResults.SchemaBuilderResult):
         """Result of schema builder build() operation.
@@ -607,6 +559,21 @@ class FlextLdifModels(FlextModels):
     # ═══════════════════════════════════════════════════════════════════════
     # STATISTICS MODELS
     # ═══════════════════════════════════════════════════════════════════════
+
+    class Statistics(FlextLdifModelsResults.Statistics):
+        """LDIF processing statistics.
+
+        Unified statistics model for all LDIF operations, tracking entry counts,
+        processing metrics, and server type detection with error handling.
+
+        Attributes:
+            total_entries: Total entries encountered/processed
+            processed_entries: Successfully processed entries
+            failed_entries: Entries that failed processing
+            parse_errors: Parse errors encountered
+            detected_server_type: Auto-detected LDAP server type
+
+        """
 
     class StatisticsResult(FlextLdifModelsResults.StatisticsResult):
         """Statistics result from LDIF processing pipeline.

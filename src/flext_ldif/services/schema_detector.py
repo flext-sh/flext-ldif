@@ -22,7 +22,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifSchemaDetector(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for schema entry detection and OID-based filtering.
 
@@ -214,12 +214,14 @@ class FlextLdifSchemaDetector(
             True if any schema definitions remain
 
         """
-        return any([
-            attrs_copy.get("attributeTypes") or attrs_copy.get("attributetypes"),
-            attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses"),
-            attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules"),
-            attrs_copy.get("matchingRuleUse") or attrs_copy.get("matchingruleuse"),
-        ])
+        return any(
+            [
+                attrs_copy.get("attributeTypes") or attrs_copy.get("attributetypes"),
+                attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses"),
+                attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules"),
+                attrs_copy.get("matchingRuleUse") or attrs_copy.get("matchingruleuse"),
+            ],
+        )
 
     def filter_by_oids(
         self,

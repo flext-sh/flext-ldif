@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.apache import FlextLdifServersApache
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestApacheDirectorySchemas:
@@ -23,8 +23,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_attribute_with_apache_oid(self) -> None:
         """Test attribute detection with Apache DS OID pattern."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
@@ -38,8 +36,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_attribute_with_ads_prefix(self) -> None:
         """Test attribute detection with ads- prefix."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
@@ -51,8 +47,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_attribute_with_apacheds_name(self) -> None:
         """Test attribute detection with apacheds in name."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = (
@@ -69,8 +63,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-ApacheDS attributes."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -84,10 +76,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing Apache DS attribute definition."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
@@ -106,10 +94,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
@@ -125,8 +109,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
@@ -139,8 +121,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_objectclass_with_apache_oid(self) -> None:
         """Test objectClass detection with Apache DS OID."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )"
@@ -157,8 +137,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_objectclass_with_ads_name(self) -> None:
         """Test objectClass detection with ads- name."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )"
@@ -175,8 +153,6 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-ApacheDS classes."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
@@ -193,10 +169,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
@@ -221,10 +193,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
@@ -239,10 +207,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
@@ -257,8 +221,6 @@ class TestApacheDirectorySchemas:
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
@@ -271,8 +233,6 @@ class TestApacheDirectorySchemas:
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         # Create proper SchemaAttribute model instead of dict
@@ -297,8 +257,6 @@ class TestApacheDirectorySchemas:
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         # Create proper SchemaObjectClass model instead of dict
@@ -335,8 +293,6 @@ class TestApacheDirectoryAcls:
 
     def test__can_handle_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
@@ -359,8 +315,6 @@ class TestApacheDirectoryAcls:
 
     def test__can_handle_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
@@ -381,8 +335,6 @@ class TestApacheDirectoryAcls:
 
     def test__can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
@@ -403,8 +355,6 @@ class TestApacheDirectoryAcls:
 
     def test__can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "access to * by * read"
@@ -427,10 +377,6 @@ class TestApacheDirectoryAcls:
 
     def test_parse_success(self) -> None:
         """Test parsing Apache DS ACI definition."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
@@ -448,10 +394,6 @@ class TestApacheDirectoryAcls:
 
     def test_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""
-        from flext_ldif.models import FlextLdifModels
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "aci: ( deny grantAdd )"
@@ -466,8 +408,6 @@ class TestApacheDirectoryAcls:
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
 
@@ -490,8 +430,6 @@ class TestApacheDirectoryAcls:
 
     def test_write_acl_to_rfc_with_clauses_only(self) -> None:
         """Test writing ACL with clauses only to RFC string format."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
 
@@ -513,8 +451,6 @@ class TestApacheDirectoryAcls:
 
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         main = FlextLdifServersApache()
         acl = main.acl_quirk
 

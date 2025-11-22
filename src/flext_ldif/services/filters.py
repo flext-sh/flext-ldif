@@ -47,7 +47,7 @@ def _get_server_registry() -> FlextLdifServer:
 
 
 class FlextLdifFilters(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Universal LDIF Entry Filtering and Categorization Service.
 
@@ -876,11 +876,13 @@ class FlextLdifFilters(
             """
             try:
                 if not entries:
-                    return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok({
-                        "active": [],
-                        "virtual_deleted": [],
-                        "archive": [],
-                    })
+                    return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(
+                        {
+                            "active": [],
+                            "virtual_deleted": [],
+                            "archive": [],
+                        },
+                    )
 
                 active_entries: list[FlextLdifModels.Entry] = []
                 deleted_entries: list[FlextLdifModels.Entry] = []
@@ -923,11 +925,13 @@ class FlextLdifFilters(
                     else:
                         active_entries.append(entry)
 
-                return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok({
-                    "active": active_entries,
-                    "virtual_deleted": deleted_entries,
-                    "archive": deleted_entries,  # Archive copy for recovery
-                })
+                return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(
+                    {
+                        "active": active_entries,
+                        "virtual_deleted": deleted_entries,
+                        "archive": deleted_entries,  # Archive copy for recovery
+                    },
+                )
 
             except Exception as e:
                 return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
@@ -1745,12 +1749,14 @@ class FlextLdifFilters(
     @staticmethod
     def _has_remaining_definitions(attrs_copy: dict[str, list[str]]) -> bool:
         """Check if entry has any schema definitions remaining after filtering."""
-        return any([
-            attrs_copy.get("attributeTypes") or attrs_copy.get("attributetypes"),
-            attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses"),
-            attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules"),
-            attrs_copy.get("matchingRuleUse") or attrs_copy.get("matchingruleuse"),
-        ])
+        return any(
+            [
+                attrs_copy.get("attributeTypes") or attrs_copy.get("attributetypes"),
+                attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses"),
+                attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules"),
+                attrs_copy.get("matchingRuleUse") or attrs_copy.get("matchingruleuse"),
+            ],
+        )
 
     @classmethod
     def filter_schema_by_oids(
@@ -2041,16 +2047,16 @@ class FlextLdifFilters(
             rules_dict: dict[str, object] = dict(rules)
             # Extract list fields with type guards - CategoryRules uses different field names
             user_dn_patterns = rules_dict.get("user_dn_patterns") or rules_dict.get(
-                "users"
+                "users",
             )
             group_dn_patterns = rules_dict.get("group_dn_patterns") or rules_dict.get(
-                "groups"
+                "groups",
             )
             hierarchy_dn_patterns = rules_dict.get(
-                "hierarchy_dn_patterns"
+                "hierarchy_dn_patterns",
             ) or rules_dict.get("hierarchy")
             schema_dn_patterns = rules_dict.get("schema_dn_patterns") or rules_dict.get(
-                "schema"
+                "schema",
             )
             user_objectclasses = rules_dict.get("user_objectclasses", [])
             group_objectclasses = rules_dict.get("group_objectclasses", [])

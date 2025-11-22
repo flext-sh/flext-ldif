@@ -57,8 +57,7 @@ from __future__ import annotations
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-
-from ...fixtures.loader import FlextLdifFixtures
+from tests.fixtures.loader import FlextLdifFixtures
 
 
 # ACL conversion test constants - defined at top of module without type checking

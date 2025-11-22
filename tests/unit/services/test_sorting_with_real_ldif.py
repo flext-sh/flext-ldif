@@ -17,8 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.sorting import FlextLdifSorting
 
 # ════════════════════════════════════════════════════════════════════════════

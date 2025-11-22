@@ -29,7 +29,7 @@ def _get_server_registry() -> FlextLdifServer:
 
 
 class FlextLdifCategorizer(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for entry categorization.
 
@@ -268,7 +268,7 @@ class FlextLdifCategorizer(
 
         # Type validation: ensure they are the correct types
         if not FlextRuntime.is_list_like(
-            priority_order
+            priority_order,
         ) or not FlextRuntime.is_dict_like(category_map):
             return ("rejected", "Invalid constants type")
 

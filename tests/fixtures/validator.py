@@ -398,7 +398,8 @@ class FlextLdifFixtureDiscovery:
         return None
 
     def load_expected_results(
-        self, metadata: FixtureMetadata
+        self,
+        metadata: FixtureMetadata,
     ) -> dict[str, object] | None:
         """Load expected results for a fixture.
 
@@ -632,11 +633,13 @@ class RoundTripValidator:
             if comparison.get("matches"):
                 total_matches += 1
             else:
-                mismatches.append({
-                    "entry_index": i,
-                    "dn": comparison.get("dn_original"),
-                    "comparison": comparison,
-                })
+                mismatches.append(
+                    {
+                        "entry_index": i,
+                        "dn": comparison.get("dn_original"),
+                        "comparison": comparison,
+                    },
+                )
 
         report: dict[str, object] = {
             "total_entries": len(original_entries),

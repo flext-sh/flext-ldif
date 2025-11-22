@@ -13,14 +13,14 @@ from __future__ import annotations
 from flext_core import FlextResult
 from pydantic import Field
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.typings import FlextLdifTypes
-
-from .servers.conftest import ConversionTestConstants
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.unit.quirks.servers.conftest import ConversionTestConstants
 
 # Conversion test constants - defined at top of module without type checking
 CONVERSION_TEST_CONSTANTS = ConversionTestConstants()
@@ -73,7 +73,7 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -82,7 +82,7 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -182,7 +182,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -191,7 +191,7 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -329,7 +329,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -338,7 +338,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -557,7 +557,7 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -566,7 +566,7 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -653,7 +653,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -662,7 +662,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -769,7 +769,7 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -778,7 +778,7 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -861,7 +861,7 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -870,7 +870,7 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -960,7 +960,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -969,7 +969,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -1074,7 +1074,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -1083,7 +1083,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -1188,7 +1188,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -1197,7 +1197,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -1318,7 +1318,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -1327,7 +1327,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -1445,7 +1445,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
             if isinstance(data, str):
                 return self.parse_attribute(data)
             return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-                "parse requires str"
+                "parse requires str",
             )
 
         # operation == "write"
@@ -1454,7 +1454,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
         return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
-            "write requires SchemaAttribute or SchemaObjectClass"
+            "write requires SchemaAttribute or SchemaObjectClass",
         )
 
     def can_handle_attribute(
@@ -1550,8 +1550,6 @@ class TestGetSupportedConversions:
         oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions for OUD quirk."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
             oud_quirk,
@@ -1565,8 +1563,6 @@ class TestGetSupportedConversions:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test checking supported conversions for OID quirk."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
             oid_quirk,
@@ -1586,8 +1582,6 @@ class TestAttributeConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OUD attribute to OID via matrix."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
             oud_quirk,
@@ -1606,8 +1600,6 @@ class TestAttributeConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OID attribute to OUD via matrix."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
             oid_quirk,
@@ -1626,8 +1618,6 @@ class TestAttributeConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting attribute with complex syntax."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
             oud_quirk,
@@ -1678,8 +1668,6 @@ class TestObjectClassConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OUD objectClass to OID via matrix."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
             oud_quirk,
@@ -1698,8 +1686,6 @@ class TestObjectClassConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting OID objectClass to OUD via matrix."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
             oid_quirk,
@@ -1718,8 +1704,6 @@ class TestObjectClassConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test converting objectClass with MAY attributes."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
             conversion_matrix,
             oud_quirk,
@@ -1742,8 +1726,6 @@ class TestBatchConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test batch conversion of multiple attributes."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         oid_attrs = TestDeduplicationHelpers.helper_batch_convert_and_assert(
             conversion_matrix,
             oud_quirk,
@@ -1766,8 +1748,6 @@ class TestBatchConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test batch conversion of multiple objectClasses."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         oid_ocs = TestDeduplicationHelpers.helper_batch_convert_and_assert(
             conversion_matrix,
             oud_quirk,
@@ -1827,8 +1807,6 @@ class TestBidirectionalConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test attribute round-trip: OUD → OID → OUD."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_roundtrip_and_assert(
             conversion_matrix,
             oud_quirk,
@@ -1846,8 +1824,6 @@ class TestBidirectionalConversion:
         conversion_constants: ConversionTestConstants,
     ) -> None:
         """Test objectClass round-trip: OID → OUD → OID."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_convert_roundtrip_and_assert(
             conversion_matrix,
             oid_quirk,
@@ -1928,7 +1904,8 @@ class TestDnCaseRegistryIntegration:
     """Test DN case registry integration."""
 
     def test_dn_registry_initialized(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test that DN registry is initialized."""
         assert hasattr(conversion_matrix, "dn_registry")
@@ -1947,11 +1924,10 @@ class TestDnCaseRegistryIntegration:
         assert True
 
     def test_validate_oud_conversion(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test OUD conversion validation."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_result_and_assert_fields(
             conversion_matrix.validate_oud_conversion(),
             expected_value=True,  # unwrap() should return True
@@ -1993,7 +1969,7 @@ class TestDnExtractionAndRegistration:
         assert conversion_matrix.dn_registry is not None
         # Register a DN to test the registry is functional
         registered_dn = conversion_matrix.dn_registry.register_dn(
-            "cn=acl,dc=example,dc=com"
+            "cn=acl,dc=example,dc=com",
         )
         assert registered_dn is not None
 
@@ -2016,15 +1992,16 @@ class TestDnExtractionAndRegistration:
         # Empty data should not cause issues
 
     def test_normalize_dns_in_data_success(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test DN normalization with registered DNs."""
         # Register some DNs
         canonical_dn1 = conversion_matrix.dn_registry.register_dn(
-            "cn=test,dc=example,dc=com"
+            "cn=test,dc=example,dc=com",
         )
         canonical_dn2 = conversion_matrix.dn_registry.register_dn(
-            "cn=admin,dc=example,dc=com"
+            "cn=admin,dc=example,dc=com",
         )
 
         # Test that registered DNs can be retrieved
@@ -2033,7 +2010,8 @@ class TestDnExtractionAndRegistration:
         assert "cn=test" in canonical_dn1
 
     def test_normalize_dns_in_data_no_dns(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test DN registry with empty data."""
         # Test that DN registry exists even with empty data
@@ -2149,7 +2127,8 @@ class TestAttributeConversionErrorPaths:
         assert "parse failed" in result.error or "failed" in result.error.lower()
 
     def test_convert_attribute_write_failure(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test attribute conversion handles target quirk write failures (NEW API)."""
         # NEW API: Note - target quirk write is not called in write→parse pipeline
@@ -2375,8 +2354,6 @@ class TestSupportCheckingEdgeCases:
         conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with minimal functionality."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
             MinimalQuirk(),
@@ -2393,8 +2370,6 @@ class TestSupportCheckingEdgeCases:
         conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with partial functionality."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
             PartialAttributeQuirk(),
@@ -2407,11 +2382,10 @@ class TestSupportCheckingEdgeCases:
         )
 
     def test_get_supported_conversions_acl(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with ACL support."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
             AclOnlyQuirk(),
@@ -2424,11 +2398,10 @@ class TestSupportCheckingEdgeCases:
         )
 
     def test_get_supported_conversions_entry(
-        self, conversion_matrix: FlextLdifConversion
+        self,
+        conversion_matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with entry support."""
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.helper_get_supported_conversions_and_assert(
             conversion_matrix,
             EntryOnlyQuirk(),

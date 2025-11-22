@@ -23,13 +23,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from types import SimpleNamespace
 
 import pytest
+from pydantic import ValidationError
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
 
-from ...helpers import TestAssertions
+from ...helpers.test_assertions import TestAssertions
 from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -37,7 +39,7 @@ from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 # ════════════════════════════════════════════════════════════════════════════
 
 # Use helper to eliminate duplication - replaces 4-6 lines per use
-create_entry = TestDeduplicationHelpers.create_entry_from_dict
+create_entry = TestAssertions.create_entry
 
 
 @pytest.fixture
@@ -156,7 +158,9 @@ class TestPublicClassmethods:
     ) -> None:
         """Test by_dn() is case-insensitive."""
         TestDeduplicationHelpers.filter_by_dn_and_unwrap(
-            user_entries, "*,OU=USERS,*", expected_count=2
+            user_entries,
+            "*,OU=USERS,*",
+            expected_count=2,
         )
 
     def test_by_dn_exclude_mode(
@@ -165,10 +169,15 @@ class TestPublicClassmethods:
     ) -> None:
         """Test by_dn() with exclude mode."""
         filtered = TestDeduplicationHelpers.filter_by_dn_and_unwrap(
-            user_entries, "*,ou=users,*", mode="exclude", expected_count=1
+            user_entries,
+            "*,ou=users,*",
+            mode="exclude",
+            expected_count=1,
         )
         TestDeduplicationHelpers.assert_entries_dn_contains(
-            filtered, "ou=admins", all_entries=False
+            filtered,
+            "ou=admins",
+            all_entries=False,
         )
 
     def test_by_objectclass_basic(
@@ -177,7 +186,9 @@ class TestPublicClassmethods:
     ) -> None:
         """Test by_objectclass() filters by objectClass."""
         TestDeduplicationHelpers.filter_by_objectclass_and_unwrap(
-            user_entries, "person", expected_count=3
+            user_entries,
+            "person",
+            expected_count=3,
         )
 
     def test_by_objectclass_multiple(
@@ -186,7 +197,9 @@ class TestPublicClassmethods:
     ) -> None:
         """Test by_objectclass() with multiple objectClasses."""
         TestDeduplicationHelpers.filter_by_objectclass_and_unwrap(
-            user_entries, ("person", "organizationalUnit"), expected_count=3
+            user_entries,
+            ("person", "organizationalUnit"),
+            expected_count=3,
         )
 
     def test_by_objectclass_with_required_attributes(
@@ -275,15 +288,12 @@ class TestPublicClassmethods:
         mixed_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test extract_acl_entries() extracts ACL entries."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         result = FlextLdifFilters.extract_acl_entries(mixed_entries)
         TestAssertions.assert_success(result, f"Extract ACL failed: {result.error}")
         acl_entries = result.unwrap()
         assert len(acl_entries) == 1
-        assert (
-            acl_entries[0].attributes and "acl" in acl_entries[0].attributes.attributes
-        )
+        assert acl_entries[0].attributes
+        assert "acl" in acl_entries[0].attributes.attributes
 
     def test_remove_attributes(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test remove_attributes() removes attributes."""
@@ -393,7 +403,10 @@ class TestExecutePattern:
     def test_execute_dn_filter(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test execute() with DN filter."""
         TestDeduplicationHelpers.filter_execute_and_unwrap(
-            user_entries, "dn", dn_pattern="*,ou=users,*", expected_count=2
+            user_entries,
+            "dn",
+            dn_pattern="*,ou=users,*",
+            expected_count=2,
         )
 
     def test_execute_objectclass_filter(
@@ -402,7 +415,10 @@ class TestExecutePattern:
     ) -> None:
         """Test execute() with objectClass filter."""
         TestDeduplicationHelpers.filter_execute_and_unwrap(
-            user_entries, "objectclass", objectclass="person", expected_count=3
+            user_entries,
+            "objectclass",
+            objectclass="person",
+            expected_count=3,
         )
 
     def test_execute_attributes_filter(
@@ -411,7 +427,10 @@ class TestExecutePattern:
     ) -> None:
         """Test execute() with attributes filter."""
         TestDeduplicationHelpers.filter_execute_and_unwrap(
-            user_entries, "attributes", attributes=["mail"], expected_count=2
+            user_entries,
+            "attributes",
+            attributes=["mail"],
+            expected_count=2,
         )
 
 
@@ -426,7 +445,10 @@ class TestClassmethodFilter:
     def test_filter_dn(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test filter() with DN criteria."""
         TestDeduplicationHelpers.filter_classmethod_and_unwrap(
-            user_entries, "dn", pattern="*,ou=users,*", expected_count=2
+            user_entries,
+            "dn",
+            pattern="*,ou=users,*",
+            expected_count=2,
         )
 
     def test_filter_with_chaining(
@@ -547,14 +569,18 @@ class TestFilterModes:
     def test_mode_include(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test include mode keeps matches."""
         filtered = TestDeduplicationHelpers.filter_by_dn_and_unwrap(
-            user_entries, "*,ou=users,*", mode="include"
+            user_entries,
+            "*,ou=users,*",
+            mode="include",
         )
         TestDeduplicationHelpers.assert_entries_dn_contains(filtered, ",ou=users,")
 
     def test_mode_exclude(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test exclude mode removes matches."""
         filtered = TestDeduplicationHelpers.filter_by_dn_and_unwrap(
-            user_entries, "*,ou=users,*", mode="exclude"
+            user_entries,
+            "*,ou=users,*",
+            mode="exclude",
         )
         # Verify none have the excluded pattern
         for entry in filtered:
@@ -782,8 +808,6 @@ class TestErrorCases:
 
     def test_invalid_filter_criteria_validation(self) -> None:
         """Test invalid filter_criteria is rejected."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError, match="Invalid filter_criteria"):
             FlextLdifFilters(
                 filter_criteria="invalid",
@@ -791,8 +815,6 @@ class TestErrorCases:
 
     def test_invalid_mode_validation(self) -> None:
         """Test invalid mode is rejected."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError, match="Invalid mode"):
             FlextLdifFilters(
                 mode="invalid",
@@ -860,11 +882,14 @@ class TestAdditionalStaticMethods:
     """Test additional static methods not covered by main tests."""
 
     def test_filter_entries_by_dn(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filter_entries_by_dn() static method."""
         result = FlextLdifFilters.filter_entries_by_dn(
-            user_entries, "*,ou=users,*", mode="include"
+            user_entries,
+            "*,ou=users,*",
+            mode="include",
         )
         assert result.is_success
         filtered = result.unwrap()
@@ -876,7 +901,9 @@ class TestAdditionalStaticMethods:
     ) -> None:
         """Test filter_entries_by_objectclass() static method."""
         result = FlextLdifFilters.filter_entries_by_objectclass(
-            user_entries, "person", mode="include"
+            user_entries,
+            "person",
+            mode="include",
         )
         assert result.is_success
         filtered = result.unwrap()
@@ -888,14 +915,17 @@ class TestAdditionalStaticMethods:
     ) -> None:
         """Test filter_entries_by_attributes() static method."""
         result = FlextLdifFilters.filter_entries_by_attributes(
-            user_entries, ["mail"], match_all=False
+            user_entries,
+            ["mail"],
+            match_all=False,
         )
         assert result.is_success
         filtered = result.unwrap()
         assert len(filtered) == 2
 
     def test_filter_entry_attributes(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filter_entry_attributes() static method."""
         entry = user_entries[0]
@@ -912,7 +942,8 @@ class TestAdditionalStaticMethods:
             {"cn": ["test"], "objectClass": ["top", "person", "organizationalPerson"]},
         )
         result = FlextLdifFilters.filter_entry_objectclasses(
-            entry, ["organizationalPerson"]
+            entry,
+            ["organizationalPerson"],
         )
         assert result.is_success
         modified = result.unwrap()
@@ -930,7 +961,8 @@ class TestVirtualDelete:
     """Test virtual delete and restore operations."""
 
     def test_virtual_delete_basic(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test virtual_delete() marks entries as deleted."""
         result = FlextLdifFilters.virtual_delete(user_entries)
@@ -946,7 +978,8 @@ class TestVirtualDelete:
     ) -> None:
         """Test virtual_delete() with DN pattern."""
         result = FlextLdifFilters.virtual_delete(
-            user_entries, _dn_pattern="*,ou=users,*"
+            user_entries,
+            _dn_pattern="*,ou=users,*",
         )
         assert result.is_success
         data = result.unwrap()
@@ -1141,8 +1174,6 @@ class TestFieldValidation:
 
     def test_validate_filter_criteria_invalid(self) -> None:
         """Test validate_filter_criteria() with invalid criteria."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError):
             FlextLdifFilters(filter_criteria="invalid")
 
@@ -1153,8 +1184,6 @@ class TestFieldValidation:
 
     def test_validate_mode_invalid(self) -> None:
         """Test validate_mode() with invalid mode."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError):
             FlextLdifFilters(mode="invalid")
 
@@ -1181,7 +1210,8 @@ class TestExecuteEdgeCases:
         assert "Unknown filter_criteria" in result.error
 
     def test_execute_base_dn_filter(
-        self, hierarchy_entries: list[FlextLdifModels.Entry]
+        self,
+        hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with base_dn filter_criteria."""
         service = FlextLdifFilters(
@@ -1212,7 +1242,8 @@ class TestBuilderPatternComplete:
     """Test complete builder pattern with all methods."""
 
     def test_builder_with_base_dn(
-        self, hierarchy_entries: list[FlextLdifModels.Entry]
+        self,
+        hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test builder with base_dn."""
         result = (
@@ -1250,7 +1281,8 @@ class TestBuilderPatternComplete:
         assert len(result) == 1  # Only e1 has both
 
     def test_builder_multiple_objectclasses(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test builder with multiple objectClasses."""
         result = (
@@ -1309,7 +1341,9 @@ class TestExclusionHelpers:
     def test_is_entry_excluded(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test is_entry_excluded() detects excluded entries."""
         result = FlextLdifFilters.by_dn(
-            user_entries, "*,ou=users,*", mark_excluded=True
+            user_entries,
+            "*,ou=users,*",
+            mark_excluded=True,
         )
         filtered = result.unwrap()
         # Find excluded entry
@@ -1322,8 +1356,6 @@ class TestExclusionHelpers:
 
     def test_mark_excluded_with_existing_metadata(self) -> None:
         """Test mark_excluded() when entry already has metadata."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Add existing metadata
         existing_metadata = FlextLdifModels.QuirkMetadata(
@@ -1333,7 +1365,9 @@ class TestExclusionHelpers:
         entry_with_metadata = entry.model_copy(update={"metadata": existing_metadata})
         # Mark as excluded
         result = FlextLdifFilters.by_dn(
-            [entry_with_metadata], "*,dc=other,*", mark_excluded=True
+            [entry_with_metadata],
+            "*,dc=other,*",
+            mark_excluded=True,
         )
         filtered = result.unwrap()
         # Entry should be marked excluded and preserve existing metadata
@@ -1344,11 +1378,14 @@ class TestExclusionHelpers:
             assert "existing" in excluded_entry.metadata.extensions
 
     def test_get_exclusion_reason(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test get_exclusion_reason() returns reason."""
         result = FlextLdifFilters.by_dn(
-            user_entries, "*,ou=users,*", mark_excluded=True
+            user_entries,
+            "*,ou=users,*",
+            mark_excluded=True,
         )
         filtered = result.unwrap()
         # Find excluded entry
@@ -1367,8 +1404,6 @@ class TestExclusionHelpers:
 
     def test_get_exclusion_reason_exclusion_info_not_dict(self) -> None:
         """Test get_exclusion_reason() when exclusion_info is not dict."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Create metadata with exclusion_info as string (not dict)
         metadata = FlextLdifModels.QuirkMetadata(
@@ -1381,14 +1416,12 @@ class TestExclusionHelpers:
 
     def test_get_exclusion_reason_not_excluded(self) -> None:
         """Test get_exclusion_reason() when entry is not excluded."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Create metadata with exclusion_info but entry is not marked as excluded
         metadata = FlextLdifModels.QuirkMetadata(
             quirk_type="test",
             extensions={
-                "exclusion_info": {"excluded": False, "exclusion_reason": "test"}
+                "exclusion_info": {"excluded": False, "exclusion_reason": "test"},
             },
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -1398,8 +1431,6 @@ class TestExclusionHelpers:
 
     def test_get_exclusion_reason_no_exclusion_info(self) -> None:
         """Test get_exclusion_reason() when exclusion_info is missing."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Create metadata without exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
@@ -1412,8 +1443,6 @@ class TestExclusionHelpers:
 
     def test_get_exclusion_reason_reason_not_str(self) -> None:
         """Test get_exclusion_reason() when reason is not string."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Create metadata with exclusion_info but reason is not string
         metadata = FlextLdifModels.QuirkMetadata(
@@ -1429,10 +1458,12 @@ class TestExclusionHelpers:
         """Test matches_dn_pattern() with regex patterns."""
         patterns = ["cn=.*,dc=example", "ou=users,.*"]
         assert FlextLdifFilters.Exclusion.matches_dn_pattern(
-            "cn=test,dc=example,dc=com", patterns
+            "cn=test,dc=example,dc=com",
+            patterns,
         )
         assert not FlextLdifFilters.Exclusion.matches_dn_pattern(
-            "cn=test,dc=other,dc=com", patterns
+            "cn=test,dc=other,dc=com",
+            patterns,
         )
 
     def test_matches_dn_pattern_invalid(self) -> None:
@@ -1466,8 +1497,6 @@ class TestPublicStaticMethods:
 
     def test_is_entry_excluded_public(self) -> None:
         """Test is_entry_excluded() public static method."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Mark entry as excluded
         metadata = FlextLdifModels.QuirkMetadata(
@@ -1481,8 +1510,6 @@ class TestPublicStaticMethods:
 
     def test_get_exclusion_reason_public(self) -> None:
         """Test get_exclusion_reason() public static method."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Mark entry as excluded with reason
         metadata = FlextLdifModels.QuirkMetadata(
@@ -1491,7 +1518,7 @@ class TestPublicStaticMethods:
                 "exclusion_info": {
                     "excluded": True,
                     "exclusion_reason": "Test exclusion reason",
-                }
+                },
             },
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -1532,7 +1559,8 @@ class TestAclDetection:
         assert FlextLdifFilters.has_acl_attributes(entry, ["acl", "aci"])
 
     def test_has_acl_attributes_false(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test has_acl_attributes() returns False for non-ACL."""
         assert not FlextLdifFilters.has_acl_attributes(user_entries[0], ["acl", "aci"])
@@ -1554,7 +1582,8 @@ class TestCategorizerHelpers:
         )
         rules = {"blocked_objectclasses": ["blockedClass"]}
         is_blocked, reason = FlextLdifFilters.Categorizer.check_blocked_objectclasses(
-            entry, rules
+            entry,
+            rules,
         )
         assert is_blocked
         assert reason is not None
@@ -1579,8 +1608,6 @@ class TestCategorizerHelpers:
 
     def test_check_blocked_objectclasses_with_model(self) -> None:
         """Test check_blocked_objectclasses() with WhitelistRules model."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry(
             "cn=test,dc=x",
             {"cn": ["test"], "objectClass": ["blockedClass"]},
@@ -1592,12 +1619,11 @@ class TestCategorizerHelpers:
 
     def test_normalize_whitelist_rules_with_model(self) -> None:
         """Test _normalize_whitelist_rules() with WhitelistRules model."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         rules = FlextLdifModels.WhitelistRules(blocked_objectclasses=["blocked"])
         is_blocked, _ = FlextLdifFilters.Categorizer.check_blocked_objectclasses(
-            entry, rules
+            entry,
+            rules,
         )
         # Should use model directly
         assert isinstance(is_blocked, bool)
@@ -1607,7 +1633,9 @@ class TestCategorizerHelpers:
         entry = create_entry("cn=user,ou=users,dc=x", {"cn": ["user"]})
         rules = {"user_dn_patterns": ["cn=.*,ou=users,.*"]}
         is_invalid, _reason = FlextLdifFilters.Categorizer.validate_category_dn_pattern(
-            entry, "users", rules
+            entry,
+            "users",
+            rules,
         )
         assert not is_invalid  # Should match pattern
 
@@ -1616,7 +1644,9 @@ class TestCategorizerHelpers:
         entry = create_entry("cn=user,ou=other,dc=x", {"cn": ["user"]})
         rules = {"user_dn_patterns": ["cn=.*,ou=users,.*"]}
         is_invalid, reason = FlextLdifFilters.Categorizer.validate_category_dn_pattern(
-            entry, "users", rules
+            entry,
+            "users",
+            rules,
         )
         assert is_invalid  # Should not match pattern
         assert reason is not None
@@ -1636,7 +1666,9 @@ class TestInternalNormalization:
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         # Pass string as rules (will be normalized)
         category, reason = FlextLdifFilters.categorize(
-            entry, "invalid", server_type="rfc"
+            entry,
+            "invalid",
+            server_type="rfc",
         )
         assert category == "rejected"
         assert reason is not None
@@ -1697,7 +1729,8 @@ class TestInternalExecuteMethods:
         assert "dn_pattern" in result.error.lower()
 
     def test_apply_exclude_filter_dn(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test _apply_exclude_filter() with DN criteria."""
         FlextLdifFilters(
@@ -1806,9 +1839,11 @@ class TestInternalExecuteMethods:
         object.__setattr__(service, "filter_criteria", "unknown")  # noqa: PLC2801
         # Try to trigger _apply_exclude_filter via exclude_matching
         # This is indirect - builder uses exclude_matching
-        builder = FlextLdifFilters.builder().with_entries([
-            create_entry("cn=test,dc=x", {"cn": ["test"]})
-        ])
+        builder = FlextLdifFilters.builder().with_entries(
+            [
+                create_entry("cn=test,dc=x", {"cn": ["test"]}),
+            ],
+        )
         object.__setattr__(builder, "filter_criteria", "unknown")  # noqa: PLC2801
         try:
             builder.exclude_matching().build()
@@ -1831,7 +1866,8 @@ class TestCategorizerEdgeCases:
         # Pass invalid rules that cause normalization failure
         invalid_rules = "not_a_dict"
         is_blocked, reason = FlextLdifFilters.Categorizer.check_blocked_objectclasses(
-            entry, invalid_rules
+            entry,
+            invalid_rules,
         )
         assert is_blocked
         assert reason is not None
@@ -1841,7 +1877,9 @@ class TestCategorizerEdgeCases:
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         invalid_rules = "not_a_dict"
         is_invalid, reason = FlextLdifFilters.Categorizer.validate_category_dn_pattern(
-            entry, "users", invalid_rules
+            entry,
+            "users",
+            invalid_rules,
         )
         assert is_invalid
         assert reason is not None
@@ -1852,7 +1890,9 @@ class TestCategorizerEdgeCases:
         # Use invalid regex pattern that causes ValueError
         rules = {"user_dn_patterns": ["[invalid regex"]}
         is_invalid, _reason = FlextLdifFilters.Categorizer.validate_category_dn_pattern(
-            entry, "users", rules
+            entry,
+            "users",
+            rules,
         )
         # Should handle ValueError gracefully (catches and returns False)
         assert isinstance(is_invalid, bool)
@@ -1867,11 +1907,14 @@ class TestFilterByStaticMethods:
     """Test filter_by_* static methods."""
 
     def test_filter_by_dn_static(
-        self, user_entries: list[FlextLdifModels.Entry]
+        self,
+        user_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filter_by_dn() static method."""
         result = FlextLdifFilters.filter_by_dn(
-            user_entries, "*,ou=users,*", mode="include"
+            user_entries,
+            "*,ou=users,*",
+            mode="include",
         )
         assert result.is_success
         filtered = result.unwrap()
@@ -1883,7 +1926,10 @@ class TestFilterByStaticMethods:
     ) -> None:
         """Test filter_by_objectclass() static method."""
         result = FlextLdifFilters.filter_by_objectclass(
-            user_entries, "person", required_attributes=None, mode="include"
+            user_entries,
+            "person",
+            required_attributes=None,
+            mode="include",
         )
         assert result.is_success
         filtered = result.unwrap()
@@ -1895,7 +1941,10 @@ class TestFilterByStaticMethods:
     ) -> None:
         """Test filter_by_attributes() static method."""
         result = FlextLdifFilters.filter_by_attributes(
-            user_entries, ["mail"], match_all=False, mode="include"
+            user_entries,
+            ["mail"],
+            match_all=False,
+            mode="include",
         )
         assert result.is_success
         filtered = result.unwrap()
@@ -1914,7 +1963,8 @@ class TestSchemaFilteringEdgeCases:
         """Test filter_schema_by_oids() with entry without attributes."""
         entry = create_entry("cn=schema", {})  # No attributes
         result = FlextLdifFilters.filter_schema_by_oids(
-            [entry], {"attributes": ["2.5.4.*"]}
+            [entry],
+            {"attributes": ["2.5.4.*"]},
         )
         assert result.is_success
         # Entry without attributes should be skipped
@@ -1929,7 +1979,8 @@ class TestSchemaFilteringEdgeCases:
         # Manually set DN to None to test edge case
         entry_without_dn = entry.model_copy(update={"dn": None})
         result = FlextLdifFilters.filter_schema_by_oids(
-            [entry_without_dn], {"attributes": ["2.5.4.*"]}
+            [entry_without_dn],
+            {"attributes": ["2.5.4.*"]},
         )
         assert result.is_success
         # Entry without DN should be skipped
@@ -1959,7 +2010,8 @@ class TestSchemaFilteringEdgeCases:
         )
         # Normal case should work
         result = FlextLdifFilters.filter_schema_by_oids(
-            [entry], {"attributes": ["2.5.4.*"]}
+            [entry],
+            {"attributes": ["2.5.4.*"]},
         )
         assert result.is_success
 
@@ -2009,7 +2061,7 @@ class TestTransformerEdgeCases:
         )
         # Add custom metadata extension
         new_metadata = entry.metadata.model_copy(
-            update={"extensions": {"custom": "value"}}
+            update={"extensions": {"custom": "value"}},
         )
         entry_with_metadata = entry.model_copy(update={"metadata": new_metadata})
         result = FlextLdifFilters.remove_objectclasses(entry_with_metadata, ["person"])
@@ -2026,8 +2078,6 @@ class TestTransformerEdgeCases:
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
         # Add statistics to entry
-        from flext_ldif.models import FlextLdifModels
-
         stats = FlextLdifModels.EntryStatistics()
         new_metadata = entry.metadata.model_copy(update={"processing_stats": stats})
         entry_with_stats = entry.model_copy(update={"metadata": new_metadata})
@@ -2137,7 +2187,10 @@ class TestCategorizeEntryComplete:
         )
         whitelist_rules = {"blocked_objectclasses": ["blockedClass"]}
         category, reason = FlextLdifFilters.categorize_entry(
-            entry, {}, whitelist_rules, server_type="rfc"
+            entry,
+            {},
+            whitelist_rules,
+            server_type="rfc",
         )
         assert category == "rejected"
         assert reason is not None
@@ -2150,10 +2203,13 @@ class TestCategorizeEntryComplete:
         )
         # Add metadata with quirk_type
         entry_with_metadata = entry.model_copy(
-            update={"metadata": type("obj", (object,), {"quirk_type": "oid"})()}
+            update={"metadata": type("obj", (object,), {"quirk_type": "oid"})()},
         )
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry_with_metadata, {}, None, server_type="rfc"
+            entry_with_metadata,
+            {},
+            None,
+            server_type="rfc",
         )
         # Should use OID server type from metadata
         assert category in {"users", "rejected"}
@@ -2166,7 +2222,10 @@ class TestCategorizeEntryComplete:
             "user_objectclasses": ["person"],
         }
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, rules, None, server_type="rfc"
+            entry,
+            rules,
+            None,
+            server_type="rfc",
         )
         # Should validate DN pattern
         assert category in {"users", "rejected"}
@@ -2176,7 +2235,10 @@ class TestCategorizeEntryComplete:
         entry = create_entry("cn=test,dc=x", {"cn": ["test"]})
         invalid_rules = "not_a_dict"
         category, reason = FlextLdifFilters.categorize_entry(
-            entry, invalid_rules, None, server_type="rfc"
+            entry,
+            invalid_rules,
+            None,
+            server_type="rfc",
         )
         assert category == "rejected"
         assert reason is not None
@@ -2188,12 +2250,13 @@ class TestCategorizeEntryComplete:
             {"cn": ["test"], "objectClass": ["orcluser"]},
         )
         # Create metadata object with quirk_type
-        from types import SimpleNamespace
-
         metadata_obj = SimpleNamespace(quirk_type="oid")
         entry_with_metadata = entry.model_copy(update={"metadata": metadata_obj})
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry_with_metadata, {}, None, server_type="rfc"
+            entry_with_metadata,
+            {},
+            None,
+            server_type="rfc",
         )
         # Should use OID from metadata instead of rfc
         assert category in {"users", "rejected"}
@@ -2206,7 +2269,10 @@ class TestCategorizeEntryComplete:
             "group_objectclasses": ["groupOfNames"],
         }
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, rules, None, server_type="rfc"
+            entry,
+            rules,
+            None,
+            server_type="rfc",
         )
         # Should validate DN pattern for groups
         assert category in {"groups", "rejected"}
@@ -2521,91 +2587,93 @@ class TestNormalizeHelpersEdgeCases:
         entry = create_entry("cn=user,ou=users,dc=x", {"cn": ["user"]})
         rules = {"user_dn_patterns": ["cn=.*,ou=users,.*"]}
         is_invalid, _reason = FlextLdifFilters.validate_category_dn_pattern(
-            entry, "users", rules
+            entry,
+            "users",
+            rules,
         )
         # Should convert dict to CategoryRules model
         assert isinstance(is_invalid, bool)
 
     def test_validate_category_dn_pattern_with_model(self) -> None:
         """Test validate_category_dn_pattern() with CategoryRules model."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = create_entry("cn=user,ou=users,dc=x", {"cn": ["user"]})
         rules = FlextLdifModels.CategoryRules(user_dn_patterns=["cn=.*,ou=users,.*"])
         is_invalid, _reason = FlextLdifFilters.validate_category_dn_pattern(
-            entry, "users", rules
+            entry,
+            "users",
+            rules,
         )
         # Should use model directly
         assert isinstance(is_invalid, bool)
 
     def test_matches_oid_pattern(self) -> None:
         """Test matches_oid_pattern() detects OID patterns."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         attributes = {
             "attributeTypes": ["( 2.5.4.3 NAME 'cn' )"],
         }
         result = FlextLdifFilters.AclDetector.matches_oid_pattern(
-            attributes, ["attributeTypes"], ["2.5.4.*"]
+            attributes,
+            ["attributeTypes"],
+            ["2.5.4.*"],
         )
         assert result is True
 
     def test_matches_oid_pattern_no_match(self) -> None:
         """Test matches_oid_pattern() returns False when no match."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         attributes = {
             "attributeTypes": ["( 1.2.3.4 NAME 'custom' )"],
         }
         result = FlextLdifFilters.AclDetector.matches_oid_pattern(
-            attributes, ["attributeTypes"], ["2.5.4.*"]
+            attributes,
+            ["attributeTypes"],
+            ["2.5.4.*"],
         )
         assert result is False
 
     def test_matches_oid_pattern_not_list(self) -> None:
         """Test matches_oid_pattern() with non-list values."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         attributes = {
             "attributeTypes": "( 2.5.4.3 NAME 'cn' )",  # String, not list
         }
         result = FlextLdifFilters.AclDetector.matches_oid_pattern(
-            attributes, ["attributeTypes"], ["2.5.4.*"]
+            attributes,
+            ["attributeTypes"],
+            ["2.5.4.*"],
         )
         # Should skip non-list values
         assert result is False
 
     def test_matches_oid_pattern_no_oid_in_value(self) -> None:
         """Test matches_oid_pattern() with value without OID."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         attributes = {
             "attributeTypes": ["NAME 'cn'"],  # No OID
         }
         result = FlextLdifFilters.AclDetector.matches_oid_pattern(
-            attributes, ["attributeTypes"], ["2.5.4.*"]
+            attributes,
+            ["attributeTypes"],
+            ["2.5.4.*"],
         )
         assert result is False
 
     def test_matches_oid_pattern_key_not_in_attributes(self) -> None:
         """Test matches_oid_pattern() when key not in attributes."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         attributes = {"otherKey": ["( 2.5.4.3 NAME 'cn' )"]}
         result = FlextLdifFilters.AclDetector.matches_oid_pattern(
-            attributes, ["attributeTypes"], ["2.5.4.*"]
+            attributes,
+            ["attributeTypes"],
+            ["2.5.4.*"],
         )
         assert result is False
 
     def test_matches_oid_pattern_multiple_patterns(self) -> None:
         """Test matches_oid_pattern() with multiple patterns."""
-        from flext_ldif.services.filters import FlextLdifFilters
-
         attributes = {
             "attributeTypes": ["( 2.5.4.3 NAME 'cn' )"],
         }
         result = FlextLdifFilters.AclDetector.matches_oid_pattern(
-            attributes, ["attributeTypes"], ["1.2.3.*", "2.5.4.*"]
+            attributes,
+            ["attributeTypes"],
+            ["1.2.3.*", "2.5.4.*"],
         )
         assert result is True
 
@@ -2685,7 +2753,10 @@ class TestNormalizeHelpersEdgeCases:
         """Test categorize_entry() when category is not users or groups."""
         entry = create_entry("cn=schema", {"attributeTypes": ["( 2.5.4.3 NAME 'cn' )"]})
         category, reason = FlextLdifFilters.categorize_entry(
-            entry, {}, None, server_type="rfc"
+            entry,
+            {},
+            None,
+            server_type="rfc",
         )
         # Schema category should not trigger DN validation
         assert category == "schema"
@@ -2699,7 +2770,10 @@ class TestNormalizeHelpersEdgeCases:
             "user_objectclasses": ["person"],
         }
         category, reason = FlextLdifFilters.categorize_entry(
-            entry, rules, None, server_type="rfc"
+            entry,
+            rules,
+            None,
+            server_type="rfc",
         )
         # Should be rejected due to DN pattern mismatch
         assert category == "rejected"
@@ -2713,7 +2787,10 @@ class TestNormalizeHelpersEdgeCases:
             "group_objectclasses": ["groupOfNames"],
         }
         category, reason = FlextLdifFilters.categorize_entry(
-            entry, rules, None, server_type="rfc"
+            entry,
+            rules,
+            None,
+            server_type="rfc",
         )
         # Should be rejected due to DN pattern mismatch
         assert category == "rejected"
@@ -2730,7 +2807,10 @@ class TestNormalizeHelpersEdgeCases:
             "user_objectclasses": ["person"],
         }
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, rules, None, server_type="rfc"
+            entry,
+            rules,
+            None,
+            server_type="rfc",
         )
         # Should pass DN validation
         assert category in {"users", "rejected"}
@@ -2746,7 +2826,10 @@ class TestNormalizeHelpersEdgeCases:
             "group_objectclasses": ["groupOfNames"],
         }
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, rules, None, server_type="rfc"
+            entry,
+            rules,
+            None,
+            server_type="rfc",
         )
         # Should pass DN validation
         assert category in {"groups", "rejected"}

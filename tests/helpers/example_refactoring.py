@@ -45,8 +45,8 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
 
 # ✅ DEPOIS - Testes concisos usando helpers:
 """
-from tests.helpers import TestOperations
-from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from .test_operations import TestOperations
+from ..unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 def test_schema_parse_attribute(self, rfc_schema_quirk) -> None:
     TestOperations.parse_attribute_and_validate(
@@ -80,8 +80,8 @@ def test_schema_parse_objectclass(self, rfc_schema_quirk) -> None:
 # ✅ Usando parametrização para reduzir ainda mais duplicação:
 """
 import pytest
-from tests.helpers import TestOperations
-from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from .test_operations import TestOperations
+from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 @pytest.mark.parametrize("attr_def,expected_oid,expected_name", [
     (TestsRfcConstants.ATTR_DEF_CN_COMPLETE, TestsRfcConstants.ATTR_OID_CN, TestsRfcConstants.ATTR_NAME_CN),
@@ -107,18 +107,18 @@ def test_schema_parse_multiple_attributes(
 """
 def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
     entries = FlextLdifTestUtils.load_fixture(ldif_api, "rfc", "rfc_entries_fixtures.ldif")
-    
+
     write_result = ldif_api.write(entries)
     assert write_result.is_success
     ldif = write_result.unwrap()
-    
+
     output_file = tmp_path / "roundtrip.ldif"
     output_file.write_text(ldif)
-    
+
     re_read_result = ldif_api.parse(output_file)
     assert re_read_result.is_success
     roundtripped_entries = re_read_result.unwrap()
-    
+
     assert len(roundtripped_entries) == len(entries)
     for i, (orig, roundtrip) in enumerate(zip(entries, roundtripped_entries)):
         assert orig.dn.value == roundtrip.dn.value
@@ -126,7 +126,7 @@ def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> Non
 
 # ✅ DEPOIS:
 """
-from tests.helpers import TestOperations
+from .test_operations import TestOperations
 
 def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
     fixture_path = FlextLdifTestUtils.get_fixture_path("rfc", "rfc_entries_fixtures.ldif")
@@ -155,7 +155,7 @@ def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
 
 # ✅ DEPOIS:
 """
-from tests.helpers import TestOperations
+from .test_operations import TestOperations
 
 def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
     entry = FlextLdifModels.Entry.create(

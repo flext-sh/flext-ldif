@@ -3,7 +3,9 @@
 Phase 1 of EntryResult-centric refactoring: Test new helper methods.
 """
 
-from flext_ldif.models import FlextLdifModels
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+from flext_ldif import FlextLdifModels
 
 
 class TestEntryResultHelpers:
@@ -11,8 +13,6 @@ class TestEntryResultHelpers:
 
     def test_from_entries_creates_entry_result(self) -> None:
         """Test EntryResult.from_entries() factory method."""
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         entry1 = RfcTestHelpers.test_entry_create_and_unwrap(
             "cn=user1,dc=example,dc=com",
             {"cn": ["user1"], "objectClass": ["person"]},
@@ -22,7 +22,8 @@ class TestEntryResultHelpers:
             {"cn": ["user2"], "objectClass": ["person"]},
         )
         result = FlextLdifModels.EntryResult.from_entries(
-            [entry1, entry2], category="users"
+            [entry1, entry2],
+            category="users",
         )
         assert result.entries_by_category == {"users": [entry1, entry2]}
         assert result.statistics.total_entries == 2

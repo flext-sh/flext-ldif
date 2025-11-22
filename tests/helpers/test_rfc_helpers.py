@@ -10,16 +10,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, Protocol, TypeVar, cast
+from typing import Literal, Protocol, TypeVar, cast
 
 from flext_core import FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.writer import FlextLdifWriter
 
-from ...helpers.test_assertions import TestAssertions
+from ..unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from ..unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from .test_assertions import TestAssertions
 
 T = TypeVar("T")
 
@@ -36,7 +36,9 @@ class HasParseMethod(Protocol):
     """Protocol for objects that have a parse method."""
 
     def parse(
-        self, ldif_input: str | Path, server_type: str | None = None
+        self,
+        ldif_input: str | Path,
+        server_type: str | None = None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF input."""
         ...
@@ -93,17 +95,20 @@ class RfcTestHelpers:
 
         """
         result = parser.parse(
-            ldif_content, input_source="string", server_type=server_type
+            ldif_content,
+            input_source="string",
+            server_type=server_type,
         )
         unwrapped_untyped = TestAssertions.assert_success(
-            result, "Parse should succeed"
+            result,
+            "Parse should succeed",
         )
         unwrapped = cast("ParseResultValue", unwrapped_untyped)
         if hasattr(unwrapped, "entries"):
             unwrapped_with_entries = cast("HasEntries", unwrapped)
-            entries = unwrapped_with_entries.entries
+            entries: list[FlextLdifModels.Entry] = unwrapped_with_entries.entries
         elif isinstance(unwrapped, list):
-            entries: list[FlextLdifModels.Entry] = unwrapped
+            entries = unwrapped
         else:
             msg = "Parse returned unexpected type"
             raise AssertionError(msg)
@@ -219,14 +224,15 @@ class RfcTestHelpers:
         """
         result = parser.parse_ldif_file(ldif_file)
         unwrapped_untyped = TestAssertions.assert_success(
-            result, "Parse should succeed"
+            result,
+            "Parse should succeed",
         )
         unwrapped = cast("ParseResultValue", unwrapped_untyped)
         if hasattr(unwrapped, "entries"):
             unwrapped_with_entries = cast("HasEntries", unwrapped)
-            entries = unwrapped_with_entries.entries
+            entries: list[FlextLdifModels.Entry] = unwrapped_with_entries.entries
         elif isinstance(unwrapped, list):
-            entries: list[FlextLdifModels.Entry] = unwrapped
+            entries = unwrapped
         else:
             msg = "Parse returned unexpected type"
             raise AssertionError(msg)
@@ -261,7 +267,7 @@ class RfcTestHelpers:
             target_server_type=target_server_type,
             output_target="string",
         )
-        ldif = TestAssertions.assert_write_success(result)
+        ldif = TestAssertions.assert_write_success(cast("FlextResult[str]", result))
         if expected_content:
             for content in expected_content:
                 assert content in ldif, (
@@ -338,7 +344,12 @@ class RfcTestHelpers:
 
         """
         result = schema_quirk.parse(attr_def)
-        attr = TestAssertions.assert_success(result, "Attribute parse should succeed")
+        attr: FlextLdifModels.SchemaAttribute = cast(
+            "FlextLdifModels.SchemaAttribute",
+            TestAssertions.assert_success(
+                cast("FlextResult[object]", result), "Attribute parse should succeed"
+            ),
+        )
         assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
             "Parse should return SchemaAttribute"
         )
@@ -365,7 +376,12 @@ class RfcTestHelpers:
 
         """
         result = schema_quirk.parse(oc_def)
-        oc = TestAssertions.assert_success(result, "ObjectClass parse should succeed")
+        oc: FlextLdifModels.SchemaObjectClass = cast(
+            "FlextLdifModels.SchemaObjectClass",
+            TestAssertions.assert_success(
+                cast("FlextResult[object]", result), "ObjectClass parse should succeed"
+            ),
+        )
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
             "Parse should return SchemaObjectClass"
         )
@@ -391,7 +407,8 @@ class RfcTestHelpers:
         """
         result = schema_quirk.write(attr)
         ldif_text = TestAssertions.assert_success(
-            result, "Attribute write should succeed"
+            result,
+            "Attribute write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -420,7 +437,8 @@ class RfcTestHelpers:
         """
         result = schema_quirk.write(oc)
         ldif_text = TestAssertions.assert_success(
-            result, "ObjectClass write should succeed"
+            result,
+            "ObjectClass write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -783,10 +801,12 @@ class RfcTestHelpers:
             x_oid=cast("str | None", kwargs.get("x_oid")),
             single_value=cast("bool", kwargs.get("single_value", False)),
             no_user_modification=cast(
-                "bool", kwargs.get("no_user_modification", False)
+                "bool",
+                kwargs.get("no_user_modification", False),
             ),
             metadata=cast(
-                "FlextLdifModels.QuirkMetadata | None", kwargs.get("metadata")
+                "FlextLdifModels.QuirkMetadata | None",
+                kwargs.get("metadata"),
             ),
         )
 
@@ -822,7 +842,8 @@ class RfcTestHelpers:
             must=cast("list[str] | None", kwargs.get("must")),
             may=cast("list[str] | None", kwargs.get("may")),
             metadata=cast(
-                "FlextLdifModels.QuirkMetadata | None", kwargs.get("metadata")
+                "FlextLdifModels.QuirkMetadata | None",
+                kwargs.get("metadata"),
             ),
         )
 
@@ -846,8 +867,14 @@ class RfcTestHelpers:
 
         """
         result = schema_quirk._route_parse(schema_def)
-        schema_obj_untyped = TestAssertions.assert_success(
-            result, "Route parse should succeed"
+        schema_obj_untyped: (
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ) = cast(
+            "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
+            TestAssertions.assert_success(
+                result,
+                "Route parse should succeed",
+            ),
         )
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
         if expected_type == "attribute":
@@ -1100,7 +1127,7 @@ class RfcTestHelpers:
         """
         if should_succeed:
             unwrapped = TestAssertions.assert_success(
-                cast("FlextResult[object]", result)
+                cast("FlextResult[object]", result),
             )
         else:
             _ = TestAssertions.assert_failure(cast("FlextResult[object]", result))
@@ -1339,7 +1366,7 @@ class RfcTestHelpers:
         if should_succeed is True:
             _ = TestAssertions.assert_success(result, "Parse should succeed")
         elif should_succeed is False:
-            _ = TestAssertions.assert_failure(result)
+            _ = TestAssertions.assert_failure(cast("FlextResult[object]", result))
         else:
             assert result.is_success or result.is_failure, (
                 "Parse should succeed or fail gracefully"
@@ -1553,7 +1580,7 @@ class RfcTestHelpers:
             if expected_name and hasattr(unwrapped, "name"):
                 assert unwrapped.name == expected_name
             return unwrapped
-        _ = TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(cast("FlextResult[object]", result))
         return None
 
     @staticmethod
@@ -1691,7 +1718,10 @@ class RfcTestHelpers:
             kwargs["operation"] = operation
         result = service.execute(**kwargs)
         if should_succeed:
-            unwrapped = TestAssertions.assert_success(result)
+            unwrapped: object = cast(
+                "object",
+                TestAssertions.assert_success(result),
+            )
             if expected_type:
                 assert isinstance(unwrapped, expected_type)
             if expected_count is not None and isinstance(unwrapped, list):
@@ -1700,7 +1730,7 @@ class RfcTestHelpers:
                 for content in must_contain:
                     assert content in unwrapped, f"Must contain '{content}'"
             return unwrapped
-        _ = TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(cast("FlextResult[object]", result))
         return None
 
     @staticmethod
@@ -1729,14 +1759,12 @@ class RfcTestHelpers:
             Tuple of (parsed_entries, written_ldif)
 
         """
-        parse_kwargs: dict[str, Any] = {
-            "content": ldif_content,
-            "input_source": "string",
-            "server_type": server_type,
-        }
-        if parse_options:
-            parse_kwargs["format_options"] = parse_options
-        parse_result = parser.parse(**parse_kwargs)
+        parse_result = parser.parse(
+            content=ldif_content,
+            input_source="string",
+            server_type=server_type,
+            format_options=parse_options,
+        )
         parse_response_untyped = TestAssertions.assert_success(parse_result)
         if hasattr(parse_response_untyped, "entries"):
             parse_response = cast("HasEntries", parse_response_untyped)
@@ -1747,14 +1775,12 @@ class RfcTestHelpers:
             msg = "Parse returned unexpected type"
             raise AssertionError(msg)
 
-        write_kwargs: dict[str, Any] = {
-            "entries": entries,
-            "target_server_type": server_type,
-            "output_target": "string",
-        }
-        if write_options:
-            write_kwargs["format_options"] = write_options
-        write_result = writer.write(**write_kwargs)
+        write_result = writer.write(
+            entries=entries,
+            target_server_type=server_type,
+            output_target="string",
+            format_options=write_options,
+        )
         written = cast("str", TestAssertions.assert_success(write_result))
         assert isinstance(written, str)
 
@@ -1786,7 +1812,7 @@ class RfcTestHelpers:
         results = {}
         for server_name, fixture_path in fixture_paths.items():
             result = api.parse(
-                Path(fixture_path) if isinstance(fixture_path, str) else fixture_path
+                Path(fixture_path) if isinstance(fixture_path, str) else fixture_path,
             )
             assert result.is_success, (
                 f"{server_name} parse failed: {result.error if hasattr(result, 'error') else 'unknown'}"
@@ -1988,7 +2014,7 @@ class RfcTestHelpers:
                 for content in must_contain:
                     assert content in unwrapped, f"Must contain '{content}'"
             return unwrapped
-        _ = TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(cast("FlextResult[object]", result))
         return None
 
     @staticmethod
@@ -2013,12 +2039,11 @@ class RfcTestHelpers:
         """
         results = []
         for i, ldif_content in enumerate(ldif_contents):
-            parse_kwargs: dict[str, Any] = {
-                "content": ldif_content,
-                "input_source": "string",
-                "server_type": server_type,
-            }
-            result = parser.parse(**parse_kwargs)
+            result = parser.parse(
+                content=ldif_content,
+                input_source="string",
+                server_type=server_type,
+            )
             parse_response_untyped = TestAssertions.assert_success(result)
             if hasattr(parse_response_untyped, "entries"):
                 parse_response = cast("HasEntries", parse_response_untyped)
@@ -2059,12 +2084,11 @@ class RfcTestHelpers:
         """
         results = []
         for i, entries in enumerate(entries_lists):
-            write_kwargs: dict[str, Any] = {
-                "entries": entries,
-                "target_server_type": server_type,
-                "output_target": "string",
-            }
-            result = writer.write(**write_kwargs)
+            result = writer.write(
+                entries=entries,
+                target_server_type=server_type,
+                output_target="string",
+            )
             written_untyped = TestAssertions.assert_success(result)
             written = cast("str", written_untyped)
             assert isinstance(written, str)
@@ -2099,7 +2123,10 @@ class RfcTestHelpers:
         results = []
         for i, ldif_content in enumerate(ldif_contents):
             result = quirk.execute(data=ldif_content, operation="parse")
-            unwrapped_untyped = TestAssertions.assert_success(result)
+            unwrapped_untyped: object = cast(
+                "object",
+                TestAssertions.assert_success(result),
+            )
             unwrapped = cast("list[FlextLdifModels.Entry]", unwrapped_untyped)
             if expected_counts and i < len(expected_counts):
                 assert len(unwrapped) == expected_counts[i]
@@ -2177,11 +2204,13 @@ class RfcTestHelpers:
         # Use public parse method instead of protected methods
         for i, definition in enumerate(definitions):
             result = schema_quirk.parse(definition)
-            parsed_untyped = TestAssertions.assert_success(result)
-            parsed = cast(
+            parsed_untyped: (
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+            ) = cast(
                 "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
-                parsed_untyped,
+                TestAssertions.assert_success(result),
             )
+            parsed = parsed_untyped
             if expected_oids and i < len(expected_oids):
                 assert parsed.oid == expected_oids[i]
             if expected_names and i < len(expected_names):
@@ -2259,7 +2288,8 @@ class RfcTestHelpers:
         # result is FlextResult[str] from Entry.execute(write)
         result_typed = cast("FlextResult[str]", result)
         written_untyped = RfcTestHelpers.test_result_success_and_unwrap(
-            result_typed, expected_type=str
+            result_typed,
+            expected_type=str,
         )
         # written_untyped is already str from unwrap() with expected_type=str
         written: str = written_untyped
@@ -2330,7 +2360,8 @@ class RfcTestHelpers:
             assert data.kind == expected_kind
         if expected_sup:
             if hasattr(data, "sup") and isinstance(
-                data, FlextLdifModels.SchemaAttribute
+                data,
+                FlextLdifModels.SchemaAttribute,
             ):
                 assert data.sup == expected_sup
             elif hasattr(data, "sup"):
@@ -2341,7 +2372,8 @@ class RfcTestHelpers:
                 elif isinstance(sup_value, list):
                     assert expected_sup in sup_value
         if expected_single_value is not None and isinstance(
-            data, FlextLdifModels.SchemaAttribute
+            data,
+            FlextLdifModels.SchemaAttribute,
         ):
             assert data.single_value == expected_single_value
         if expected_length and isinstance(data, FlextLdifModels.SchemaAttribute):
@@ -2387,7 +2419,9 @@ class RfcTestHelpers:
         server = server_class()
         quirk = getattr(server, quirk_type)
         return RfcTestHelpers.test_quirk_parse_and_unwrap(
-            quirk, definition, operation=operation
+            quirk,
+            definition,
+            operation=operation,
         )
 
     @staticmethod
@@ -2535,8 +2569,6 @@ class RfcTestHelpers:
             SchemaAttribute instance
 
         """
-        from flext_ldif.models import FlextLdifModels
-
         return FlextLdifModels.SchemaAttribute(
             oid=cast("str", attr_dict.get("oid", default_oid)),
             name=cast("str", attr_dict.get("name", default_name)),
@@ -2574,8 +2606,6 @@ class RfcTestHelpers:
             SchemaObjectClass instance
 
         """
-        from flext_ldif.models import FlextLdifModels
-
         return FlextLdifModels.SchemaObjectClass(
             oid=cast("str", oc_dict.get("oid", default_oid)),
             name=cast("str", oc_dict.get("name", default_name)),
@@ -2636,10 +2666,6 @@ class RfcTestHelpers:
             SchemaAttribute instance
 
         """
-        from flext_ldif.models import FlextLdifModels
-
-        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
-
         return FlextLdifModels.SchemaAttribute(
             oid=oid or TestsRfcConstants.ATTR_OID_CN,
             name=name or TestsRfcConstants.ATTR_NAME_CN,
@@ -2681,10 +2707,6 @@ class RfcTestHelpers:
             SchemaObjectClass instance
 
         """
-        from flext_ldif.models import FlextLdifModels
-
-        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
-
         return FlextLdifModels.SchemaObjectClass(
             oid=oid or TestsRfcConstants.OC_OID_PERSON,
             name=name or TestsRfcConstants.OC_NAME_PERSON,
@@ -2713,12 +2735,6 @@ class RfcTestHelpers:
             Entry instance (unwrapped)
 
         """
-        from flext_ldif.models import FlextLdifModels
-
-        from ...unit.quirks.servers.fixtures.general_constants import (
-            TestGeneralConstants,
-        )
-
         if dn is None:
             dn = TestGeneralConstants.SAMPLE_DN
         if attributes is None:
@@ -2728,7 +2744,8 @@ class RfcTestHelpers:
 
         # Cast attributes to match Entry.create signature
         attributes_typed: dict[str, str | list[str]] = cast(
-            "dict[str, str | list[str]]", attributes
+            "dict[str, str | list[str]]",
+            attributes,
         )
         # Extract and cast kwargs to appropriate types for Entry.create
         # QuirkMetadata and EntryStatistics are available via FlextLdifModels
@@ -2737,12 +2754,12 @@ class RfcTestHelpers:
             if "metadata" in kwargs
             else None
         )
-        # Cast to match Entry.create's expected types (which use internal domain types)
-        # Note: FlextLdifModels types are aliases of internal domain types, but type checker sees them as different
-        # We use cast through Any to bridge this gap
+        # Extract optional parameters from kwargs
+        # Note: FlextLdifModels types are aliases of internal domain types
+        # We use cast to match Entry.create's expected types
         acls_raw = kwargs.get("acls") if "acls" in kwargs else None
         acls = (
-            cast("list[FlextLdifModels.Acl] | None", cast("Any", acls_raw))
+            cast("list[FlextLdifModels.Acl] | None", acls_raw)
             if acls_raw is not None
             else None
         )
@@ -2752,7 +2769,7 @@ class RfcTestHelpers:
         objectclasses = (
             cast(
                 "list[FlextLdifModels.SchemaObjectClass] | None",
-                cast("Any", objectclasses_raw),
+                objectclasses_raw,
             )
             if objectclasses_raw is not None
             else None
@@ -2763,7 +2780,7 @@ class RfcTestHelpers:
         attributes_schema = (
             cast(
                 "list[FlextLdifModels.SchemaAttribute] | None",
-                cast("Any", attributes_schema_raw),
+                attributes_schema_raw,
             )
             if attributes_schema_raw is not None
             else None
@@ -2799,15 +2816,14 @@ class RfcTestHelpers:
             else None
         )
 
-        # Entry.create expects domain types, but we have FlextLdifModels types (which are aliases)
-        # Cast through Any to bridge the type system gap
+        # Entry.create expects domain types
         result = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=attributes_typed,
             metadata=metadata,
-            acls=cast("Any", acls),
-            objectclasses=cast("Any", objectclasses),
-            attributes_schema=cast("Any", attributes_schema),
+            acls=acls,
+            objectclasses=objectclasses,
+            attributes_schema=attributes_schema,
             entry_metadata=entry_metadata,
             validation_metadata=validation_metadata,
             server_type=server_type_kwarg,
@@ -2836,10 +2852,6 @@ class RfcTestHelpers:
             SchemaAttribute instance (unwrapped)
 
         """
-        from flext_ldif.models import FlextLdifModels
-
-        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
-
         if oid is None:
             oid = TestsRfcConstants.ATTR_OID_CN
         if name is None:
@@ -2883,10 +2895,6 @@ class RfcTestHelpers:
             SchemaObjectClass instance (unwrapped)
 
         """
-        from flext_ldif.models import FlextLdifModels
-
-        from ...unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
-
         if oid is None:
             oid = TestsRfcConstants.OC_OID_PERSON
         if name is None:
@@ -2902,7 +2910,8 @@ class RfcTestHelpers:
             must=cast("list[str] | None", kwargs.get("must")),
             may=cast("list[str] | None", kwargs.get("may")),
             metadata=cast(
-                "FlextLdifModels.QuirkMetadata | None", kwargs.get("metadata")
+                "FlextLdifModels.QuirkMetadata | None",
+                kwargs.get("metadata"),
             ),
         )
 
@@ -2934,7 +2943,8 @@ class RfcTestHelpers:
             result = api.parse(path)
 
         unwrapped = TestAssertions.assert_success(
-            result, "Fixture parse should succeed"
+            result,
+            "Fixture parse should succeed",
         )
 
         if isinstance(unwrapped, list):
@@ -2956,4 +2966,4 @@ class RfcTestHelpers:
         return entries
 
 
-__all__ = ["RfcTestHelpers"]
+__all__ = ["HasParseMethod", "RfcTestHelpers"]

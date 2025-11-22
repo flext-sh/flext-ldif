@@ -971,12 +971,14 @@ class FlextLdifModelsDomains:
             for normalized_dn, variants in self._case_variants.items():
                 if len(variants) > 1:
                     canonical = self._registry[normalized_dn]
-                    inconsistencies.append({
-                        "normalized_dn": normalized_dn,
-                        "canonical_case": canonical,
-                        "variants": list(variants),
-                        "variant_count": len(variants),
-                    })
+                    inconsistencies.append(
+                        {
+                            "normalized_dn": normalized_dn,
+                            "canonical_case": canonical,
+                            "variants": list(variants),
+                            "variant_count": len(variants),
+                        },
+                    )
 
             if inconsistencies:
                 result = FlextResult[bool].ok(False)
@@ -984,7 +986,7 @@ class FlextLdifModelsDomains:
                     attributes={
                         "inconsistencies": inconsistencies,
                         "warning": f"Found {len(inconsistencies)} DNs with case inconsistencies",
-                    }
+                    },
                 )
                 return result
 
@@ -1383,7 +1385,8 @@ class FlextLdifModelsDomains:
                     # If decode succeeded, log warning about LDIF quality
                     if value != original_value:
                         logging.getLogger(__name__).warning(
-                            f"Emergency base64 decode in Entry model. DN was not decoded by parser: {original_value[:50]}...",
+                            "Emergency base64 decode in Entry model. DN was not decoded by parser: %s...",
+                            original_value[:50],
                         )
 
                 return FlextLdifModelsDomains.DistinguishedName(value=value)
@@ -1507,7 +1510,7 @@ class FlextLdifModelsDomains:
             violations: list[str] = []
             # Schema entries exempt from objectClass requirement
             is_schema_entry = dn_value.lower().startswith(
-                "cn=schema"
+                "cn=schema",
             ) or dn_value.lower().startswith("cn=subschema")
             if (
                 self.attributes is None
@@ -2781,7 +2784,7 @@ class FlextLdifModelsDomains:
         validation_warnings: list[str]
         validation_errors: list[str]
 
-    class DNStatistics(FlextModels.Statistics):
+    class DNStatistics(BaseModel):
         """Statistics tracking for DN transformations and validation.
 
         Immutable value object capturing complete DN transformation history
@@ -2791,7 +2794,7 @@ class FlextLdifModelsDomains:
         All DN transformation operations should populate this model to
         maintain a complete audit trail.
 
-        Inherits from FlextModels.Statistics (flext-core):
+        Inherits from FlextModels.BaseModel (flext-core):
         - model_config (frozen=True, validate_default=True, validate_assignment=True)
         - aggregate() classmethod (automatic statistics aggregation)
         """
@@ -2935,7 +2938,7 @@ class FlextLdifModelsDomains:
                 **flags,
             )
 
-    class EntryStatistics(FlextModels.Statistics):
+    class EntryStatistics(BaseModel):
         """Statistics tracking for entry-level transformations and validation.
 
         Tracks complete entry lifecycle from parsing through validation,
@@ -2945,7 +2948,7 @@ class FlextLdifModelsDomains:
         Designed for aggregation across large LDIF files to provide
         comprehensive migration diagnostics.
 
-        Inherits from FlextModels.Statistics (flext-core):
+        Inherits from FlextModels.BaseModel (flext-core):
         - model_config (frozen=True, validate_default=True, validate_assignment=True)
         - aggregate() classmethod (automatic statistics aggregation)
         """
@@ -3141,7 +3144,10 @@ class FlextLdifModelsDomains:
             return self.model_copy(update={"was_validated": True})
 
         def mark_filtered(
-            self, filter_type: str, *, passed: bool
+            self,
+            filter_type: str,
+            *,
+            passed: bool,
         ) -> FlextLdifModelsDomains.EntryStatistics:
             """Mark entry as filtered with result.
 
@@ -3159,7 +3165,7 @@ class FlextLdifModelsDomains:
                     "was_filtered": True,
                     "filters_applied": filters_applied,
                     "filter_results": filter_results,
-                }
+                },
             )
 
         def mark_rejected(
@@ -3176,7 +3182,7 @@ class FlextLdifModelsDomains:
                     "was_rejected": True,
                     "rejection_category": category,
                     "rejection_reason": reason,
-                }
+                },
             )
 
         def add_error(self, error: str) -> FlextLdifModelsDomains.EntryStatistics:
@@ -3210,22 +3216,23 @@ class FlextLdifModelsDomains:
             if change_type == "removed":
                 attributes_removed = [*self.attributes_removed, attr_name]
                 return self.model_copy(
-                    update={"attributes_removed": attributes_removed}
+                    update={"attributes_removed": attributes_removed},
                 )
             if change_type == "modified":
                 attributes_modified = [*self.attributes_modified, attr_name]
                 return self.model_copy(
-                    update={"attributes_modified": attributes_modified}
+                    update={"attributes_modified": attributes_modified},
                 )
             if change_type == "filtered":
                 attributes_filtered = [*self.attributes_filtered, attr_name]
                 return self.model_copy(
-                    update={"attributes_filtered": attributes_filtered}
+                    update={"attributes_filtered": attributes_filtered},
                 )
             return self  # No change for unknown type
 
         def apply_quirk(
-            self, quirk_type: str
+            self,
+            quirk_type: str,
         ) -> FlextLdifModelsDomains.EntryStatistics:
             """Record quirk application.
 
@@ -3236,5 +3243,5 @@ class FlextLdifModelsDomains:
                 update={
                     "quirks_applied": quirks_applied,
                     "quirk_transformations": self.quirk_transformations + 1,
-                }
+                },
             )

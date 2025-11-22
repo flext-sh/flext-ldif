@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
 
@@ -109,7 +109,9 @@ class TestAttributeParserBasics:
             expected_name=TestsRfcConstants.ATTR_OID_CN,
             has_matching_rules=False,
         )
-        assert attr.equality is None and attr.ordering is None and attr.substr is None
+        assert attr.equality is None
+        assert attr.ordering is None
+        assert attr.substr is None
 
     @pytest.mark.timeout(5)
     def test_parse_attribute_with_sup(
@@ -479,7 +481,10 @@ class TestSyntaxDefinitionIntegration:
         ]
         for attr_def, expected_oid, expected_name in test_cases:
             _ = RfcTestHelpers.test_schema_parse_attribute(
-                rfc_schema_quirk, attr_def, expected_oid, expected_name
+                rfc_schema_quirk,
+                attr_def,
+                expected_oid,
+                expected_name,
             )
 
 
@@ -519,11 +524,16 @@ class TestSyntaxOIDValidation:
         attributes = []
         for tc in test_cases:
             attr = RfcTestHelpers.test_schema_parse_attribute(
-                rfc_schema_quirk, tc[0], tc[1], tc[2]
+                rfc_schema_quirk,
+                tc[0],
+                tc[1],
+                tc[2],
             )
             attributes.append(attr)
         for attr, (_, _, _, should_be_valid) in zip(
-            attributes, test_cases, strict=True
+            attributes,
+            test_cases,
+            strict=True,
         ):
             if attr.syntax and attr.metadata:
                 is_valid = attr.metadata.extensions.get("syntax_oid_valid")
@@ -576,7 +586,8 @@ class TestSyntaxOIDValidation:
         )
         result = rfc_schema_quirk.parse(quoted_attr_def)
         quoted_schema_obj = TestAssertions.assert_success(
-            result, "Parse should succeed"
+            result,
+            "Parse should succeed",
         )
         assert isinstance(quoted_schema_obj, FlextLdifModels.SchemaAttribute)
         quoted_attr = quoted_schema_obj
@@ -684,7 +695,8 @@ class TestTypeSpecificValidators:
         """Test DirectoryString validator accepts special characters."""
         service = FlextLdifSyntax()
         result = service.validate_value(
-            "User Name (Office)", "1.3.6.1.4.1.1466.115.121.1.15"
+            "User Name (Office)",
+            "1.3.6.1.4.1.1466.115.121.1.15",
         )
         assert result.is_success
 
@@ -693,7 +705,8 @@ class TestTypeSpecificValidators:
         """Test IA5String syntax validator accepts ASCII values."""
         service = FlextLdifSyntax()
         result = service.validate_value(
-            "test@example.com", "1.3.6.1.4.1.1466.115.121.1.26"
+            "test@example.com",
+            "1.3.6.1.4.1.1466.115.121.1.26",
         )
         assert result.is_success
 

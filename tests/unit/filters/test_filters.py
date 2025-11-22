@@ -15,15 +15,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
+import sys
+from pathlib import Path
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.filters import FlextLdifFilters
+from tests.helpers.test_assertions import TestAssertions
 
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from flext_ldif import FlextLdifModels
+
+# Ensure project root is in sys.path for absolute imports
+_project_root = Path(__file__).parent.parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+import pytest  # noqa: E402
+
+from flext_ldif.services.filters import FlextLdifFilters  # noqa: E402
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
-create_test_entry = TestDeduplicationHelpers.create_entry_from_dict
+create_test_entry = TestAssertions.create_entry
 
 
 class TestExclusionMetadataTypeGuards:
@@ -549,6 +558,7 @@ class TestFilterEntryObjectClassesException:
 
         # Should fail
         assert not result.is_success
+        assert result.error is not None
         assert "All objectClasses would be removed" in result.error
 
     def test_filter_entry_objectclasses_non_existent_to_filter(self) -> None:
@@ -667,7 +677,7 @@ class TestCategorizeEntryBlockedObjectClasses:
             user_objectclasses=["person"],
         )
         whitelist_rules = FlextLdifModels.WhitelistRules(
-            blocked_objectclasses=["blockedClass"]
+            blocked_objectclasses=["blockedClass"],
         )
 
         category, reason = FlextLdifFilters.categorize_entry(

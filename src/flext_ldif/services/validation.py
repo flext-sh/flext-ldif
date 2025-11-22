@@ -122,7 +122,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[FlextLdifModels.ValidationServiceStatus]
+    FlextLdifServiceBase[FlextLdifModels.ValidationServiceStatus],
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 

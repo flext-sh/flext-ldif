@@ -13,7 +13,8 @@ from collections.abc import Iterator
 from typing import overload
 
 from flext_core import FlextModels, FlextRuntime
-from pydantic import ConfigDict, Field, computed_field
+from flext_core._models.collections import FlextModelsCollections
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
@@ -118,7 +119,7 @@ class FlextLdifModelsResults:
                 f"{self.pattern_count} patterns detected"
             )
 
-    class EntryResult(FlextModels.Results):
+    class EntryResult(BaseModel):
         """Result of LDIF processing containing categorized entries and statistics.
 
         This is the UNIFIED result model for all LDIF operations. Contains entries
@@ -447,6 +448,12 @@ class FlextLdifModelsResults:
 
     class Statistics(FlextModels.Statistics):
         """Unified statistics model for all LDIF operations."""
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_default=True,
+            str_strip_whitespace=True,
+        )
 
         # CORE COUNTERS
         total_entries: int = Field(
@@ -810,7 +817,7 @@ class FlextLdifModelsResults:
                 events=list(self.events) + [event],
             )
 
-    class SchemaBuilderResult(FlextModels.Results):
+    class SchemaBuilderResult(BaseModel):
         """Result of schema builder build() operation.
 
         Contains attributes, object classes, server type, and metadata about the schema.
@@ -911,7 +918,7 @@ class FlextLdifModelsResults:
                 "entry_count": self.entry_count,
             }
 
-    class MigrationPipelineResult(FlextModels.Results):
+    class MigrationPipelineResult(BaseModel):
         """Result of migration pipeline execution.
 
         Contains migrated schema, entries, statistics, and output file paths
@@ -1041,7 +1048,7 @@ class FlextLdifModelsResults:
             description="Active configuration settings",
         )
 
-    class ValidationResult(FlextModels.Results):
+    class ValidationResult(BaseModel):
         """Entry validation result."""
 
         model_config = ConfigDict(
@@ -1068,7 +1075,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return (self.valid_entries / self.total_entries) * 100.0
 
-    class MigrationEntriesResult(FlextModels.Results):
+    class MigrationEntriesResult(BaseModel):
         """Result from migrating entries between servers."""
 
         model_config = ConfigDict(
@@ -1092,7 +1099,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return (self.migrated_entries / self.total_entries) * 100.0
 
-    class EntryAnalysisResult(FlextModels.Results):
+    class EntryAnalysisResult(BaseModel):
         """Result from entry analysis operations."""
 
         model_config = ConfigDict(
@@ -1115,7 +1122,7 @@ class FlextLdifModelsResults:
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(FlextModels.Results):
+    class ServerDetectionResult(BaseModel):
         """Result from LDAP server type detection."""
 
         model_config = ConfigDict(
@@ -1147,7 +1154,7 @@ class FlextLdifModelsResults:
             description="Reason for fallback to RFC mode",
         )
 
-    class StatisticsResult(FlextModels.Results):
+    class StatisticsResult(BaseModel):
         """Statistics result from LDIF processing pipeline.
 
         Contains comprehensive statistics about categorized entries, rejections,
@@ -1348,7 +1355,7 @@ class FlextLdifModelsResults:
             description="Service version",
         )
 
-    class SyntaxLookupResult(FlextModels.Results):
+    class SyntaxLookupResult(BaseModel):
         """Result of syntax OID/name lookup operations.
 
         Contains results from bidirectional OID ↔ name lookups
@@ -1396,7 +1403,7 @@ class FlextLdifModelsResults:
             description="List of supported validation types",
         )
 
-    class ValidationBatchResult(FlextModels.Results):
+    class ValidationBatchResult(BaseModel):
         """Result of batch validation operations.
 
         Contains validation results for multiple attribute names
@@ -1609,7 +1616,9 @@ class FlextLdifModelsResults:
                 f"{self.entry_count} entries ({self.server_type})"
             )
 
-    class FlexibleCategories(FlextModels.Categories[FlextLdifModelsDomains.Entry]):
+    class FlexibleCategories(
+        FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
+    ):
         """Flexible entry categorization with dynamic categories.
 
         Replaces dict[str, list[Entry]] pattern with type-safe model.
