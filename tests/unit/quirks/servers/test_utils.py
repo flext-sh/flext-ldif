@@ -11,10 +11,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif.api import FlextLdif
-from flext_ldif.models import FlextLdifModels
-
-from ...helpers.test_assertions import TestAssertions
+from flext_ldif import FlextLdif, FlextLdifModels
+from tests.helpers.test_assertions import TestAssertions
 
 
 class FlextLdifTestUtils:
@@ -78,7 +76,8 @@ class FlextLdifTestUtils:
         """
         # Get fixture path using helper method
         fixture_path = FlextLdifTestUtils.get_fixture_path(
-            server_type, fixture_filename
+            server_type,
+            fixture_filename,
         )
 
         # Parse the fixture
@@ -244,7 +243,9 @@ class FlextLdifTestUtils:
                 is_identical = False
             else:
                 for orig, rt in zip(
-                    original_entries, roundtripped_entries, strict=False
+                    original_entries,
+                    roundtripped_entries,
+                    strict=False,
                 ):
                     if orig.dn is None or rt.dn is None:
                         is_identical = False
@@ -344,7 +345,7 @@ class FlextLdifTestUtils:
 
         # Compare each entry
         for i, (orig, roundtrip) in enumerate(
-            zip(original_entries, roundtrip_entries, strict=True)
+            zip(original_entries, roundtrip_entries, strict=True),
         ):
             # Compare DNs
             orig_dn = str(orig.dn) if orig.dn else ""

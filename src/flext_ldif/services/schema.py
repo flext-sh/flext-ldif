@@ -234,7 +234,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 return FlextResult.fail("Attribute OID is required and cannot be empty")
             if not attr.name or not attr.name.strip():
                 return FlextResult.fail(
-                    "Attribute NAME is required and cannot be empty"
+                    "Attribute NAME is required and cannot be empty",
                 )
 
             # Validate syntax OID format if present
@@ -274,11 +274,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             # Validate required fields are not empty
             if not oc.oid or not oc.oid.strip():
                 return FlextResult.fail(
-                    "ObjectClass OID is required and cannot be empty"
+                    "ObjectClass OID is required and cannot be empty",
                 )
             if not oc.name or not oc.name.strip():
                 return FlextResult.fail(
-                    "ObjectClass NAME is required and cannot be empty"
+                    "ObjectClass NAME is required and cannot be empty",
                 )
 
             # Check objectclass kind

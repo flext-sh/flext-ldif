@@ -12,9 +12,16 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdifModels
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.schema import FlextLdifSchema
 
+from ...helpers.test_assertions import TestAssertions
 from ...helpers.test_deduplication_helpers import DeduplicationHelpers
 
 
@@ -31,7 +38,8 @@ class TestBasicAssertions:
         """Test assert_success_and_unwrap with custom error message."""
         result = FlextResult[str].ok("test")
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap(
-            result, "Custom error"
+            result,
+            "Custom error",
         )
         assert unwrapped == "test"
 
@@ -46,10 +54,12 @@ class TestBasicAssertions:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.LdifAttributes.create({
-                    "cn": ["test"]
-                }).unwrap(),
-            )
+                attributes=FlextLdifModels.LdifAttributes.create(
+                    {
+                        "cn": ["test"],
+                    },
+                ).unwrap(),
+            ),
         ]
         result = FlextResult[list[FlextLdifModels.Entry]].ok(entries)
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap_list(result)
@@ -77,7 +87,7 @@ class TestEntryCreation:
 
     def test_create_entry_from_dict(self) -> None:
         """Test create_entry_from_dict."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"], "sn": ["Doe"]},
         )
@@ -86,8 +96,8 @@ class TestEntryCreation:
         assert "sn" in entry.attributes.attributes
 
     def test_create_entry_simple(self) -> None:
-        """Test create_entry_simple."""
-        entry = DeduplicationHelpers.create_entry_simple(
+        """Test TestAssertions.create_entry (formerly create_entry_simple)."""
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -95,10 +105,12 @@ class TestEntryCreation:
 
     def test_create_attributes_from_dict(self) -> None:
         """Test create_attributes_from_dict."""
-        attrs = DeduplicationHelpers.create_attributes_from_dict({
-            "cn": ["test"],
-            "sn": ["Doe"],
-        })
+        attrs = DeduplicationHelpers.create_attributes_from_dict(
+            {
+                "cn": ["test"],
+                "sn": ["Doe"],
+            },
+        )
         assert "cn" in attrs.attributes
         assert "sn" in attrs.attributes
 
@@ -115,7 +127,9 @@ class TestDNAssertions:
         """Test assert_dn_value_equals with custom error message."""
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         DeduplicationHelpers.assert_dn_value_equals(
-            dn, "cn=test,dc=example,dc=com", "Custom error"
+            dn,
+            "cn=test,dc=example,dc=com",
+            "Custom error",
         )
 
     def test_assert_dn_value_equals_failure(self) -> None:
@@ -123,7 +137,8 @@ class TestDNAssertions:
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         with pytest.raises(AssertionError):
             DeduplicationHelpers.assert_dn_value_equals(
-                dn, "cn=wrong,dc=example,dc=com"
+                dn,
+                "cn=wrong,dc=example,dc=com",
             )
 
     def test_assert_dn_value_is_not_none(self) -> None:
@@ -133,12 +148,13 @@ class TestDNAssertions:
 
     def test_assert_entry_dn_value_equals(self) -> None:
         """Test assert_entry_dn_value_equals."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
         DeduplicationHelpers.assert_entry_dn_value_equals(
-            entry, "cn=test,dc=example,dc=com"
+            entry,
+            "cn=test,dc=example,dc=com",
         )
 
 
@@ -182,7 +198,7 @@ class TestEntryAssertions:
 
     def test_assert_entry_has_attribute(self) -> None:
         """Test assert_entry_has_attribute."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -190,7 +206,7 @@ class TestEntryAssertions:
 
     def test_assert_entry_not_has_attribute(self) -> None:
         """Test assert_entry_not_has_attribute."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -198,7 +214,7 @@ class TestEntryAssertions:
 
     def test_assert_entry_attribute_equals(self) -> None:
         """Test assert_entry_attribute_equals."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -206,7 +222,7 @@ class TestEntryAssertions:
 
     def test_assert_entry_dn_equals(self) -> None:
         """Test assert_entry_dn_equals."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -214,7 +230,7 @@ class TestEntryAssertions:
 
     def test_assert_entry_attributes_not_none(self) -> None:
         """Test assert_entry_attributes_not_none."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -223,13 +239,14 @@ class TestEntryAssertions:
     def test_assert_first_entry_dn_equals(self) -> None:
         """Test assert_first_entry_dn_equals."""
         entries = [
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=test,dc=example,dc=com",
                 {"cn": ["test"]},
-            )
+            ),
         ]
         DeduplicationHelpers.assert_first_entry_dn_equals(
-            entries, "cn=test,dc=example,dc=com"
+            entries,
+            "cn=test,dc=example,dc=com",
         )
 
 
@@ -387,7 +404,7 @@ class TestMetadataAssertions:
 
     def test_assert_metadata_extensions_not_none(self) -> None:
         """Test assert_metadata_extensions_not_none."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -395,40 +412,46 @@ class TestMetadataAssertions:
 
     def test_assert_metadata_extensions_get_equals(self) -> None:
         """Test assert_metadata_extensions_get_equals."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
         entry.metadata.extensions["test_key"] = "test_value"
         DeduplicationHelpers.assert_metadata_extensions_get_equals(
-            entry, "test_key", "test_value"
+            entry,
+            "test_key",
+            "test_value",
         )
 
     def test_assert_metadata_extension_equals(self) -> None:
         """Test assert_metadata_extension_equals."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
         entry.metadata.extensions["test_key"] = "test_value"
         DeduplicationHelpers.assert_metadata_extension_equals(
-            entry, "test_key", "test_value"
+            entry,
+            "test_key",
+            "test_value",
         )
 
     def test_assert_metadata_extension_get_isinstance(self) -> None:
         """Test assert_metadata_extension_get_isinstance."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
         entry.metadata.extensions["test_key"] = {"nested": "value"}
         DeduplicationHelpers.assert_metadata_extension_get_isinstance(
-            entry, "test_key", dict
+            entry,
+            "test_key",
+            dict,
         )
 
     def test_assert_metadata_quirk_type_equals(self) -> None:
         """Test assert_metadata_quirk_type_equals."""
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -483,7 +506,8 @@ class TestSchemaAssertions:
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         DeduplicationHelpers.assert_schema_syntax_equals(
-            attr, "1.3.6.1.4.1.1466.115.121.1.15"
+            attr,
+            "1.3.6.1.4.1.1466.115.121.1.15",
         )
 
     def test_assert_schema_single_value_equals(self) -> None:
@@ -531,8 +555,6 @@ class TestParseAndUnwrap:
 
     def test_parse_and_unwrap_simple(self) -> None:
         """Test parse_and_unwrap_simple."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
         result = api.parse(ldif_content)
@@ -542,10 +564,8 @@ class TestParseAndUnwrap:
 
     def test_write_and_unwrap_simple(self) -> None:
         """Test write_and_unwrap_simple."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif()
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -560,8 +580,6 @@ class TestQuirkOperations:
 
     def test_quirk_parse_and_unwrap(self) -> None:
         """Test quirk_parse_and_unwrap."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
         result = quirk.Entry().parse(ldif_content)
@@ -570,10 +588,8 @@ class TestQuirkOperations:
 
     def test_quirk_write_and_unwrap(self) -> None:
         """Test quirk_write_and_unwrap."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -587,10 +603,8 @@ class TestWriteUnwrapAssert:
 
     def test_write_unwrap_and_assert_success(self) -> None:
         """Test write_unwrap_and_assert with success."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif()
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -600,10 +614,8 @@ class TestWriteUnwrapAssert:
 
     def test_write_unwrap_and_assert_must_not_contain(self) -> None:
         """Test write_unwrap_and_assert with must_not_contain."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif()
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
@@ -617,8 +629,6 @@ class TestParseAndAssert:
 
     def test_parse_and_assert_success(self) -> None:
         """Test parse_and_assert with success."""
-        from flext_ldif.services.parser import FlextLdifParser
-
         parser = FlextLdifParser()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
         entries = DeduplicationHelpers.parse_and_assert(
@@ -633,13 +643,13 @@ class TestParseAndAssert:
 
     def test_parse_and_assert_failure(self) -> None:
         """Test parse_and_assert with failure."""
-        from flext_ldif.services.parser import FlextLdifParser
-
         parser = FlextLdifParser()
         # Use content that will fail parsing
         ldif_content = ""
         entries = DeduplicationHelpers.parse_and_assert(
-            parser, ldif_content, should_succeed=False
+            parser,
+            ldif_content,
+            should_succeed=False,
         )
         assert len(entries) == 0
 
@@ -649,14 +659,12 @@ class TestWriteAndAssert:
 
     def test_write_and_assert_success(self) -> None:
         """Test write_and_assert with success."""
-        from flext_ldif.services.writer import FlextLdifWriter
-
         writer = FlextLdifWriter()
         entries = [
-            DeduplicationHelpers.create_entry_from_dict(
+            TestAssertions.create_entry(
                 "cn=test,dc=example,dc=com",
                 {"cn": ["test"]},
-            )
+            ),
         ]
         ldif = DeduplicationHelpers.write_and_assert(
             writer,
@@ -673,9 +681,6 @@ class TestRoundtripAndAssert:
 
     def test_roundtrip_and_assert_success(self) -> None:
         """Test roundtrip_and_assert with success."""
-        from flext_ldif.services.parser import FlextLdifParser
-        from flext_ldif.services.writer import FlextLdifWriter
-
         parser = FlextLdifParser()
         writer = FlextLdifWriter()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
@@ -692,8 +697,6 @@ class TestSchemaParseAndAssert:
 
     def test_schema_parse_and_assert_attribute(self) -> None:
         """Test schema_parse_and_assert for attribute."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
         attr = DeduplicationHelpers.schema_parse_and_assert(
@@ -712,8 +715,6 @@ class TestSchemaWriteAndAssert:
 
     def test_schema_write_and_assert_success(self) -> None:
         """Test schema_write_and_assert with success."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         attr = FlextLdifModels.SchemaAttribute(
             oid="1.2.3.4",
@@ -721,7 +722,9 @@ class TestSchemaWriteAndAssert:
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         ldif = DeduplicationHelpers.schema_write_and_assert(
-            quirk.Schema(), attr, must_contain=["testAttr"]
+            quirk.Schema(),
+            attr,
+            must_contain=["testAttr"],
         )
         assert "testAttr" in ldif
 
@@ -731,8 +734,6 @@ class TestQuirkRoundtrip:
 
     def test_quirk_parse_write_roundtrip(self) -> None:
         """Test quirk_parse_write_roundtrip."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         schema_quirk = quirk.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
@@ -754,13 +755,13 @@ class TestAPIRoundtrip:
 
     def test_api_parse_write_roundtrip(self) -> None:
         """Test api_parse_write_roundtrip."""
-        from flext_ldif import FlextLdif
-
         api = FlextLdif()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
         original, written, roundtripped = (
             DeduplicationHelpers.api_parse_write_roundtrip(
-                api, ldif_content, expected_count=1
+                api,
+                ldif_content,
+                expected_count=1,
             )
         )
         assert len(original) == 1
@@ -773,8 +774,6 @@ class TestBatchOperations:
 
     def test_batch_parse_and_assert(self) -> None:
         """Test batch_parse_and_assert."""
-        from flext_ldif.services.parser import FlextLdifParser
-
         parser = FlextLdifParser()
         test_cases = [
             {
@@ -807,8 +806,6 @@ class TestSchemaHelpers:
 
     def test_parse_schema_and_unwrap(self) -> None:
         """Test parse_schema_and_unwrap."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
         attr = DeduplicationHelpers.parse_schema_and_unwrap(quirk.Schema(), attr_def)
@@ -817,8 +814,6 @@ class TestSchemaHelpers:
 
     def test_write_schema_and_unwrap(self) -> None:
         """Test write_schema_and_unwrap."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         attr = FlextLdifModels.SchemaAttribute(
             oid="1.2.3.4",
@@ -835,26 +830,26 @@ class TestEntryHelpers:
 
     def test_parse_entry_and_unwrap(self) -> None:
         """Test parse_entry_and_unwrap."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
         entry = DeduplicationHelpers.parse_entry_and_unwrap(
-            quirk.Entry(), ldif_content, expected_dn="cn=test,dc=example,dc=com"
+            quirk.Entry(),
+            ldif_content,
+            expected_dn="cn=test,dc=example,dc=com",
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
     def test_write_entry_and_unwrap(self) -> None:
         """Test write_entry_and_unwrap."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
-        entry = DeduplicationHelpers.create_entry_from_dict(
+        entry = TestAssertions.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
         ldif = DeduplicationHelpers.write_entry_and_unwrap(
-            quirk.Entry(), entry, must_contain="cn: test"
+            quirk.Entry(),
+            entry,
+            must_contain="cn: test",
         )
         assert "cn: test" in ldif
 
@@ -864,8 +859,6 @@ class TestACLHelpers:
 
     def test_acl_quirk_parse_and_assert(self) -> None:
         """Test acl_quirk_parse_and_assert."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         acl_line = "grant(user1) read"
         acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
@@ -873,14 +866,14 @@ class TestACLHelpers:
 
     def test_acl_quirk_write_and_assert(self) -> None:
         """Test acl_quirk_write_and_assert."""
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         quirk = FlextLdifServersRfc()
         # Create ACL by parsing first
         acl_line = "grant(user1) read"
         acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
         # Then write it
         ldif = DeduplicationHelpers.acl_quirk_write_and_assert(
-            quirk.Acl(), acl, must_contain=["grant"]
+            quirk.Acl(),
+            acl,
+            must_contain=["grant"],
         )
         assert "grant" in ldif.lower()

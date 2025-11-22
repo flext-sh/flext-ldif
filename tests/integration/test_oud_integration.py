@@ -19,8 +19,7 @@ import re
 import pytest
 
 from flext_ldif import FlextLdif
-
-from ..fixtures import FlextLdifFixtures
+from tests.fixtures import FlextLdifFixtures
 
 
 class TestOudSchemaIntegration:
@@ -32,7 +31,9 @@ class TestOudSchemaIntegration:
     """
 
     def test_parse_schema_fixture(
-        self, api: FlextLdif, oud_schema_fixture: str
+        self,
+        api: FlextLdif,
+        oud_schema_fixture: str,
     ) -> None:
         """Test parsing complete OUD schema fixture.
 

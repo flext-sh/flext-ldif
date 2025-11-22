@@ -16,6 +16,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
+from flext_ldif import FlextLdif
+
 from .loader import FlextLdifFixtures
 
 # Fixture paths
@@ -27,6 +29,7 @@ __all__ = [
     # Paths
     "FIXTURES_DIR",
     "OID_FIXTURES_DIR",
+    "FlextLdif",
     # Main fixture loader class
     "FlextLdifFixtures",
 ]

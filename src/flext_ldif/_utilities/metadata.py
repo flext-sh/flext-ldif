@@ -434,7 +434,9 @@ class FlextLdifUtilitiesMetadata:
         details: dict[str, object] = {}
         if "attributetypes:" in definition.lower():
             attr_match = re.search(
-                r"(attributetypes|attributeTypes):", definition, re.IGNORECASE
+                r"(attributetypes|attributeTypes):",
+                definition,
+                re.IGNORECASE,
             )
             if attr_match:
                 details["attribute_case"] = attr_match.group(1)
@@ -446,7 +448,9 @@ class FlextLdifUtilitiesMetadata:
                         details["attribute_prefix_spacing"] = spacing_match.group(1)
         if "objectclasses:" in definition.lower() or "objectClasses:" in definition:
             oc_match = re.search(
-                r"(objectclasses|objectClasses):", definition, re.IGNORECASE
+                r"(objectclasses|objectClasses):",
+                definition,
+                re.IGNORECASE,
             )
             if oc_match:
                 details["objectclass_case"] = oc_match.group(1)
@@ -479,7 +483,7 @@ class FlextLdifUtilitiesMetadata:
         )
         if syntax_match:
             details["syntax_quotes"] = bool(
-                syntax_match.group(1) or syntax_match.group(3)
+                syntax_match.group(1) or syntax_match.group(3),
             )
             details["syntax_quote_char"] = (
                 syntax_match.group(1) or syntax_match.group(3) or ""
@@ -504,7 +508,8 @@ class FlextLdifUtilitiesMetadata:
         """Extract NAME format details."""
         details: dict[str, object] = {}
         name_match = re.search(
-            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?", definition
+            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
+            definition,
         )
         if name_match:
             has_parens = bool(name_match.group(1))
@@ -547,7 +552,9 @@ class FlextLdifUtilitiesMetadata:
         """Extract DESC details."""
         details: dict[str, object] = {}
         desc_match = re.search(
-            r"DESC\s+([\"']?)([^\"']+)([\"']?)", definition, re.IGNORECASE
+            r"DESC\s+([\"']?)([^\"']+)([\"']?)",
+            definition,
+            re.IGNORECASE,
         )
         if desc_match:
             details["desc_presence"] = True
@@ -777,26 +784,29 @@ class FlextLdifUtilitiesMetadata:
             "X-ORIGIN": r"X-ORIGIN",
         }
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
-            definition
+            definition,
         )
         details["field_order"] = field_order
         details["field_positions"] = field_positions
         details["spacing_between_fields"] = (
             FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
-                definition, field_order, field_positions, field_patterns
+                definition,
+                field_order,
+                field_positions,
+                field_patterns,
             )
         )
 
         # Extract remaining details
         details.update(
-            FlextLdifUtilitiesMetadata._extract_leading_trailing_spaces(definition)
+            FlextLdifUtilitiesMetadata._extract_leading_trailing_spaces(definition),
         )
         details.update(
-            FlextLdifUtilitiesMetadata._extract_matching_rule_details(definition)
+            FlextLdifUtilitiesMetadata._extract_matching_rule_details(definition),
         )
         details.update(FlextLdifUtilitiesMetadata._extract_sup_details(definition))
         details.update(
-            FlextLdifUtilitiesMetadata._extract_single_value_details(definition)
+            FlextLdifUtilitiesMetadata._extract_single_value_details(definition),
         )
 
         # Log all captured deviations at DEBUG level
@@ -841,7 +851,7 @@ class FlextLdifUtilitiesMetadata:
 
         """
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
-            definition
+            definition,
         )
         metadata.schema_format_details.update(formatting_details)
 
@@ -1045,7 +1055,7 @@ class FlextLdifUtilitiesMetadata:
         # Get all tracked locations in converted entry
         converted_attrs = set(converted_entry.attributes.attributes.keys())
         tracked_transforms = set(
-            converted_entry.metadata.attribute_transformations.keys()
+            converted_entry.metadata.attribute_transformations.keys(),
         )
         removed_attrs = set(converted_entry.metadata.removed_attributes.keys())
         soft_deleted = set(converted_entry.metadata.soft_delete_markers)
@@ -1154,7 +1164,8 @@ class FlextLdifUtilitiesMetadata:
         new_attrs: dict[str, list[str]] = {}
         for attr_name, values in entry.attributes.attributes.items():
             original_case = metadata.original_attribute_case.get(
-                attr_name.lower(), attr_name
+                attr_name.lower(),
+                attr_name,
             )
             new_attrs[original_case] = values
         entry.attributes.attributes = new_attrs
@@ -1186,11 +1197,13 @@ class FlextLdifUtilitiesMetadata:
             spacing_added.append(position)
             diff_entry["type"] = "spacing_added"
         elif orig_char and conv_char and orig_char.lower() == conv_char.lower():
-            case_changes.append({
-                "position": position,
-                "original": orig_char,
-                "converted": conv_char,
-            })
+            case_changes.append(
+                {
+                    "position": position,
+                    "original": orig_char,
+                    "converted": conv_char,
+                },
+            )
             diff_entry["type"] = "case_change"
         elif (
             orig_char
@@ -1198,11 +1211,13 @@ class FlextLdifUtilitiesMetadata:
             and orig_char in ",;:()[]{}"
             and conv_char in ",;:()[]{}"
         ):
-            punctuation_changes.append({
-                "position": position,
-                "original": orig_char,
-                "converted": conv_char,
-            })
+            punctuation_changes.append(
+                {
+                    "position": position,
+                    "original": orig_char,
+                    "converted": conv_char,
+                },
+            )
             diff_entry["type"] = "punctuation_change"
         elif orig_char is None:
             diff_entry["type"] = "added"
@@ -1218,7 +1233,7 @@ class FlextLdifUtilitiesMetadata:
                 missing_chars_obj.append({"position": position, "char": orig_char})
             else:
                 differences["missing_chars"] = [
-                    {"position": position, "char": orig_char}
+                    {"position": position, "char": orig_char},
                 ]
         else:
             diff_entry["type"] = "character_change"
@@ -1363,13 +1378,19 @@ class FlextLdifUtilitiesMetadata:
                 context_after_end = (
                     pos + 6 if pos >= 0 and pos + 6 < len(original) else len(original)
                 )
-                case_change_details.append({
-                    "position": pos,
-                    "original": orig_char,
-                    "converted": conv_char,
-                    "context_before": original[context_before_start:context_before_end],
-                    "context_after": original[context_after_start:context_after_end],
-                })
+                case_change_details.append(
+                    {
+                        "position": pos,
+                        "original": orig_char,
+                        "converted": conv_char,
+                        "context_before": original[
+                            context_before_start:context_before_end
+                        ],
+                        "context_after": original[
+                            context_after_start:context_after_end
+                        ],
+                    },
+                )
         if case_change_details:
             details["case_change_details"] = case_change_details
         return details
@@ -1489,7 +1510,9 @@ class FlextLdifUtilitiesMetadata:
             case_changes,
             punctuation_changes,
         ) = FlextLdifUtilitiesMetadata._compare_char_by_char(
-            original, converted, differences
+            original,
+            converted,
+            differences,
         )
 
         differences["differences"] = char_differences
@@ -1505,24 +1528,28 @@ class FlextLdifUtilitiesMetadata:
         # Analyze additional details using helper methods
         differences.update(
             FlextLdifUtilitiesMetadata._analyze_leading_trailing_spaces(
-                original, converted
-            )
+                original,
+                converted,
+            ),
         )
         differences.update(
-            FlextLdifUtilitiesMetadata._analyze_punctuation_counts(original, converted)
+            FlextLdifUtilitiesMetadata._analyze_punctuation_counts(original, converted),
         )
         differences.update(
-            FlextLdifUtilitiesMetadata._analyze_quote_counts(original, converted)
+            FlextLdifUtilitiesMetadata._analyze_quote_counts(original, converted),
         )
         differences.update(
             FlextLdifUtilitiesMetadata._analyze_case_change_details(
-                original, case_changes
-            )
+                original,
+                case_changes,
+            ),
         )
         differences.update(
             FlextLdifUtilitiesMetadata._detect_boolean_conversions(
-                original, converted, context
-            )
+                original,
+                converted,
+                context,
+            ),
         )
 
         # CRITICAL: Detect semicolon removal (common in DN normalization)
@@ -1641,7 +1668,9 @@ class FlextLdifUtilitiesMetadata:
         # Analyze differences if converted string provided
         if converted is not None:
             differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
-                original=original, converted=converted, context=context
+                original=original,
+                converted=converted,
+                context=context,
             )
 
             # Store differences in metadata.minimal_differences
@@ -1659,7 +1688,13 @@ class FlextLdifUtilitiesMetadata:
 
             # Auto-track boolean conversions and soft deletes using helper method
             FlextLdifUtilitiesMetadata._auto_track_conversions(
-                metadata, differences, original, converted, context, attribute_name, key
+                metadata,
+                differences,
+                original,
+                converted,
+                context,
+                attribute_name,
+                key,
             )
 
             # Log differences found

@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 
+from flext_ldif import FlextLdif
+
 from .fixtures.validator import FlextLdifFixtureDiscovery
 
 logger = FlextLogger(__name__)
@@ -92,8 +94,6 @@ class TestFixtureDiscovery:
 
     def test_fixture_parsing_with_expected_comparison(self) -> None:
         """Test fixture parsing and comparison with expected results."""
-        from flext_ldif import FlextLdif
-
         discovery = FlextLdifFixtureDiscovery()
         metadata = discovery.get_metadata("rfc2849_simple_entry")
 

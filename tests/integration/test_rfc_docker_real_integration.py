@@ -15,10 +15,13 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import (
+    FlextLdifConfig,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
 
 class TestRfcParserRealFixtures:
@@ -209,9 +212,7 @@ class TestRfcWriterRealFixtures:
         if not acl_file.exists():
             pytest.skip(f"Fixture not found: {acl_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         parse_result = parser.parse_ldif_file(acl_file)
 
@@ -225,7 +226,6 @@ class TestRfcWriterRealFixtures:
         output_file = tmp_path / "acl_output.ldif"
 
         writer = FlextLdifWriter(
-            config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
         )
 
@@ -274,8 +274,6 @@ class TestRfcExceptionHandlingRealScenarios:
 
         try:
             # Create test entry
-            from flext_ldif.models import FlextLdifModels
-
             test_entry = FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
                 attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
@@ -295,7 +293,8 @@ class TestRfcExceptionHandlingRealScenarios:
 
             # Should fail with permission error
             if not result.is_success:
-                assert result.error is not None and (
+                assert result.error is not None
+                assert (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error
                 )

@@ -414,10 +414,12 @@ class FlextLdifUtilitiesDN:
             ),
         )
 
-        return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].ok((
-            normalized,
-            stats,
-        ))
+        return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].ok(
+            (
+                normalized,
+                stats,
+            ),
+        )
 
     @overload
     @staticmethod
@@ -621,10 +623,12 @@ class FlextLdifUtilitiesDN:
         # Pass flags explicitly to ensure type safety
         # Values are already correct types, use cast to help type checker
         validation_warnings_list = cast(
-            "list[str]", transformation_flags["validation_warnings"]
+            "list[str]",
+            transformation_flags["validation_warnings"],
         )
         validation_errors_list = cast(
-            "list[str]", transformation_flags["validation_errors"]
+            "list[str]",
+            transformation_flags["validation_errors"],
         )
         stats_domain = FlextLdifModels.DNStatistics.create_with_transformation(
             original_dn=original_dn,
@@ -633,14 +637,16 @@ class FlextLdifUtilitiesDN:
             transformations=transformations,
             had_tab_chars=cast("bool", transformation_flags["had_tab_chars"]),
             had_trailing_spaces=cast(
-                "bool", transformation_flags["had_trailing_spaces"]
+                "bool",
+                transformation_flags["had_trailing_spaces"],
             ),
             had_leading_spaces=cast("bool", transformation_flags["had_leading_spaces"]),
             had_extra_spaces=cast("bool", transformation_flags["had_extra_spaces"]),
             was_base64_encoded=cast("bool", transformation_flags["was_base64_encoded"]),
             had_utf8_chars=cast("bool", transformation_flags["had_utf8_chars"]),
             had_escape_sequences=cast(
-                "bool", transformation_flags["had_escape_sequences"]
+                "bool",
+                transformation_flags["had_escape_sequences"],
             ),
             validation_status=cast("str", transformation_flags["validation_status"]),
             validation_warnings=validation_warnings_list,

@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
-import pytest
+import sys
+from pathlib import Path
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.novell import FlextLdifServersNovell
+from flext_ldif import FlextLdifModels
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+# Ensure project root is in sys.path for absolute imports
+_project_root = Path(__file__).parent.parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+import pytest  # noqa: E402
+
+from flext_ldif import FlextLdifConstants  # noqa: E402
+from flext_ldif.servers.novell import FlextLdifServersNovell  # noqa: E402
+from tests.helpers.test_rfc_helpers import RfcTestHelpers  # noqa: E402
 
 
 class TestNovellSchemas:
@@ -35,8 +44,6 @@ class TestNovellSchemas:
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
 
         # Parse using public API (parse_attribute)
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             attr_def,
@@ -52,8 +59,6 @@ class TestNovellSchemas:
         )
 
         # Parse using public API (parse_attribute)
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             attr_def,
@@ -68,8 +73,6 @@ class TestNovellSchemas:
         )
 
         # Parse using public API (parse_attribute)
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             attr_def,
@@ -82,8 +85,6 @@ class TestNovellSchemas:
         attr_def = "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
         # Parse using public API (parse_attribute)
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             attr_def,
@@ -109,8 +110,6 @@ class TestNovellSchemas:
         """Test parsing Novell eDirectory attribute definition."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             attr_def,
@@ -125,8 +124,6 @@ class TestNovellSchemas:
         """Test parsing attribute with syntax length specification."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             attr_def,
@@ -150,8 +147,6 @@ class TestNovellSchemas:
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )"
 
         # Parse using public API (parse_objectclass)
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             oc_def,
@@ -165,8 +160,6 @@ class TestNovellSchemas:
         oc_def = "( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )"
 
         # Parse using public API (parse_objectclass)
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             oc_def,
@@ -186,8 +179,6 @@ class TestNovellSchemas:
         """Test parsing STRUCTURAL objectClass."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             oc_def,
@@ -203,8 +194,6 @@ class TestNovellSchemas:
         """Test parsing AUXILIARY objectClass."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             oc_def,
@@ -215,8 +204,6 @@ class TestNovellSchemas:
         """Test parsing ABSTRACT objectClass."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             quirk,
             oc_def,
@@ -243,8 +230,6 @@ class TestNovellSchemas:
             syntax="1.3.6.1.4.1.1466.115.121.1.12",
             single_value=True,
         )
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,
             attr_data,
@@ -267,8 +252,6 @@ class TestNovellSchemas:
             must=["cn"],
             may=["loginDisabled"],
         )
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,
             oc_data,
@@ -303,7 +286,9 @@ class TestNovellAcls:
 
         # Use parse which calls can_handle internally
         TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl, acl_line, parse_method="parse"
+            acl,
+            acl_line,
+            parse_method="parse",
         )  # Novell ACL should be handled
 
     def test__can_handle_with_inheritedacl_attribute(self) -> None:
@@ -323,7 +308,9 @@ class TestNovellAcls:
 
         # Use parse which calls can_handle internally
         TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl, acl_line, parse_method="parse"
+            acl,
+            acl_line,
+            parse_method="parse",
         )  # Novell ACL should be handled
 
     def test__can_handle_negative(self) -> None:
@@ -422,7 +409,9 @@ class TestNovellAcls:
             raw_acl="acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
         )
         acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl, acl_data, write_method="write"
+            acl,
+            acl_data,
+            write_method="write",
         )
         assert "acl:" in acl_str or "[Entry Rights]" in acl_str
 
@@ -446,7 +435,9 @@ class TestNovellAcls:
             ),
         )
         acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl, acl_data, write_method="write"
+            acl,
+            acl_data,
+            write_method="write",
         )
         assert isinstance(acl_str, str)
 
@@ -472,7 +463,9 @@ class TestNovellAcls:
             ),
         )
         acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl, acl_data, write_method="write"
+            acl,
+            acl_data,
+            write_method="write",
         )
         assert "acl:" in acl_str
         assert "[Entry Rights]" in acl_str
@@ -498,7 +491,9 @@ class TestNovellAcls:
             ),
         )
         acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl, acl_data, write_method="write"
+            acl,
+            acl_data,
+            write_method="write",
         )
         assert isinstance(acl_str, str)
 

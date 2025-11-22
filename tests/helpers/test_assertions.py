@@ -14,11 +14,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
+from typing import TypeVar
 
 from flext_core import FlextResult
 
-from flext_ldif.models import FlextLdifModels
+T = TypeVar("T")
+
+from flext_ldif import FlextLdifModels
+
+_T = TypeVar("_T")
 
 
 class TestAssertions:
@@ -29,12 +33,9 @@ class TestAssertions:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[object]
-        | FlextResult[str]
-        | FlextResult[list]
-        | FlextResult,
+        result: FlextResult[_T],
         error_msg: str | None = None,
-    ) -> object:
+    ) -> _T:
         """Assert result is success and return unwrapped value.
 
         Args:
@@ -48,18 +49,14 @@ class TestAssertions:
             AssertionError: If result is failure
 
         """
-        cast_result = cast("FlextResult[object]", result)
-        if not cast_result.is_success:
-            msg = error_msg or f"Expected success but got failure: {cast_result.error}"
+        if not result.is_success:
+            msg = error_msg or f"Expected success but got failure: {result.error}"
             raise AssertionError(msg)
-        return cast_result.unwrap()
+        return result.unwrap()
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[object]
-        | FlextResult[str]
-        | FlextResult[list]
-        | FlextResult,
+        result: FlextResult[_T],
         expected_error: str | None = None,
     ) -> str:
         """Assert result is failure and return error message.
@@ -75,18 +72,19 @@ class TestAssertions:
             AssertionError: If result is success
 
         """
-        cast_result = cast("FlextResult[object]", result)
-        if cast_result.is_success:
+        if result.is_success:
+            msg = f"Expected failure but got success: {result.unwrap()}"
             raise AssertionError(
-                f"Expected failure but got success: {cast_result.unwrap()}"
+                msg,
             )
-        error = cast_result.error
+        error = result.error
         if error is None:
             msg = "Expected error but got None"
             raise AssertionError(msg)
         if expected_error and expected_error not in error:
+            msg = f"Expected error containing '{expected_error}' but got: {error}"
             raise AssertionError(
-                f"Expected error containing '{expected_error}' but got: {error}"
+                msg,
             )
         return error
 
@@ -228,7 +226,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_write_success(
-        result: FlextResult[str],
+        result: FlextResult[T],
         expected_content: str | None = None,
     ) -> str:
         """Assert write result is success and return LDIF string.
@@ -273,7 +271,7 @@ class TestAssertions:
             f"roundtripped={len(roundtripped_entries)}"
         )
         for i, (original, roundtripped) in enumerate(
-            zip(original_entries, roundtripped_entries, strict=True)
+            zip(original_entries, roundtripped_entries, strict=True),
         ):
             assert original.dn is not None, f"Entry {i} original DN should not be None"
             assert roundtripped.dn is not None, (
@@ -284,6 +282,46 @@ class TestAssertions:
                 f"original={original.dn.value}, "
                 f"roundtripped={roundtripped.dn.value}"
             )
+
+    @staticmethod
+    def create_entry(
+        dn: str,
+        attributes: dict[str, str | list[str]],
+        *,
+        validate: bool = False,
+    ) -> FlextLdifModels.Entry:
+        """Create Entry using Entry.create() - generalized helper.
+
+        Replaces multiple create_entry_* helper methods:
+        - create_entry_simple: Basic creation with optional validation
+        - create_entry_from_dict: Creation from dictionary
+        - create_entry_with_validation: Creation with required validation
+        - create_entry_and_unwrap: Wrapper that unwraps result
+
+        Args:
+            dn: Distinguished name as string
+            attributes: Dictionary of attribute names to values
+            validate: Whether to validate entry structure (default: False)
+
+        Returns:
+            Created Entry model
+
+        Raises:
+            AssertionError: If entry creation fails
+
+        """
+        result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes)
+        entry = TestAssertions.assert_success(
+            result,
+            f"Failed to create entry with DN '{dn}'",
+        )
+        # Type narrowing check to satisfy strict type checking
+        if not isinstance(entry, FlextLdifModels.Entry):
+            msg = f"Expected Entry but got {type(entry).__name__}"
+            raise AssertionError(msg)
+        if validate:
+            TestAssertions.assert_entry_valid(entry)
+        return entry
 
 
 __all__ = ["TestAssertions"]

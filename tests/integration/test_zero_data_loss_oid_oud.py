@@ -15,11 +15,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif.models import FlextLdifModels
-
-from ..fixtures.loader import FlextLdifFixtures
+from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
+from tests.fixtures.loader import FlextLdifFixtures
 
 
 class TestZeroDataLossOidOud:
@@ -43,7 +41,9 @@ class TestZeroDataLossOidOud:
         return loader.entries()
 
     def test_oid_parse_preserves_original_ldif(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
@@ -67,7 +67,9 @@ class TestZeroDataLossOidOud:
             assert "dn:" in original_ldif.lower(), "Original LDIF missing DN"
 
     def test_oud_parse_preserves_original_ldif(
-        self, api: FlextLdif, oud_fixture: str
+        self,
+        api: FlextLdif,
+        oud_fixture: str,
     ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
         result = api.parse(oud_fixture, server_type="oud")
@@ -162,7 +164,7 @@ class TestZeroDataLossOidOud:
                 assert len(original_oid_ldif) > 0, "Original OID LDIF lost"
 
             # Verify no data loss using utility function
-            no_loss, lost_attrs = FlextLdifUtilitiesMetadata.assert_no_data_loss(
+            no_loss, lost_attrs = FlextLdifUtilities.Metadata.assert_no_data_loss(
                 original_entry=oid_entry,
                 converted_entry=oud_entry,
             )
@@ -333,7 +335,8 @@ class TestZeroDataLossOidOud:
 
             # Verify DN original is preserved if DN was modified
             if entry.metadata.minimal_differences.get("dn", {}).get(
-                "has_differences", False
+                "has_differences",
+                False,
             ):
                 assert "dn_original" in entry.metadata.original_strings, (
                     "DN differences detected but dn_original not preserved"

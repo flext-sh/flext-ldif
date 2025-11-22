@@ -23,7 +23,7 @@ from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifProcessing(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for batch and parallel entry processing.
 

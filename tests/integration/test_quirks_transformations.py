@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -81,8 +82,6 @@ class TestOidQuirksTransformations:
         output_dir = tmp_path / "openldap_output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        import shutil
 
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
@@ -160,8 +159,6 @@ class TestOudQuirksTransformations:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        import shutil
-
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
         result = api.migrate(
@@ -187,8 +184,6 @@ class TestOudQuirksTransformations:
         output_dir = tmp_path / "openldap_oud_output"
         input_dir.mkdir()
         output_dir.mkdir()
-
-        import shutil
 
         shutil.copy(fixture_path, input_dir / "data.ldif")
 

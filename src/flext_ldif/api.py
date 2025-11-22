@@ -430,7 +430,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                             "type": "service",
                             "domain": "parser",
                             "description": "Unified LDIF parsing",
-                        }
+                        },
                     ),
                 )
 
@@ -439,14 +439,14 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                     "ldif_config",
                     self.config.ldif,
                     metadata=FlextModels.Metadata(
-                        attributes={"type": "config", "domain": "ldif"}
+                        attributes={"type": "config", "domain": "ldif"},
                     ),
                 )
                 self._registry.register(
                     "ldif_constants",
                     FlextLdifConstants,
                     metadata=FlextModels.Metadata(
-                        attributes={"type": "constants", "domain": "ldif"}
+                        attributes={"type": "constants", "domain": "ldif"},
                     ),
                 )
 
@@ -1197,7 +1197,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 else:
                     # Convert from config type to models type
                     categorization_rules = FlextLdifModels.CategoryRules.model_validate(
-                        opts.categorization_rules.model_dump()
+                        opts.categorization_rules.model_dump(),
                     )
             mode = self._detect_migration_mode(config_model, categorization_rules)
             write_options_result = self._get_write_options_for_mode(
@@ -1242,11 +1242,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 schema_whitelist_rules=(
                     opts.schema_whitelist_rules
                     if isinstance(
-                        opts.schema_whitelist_rules, FlextLdifModels.WhitelistRules
+                        opts.schema_whitelist_rules,
+                        FlextLdifModels.WhitelistRules,
                     )
                     or opts.schema_whitelist_rules is None
                     else FlextLdifModels.WhitelistRules.model_validate(
-                        opts.schema_whitelist_rules.model_dump()
+                        opts.schema_whitelist_rules.model_dump(),
                     )
                 ),
                 input_filename=opts.input_filename,
@@ -1916,7 +1917,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             if config.quirks_detection_mode == "manual":
                 if not config.quirks_server_type:
                     return FlextResult[str].fail(
-                        "Manual mode requires quirks_server_type to be set"
+                        "Manual mode requires quirks_server_type to be set",
                     )
                 return FlextResult[str].ok(config.quirks_server_type)
 

@@ -22,7 +22,7 @@ from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifEntries(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for entry CRUD operations.
 
@@ -176,9 +176,9 @@ class FlextLdifEntries(
         for attr_name, attr_val in attrs_container.items():
             if FlextRuntime.is_list_like(attr_val):
                 # Return list as-is or single item if length==1
-                result_dict[attr_name] = FlextLdifEntries._normalize_attribute_value([
-                    str(v) for v in attr_val
-                ])
+                result_dict[attr_name] = FlextLdifEntries._normalize_attribute_value(
+                    [str(v) for v in attr_val],
+                )
             else:
                 # Single value - return as string
                 result_dict[attr_name] = str(attr_val)

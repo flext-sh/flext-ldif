@@ -19,8 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 

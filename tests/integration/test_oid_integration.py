@@ -27,7 +27,9 @@ class TestOidSchemaIntegration:
     """
 
     def test_parse_schema_fixture(
-        self, api: FlextLdif, oid_schema_fixture: str
+        self,
+        api: FlextLdif,
+        oid_schema_fixture: str,
     ) -> None:
         """Test parsing complete OID schema fixture.
 

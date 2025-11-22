@@ -15,8 +15,7 @@ import pytest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.entry_manipulation import EntryManipulationServices
 from flext_ldif.services.validation import FlextLdifValidation
-
-from ...helpers.test_deduplication_helpers import DeduplicationHelpers
+from tests.helpers.test_assertions import TestAssertions
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -52,7 +51,7 @@ def simple_user_entry() -> FlextLdifModels.Entry:
 @pytest.fixture
 def locked_user_entry() -> FlextLdifModels.Entry:
     """Create a locked user entry."""
-    return DeduplicationHelpers.create_entry_from_dict(
+    return TestAssertions.create_entry(
         "cn=locked,ou=users,dc=example,dc=com",
         {
             "cn": ["locked"],
@@ -65,7 +64,7 @@ def locked_user_entry() -> FlextLdifModels.Entry:
 @pytest.fixture
 def disabled_user_entry() -> FlextLdifModels.Entry:
     """Create a disabled user entry."""
-    return DeduplicationHelpers.create_entry_from_dict(
+    return TestAssertions.create_entry(
         "cn=disabled,ou=users,dc=example,dc=com",
         {
             "cn": ["disabled"],
@@ -359,7 +358,7 @@ class TestUserStatus:
     ) -> None:
         """Test checking active status for active user."""
         is_active = entry_manipulation_service.check_user_active_status(
-            simple_user_entry
+            simple_user_entry,
         )
         assert is_active is True
 
@@ -368,7 +367,7 @@ class TestUserStatus:
         entry_manipulation_service: EntryManipulationServices,
     ) -> None:
         """Test checking active status for locked user."""
-        locked_entry = DeduplicationHelpers.create_entry_from_dict(
+        locked_entry = TestAssertions.create_entry(
             "cn=locked,ou=users,dc=example,dc=com",
             {
                 "cn": ["locked"],

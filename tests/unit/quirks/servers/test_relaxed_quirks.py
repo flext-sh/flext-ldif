@@ -15,11 +15,10 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 # Metadata keys for testing relaxed mode
 meta_keys = FlextLdifConstants.MetadataKeys
@@ -67,16 +66,12 @@ class TestRelaxedSchemas:
         """Test parsing malformed attribute with best-effort approach."""
         # Malformed attribute missing closing paren
         malformed = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
-
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse(malformed),
         )
+        assert parsed.metadata
         assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
-            == "relaxed"
+            parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER) == "relaxed"
         )
         assert parsed.oid == "2.5.4.3"
 
@@ -88,16 +83,12 @@ class TestRelaxedSchemas:
         # Non-standard OID format - should fail if OID cannot be extracted
         # But if it has a valid OID pattern, should work
         non_standard = "( 2.5.4.999 NAME 'attr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse_attribute(non_standard),
         )
+        assert parsed.metadata
         assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
-            == "relaxed"
+            parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER) == "relaxed"
         )
 
     def test_parse_attribute_returns_definition(
@@ -106,16 +97,11 @@ class TestRelaxedSchemas:
     ) -> None:
         """Test that parsed attribute includes original definition."""
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse_attribute(attr_def),
         )
-        assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get("original_format") == attr_def
-        )
+        assert parsed.metadata
+        assert parsed.metadata.extensions.get("original_format") == attr_def
 
     def test_parse_objectclass_malformed(
         self,
@@ -124,16 +110,12 @@ class TestRelaxedSchemas:
         """Test parsing malformed objectClass definition."""
         # Malformed objectClass
         malformed = "( 2.5.6.0 NAME 'top' ABSTRACT MUST objectClass"
-
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         parsed = RfcTestHelpers.test_result_success_and_unwrap(
             relaxed_schema.parse(malformed),
         )
+        assert parsed.metadata
         assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
-            == "relaxed"
+            parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER) == "relaxed"
         )
 
     def test_can_handle_any_objectclass_definition(
@@ -174,7 +156,8 @@ class TestRelaxedSchemas:
 
         result = relaxed_schema.write_attribute(attr_data)
         written = TestDeduplicationHelpers.assert_success_and_unwrap(result)
-        assert isinstance(written, str) and len(written) > 0
+        assert isinstance(written, str)
+        assert len(written) > 0
 
 
 class TestRelaxedAcls:
@@ -425,10 +408,8 @@ class TestRelaxedModeIntegration:
 
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
-        assert (
-            parsed.metadata
-            and meta_keys.SCHEMA_SOURCE_SERVER in parsed.metadata.extensions
-        )
+        assert parsed.metadata
+        assert meta_keys.SCHEMA_SOURCE_SERVER in parsed.metadata.extensions
 
     def test_relaxed_mode_logs_warnings_on_parse_failure(self) -> None:
         """Test that relaxed mode logs warnings on parse failures."""
@@ -516,10 +497,9 @@ class TestRelaxedQuirksParseAttribute:
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
         assert parsed.oid == "1.2.3.4"
+        assert parsed.metadata
         assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
-            == "relaxed"
+            parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER) == "relaxed"
         )
 
     def test_parse_attribute_malformed_oid(
@@ -587,7 +567,8 @@ class TestRelaxedQuirksParseAttribute:
         result = relaxed.parse("( 1.2.3.4 \x00\x01\x02 INVALID )")
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.metadata and (
+        assert parsed.metadata
+        assert (
             meta_keys.SCHEMA_SOURCE_SERVER in parsed.metadata.extensions
             or "original_format" in parsed.metadata.extensions
         )
@@ -601,10 +582,8 @@ class TestRelaxedQuirksParseAttribute:
         result = relaxed.parse(original)
         assert result.is_success
         parsed = result.unwrap()
-        assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get("original_format") == original
-        )
+        assert parsed.metadata
+        assert parsed.metadata.extensions.get("original_format") == original
 
 
 class TestRelaxedQuirksParseObjectclass:
@@ -626,10 +605,9 @@ class TestRelaxedQuirksParseObjectclass:
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
         assert parsed.oid == "1.2.3.4"
+        assert parsed.metadata
         assert (
-            parsed.metadata
-            and parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER)
-            == "relaxed"
+            parsed.metadata.extensions.get(meta_keys.SCHEMA_SOURCE_SERVER) == "relaxed"
         )
 
     def test_parse_objectclass_malformed_oid(
@@ -672,7 +650,8 @@ class TestRelaxedQuirksParseObjectclass:
         result = relaxed.parse("( 1.2.3.4 NAME 'test' INVALID )")
         assert result.is_success  # Succeeds with numeric OID
         parsed = result.unwrap()
-        assert parsed.metadata and (
+        assert parsed.metadata
+        assert (
             meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
             or parsed.metadata.extensions.get("original_format") is not None
         )
@@ -811,9 +790,11 @@ class TestRelaxedQuirksErrorRecovery:
         result = relaxed.parse("( 1.2.3.4 💣 🔥 \x00 INVALID )")
         assert result.is_success  # Should succeed if OID can be extracted
         parsed = result.unwrap()
-        assert parsed.metadata and (
-            parsed.metadata.extensions.get("original_format") is not None
-            or meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
+        assert parsed.metadata
+        assert parsed.metadata.extensions.get(
+            "original_format",
+        ) is not None or meta_keys.SCHEMA_SOURCE_SERVER in (
+            parsed.metadata.extensions or {}
         )
 
     def test_parse_objectclass_logs_failures_but_recovers(
@@ -829,9 +810,11 @@ class TestRelaxedQuirksErrorRecovery:
         )  # Relaxed mode may recover if OID found
         if result.is_success:
             parsed = result.unwrap()
-            assert parsed.metadata and (
-                parsed.metadata.extensions.get("original_format") is not None
-                or meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
+            assert parsed.metadata
+            assert parsed.metadata.extensions.get(
+                "original_format",
+            ) is not None or meta_keys.SCHEMA_SOURCE_SERVER in (
+                parsed.metadata.extensions or {}
             )
 
     def test_relaxed_mode_priority_very_low(

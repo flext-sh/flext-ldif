@@ -28,6 +28,7 @@ from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -126,7 +127,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         """Handles input routing and parsing - replaces _handle_input_routing and _parse_from_* methods."""
 
         def __init__(
-            self, registry: FlextLdifServer, parent_logger: FlextLogger
+            self,
+            registry: FlextLdifServer,
+            parent_logger: FlextLogger,
         ) -> None:
             """Initialize with registry and logger."""
             self.registry = registry
@@ -313,7 +316,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                         # Type narrowing: entry.metadata is domain model, cast to public
                         FlextLdifUtilities.Metadata.preserve_original_ldif_content(
                             metadata=cast(
-                                "FlextLdifModels.QuirkMetadata", entry.metadata
+                                "FlextLdifModels.QuirkMetadata",
+                                entry.metadata,
                             ),
                             ldif_content=original_ldif_content,
                             context="entry_original_ldif",
@@ -573,7 +577,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 # Type narrowing: normalized_entry.metadata is domain model, cast to public
                 FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
                     metadata=cast(
-                        "FlextLdifModels.QuirkMetadata", normalized_entry.metadata
+                        "FlextLdifModels.QuirkMetadata",
+                        normalized_entry.metadata,
                     ),
                     original=dn_before,
                     converted=dn_after,
@@ -666,14 +671,16 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                         # Type narrowing: filtered_entry.metadata is domain model, cast to public
                         FlextLdifUtilities.Metadata.soft_delete_attribute(
                             metadata=cast(
-                                "FlextLdifModels.QuirkMetadata", filtered_entry.metadata
+                                "FlextLdifModels.QuirkMetadata",
+                                filtered_entry.metadata,
                             ),
                             attr_name=removed_attr,
                             original_values=original_values,
                         )
                         FlextLdifUtilities.Metadata.track_transformation(
                             metadata=cast(
-                                "FlextLdifModels.QuirkMetadata", filtered_entry.metadata
+                                "FlextLdifModels.QuirkMetadata",
+                                filtered_entry.metadata,
                             ),
                             original_name=removed_attr,
                             target_name=None,
@@ -698,7 +705,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                     is_complete, missing = (
                         FlextLdifUtilities.Metadata.validate_metadata_completeness(
                             metadata=cast(
-                                "FlextLdifModels.QuirkMetadata", filtered_entry.metadata
+                                "FlextLdifModels.QuirkMetadata",
+                                filtered_entry.metadata,
                             ),
                             expected_transformations=expected_transformations,
                         )
@@ -970,7 +978,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         """Handles schema extraction - replaces _parse_attribute_types_from_entry, _parse_objectclasses_from_entry, _parse_schema_entry."""
 
         def __init__(
-            self, registry: FlextLdifServer, parent_logger: FlextLogger
+            self,
+            registry: FlextLdifServer,
+            parent_logger: FlextLogger,
         ) -> None:
             """Initialize with registry and logger."""
             self.registry = registry
@@ -1126,7 +1136,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         """Handles ACL extraction - replaces _extract_acls method."""
 
         def __init__(
-            self, acl_service: FlextLdifAcl, parent_logger: FlextLogger
+            self,
+            acl_service: FlextLdifAcl,
+            parent_logger: FlextLogger,
         ) -> None:
             """Initialize with ACL service and logger."""
             self.acl_service = acl_service
@@ -1186,9 +1198,13 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             """Finalize statistics with failure info and optional event emission."""
             # Update statistics with failures
             if failed_count > 0:
-                stats = stats.model_copy(
-                    update={"parse_errors": stats.parse_errors + failed_count},
+                # Cast to internal Statistics type for attribute access
+                ldif_stats = cast("FlextLdifModelsResults.Statistics", stats)
+                stats_updated = ldif_stats.model_copy(
+                    update={"parse_errors": ldif_stats.parse_errors + failed_count},
                 )
+                # Cast back to public type
+                stats = cast("FlextLdifModels.Statistics", stats_updated)
                 self.logger.error(
                     "Parse completed with failures",
                     failed_count=failed_count,
@@ -1231,7 +1247,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                     )
 
                 # add_event returns Statistics - convert to Models.Statistics
-                stats_result = stats.add_event(parse_event)
+                # Cast stats to internal type for method access
+                ldif_stats = cast("FlextLdifModelsResults.Statistics", stats)
+                stats_result = ldif_stats.add_event(parse_event)
                 # Type narrowing: add_event returns Results.Statistics, but we need Models.Statistics
                 # Since Models.Statistics extends Results.Statistics, we can safely use it
                 if isinstance(stats_result, FlextLdifModels.Statistics):
@@ -1239,13 +1257,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 else:
                     # Convert Results.Statistics to Models.Statistics if needed
                     # This should not happen in practice, but handle defensively
-                    stats = FlextLdifModels.Statistics(
-                        total_entries=stats_result.total_entries,
-                        processed_entries=stats_result.processed_entries,
-                        parse_errors=stats_result.parse_errors,
-                        detected_server_type=stats_result.detected_server_type,
-                        events=stats_result.events,
-                    )
+                    stats = cast("FlextLdifModels.Statistics", stats_result)
 
             return stats
 
@@ -1376,13 +1388,15 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 effective_type=effective_type,
             )
 
-            # Type narrowing: content parameter cast to expected union type
+            # Type narrowing: content parameter already has correct type
+            # Cast to expected type for type checker
+            content_typed = cast(
+                "str | Path | list[tuple[str, dict[str, list[str]]]]",
+                content,
+            )
             entries_result = router.route_and_parse(
                 input_source,
-                cast(
-                    "str | Path | list[tuple[str, dict[str, list[str]]]]",
-                    content,
-                ),
+                content_typed,
                 effective_type,
                 encoding,
             )
@@ -1433,6 +1447,10 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             parse_duration_ms = (time.perf_counter() - start_time) * 1000.0
 
             # Type narrowing: content parameter cast to expected union type
+            content_typed_final = cast(
+                "str | Path | list[tuple[str, dict[str, list[str]]]]",
+                content,
+            )
             stats = stats_builder.finalize(
                 stats,
                 failed_count,
@@ -1440,10 +1458,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 processed_entries,
                 parse_duration_ms,
                 input_source,
-                cast(
-                    "str | Path | list[tuple[str, dict[str, list[str]]]]",
-                    content,
-                ),
+                content_typed_final,
                 effective_type,
             )
 
@@ -1466,12 +1481,14 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 (len(processed_entries) / len(entries)) * 100 if entries else 100
             )
 
+            # Cast stats to internal type for attribute access
+            ldif_stats = cast("FlextLdifModelsResults.Statistics", stats)
             self.logger.info(
                 "Parsing completed",
                 input_source=input_source,
                 server_type=effective_type,
                 total_entries=len(processed_entries),
-                parse_errors=stats.parse_errors,
+                parse_errors=ldif_stats.parse_errors,
                 duration_ms=parse_duration_ms,
             )
 

@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.api import FlextLdif
+from flext_ldif import FlextLdif
 
-from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
+from .test_utils import FlextLdifTestUtils
 
 
 @pytest.fixture(scope="module")

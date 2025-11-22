@@ -13,12 +13,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+import traceback
 
 from flext_core import FlextLogger
+
+from flext_ldif import FlextLdif, FlextLdifConfig
+from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from flext_ldif.services.detector import FlextLdifDetector
 
 logger = FlextLogger(__name__)
 
@@ -38,8 +39,6 @@ def verify_imports() -> bool:
         return True
     except (ValueError, TypeError, AttributeError) as e:
         logger.info("❌ Import failed: %s", e)
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -48,8 +47,6 @@ def verify_detector() -> bool:
     """Verify FlextLdifDetector functionality."""
     logger.info("\n=== VERIFYING SERVER DETECTOR ===")
     try:
-        from flext_ldif.services.detector import FlextLdifDetector
-
         detector = FlextLdifDetector()
         logger.info("✅ FlextLdifDetector instantiated")
 
@@ -63,19 +60,19 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
             detection = result.unwrap()
             if detection["detected_server_type"] == "oid":
                 logger.info(
-                    f"✅ OID detection works (confidence: {detection['confidence']:.2f})",
+                    "✅ OID detection works (confidence: %.2f)",
+                    detection["confidence"],
                 )
                 return True
             logger.info(
-                f"⚠️  Detected as {detection['detected_server_type']} instead of oid",
+                "⚠️  Detected as %s instead of oid",
+                detection["detected_server_type"],
             )
             return True  # Still OK if detection logic is working
-        logger.info(f"❌ Detection failed: {result.error}")
+        logger.info("❌ Detection failed: %s", result.error)
         return False
     except (ValueError, TypeError, AttributeError) as e:
         logger.info("❌ Server detector verification failed: %s", e)
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -84,8 +81,6 @@ def verify_relaxed() -> bool:
     """Verify Relaxed quirks functionality."""
     logger.info("\n=== VERIFYING RELAXED QUIRKS ===")
     try:
-        from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-
         # Test Schema quirk
         schema = FlextLdifServersRelaxed.Schema()
         result = schema.parse("( broken-oid NAME 'test'")
@@ -123,8 +118,6 @@ def verify_relaxed() -> bool:
         return True
     except (ValueError, TypeError, AttributeError) as e:
         logger.info("❌ Relaxed quirks verification failed: %s", e)
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -133,8 +126,6 @@ def verify_config_modes() -> bool:
     """Verify configuration detection modes."""
     logger.info("\n=== VERIFYING CONFIG MODES ===")
     try:
-        from flext_ldif.config import FlextLdifConfig
-
         # Test auto mode
         config_auto = FlextLdifConfig(quirks_detection_mode="auto")
         if config_auto.quirks_detection_mode == "auto":
@@ -176,8 +167,6 @@ def verify_config_modes() -> bool:
         return True
     except (ValueError, TypeError, AttributeError) as e:
         logger.info("❌ Config modes verification failed: %s", e)
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -186,8 +175,6 @@ def verify_api_integration() -> bool:
     """Verify API integration with new features."""
     logger.info("\n=== VERIFYING API INTEGRATION ===")
     try:
-        from flext_ldif.api import FlextLdif
-
         ldif = FlextLdif()
         logger.info("✅ FlextLdif API instantiated")
 
@@ -219,8 +206,6 @@ def verify_api_integration() -> bool:
         return True
     except (ValueError, TypeError, AttributeError) as e:
         logger.info("❌ API integration verification failed: %s", e)
-        import traceback
-
         traceback.print_exc()
         return False
 

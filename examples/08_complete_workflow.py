@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
 
 
 def railway_oriented_composition() -> None:
@@ -65,13 +66,9 @@ mail: railway@example.com
 
     # Handle final result
     if result.is_success:
-        ldif_output, stats = result.unwrap()
+        _ldif_output, stats = result.unwrap()
         # stats is EntryAnalysisResult model, access attributes directly
-        total_entries = getattr(stats, "total_entries", 0)
-        print(f"✓ Processed {total_entries} entries")
-        print(f"✓ LDIF output: {len(ldif_output)} characters")
-    else:
-        print(f"✗ Processing failed: {result.error}")
+        getattr(stats, "total_entries", 0)
 
 
 def configuration_from_env_example() -> None:
@@ -88,16 +85,10 @@ def configuration_from_env_example() -> None:
     api = FlextLdif.get_instance()
 
     # Configuration loaded automatically from .env
-    print(f"Encoding (from .env): {api.config.ldif_encoding}")
-    print(f"Max Workers (from .env): {api.config.max_workers}")
-    print(f"Strict Validation (from .env): {api.config.ldif_strict_validation}")
-    print(f"Debug Mode (from .env): {api.config.debug}")
 
     # Configuration affects behavior automatically
-    entries_count = 1000
     # Use max_workers from config (no get_effective_workers method)
-    max_workers = getattr(api.config, "max_workers", 4)
-    print(f"Max workers configured: {max_workers} for {entries_count} entries")
+    getattr(api.config, "max_workers", 4)
 
 
 def complete_ldif_processing_workflow() -> None:
@@ -352,8 +343,8 @@ sn: Test
             # Cast to expected type since models are compatible at runtime
             acls_list = acl_response.acls if hasattr(acl_response, "acls") else []
             # Type cast needed because domain and public Acl models are structurally compatible
-            # Use api.models.Acl for type hint since we have access to api object
-            public_acls = cast("list[api.models.Acl]", acls_list)
+            # Use FlextLdifModels.Acl for type hint
+            public_acls = cast("list[FlextLdifModels.Acl]", acls_list)
 
             if public_acls:
                 # Evaluate ACL rules using direct API method
@@ -368,7 +359,7 @@ def batch_processing_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Create large dataset
-    entries = []
+    entries: list[FlextLdifModels.Entry] = []
     for i in range(20):
         result = api.models.Entry.create(
             dn=f"cn=BatchUser{i},ou=People,dc=example,dc=com",
@@ -379,7 +370,7 @@ def batch_processing_workflow() -> None:
             },
         )
         if result.is_success:
-            entries.append(result.unwrap())
+            entries.append(cast("FlextLdifModels.Entry", result.unwrap()))
 
     # Validate all entries
     validation_result = api.validate_entries(entries)

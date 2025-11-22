@@ -9,10 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.base import FlextLdifServersBase
+from typing import Any, cast
 
-from ...helpers.test_assertions import TestAssertions
+from flext_core import FlextResult
+
+from flext_ldif import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
+
+from .test_assertions import TestAssertions
+
+# Type alias for Entry quirk protocol
+EntryQuirk = FlextLdifProtocols.Quirks.EntryProtocol
 
 
 class EntryTestHelpers:
@@ -20,7 +27,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def test_write_entry_complete(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         expected_dn_in_output: bool = True,
@@ -62,7 +69,7 @@ class EntryTestHelpers:
 
         """
         result = entry_quirk.write(entry)
-        ldif = TestAssertions.assert_write_success(result)
+        ldif = TestAssertions.assert_write_success(cast("FlextResult[str]", result))
 
         if expected_dn_in_output:
             assert entry.dn.value in ldif, (
@@ -101,7 +108,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def test_write_entry_modify_add_format_complete(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         expected_attributes_in_output: list[str] | None = None,
@@ -137,9 +144,13 @@ class EntryTestHelpers:
             )
 
         """
-        result = entry_quirk._write_entry_modify_add_format(entry)
+        result = cast(
+            "FlextResult[str]",
+            cast("Any", entry_quirk)._write_entry_modify_add_format(entry),
+        )
         ldif = TestAssertions.assert_success(
-            result, "Modify-add format write should succeed"
+            result,
+            "Modify-add format write should succeed",
         )
         assert isinstance(ldif, str), "Write should return string"
 
@@ -162,7 +173,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def test_write_entry_modify_format_complete(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         expected_operations: list[str] | None = None,  # ["add", "delete", "replace"]
         must_contain: list[str] | None = None,
@@ -197,9 +208,13 @@ class EntryTestHelpers:
             )
 
         """
-        result = entry_quirk._write_entry_modify_format(entry)
+        result = cast(
+            "FlextResult[str]",
+            cast("Any", entry_quirk)._write_entry_modify_format(entry),
+        )
         ldif = TestAssertions.assert_success(
-            result, "Modify format write should succeed"
+            result,
+            "Modify format write should succeed",
         )
         assert isinstance(ldif, str), "Write should return string"
 
@@ -229,7 +244,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def test_parse_entry_complete(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: EntryQuirk,
         ldif_content: str,
         *,
         expected_entry_count: int = 1,
@@ -272,7 +287,13 @@ class EntryTestHelpers:
         result = entry_quirk.parse(ldif_content)
 
         if should_succeed:
-            entries = TestAssertions.assert_parse_success(result, expected_entry_count)
+            entries = TestAssertions.assert_parse_success(
+                cast(
+                    "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry] | str]",
+                    result,
+                ),
+                expected_entry_count,
+            )
 
             if expected_dn:
                 assert entries[0].dn.value.lower() == expected_dn.lower(), (
@@ -286,12 +307,15 @@ class EntryTestHelpers:
                     )
 
             return entries
-        TestAssertions.assert_failure(result, expected_error)
+        TestAssertions.assert_failure(
+            result,
+            expected_error,
+        )
         return None
 
     @staticmethod
     def test_hook_pre_write_entry_complete(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         should_succeed: bool = True,
@@ -326,7 +350,10 @@ class EntryTestHelpers:
             )
 
         """
-        result = entry_quirk._hook_pre_write_entry(entry)
+        result = cast(
+            "FlextResult[FlextLdifModels.Entry]",
+            cast("Any", entry_quirk)._hook_pre_write_entry(entry),
+        )
 
         if should_succeed:
             result_entry = TestAssertions.assert_success(result, "Hook should succeed")
@@ -341,7 +368,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def test_write_entry_with_format_options_complete(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: EntryQuirk,
         entry: FlextLdifModels.Entry,
         write_options: FlextLdifModels.WriteFormatOptions | None = None,
         expected_content: list[str] | None = None,
@@ -385,8 +412,6 @@ class EntryTestHelpers:
         # Add write_options to entry metadata if provided
         if write_options:
             if not entry.metadata:
-                from flext_ldif.models import FlextLdifModels
-
                 entry.metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="test",
                     extensions={},
@@ -396,7 +421,7 @@ class EntryTestHelpers:
             entry.metadata.extensions["write_options"] = write_options
 
         result = entry_quirk.write(entry)
-        ldif = TestAssertions.assert_write_success(result)
+        ldif = TestAssertions.assert_write_success(cast("FlextResult[str]", result))
 
         if expected_content:
             for content in expected_content:

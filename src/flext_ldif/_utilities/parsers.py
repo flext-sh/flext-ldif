@@ -59,28 +59,36 @@ class FlextLdifUtilitiesParsers:
             """Protocol for entry parsing hooks."""
 
             def __call__(
-                self, dn: str, attrs: EntryAttrs
+                self,
+                dn: str,
+                attrs: EntryAttrs,
             ) -> FlextResult[FlextLdifModels.Entry]: ...
 
         class PreserveMetadataHook(Protocol):
             """Protocol for metadata preservation hooks."""
 
             def __call__(
-                self, entry: FlextLdifModels.Entry, original_ldif: str, context: str
+                self,
+                entry: FlextLdifModels.Entry,
+                original_ldif: str,
+                context: str,
             ) -> None: ...
 
         class TransformAttrsHook(Protocol):
             """Protocol for attribute transformation hooks."""
 
             def __call__(
-                self, dn: str, attrs: EntryAttrs
+                self,
+                dn: str,
+                attrs: EntryAttrs,
             ) -> tuple[str, EntryAttrs]: ...
 
         class PostParseHook(Protocol):
             """Protocol for post-parse entry hooks."""
 
             def __call__(
-                self, entry: FlextLdifModels.Entry
+                self,
+                entry: FlextLdifModels.Entry,
             ) -> FlextLdifModels.Entry: ...
 
         # ===== NESTED STATISTICS DATACLASS =====
@@ -149,7 +157,7 @@ class FlextLdifUtilitiesParsers:
 
                 # Initialize stats tracker
                 stats = FlextLdifUtilitiesParsers.Content.Stats(
-                    total_entries=len(parsed_entries)
+                    total_entries=len(parsed_entries),
                 )
 
                 # Process entries using generator
@@ -162,13 +170,14 @@ class FlextLdifUtilitiesParsers:
                         preserve_metadata_hook,
                         skip_empty_entries=skip_empty_entries,
                         stats=stats,
-                    )
+                    ),
                 )
 
                 # Log final stats
                 if log_level == "debug":
                     logger.debug(
-                        f"Parsed {server_type.upper()} LDIF content",
+                        "Parsed %s LDIF content",
+                        server_type.upper(),
                         total=stats.total_entries,
                         successful=stats.successful,
                         failed=stats.failed,
@@ -179,10 +188,11 @@ class FlextLdifUtilitiesParsers:
 
             except Exception as e:
                 logger.exception(
-                    "Failed to parse LDIF content", server_type=server_type
+                    "Failed to parse LDIF content",
+                    server_type=server_type,
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to parse {server_type} LDIF: {e}"
+                    f"Failed to parse {server_type} LDIF: {e}",
                 )
 
         @staticmethod
@@ -220,7 +230,8 @@ class FlextLdifUtilitiesParsers:
                 # Apply transform hook if provided
                 if transform_attrs_hook:
                     transformed_dn, transformed_attrs = transform_attrs_hook(
-                        original_dn, original_attrs
+                        original_dn,
+                        original_attrs,
                     )
                     current_dn = transformed_dn
                     current_attrs = transformed_attrs
@@ -236,7 +247,7 @@ class FlextLdifUtilitiesParsers:
                             f"{attr}: {val}"
                             for attr, vals in current_attrs.items()
                             for val in vals
-                        ]
+                        ],
                     )
                     + "\n"
                 )
@@ -253,14 +264,17 @@ class FlextLdifUtilitiesParsers:
                         # Preserve metadata
                         if entry.metadata and preserve_metadata_hook:
                             preserve_metadata_hook(
-                                entry, original_ldif, "entry_original_ldif"
+                                entry,
+                                original_ldif,
+                                "entry_original_ldif",
                             )
                             stats.with_metadata += 1
                         elif entry.metadata:
                             # Type cast: FlextLdifModelsDomains.QuirkMetadata → FlextLdifModels.QuirkMetadata
                             FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
                                 metadata=cast(
-                                    "FlextLdifModels.QuirkMetadata", entry.metadata
+                                    "FlextLdifModels.QuirkMetadata",
+                                    entry.metadata,
                                 ),
                                 ldif_content=original_ldif,
                                 context="entry_original_ldif",
@@ -292,7 +306,8 @@ class FlextLdifUtilitiesParsers:
             """Protocol for core attribute parsing."""
 
             def __call__(
-                self, definition: str
+                self,
+                definition: str,
             ) -> FlextResult[FlextLdifModels.SchemaAttribute]: ...
 
         class ValidateSyntaxHook(Protocol):
@@ -304,7 +319,9 @@ class FlextLdifUtilitiesParsers:
             """Protocol for metadata enrichment."""
 
             def __call__(
-                self, attribute: FlextLdifModels.SchemaAttribute, definition: str
+                self,
+                attribute: FlextLdifModels.SchemaAttribute,
+                definition: str,
             ) -> FlextLdifModels.SchemaAttribute: ...
 
         # ===== STATIC METHODS =====
@@ -352,7 +369,7 @@ class FlextLdifUtilitiesParsers:
             except Exception as e:
                 logger.exception("Failed to parse attribute", server_type=server_type)
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    f"Failed to parse attribute: {e}"
+                    f"Failed to parse attribute: {e}",
                 )
 
     # =========================================================================
@@ -368,7 +385,8 @@ class FlextLdifUtilitiesParsers:
             """Protocol for core objectClass parsing."""
 
             def __call__(
-                self, definition: str
+                self,
+                definition: str,
             ) -> FlextResult[FlextLdifModels.SchemaObjectClass]: ...
 
         class ValidateStructuralHook(Protocol):
@@ -385,7 +403,9 @@ class FlextLdifUtilitiesParsers:
             """Protocol for metadata enrichment."""
 
             def __call__(
-                self, objectclass: FlextLdifModels.SchemaObjectClass, definition: str
+                self,
+                objectclass: FlextLdifModels.SchemaObjectClass,
+                definition: str,
             ) -> FlextLdifModels.SchemaObjectClass: ...
 
         # ===== STATIC METHODS =====
@@ -460,7 +480,7 @@ class FlextLdifUtilitiesParsers:
             except Exception as e:
                 logger.exception("Failed to parse objectClass", server_type=server_type)
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    f"Failed to parse objectClass: {e}"
+                    f"Failed to parse objectClass: {e}",
                 )
 
     # =========================================================================
@@ -476,14 +496,18 @@ class FlextLdifUtilitiesParsers:
             """Protocol for entry creation."""
 
             def __call__(
-                self, dn: str, attrs: EntryAttrs
+                self,
+                dn: str,
+                attrs: EntryAttrs,
             ) -> FlextResult[FlextLdifModels.Entry]: ...
 
         class BuildMetadataHook(Protocol):
             """Protocol for metadata building."""
 
             def __call__(
-                self, dn: str, attrs: EntryAttrs
+                self,
+                dn: str,
+                attrs: EntryAttrs,
             ) -> FlextLdifModels.QuirkMetadata | None: ...
 
         class NormalizeDnHook(Protocol):
@@ -555,5 +579,5 @@ class FlextLdifUtilitiesParsers:
                     dn=dn[:50] if dn else None,
                 )
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Failed to parse entry: {e}"
+                    f"Failed to parse entry: {e}",
                 )

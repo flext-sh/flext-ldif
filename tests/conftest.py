@@ -7,20 +7,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import copy
 import tempfile
+import time
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
-from flext_core import FlextConstants, FlextResult
+from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
 from flext_tests.docker import FlextTestDocker
+from ldap3 import ALL, Connection, Server
 
-from flext_ldif.api import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
 from .fixtures import FlextLdifFixtures
 from .support import (
@@ -29,9 +29,6 @@ from .support import (
     RealServiceFactory,
     TestValidators,
 )
-
-if TYPE_CHECKING:
-    from ldap3 import Connection
 
 # =============================================================================
 # TEST DATA CONSTANTS (Pre-built for performance)
@@ -45,7 +42,7 @@ _TEST_USERS: list[dict[str, str]] = [
 ]
 
 # Pre-built LDIF test entries (computed once at module load)
-_LDIF_TEST_ENTRIES: list[dict[str, object]] = [
+_LDIF_TEST_ENTRIES: list[dict[str, dict[str, list[str]] | str]] = [
     {
         "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
         "attributes": {
@@ -75,7 +72,7 @@ _LDIF_TEST_ENTRIES: list[dict[str, object]] = [
                 for i, user in enumerate(_TEST_USERS)
             ],
         },
-    }
+    },
 ]
 
 # =============================================================================
@@ -108,7 +105,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
 @pytest.fixture(scope="session")
 def session_id() -> str:
-    """Unique session ID for this test run.
+    """Generate a unique session ID for this test run.
 
     Returns:
         str: Timestamp in milliseconds as string
@@ -116,8 +113,6 @@ def session_id() -> str:
     Used for DN namespacing to ensure test isolation.
 
     """
-    import time
-
     return str(int(time.time() * 1000))
 
 
@@ -146,8 +141,6 @@ def unique_dn_suffix(
         >>> dn = f"uid=testuser-{suffix},ou=people,dc=flext,dc=local"
 
     """
-    import time
-
     # Get test function name for additional isolation
     test_name = request.node.name if hasattr(request, "node") else "unknown"
     # Sanitize test name (remove special chars that could break DN)
@@ -167,7 +160,7 @@ def make_user_dn(
     unique_dn_suffix: str,
     ldap_container: dict[str, object],
 ) -> Callable[[str], str]:
-    """Factory to create unique user DNs with base DN isolation.
+    """Create a factory for unique user DNs with base DN isolation.
 
     Uses the base_dn from ldap_container to ensure complete isolation.
     This allows multiple tests to run in parallel without conflicts.
@@ -206,7 +199,7 @@ def make_group_dn(
     unique_dn_suffix: str,
     ldap_container: dict[str, object],
 ) -> Callable[[str], str]:
-    """Factory to create unique group DNs with base DN isolation.
+    """Create a factory for unique group DNs with base DN isolation.
 
     Uses the base_dn from ldap_container to ensure complete isolation.
     This allows multiple tests to run in parallel without conflicts.
@@ -247,7 +240,7 @@ def make_test_base_dn(
     unique_dn_suffix: str,
     ldap_container: dict[str, object],
 ) -> Callable[[str], str]:
-    """Factory to create unique base DNs for test isolation.
+    """Create a factory for unique base DNs for test isolation.
 
     Uses the base_dn from ldap_container to ensure complete isolation.
     This allows multiple tests to run in parallel without conflicts.
@@ -341,8 +334,6 @@ def set_test_environment() -> Generator[None]:
     # Use FlextConfig for environment variable management instead of os.environ
     yield
     # Cleanup - reset config instances instead of manipulating os.environ
-    from flext_core import FlextConfig
-
     # Reset global config instance to clear any test-specific state
     FlextConfig.reset_global_instance()
 
@@ -410,8 +401,6 @@ def ldap_container(
         dict with connection parameters including base_dn
 
     """
-    from flext_core import FlextLogger
-
     logger = FlextLogger(__name__)
 
     # Use the actual container name from SHARED_CONTAINERS
@@ -421,7 +410,8 @@ def ldap_container(
     if not container_config:
         pytest.skip(f"Container {container_name} not found in SHARED_CONTAINERS")
 
-    # Get compose file path
+    # Get compose file path - type narrowing after None check above
+    assert container_config is not None  # Type narrowing for pyrefly
     compose_file = str(container_config["compose_file"])
     if not compose_file.startswith("/"):
         # Relative path, make it absolute from workspace root
@@ -434,7 +424,8 @@ def ldap_container(
     if is_dirty:
         # Container está dirty - recriar completamente (down -v + up)
         logger.info(
-            f"Container {container_name} is dirty, recreating with fresh volumes",
+            "Container %s is dirty, recreating with fresh volumes",
+            container_name,
         )
         cleanup_result = docker_control.cleanup_dirty_containers()
         if cleanup_result.is_failure:
@@ -450,35 +441,37 @@ def ldap_container(
         ):
             # Container não está rodando mas não está dirty - apenas iniciar (sem recriar)
             logger.info(
-                f"Container {container_name} is not running (but not dirty), starting...",
+                "Container %s is not running (but not dirty), starting...",
+                container_name,
             )
             start_result = docker_control.start_compose_stack(compose_file)
             if start_result.is_failure:
                 pytest.skip(f"Failed to start LDAP container: {start_result.error}")
 
     # AGUARDAR container estar pronto antes de permitir testes
-    import time
-
-    max_wait = 30  # segundos
+    max_wait = 30.0  # segundos (float for consistency with wait_interval)
     wait_interval = 0.5  # segundos
-    waited = 0
+    waited = 0.0  # Track elapsed time as float
 
     while waited < max_wait:
         # Verificar se container está realmente pronto tentando uma conexão simples
         try:
-            from ldap3 import Connection, Server
-
-            server = Server("ldap://localhost:3390", get_info="NONE")
+            # Use ALL for get_info - imported from ldap3
+            server = Server("ldap://localhost:3390", get_info=ALL)
             test_conn = Connection(
                 server,
                 user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                 password="REDACTED_LDAP_BIND_PASSWORD",
                 auto_bind=False,
             )
-            # Tentar bind com timeout curto
-            if test_conn.bind(timeout=2):
+            # Tentar bind (timeout não é suportado por ldap3.Connection.bind())
+            if test_conn.bind():
                 test_conn.unbind()
-                logger.debug(f"Container {container_name} is ready after {waited:.1f}s")
+                logger.debug(
+                    "Container %s is ready after %.1fs",
+                    container_name,
+                    waited,
+                )
                 break
             test_conn.unbind()
         except Exception:
@@ -507,8 +500,9 @@ def ldap_container(
     }
 
     logger.info(
-        f"LDAP container configured for worker {worker_id}: "
-        f"{container_name} on port 3390",
+        "LDAP container configured for worker %s: %s on port 3390",
+        worker_id,
+        container_name,
     )
 
     return container_info
@@ -551,11 +545,11 @@ def ldap_connection(ldap_container: dict[str, object]) -> Generator[Connection]:
         Connection: ldap3 connection to LDAP server
 
     """
-    from ldap3 import ALL, Connection, Server
-
     # Extract connection parameters from container config
+    # Type narrowing for object values from dict[str, object]
     host = str(ldap_container["host"])
-    port = int(ldap_container["port"])
+    port_raw = ldap_container["port"]
+    port = int(port_raw) if isinstance(port_raw, int) else int(str(port_raw))
     bind_dn = str(ldap_container["bind_dn"])
     password = str(ldap_container["password"])
 
@@ -1045,13 +1039,11 @@ def flext_matchers() -> LocalTestMatchers:
 
 # LDIF-specific test data using FlextTests patterns
 @pytest.fixture
-def ldif_test_entries() -> list[dict[str, object]]:
+def ldif_test_entries() -> list[dict[str, dict[str, list[str]] | str]]:
     """Generate LDIF test entries using FlextTests domain patterns.
 
     Returns a copy of pre-built entries for performance.
     """
-    import copy
-
     return copy.deepcopy(_LDIF_TEST_ENTRIES)
 
 
@@ -1135,7 +1127,8 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
+    config: pytest.Config,
+    items: list[pytest.Item],
 ) -> None:
     """Filter out static methods that start with 'test_' in classes with __test__ = False.
 

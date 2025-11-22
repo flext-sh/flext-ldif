@@ -22,7 +22,7 @@ from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus]
+    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus],
 ):
     """Statistics service for LDIF processing pipeline.
 

@@ -13,8 +13,9 @@ Original: 235 lines | Optimized: ~120 lines (49% reduction)
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def build_entries_pipeline() -> None:
@@ -33,7 +34,6 @@ def build_entries_pipeline() -> None:
         },
     )
     if not person_result.is_success:
-        print(f"Failed to build person: {person_result.error}")
         return
 
     # Build group - library handles member validation
@@ -50,7 +50,6 @@ def build_entries_pipeline() -> None:
         },
     )
     if not group_result.is_success:
-        print(f"Failed to build group: {group_result.error}")
         return
 
     # Build OU - library handles structure validation
@@ -63,32 +62,24 @@ def build_entries_pipeline() -> None:
         },
     )
     if not ou_result.is_success:
-        print(f"Failed to build OU: {ou_result.error}")
         return
 
     # Chain operations - auto error propagation
     results = [person_result, group_result, ou_result]
-    successful = [r.unwrap() for r in results if r.is_success]
-    print(f"Built {len(successful)}/{len(results)} entries")
+    [r.unwrap() for r in results if r.is_success]
 
 
 def build_custom_entry_example() -> None:
     """Build custom entry - library validates structure."""
     api = FlextLdif.get_instance()
 
-    result = api.create_entry(
+    api.create_entry(
         dn="cn=schema,cn=config",
         attributes={
             "objectClass": ["top", "ldapSubentry", "subschema"],
             "cn": ["schema"],
             "description": ["Custom schema entry"],
         },
-    )
-
-    print(
-        f"Custom entry: {result.unwrap().dn}"
-        if result.is_success
-        else f"Error: {result.error}",
     )
 
 
@@ -119,12 +110,7 @@ sn: Williams
         entries = parse_result.unwrap()
         person_result = api.filter(entries, objectclass="person")
         if person_result.is_success:
-            filtered_entries = person_result.unwrap()
-            print(f"Found {len(filtered_entries)} person entries (direct filter)")
-        else:
-            print("Filter failed")
-    else:
-        print("Parse failed")
+            person_result.unwrap()
 
     # Alternative: filter entries by objectclass
     parse_result2 = api.parse(ldif_content)
@@ -132,12 +118,7 @@ sn: Williams
         entries2 = parse_result2.unwrap()
         all_persons_result = api.filter(entries2, objectclass="person")
         if all_persons_result.is_success:
-            all_persons = all_persons_result.unwrap()
-            print(f"Found {len(all_persons)} person entries (convenience)")
-        else:
-            print("Filter failed")
-    else:
-        print("Parse failed")
+            all_persons_result.unwrap()
 
 
 def entry_model_usage() -> None:
@@ -154,17 +135,14 @@ def entry_model_usage() -> None:
         },
     )
     if entry_result.is_failure:
-        print(f"Failed to create entry: {entry_result.error}")
         return
-    entry = entry_result.unwrap()
+    entry = cast("FlextLdifModels.Entry", entry_result.unwrap())
 
     # Railway pattern - use in write operation
-    ldif_output = api.write(entries=[entry])
-    print(
-        f"Wrote {len(ldif_output.unwrap())} bytes"
-        if ldif_output.is_success
-        else f"Error: {ldif_output.error}",
-    )
+    # Note: write() requires output_path=None for string output or Path for file output
+    write_result = api.write([entry], output_path=None)
+    if write_result.is_success:
+        _ldif_output = write_result.unwrap()
 
 
 def convert_formats_pipeline() -> None:
@@ -185,12 +163,7 @@ def convert_formats_pipeline() -> None:
         dict_result = api.get_entry_attributes(entry)
         if dict_result.is_success:
             entry_dict = dict_result.unwrap()
-            result = f"DN: {entry_dict.get('dn', 'unknown')}"
-            print(result)
-        else:
-            print("Dict conversion failed")
-    else:
-        print("Build failed")
+            f"DN: {entry_dict.get('dn', 'unknown')}"
 
     # Batch conversions - library eliminates manual loops!
     person_result = api.create_entry(
@@ -209,14 +182,12 @@ def convert_formats_pipeline() -> None:
         if write_result.is_success:
             parse_result = api.parse(Path("temp.json"))
             if parse_result.is_success:
-                entries_from_json = parse_result.unwrap()
-                print(f"Round-trip: {len(entries_from_json)} entries recovered")
+                parse_result.unwrap()
 
         # Batch: entries → dicts (NEW - eliminates manual loops!)
         attrs_result = api.get_entry_attributes(person)
         if attrs_result.is_success:
             entry_dict = attrs_result.unwrap()
-            print(f"Converted entry to dict with {len(entry_dict)} attributes")
 
         # Batch: dicts → entries (NEW - eliminates manual loops!)
         entry_result = api.create_entry(
@@ -228,23 +199,16 @@ def convert_formats_pipeline() -> None:
             },
         )
         if entry_result.is_success:
-            print("Converted dict to entry")
+            pass
 
 
 if __name__ == "__main__":
-    print("=== FlextLdif Entry Operations Examples ===\n")
-
-    print("1. Build Various Entry Types:")
     build_entries_pipeline()
 
-    print("\n2. Build Custom Entry:")
     build_custom_entry_example()
 
-    print("\n3. Filter Entries by ObjectClass:")
     filter_entries_example()
 
-    print("\n4. Entry Model Usage:")
     entry_model_usage()
 
-    print("\n5. Format Conversions:")
     convert_formats_pipeline()

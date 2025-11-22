@@ -337,53 +337,63 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         # ObjectClasses defining each category
         CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
-            "users": frozenset([
-                "person",
-                "inetOrgPerson",
-                "orclUser",  # OID-specific user
-                "orclUserV2",
-            ]),
-            "hierarchy": frozenset([
-                "organizationalUnit",
-                "organization",
-                "domain",
-                "country",
-                "locality",
-                "orclContainer",  # OID structural container
-                "orclContainerOC",  # OID container objectClass variant
-                "orclContext",  # OID context
-                "orclApplicationEntity",  # Application entity container
-                "orclConfigSet",  # Configuration set
-                "orclDASAttrCategory",  # DAS attribute category
-                "orclDASOperationURL",  # DAS operation URL
-                "orclDASConfigPublicGroup",  # DAS public group config
-            ]),
-            "groups": frozenset([
-                "groupOfNames",
-                "groupOfUniqueNames",
-                "orclGroup",  # OID group
-                "orclPrivilegeGroup",  # OID privilege (unless has orclContainer!)
-            ]),
+            "users": frozenset(
+                [
+                    "person",
+                    "inetOrgPerson",
+                    "orclUser",  # OID-specific user
+                    "orclUserV2",
+                ],
+            ),
+            "hierarchy": frozenset(
+                [
+                    "organizationalUnit",
+                    "organization",
+                    "domain",
+                    "country",
+                    "locality",
+                    "orclContainer",  # OID structural container
+                    "orclContainerOC",  # OID container objectClass variant
+                    "orclContext",  # OID context
+                    "orclApplicationEntity",  # Application entity container
+                    "orclConfigSet",  # Configuration set
+                    "orclDASAttrCategory",  # DAS attribute category
+                    "orclDASOperationURL",  # DAS operation URL
+                    "orclDASConfigPublicGroup",  # DAS public group config
+                ],
+            ),
+            "groups": frozenset(
+                [
+                    "groupOfNames",
+                    "groupOfUniqueNames",
+                    "orclGroup",  # OID group
+                    "orclPrivilegeGroup",  # OID privilege (unless has orclContainer!)
+                ],
+            ),
         }
 
         # ObjectClasses that ALWAYS categorize as hierarchy
         # Even if entry also has group objectClasses
         # Solves cn=PERFIS: orclContainer + orclPrivilegeGroup → hierarchy
-        HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset([
-            "orclContainer",  # Always hierarchy
-            "organizationalUnit",
-            "organization",
-            "domain",
-        ])
+        HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "orclContainer",  # Always hierarchy
+                "organizationalUnit",
+                "organization",
+                "domain",
+            ],
+        )
 
         # ACL attributes (reuse existing constant)
         # NOTE: Includes BOTH pre-normalization (orclaci) AND post-normalization
         # (aci) names because _normalize_attribute_name() transforms orclaci→aci
-        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "aci",  # RFC standard (normalized from orclaci/orclentrylevelaci)
-            "orclaci",  # OID format (before normalization)
-            "orclentrylevelaci",  # OID entry-level format (before normalization)
-        ])
+        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "aci",  # RFC standard (normalized from orclaci/orclentrylevelaci)
+                "orclaci",  # OID format (before normalization)
+                "orclentrylevelaci",  # OID entry-level format (before normalization)
+            ],
+        )
 
         # =====================================================================
         # DN PATTERNS - OID-specific DN markers
@@ -750,17 +760,22 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         defined in Constants.DETECTION_OID_PATTERN.
         """
 
-        def __init__(self, **kwargs: object) -> None:
+        def __init__(
+            self,
+            schema_service: object | None = None,
+            **kwargs: object,
+        ) -> None:
             """Initialize OID schema quirk.
 
             server_type and priority are obtained from parent class Constants.
             They are not passed as parameters anymore.
 
             Args:
-                **kwargs: Passed to parent (ignored)
+                schema_service: Injected FlextLdifSchema service (optional)
+                **kwargs: Passed to parent
 
             """
-            super().__init__(**kwargs)
+            super().__init__(schema_service=schema_service, **kwargs)
 
         # Schema parsing and conversion methods
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Schema)
@@ -1013,7 +1028,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             attr_definition: str,
             *,
             _case_insensitive: bool = True,
-            allow_syntax_quotes: bool = True,
+            _allow_syntax_quotes: bool = True,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse Oracle OID attribute definition.
 
@@ -1025,7 +1040,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 attr_definition: AttributeType definition string
                                 (without "attributetypes:" prefix)
                 _case_insensitive: OID uses case-insensitive NAME (default True, unused)
-                allow_syntax_quotes: OID allows 'OID' format for SYNTAX (default True)
+                _allow_syntax_quotes: OID allows 'OID' format for SYNTAX (default True)
 
             Returns:
                 FlextResult with parsed OID attribute data with metadata
@@ -1036,7 +1051,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 result = super()._parse_attribute(
                     attr_definition,
                     _case_insensitive=_case_insensitive,
-                    allow_syntax_quotes=allow_syntax_quotes,
+                    _allow_syntax_quotes=_allow_syntax_quotes,
                 )
 
                 if not result.is_success:
@@ -1129,10 +1144,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             source_syntax = None
             if attr_copy.metadata and attr_copy.metadata.extensions:
                 source_rules = attr_copy.metadata.extensions.get(
-                    meta_keys.SCHEMA_SOURCE_MATCHING_RULES
+                    meta_keys.SCHEMA_SOURCE_MATCHING_RULES,
                 )
                 source_syntax = attr_copy.metadata.extensions.get(
-                    meta_keys.SCHEMA_SOURCE_SYNTAX_OID
+                    meta_keys.SCHEMA_SOURCE_SYNTAX_OID,
                 )
 
             # 1. Denormalizar matching rules: RFC → OID
@@ -1154,7 +1169,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 oid_ordering = attr_copy.ordering
                 if attr_copy.ordering:
                     mapped = FlextLdifServersOid.Constants.MATCHING_RULE_RFC_TO_OID.get(
-                        attr_copy.ordering
+                        attr_copy.ordering,
                     )
                     if mapped:
                         oid_ordering = mapped
@@ -1168,7 +1183,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 oid_syntax = attr_copy.syntax
                 if attr_copy.syntax:
                     mapped = FlextLdifServersOid.Constants.SYNTAX_RFC_TO_OID.get(
-                        str(attr_copy.syntax)
+                        str(attr_copy.syntax),
                     )
                     if mapped:
                         oid_syntax = mapped
@@ -1224,9 +1239,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             match oc_data.sup:
                 case sup_str if (
-                    isinstance(sup_str, str)
-                    and (sup_clean := sup_str.strip()) in sup_normalize_set
-                ):
+                    sup_clean := str(sup_str).strip()
+                ) in sup_normalize_set:
                     logger.debug(
                         "OID→RFC transform: SUP normalization",
                         objectclass_name=oc_data.name,
@@ -1236,9 +1250,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     )
                     return "top"
                 case [sup_item] if (
-                    isinstance(sup_item, str)
-                    and (sup_clean := str(sup_item).strip()) in sup_normalize_set
-                ):
+                    sup_clean := str(sup_item).strip()
+                ) in sup_normalize_set:
                     logger.debug(
                         "OID→RFC transform: SUP normalization (list)",
                         objectclass_name=oc_data.name,
@@ -1740,9 +1753,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 if acl_line.metadata and acl_line.metadata.quirk_type:
                     return acl_line.metadata.quirk_type == self._get_server_type()
                 return False
-            if not acl_line or not isinstance(acl_line, str):
+            if not acl_line:
                 return False
-            acl_line_lower = acl_line.strip().lower()
+            # Type narrowing: after checking for Acl, remaining is str
+            # acl_line is str at this point (str | Acl, and Acl was already checked)
+            acl_line_str: str = str(acl_line)
+            acl_line_lower = acl_line_str.strip().lower()
 
             # Check for LDIF attribute prefix (when parsing from LDIF file)
             if acl_line_lower.startswith(
@@ -2059,8 +2075,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             """
             # If raw_acl is available and already in OID format, use it
-            # Python 3.13: Type guard with walrus operator
-            if isinstance(acl_data.raw_acl, str) and acl_data.raw_acl.startswith(
+            if acl_data.raw_acl and acl_data.raw_acl.startswith(
                 FlextLdifServersOid.Constants.ORCLACI + ":",
             ):
                 return FlextResult[str].ok(acl_data.raw_acl)
@@ -2108,17 +2123,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     subject_value=subject_value,
                 )
 
-                acl_parts.extend([
-                    FlextLdifServersOid.Constants.ACL_BY,
-                    FlextLdifUtilities.ACL.format_oid_subject(
-                        oid_subject,
-                        FlextLdifServersOid.Constants.ACL_SUBJECT_FORMATTERS,
-                    ),
-                    FlextLdifUtilities.ACL.format_oid_permissions(
-                        acl_data.permissions,
-                        FlextLdifServersOid.Constants.ACL_PERMISSION_NAMES,
-                    ),
-                ])
+                acl_parts.extend(
+                    [
+                        FlextLdifServersOid.Constants.ACL_BY,
+                        FlextLdifUtilities.ACL.format_oid_subject(
+                            oid_subject,
+                            FlextLdifServersOid.Constants.ACL_SUBJECT_FORMATTERS,
+                        ),
+                        FlextLdifUtilities.ACL.format_oid_permissions(
+                            acl_data.permissions,
+                            FlextLdifServersOid.Constants.ACL_PERMISSION_NAMES,
+                        ),
+                    ],
+                )
 
             # Add filter if present in metadata (Python 3.13: walrus operator, standardized key from constants.py)
             if (
@@ -2218,7 +2235,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 return rfc_subject_type
             if rfc_subject_type in {"bind_rules", "group"}:
                 return self._map_bind_rules_to_oid(
-                    rfc_subject_value, source_subject_type
+                    rfc_subject_value,
+                    source_subject_type,
                 )
             return source_subject_type or "user_dn"
 
@@ -2298,7 +2316,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             self,
             entry_attributes: dict[str, list[str]],
         ) -> tuple[
-            dict[str, list[str]], set[str], dict[str, dict[str, list[str] | str]]
+            dict[str, list[str]],
+            set[str],
+            dict[str, dict[str, list[str] | str]],
         ]:
             """Convert OID boolean attribute values to RFC format.
 
@@ -2697,11 +2717,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     oid_dn = FlextLdifModels.DistinguishedName(value=original_dn)
                 else:
                     source_dn = entry_data.metadata.extensions.get(
-                        meta_keys.ENTRY_SOURCE_DN_CASE
+                        meta_keys.ENTRY_SOURCE_DN_CASE,
                     )
                     if source_dn:
                         oid_dn = FlextLdifModels.DistinguishedName(
-                            value=cast("str", source_dn)
+                            value=cast("str", source_dn),
                         )
 
             # Denormalize schema DN if needed
@@ -2711,7 +2731,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 == FlextLdifServersRfc.Constants.SCHEMA_DN.lower()
             ):
                 oid_dn = FlextLdifModels.DistinguishedName(
-                    value=FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK
+                    value=FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK,
                 )
 
             return oid_dn
@@ -2754,17 +2774,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 else None
             )
             attributes_to_convert = self._restore_oid_boolean_values(
-                entry_data.attributes.attributes, metadata
+                entry_data.attributes.attributes,
+                metadata,
             )
 
             # Convert boolean attributes RFC→OID
             oid_attributes = self._convert_boolean_attributes_to_oid(
-                attributes_to_convert
+                attributes_to_convert,
             )
 
             # Denormalize attributes using helper (DRY refactoring)
             denormalized_attributes = self._denormalize_oid_attributes(
-                oid_attributes, metadata
+                oid_attributes,
+                metadata,
             )
 
             # Restore original DN using helper (DRY refactoring)
@@ -2849,19 +2871,21 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 meta_keys.ENTRY_ORIGINAL_FORMAT: f"OID Entry with {len(converted_attrs)} boolean conversions",
                 meta_keys.ENTRY_SOURCE_DN_CASE: original_dn,
                 meta_keys.ENTRY_SOURCE_ATTRIBUTES: list(
-                    original_entry.attributes.attributes.keys()
+                    original_entry.attributes.attributes.keys(),
                 )
                 if original_entry.attributes
                 else [],
                 meta_keys.ENTRY_SOURCE_OBJECTCLASSES: original_entry.attributes.attributes.get(
-                    "objectClass", []
+                    "objectClass",
+                    [],
                 )
                 if original_entry.attributes
                 else [],
                 meta_keys.ENTRY_TARGET_DN_CASE: cleaned_dn,
                 meta_keys.ENTRY_TARGET_ATTRIBUTES: list(converted_attributes.keys()),
                 meta_keys.ENTRY_TARGET_OBJECTCLASSES: converted_attributes.get(
-                    "objectClass", []
+                    "objectClass",
+                    [],
                 ),
                 meta_keys.ENTRY_SOURCE_OPERATIONAL_ATTRS: [
                     attr
@@ -2908,10 +2932,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 and original_entry.metadata.original_format_details
             ):
                 original_dn_line = original_entry.metadata.original_format_details.get(
-                    "original_dn_line"
+                    "original_dn_line",
                 )
                 orig_attr_lines = original_entry.metadata.original_format_details.get(
-                    "original_attr_lines", []
+                    "original_attr_lines",
+                    [],
                 )
                 if FlextRuntime.is_list_like(orig_attr_lines):
                     original_attr_lines = cast("list[str]", orig_attr_lines)
@@ -2949,7 +2974,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                             if original_entry.attributes
                             else []
                         )
-                        else None
+                        else None,
                     },
                 },
                 "removed_attributes": [],
@@ -2991,7 +3016,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """
             # Build metadata using helper methods (DRY refactoring)
             conversion_metadata = self._build_conversion_metadata(
-                cleaned_dn, converted_attrs, boolean_conversions
+                cleaned_dn,
+                converted_attrs,
+                boolean_conversions,
             )
             dn_metadata = self._build_dn_metadata(original_dn, cleaned_dn, dn_stats)
 
@@ -3034,7 +3061,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             )
             # Convert to models.py type (QuirkMetadata in models.py inherits from domain)
             metadata = FlextLdifModels.QuirkMetadata.model_validate(
-                domain_metadata.model_dump()
+                domain_metadata.model_dump(),
             )
 
             # =====================================================================
@@ -3134,28 +3161,30 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     conflict_values = conflict.get("values", [])
                     was_removed = attr_name not in converted_attributes
 
-                    violation_details.append({
-                        "type": "attribute_conflict",
-                        "attribute": attr_name,
-                        "reason": str(conflict.get("reason", "Unknown conflict")),
-                        "conflicting_objectclass": str(
-                            conflict.get("conflicting_objectclass", "")
-                        ),
-                        "original_values": original_values,
-                        "conflict_values": conflict_values,
-                        "was_removed": was_removed,
-                        "action_taken": "removed"
-                        if was_removed
-                        else "kept_with_warning",
-                        "original_values_string": str(original_values),
-                        "conflict_values_string": str(conflict_values),
-                    })
+                    violation_details.append(
+                        {
+                            "type": "attribute_conflict",
+                            "attribute": attr_name,
+                            "reason": str(conflict.get("reason", "Unknown conflict")),
+                            "conflicting_objectclass": str(
+                                conflict.get("conflicting_objectclass", ""),
+                            ),
+                            "original_values": original_values,
+                            "conflict_values": conflict_values,
+                            "was_removed": was_removed,
+                            "action_taken": "removed"
+                            if was_removed
+                            else "kept_with_warning",
+                            "original_values_string": str(original_values),
+                            "conflict_values_string": str(conflict_values),
+                        },
+                    )
 
                 # Calculate attribute changes for logging
                 original_attr_set = set(
                     original_entry.attributes.attributes.keys()
                     if original_entry.attributes
-                    else []
+                    else [],
                 )
                 final_attr_set = set(converted_attributes.keys())
                 removed_attrs = list(original_attr_set - final_attr_set)
@@ -3432,17 +3461,21 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Analyze differences using helper (DRY refactoring)
             dn_differences, attribute_differences, original_attributes_complete_dict = (
                 self._analyze_oid_entry_differences(
-                    entry_attrs, normalized_attributes, original_dn, normalized_dn
+                    entry_attrs,
+                    normalized_attributes,
+                    original_dn,
+                    normalized_dn,
                 )
             )
 
             # Store minimal differences using helper (DRY refactoring)
             if not original_entry.metadata:
                 domain_metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    self._get_server_type(), extensions={}
+                    self._get_server_type(),
+                    extensions={},
                 )
                 original_entry.metadata = FlextLdifModels.QuirkMetadata.model_validate(
-                    domain_metadata.model_dump()
+                    domain_metadata.model_dump(),
                 )
             # Ensure metadata is the correct type from models.py
             entry_metadata = (
@@ -3450,13 +3483,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 if isinstance(original_entry.metadata, FlextLdifModels.QuirkMetadata)
                 else (
                     FlextLdifModels.QuirkMetadata.model_validate(
-                        original_entry.metadata.model_dump()
+                        original_entry.metadata.model_dump(),
                     )
                     if original_entry.metadata
                     else FlextLdifModels.QuirkMetadata.model_validate(
                         FlextLdifModels.QuirkMetadata.create_for(
-                            self._get_server_type(), extensions={}
-                        ).model_dump()
+                            self._get_server_type(),
+                            extensions={},
+                        ).model_dump(),
                     )
                 )
             )
@@ -3464,11 +3498,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             original_dn_line: str | None = None
             original_attr_lines: list[str] | None = None
             if entry.metadata and entry.metadata.original_format_details:
-                original_dn_line = entry.metadata.original_format_details.get(
-                    "original_dn_line"
+                original_dn_line_raw = entry.metadata.original_format_details.get(
+                    "original_dn_line",
+                )
+                original_dn_line = (
+                    str(original_dn_line_raw)
+                    if original_dn_line_raw is not None
+                    else None
                 )
                 orig_attr_lines = entry.metadata.original_format_details.get(
-                    "original_attr_lines"
+                    "original_attr_lines",
                 )
                 if FlextRuntime.is_list_like(orig_attr_lines):
                     original_attr_lines = cast("list[str]", orig_attr_lines)
@@ -3497,7 +3536,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 normalized_attributes_count=len(normalized_attributes),
                 # What was preserved
                 minimal_differences_dn_captured=bool(
-                    dn_differences.get("has_differences", False)
+                    dn_differences.get("has_differences", False),
                 ),
                 minimal_differences_attributes_captured=len(attribute_differences) > 0,
                 boolean_conversions_count=len(boolean_conversions),

@@ -9,15 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdif
-    from flext_ldif.models import FlextLdifModels
-
 from pathlib import Path
 
-from ...helpers.test_assertions import TestAssertions
+from flext_ldif import FlextLdif, FlextLdifModels
+
+from ..unit.quirks.servers.test_utils import FlextLdifTestUtils
+from .test_assertions import TestAssertions
 
 
 class FixtureTestHelpers:
@@ -60,8 +57,6 @@ class FixtureTestHelpers:
             assert len(entries) > 0
 
         """
-        from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
-
         entries = FlextLdifTestUtils.load_fixture(
             ldif_api,
             server_type,
@@ -186,8 +181,6 @@ class FixtureTestHelpers:
             assert identical, "Roundtrip should preserve entries"
 
         """
-        from ...unit.quirks.servers.test_utils import FlextLdifTestUtils
-
         original_entries, roundtrip_entries, is_identical = (
             FlextLdifTestUtils.run_roundtrip_test(
                 ldif_api,

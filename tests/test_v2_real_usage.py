@@ -15,8 +15,9 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
+from pydantic_core import ValidationError
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.services.sorting import FlextLdifSorting
 
 
@@ -157,16 +158,12 @@ class TestFlextServiceV2Patterns:
     def test_v2_error_handling_with_result_property(self) -> None:
         """Test V2 error handling when using .result property."""
         # Invalid sort_by should raise exception with .result (Pydantic ValidationError)
-        from pydantic_core import ValidationError
-
         with pytest.raises(ValidationError, match="Invalid sort_by"):
             FlextLdifSorting(entries=create_test_entries(), sort_by="invalid").result
 
     def test_v1_error_handling_with_execute(self) -> None:
         """Test V2 error handling raises ValidationError on invalid parameters."""
         # Invalid sort_by raises ValidationError at initialization (V2 pattern)
-        from pydantic_core import ValidationError
-
         with pytest.raises(ValidationError, match="Invalid sort_by"):
             FlextLdifSorting(entries=create_test_entries(), sort_by="invalid")
 

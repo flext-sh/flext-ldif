@@ -34,17 +34,6 @@ logger = FlextLogger(__name__)
 
 # Import for type checking in __new__ method
 
-# ===== TYPE ALIASES (Python 3.13 semantic types) =====
-# These document the semantic purpose of constants without formal definitions
-# Used in docstrings and type hints for better code clarity
-#
-# type PermissionSet = frozenset[str]  # Set of ACL permissions
-# type AttributeSet = frozenset[str]   # Set of LDAP attribute names
-# type PatternSet = frozenset[str]     # Set of regex/match patterns
-# type ReplacementMap = Mapping[str, str]  # Mapping for substitutions/normalization
-# type DetectionConfig = Mapping[str, str | int | frozenset[str]]  # Detection config
-# type AclConfig = Mapping[str, str | int | frozenset[str]]  # ACL format config
-
 
 class FlextLdifServersRfc(FlextLdifServersBase):
     """RFC 4512 Compliant Server Quirks - Base Implementation.
@@ -257,30 +246,38 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         # ObjectClasses defining each category (RFC baseline - standard LDAP objectClasses)
         CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
-            "users": frozenset([
-                "person",
-                "inetOrgPerson",
-                "organizationalPerson",
-                "residentialPerson",
-            ]),
-            "hierarchy": frozenset([
-                "organizationalUnit",
-                "organization",
-                "locality",
-                "country",
-            ]),
-            "groups": frozenset([
-                "groupOfNames",
-                "groupOfUniqueNames",
-                "posixGroup",
-            ]),
+            "users": frozenset(
+                [
+                    "person",
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "residentialPerson",
+                ],
+            ),
+            "hierarchy": frozenset(
+                [
+                    "organizationalUnit",
+                    "organization",
+                    "locality",
+                    "country",
+                ],
+            ),
+            "groups": frozenset(
+                [
+                    "groupOfNames",
+                    "groupOfUniqueNames",
+                    "posixGroup",
+                ],
+            ),
         }
 
         # ACL attributes for categorization (RFC 4876 + generic)
-        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "aci",  # RFC 4876 ACI attribute
-            "acl",  # Generic ACL attribute (common in various LDAP servers)
-        ])
+        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "aci",  # RFC 4876 ACI attribute
+                "acl",  # Generic ACL attribute (common in various LDAP servers)
+            ],
+        )
 
         # =====================================================================
         # DETECTION PATTERNS - Server type detection rules
@@ -694,7 +691,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Preserve ALL schema formatting details for zero data loss
             FlextLdifUtilities.Metadata.preserve_schema_formatting(
-                metadata, attr_definition
+                metadata,
+                attr_definition,
             )
 
             # Log formatting preservation for debugging (FlextLogger adds source automatically)
@@ -719,14 +717,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             attr_definition: str,
             *,
             _case_insensitive: bool = False,
-            allow_syntax_quotes: bool = False,  # noqa: ARG002
+            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse RFC 4512 attribute definition using generalized parser.
 
             Args:
                 attr_definition: RFC 4512 attribute definition string
                 _case_insensitive: Whether to use case-insensitive pattern matching
-                allow_syntax_quotes: Whether to allow quoted syntax values
+                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with parsed SchemaAttribute model
@@ -1183,13 +1181,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 attr_data.metadata
                 and attr_data.metadata.schema_format_details
                 and attr_data.metadata.schema_format_details.get(
-                    "original_string_complete"
+                    "original_string_complete",
                 )
             ):
                 # Use original format if available (perfect round-trip)
                 original = str(
                     attr_data.metadata.schema_format_details.get(
-                        "original_string_complete", ""
+                        "original_string_complete",
+                        "",
                     ),
                 )
                 if original:
@@ -1207,7 +1206,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             field_order: list[str] | None = None
             if attr_data.metadata and attr_data.metadata.schema_format_details:
                 field_order_ = attr_data.metadata.schema_format_details.get(
-                    "field_order"
+                    "field_order",
                 )
                 if FlextRuntime.is_list_like(field_order_):
                     field_order = cast("list[str]", field_order_)
@@ -1216,10 +1215,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # RESTORE NAME format from metadata if available
             if attr_data.metadata and attr_data.metadata.schema_format_details:
                 name_format = attr_data.metadata.schema_format_details.get(
-                    "name_format", "single"
+                    "name_format",
+                    "single",
                 )
                 name_values_ = attr_data.metadata.schema_format_details.get(
-                    "name_values", []
+                    "name_values",
+                    [],
                 )
                 name_values = (
                     name_values_ if FlextRuntime.is_list_like(name_values_) else []
@@ -1278,7 +1279,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     False,
                 )
                 x_origin_value = attr_data.metadata.schema_format_details.get(
-                    "x_origin_value"
+                    "x_origin_value",
                 )
                 if x_origin_presence and x_origin_value:
                     parts.append(f"X-ORIGIN '{x_origin_value}'")
@@ -1435,7 +1436,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 ):
                     format_details = transformed_attr.metadata.schema_format_details
                     attribute_case = format_details.get(
-                        "attribute_case", "attributetypes"
+                        "attribute_case",
+                        "attributetypes",
                     )
                     # Replace "attributetypes:" with original case
                     if "attributetypes:" in transformed_str.lower():
@@ -1884,7 +1886,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             raise AssertionError(msg)
 
         def execute(
-            self, **kwargs: object
+            self,
+            **kwargs: object,
         ) -> FlextResult[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
         ]:
@@ -1937,9 +1940,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             operation_raw = kwargs.get("operation")
             # Type narrowing: check if operation_raw is a valid Literal value
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation: Literal["parse", "write"] | None = cast(
-                    "Literal['parse', 'write']", operation_raw
-                )
+                operation = operation_raw
             else:
                 operation = None
 
@@ -2084,16 +2085,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             }
             # Initialize instance using proper type - Schema.__init__ accepts schema_service
             # Type narrowing: instance is Self (Schema subclass)
-            schema_instance = cast("Self", instance)
+            schema_instance = cast("FlextLdifServersRfc.Schema", instance)
             # Initialize using super() to avoid mypy error about accessing __init__ on instance
             # Use FlextLdifServersBase.Schema as the base class for super()
             if schema_service is not None:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
-                    schema_service=schema_service, **init_kwargs
+                    schema_service=schema_service,
+                    **init_kwargs,
                 )
             else:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
-                    **init_kwargs
+                    **init_kwargs,
                 )
 
             if cls.auto_execute:
@@ -2144,14 +2146,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 elif oc_mod is not None:
                     data = oc_mod
                 # Type narrowing: instance is Self (Schema subclass)
-                schema_instance = cast("Self", instance)
-                result = schema_instance.execute(data=data, operation=op)
-                unwrapped: (
-                    FlextLdifModels.SchemaAttribute
-                    | FlextLdifModels.SchemaObjectClass
-                    | str
-                ) = result.unwrap()
-                return cast("Self", unwrapped)
+                # Cast again for execute() call
+                schema_instance_execute = cast("FlextLdifServersRfc.Schema", instance)
+                result = schema_instance_execute.execute(data=data, operation=op)
+                # Unwrap result but don't store since we return instance
+                _ = result.unwrap()
+                # Auto-execute completed, return instance
+                return cast("Self", instance)
 
             return cast("Self", instance)
 
@@ -2676,9 +2677,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             operation_raw = kwargs.get("operation")
             # Type narrowing: check if operation_raw is a valid Literal value
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation: Literal["parse", "write"] | None = cast(
-                    "Literal['parse', 'write']", operation_raw
-                )
+                operation = operation_raw
             else:
                 operation = None
 
@@ -2979,7 +2978,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Wrap method to match CreateEntryHook protocol
             def create_entry_hook(
-                dn: str, attrs: Mapping[str, list[str]]
+                dn: str,
+                attrs: Mapping[str, list[str]],
             ) -> FlextResult[FlextLdifModels.Entry]:
                 return self._parse_entry(dn, attrs)
 
@@ -3086,11 +3086,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if "_original_dn_line" in converted_attrs:
                 original_dn_lines = converted_attrs.pop("_original_dn_line", [])
                 if original_dn_lines and FlextRuntime.is_list_like(original_dn_lines):
-                    original_dn_line = cast(
-                        "str | None",
-                        cast("list[str]", original_dn_lines)[0]
-                        if original_dn_lines
-                        else None,
+                    original_dn_lines_list = cast("list[str]", original_dn_lines)
+                    original_dn_line = (
+                        original_dn_lines_list[0] if original_dn_lines_list else None
                     )
 
             # Extract original attribute lines
@@ -3329,7 +3327,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     original_attributes_complete,
                     original_attribute_case,
                 ) = self._analyze_entry_differences(
-                    entry_attrs, converted_attrs, original_entry_dn_complete, cleaned_dn
+                    entry_attrs,
+                    converted_attrs,
+                    original_entry_dn_complete,
+                    cleaned_dn,
                 )
 
                 # Build metadata using helper (DRY refactoring)
@@ -3535,12 +3536,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Get original attribute lines using helper (DRY refactoring)
             original_attr_lines_complete = self._get_original_attr_lines_from_metadata(
-                entry_data
+                entry_data,
             )
 
             # Get minimal differences using helper (DRY refactoring)
             minimal_differences_attrs = self._get_minimal_differences_from_metadata(
-                entry_data
+                entry_data,
             )
 
             if original_attr_lines_complete:
@@ -3583,18 +3584,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             original_attr_lines = None
             if entry_data.metadata.original_format_details:
                 original_attr_lines = entry_data.metadata.original_format_details.get(
-                    "original_attr_lines", []
+                    "original_attr_lines",
+                    [],
                 )
 
             # Try to get complete original lines from extensions
             if entry_data.metadata.extensions:
                 orig_lines = entry_data.metadata.extensions.get(
-                    "original_attr_lines_complete"
+                    "original_attr_lines_complete",
                 )
                 if FlextRuntime.is_list_like(orig_lines):
                     return cast("list[str]", orig_lines)
                 if original_attr_lines and FlextRuntime.is_list_like(
-                    original_attr_lines
+                    original_attr_lines,
                 ):
                     return cast("list[str]", original_attr_lines)
 
@@ -3625,7 +3627,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             if entry_data.metadata.extensions:
                 attr_diffs = entry_data.metadata.extensions.get(
-                    "minimal_differences_attributes", {}
+                    "minimal_differences_attributes",
+                    {},
                 )
                 if FlextRuntime.is_dict_like(attr_diffs):
                     return attr_diffs
@@ -3706,10 +3709,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             for attr_name, attr_values in entry_data.attributes.attributes.items():
                 # Check for minimal differences
                 attr_diff = minimal_differences_attrs.get(
-                    attr_name
+                    attr_name,
                 ) or minimal_differences_attrs.get(f"attribute_{attr_name}")
                 if FlextRuntime.is_dict_like(attr_diff) and attr_diff.get(
-                    "has_differences"
+                    "has_differences",
                 ):
                     original_attr_str = attr_diff.get("original")
                     if original_attr_str and isinstance(original_attr_str, str):
@@ -3733,7 +3736,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 if FlextRuntime.is_list_like(attr_values):
                     for value in attr_values:
                         self._write_entry_attribute_value(
-                            ldif_lines, attr_name, cast("str", value), write_options
+                            ldif_lines,
+                            attr_name,
+                            cast("str", value),
+                            write_options,
                         )
                 elif attr_values:
                     str_value = (
@@ -3742,7 +3748,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         else attr_values
                     )
                     self._write_entry_attribute_value(
-                        ldif_lines, attr_name, str_value, write_options
+                        ldif_lines,
+                        attr_name,
+                        str_value,
+                        write_options,
                     )
 
         # ===== _write_entry HELPER METHODS (DRY refactoring) =====
@@ -3770,7 +3779,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry_data
 
             dn_differences = entry_data.metadata.extensions.get(
-                "minimal_differences_dn", {}
+                "minimal_differences_dn",
+                {},
             )
             if not (
                 FlextRuntime.is_dict_like(dn_differences)
@@ -3784,7 +3794,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 current_dn=str(entry_data.dn),
             )
             return entry_data.model_copy(
-                update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)}
+                update={"dn": FlextLdifModels.DistinguishedName(value=original_dn)},
             )
 
         def _restore_original_attributes(
@@ -3808,13 +3818,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry_data
 
             original_attrs = entry_data.metadata.extensions.get(
-                "original_attributes_complete"
+                "original_attributes_complete",
             )
             if not (original_attrs and FlextRuntime.is_dict_like(original_attrs)):
                 return entry_data
 
             attr_differences = entry_data.metadata.extensions.get(
-                "minimal_differences_attributes", {}
+                "minimal_differences_attributes",
+                {},
             )
             if not (
                 FlextRuntime.is_dict_like(attr_differences)
@@ -3828,7 +3839,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             restored_attrs: dict[str, list[str]] = {}
             for attr_name, attr_values in entry_data.attributes.attributes.items():
                 original_case = entry_data.metadata.original_attribute_case.get(
-                    attr_name.lower(), attr_name
+                    attr_name.lower(),
+                    attr_name,
                 )
                 if original_case in original_attrs:
                     original_val = original_attrs[original_case]
@@ -3848,8 +3860,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             attributes=restored_attrs,
                             attribute_metadata=entry_data.attributes.attribute_metadata,
                             metadata=entry_data.attributes.metadata,
-                        )
-                    }
+                        ),
+                    },
                 )
             return entry_data
 
@@ -3901,8 +3913,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             metadata=entry_data.attributes.metadata
                             if entry_data.attributes
                             else {},
-                        )
-                    }
+                        ),
+                    },
                 )
             return entry_data
 
@@ -3961,7 +3973,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     if write_options is None:
                         write_options = FlextLdifModels.WriteFormatOptions()
                     return self._write_entry_modify_format(
-                        entry_to_write, write_options
+                        entry_to_write,
+                        write_options,
                     )
 
                 # Standard ADD format (RFC 2849 § 3)
@@ -4094,13 +4107,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ):
                 rejection_reason = entry.metadata.processing_stats.rejection_reason
                 if rejection_reason:
-                    comment_lines.extend([
-                        FlextLdifConstants.CommentFormats.SEPARATOR_DOUBLE,
-                        FlextLdifConstants.CommentFormats.HEADER_REJECTION_REASON,
-                        FlextLdifConstants.CommentFormats.SEPARATOR_DOUBLE,
-                        f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{rejection_reason}",
-                        FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY,
-                    ])
+                    comment_lines.extend(
+                        [
+                            FlextLdifConstants.CommentFormats.SEPARATOR_DOUBLE,
+                            FlextLdifConstants.CommentFormats.HEADER_REJECTION_REASON,
+                            FlextLdifConstants.CommentFormats.SEPARATOR_DOUBLE,
+                            f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{rejection_reason}",
+                            FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY,
+                        ],
+                    )
 
             # Add removed attributes comments if enabled
             if (
@@ -4113,21 +4128,25 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         comment_lines.append(
                             FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY,
                         )
-                    comment_lines.extend([
-                        FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
-                        FlextLdifConstants.CommentFormats.HEADER_REMOVED_ATTRIBUTES,
-                        FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
-                    ])
+                    comment_lines.extend(
+                        [
+                            FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
+                            FlextLdifConstants.CommentFormats.HEADER_REMOVED_ATTRIBUTES,
+                            FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
+                        ],
+                    )
                     # Python 3.13: Optimize with nested list comprehension
-                    comment_lines.extend([
-                        f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{attr_name}: {value}"
-                        for attr_name, attr_values in removed_attrs.items()
-                        for value in (
-                            attr_values
-                            if FlextRuntime.is_list_like(attr_values)
-                            else [attr_values]
-                        )
-                    ])
+                    comment_lines.extend(
+                        [
+                            f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{attr_name}: {value}"
+                            for attr_name, attr_values in removed_attrs.items()
+                            for value in (
+                                attr_values
+                                if FlextRuntime.is_list_like(attr_values)
+                                else [attr_values]
+                            )
+                        ],
+                    )
                     comment_lines.append(
                         FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY,
                     )
@@ -4264,7 +4283,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Return first entry or empty string (matching base class behavior)
                 if len(parsed_entries) == 1:
                     return FlextResult[FlextLdifModels.Entry | str].ok(
-                        parsed_entries[0]
+                        parsed_entries[0],
                     )
                 if len(parsed_entries) == 0:
                     return FlextResult[FlextLdifModels.Entry | str].ok("")
@@ -4340,7 +4359,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             cast(
                                 "FlextLdifModels.Entry | str",
                                 parse_value[0] if parse_value else "",
-                            )
+                            ),
                         )
                     if isinstance(parse_value, FlextLdifModels.Entry):
                         return FlextResult[FlextLdifModels.Entry | str].ok(parse_value)
@@ -4348,7 +4367,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         return FlextResult[FlextLdifModels.Entry | str].ok(parse_value)
                     return FlextResult[FlextLdifModels.Entry | str].ok("")
                 return FlextResult[FlextLdifModels.Entry | str].fail(
-                    parse_result.error or "Unknown error"
+                    parse_result.error or "Unknown error",
                 )
 
             if operation == "write":
@@ -4357,7 +4376,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         f"write operation requires list[Entry], got {type(data).__name__}",
                     )
                 write_result = self._handle_write_entry(
-                    cast("list[FlextLdifModels.Entry]", data)
+                    cast("list[FlextLdifModels.Entry]", data),
                 )
                 # Convert to base return type
                 if write_result.is_success:
@@ -4367,7 +4386,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     # Should not happen for write operations
                     return FlextResult[FlextLdifModels.Entry | str].ok("")
                 return FlextResult[FlextLdifModels.Entry | str].fail(
-                    write_result.error or "Unknown error"
+                    write_result.error or "Unknown error",
                 )
 
             # Should not reach here (Literal type ensures only parse or write)
@@ -4415,9 +4434,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             operation_raw = kwargs.get("operation")
             # Type narrowing: check if operation_raw is a valid Literal value
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation: Literal["parse", "write"] | None = cast(
-                    "Literal['parse', 'write']", operation_raw
-                )
+                operation = operation_raw
             else:
                 operation = None
 
@@ -4439,10 +4456,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     entries = parse_result.unwrap()
                     # Return first entry or empty string (matching base class behavior)
                     return FlextResult[FlextLdifModels.Entry | str].ok(
-                        entries[0] if entries else ""
+                        entries[0] if entries else "",
                     )
                 return FlextResult[FlextLdifModels.Entry | str].fail(
-                    parse_result.error or "Unknown error"
+                    parse_result.error or "Unknown error",
                 )
 
             # Route to appropriate handler and convert to base return type
@@ -4456,14 +4473,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     if detected_operation == "write":
                         # route_value should be str for write operations
                         return FlextResult[FlextLdifModels.Entry | str].ok(
-                            route_value if isinstance(route_value, str) else ""
+                            route_value if isinstance(route_value, str) else "",
                         )
                     # Parse operation: return first entry
                     if route_value and isinstance(
-                        route_value[0], FlextLdifModels.Entry
+                        route_value[0],
+                        FlextLdifModels.Entry,
                     ):
                         return FlextResult[FlextLdifModels.Entry | str].ok(
-                            route_value[0]
+                            route_value[0],
                         )
                     return FlextResult[FlextLdifModels.Entry | str].ok("")
                 if isinstance(route_value, FlextLdifModels.Entry):
@@ -4472,7 +4490,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     return FlextResult[FlextLdifModels.Entry | str].ok(route_value)
                 return FlextResult[FlextLdifModels.Entry | str].ok("")
             return FlextResult[FlextLdifModels.Entry | str].fail(
-                route_result.error or "Unknown error"
+                route_result.error or "Unknown error",
             )
 
         @overload
@@ -4652,7 +4670,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             # CRITICAL: Check if we should restore original LDIF from metadata
             restore_enabled = write_options and getattr(
-                write_options, "restore_original_format", False
+                write_options,
+                "restore_original_format",
+                False,
             )
             if (
                 restore_enabled
@@ -4660,7 +4680,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 and entry_data.metadata.original_strings
             ):
                 original_ldif = entry_data.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if original_ldif:
                     # Return original LDIF exactly as parsed (perfect round-trip)
@@ -4683,19 +4703,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Try multiple locations for original DN
                 if entry_data.metadata.original_format_details:
                     dn_line = entry_data.metadata.original_format_details.get(
-                        "original_dn_line"
+                        "original_dn_line",
                     )
                     if isinstance(dn_line, str):
                         original_dn_line = dn_line
                 if not original_dn_line and entry_data.metadata.extensions:
                     dn_line = entry_data.metadata.extensions.get(
-                        "original_dn_line_complete"
+                        "original_dn_line_complete",
                     )
                     if isinstance(dn_line, str):
                         original_dn_line = dn_line
                 if not original_dn_line and entry_data.metadata.original_strings:
                     original_dn = entry_data.metadata.original_strings.get(
-                        "dn_original"
+                        "dn_original",
                     )
                     if isinstance(original_dn, str):
                         original_dn_line = f"dn: {original_dn}"
@@ -4796,7 +4816,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else str_value
                 )
                 logger.debug(
-                    f"RFC quirks: Corrected invalid UTF-8 in attribute: attribute_name={attr_name}, original_value_preview={original_preview}, corrected_value_preview={corrected_preview}, value_length={len(value)}, correction_type=utf8_encoding_fix",
+                    "RFC quirks: Corrected invalid UTF-8 in attribute: attribute_name=%s, original_value_preview=%s, corrected_value_preview=%s, value_length=%s, correction_type=utf8_encoding_fix",
+                    attr_name,
+                    original_preview,
+                    corrected_preview,
+                    len(value),
                 )
 
             # Check if attribute is a known binary attribute (RFC 4522)
@@ -4841,10 +4865,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # DN line (required)
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
-            ldif_lines.extend([
-                f"dn: {entry_data.dn.value}",
-                "changetype: modify",
-            ])
+            ldif_lines.extend(
+                [
+                    f"dn: {entry_data.dn.value}",
+                    "changetype: modify",
+                ],
+            )
 
             # Get attributes to process
             if not entry_data.attributes or not entry_data.attributes.attributes:

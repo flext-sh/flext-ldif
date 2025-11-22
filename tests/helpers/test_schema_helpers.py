@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 
-from ...helpers.test_assertions import TestAssertions
+from .test_assertions import TestAssertions
 
 
 class SchemaTestHelpers:
@@ -430,7 +430,10 @@ class SchemaTestHelpers:
         """
         # Parse
         attr = SchemaTestHelpers.test_parse_attribute_complete(
-            schema_quirk, attr_def, expected_oid, expected_name
+            schema_quirk,
+            attr_def,
+            expected_oid,
+            expected_name,
         )
 
         # Write
@@ -478,7 +481,10 @@ class SchemaTestHelpers:
         """
         # Parse
         oc = SchemaTestHelpers.test_parse_objectclass_complete(
-            schema_quirk, oc_def, expected_oid, expected_name
+            schema_quirk,
+            oc_def,
+            expected_oid,
+            expected_name,
         )
 
         # Write

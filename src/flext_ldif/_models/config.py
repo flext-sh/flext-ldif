@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels
-from pydantic import ConfigDict, Field
+from flext_core import FlextConfig, FlextModels
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -116,7 +116,9 @@ class FlextLdifModelsConfig:
         )
         correlation_id: str | None = Field(
             default=None,
-            description="Correlation ID for tracking related operations across services",
+            description=(
+                "Correlation ID for tracking related operations across services"
+            ),
         )
         trace_id: str | None = Field(
             default=None,
@@ -164,7 +166,7 @@ class FlextLdifModelsConfig:
             description="Attribute names containing ACL information",
         )
 
-    class MigrateOptions(FlextModels.Options):
+    class MigrateOptions(BaseModel):
         """Options for FlextLdif.migrate() operation.
 
         Consolidates 12+ optional parameters into single typed Model.
@@ -189,7 +191,9 @@ class FlextLdifModelsConfig:
         )
         write_options: dict[str, object] | None = Field(
             default=None,
-            description="Write format options (line folding, removed attrs as comments)",
+            description=(
+                "Write format options (line folding, removed attrs as comments)"
+            ),
         )
 
         # Categorized mode parameters (legacy)
@@ -321,7 +325,7 @@ class FlextLdifModelsConfig:
             description="OID patterns for allowed matchingRuleUse definitions",
         )
 
-    class WriteFormatOptions(FlextModels.Options):
+    class WriteFormatOptions(BaseModel):
         """Formatting options for LDIF serialization.
 
         Provides detailed control over the output format, including line width
@@ -334,23 +338,37 @@ class FlextLdifModelsConfig:
             default=FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH,
             ge=10,
             le=100000,
-            description="Maximum line width before folding (RFC 2849 recommends 76). Only used if fold_long_lines=True.",
+            description=(
+                "Maximum line width before folding (RFC 2849 recommends 76). "
+                "Only used if fold_long_lines=True."
+            ),
         )
         respect_attribute_order: bool = Field(
             default=True,
-            description="If True, writes attributes in the order specified in Entry.metadata.",
+            description=(
+                "If True, writes attributes in the order specified in Entry.metadata."
+            ),
         )
         sort_attributes: bool = Field(
             default=False,
-            description="If True, sorts attributes alphabetically. Overridden by respect_attribute_order.",
+            description=(
+                "If True, sorts attributes alphabetically. "
+                "Overridden by respect_attribute_order."
+            ),
         )
         write_hidden_attributes_as_comments: bool = Field(
             default=False,
-            description="If True, attributes marked as 'hidden' in metadata will be written as comments.",
+            description=(
+                "If True, attributes marked as 'hidden' in metadata will be "
+                "written as comments."
+            ),
         )
         write_metadata_as_comments: bool = Field(
             default=False,
-            description="If True, the entry's main metadata will be written as a commented block.",
+            description=(
+                "If True, the entry's main metadata will be written as a "
+                "commented block."
+            ),
         )
         include_version_header: bool = Field(
             default=True,
@@ -358,15 +376,21 @@ class FlextLdifModelsConfig:
         )
         include_timestamps: bool = Field(
             default=False,
-            description="If True, includes timestamp comments for when entries were written.",
+            description=(
+                "If True, includes timestamp comments for when entries were written."
+            ),
         )
         base64_encode_binary: bool = Field(
             default=False,
-            description="If True, automatically base64 encodes binary attribute values.",
+            description=(
+                "If True, automatically base64 encodes binary attribute values."
+            ),
         )
         fold_long_lines: bool = Field(
             default=True,
-            description="If True, folds lines longer than line_width according to RFC 2849.",
+            description=(
+                "If True, folds lines longer than line_width according to RFC 2849."
+            ),
         )
         restore_original_format: bool = Field(
             default=False,
@@ -387,39 +411,62 @@ class FlextLdifModelsConfig:
         )
         include_dn_comments: bool = Field(
             default=False,
-            description="If True, includes DN explanation comments for complex entries.",
+            description=(
+                "If True, includes DN explanation comments for complex entries."
+            ),
         )
         write_removed_attributes_as_comments: bool = Field(
             default=False,
-            description="If True, writes removed attributes as comments in LDIF output.",
+            description=(
+                "If True, writes removed attributes as comments in LDIF output."
+            ),
         )
         write_migration_header: bool = Field(
             default=False,
-            description="If True, writes migration metadata header at the start of LDIF file.",
+            description=(
+                "If True, writes migration metadata header at the start of LDIF file."
+            ),
         )
         migration_header_template: str | None = Field(
             default=None,
-            description="Jinja2 template string for migration header. If None, uses default template.",
+            description=(
+                "Jinja2 template string for migration header. "
+                "If None, uses default template."
+            ),
         )
         write_rejection_reasons: bool = Field(
             default=False,
-            description="If True, writes rejection reasons as comments for rejected entries.",
+            description=(
+                "If True, writes rejection reasons as comments for rejected entries."
+            ),
         )
         write_transformation_comments: bool = Field(
             default=False,
-            description="If True, writes transformation details as comments (e.g., objectClass changes).",
+            description=(
+                "If True, writes transformation details as comments "
+                "(e.g., objectClass changes)."
+            ),
         )
         include_removal_statistics: bool = Field(
             default=False,
-            description="If True, includes statistics about removed attributes in headers.",
+            description=(
+                "If True, includes statistics about removed attributes in headers."
+            ),
         )
         ldif_changetype: str | None = Field(
             default=None,
-            description="If set to 'modify', writes entries in LDIF modify format (changetype: modify). Otherwise uses add format.",
+            description=(
+                "If set to 'modify', writes entries in LDIF modify format "
+                "(changetype: modify). Otherwise uses add format."
+            ),
         )
         ldif_modify_operation: str = Field(
             default="add",
-            description="LDIF modify operation: 'add' or 'replace'. Used when ldif_changetype='modify'. Default 'add' for schema/ACL phases.",
+            description=(
+                "LDIF modify operation: 'add' or 'replace'. "
+                "Used when ldif_changetype='modify'. "
+                "Default 'add' for schema/ACL phases."
+            ),
         )
         # NEW FIELDS FOR client-a OUD MIGRATION - Phase-aware ACL handling and original entry commenting
         write_original_entry_as_comment: bool = Field(
@@ -428,15 +475,24 @@ class FlextLdifModelsConfig:
         )
         entry_category: str | None = Field(
             default=None,
-            description="Migration category (e.g., 'hierarchy', 'users', 'groups', 'acl'). Used for phase-specific formatting.",
+            description=(
+                "Migration category (e.g., 'hierarchy', 'users', 'groups', "
+                "'acl'). Used for phase-specific formatting."
+            ),
         )
         acl_attribute_names: frozenset[str] = Field(
             default_factory=frozenset,
-            description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
+            description=(
+                "Set of ACL attribute names (e.g., {'orclaci', "
+                "'orclentrylevelaci'}). Used to identify ACL attributes."
+            ),
         )
         comment_acl_in_non_acl_phases: bool = Field(
             default=True,
-            description="If True, ACL attributes are written as comments when entry_category != 'acl'.",
+            description=(
+                "If True, ACL attributes are written as comments when "
+                "entry_category != 'acl'."
+            ),
         )
 
     class MigrationConfig(FlextModels.Value):
@@ -514,7 +570,7 @@ class FlextLdifModelsConfig:
             description="Data to pass to header template",
         )
 
-    class ParseFormatOptions(FlextModels.Options):
+    class ParseFormatOptions(BaseModel):
         """Formatting options for LDIF parsing."""
 
         model_config = ConfigDict(frozen=True)
@@ -726,8 +782,6 @@ class FlextLdifModelsConfig:
 
             """
             # Get global config for root-level settings
-            from flext_core import FlextConfig
-
             global_config = FlextConfig.get_global_instance()
 
             return cls(

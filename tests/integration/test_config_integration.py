@@ -16,8 +16,7 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextLogger
 
-from flext_ldif import FlextLdif
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdif, FlextLdifConfig
 
 logger = FlextLogger(__name__)
 

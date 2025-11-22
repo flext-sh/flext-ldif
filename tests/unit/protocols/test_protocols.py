@@ -227,29 +227,37 @@ class TestSchemaProtocolSatisfaction:
         """Test that OID Schema quirk satisfies SchemaProtocol."""
         quirk = FlextLdifServersOid.Schema()
         # Protocol satisfied via structural typing (duck typing)
-        assert hasattr(quirk, "parse") and callable(quirk.parse)
-        assert hasattr(quirk, "write") and callable(quirk.write)
+        assert hasattr(quirk, "parse")
+        assert callable(quirk.parse)
+        assert hasattr(quirk, "write")
+        assert callable(quirk.write)
 
     def test_oud_satisfies_schema_protocol(self) -> None:
         """Test that OUD Schema quirk satisfies SchemaProtocol."""
         quirk = FlextLdifServersOud.Schema()
         # Protocol satisfied via structural typing (duck typing)
-        assert hasattr(quirk, "parse") and callable(quirk.parse)
-        assert hasattr(quirk, "write") and callable(quirk.write)
+        assert hasattr(quirk, "parse")
+        assert callable(quirk.parse)
+        assert hasattr(quirk, "write")
+        assert callable(quirk.write)
 
     def test_openldap_satisfies_schema_protocol(self) -> None:
         """Test that OpenLDAP Schema quirk satisfies SchemaProtocol."""
         quirk = FlextLdifServersOpenldap.Schema()
         # Protocol satisfied via structural typing (duck typing)
-        assert hasattr(quirk, "parse") and callable(quirk.parse)
-        assert hasattr(quirk, "write") and callable(quirk.write)
+        assert hasattr(quirk, "parse")
+        assert callable(quirk.parse)
+        assert hasattr(quirk, "write")
+        assert callable(quirk.write)
 
     def test_relaxed_satisfies_schema_protocol(self) -> None:
         """Test that Relaxed Schema quirk satisfies SchemaProtocol."""
         quirk = FlextLdifServersRelaxed.Schema()
         # Protocol satisfied via structural typing (duck typing)
-        assert hasattr(quirk, "parse") and callable(quirk.parse)
-        assert hasattr(quirk, "write") and callable(quirk.write)
+        assert hasattr(quirk, "parse")
+        assert callable(quirk.parse)
+        assert hasattr(quirk, "write")
+        assert callable(quirk.write)
 
 
 class TestSchemaProtocolMethods:
@@ -409,9 +417,8 @@ class TestQuirkRegistryProtocolMethods:
         if hasattr(registry, "get_schemas"):
             result = registry.get_schemas("oid")
             # May return list or FlextResult depending on implementation
-            assert result is not None and (
-                isinstance(result, list) or hasattr(result, "is_success")
-            )
+            assert result is not None
+            assert isinstance(result, list) or hasattr(result, "is_success")
 
     def test_get_global_instance_returns_registry(self) -> None:
         """Test that get_global_instance returns something callable."""
@@ -432,8 +439,10 @@ class TestProtocolInheritance:
         """Test that schema quirks satisfy SchemaProtocol."""
         oid_schema = FlextLdifServersOid.Schema()
         # Protocol satisfied via structural typing (duck typing)
-        assert hasattr(oid_schema, "parse") and callable(oid_schema.parse)
-        assert hasattr(oid_schema, "write") and callable(oid_schema.write)
+        assert hasattr(oid_schema, "parse")
+        assert callable(oid_schema.parse)
+        assert hasattr(oid_schema, "write")
+        assert callable(oid_schema.write)
 
 
 class TestProtocolUsagePatterns:

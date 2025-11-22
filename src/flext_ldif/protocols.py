@@ -34,7 +34,7 @@ class FlextLdifProtocols(FlextProtocols):
     1. All quirk classes inherit from ABC base classes (Schema, Acl, Entry)
     2. All base classes satisfy protocols through structural typing (duck typing)
     3. isinstance() checks validate protocol compliance at runtime
-    4. All methods use FlextResult[T] for railway-oriented error handling
+            4. All methods use "FlextResult[T]" for railway-oriented error handling
     5. execute() method provides polymorphic type-based routing
 
     **Minimal Public Interface:**
@@ -101,9 +101,10 @@ class FlextLdifProtocols(FlextProtocols):
             - FlextLdifServersRfc (RFC baseline)
 
             **PUBLIC INTERFACE** (protocol-required):
-            1. parse(str) → FlextResult[SchemaAttribute | SchemaObjectClass]
-            2. write(SchemaAttribute | SchemaObjectClass) → FlextResult[str]
-            3. execute(data, operation) → FlextResult[SchemaAttribute | SchemaObjectClass | str]
+            1. parse(str) -> "FlextResult[SchemaAttribute | SchemaObjectClass]"
+            2. write(SchemaAttribute | SchemaObjectClass) -> "FlextResult[str]"
+            3. execute(data, operation) ->
+              "FlextResult[SchemaAttribute | SchemaObjectClass | str]"
 
             **Private Methods** (NOT in protocol, internal only):
             - can_handle_attribute() - Detection logic
@@ -126,7 +127,9 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 definition: str,
-            ) -> FlextResult[object]:
+            ) -> FlextResult[
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+            ]:
                 """Parse schema definition (attribute or objectClass).
 
                 Auto-detects type from content and routes appropriately.
@@ -135,7 +138,7 @@ class FlextLdifProtocols(FlextProtocols):
                     definition: RFC 4512 AttributeType or ObjectClass definition string
 
                 Returns:
-                    FlextResult[SchemaAttribute | SchemaObjectClass]
+                    "FlextResult[SchemaAttribute | SchemaObjectClass]"
 
                 """
                 ...
@@ -152,7 +155,7 @@ class FlextLdifProtocols(FlextProtocols):
                     model: SchemaAttribute or SchemaObjectClass model
 
                 Returns:
-                    FlextResult[str] with RFC 4512 schema definition
+                    "FlextResult[str]" with RFC 4512 schema definition
 
                 """
                 ...
@@ -165,16 +168,17 @@ class FlextLdifProtocols(FlextProtocols):
                 """Execute with automatic type detection and routing.
 
                 Polymorphic dispatch based on data type:
-                - str → auto-detect attribute vs OC → parse()
-                - SchemaAttribute → write()
-                - SchemaObjectClass → write()
+                - str -> auto-detect attribute vs OC -> parse()
+                - SchemaAttribute -> write()
+                - SchemaObjectClass -> write()
 
                 Args:
-                    data: Schema definition string OR SchemaAttribute OR SchemaObjectClass
+                    data: Schema definition string OR SchemaAttribute OR
+                        SchemaObjectClass
                     operation: Force operation ('parse' or 'write'), optional
 
                 Returns:
-                    FlextResult[SchemaAttribute | SchemaObjectClass | str]
+                    "FlextResult[SchemaAttribute | SchemaObjectClass | str]"
 
                 """
                 ...
@@ -197,9 +201,9 @@ class FlextLdifProtocols(FlextProtocols):
             - FlextLdifServersRfc (RFC-based ACL handling)
 
             **PUBLIC INTERFACE** (protocol-required):
-            1. parse(str) → FlextResult[Acl]
-            2. write(Acl) → FlextResult[str]
-            3. execute(data, operation) → FlextResult[Acl | str]
+            1. parse(str) -> "FlextResult[Acl]"
+            2. write(Acl) -> "FlextResult[str]"
+            3. execute(data, operation) -> "FlextResult[Acl | str]"
 
             **Private Methods** (NOT in protocol, internal only):
             - __can_handle() - Detection logic
@@ -213,14 +217,14 @@ class FlextLdifProtocols(FlextProtocols):
             priority: int
             """Quirk priority (lower number = higher priority)."""
 
-            def parse(self, acl_line: str) -> FlextResult[object]:
+            def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
                 """Parse ACL line to Acl model.
 
                 Args:
                     acl_line: ACL definition line (e.g., orclaci, olcAccess)
 
                 Returns:
-                    FlextResult[FlextLdifModels.Acl]
+                    "FlextResult[FlextLdifModels.Acl]"
 
                 """
                 ...
@@ -232,7 +236,7 @@ class FlextLdifProtocols(FlextProtocols):
                     acl_data: FlextLdifModels.Acl
 
                 Returns:
-                    FlextResult[str] with ACL line
+                    "FlextResult[str]" with ACL line
 
                 """
                 ...
@@ -245,15 +249,15 @@ class FlextLdifProtocols(FlextProtocols):
                 """Execute with automatic type detection and routing.
 
                 Polymorphic dispatch based on data type:
-                - str → parse
-                - Acl → write
+                - str -> parse
+                - Acl -> write
 
                 Args:
                     data: ACL line string OR Acl model
                     operation: Force operation ('parse' or 'write'), optional
 
                 Returns:
-                    FlextResult[Acl | str]
+                    "FlextResult[Acl | str]"
 
                 """
                 ...
@@ -270,7 +274,7 @@ class FlextLdifProtocols(FlextProtocols):
                     target_server: Target server type identifier
 
                 Returns:
-                    FlextResult[dict[str, list[str]]] with server-specific ACL attributes
+                    "FlextResult[dict[str, list[str]]]" with server-specific ACL attributes
 
                 """
                 ...
@@ -293,9 +297,9 @@ class FlextLdifProtocols(FlextProtocols):
             - FlextLdifServersRfc (RFC baseline)
 
             **PUBLIC INTERFACE** (protocol-required):
-            1. parse(str) → FlextResult[list[Entry]]
-            2. write(Entry) → FlextResult[str]
-            3. execute(data, operation) → FlextResult[list[Entry] | str]
+            1. parse(str) -> "FlextResult[list[Entry]]"
+            2. write(Entry) -> "FlextResult[str]"
+            3. execute(data, operation) -> "FlextResult[list[Entry] | str]"
 
             **Private Methods** (NOT in protocol, internal only):
             - can_handle() - Detection logic
@@ -314,14 +318,14 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 ldif_content: str,
-            ) -> FlextResult[object]:
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Parse LDIF content string into Entry models.
 
                 Args:
                     ldif_content: Raw LDIF content as string
 
                 Returns:
-                    FlextResult[list[FlextLdifModels.Entry]]
+                    "FlextResult[list[FlextLdifModels.Entry]]"
 
                 """
                 ...
@@ -340,7 +344,7 @@ class FlextLdifProtocols(FlextProtocols):
                         - ldif_modify_operation: 'add', 'replace', 'delete' (for changetype=modify)
 
                 Returns:
-                    FlextResult[str] with LDIF string
+                    "FlextResult[str]" with LDIF string
 
                 """
                 ...
@@ -357,7 +361,7 @@ class FlextLdifProtocols(FlextProtocols):
                     entry_attrs: Entry attributes mapping
 
                 Returns:
-                    FlextResult[Entry] with parsed entry model
+                    "FlextResult[Entry]" with parsed entry model
 
                 """
                 ...
@@ -370,15 +374,15 @@ class FlextLdifProtocols(FlextProtocols):
                 """Execute with automatic type detection and routing.
 
                 Polymorphic dispatch based on data type:
-                - str → parse → list[Entry]
-                - list[Entry] → write → str
+                - str -> parse -> list[Entry]
+                - list[Entry] -> write -> str
 
                 Args:
                     data: LDIF content string OR list of Entry models
                     operation: Force operation ('parse' or 'write'), optional
 
                 Returns:
-                    FlextResult[list[Entry] | str]
+                    "FlextResult[list[Entry] | str]"
 
                 """
                 ...
@@ -424,26 +428,32 @@ class FlextLdifProtocols(FlextProtocols):
             # (entry, schema, acl) instead of through the base port.
             # These methods route each entry to the appropriate quirk based on its type.
 
-            def parse(self, ldif_text: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+            def parse(
+                self,
+                ldif_text: str,
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Parse LDIF text to Entry models.
 
                 Args:
                     ldif_text: LDIF content as string.
 
                 Returns:
-                    FlextResult with list of Entry models.
+                    "FlextResult" with list of Entry models.
 
                 """
                 ...
 
-            def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+            def write(
+                self,
+                entries: list[FlextLdifModels.Entry],
+            ) -> FlextResult[str]:
                 """Write Entry models to LDIF text.
 
                 Args:
                     entries: List of Entry models to write.
 
                 Returns:
-                    FlextResult with LDIF text as string.
+                    "FlextResult" with LDIF text as string.
 
                 """
                 ...
@@ -456,8 +466,8 @@ class FlextLdifProtocols(FlextProtocols):
         class ConversionMatrixProtocol(Protocol):
             """Protocol for conversion matrix operations.
 
-            Handles N×N server conversions using RFC as intermediate format:
-            Source Server → RFC Format → Target Server
+            Handles NxN server conversions using RFC as intermediate format:
+            Source Server -> RFC Format -> Target Server
 
             Responsibilities:
             1. Convert schema elements between servers
@@ -493,7 +503,7 @@ class FlextLdifProtocols(FlextProtocols):
                     model_instance: The Pydantic model instance to convert.
 
                 Returns:
-                    A FlextResult containing the converted Pydantic model in the
+                    A "FlextResult" containing the converted Pydantic model in the
                     target server's format.
 
                 """
@@ -526,7 +536,7 @@ class FlextLdifProtocols(FlextProtocols):
                     server_type: Server type identifier
 
                 Returns:
-                    FlextResult with highest-priority schema quirk
+                    "FlextResult" with highest-priority schema quirk
 
                 """
                 ...

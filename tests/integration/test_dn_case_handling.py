@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 from flext_core.models import FlextModels
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 
 class TestDnCaseRegistry:
@@ -74,7 +74,8 @@ class TestDnCaseRegistry:
         assert registry.get_canonical_dn("cn=unknown,dc=com") is None
 
     def test_has_dn_case_insensitive(
-        self, registry: FlextLdifModels.DnRegistry
+        self,
+        registry: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test DN existence check is case-insensitive."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")

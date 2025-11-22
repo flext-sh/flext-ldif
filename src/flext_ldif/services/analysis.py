@@ -22,7 +22,7 @@ from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifAnalysis(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for entry analysis and validation.
 
@@ -241,7 +241,7 @@ class FlextLdifAnalysis(
         if FlextRuntime.is_list_like(oc_values):
             for oc in oc_values:
                 oc_result = validation_service.validate_objectclass_name(
-                    cast("str", oc)
+                    cast("str", oc),
                 )
                 if oc_result.is_failure or not oc_result.unwrap():
                     errors.append(f"Entry {dn_str}: Invalid objectClass '{oc}'")

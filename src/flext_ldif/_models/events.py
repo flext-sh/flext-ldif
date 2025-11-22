@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from flext_core import FlextModels
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FlextLdifModelsEvents:
@@ -26,7 +26,7 @@ class FlextLdifModelsEvents:
 
     # Event configuration classes would go here
 
-    class DnEventConfig(FlextModels.Config):
+    class DnEventConfig(BaseModel):
         """Configuration for DN event creation.
 
         Consolidates parameters for create_dn_event utility function.
@@ -68,7 +68,7 @@ class FlextLdifModelsEvents:
             description="Parsed DN components",
         )
 
-    class MigrationEventConfig(FlextModels.Config):
+    class MigrationEventConfig(BaseModel):
         """Configuration for migration event creation.
 
         Consolidates parameters for create_migration_event utility function.
@@ -128,7 +128,7 @@ class FlextLdifModelsEvents:
             )
         )
 
-    class ConversionEventConfig(FlextModels.Config):
+    class ConversionEventConfig(BaseModel):
         """Configuration for conversion event creation.
 
         Consolidates parameters for create_conversion_event utility function.
@@ -603,7 +603,7 @@ class FlextLdifModelsEvents:
             description="Schema processing throughput in items per second",
         )
 
-    class SchemaEventConfig(FlextModels.Config):
+    class SchemaEventConfig(BaseModel):
         """Configuration for schema event creation."""
 
         schema_operation: str = Field(description="Schema operation name")

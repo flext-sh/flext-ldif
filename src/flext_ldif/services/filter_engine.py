@@ -26,7 +26,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifFilterEngine(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes]
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Service for core entry filtering operations.
 

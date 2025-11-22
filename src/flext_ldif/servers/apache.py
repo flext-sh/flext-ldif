@@ -50,14 +50,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "aci"  # Apache DS uses standard ACI
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
-        # NOTE: Apache inherits RFC baseline for:
-        # - OPERATIONAL_ATTRIBUTES (RFC standard set)
-        # - PRESERVE_ON_MIGRATION (createTimestamp, modifyTimestamp)
-        # - SUPPORTED_PERMISSIONS (read, write, add, delete, search, compare)
-        # - ATTRIBUTE_ALIASES (empty, no aliases)
-        # - ATTRIBUTE_FIELDS (empty, no special fields)
-        # - OBJECTCLASS_REQUIREMENTS (RFC standard requirements)
-
         # Detection constants (server-specific)
         # Migrated from FlextLdifConstants.LdapServerDetection
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.18060\."
@@ -254,14 +246,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             attr_definition: str,
             *,
             _case_insensitive: bool = False,
-            allow_syntax_quotes: bool = False,
+            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata.
 
             Args:
                 attr_definition: Attribute definition string
                 _case_insensitive: Whether to use case-insensitive pattern matching
-                allow_syntax_quotes: Whether to allow quoted syntax values
+                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with SchemaAttribute marked with Apache metadata
@@ -270,7 +262,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             result = super()._parse_attribute(
                 attr_definition,
                 _case_insensitive=_case_insensitive,
-                allow_syntax_quotes=allow_syntax_quotes,
+                _allow_syntax_quotes=_allow_syntax_quotes,
             )
             if result.is_success:
                 attr_data = result.unwrap()

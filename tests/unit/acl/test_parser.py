@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
 
 

@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConstants
 
 
 class TestAclAttributeRegistry:
@@ -80,7 +80,7 @@ class TestAclAttributeRegistry:
     def test_acl_registry_unknown_server_type(self) -> None:
         """Unknown server type should return RFC foundation only."""
         attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
-            "unknown_server"
+            "unknown_server",
         )
         # Should have RFC foundation
         assert "aci" in attrs

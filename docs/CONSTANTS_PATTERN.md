@@ -1,7 +1,9 @@
 # Constants Pattern Guide
 
 ## RFC.Constants (Base)
+
 **Rule:** Use ONLY `ClassVar` - never `Final`
+
 - Allows all servers to override if needed
 - Provides baseline values
 
@@ -16,7 +18,9 @@ class Constants:
 ```
 
 ## Server.Constants (Específicos)
+
 **Rule:**
+
 - `ClassVar` quando sobrescrever RFC
 - `Final` apenas para novas constantes server-specific
 
@@ -32,16 +36,17 @@ class Constants(FlextLdifServersRfc.Constants):
     ACL_TYPE_PATTERN: Final[str] = r"^orclaci:"
 ```
 
-## Quando usar o quê:
+## Quando usar o quê
 
-| Cenário | RFC.Constants | Server.Constants |
-|---------|---------------|------------------|
-| Valor baseline para todos | `ClassVar` | - |
-| Override de valor RFC | - | `ClassVar` |
-| Nova constante server-specific | - | `Final` ou `ClassVar` |
-| Constante que NUNCA muda | - | `Final` |
+| Cenário                        | RFC.Constants | Server.Constants      |
+| ------------------------------ | ------------- | --------------------- |
+| Valor baseline para todos      | `ClassVar`    | -                     |
+| Override de valor RFC          | -             | `ClassVar`            |
+| Nova constante server-specific | -             | `Final` ou `ClassVar` |
+| Constante que NUNCA muda       | -             | `Final`               |
 
-## Benefícios:
+## Benefícios
+
 - ✅ Sem conflitos de lint
 - ✅ Herança funciona corretamente
 - ✅ Type safety mantida

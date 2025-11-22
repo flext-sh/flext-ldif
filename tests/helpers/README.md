@@ -153,12 +153,12 @@ def test_roundtrip_with_fixture(ldif_api, tmp_path):
     """Test roundtrip using fixture."""
     # Load fixture
     entries = FlextLdifTestUtils.load_fixture(ldif_api, "rfc", "rfc_entries.ldif")
-    
+
     # Roundtrip
     original, roundtripped = TestOperations.roundtrip_and_validate(
         ldif_api, entries, tmp_path
     )
-    
+
     # Validações adicionais
     TestAssertions.assert_roundtrip_preserves(original, roundtripped)
 ```

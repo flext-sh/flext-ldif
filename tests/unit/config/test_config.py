@@ -14,8 +14,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConfig, FlextLdifConstants
 
 
 class TestFlextLdifConfig:
@@ -117,12 +116,12 @@ class TestFlextLdifConfig:
         # Invalid values
         with pytest.raises(ValidationError):
             FlextLdifConfig(
-                ldif_analytics_cache_size=99
+                ldif_analytics_cache_size=99,
             )  # Below MIN_ANALYTICS_CACHE_SIZE=100
 
         with pytest.raises(ValidationError):
             FlextLdifConfig(
-                ldif_analytics_cache_size=10001
+                ldif_analytics_cache_size=10001,
             )  # Above MAX_ANALYTICS_CACHE_SIZE=10000
 
     def test_singleton_pattern(self) -> None:

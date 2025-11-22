@@ -14,7 +14,7 @@ import pytest
 
 from flext_ldif import FlextLdif
 
-from ...helpers.test_fixture_helpers import FixtureTestHelpers
+from .test_fixture_helpers import FixtureTestHelpers
 
 # Fixtures are automatically discovered from conftest files in parent directories
 
@@ -47,7 +47,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_entries_with_specific_count(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_entries with specific expected_min_count."""
         entries = FixtureTestHelpers.load_fixture_entries(
@@ -61,7 +62,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_and_validate_structure_defaults(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_and_validate_structure with default parameters."""
         entries = FixtureTestHelpers.load_fixture_and_validate_structure(
@@ -79,7 +81,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_and_validate_structure_with_dn(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_and_validate_structure with expected_has_dn=True."""
         entries = FixtureTestHelpers.load_fixture_and_validate_structure(
@@ -95,7 +98,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_and_validate_structure_with_attributes(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_and_validate_structure with expected_has_attributes=True."""
         entries = FixtureTestHelpers.load_fixture_and_validate_structure(
@@ -111,7 +115,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_and_validate_structure_with_objectclass_true(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_and_validate_structure with expected_has_objectclass=True."""
         entries = FixtureTestHelpers.load_fixture_and_validate_structure(
@@ -128,7 +133,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_and_validate_structure_with_objectclass_false(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_and_validate_structure with expected_has_objectclass=False."""
         # Note: This test may fail if fixture has objectclass, but tests the branch
@@ -143,7 +149,8 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(10)
     def test_load_fixture_and_validate_structure_all_false(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test load_fixture_and_validate_structure with all flags False."""
         # This tests the branches where expected_has_dn and expected_has_attributes are False
@@ -160,7 +167,9 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(15)
     def test_run_fixture_roundtrip_with_validation(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test run_fixture_roundtrip with validate_identical=True."""
         original, roundtrip, is_identical = FixtureTestHelpers.run_fixture_roundtrip(
@@ -176,7 +185,9 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(15)
     def test_run_fixture_roundtrip_without_validation(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test run_fixture_roundtrip with validate_identical=False."""
         original, roundtrip, is_identical = FixtureTestHelpers.run_fixture_roundtrip(
@@ -192,7 +203,9 @@ class TestFixtureTestHelpers:
 
     @pytest.mark.timeout(15)
     def test_run_fixture_roundtrip_default(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test run_fixture_roundtrip with default parameters."""
         original, roundtrip, is_identical = FixtureTestHelpers.run_fixture_roundtrip(

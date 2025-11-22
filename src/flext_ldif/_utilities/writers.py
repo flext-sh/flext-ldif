@@ -55,14 +55,18 @@ class FlextLdifUtilitiesWriters:
             """Protocol for writing comments and metadata."""
 
             def __call__(
-                self, entry: FlextLdifModels.Entry, lines: list[str]
+                self,
+                entry: FlextLdifModels.Entry,
+                lines: list[str],
             ) -> None: ...
 
         class WriteAttributesHook(Protocol):
             """Protocol for writing attributes."""
 
             def __call__(
-                self, entry: FlextLdifModels.Entry, lines: list[str]
+                self,
+                entry: FlextLdifModels.Entry,
+                lines: list[str],
             ) -> None: ...
 
         class FormatValueHook(Protocol):
@@ -74,7 +78,8 @@ class FlextLdifUtilitiesWriters:
             """Protocol for entry transformation before write."""
 
             def __call__(
-                self, entry: FlextLdifModels.Entry
+                self,
+                entry: FlextLdifModels.Entry,
             ) -> FlextLdifModels.Entry: ...
 
         class WriteDnHook(Protocol):
@@ -177,14 +182,16 @@ class FlextLdifUtilitiesWriters:
             """Protocol for building attribute definition parts."""
 
             def __call__(
-                self, attribute: FlextLdifModels.SchemaAttribute
+                self,
+                attribute: FlextLdifModels.SchemaAttribute,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
             """Protocol for attribute transformation."""
 
             def __call__(
-                self, attribute: FlextLdifModels.SchemaAttribute
+                self,
+                attribute: FlextLdifModels.SchemaAttribute,
             ) -> FlextLdifModels.SchemaAttribute: ...
 
         class FormatOidHook(Protocol):
@@ -249,14 +256,16 @@ class FlextLdifUtilitiesWriters:
             """Protocol for building objectClass definition parts."""
 
             def __call__(
-                self, objectclass: FlextLdifModels.SchemaObjectClass
+                self,
+                objectclass: FlextLdifModels.SchemaObjectClass,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
             """Protocol for objectClass transformation."""
 
             def __call__(
-                self, objectclass: FlextLdifModels.SchemaObjectClass
+                self,
+                objectclass: FlextLdifModels.SchemaObjectClass,
             ) -> FlextLdifModels.SchemaObjectClass: ...
 
         class TransformSupHook(Protocol):
@@ -382,7 +391,7 @@ class FlextLdifUtilitiesWriters:
 
                 # Write each entry
                 stats = FlextLdifUtilitiesWriters.Content.Stats(
-                    total_entries=len(entries)
+                    total_entries=len(entries),
                 )
 
                 for entry in entries:

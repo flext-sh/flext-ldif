@@ -711,7 +711,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
                 # Build Acl model using helper (DRY refactoring)
                 acl = self._build_openldap_acl_model(
-                    what, attributes, subject_value, access, acl_line
+                    what,
+                    attributes,
+                    subject_value,
+                    access,
+                    acl_line,
                 )
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl)

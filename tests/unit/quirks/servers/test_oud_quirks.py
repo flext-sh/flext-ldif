@@ -11,17 +11,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal, cast
 
 import pytest
 
-from flext_ldif.api import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oud import FlextLdifServersOud
+from tests.helpers import FixtureTestHelpers
+from tests.helpers.test_assertions import TestAssertions
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-from ....helpers import FixtureTestHelpers
-from ....helpers.test_assertions import TestAssertions
-from ....helpers.test_deduplication_helpers import TestDeduplicationHelpers
 from .test_utils import FlextLdifTestUtils
 
 # Test constants - always at top of module, no type checking
@@ -134,8 +134,6 @@ class OudTestHelpers:
         operation: str = "write",
     ) -> None:
         """Validate all entries can be written successfully - replaces 8-12 lines per test."""
-        from typing import Literal, cast
-
         for entry in entries:
             result = quirk.execute(
                 entries=[entry],

@@ -531,7 +531,7 @@ class TestCanHandle:
     ) -> None:
         """Test can_handle_objectclass with valid definition."""
         can_handle = schema_service.can_handle_objectclass(
-            sample_objectclass_definition
+            sample_objectclass_definition,
         )
         assert can_handle is True
 

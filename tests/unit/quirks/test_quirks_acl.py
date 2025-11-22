@@ -816,8 +816,6 @@ class TestOIDWriterFormatting:
 
         Default format produces standard single-line orclaci string.
         """
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with self subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -850,8 +848,6 @@ class TestOIDWriterFormatting:
 
         Oneline format produces single line without line breaks.
         """
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with self subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -882,8 +878,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with dnattr subject in default format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with dnattr subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -916,8 +910,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with guidattr subject in oneline format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with guidattr subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -948,8 +940,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with groupattr subject in default format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with groupattr subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -983,8 +973,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with multiple permissions in oneline format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with multiple permissions
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1029,8 +1017,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with group_dn subject in oneline format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with group_dn subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1064,8 +1050,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with entry target (no attributes) in default format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with entry target (no specific attributes)
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1098,8 +1082,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with proxy permission in oneline format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with proxy permission (OID-specific)
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1132,8 +1114,6 @@ class TestOIDWriterFormatting:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with selfwrite permission in default format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL model with selfwrite permission (OID-specific)
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1175,8 +1155,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with all permissions expanded together."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL with all possible permissions
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1214,8 +1192,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with empty attributes list produces 'entry'."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1241,8 +1217,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with single attribute."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1268,8 +1242,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with many attributes."""
-        from flext_ldif import FlextLdifModels
-
         attrs = ["cn", "mail", "telephoneNumber", "mobile", "description", "department"]
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1296,8 +1268,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer extracts DN from LDAP URL for user_dn subject."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1323,8 +1293,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer extracts DN from LDAP URL for group_dn subject."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1349,8 +1317,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer removes #LDAPURL suffix from dnattr subject value."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1376,8 +1342,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer removes #USERDN suffix from guidattr subject value."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1403,8 +1367,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer removes #GROUPDN suffix from groupattr subject value."""
-        from flext_ldif import FlextLdifModels
-
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
@@ -1430,8 +1392,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer uses raw_acl if already in OID format."""
-        from flext_ldif import FlextLdifModels
-
         # Create ACL with raw_acl already set
         raw_orclaci = "orclaci: access to attr=(userPassword) by self (write)"
         acl = FlextLdifModels.Acl(
@@ -1459,8 +1419,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer handles special characters in DN values."""
-        from flext_ldif import FlextLdifModels
-
         # DN with special characters
         special_dn = "cn=User\\, Admin,ou=special,dc=example,dc=com"
         acl = FlextLdifModels.Acl(
@@ -1487,8 +1445,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer permission order matches permission check sequence."""
-        from flext_ldif import FlextLdifModels
-
         # Mix of permissions
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
@@ -1519,8 +1475,6 @@ class TestOIDWriterComprehensive:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer handles missing subject gracefully."""
-        from flext_ldif import FlextLdifModels
-
         # ACL without subject
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(

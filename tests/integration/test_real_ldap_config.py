@@ -9,7 +9,7 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Process batches of entries
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestsDocker.ldap_container fixture.
+container management via FlextTestDocker.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,6 +22,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from flext_core import FlextConfig
+from flext_ldap.config import FlextLdapConfig
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
@@ -57,14 +59,10 @@ class TestRealLdapConfigurationFromEnv:
 
         # max_workers is in root FlextConfig, not nested FlextLdifConfig
         # Access via super().config to get root config
-        from flext_core import FlextConfig
-
         root_config = FlextConfig.get_global_instance()
         assert root_config.max_workers >= 1
 
         # Verify LDAP-specific config from environment using FlextLdapConfig
-        from flext_ldap.config import FlextLdapConfig
-
         ldap_config = FlextLdapConfig.get_instance()
 
         assert ldap_config.host is not None
@@ -77,8 +75,6 @@ class TestRealLdapConfigurationFromEnv:
     ) -> None:
         """Test dynamic worker calculation based on config and entry count."""
         # max_workers is in root FlextConfig, not nested FlextLdifConfig
-        from flext_core import FlextConfig
-
         root_config = FlextConfig.get_global_instance()
 
         # Verify max_workers is accessible from root config

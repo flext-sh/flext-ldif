@@ -16,9 +16,3 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-# ACL models moved to _models/domain.py
-# Import them from there if needed directly:
-# from flext_ldif._models.domain import FlextLdifModelsDomains
-# Or use the unified interface:
-# from flext_ldif.models import FlextLdifModels

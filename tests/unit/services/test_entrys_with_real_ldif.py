@@ -22,12 +22,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from flext_ldif import FlextLdifModels
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifUtilities
+from flext_ldif import FlextLdif, FlextLdifUtilities
 from flext_ldif.services.entry import FlextLdifEntry
 
 # Add fixtures path
@@ -51,7 +53,8 @@ class RealLdifLoader:
         result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
-        raise ValueError(f"Failed to parse OID fixtures: {result.error}")
+        msg = f"Failed to parse OID fixtures: {result.error}"
+        raise ValueError(msg)
 
     @staticmethod
     def load_oud_entries() -> list[FlextLdifModels.Entry]:
@@ -62,7 +65,8 @@ class RealLdifLoader:
         result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
-        raise ValueError(f"Failed to parse OUD fixtures: {result.error}")
+        msg = f"Failed to parse OUD fixtures: {result.error}"
+        raise ValueError(msg)
 
     @staticmethod
     def load_openldap2_entries() -> list[FlextLdifModels.Entry]:
@@ -73,7 +77,8 @@ class RealLdifLoader:
         result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
-        raise ValueError(f"Failed to parse OpenLDAP2 fixtures: {result.error}")
+        msg = f"Failed to parse OpenLDAP2 fixtures: {result.error}"
+        raise ValueError(msg)
 
     @staticmethod
     def load_rfc_entries() -> list[FlextLdifModels.Entry]:
@@ -84,7 +89,8 @@ class RealLdifLoader:
         result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
-        raise ValueError(f"Failed to parse RFC fixtures: {result.error}")
+        msg = f"Failed to parse RFC fixtures: {result.error}"
+        raise ValueError(msg)
 
 
 # ════════════════════════════════════════════════════════════════════════════

@@ -10,12 +10,11 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 
 
 def get_validation_metadata(
-    entry: FlextLdifModels.Entry | FlextLdifModelsDomains.Entry,
+    entry: FlextLdifModels.Entry,
 ) -> dict[str, object] | None:
     """Helper to get validation_metadata from entry.metadata.validation_results."""
     if not entry.metadata or not entry.metadata.validation_results:
@@ -165,7 +164,7 @@ class TestLdifAttributesRfcValidation:
                 "userPassword": ["{SSHA}hash"],
                 "employee-number": ["12345"],  # Hyphen allowed
                 "cn;lang-en": ["Test"],  # Options allowed (RFC 4512 § 2.5)
-            }
+            },
         )
 
         # All RFC-compliant names accepted
@@ -187,7 +186,7 @@ class TestLdifAttributesRfcValidation:
                 "orclGUID": ["12345678"],  # OID-specific
                 "orclentrylevelaci": ["access to entry by * (browse)"],  # OID-specific
                 "cn": ["Test"],  # RFC-compliant
-            }
+            },
         )
 
         # All attributes accepted (lenient processing)
@@ -209,7 +208,7 @@ class TestLdifAttributesRfcValidation:
                 "2.5.4.3": ["CommonName"],  # cn OID
                 "1.3.6.1.4.1.1466.115.121.1.15": ["DirectoryString"],  # SYNTAX OID
                 "2.16.840.1.113894.1.1.1": ["orclGUID"],  # Oracle OID
-            }
+            },
         )
 
         # Numeric OIDs accepted
@@ -224,7 +223,7 @@ class TestDistinguishedNameRfcValidation:
     def test_rfc4514_compliant_dn_passes_validation(self) -> None:
         """Validate RFC 4514 compliant DN passes field_validator."""
         dn = FlextLdifModels.DistinguishedName(
-            value="uid=test,ou=users,dc=example,dc=com"
+            value="uid=test,ou=users,dc=example,dc=com",
         )
 
         assert dn.value == "uid=test,ou=users,dc=example,dc=com"
@@ -238,7 +237,7 @@ class TestDistinguishedNameRfcValidation:
         RFC 4514 allows spaces after comma in DN components.
         """
         dn = FlextLdifModels.DistinguishedName(
-            value="uid=test, ou=users, dc=example, dc=com"
+            value="uid=test, ou=users, dc=example, dc=com",
         )
 
         assert dn.value == "uid=test, ou=users, dc=example, dc=com"

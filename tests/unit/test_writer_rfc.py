@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifWriter
 
 # Import RFC quirks to ensure they are auto-registered
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
 
 @pytest.fixture
@@ -69,7 +68,7 @@ def test_write_single_entry_to_string(
     )
 
     assert result.is_success, f"Write failed: {result.error}"
-    content = result.unwrap()
+    content = cast("str", result.unwrap())
 
     # Check LDIF version line
     assert content.startswith("version: 1\n"), "Missing LDIF version line"
@@ -109,7 +108,7 @@ def test_write_multiple_entries_to_string(
     )
 
     assert result.is_success, f"Write failed: {result.error}"
-    content = result.unwrap()
+    content = cast("str", result.unwrap())
 
     # Check both entries are present
     assert "dn: cn=test,dc=example,dc=com" in content
@@ -159,7 +158,7 @@ def test_write_entries_counted(
     )
 
     assert result.is_success
-    write_response = result.unwrap()
+    write_response = cast("FlextLdifModels.WriteResponse", result.unwrap())
     assert write_response.statistics.entries_written == 1
 
 
@@ -196,7 +195,7 @@ def test_write_with_multiple_attribute_values(writer: FlextLdifWriter) -> None:
     )
 
     assert result.is_success
-    content = result.unwrap()
+    content = cast("str", result.unwrap())
 
     # Check all member values are present
     assert content.count("member: ") == 3, "Not all member values written"
@@ -210,7 +209,7 @@ def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
     result = writer.write([], target_server_type="rfc", output_target="string")
 
     assert result.is_success
-    content = result.unwrap()
+    content = cast("str", result.unwrap())
     # Empty list produces LDIF version header but no entries (RFC 2849 compliant)
     assert content == "version: 1\n"
     assert content.count("dn:") == 0
@@ -222,10 +221,8 @@ def test_fallback_to_rfc_when_no_server(
 ) -> None:
     """Test that non-existent server type fails gracefully."""
     # Use non-existent server type - should fail
-    writer = FlextLdifWriter(
-        config=rfc_config,
-        quirk_registry=registry,
-    )
+    # Note: FlextLdifWriter no longer accepts config/quirk_registry in __init__
+    writer = FlextLdifWriter()
 
     entry = FlextLdifModels.Entry(
         dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -243,4 +240,4 @@ def test_fallback_to_rfc_when_no_server(
     )
     # Should fail with clear error message
     assert result.is_failure
-    assert "no quirk found" in result.error or ""
+    assert "no quirk found" in (result.error or "")

@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif import FlextLdifModels, FlextLdifWriter
 
 
 class TestWriterLineFoldingDebug:

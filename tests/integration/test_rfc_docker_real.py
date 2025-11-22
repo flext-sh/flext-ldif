@@ -15,10 +15,13 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import (
+    FlextLdifConfig,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
 
 
 class TestRfcDockerRealData:
@@ -226,8 +229,6 @@ class TestRfcDockerRealData:
     ) -> None:
         """Test RFC writer exception handling (now exposed without pragmas)."""
         # Test with readonly directory (permission error)
-        from flext_ldif.models import FlextLdifModels
-
         readonly_dir = tmp_path / "readonly"
         readonly_dir.mkdir()
         readonly_dir.chmod(0o555)
@@ -253,7 +254,8 @@ class TestRfcDockerRealData:
             )
             # Should fail with permission error (not silently)
             if not result.is_success:
-                assert result.error is not None and (
+                assert result.error is not None
+                assert (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error
                 )
@@ -372,8 +374,6 @@ class TestRfcIntegrationRealWorld:
     ) -> None:
         """Test writing large dataset to file."""
         # Create 100 test entries
-        from flext_ldif.models import FlextLdifModels
-
         # Create Entry models directly (writer expects Entry objects, not dicts)
         entry_models = [
             FlextLdifModels.Entry(

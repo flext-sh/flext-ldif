@@ -13,10 +13,10 @@ from typing import cast
 
 from flext_core import FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oud import FlextLdifServersOud
 
-from ...helpers.test_assertions import TestAssertions
+from .test_assertions import TestAssertions
 
 
 class OudTestHelpers:
@@ -43,7 +43,8 @@ class OudTestHelpers:
         """
         result = schema_quirk.parse(attr_def)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result), "Attribute parse should succeed"
+            cast("FlextResult[object]", result),
+            "Attribute parse should succeed",
         )
         attr = cast("FlextLdifModels.SchemaAttribute", unwrapped)
         assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
@@ -58,7 +59,9 @@ class OudTestHelpers:
                 f"Expected name {expected_name}, got {attr.name}"
             )
         TestAssertions.assert_schema_attribute_valid(
-            attr, expected_oid or "", expected_name or ""
+            attr,
+            expected_oid or "",
+            expected_name or "",
         )
         return attr
 
@@ -83,7 +86,8 @@ class OudTestHelpers:
         """
         result = schema_quirk.parse(oc_def)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result), "ObjectClass parse should succeed"
+            cast("FlextResult[object]", result),
+            "ObjectClass parse should succeed",
         )
         oc = cast("FlextLdifModels.SchemaObjectClass", unwrapped)
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
@@ -96,7 +100,9 @@ class OudTestHelpers:
                 f"Expected name {expected_name}, got {oc.name}"
             )
         TestAssertions.assert_schema_objectclass_valid(
-            oc, expected_oid or "", expected_name or ""
+            oc,
+            expected_oid or "",
+            expected_name or "",
         )
         return oc
 
@@ -119,7 +125,8 @@ class OudTestHelpers:
         """
         result = schema_quirk.write(attr)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result), "Attribute write should succeed"
+            cast("FlextResult[object]", result),
+            "Attribute write should succeed",
         )
         written = cast("str", unwrapped)
         assert isinstance(written, str), "Write should return string"
@@ -152,7 +159,8 @@ class OudTestHelpers:
         """
         result = schema_quirk.write(oc)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result), "ObjectClass write should succeed"
+            cast("FlextResult[object]", result),
+            "ObjectClass write should succeed",
         )
         written = cast("str", unwrapped)
         assert isinstance(written, str), "Write should return string"
@@ -185,7 +193,8 @@ class OudTestHelpers:
         """
         result = acl_quirk.parse(acl_line)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result), "ACL parse should succeed"
+            cast("FlextResult[object]", result),
+            "ACL parse should succeed",
         )
         acl = cast("FlextLdifModels.Acl", unwrapped)
         assert isinstance(acl, FlextLdifModels.Acl), "Parse should return Acl"
@@ -214,7 +223,8 @@ class OudTestHelpers:
         """
         result = acl_quirk.write(acl)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result), "ACL write should succeed"
+            cast("FlextResult[object]", result),
+            "ACL write should succeed",
         )
         written = cast("str", unwrapped)
         assert isinstance(written, str), "Write should return string"

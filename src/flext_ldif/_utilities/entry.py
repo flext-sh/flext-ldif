@@ -112,7 +112,7 @@ class FlextLdifUtilitiesEntry:
                     ]
                 elif isinstance(values, bytes):
                     normalized_result[attr_name] = [
-                        values.decode("utf-8", errors="replace")
+                        values.decode("utf-8", errors="replace"),
                     ]
                 else:
                     normalized_result[attr_name] = [str(values)]

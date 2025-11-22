@@ -33,8 +33,13 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifConstants, FlextLdifModels
-from flext_ldif.config import LdifFlextConfig
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifConfig,
+    FlextLdifConstants,
+    FlextLdifModels,
+    LdifFlextConfig,
+)
 
 from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 from ...helpers.test_rfc_helpers import RfcTestHelpers
@@ -280,7 +285,9 @@ olcSortVals: mail cn
             {"content": oid_specific_content, "server_type": None, "expected_count": 1},
         ]
         TestDeduplicationHelpers.api_parse_with_server_types_batch(
-            api, test_cases, validate_all=True
+            api,
+            test_cases,
+            validate_all=True,
         )
 
 
@@ -310,7 +317,9 @@ objectClass: person"""
         # TestDeduplicationHelpers already imported at top
 
         TestDeduplicationHelpers.api_parse_and_unwrap(
-            api, entries_content, expected_count=100
+            api,
+            entries_content,
+            expected_count=100,
         )
         # Should parse all entries
 
@@ -347,7 +356,8 @@ class TestAPIWriting:
             },
         ]
         return TestDeduplicationHelpers.create_entries_batch(
-            entries_data, validate_all=True
+            entries_data,
+            validate_all=True,
         )
 
     def test_write_entries_to_string(
@@ -359,7 +369,9 @@ class TestAPIWriting:
         # TestDeduplicationHelpers already imported at top
 
         ldif_string = TestDeduplicationHelpers.api_write_and_unwrap(
-            api, sample_entries, must_contain=["Alice", "Bob"]
+            api,
+            sample_entries,
+            must_contain=["Alice", "Bob"],
         )
         assert isinstance(ldif_string, str)
 
@@ -438,12 +450,14 @@ class TestAPIEntryOperations:
         dn = FlextLdifModels.DistinguishedName(
             value="cn=Test User,ou=People,dc=example,dc=com",
         )
-        attrs_result = FlextLdifModels.LdifAttributes.create({
-            "cn": ["Test User"],
-            "sn": ["User"],
-            "mail": ["test@example.com"],
-            "objectClass": ["person", "inetOrgPerson"],
-        })
+        attrs_result = FlextLdifModels.LdifAttributes.create(
+            {
+                "cn": ["Test User"],
+                "sn": ["User"],
+                "mail": ["test@example.com"],
+                "objectClass": ["person", "inetOrgPerson"],
+            },
+        )
         assert attrs_result.is_success
         return FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
 
@@ -616,7 +630,7 @@ cn: Test
 objectClass: person
 orclGUID: 550e8400-e29b-41d4-a716-446655440000
 """
-        result = api.detect_server_type(content)
+        result = api.detect_server_type(ldif_content=content)
         # Detection may vary, so just check it returns a result
         assert result.is_success or result.is_failure
 
@@ -626,7 +640,7 @@ orclGUID: 550e8400-e29b-41d4-a716-446655440000
 cn: Test
 objectClass: person
 """
-        result = api.detect_server_type(content)
+        result = api.detect_server_type(ldif_content=content)
         # Should succeed
         assert result.is_success or result.is_failure
 
@@ -785,13 +799,15 @@ class TestAPIACLOperations:
     def entry_with_acl(self) -> FlextLdifModels.Entry:
         """Create an entry with ACL attributes."""
         dn = FlextLdifModels.DistinguishedName(value="cn=ACL Test,dc=example,dc=com")
-        attrs_result = FlextLdifModels.LdifAttributes.create({
-            "cn": ["ACL Test"],
-            "aci": [
-                "(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)",
-            ],
-            "objectClass": ["person"],
-        })
+        attrs_result = FlextLdifModels.LdifAttributes.create(
+            {
+                "cn": ["ACL Test"],
+                "aci": [
+                    "(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)",
+                ],
+                "objectClass": ["person"],
+            },
+        )
         assert attrs_result.is_success
         return FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
 
@@ -830,12 +846,14 @@ class TestAPIAdvancedOperations:
             dn = FlextLdifModels.DistinguishedName(
                 value=f"cn=User{i},ou=People,dc=example,dc=com",
             )
-            attrs_result = FlextLdifModels.LdifAttributes.create({
-                "cn": [f"User{i}"],
-                "sn": ["User"],
-                "mail": [f"user{i}@example.com"],
-                "objectClass": ["person", "inetOrgPerson"],
-            })
+            attrs_result = FlextLdifModels.LdifAttributes.create(
+                {
+                    "cn": [f"User{i}"],
+                    "sn": ["User"],
+                    "mail": [f"user{i}@example.com"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                },
+            )
             if attrs_result.is_success:
                 entries.append(
                     FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap()),
@@ -1069,11 +1087,13 @@ class TestAPIConversionOperations:
         dn = FlextLdifModels.DistinguishedName(
             value="cn=Test,ou=People,dc=example,dc=com",
         )
-        attrs_result = FlextLdifModels.LdifAttributes.create({
-            "cn": ["Test"],
-            "sn": ["User"],
-            "objectClass": ["person"],
-        })
+        attrs_result = FlextLdifModels.LdifAttributes.create(
+            {
+                "cn": ["Test"],
+                "sn": ["User"],
+                "objectClass": ["person"],
+            },
+        )
         assert attrs_result.is_success
         return FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
 
@@ -1085,11 +1105,13 @@ class TestAPIConversionOperations:
             dn = FlextLdifModels.DistinguishedName(
                 value=f"cn=User{i},ou=People,dc=example,dc=com",
             )
-            attrs_result = FlextLdifModels.LdifAttributes.create({
-                "cn": [f"User{i}"],
-                "sn": ["User"],
-                "objectClass": ["person"],
-            })
+            attrs_result = FlextLdifModels.LdifAttributes.create(
+                {
+                    "cn": [f"User{i}"],
+                    "sn": ["User"],
+                    "objectClass": ["person"],
+                },
+            )
             if attrs_result.is_success:
                 entries.append(
                     FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap()),
@@ -1292,12 +1314,15 @@ class TestAPIProcessing:
     def sample_entry(self) -> FlextLdifModels.Entry:
         """Create sample entry for processing testing."""
         dn = FlextLdifModels.DistinguishedName(value="cn=Test User,dc=example,dc=com")
-        attrs_result = FlextLdifModels.LdifAttributes.create({
-            "cn": ["Test User"],
-            "objectClass": ["person"],
-        })
+        attrs_result = FlextLdifModels.LdifAttributes.create(
+            {
+                "cn": ["Test User"],
+                "objectClass": ["person"],
+            },
+        )
         if attrs_result.is_failure:
-            raise ValueError(f"Failed to create attributes: {attrs_result.error}")
+            msg = f"Failed to create attributes: {attrs_result.error}"
+            raise ValueError(msg)
         return FlextLdifModels.Entry(
             dn=dn,
             attributes=attrs_result.unwrap(),

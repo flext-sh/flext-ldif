@@ -6,13 +6,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
+import sys
+from pathlib import Path
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.ad import FlextLdifServersAd
+from flext_ldif import FlextLdifModels
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+# Ensure project root is in sys.path for absolute imports
+_project_root = Path(__file__).parent.parent.parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+import pytest  # noqa: E402
+
+from flext_ldif import FlextLdifConstants  # noqa: E402
+from flext_ldif.servers import FlextLdifServersAd  # noqa: E402
+from tests.helpers.test_rfc_helpers import RfcTestHelpers  # noqa: E402, type: ignore
 
 
 class TestActiveDirectorySchemas:
@@ -98,8 +107,6 @@ class TestActiveDirectorySchemas:
             "DESC 'SAM Account Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
             "EQUALITY caseIgnoreMatch SINGLE-VALUE )"
         )
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         attr_data = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_attribute(attr_def),
         )
@@ -202,8 +209,6 @@ class TestActiveDirectorySchemas:
         """Test parsing AUXILIARY objectClass."""
         quirk = ad_schema
 
-        from ...helpers.test_rfc_helpers import RfcTestHelpers
-
         oc_def = "( 1.2.840.113556.1.5.10 NAME 'adGroup' AUXILIARY )"
         oc_data = RfcTestHelpers.test_result_success_and_unwrap(
             quirk.parse_objectclass(oc_def),
@@ -238,8 +243,6 @@ class TestActiveDirectorySchemas:
             single_value=True,
         )
 
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,
             attr_model,
@@ -263,8 +266,6 @@ class TestActiveDirectorySchemas:
             must=["cn", "objectGUID"],
             may=["sAMAccountName"],
         )
-
-        from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
         TestDeduplicationHelpers.quirk_write_and_unwrap(
             quirk,

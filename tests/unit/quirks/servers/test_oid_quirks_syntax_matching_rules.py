@@ -16,7 +16,7 @@ import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 
-from ...fixtures.loader import FlextLdifFixtures
+from ....fixtures.loader import FlextLdifFixtures
 
 
 class TestOidSyntaxOidReplacements:

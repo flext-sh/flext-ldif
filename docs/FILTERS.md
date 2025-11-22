@@ -2,19 +2,19 @@
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| DN pattern matching | Wildcard/fnmatch syntax |
-| ObjectClass-based filtering | With required attributes |
-| Attribute presence/absence filtering | Include/exclude by attribute |
-| Entry transformation | Attribute and objectClass removal |
-| Entry categorization | 6-category: users/groups/hierarchy/schema/ACL |
-| Schema entry detection | Filtering by OID patterns |
-| ACL attribute detection | Extraction capabilities |
-| Exclusion metadata | Marking with reason tracking |
-| Fluent builder pattern | Complex multi-condition filtering |
-| Multiple API patterns | Static, classmethod, builder, helpers |
-| Server-agnostic design | Works with any LDAP server |
+| Feature                              | Description                                   |
+| ------------------------------------ | --------------------------------------------- |
+| DN pattern matching                  | Wildcard/fnmatch syntax                       |
+| ObjectClass-based filtering          | With required attributes                      |
+| Attribute presence/absence filtering | Include/exclude by attribute                  |
+| Entry transformation                 | Attribute and objectClass removal             |
+| Entry categorization                 | 6-category: users/groups/hierarchy/schema/ACL |
+| Schema entry detection               | Filtering by OID patterns                     |
+| ACL attribute detection              | Extraction capabilities                       |
+| Exclusion metadata                   | Marking with reason tracking                  |
+| Fluent builder pattern               | Complex multi-condition filtering             |
+| Multiple API patterns                | Static, classmethod, builder, helpers         |
+| Server-agnostic design               | Works with any LDAP server                    |
 
 ## Usage Examples
 

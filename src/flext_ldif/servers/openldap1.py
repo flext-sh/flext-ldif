@@ -267,7 +267,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             attr_definition: str,
             *,
             _case_insensitive: bool = False,
-            allow_syntax_quotes: bool = False,
+            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute definition, strip OpenLDAP1 prefix, and add metadata.
 
@@ -275,7 +275,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 attr_definition: Attribute definition string
                     (with "attributetype" prefix)
                 _case_insensitive: Whether to use case-insensitive pattern matching (unused)
-                allow_syntax_quotes: Whether to allow quoted syntax values
+                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with SchemaAttribute marked with OpenLDAP1 metadata
@@ -292,7 +292,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_attribute(
                 stripped,
                 _case_insensitive=_case_insensitive,
-                allow_syntax_quotes=allow_syntax_quotes,
+                _allow_syntax_quotes=_allow_syntax_quotes,
             )
             if result.is_success:
                 attr_data = result.unwrap()

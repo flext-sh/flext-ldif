@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifConfig
 
 
 class TestFlextLdifConfigEncodingValidator:
@@ -190,9 +190,8 @@ class TestFlextLdifConfigVersionStringValidator:
             FlextLdifConfig(ldif_version_string="version: 2")
 
         error_str = str(exc_info.value)
-        assert "version" in error_str.lower() and (
-            "1" in error_str or "unsupported" in error_str.lower()
-        )
+        assert "version" in error_str.lower()
+        assert "1" in error_str or "unsupported" in error_str.lower()
 
     def test_invalid_version_non_numeric_raises_error(self) -> None:
         """Validate non-numeric version raises ValidationError."""
@@ -223,9 +222,8 @@ class TestFlextLdifConfigModelValidator:
             )
 
         error_str = str(exc_info.value)
-        assert (
-            "quirks_server_type" in error_str.lower() and "manual" in error_str.lower()
-        )
+        assert "quirks_server_type" in error_str.lower()
+        assert "manual" in error_str.lower()
 
     def test_manual_detection_mode_with_server_type_accepted(self) -> None:
         """Validate manual detection mode with quirks_server_type is accepted."""

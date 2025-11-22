@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 

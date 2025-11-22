@@ -28,8 +28,6 @@ class TestMinimalDifferencesOidOud:
     @pytest.fixture
     def writer(self) -> FlextLdif:
         """Create writer instance via FlextLdif."""
-        from flext_ldif import FlextLdif
-
         return FlextLdif()
 
     def test_oid_fixture_all_differences_captured(
@@ -88,7 +86,8 @@ class TestMinimalDifferencesOidOud:
 
             # Validate metadata completeness
             original_attrs = entry.metadata.extensions.get(
-                "original_attributes_complete", {}
+                "original_attributes_complete",
+                {},
             )
             if isinstance(original_attrs, dict):
                 expected_transformations = list(original_attrs.keys())
@@ -101,7 +100,7 @@ class TestMinimalDifferencesOidOud:
                 if not is_complete:
                     pytest.fail(
                         f"Entry {entry.dn} has incomplete metadata. "
-                        f"Missing transformations for: {missing}"
+                        f"Missing transformations for: {missing}",
                     )
 
     def test_oud_fixture_all_differences_captured(
@@ -251,7 +250,8 @@ cn: test
         # Check that original case is preserved
         assert entry.metadata is not None
         original_attrs = entry.metadata.extensions.get(
-            "original_attributes_complete", {}
+            "original_attributes_complete",
+            {},
         )
         assert isinstance(original_attrs, dict)
 
