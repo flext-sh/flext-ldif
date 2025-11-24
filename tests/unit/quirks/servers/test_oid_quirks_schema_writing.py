@@ -15,9 +15,8 @@ import pytest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
+from tests.fixtures.loader import FlextLdifFixtures
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
-from ....fixtures.loader import FlextLdifFixtures
 
 
 class TestOidSchemaWriting:

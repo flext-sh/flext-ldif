@@ -299,7 +299,8 @@ class TestFlextLdifServersBaseSchemaAclEntryMethods:
     def test_schema_method_with_server_type(self) -> None:
         """Test get_schema_quirk() method with server_type parameter."""
         rfc = FlextLdifServersRfc()
-        schema_quirk = rfc.get_schema_quirk(server_type="rfc")
+        # get_schema_quirk uses _server_type parameter (ignored, but accepts it)
+        schema_quirk = rfc.get_schema_quirk(_server_type="rfc")
         assert schema_quirk is not None
 
     def test_acl_method_no_server_type(self) -> None:
@@ -312,6 +313,7 @@ class TestFlextLdifServersBaseSchemaAclEntryMethods:
     def test_acl_method_with_server_type(self) -> None:
         """Test acl() method with server_type parameter."""
         rfc = FlextLdifServersRfc()
+        # acl() accepts server_type parameter (ignored, but accepts it)
         acl_quirk = rfc.acl(server_type="rfc")
         assert acl_quirk is not None
 

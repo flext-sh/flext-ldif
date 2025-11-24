@@ -667,17 +667,22 @@ class FlextLdifConversion(
                 f"Target quirk {target_class.__name__} does not have Acl nested class",
             )
 
-        # Type ignore: Concrete subclasses (e.g., FlextLdifServersRfc) implement execute
+        # Create ACL quirks - they implement AclProtocol
         source_acl = source_class.Acl()
         target_acl = target_class.Acl()
 
-        # Protocols are for STATIC type checking only, not runtime isinstance()
-        # Duck typing: if the quirk has write() and parse() methods, it works
-        # Use cast() to guide type checker without runtime checks
-        source_acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", source_acl)
-        target_acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", target_acl)
+        # Validate protocol compliance at runtime using isinstance
+        if not isinstance(source_acl, FlextLdifProtocols.Quirks.AclProtocol):
+            return FlextResult.fail(
+                f"Source ACL quirk {source_class.__name__} does not implement AclProtocol",
+            )
+        if not isinstance(target_acl, FlextLdifProtocols.Quirks.AclProtocol):
+            return FlextResult.fail(
+                f"Target ACL quirk {target_class.__name__} does not implement AclProtocol",
+            )
 
-        return FlextResult.ok((source_acl_typed, target_acl_typed))
+        # Both are now typed as AclProtocol - no cast needed
+        return FlextResult.ok((source_acl, target_acl))
 
     def _write_acl_to_string(
         self,

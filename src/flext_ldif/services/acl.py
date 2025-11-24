@@ -30,6 +30,7 @@ from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -76,12 +77,6 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
             - Uses FlextResult for error handling - no None returns
 
         """
-        # Defensive check for None entry
-        if entry is None:
-            return FlextResult[FlextLdifModels.AclResponse].fail(
-                "Entry is None - cannot extract ACLs",
-            )
-
         # Get ACL attribute name for this server type (from quirk)
         acl_attribute_result = self._get_acl_attribute_for_server(server_type)
 
@@ -106,7 +101,13 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                 ),
             )
 
-        # Type annotation guarantees entry is not None - no defensive check needed
+        # Validate entry is not None
+        if entry is None:
+            return FlextResult[FlextLdifModels.AclResponse].fail(
+                "Entry cannot be None",
+            )
+
+        # Type annotation guarantees entry is not None after validation
         acl_values: list[str] = entry.get_attribute_values(acl_attribute)
 
         if not acl_values:
@@ -180,15 +181,17 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         """
         # Get ACL attribute name from quirks - no fallback
         try:
-            acls = self._registry.get_acls(server_type)
-            if acls:
-                # Get the ACL attribute name from the first quirk class variable
-                for quirk in acls:
-                    if hasattr(quirk, "acl_attribute_name"):
-                        attr_name = getattr(quirk, "acl_attribute_name", None)
-                        if attr_name and isinstance(attr_name, str):
-                            # attr_name is already str from getattr - no cast needed
-                            return FlextResult[str].ok(attr_name)
+            acl_quirk = self._registry.acl(server_type)
+            if (
+                acl_quirk
+                and hasattr(acl_quirk, "acl_attribute_name")
+                and isinstance(
+                    attr_name := getattr(acl_quirk, "acl_attribute_name", None),
+                    str,
+                )
+            ):
+                # attr_name is already str from getattr - no cast needed
+                return FlextResult[str].ok(attr_name)
 
             # No ACL attribute for this server type - explicit failure
             # Caller must handle this case (not all servers have ACL attributes)
@@ -255,8 +258,8 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         """
         try:
             # Find the appropriate quirk that can handle this ACL line
-            # Registry returns the first quirk that can_handle(acl_line)
-            acl = self._registry.find_acl(server_type, acl_string)
+            # Registry returns the quirk that can_handle(acl_line)
+            acl = self._registry.find_acl_for_line(server_type, acl_string)
             if not acl:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"No ACL quirk available to parse for {server_type}: {acl_string[:50]}...",
@@ -354,7 +357,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
             else:
                 # Use ACL quirk for the target server to convert RFC ACLs to ACI format
                 # ACL quirks handle the conversion from internal format to server-specific ACI format
-                target_acl_quirk = self._registry.find_acl(target_server, "")
+                target_acl_quirk = self._registry.find_acl_for_line(target_server, "")
                 if not target_acl_quirk:
                     return FlextResult[dict[str, object]].fail(
                         f"No ACL quirk available for target server {target_server}",
@@ -546,6 +549,226 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
+
+    def get_acls_for_transformation(
+        self,
+        source_type: str,
+        target_type: str,
+    ) -> FlextResult[tuple[FlextLdifServersBase.Acl, FlextLdifServersBase.Acl]]:
+        """Get ACL quirks for source and target servers.
+
+        Internal helper method to reduce complexity in transform_acl_entries() method.
+
+        Args:
+            source_type: Source server type string
+            target_type: Target server type string
+
+        Returns:
+            FlextResult containing tuple of (source_acl, target_acl) or failure if not available
+
+        """
+        # Get schema quirks for source and target
+        source = self._registry.schema(source_type)
+        target = self._registry.schema(target_type)
+
+        if source is None or target is None:
+            return FlextResult[
+                tuple[FlextLdifServersBase.Acl, FlextLdifServersBase.Acl]
+            ].fail(
+                f"Schema quirks not available for source={source_type} or target={target_type}",
+            )
+
+        # Extract ACL quirks from schema quirks
+        source_acl = getattr(source, "acl", None) if hasattr(source, "acl") else None
+        target_acl = getattr(target, "acl", None) if hasattr(target, "acl") else None
+
+        if source_acl is None or target_acl is None:
+            return FlextResult[
+                tuple[FlextLdifServersBase.Acl, FlextLdifServersBase.Acl]
+            ].fail(
+                f"ACL quirks not available for source={source_type} or target={target_type}",
+            )
+
+        return FlextResult[
+            tuple[FlextLdifServersBase.Acl, FlextLdifServersBase.Acl]
+        ].ok((source_acl, target_acl))
+
+    def transform_acl_in_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        source_type: str,
+        target_type: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Transform ACL attributes in a single entry.
+
+        Internal helper method to reduce complexity in transform_acl_entries() method.
+
+        Args:
+            entry: Entry to transform
+            source_type: Source server type string
+            target_type: Target server type string
+
+        Returns:
+            FlextResult containing transformed entry (or original if no ACLs)
+
+        """
+        # Check if entry has any ACL attributes
+        if not entry.attributes.attributes:
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        attrs = entry.attributes.attributes
+        # Use constants for ACL attribute detection
+        acl_attrs_lower = {
+            attr.lower() for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
+        }
+        has_acl = any(key.lower() in acl_attrs_lower for key in attrs)
+
+        if not has_acl:
+            # No ACL attributes, pass through unchanged
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        # Get ACL quirks for transformation
+        acls_result = self.get_acls_for_transformation(
+            source_type,
+            target_type,
+        )
+
+        if acls_result.is_failure:
+            # No ACL transformation available for this server pair
+            dn_str = entry.dn.value
+            self.logger.debug(
+                "ACL quirks not available, passing entry unchanged",
+                source_type=source_type,
+                target_type=target_type,
+                entry_dn=dn_str,
+                error=str(acls_result.error),
+            )
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        _source_acl, _target_acl = acls_result.unwrap()
+
+        # ACL transformation between different server types is complex and requires
+        # server-specific semantics. Currently not implemented - return failure to prevent
+        # silent data loss from ACL transformations.
+        dn_value = entry.dn.value
+        return FlextResult[FlextLdifModels.Entry].fail(
+            f"ACL transformation not yet supported for {source_type}→{target_type}: "
+            f"entry with ACLs requires manual validation (DN: {dn_value})",
+        )
+
+    def transform_acl_entries(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        source_server: str | type[FlextLdifConstants.ServerTypes],
+        target_server: str | type[FlextLdifConstants.ServerTypes],
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Transform ACL attributes from source to target server format.
+
+        This is the ONLY way to transform ACLs through the facade. Internal quirks
+        are accessed here, but consumers never see them directly. This ensures:
+        - Consistent ACL transformation across all consuming code
+        - Proper validation of transformation results
+        - Centralized error handling and logging
+        - Server-specific quirks remain private implementation details
+
+        Args:
+            entries: List of entries with ACL attributes in source format
+            source_server: Source server type (e.g., "OID", "OpenLDAP")
+            target_server: Target server type (e.g., "OUD", "AD")
+
+        Returns:
+            FlextResult containing list of entries with ACL attributes in target format
+
+        Raises:
+            Returns FlextResult.fail() if transformation fails
+
+        """
+        try:
+            if not entries:
+                return FlextResult[list[FlextLdifModels.Entry]].ok([])
+
+            # Normalize server type strings if needed
+            source_type = (
+                source_server
+                if isinstance(source_server, str)
+                else getattr(source_server, "value", str(source_server))
+            )
+            target_type = (
+                target_server
+                if isinstance(target_server, str)
+                else getattr(target_server, "value", str(target_server))
+            )
+
+            transformed_entries: list[FlextLdifModels.Entry] = []
+            transformation_errors: list[tuple[str, str]] = []
+
+            # Process each entry
+            for entry in entries:
+                try:
+                    transform_result = self.transform_acl_in_entry(
+                        entry,
+                        source_type,
+                        target_type,
+                    )
+                    if transform_result.is_success:
+                        transformed_entries.append(transform_result.unwrap())
+                    else:
+                        dn_str = entry.dn.value
+                        transformation_errors.append((
+                            dn_str,
+                            f"Transformation failed: {transform_result.error}",
+                        ))
+
+                except (ValueError, TypeError, AttributeError, KeyError) as e:
+                    dn_str = entry.dn.value
+                    transformation_errors.append((
+                        dn_str,
+                        f"Transformation error: {e!s}",
+                    ))
+                    self.logger.debug(
+                        "Exception during ACL transformation",
+                        entry_dn=dn_str,
+                        error=str(e),
+                        error_type=type(e).__name__,
+                    )
+                    continue
+
+            # Log overall transformation statistics
+            total = len(entries)
+            succeeded = len(transformed_entries)
+            failed = len(transformation_errors)
+
+            self.logger.info(
+                "ACL transformation complete",
+                total_entries=total,
+                succeeded_entries=succeeded,
+                failed_entries=failed,
+                success_rate=f"{succeeded / total * 100:.1f}%" if total > 0 else "0%",
+            )
+
+            if transformation_errors:
+                for dn, error in transformation_errors[
+                    : FlextLdifConstants.MAX_LOGGED_ERRORS
+                ]:
+                    self.logger.debug(
+                        "ACL transformation failed for entry",
+                        entry_dn=dn,
+                        error=str(error),
+                    )
+                if failed > FlextLdifConstants.MAX_LOGGED_ERRORS:
+                    self.logger.debug(
+                        "Additional ACL transformation failures",
+                        additional_failures=failed
+                        - FlextLdifConstants.MAX_LOGGED_ERRORS,
+                        max_logged=FlextLdifConstants.MAX_LOGGED_ERRORS,
+                    )
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"ACL transformation failed: {e}",
+            )
 
 
 __all__ = ["FlextLdifAcl"]

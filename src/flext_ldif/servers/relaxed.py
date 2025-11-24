@@ -28,7 +28,6 @@ from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
-from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -1109,7 +1108,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 attrs_obj: Mapping[str, object] = attrs
                 return self._parse_entry(dn, attrs_obj)
 
-            return FlextLdifUtilitiesParsers.Content.parse(
+            return FlextLdifUtilities.Parsers.Content.parse(
                 ldif_content,
                 self._get_server_type(),
                 adapted_parse_entry,

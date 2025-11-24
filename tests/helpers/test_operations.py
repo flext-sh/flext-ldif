@@ -13,45 +13,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol, cast
+from typing import cast
 
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 
 from .test_assertions import TestAssertions
 
-
-class HasParseMethod(Protocol):
-    """Protocol for objects with parse method."""
-
-    def parse(
-        self,
-        ldif_input: str | Path,
-        server_type: str | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content."""
-        ...
-
-
-class HasWriteMethod(Protocol):
-    """Protocol for objects with write method."""
-
-    def write(
-        self,
-        entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
-    ) -> FlextResult[str]:
-        """Write entries to LDIF."""
-        ...
-
-
-class HasEntryWriteMethod(Protocol):
-    """Protocol for entry quirk instances with write method."""
-
-    def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
-        """Write entries to LDIF."""
-        ...
+# Use protocols from src instead of defining locally
+HasParseMethod = FlextLdifProtocols.Services.HasParseMethodProtocol
+HasWriteMethod = FlextLdifProtocols.Services.HasWriteMethodProtocol
+HasEntryWriteMethod = FlextLdifProtocols.Services.HasEntryWriteMethodProtocol
 
 
 class TestOperations:

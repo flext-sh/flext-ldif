@@ -13,7 +13,6 @@ from collections.abc import Iterator
 from typing import overload
 
 from flext_core import FlextModels, FlextRuntime
-from flext_core._models.collections import FlextModelsCollections
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -1617,7 +1616,7 @@ class FlextLdifModelsResults:
             )
 
     class FlexibleCategories(
-        FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
+        FlextModels.Categories[FlextLdifModelsDomains.Entry],
     ):
         """Flexible entry categorization with dynamic categories.
 

@@ -6,22 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
+import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif import (
+    FlextLdifConstants,
+    FlextLdifModels,
+)
+from flext_ldif.servers import FlextLdifServersAd
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
-# Ensure project root is in sys.path for absolute imports
-_project_root = Path(__file__).parent.parent.parent.parent.parent
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
-
-import pytest  # noqa: E402
-
-from flext_ldif import FlextLdifConstants  # noqa: E402
-from flext_ldif.servers import FlextLdifServersAd  # noqa: E402
-from tests.helpers.test_rfc_helpers import RfcTestHelpers  # noqa: E402, type: ignore
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 class TestActiveDirectorySchemas:

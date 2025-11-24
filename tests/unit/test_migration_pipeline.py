@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -61,12 +62,15 @@ class TestMigrationPipelineInitialization:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules = {
-            "hierarchy_objectclasses": ["organization"],
-            "user_objectclasses": ["inetOrgPerson"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["organization"],
+                "user_objectclasses": ["inetOrgPerson"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -136,6 +140,7 @@ class TestMigrationPipelineValidation:
         # Pipeline handles nonexistent input gracefully (no files = empty result)
         assert result.is_success
         assert result.value is not None
+        assert result.value.statistics is not None
         assert result.value.statistics.total_entries == 0
 
     def test_execute_creates_output_dir_if_missing(self, tmp_path: Path) -> None:

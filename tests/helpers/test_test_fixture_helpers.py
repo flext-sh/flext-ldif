@@ -9,10 +9,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 from .test_fixture_helpers import FixtureTestHelpers
 
@@ -128,7 +129,8 @@ class TestFixtureTestHelpers:
         assert entries is not None
         for entry in entries:
             assert entry.attributes is not None
-            attr_names = {name.lower() for name in entry.attributes}
+            entry_typed = cast("FlextLdifModels.Entry", entry)
+            attr_names = {name.lower() for name in entry_typed.attributes.attributes}
             assert "objectclass" in attr_names
 
     @pytest.mark.timeout(10)

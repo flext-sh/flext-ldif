@@ -1060,10 +1060,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
             elif hasattr(transformation, "original_values"):
                 # AttributeTransformation object
-                original_names[orig_name] = cast(
-                    "list[str]",
-                    transformation.original_values,
+                attr_transform = cast(
+                    "FlextLdifModels.AttributeTransformation", transformation
                 )
+                original_names[orig_name] = attr_transform.original_values
 
         # Validate original_names - use acl_attrs if empty
         if not original_names:

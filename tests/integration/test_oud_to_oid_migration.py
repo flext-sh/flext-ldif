@@ -19,7 +19,8 @@ import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests.fixtures.loader import FlextLdifFixtures
+
+from ..fixtures.loader import FlextLdifFixtures
 
 
 class TestOudToOidSchemaMigration:

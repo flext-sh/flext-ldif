@@ -56,39 +56,39 @@ class TestSchemaRetrieval:
         """Test retrieving schema quirks for OID server."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schemas("oid")
+        quirk = registry.schema("oid")
 
-        assert len(quirks) > 0
+        assert quirk is not None
         # Quirks don't have server_type attribute - verify they have parse method
-        assert all(hasattr(q, "parse") for q in quirks)
+        assert hasattr(quirk, "parse")
 
     def test_get_schemas_oud(self) -> None:
         """Test retrieving schema quirks for OUD server."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schemas("oud")
+        quirk = registry.schema("oud")
 
-        assert len(quirks) > 0
+        assert quirk is not None
         # Quirks don't have server_type attribute - verify they have parse method
-        assert all(hasattr(q, "parse") for q in quirks)
+        assert hasattr(quirk, "parse")
 
     def test_get_schemas_openldap(self) -> None:
         """Test retrieving schema quirks for OpenLDAP server."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schemas("openldap")
+        quirk = registry.schema("openldap")
 
-        assert len(quirks) > 0
+        assert quirk is not None
         # Quirks don't have server_type attribute - verify they have parse method
-        assert all(hasattr(q, "parse") for q in quirks)
+        assert hasattr(quirk, "parse")
 
     def test_get_schemas_nonexistent_server(self) -> None:
         """Test retrieving schema quirks for nonexistent server type."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schemas("unknown_server")
+        quirk = registry.schema("unknown_server")
 
-        assert quirks == []
+        assert quirk is None
 
 
 class TestQuirkPriorityOrdering:
@@ -98,34 +98,31 @@ class TestQuirkPriorityOrdering:
         """Test that schema quirks are sorted by priority."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schemas("oid")
+        quirk = registry.schema("oid")
 
-        # Quirks should be sorted by priority (lower number = higher priority)
-        if len(quirks) > 1:
-            for i in range(len(quirks) - 1):
-                assert quirks[i].priority <= quirks[i + 1].priority
+        # Single quirk per server type now - just verify it exists
+        assert quirk is not None
+        assert hasattr(quirk, "parse")
 
     def test_acls_sorted_by_priority(self) -> None:
         """Test that ACL quirks are sorted by priority."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_acls("oid")
+        quirk = registry.acl("oid")
 
-        # Quirks should be sorted by priority (lower number = higher priority)
-        if len(quirks) > 1:
-            for i in range(len(quirks) - 1):
-                assert quirks[i].priority <= quirks[i + 1].priority
+        # Single quirk per server type now - just verify it exists
+        assert quirk is not None
+        assert hasattr(quirk, "parse")
 
     def test_entrys_sorted_by_priority(self) -> None:
         """Test that entry quirks are sorted by priority."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_entrys("oid")
+        quirk = registry.entry("oid")
 
-        # Quirks should be sorted by priority (lower number = higher priority)
-        if len(quirks) > 1:
-            for i in range(len(quirks) - 1):
-                assert quirks[i].priority <= quirks[i + 1].priority
+        # Single quirk per server type now - just verify it exists
+        assert quirk is not None
+        assert hasattr(quirk, "can_handle")
 
 
 class TestQuirkFinding:
@@ -173,30 +170,29 @@ class TestNestedQuirks:
         """Test retrieving ACL quirks for OID."""
         registry = FlextLdifServer()
 
-        acls = registry.get_acls("oid")
+        acl = registry.acl("oid")
 
-        # Should have auto-discovered ACL quirks
-        assert isinstance(acls, list)
+        # Should have auto-discovered ACL quirk
+        assert acl is not None
         # ACL quirks don't have server_type attribute - verify they have parse method
-        assert all(hasattr(q, "parse") for q in acls)
+        assert hasattr(acl, "parse")
 
     def test_get_entrys_for_oid(self) -> None:
         """Test retrieving entry quirks for OID."""
         registry = FlextLdifServer()
 
-        entrys = registry.get_entrys("oid")
+        entry = registry.entry("oid")
 
-        # Should have auto-discovered entry quirks
-        assert isinstance(entrys, list)
-        assert len(entrys) > 0
-        # Entry quirks don't have server_type attribute - verify they have parse method
-        assert all(hasattr(q, "parse") for q in entrys)
+        # Should have auto-discovered entry quirk
+        assert entry is not None
+        # Entry quirks don't have server_type attribute - verify they have can_handle method
+        assert hasattr(entry, "can_handle")
 
     def test_get_alls_for_server(self) -> None:
         """Test retrieving all quirk types for a server."""
         registry = FlextLdifServer()
 
-        alls = registry.get_alls_for_server("oid")
+        alls = registry.get_all_quirks("oid")
 
         assert "schema" in alls
         assert "acl" in alls
@@ -286,16 +282,18 @@ class TestServerQuirksAvailability:
 
         for server_type in supported_servers:
             # Each server should have at least schema quirks
-            schemas = registry.get_schemas(server_type)
-            assert len(schemas) > 0, f"No schema quirks for {server_type}"
+            schema = registry.schema(server_type)
+            assert schema is not None, f"No schema quirk for {server_type}"
 
             # Each server should have entry quirks
-            entrys = registry.get_entrys(server_type)
-            assert len(entrys) > 0, f"No entry quirks for {server_type}"
+            entry = registry.entry(server_type)
+            assert entry is not None, f"No entry quirk for {server_type}"
 
             # ACL quirks may or may not exist for all servers
-            acls = registry.get_acls(server_type)
-            assert isinstance(acls, list), f"ACL quirks not a list for {server_type}"
+            acl = registry.acl(server_type)
+            # ACL may be None for some servers
+            if acl is not None:
+                assert hasattr(acl, "parse"), f"ACL quirk invalid for {server_type}"
 
 
 class TestErrorHandling:
@@ -305,8 +303,8 @@ class TestErrorHandling:
         """Test that getting quirks handles empty server type gracefully."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schemas("")
-        assert quirks == []
+        quirk = registry.schema("")
+        assert quirk is None
 
     def test_find_with_empty_definition(self) -> None:
         """Test finding quirk with empty definition string."""
@@ -321,7 +319,7 @@ class TestErrorHandling:
         """Test getting all quirks for unknown server."""
         registry = FlextLdifServer()
 
-        alls = registry.get_alls_for_server("unknown_server")
+        alls = registry.get_all_quirks("unknown_server")
 
         # Updated API: Unknown server returns None for all quirks, not empty lists
         assert alls == {"schema": None, "acl": None, "entry": None}

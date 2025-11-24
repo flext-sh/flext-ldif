@@ -11,12 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import cast
 
 import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
-
-from ....fixtures.loader import FlextLdifFixtures
+from tests.fixtures.loader import FlextLdifFixtures
 
 
 class TestOidSyntaxOidReplacements:
@@ -25,7 +25,7 @@ class TestOidSyntaxOidReplacements:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersOid.Schema", FlextLdifServersOid().schema_quirk)
 
     def test_syntax_replacements_defined(self) -> None:
         """Test that syntax OID replacements are defined."""
@@ -119,7 +119,7 @@ class TestOidMatchingRuleReplacements:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersOid.Schema", FlextLdifServersOid().schema_quirk)
 
     def test_matching_rule_replacements_defined(self) -> None:
         """Test that matching rule replacements are defined."""
@@ -222,7 +222,7 @@ class TestOidOudCompatibilityTransformations:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersOid.Schema", FlextLdifServersOid().schema_quirk)
 
     @pytest.fixture
     def oid_fixtures(self) -> FlextLdifFixtures.OID:

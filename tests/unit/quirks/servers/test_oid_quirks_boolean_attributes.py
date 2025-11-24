@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -20,12 +22,12 @@ class TestOidBooleanAttributeParsing:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersOid.Schema", FlextLdifServersOid().schema_quirk)
 
     @pytest.fixture
     def oid_entry(self) -> FlextLdifServersOid.Entry:
         """Create OID entry quirk instance."""
-        return FlextLdifServersOid().entry_quirk
+        return cast("FlextLdifServersOid.Entry", FlextLdifServersOid().entry_quirk)
 
     def test_boolean_attributes_constant_exists(
         self,
@@ -70,7 +72,7 @@ class TestOidBooleanAttributeRoundtrip:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersOid.Schema", FlextLdifServersOid().schema_quirk)
 
     def test_parse_boolean_attribute_definition(
         self,
@@ -157,7 +159,7 @@ class TestOidKnownBooleanAttributes:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersOid.Schema", FlextLdifServersOid().schema_quirk)
 
     # Test helper to check if attribute is in boolean list
     def _is_boolean_attribute(self, attr_name: str) -> bool:
@@ -250,10 +252,14 @@ class TestOidBooleanConversionMappings:
 
         # Core mappings should be symmetric
         assert oid_to_rfc.get("1") == "TRUE"
-        assert rfc_to_oid.get(oid_to_rfc.get("1")) == "1"
+        rfc_value_1 = oid_to_rfc.get("1")
+        assert rfc_value_1 is not None
+        assert rfc_to_oid.get(rfc_value_1) == "1"
 
         assert oid_to_rfc.get("0") == "FALSE"
-        assert rfc_to_oid.get(oid_to_rfc.get("0")) == "0"
+        rfc_value_0 = oid_to_rfc.get("0")
+        assert rfc_value_0 is not None
+        assert rfc_to_oid.get(rfc_value_0) == "0"
 
     def test_case_insensitive_boolean_mappings(self) -> None:
         """Test case-insensitive boolean mappings."""

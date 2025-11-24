@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.services.dn import FlextLdifDn
@@ -839,7 +841,7 @@ class TestRdnParsing:
     def test_parse_rdn_none_fails(self) -> None:
         """Test parsing None fails."""
         service = FlextLdifDn()
-        result = service.parse_rdn(None)
+        result = service.parse_rdn(cast("str", None))
 
         assert result.is_failure
 

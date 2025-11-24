@@ -28,8 +28,7 @@ import pytest
 
 from flext_ldif import FlextLdifConfig, FlextLdifModels
 from flext_ldif.services.detector import FlextLdifDetector
-
-from ...helpers.test_deduplication_helpers import DeduplicationHelpers
+from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
 
 
 class TestServerDetectorOracleOid:

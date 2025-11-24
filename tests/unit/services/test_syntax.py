@@ -21,6 +21,9 @@ class TestSyntaxModelCreation:
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="Boolean",
             type_category="boolean",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.oid == "1.3.6.1.4.1.1466.115.121.1.7"
         assert syntax.name == "Boolean"
@@ -49,6 +52,9 @@ class TestSyntaxModelCreation:
         syntax = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.39",
             name="Octet String",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.type_category == "string"
         assert syntax.is_binary is False
@@ -142,6 +148,9 @@ class TestSyntaxTypeCategories:
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="Boolean",
             type_category="boolean",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.type_category == "boolean"
 
@@ -254,6 +263,9 @@ class TestSyntaxSerialization:
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="Boolean",
             type_category="boolean",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         dumped = syntax.model_dump()
         assert dumped["oid"] == "1.3.6.1.4.1.1466.115.121.1.7"
@@ -288,7 +300,13 @@ class TestSyntaxEdgeCases:
     def test_empty_oid_fails(self) -> None:
         """Test validation with empty OID."""
         with pytest.raises(ValueError):
-            FlextLdifModels.Syntax(oid="", name="Invalid")
+            FlextLdifModels.Syntax(
+                oid="",
+                name="Invalid",
+                desc=None,
+                max_length=None,
+                validation_pattern=None,
+            )
 
     def test_negative_max_length(self) -> None:
         """Test negative max_length is accepted."""
@@ -297,6 +315,8 @@ class TestSyntaxEdgeCases:
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
             max_length=-1,
+            desc=None,
+            validation_pattern=None,
         )
         assert syntax.max_length == -1
 
@@ -306,6 +326,9 @@ class TestSyntaxEdgeCases:
         syntax = FlextLdifModels.Syntax(
             oid=long_oid,
             name="Custom OID",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.oid == long_oid
 
@@ -314,6 +337,9 @@ class TestSyntaxEdgeCases:
         syntax = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert not syntax.name
 
@@ -322,10 +348,16 @@ class TestSyntaxEdgeCases:
         syntax1 = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.7",
             name="Boolean",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         syntax2 = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax1.oid != syntax2.oid
         assert syntax1.name != syntax2.name
@@ -343,7 +375,13 @@ class TestSyntaxComputedFieldsAdvanced:
             ("1.3.6.1.4.1.1466.115.121.1.27", "27"),
         ]
         for oid, expected_suffix in test_oids:
-            syntax = FlextLdifModels.Syntax(oid=oid, name="Test")
+            syntax = FlextLdifModels.Syntax(
+                oid=oid,
+                name="Test",
+                desc=None,
+                max_length=None,
+                validation_pattern=None,
+            )
             assert syntax.is_rfc4517_standard is True
             assert syntax.syntax_oid_suffix == expected_suffix
 
@@ -355,7 +393,13 @@ class TestSyntaxComputedFieldsAdvanced:
             "1.2.840.113556.1.2.1",  # Active Directory
         ]
         for oid in non_standard_oids:
-            syntax = FlextLdifModels.Syntax(oid=oid, name="Test")
+            syntax = FlextLdifModels.Syntax(
+                oid=oid,
+                name="Test",
+                desc=None,
+                max_length=None,
+                validation_pattern=None,
+            )
             assert syntax.is_rfc4517_standard is False
             assert syntax.syntax_oid_suffix is None
 

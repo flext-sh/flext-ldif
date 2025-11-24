@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -72,7 +73,7 @@ class TestOidSchemas:
 
         # Use parse which calls can_handle internally
         RfcTestHelpers.test_parse_result_success_and_unwrap(
-            oid.parse_attribute(oracle_attr),
+            cast("FlextResult[object]", oid.parse_attribute(oracle_attr)),
         )
 
         # Verify OID extraction using utility
@@ -108,9 +109,9 @@ class TestOidSchemas:
         # Can handle is internal - test through parse
         # Test multiple invalid inputs
         for invalid_input in [None, 123]:
-            result = oid.parse(invalid_input)
+            result = oid.parse(cast("str", invalid_input))
             TestAssertions.assert_failure(result)
-        result = oid.parse_attribute([])
+        result = oid.parse_attribute(cast("str", []))
         TestAssertions.assert_failure(result)
 
     def test_parse_oracle_attribute_basic(

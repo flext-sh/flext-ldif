@@ -23,6 +23,8 @@ from flext_ldif import (
 )
 from flext_ldif.services.server import FlextLdifServer
 
+from ..helpers.test_ldif_helpers import OptimizedLdifTestHelpers
+
 
 class TestRfcParserRealFixtures:
     """Test RFC parser with real fixture data."""
@@ -42,16 +44,13 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
+        # Using optimized helper - reduces 8 lines to 1 line
+        parse_response = OptimizedLdifTestHelpers.parse_ldif_file_and_validate(
+            entries_file
         )
 
-        result = parser.parse_ldif_file(entries_file)
-
-        assert result.is_success, f"Failed to parse: {result.error}"
-        parse_response = result.unwrap()
-        assert len(parse_response.entries) > 0, "No entries parsed"
-        assert all(hasattr(entry, "dn") for entry in parse_response.entries)
+        # Additional validation specific to this test
+        OptimizedLdifTestHelpers.validate_entries_structure(parse_response.entries)
 
     def test_parse_oud_entries_fixture(
         self,
@@ -63,9 +62,7 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(entries_file)
 
@@ -83,9 +80,7 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(entries_file)
 
@@ -112,9 +107,7 @@ class TestRfcSchemaParserRealFixtures:
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(schema_file)
 
@@ -133,9 +126,7 @@ class TestRfcSchemaParserRealFixtures:
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(schema_file)
 
@@ -162,9 +153,7 @@ class TestRfcWriterRealFixtures:
             pytest.skip(f"Fixture not found: {source_file}")
 
         # Parse original
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
         parse_result = parser.parse_ldif_file(source_file)
 
         assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
@@ -253,9 +242,7 @@ class TestRfcExceptionHandlingRealScenarios:
         quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing nonexistent file returns error."""
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
 
@@ -310,9 +297,7 @@ class TestRfcExceptionHandlingRealScenarios:
         empty_file = tmp_path / "empty.ldif"
         empty_file.write_text("")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(empty_file)
 

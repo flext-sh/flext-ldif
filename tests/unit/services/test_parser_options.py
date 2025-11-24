@@ -163,9 +163,10 @@ sn:
             if any(
                 "aci" in attr.lower()
                 for attr in (
-                    e.attributes.keys()
-                    if hasattr(e.attributes, "keys")
-                    else e.attributes
+                    e.attributes
+                    if hasattr(e.attributes, "__iter__")
+                    and not isinstance(e.attributes, str)
+                    else []
                 )
             )
         ]
@@ -197,9 +198,10 @@ sn:
             if any(
                 "aci" in attr.lower()
                 for attr in (
-                    e.attributes.keys()
-                    if hasattr(e.attributes, "keys")
-                    else e.attributes
+                    e.attributes
+                    if hasattr(e.attributes, "__iter__")
+                    and not isinstance(e.attributes, str)
+                    else []
                 )
             )
         ]

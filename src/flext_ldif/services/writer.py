@@ -324,22 +324,24 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             self,
             entry_quirk: object,
         ) -> FlextResult[FlextLdifProtocols.Quirks.EntryProtocol]:
-            """Validate entry quirk has write method."""
+            """Validate entry quirk implements EntryProtocol."""
             self.logger.debug(
                 "Entry quirk type info",
                 entry_quirk_type=type(entry_quirk).__name__,
                 entry_quirk_module=type(entry_quirk).__module__,
-                has_write=hasattr(entry_quirk, "write"),
+                is_entry_protocol=isinstance(
+                    entry_quirk,
+                    FlextLdifProtocols.Quirks.EntryProtocol,
+                ),
             )
-            if not hasattr(entry_quirk, "write"):
+            if not isinstance(entry_quirk, FlextLdifProtocols.Quirks.EntryProtocol):
                 self.logger.error(
-                    "Entry quirk does not implement write method",
+                    "Entry quirk does not implement EntryProtocol",
                     entry_quirk_type=type(entry_quirk).__name__,
                 )
-                return FlextResult.fail("Entry quirk does not have write method")
-            return FlextResult.ok(
-                cast("FlextLdifProtocols.Quirks.EntryProtocol", entry_quirk),
-            )
+                return FlextResult.fail("Entry quirk does not implement EntryProtocol")
+            # entry_quirk is now typed as EntryProtocol - no cast needed
+            return FlextResult.ok(entry_quirk)
 
         def _restore_original_ldif_if_available(
             self,
@@ -412,8 +414,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         ) -> FlextResult[bool]:
             """Write single entry using quirk."""
             # Generate and write comments BEFORE the entry via quirk
-            if hasattr(entry_quirk, "generate_entry_comments"):
-                entry_comments = entry_quirk.generate_entry_comments(
+            generate_comments = getattr(entry_quirk, "generate_entry_comments", None)
+            if generate_comments:
+                entry_comments = generate_comments(
                     entry,
                     format_options,
                 )
@@ -628,14 +631,6 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             | list[FlextLdifModels.Entry]
         ]:
             """Route output to appropriate target."""
-            # Type alias for return type Union
-            writer_result_union = (
-                FlextLdifModels.WriteResponse
-                | list[FlextLdifModels.Entry]
-                | list[tuple[str, dict[str, list[str]]]]
-                | str
-            )
-
             # Python 3.13: DRY with match statement
             match output_target:
                 case "string":
@@ -646,11 +641,24 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                         header_content,
                     )
                     if string_result.is_failure:
-                        return FlextResult[writer_result_union].fail(
+                        return FlextResult[
+                            str
+                            | FlextLdifModels.WriteResponse
+                            | list[tuple[str, dict[str, list[str]]]]
+                            | list[FlextLdifModels.Entry]
+                        ].fail(
                             string_result.error or "Unknown error",
                         )
-                    return FlextResult[writer_result_union].ok(
-                        cast("writer_result_union", string_result.unwrap()),
+                    return FlextResult[
+                        str
+                        | FlextLdifModels.WriteResponse
+                        | list[tuple[str, dict[str, list[str]]]]
+                        | list[FlextLdifModels.Entry]
+                    ].ok(
+                        cast(
+                            "str | FlextLdifModels.WriteResponse | list[tuple[str, dict[str, list[str]]]] | list[FlextLdifModels.Entry]",
+                            string_result.unwrap(),
+                        ),
                     )
                 case "file":
                     file_result = self._to_file(
@@ -661,30 +669,66 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                         header_content,
                     )
                     if file_result.is_failure:
-                        return FlextResult[writer_result_union].fail(
+                        return FlextResult[
+                            str
+                            | FlextLdifModels.WriteResponse
+                            | list[tuple[str, dict[str, list[str]]]]
+                            | list[FlextLdifModels.Entry]
+                        ].fail(
                             file_result.error or "Unknown error",
                         )
-                    return FlextResult[writer_result_union].ok(
-                        cast("writer_result_union", file_result.unwrap()),
+                    return FlextResult[
+                        str
+                        | FlextLdifModels.WriteResponse
+                        | list[tuple[str, dict[str, list[str]]]]
+                        | list[FlextLdifModels.Entry]
+                    ].ok(
+                        cast(
+                            "str | FlextLdifModels.WriteResponse | list[tuple[str, dict[str, list[str]]]] | list[FlextLdifModels.Entry]",
+                            file_result.unwrap(),
+                        ),
                     )
                 case "ldap3":
                     ldap3_result = self.serializer.to_ldap3_format(entries)
                     if ldap3_result.is_failure:
-                        return FlextResult[writer_result_union].fail(
+                        return FlextResult[
+                            str
+                            | FlextLdifModels.WriteResponse
+                            | list[tuple[str, dict[str, list[str]]]]
+                            | list[FlextLdifModels.Entry]
+                        ].fail(
                             ldap3_result.error or "Unknown error",
                         )
-                    return FlextResult[writer_result_union].ok(
-                        cast("writer_result_union", ldap3_result.unwrap()),
+                    return FlextResult[
+                        str
+                        | FlextLdifModels.WriteResponse
+                        | list[tuple[str, dict[str, list[str]]]]
+                        | list[FlextLdifModels.Entry]
+                    ].ok(
+                        cast(
+                            "str | FlextLdifModels.WriteResponse | list[tuple[str, dict[str, list[str]]]] | list[FlextLdifModels.Entry]",
+                            ldap3_result.unwrap(),
+                        ),
                     )
                 case "model":
-                    return FlextResult[writer_result_union].ok(list(entries))
+                    return FlextResult[
+                        str
+                        | FlextLdifModels.WriteResponse
+                        | list[tuple[str, dict[str, list[str]]]]
+                        | list[FlextLdifModels.Entry]
+                    ].ok(list(entries))
                 case _:
                     self.logger.error(
                         "Unsupported output target",
                         output_target=output_target,
                         supported_targets=["string", "file", "ldap3", "model"],
                     )
-                    return FlextResult[writer_result_union].fail(
+                    return FlextResult[
+                        str
+                        | FlextLdifModels.WriteResponse
+                        | list[tuple[str, dict[str, list[str]]]]
+                        | list[FlextLdifModels.Entry]
+                    ].fail(
                         f"Unsupported output target: {output_target}",
                     )
 
@@ -944,8 +988,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                         "format_entry_for_write",
                     )
                 ):
+                    format_method = getattr(entry_quirk, "format_entry_for_write", None)
                     formatted_entries = [
-                        entry_quirk.format_entry_for_write(entry, options)
+                        format_method(entry, options) if format_method else entry
                         for entry in entries
                     ]
                 else:

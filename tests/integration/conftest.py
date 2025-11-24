@@ -15,19 +15,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
+from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
-from tests.fixtures.loader import FlextLdifFixtures
 
-if TYPE_CHECKING:
-    from flext_ldif.typings import FlextLdifEntry
-
+from ..fixtures.loader import FlextLdifFixtures
 
 # ============================================================================
 # API FIXTURES
@@ -124,7 +120,7 @@ def oid_integration_fixture() -> str:
 def oid_schema_entries(
     api: FlextLdif,
     oid_schema_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse OID schema fixture into Entry models.
 
     Args:
@@ -147,7 +143,7 @@ def oid_schema_entries(
 def oid_entries(
     api: FlextLdif,
     oid_entries_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse OID entries fixture into Entry models.
 
     Args:
@@ -155,7 +151,7 @@ def oid_entries(
         oid_entries_fixture: OID entries fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed entries.
+        list[FlextLdifModels.Entry]: Parsed entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -223,7 +219,7 @@ def oud_integration_fixture() -> str:
 def oud_schema_entries(
     api: FlextLdif,
     oud_schema_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse OUD schema fixture into Entry models.
 
     Args:
@@ -246,7 +242,7 @@ def oud_schema_entries(
 def oud_entries(
     api: FlextLdif,
     oud_entries_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse OUD entries fixture into Entry models.
 
     Args:
@@ -254,7 +250,7 @@ def oud_entries(
         oud_entries_fixture: OUD entries fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed entries.
+        list[FlextLdifModels.Entry]: Parsed entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -322,7 +318,7 @@ def openldap_integration_fixture() -> str:
 def openldap_schema_entries(
     api: FlextLdif,
     openldap_schema_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse OpenLDAP schema fixture into Entry models.
 
     Args:
@@ -345,7 +341,7 @@ def openldap_schema_entries(
 def openldap_entries(
     api: FlextLdif,
     openldap_entries_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse OpenLDAP entries fixture into Entry models.
 
     Args:
@@ -353,7 +349,7 @@ def openldap_entries(
         openldap_entries_fixture: OpenLDAP entries fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed entries.
+        list[FlextLdifModels.Entry]: Parsed entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -385,7 +381,7 @@ def rfc_schema_fixture() -> str:
 def rfc_schema_entries(
     api: FlextLdif,
     rfc_schema_fixture: str,
-) -> list[FlextLdifEntry]:
+) -> list[FlextLdifModels.Entry]:
     """Parse RFC schema fixture into Entry models.
 
     Args:

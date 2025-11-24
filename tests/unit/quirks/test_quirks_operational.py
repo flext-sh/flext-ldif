@@ -15,14 +15,13 @@ from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
+from tests.fixtures import FlextLdifFixtures
 from tests.fixtures.helpers import (
     extract_attributes,
     extract_name,
     extract_objectclasses,
     extract_oid,
 )
-
-from ...fixtures import FlextLdifFixtures
 
 
 class TestOidQuirksWithRealFixtures:

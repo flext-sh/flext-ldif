@@ -56,12 +56,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-def _get_server_registry() -> object:
-    """Get server registry instance using lazy module-level import below."""
-    # _FlextLdifServer is imported after class definition to avoid circular import
-    return _FlextLdifServer.get_global_instance()
-
-
 # NOTE: BaseServerConstants has been consolidated into FlextLdifServersRfc.Constants
 # All server-specific Constants should inherit from FlextLdifServersRfc.Constants
 
@@ -237,32 +231,25 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     ) -> FlextLdifServersRfc.Schema: ...
 
     @overload
-    def get_schema_quirk(self) -> FlextLdifServersBase.Schema: ...
-
     def get_schema_quirk(
         self,
         server_type: str | None = None,
-    ) -> FlextLdifServersBase.Schema | None:
-        """Get schema quirk for a server type, or self.schema_quirk.
+    ) -> FlextLdifServersBase.Schema: ...
 
-        This method provides access to server-specific schema quirks.
-        It does NOT override Pydantic's BaseModel.schema() method.
+    def get_schema_quirk(
+        self,
+        server_type: str | None = None,  # noqa: ARG002
+    ) -> FlextLdifServersBase.Schema:
+        """Get schema quirk instance.
 
-        Args:
-            server_type: Optional server type (e.g., 'rfc', 'oid', 'oud')
+        Returns self.schema_quirk. The server_type parameter is ignored
+        as this base class only provides access to its own quirks.
+        Use registry from api.py to access quirks by type.
 
         Returns:
-            Schema quirk instance or None
+            Schema quirk instance
 
         """
-        if server_type:
-            registry = _get_server_registry()
-            # Registry has schema method (FlextLdifServer implements it)
-            if hasattr(registry, "schema"):
-                return cast(
-                    "FlextLdifServersBase.Schema | None",
-                    registry.schema(server_type),
-                )
         return self.schema_quirk
 
     # @overload
@@ -272,21 +259,25 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def acl(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Acl: ...
 
     @overload
-    def acl(self) -> FlextLdifServersBase.Acl: ...  # Access via self.acl_quirk
-
     def acl(
         self,
         server_type: str | None = None,
+    ) -> FlextLdifServersBase.Acl | None: ...
+
+    def acl(
+        self,
+        server_type: str | None = None,  # noqa: ARG002
     ) -> FlextLdifServersBase.Acl | None:
-        """Get ACL quirk for a server type, or self.acl_quirk."""
-        if server_type:
-            registry = _get_server_registry()
-            # Registry has acl method (FlextLdifServer implements it)
-            if hasattr(registry, "acl"):
-                return cast(
-                    "FlextLdifServersBase.Acl | None",
-                    registry.acl(server_type),
-                )
+        """Get ACL quirk instance.
+
+        Returns self.acl_quirk. The server_type parameter is ignored
+        as this base class only provides access to its own quirks.
+        Use registry from api.py to access quirks by type.
+
+        Returns:
+            ACL quirk instance
+
+        """
         return self.acl_quirk
 
     # @overload
@@ -296,21 +287,25 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def entry(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Entry: ...
 
     @overload
-    def entry(self) -> FlextLdifServersBase.Entry: ...  # Access via self.entry_quirk
-
     def entry(
         self,
         server_type: str | None = None,
+    ) -> FlextLdifServersBase.Entry | None: ...
+
+    def entry(
+        self,
+        server_type: str | None = None,  # noqa: ARG002
     ) -> FlextLdifServersBase.Entry | None:
-        """Get entry quirk for a server type, or self.entry_quirk."""
-        if server_type:
-            registry = _get_server_registry()
-            # Registry has entry method (FlextLdifServer implements it)
-            if hasattr(registry, "entry"):
-                return cast(
-                    "FlextLdifServersBase.Entry | None",
-                    registry.entry(server_type),
-                )
+        """Get entry quirk instance.
+
+        Returns self.entry_quirk. The server_type parameter is ignored
+        as this base class only provides access to its own quirks.
+        Use registry from api.py to access quirks by type.
+
+        Returns:
+            Entry quirk instance
+
+        """
         return self.entry_quirk
 
     # =========================================================================
@@ -465,7 +460,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             type-annotate with the domain result type for auto_execute services.
 
         """
-        # Use object.__new__ directly to avoid FlextService.__new__ calling execute() without params
+        # Use object.__new__ directly to avoid FlextService.__new__
+        # calling execute() without params
         # This allows us to control when execute() is called with proper parameters
         instance: Self = cast("Self", object.__new__(cls))
 
@@ -538,7 +534,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         self._entry_quirk = self.Entry()
 
         # Use schema_quirk, acl_quirk, entry_quirk properties
-        # Old: object.__setattr__(self, "schema", self._schema_quirk) - removed per zero-tolerance policy
+        # Old: object.__setattr__(self, "schema", self._schema_quirk)
+        # removed per zero-tolerance policy
 
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)
@@ -674,7 +671,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @classmethod
     def _get_server_type_from_mro(cls, quirk_class: type[object]) -> str:
-        """Get server_type from parent class Constants via MRO traversal using functional patterns."""
+        """Get server_type from parent class Constants via MRO traversal.
+
+        Uses functional patterns.
+        """
 
         def is_valid_server_class(mro_cls: type[object]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
@@ -718,7 +718,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @classmethod
     def _get_priority_from_mro(cls, quirk_class: type[object]) -> int:
-        """Get priority from parent class Constants via MRO traversal using functional patterns."""
+        """Get priority from parent class Constants via MRO traversal.
+
+        Uses functional patterns.
+        """
 
         def is_valid_server_class(mro_cls: type[object]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
@@ -765,7 +768,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         quirk_instance: object,
         registry: object,
     ) -> None:
-        """Helper method to register a quirk instance in the registry using functional validation.
+        """Helper method to register a quirk instance in the registry.
+
+        Uses functional validation.
 
         This method can be used by subclasses or registry to automatically register
         quirks. The base class itself does NOT register automatically - this is
@@ -817,8 +822,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         for attribute and objectClass processing.
 
         **FlextService V2 Integration:**
-        - Inherits from FlextService for dependency injection, logging, and validation
-        - Uses V2 patterns: .result property for direct access, .execute() for FlextResult
+        - Inherits from FlextService for dependency injection,
+          logging, and validation
+        - Uses V2 patterns: .result property for direct access,
+          .execute() for FlextResult
         - Auto-registration in DI container via FlextService
         - Type-safe with TDomainResult = SchemaAttribute | SchemaObjectClass
 
@@ -859,7 +866,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             default=None,
             exclude=True,
             repr=False,
-            description="Reference to parent FlextLdifServersBase instance for server-level access",
+            description=(
+                "Reference to parent FlextLdifServersBase instance "
+                "for server-level access"
+            ),
         )
 
         def __init__(
@@ -870,7 +880,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """Initialize schema quirk service with optional DI service injection.
 
             Args:
-                schema_service: Injected FlextLdifSchema service (optional, lazy-created if None)
+                schema_service: Injected FlextLdifSchema service
+                    (optional, lazy-created if None)
                 **kwargs: Passed to FlextService for initialization (includes parent_quirk)
 
             Note:
@@ -896,7 +907,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         # =====================================================================
         # Automatic Routing Methods - Moved to rfc.py.Schema
         # =====================================================================
-        # Concrete implementations of routing methods are now in FlextLdifServersRfc.Schema
+        # Concrete implementations of routing methods are now in
+        # FlextLdifServersRfc.Schema
         # Base class keeps only abstract methods and hooks
 
         def _parse_attribute(
@@ -1103,6 +1115,38 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             """
             return self._parse_objectclass(oc_definition)
+
+        def parse(
+            self,
+            definition: str,
+        ) -> FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ]:
+            """Parse schema definition (attribute or objectClass) - protocol method.
+
+            Auto-detects type from content and routes to parse_attribute() or
+            parse_objectclass(). Base implementation delegates to subclasses.
+
+            Args:
+                definition: RFC 4512 AttributeType or ObjectClass definition string
+
+            Returns:
+                FlextResult with SchemaAttribute or SchemaObjectClass model
+
+            """
+            # Base implementation: try attribute first, then objectClass
+            # Subclasses should override to provide better auto-detection
+            attr_result = self.parse_attribute(definition)
+            if attr_result.is_success:
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                    attr_result,
+                )
+            oc_result = self.parse_objectclass(definition)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                oc_result,
+            )
 
         def write_attribute(
             self,
@@ -1313,7 +1357,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             default=None,
             exclude=True,
             repr=False,
-            description="Reference to parent FlextLdifServersBase instance for server-level access",
+            description=(
+                "Reference to parent FlextLdifServersBase instance "
+                "for server-level access"
+            ),
         )
 
         def __init__(self, acl_service: object | None = None, **kwargs: object) -> None:
@@ -1638,7 +1685,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             default=None,
             exclude=True,
             repr=False,
-            description="Reference to parent FlextLdifServersBase instance for server-level access",
+            description=(
+                "Reference to parent FlextLdifServersBase instance "
+                "for server-level access"
+            ),
         )
 
         def __init__(
@@ -1906,12 +1956,6 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             return FlextResult[FlextLdifModels.Entry | str].ok("")
 
-
-# =========================================================================
-# Circular import - import after FlextLdifServersBase class definition
-# to break circular dependency where services.server imports FlextLdifServersBase
-
-from flext_ldif.services.server import FlextLdifServer as _FlextLdifServer  # noqa: E402
 
 # =========================================================================
 

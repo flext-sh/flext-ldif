@@ -37,8 +37,8 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
         validate_assignment=True,
     )
 
-    # NOTE: metadata field is defined in subclasses with proper type (QuirkMetadata | None)
-    # to avoid circular imports and type override issues
+    # NOTE: metadata field is defined in subclasses with proper type
+    # (QuirkMetadata | None) to avoid circular imports and type override issues
 
     @computed_field
     def has_metadata(self) -> bool:
@@ -103,8 +103,8 @@ class AclElement(FlextModels.ArbitraryTypesModel):
         description="LDAP server type (oid, oud, openldap, rfc, etc.)",
     )
 
-    # NOTE: metadata field is defined in subclasses with proper type (QuirkMetadata | None)
-    # to avoid circular imports and type override issues
+    # NOTE: metadata field is defined in subclasses with proper type
+    # (QuirkMetadata | None) to avoid circular imports and type override issues
 
     validation_violations: list[str] = Field(
         default_factory=list,
