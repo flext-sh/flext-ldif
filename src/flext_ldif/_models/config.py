@@ -395,10 +395,12 @@ class FlextLdifModelsConfig:
         restore_original_format: bool = Field(
             default=False,
             description=(
-                "If True, restores original LDIF format from metadata for perfect round-trip. "
-                "When enabled, uses entry.metadata.original_strings['entry_original_ldif'] "
-                "to write the exact original format, preserving all minimal differences "
-                "(spacing, case, punctuation, quotes, etc.). CRITICAL for zero data loss."
+                "If True, restores original LDIF format from metadata for "
+                "perfect round-trip. When enabled, uses "
+                "entry.metadata.original_strings['entry_original_ldif'] "
+                "to write the exact original format, preserving all minimal "
+                "differences (spacing, case, punctuation, quotes, etc.). "
+                "CRITICAL for zero data loss."
             ),
         )
         write_empty_values: bool = Field(

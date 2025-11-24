@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import copy
+import sys
 import tempfile
 import time
 from collections.abc import Callable, Generator
@@ -15,6 +16,10 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
+
+sys.path.insert(
+    0, str(Path(__file__).parent.parent.parent.parent / "flext-core" / "src")
+)
 from flext_tests.docker import FlextTestDocker
 from ldap3 import ALL, Connection, Server
 
@@ -449,7 +454,15 @@ def ldap_container(
                 pytest.skip(f"Failed to start LDAP container: {start_result.error}")
 
     # AGUARDAR container estar pronto antes de permitir testes
-    max_wait = 30.0  # segundos (float for consistency with wait_interval)
+    # Primeiro verificar se a porta está aberta usando FlextTestDocker
+    port_ready = docker_control.wait_for_port_ready("localhost", 3390, max_wait=30)
+    if port_ready.is_failure or not port_ready.unwrap():
+        pytest.skip(
+            f"Container {container_name} port 3390 not ready within 30s",
+        )
+
+    # Depois verificar se o LDAP está realmente funcional (bind)
+    max_wait = 30.0  # segundos
     wait_interval = 0.5  # segundos
     waited = 0.0  # Track elapsed time as float
 

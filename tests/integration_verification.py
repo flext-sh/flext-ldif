@@ -58,15 +58,15 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
         result = detector.detect_server_type(ldif_content=oid_content)
         if result.is_success:
             detection = result.unwrap()
-            if detection["detected_server_type"] == "oid":
+            if detection.detected_server_type == "oid":
                 logger.info(
                     "✅ OID detection works (confidence: %.2f)",
-                    detection["confidence"],
+                    detection.confidence,
                 )
                 return True
             logger.info(
                 "⚠️  Detected as %s instead of oid",
-                detection["detected_server_type"],
+                detection.detected_server_type,
             )
             return True  # Still OK if detection logic is working
         logger.info("❌ Detection failed: %s", result.error)
@@ -81,38 +81,43 @@ def verify_relaxed() -> bool:
     """Verify Relaxed quirks functionality."""
     logger.info("\n=== VERIFYING RELAXED QUIRKS ===")
     try:
-        # Test Schema quirk
+        # Test Schema quirk - relaxed parsing should succeed with broken definitions
         schema = FlextLdifServersRelaxed.Schema()
-        result = schema.parse("( broken-oid NAME 'test'")
-        if result.is_success and result.unwrap()["relaxed_parsed"]:
+        schema_result = schema.parse_attribute("( broken-oid NAME 'test'")
+        if schema_result.is_success:
             logger.info("✅ Relaxed schema quirk works")
         else:
             logger.info("❌ Relaxed schema quirk failed")
             return False
 
-        # Test ACL quirk
+        # Test ACL quirk - relaxed parsing should succeed with incomplete ACLs
         acl = FlextLdifServersRelaxed.Acl()
-        result = acl.parse("(incomplete-acl")
-        if result.is_success and result.unwrap()["relaxed_parsed"]:
+        acl_result = acl.parse("(incomplete-acl")
+        if acl_result.is_success:
             logger.info("✅ Relaxed ACL quirk works")
         else:
             logger.info("❌ Relaxed ACL quirk failed")
             return False
 
-        # Test Entry quirk
-        entry = FlextLdifServersRelaxed.Entry()
-        result = entry.parse("cn=broken-dn", {})
-        if result.is_success and result.unwrap()["relaxed_parsed"]:
+        # Test Entry quirk - relaxed parsing should handle broken DN gracefully
+        api = FlextLdif()
+        entry_result = api.parse(
+            "dn: cn=broken-dn\ncn: test\n\n", server_type="relaxed"
+        )
+        if entry_result.is_success:
             logger.info("✅ Relaxed entry quirk works")
         else:
-            logger.info("❌ Relaxed entry quirk failed")
+            logger.info("❌ Relaxed entry quirk failed: %s", entry_result.error)
             return False
 
-        # Verify priority
-        if schema.priority == 200 and acl.priority == 200 and entry.priority == 200:
-            logger.info("✅ Relaxed quirks have correct priority (200)")
+        # Verify priority - check on the server class, not individual quirks
+        relaxed_server = FlextLdifServersRelaxed()
+        if relaxed_server.priority == 200:
+            logger.info("✅ Relaxed server has correct priority (200)")
         else:
-            logger.info("❌ Relaxed quirks have incorrect priority")
+            logger.info(
+                "❌ Relaxed server has incorrect priority: %d", relaxed_server.priority
+            )
             return False
 
         return True

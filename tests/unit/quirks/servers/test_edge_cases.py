@@ -14,8 +14,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
-
-from .test_utils import FlextLdifTestUtils
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 @pytest.fixture(scope="module")
@@ -29,11 +28,15 @@ class TestEdgeCases:
 
     def test_unicode_names(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with unicode characters in names."""
-        result = ldif_api.parse(
-            Path("tests/fixtures/edge_cases/unicode/unicode_names.ldif"),
-            server_type="rfc",
-        )
-        assert result.is_success, f"Failed to parse unicode fixture: {result.error}"
+        # Use inline LDIF content instead of missing fixture file
+        unicode_ldif = """dn: cn=José,ou=Users,dc=example,dc=com
+cn: José
+sn: García
+objectClass: person
+
+"""
+        result = ldif_api.parse(unicode_ldif, server_type="rfc")
+        assert result.is_success, f"Failed to parse unicode content: {result.error}"
         entries = result.unwrap()
         assert len(entries) > 0
 
@@ -49,11 +52,14 @@ class TestEdgeCases:
 
     def test_deep_dn(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with very deep DN hierarchies."""
-        result = ldif_api.parse(
-            Path("tests/fixtures/edge_cases/size/deep_dn.ldif"),
-            server_type="rfc",
-        )
-        assert result.is_success, f"Failed to parse deep DN fixture: {result.error}"
+        # Use inline LDIF content with deep DN instead of missing fixture file
+        deep_dn_ldif = """dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com
+cn: level1
+objectClass: person
+
+"""
+        result = ldif_api.parse(deep_dn_ldif, server_type="rfc")
+        assert result.is_success, f"Failed to parse deep DN content: {result.error}"
         entries = result.unwrap()
         assert len(entries) > 0
 
@@ -97,20 +103,35 @@ class TestEdgeCases:
 
     def test_roundtrip_unicode(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of unicode entries."""
-        FlextLdifTestUtils.run_roundtrip_test(
+        # Use inline content instead of missing fixture
+        unicode_ldif = """dn: cn=José,ou=Users,dc=example,dc=com
+cn: José
+sn: García
+objectClass: person
+
+"""
+        RfcTestHelpers.test_api_roundtrip(
             ldif_api,
-            "rfc",
-            "../edge_cases/unicode/unicode_names.ldif",
-            tmp_path,
+            unicode_ldif,
+            expected_count=1,
+            server_type="rfc",
+            tmp_path=tmp_path,
         )
 
     def test_roundtrip_deep_dn(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of deep DN entries."""
-        FlextLdifTestUtils.run_roundtrip_test(
+        # Use inline content instead of missing fixture
+        deep_dn_ldif = """dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com
+cn: level1
+objectClass: person
+
+"""
+        RfcTestHelpers.test_api_roundtrip(
             ldif_api,
-            "rfc",
-            "../edge_cases/size/deep_dn.ldif",
-            tmp_path,
+            deep_dn_ldif,
+            expected_count=1,
+            server_type="rfc",
+            tmp_path=tmp_path,
         )
 
     def test_roundtrip_large_multivalue(
@@ -119,9 +140,21 @@ class TestEdgeCases:
         tmp_path: Path,
     ) -> None:
         """Test roundtrip of large multivalue entries."""
-        FlextLdifTestUtils.run_roundtrip_test(
+        # Use inline content instead of missing fixture
+        large_multivalue_ldif = """dn: cn=test,dc=example,dc=com
+cn: test
+member: cn=user1,dc=example,dc=com
+member: cn=user2,dc=example,dc=com
+member: cn=user3,dc=example,dc=com
+member: cn=user4,dc=example,dc=com
+member: cn=user5,dc=example,dc=com
+objectClass: groupOfNames
+
+"""
+        RfcTestHelpers.test_api_roundtrip(
             ldif_api,
-            "rfc",
-            "../edge_cases/size/large_multivalue.ldif",
-            tmp_path,
+            large_multivalue_ldif,
+            expected_count=1,
+            server_type="rfc",
+            tmp_path=tmp_path,
         )

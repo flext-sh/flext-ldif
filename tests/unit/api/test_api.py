@@ -40,9 +40,8 @@ from flext_ldif import (
     FlextLdifModels,
     LdifFlextConfig,
 )
-
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from ...helpers.test_rfc_helpers import RfcTestHelpers
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 # ============================================================================
 # PARSING TESTS - CORE FUNCTIONALITY
@@ -1190,8 +1189,8 @@ objectClass: person
 
     def test_parse_validation(self, api: FlextLdif) -> None:
         """Test parse validates input."""
-        # Test empty string
-        result = api.parse("")
+        # Test empty string - must specify server_type for empty content
+        result = api.parse("", server_type="rfc")
         assert result.is_success  # Empty string is valid, returns empty entries
 
     def test_write_validation(self, api: FlextLdif) -> None:

@@ -154,11 +154,10 @@ class FlextLdifCategorizer(
                 return FlextResult[type].fail(f"Unknown server type: {server_type}")
 
             quirk_class = type(server_quirk)
-            if not hasattr(quirk_class, "Constants"):
+            constants = getattr(quirk_class, "Constants", None)
+            if constants is None:
                 error_msg = f"Server type {server_type} missing Constants class"
                 return FlextResult[type].fail(error_msg)
-
-            constants = quirk_class.Constants
 
             if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
                 error_msg = f"Server {server_type} missing CATEGORIZATION_PRIORITY"

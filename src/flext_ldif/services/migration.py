@@ -11,11 +11,10 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -60,6 +59,246 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
 
     """
 
+    @staticmethod
+    def normalize_migration_config(
+        migration_config: FlextLdifModels.MigrationConfig | dict[str, object] | None,
+    ) -> FlextResult[FlextLdifModels.MigrationConfig]:
+        """Convert dict to MigrationConfig model using FlextResult.
+
+        Uses FlextResult for error handling - no None returns.
+
+        Args:
+            migration_config: MigrationConfig model, dict, or None
+
+        Returns:
+            FlextResult with MigrationConfig model or error if None/invalid
+
+        """
+        if migration_config is None:
+            return FlextResult[FlextLdifModels.MigrationConfig].fail(
+                "MigrationConfig cannot be None",
+            )
+        if FlextRuntime.is_dict_like(migration_config):
+            try:
+                model = FlextLdifModels.MigrationConfig.model_validate(migration_config)
+                return FlextResult[FlextLdifModels.MigrationConfig].ok(model)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.MigrationConfig].fail(
+                    f"Failed to validate MigrationConfig from dict: {e}",
+                )
+        if isinstance(migration_config, FlextLdifModels.MigrationConfig):
+            return FlextResult[FlextLdifModels.MigrationConfig].ok(migration_config)
+        return FlextResult[FlextLdifModels.MigrationConfig].fail(
+            f"Invalid MigrationConfig type: {type(migration_config).__name__}",
+        )
+
+    @staticmethod
+    def detect_migration_mode(
+        config_model: FlextLdifModels.MigrationConfig | None,
+        categorization_rules: FlextLdifModels.CategoryRules | None,
+    ) -> str:
+        """Auto-detect migration mode based on parameters."""
+        if config_model is not None:
+            return "structured"
+        if categorization_rules is not None:
+            return "categorized"
+        return "simple"
+
+    @staticmethod
+    def get_write_options_for_mode(
+        mode: str,
+        write_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None,
+        config_model: FlextLdifModels.MigrationConfig | None,
+    ) -> FlextResult[FlextLdifModels.WriteFormatOptions]:
+        """Set default write options for structured and categorized modes using FlextResult.
+
+        Uses FlextResult for error handling - no None returns.
+
+        Args:
+            mode: Migration mode ("structured", "categorized", or "simple")
+            write_options: WriteFormatOptions model, dict, or None
+            config_model: MigrationConfig model or None
+
+        Returns:
+            FlextResult with WriteFormatOptions model or error
+
+        """
+        if write_options is not None:
+            # Convert dict to WriteFormatOptions if necessary
+            if FlextRuntime.is_dict_like(write_options):
+                try:
+                    model = FlextLdifModels.WriteFormatOptions.model_validate(
+                        write_options,
+                    )
+                    return FlextResult[FlextLdifModels.WriteFormatOptions].ok(model)
+                except Exception as e:
+                    return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
+                        f"Failed to validate WriteFormatOptions from dict: {e}",
+                    )
+            if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
+                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(write_options)
+            return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
+                f"Invalid WriteFormatOptions type: {type(write_options).__name__}",
+            )
+
+        match mode:
+            case "structured":
+                if config_model is None:
+                    return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
+                        "MigrationConfig required for structured mode",
+                    )
+                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
+                    FlextLdifModels.WriteFormatOptions(
+                        fold_long_lines=False,
+                        write_removed_attributes_as_comments=(
+                            config_model.write_removed_as_comments
+                        ),
+                    ),
+                )
+            case "categorized":
+                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
+                    FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
+                )
+            case "simple":
+                # Simple mode doesn't require write options
+                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
+                    FlextLdifModels.WriteFormatOptions(),
+                )
+            case _:
+                return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
+                    f"Unknown migration mode: {mode}",
+                )
+
+    @staticmethod
+    def validate_simple_mode_params(
+        input_filename: str | None,
+        output_filename: str | None,
+    ) -> FlextResult[bool]:
+        """Validate requirements for simple mode."""
+        if input_filename is not None and output_filename is None:
+            return FlextResult[bool].fail(
+                "output_filename is required when input_filename is specified",
+            )
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def normalize_category_rules(
+        categorization_rules: FlextLdifModels.CategoryRules | object | None,
+    ) -> FlextResult[FlextLdifModels.CategoryRules | None]:
+        """Normalize categorization rules to CategoryRules model.
+
+        Args:
+            categorization_rules: CategoryRules model, dict, or None
+
+        Returns:
+            FlextResult with CategoryRules model or None
+
+        """
+        if categorization_rules is None:
+            return FlextResult[FlextLdifModels.CategoryRules | None].ok(None)
+        if isinstance(categorization_rules, FlextLdifModels.CategoryRules):
+            return FlextResult[FlextLdifModels.CategoryRules | None].ok(
+                categorization_rules,
+            )
+        if FlextRuntime.is_dict_like(categorization_rules):
+            try:
+                model = FlextLdifModels.CategoryRules.model_validate(
+                    categorization_rules,
+                )
+                return FlextResult[FlextLdifModels.CategoryRules | None].ok(model)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.CategoryRules | None].fail(
+                    f"Failed to validate CategoryRules: {e}",
+                )
+        # Try model_dump if it's a Pydantic model
+        if hasattr(categorization_rules, "model_dump"):
+            try:
+                model = FlextLdifModels.CategoryRules.model_validate(
+                    categorization_rules.model_dump(),
+                )
+                return FlextResult[FlextLdifModels.CategoryRules | None].ok(model)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.CategoryRules | None].fail(
+                    f"Failed to validate CategoryRules from model_dump: {e}",
+                )
+        return FlextResult[FlextLdifModels.CategoryRules | None].fail(
+            f"Invalid CategoryRules type: {type(categorization_rules).__name__}",
+        )
+
+    @staticmethod
+    def normalize_whitelist_rules(
+        schema_whitelist_rules: FlextLdifModels.WhitelistRules | object | None,
+    ) -> FlextResult[FlextLdifModels.WhitelistRules | None]:
+        """Normalize whitelist rules to WhitelistRules model.
+
+        Args:
+            schema_whitelist_rules: WhitelistRules model, dict, or None
+
+        Returns:
+            FlextResult with WhitelistRules model or None
+
+        """
+        if schema_whitelist_rules is None:
+            return FlextResult[FlextLdifModels.WhitelistRules | None].ok(None)
+        if isinstance(schema_whitelist_rules, FlextLdifModels.WhitelistRules):
+            return FlextResult[FlextLdifModels.WhitelistRules | None].ok(
+                schema_whitelist_rules,
+            )
+        if FlextRuntime.is_dict_like(schema_whitelist_rules):
+            try:
+                model = FlextLdifModels.WhitelistRules.model_validate(
+                    schema_whitelist_rules,
+                )
+                return FlextResult[FlextLdifModels.WhitelistRules | None].ok(model)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.WhitelistRules | None].fail(
+                    f"Failed to validate WhitelistRules: {e}",
+                )
+        # Try model_dump if it's a Pydantic model
+        if hasattr(schema_whitelist_rules, "model_dump"):
+            try:
+                model = FlextLdifModels.WhitelistRules.model_validate(
+                    schema_whitelist_rules.model_dump(),
+                )
+                return FlextResult[FlextLdifModels.WhitelistRules | None].ok(model)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.WhitelistRules | None].fail(
+                    f"Failed to validate WhitelistRules from model_dump: {e}",
+                )
+        return FlextResult[FlextLdifModels.WhitelistRules | None].fail(
+            f"Invalid WhitelistRules type: {type(schema_whitelist_rules).__name__}",
+        )
+
+    """LDIF Migration Pipeline - Direct Implementation.
+
+    Zero private methods - pure service orchestration.
+    All logic delegated to public service methods.
+
+    Design:
+    - FlextLdifParser: parse files
+    - FlextLdifCategorization: validate, categorize, filter
+    - FlextLdifSorting: sort entries
+    - FlextLdifWriter: write outputs
+    - FlextLdifUtilities: events
+
+    Example:
+        pipeline = FlextLdifMigrationPipeline(
+            input_dir=Path("source"),
+            output_dir=Path("target"),
+            mode="categorized",
+            categorization_rules={
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "user_objectclasses": ["inetOrgPerson"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": ["aci"],
+            },
+            source_server="oid",
+            target_server="oud",
+        )
+        result = pipeline.execute()
+
+    """
+
     def __init__(
         self,
         input_dir: str | Path,
@@ -67,7 +306,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         mode: FlextLdifConstants.LiteralTypes.MigrationMode = "simple",
         input_filename: str | None = None,
         output_filename: str = "migrated.ldif",
-        categorization_rules: FlextLdifModels.CategoryRules | None = None,
+        categorization_rules: FlextLdifModels.CategoryRules
+        | dict[str, object]
+        | None = None,
         input_files: list[str] | None = None,
         output_files: dict[str, str] | None = None,
         schema_whitelist_rules: FlextLdifModels.WhitelistRules | None = None,
@@ -180,18 +421,34 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 )
 
             parse_response = parse_result.unwrap()
-            entries = (
-                parse_response
-                if FlextRuntime.is_list_like(parse_response)
-                else parse_response.entries
-            )
+            # Type narrowing: ParseResponse has entries attribute, or parse_response is list
+            if isinstance(parse_response, FlextLdifModels.ParseResponse):
+                # ParseResponse.entries is list[FlextLdifModelsDomains.Entry]
+                # which is compatible with list[FlextLdifModels.Entry] (inheritance)
+                response_entries = parse_response.entries
+                # Convert to list[FlextLdifModels.Entry] explicitly
+                entries: list[FlextLdifModels.Entry] = [
+                    entry
+                    for entry in response_entries
+                    if isinstance(entry, FlextLdifModels.Entry)
+                ]
+            elif isinstance(parse_response, list):
+                # Filter to ensure all entries are FlextLdifModels.Entry
+                entries = [
+                    entry
+                    for entry in parse_response
+                    if isinstance(entry, FlextLdifModels.Entry)
+                ]
+            else:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Unexpected parse response type: {type(parse_response).__name__}",
+                )
             # Register all DNs in registry for case normalization
-            # Type narrowing: entries is list[object], cast to proper Entry type
-            typed_entries = cast("list[FlextLdifModels.Entry]", entries)
-            for entry in typed_entries:
+            # entries is list[FlextLdifModels.Entry]
+            for entry in entries:
                 if entry.dn and entry.dn.value:
                     _ = self._dn_registry.register_dn(entry.dn.value)
-            all_entries.extend(cast("list[FlextLdifModels.Entry]", entries))
+            all_entries.extend(entries)
             logger.info(
                 "Parsed entries from file",
                 filename=filename,
@@ -249,9 +506,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
 
                 # Apply attribute filtering
                 if forbidden_attrs:
-                    # Type narrowing: filtered_entry from Categories is domain model, cast to public
+                    # filtered_entry is already FlextLdifModels.Entry from categories
                     attr_result = FlextLdifFilters.remove_attributes(
-                        cast("FlextLdifModels.Entry", filtered_entry),
+                        filtered_entry,
                         forbidden_attrs,
                     )
                     if attr_result.is_success:
@@ -259,9 +516,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
 
                 # Apply objectClass filtering
                 if forbidden_ocs:
-                    # Type narrowing: mixed Entry type from previous operation, cast to public
+                    # filtered_entry is already FlextLdifModels.Entry
                     oc_result = FlextLdifFilters.remove_objectclasses(
-                        cast("FlextLdifModels.Entry", filtered_entry),
+                        filtered_entry,
                         forbidden_ocs,
                     )
                     if oc_result.is_success:
@@ -280,24 +537,15 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         if FlextLdifConstants.Categories.SCHEMA not in categories:
             return
 
-        # Type narrowing: Categories stores domain models, cast to public for function
+        # categories[SCHEMA] already returns list[FlextLdifModels.Entry]
         schema_result = self._categorization.filter_schema_by_oids(
-            cast(
-                "list[FlextLdifModels.Entry]",
-                categories[FlextLdifConstants.Categories.SCHEMA],
-            ),
+            categories[FlextLdifConstants.Categories.SCHEMA],
         )
         if schema_result.is_success:
             # Type narrowing: Result returns public models
-            # Convert to domain Entry type for FlexibleCategories
+            # FlexibleCategories now uses FlextLdifModels.Entry directly
             public_entries = schema_result.unwrap()
-            domain_entries = [
-                FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
-                if isinstance(entry, FlextLdifModels.Entry)
-                else entry
-                for entry in public_entries
-            ]
-            categories[FlextLdifConstants.Categories.SCHEMA] = domain_entries
+            categories[FlextLdifConstants.Categories.SCHEMA] = public_entries
 
     def _duplicate_acl_entries(
         self,
@@ -370,29 +618,15 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         }:
             cat_entries = categories.get(cat)
             if cat_entries:
-                # Convert domain Entry to public Entry for sorting
-                # cat_entries is list[FlextLdifModelsDomains.Entry], need to convert
-                public_entries: list[FlextLdifModels.Entry] = [
-                    FlextLdifModels.Entry.model_validate(entry.model_dump())
-                    if isinstance(entry, FlextLdifModelsDomains.Entry)
-                    else entry
-                    for entry in cat_entries
-                ]
+                # FlexibleCategories uses FlextLdifModels.Entry directly
                 sorted_entries = (
                     FlextLdifSorting.builder()
-                    .with_entries(public_entries)
+                    .with_entries(cat_entries)
                     .with_target("entries")
                     .with_strategy("hierarchy")
                     .build()
                 )
-                # Convert back to domain Entry for FlexibleCategories
-                domain_sorted = [
-                    FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
-                    if isinstance(entry, FlextLdifModels.Entry)
-                    else entry
-                    for entry in sorted_entries
-                ]
-                categories[cat] = domain_sorted
+                categories[cat] = sorted_entries
                 logger.info(
                     "Sorted category entries hierarchically",
                     category=cat,
@@ -409,9 +643,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             entry for entries in categories.values() for entry in entries
         ]
 
-        # Type narrowing: Categories contains domain models, cast to public for writer
+        # all_output_entries is already list[FlextLdifModels.Entry] from categories.values()
         write_result = self._writer.write(
-            entries=cast("list[FlextLdifModels.Entry]", all_output_entries),
+            entries=all_output_entries,
             target_server_type=self._target_server,
             output_target="file",
             output_path=output_path,
@@ -523,7 +757,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             template_data = self._build_template_data(
                 category,
                 phase_num,
-                cast("list[FlextLdifModels.Entry]", entries),
+                entries,
             )
 
             # Create category-specific WriteFormatOptions for phase-aware processing
@@ -532,8 +766,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             )
 
             # Prepare entries (add metadata for ACL category)
-            # Type narrowing: entries from Categories are domain models, cast to public
-            processed_entries = cast("list[FlextLdifModels.Entry]", entries)
+            # entries is already list[FlextLdifModels.Entry] from categories
+            processed_entries = entries
             if category == FlextLdifConstants.Categories.ACL:
                 processed_entries = self._prepare_acl_entries(processed_entries)
 

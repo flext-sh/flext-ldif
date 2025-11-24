@@ -13,6 +13,7 @@ from flext_core import FlextTypes
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 
 # =============================================================================
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
@@ -52,6 +53,57 @@ class FlextLdifTypes(FlextTypes):
         | FlextLdifModels.SchemaObjectClass
         | FlextLdifModels.Acl
     )
+
+    # =========================================================================
+    # QUIRK PROTOCOL TYPE ALIASES - Type aliases for quirk protocols
+    # =========================================================================
+
+    type EntryQuirk = FlextLdifProtocols.Quirks.EntryProtocol
+    """Type alias for Entry quirk protocol."""
+
+    type SchemaQuirk = FlextLdifProtocols.Quirks.SchemaProtocol
+    """Type alias for Schema quirk protocol."""
+
+    type AclQuirk = FlextLdifProtocols.Quirks.AclProtocol
+    """Type alias for ACL quirk protocol."""
+
+    type QuirksPort = FlextLdifProtocols.Quirks.QuirksPort
+    """Type alias for QuirksPort protocol."""
+
+    # =========================================================================
+    # MODEL UNION TYPE ALIASES - Common model unions
+    # =========================================================================
+
+    type SchemaOrObjectClass = (
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    )
+    """Type alias for schema attribute or objectClass."""
+
+    type EntryOrList = FlextLdifModels.Entry | list[FlextLdifModels.Entry]
+    """Type alias for entry or list of entries."""
+
+    type ModelInstance = (
+        FlextLdifModels.Acl
+        | FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+    )
+    """Type alias for any convertible model instance."""
+
+    # =========================================================================
+    # RESULT VALUE TYPE ALIASES - Types for unwrapped result values
+    # =========================================================================
+
+    type ParseResultValue = (
+        FlextLdifProtocols.Services.HasEntriesProtocol
+        | list[FlextLdifModels.Entry]
+        | FlextLdifModels.Entry
+        | str
+    )
+    """Type alias for values that can be unwrapped from parse results."""
+
+    type WriteResultValue = str
+    """Type alias for values returned from write operations."""
 
     # =============================================================================
     # METADATA EXTENSIONS TYPE HINTS - TypedDict for metadata.extensions (FASE 6)

@@ -754,7 +754,9 @@ class FlextLdifModelsDomains:
                 normalized_attrs: dict[str, list[str]] = {}
                 for key, val in attrs_data.items():
                     if FlextRuntime.is_list_like(val):
-                        normalized_attrs[key] = [str(v) for v in val]
+                        # Type guard: val is list-like, so it's iterable
+                        val_list = val
+                        normalized_attrs[key] = [str(v) for v in val_list]
                     elif isinstance(val, str):
                         normalized_attrs[key] = [val]
                     else:
@@ -1030,8 +1032,10 @@ class FlextLdifModelsDomains:
                             field_value,
                         )
                     elif FlextRuntime.is_list_like(field_value):
+                        # Type guard: field_value is list-like, so it's a list
+                        field_value_list = field_value
                         normalized_data[field_name] = self._normalize_dn_list(
-                            field_value,
+                            field_value_list,
                         )
 
                 return FlextResult[dict[str, object]].ok(normalized_data)
@@ -1779,7 +1783,8 @@ class FlextLdifModelsDomains:
             if not FlextRuntime.is_dict_like(validation_rules):
                 return self
 
-            rules: dict[str, object] = validation_rules
+            # Type guard: validation_rules passed is_dict_like check
+            rules = validation_rules
             dn_value = str(self.dn.value) if self.dn else ""
 
             # Collect violations from all rule checkers
@@ -1818,7 +1823,10 @@ class FlextLdifModelsDomains:
                 if self.metadata
                 else {}
             )
-            return result if FlextRuntime.is_dict_like(result) else {}
+            # Type guard: ensure we return dict[str, object]
+            return cast(
+                "dict[str, object]", result if FlextRuntime.is_dict_like(result) else {}
+            )
 
         class Builder:
             """Builder pattern for Entry creation (reduces complexity, improves readability)."""
@@ -2232,8 +2240,10 @@ class FlextLdifModelsDomains:
                 if entry_attrs_raw:
                     for attr_name, attr_value_list in entry_attrs_raw.items():
                         if FlextRuntime.is_list_like(attr_value_list):
+                            # Type guard: attr_value_list is list-like, so it's iterable
+                            attr_value_list_cast = cast("list[object]", attr_value_list)
                             attrs_dict[str(attr_name)] = [
-                                str(v) for v in attr_value_list
+                                str(v) for v in attr_value_list_cast
                             ]
                         elif isinstance(attr_value_list, str):
                             attrs_dict[str(attr_name)] = [attr_value_list]

@@ -28,7 +28,6 @@ from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -190,12 +189,13 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 # Verify original content preservation in entries
                 def has_original(entry: object) -> int:
                     """Check if entry has original content."""
+                    metadata = getattr(entry, "metadata", None)
                     if (
-                        hasattr(entry, "metadata")
-                        and entry.metadata
-                        and hasattr(entry.metadata, "original_strings")
-                        and entry.metadata.original_strings
-                        and "entry_original_ldif" in entry.metadata.original_strings
+                        metadata
+                        and hasattr(metadata, "original_strings")
+                        and getattr(metadata, "original_strings", None)
+                        and "entry_original_ldif"
+                        in getattr(metadata, "original_strings", {})
                     ):
                         return 1
                     return 0
@@ -291,23 +291,19 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 )
                 original_ldif_content = "\n".join(original_ldif_lines) + "\n"
 
-                # Type guard: ensure entry_quirk has parse_entry method
+                # Type guard: ensure entry_quirk implements EntryProtocol
                 entry_quirk = quirk.entry_quirk
-                if not hasattr(entry_quirk, "parse_entry"):
+                if not isinstance(entry_quirk, FlextLdifProtocols.Quirks.EntryProtocol):
                     self.logger.error(
-                        "Entry quirk does not implement parse_entry method",
+                        "Entry quirk does not implement EntryProtocol",
                         server_type=server_type,
                         entry_index=idx + 1,
                     )
                     return FlextResult.fail(
-                        f"Entry quirk for {server_type} does not have parse_entry method",
+                        f"Entry quirk for {server_type} does not implement EntryProtocol",
                     )
-                # Use cast() to guide type checker - runtime hasattr already verified
-                entry_typed = cast(
-                    "FlextLdifProtocols.Quirks.EntryProtocol",
-                    entry_quirk,
-                )
-                entry_result = entry_typed.parse_entry(dn, attrs)
+                # entry_quirk is now typed as EntryProtocol - no cast needed
+                entry_result = entry_quirk.parse_entry(dn, attrs)
 
                 # CRITICAL: After parsing, preserve original in entry metadata
                 if entry_result.is_success:
@@ -537,8 +533,11 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             entry_quirk = quirk.entry_quirk
 
             # Delegate to quirk's normalize_schema_strings_inline if available
-            if hasattr(entry_quirk, "normalize_schema_strings_inline"):
-                result = entry_quirk.normalize_schema_strings_inline(entry)
+            normalize_method = getattr(
+                entry_quirk, "normalize_schema_strings_inline", None
+            )
+            if normalize_method:
+                result = normalize_method(entry)
                 # Type narrowing: result should be Entry
                 if isinstance(result, FlextLdifModels.Entry):
                     return result
@@ -841,9 +840,10 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
 
             entry_quirk = quirk.entry_quirk
 
-            if hasattr(entry_quirk, "normalize_entry_dn"):
+            normalize_method = getattr(entry_quirk, "normalize_entry_dn", None)
+            if normalize_method:
                 try:
-                    result = entry_quirk.normalize_entry_dn(entry)
+                    result = normalize_method(entry)
                     # Type narrowing: result should be Entry
                     if isinstance(result, FlextLdifModels.Entry):
                         return result
@@ -870,9 +870,10 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
 
             entry_quirk = quirk.entry_quirk
 
-            if hasattr(entry_quirk, "filter_operational_attributes"):
+            filter_method = getattr(entry_quirk, "filter_operational_attributes", None)
+            if filter_method:
                 try:
-                    result = entry_quirk.filter_operational_attributes(entry)
+                    result = filter_method(entry)
                     # Type narrowing: result should be Entry
                     if isinstance(result, FlextLdifModels.Entry):
                         return result
@@ -1198,13 +1199,11 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             """Finalize statistics with failure info and optional event emission."""
             # Update statistics with failures
             if failed_count > 0:
-                # Cast to internal Statistics type for attribute access
-                ldif_stats = cast("FlextLdifModelsResults.Statistics", stats)
-                stats_updated = ldif_stats.model_copy(
-                    update={"parse_errors": ldif_stats.parse_errors + failed_count},
+                # Update statistics with failures
+                stats_updated = stats.model_copy(
+                    update={"parse_errors": stats.parse_errors + failed_count},
                 )
-                # Cast back to public type
-                stats = cast("FlextLdifModels.Statistics", stats_updated)
+                stats = stats_updated
                 self.logger.error(
                     "Parse completed with failures",
                     failed_count=failed_count,
@@ -1246,10 +1245,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                         error_details=error_details_value,
                     )
 
-                # add_event returns Statistics - convert to Models.Statistics
-                # Cast stats to internal type for method access
-                ldif_stats = cast("FlextLdifModelsResults.Statistics", stats)
-                stats_result = ldif_stats.add_event(parse_event)
+                # add_event returns Statistics
+                stats_result = stats.add_event(parse_event)
                 # Type narrowing: add_event returns Results.Statistics, but we need Models.Statistics
                 # Since Models.Statistics extends Results.Statistics, we can safely use it
                 if isinstance(stats_result, FlextLdifModels.Statistics):
@@ -1481,14 +1478,13 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
                 (len(processed_entries) / len(entries)) * 100 if entries else 100
             )
 
-            # Cast stats to internal type for attribute access
-            ldif_stats = cast("FlextLdifModelsResults.Statistics", stats)
+            # Stats is already FlextLdifModels.Statistics
             self.logger.info(
                 "Parsing completed",
                 input_source=input_source,
                 server_type=effective_type,
                 total_entries=len(processed_entries),
-                parse_errors=ldif_stats.parse_errors,
+                parse_errors=stats.parse_errors,
                 duration_ms=parse_duration_ms,
             )
 
@@ -1555,6 +1551,102 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             input_source="ldap3",
             server_type=server_type,
             format_options=format_options,
+        )
+
+    def parse_source(
+        self,
+        source: str | Path,
+        server_type: str | None = None,
+        format_options: FlextLdifModels.ParseFormatOptions | None = None,
+    ) -> FlextResult[FlextLdifModels.ParseResponse]:
+        """Parse LDIF from source (Path or str) with automatic detection.
+
+        Intelligently handles:
+        - Path objects: Read file content
+        - Strings with file-like patterns: Treat as file path and validate existence
+        - Strings without file patterns: Treat as LDIF content
+
+        Args:
+            source: Either a Path to LDIF file or string containing LDIF data
+            server_type: Server type for quirk selection ("rfc", "oid", "oud", etc.)
+            format_options: Parse options as ParseFormatOptions model
+
+        Returns:
+            FlextResult containing ParseResponse with entries
+
+        """
+        # Case 1: Path object - read file
+        if isinstance(source, Path):
+            return self.parse_ldif_file(
+                path=source,
+                server_type=server_type,
+                encoding=self.config.ldif.ldif_encoding,
+                format_options=format_options,
+            )
+
+        # Case 2: String - detect if it's a file path or LDIF content
+        if isinstance(source, str):
+            # Handle empty string or whitespace-only as empty LDIF content
+            if not source.strip():
+                return self.parse_string(
+                    content=source,
+                    server_type=server_type,
+                    format_options=format_options,
+                )
+
+            # Heuristic: Check if string looks like LDIF content first
+            # LDIF content indicators: starts with "dn:" or contains LDIF patterns
+            is_ldif_content = (
+                source.strip().startswith("dn:")
+                or source.strip().startswith("#")
+                or "\ndn:" in source
+                or "\r\ndn:" in source
+            )
+
+            # Heuristic: Check if string looks like a file path
+            # Indicators: ends with .ldif, looks like absolute path, or short string that exists as file
+            # Windows MAX_PATH limit (260 characters)
+            windows_max_path_length = 260
+            is_file_path = (
+                source.endswith((".ldif", ".LDIF"))
+                or (
+                    len(source) < windows_max_path_length and Path(source).is_file()
+                )  # Windows MAX_PATH limit, use is_file() not exists()
+            )
+
+            # If it looks like LDIF content, treat as content (even if it contains /)
+            if is_ldif_content:
+                return self.parse_string(
+                    content=source,
+                    server_type=server_type,
+                    format_options=format_options,
+                )
+
+            # If it looks like a file path, validate and read
+            if is_file_path:
+                file_path = Path(source)
+                if not file_path.exists():
+                    return FlextResult.fail(f"File not found: {source}")
+                if not file_path.is_file():
+                    return FlextResult.fail(f"Path is not a file: {source}")
+                return self.parse_ldif_file(
+                    path=file_path,
+                    server_type=server_type,
+                    encoding=self.config.ldif.ldif_encoding,
+                    format_options=format_options,
+                )
+
+            # Default: treat as LDIF content if ambiguous
+            return self.parse_string(
+                content=source,
+                server_type=server_type,
+                format_options=format_options,
+            )
+
+        # Should not reach here due to type annotation, but fail-safe
+        source_type_name = type(source).__name__
+        return FlextResult.fail(
+            f"Source must be Path or str, got {source_type_name}",
         )
 
 

@@ -241,7 +241,3 @@ def main() -> None:
     process_entries_with_acls()
     execute_acl_service()
     acl_pipeline()
-
-
-if __name__ == "__main__":
-    main()

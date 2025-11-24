@@ -15,21 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
+import pytest
 from tests.helpers.test_assertions import TestAssertions
 
 from flext_ldif import FlextLdifModels
-
-# Ensure project root is in sys.path for absolute imports
-_project_root = Path(__file__).parent.parent.parent.parent
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
-
-import pytest  # noqa: E402
-
-from flext_ldif.services.filters import FlextLdifFilters  # noqa: E402
+from flext_ldif.services.filters import FlextLdifFilters
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
 create_test_entry = TestAssertions.create_entry
@@ -327,7 +317,7 @@ class TestExclusionMarkingInFilters:
     """Test exclusion marking functionality in filter methods."""
 
     def test_filter_entries_by_dn_with_exclusion_marking(self) -> None:
-        """Test filter_entries_by_dn marks excluded entries."""
+        """Test filter_by_dn marks excluded entries."""
         entries = [
             create_test_entry(
                 "cn=user1,ou=users,dc=example,dc=com",
@@ -339,7 +329,7 @@ class TestExclusionMarkingInFilters:
             ),
         ]
 
-        result = FlextLdifFilters.filter_entries_by_dn(
+        result = FlextLdifFilters.filter_by_dn(
             entries,
             "*,ou=users,*",
             mode="include",
@@ -357,7 +347,7 @@ class TestExclusionMarkingInFilters:
         assert "DN pattern" in reason
 
     def test_filter_entries_by_objectclass_with_exclusion_marking(self) -> None:
-        """Test filter_entries_by_objectclass marks excluded entries."""
+        """Test filter_by_objectclass marks excluded entries."""
         entries = [
             create_test_entry(
                 "cn=user1,dc=example,dc=com",
@@ -369,7 +359,7 @@ class TestExclusionMarkingInFilters:
             ),
         ]
 
-        result = FlextLdifFilters.filter_entries_by_objectclass(
+        result = FlextLdifFilters.filter_by_objectclass(
             entries,
             "person",
             mode="include",
@@ -387,7 +377,7 @@ class TestExclusionMarkingInFilters:
         assert "ObjectClass" in reason
 
     def test_filter_entries_by_attributes_with_exclusion_marking(self) -> None:
-        """Test filter_entries_by_attributes marks excluded entries."""
+        """Test filter_by_attributes marks excluded entries."""
         entries = [
             create_test_entry(
                 "cn=user1,dc=example,dc=com",
@@ -403,7 +393,7 @@ class TestExclusionMarkingInFilters:
             ),
         ]
 
-        result = FlextLdifFilters.filter_entries_by_attributes(
+        result = FlextLdifFilters.filter_by_attributes(
             entries,
             ["mail"],
             mode="include",
@@ -425,7 +415,7 @@ class TestFilterEntriesByDnException:
     """Test exception handling in filter_entries_by_dn."""
 
     def test_filter_entries_by_dn_with_invalid_entries(self) -> None:
-        """Test filter_entries_by_dn handles exceptions gracefully."""
+        """Test filter_by_dn handles exceptions gracefully."""
         # Create an entry and then manually corrupt it (break the contract)
         entry = create_test_entry(
             "cn=test,dc=example,dc=com",
@@ -434,7 +424,7 @@ class TestFilterEntriesByDnException:
 
         # Test with real entry data - success path validation
         entries = [entry]
-        result = FlextLdifFilters.filter_entries_by_dn(
+        result = FlextLdifFilters.filter_by_dn(
             entries,
             "*",
             mode="include",
@@ -448,7 +438,7 @@ class TestFilterEntriesByObjectClassException:
     """Test exception handling in filter_entries_by_objectclass."""
 
     def test_filter_entries_by_objectclass_success(self) -> None:
-        """Test filter_entries_by_objectclass succeeds with valid entries."""
+        """Test filter_by_objectclass succeeds with valid entries."""
         entries = [
             create_test_entry(
                 "cn=test,dc=example,dc=com",
@@ -456,7 +446,7 @@ class TestFilterEntriesByObjectClassException:
             ),
         ]
 
-        result = FlextLdifFilters.filter_entries_by_objectclass(
+        result = FlextLdifFilters.filter_by_objectclass(
             entries,
             "person",
             mode="include",
@@ -471,7 +461,7 @@ class TestFilterEntriesByAttributesException:
     """Test exception handling in filter_entries_by_attributes."""
 
     def test_filter_entries_by_attributes_success(self) -> None:
-        """Test filter_entries_by_attributes succeeds with valid entries."""
+        """Test filter_by_attributes succeeds with valid entries."""
         entries = [
             create_test_entry(
                 "cn=test,dc=example,dc=com",
@@ -479,7 +469,7 @@ class TestFilterEntriesByAttributesException:
             ),
         ]
 
-        result = FlextLdifFilters.filter_entries_by_attributes(
+        result = FlextLdifFilters.filter_by_attributes(
             entries,
             ["mail"],
             mode="include",

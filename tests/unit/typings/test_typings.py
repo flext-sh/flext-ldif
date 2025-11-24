@@ -67,11 +67,13 @@ class TestFlextLdifTypesNamespace:
                 if node.module and "flext_ldif" in node.module:
                     flext_ldif_imports.append(node.module)
 
-        # Only flext_ldif.constants and flext_ldif.models should be imported from flext_ldif
+        # Only flext_ldif.constants, flext_ldif.models, and flext_ldif.protocols should be imported from flext_ldif
         # models is imported to use FlextLdifModels directly without TYPE_CHECKING
+        # protocols is imported for protocol type definitions
         assert sorted(flext_ldif_imports) == [
             "flext_ldif.constants",
             "flext_ldif.models",
+            "flext_ldif.protocols",
         ]
 
 

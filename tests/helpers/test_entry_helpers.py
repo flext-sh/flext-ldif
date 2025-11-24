@@ -9,17 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import cast
 
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.typings import FlextLdifTypes
 
 from .test_assertions import TestAssertions
 
-# Type alias for Entry quirk protocol
-EntryQuirk = FlextLdifProtocols.Quirks.EntryProtocol
+# Use type alias from src
+EntryQuirk = FlextLdifTypes.EntryQuirk
 
 
 class EntryTestHelpers:
@@ -144,10 +144,12 @@ class EntryTestHelpers:
             )
 
         """
-        result = cast(
-            "FlextResult[str]",
-            cast("Any", entry_quirk)._write_entry_modify_add_format(entry),
-        )
+        # Access private method for testing - use getattr with type checking
+        write_method = getattr(entry_quirk, "_write_entry_modify_add_format", None)
+        if write_method is None:
+            msg = "Entry quirk does not implement _write_entry_modify_add_format"
+            raise AttributeError(msg)
+        result = cast("FlextResult[str]", write_method(entry))
         ldif = TestAssertions.assert_success(
             result,
             "Modify-add format write should succeed",
@@ -208,10 +210,12 @@ class EntryTestHelpers:
             )
 
         """
-        result = cast(
-            "FlextResult[str]",
-            cast("Any", entry_quirk)._write_entry_modify_format(entry),
-        )
+        # Access private method for testing - use getattr with type checking
+        write_method = getattr(entry_quirk, "_write_entry_modify_format", None)
+        if write_method is None:
+            msg = "Entry quirk does not implement _write_entry_modify_format"
+            raise AttributeError(msg)
+        result = cast("FlextResult[str]", write_method(entry))
         ldif = TestAssertions.assert_success(
             result,
             "Modify format write should succeed",
@@ -350,10 +354,12 @@ class EntryTestHelpers:
             )
 
         """
-        result = cast(
-            "FlextResult[FlextLdifModels.Entry]",
-            cast("Any", entry_quirk)._hook_pre_write_entry(entry),
-        )
+        # Access private method for testing - use getattr with type checking
+        hook_method = getattr(entry_quirk, "_hook_pre_write_entry", None)
+        if hook_method is None:
+            msg = "Entry quirk does not implement _hook_pre_write_entry"
+            raise AttributeError(msg)
+        result = cast("FlextResult[FlextLdifModels.Entry]", hook_method(entry))
 
         if should_succeed:
             result_entry = TestAssertions.assert_success(result, "Hook should succeed")

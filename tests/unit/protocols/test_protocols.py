@@ -12,9 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_core import FlextResult
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
@@ -128,10 +131,20 @@ class TestSchemaProtocol:
         oid_schema = FlextLdifServersOid.Schema()
         test_data: dict[str, object] = {"oid": "2.5.4.3", "name": "cn"}
 
-        result = oid_schema.write(test_data)
+        result = oid_schema.write(
+            cast(
+                "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
+                test_data,
+            )
+        )
         assert isinstance(result, FlextResult)
 
-        result = oid_schema.write(test_data)
+        result = oid_schema.write(
+            cast(
+                "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
+                test_data,
+            )
+        )
         assert isinstance(result, FlextResult)
 
 
@@ -167,9 +180,9 @@ class TestQuirkRegistry:
         registry = FlextLdifServer()
 
         # Verify retrieval methods exist and are callable
-        assert callable(registry.get_schemas)
-        assert callable(registry.get_acls)
-        assert callable(registry.get_entrys)
+        assert callable(registry.schema)
+        assert callable(registry.acl)
+        assert callable(registry.entry)
         assert callable(registry.find_schema_for_attribute)
         assert callable(registry.find_schema_for_objectclass)
 
@@ -413,12 +426,10 @@ class TestQuirkRegistryProtocolMethods:
 
     def test_registry_can_retrieves(self, registry: FlextLdifServer) -> None:
         """Test that registry can retrieve quirks."""
-        # Test retrieval methods if they exist
-        if hasattr(registry, "get_schemas"):
-            result = registry.get_schemas("oid")
-            # May return list or FlextResult depending on implementation
-            assert result is not None
-            assert isinstance(result, list) or hasattr(result, "is_success")
+        # Test retrieval methods
+        result = registry.schema("oid")
+        # Returns quirk instance or None
+        assert result is None or hasattr(result, "parse")
 
     def test_get_global_instance_returns_registry(self) -> None:
         """Test that get_global_instance returns something callable."""

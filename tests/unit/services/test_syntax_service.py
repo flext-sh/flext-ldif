@@ -170,6 +170,7 @@ class TestOidLookup:
         result = service.lookup_oid("9.9.9.9.9.9")
 
         assert result.is_failure
+        assert result.error is not None
         assert "not found" in result.error.lower()
 
     def test_lookup_empty_oid(self) -> None:
@@ -178,6 +179,7 @@ class TestOidLookup:
         result = service.lookup_oid("")
 
         assert result.is_failure
+        assert result.error is not None
         assert "empty" in result.error.lower()
 
 
@@ -217,6 +219,7 @@ class TestNameLookup:
         result = service.lookup_name("Unknown Syntax Type")
 
         assert result.is_failure
+        assert result.error is not None
         assert "not found" in result.error.lower()
 
     def test_lookup_empty_name(self) -> None:
@@ -225,6 +228,7 @@ class TestNameLookup:
         result = service.lookup_name("")
 
         assert result.is_failure
+        assert result.error is not None
         assert "empty" in result.error.lower()
 
 
@@ -394,6 +398,7 @@ class TestValueValidation:
         # This is correct behavior - we should not validate against unknown syntaxes
         # If default validation is needed, it should be implemented explicitly
         assert result.is_failure
+        assert result.error is not None
         assert "unknown syntax OID" in result.error
 
 
@@ -629,6 +634,7 @@ class TestValueValidationDetailed:
         service = FlextLdifSyntax()
         result = service.validate_value("value", "9.9.9.9.9.9")
         assert result.is_failure
+        assert result.error is not None
         assert "unknown" in result.error.lower()
 
 
@@ -679,6 +685,7 @@ class TestErrorHandling:
         service = FlextLdifSyntax()
         result = service.resolve_syntax("invalid-oid")
         assert result.is_failure
+        assert result.error is not None
         assert "format" in result.error.lower() or "invalid" in result.error.lower()
 
     def test_validate_value_exception_handling(self) -> None:

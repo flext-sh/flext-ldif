@@ -465,8 +465,9 @@ class TestFluentBuilder:
             .build()
         )
 
-        assert len(result) > 0
-        assert all("ou=people" in e.dn.value.lower() for e in result)
+        entries = result.get_all_entries()
+        assert len(entries) > 0
+        assert all("ou=people" in e.dn.value.lower() for e in entries)
 
     def test_builder_objectclass_with_attributes(
         self,
@@ -481,8 +482,9 @@ class TestFluentBuilder:
             .build()
         )
 
-        assert len(result) > 0
-        for entry in result:
+        entries = result.get_all_entries()
+        assert len(entries) > 0
+        for entry in entries:
             ocs = entry.get_attribute_values("objectClass")
             assert any(oc.lower() == "inetorgperson" for oc in ocs)
             assert entry.has_attribute("mail")
@@ -519,10 +521,10 @@ class TestIntegration:
         )
         assert result2.is_success
         stage2 = result2.unwrap()
-        assert len(stage2) > 0
+        assert len(stage2.get_all_entries()) > 0
 
         # All should be users
-        for entry in stage2:
+        for entry in stage2.get_all_entries():
             assert "ou=people" in entry.dn.value.lower()
             ocs = entry.get_attribute_values("objectClass")
             assert any(oc.lower() == "inetorgperson" for oc in ocs)

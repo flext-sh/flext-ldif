@@ -17,11 +17,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Protocol, runtime_checkable
+from pathlib import Path
+from typing import ClassVar, Protocol, TypeVar, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
 from flext_ldif.models import FlextLdifModels
+
+TResult = TypeVar("TResult")
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -552,6 +555,156 @@ class FlextLdifProtocols(FlextProtocols):
 
                 """
                 ...
+
+    # =========================================================================
+    # SERVICES PROTOCOLS - For service and utility interfaces
+    # =========================================================================
+
+    class Services:
+        """Service and utility protocols for LDIF operations."""
+
+        @runtime_checkable
+        class HasParseMethodProtocol(Protocol):
+            """Protocol for objects with parse method.
+
+            Used by services and utilities that need to parse LDIF content.
+            Provides type-safe interface for parse operations.
+
+            Implemented by:
+            - FlextLdifParser
+            - FlextLdif API
+            - Entry quirks
+            """
+
+            def parse(
+                self,
+                ldif_input: str | Path,
+                server_type: str | None = None,
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+                """Parse LDIF content.
+
+                Args:
+                    ldif_input: LDIF content as string or file path
+                    server_type: Optional server type override
+
+                Returns:
+                    FlextResult with list of parsed entries
+
+                """
+                ...
+
+        @runtime_checkable
+        class HasWriteMethodProtocol(Protocol):
+            """Protocol for objects with write method.
+
+            Used by services and utilities that need to write LDIF content.
+            Provides type-safe interface for write operations.
+
+            Implemented by:
+            - FlextLdifWriter
+            - FlextLdif API
+            - Entry quirks
+            """
+
+            def write(
+                self,
+                entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
+            ) -> FlextResult[str]:
+                """Write entries to LDIF.
+
+                Args:
+                    entries: Entry or list of entries to write
+
+                Returns:
+                    FlextResult with LDIF string
+
+                """
+                ...
+
+        @runtime_checkable
+        class HasEntryWriteMethodProtocol(Protocol):
+            """Protocol for entry quirk instances with write method.
+
+            Used specifically for entry quirks that write entries.
+            Provides type-safe interface for entry write operations.
+
+            Implemented by:
+            - Entry quirks (FlextLdifServersBase.Entry, etc.)
+            """
+
+            def write(
+                self,
+                entries: list[FlextLdifModels.Entry],
+            ) -> FlextResult[str]:
+                """Write entries to LDIF.
+
+                Args:
+                    entries: List of entries to write
+
+                Returns:
+                    FlextResult with LDIF string
+
+                """
+                ...
+
+        @runtime_checkable
+        class ServiceWithExecuteProtocol(Protocol):
+            """Protocol for services that have an execute method.
+
+            Used by services that follow the FlextService pattern.
+            Provides type-safe interface for service execution.
+
+            Implemented by:
+            - FlextService subclasses
+            - Service instances with execute() method
+            """
+
+            def execute(self) -> FlextResult[TResult]:
+                """Execute the service.
+
+                Returns:
+                    FlextResult with service result
+
+                """
+                ...
+
+        @runtime_checkable
+        class ObjectWithMetadataProtocol(Protocol):
+            """Protocol for objects that have metadata attribute.
+
+            Used by models and utilities that carry metadata.
+            Provides type-safe interface for metadata access.
+
+            Implemented by:
+            - Entry models with metadata
+            - Schema models with metadata
+            - Other domain models with metadata
+            """
+
+            @property
+            def metadata(self) -> object:
+                """Metadata attribute.
+
+                Returns:
+                    Metadata object (typically QuirkMetadata or similar)
+
+                """
+                ...
+
+        @runtime_checkable
+        class HasEntriesProtocol(Protocol):
+            """Protocol for objects that have an entries attribute.
+
+            Used by parse results and response objects.
+            Provides type-safe interface for accessing entries.
+
+            Implemented by:
+            - ParseResponse objects
+            - Other response objects with entries
+            """
+
+            entries: list[FlextLdifModels.Entry]
+            """List of entries in the object."""
 
     # =========================================================================
     # ENTRY PROTOCOLS - General entry processing protocols

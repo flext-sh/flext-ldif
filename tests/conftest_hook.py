@@ -34,7 +34,7 @@ LDAP_FAILURE_PATTERNS = [
 def pytest_runtest_makereport(
     item: pytest.Item,
     call: pytest.CallInfo[object],
-) -> Generator[object]:
+) -> Generator[None, object]:
     """Detect LDAP failures and mark container dirty (REGRA 4).
 
     Examines test failures and identifies LDAP service failures vs test logic failures.
@@ -55,12 +55,14 @@ def pytest_runtest_makereport(
 
     """
     outcome = yield
-    # Type narrowing: outcome from hookwrapper has get_result() method
-    # Use getattr to safely access get_result and cast the result
-    get_result_method = getattr(outcome, "get_result", None)
-    if get_result_method is None:
-        return
-    report = cast("pytest.TestReport", get_result_method())
+    # Type narrowing: pytest hookimpl with hookwrapper returns _Result type with get_result
+    # Use getattr to safely access get_result method
+    if hasattr(outcome, "get_result"):
+        get_result = outcome.get_result
+        report = cast("pytest.TestReport", get_result())
+    else:
+        msg = "Pytest hook outcome does not have get_result method"
+        raise AttributeError(msg)
 
     # Only process failures during test execution (not setup/teardown)
     if report.when != "call" or not report.failed:

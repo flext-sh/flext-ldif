@@ -56,6 +56,7 @@ class FlextLdifTestFactory:
 
         @staticmethod
         def create_ldif_writer(
+            config: dict[str, object] | None = None,
             quirk_registry: FlextLdifServer | None = None,
         ) -> FlextLdifWriter:
             """Create unified LDIF writer service."""
@@ -203,7 +204,9 @@ class FlextLdifTestFactory:
         return {
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
-            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(quirk_registry),
+            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
+                None, quirk_registry
+            ),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
                 config,
             ),
@@ -235,10 +238,11 @@ class FlextLdifTestFactory:
     @classmethod
     def create_writer(
         cls,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifServer | None = None,
     ) -> FlextLdifWriter:
-        """Create writer service with quirk registry."""
-        return cls._RfcParserFactory.create_ldif_writer(quirk_registry)
+        """Create writer service with config and quirk registry."""
+        return cls._RfcParserFactory.create_ldif_writer(config, quirk_registry)
 
     @classmethod
     def create_configured_api(
@@ -341,7 +345,7 @@ class FlextLdifTestFactory:
 
         return {
             "api": cls.create_api(quirk_registry=quirk_registry),
-            "parser": cls.create_parser(quirk_registry=quirk_registry),
+            "parser": cls.create_parser(_registry=quirk_registry),
             "quirk_registry": quirk_registry,
         }
 

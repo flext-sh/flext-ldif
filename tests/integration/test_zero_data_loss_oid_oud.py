@@ -17,7 +17,8 @@ import pytest
 
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
-from tests.fixtures.loader import FlextLdifFixtures
+
+from ..fixtures.loader import FlextLdifFixtures
 
 
 class TestZeroDataLossOidOud:

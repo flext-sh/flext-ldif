@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_core import FlextResult
 
@@ -18,11 +20,15 @@ from flext_ldif import (
     FlextLdifParser,
     FlextLdifWriter,
 )
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.schema import FlextLdifSchema
-
-from ...helpers.test_assertions import TestAssertions
-from ...helpers.test_deduplication_helpers import DeduplicationHelpers
+from tests.helpers.test_assertions import TestAssertions
+from tests.helpers.test_deduplication_helpers import (
+    DeduplicationHelpers,
+    ParseTestCaseDict,
+    ServiceWithExecute,
+)
 
 
 class TestBasicAssertions:
@@ -284,33 +290,33 @@ class TestDictAssertions:
 
     def test_assert_dict_equals(self) -> None:
         """Test assert_dict_equals."""
-        d1 = {"key": "value"}
-        d2 = {"key": "value"}
+        d1: dict[str, object] = {"key": "value"}
+        d2: dict[str, object] = {"key": "value"}
         DeduplicationHelpers.assert_dict_equals(d1, d2)
 
     def test_assert_dict_has_key(self) -> None:
         """Test assert_dict_has_key."""
-        d = {"key": "value"}
+        d: dict[str, object] = {"key": "value"}
         DeduplicationHelpers.assert_dict_has_key(d, "key")
 
     def test_assert_dict_has_value(self) -> None:
         """Test assert_dict_has_value."""
-        d = {"key": "value"}
+        d: dict[str, object] = {"key": "value"}
         DeduplicationHelpers.assert_dict_has_value(d, "value")
 
     def test_assert_dict_key_equals(self) -> None:
         """Test assert_dict_key_equals."""
-        d = {"key": "value"}
+        d: dict[str, object] = {"key": "value"}
         DeduplicationHelpers.assert_dict_key_equals(d, "key", "value")
 
     def test_assert_dict_key_isinstance(self) -> None:
         """Test assert_dict_key_isinstance."""
-        d = {"key": ["value"]}
+        d: dict[str, object] = {"key": ["value"]}
         DeduplicationHelpers.assert_dict_key_isinstance(d, "key", list)
 
     def test_assert_dict_key_is_not_none(self) -> None:
         """Test assert_dict_key_is_not_none."""
-        d = {"key": "value"}
+        d: dict[str, object] = {"key": "value"}
         DeduplicationHelpers.assert_dict_key_is_not_none(d, "key")
 
 
@@ -319,17 +325,17 @@ class TestListAssertions:
 
     def test_assert_list_equals(self) -> None:
         """Test assert_list_equals."""
-        lst = [1, 2, 3]
+        lst: list[object] = [1, 2, 3]
         DeduplicationHelpers.assert_list_equals(lst, [1, 2, 3])
 
     def test_assert_list_first_equals(self) -> None:
         """Test assert_list_first_equals."""
-        lst = [1, 2, 3]
+        lst: list[object] = [1, 2, 3]
         DeduplicationHelpers.assert_list_first_equals(lst, 1)
 
     def test_assert_list_last_equals(self) -> None:
         """Test assert_list_last_equals."""
-        lst = [1, 2, 3]
+        lst: list[object] = [1, 2, 3]
         DeduplicationHelpers.assert_list_last_equals(lst, 3)
 
     def test_assert_in_list(self) -> None:
@@ -379,7 +385,7 @@ class TestServiceExecution:
     def test_service_execute_and_unwrap(self) -> None:
         """Test service_execute_and_unwrap."""
         # Use real schema service instead of mock
-        service = FlextLdifSchema(server_type="rfc")
+        service = cast("ServiceWithExecute", FlextLdifSchema(server_type="rfc"))
         result = DeduplicationHelpers.service_execute_and_unwrap(service)
         # Schema service returns SchemaServiceStatus
         assert result is not None
@@ -389,7 +395,7 @@ class TestServiceExecution:
     def test_service_execute_and_assert_fields(self) -> None:
         """Test service_execute_and_assert_fields."""
         # Use real schema service instead of mock
-        service = FlextLdifSchema(server_type="rfc")
+        service = cast("ServiceWithExecute", FlextLdifSchema(server_type="rfc"))
         result = DeduplicationHelpers.service_execute_and_assert_fields(
             service,
             expected_fields={"service": "SchemaService", "status": "operational"},
@@ -739,7 +745,7 @@ class TestQuirkRoundtrip:
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
         original, written, roundtripped = (
             DeduplicationHelpers.quirk_parse_write_roundtrip(
-                schema_quirk,
+                cast("FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk),
                 attr_def,
                 parse_method="parse_attribute",
                 expected_type=FlextLdifModels.SchemaAttribute,
@@ -775,26 +781,32 @@ class TestBatchOperations:
     def test_batch_parse_and_assert(self) -> None:
         """Test batch_parse_and_assert."""
         parser = FlextLdifParser()
-        test_cases = [
-            {
-                "ldif_content": "dn: cn=test1,dc=example,dc=com\ncn: test1\n",
-                "expected_count": 1,
-            },
-            {
-                "ldif_content": "dn: cn=test2,dc=example,dc=com\ncn: test2\n",
-                "expected_count": 1,
-            },
-        ]
+        test_cases = cast(
+            "list[ParseTestCaseDict]",
+            [
+                {
+                    "ldif_content": "dn: cn=test1,dc=example,dc=com\ncn: test1\n",
+                    "expected_count": 1,
+                },
+                {
+                    "ldif_content": "dn: cn=test2,dc=example,dc=com\ncn: test2\n",
+                    "expected_count": 1,
+                },
+            ],
+        )
         results = DeduplicationHelpers.batch_parse_and_assert(parser, test_cases)
         assert len(results) == 2
         assert all(len(entries) == 1 for entries in results)
 
     def test_create_entries_batch(self) -> None:
         """Test create_entries_batch."""
-        entries_data = [
-            {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": ["test1"]}},
-            {"dn": "cn=test2,dc=example,dc=com", "attributes": {"cn": ["test2"]}},
-        ]
+        entries_data = cast(
+            "list[dict[str, str | dict[str, list[str] | str] | list[str]]]",
+            [
+                {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": ["test1"]}},
+                {"dn": "cn=test2,dc=example,dc=com", "attributes": {"cn": ["test2"]}},
+            ],
+        )
         entries = DeduplicationHelpers.create_entries_batch(entries_data)
         assert len(entries) == 2
         assert entries[0].dn.value == "cn=test1,dc=example,dc=com"
@@ -808,7 +820,9 @@ class TestSchemaHelpers:
         """Test parse_schema_and_unwrap."""
         quirk = FlextLdifServersRfc()
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
-        attr = DeduplicationHelpers.parse_schema_and_unwrap(quirk.Schema(), attr_def)
+        attr = DeduplicationHelpers.parse_schema_and_unwrap(
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr_def
+        )
         assert isinstance(attr, FlextLdifModels.SchemaAttribute)
         assert attr.oid == "2.5.4.3"
 
@@ -820,7 +834,9 @@ class TestSchemaHelpers:
             name="testAttr",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
-        ldif = DeduplicationHelpers.write_schema_and_unwrap(quirk.Schema(), attr)
+        ldif = DeduplicationHelpers.write_schema_and_unwrap(
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr
+        )
         assert isinstance(ldif, str)
         assert "testAttr" in ldif
 
@@ -833,7 +849,7 @@ class TestEntryHelpers:
         quirk = FlextLdifServersRfc()
         ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
         entry = DeduplicationHelpers.parse_entry_and_unwrap(
-            quirk.Entry(),
+            cast("FlextLdifProtocols.Quirks.EntryProtocol", quirk.Entry()),
             ldif_content,
             expected_dn="cn=test,dc=example,dc=com",
         )
@@ -847,9 +863,9 @@ class TestEntryHelpers:
             {"cn": ["test"]},
         )
         ldif = DeduplicationHelpers.write_entry_and_unwrap(
-            quirk.Entry(),
+            cast("FlextLdifProtocols.Quirks.EntryProtocol", quirk.Entry()),
             entry,
-            must_contain="cn: test",
+            must_contain=["cn: test"],
         )
         assert "cn: test" in ldif
 

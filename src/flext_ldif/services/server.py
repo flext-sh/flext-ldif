@@ -3,12 +3,12 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Provides centralized registry for discovering, registering, and composing
+Provides centralized registry for discovering, registering, and accessing
 server-specific quirks with RFC-compliant base parsers.
 
-Registration is handled automatically via dependency injection during
-FlextLdifServer initialization. All quirk classes are auto-discovered
-from the flext_ldif.servers package and registered automatically.
+Registration is handled automatically during FlextLdifServer initialization.
+All quirk classes are auto-discovered from the flext_ldif.servers package
+and registered automatically.
 """
 
 from __future__ import annotations
@@ -16,7 +16,10 @@ from __future__ import annotations
 import inspect
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import (
+    FlextLogger,
+    FlextResult,
+)
 
 import flext_ldif.servers as servers_package
 from flext_ldif.constants import FlextLdifConstants
@@ -58,8 +61,6 @@ class FlextLdifServer:
 
     def __init__(self) -> None:
         """Initialize quirk registry with auto-discovery (idempotent)."""
-        super().__init__()
-
         # Use class-level cache if already initialized
         if FlextLdifServer._quirks_cache is not None:
             self._bases = FlextLdifServer._quirks_cache
@@ -314,76 +315,7 @@ class FlextLdifServer:
         return cast("FlextLdifServersBase.Entry | None", result)
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY - Keep old method names for now
-    # =========================================================================
-
-    def get_base(self, server_type: str) -> FlextLdifServersBase | None:
-        """Deprecated: Use quirk() instead."""
-        return self.quirk(server_type)
-
-    def get_schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
-        """Deprecated: Use schema() instead."""
-        return self.schema(server_type)
-
-    def get_schemas(
-        self,
-        server_type: str,
-    ) -> list[FlextLdifServersBase.Schema]:
-        """Deprecated: Use schema() and check for None instead."""
-        quirk = self.schema(server_type)
-        return [quirk] if quirk else []
-
-    def get_acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
-        """Deprecated: Use acl() instead."""
-        return self.acl(server_type)
-
-    def get_acls(self, server_type: str) -> list[FlextLdifServersBase.Acl]:
-        """Deprecated: Use acl() and check for None instead."""
-        quirk = self.acl(server_type)
-        return [quirk] if quirk else []
-
-    def get_entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
-        """Deprecated: Use entry() instead."""
-        return self.entry(server_type)
-
-    def get_entrys(self, server_type: str) -> list[FlextLdifServersBase.Entry]:
-        """Deprecated: Use entry() and check for None instead."""
-        quirk = self.entry(server_type)
-        return [quirk] if quirk else []
-
-    def gets(self, server_type: str) -> list[FlextLdifServersBase]:
-        """Get base quirk implementation for a server type."""
-        normalized_type = self._normalize_server_type(server_type)
-        quirk = self._bases.get(normalized_type)
-        return [quirk] if quirk is not None else []
-
-    def get_alls_for_server(
-        self,
-        server_type: str,
-    ) -> dict[
-        str,
-        FlextLdifServersBase.Schema
-        | FlextLdifServersBase.Acl
-        | FlextLdifServersBase.Entry
-        | None,
-    ]:
-        """Get all quirks (schema, ACL, entry) for a server type.
-
-        Args:
-            server_type: Server type
-
-        Returns:
-            Dict with 'schema', 'acl', 'entry' quirk instances
-
-        """
-        return {
-            "schema": self.get_schema(server_type),
-            "acl": self.get_acl(server_type),
-            "entry": self.get_entry(server_type),
-        }
-
-    # =========================================================================
-    # SERVER-AGNOSTIC QUIRK FINDING - Thin wrappers (no duplication)
+    # SERVER-AGNOSTIC QUIRK FINDING
     # =========================================================================
 
     def find_schema_for_attribute(
@@ -444,7 +376,10 @@ class FlextLdifServer:
         acl = self.acl(server_type)
         # Type narrowing: acl is FlextLdifServersBase.Acl
         # Check if it has can_handle method (all Acl quirks should have it)
-        if acl is not None and hasattr(acl, "can_handle") and acl.can_handle(acl_line):
+        can_handle_method = (
+            getattr(acl, "can_handle", None) if acl is not None else None
+        )
+        if can_handle_method and can_handle_method(acl_line):
             return acl
         return None
 
@@ -480,32 +415,6 @@ class FlextLdifServer:
 
         return None
 
-    # =========================================================================
-    # BACKWARD COMPATIBILITY - Old find_* method names (removed duplicates)
-    # =========================================================================
-    # NOTE: Removed duplicate method definitions to fix F811 errors:
-    # - find_schema_for_attribute() already defined at line 338
-    # - find_schema_for_objectclass() already defined at line 358
-    # - find_acl_for_line() already defined at line 378
-    # - find_entry_for_data() already defined at line 398
-
-    def find_acl(
-        self,
-        server_type: str,
-        acl_line: str,
-    ) -> FlextLdifServersBase.Acl | None:
-        """Deprecated: Use find_acl_for_line() instead."""
-        return self.find_acl_for_line(server_type, acl_line)
-
-    def find_entry(
-        self,
-        server_type: str,
-        entry_dn: str,
-        attributes: dict[str, object],
-    ) -> FlextLdifServersBase.Entry | None:
-        """Deprecated: Use find_entry_handler() instead."""
-        return self.find_entry_handler(server_type, entry_dn, attributes)
-
     def list_registered_servers(self) -> list[str]:
         """List all server types that have registered quirks.
 
@@ -514,29 +423,6 @@ class FlextLdifServer:
 
         """
         return sorted(self._bases.keys())
-
-    def get_registry_stats(self) -> dict[str, object]:
-        """Get statistics about registered quirks.
-
-        Returns:
-            Dict with quirk registration statistics
-
-        """
-        # Collect stats per server
-        by_server: dict[str, dict[str, bool]] = {}
-        for server_type, base in self._bases.items():
-            by_server[server_type] = {
-                "has_schema": hasattr(base, "schema"),
-                "has_acl": hasattr(base, "acl"),
-                "has_entry": hasattr(base, "entry"),
-            }
-
-        stats: dict[str, object] = {
-            "total_servers": len(self._bases),
-            "servers": list(self._bases.keys()),
-            "quirks_by_server": by_server,
-        }
-        return stats
 
     class _GlobalAccess:
         """Nested singleton management for global quirk registry."""

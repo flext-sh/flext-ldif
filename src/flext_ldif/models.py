@@ -16,6 +16,8 @@ Notes:
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextModels
 from flext_core._models.collections import FlextModelsCollections
 from pydantic import computed_field
@@ -246,12 +248,12 @@ class FlextLdifModels(FlextModels):
         """Result of schema discovery operations."""
 
     class FlexibleCategories(
-        FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
+        FlextModelsCollections.Categories["FlextLdifModels.Entry"],
     ):
         """Flexible entry categorization with dynamic categories.
 
         Replaces dict[str, list[Entry]] pattern with type-safe model.
-        Uses public FlextLdifModels.Entry (not domain Entry) for type safety.
+        Uses public FlextLdifModels.Entry facade for type safety.
         """
 
     class SchemaAttribute(FlextLdifModelsDomains.SchemaAttribute):
@@ -273,13 +275,17 @@ class FlextLdifModels(FlextModels):
 
             """
             # Get internal syntax from parent implementation
-            internal_syntax = super().syntax_definition
-            if internal_syntax is None:
+            parent_result = super().syntax_definition
+            if parent_result is None:
                 return None
 
-            # Type guard: ensure internal_syntax is a Pydantic model with model_dump method
-            if not hasattr(internal_syntax, "model_dump"):
+            # Type guard: ensure parent_result is a Pydantic model with model_dump method
+            if not hasattr(parent_result, "model_dump"):
                 return None
+
+            # Since we checked hasattr, we know it's a Pydantic model
+            # Parent syntax is already FlextLdifModelsDomains.Syntax (internal type)
+            internal_syntax = cast("FlextLdifModelsDomains.Syntax", parent_result)
 
             # Convert to public type using model_validate
             # Exclude computed fields since they will be recomputed automatically
@@ -458,6 +464,9 @@ class FlextLdifModels(FlextModels):
 
         Combines Entry models with statistics from parse operation.
         Uses model composition instead of dict intermediaries.
+
+        Note: entries field inherits from parent but all entries are
+        compatible with FlextLdifModels.Entry through inheritance.
         """
 
     class WriteResponse(FlextLdifModelsResults.WriteResponse):

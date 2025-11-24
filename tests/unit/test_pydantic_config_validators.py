@@ -10,9 +10,12 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from typing import cast
+
 import pytest
 
 from flext_ldif import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 
 
 class TestFlextLdifConfigEncodingValidator:
@@ -36,7 +39,11 @@ class TestFlextLdifConfigEncodingValidator:
     def test_invalid_encoding_raises_validation_error(self) -> None:
         """Validate invalid encoding raises ValidationError from field_validator."""
         with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_encoding="invalid-codec-xyz")
+            FlextLdifConfig(
+                ldif_encoding=cast(
+                    "FlextLdifConstants.LiteralTypes.EncodingType", "invalid-codec-xyz"
+                )
+            )
 
         # Error should mention the invalid encoding
         error_str = str(exc_info.value)
@@ -112,7 +119,11 @@ class TestFlextLdifConfigServerTypeValidator:
     def test_invalid_server_type_raises_validation_error(self) -> None:
         """Validate invalid server_type raises ValidationError from field_validator."""
         with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(server_type="invalid-server-xyz")
+            FlextLdifConfig(
+                server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerType", "invalid-server-xyz"
+                )
+            )
 
         # Error should mention the invalid server type
         error_str = str(exc_info.value)

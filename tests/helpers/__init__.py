@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from .test_assertions import TestAssertions
 from .test_deduplication_helpers import DeduplicationHelpers
 from .test_entry_helpers import EntryTestHelpers
+from .test_factories import FlextLdifTestFactories
 from .test_fixture_helpers import FixtureTestHelpers
 from .test_operations import TestOperations
 from .test_oud_helpers import OudTestHelpers
@@ -23,6 +24,7 @@ __all__ = [
     "DeduplicationHelpers",
     "EntryTestHelpers",
     "FixtureTestHelpers",
+    "FlextLdifTestFactories",
     "OudTestHelpers",
     "QuirkTestHelpers",
     "RfcTestHelpers",

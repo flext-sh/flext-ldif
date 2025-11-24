@@ -123,7 +123,8 @@ class TestAttributeExtraction:
             "nonexistent",
         )
         assert result.is_failure
-        assert "not found" in result.error.lower()
+        error_msg = result.error or ""
+        assert "not found" in error_msg.lower()
 
     def test_get_entry_attribute_no_attributes(self) -> None:
         """Test getting attribute from entry with no attributes."""
@@ -153,7 +154,8 @@ class TestAttributeExtraction:
         """Test normalizing empty string."""
         result = EntryManipulationServices.normalize_attribute_value("   ")
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        error_msg = result.error or ""
+        assert "empty" in error_msg.lower()
 
     def test_get_normalized_attribute_success(
         self,
@@ -203,7 +205,8 @@ class TestDisplayName:
             "Doe",
         )
         assert result.is_failure
-        assert "insufficient" in result.error.lower()
+        error_msg = result.error or ""
+        assert "insufficient" in error_msg.lower()
 
     def test_build_display_name_from_parts_missing_sn(self) -> None:
         """Test building display name with missing surname."""
@@ -433,7 +436,8 @@ class TestGroupMembership:
             group_entry,
         )
         assert result.is_failure
-        assert "email" in result.error.lower()
+        error_msg = result.error or ""
+        assert "email" in error_msg.lower()
 
     def test_validate_group_membership_rules_valid(
         self,
@@ -469,7 +473,8 @@ class TestGroupMembership:
             group_entry,
         )
         assert result.is_failure
-        assert "inactive" in result.error.lower()
+        error_msg = result.error or ""
+        assert "inactive" in error_msg.lower()
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -506,7 +511,8 @@ class TestUsernameGeneration:
             validation_service,
         )
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        error_msg = result.error or ""
+        assert "empty" in error_msg.lower()
 
     def test_normalize_username_base_invalid_chars(
         self,

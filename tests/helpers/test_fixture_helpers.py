@@ -133,7 +133,10 @@ class FixtureTestHelpers:
 
             if expected_has_objectclass is not None:
                 assert entry.attributes is not None, "Entry must have attributes"
-                attr_names = {name.lower() for name in entry.attributes}
+                entry_typed = entry
+                attr_names = {
+                    name.lower() for name in entry_typed.attributes.attributes
+                }
                 has_objectclass = "objectclass" in attr_names
                 assert has_objectclass == expected_has_objectclass, (
                     f"Expected has_objectclass={expected_has_objectclass}, "

@@ -19,7 +19,8 @@ import re
 import pytest
 
 from flext_ldif import FlextLdif
-from tests.fixtures import FlextLdifFixtures
+
+from ..fixtures import FlextLdifFixtures
 
 
 class TestOudSchemaIntegration:

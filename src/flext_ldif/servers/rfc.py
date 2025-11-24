@@ -1608,10 +1608,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _route_parse(
             self,
             definition: str,
-        ) -> (
-            FlextResult[FlextLdifModels.SchemaAttribute]
-            | FlextResult[FlextLdifModels.SchemaObjectClass]
-        ):
+        ) -> FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ]:
             """Route schema definition to appropriate parse method.
 
             Automatically detects if definition is attribute or objectclass.
@@ -1625,16 +1624,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             schema_type = self._detect_schema_type(definition)
             if schema_type == "objectclass":
-                return self._parse_objectclass(definition)
-            return self._parse_attribute(definition)
+                oc_result = self._parse_objectclass(definition)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                    oc_result,
+                )
+            attr_result = self._parse_attribute(definition)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                attr_result,
+            )
 
         def parse(
             self,
             definition: str,
-        ) -> (
-            FlextResult[FlextLdifModels.SchemaAttribute]
-            | FlextResult[FlextLdifModels.SchemaObjectClass]
-        ):
+        ) -> FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ]:
             """Parse schema definition (attribute or objectClass).
 
             Automatically routes to parse_attribute() or parse_objectclass() based on content.
@@ -2677,7 +2683,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             operation_raw = kwargs.get("operation")
             # Type narrowing: check if operation_raw is a valid Literal value
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation = operation_raw
+                operation: Literal["parse", "write"] | None = operation_raw
             else:
                 operation = None
 
@@ -4434,7 +4440,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             operation_raw = kwargs.get("operation")
             # Type narrowing: check if operation_raw is a valid Literal value
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation = operation_raw
+                operation: Literal["parse", "write"] | None = operation_raw
             else:
                 operation = None
 

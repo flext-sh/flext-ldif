@@ -13,7 +13,6 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -86,7 +85,7 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
     def __init__(
         self,
         categorization_rules: FlextLdifModels.CategoryRules
-        | dict[str, list[str]]
+        | dict[str, object]
         | None = None,
         schema_whitelist_rules: FlextLdifModels.WhitelistRules
         | dict[str, list[str]]
@@ -452,14 +451,8 @@ class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCateg
                     model_entries,
                     self._base_dn,
                 )
-                # FlexibleCategories expects list[FlextLdifModelsDomains.Entry]
-                # Type narrowing: all entries in included are FlextLdifModels.Entry
-                # Convert to domain Entry type for FlexibleCategories
-                domain_entries = [
-                    FlextLdifModelsDomains.Entry.model_validate(entry.model_dump())
-                    for entry in included
-                ]
-                filtered[category] = domain_entries
+                # FlexibleCategories uses FlextLdifModels.Entry directly
+                filtered[category] = included
                 self._rejection_tracker["base_dn_filter"].extend(excluded)
 
                 # Track filter results in statistics

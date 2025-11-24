@@ -153,9 +153,7 @@ class FlextLdifUtilitiesMetadata:
             if FlextRuntime.is_dict_like(value):
                 value.update(item_data)
             else:
-                metadata[metadata_key] = (
-                    dict(item_data) if hasattr(item_data, "items") else {item_data}
-                )
+                metadata[metadata_key] = item_data
 
         # Update conversion_path if requested
         if update_conversion_path:

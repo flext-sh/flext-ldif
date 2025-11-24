@@ -18,7 +18,7 @@ from typing import ClassVar, Final
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from ldap3 import Connection
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
 
 logger = FlextLogger(__name__)
@@ -727,7 +727,7 @@ class EntryManipulationServices:
             dn_str,
             object_class=object_class,
             attributes=attempted_attributes,
-        )  # type: ignore[no-untyped-call]
+        )
         return bool(result) if result is not None else False
 
     def _extract_undefined_attribute_internal(

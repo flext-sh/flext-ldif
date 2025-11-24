@@ -35,12 +35,22 @@ class TestRfcSchemaParserInitialization:
         self,
         real_parser_service: FlextLdifParser,
     ) -> None:
-        """Test parser service initialization."""
+        """Test parser service initialization with real functionality."""
         parser = real_parser_service
 
-        assert parser is not None
-        assert hasattr(parser, "_registry")
-        assert hasattr(parser, "_config")
+        # Test real functionality - parser should be able to parse valid LDIF
+        test_ldif = """dn: cn=test,dc=example,dc=com
+objectClass: person
+cn: test
+"""
+
+        result = parser.parse(
+            content=test_ldif, input_source="string", server_type="rfc"
+        )
+        assert result.is_success
+        entries = result.unwrap().entries
+        assert len(entries) == 1
+        assert entries[0].dn.value == "cn=test,dc=example,dc=com"
 
 
 class TestAutomaticSchemaDetection:

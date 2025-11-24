@@ -24,9 +24,8 @@ from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from flext_ldif.services.entry import FlextLdifEntry
 from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
-
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from ...helpers.test_rfc_helpers import RfcTestHelpers
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES

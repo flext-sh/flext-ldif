@@ -289,7 +289,8 @@ class TestConversionServiceConvert:
         result = conversion_service.convert(rfc_quirk, rfc_quirk, entry)
         # Should fail DN validation
         assert result.is_failure
-        assert "validation" in result.error.lower() or "dn" in result.error.lower()
+        error_msg = result.error or ""
+        assert "validation" in error_msg.lower() or "dn" in error_msg.lower()
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -379,9 +380,8 @@ class TestConversionServiceBatchConvert:
             assert len(converted) >= 1
         else:
             # If fails, should have error details
-            assert (
-                "error" in result.error.lower() or "validation" in result.error.lower()
-            )
+            error_msg = result.error or ""
+            assert "error" in error_msg.lower() or "validation" in error_msg.lower()
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -720,9 +720,8 @@ class TestConversionServiceErrorHandling:
         # _resolve_quirk raises ValueError, but convert() catches it and returns FlextResult.fail()
         result = conversion_service.convert("invalid_type", "rfc", simple_entry)
         assert result.is_failure
-        assert (
-            "Unknown server type" in result.error or "invalid" in result.error.lower()
-        )
+        error_msg = result.error or ""
+        assert "Unknown server type" in error_msg or "invalid" in error_msg.lower()
 
     def test_convert_with_invalid_target_type(
         self,
@@ -732,9 +731,8 @@ class TestConversionServiceErrorHandling:
         """Test convert with invalid target server type."""
         result = conversion_service.convert("rfc", "invalid_type", simple_entry)
         assert result.is_failure
-        assert (
-            "Unknown server type" in result.error or "invalid" in result.error.lower()
-        )
+        error_msg = result.error or ""
+        assert "Unknown server type" in error_msg or "invalid" in error_msg.lower()
 
     def test_batch_convert_with_invalid_source(
         self,
@@ -744,9 +742,8 @@ class TestConversionServiceErrorHandling:
         """Test batch_convert with invalid source."""
         result = conversion_service.batch_convert("invalid", "rfc", [simple_entry])
         assert result.is_failure
-        assert (
-            "Unknown server type" in result.error or "invalid" in result.error.lower()
-        )
+        error_msg = result.error or ""
+        assert "Unknown server type" in error_msg or "invalid" in error_msg.lower()
 
     def test_execute_exception_handling(
         self,

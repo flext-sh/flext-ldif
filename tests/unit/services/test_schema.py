@@ -139,7 +139,8 @@ class TestParseAttribute:
         """Test parsing empty attribute definition."""
         result = schema_service.parse_attribute("")
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        error_msg = result.error or ""
+        assert "empty" in error_msg.lower()
 
     def test_parse_attribute_whitespace(
         self,

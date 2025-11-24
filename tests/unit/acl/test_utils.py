@@ -15,7 +15,6 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
 # ===== ACL Component Factory Helpers (replaced FlextLdifUtilities) =====
@@ -60,7 +59,7 @@ def create_unified_acl_helper(
     target: FlextLdifModels.AclTarget,
     subject: FlextLdifModels.AclSubject,
     permissions: FlextLdifModels.AclPermissions,
-    server_type: FlextLdifTypes.AclServerType,
+    server_type: str,
     raw_acl: str,
 ) -> FlextResult[FlextLdifModels.Acl]:
     """Create unified ACL with proper validation using railway pattern.

@@ -31,6 +31,7 @@ from flext_ldif.config import FlextLdifConfig, LdifFlextConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.entry_manipulation import EntryManipulationServices
 from flext_ldif.services.filters import FlextLdifFilters
@@ -46,10 +47,11 @@ __email__ = "dev@flext.com"
 __all__ = [
     # ✅ Entry manipulation service (required by flext-ldap)
     "EntryManipulationServices",
-    "FlextLdif",  # ✅ Facade (single entry point)
+    "FlextLdif",  # ✅ Facade (single entry point) - supports monadic methods and builder
     "FlextLdifCategorization",  # ✅ Categorization service (public API)
     "FlextLdifConfig",  # ✅ Configuration (namespace registered)
     "FlextLdifConstants",  # ✅ Constants
+    "FlextLdifConversion",  # ✅ Conversion service (public API)
     "FlextLdifDetector",  # ✅ Detector service (required by flext-ldap)
     "FlextLdifFilters",  # ✅ Filters service (public API)
     "FlextLdifMigrationPipeline",  # ✅ High-level service (OK to expose)

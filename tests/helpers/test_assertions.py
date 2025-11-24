@@ -14,29 +14,33 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TypeVar
+from typing import cast
 
-from flext_core import FlextResult
-
-T = TypeVar("T")
+from flext_core import FlextResult, T
+from flext_tests import FlextTestsMatchers
 
 from flext_ldif import FlextLdifModels
 
-_T = TypeVar("_T")
+from .test_factories import FlextLdifTestFactories
 
 
 class TestAssertions:
-    """Reusable assertion helpers for tests."""
+    """Reusable assertion helpers for tests.
+
+    Delegates to FlextTestsMatchers for common assertions to avoid duplication.
+    """
 
     # Prevent pytest from collecting static methods as tests
     __test__ = False
 
     @staticmethod
     def assert_success(
-        result: FlextResult[_T],
+        result: FlextResult[T],
         error_msg: str | None = None,
-    ) -> _T:
+    ) -> T:
         """Assert result is success and return unwrapped value.
+
+        Delegates to FlextTestsMatchers.assert_success().
 
         Args:
             result: FlextResult to check
@@ -49,17 +53,16 @@ class TestAssertions:
             AssertionError: If result is failure
 
         """
-        if not result.is_success:
-            msg = error_msg or f"Expected success but got failure: {result.error}"
-            raise AssertionError(msg)
-        return result.unwrap()
+        return FlextTestsMatchers.assert_success(result, error_msg)
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[_T],
+        result: FlextResult[T],
         expected_error: str | None = None,
     ) -> str:
         """Assert result is failure and return error message.
+
+        Delegates to FlextTestsMatchers.assert_failure().
 
         Args:
             result: FlextResult to check
@@ -72,21 +75,9 @@ class TestAssertions:
             AssertionError: If result is success
 
         """
-        if result.is_success:
-            msg = f"Expected failure but got success: {result.unwrap()}"
-            raise AssertionError(
-                msg,
-            )
-        error = result.error
-        if error is None:
-            msg = "Expected error but got None"
-            raise AssertionError(msg)
-        if expected_error and expected_error not in error:
-            msg = f"Expected error containing '{expected_error}' but got: {error}"
-            raise AssertionError(
-                msg,
-            )
-        return error
+        # Cast to object for FlextTestsMatchers which expects FlextResult[object]
+        result_obj: FlextResult[object] = cast("FlextResult[object]", result)
+        return FlextTestsMatchers.assert_failure(result_obj, expected_error)
 
     @staticmethod
     def assert_entry_valid(entry: FlextLdifModels.Entry) -> None:
@@ -195,19 +186,38 @@ class TestAssertions:
             raise AssertionError(msg)
         # Handle ParseResponse objects
         entries: list[FlextLdifModels.Entry]
+        # Check if unwrapped has entries attribute (ParseResponse-like)
         if hasattr(unwrapped, "entries"):
-            entries_raw = unwrapped.entries
-            if isinstance(entries_raw, list):
-                entries = [
-                    entry
-                    for entry in entries_raw
-                    if isinstance(entry, FlextLdifModels.Entry)
-                ]
-            elif isinstance(entries_raw, FlextLdifModels.Entry):
-                entries = [entries_raw]
+            # unwrapped is ParseResponse-like object - use protocol for type safety
+            from flext_ldif.protocols import FlextLdifProtocols
+
+            if isinstance(unwrapped, FlextLdifProtocols.Services.HasEntriesProtocol):
+                entries_raw = unwrapped.entries
+                if isinstance(entries_raw, list):
+                    entries = [
+                        entry
+                        for entry in entries_raw
+                        if isinstance(entry, FlextLdifModels.Entry)
+                    ]
+                elif isinstance(entries_raw, FlextLdifModels.Entry):
+                    entries = [entries_raw]
+                else:
+                    msg = "Parse returned unexpected entry type"
+                    raise AssertionError(msg)
             else:
-                msg = "Parse returned unexpected entry type"
-                raise AssertionError(msg)
+                # Fallback for objects with entries attribute but not protocol
+                entries_raw = unwrapped.entries
+                if isinstance(entries_raw, list):
+                    entries = [
+                        entry
+                        for entry in entries_raw
+                        if isinstance(entry, FlextLdifModels.Entry)
+                    ]
+                elif isinstance(entries_raw, FlextLdifModels.Entry):
+                    entries = [entries_raw]
+                else:
+                    msg = "Parse returned unexpected entry type"
+                    raise AssertionError(msg)
         elif isinstance(unwrapped, list):
             entries = [
                 entry for entry in unwrapped if isinstance(entry, FlextLdifModels.Entry)
@@ -286,11 +296,11 @@ class TestAssertions:
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: dict[str, str | list[str]],
+        attributes: dict[str, str | list[str]] | None = None,
         *,
         validate: bool = False,
     ) -> FlextLdifModels.Entry:
-        """Create Entry using Entry.create() - generalized helper.
+        """Create Entry using FlextLdifTestFactories - delegates to factory.
 
         Replaces multiple create_entry_* helper methods:
         - create_entry_simple: Basic creation with optional validation
@@ -300,7 +310,7 @@ class TestAssertions:
 
         Args:
             dn: Distinguished name as string
-            attributes: Dictionary of attribute names to values
+            attributes: Optional dictionary of attribute names to values
             validate: Whether to validate entry structure (default: False)
 
         Returns:
@@ -310,15 +320,7 @@ class TestAssertions:
             AssertionError: If entry creation fails
 
         """
-        result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes)
-        entry = TestAssertions.assert_success(
-            result,
-            f"Failed to create entry with DN '{dn}'",
-        )
-        # Type narrowing check to satisfy strict type checking
-        if not isinstance(entry, FlextLdifModels.Entry):
-            msg = f"Expected Entry but got {type(entry).__name__}"
-            raise AssertionError(msg)
+        entry = FlextLdifTestFactories.create_entry(dn=dn, attributes=attributes)
         if validate:
             TestAssertions.assert_entry_valid(entry)
         return entry
