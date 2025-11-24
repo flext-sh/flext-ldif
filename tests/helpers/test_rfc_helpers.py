@@ -842,10 +842,7 @@ class RfcTestHelpers:
         schema_obj_untyped: (
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
         ) = TestAssertions.assert_success(
-            cast(
-                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
-                result,
-            ),
+            result,
             "Route parse should succeed",
         )
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
@@ -2175,10 +2172,7 @@ class RfcTestHelpers:
             parsed_untyped: (
                 FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
             ) = TestAssertions.assert_success(
-                cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
-                    result,
-                ),
+                result,
             )
             parsed = parsed_untyped
             if expected_oids and i < len(expected_oids):

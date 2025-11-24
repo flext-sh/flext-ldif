@@ -1166,7 +1166,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         unwrapped = TestAssertions.assert_success(result, error_msg)
         if isinstance(unwrapped, list):
             entries: list[FlextLdifModels.Entry] = [
-                cast("FlextLdifModels.Entry", e)
+                e
                 for e in unwrapped
                 if isinstance(e, FlextLdifModels.Entry)
             ]
@@ -1175,7 +1175,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             entries_list = parse_response.entries
             # ParseResponse.entries is list[Domain.Entry], convert to list[Entry]
             entries = [
-                cast("FlextLdifModels.Entry", e)
+                e
                 for e in entries_list
                 if isinstance(e, FlextLdifModels.Entry)
             ]
@@ -1190,7 +1190,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 f"Expected {expected_length} items, got {len(entries)}"
             )
 
-        return cast("list[FlextLdifModels.Entry]", entries)
+        return entries
 
     @staticmethod
     def assert_success_and_unwrap_entry(
@@ -9847,7 +9847,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     f"Attribute '{attr_name}' not found in entry"
                 )
 
-        return cast("list[FlextLdifModels.Entry]", entries)
+        return entries
 
     @staticmethod
     def api_parse_write_file_and_assert(
