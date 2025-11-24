@@ -2241,9 +2241,8 @@ class FlextLdifModelsDomains:
                     for attr_name, attr_value_list in entry_attrs_raw.items():
                         if FlextRuntime.is_list_like(attr_value_list):
                             # Type guard: attr_value_list is list-like, so it's iterable
-                            attr_value_list_cast = cast("list[object]", attr_value_list)
                             attrs_dict[str(attr_name)] = [
-                                str(v) for v in attr_value_list_cast
+                                str(v) for v in attr_value_list
                             ]
                         elif isinstance(attr_value_list, str):
                             attrs_dict[str(attr_name)] = [attr_value_list]
