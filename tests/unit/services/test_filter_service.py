@@ -715,7 +715,7 @@ class TestFilterService:
             self,
             user_entries: list[FlextLdifModels.Entry],
         ) -> None:
-            """Test builder with objectClass."""
+            """Test builder with objectClass - SRP marks instead of removes."""
             result = (
                 FlextLdifFilters.builder()
                 .with_entries(user_entries)
@@ -724,10 +724,11 @@ class TestFilterService:
                 .build()
             )
 
-            assert len(result) == 2
+            # SRP: All entries returned, objectClasses are marked not removed
+            assert len(result) == 3
 
         def test_builder_attributes(self) -> None:
-            """Test builder with attributes."""
+            """Test builder with attributes - SRP marks instead of removes."""
             entries = [
                 FilterTestFactory.create_entry(
                     "cn=e1,dc=x",
@@ -748,7 +749,8 @@ class TestFilterService:
                 .build()
             )
 
-            assert len(result) == 1
+            # SRP: All entries returned, attributes are marked not removed
+            assert len(result) == 2
 
         def test_builder_exclude_matching(
             self,

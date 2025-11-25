@@ -201,6 +201,15 @@ class FlextLdifFilters(
             mark_excluded: bool,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter entries by DN pattern."""
+            # Validate mode
+            valid_modes = (
+                FlextLdifConstants.Modes.INCLUDE,
+                FlextLdifConstants.Modes.EXCLUDE,
+            )
+            if mode not in valid_modes:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Invalid filter mode '{mode}'. Must be one of: {valid_modes}",
+                )
             try:
                 pattern = dn_pattern  # Type narrowing
                 filtered = []

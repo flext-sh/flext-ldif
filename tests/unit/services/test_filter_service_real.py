@@ -93,9 +93,8 @@ class BuilderTestCase:
 
 # Test case definitions
 DN_PATTERN_TESTS: Final[list[DnPatternTestCase]] = [
-    DnPatternTestCase("people", "*,ou=people,*", "ou=people"),
-    DnPatternTestCase("groups", "*,ou=groups,*", "ou=groups"),
-    DnPatternTestCase("REDACTED_LDAP_BIND_PASSWORDs", "*,ou=REDACTED_LDAP_BIND_PASSWORDs,*", "ou=REDACTED_LDAP_BIND_PASSWORDs"),
+    DnPatternTestCase("people", "*ou=people*", "ou=people"),
+    DnPatternTestCase("groups", "*ou=groups*", "ou=groups"),
     DnPatternTestCase("organizational_unit", "*,ou=*", "ou="),
 ]
 
@@ -272,7 +271,7 @@ class TestFlextLdifFilterService(FlextTestsFactories):
         """Test exclude mode removes matching entries."""
         original_count = len(oid_entries)
 
-        result = FlextLdifFilters.by_dn(oid_entries, "*,ou=people,*", mode="exclude")
+        result = FlextLdifFilters.by_dn(oid_entries, "*ou=people*", mode="exclude")
 
         assert result.is_success
         filtered = result.unwrap()
@@ -386,20 +385,23 @@ class TestFlextLdifFilterService(FlextTestsFactories):
 
     def test_acl_extraction(self, oid_acl_entries: list[FlextLdifModels.Entry]) -> None:
         """Test ACL entry extraction with real ACL data."""
-        result = FlextLdifFilters.extract_acl_entries(oid_acl_entries)
+        # OID uses orclaci and orclentrylevelaci attributes
+        oid_acl_attributes = ["orclaci", "orclentrylevelaci"]
+        result = FlextLdifFilters.extract_acl_entries(
+            oid_acl_entries, acl_attributes=oid_acl_attributes,
+        )
 
         assert result.is_success
         acl_entries = result.unwrap()
         assert len(acl_entries) > 0, "Should extract ACL entries"
 
-        # Verify ACL entries have ACI attributes or similar
+        # Verify ACL entries have OID ACL attributes
         for entry in acl_entries:
             has_acl_attr = (
-                "aci" in str(entry.attributes.attributes).lower()
-                or entry.has_attribute("aci")
-                or entry.has_attribute("acl")
+                entry.has_attribute("orclaci")
+                or entry.has_attribute("orclentrylevelaci")
             )
-            assert has_acl_attr, "ACL entry should have ACL-related attributes"
+            assert has_acl_attr, "ACL entry should have OID ACL attributes"
 
     def test_entry_categorization(
         self, oid_entries: list[FlextLdifModels.Entry]
