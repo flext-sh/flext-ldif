@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import cast
+from typing import Protocol, runtime_checkable
 
 import pytest
 
@@ -28,6 +28,15 @@ LDAP_FAILURE_PATTERNS = [
     "UNAVAILABLE",
     "ldap3.core.exceptions",
 ]
+
+
+@runtime_checkable
+class PytestHookOutcome(Protocol):
+    """Protocol for pytest hook outcome with get_result method."""
+
+    def get_result(self) -> pytest.TestReport:
+        """Get the test report result."""
+        ...
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -56,27 +65,25 @@ def pytest_runtest_makereport(
     """
     outcome = yield
     # Type narrowing: pytest hookimpl with hookwrapper returns _Result type with get_result
-    # Use getattr to safely access get_result method
-    if hasattr(outcome, "get_result"):
-        get_result = outcome.get_result
-        report = cast("pytest.TestReport", get_result())
-    else:
+    if not isinstance(outcome, PytestHookOutcome):
         msg = "Pytest hook outcome does not have get_result method"
-        raise AttributeError(msg)
+        raise TypeError(msg)
+
+    report = outcome.get_result()
 
     # Only process failures during test execution (not setup/teardown)
     if report.when != "call" or not report.failed:
-        return
+        return None
 
     # Check if test uses ldap_container fixture
     # Type narrowing: item has fixturenames attribute for Function/Class items
     fixturenames = getattr(item, "fixturenames", None)
     if fixturenames is None or "ldap_container" not in fixturenames:
-        return
+        return None
 
     # Get exception information
     if call.excinfo is None:
-        return
+        return None
 
     exception_message = str(call.excinfo.value)
 
@@ -87,7 +94,7 @@ def pytest_runtest_makereport(
     )
 
     if not is_ldap_failure:
-        return  # Test logic failure - do NOT mark dirty
+        return None  # Test logic failure - do NOT mark dirty
 
     # LDAP service failure detected - mark container dirty
     try:
@@ -152,3 +159,5 @@ def pytest_runtest_makereport(
                 f"LDAP failure detected but failed to mark container dirty:\n{e}",
             ),
         )
+
+    return None

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict, cast
+from typing import cast
 
 import pytest
 from flext_core import FlextResult
@@ -21,15 +21,6 @@ from tests.helpers.test_assertions import TestAssertions
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 from .fixtures.rfc_constants import TestsRfcConstants
-
-
-class AutoExecuteKwargs(TypedDict, total=False):
-    """TypedDict for AutoExecuteServer kwargs."""
-
-    ldif_text: str
-    entries: list[FlextLdifModels.Entry]
-    operation: Literal["parse", "write"]
-
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed
@@ -300,7 +291,7 @@ class TestFlextLdifServersBaseSchemaAclEntryMethods:
         """Test get_schema_quirk() method with server_type parameter."""
         rfc = FlextLdifServersRfc()
         # get_schema_quirk uses _server_type parameter (ignored, but accepts it)
-        schema_quirk = rfc.get_schema_quirk(_server_type="rfc")
+        schema_quirk = rfc.get_schema_quirk(server_type="rfc")
         assert schema_quirk is not None
 
     def test_acl_method_no_server_type(self) -> None:
@@ -2457,3 +2448,53 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # and then raises AttributeError at line 1605
         with pytest.raises(AttributeError, match="nested class must have parent"):
             _ = entry._get_server_type()
+
+
+class TestFlextLdifServersBaseGetattr:
+    """Test __getattr__ delegation to nested quirks."""
+
+    def test_getattr_delegates_to_schema_quirk(self) -> None:
+        """Test that __getattr__ delegates method calls to schema quirk."""
+        rfc = FlextLdifServersRfc()
+        # Call a method that exists on schema quirk
+        result = rfc.can_handle_attribute(
+            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
+        assert isinstance(result, bool)
+
+    def test_getattr_delegates_to_acl_quirk(self) -> None:
+        """Test that __getattr__ delegates method calls to acl quirk."""
+        rfc = FlextLdifServersRfc()
+        # Call a method that exists on acl quirk
+        result = rfc.can_handle_acl("aci: test")
+        assert isinstance(result, bool)
+
+    def test_getattr_delegates_to_entry_quirk(self) -> None:
+        """Test that __getattr__ delegates method calls to entry quirk."""
+        rfc = FlextLdifServersRfc()
+        # Call a method that exists on entry quirk
+        result = rfc.can_handle("dn: test", {})
+        assert isinstance(result, bool)
+
+    def test_getattr_raises_attributeerror_for_unknown_method(self) -> None:
+        """Test that __getattr__ raises AttributeError for unknown methods."""
+        rfc = FlextLdifServersRfc()
+        with pytest.raises(
+            AttributeError,
+            match="'FlextLdifServersRfc' object has no attribute 'nonexistent_method'",
+        ):
+            _ = rfc.nonexistent_method()
+
+    def test_getattr_handles_none_quirks_gracefully(self) -> None:
+        """Test that __getattr__ handles None quirks without crashing."""
+        # Create a minimal instance that might have None quirks during init
+        rfc = FlextLdifServersRfc()
+        # Force a quirk to None to test error handling (this is for coverage)
+        original_schema = rfc._schema_quirk
+        try:
+            rfc._schema_quirk = None
+            # This should still work via other quirks or raise proper error
+            with pytest.raises(AttributeError):
+                _ = rfc.some_unknown_method()
+        finally:
+            rfc._schema_quirk = original_schema

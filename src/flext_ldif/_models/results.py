@@ -12,7 +12,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import overload
 
-from flext_core import FlextModels, FlextRuntime
+from flext_core import FlextModels
+from flext_core.models import FlextModelsCollections
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -235,7 +236,7 @@ class FlextLdifModelsResults:
 
             Args:
                 entries: List of Entry objects (domain Entry type)
-                        Public Entry types (FlextLdifModels.Entry) inherit from domain Entry
+                        Public Entry types ("FlextLdifModels.Entry") inherit from domain Entry
                         and are compatible, but lists are invariant so caller must convert.
                 category: Category name for the entries (default: "all")
                 statistics: Optional statistics object (creates default if None)
@@ -964,7 +965,7 @@ class FlextLdifModelsResults:
             """
             # Compute directly instead of accessing computed field properties
             # stats can be dict or MigrationStatistics object
-            if FlextRuntime.is_dict_like(self.stats):
+            if isinstance(self.stats, dict):
                 stats_dict = self.stats
                 total_schema_attrs = stats_dict.get("total_schema_attributes", 0)
                 total_schema_ocs = stats_dict.get("total_schema_objectclasses", 0)
@@ -1435,6 +1436,30 @@ class FlextLdifModelsResults:
         )
         detected_server_type: str | None = Field(None)
 
+        def get_entries(self) -> list[FlextLdifModelsDomains.Entry]:
+            """Get parsed entries.
+
+            Returns:
+                List of parsed entries
+
+            """
+            # Convert domain entries to public facade entries
+            return [
+                FlextLdifModelsDomains.Entry(
+                    dn=FlextLdifModelsDomains.DistinguishedName(
+                        value=entry.dn.value
+                        if hasattr(entry.dn, "value")
+                        else str(entry.dn)
+                    ),
+                    attributes=FlextLdifModelsDomains.LdifAttributes(
+                        attributes=dict(entry.attributes.attributes)
+                        if hasattr(entry.attributes, "attributes")
+                        else dict(entry.attributes)
+                    ),
+                )
+                for entry in self.entries
+            ]
+
     class AclResponse(FlextModels.Value):
         """Composed response from ACL extraction.
 
@@ -1463,6 +1488,15 @@ class FlextLdifModelsResults:
         statistics: FlextLdifModelsResults.Statistics = Field(
             description="Write operation statistics",
         )
+
+        def get_content(self) -> str:
+            """Get written LDIF content.
+
+            Returns:
+                Written LDIF content as string
+
+            """
+            return self.content or ""
 
     class CategorizedEntries(FlextModels.ArbitraryTypesModel):
         """Result of entry categorization by objectClass.
@@ -1616,7 +1650,7 @@ class FlextLdifModelsResults:
             )
 
     class FlexibleCategories(
-        FlextModels.Categories[FlextLdifModelsDomains.Entry],
+        FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
     ):
         """Flexible entry categorization with dynamic categories.
 

@@ -1,22 +1,20 @@
-"""Comprehensive unit tests for FlextLdifEntry.
+"""Test FlextLdifEntry service with real implementations.
 
-Tests all ACTUAL entry transformation methods with REAL implementations.
-Validates DN cleaning, operational attribute removal, and attribute stripping.
+Tests FlextLdifEntry service operations using actual implementations.
+Validates DN cleaning, operational attribute removal, attribute stripping,
+and entry transformations with real data and edge cases.
 
-This test suite covers:
-  ✅ Public classmethod API (clean_dn, remove_operational_attributes, etc)
-  ✅ Execute pattern (V1 FlextService style)
-  ✅ Fluent builder pattern
-  ✅ Single entry transformations
-  ✅ Batch entry transformations
-  ✅ Error handling and validation
-  ✅ Edge cases and special characters
+Scope: Entry service functionality with comprehensive validation.
+Modules tested: flext_ldif.services.entry, flext_ldif.models, flext_ldif.utilities
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from collections.abc import Mapping
+from enum import StrEnum
 
 import pytest
 
@@ -27,6 +25,18 @@ from flext_ldif.services.validation import FlextLdifValidation
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
+
+class TestCategory(StrEnum):
+    """Test categories for entry service testing."""
+
+    DN_CLEANING = "dn_cleaning"
+    OPERATIONAL_ATTRS = "operational_attrs"
+    ATTRIBUTE_STRIPPING = "attribute_stripping"
+    BATCH_TRANSFORMATIONS = "batch_transformations"
+    ERROR_HANDLING = "error_handling"
+    EDGE_CASES = "edge_cases"
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
 # ════════════════════════════════════════════════════════════════════════════
@@ -34,11 +44,11 @@ from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 def create_entry(
     dn_str: str,
-    attributes: dict[str, list[str]],
+    attributes: Mapping[str, str | list[str]],
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
-    attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)
+    attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)  # type: ignore[arg-type]
     return FlextLdifModels.Entry(dn=dn, attributes=attrs)
 
 
@@ -230,7 +240,7 @@ class TestExecutePattern:
             operation="remove_operational_attributes",
         )
         RfcTestHelpers.test_service_execute_and_assert(
-            service1,
+            service1,  # type: ignore[arg-type]
             expected_type=list,
             expected_count=3,
         )
@@ -241,17 +251,17 @@ class TestExecutePattern:
             attributes_to_remove=["mail"],
         )
         cleaned2 = RfcTestHelpers.test_service_execute_and_assert(
-            service2,
+            service2,  # type: ignore[arg-type]
             expected_type=list,
         )
-        assert "mail" not in cleaned2[0].attributes.attributes
+        assert "mail" not in cleaned2[0].attributes.attributes  # type: ignore[index,attr-defined]
 
         service3 = FlextLdifEntry(
             entries=[simple_entry],
             operation="invalid_operation",
         )
         RfcTestHelpers.test_service_execute_and_assert(
-            service3,
+            service3,  # type: ignore[arg-type]
             should_succeed=False,
         )
 
@@ -260,7 +270,7 @@ class TestExecutePattern:
             operation="remove_operational_attributes",
         )
         empty_result = RfcTestHelpers.test_service_execute_and_assert(
-            service4,
+            service4,  # type: ignore[arg-type]
             expected_type=list,
             expected_count=0,
         )

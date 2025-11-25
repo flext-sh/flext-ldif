@@ -1,8 +1,14 @@
 """FLEXT-LDIF API - Unified Facade for LDIF Operations.
 
-This module provides the primary entry point for all LDIF processing operations.
-The FlextLdif class serves as the sole facade for the FLEXT LDIF library,
-consolidating all business logic and service coordination into a single interface.
+Provides the primary entry point for all LDIF processing operations using advanced
+Python 3.13 patterns with SOLID principles, DRY methods, and extensive use of
+generic helpers from *Constants, *Protocols, *Types, *Config, *Models, *Utilities.
+
+Module functionality:
+- Unified facade consolidating all LDIF operations
+- Railway-oriented programming with FlextResult[T]
+- Advanced service coordination and dependency injection
+- Extensive use of mappings, enums, and type-safe operations
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,21 +18,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, TypeVar, cast, overload, override
+from typing import ClassVar, Literal, TypeVar, cast, overload, override
 
 from flext_core import (
+    FlextConfig,
     FlextContext,
     FlextResult,
-    FlextRuntime,
     FlextService,
+    FlextUtilities,
 )
 from pydantic import PrivateAttr
 
-from flext_ldif.config import FlextLdifConfig, LdifFlextConfig
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import (
+    EntryWithDnProtocol,
+)
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.categorization import FlextLdifCategorization
@@ -50,6 +60,22 @@ _ServiceResponseType = FlextLdifTypes.Models.ServiceResponseTypes
 
 # Type variable for monadic transformations
 U = TypeVar("U")
+
+
+class ServiceType(StrEnum):
+    """Service types for internal management."""
+
+    PARSER = "parser"
+    ACL = "acl"
+    WRITER = "writer"
+    ENTRIES = "entries"
+    ANALYSIS = "analysis"
+    PROCESSING = "processing"
+    DETECTOR = "detector"
+    FILTERS = "filters"
+    CATEGORIZATION = "categorization"
+    CONVERSION = "conversion"
+    VALIDATION = "validation"
 
 
 class FlextLdif(FlextService[_ServiceResponseType]):
@@ -124,18 +150,23 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
     """
 
-    # Private attributes (initialized in model_post_init)
-    # Using PrivateAttr() for Pydantic v2 compatibility
-    # Services are created via factory - no direct instantiation
-    _parser_service: FlextLdifParser | None = PrivateAttr(default=None)
-    _acl_service: FlextLdifAcl | None = PrivateAttr(default=None)
-    _writer_service: FlextLdifWriter | None = PrivateAttr(default=None)
-    _entries_service: FlextLdifEntries | None = PrivateAttr(default=None)
-    _analysis_service: FlextLdifAnalysis | None = PrivateAttr(default=None)
-    _processing_service: FlextLdifProcessing | None = PrivateAttr(default=None)
-    _detector_service: FlextLdifDetector | None = PrivateAttr(default=None)
-    _validation_service: FlextLdifValidation | None = PrivateAttr(default=None)
-    _filters_service: FlextLdifFilters | None = PrivateAttr(default=None)
+    # Service mapping for DRY initialization and access
+    SERVICE_MAPPING: ClassVar[dict[ServiceType, type]] = {
+        ServiceType.PARSER: FlextLdifParser,
+        ServiceType.ACL: FlextLdifAcl,
+        ServiceType.WRITER: FlextLdifWriter,
+        ServiceType.ENTRIES: FlextLdifEntries,
+        ServiceType.ANALYSIS: FlextLdifAnalysis,
+        ServiceType.PROCESSING: FlextLdifProcessing,
+        ServiceType.DETECTOR: FlextLdifDetector,
+        ServiceType.FILTERS: FlextLdifFilters,
+        ServiceType.CATEGORIZATION: FlextLdifCategorization,
+        ServiceType.CONVERSION: FlextLdifConversion,
+        ServiceType.VALIDATION: FlextLdifValidation,
+    }
+
+    # Private attributes - dynamically initialized from SERVICE_MAPPING
+    _services: dict[ServiceType, object] = PrivateAttr(default_factory=dict)
 
     _context: dict[str, object] = PrivateAttr(default_factory=dict)
     _init_config_value: FlextLdifConfig | None = PrivateAttr(default=None)
@@ -254,13 +285,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     def model_post_init(self, __context: object, /) -> None:
         """Initialize private attributes after Pydantic initialization.
 
-        This hook is called by Pydantic after __init__ completes and handles:
-        - Service setup and dependency injection via FlextContainer
-        - Default quirk registration for all supported LDAP servers
-        - Context and handler initialization
-
-        Uses class-level initialization guard to prevent redundant initialization
-        across ALL instances (singleton pattern).
+        Uses DRY mapping to initialize all services dynamically, eliminating
+        repetitive initialization code while maintaining SOLID principles.
 
         Args:
             __context: Pydantic's validation context dictionary or None (unused).
@@ -269,57 +295,116 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         # Initialize context
         self._context = {}
 
-        # Create services directly via instantiation
-        # (pure facade - no infrastructure management)
-        self._parser_service = FlextLdifParser()
-        self._acl_service = FlextLdifAcl()
-        self._entries_service = FlextLdifEntries()
-        self._analysis_service = FlextLdifAnalysis()
-        self._processing_service = FlextLdifProcessing()
-        self._detector_service = FlextLdifDetector()
-        self._filters_service = FlextLdifFilters()
-        self._validation_service = FlextLdifValidation()
-
-        # Create writer service with quirk registry dependency
-        quirk_registry = FlextLdifServer.get_global_instance()
-        self._writer_service = FlextLdifWriter(quirk_registry=quirk_registry)
+        # DRY service initialization using mapping
+        for service_type, service_class in self.SERVICE_MAPPING.items():
+            if service_type == ServiceType.WRITER:
+                # Special case for writer with dependency
+                quirk_registry = FlextLdifServer.get_global_instance()
+                self._services[service_type] = service_class(
+                    quirk_registry=quirk_registry
+                )
+            else:
+                self._services[service_type] = service_class()
 
         # Log initialization
-        if self.logger is not None:
-            self.logger.debug("FlextLdif facade initialized")
+        self.logger.debug("FlextLdif facade initialized")
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.PARSER]
+    ) -> FlextLdifParser: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.WRITER]
+    ) -> FlextLdifWriter: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.DETECTOR]
+    ) -> FlextLdifDetector: ...
+
+    @overload
+    def _get_service(self, service_type: Literal[ServiceType.ACL]) -> FlextLdifAcl: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.ANALYSIS]
+    ) -> FlextLdifAnalysis: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.CATEGORIZATION]
+    ) -> FlextLdifCategorization: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.CONVERSION]
+    ) -> FlextLdifConversion: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.ENTRIES]
+    ) -> FlextLdifEntries: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.FILTERS]
+    ) -> FlextLdifFilters: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.PROCESSING]
+    ) -> FlextLdifProcessing: ...
+
+    @overload
+    def _get_service(
+        self, service_type: Literal[ServiceType.VALIDATION]
+    ) -> FlextLdifValidation: ...
+
+    def _get_service(self, service_type: ServiceType) -> object:
+        """Get service instance with type safety and error handling.
+
+        DRY helper for service access, eliminating repetitive None checks.
+
+        Args:
+            service_type: Type of service to retrieve
+
+        Returns:
+            Service instance
+
+        Raises:
+            RuntimeError: If service not initialized
+
+        """
+        service = self._services.get(service_type)
+        if service is None:
+            service_name = service_type.value
+            msg = f"Service {service_name} not initialized"
+            raise RuntimeError(msg)
+        return service
 
     @override
     def execute(
         self,
         **_kwargs: object,
-    ) -> FlextResult[
-        FlextLdifModels.EntryResult
-        | FlextLdifModels.ParseResponse
-        | FlextLdifModels.WriteResponse
-        | FlextLdifModels.MigrationPipelineResult
-        | FlextLdifModels.ValidationResult
-    ]:
+    ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute facade self-check and return status.
 
         Returns:
-            FlextResult containing ValidationResult with health check status
+            FlextResult containing status string
 
         """
-        # Return ValidationResult as health check (all services healthy)
-        validation_result = FlextLdifModels.ValidationResult(
-            is_valid=True,
-            total_entries=0,
-            valid_entries=0,
-            invalid_entries=0,
-            errors=[],
-        )
-        return FlextResult.ok(validation_result)
+        # Return status string as health check
+        status = "FlextLdif facade healthy - all services initialized"
+        return FlextResult.ok(status)
 
     def parse(
         self,
         source: str | Path,
         server_type: str | None = None,
         format_options: FlextLdifModels.ParseFormatOptions | None = None,
+        **format_kwargs: object,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         r"""Parse LDIF content string or file.
 
@@ -329,6 +414,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             source: LDIF content as string or Path to LDIF file
             server_type: Server type for quirk selection ("rfc", "oid", "oud", etc.)
             format_options: Parse options as ParseFormatOptions model
+            **format_kwargs: Individual format option overrides (e.g., validate_entries=True)
 
         Returns:
             FlextResult containing list of Entry models
@@ -344,21 +430,37 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             if result.is_success:
                 entries = result.unwrap()
 
-            # Parse with options
+            # Parse with options model (old pattern - still works)
             options = FlextLdifModels.ParseFormatOptions(validate_entries=True)
             result = ldif.parse("dn: cn=test\ncn: test\n", format_options=options)
 
+            # Parse with kwargs (new pattern - more convenient)
+            result = ldif.parse("dn: cn=test\ncn: test\n", validate_entries=True)
+
         """
-        if self._parser_service is None:
+        parser_service = self._get_service(ServiceType.PARSER)
+
+        # Architecture: Options+kwargs pattern
+        # - Model provides defaults via Field(default=...) definitions
+        # - format_options can override (explicit options pattern)
+        # - format_kwargs can override individual options (kwargs pattern)
+        options_result = FlextUtilities.Configuration.build_options_from_kwargs(
+            model_class=FlextLdifModels.ParseFormatOptions,
+            explicit_options=format_options,
+            default_factory=FlextLdifModels.ParseFormatOptions,
+            **format_kwargs,
+        )
+        if options_result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "Parser service not initialized",
+                f"Invalid format options: {options_result.error}",
             )
+        resolved_format_options = options_result.unwrap()
 
         # Delegate to parser service - service handles all logic
-        parse_result = self._parser_service.parse_source(
+        parse_result = parser_service.parse_source(
             source=source,
             server_type=server_type,
-            format_options=format_options,
+            format_options=resolved_format_options,
         )
 
         # Service returns ParseResponse - extract entries
@@ -381,30 +483,33 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     @overload
     def write(
         self,
-        entries: FlextLdifTypes.EntryOrList,
+        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
         output_path: None = None,
         server_type: str | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: dict[str, object] | None = None,
+        **format_kwargs: object,
     ) -> FlextResult[str]: ...
 
     @overload
     def write(
         self,
-        entries: FlextLdifTypes.EntryOrList,
+        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
         output_path: Path,
         server_type: str | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: dict[str, object] | None = None,
+        **format_kwargs: object,
     ) -> FlextResult[str]: ...
 
     def write(
         self,
-        entries: FlextLdifTypes.EntryOrList,
+        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
         output_path: Path | None = None,
         server_type: str | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: dict[str, object] | None = None,
+        **format_kwargs: object,
     ) -> FlextResult[str]:
         """Write entries to LDIF format string or file.
 
@@ -414,6 +519,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             server_type: Target server type for writing. If None, uses RFC.
             format_options: Write options as WriteFormatOptions model
             template_data: Optional dict with template variables for header generation
+            **format_kwargs: Individual format option overrides (e.g., line_width=100)
 
         Returns:
             FlextResult containing LDIF content as string (if output_path is None)
@@ -428,12 +534,15 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             # Write to file
             result = ldif.write(entries, Path("output.ldif"))
 
-            # Write with options
+            # Write with options model (old pattern - still works)
             options = FlextLdifModels.WriteFormatOptions(
                 line_width=100,
                 sort_attributes=True,
             )
             result = ldif.write(entries, format_options=options)
+
+            # Write with kwargs (new pattern - more convenient)
+            result = ldif.write(entries, line_width=100, sort_attributes=True)
 
             # Write with template data for header
             result = ldif.write(
@@ -443,26 +552,37 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        if self._writer_service is None:
-            return FlextResult[str].fail("Writer service not initialized")
+        writer_service = self._get_service(ServiceType.WRITER)
 
-        # Normalize EntryOrList to list[Entry] using type alias
+        # Normalize Entry | list[Entry] to list[Entry]
         entries_list: list[FlextLdifModels.Entry]
         if isinstance(entries, FlextLdifModels.Entry):
             entries_list = [entries]
-        elif isinstance(entries, list):
-            entries_list = entries
         else:
-            return FlextResult[str].fail(
-                f"Invalid entries type: {type(entries).__name__}",
-            )
+            # Type guarantees it's list[Entry] if not Entry
+            entries_list = entries
 
         # Delegate to writer service - service handles all logic
         target_server = server_type or "rfc"
         output_target = "file" if output_path else "string"
-        resolved_format_options = format_options or FlextLdifModels.WriteFormatOptions()
 
-        write_result = self._writer_service.write(
+        # Architecture: Options+kwargs pattern
+        # - Model provides defaults via Field(default=...) definitions
+        # - format_options can override (explicit options pattern)
+        # - format_kwargs can override individual options (kwargs pattern)
+        options_result = FlextUtilities.Configuration.build_options_from_kwargs(
+            model_class=FlextLdifModels.WriteFormatOptions,
+            explicit_options=format_options,
+            default_factory=FlextLdifModels.WriteFormatOptions,
+            **format_kwargs,
+        )
+        if options_result.is_failure:
+            return FlextResult[str].fail(
+                f"Invalid format options: {options_result.error}",
+            )
+        resolved_format_options = options_result.unwrap()
+
+        write_result = writer_service.write(
             entries=entries_list,
             target_server_type=target_server,
             output_target=output_target,
@@ -490,9 +610,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
     def get_entry_dn(
         self,
-        entry: FlextLdifModels.Entry
-        | FlextLdifProtocols.Entry.EntryWithDnProtocol
-        | dict[str, str | list[str]],
+        entry: FlextLdifModels.Entry | EntryWithDnProtocol | dict[str, str | list[str]],
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
@@ -505,16 +623,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing DN as string
 
         """
-        # _entries_service is always initialized in model_post_init
-        # Type narrowing: _entries_service is never None after model_post_init
-        entries_service = self._entries_service
-        if entries_service is None:
-            return FlextResult[str].fail("Entries service not initialized")
+        entries_service = self._get_service(ServiceType.ENTRIES)
         return entries_service.get_entry_dn(entry)
 
     def get_entry_attributes(
         self,
-        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
+        entry: FlextLdifModels.Entry | EntryWithDnProtocol,
     ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
         """Extract attributes from any entry type.
 
@@ -528,12 +642,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             str | list[str] values matching FlextLdifTypes definition.
 
         """
-        # _entries_service is always initialized in model_post_init
-        entries_service = self._entries_service
-        if entries_service is None:
-            return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
-                "Entries service not initialized",
-            )
+        entries_service = self._get_service(ServiceType.ENTRIES)
         return entries_service.get_entry_attributes(entry)
 
     def create_entry(
@@ -556,17 +665,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing new FlextLdifModels.Entry
 
         """
-        # _entries_service is always initialized in model_post_init
-        entries_service = self._entries_service
-        if entries_service is None:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                "Entries service not initialized",
-            )
+        entries_service = self._get_service(ServiceType.ENTRIES)
         return entries_service.create_entry(dn, attributes, objectclasses)
 
     def get_entry_objectclasses(
         self,
-        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
+        entry: FlextLdifModels.Entry | EntryWithDnProtocol,
     ) -> FlextResult[list[str]]:
         """Extract objectClass values from any entry type.
 
@@ -579,15 +683,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing list of objectClass values
 
         """
-        # _entries_service is always initialized in model_post_init
-        entries_service = self._entries_service
-        if entries_service is None:
-            return FlextResult[list[str]].fail("Entries service not initialized")
+        entries_service = self._get_service(ServiceType.ENTRIES)
         return entries_service.get_entry_objectclasses(entry)
 
     def get_attribute_values(
         self,
-        attribute: (FlextLdifProtocols.AttributeValueProtocol | list[str] | str),
+        attribute: list[str] | str,
     ) -> FlextResult[list[str]]:
         """Extract values from an attribute value object.
 
@@ -600,10 +701,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing list of attribute values as strings.
 
         """
-        # _entries_service is always initialized in model_post_init
-        entries_service = self._entries_service
-        if entries_service is None:
-            return FlextResult[list[str]].fail("Entries service not initialized")
+        entries_service = self._get_service(ServiceType.ENTRIES)
         return entries_service.get_attribute_values(attribute)
 
     def migrate(
@@ -702,70 +800,86 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        # Delegate to migration pipeline - service handles all logic
+        # DRY migration setup using service normalization methods
         opts = options or FlextLdifModels.MigrateOptions()
 
-        # Normalize migration config via service
-        config_result = FlextLdifMigrationPipeline.normalize_migration_config(
-            opts.migration_config,
-        )
-        if config_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(
-                f"Invalid migration config: {config_result.error}",
+        # Chain validation steps using railway pattern
+        migration_setup = (
+            FlextResult.ok(opts)
+            .flat_map(
+                lambda o: FlextLdifMigrationPipeline.normalize_migration_config(
+                    o.migration_config
+                ).map(lambda c: (o, c))
             )
-        config_model = (
-            config_result.unwrap() if opts.migration_config is not None else None
+            .flat_map(
+                lambda t: (
+                    t_cast := cast("tuple[FlextLdifModels.MigrateOptions, object]", t),
+                    FlextLdifMigrationPipeline.normalize_category_rules(
+                        t_cast[0].categorization_rules
+                    ).map(lambda r: (t_cast[0], t_cast[1], r)),
+                )[1]
+            )
+            .flat_map(
+                lambda t: (
+                    t_cast := cast(
+                        "tuple[FlextLdifModels.MigrateOptions, object, object]", t
+                    ),
+                    FlextLdifMigrationPipeline.validate_simple_mode_params(
+                        t_cast[0].input_filename, t_cast[0].output_filename
+                    ).map(lambda _: t_cast),
+                )[1]
+            )
+            .flat_map(
+                lambda t: (
+                    t_cast := cast(
+                        "tuple[FlextLdifModels.MigrateOptions, object, object, object]",
+                        t,
+                    ),
+                    FlextLdifMigrationPipeline.normalize_whitelist_rules(
+                        t_cast[0].schema_whitelist_rules
+                    ).map(lambda w: (t_cast[0], t_cast[1], t_cast[2], w)),
+                )[1]
+            )
         )
 
-        # Normalize categorization rules via service
-        categorization_rules_result = (
-            FlextLdifMigrationPipeline.normalize_category_rules(
-                opts.categorization_rules,
-            )
-        )
-        if categorization_rules_result.is_failure:
+        if migration_setup.is_failure:
             return FlextResult[FlextLdifModels.EntryResult].fail(
-                f"Invalid categorization rules: {categorization_rules_result.error}",
+                migration_setup.error or "Migration setup failed"
             )
-        categorization_rules = categorization_rules_result.unwrap()
+
+        migration_tuple = cast(
+            "tuple[FlextLdifModels.MigrateOptions, object, object, object]",
+            migration_setup.unwrap(),
+        )
+        opts, config_model, categorization_rules, schema_whitelist_rules = (
+            migration_tuple
+        )
+
+        # Types are already correct after casting the tuple
+        config_model = cast("FlextLdifModels.MigrationConfig | None", config_model)
+        categorization_rules = cast(
+            "FlextLdifModels.CategoryRules | None", categorization_rules
+        )
+        schema_whitelist_rules = cast(
+            "FlextLdifModels.WhitelistRules | None", schema_whitelist_rules
+        )
 
         # Auto-detect mode and create write options
         mode = FlextLdifMigrationPipeline.detect_migration_mode(
-            config_model,
-            categorization_rules,
+            config_model, categorization_rules
         )
         write_options_result = FlextLdifMigrationPipeline.get_write_options_for_mode(
-            mode,
-            opts.write_options,
-            config_model,
+            mode, opts.write_options, config_model
         )
+
         if write_options_result.is_failure:
             return FlextResult[FlextLdifModels.EntryResult].fail(
                 f"Failed to create write options: {write_options_result.error}",
             )
+
         write_options = write_options_result.unwrap()
 
-        # Validate requirements for simple mode
-        validation_result = FlextLdifMigrationPipeline.validate_simple_mode_params(
-            opts.input_filename,
-            opts.output_filename,
-        )
-        if validation_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(
-                validation_result.error or "Parameter validation failed",
-            )
-
-        # Normalize whitelist rules via service
-        whitelist_rules_result = FlextLdifMigrationPipeline.normalize_whitelist_rules(
-            opts.schema_whitelist_rules,
-        )
-        if whitelist_rules_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(
-                f"Invalid whitelist rules: {whitelist_rules_result.error}",
-            )
-        schema_whitelist_rules = whitelist_rules_result.unwrap()
-
-        # Initialize and execute migration pipeline
+        # Initialize and execute migration pipeline with all normalized parameters
         migration_pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -835,11 +949,6 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        if self._filters_service is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "Filters service not initialized",
-            )
-
         # Delegate to filters service - service handles all logic
         filter_result = FlextLdifFilters.apply_standard_filters(
             entries,
@@ -852,7 +961,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         filtered_entries = filter_result.unwrap()
 
-        # Apply custom_filter if provided
+        # Apply custom_filter if provided (DRY pattern)
         if custom_filter is not None:
             filtered_entries = [e for e in filtered_entries if custom_filter(e)]
 
@@ -877,11 +986,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing EntryAnalysisResult with statistics
 
         """
-        if self._analysis_service is None:
-            return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(
-                "Analysis service not initialized",
-            )
-        return self._analysis_service.analyze(entries)
+        analysis_service = self._get_service(ServiceType.ANALYSIS)
+        return analysis_service.analyze(entries)
 
     def validate_entries(
         self,
@@ -898,19 +1004,10 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing ValidationResult with validation status
 
         """
-        if self._analysis_service is None:
-            return FlextResult[FlextLdifModels.ValidationResult].fail(
-                "Analysis service not initialized",
-            )
+        analysis_service = self._get_service(ServiceType.ANALYSIS)
+        validation_service = self._get_service(ServiceType.VALIDATION)
 
-        if self._validation_service is None:
-            return FlextResult[FlextLdifModels.ValidationResult].fail(
-                "Validation service not initialized",
-            )
-
-        return self._analysis_service.validate_entries(
-            entries, self._validation_service
-        )
+        return analysis_service.validate_entries(entries, validation_service)
 
     # =========================================================================
     # ACL OPERATIONS
@@ -937,12 +1034,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 acls = acl_response.acls
 
         """
-        # Resolve ACL service via container
-        if self._acl_service is None:
-            return FlextResult[FlextLdifModels.AclResponse].fail(
-                "ACL service not initialized",
-            )
-        return self._acl_service.extract_acls_from_entry(entry, server_type)
+        acl_service = self._get_service(ServiceType.ACL)
+        return acl_service.extract_acls_from_entry(entry, server_type)
 
     def evaluate_acl_rules(
         self,
@@ -969,19 +1062,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 is_allowed = result.unwrap()
 
         """
-        if self._acl_service is None:
-            return FlextResult[bool].fail("ACL service not initialized")
+        acl_service = self._get_service(ServiceType.ACL)
 
         # Delegate to ACL service - service handles context conversion
         eval_context: dict[str, object] = (
-            dict(context)
-            if context is not None and FlextRuntime.is_dict_like(context)
-            else {}
+            dict(context) if context is not None and isinstance(context, dict) else {}
         )
-        return self._acl_service.evaluate_acl_context(
-            acls,
-            eval_context,
-        )
+        return acl_service.evaluate_acl_context(acls, eval_context)
 
     def transform_acl_entries(
         self,
@@ -1013,15 +1100,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 # ACL attributes now in OUD format (aci: instead of orclaci:)
 
         """
-        if self._acl_service is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "ACL service not initialized",
-            )
-        return self._acl_service.transform_acl_entries(
-            entries,
-            source_server,
-            target_server,
-        )
+        acl_service = self._get_service(ServiceType.ACL)
+        return acl_service.transform_acl_entries(entries, source_server, target_server)
 
     # =========================================================================
     # UNIFIED PROCESSING OPERATIONS
@@ -1051,11 +1131,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing processed results
 
         """
-        if self._processing_service is None:
-            return FlextResult[list[dict[str, object]]].fail(
-                "Processing service not initialized",
-            )
-        return self._processing_service.process(
+        processing_service = self._get_service(ServiceType.PROCESSING)
+        return processing_service.process(
             processor_name,
             entries,
             parallel=parallel,
@@ -1101,13 +1178,10 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 print(f"Confidence: {detected.confidence:.2%}")
 
         """
-        if self._detector_service is None:
-            return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
-                "Detector service not initialized",
-            )
+        detector_service = self._get_service(ServiceType.DETECTOR)
 
         # Delegate to detector service - service handles all logic
-        return self._detector_service.detect_server_type(
+        return detector_service.detect_server_type(
             ldif_path=ldif_path,
             ldif_content=ldif_content,
         )
@@ -1134,24 +1208,23 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 print(f"Will use {server_type} quirks")
 
         """
-        if self._detector_service is None:
-            return FlextResult[str].fail("Detector service not initialized")
+        detector_service = self._get_service(ServiceType.DETECTOR)
 
         # Delegate to detector service - service handles all logic
-        return self._detector_service.get_effective_server_type(ldif_path=ldif_path)
+        return detector_service.get_effective_server_type(ldif_path=ldif_path)
 
     @property
-    def config(self) -> LdifFlextConfig:
+    def config(self) -> FlextConfig:
         """Config tipado com namespace ldif.
 
         Returns:
-            LdifFlextConfig: FlextConfig tipado com acesso via .ldif
+            FlextConfig: FlextConfig tipado com acesso via .ldif
 
         Example:
             encoding = ldif.config.ldif.ldif_encoding
 
         """
-        return LdifFlextConfig.get_global_instance()
+        return FlextConfig.get_global_instance()
 
     @property
     def models(self) -> type[FlextLdifModels]:
@@ -1203,10 +1276,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = parser.parse_ldif_file(Path("file.ldif"), "oid")
 
         """
-        if self._parser_service is None:
-            error_msg = "Parser service not initialized"
-            raise RuntimeError(error_msg)
-        return self._parser_service
+        return self._get_service(ServiceType.PARSER)
 
     @property
     def detector(self) -> FlextLdifDetector:
@@ -1220,10 +1290,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = detector.detect_server_type(ldif_path=Path("file.ldif"))
 
         """
-        if self._detector_service is None:
-            error_msg = "Detector service not initialized"
-            raise RuntimeError(error_msg)
-        return self._detector_service
+        return self._get_service(ServiceType.DETECTOR)
 
     @property
     def acl_service(self) -> FlextLdifAcl:
@@ -1237,10 +1304,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
         """
-        if self._acl_service is None:
-            error_msg = "ACL service not initialized"
-            raise RuntimeError(error_msg)
-        return self._acl_service
+        return self._get_service(ServiceType.ACL)
 
     # INTERNAL: bus property is hidden from public API
     # Use models, config, constants for public access instead
@@ -1288,7 +1352,10 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        return self.parse(source, server_type, format_options).map(transform)
+        return cast(
+            "FlextResult[U]",
+            self.parse(source, server_type, format_options).map(transform),
+        )
 
     def parse_and_flat_map(
         self,
@@ -1315,7 +1382,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        return self.parse(source, server_type, format_options).flat_map(transform)
+        result = self.parse(source, server_type, format_options).flat_map(
+            cast(
+                "Callable[[list[FlextLdifModels.Entry]], FlextResult[object]]",
+                transform,
+            )
+        )
+        return cast("FlextResult[U]", result)
 
     def filter_and_map(
         self,
@@ -1340,9 +1413,12 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult with transformed value
 
         """
-        return self.filter(
-            entries, objectclass, dn_pattern, attributes, custom_filter
-        ).map(transform)
+        return cast(
+            "FlextResult[U]",
+            self.filter(
+                entries, objectclass, dn_pattern, attributes, custom_filter
+            ).map(transform),
+        )
 
     def filter_and_flat_map(
         self,
@@ -1367,9 +1443,15 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult from chained operation
 
         """
-        return self.filter(
+        result = self.filter(
             entries, objectclass, dn_pattern, attributes, custom_filter
-        ).flat_map(transform)
+        ).flat_map(
+            cast(
+                "Callable[[list[FlextLdifModels.Entry]], FlextResult[object]]",
+                transform,
+            )
+        )
+        return cast("FlextResult[U]", result)
 
     # =========================================================================
     # BUILDER METHODS - Fluent API for complex operations (no additional class)

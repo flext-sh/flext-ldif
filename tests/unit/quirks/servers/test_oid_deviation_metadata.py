@@ -20,7 +20,7 @@ class TestOidBooleanConversionMetadata:
     """Test suite for boolean conversion metadata tracking."""
 
     @pytest.fixture
-    def oid_entry(self) -> FlextLdifServersOid.Entry:
+    def oid_entry(self) -> object:
         """Create OID entry quirk instance."""
         return FlextLdifServersOid().entry_quirk
 
@@ -124,7 +124,7 @@ class TestOidSchemaQuirkMetadata:
     """Test suite for schema quirk metadata tracking."""
 
     @pytest.fixture
-    def oid_entry(self) -> FlextLdifServersOid.Entry:
+    def oid_entry(self) -> object:
         """Create OID entry quirk instance."""
         return FlextLdifServersOid().entry_quirk
 
@@ -156,7 +156,7 @@ class TestOidMetadataRoundTrip:
     """Test suite for round-trip metadata support."""
 
     @pytest.fixture
-    def oid_entry(self) -> FlextLdifServersOid.Entry:
+    def oid_entry(self) -> object:
         """Create OID entry quirk instance."""
         return FlextLdifServersOid().entry_quirk
 

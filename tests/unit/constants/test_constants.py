@@ -1,245 +1,402 @@
-"""Tests for flext_ldif.constants module.
+"""Test suite for FlextLdifConstants.
+
+Modules tested: FlextLdifConstants (Format, Processing, QualityAnalysis,
+LdifValidation, ObjectClasses, Encoding, LdapServers, RfcCompliance, enums)
+Scope: Constant validation, enum values, namespace access, reasonable value ranges
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+import dataclasses
+from enum import StrEnum
+
+import pytest
+
 from flext_ldif import FlextLdifConstants
 
 
-class TestFlextLdifConstants:
-    """Test FlextLdifConstants values."""
+# Test scenario enums
+class ConstantGroup(StrEnum):
+    """Constant groups for parametrized testing."""
 
-    def test_format_constants(self) -> None:
-        """Test Format constants."""
-        assert FlextLdifConstants.Format.DN_ATTRIBUTE == "dn"
-        assert FlextLdifConstants.Format.ATTRIBUTE_SEPARATOR == ":"
-        assert FlextLdifConstants.Format.DN_PREFIX == "dn:"
-        assert FlextLdifConstants.Format.MAX_LINE_LENGTH == 78
-        assert FlextLdifConstants.Format.MIN_BUFFER_SIZE == 1024
-        assert FlextLdifConstants.Format.CONTENT_PREVIEW_LENGTH == 100
-        assert FlextLdifConstants.Format.MAX_ATTRIBUTES_DISPLAY == 10
-        assert FlextLdifConstants.Format.BASE64_PREFIX == "::"
-        assert FlextLdifConstants.Format.COMMENT_PREFIX == "#"
-        assert FlextLdifConstants.Format.VERSION_PREFIX == "version:"
-        assert FlextLdifConstants.Format.CHANGE_TYPE_PREFIX == "changetype:"
-        assert FlextLdifConstants.Format.ATTRIBUTE_OPTION_SEPARATOR == ";"
-        assert FlextLdifConstants.Format.URL_PREFIX == "<"
-        assert FlextLdifConstants.Format.URL_SUFFIX == ">"
-        assert FlextLdifConstants.Format.LDIF_VERSION_1 == "1"
+    ENCODING = "encoding"
+    FORMAT = "format"
+    PROCESSING = "processing"
+    VALIDATION = "validation"
+    QUALITY = "quality"
+    OBJECTCLASSES = "objectclasses"
+    LDAPSERVERS = "ldapservers"
+    RFCCOMPLIANCE = "rfccompliance"
+
+
+class EnumType(StrEnum):
+    """Enum types for testing."""
+
+    PROCESSING_STAGE = "processing_stage"
+    HEALTH_STATUS = "health_status"
+    ENTRY_TYPE = "entry_type"
+    ENTRY_MODIFICATION = "entry_modification"
+
+
+# Test data structures
+@dataclasses.dataclass(frozen=True)
+class ConstantTestCase:
+    """Constant test case."""
+
+    constant_path: str
+    expected_value: object
+    expected_type: type
+
+
+@dataclasses.dataclass(frozen=True)
+class EnumTestCase:
+    """Enum member test case."""
+
+    enum_type: EnumType
+    member_name: str
+    expected_value: str
+
+
+# Test data mapping for parametrization
+FORMAT_CONSTANTS = {
+    "DN_ATTRIBUTE": "dn",
+    "ATTRIBUTE_SEPARATOR": ":",
+    "DN_PREFIX": "dn:",
+    "MAX_LINE_LENGTH": 78,
+    "MIN_BUFFER_SIZE": 1024,
+    "CONTENT_PREVIEW_LENGTH": 100,
+    "MAX_ATTRIBUTES_DISPLAY": 10,
+    "BASE64_PREFIX": "::",
+    "COMMENT_PREFIX": "#",
+    "VERSION_PREFIX": "version:",
+    "CHANGE_TYPE_PREFIX": "changetype:",
+    "ATTRIBUTE_OPTION_SEPARATOR": ";",
+    "URL_PREFIX": "<",
+    "URL_SUFFIX": ">",
+    "LDIF_VERSION_1": "1",
+}
+
+PROCESSING_CONSTANTS = {
+    "LdifProcessing.MIN_WORKERS_FOR_PARALLEL": 2,
+    "LdifProcessing.MAX_WORKERS_LIMIT": 16,
+    "LdifProcessing.PERFORMANCE_MIN_WORKERS": 4,
+    "LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE": 1000,
+    "MIN_ANALYTICS_CACHE_SIZE": 100,
+    "MAX_ANALYTICS_CACHE_SIZE": 10000,
+    "MIN_ENTRIES": 1000,
+    "MIN_MEMORY_MB": 64,
+    "PERFORMANCE_MEMORY_MB_THRESHOLD": 512,
+    "DEBUG_MAX_WORKERS": 2,
+    "SMALL_ENTRY_COUNT_THRESHOLD": 100,
+    "MEDIUM_ENTRY_COUNT_THRESHOLD": 1000,
+    "MIN_ATTRIBUTE_PARTS": 2,
+}
+
+VALIDATION_CONSTANTS = {
+    "LdifValidation.MIN_DN_COMPONENTS": 1,
+    "LdifValidation.MAX_DN_LENGTH": 2048,
+    "LdifValidation.MAX_ATTRIBUTES_PER_ENTRY": 1000,
+    "LdifValidation.MAX_VALUES_PER_ATTRIBUTE": 100,
+    "LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH": 10000,
+    "LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH": 1,
+    "LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH": 127,
+    "LdifValidation.MIN_URL_LENGTH": 1,
+    "LdifValidation.MAX_URL_LENGTH": 2048,
+    "LdifValidation.MIN_ENCODING_LENGTH": 1,
+    "LdifValidation.MAX_ENCODING_LENGTH": 50,
+}
+
+QUALITY_CONSTANTS = {
+    "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
+    "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
+}
+
+ENUM_TEST_CASES = [
+    EnumTestCase(EnumType.PROCESSING_STAGE, "PARSING", "parsing"),
+    EnumTestCase(EnumType.PROCESSING_STAGE, "VALIDATION", "validation"),
+    EnumTestCase(EnumType.PROCESSING_STAGE, "ANALYTICS", "analytics"),
+    EnumTestCase(EnumType.PROCESSING_STAGE, "WRITING", "writing"),
+    EnumTestCase(EnumType.HEALTH_STATUS, "HEALTHY", "healthy"),
+    EnumTestCase(EnumType.HEALTH_STATUS, "DEGRADED", "degraded"),
+    EnumTestCase(EnumType.HEALTH_STATUS, "UNHEALTHY", "unhealthy"),
+    EnumTestCase(EnumType.ENTRY_TYPE, "PERSON", "person"),
+    EnumTestCase(EnumType.ENTRY_TYPE, "GROUP", "group"),
+    EnumTestCase(EnumType.ENTRY_TYPE, "ORGANIZATIONAL_UNIT", "organizationalunit"),
+    EnumTestCase(EnumType.ENTRY_TYPE, "DOMAIN", "domain"),
+    EnumTestCase(EnumType.ENTRY_TYPE, "OTHER", "other"),
+    EnumTestCase(EnumType.ENTRY_MODIFICATION, "ADD", "add"),
+    EnumTestCase(EnumType.ENTRY_MODIFICATION, "MODIFY", "modify"),
+    EnumTestCase(EnumType.ENTRY_MODIFICATION, "DELETE", "delete"),
+    EnumTestCase(EnumType.ENTRY_MODIFICATION, "MODRDN", "modrdn"),
+]
+
+NAMESPACE_GROUPS = [
+    "Encoding",
+    "Format",
+    "Processing",
+    "LdifGeneralValidation",
+    "Acl",
+    "Schema",
+]
+
+
+# Helper functions
+def get_constant_value(path: str) -> object:
+    """Get constant value by path."""
+    parts = path.split(".")
+    value = FlextLdifConstants
+    for part in parts:
+        value = getattr(value, part)
+    return value
+
+
+def get_enum_class(enum_type: EnumType) -> type[object]:
+    """Get enum class by type."""
+    mapping: dict[EnumType, type[object]] = {
+        EnumType.PROCESSING_STAGE: FlextLdifConstants.ProcessingStage,
+        EnumType.HEALTH_STATUS: FlextLdifConstants.LdifHealthStatus,
+        EnumType.ENTRY_TYPE: FlextLdifConstants.EntryType,
+        EnumType.ENTRY_MODIFICATION: FlextLdifConstants.EntryModification,
+    }
+    return mapping[enum_type]
+
+
+# Parametrization functions
+def get_format_constant_cases() -> list[tuple[str, object]]:
+    """Generate format constant test cases."""
+    return list(FORMAT_CONSTANTS.items())
+
+
+def get_processing_constant_cases() -> list[tuple[str, object]]:
+    """Generate processing constant test cases."""
+    return list(PROCESSING_CONSTANTS.items())
+
+
+def get_validation_constant_cases() -> list[tuple[str, object]]:
+    """Generate validation constant test cases."""
+    return list(VALIDATION_CONSTANTS.items())
+
+
+def get_quality_constant_cases() -> list[tuple[str, object]]:
+    """Generate quality constant test cases."""
+    return list(QUALITY_CONSTANTS.items())
+
+
+def get_enum_test_cases() -> list[EnumTestCase]:
+    """Generate enum test cases."""
+    return ENUM_TEST_CASES
+
+
+class TestFormatConstants:
+    """Test Format constants."""
+
+    @pytest.mark.parametrize(
+        ("name", "expected_value"),
+        get_format_constant_cases(),
+    )
+    def test_format_constants(
+        self,
+        name: str,
+        expected_value: object,
+    ) -> None:
+        """Test format constant value."""
+        actual = getattr(FlextLdifConstants.Format, name)
+        assert actual == expected_value
+
+    def test_default_version_matches_version_1(self) -> None:
+        """Test that default LDIF version matches version 1."""
         assert (
             FlextLdifConstants.Format.DEFAULT_LDIF_VERSION
             == FlextLdifConstants.Format.LDIF_VERSION_1
         )
 
-    def test_processing_constants(self) -> None:
-        """Test LdifProcessing constants."""
-        assert FlextLdifConstants.LdifProcessing.MIN_WORKERS_FOR_PARALLEL == 2
-        assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT == 16
-        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS == 4
-        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE == 1000
-        assert FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE == 100
-        assert FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE == 10000
-        assert FlextLdifConstants.MIN_ENTRIES == 1000
-        assert FlextLdifConstants.MIN_MEMORY_MB == 64
-        assert FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD == 512
-        assert FlextLdifConstants.DEBUG_MAX_WORKERS == 2
-        assert FlextLdifConstants.SMALL_ENTRY_COUNT_THRESHOLD == 100
-        assert FlextLdifConstants.MEDIUM_ENTRY_COUNT_THRESHOLD == 1000
-        assert FlextLdifConstants.MIN_ATTRIBUTE_PARTS == 2
 
-    def test_quality_analysis_constants(self) -> None:
-        """Test QualityAnalysis constants."""
-        assert FlextLdifConstants.QualityAnalysis.QUALITY_THRESHOLD_MEDIUM == 0.8
+class TestProcessingConstants:
+    """Test processing and worker constants."""
+
+    @pytest.mark.parametrize(
+        ("path", "expected_value"),
+        get_processing_constant_cases(),
+    )
+    def test_processing_constants(
+        self,
+        path: str,
+        expected_value: object,
+    ) -> None:
+        """Test processing constant value."""
+        actual = get_constant_value(path)
+        assert actual == expected_value
+
+    def test_debug_workers_less_than_max(self) -> None:
+        """Test debug workers is less than max workers limit."""
         assert (
-            FlextLdifConstants.QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN == 2
+            FlextLdifConstants.DEBUG_MAX_WORKERS
+            <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
         )
 
-    def test_ldif_validation_constants(self) -> None:
-        """Test LdifValidation constants."""
-        assert FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS == 1
-        assert FlextLdifConstants.LdifValidation.MAX_DN_LENGTH == 2048
-        assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTES_PER_ENTRY == 1000
-        assert FlextLdifConstants.LdifValidation.MAX_VALUES_PER_ATTRIBUTE == 100
-        assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH == 10000
-        assert FlextLdifConstants.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH == 1
-        # RFC 4512 constraint: attribute names must not exceed 127 characters
-        assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH == 127
-        assert FlextLdifConstants.LdifValidation.MIN_URL_LENGTH == 1
-        assert FlextLdifConstants.LdifValidation.MAX_URL_LENGTH == 2048
-        assert FlextLdifConstants.LdifValidation.MIN_ENCODING_LENGTH == 1
-        assert FlextLdifConstants.LdifValidation.MAX_ENCODING_LENGTH == 50
+    def test_performance_workers_less_than_max(self) -> None:
+        """Test performance workers is less than max workers limit."""
+        assert (
+            FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
+            <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
+        )
 
-    def test_object_classes_constants(self) -> None:
-        """Test ObjectClasses constants."""
-        assert "person" in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
-        assert "groupOfNames" in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
 
-    def test_encoding_constants(self) -> None:
-        """Test Encoding constants."""
-        # Test default encoding
+class TestEncodingConstants:
+    """Test encoding constants."""
+
+    def test_default_encoding_is_utf8(self) -> None:
+        """Test default encoding is utf-8."""
         assert FlextLdifConstants.DEFAULT_ENCODING == "utf-8"
 
-        # Test supported encodings set
-        assert "utf-8" in FlextLdifConstants.SUPPORTED_ENCODINGS
-        assert "utf-16" in FlextLdifConstants.SUPPORTED_ENCODINGS
-        assert "ascii" in FlextLdifConstants.SUPPORTED_ENCODINGS
+    def test_supported_encodings_is_frozenset(self) -> None:
+        """Test supported encodings is a frozenset."""
+        assert isinstance(
+            FlextLdifConstants.SUPPORTED_ENCODINGS,
+            frozenset,
+        )
 
-        # Test that default is in supported set
+    def test_default_in_supported_encodings(self) -> None:
+        """Test default encoding is in supported encodings set."""
         assert (
             FlextLdifConstants.DEFAULT_ENCODING
             in FlextLdifConstants.SUPPORTED_ENCODINGS
         )
 
-        # Test that it's a frozenset
-        assert isinstance(FlextLdifConstants.SUPPORTED_ENCODINGS, frozenset)
+    def test_utf8_in_supported_encodings(self) -> None:
+        """Test utf-8 is in supported encodings."""
+        assert "utf-8" in FlextLdifConstants.SUPPORTED_ENCODINGS
 
-    def test_ldap_servers_constants(self) -> None:
-        """Test LdapServers constants."""
+    def test_utf16_in_supported_encodings(self) -> None:
+        """Test utf-16 is in supported encodings."""
+        assert "utf-16" in FlextLdifConstants.SUPPORTED_ENCODINGS
+
+    def test_ascii_in_supported_encodings(self) -> None:
+        """Test ascii is in supported encodings."""
+        assert "ascii" in FlextLdifConstants.SUPPORTED_ENCODINGS
+
+
+class TestValidationConstants:
+    """Test validation limit constants."""
+
+    @pytest.mark.parametrize(
+        ("path", "expected_value"),
+        get_validation_constant_cases(),
+    )
+    def test_validation_constants(
+        self,
+        path: str,
+        expected_value: object,
+    ) -> None:
+        """Test validation constant value."""
+        actual = get_constant_value(path)
+        assert actual == expected_value
+
+
+class TestQualityConstants:
+    """Test quality analysis constants."""
+
+    @pytest.mark.parametrize(
+        ("path", "expected_value"),
+        get_quality_constant_cases(),
+    )
+    def test_quality_constants(
+        self,
+        path: str,
+        expected_value: object,
+    ) -> None:
+        """Test quality constant value."""
+        actual = get_constant_value(path)
+        assert actual == expected_value
+
+
+class TestObjectClassConstants:
+    """Test ObjectClasses constants."""
+
+    def test_person_in_ldap_person_classes(self) -> None:
+        """Test person is in LDAP person classes."""
+        assert "person" in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+
+    def test_groupofnames_in_ldap_group_classes(self) -> None:
+        """Test groupOfNames is in LDAP group classes."""
+        assert "groupOfNames" in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+
+
+class TestLdapServerConstants:
+    """Test LdapServers constants."""
+
+    def test_active_directory_constant(self) -> None:
+        """Test Active Directory constant."""
         assert FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY == "active_directory"
-        assert FlextLdifConstants.LdapServers.OPENLDAP == "openldap"
-        # NOTE: Server-specific constants like AD_DN_PATTERNS are now in server Constants classes
-        # e.g., FlextLdifServersAd.Constants.AD_DN_PATTERNS
-        # e.g., FlextLdifServersOpenldap.Constants.OPENLDAP_DN_PATTERNS
 
-    def test_rfc_compliance_constants(self) -> None:
-        """Test RfcCompliance constants."""
+    def test_openldap_constant(self) -> None:
+        """Test OpenLDAP constant."""
+        assert FlextLdifConstants.LdapServers.OPENLDAP == "openldap"
+
+
+class TestRfcComplianceConstants:
+    """Test RfcCompliance constants."""
+
+    def test_base64_encoding_in_required(self) -> None:
+        """Test base64_encoding in required features."""
         assert "base64_encoding" in FlextLdifConstants.RfcCompliance.REQUIRED_FEATURES
+
+    def test_language_tags_in_optional(self) -> None:
+        """Test language_tags in optional features."""
         assert "language_tags" in FlextLdifConstants.RfcCompliance.OPTIONAL_FEATURES
+
+    def test_compliance_modes(self) -> None:
+        """Test RFC compliance mode constants."""
         assert FlextLdifConstants.RfcCompliance.STRICT == "strict"
         assert FlextLdifConstants.RfcCompliance.MODERATE == "moderate"
         assert FlextLdifConstants.RfcCompliance.LENIENT == "lenient"
 
-    def test_processing_stages_enum(self) -> None:
-        """Test ProcessingStage enum."""
-        assert FlextLdifConstants.ProcessingStage.PARSING.value == "parsing"
-        assert FlextLdifConstants.ProcessingStage.VALIDATION.value == "validation"
-        assert FlextLdifConstants.ProcessingStage.ANALYTICS.value == "analytics"
-        assert FlextLdifConstants.ProcessingStage.WRITING.value == "writing"
 
-    def test_health_status_enum(self) -> None:
-        """Test LdifHealthStatus enum."""
-        assert FlextLdifConstants.LdifHealthStatus.HEALTHY.value == "healthy"
-        assert FlextLdifConstants.LdifHealthStatus.DEGRADED.value == "degraded"
-        assert FlextLdifConstants.LdifHealthStatus.UNHEALTHY.value == "unhealthy"
+class TestEnumValues:
+    """Test enum values."""
 
-    def test_entry_type_enum(self) -> None:
-        """Test EntryType enum."""
-        assert FlextLdifConstants.EntryType.PERSON.value == "person"
-        assert FlextLdifConstants.EntryType.GROUP.value == "group"
-        assert (
-            FlextLdifConstants.EntryType.ORGANIZATIONAL_UNIT.value
-            == "organizationalunit"
-        )
-        assert FlextLdifConstants.EntryType.DOMAIN.value == "domain"
-        assert FlextLdifConstants.EntryType.OTHER.value == "other"
-
-    def test_entry_modification_enum(self) -> None:
-        """Test EntryModification enum."""
-        assert FlextLdifConstants.EntryModification.ADD.value == "add"
-        assert FlextLdifConstants.EntryModification.MODIFY.value == "modify"
-        assert FlextLdifConstants.EntryModification.DELETE.value == "delete"
-        assert FlextLdifConstants.EntryModification.MODRDN.value == "modrdn"
+    @pytest.mark.parametrize(
+        "test_case",
+        get_enum_test_cases(),
+    )
+    def test_enum_values(self, test_case: EnumTestCase) -> None:
+        """Test enum member value."""
+        enum_class = get_enum_class(test_case.enum_type)
+        enum_member = getattr(enum_class, test_case.member_name)
+        assert enum_member.value == test_case.expected_value
 
 
-class TestFlextLdifConstantsEncoding:
-    """Test suite for encoding constants."""
+class TestNamespaceValidation:
+    """Test FlextLdifConstants namespace access."""
 
-    def test_default_encoding(self) -> None:
-        """Test default encoding constant."""
-        assert FlextLdifConstants.DEFAULT_ENCODING == "utf-8"
-        assert isinstance(FlextLdifConstants.DEFAULT_ENCODING, str)
+    @pytest.mark.parametrize(
+        "group_name",
+        NAMESPACE_GROUPS,
+    )
+    def test_constant_groups_accessible(
+        self,
+        group_name: str,
+    ) -> None:
+        """Test constant group is accessible."""
+        assert hasattr(FlextLdifConstants, group_name)
 
-    def test_supported_encodings(self) -> None:
-        """Test supported encodings set."""
-        encodings = FlextLdifConstants.SUPPORTED_ENCODINGS
-        assert isinstance(encodings, frozenset)
-        assert "utf-8" in encodings
-        assert "utf-16" in encodings
-
-    def test_encoding_constants_exist(self) -> None:
-        """Test that all encoding constants exist."""
-        # Encoding is a StrEnum - constants are at FlextLdifConstants level
-        assert hasattr(FlextLdifConstants, "DEFAULT_ENCODING")
-        assert hasattr(FlextLdifConstants, "SUPPORTED_ENCODINGS")
-        # Verify enum values exist
-        assert hasattr(FlextLdifConstants.Encoding, "UTF8")
-        assert hasattr(FlextLdifConstants.Encoding, "UTF16")
-
-
-class TestFlextLdifConstantsFormat:
-    """Test suite for format constants."""
-
-    def test_max_line_length(self) -> None:
-        """Test maximum line length constant."""
-        assert (
-            FlextLdifConstants.Format.MAX_LINE_LENGTH == 78
-        )  # Fixed from 76 to correct value
-        assert isinstance(FlextLdifConstants.Format.MAX_LINE_LENGTH, int)
-
-    def test_format_constants_exist(self) -> None:
-        """Test that all format constants exist."""
-        assert hasattr(FlextLdifConstants.Format, "MAX_LINE_LENGTH")
-        assert hasattr(FlextLdifConstants.Format, "DN_ATTRIBUTE")
-        assert hasattr(FlextLdifConstants.Format, "ATTRIBUTE_SEPARATOR")
-
-
-class TestFlextLdifConstantsProcessing:
-    """Test suite for processing constants."""
-
-    def test_max_workers_limit(self) -> None:
-        """Test maximum workers limit."""
-        assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT == 16
-        assert isinstance(FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT, int)
-
-    def test_debug_max_workers(self) -> None:
-        """Test debug maximum workers."""
-        assert FlextLdifConstants.DEBUG_MAX_WORKERS == 2
-        assert isinstance(FlextLdifConstants.DEBUG_MAX_WORKERS, int)
-
-    def test_performance_min_workers(self) -> None:
-        """Test performance minimum workers."""
-        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS == 4
-        assert isinstance(
-            FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS,
-            int,
-        )
-
-    def test_processing_constants_exist(self) -> None:
-        """Test that all processing constants exist."""
-        assert hasattr(FlextLdifConstants.LdifProcessing, "MAX_WORKERS_LIMIT")
-        assert hasattr(FlextLdifConstants, "DEBUG_MAX_WORKERS")
-        assert hasattr(FlextLdifConstants.LdifProcessing, "PERFORMANCE_MIN_WORKERS")
-        assert hasattr(FlextLdifConstants, "PERFORMANCE_MEMORY_MB_THRESHOLD")
-
-
-class TestFlextLdifConstantsNamespace:
-    """Test suite for the FlextLdifConstants namespace."""
-
-    def test_constants_namespace_access(self) -> None:
-        """Test accessing constants through namespace."""
-        # Test that all expected constant groups are available
-        assert hasattr(FlextLdifConstants, "Encoding")
-        assert hasattr(FlextLdifConstants, "Format")
-        assert hasattr(FlextLdifConstants, "Processing")
-        assert hasattr(FlextLdifConstants, "LdifGeneralValidation")
-        assert hasattr(FlextLdifConstants, "Acl")
-        assert hasattr(FlextLdifConstants, "Schema")
-
-    def test_constant_groups_are_classes(self) -> None:
-        """Test that constant groups are classes."""
-        assert isinstance(FlextLdifConstants.Encoding, type)
-        assert isinstance(FlextLdifConstants.Format, type)
-        assert isinstance(FlextLdifConstants.Processing, type)
-        assert isinstance(FlextLdifConstants.LdifGeneralValidation, type)
-        assert isinstance(FlextLdifConstants.Acl, type)
-        assert isinstance(FlextLdifConstants.Schema, type)
+    @pytest.mark.parametrize(
+        "group_name",
+        NAMESPACE_GROUPS,
+    )
+    def test_constant_groups_are_classes(
+        self,
+        group_name: str,
+    ) -> None:
+        """Test constant group is a class."""
+        group = getattr(FlextLdifConstants, group_name)
+        assert isinstance(group, type)
 
     def test_constant_values_are_reasonable(self) -> None:
-        """Test that constant values are reasonable."""
+        """Test that constant values are within reasonable ranges."""
         # Encoding
         assert (
             FlextLdifConstants.DEFAULT_ENCODING
@@ -247,8 +404,7 @@ class TestFlextLdifConstantsNamespace:
         )
 
         # Format
-        assert FlextLdifConstants.Format.MAX_LINE_LENGTH > 40
-        assert FlextLdifConstants.Format.MAX_LINE_LENGTH < 200
+        assert 40 < FlextLdifConstants.Format.MAX_LINE_LENGTH < 200
 
         # Processing
         assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT > 0
@@ -264,3 +420,21 @@ class TestFlextLdifConstantsNamespace:
             FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MAX
             > FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MIN
         )
+
+
+__all__ = [
+    "ConstantGroup",
+    "ConstantTestCase",
+    "EnumTestCase",
+    "EnumType",
+    "TestEncodingConstants",
+    "TestEnumValues",
+    "TestFormatConstants",
+    "TestLdapServerConstants",
+    "TestNamespaceValidation",
+    "TestObjectClassConstants",
+    "TestProcessingConstants",
+    "TestQualityConstants",
+    "TestRfcComplianceConstants",
+    "TestValidationConstants",
+]

@@ -26,7 +26,7 @@ from flext_core import (
 )
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
@@ -46,7 +46,7 @@ def _get_server_registry() -> FlextLdifServer:
 
 
 class FlextLdifFilters(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
+    LdifServiceBase,
 ):
     """Universal LDIF Entry Filtering and Categorization Service.
 
@@ -513,13 +513,30 @@ class FlextLdifFilters(
         """
 
         @staticmethod
-        def filter_entry_attributes(
+        def mark_attributes_for_removal(
             entry: FlextLdifModels.Entry,
-            attributes_to_remove: list[str],
+            attributes_to_mark: set[str],
+            status: str = FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL,
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Remove specified attributes from entry."""
+            """Mark attributes in metadata without removing from entry.attributes.
+
+            SRP: Filters MARK only, entry service REMOVES.
+
+            This method marks attributes for removal by storing metadata about them
+            without actually removing them from entry.attributes. The marked attributes
+            will be removed later by the entry service (FlextLdifEntryTransformer).
+
+            Args:
+                entry: Entry to mark attributes in
+                attributes_to_mark: Set of attribute names to mark
+                status: Marker status (default: MARKED_FOR_REMOVAL)
+
+            Returns:
+                FlextResult[Entry] with marked attributes in metadata
+
+            """
             try:
-                if not attributes_to_remove:
+                if not attributes_to_mark:
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
                 # Entry.attributes is required by model, but we check for safety
@@ -528,133 +545,207 @@ class FlextLdifFilters(
                         f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes",
                     )
 
-                # Create filtered attributes dict
-                attrs_lower = {attr.lower() for attr in attributes_to_remove}
-                original_attrs = dict(entry.attributes.items())
-                original_attr_names = list(original_attrs.keys())
+                # Build marked attributes metadata
+                attrs_lower = {attr.lower() for attr in attributes_to_mark}
+                marked_attributes: dict[str, dict[str, str | list[str]]] = {}
 
-                filtered_attrs = {
-                    key: values
-                    for key, values in entry.attributes.items()
-                    if key.lower() not in attrs_lower
-                }
-                removed_attrs = [
-                    attr for attr in original_attr_names if attr.lower() in attrs_lower
-                ]
+                for attr_name, attr_values in entry.attributes.items():
+                    if attr_name.lower() in attrs_lower:
+                        # Store original values for recovery if needed
+                        marked_attributes[attr_name] = {
+                            "status": status,
+                            "original_value": attr_values,
+                        }
 
-                # Create new LdifAttributes
-                attrs_result = FlextLdifModels.LdifAttributes.create(
-                    filtered_attrs,
-                )
-                if not attrs_result.is_success:
-                    FlextLogger.get_logger().error(
-                        "Failed to create LdifAttributes after filtering",
-                        entry_dn=str(entry.dn) if entry.dn else None,
-                        attributes_to_remove=attributes_to_remove,
-                        error=str(attrs_result.error),
+                # Create or update metadata with marked attributes
+                if entry.metadata is None:
+                    new_metadata = FlextLdifModels.QuirkMetadata(
+                        quirk_type="marked_attributes",
+                        extensions={
+                            "marked_attributes": marked_attributes,
+                        },
                     )
-                    return FlextResult[FlextLdifModels.Entry].fail(
-                        attrs_result.error or "Unknown error",
+                else:
+                    new_extensions = {**entry.metadata.extensions}
+                    # Merge with existing marked_attributes if present
+                    existing_marked = new_extensions.get("marked_attributes", {})
+                    if isinstance(existing_marked, dict):
+                        existing_marked.update(marked_attributes)
+                        new_extensions["marked_attributes"] = existing_marked
+                    else:
+                        new_extensions["marked_attributes"] = marked_attributes
+
+                    new_metadata = FlextLdifModels.QuirkMetadata(
+                        quirk_type=entry.metadata.quirk_type,
+                        extensions=new_extensions,
                     )
 
-                new_entry = entry.model_copy(
-                    update={"attributes": attrs_result.unwrap()},
-                )
+                new_entry = entry.model_copy(update={"metadata": new_metadata})
 
-                # Log detailed filtering information
-                if removed_attrs:
+                # Log marking operation
+                if marked_attributes:
                     FlextLogger.get_logger().debug(
-                        "Removed specified attributes from entry",
-                        action_taken="filter_entry_attributes",
+                        "Marked attributes for removal in metadata",
+                        action_taken="mark_attributes_for_removal",
                         entry_dn=str(entry.dn) if entry.dn else None,
-                        original_attributes_count=len(original_attr_names),
-                        final_attributes_count=len(filtered_attrs),
-                        removed_attributes=removed_attrs,
-                        removed_count=len(removed_attrs),
+                        marked_attributes=list(marked_attributes.keys()),
+                        marked_count=len(marked_attributes),
+                        status=status,
                     )
 
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Filter attributes failed: {e}",
+                    f"Mark attributes for removal failed: {e}",
                 )
+
+        @staticmethod
+        def mark_objectclasses_for_removal(
+            entry: FlextLdifModels.Entry,
+            objectclasses_to_mark: set[str],
+            status: str = FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Mark objectClasses in metadata without removing from entry.attributes.
+
+            SRP: Filters MARK only, entry service REMOVES.
+
+            This method marks specific objectClass values for removal by storing
+            metadata about them without actually removing them from entry.attributes.
+            The marked objectClasses will be removed later by the entry service.
+
+            Args:
+                entry: Entry to mark objectClasses in
+                objectclasses_to_mark: Set of objectClass values to mark
+                status: Marker status (default: MARKED_FOR_REMOVAL)
+
+            Returns:
+                FlextResult[Entry] with marked objectClasses in metadata
+
+            """
+            try:
+                if not objectclasses_to_mark:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+                current_ocs = entry.get_attribute_values("objectClass")
+                if not current_ocs:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+                # Build marked objectclasses metadata (case-insensitive)
+                ocs_lower = {oc.lower() for oc in objectclasses_to_mark}
+                marked_ocs: dict[str, dict[str, str | list[str]]] = {}
+
+                for oc_value in current_ocs:
+                    if oc_value.lower() in ocs_lower:
+                        marked_ocs[oc_value] = {
+                            "status": status,
+                            "original_value": [oc_value],
+                        }
+
+                if not marked_ocs:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+                # Create or update metadata with marked objectclasses
+                if entry.metadata is None:
+                    new_metadata = FlextLdifModels.QuirkMetadata(
+                        quirk_type="marked_objectclasses",
+                        extensions={
+                            "marked_objectclasses": marked_ocs,
+                        },
+                    )
+                else:
+                    new_extensions = {**entry.metadata.extensions}
+                    existing_marked = new_extensions.get("marked_objectclasses", {})
+                    if isinstance(existing_marked, dict):
+                        existing_marked.update(marked_ocs)
+                        new_extensions["marked_objectclasses"] = existing_marked
+                    else:
+                        new_extensions["marked_objectclasses"] = marked_ocs
+
+                    new_metadata = FlextLdifModels.QuirkMetadata(
+                        quirk_type=entry.metadata.quirk_type,
+                        extensions=new_extensions,
+                    )
+
+                new_entry = entry.model_copy(update={"metadata": new_metadata})
+
+                # Log marking operation
+                if marked_ocs:
+                    FlextLogger.get_logger().debug(
+                        "Marked objectClasses for removal in metadata",
+                        action_taken="mark_objectclasses_for_removal",
+                        entry_dn=str(entry.dn) if entry.dn else None,
+                        marked_objectclasses=list(marked_ocs.keys()),
+                        marked_count=len(marked_ocs),
+                        status=status,
+                    )
+
+                return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Mark objectClasses for removal failed: {e}",
+                )
+
+        @staticmethod
+        def filter_entry_attributes(
+            entry: FlextLdifModels.Entry,
+            attributes_to_remove: list[str],
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Mark attributes for removal in entry metadata (SRP - never removes).
+
+            This method follows Single Responsibility Principle:
+            - filters.py: MARKS attributes in metadata (this method)
+            - entry.py: REMOVES attributes based on markers
+            - writer.py: Decides output visibility based on WriteOutputOptions
+
+            Args:
+                entry: Entry to mark attributes for removal
+                attributes_to_remove: List of attribute names to mark
+
+            Returns:
+                FlextResult[Entry] with marked attributes in metadata
+
+            """
+            if not attributes_to_remove:
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+            return FlextLdifFilters.Transformer.mark_attributes_for_removal(
+                entry,
+                set(attributes_to_remove),
+                FlextLdifConstants.AttributeMarkerStatus.FILTERED,
+            )
 
         @staticmethod
         def filter_entry_objectclasses(
             entry: FlextLdifModels.Entry,
             objectclasses_to_remove: list[str],
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Remove specified objectClasses from entry."""
-            try:
-                oc_to_remove_lower = {oc.lower() for oc in objectclasses_to_remove}
-                current_ocs = entry.get_attribute_values("objectClass")
+            """Mark objectClasses for removal in entry metadata (SRP - never removes).
 
-                if not current_ocs:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+            This method follows Single Responsibility Principle:
+            - filters.py: MARKS objectClasses in metadata (this method)
+            - entry.py: REMOVES objectClasses based on markers
+            - writer.py: Decides output visibility based on WriteOutputOptions
 
-                # Filter objectClasses
-                filtered_ocs = [
-                    oc for oc in current_ocs if oc.lower() not in oc_to_remove_lower
-                ]
-                removed_ocs = [
-                    oc for oc in current_ocs if oc.lower() in oc_to_remove_lower
-                ]
+            Args:
+                entry: Entry to mark objectClasses for removal
+                objectclasses_to_remove: List of objectClass names to mark
 
-                # Check if all objectClasses would be removed
-                if not filtered_ocs:
-                    FlextLogger.get_logger().error(
-                        "Cannot remove all objectClasses - entry would become invalid",
-                        action_attempted="filter_entry_objectclasses",
-                        entry_dn=str(entry.dn) if entry.dn else None,
-                        objectclasses_count=len(current_ocs),
-                        objectclasses_to_remove=objectclasses_to_remove,
-                        consequence="Entry would become invalid without objectClass",
-                    )
-                    return FlextResult[FlextLdifModels.Entry].fail(
-                        "All objectClasses would be removed",
-                    )
+            Returns:
+                FlextResult[Entry] with marked objectClasses in metadata
 
-                # Log successful filtering
-                if removed_ocs:
-                    FlextLogger.get_logger().debug(
-                        "Removed specified objectClasses from entry",
-                        action_taken="filter_entry_objectclasses",
-                        entry_dn=str(entry.dn) if entry.dn else None,
-                        original_objectclasses_count=len(current_ocs),
-                        final_objectclasses_count=len(filtered_ocs),
-                        removed_objectclasses=removed_ocs,
-                        removed_count=len(removed_ocs),
-                    )
+            """
+            if not objectclasses_to_remove:
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-                # Check if entry has attributes
-                if not entry.attributes:
-                    return FlextResult[FlextLdifModels.Entry].fail(
-                        "Entry has no attributes",
-                    )
-
-                # Create filtered attributes dict
-                filtered_attrs = dict(entry.attributes.attributes)
-                filtered_attrs["objectClass"] = filtered_ocs
-
-                # Create new LdifAttributes
-                attrs_result = FlextLdifModels.LdifAttributes.create(
-                    filtered_attrs,
-                )
-                if not attrs_result.is_success:
-                    return FlextResult[FlextLdifModels.Entry].fail(
-                        attrs_result.error or "Unknown error",
-                    )
-
-                new_entry = entry.model_copy(
-                    update={"attributes": attrs_result.unwrap()},
-                )
-                return FlextResult[FlextLdifModels.Entry].ok(new_entry)
-
-            except Exception as e:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Filter objectClasses failed: {e}",
-                )
+            # Mark "objectClass" attribute as having filtered values
+            # Store which specific objectClasses are marked in metadata
+            return FlextLdifFilters.Transformer.mark_objectclasses_for_removal(
+                entry,
+                set(objectclasses_to_remove),
+                FlextLdifConstants.AttributeMarkerStatus.FILTERED,
+            )
 
     class AclDetector:
         """Handles ACL detection and schema entry operations.
@@ -2128,7 +2219,7 @@ class FlextLdifFilters(
         entry: FlextLdifModels.Entry,
         attributes_to_remove: list[str],
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Remove specified attributes from entry."""
+        """Mark attributes for removal in entry metadata (SRP - never removes)."""
         return FlextLdifFilters.Transformer.filter_entry_attributes(
             entry,
             attributes_to_remove,
@@ -2139,7 +2230,7 @@ class FlextLdifFilters(
         entry: FlextLdifModels.Entry,
         objectclasses_to_remove: list[str],
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Remove specified objectClasses from entry."""
+        """Mark objectClasses for removal in entry metadata (SRP - never removes)."""
         return FlextLdifFilters.Transformer.filter_entry_objectclasses(
             entry,
             objectclasses_to_remove,

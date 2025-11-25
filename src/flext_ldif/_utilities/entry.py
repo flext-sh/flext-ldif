@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import base64
-import re
 from typing import cast
 
 from flext_core import FlextLogger, FlextRuntime
@@ -178,53 +176,6 @@ class FlextLdifUtilitiesEntry:
         return result
 
     @staticmethod
-    def detect_base64_attributes(
-        attributes: dict[str, list[str]],
-    ) -> set[str]:
-        """Detect which attributes contain base64-encoded values.
-
-        Args:
-            attributes: Entry attributes dict
-
-        Returns:
-            Set of attribute names that contain base64 data
-
-        """
-        if not attributes:
-            return set()
-
-        base64_attrs: set[str] = set()
-
-        for attr_name, values in attributes.items():
-            for value in values:
-                # Check for base64 markers or non-UTF8 patterns
-                # Note: value is guaranteed to be str from type annotation
-                try:
-                    value.encode("utf-8").decode("utf-8")
-                except (UnicodeDecodeError, AttributeError):
-                    base64_attrs.add(attr_name)
-                    break
-
-                # Check for common base64 patterns
-                if (
-                    re.match(r"^[A-Za-z0-9+/]*={0,2}$", value)
-                    and len(value) > FlextLdifUtilitiesEntry._MIN_BASE64_LENGTH
-                ):
-                    # Looks like base64
-                    try:
-                        base64.b64decode(value, validate=True)
-                        base64_attrs.add(attr_name)
-                        break
-                    except Exception as e:
-                        logger.debug(
-                            "Base64 validation failed",
-                            attribute_name=attr_name,
-                            error=str(e),
-                        )
-
-        return base64_attrs
-
-    @staticmethod
     def is_schema_entry(entry: FlextLdifModels.Entry, *, strict: bool = True) -> bool:
         """Check if entry is a REAL schema entry with schema definitions.
 
@@ -354,62 +305,6 @@ class FlextLdifUtilitiesEntry:
         return any(attr.lower() in entry_attrs_lower for attr in attributes)
 
     @staticmethod
-    def filter_operational_attrs(
-        entry: FlextLdifModels.Entry,
-    ) -> FlextLdifModels.Entry:
-        """Remove operational attributes from entry.
-
-        Operational attributes are LDAP-managed attributes like:
-        - createTimestamp, modifyTimestamp
-        - creatorsName, modifiersName
-        - entryUUID, entryDN
-        - structuralObjectClass, etc.
-
-        Args:
-            entry: Entry to filter
-
-        Returns:
-            New entry with operational attributes removed
-
-        """
-        # Entry with no attributes - return as-is
-        if entry.attributes is None:
-            return entry
-
-        # Common operational attributes (case-insensitive)
-        operational_attrs = {
-            "createtimestamp",
-            "modifytimestamp",
-            "creatorsname",
-            "modifiersname",
-            "entryuuid",
-            "entrydn",
-            "structuralobjectclass",
-            "hassubordinates",
-            "subschemasubentry",
-            "numsubordinates",
-        }
-
-        # Filter attributes
-        filtered = {
-            k: v
-            for k, v in entry.attributes.attributes.items()
-            if k.lower() not in operational_attrs
-        }
-
-        # Create new entry with filtered attributes
-        if entry.dn is None:
-            return entry
-        result = FlextLdifModels.Entry.create(
-            dn=entry.dn,
-            attributes=FlextLdifModels.LdifAttributes(attributes=filtered),
-        )
-        if result.is_failure:
-            return entry
-        # Entry.create returns FlextResult[FlextLdifModels.Entry]
-        return cast("FlextLdifModels.Entry", result.unwrap())
-
-    @staticmethod
     def remove_attributes(
         entry: FlextLdifModels.Entry,
         attributes: list[str],
@@ -449,7 +344,7 @@ class FlextLdifUtilitiesEntry:
         )
         if result.is_failure:
             return entry
-        # Entry.create returns FlextResult[FlextLdifModels.Entry]
+        # Entry.create returns FlextResult[FlextLdifModelsDomains.Entry]
         return cast("FlextLdifModels.Entry", result.unwrap())
 
 

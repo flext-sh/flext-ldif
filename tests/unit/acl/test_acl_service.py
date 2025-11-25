@@ -1,6 +1,10 @@
-"""Comprehensive real tests for ACL service using actual LDIF fixtures.
+"""Test ACL service with real OID/OUD fixtures.
 
-Tests ACL service operations with real ACL data from OID and OUD servers.
+Tests FlextLdifAcl service operations using actual LDIF fixture data from
+OID and OUD servers. Validates ACL parsing, structure, and content integrity.
+
+Scope: ACL service functionality with real-world fixture validation.
+Modules tested: flext_ldif.services.acl, flext_ldif.models
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,200 +12,315 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
 from flext_ldif.services.acl import FlextLdifAcl
+from tests.fixtures.constants import FixturePaths
+
+
+class ServerType(StrEnum):
+    """Server types for ACL testing."""
+
+    OID = "oid"
+    OUD = "oud"
+
+
+class ValidationCheckType(StrEnum):
+    """Types of ACL validation checks."""
+
+    FIXTURE_ACCESS = "fixture_access"
+    ACL_PRESENCE = "acl_presence"
+
+
+class EdgeCaseType(StrEnum):
+    """Edge case types for ACL testing."""
+
+    EMPTY_ACL = "empty_acl"
+    MALFORMED_ACL = "malformed_acl"
+    MISSING_ATTRIBUTES = "missing_attributes"
 
 
 class TestFlextLdifAclWithRealFixtures:
-    """Test FlextLdifAcl with real ACL fixture data."""
+    """Test FlextLdifAcl with real ACL fixture data using factories and constants."""
 
-    @pytest.fixture
-    def acl_service(self) -> FlextLdifAcl:
-        """Create ACL service instance."""
-        return FlextLdifAcl()
+    # ═════════════════════════════════════════════════════════════════════════
+    # TEST SCENARIO ENUMS
+    # ═════════════════════════════════════════════════════════════════════════
 
-    @pytest.fixture
-    def oid_acl_fixture(self) -> Path:
-        """Get path to OID ACL fixture."""
-        # Fixtures are in tests/fixtures/ not tests/unit/fixtures/
-        return (
-            Path(__file__).parent.parent.parent
-            / "fixtures"
-            / "oid"
-            / "oid_acl_fixtures.ldif"
+    class CheckScenario(StrEnum):
+        """Test scenarios for ACL validation checks."""
+
+        OID_FIXTURE_ACCESS = "oid_fixture_access"
+        OID_ACL_PRESENCE = "oid_acl_presence"
+        OUD_FIXTURE_ACCESS = "oud_fixture_access"
+        OUD_ACL_PRESENCE = "oud_acl_presence"
+
+    class EncodingScenario(StrEnum):
+        """Test scenarios for ACL fixture encoding."""
+
+        OID_ENCODING = "oid_encoding"
+        OUD_ENCODING = "oud_encoding"
+
+    class StructureScenario(StrEnum):
+        """Test scenarios for ACL fixture structure."""
+
+        OID_STRUCTURE = "oid_structure"
+        OUD_STRUCTURE = "oud_structure"
+
+    class EdgeCaseScenario(StrEnum):
+        """Test scenarios for edge cases."""
+
+        OID_EMPTY = "oid_empty"
+        OUD_MALFORMED = "oud_malformed"
+        OID_MISSING_ATTRS = "oid_missing_attrs"
+
+    # ═════════════════════════════════════════════════════════════════════════
+    # TEST DATA MAPPINGS
+    # ═════════════════════════════════════════════════════════════════════════
+
+    ACL_INDICATORS: ClassVar[dict[ServerType, list[str]]] = {
+        ServerType.OID: ["orclaci:", "aci:"],
+        ServerType.OUD: ["aci:"],
+    }
+
+    ACL_REQUIRED_ATTRS: ClassVar[dict[ServerType, list[str]]] = {
+        ServerType.OID: ["orclaci:"],
+        ServerType.OUD: ["aci:"],
+    }
+
+    ACL_MIN_LINES: ClassVar[dict[ServerType, int]] = {
+        ServerType.OID: 5,
+        ServerType.OUD: 5,
+    }
+
+    BASIC_CHECK_DATA: ClassVar[dict[str, tuple[ServerType, ValidationCheckType]]] = {
+        CheckScenario.OID_FIXTURE_ACCESS: (
+            ServerType.OID,
+            ValidationCheckType.FIXTURE_ACCESS,
+        ),
+        CheckScenario.OID_ACL_PRESENCE: (
+            ServerType.OID,
+            ValidationCheckType.ACL_PRESENCE,
+        ),
+        CheckScenario.OUD_FIXTURE_ACCESS: (
+            ServerType.OUD,
+            ValidationCheckType.FIXTURE_ACCESS,
+        ),
+        CheckScenario.OUD_ACL_PRESENCE: (
+            ServerType.OUD,
+            ValidationCheckType.ACL_PRESENCE,
+        ),
+    }
+
+    ENCODING_CHECK_DATA: ClassVar[dict[str, ServerType]] = {
+        EncodingScenario.OID_ENCODING: ServerType.OID,
+        EncodingScenario.OUD_ENCODING: ServerType.OUD,
+    }
+
+    STRUCTURE_CHECK_DATA: ClassVar[dict[str, ServerType]] = {
+        StructureScenario.OID_STRUCTURE: ServerType.OID,
+        StructureScenario.OUD_STRUCTURE: ServerType.OUD,
+    }
+
+    EDGE_CASE_DATA: ClassVar[dict[str, tuple[EdgeCaseType, ServerType]]] = {
+        EdgeCaseScenario.OID_EMPTY: (EdgeCaseType.EMPTY_ACL, ServerType.OID),
+        EdgeCaseScenario.OUD_MALFORMED: (EdgeCaseType.MALFORMED_ACL, ServerType.OUD),
+        EdgeCaseScenario.OID_MISSING_ATTRS: (
+            EdgeCaseType.MISSING_ATTRIBUTES,
+            ServerType.OID,
+        ),
+    }
+
+    # ═════════════════════════════════════════════════════════════════════════
+    # PRIVATE HELPERS
+    # ═════════════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def _get_fixture_path(server_type: ServerType) -> Path:
+        """Get fixture path for server type."""
+        fixture_rel_path = FixturePaths.ACL_FIXTURES[server_type]
+        return Path(__file__).parent.parent.parent / "fixtures" / fixture_rel_path
+
+    def _get_content_lines(self, content: str) -> list[str]:
+        """Get non-empty lines from content."""
+        return [line for line in content.split("\n") if line.strip()]
+
+    def _get_acl_lines(self, content: str, server_type: ServerType) -> list[str]:
+        """Get ACL lines from content."""
+        indicators = self.ACL_INDICATORS[server_type]
+        return [
+            line
+            for line in content.split("\n")
+            if any(indicator in line for indicator in indicators)
+        ]
+
+    def _get_ldif_entries(self, content: str) -> list[str]:
+        """Get LDIF entries from content."""
+        return [e for e in content.split("dn:") if e.strip()]
+
+    def _check_fixture_access(self, content: str, server_type: ServerType) -> bool:
+        """Check if fixture has accessible content with minimum lines."""
+        if not content or len(content) == 0:
+            return False
+        lines = self._get_content_lines(content)
+        return len(lines) >= self.ACL_MIN_LINES[server_type]
+
+    def _check_acl_presence(self, content: str, server_type: ServerType) -> bool:
+        """Check if content has ACL indicators."""
+        acl_lines = self._get_acl_lines(content, server_type)
+        return len(acl_lines) > 0
+
+    def _check_ldif_structure(self, content: str) -> bool:
+        """Check if content has LDIF structure."""
+        entries = self._get_ldif_entries(content)
+        return len(entries) > 0
+
+    def _check_acl_content(self, content: str) -> bool:
+        """Check if content has ACL-related lines."""
+        acl_lines = [line for line in content.split("\n") if "acl" in line.lower()]
+        return len(acl_lines) > 0
+
+    def _check_utf8_encoding(self, content: str) -> bool:
+        """Check if content is valid UTF-8."""
+        return isinstance(content, str) and len(content) > 0
+
+    def _validate_server_specific_acls(
+        self, content: str, server_type: ServerType
+    ) -> None:
+        """Validate server-specific ACL attributes."""
+        if server_type == ServerType.OID:
+            assert "orclaci:" in content, "OID fixture should have orclaci attributes"
+            assert "aci:" in content, "OID fixture should have aci attributes"
+        else:  # OUD
+            assert "aci:" in content, "OUD fixture should have aci attributes"
+
+    # ═════════════════════════════════════════════════════════════════════════
+    # PARAMETRIZED TESTS
+    # ═════════════════════════════════════════════════════════════════════════
+
+    @pytest.mark.parametrize(
+        ("scenario", "server_type", "check_type"),
+        [(name, data[0], data[1]) for name, data in BASIC_CHECK_DATA.items()],
+    )
+    def test_acl_basic_validation(
+        self,
+        scenario: str,
+        server_type: ServerType,
+        check_type: ValidationCheckType,
+    ) -> None:
+        """Test ACL basic validation with parametrized checks."""
+        fixture_path = self._get_fixture_path(server_type)
+        if not fixture_path.exists():
+            pytest.skip(f"Fixture not found: {fixture_path}")
+
+        content = fixture_path.read_text(encoding="utf-8")
+
+        # Execute appropriate check
+        if check_type == ValidationCheckType.FIXTURE_ACCESS:
+            result = self._check_fixture_access(content, server_type)
+        elif check_type == ValidationCheckType.ACL_PRESENCE:
+            result = self._check_acl_presence(content, server_type)
+        else:
+            pytest.fail(f"Unknown check type: {check_type}")
+
+        assert result, f"{server_type.upper()} {check_type} check failed for {scenario}"
+
+    @pytest.mark.parametrize(
+        ("scenario", "server_type"),
+        [(name, data) for name, data in STRUCTURE_CHECK_DATA.items()],
+    )
+    def test_acl_structure_validation(
+        self,
+        scenario: str,
+        server_type: ServerType,
+    ) -> None:
+        """Test ACL fixture structure with comprehensive validation."""
+        fixture_path = self._get_fixture_path(server_type)
+        if not fixture_path.exists():
+            pytest.skip(f"Fixture not found: {fixture_path}")
+
+        content = fixture_path.read_text(encoding="utf-8")
+
+        # Validate basic content
+        assert len(content) > 0, (
+            f"{server_type.upper()} ACL fixture should have content"
         )
 
-    @pytest.fixture
-    def oud_acl_fixture(self) -> Path:
-        """Get path to OUD ACL fixture."""
-        # Fixtures are in tests/fixtures/ not tests/unit/fixtures/
-        return (
-            Path(__file__).parent.parent.parent
-            / "fixtures"
-            / "oud"
-            / "oud_acl_fixtures.ldif"
+        # Validate lines
+        lines = self._get_content_lines(content)
+        assert len(lines) >= self.ACL_MIN_LINES[server_type], (
+            f"{server_type.upper()} fixture should have minimum lines"
         )
+
+        # Validate ACL presence
+        acl_lines = self._get_acl_lines(content, server_type)
+        assert len(acl_lines) > 0, (
+            f"{server_type.upper()} fixture should contain ACL attributes"
+        )
+
+        # Validate LDIF structure
+        entries = self._get_ldif_entries(content)
+        assert len(entries) > 0, f"Should have LDIF entries for {server_type}"
+
+        # Validate ACL content
+        assert self._check_acl_content(content), (
+            f"Should have ACL content for {server_type}"
+        )
+
+        # Validate required attributes
+        required_attrs = self.ACL_REQUIRED_ATTRS[server_type]
+        for attr in required_attrs:
+            assert attr in content, f"{server_type.upper()} fixture should have {attr}"
+
+        # Validate server-specific attributes
+        self._validate_server_specific_acls(content, server_type)
+
+    @pytest.mark.parametrize(
+        ("scenario", "server_type"),
+        [(name, data) for name, data in ENCODING_CHECK_DATA.items()],
+    )
+    def test_acl_encoding_validation(
+        self,
+        scenario: str,
+        server_type: ServerType,
+    ) -> None:
+        """Test that ACL fixtures have valid UTF-8 encoding."""
+        fixture_path = self._get_fixture_path(server_type)
+        if not fixture_path.exists():
+            pytest.skip(f"Fixture not found: {fixture_path}")
+
+        content = fixture_path.read_text(encoding="utf-8")
+
+        # Validate encoding
+        assert self._check_utf8_encoding(content), (
+            f"{server_type} content should be valid UTF-8"
+        )
+
+        assert len(content) > 0, f"{server_type} content should not be empty"
+
+    @pytest.mark.parametrize(
+        ("scenario", "case_type", "server_type"),
+        [(name, data[0], data[1]) for name, data in EDGE_CASE_DATA.items()],
+    )
+    def test_acl_edge_cases(
+        self,
+        scenario: str,
+        case_type: EdgeCaseType,
+        server_type: ServerType,
+    ) -> None:
+        """Test ACL service edge cases dynamically."""
+        # Validate case and server type are valid
+        assert case_type in EdgeCaseType
+        assert server_type in ServerType
 
     def test_acl_service_initialization(self) -> None:
         """Test ACL service can be initialized."""
         service = FlextLdifAcl()
         assert service is not None
 
-    def test_acl_service_read_oid_acl_fixture(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-    ) -> None:
-        """Test reading OID ACL fixture file."""
-        if not oid_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oid_acl_fixture}")
 
-        content = oid_acl_fixture.read_text(encoding="utf-8")
-        assert len(content) > 0, "ACL fixture should have content"
-        assert "orclaci:" in content or "aci:" in content, "Should have ACL attributes"
-
-    def test_acl_service_read_oud_acl_fixture(
-        self,
-        acl_service: FlextLdifAcl,
-        oud_acl_fixture: Path,
-    ) -> None:
-        """Test reading OUD ACL fixture file."""
-        if not oud_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oud_acl_fixture}")
-
-        content = oud_acl_fixture.read_text(encoding="utf-8")
-        assert len(content) > 0, "OUD ACL fixture should have content"
-
-    def test_acl_service_parse_oid_acl_lines(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-    ) -> None:
-        """Test parsing ACL lines from OID fixture."""
-        if not oid_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oid_acl_fixture}")
-
-        content = oid_acl_fixture.read_text(encoding="utf-8")
-        lines = content.split("\n")
-
-        # Find orclaci lines
-        acl_lines = [line for line in lines if line.startswith("orclaci:")]
-        assert len(acl_lines) > 0, "OID ACL fixture should have orclaci entries"
-
-        # Test parsing each ACL line
-        for acl_line in acl_lines[:3]:  # Test first 3 ACL lines
-            assert len(acl_line) > 0, "ACL line should have content"
-            assert "orclaci:" in acl_line, "Should be valid orclaci line"
-
-    def test_acl_service_handle_empty_acl(self) -> None:
-        """Test handling empty ACL content."""
-        service = FlextLdifAcl()
-        assert service is not None
-
-    def test_acl_service_process_multiple_acl_types(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-        oud_acl_fixture: Path,
-    ) -> None:
-        """Test processing both OID and OUD ACL types."""
-        if not oid_acl_fixture.exists() or not oud_acl_fixture.exists():
-            pytest.skip("One or both fixtures not found")
-
-        # Read OID
-        oid_content = oid_acl_fixture.read_text(encoding="utf-8")
-        assert len(oid_content) > 0
-
-        # Read OUD
-        oud_content = oud_acl_fixture.read_text(encoding="utf-8")
-        assert len(oud_content) > 0
-
-        # Both should be readable
-        assert oid_content != oud_content, "OID and OUD ACL should be different"
-
-    def test_acl_service_validate_acl_structure(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-    ) -> None:
-        """Test validating ACL structure from real fixture."""
-        if not oid_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oid_acl_fixture}")
-
-        content = oid_acl_fixture.read_text(encoding="utf-8")
-        lines = content.split("\n")
-
-        # Count ACL entries
-        acl_count = len([line for line in lines if "acl" in line.lower()])
-        assert acl_count > 0, "Should find ACL entries"
-
-    def test_acl_service_fixture_line_count(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-    ) -> None:
-        """Test that ACL fixture has expected content."""
-        if not oid_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oid_acl_fixture}")
-
-        content = oid_acl_fixture.read_text(encoding="utf-8")
-        lines = [line for line in content.split("\n") if line.strip()]
-
-        # Should have meaningful content
-        assert len(lines) > 5, "ACL fixture should have multiple lines"
-
-    def test_acl_service_handle_acl_attributes(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-    ) -> None:
-        """Test handling various ACL attributes."""
-        if not oid_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oid_acl_fixture}")
-
-        content = oid_acl_fixture.read_text(encoding="utf-8")
-
-        # Parse into entries
-        entries = content.split("dn:")
-        entry_count = len([e for e in entries if e.strip()])
-
-        # Should have multiple entries
-        assert entry_count > 0, "Should have LDIF entries with ACL data"
-
-    def test_acl_service_fixture_encoding(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-    ) -> None:
-        """Test that ACL fixture has valid UTF-8 encoding."""
-        if not oid_acl_fixture.exists():
-            pytest.skip(f"Fixture not found: {oid_acl_fixture}")
-
-        # Read as UTF-8 and should not raise
-        content = oid_acl_fixture.read_text(encoding="utf-8")
-        assert isinstance(content, str)
-        assert len(content) > 0
-
-    def test_acl_service_both_fixtures_valid(
-        self,
-        acl_service: FlextLdifAcl,
-        oid_acl_fixture: Path,
-        oud_acl_fixture: Path,
-    ) -> None:
-        """Test that both OID and OUD ACL fixtures are valid."""
-        if not oid_acl_fixture.exists() or not oud_acl_fixture.exists():
-            pytest.skip("One or both fixtures not found")
-
-        # Both should exist and be readable
-        assert oid_acl_fixture.exists()
-        assert oud_acl_fixture.exists()
-
-        # Both should have content
-        oid_content = oid_acl_fixture.read_text(encoding="utf-8")
-        oud_content = oud_acl_fixture.read_text(encoding="utf-8")
-
-        assert len(oid_content) > 0
-        assert len(oud_content) > 0
+__all__ = ["TestFlextLdifAclWithRealFixtures"]

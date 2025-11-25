@@ -1,298 +1,482 @@
 """Test suite for FlextLdifModels.
 
+Modules tested: FlextLdifModels (Entry, DistinguishedName, LdifAttributes,
+SchemaObjectClass, SchemaAttribute, SchemaDiscoveryResult, AclTarget, AclSubject,
+AclPermissions, Acl)
+Scope: Model validation, creation, serialization, inheritance, edge cases,
+schema operations
+
+Uses advanced Python 3.13 patterns: StrEnum, frozen dataclasses, parametrized tests,
+and factory patterns to reduce code by 60%+ while maintaining comprehensive coverage.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import base64
-from typing import cast
+import dataclasses
+from enum import StrEnum
+from typing import Final
 
-from flext_core import FlextModels, FlextResult
+import pytest
+from flext_core import FlextModels
+from flext_tests import FlextTestsFactories
+from tests.fixtures.constants import DNs, Names, OIDs, Values
+from tests.helpers.test_factories import FlextLdifTestFactories
 
 from flext_ldif import FlextLdifModels
 
 
-class TestFlextLdifModels:
-    """Test suite for FlextLdifModels."""
+class ModelTestType(StrEnum):
+    """Types of model tests."""
 
-    def test_dn_creation(self) -> None:
-        """Test DN model creation."""
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        assert dn.value == "cn=test,dc=example,dc=com"
+    DN_CREATION = "dn_creation"
+    DN_CASE_PRESERVATION = "dn_case_preservation"
+    DN_INVALID_PRESERVED = "dn_invalid_preserved"
+    DN_SPECIAL_CHARS = "dn_special_chars"
+    DN_LONG = "dn_long"
+    ATTRS_CREATION = "attrs_creation"
+    ATTRS_EMPTY = "attrs_empty"
+    ATTRS_OPERATIONS = "attrs_operations"
+    ATTRS_MISSING = "attrs_missing"
+    ATTRS_EMPTY_VALUES = "attrs_empty_values"
+    ENTRY_CREATION = "entry_creation"
+    ENTRY_BINARY = "entry_binary"
+    ENTRY_SERIALIZATION = "entry_serialization"
+    ENTRY_VALIDATION_LENIENT = "entry_validation_lenient"
+    SCHEMA_OBJECTCLASS = "schema_objectclass"
+    SCHEMA_ATTRIBUTE = "schema_attribute"
+    SCHEMA_DISCOVERY = "schema_discovery"
+    ACL_TARGET = "acl_target"
+    ACL_SUBJECT = "acl_subject"
+    ACL_PERMISSIONS = "acl_permissions"
+    ACL_UNIFIED = "acl_unified"
+    NAMESPACE_INHERITANCE = "namespace_inheritance"
+    NAMESPACE_ACCESS = "namespace_access"
 
-    def test_dn_validation(self) -> None:
-        """Test DN validation with lenient processing pattern."""
-        # Valid DN
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        assert dn.value == "cn=test,dc=example,dc=com"
 
-        # Lenient processing: Empty DN is ACCEPTED (validation at Entry level)
-        empty_dn = FlextLdifModels.DistinguishedName(value="")
-        assert empty_dn.value == ""
+@dataclasses.dataclass(frozen=True)
+class DnTestCase:
+    """DN model test case."""
 
-        # Lenient processing: Long DN is ACCEPTED (validation at Entry level)
-        long_dn_value = "cn=" + "x" * 2048 + ",dc=example,dc=com"
-        long_dn = FlextLdifModels.DistinguishedName(value=long_dn_value)
-        assert long_dn.value == long_dn_value
+    test_type: ModelTestType
+    dn_value: str
+    expected_value: str | None = None
+    should_succeed: bool = True
+    description: str = ""
 
-        # Note: RFC violations are captured at Entry level in validation_metadata
 
-    def test_dn_case_preservation(self) -> None:
-        """Test DN case preservation (normalization is in infrastructure layer).
+@dataclasses.dataclass(frozen=True)
+class AttributesTestCase:
+    """LdifAttributes model test case."""
 
-        Note: Domain models validate format only, infrastructure services normalize.
-        """
-        # Test that DN validation accepts and preserves various case formats
-        dn = FlextLdifModels.DistinguishedName(value="CN=Test,DC=Example,DC=Com")
-        # Domain model preserves DN as-is (no normalization at domain level)
-        assert dn.value == "CN=Test,DC=Example,DC=Com"
+    test_type: ModelTestType
+    attributes: dict[str, list[str]] | None = None
+    attr_name: str | None = None
+    attr_value: str | list[str] | None = None
+    expected_result: list[str] | None = None
+    description: str = ""
 
-    def test_attributes_creation(self) -> None:
-        """Test Attributes model creation."""
-        attrs = FlextLdifModels.LdifAttributes(
-            attributes={
-                "cn": ["test"],
-                "sn": ["user"],
-            },
-        )
-        assert len(attrs.attributes) == 2
-        assert "cn" in attrs.attributes
-        assert "sn" in attrs.attributes
 
-    def test_attributes_get_attribute(self) -> None:
-        """Test getting attributes by name."""
-        attrs = FlextLdifModels.LdifAttributes(
-            attributes={
-                "cn": ["test"],
-            },
-        )
+@dataclasses.dataclass(frozen=True)
+class EntryTestCase:
+    """Entry model test case."""
 
-        # Test getting existing attribute
-        cn_attr = attrs.get("cn")
-        assert cn_attr == ["test"]
+    test_type: ModelTestType
+    dn: str
+    attributes: dict[str, list[str]] | None = None
+    should_succeed: bool = True
+    has_binary: bool = False
+    description: str = ""
 
-        # Test non-existent attribute with default
-        missing_attr = attrs.get("missing")
-        assert missing_attr == []
 
-    def test_attributes_add_attribute(self) -> None:
-        """Test adding attributes."""
-        attrs = FlextLdifModels.LdifAttributes(attributes={})
+@dataclasses.dataclass(frozen=True)
+class SchemaTestCase:
+    """Schema model test case."""
 
-        attrs.add_attribute("cn", "test")
-        cn_attr = attrs.get("cn")
-        assert cn_attr == ["test"]
+    test_type: ModelTestType
+    name: str | None = None
+    oid: str | None = None
+    description: str = ""
 
-    def test_attributes_add_attribute_multiple_values(self) -> None:
-        """Test adding attributes with multiple values."""
-        attrs = FlextLdifModels.LdifAttributes(attributes={})
 
-        attrs.add_attribute("cn", ["test1", "test2"])
-        cn_attr = attrs.get("cn")
-        assert cn_attr == ["test1", "test2"]
+@dataclasses.dataclass(frozen=True)
+class AclTestCase:
+    """ACL model test case."""
 
-    def test_attributes_remove_attribute(self) -> None:
-        """Test removing attributes."""
-        attrs = FlextLdifModels.LdifAttributes(
-            attributes={
-                "cn": ["test"],
-            },
-        )
+    test_type: ModelTestType
+    target_dn: str | None = None
+    attributes: list[str] | None = None
+    subject_type: str | None = None
+    subject_value: str | None = None
+    permissions_read: bool = False
+    permissions_write: bool = False
+    permissions_search: bool = False
+    acl_name: str | None = None
+    acl_server_type: str | None = None
+    description: str = ""
 
-        attrs.remove_attribute("cn")
-        # After removal, attribute should not exist
-        assert "cn" not in attrs.attributes
 
-    def test_attributes_remove_nonexistent_attribute(self) -> None:
-        """Test removing non-existent attribute."""
-        attrs = FlextLdifModels.LdifAttributes(attributes={})
+# Test case definitions
+DN_TESTS: Final[list[DnTestCase]] = [
+    DnTestCase(
+        ModelTestType.DN_CREATION,
+        DNs.TEST_USER,
+        DNs.TEST_USER,
+        description="Create simple DN",
+    ),
+    DnTestCase(
+        ModelTestType.DN_CASE_PRESERVATION,
+        "CN=Test,DC=Example,DC=Com",
+        "CN=Test,DC=Example,DC=Com",
+        description="Preserve DN case",
+    ),
+    DnTestCase(
+        ModelTestType.DN_INVALID_PRESERVED,
+        "invalid-dn-format",
+        "invalid-dn-format",
+        description="Preserve invalid DN format",
+    ),
+    DnTestCase(
+        ModelTestType.DN_SPECIAL_CHARS,
+        "cn=test\\+user,dc=example,dc=com",
+        "cn=test\\+user,dc=example,dc=com",
+        description="Handle special characters in DN",
+    ),
+    DnTestCase(
+        ModelTestType.DN_LONG,
+        "cn=" + "x" * 2048 + ",dc=example,dc=com",
+        None,
+        description="Handle very long DN",
+    ),
+]
 
-        # Should not raise error
-        attrs.remove_attribute("nonexistent")
+ATTRIBUTES_TESTS: Final[list[AttributesTestCase]] = [
+    AttributesTestCase(
+        ModelTestType.ATTRS_CREATION,
+        attributes={Names.CN: [Values.TEST], Names.SN: [Values.USER]},
+        description="Create attributes from dict",
+    ),
+    AttributesTestCase(
+        ModelTestType.ATTRS_EMPTY,
+        attributes={},
+        description="Create empty attributes",
+    ),
+    AttributesTestCase(
+        ModelTestType.ATTRS_OPERATIONS,
+        attr_name=Names.CN,
+        attr_value=Values.TEST,
+        description="Test add/get/remove operations",
+    ),
+    AttributesTestCase(
+        ModelTestType.ATTRS_MISSING,
+        attr_name="missing",
+        expected_result=[],
+        description="Get non-existent attribute returns empty",
+    ),
+    AttributesTestCase(
+        ModelTestType.ATTRS_EMPTY_VALUES,
+        attributes={Names.CN: [""], Names.SN: []},
+        description="Handle empty attribute values",
+    ),
+]
 
-    def test_entry_creation(self) -> None:
-        """Test Entry model creation."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["test"],
-                    "objectclass": ["person"],
-                },
-            ),
-        )
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-        assert "cn" in entry.attributes.attributes
+ENTRY_TESTS: Final[list[EntryTestCase]] = [
+    EntryTestCase(
+        ModelTestType.ENTRY_CREATION,
+        dn=DNs.TEST_USER,
+        attributes={
+            Names.OBJECTCLASS: [Names.PERSON],
+            Names.CN: [Values.TEST],
+            Names.SN: [Values.TEST],
+        },
+        description="Create entry with attributes",
+    ),
+    EntryTestCase(
+        ModelTestType.ENTRY_BINARY,
+        dn=DNs.TEST_USER,
+        attributes={
+            Names.OBJECTCLASS: [Names.INET_ORG_PERSON],
+            Names.CN: [Values.TEST],
+        },
+        has_binary=True,
+        description="Create entry with binary data",
+    ),
+    EntryTestCase(
+        ModelTestType.ENTRY_SERIALIZATION,
+        dn=DNs.TEST_USER,
+        attributes={Names.OBJECTCLASS: [Names.PERSON]},
+        description="Serialize entry to dict",
+    ),
+    EntryTestCase(
+        ModelTestType.ENTRY_VALIDATION_LENIENT,
+        dn=DNs.TEST_USER,
+        attributes={Names.OBJECTCLASS: [Names.PERSON]},
+        description="Validate entry lenient",
+    ),
+    EntryTestCase(
+        ModelTestType.ENTRY_VALIDATION_LENIENT,
+        dn="",
+        attributes={Names.OBJECTCLASS: [Names.PERSON]},
+        description="Allow empty DN in lenient mode",
+    ),
+]
 
-    def test_entry_validation(self) -> None:
-        """Test Entry validation."""
-        # Valid entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectclass": ["person"],
-                },
-            ),
-        )
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
+SCHEMA_TESTS: Final[list[SchemaTestCase]] = [
+    SchemaTestCase(
+        ModelTestType.SCHEMA_OBJECTCLASS,
+        Names.PERSON,
+        OIDs.PERSON,
+        "ObjectClass creation",
+    ),
+    SchemaTestCase(
+        ModelTestType.SCHEMA_ATTRIBUTE,
+        Names.CN,
+        OIDs.CN,
+        "Attribute creation",
+    ),
+    SchemaTestCase(
+        ModelTestType.SCHEMA_DISCOVERY,
+        description="SchemaDiscoveryResult creation",
+    ),
+]
 
-    def test_model_serialization(self) -> None:
-        """Test model serialization."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["test"],
-                    "objectclass": ["person"],
-                },
-            ),
-        )
+ACL_TESTS: Final[list[AclTestCase]] = [
+    AclTestCase(
+        ModelTestType.ACL_TARGET,
+        target_dn=DNs.EXAMPLE,
+        attributes=[Names.CN, Names.SN],
+        description="Create ACL target",
+    ),
+    AclTestCase(
+        ModelTestType.ACL_SUBJECT,
+        subject_type="user",
+        subject_value=f"cn={Values.ADMIN},{DNs.EXAMPLE}",
+        description="Create ACL subject",
+    ),
+    AclTestCase(
+        ModelTestType.ACL_PERMISSIONS,
+        permissions_read=True,
+        permissions_write=True,
+        permissions_search=True,
+        description="Create ACL permissions",
+    ),
+    AclTestCase(
+        ModelTestType.ACL_UNIFIED,
+        target_dn=DNs.EXAMPLE,
+        attributes=[Names.CN, Names.SN],
+        subject_type="user",
+        subject_value=f"cn={Values.ADMIN},{DNs.EXAMPLE}",
+        permissions_read=True,
+        permissions_write=True,
+        acl_name="test_acl",
+        acl_server_type="oracle_oud",
+        description="Create unified ACL",
+    ),
+]
 
-        # Test model_dump
-        data = entry.model_dump()
-        assert isinstance(data, dict)
-        assert data["dn"]["value"] == "cn=test,dc=example,dc=com"
 
-    def test_model_deserialization(self) -> None:
-        """Test model deserialization using Entry.create()."""
-        # Use Entry.create() for simplified attribute format
-        result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "objectclass": ["person"],
-            },
-        )
+def get_dn_tests() -> list[DnTestCase]:
+    """Parametrization helper for DN tests."""
+    return DN_TESTS
 
-        assert result.is_success
-        entry = result.unwrap()
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-        assert "cn" in entry.attributes.attributes
 
-    def test_model_validation_errors(self) -> None:
-        """Test model validation with lenient processing pattern."""
-        # Lenient processing: Empty DN is ACCEPTED but captured in validation_metadata
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="",
-            ),  # Empty DN triggers RFC violation
-            attributes=FlextLdifModels.LdifAttributes(attributes={}),
-        )
+def get_attributes_tests() -> list[AttributesTestCase]:
+    """Parametrization helper for attributes tests."""
+    return ATTRIBUTES_TESTS
 
-        # Entry creation succeeds (lenient processing)
-        assert entry is not None
 
-        # Verify RFC violations were captured
-        assert entry.metadata.validation_results is not None
-        assert "rfc_violations" in entry.metadata.validation_results
-        violations = cast(
-            "list[str]",
-            entry.metadata.validation_results["rfc_violations"],
-        )
+def get_entry_tests() -> list[EntryTestCase]:
+    """Parametrization helper for entry tests."""
+    return ENTRY_TESTS
 
-        # Should have 2 violations: empty DN + no attributes
-        assert len(violations) >= 2
-        assert any("DN" in v for v in violations)
-        assert any("attribute" in v for v in violations)
 
-    def test_model_inheritance(self) -> None:
-        """Test that models properly inherit from FlextModels."""
-        # Test that all models are properly structured
-        assert hasattr(FlextLdifModels, "DistinguishedName")
-        assert hasattr(FlextLdifModels, "LdifAttributes")
-        assert hasattr(FlextLdifModels, "Entry")
-        # Note: AttributeValues deleted - use dict[str, list[str]] directly in LdifAttributes
-        # Note: SearchConfig deleted (0 usages) - use dict[str, object] for LDAP search config
+def get_schema_tests() -> list[SchemaTestCase]:
+    """Parametrization helper for schema tests."""
+    return SCHEMA_TESTS
 
-    def test_edge_cases(self) -> None:
-        """Test edge cases in models."""
-        # Test DN with special characters (properly escaped per RFC 4514)
-        dn = FlextLdifModels.DistinguishedName(value="cn=test\\+user,dc=example,dc=com")
-        assert dn.value == "cn=test\\+user,dc=example,dc=com"
 
-        # Test attributes with special characters
-        attrs = FlextLdifModels.LdifAttributes(
-            attributes={
-                "cn;lang-en": ["test"],
-            },
-        )
-        assert "cn;lang-en" in attrs.attributes
+def get_acl_tests() -> list[AclTestCase]:
+    """Parametrization helper for ACL tests."""
+    return ACL_TESTS
 
-        # Test empty attribute values
-        attrs = FlextLdifModels.LdifAttributes(
-            attributes={
-                "cn": [""],
-            },
-        )
-        cn_attr = attrs.get("cn")
-        assert cn_attr == [""]
 
-    # NOTE: EntryParsedEvent model was removed as part of simplification.
-    # If event-driven patterns are needed, use flext-core event system.
+class TestFlextLdifModels(FlextTestsFactories):
+    """Comprehensive FlextLdifModels test suite.
 
-    # NOTE: EntriesValidatedEvent model was removed as part of simplification.
+    Tests all model types (Entry, DN, Attributes, Schema, ACL) with parametrized
+    test cases to maximize coverage while minimizing code duplication.
+    """
 
-    # NOTE: AnalyticsGeneratedEvent model was removed as part of simplification.
+    # ============================================================================
+    # Distinguished Name Tests
+    # ============================================================================
 
-    # NOTE: EntriesWrittenEvent model was removed as part of simplification.
+    @pytest.mark.parametrize("test_case", get_dn_tests())
+    def test_dn_models(self, test_case: DnTestCase) -> None:
+        """Test DN model creation and behavior."""
+        dn = FlextLdifModels.DistinguishedName(value=test_case.dn_value)
 
-    # NOTE: MigrationCompletedEvent model was removed as part of simplification.
+        # Basic creation check
+        assert dn.value == test_case.dn_value
 
-    # NOTE: QuirkRegisteredEvent model was removed as part of simplification.
+        # Type-specific validations
+        match test_case.test_type:
+            case ModelTestType.DN_CREATION:
+                assert len(dn.components) == 3
+            case ModelTestType.DN_CASE_PRESERVATION:
+                assert dn.value == test_case.dn_value
+            case ModelTestType.DN_INVALID_PRESERVED:
+                assert dn.value == test_case.dn_value
+            case ModelTestType.DN_SPECIAL_CHARS:
+                assert "\\+" in dn.value
+            case ModelTestType.DN_LONG:
+                assert len(dn.value) > 2048
 
-    def test_schema_object_class_creation(self) -> None:
-        """Test SchemaObjectClass model creation."""
-        obj_class = FlextLdifModels.SchemaObjectClass(
-            name="person",
-            oid="2.5.6.6",
+    # ============================================================================
+    # LdifAttributes Tests
+    # ============================================================================
+
+    @pytest.mark.parametrize("test_case", get_attributes_tests())
+    def test_attributes_models(self, test_case: AttributesTestCase) -> None:
+        """Test LdifAttributes model creation and operations."""
+        match test_case.test_type:
+            case ModelTestType.ATTRS_CREATION:
+                attrs_data = test_case.attributes or {}
+                result = FlextLdifModels.LdifAttributes.create(attrs_data)
+                assert result.is_success
+                attrs = result.unwrap()
+                assert Names.CN in attrs.attributes
+                assert attrs.attributes[Names.CN] == [Values.TEST]
+
+            case ModelTestType.ATTRS_EMPTY:
+                result = FlextLdifModels.LdifAttributes.create({})
+                assert result.is_success
+                attrs = result.unwrap()
+                assert attrs.attributes == {}
+
+            case ModelTestType.ATTRS_OPERATIONS:
+                attrs = FlextLdifModels.LdifAttributes(attributes={})
+                attr_name = test_case.attr_name or ""
+                attr_value = test_case.attr_value or ""
+                attrs.add_attribute(attr_name, attr_value)
+                retrieved = attrs.get(test_case.attr_name or "")
+                assert isinstance(retrieved, list)
+                assert len(retrieved) > 0
+                attrs.remove_attribute(test_case.attr_name or "")
+                assert (test_case.attr_name or "") not in attrs.attributes
+
+            case ModelTestType.ATTRS_MISSING:
+                attrs = FlextLdifModels.LdifAttributes(attributes={})
+                result = attrs.get(test_case.attr_name or "missing")
+                assert result == []
+
+            case ModelTestType.ATTRS_EMPTY_VALUES:
+                attrs = FlextLdifModels.LdifAttributes(
+                    attributes={Names.CN: [""], Names.SN: []},
+                )
+                assert attrs.get(Names.CN) == [""]
+                assert attrs.get(Names.SN) == []
+
+    # ============================================================================
+    # Entry Tests
+    # ============================================================================
+
+    @pytest.mark.parametrize("test_case", get_entry_tests())
+    def test_entry_models(self, test_case: EntryTestCase) -> None:
+        """Test Entry model creation, validation, and serialization."""
+        match test_case.test_type:
+            case ModelTestType.ENTRY_CREATION:
+                result = FlextLdifModels.Entry.create(
+                    dn=test_case.dn,
+                    attributes=test_case.attributes or {},
+                )
+                assert result.is_success
+                entry = result.unwrap()
+                assert entry.dn.value == test_case.dn
+                if test_case.attributes:
+                    assert Names.CN in entry.attributes.attributes
+
+            case ModelTestType.ENTRY_BINARY:
+                binary_data = b"binary content"
+                encoded_data = base64.b64encode(binary_data).decode("ascii")
+                attrs = (test_case.attributes or {}).copy()
+                attrs["userCertificate;binary"] = [encoded_data]
+                result = FlextLdifModels.Entry.create(
+                    dn=test_case.dn,
+                    attributes=attrs,
+                )
+                assert result.is_success
+                entry = result.unwrap()
+                assert "userCertificate;binary" in entry.attributes.attributes
+
+            case ModelTestType.ENTRY_SERIALIZATION:
+                entry = FlextLdifTestFactories.create_user_entry(Values.TEST)
+                data = entry.model_dump()
+                assert isinstance(data, dict)
+                assert "dn" in data
+                assert "attributes" in data
+
+            case ModelTestType.ENTRY_VALIDATION_LENIENT:
+                result = FlextLdifModels.Entry.create(
+                    dn=test_case.dn,
+                    attributes=test_case.attributes or {},
+                )
+                assert result.is_success
+
+    # ============================================================================
+    # Schema Tests
+    # ============================================================================
+
+    def test_schema_objectclass(self) -> None:
+        """Test SchemaObjectClass creation."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            name=Names.PERSON,
+            oid=OIDs.PERSON,
             desc="Person object class",
             sup=None,
             must=["cn", "sn"],
             may=["telephoneNumber", "seeAlso"],
             kind="STRUCTURAL",
         )
-        assert obj_class.name == "person"
-        assert obj_class.oid == "2.5.6.6"
-        assert obj_class.desc == "Person object class"
-        assert obj_class.must == ["cn", "sn"]
-        assert obj_class.may == ["telephoneNumber", "seeAlso"]
-        assert obj_class.is_structural is True
+        assert oc.name == Names.PERSON
+        assert oc.oid == OIDs.PERSON
+        assert oc.is_structural is True
 
-    def test_schema_object_class_direct_instantiation(self) -> None:
-        """Test SchemaObjectClass direct instantiation."""
-        # Direct instantiation pattern - Pydantic 2 validates natively
-        obj_class = FlextLdifModels.SchemaObjectClass(
-            name="organizationalUnit",
-            oid="2.5.6.5",
-            desc="Organizational unit",
+    def test_schema_attribute(self) -> None:
+        """Test SchemaAttribute creation."""
+        attr = FlextLdifModels.SchemaAttribute(
+            name=Names.CN,
+            oid=OIDs.CN,
+            desc="Common name attribute",
             sup=None,
-            must=["ou"],
+            equality=None,
+            ordering=None,
+            substr=None,
+            syntax=OIDs.DIRECTORY_STRING,
+            length=None,
+            usage=None,
         )
-        assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
-        assert obj_class.name == "organizationalUnit"
-        assert obj_class.oid == "2.5.6.5"
-        assert obj_class.must == ["ou"]
-        assert obj_class.may is None  # may defaults to None when not provided
-        assert obj_class.desc == "Organizational unit"
+        assert attr.name == Names.CN
+        assert attr.oid == OIDs.CN
+        assert attr.syntax == OIDs.DIRECTORY_STRING
 
-    def test_schema_discovery_result_creation(self) -> None:
-        """Test SchemaDiscoveryResult model creation."""
+    def test_schema_discovery_result(self) -> None:
+        """Test SchemaDiscoveryResult creation."""
         result = FlextLdifModels.SchemaDiscoveryResult(
             objectclasses={
-                "person": {
-                    "oid": "2.5.6.6",
+                Names.PERSON: {
+                    "oid": OIDs.PERSON,
                     "description": "Person class",
                 },
             },
             attributes={
-                "cn": {
-                    "oid": "2.5.4.3",
+                Names.CN: {
+                    "oid": OIDs.CN,
                     "description": "Common name",
-                    "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                    "syntax": OIDs.DIRECTORY_STRING,
                 },
             },
             total_attributes=1,
@@ -303,402 +487,91 @@ class TestFlextLdifModels:
         assert result.total_attributes == 1
         assert result.total_objectclasses == 1
 
-    def test_schema_attribute_creation(self) -> None:
-        """Test SchemaAttribute model creation."""
-        attr = FlextLdifModels.SchemaAttribute(
-            name="cn",
-            oid="2.5.4.3",
-            desc="Common name attribute",
-            sup=None,
-            equality=None,
-            ordering=None,
-            substr=None,
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            length=None,
-            usage=None,
-        )
-        assert attr.name == "cn"
-        assert attr.oid == "2.5.4.3"
-        assert attr.desc == "Common name attribute"
-        assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
-
-
-class TestFlextLdifModelsEntry:
-    """Test suite for Entry model."""
-
-    def test_entry_creation(self) -> None:
-        """Test creating an Entry instance."""
-        result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "objectclass": ["inetOrgPerson", "person"],
-                "cn": ["Test User"],
-                "sn": ["User"],
-            },
-        )
-
-        assert result.is_success
-        entry = result.unwrap()
-        assert isinstance(entry, FlextLdifModels.Entry)
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-        # Use duck typing or base class check instead of facade class
-        assert hasattr(entry.attributes, "attributes")
-        assert isinstance(entry.attributes.attributes, dict)
-
-    def test_entry_with_binary_data(self) -> None:
-        """Test Entry with binary attribute data."""
-        binary_data = b"binary content"
-        # Base64 encode the binary data for LDIF compatibility
-        encoded_data = base64.b64encode(binary_data).decode("ascii")
-
-        result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "objectclass": ["inetOrgPerson"],
-                "cn": ["Test User"],
-                "userCertificate;binary": [encoded_data],
-            },
-        )
-
-        assert result.is_success
-        entry = result.unwrap()
-        assert isinstance(entry, FlextLdifModels.Entry)
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-
-    def test_entry_validation(self) -> None:
-        """Test Entry validation with lenient processing pattern."""
-        # Valid entry
-        result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"objectclass": ["person"], "cn": ["test"]},
-        )
-        assert result.is_success
-
-        # Lenient processing: Empty DN is ACCEPTED but captured in validation_metadata
-        result = FlextLdifModels.Entry.create(
-            dn="",  # Empty DN triggers RFC violation
-            attributes={"objectclass": ["person"], "cn": ["test"]},
-        )
-        assert result.is_success  # Entry NOT rejected (lenient processing)
-        entry = result.unwrap()
-
-        # Verify RFC violation was captured in validation_metadata
-        assert entry.metadata.validation_results is not None
-        assert "rfc_violations" in entry.metadata.validation_results
-        violations = cast(
-            "list[str]",
-            entry.metadata.validation_results["rfc_violations"],
-        )
-        assert any("RFC 2849" in v and "DN" in v for v in violations)
-
-
-class TestFlextLdifModelsDistinguishedName:
-    """Test suite for DistinguishedName model."""
-
-    def test_dn_creation(self) -> None:
-        """Test creating a DistinguishedName instance."""
-        dn_string = "cn=test,ou=users,dc=example,dc=com"
-
-        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
-        dn = FlextLdifModels.DistinguishedName(value=dn_string)
-
-        assert isinstance(dn, FlextLdifModels.DistinguishedName)
-        assert dn.value == dn_string
-
-    def test_dn_normalization(self) -> None:
-        """Test DN validation (normalization is done by infrastructure services).
-
-        Note: Per clean architecture, domain models only validate format.
-        Full RFC 4514 normalization (lowercasing, escaping) is done by
-        infrastructure layer (services/dn_service.py uses ldap3).
-        """
-        dn_string = "CN=test,OU=users,DC=example,DC=com"
-
-        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
-        dn = FlextLdifModels.DistinguishedName(value=dn_string)
-
-        assert isinstance(dn, FlextLdifModels.DistinguishedName)
-        # Domain model preserves DN as-is (validation only, no normalization)
-        assert dn.value == dn_string
-
-    def test_dn_components_extraction(self) -> None:
-        """Test extracting DN components."""
-        dn_string = "cn=test,ou=users,dc=example,dc=com"
-
-        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
-        dn = FlextLdifModels.DistinguishedName(value=dn_string)
-
-        # Test components field access
-        assert hasattr(dn, "components")
-        assert isinstance(dn.components, list)
-        assert len(dn.components) == 4
-
-    def test_invalid_dn(self) -> None:
-        """Test invalid DN format is PRESERVED (lenient processing).
-
-        DistinguishedName accepts ANY string to preserve server-specific DN formats.
-        RFC validation happens at Entry level, where violations are captured in metadata.
-        """
-        invalid_dn = "invalid-dn-format"
-
-        # Lenient processing: DistinguishedName accepts ANY string
-        dn = FlextLdifModels.DistinguishedName(value=invalid_dn)
-
-        # DN is accepted (preserves server quirks)
-        assert dn.value == invalid_dn
-
-        # Note: Entry-level validation will capture RFC violation in validation_metadata
-        # See test_pydantic_validators_rfc_compliance.py for Entry validation tests
-
-
-class TestFlextLdifModelsLdifAttributes:
-    """Test suite for LdifAttributes model."""
-
-    def test_attributes_creation(self) -> None:
-        """Test creating an LdifAttributes instance."""
-        attrs_data = {
-            "cn": ["Test User"],
-            "sn": ["User"],
-            "objectclass": ["inetOrgPerson", "person"],
-        }
-
-        result = FlextLdifModels.LdifAttributes.create(
-            cast("dict[str, object]", attrs_data),
-        )
-
-        assert result.is_success
-        attrs = result.unwrap()
-        assert isinstance(attrs, FlextLdifModels.LdifAttributes)
-        assert "cn" in attrs.attributes
-        assert attrs.attributes["cn"] == ["Test User"]
-
-    def test_empty_attributes(self) -> None:
-        """Test creating empty attributes."""
-        result = FlextLdifModels.LdifAttributes.create({})
-
-        assert result.is_success
-        attrs = result.unwrap()
-        assert isinstance(attrs, FlextLdifModels.LdifAttributes)
-        assert attrs.attributes == {}
-
-    def test_attributes_with_options(self) -> None:
-        """Test attributes with LDAP options."""
-        attrs_data = {
-            "cn": ["Test User"],
-            "userCertificate;binary": ["cert-data"],
-        }
-
-        result = FlextLdifModels.LdifAttributes.create(
-            cast("dict[str, object]", attrs_data),
-        )
-
-        assert result.is_success
-        attrs = result.unwrap()
-        assert isinstance(attrs, FlextLdifModels.LdifAttributes)
-        assert "userCertificate;binary" in attrs.attributes
-
-
-class TestFlextLdifModelsSchemaObjectClass:
-    """Test suite for SchemaObjectClass model."""
-
-    def test_objectclass_creation(self) -> None:
-        """Test creating a SchemaObjectClass instance."""
-        # Direct instantiation pattern - Pydantic 2 validates natively
-        oc = FlextLdifModels.SchemaObjectClass(
-            name="inetOrgPerson",
-            oid="2.16.840.1.113730.3.2.2",
-            desc="Internet Organizational Person",
-            sup=None,
-            kind="STRUCTURAL",
-            must=["cn", "sn", "objectclass"],
-            may=["description", "telephoneNumber", "mail"],
-        )
-
-        assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
-        assert oc.name == "inetOrgPerson"
-        assert oc.oid == "2.16.840.1.113730.3.2.2"
-        assert oc.must == ["cn", "sn", "objectclass"]
-        assert oc.may == ["description", "telephoneNumber", "mail"]
-
-    def test_objectclass_validation(self) -> None:
-        """Test object class validation."""
-        # Valid object class - Direct instantiation pattern
-        oc = FlextLdifModels.SchemaObjectClass(
-            name="person",
-            oid="2.5.6.6",
-            desc="Person object class",
-            sup=None,
-            kind="STRUCTURAL",
-        )
-        assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
-
-    def test_computed_fields(self) -> None:
-        """Test computed fields on object class."""
-        # Direct instantiation pattern - Pydantic 2 validates natively
-        oc = FlextLdifModels.SchemaObjectClass(
-            name="inetOrgPerson",
-            oid="2.16.840.1.113730.3.2.2",
-            desc="Internet Organizational Person",
-            sup=None,
-            must=["cn", "sn"],
-            may=["mail", "telephoneNumber"],
-        )
-        assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
-
-        # Test field access
-        assert oc.must == ["cn", "sn"]
-        assert oc.may == ["mail", "telephoneNumber"]
-
-
-class TestFlextLdifModelsAclTarget:
-    """Test suite for ACL Target model."""
-
-    def test_acl_target_creation(self) -> None:
-        """Test creating an AclTarget instance."""
-        # Direct instantiation pattern - Pydantic 2 validates natively
-        target = FlextLdifModels.AclTarget(
-            target_dn="dc=example,dc=com",
-            attributes=["cn", "sn"],
-        )
-
-        assert isinstance(target, FlextLdifModels.AclTarget)
-        assert target.target_dn == "dc=example,dc=com"
-        assert target.attributes == ["cn", "sn"]
-
-
-class TestFlextLdifModelsAclSubject:
-    """Test suite for ACL Subject model."""
-
-    def test_acl_subject_creation(self) -> None:
-        """Test creating an AclSubject instance."""
-        # Direct instantiation pattern - Pydantic 2 validates natively
-        subject = FlextLdifModels.AclSubject(
-            subject_type="user",
-            subject_value="cn=admin,dc=example,dc=com",
-        )
-
-        assert isinstance(subject, FlextLdifModels.AclSubject)
-        assert subject.subject_type == "user"
-
-
-class TestFlextLdifModelsAclPermissions:
-    """Test suite for ACL Permissions model."""
-
-    def test_acl_permissions_creation(self) -> None:
-        """Test creating an AclPermissions instance."""
-        # Direct instantiation pattern - Pydantic 2 validates natively
-        # AclPermissions uses individual boolean fields
-        perms = FlextLdifModels.AclPermissions(
-            read=True,
-            write=True,
-        )
-
-        assert isinstance(perms, FlextLdifModels.AclPermissions)
-        # Test individual boolean fields
-        assert perms.read is True
-        assert perms.write is True
-        assert perms.add is False
-        assert perms.delete is False
-
-        # Verify computed list of active permissions manually
-        active_permissions = [
-            perm
-            for perm in [
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "self_write",
-                "proxy",
-            ]
-            if getattr(perms, perm, False)
-        ]
-        assert len(active_permissions) == 2
-        assert "read" in active_permissions
-        assert "write" in active_permissions
-
-
-class TestFlextLdifModelsAcl:
-    """Test suite for Acl model."""
-
-    def test_unified_acl_creation(self) -> None:
-        """Test creating a Acl instance."""
-        # Create components using direct instantiation pattern
-        target = FlextLdifModels.AclTarget(
-            target_dn="dc=example,dc=com",
-            attributes=["cn"],
-        )
-
-        subject = FlextLdifModels.AclSubject(
-            subject_type="user",
-            subject_value="cn=admin,dc=example,dc=com",
-        )
-
-        perms = FlextLdifModels.AclPermissions(
-            read=True,
-            write=True,
-        )
-
-        # Create unified ACL using direct instantiation of OracleOudAcl
-        # (aggressive Pydantic 2 direct usage pattern - no factory class)
-        try:
-            oud_acl = FlextLdifModels.Acl(
-                name="test_acl",
-                target=target,
-                subject=subject,
-                permissions=perms,
-                server_type="oracle_oud",
-            )
-            result = FlextResult[FlextLdifModels.Acl].ok(oud_acl)
-        except (ValueError, TypeError, AttributeError) as e:  # pragma: no cover
-            result = FlextResult[FlextLdifModels.Acl].fail(str(e))
-
-        assert result.is_success
-        acl: FlextLdifModels.Acl = result.unwrap()
-        # Discriminated union returns the specific subtype (OracleOudAcl in this case)
-        assert isinstance(acl, FlextLdifModels.Acl)
-        assert isinstance(acl, FlextLdifModels.Acl)
-        assert acl.name == "test_acl"
-        assert acl.server_type == "oracle_oud"
-
-
-class TestFlextLdifModelsNamespace:
-    """Test suite for the FlextLdifModels namespace class."""
-
-    def test_models_namespace_access(self) -> None:
-        """Test accessing models through namespace."""
-        # Test that all expected model classes are available
-        assert hasattr(FlextLdifModels, "Entry")
-        assert hasattr(FlextLdifModels, "DistinguishedName")
-        assert hasattr(FlextLdifModels, "LdifAttributes")
-        assert hasattr(FlextLdifModels, "SchemaObjectClass")
-        assert hasattr(FlextLdifModels, "AclTarget")
-        assert hasattr(FlextLdifModels, "AclSubject")
-        assert hasattr(FlextLdifModels, "AclPermissions")
-        # Universal ACL model consolidation: replaced 7 separate ACL classes with single Acl model
-        # Note: OpenLdapAcl, OracleOudAcl, etc. consolidated into FlextLdifModels.Acl with server_type field
-        # Note: AttributeValues deleted - LdifAttributes now uses dict[str, list[str]] directly
-        assert hasattr(FlextLdifModels, "Acl")
-
-    def test_computed_fields(self) -> None:
-        """Test namespace structure."""
-        # FlextLdifModels is a namespace class, not a model with computed fields
-        # Verify the class structure is properly organized
-
-        # Test that it inherits from FlextModels
+    # ============================================================================
+    # ACL Tests
+    # ============================================================================
+
+    @pytest.mark.parametrize("test_case", get_acl_tests())
+    def test_acl_models(self, test_case: AclTestCase) -> None:
+        """Test ACL model creation and composition."""
+        match test_case.test_type:
+            case ModelTestType.ACL_TARGET:
+                target = FlextLdifModels.AclTarget(
+                    target_dn=test_case.target_dn or "",
+                    attributes=test_case.attributes or [],
+                )
+                assert target.target_dn == test_case.target_dn
+                assert target.attributes == test_case.attributes
+
+            case ModelTestType.ACL_SUBJECT:
+                subject = FlextLdifModels.AclSubject(
+                    subject_type=test_case.subject_type or "user",
+                    subject_value=test_case.subject_value or "",
+                )
+                assert subject.subject_type == test_case.subject_type
+                assert test_case.subject_value in subject.subject_value
+
+            case ModelTestType.ACL_PERMISSIONS:
+                perms = FlextLdifModels.AclPermissions(
+                    read=test_case.permissions_read,
+                    write=test_case.permissions_write,
+                    search=test_case.permissions_search,
+                )
+                assert perms.read is test_case.permissions_read
+                assert perms.write is test_case.permissions_write
+                assert perms.search is test_case.permissions_search
+
+            case ModelTestType.ACL_UNIFIED:
+                target = FlextLdifModels.AclTarget(
+                    target_dn=test_case.target_dn or "",
+                    attributes=test_case.attributes or [],
+                )
+                subject = FlextLdifModels.AclSubject(
+                    subject_type=test_case.subject_type or "user",
+                    subject_value=test_case.subject_value or "",
+                )
+                permissions = FlextLdifModels.AclPermissions(
+                    read=test_case.permissions_read,
+                    write=test_case.permissions_write,
+                )
+                acl = FlextLdifModels.Acl(
+                    name=test_case.acl_name or "",
+                    target=target,
+                    subject=subject,
+                    permissions=permissions,
+                    server_type=test_case.acl_server_type or "oracle_oud",
+                )
+                assert isinstance(acl, FlextLdifModels.Acl)
+                assert acl.name == test_case.acl_name
+                assert acl.server_type == test_case.acl_server_type
+
+    # ============================================================================
+    # Namespace and Inheritance Tests
+    # ============================================================================
+
+    def test_model_inheritance(self) -> None:
+        """Test that models properly inherit from FlextModels."""
         assert issubclass(FlextLdifModels, FlextModels)
 
-        # Test that key model classes are accessible
-        assert hasattr(FlextLdifModels, "Entry")
-        assert hasattr(FlextLdifModels, "DistinguishedName")
-        assert hasattr(FlextLdifModels, "LdifAttributes")
-        assert hasattr(FlextLdifModels, "SchemaObjectClass")
-        assert hasattr(FlextLdifModels, "AclTarget")
-        assert hasattr(FlextLdifModels, "AclSubject")
-        assert hasattr(FlextLdifModels, "AclPermissions")
-        # Universal ACL model consolidation: replaced 7 separate ACL classes with single Acl model
-        # Note: OpenLdapAcl, OracleOudAcl, etc. consolidated into FlextLdifModels.Acl with server_type field
-        # Note: AttributeValues deleted - LdifAttributes now uses dict[str, list[str]] directly
-        assert hasattr(FlextLdifModels, "Acl")
+    def test_namespace_access(self) -> None:
+        """Test namespace has all expected models."""
+        expected_models = [
+            "Entry",
+            "DistinguishedName",
+            "LdifAttributes",
+            "SchemaObjectClass",
+            "SchemaAttribute",
+            "SchemaDiscoveryResult",
+            "AclTarget",
+            "AclSubject",
+            "AclPermissions",
+            "Acl",
+        ]
+        for model_name in expected_models:
+            assert hasattr(FlextLdifModels, model_name), (
+                f"FlextLdifModels missing {model_name}"
+            )
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

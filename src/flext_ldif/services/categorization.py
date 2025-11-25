@@ -13,7 +13,7 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
@@ -22,7 +22,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifCategorization(FlextLdifServiceBase[FlextLdifModels.FlexibleCategories]):
+class FlextLdifCategorization(LdifServiceBase):
     """LDIF Entry Categorization Service.
 
     Public API for categorizing LDIF entries into 6 categories:

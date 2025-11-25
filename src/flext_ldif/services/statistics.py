@@ -12,17 +12,17 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import override
+from typing import Self, override
 
-from flext_core import FlextDecorators, FlextResult, FlextRuntime
+from flext_core import FlextDecorators, FlextResult
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus],
+    LdifServiceBase,
 ):
     """Statistics service for LDIF processing pipeline.
 
@@ -101,22 +101,22 @@ class FlextLdifStatistics(
     def with_categorized(
         self,
         categorized: dict[str, list[dict[str, object]]],
-    ) -> FlextLdifStatistics:
+    ) -> Self:
         """Set categorized entries data (fluent builder)."""
         self.categorized = categorized
         return self
 
-    def with_written_counts(self, counts: dict[str, int]) -> FlextLdifStatistics:
+    def with_written_counts(self, counts: dict[str, int]) -> Self:
         """Set written counts per category (fluent builder)."""
         self.written_counts = counts
         return self
 
-    def with_output_dir(self, output_dir: Path) -> FlextLdifStatistics:
+    def with_output_dir(self, output_dir: Path) -> Self:
         """Set output directory (fluent builder)."""
         self.output_dir = output_dir
         return self
 
-    def with_output_files(self, output_files: dict[str, object]) -> FlextLdifStatistics:
+    def with_output_files(self, output_files: dict[str, object]) -> Self:
         """Set output files mapping (fluent builder)."""
         self.output_files = output_files
         return self
@@ -187,7 +187,7 @@ class FlextLdifStatistics(
 
             for entry in rejected_entries:
                 attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                if FlextRuntime.is_dict_like(attrs) and "rejectionReason" in attrs:
+                if isinstance(attrs, dict) and "rejectionReason" in attrs:
                     reason_value = attrs["rejectionReason"]
                     if (
                         isinstance(reason_value, str)

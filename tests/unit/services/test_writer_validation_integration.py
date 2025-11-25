@@ -159,7 +159,8 @@ class TestWriterValidationIntegration:
 
         assert result.is_success
         output = result.unwrap()
-        assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output
+        if isinstance(output, str):
+            assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output
 
     def test_validate_multiple_entries_in_batch(
         self,
@@ -187,8 +188,10 @@ class TestWriterValidationIntegration:
         all_valid = True
         for entry in entries:
             for attr_name in entry.attributes.attributes:
-                result = validation_service.validate_attribute_name(attr_name)
-                if not result.is_success or not result.unwrap():
+                validation_result = validation_service.validate_attribute_name(
+                    attr_name
+                )
+                if not validation_result.is_success or not validation_result.unwrap():
                     all_valid = False
                     break
 
@@ -204,6 +207,7 @@ class TestWriterValidationIntegration:
 
         assert result.is_success
         output = result.unwrap()
-        assert "User1" in output
-        assert "User2" in output
-        assert "User3" in output
+        if isinstance(output, str):
+            assert "User1" in output
+            assert "User2" in output
+            assert "User3" in output

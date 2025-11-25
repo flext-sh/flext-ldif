@@ -13,14 +13,14 @@ from pathlib import Path
 from typing import Literal, TypeVar, cast
 
 from flext_core import FlextResult
+from flext_tests import FlextTestsMatchers
+from unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
 
-from ..unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
-from ..unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 from .test_assertions import TestAssertions
 
 T = TypeVar("T")
@@ -28,7 +28,14 @@ T = TypeVar("T")
 # Use protocols and types from src instead of defining locally
 HasEntries = FlextLdifProtocols.Services.HasEntriesProtocol
 HasParseMethod = FlextLdifProtocols.Services.HasParseMethodProtocol
-ParseResultValue = FlextLdifTypes.ParseResultValue
+
+# Local type alias for parse result values (unwrapped from FlextResult)
+ParseResultValue = (
+    FlextLdifModels.Entry
+    | list[FlextLdifModels.Entry]
+    | FlextLdifProtocols.Services.HasEntriesProtocol
+    | str
+)
 
 # Union type for quirk instances (kept local as it's test-specific)
 type QuirkInstance = (
@@ -71,7 +78,7 @@ class RfcTestHelpers:
             input_source="string",
             server_type=server_type,
         )
-        unwrapped_untyped = TestAssertions.assert_success(
+        unwrapped_untyped = FlextTestsMatchers.assert_success(
             result,
             "Parse should succeed",
         )
@@ -195,7 +202,7 @@ class RfcTestHelpers:
 
         """
         result = parser.parse_ldif_file(ldif_file)
-        unwrapped_untyped = TestAssertions.assert_success(
+        unwrapped_untyped = FlextTestsMatchers.assert_success(
             result,
             "Parse should succeed",
         )
@@ -272,7 +279,7 @@ class RfcTestHelpers:
             output_target="file",
             output_path=output_file,
         )
-        _ = TestAssertions.assert_success(result, "Write to file should succeed")
+        _ = FlextTestsMatchers.assert_success(result, "Write to file should succeed")
         assert output_file.exists(), "Output file should exist"
         return output_file
 
@@ -294,7 +301,7 @@ class RfcTestHelpers:
         # Convert dict[str, list[str]] to dict[str, str | list[str]] for Entry.create
         attributes_typed: dict[str, str | list[str]] = dict(attributes.items())
         result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes_typed)
-        return cast("FlextLdifModels.Entry", TestAssertions.assert_success(result))
+        return cast("FlextLdifModels.Entry", FlextTestsMatchers.assert_success(result))
 
     @staticmethod
     def test_schema_parse_attribute(
@@ -318,7 +325,7 @@ class RfcTestHelpers:
         result = schema_quirk.parse(attr_def)
         attr: FlextLdifModels.SchemaAttribute = cast(
             "FlextLdifModels.SchemaAttribute",
-            TestAssertions.assert_success(
+            FlextTestsMatchers.assert_success(
                 cast("FlextResult[object]", result), "Attribute parse should succeed"
             ),
         )
@@ -350,7 +357,7 @@ class RfcTestHelpers:
         result = schema_quirk.parse(oc_def)
         oc: FlextLdifModels.SchemaObjectClass = cast(
             "FlextLdifModels.SchemaObjectClass",
-            TestAssertions.assert_success(
+            FlextTestsMatchers.assert_success(
                 cast("FlextResult[object]", result), "ObjectClass parse should succeed"
             ),
         )
@@ -378,7 +385,7 @@ class RfcTestHelpers:
 
         """
         result = schema_quirk.write(attr)
-        ldif_text = TestAssertions.assert_success(
+        ldif_text = FlextTestsMatchers.assert_success(
             result,
             "Attribute write should succeed",
         )
@@ -408,7 +415,7 @@ class RfcTestHelpers:
 
         """
         result = schema_quirk.write(oc)
-        ldif_text = TestAssertions.assert_success(
+        ldif_text = FlextTestsMatchers.assert_success(
             result,
             "ObjectClass write should succeed",
         )
@@ -556,7 +563,7 @@ class RfcTestHelpers:
         # Convert dict[str, list[str]] to dict[str, str | list[str]] for Entry.create
         attributes_typed: dict[str, str | list[str]] = dict(attributes.items())
         result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes_typed)
-        entry = cast("FlextLdifModels.Entry", TestAssertions.assert_success(result))
+        entry = cast("FlextLdifModels.Entry", FlextTestsMatchers.assert_success(result))
         TestAssertions.assert_entry_valid(entry)
         return entry
 
@@ -628,7 +635,9 @@ class RfcTestHelpers:
 
         """
         result = entry_quirk.write(entry)
-        ldif_text = TestAssertions.assert_success(result, "Entry write should succeed")
+        ldif_text = FlextTestsMatchers.assert_success(
+            result, "Entry write should succeed"
+        )
         assert isinstance(ldif_text, str), "Write should return string"
         assert len(ldif_text) > 0, "Written LDIF should not be empty"
         if must_contain:
@@ -661,7 +670,9 @@ class RfcTestHelpers:
 
         """
         result = entry_quirk._write_entry(entry)
-        ldif_text = TestAssertions.assert_success(result, "Entry write should succeed")
+        ldif_text = FlextTestsMatchers.assert_success(
+            result, "Entry write should succeed"
+        )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
             for content in must_contain:
@@ -880,7 +891,9 @@ class RfcTestHelpers:
 
         """
         result = schema_quirk._route_write(schema_obj)
-        ldif_text = TestAssertions.assert_success(result, "Route write should succeed")
+        ldif_text = FlextTestsMatchers.assert_success(
+            result, "Route write should succeed"
+        )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
             for content in must_contain:
@@ -975,7 +988,9 @@ class RfcTestHelpers:
 
         """
         result = acl_quirk._write_acl(acl)
-        ldif_text = TestAssertions.assert_success(result, "ACL write should succeed")
+        ldif_text = FlextTestsMatchers.assert_success(
+            result, "ACL write should succeed"
+        )
         assert isinstance(ldif_text, str), "Write should return string"
         if expected_content:
             assert expected_content in ldif_text, (
@@ -1530,7 +1545,7 @@ class RfcTestHelpers:
         method = getattr(quirk, method_name)
         result = method(input_data)
         if should_succeed:
-            unwrapped_untyped = TestAssertions.assert_success(result)
+            unwrapped_untyped = FlextTestsMatchers.assert_success(result)
             unwrapped = cast(
                 "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
                 unwrapped_untyped,
@@ -1599,7 +1614,7 @@ class RfcTestHelpers:
         # Convert dict[str, list[str]] to dict[str, str | list[str]] for Entry.create
         attributes_typed: dict[str, str | list[str]] = dict(attributes.items())
         result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes_typed)
-        entry = cast("FlextLdifModels.Entry", TestAssertions.assert_success(result))
+        entry = cast("FlextLdifModels.Entry", FlextTestsMatchers.assert_success(result))
         TestAssertions.assert_entry_valid(entry)
         if expected_dn:
             assert entry.dn is not None
@@ -1774,8 +1789,41 @@ class RfcTestHelpers:
         """
         results = {}
         for server_name, fixture_path in fixture_paths.items():
+            # Determine server type from server name if not provided
+            server_type_map = {
+                "rfc": "rfc",
+                "oid": "oid",
+                "oud": "oud",
+                "openldap": "openldap",
+                "openldap2": "openldap",  # OpenLDAP2 uses "openldap" server type
+                "ad": "ad",
+                "389ds": "389ds",
+            }
+            detected_server_type = None
+            for key, value in server_type_map.items():
+                if key in server_name.lower():
+                    detected_server_type = value
+                    break
+            # Convert string paths to Path objects, handle relative paths
+            if isinstance(fixture_path, str):
+                # If it's a relative path like "tests/fixtures/...", convert to absolute
+                if fixture_path.startswith("tests/fixtures/"):
+                    base_dir = Path(__file__).parent.parent.parent
+                    fixture_path = (
+                        base_dir
+                        / "fixtures"
+                        / fixture_path.replace("tests/fixtures/", "")
+                    )
+                    if not fixture_path.exists():
+                        # Try alternative path if running from different directory
+                        alt_path = Path("flext-ldif/tests/fixtures") / fixture_path.name
+                        if alt_path.exists():
+                            fixture_path = alt_path
+                else:
+                    fixture_path = Path(fixture_path)
             result = api.parse(
-                Path(fixture_path) if isinstance(fixture_path, str) else fixture_path,
+                fixture_path,
+                server_type=detected_server_type or "rfc",
             )
             assert result.is_success, (
                 f"{server_name} parse failed: {result.error if hasattr(result, 'error') else 'unknown'}"
@@ -1821,7 +1869,7 @@ class RfcTestHelpers:
         # Convert dict[str, list[str]] to dict[str, str | list[str]] for Entry.create
         attributes_typed: dict[str, str | list[str]] = dict(attributes.items())
         result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes_typed)
-        entry = cast("FlextLdifModels.Entry", TestAssertions.assert_success(result))
+        entry = cast("FlextLdifModels.Entry", FlextTestsMatchers.assert_success(result))
         if expected_dn:
             assert entry.dn is not None
             assert entry.dn.value == expected_dn
@@ -2781,10 +2829,12 @@ class RfcTestHelpers:
             metadata=metadata,
             acls=cast("list[FlextLdifModels.Acl] | None", acls),
             objectclasses=cast(
-                "list[FlextLdifModels.SchemaObjectClass] | None", objectclasses
+                "list[FlextLdifModels.SchemaObjectClass] | None",
+                objectclasses,
             ),
             attributes_schema=cast(
-                "list[FlextLdifModels.SchemaAttribute] | None", attributes_schema
+                "list[FlextLdifModels.SchemaAttribute] | None",
+                attributes_schema,
             ),
             entry_metadata=entry_metadata,
             validation_metadata=validation_metadata,

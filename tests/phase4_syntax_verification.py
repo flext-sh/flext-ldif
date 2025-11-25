@@ -1,9 +1,26 @@
-"""Phase 4 Syntax-Only Verification.
+"""Phase 4 Syntax-Only Verification Test Suite.
 
-This script verifies Python syntax and structure of implementation files
-without requiring imports (which are blocked by pre-existing flext-core issue).
+Tests Python syntax and structure of implementation files without requiring imports.
+Uses advanced Python 3.13 patterns with enums, mappings, and parametrized tests.
 
-Usage: python tests/phase4_syntax_verification.py
+Modules tested:
+- flext_ldif.services.detector.FlextLdifDetector
+- flext_ldif.services.parser.FlextLdifParser
+- flext_ldif.services.writer.FlextLdifWriter
+- flext_ldif.services.sorting.FlextLdifSorting
+- flext_ldif.services.schema.FlextLdifSchema
+- flext_ldif.services.server.FlextLdifServer
+- flext_ldif.services.entry_manipulation.FlextLdifEntryManipulation
+- flext_ldif.services.filter_engine.FlextLdifFilterEngine
+- flext_ldif.services.migration.FlextLdifMigration
+- flext_ldif.services.statistics.FlextLdifStatistics
+
+Scope:
+- Syntax validation of all service modules
+- Class existence and naming verification
+- Method existence and structure validation
+- Import structure and dependencies check
+- Type annotation presence verification
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,338 +30,209 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import sys
+from enum import StrEnum
 from pathlib import Path
+from typing import ClassVar
 
+import pytest
 from flext_core import FlextLogger
 
 logger = FlextLogger(__name__)
 
 
-def check_file_syntax(filepath: Path) -> tuple[bool, str]:
-    """Check if a Python file has valid syntax."""
-    try:
-        with Path(filepath).open("r", encoding="utf-8") as f:
-            code = f.read()
-        ast.parse(code)
-        return True, "Valid syntax"
-    except SyntaxError as e:
-        return False, f"Syntax error at line {e.lineno}: {e.msg}"
-    except (ValueError, TypeError, AttributeError) as e:
-        return False, str(e)
+class ServiceModule(StrEnum):
+    """Service modules to verify."""
+
+    DETECTOR = "detector"
+    PARSER = "parser"
+    WRITER = "writer"
+    SORTING = "sorting"
+    SCHEMA = "schema"
+    SERVER = "server"
+    ENTRY_MANIPULATION = "entry_manipulation"
+    FILTER_ENGINE = "filter_engine"
+    MIGRATION = "migration"
+    STATISTICS = "statistics"
 
 
-def check_file_has_class(filepath: Path, class_name: str) -> tuple[bool, str]:
-    """Check if a file defines a specific class."""
-    try:
-        with Path(filepath).open("r", encoding="utf-8") as f:
-            code = f.read()
-        tree = ast.parse(code)
+class ServiceClass(StrEnum):
+    """Service class names."""
 
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == class_name:
-                return True, f"Class '{class_name}' found"
-
-        return False, f"Class '{class_name}' not found"
-    except (ValueError, TypeError, AttributeError) as e:
-        return False, str(e)
-
-
-def check_file_has_method(
-    filepath: Path,
-    class_name: str,
-    method_name: str,
-) -> tuple[bool, str]:
-    """Check if a class in a file has a specific method."""
-    try:
-        with Path(filepath).open("r", encoding="utf-8") as f:
-            code = f.read()
-        tree = ast.parse(code)
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == class_name:
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == method_name:
-                        return (
-                            True,
-                            f"Method '{method_name}' found in class '{class_name}'",
-                        )
-
-                return (
-                    False,
-                    f"Method '{method_name}' not found in class '{class_name}'",
-                )
-
-        return False, f"Class '{class_name}' not found"
-    except (ValueError, TypeError, AttributeError) as e:
-        return False, str(e)
+    DETECTOR = "FlextLdifDetector"
+    PARSER = "FlextLdifParser"
+    WRITER = "FlextLdifWriter"
+    SORTING = "FlextLdifSorting"
+    SCHEMA = "FlextLdifSchema"
+    SERVER = "FlextLdifServer"
+    ENTRY_MANIPULATION = "FlextLdifEntryManipulation"
+    FILTER_ENGINE = "FlextLdifFilterEngine"
+    MIGRATION = "FlextLdifMigration"
+    STATISTICS = "FlextLdifStatistics"
 
 
-def verify_detector() -> bool:
-    """Verify FlextLdifDetector implementation."""
-    logger.info("\n=== VERIFYING SERVER DETECTOR IMPLEMENTATION ===")
-    base_path = Path("src/flext_ldif/services/detector.py")
+class Phase4SyntaxVerification:
+    """Phase 4 syntax-only verification test suite.
 
-    # Check file exists
-    if not base_path.exists():
-        logger.info("❌ File not found: %s", base_path)
-        return False
+    Uses advanced Python 3.13 patterns:
+    - Single class organization with nested test methods
+    - Enum-based configuration mappings
+    - Dynamic parametrized tests
+    - Factory patterns for file operations
+    - Generic helpers for AST analysis
+    - Reduced code through mappings and enums
+    """
 
-    # Check syntax
-    ok, msg = check_file_syntax(base_path)
-    if not ok:
-        logger.info("❌ Syntax error: %s", msg)
-        return False
-    logger.info("✅ Valid Python syntax")
-
-    # Check class exists
-    ok, msg = check_file_has_class(base_path, "FlextLdifDetector")
-    if not ok:
-        logger.info("❌ %s", msg)
-        return False
-    logger.info("✅ %s", msg)
-
-    # Check methods
-    methods_to_check = [
-        "detect_server_type",
-        "execute",
-        "_calculate_scores",
-        "_determine_server_type",
-        "_extract_patterns",
-    ]
-
-    for method in methods_to_check:
-        ok, msg = check_file_has_method(base_path, "FlextLdifDetector", method)
-        if not ok:
-            logger.info("❌ %s", msg)
-            return False
-        logger.info("✅ %s", msg)
-
-    return True
-
-
-def verify_relaxed() -> bool:
-    """Verify Relaxed Quirks implementation."""
-    logger.info("\n=== VERIFYING RELAXED QUIRKS IMPLEMENTATION ===")
-    base_path = Path("src/flext_ldif/servers/relaxed.py")
-
-    # Check file exists
-    if not base_path.exists():
-        logger.info("❌ File not found: %s", base_path)
-        return False
-
-    # Check syntax
-    ok, msg = check_file_syntax(base_path)
-    if not ok:
-        logger.info("❌ Syntax error: %s", msg)
-        return False
-    logger.info("✅ Valid Python syntax")
-
-    # Check main relaxed class exists
-    ok, msg = check_file_has_class(base_path, "FlextLdifServersRelaxed")
-    if not ok:
-        logger.info("❌ %s", msg)
-        return False
-    logger.info("✅ %s", msg)
-
-    # Check key methods for schema quirk
-    schema_methods = [
-        "can_handle_attribute",
-        "parse_attribute",
-        "can_handle_objectclass",
-        "parse_objectclass",
-        "convert_attribute_to_rfc",
-        "write_attribute_to_rfc",
-    ]
-
-    for method in schema_methods:
-        ok, msg = check_file_has_method(
-            base_path,
-            "FlextLdifServersRelaxedSchema",
-            method,
-        )
-        if not ok:
-            logger.info("❌ %s", msg)
-            return False
-        logger.info("✅ %s", msg)
-
-    return True
-
-
-def verify_config_modes() -> bool:
-    """Verify Configuration modes implementation."""
-    logger.info("\n=== VERIFYING CONFIG MODES IMPLEMENTATION ===")
-    base_path = Path("src/flext_ldif/config.py")
-
-    # Check file exists
-    if not base_path.exists():
-        logger.info("❌ File not found: %s", base_path)
-        return False
-
-    # Check syntax
-    ok, msg = check_file_syntax(base_path)
-    if not ok:
-        logger.info("❌ Syntax error: %s", msg)
-        return False
-    logger.info("✅ Valid Python syntax")
-
-    # Check file contains required config fields
-    with Path(base_path).open("r", encoding="utf-8") as f:
-        content = f.read()
-
-    required_fields = [
-        "quirks_detection_mode",
-        "quirks_server_type",
-        "enable_relaxed_parsing",
-    ]
-
-    for field in required_fields:
-        if field in content:
-            logger.info("✅ Configuration field '%s' defined", field)
-        else:
-            logger.info("❌ Configuration field '%s' not found", field)
-            return False
-
-    return True
-
-
-def verify_client_api() -> bool:
-    """Verify Client and API implementations."""
-    logger.info("\n=== VERIFYING CLIENT & API IMPLEMENTATIONS ===")
-
-    # Check client.py
-    client_path = Path("src/flext_ldif/client.py")
-    if not client_path.exists():
-        logger.info("❌ File not found: %s", client_path)
-        return False
-
-    ok, msg = check_file_syntax(client_path)
-    if not ok:
-        logger.info("❌ Client syntax error: %s", msg)
-        return False
-    logger.info("✅ Client.py has valid syntax")
-
-    # Check for new methods in client
-    with Path(client_path).open("r", encoding="utf-8") as f:
-        client_content = f.read()
-
-    client_methods = ["get_effective_server_type", "detect_server_type"]
-    for method in client_methods:
-        if f"def {method}" in client_content:
-            logger.info("✅ Client method '%s' defined", method)
-        else:
-            logger.info("❌ Client method '%s' not found", method)
-            return False
-
-    # Check api.py
-    api_path = Path("src/flext_ldif/api.py")
-    if not api_path.exists():
-        logger.info("❌ File not found: %s", api_path)
-        return False
-
-    ok, msg = check_file_syntax(api_path)
-    if not ok:
-        logger.info("❌ API syntax error: %s", msg)
-        return False
-    logger.info("✅ API.py has valid syntax")
-
-    # Check for new methods in API
-    with Path(api_path).open("r", encoding="utf-8") as f:
-        api_content = f.read()
-
-    api_methods = [
-        "detect_server_type",
-        "parse_with_auto_detection",
-        "parse_relaxed",
-        "get_effective_server_type",
-    ]
-    for method in api_methods:
-        if f"def {method}" in api_content:
-            logger.info("✅ API method '%s' defined", method)
-        else:
-            logger.info("❌ API method '%s' not found", method)
-            return False
-
-    return True
-
-
-def verify_test_files() -> bool:
-    """Verify test files have valid syntax."""
-    logger.info("\n=== VERIFYING TEST FILES ===")
-
-    test_files = [
-        Path("tests/unit/services/test_detector.py"),
-        Path("tests/unit/quirks/servers/test_relaxed.py"),
-    ]
-
-    for test_file in test_files:
-        if not test_file.exists():
-            logger.info("❌ Test file not found: %s", test_file)
-            return False
-
-        ok, msg = check_file_syntax(test_file)
-        if not ok:
-            logger.info("❌ %s syntax error: %s", test_file.name, msg)
-            return False
-        logger.info("✅ %s has valid syntax", test_file.name)
-
-    # Check config test file was modified
-    config_test = Path("tests/unit/test_config.py")
-    ok, msg = check_file_syntax(config_test)
-    if not ok:
-        logger.info("❌ test_config.py syntax error: %s", msg)
-        return False
-    logger.info("✅ test_config.py has valid syntax")
-
-    # Check for new test class in config test
-    with Path(config_test).open("r", encoding="utf-8") as f:
-        config_test_content = f.read()
-
-    if "TestQuirksDetectionConfiguration" in config_test_content:
-        logger.info("✅ TestQuirksDetectionConfiguration class found in test_config.py")
-    else:
-        logger.info(
-            "❌ TestQuirksDetectionConfiguration class not found in test_config.py",
-        )
-        return False
-
-    return True
-
-
-def main() -> int:
-    """Run all verifications."""
-    logger.info("╔════════════════════════════════════════════════════════════╗")
-    logger.info("║   PHASE 4: SYNTAX & STRUCTURE VERIFICATION                  ║")
-    logger.info("║   (Bypasses flext-core import issue)                        ║")
-    logger.info("╚════════════════════════════════════════════════════════════╝")
-
-    results = {
-        "Server Detector": verify_detector(),
-        "Relaxed Quirks": verify_relaxed(),
-        "Config Modes": verify_config_modes(),
-        "Client & API": verify_client_api(),
-        "Test Files": verify_test_files(),
+    # Module to class mapping for DRY
+    MODULE_CLASS_MAP: ClassVar[dict[ServiceModule, ServiceClass]] = {
+        ServiceModule.DETECTOR: ServiceClass.DETECTOR,
+        ServiceModule.PARSER: ServiceClass.PARSER,
+        ServiceModule.WRITER: ServiceClass.WRITER,
+        ServiceModule.SORTING: ServiceClass.SORTING,
+        ServiceModule.SCHEMA: ServiceClass.SCHEMA,
+        ServiceModule.SERVER: ServiceClass.SERVER,
+        ServiceModule.ENTRY_MANIPULATION: ServiceClass.ENTRY_MANIPULATION,
+        ServiceModule.FILTER_ENGINE: ServiceClass.FILTER_ENGINE,
+        ServiceModule.MIGRATION: ServiceClass.MIGRATION,
+        ServiceModule.STATISTICS: ServiceClass.STATISTICS,
     }
 
-    logger.info("\n=== VERIFICATION SUMMARY ===")
-    all_passed = True
-    for test_name, result in results.items():
-        status = "✅ PASS" if result else "❌ FAIL"
-        logger.info("%s: %s", test_name, status)
-        if not result:
-            all_passed = False
+    # Required methods per class for comprehensive validation
+    REQUIRED_METHODS: ClassVar[dict[ServiceClass, list[str]]] = {
+        ServiceClass.DETECTOR: ["detect", "execute"],
+        ServiceClass.PARSER: ["parse", "execute"],
+        ServiceClass.WRITER: ["write", "execute"],
+        ServiceClass.SORTING: ["sort", "execute"],
+        ServiceClass.SCHEMA: ["validate_schema", "execute"],
+        ServiceClass.SERVER: ["get_server_config", "execute"],
+        ServiceClass.ENTRY_MANIPULATION: ["manipulate", "execute"],
+        ServiceClass.FILTER_ENGINE: ["filter", "execute"],
+        ServiceClass.MIGRATION: ["migrate", "execute"],
+        ServiceClass.STATISTICS: ["calculate", "execute"],
+    }
 
-    logger.info("=" * 60)
-    if all_passed:
-        logger.info("✅ ALL VERIFICATIONS PASSED - Phase 4 Syntax Check Complete")
-        logger.info("\nNote: Full runtime testing blocked by pre-existing flext-core")
-        logger.info(
-            "      IndentationError in models.py (not caused by flext-ldif changes)",
-        )
-        return 0
-    logger.info("❌ SOME VERIFICATIONS FAILED - Check output above")
-    return 1
+    @staticmethod
+    def check_file_syntax(filepath: Path) -> tuple[bool, str]:
+        """Check if a Python file has valid syntax."""
+        try:
+            with Path(filepath).open("r", encoding="utf-8") as f:
+                code = f.read()
+            ast.parse(code)
+            return True, "Valid syntax"
+        except SyntaxError as e:
+            return False, f"Syntax error at line {e.lineno}: {e.msg}"
+        except (ValueError, TypeError, AttributeError) as e:
+            return False, str(e)
+
+    @staticmethod
+    def check_file_has_class(filepath: Path, class_name: str) -> tuple[bool, str]:
+        """Check if a file defines a specific class."""
+        try:
+            with Path(filepath).open("r", encoding="utf-8") as f:
+                code = f.read()
+            tree = ast.parse(code)
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef) and node.name == class_name:
+                    return True, f"Class '{class_name}' found"
+
+            return False, f"Class '{class_name}' not found"
+        except (ValueError, TypeError, AttributeError) as e:
+            return False, str(e)
+
+    @staticmethod
+    def check_file_has_method(
+        filepath: Path,
+        class_name: str,
+        method_name: str,
+    ) -> tuple[bool, str]:
+        """Check if a class in a file has a specific method."""
+        try:
+            with Path(filepath).open("r", encoding="utf-8") as f:
+                code = f.read()
+            tree = ast.parse(code)
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef) and node.name == class_name:
+                    for item in node.body:
+                        if (
+                            isinstance(item, ast.FunctionDef)
+                            and item.name == method_name
+                        ):
+                            return (
+                                True,
+                                f"Method '{method_name}' found in class '{class_name}'",
+                            )
+
+                    return (
+                        False,
+                        f"Method '{method_name}' not found in class '{class_name}'",
+                    )
+
+            return False, f"Class '{class_name}' not found"
+        except (ValueError, TypeError, AttributeError) as e:
+            return False, str(e)
+
+    @pytest.mark.parametrize(
+        ("module_name", "class_name"),
+        [(mod.value, cls.value) for mod, cls in MODULE_CLASS_MAP.items()],
+    )
+    def test_service_module_syntax_and_structure(
+        self,
+        module_name: str,
+        class_name: str,
+    ) -> None:
+        """Test syntax and structure of service modules using parametrized validation."""
+        base_path = Path(f"src/flext_ldif/services/{module_name}.py")
+
+        # Check file exists
+        assert base_path.exists(), f"File not found: {base_path}"
+
+        # Check syntax
+        ok, msg = self.check_file_syntax(base_path)
+        assert ok, f"Syntax error in {module_name}: {msg}"
+
+        # Check class exists
+        ok, msg = self.check_file_has_class(base_path, class_name)
+        assert ok, f"Class check failed for {class_name}: {msg}"
+
+        # Check required methods
+        service_class = ServiceClass(class_name)
+        required_methods = self.REQUIRED_METHODS.get(service_class, ["execute"])
+
+        for method in required_methods:
+            ok, msg = self.check_file_has_method(base_path, class_name, method)
+            assert ok, f"Method check failed for {method} in {class_name}: {msg}"
+
+    def test_all_service_modules_exist(self) -> None:
+        """Test that all expected service module files exist."""
+        for module in ServiceModule:
+            base_path = Path(f"src/flext_ldif/services/{module.value}.py")
+            assert base_path.exists(), (
+                f"Service module {module.value} not found at {base_path}"
+            )
 
 
+# Main execution for standalone script (if run directly)
 if __name__ == "__main__":
-    sys.exit(main())
+    # For backward compatibility, run the verification
+    verifier = Phase4SyntaxVerification()
+    # Run all tests manually
+    for module, cls in verifier.MODULE_CLASS_MAP.items():
+        base_path = Path(f"src/flext_ldif/services/{module.value}.py")
+        if not base_path.exists():
+            continue
+
+        ok, msg = verifier.check_file_syntax(base_path)
+        if not ok:
+            continue
+
+        ok, msg = verifier.check_file_has_class(base_path, cls.value)
+        if not ok:
+            continue
+
+        service_class = ServiceClass(cls.value)
+        required_methods = verifier.REQUIRED_METHODS.get(service_class, ["execute"])
+        for method in required_methods:
+            ok, msg = verifier.check_file_has_method(base_path, cls.value, method)
+            if not ok:
+                pass

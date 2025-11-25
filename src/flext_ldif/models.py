@@ -1,16 +1,25 @@
-"""LDIF domain models and data structures.
+"""LDIF Domain Models - Unified Model Aggregation Layer.
 
-This module defines Pydantic models for LDIF data structures including entries,
-attributes, DNs, ACLs, and schema elements. Models provide validation and
-type safety for LDIF operations.
+This module provides a single FlextLdifModels class that aggregates all LDIF domain models,
+events, configurations, and result types. It serves as the public API facade for all
+LDIF data structures including entries, attributes, DNs, ACLs, and schema elements.
+
+Scope:
+- Domain Models: Core business entities (Entry, Schema, ACL, DN)
+- Event Models: Processing events and logging structures
+- Configuration Models: Operation parameters and settings
+- Result Models: Operation outcomes and statistics
+- DTO Models: Data transfer objects for service communication
+
+Architecture:
+- Single unified class with nested organization per FLEXT standards
+- Extends flext-core FlextModels for consistency
+- Uses Pydantic v2 with computed fields and validators
+- All models are immutable by default (frozen=True where applicable)
+- Server-specific quirk data preserved in extensions (object type)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Notes:
- - Uses object type in **extensions for server-specific quirk data
- - Models follow Pydantic v2 patterns with computed fields and validators
- - All models are immutable by default (frozen=True where applicable)
 
 """
 
@@ -19,13 +28,14 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextModels
-from flext_core._models.collections import FlextModelsCollections
+from flext_core.models import FlextModelsCollections
 from pydantic import computed_field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifModels(FlextModels):
@@ -115,7 +125,7 @@ class FlextLdifModels(FlextModels):
                 items_succeeded=48,
                 items_failed=2,
                 operation_duration_ms=125.3,
-                server_type="oud",
+                server_type=FlextLdifConstants.ServerType.OUD,
             )
             event = FlextLdifUtilities.Events.create_schema_event(config)
 
@@ -182,15 +192,16 @@ class FlextLdifModels(FlextModels):
 
         Supports multiple filter types:
         - dn_pattern: Wildcard DN pattern matching (e.g., "*,dc=example,dc=com")
+          Uses FlextLdifConstants.FilterType.DN_PATTERN for type safety
         - oid_pattern: OID pattern matching with wildcard support
         - objectclass: Filter by objectClass with optional attribute validation
         - attribute: Filter by attribute presence/absence
 
         Example:
             criteria = FilterCriteria(
-                filter_type="dn_pattern",
+                filter_type=FlextLdifConstants.FilterType.DN_PATTERN,
                 pattern="*,ou=users,dc=ctbc,dc=com",
-                mode="include"
+                mode=FlextLdifConstants.FilterMode.INCLUDE
             )
 
         """
@@ -220,7 +231,8 @@ class FlextLdifModels(FlextModels):
                 excluded=True,
                 exclusion_reason="DN outside base context",
                 filter_criteria=FilterCriteria(
-                    filter_type="dn_pattern", pattern="*,dc=old,dc=com"
+                    filter_type=FlextLdifConstants.FilterType.DN_PATTERN,
+                    pattern="*,dc=old,dc=com"
                 ),
                 timestamp="2025-10-09T12:34:56Z"
             )
@@ -279,39 +291,19 @@ class FlextLdifModels(FlextModels):
             if parent_result is None:
                 return None
 
-            # Type guard: ensure parent_result is a Pydantic model with model_dump method
-            if not hasattr(parent_result, "model_dump"):
-                return None
-
-            # Since we checked hasattr, we know it's a Pydantic model
-            # Parent syntax is already FlextLdifModelsDomains.Syntax (internal type)
+            # Convert internal domain model to public API model
+            # Parent result is guaranteed to be FlextLdifModelsDomains.Syntax
+            # Type checker knows this after None check
             internal_syntax = cast("FlextLdifModelsDomains.Syntax", parent_result)
 
-            # Convert to public type using model_validate
-            # Exclude computed fields since they will be recomputed automatically
-            # Use mode='python' to get plain Python dict, and exclude computed fields
-            dump_data = internal_syntax.model_dump(
+            # Extract core fields for public model (exclude internal computed fields)
+            data = internal_syntax.model_dump(
                 mode="python",
                 exclude={"is_rfc4517_standard", "syntax_oid_suffix"},
-                exclude_unset=False,
             )
-            # Filter out any remaining computed fields that might have been included
-            # Only include fields that exist in the Syntax model
-            valid_fields = {
-                "oid",
-                "name",
-                "desc",
-                "type_category",
-                "is_binary",
-                "max_length",
-                "case_insensitive",
-                "allows_multivalued",
-                "encoding",
-                "validation_pattern",
-                "metadata",
-            }
-            filtered_data = {k: v for k, v in dump_data.items() if k in valid_fields}
-            return FlextLdifModels.Syntax.model_validate(filtered_data)
+
+            # Validate as public Syntax model
+            return FlextLdifModels.Syntax.model_validate(data)
 
     class Syntax(FlextLdifModelsDomains.Syntax):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
@@ -351,7 +343,7 @@ class FlextLdifModels(FlextModels):
         def from_entries(
             cls,
             entries: list[FlextLdifModels.Entry] | list[FlextLdifModelsDomains.Entry],
-            category: str = "all",
+            category: str = FlextLdifConstants.Categories.ALL,
             statistics: FlextLdifModels.Statistics
             | FlextLdifModelsResults.Statistics
             | None = None,
@@ -363,7 +355,7 @@ class FlextLdifModels(FlextModels):
 
             Args:
                 entries: List of Entry objects (public or domain Entry types)
-                category: Category name for the entries (default: "all")
+                category: Category name for the entries (default: FlextLdifConstants.Categories.ALL)
                 statistics: Optional statistics object (creates default if None)
 
             Returns:
@@ -480,6 +472,13 @@ class FlextLdifModels(FlextModels):
 
         Provides detailed control over the output format, including line width
         for folding, and whether to respect attribute ordering from metadata.
+        """
+
+    class WriteOutputOptions(FlextLdifModelsConfig.WriteOutputOptions):
+        """Output visibility options for attributes based on marker status.
+
+        Controls how attributes are rendered in LDIF output based on their
+        status (show/hide/comment). Works with AttributeMarkerStatus for SRP.
         """
 
     class AclResponse(FlextLdifModelsResults.AclResponse):
@@ -625,7 +624,7 @@ class FlextLdifModels(FlextModels):
 
         Attributes:
             service: Service name identifier
-            status: Operational status (e.g., "operational", "degraded")
+            status: Operational status (e.g., FlextLdifConstants.Status.OPERATIONAL, FlextLdifConstants.Status.DEGRADED)
             rfc_compliance: RFC standards implemented (e.g., "RFC 2849", "RFC 4512")
 
         """
@@ -638,7 +637,7 @@ class FlextLdifModels(FlextModels):
 
         Attributes:
             service: Service name identifier
-            server_type: Server type configuration (e.g., "oud", "oid", "rfc")
+            server_type: Server type configuration (e.g., FlextLdifConstants.ServerType.OUD, FlextLdifConstants.ServerType.OID, FlextLdifConstants.ServerType.RFC)
             status: Operational status
             rfc_compliance: RFC 4512 compliance
             operations: List of available schema operations
@@ -668,7 +667,7 @@ class FlextLdifModels(FlextModels):
 
         Attributes:
             service: Service name identifier
-            status: Operational status (e.g., "operational", "degraded")
+            status: Operational status (e.g., FlextLdifConstants.Status.OPERATIONAL, FlextLdifConstants.Status.DEGRADED)
             capabilities: List of available statistical operations
             version: Service version
 

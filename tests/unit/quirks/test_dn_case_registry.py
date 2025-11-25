@@ -398,23 +398,23 @@ class TestOudConsistencyValidation:
         self,
         registry: FlextLdifModels.DnRegistry,
     ) -> None:
-        """Test that validation returns detailed inconsistency metadata."""
+        """Test that validation detects inconsistency in case variants."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
 
         result = registry.validate_oud_consistency()
-        assert result.metadata is not None
-        # Metadata is a FlextModels.Metadata object, not a dict
-        assert hasattr(result.metadata, "attributes")
-        assert result.metadata.attributes is not None
-        assert "inconsistencies" in result.metadata.attributes
-        assert "warning" in result.metadata.attributes
+        assert result.is_success
+        # validate_oud_consistency returns False when inconsistencies are found
+        is_consistent = result.unwrap()
+        assert is_consistent is False  # Has inconsistencies
 
-        inconsistencies = result.metadata.attributes.get("inconsistencies", [])
-        assert len(inconsistencies) == 1
-        assert inconsistencies[0]["variant_count"] == 3
-        assert inconsistencies[0]["canonical_case"] == "cn=admin,dc=com"
+        # Verify the registry tracks all case variants
+        variants = registry.get_case_variants("cn=admin,dc=com")
+        assert len(variants) == 3
+        assert "cn=admin,dc=com" in variants
+        assert "CN=Admin,DC=Com" in variants
+        assert "cn=ADMIN,dc=COM" in variants
 
     def test_validate_multiple_inconsistent_dns(
         self,
@@ -434,13 +434,19 @@ class TestOudConsistencyValidation:
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is False
+        is_consistent = result.unwrap()
+        assert is_consistent is False  # Has inconsistencies
 
-        assert result.metadata is not None
-        assert result.metadata.attributes is not None
-        assert "inconsistencies" in result.metadata.attributes
-        inconsistencies = result.metadata.attributes.get("inconsistencies", [])
-        assert len(inconsistencies) == 2  # Two DNs with issues
+        # Verify the registry tracks both inconsistent DNs
+        admin_variants = registry.get_case_variants("cn=admin,dc=com")
+        user_variants = registry.get_case_variants("cn=user1,dc=com")
+
+        assert len(admin_variants) == 2
+        assert len(user_variants) == 2
+
+        # Consistent DN should have only one variant
+        ou_variants = registry.get_case_variants("ou=users,dc=com")
+        assert len(ou_variants) == 1
 
 
 class TestDnReferenceNormalization:

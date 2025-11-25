@@ -1,35 +1,28 @@
-"""Test helpers module.
+"""LDIF test helpers package.
 
-Provides reusable test utilities to reduce duplication across test files.
+Provides comprehensive testing utilities for flext-ldif:
+- Factories for creating test objects
+- Assertions for validation
+- Constants organized by domain
+- Advanced Python 3.13 patterns
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from .test_assertions import TestAssertions
-from .test_deduplication_helpers import DeduplicationHelpers
-from .test_entry_helpers import EntryTestHelpers
-from .test_factories import FlextLdifTestFactories
+from .test_factories import EntryTemplate, FlextLdifTestFactories
 from .test_fixture_helpers import FixtureTestHelpers
-from .test_operations import TestOperations
-from .test_oud_helpers import OudTestHelpers
 from .test_quirk_helpers import QuirkTestHelpers
-from .test_rfc_helpers import RfcTestHelpers
 from .test_schema_helpers import SchemaTestHelpers
 
-# Alias for backward compatibility
-TestDeduplicationHelpers = DeduplicationHelpers
-
 __all__ = [
-    "DeduplicationHelpers",
-    "EntryTestHelpers",
+    "EntryTemplate",
     "FixtureTestHelpers",
     "FlextLdifTestFactories",
-    "OudTestHelpers",
     "QuirkTestHelpers",
-    "RfcTestHelpers",
     "SchemaTestHelpers",
     "TestAssertions",
-    "TestDeduplicationHelpers",
-    "TestOperations",
 ]

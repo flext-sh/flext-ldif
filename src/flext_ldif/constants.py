@@ -836,6 +836,36 @@ class FlextLdifConstants(FlextConstants):
         ACL = "acl"
         MODRDN = "modrdn"
 
+    class AttributeMarkerStatus(StrEnum):
+        """Marker status for attribute processing in metadata.
+
+        Used by filters/entry services to mark attributes without removing them.
+        Writer services use this status to determine output behavior.
+
+        SRP Architecture:
+            - filters.py: MARKS attributes with this status (never removes)
+            - entry.py: REMOVES attributes based on this status
+            - writer.py: Uses status + WriteOutputOptions for output
+        """
+
+        NORMAL = "normal"
+        """Attribute is in normal state, no special handling."""
+
+        MARKED_FOR_REMOVAL = "marked_for_removal"
+        """Marked for removal by filters; removed by entry service."""
+
+        FILTERED = "filtered"
+        """Attribute filtered out based on filter rules."""
+
+        OPERATIONAL = "operational"
+        """Attribute is operational (server-managed), typically hidden in output."""
+
+        HIDDEN = "hidden"
+        """Attribute explicitly marked as hidden in output."""
+
+        RENAMED = "renamed"
+        """Attribute was renamed from original name."""
+
     # NOTE: ServerTypeEnum removed - use ServerTypes instead (canonical source)
     # ServerTypeEnum was duplicate of LdapServerType - consolidated to ServerTypes
 
@@ -908,6 +938,19 @@ class FlextLdifConstants(FlextConstants):
 
         # Error recovery modes
         ERROR_RECOVERY_MODES: Final[tuple[str, ...]] = ("continue", "stop", "skip")
+
+        # Attribute output modes (show/hide/comment for writer)
+        ATTRIBUTE_OUTPUT_MODES: Final[tuple[str, ...]] = ("show", "hide", "comment")
+
+        # Attribute marker statuses (for metadata processing)
+        ATTRIBUTE_MARKER_STATUSES: Final[tuple[str, ...]] = (
+            "normal",
+            "marked_for_removal",
+            "filtered",
+            "operational",
+            "hidden",
+            "renamed",
+        )
 
         # Project types
         PROJECT_TYPES: Final[tuple[str, ...]] = (
@@ -1007,6 +1050,22 @@ class FlextLdifConstants(FlextConstants):
         type MigrationMode = Literal["simple", "categorized", "structured"]
         type ParserInputSource = Literal["string", "file", "ldap3"]
         type WriterOutputTarget = Literal["string", "file", "ldap3", "model"]
+        type AttributeOutputMode = Literal["show", "hide", "comment"]
+        """Output mode for attribute visibility in LDIF output.
+
+        - show: Write attribute normally
+        - hide: Don't write attribute at all
+        - comment: Write attribute as a comment (# attr: value)
+        """
+        type AttributeMarkerStatus = Literal[
+            "normal",
+            "marked_for_removal",
+            "filtered",
+            "operational",
+            "hidden",
+            "renamed",
+        ]
+        """Marker status for attribute processing metadata."""
         type ProjectType = Literal[
             "library",
             "application",
@@ -1739,6 +1798,19 @@ class FlextLdifConstants(FlextConstants):
         ACL_CONSTRAINT: Final[str] = (
             "added_object_constraint"  # OID entry-level constraint
         )
+        ACL_BINDMODE: Final[str] = (
+            "bindmode"  # OID BINDMODE (authentication/encryption requirements)
+        )
+        ACL_DENY_GROUP_OVERRIDE: Final[str] = (
+            "deny_group_override"  # OID DenyGroupOverride flag
+        )
+        ACL_APPEND_TO_ALL: Final[str] = "append_to_all"  # OID AppendToAll flag
+        ACL_BIND_IP_FILTER: Final[str] = (
+            "bind_ip_filter"  # OID BINDIPFILTER (IP-based access restriction)
+        )
+        ACL_CONSTRAIN_TO_ADDED_OBJECT: Final[str] = (
+            "constrain_to_added_object"  # OID constraintonaddedobject filter
+        )
 
         # Generic subject attribute metadata (works for ANY LDAP server - not OID-specific)
         ACL_DN_ATTR: Final[str] = (
@@ -1778,6 +1850,39 @@ class FlextLdifConstants(FlextConstants):
         )
         ACL_SSFS: Final[str] = (
             "ssfs"  # OpenLDAP SSFS (Simple Security Framework Syntax)
+        )
+
+        # OUD/RFC4876 Advanced Bind Rules (for complex access control)
+        ACL_TARGETATTR_FILTERS: Final[str] = (
+            "targattrfilters"  # OUD targattrfilters (attribute value filtering)
+        )
+        ACL_TARGET_CONTROL: Final[str] = (
+            "targetcontrol"  # OUD targetcontrol (LDAP control OID targeting)
+        )
+        ACL_EXTOP: Final[str] = "extop"  # OUD extop (extended operation OID)
+        ACL_BIND_IP: Final[str] = "bind_ip"  # OUD ip bind rule (IP/CIDR filtering)
+        ACL_BIND_DNS: Final[str] = (
+            "bind_dns"  # OUD dns bind rule (DNS pattern matching)
+        )
+        ACL_BIND_DAYOFWEEK: Final[str] = (
+            "bind_dayofweek"  # OUD dayofweek bind rule (day restrictions)
+        )
+        ACL_BIND_TIMEOFDAY: Final[str] = (
+            "bind_timeofday"  # OUD timeofday bind rule (time restrictions)
+        )
+        ACL_AUTHMETHOD: Final[str] = (
+            "authmethod"  # OUD authmethod bind rule (required auth method)
+        )
+        ACL_SSF: Final[str] = (
+            "ssf"  # OUD ssf bind rule (Security Strength Factor threshold)
+        )
+
+        # ACL Name Origin Tracking (OID→OUD conversion)
+        ACL_NAME_SANITIZED: Final[str] = (
+            "name_sanitized"  # True if ACL name was sanitized (had control chars)
+        )
+        ACL_ORIGINAL_NAME_RAW: Final[str] = (
+            "original_name_raw"  # Original ACL name before sanitization (for audit)
         )
 
         # Active Directory-specific (for nTSecurityDescriptor format)
@@ -2212,6 +2317,7 @@ class FlextLdifConstants(FlextConstants):
         Used for LDIF entry categorization in pipelines.
         """
 
+        ALL: Final[str] = "all"
         USERS: Final[str] = "users"
         GROUPS: Final[str] = "groups"
         HIERARCHY: Final[str] = "hierarchy"
@@ -2221,6 +2327,7 @@ class FlextLdifConstants(FlextConstants):
 
         # Python 3.13 type alias from constants
         type Category = Literal[
+            "all",
             "users",
             "groups",
             "hierarchy",

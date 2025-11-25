@@ -121,16 +121,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import override
+from collections.abc import Callable
+from typing import cast, override
 
 from flext_core import FlextDecorators, FlextResult
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
+class FlextLdifSyntax(LdifServiceBase):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and
@@ -548,24 +549,31 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
 
         """
         # Functional validator mapping with railway pattern
-        validator_map = {
+        validator_map: dict[str, Callable[[str], FlextResult[bool]]] = {
             "boolean": self._validate_boolean,
             "integer": self._validate_integer,
             "dn": self._validate_dn,
             "time": self._validate_time,
-            "binary": lambda _: FlextResult.ok(True),  # Base64 assumed valid
+            "binary": lambda _: FlextResult[bool].ok(True),  # Base64 assumed valid
         }
 
         # Get validator with default pass-through for extensibility
-        validator = validator_map.get(type_category, lambda _: FlextResult.ok(True))
+        validator = validator_map.get(
+            type_category, lambda _: FlextResult[bool].ok(True)
+        )
 
         # Apply validation with railway error handling
-        result = FlextResult.ok(value).flat_map(validator)
+        result = (
+            FlextResult[str]
+            .ok(value)
+            .flat_map(cast("Callable[[str], FlextResult[object]]", validator))
+        )
         if result.is_failure:
             return FlextResult[bool].fail(
                 f"Validation failed for {type_category}: {result.error}",
             )
-        return result
+        # Validator returns FlextResult[bool], so result is FlextResult[bool]
+        return result  # type: ignore[return-value]
 
     @staticmethod
     def _validate_boolean(value: str) -> FlextResult[bool]:

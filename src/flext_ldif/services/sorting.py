@@ -1,15 +1,17 @@
-"""LDIF Entry Sorting Service (V2 Ultimate DRY - Minimal API).
+"""LDIF Entry Sorting Service - Advanced hierarchical and attribute sorting.
 
-Ultra-minimal design with maximum automation:
-- Single entry point (instance-based)
-- V2 auto-execution by default
-- Minimal public API surface
-- All sorting via Pydantic fields
-- Zero code duplication
+Provides comprehensive sorting capabilities for LDIF entries including:
+- Hierarchical DN sorting (depth-first, level-order)
+- Attribute sorting (alphabetical, custom order)
+- ACL sorting
+- Schema sorting
+- Custom predicate sorting
+
+Scope: Sorting operations for flext-ldif entries and attributes.
+Modules: flext_ldif.services.sorting
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -17,169 +19,167 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar, Self, cast
 
 from flext_core import FlextResult, FlextRuntime
 from pydantic import Field, field_validator, model_validator
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
-    """LDIF Sorting Service - Universal Sorting Engine.
+class FlextLdifSorting(LdifServiceBase):
+    """LDIF Sorting Service - Universal Sorting Engine."""
 
-    Flexible sorting for LDIF entries, attributes, ACL & schemas.
-    Supports hierarchy, DN, custom predicate, and schema OID sorting.
+    auto_execute: ClassVar[bool] = False
 
-    Sort targets: entries, attributes, acl, schema, combined.
-    Sort strategies: hierarchy, alphabetical, dn, schema, custom.
+    @classmethod
+    def builder(cls) -> Self:
+        """Create a new sorting service instance for builder pattern."""
+        return cls()
 
-    For detailed usage examples and API documentation, see docs/SORTING.md.
-    """
-
-    auto_execute: ClassVar[bool] = (
-        False  # Disable V2 auto-execution (execute() takes no params)
-    )
-
-    # PYDANTIC FIELDS
-
-    # ──────────────────────────────────────────────────────────────────────
-    # DATA FIELDS
-    # ──────────────────────────────────────────────────────────────────────
-
-    entries: list[FlextLdifModels.Entry] = Field(
-        default_factory=list,
-        description="LDIF entries to sort.",
-    )
-
-    # ──────────────────────────────────────────────────────────────────────
-    # SORT CONFIGURATION (Ultra Parametrized)
-    # ──────────────────────────────────────────────────────────────────────
-
-    sort_target: str = Field(
-        default=FlextLdifConstants.SortTarget.ENTRIES.value,
-        description="What to sort: entries|attributes|acl|schema|combined",
-    )
-
-    sort_by: str = Field(
-        default=FlextLdifConstants.SortStrategy.HIERARCHY.value,
-        description="How to sort: hierarchy|alphabetical|schema|custom",
-    )
-
+    entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
+    sort_target: str = Field(default=FlextLdifConstants.SortTarget.ENTRIES.value)
+    sort_by: str = Field(default=FlextLdifConstants.SortStrategy.HIERARCHY.value)
     custom_predicate: Callable[[FlextLdifModels.Entry], str | int | float] | None = (
-        Field(default=None, description="Custom sort predicate.")
+        Field(default=None)
     )
-
-    # ──────────────────────────────────────────────────────────────────────
-    # ATTRIBUTE SORTING
-    # ──────────────────────────────────────────────────────────────────────
-
-    sort_attributes: bool = Field(
-        default=False,
-        description="Sort entry attributes alphabetically.",
-    )
-
-    attribute_order: list[str] | None = Field(
-        default=None,
-        description="Custom attribute order list.",
-    )
-
-    # ──────────────────────────────────────────────────────────────────────
-    # ACL SORTING
-    # ──────────────────────────────────────────────────────────────────────
-
-    sort_acl: bool = Field(
-        default=False,
-        description="Sort ACL attributes within entries.",
-    )
-
+    sort_attributes: bool = Field(default=False)
+    attribute_order: list[str] | None = Field(default=None)
+    sort_acl: bool = Field(default=False)
     acl_attributes: list[str] = Field(
-        default_factory=lambda: ["acl", "aci", "olcAccess"],
-        description="ACL attribute names to sort.",
+        default_factory=lambda: ["acl", "aci", "olcAccess"]
     )
+    traversal: str = Field(default="depth-first")
 
-    # ──────────────────────────────────────────────────────────────────────
-    # HIERARCHY TRAVERSAL MODE
-    # ──────────────────────────────────────────────────────────────────────
+    def with_entries(self, entries: list[FlextLdifModels.Entry]) -> Self:
+        """Set entries to sort."""
+        self.entries = entries
+        return self
 
-    traversal: str = Field(
-        default="depth-first",
-        description="Hierarchy traversal mode: depth-first|level-order",
-    )
+    def with_strategy(self, strategy: str) -> Self:
+        """Set sorting strategy."""
+        self.sort_by = strategy
+        return self
 
-    # PYDANTIC VALIDATORS
+    def with_attribute_sorting(
+        self, *, alphabetical: bool | None = None, order: list[str] | None = None
+    ) -> Self:
+        """Configure attribute sorting.
+
+        Args:
+            alphabetical: Enable alphabetical sorting (mutually exclusive with order)
+            order: Custom attribute order (mutually exclusive with alphabetical)
+
+        """
+        if alphabetical is not None:
+            self.sort_attributes = alphabetical
+            self.attribute_order = None
+        if order is not None:
+            self.attribute_order = order
+            self.sort_attributes = False
+        return self
+
+    def with_target(self, target: str) -> Self:
+        """Set sorting target (entries, attributes, acl, schema, combined)."""
+        self.sort_target = target
+        return self
 
     @field_validator("sort_target")
     @classmethod
     def validate_sort_target(cls, v: str) -> str:
-        """Validate sort_target is valid."""
-        # Use __members__.values() for type-safe enum iteration
+        """Validate sort_target parameter.
+
+        Args:
+            v: The sort target value to validate
+
+        Returns:
+            The validated sort target value
+
+        Raises:
+            ValueError: If the sort target is not valid
+
+        """
         valid = {t.value for t in FlextLdifConstants.SortTarget.__members__.values()}
         if v not in valid:
-            msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid))}"
+            msg = "Invalid sort_target: {!r}. Valid: {}".format(
+                v, ", ".join(sorted(valid))
+            )
             raise ValueError(msg)
         return v
 
     @field_validator("sort_by")
     @classmethod
     def validate_sort_strategy(cls, v: str) -> str:
-        """Validate sort_by is valid."""
-        # Use __members__.values() for type-safe enum iteration
+        """Validate sort_by parameter.
+
+        Args:
+            v: The sort strategy value to validate
+
+        Returns:
+            The validated sort strategy value
+
+        Raises:
+            ValueError: If the sort strategy is not valid
+
+        """
         valid = {s.value for s in FlextLdifConstants.SortStrategy.__members__.values()}
         if v not in valid:
-            msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid))}"
+            msg = "Invalid sort_by: {!r}. Valid: {}".format(v, ", ".join(sorted(valid)))
             raise ValueError(msg)
         return v
 
     @field_validator("traversal")
     @classmethod
     def validate_traversal(cls, v: str) -> str:
-        """Validate traversal mode is valid."""
-        valid = {"depth-first", "level-order"}
-        if v not in valid:
-            msg = f"Invalid traversal: {v!r}. Valid: {', '.join(sorted(valid))}"
+        """Validate traversal parameter.
+
+        Args:
+            v: The traversal value to validate
+
+        Returns:
+            The validated traversal value
+
+        Raises:
+            ValueError: If the traversal is not valid
+
+        """
+        if v not in {"depth-first", "level-order"}:
+            msg = f"Invalid traversal: {v!r}"
             raise ValueError(msg)
         return v
 
     @model_validator(mode="after")
-    def validate_custom_predicate_when_needed(self) -> FlextLdifSorting:
-        """Validate custom_predicate when needed."""
+    def validate_custom_predicate(self) -> Self:
+        """Validate custom predicate requirements."""
         if (
             self.sort_by == FlextLdifConstants.SortStrategy.CUSTOM.value
             and not self.custom_predicate
         ):
-            msg = "custom_predicate required when sort_by='custom'."
+            msg = "custom_predicate required when sort_by='custom'"
             raise ValueError(msg)
         return self
 
-    # CORE EXECUTION (V2 Universal Engine)
-
     def execute(self, **_kwargs: object) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Execute sorting based on sort_target (ultra parametrized dispatch)."""
+        """Execute sorting based on sort_target."""
         if not self.entries:
-            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+            return FlextResult.ok([])
 
-        # Universal dispatcher based on sort_target
-        match self.sort_target:
-            case FlextLdifConstants.SortTarget.ENTRIES.value:
-                return self._sort_entries()
-            case FlextLdifConstants.SortTarget.ATTRIBUTES.value:
-                return self._sort_only_attributes()
-            case FlextLdifConstants.SortTarget.ACL.value:
-                return self._sort_only_acl()
-            case FlextLdifConstants.SortTarget.SCHEMA.value:
-                return self._sort_schema_entries()
-            case FlextLdifConstants.SortTarget.COMBINED.value:
-                return self._sort_combined()
-            case _:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Unknown sort_target: {self.sort_target}",
-                )
-
-    # PUBLIC API - MINIMAL ESSENTIALS
+        dispatch = {
+            FlextLdifConstants.SortTarget.ENTRIES.value: self._sort_entries,
+            FlextLdifConstants.SortTarget.ATTRIBUTES.value: self._sort_only_attributes,
+            FlextLdifConstants.SortTarget.ACL.value: self._sort_only_acl,
+            FlextLdifConstants.SortTarget.SCHEMA.value: self._sort_schema_entries,
+            FlextLdifConstants.SortTarget.COMBINED.value: self._sort_combined,
+        }
+        method = dispatch.get(self.sort_target)
+        return (
+            method()
+            if method
+            else FlextResult.fail(f"Unknown sort_target: {self.sort_target}")
+        )
 
     @classmethod
     def sort(
@@ -196,46 +196,9 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         sort_acl: bool = False,
         acl_attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Quick sort with FlextResult for composable/chainable operations.
-
-        Standardized Parameters:
-            entries: Entries to sort
-            target: WHAT to sort (entries|attributes|acl|schema|combined)
-            by: HOW to sort entries (hierarchy|alphabetical|schema|custom)
-            traversal: Hierarchy traversal mode (depth-first|level-order)
-            predicate: Custom sort function (required if by="custom")
-            sort_attributes: Auto-sort attributes alphabetically
-            attribute_order: Custom attribute order list
-            sort_acl: Sort ACL attribute values
-            acl_attributes: ACL attribute names (default: ["acl", "aci", "olcAccess"])
-
-        Returns:
-            FlextResult[list[Entry]] for chaining with .map/.and_then/.unwrap
-
-        Examples:
-            # Simple sort with default depth-first traversal
-            sorted = Service.sort(entries, by="hierarchy").unwrap()
-
-            # Explicit depth-first traversal (proper parent->child order)
-            sorted = Service.sort(entries, by="hierarchy", traversal="depth-first").unwrap()
-
-            # Level-order traversal (backward compatibility)
-            sorted = Service.sort(entries, by="hierarchy", traversal="level-order").unwrap()
-
-            # Chainable pipeline
-            result = (Service.sort(entries, by="hierarchy")
-                .map(lambda e: e[:10])
-                .and_then(lambda e: Service.sort(e, by="alphabetical")))
-
-            # With error handling
-            sorted = Service.sort(entries, by="custom",
-                                 predicate=lambda e: len(FlextLdifUtilities.DN.get_dn_value(e.dn))
-                                ).unwrap_or([])
-
-        """
+        """Sort entries with FlextResult for composable operations."""
         strategy = by.value if isinstance(by, FlextLdifConstants.SortStrategy) else by
-        # Build kwargs - only include acl_attributes if provided (Pydantic will use default_factory otherwise)
-        kwargs: dict[str, object] = {
+        kwargs = {
             "entries": entries,
             "sort_target": target,
             "sort_by": strategy,
@@ -245,143 +208,19 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             "attribute_order": attribute_order,
             "sort_acl": sort_acl,
         }
-        if acl_attributes is not None:
+        if acl_attributes:
             kwargs["acl_attributes"] = acl_attributes
-        # With auto_execute=False, create instance and call execute() explicitly
-        # Type narrowing: ensure kwargs match FlextLdifSorting constructor
-        sorting_instance = cls(
-            entries=cast("list[FlextLdifModels.Entry]", kwargs.get("entries", [])),
-            sort_target=cast("str", kwargs.get("sort_target", "entries")),
-            sort_by=cast("str", kwargs.get("sort_by", "hierarchy")),
-            custom_predicate=cast(
-                "Callable[[FlextLdifModels.Entry], str | int | float] | None",
-                kwargs.get("custom_predicate"),
-            ),
-            sort_attributes=cast("bool", kwargs.get("sort_attributes", False)),
-            attribute_order=cast("list[str] | None", kwargs.get("attribute_order")),
-            acl_attributes=cast("list[str]", kwargs.get("acl_attributes", [])),
-            sort_acl=cast("bool", kwargs.get("sort_acl", False)),
-        )
-        return sorting_instance.execute()
-
-    @classmethod
-    def builder(cls) -> FlextLdifSorting:
-        """Create fluent builder instance.
-
-        Returns:
-            Service instance for method chaining
-
-        Example:
-            sorted_entries = (Service.builder()
-                .with_entries(my_entries)
-                .with_strategy("hierarchy")
-                .build())
-
-        """
-        # Create instance using object.__new__ to bypass auto_execute
-        instance = object.__new__(cls)
-        # Initialize instance with default parameters
-        # Type narrowing: instance is of type Self (FlextLdifSorting)
-        if not isinstance(instance, FlextLdifSorting):
-            msg = f"Instance {instance} is not a FlextLdifSorting"
-            raise TypeError(msg)
-        # Initialize instance attributes directly instead of calling __init__
-        # This avoids mypy error about accessing __init__ on instance
-        # Use object.__setattr__ to set Pydantic model fields
-        object.__setattr__(instance, "entries", [])  # noqa: PLC2801 (Pydantic pattern)
-        # Call parent __init__ through super() to properly initialize FlextService
-        super(FlextLdifSorting, instance).__init__()
-        return instance
-
-    def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifSorting:
-        """Set entries to sort (fluent builder)."""
-        self.entries = entries
-        return self
-
-    def with_target(
-        self,
-        target: str | FlextLdifConstants.SortTarget,
-    ) -> FlextLdifSorting:
-        """Set sort target - WHAT to sort (fluent builder).
-
-        Args:
-            target: "entries"|"attributes"|"acl"|"schema"|"combined"
-
-        """
-        self.sort_target = (
-            target.value
-            if isinstance(target, FlextLdifConstants.SortTarget)
-            else target
-        )
-        return self
-
-    def with_strategy(
-        self,
-        strategy: str | FlextLdifConstants.SortStrategy,
-    ) -> FlextLdifSorting:
-        """Set sort strategy - HOW to sort (fluent builder).
-
-        Args:
-        strategy: "hierarchy"|"alphabetical"|"schema"|"custom"
-
-        """
-        self.sort_by = (
-            strategy.value
-            if isinstance(strategy, FlextLdifConstants.SortStrategy)
-            else strategy
-        )
-        return self
-
-    def with_predicate(
-        self,
-        predicate: Callable[[FlextLdifModels.Entry], str | int | float],
-    ) -> FlextLdifSorting:
-        """Set custom predicate function (fluent builder)."""
-        self.custom_predicate = predicate
-        return self
-
-    def with_attribute_sorting(
-        self,
-        *,
-        alphabetical: bool = False,
-        order: list[str] | None = None,
-    ) -> FlextLdifSorting:
-        """Enable attribute sorting (fluent builder).
-
-        Args:
-        alphabetical: Sort attributes alphabetically
-        order: Custom attribute order (overrides alphabetical)
-
-        """
-        if order:
-            self.attribute_order = order
-            self.sort_attributes = False
-        else:
-            self.sort_attributes = alphabetical
-            self.attribute_order = None
-        return self
-
-    def with_acl_sorting(
-        self,
-        *,
-        enabled: bool = True,
-        acl_attrs: list[str] | None = None,
-    ) -> FlextLdifSorting:
-        """Enable ACL sorting (fluent builder).
-
-        Args:
-            enabled: Enable ACL sorting
-            acl_attrs: ACL attribute names (default: ["acl", "aci", "olcAccess"])
-
-        """
-        self.sort_acl = enabled
-        if acl_attrs:
-            self.acl_attributes = acl_attrs
-        return self
-
-    def build(self) -> list[FlextLdifModels.Entry]:
-        """Execute and return unwrapped result (fluent terminal)."""
-        return self.execute().unwrap()
+        return cls(
+            entries=entries,
+            sort_target=target,
+            sort_by=strategy,
+            traversal=traversal,
+            custom_predicate=predicate,
+            sort_attributes=sort_attributes,
+            attribute_order=attribute_order,
+            sort_acl=sort_acl,
+            acl_attributes=acl_attributes or ["acl", "aci", "olcAccess"],
+        ).execute()
 
     # PUBLIC CLASSMETHOD HELPERS (Direct Entry Points)
 
@@ -403,11 +242,12 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls.with_result(
+        sorting_instance = cls(
             entries=entries,
             sort_target="entries",
             sort_by="hierarchy",
         )
+        return sorting_instance.execute()
 
     @classmethod
     def by_dn(
@@ -427,7 +267,8 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls.with_result(entries=entries, sort_target="entries", sort_by="dn")
+        sorting_instance = cls(entries=entries, sort_target="entries", sort_by="dn")
+        return sorting_instance.execute()
 
     @classmethod
     def by_schema(
@@ -447,7 +288,8 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls.with_result(entries=entries, sort_target="schema", sort_by="schema")
+        sorting_instance = cls(entries=entries, sort_target="schema", sort_by="schema")
+        return sorting_instance.execute()
 
     @classmethod
     def by_custom(
@@ -473,12 +315,13 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls.with_result(
+        sorting_instance = cls(
             entries=entries,
             sort_target="entries",
             sort_by="custom",
             custom_predicate=predicate,
         )
+        return sorting_instance.execute()
 
     @classmethod
     def sort_attributes_in_entries(
@@ -503,11 +346,12 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls.with_result(
+        sorting_instance = cls(
             entries=entries,
             sort_target="attributes",
             attribute_order=order,
         )
+        return sorting_instance.execute()
 
     @classmethod
     def sort_acl_in_entries(
@@ -529,38 +373,30 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        # Build kwargs - only include acl_attributes if provided (Pydantic will use default_factory otherwise)
-        kwargs: dict[str, object] = {
-            "entries": entries,
-            "sort_target": "acl",
-        }
-        if acl_attrs is not None:
-            kwargs["acl_attributes"] = acl_attrs
-        return cls.with_result(**kwargs)
-
-    # PRIVATE IMPLEMENTATION (DRY Core)
+        # Build instance with explicit parameters
+        sorting_instance = cls(
+            entries=entries,
+            sort_target="acl",
+            acl_attributes=acl_attrs if acl_attrs is not None else [],
+        )
+        return sorting_instance.execute()
 
     def _sort_entries(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Universal entry sorting engine."""
+        strategies = {
+            FlextLdifConstants.SortStrategy.HIERARCHY.value: self._by_hierarchy,
+            FlextLdifConstants.SortStrategy.DN.value: self._by_dn,
+            FlextLdifConstants.SortStrategy.ALPHABETICAL.value: self._by_dn,
+            FlextLdifConstants.SortStrategy.SCHEMA.value: self._by_schema,
+            FlextLdifConstants.SortStrategy.CUSTOM.value: self._by_custom,
+        }
+        method = strategies.get(self.sort_by)
+        if not method:
+            return FlextResult.fail(f"Unknown strategy: {self.sort_by}")
         try:
-            match self.sort_by:
-                case FlextLdifConstants.SortStrategy.HIERARCHY.value:
-                    return self._by_hierarchy()
-                case (
-                    FlextLdifConstants.SortStrategy.DN.value
-                    | FlextLdifConstants.SortStrategy.ALPHABETICAL.value
-                ):
-                    return self._by_dn()
-                case FlextLdifConstants.SortStrategy.SCHEMA.value:
-                    return self._by_schema()
-                case FlextLdifConstants.SortStrategy.CUSTOM.value:
-                    return self._by_custom()
-                case _:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Unknown strategy: {self.sort_by}",
-                    )
+            return method()
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Sort failed: {e}")
+            return FlextResult.fail(f"Sort failed: {e}")
 
     def _sort_only_attributes(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort ONLY attributes (no entry sorting)."""
@@ -1393,6 +1229,3 @@ class FlextLdifSorting(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
                 f"Group and sort failed: {e}",
             )
-
-
-__all__ = ["FlextLdifSorting"]

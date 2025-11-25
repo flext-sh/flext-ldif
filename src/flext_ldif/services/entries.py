@@ -15,14 +15,14 @@ from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifEntries(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
+    LdifServiceBase,
 ):
     """Service for entry CRUD operations.
 
@@ -106,11 +106,20 @@ class FlextLdifEntries(
                     return FlextResult[str].fail("Dict entry missing 'dn' key")
                 return FlextResult[str].ok(str(dn_val))
 
-            # Handle models/protocols
-            if not entry or not hasattr(entry, "dn"):
-                return FlextResult[str].fail("Entry missing DN attribute")
+            # Handle models/protocols - check Entry first to avoid protocol overlap
+            dn_value: FlextLdifModels.DistinguishedName | object
+            if isinstance(entry, FlextLdifModels.Entry):
+                if not entry.dn:
+                    return FlextResult[str].fail("Entry missing DN attribute")
+                dn_value = entry.dn
+            elif isinstance(entry, FlextLdifProtocols.Entry.EntryWithDnProtocol):
+                dn_value = entry.dn
+            else:
+                return FlextResult[str].fail(
+                    "Entry does not implement EntryWithDnProtocol or is not Entry model"
+                )
 
-            dn_value = entry.dn
+            # Extract DN value
             # Handle both DistinguishedName objects (with .value) and plain strings
             value_attr = getattr(dn_value, "value", None)
             if value_attr is not None:
@@ -152,8 +161,9 @@ class FlextLdifEntries(
 
         for attr_name, attr_values in attrs_container.attributes.items():
             # attr_values is always a list[str] in LdifAttributes
-            result_dict[attr_name] = FlextLdifEntries._normalize_attribute_value(
-                attr_values,
+            normalized = FlextLdifEntries._normalize_attribute_value(attr_values)
+            result_dict[attr_name] = (
+                [normalized] if isinstance(normalized, str) else normalized
             )
 
         return result_dict
@@ -176,12 +186,15 @@ class FlextLdifEntries(
         for attr_name, attr_val in attrs_container.items():
             if FlextRuntime.is_list_like(attr_val):
                 # Return list as-is or single item if length==1
-                result_dict[attr_name] = FlextLdifEntries._normalize_attribute_value(
+                normalized = FlextLdifEntries._normalize_attribute_value(
                     [str(v) for v in attr_val],
                 )
+                result_dict[attr_name] = (
+                    [normalized] if isinstance(normalized, str) else normalized
+                )
             else:
-                # Single value - return as string
-                result_dict[attr_name] = str(attr_val)
+                # Single value - return as string, but dict expects list
+                result_dict[attr_name] = [str(attr_val)]
 
         return result_dict
 
@@ -281,7 +294,7 @@ class FlextLdifEntries(
         """
         try:
             # Normalize attributes to ensure all values are lists
-            normalized_attrs: FlextLdifTypes.CommonDict.AttributeDict = {}
+            normalized_attrs: dict[str, list[str] | str] = {}
             for key, value in attributes.items():
                 if FlextRuntime.is_list_like(value):
                     # Type narrowing: value is list[object], convert to list[str]

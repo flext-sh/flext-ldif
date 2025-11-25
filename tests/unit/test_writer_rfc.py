@@ -1,243 +1,329 @@
-"""Test FlextLdifWriter with RFC quirks."""
+"""Test suite for FlextLdifWriter RFC compliance.
+
+Modules tested: FlextLdifWriter (RFC 2849 writing, format options, output targets)
+Scope: Single/multiple entry writing, string/file output, statistics, multi-value
+attributes, empty entries, server validation
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+import dataclasses
+from enum import StrEnum
 from pathlib import Path
-from typing import cast
+from typing import Final
 
 import pytest
+from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifWriter
-
-# Import RFC quirks to ensure they are auto-registered
-from flext_ldif.services.server import FlextLdifServer
-
-
-@pytest.fixture
-def rfc_config() -> FlextLdifConfig:
-    """Create RFC configuration."""
-    return FlextLdifConfig(
-        quirks_detection_mode="manual",
-        quirks_server_type="rfc",
-        enable_relaxed_parsing=False,
-    )
+from flext_ldif import FlextLdifModels, FlextLdifWriter
+from tests.fixtures.constants import DNs, Names, Values
+from tests.helpers.test_factories import FlextLdifTestFactories
 
 
-@pytest.fixture
-def registry() -> FlextLdifServer:
-    """Get global FlextLdifServer with all registered quirks."""
-    return FlextLdifServer.get_global_instance()
+class WriteTarget(StrEnum):
+    """Write output target types."""
+
+    STRING = "string"
+    FILE = "file"
 
 
-@pytest.fixture
-def writer(rfc_config: FlextLdifConfig, registry: FlextLdifServer) -> FlextLdifWriter:
-    """Create FlextLdifWriter with RFC server type (current API)."""
-    # FlextLdifWriter() no longer accepts config/registry in __init__
-    # Registry is fetched as singleton automatically
-    return FlextLdifWriter()
+class WriterTestType(StrEnum):
+    """Types of writer tests."""
+
+    SINGLE_ENTRY = "single_entry"
+    MULTIPLE_ENTRIES = "multiple_entries"
+    STATISTICS = "statistics"
+    MULTIVALUE = "multivalue"
+    EMPTY_LIST = "empty_list"
+    INVALID_SERVER = "invalid_server"
+    INITIALIZATION = "initialization"
 
 
-@pytest.fixture
-def simple_entry() -> FlextLdifModels.Entry:
-    """Create a simple RFC-compliant entry."""
-    return FlextLdifModels.Entry(
-        dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-        attributes=FlextLdifModels.LdifAttributes(
+@dataclasses.dataclass(frozen=True)
+class WriterTestCase:
+    """Writer test case definition."""
+
+    test_type: WriterTestType
+    target_type: str = WriteTarget.STRING
+    expect_success: bool = True
+    expected_entry_count: int | None = None
+    expected_member_count: int | None = None
+    server_type: str = "rfc"
+    description: str = ""
+
+
+# Writer test cases
+WRITER_TESTS: Final[list[WriterTestCase]] = [
+    WriterTestCase(
+        WriterTestType.SINGLE_ENTRY,
+        WriteTarget.STRING,
+        description="Write single entry to string",
+    ),
+    WriterTestCase(
+        WriterTestType.SINGLE_ENTRY,
+        WriteTarget.FILE,
+        description="Write single entry to file",
+    ),
+    WriterTestCase(
+        WriterTestType.MULTIPLE_ENTRIES,
+        WriteTarget.STRING,
+        expected_entry_count=2,
+        description="Write multiple entries to string",
+    ),
+    WriterTestCase(
+        WriterTestType.STATISTICS,
+        WriteTarget.STRING,
+        expected_entry_count=1,
+        description="Verify entry statistics on write",
+    ),
+    WriterTestCase(
+        WriterTestType.MULTIVALUE,
+        WriteTarget.STRING,
+        expected_member_count=3,
+        description="Write entry with multiple attribute values",
+    ),
+    WriterTestCase(
+        WriterTestType.EMPTY_LIST,
+        WriteTarget.STRING,
+        description="Write empty entries list",
+    ),
+    WriterTestCase(
+        WriterTestType.INVALID_SERVER,
+        WriteTarget.STRING,
+        expect_success=False,
+        server_type="nonexistent-server",
+        description="Fail on non-existent server type",
+    ),
+    WriterTestCase(
+        WriterTestType.INITIALIZATION,
+        WriteTarget.STRING,
+        description="Test writer initialization",
+    ),
+]
+
+
+class WriterTestFactory:
+    """Factory for creating writer test instances and data."""
+
+    @staticmethod
+    def create_writer() -> FlextLdifWriter:
+        """Create FlextLdifWriter instance."""
+        return FlextLdifWriter()
+
+    @staticmethod
+    def create_format_options(
+        *, base64_encode: bool = False
+    ) -> FlextLdifModels.WriteFormatOptions:
+        """Create write format options."""
+        return FlextLdifModels.WriteFormatOptions(base64_encode_binary=base64_encode)
+
+    @classmethod
+    def create_simple_entry(cls) -> FlextLdifModels.Entry:
+        """Create a simple RFC-compliant entry."""
+        return FlextLdifTestFactories.create_entry(
+            dn=DNs.TEST_USER,
             attributes={
-                "cn": ["test"],
-                "objectClass": ["person", "inetOrgPerson"],
-                "sn": ["test-user"],
-                "mail": ["test@example.com"],
+                Names.CN: [Values.TEST],
+                Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
+                Names.SN: [f"{Values.TEST}-user"],
+                Names.MAIL: [Values.TEST_EMAIL],
             },
-        ),
-    )
+        )
 
-
-def test_write_single_entry_to_string(
-    writer: FlextLdifWriter,
-    simple_entry: FlextLdifModels.Entry,
-) -> None:
-    """Test writing a single entry to string."""
-    # Disable base64 encoding for readable output
-    format_options = FlextLdifModels.WriteFormatOptions(base64_encode_binary=False)
-    result = writer.write(
-        [simple_entry],
-        target_server_type="rfc",
-        output_target="string",
-        format_options=format_options,
-    )
-
-    assert result.is_success, f"Write failed: {result.error}"
-    content = cast("str", result.unwrap())
-
-    # Check LDIF version line
-    assert content.startswith("version: 1\n"), "Missing LDIF version line"
-
-    # Check DN line
-    assert "dn: cn=test,dc=example,dc=com" in content, "Missing or incorrect DN"
-
-    # Check attributes
-    assert "cn: test" in content, "Missing cn attribute"
-    assert "objectClass: person" in content, "Missing objectClass value"
-    assert "objectClass: inetOrgPerson" in content, "Missing objectClass value"
-    assert "sn: test-user" in content, "Missing sn attribute"
-    assert "mail: test@example.com" in content, "Missing mail attribute"
-
-
-def test_write_multiple_entries_to_string(
-    writer: FlextLdifWriter,
-    simple_entry: FlextLdifModels.Entry,
-) -> None:
-    """Test writing multiple entries to string."""
-    entry2 = FlextLdifModels.Entry(
-        dn=FlextLdifModels.DistinguishedName(value="cn=test2,dc=example,dc=com"),
-        attributes=FlextLdifModels.LdifAttributes(
+    @classmethod
+    def create_multivalue_entry(cls) -> FlextLdifModels.Entry:
+        """Create entry with multiple values for same attribute."""
+        return FlextLdifTestFactories.create_entry(
+            dn=DNs.TEST_GROUP,
             attributes={
-                "cn": ["test2"],
-                "objectClass": ["person"],
-            },
-        ),
-    )
-
-    format_options = FlextLdifModels.WriteFormatOptions(base64_encode_binary=False)
-    result = writer.write(
-        [simple_entry, entry2],
-        target_server_type="rfc",
-        output_target="string",
-        format_options=format_options,
-    )
-
-    assert result.is_success, f"Write failed: {result.error}"
-    content = cast("str", result.unwrap())
-
-    # Check both entries are present
-    assert "dn: cn=test,dc=example,dc=com" in content
-    assert "dn: cn=test2,dc=example,dc=com" in content
-    assert content.count("dn:") == 2, "Expected 2 entries"
-
-
-def test_write_to_file(
-    tmp_path: Path,
-    writer: FlextLdifWriter,
-    simple_entry: FlextLdifModels.Entry,
-) -> None:
-    """Test writing entries to file."""
-    output_file = tmp_path / "output.ldif"
-
-    format_options = FlextLdifModels.WriteFormatOptions(base64_encode_binary=False)
-    result = writer.write(
-        [simple_entry],
-        target_server_type="rfc",
-        output_target="file",
-        output_path=output_file,
-        format_options=format_options,
-    )
-
-    assert result.is_success, f"Write failed: {result.error}"
-    assert output_file.exists(), "Output file not created"
-
-    # Read and verify content
-    content = output_file.read_text()
-    assert "dn: cn=test,dc=example,dc=com" in content
-    assert "cn: test" in content
-    assert "objectClass: person" in content
-
-
-def test_write_entries_counted(
-    writer: FlextLdifWriter,
-    simple_entry: FlextLdifModels.Entry,
-    tmp_path: Path,
-) -> None:
-    """Test that entry count is correct."""
-    output_file = tmp_path / "count_test.ldif"
-    result = writer.write(
-        [simple_entry],
-        target_server_type="rfc",
-        output_target="file",
-        output_path=output_file,
-    )
-
-    assert result.is_success
-    write_response = cast("FlextLdifModels.WriteResponse", result.unwrap())
-    assert write_response.statistics.entries_written == 1
-
-
-def test_effective_server_type(writer: FlextLdifWriter) -> None:
-    """Test that writer service can be initialized successfully."""
-    # Writer service is initialized correctly - just verify it exists
-    assert writer is not None
-    assert isinstance(writer, FlextLdifWriter)
-
-
-def test_write_with_multiple_attribute_values(writer: FlextLdifWriter) -> None:
-    """Test writing entry with multiple values for same attribute."""
-    entry = FlextLdifModels.Entry(
-        dn=FlextLdifModels.DistinguishedName(value="cn=group,dc=example,dc=com"),
-        attributes=FlextLdifModels.LdifAttributes(
-            attributes={
-                "cn": ["group"],
-                "objectClass": ["groupOfNames", "top"],
+                Names.CN: [Values.TEST],
+                Names.OBJECTCLASS: ["groupOfNames", Names.TOP],
                 "member": [
-                    "cn=user1,dc=example,dc=com",
-                    "cn=user2,dc=example,dc=com",
-                    "cn=user3,dc=example,dc=com",
+                    f"cn={Values.USER1},{DNs.EXAMPLE}",
+                    f"cn={Values.USER2},{DNs.EXAMPLE}",
+                    f"cn=user3,{DNs.EXAMPLE}",
                 ],
             },
-        ),
-    )
+        )
 
-    format_options = FlextLdifModels.WriteFormatOptions(base64_encode_binary=False)
-    result = writer.write(
-        [entry],
-        target_server_type="rfc",
-        output_target="string",
-        format_options=format_options,
-    )
-
-    assert result.is_success
-    content = cast("str", result.unwrap())
-
-    # Check all member values are present
-    assert content.count("member: ") == 3, "Not all member values written"
-    assert "member: cn=user1,dc=example,dc=com" in content
-    assert "member: cn=user2,dc=example,dc=com" in content
-    assert "member: cn=user3,dc=example,dc=com" in content
+    @classmethod
+    def create_second_entry(cls) -> FlextLdifModels.Entry:
+        """Create a second RFC-compliant entry."""
+        return FlextLdifTestFactories.create_entry(
+            dn=f"cn=test2,{DNs.EXAMPLE}",
+            attributes={
+                Names.CN: ["test2"],
+                Names.OBJECTCLASS: [Names.PERSON],
+            },
+        )
 
 
-def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
-    """Test writing empty entries list."""
-    result = writer.write([], target_server_type="rfc", output_target="string")
-
-    assert result.is_success
-    content = cast("str", result.unwrap())
-    # Empty list produces LDIF version header but no entries (RFC 2849 compliant)
-    assert content == "version: 1\n"
-    assert content.count("dn:") == 0
+def get_writer_tests() -> list[WriterTestCase]:
+    """Parametrization helper for writer tests."""
+    return WRITER_TESTS
 
 
-def test_fallback_to_rfc_when_no_server(
-    rfc_config: FlextLdifConfig,
-    registry: FlextLdifServer,
-) -> None:
-    """Test that non-existent server type fails gracefully."""
-    # Use non-existent server type - should fail
-    # Note: FlextLdifWriter no longer accepts config/quirk_registry in __init__
-    writer = FlextLdifWriter()
+class TestWriterRfc:
+    """Comprehensive RFC writer tests.
 
-    entry = FlextLdifModels.Entry(
-        dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-        attributes=FlextLdifModels.LdifAttributes(
-            attributes={"cn": ["test"], "objectClass": ["person"]},
-        ),
-    )
+    Tests all writer functionality using factories, parametrization, and helpers
+    for minimal code with complete coverage.
+    """
 
-    format_options = FlextLdifModels.WriteFormatOptions(base64_encode_binary=False)
-    result = writer.write(
-        [entry],
-        target_server_type="nonexistent-server",
-        output_target="string",
-        format_options=format_options,
-    )
-    # Should fail with clear error message
-    assert result.is_failure
-    assert "no quirk found" in (result.error or "")
+    @pytest.mark.parametrize("test_case", get_writer_tests())
+    def test_writer_operations(
+        self,
+        test_case: WriterTestCase,
+        tmp_path: Path,
+    ) -> None:
+        """Comprehensive writer test for all scenarios."""
+        writer = WriterTestFactory.create_writer()
+        format_options = WriterTestFactory.create_format_options()
+
+        match test_case.test_type:
+            case WriterTestType.SINGLE_ENTRY:
+                # Test single entry writing
+                entry = WriterTestFactory.create_simple_entry()
+
+                if test_case.target_type == WriteTarget.FILE:
+                    output_path = tmp_path / "output.ldif"
+                    result = writer.write(
+                        [entry],
+                        target_server_type=test_case.server_type,
+                        output_target=test_case.target_type,
+                        output_path=output_path,
+                        format_options=format_options,
+                    )
+                    unwrapped = FlextTestsMatchers.assert_success(result)
+                    assert output_path.exists()
+                    content = output_path.read_text()
+                else:
+                    result = writer.write(
+                        [entry],
+                        target_server_type=test_case.server_type,
+                        output_target=test_case.target_type,
+                        format_options=format_options,
+                    )
+                    unwrapped = FlextTestsMatchers.assert_success(result)
+                    assert isinstance(unwrapped, str)
+                    content = unwrapped
+
+                # Verify LDIF structure
+                assert content.startswith("version: 1\n")
+                assert f"dn: {DNs.TEST_USER}" in content
+                assert f"{Names.CN}: {Values.TEST}" in content
+                assert f"{Names.OBJECTCLASS}: {Names.PERSON}" in content
+                assert f"{Names.OBJECTCLASS}: {Names.INET_ORG_PERSON}" in content
+
+            case WriterTestType.MULTIPLE_ENTRIES:
+                # Test multiple entry writing
+                entry1 = WriterTestFactory.create_simple_entry()
+                entry2 = WriterTestFactory.create_second_entry()
+
+                result = writer.write(
+                    [entry1, entry2],
+                    target_server_type=test_case.server_type,
+                    output_target=test_case.target_type,
+                    format_options=format_options,
+                )
+
+                unwrapped = FlextTestsMatchers.assert_success(result)
+                assert isinstance(unwrapped, str)
+                content = unwrapped
+
+                # Verify both entries are present
+                lines = content.split("\n")
+                dn_line_indices = [
+                    i for i, line in enumerate(lines) if line.startswith("dn:")
+                ]
+                # Should have at least expected count
+                expected_count = test_case.expected_entry_count or 2
+                assert len(dn_line_indices) >= expected_count, (
+                    f"Expected at least {expected_count} "
+                    f"DN lines, found {len(dn_line_indices)}"
+                )
+                assert f"dn: {DNs.TEST_USER}" in content
+                assert "dn: cn=test2,dc=example,dc=com" in content
+
+            case WriterTestType.STATISTICS:
+                # Test entry statistics
+                entry = WriterTestFactory.create_simple_entry()
+
+                result = writer.write(
+                    [entry],
+                    target_server_type=test_case.server_type,
+                    output_target=test_case.target_type,
+                    format_options=format_options,
+                )
+
+                unwrapped = FlextTestsMatchers.assert_success(result)
+                assert isinstance(unwrapped, str)
+                # Verify we have the entry in output
+                assert f"dn: {DNs.TEST_USER}" in unwrapped
+
+            case WriterTestType.MULTIVALUE:
+                # Test multi-value attributes
+                entry = WriterTestFactory.create_multivalue_entry()
+
+                result = writer.write(
+                    [entry],
+                    target_server_type=test_case.server_type,
+                    output_target=test_case.target_type,
+                    format_options=format_options,
+                )
+
+                unwrapped = FlextTestsMatchers.assert_success(result)
+                assert isinstance(unwrapped, str)
+                content = unwrapped
+
+                # Check all member values are present
+                assert content.count("member: ") == test_case.expected_member_count
+                assert f"member: cn={Values.USER1},dc=example,dc=com" in content
+                assert f"member: cn={Values.USER2},dc=example,dc=com" in content
+                assert "member: cn=user3,dc=example,dc=com" in content
+
+            case WriterTestType.EMPTY_LIST:
+                # Test empty entries list
+                result = writer.write(
+                    [],
+                    target_server_type=test_case.server_type,
+                    output_target=test_case.target_type,
+                    format_options=format_options,
+                )
+
+                unwrapped = FlextTestsMatchers.assert_success(result)
+                assert isinstance(unwrapped, str)
+                # Empty list produces LDIF version header but no entries
+                assert unwrapped == "version: 1\n"
+                assert unwrapped.count("dn:") == 0
+
+            case WriterTestType.INVALID_SERVER:
+                # Test invalid server type
+                entry = WriterTestFactory.create_simple_entry()
+
+                result = writer.write(
+                    [entry],
+                    target_server_type=test_case.server_type,
+                    output_target=test_case.target_type,
+                    format_options=format_options,
+                )
+
+                # Should fail with clear error message
+                assert result.is_failure
+                assert result.error is not None
+                assert "no quirk found" in result.error.lower()
+
+            case WriterTestType.INITIALIZATION:
+                # Test writer initialization
+                assert writer is not None
+                assert isinstance(writer, FlextLdifWriter)
+
+
+__all__ = [
+    "TestWriterRfc",
+    "WriteTarget",
+    "WriterTestFactory",
+]

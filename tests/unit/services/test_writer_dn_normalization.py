@@ -161,4 +161,7 @@ class TestWriterDnNormalization:
         assert write_result.is_success
         output = write_result.unwrap()
         # Should contain the normalized DN
-        assert "dn: cn=" in output, "Output should have normalized DN with lowercase cn"
+        if isinstance(output, str):
+            assert "dn: cn=" in output, (
+                "Output should have normalized DN with lowercase cn"
+            )

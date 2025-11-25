@@ -64,7 +64,7 @@ class TestMigrationPipelineInitialization:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules = {
+        categorization_rules: dict[str, object] = {
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["inetOrgPerson"],
             "group_objectclasses": ["groupOfNames"],
@@ -197,7 +197,7 @@ class TestMigrationPipelineWithEmptyInput:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules = {
+        categorization_rules: dict[str, object] = {
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["inetOrgPerson"],
             "group_objectclasses": ["groupOfNames"],
@@ -299,7 +299,7 @@ cn: admin
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules = {
+        categorization_rules: dict[str, object] = {
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
@@ -336,7 +336,7 @@ cn: user
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules = {
+        categorization_rules: dict[str, object] = {
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
@@ -372,7 +372,7 @@ userPassword: secret
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules = {
+        categorization_rules: dict[str, object] = {
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
@@ -436,7 +436,7 @@ class TestMigrationPipelineMultipleFiles:
             "dn: cn=admin,dc=example,dc=com\nobjectClass: person\ncn: admin\n",
         )
 
-        categorization_rules = {
+        categorization_rules: dict[str, object] = {
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],

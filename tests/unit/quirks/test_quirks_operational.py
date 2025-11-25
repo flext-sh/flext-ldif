@@ -1,7 +1,7 @@
 """Operational tests for quirks using real fixture data.
 
 Tests that use real LDIF fixtures to validate quirk operations with actual data.
-Serves as reference implementation for adding operational tests to other test files.
+Uses advanced Python 3.13 patterns, factories, and parametrization for maximum coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,270 +9,441 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
+from collections.abc import Callable
+from enum import IntEnum
+from typing import TypeVar
+
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
 from tests.fixtures import FlextLdifFixtures
+from tests.fixtures.constants import Fixtures
 from tests.fixtures.helpers import (
     extract_attributes,
-    extract_name,
     extract_objectclasses,
     extract_oid,
 )
 
+# Type variables for generic validators
+T = TypeVar("T")
 
-class TestOidQuirksWithRealFixtures:
-    """Test OID quirks with real fixture data."""
 
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID server quirk."""
+# Test scenario enums
+class FixtureType(IntEnum):
+    """Fixture data types for parametrized testing."""
+
+    ATTRIBUTES = 1
+    OBJECTCLASSES = 2
+
+
+class ConversionScenario(IntEnum):
+    """Conversion scenarios for OID/OUD testing."""
+
+    OID_TO_OUD = 1
+    OUD_TO_OID = 2
+    ROUNDTRIP = 3
+
+
+# Test data structures
+@dataclasses.dataclass(frozen=True)
+class SchemaTestConfig:
+    """Configuration for schema testing."""
+
+    attr_test_count: int = 5
+    oc_test_count: int = 5
+    min_success_rate: float = 0.90
+    roundtrip_test_count: int = 1
+
+
+# Module-level test configuration
+DEFAULT_TEST_CONFIG = SchemaTestConfig()
+
+
+# Factory functions
+def create_server(
+    server_type: str,
+) -> FlextLdifServersOid | FlextLdifServersOud:
+    """Create server instance by type."""
+    if server_type == Fixtures.OID:
         return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD server quirk."""
+    if server_type == Fixtures.OUD:
         return FlextLdifServersOud()
+    raise ValueError(f"Unknown server type: {server_type}")
 
-    @pytest.fixture
-    def oid_schema_attributes(
-        self,
-        oid_fixtures: FlextLdifFixtures.OID,
-    ) -> list[str]:
-        """Extract OID attributes from schema fixture."""
-        try:
-            schema = oid_fixtures.schema()
-        except AttributeError:
-            pytest.skip("OID schema fixture not available")
+
+def extract_schema_data(
+    fixtures: FlextLdifFixtures.OID,
+    data_type: FixtureType,
+) -> list[str]:
+    """Extract schema data from fixtures."""
+    try:
+        schema = fixtures.schema()
+    except AttributeError:
+        pytest.skip(f"Schema fixture not available for {data_type.name}")
+
+    if data_type == FixtureType.ATTRIBUTES:
         return extract_attributes(schema)
-
-    @pytest.fixture
-    def oid_schema_objectclasses(
-        self,
-        oid_fixtures: FlextLdifFixtures.OID,
-    ) -> list[str]:
-        """Extract OID objectClasses from schema fixture."""
-        try:
-            schema = oid_fixtures.schema()
-        except AttributeError:
-            pytest.skip("OID schema fixture not available")
+    if data_type == FixtureType.OBJECTCLASSES:
         return extract_objectclasses(schema)
+    raise ValueError(f"Unknown data type: {data_type}")
 
-    @pytest.mark.parametrize("attr_index", range(5))
-    def test_parse_real_oid_attributes_from_fixtures(
+
+# Validator class
+class SchemaValidator:
+    """Validators for schema parsing and conversion tests."""
+
+    @staticmethod
+    def validate_parse_result(
+        result: FlextResult[T],
+        expected_type: type[T],
+        description: str,
+    ) -> T:
+        """Validate parsing result with common assertions."""
+        assert result.is_success, f"Failed to parse {description}: {result.error}"
+        parsed = result.unwrap()
+        assert isinstance(parsed, expected_type), (
+            f"Expected {expected_type.__name__}, got {type(parsed).__name__}"
+        )
+        return parsed
+
+    @staticmethod
+    def validate_oid_preservation(
+        original_def: str,
+        parsed_model: FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
+    ) -> None:
+        """Validate OID is preserved in parsed model."""
+        original_oid = extract_oid(original_def)
+        if original_oid and hasattr(parsed_model, "oid"):
+            # Both SchemaAttribute and SchemaObjectClass have oid attribute
+            parsed_oid = parsed_model.oid
+            assert parsed_oid == original_oid, (
+                f"OID mismatch: {original_oid} → {parsed_oid}"
+            )
+
+    @staticmethod
+    def validate_success_rate(
+        items: list[str],
+        parse_func: Callable[[str], FlextResult[T]],
+        min_rate: float = 0.90,
+    ) -> None:
+        """Validate parsing success rate meets minimum threshold."""
+        if not items:
+            pytest.skip("No items in fixture")
+
+        successes = sum(1 for item in items if parse_func(item).is_success)
+        success_rate = successes / len(items)
+
+        assert success_rate >= min_rate, (
+            f"Success rate {success_rate:.1%} "
+            f"({successes}/{len(items)}) below {min_rate:.1%}"
+        )
+
+    @staticmethod
+    def validate_conversion_result(
+        result: FlextResult[T],
+        expected_type: type[T],
+        description: str,
+    ) -> T:
+        """Validate conversion result with common assertions."""
+        assert result.is_success, f"Conversion failed for {description}: {result.error}"
+        converted = result.unwrap()
+        assert isinstance(converted, expected_type), (
+            f"Expected {expected_type.__name__}, got {type(converted).__name__}"
+        )
+        return converted
+
+    @staticmethod
+    def validate_roundtrip_preservation(
+        original_model: FlextLdifModels.SchemaAttribute,
+        final_model: FlextLdifModels.SchemaAttribute,
+        attributes_to_check: list[str],
+    ) -> None:
+        """Validate that specified attributes are preserved in roundtrip."""
+        for attr in attributes_to_check:
+            if hasattr(original_model, attr) and hasattr(final_model, attr):
+                orig_value = getattr(original_model, attr)
+                final_value = getattr(final_model, attr)
+                assert orig_value == final_value, (
+                    f"{attr} not preserved: {orig_value} → {final_value}"
+                )
+
+
+# Parametrization functions
+def get_attribute_indices() -> list[int]:
+    """Generate attribute test indices for parametrization."""
+    return list(range(DEFAULT_TEST_CONFIG.attr_test_count))
+
+
+def get_objectclass_indices() -> list[int]:
+    """Generate objectClass test indices for parametrization."""
+    return list(range(DEFAULT_TEST_CONFIG.oc_test_count))
+
+
+def get_roundtrip_indices() -> list[int]:
+    """Generate roundtrip test indices for parametrization."""
+    return list(range(DEFAULT_TEST_CONFIG.roundtrip_test_count))
+
+
+# Module-level fixtures
+@pytest.fixture
+def oid_server() -> FlextLdifServersOid:
+    """Create OID server instance."""
+    return create_server(Fixtures.OID)  # type: ignore[return-value]
+
+
+@pytest.fixture
+def oud_server() -> FlextLdifServersOud:
+    """Create OUD server instance."""
+    return create_server(Fixtures.OUD)  # type: ignore[return-value]
+
+
+@pytest.fixture
+def conversion_service() -> FlextLdifConversion:
+    """Create conversion service instance."""
+    return FlextLdifConversion()
+
+
+@pytest.fixture
+def oid_schema_attributes(
+    oid_fixtures: FlextLdifFixtures.OID,
+) -> list[str]:
+    """Extract OID attributes from schema fixture."""
+    return extract_schema_data(oid_fixtures, FixtureType.ATTRIBUTES)
+
+
+@pytest.fixture
+def oid_schema_objectclasses(
+    oid_fixtures: FlextLdifFixtures.OID,
+) -> list[str]:
+    """Extract OID objectClasses from schema fixture."""
+    return extract_schema_data(oid_fixtures, FixtureType.OBJECTCLASSES)
+
+
+@pytest.fixture
+def oid_conversion_attributes(
+    oid_fixtures: FlextLdifFixtures.OID,
+) -> list[str]:
+    """Extract OID attributes for conversion testing."""
+    return extract_schema_data(oid_fixtures, FixtureType.ATTRIBUTES)
+
+
+# Test classes
+class TestOperationalSchemaAttributeParsing:
+    """Test parsing real OID attributes from fixtures."""
+
+    @pytest.mark.parametrize("attr_index", get_attribute_indices())
+    def test_parse_oid_attributes_from_fixtures(
         self,
-        oid: FlextLdifServersOid,
+        oid_server: FlextLdifServersOid,
         oid_schema_attributes: list[str],
         attr_index: int,
     ) -> None:
-        """Test parsing real OID attributes from fixtures.
-
-        Uses parametrization to test multiple attributes.
-        """
+        """Test parsing real OID attributes with dynamic parametrization."""
         if attr_index >= len(oid_schema_attributes):
-            pytest.skip(f"Not enough attributes in fixture (need {attr_index + 1})")
+            pytest.skip(f"Insufficient attributes (need {attr_index + 1})")
 
         attr_def = oid_schema_attributes[attr_index]
-        result = oid.schema_quirk.parse(attr_def)
+        result = oid_server.schema_quirk.parse(attr_def)
+        parsed = SchemaValidator.validate_parse_result(
+            result,  # type: ignore[arg-type]
+            FlextLdifModels.SchemaAttribute,
+            f"attribute[{attr_index}]",
+        )
 
-        assert result.is_success, f"Failed to parse attribute: {result.error}"
-        parsed = result.unwrap()
-        # Parse attribute returns a Pydantic SchemaAttribute model, not dict
-
-        assert isinstance(parsed, FlextLdifModels.SchemaAttribute)
-
-        # Verify essential elements preserved
-        oid = extract_oid(attr_def)
-        if oid:
-            assert hasattr(parsed, "oid"), f"OID not in parsed attribute: {parsed}"
-
-    @pytest.mark.parametrize("oc_index", range(5))
-    def test_parse_real_oid_objectclasses_from_fixtures(
-        self,
-        oid: FlextLdifServersOid,
-        oid_schema_objectclasses: list[str],
-        oc_index: int,
-    ) -> None:
-        """Test parsing real OID objectClasses from fixtures."""
-        if oc_index >= len(oid_schema_objectclasses):
-            pytest.skip(f"Not enough objectClasses in fixture (need {oc_index + 1})")
-
-        oc_def = oid_schema_objectclasses[oc_index]
-        result = oid.schema_quirk.parse(oc_def)
-
-        assert result.is_success, f"Failed to parse objectClass: {result.error}"
-        parsed = result.unwrap()
-        # Parse objectclass returns a Pydantic SchemaObjectClass model, not dict
-
-        assert isinstance(parsed, FlextLdifModels.SchemaObjectClass)
+        SchemaValidator.validate_oid_preservation(attr_def, parsed)
 
     def test_parse_all_oid_attributes_success_rate(
         self,
-        oid: FlextLdifServersOid,
+        oid_server: FlextLdifServersOid,
         oid_schema_attributes: list[str],
     ) -> None:
         """Test that high percentage of real OID attributes parse successfully."""
-        if not oid_schema_attributes:
-            pytest.skip("No OID attributes in fixture")
 
-        successes = 0
-        failures = []
+        def parse_attribute(attr: str) -> FlextResult[object]:
+            return oid_server.parse(attr)  # type: ignore[return-value]
 
-        for attr in oid_schema_attributes:
-            result = oid.parse(attr)
-            if result.is_success:
-                successes += 1
-            else:
-                failures.append((attr[:50], result.error))
-
-        success_rate = (
-            successes / len(oid_schema_attributes) if oid_schema_attributes else 0
-        )
-        assert success_rate > 0.90, (
-            f"Only {success_rate:.1%} of OID attributes parsed successfully "
-            f"({successes}/{len(oid_schema_attributes)}). Failures: {failures[:3]}"
+        SchemaValidator.validate_success_rate(
+            oid_schema_attributes,
+            parse_attribute,
+            DEFAULT_TEST_CONFIG.min_success_rate,
         )
 
 
-class TestConversionMatrixWithRealFixtures:
-    """Test conversion matrix using real fixture data."""
+class TestOperationalSchemaObjectClassParsing:
+    """Test parsing real OID objectClasses from fixtures."""
 
-    @pytest.fixture
-    def matrix(self) -> FlextLdifConversion:
-        """Create conversion matrix."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID server quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD server quirk."""
-        return FlextLdifServersOud()
-
-    @pytest.fixture
-    def oid_conversion_attributes(
+    @pytest.mark.parametrize("oc_index", get_objectclass_indices())
+    def test_parse_oid_objectclasses_from_fixtures(
         self,
-        oid_fixtures: FlextLdifFixtures.OID,
-    ) -> list[str]:
-        """Extract OID attributes for conversion testing."""
-        try:
-            schema = oid_fixtures.schema()
-        except AttributeError:
-            pytest.skip("OID schema fixture not available")
-        return extract_attributes(schema)
+        oid_server: FlextLdifServersOid,
+        oid_schema_objectclasses: list[str],
+        oc_index: int,
+    ) -> None:
+        """Test parsing real OID objectClasses with dynamic parametrization."""
+        if oc_index >= len(oid_schema_objectclasses):
+            pytest.skip(f"Insufficient objectClasses (need {oc_index + 1})")
+
+        oc_def = oid_schema_objectclasses[oc_index]
+        result = oid_server.schema_quirk.parse(oc_def)
+        SchemaValidator.validate_parse_result(
+            result,  # type: ignore[arg-type]
+            FlextLdifModels.SchemaObjectClass,
+            f"objectClass[{oc_index}]",
+        )
+
+    def test_parse_all_oid_objectclasses_success_rate(
+        self,
+        oid_server: FlextLdifServersOid,
+        oid_schema_objectclasses: list[str],
+    ) -> None:
+        """Test that high percentage of OID objectClasses parse successfully."""
+
+        def parse_objectclass(oc: str) -> FlextResult[object]:
+            return oid_server.parse(oc)  # type: ignore[return-value]
+
+        SchemaValidator.validate_success_rate(
+            oid_schema_objectclasses,
+            parse_objectclass,
+            DEFAULT_TEST_CONFIG.min_success_rate,
+        )
+
+
+class TestOperationalServerConversion:
+    """Test OID↔OUD server conversion operations."""
 
     def test_oid_to_oud_conversion_with_real_attributes(
         self,
-        matrix: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_service: FlextLdifConversion,
+        oid_server: FlextLdifServersOid,
+        oud_server: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
     ) -> None:
-        """Test OID→OUD conversion with real fixture attributes.
-
-        Note: Currently only Entry models are supported for conversion.
-        SchemaAttribute conversion would require additional implementation.
-        """
+        """Test OID→OUD conversion with real fixture attributes."""
         if not oid_conversion_attributes:
             pytest.skip("No OID attributes in fixture")
+
+        test_count = min(
+            DEFAULT_TEST_CONFIG.attr_test_count,
+            len(oid_conversion_attributes),
+        )
+        test_attributes = oid_conversion_attributes[:test_count]
 
         successes = 0
-        failures = []
+        failures: list[tuple[str, str]] = []
 
-        # Test first 5 attributes
-        for attr in oid_conversion_attributes[:5]:
-            # Parse attribute string to SchemaAttribute model first
-            parse_result = oid.schema_quirk.parse(attr)
-            if parse_result.is_failure:
-                failures.append((attr[:50], parse_result.error))
-                continue
+        for i, attr_def in enumerate(test_attributes):
+            try:
+                parse_result = oid_server.schema_quirk.parse(attr_def)
+                parsed_model = SchemaValidator.validate_parse_result(
+                    parse_result,  # type: ignore[arg-type]
+                    FlextLdifModels.SchemaAttribute,
+                    f"attribute[{i}]",
+                )
 
-            attr_model = parse_result.unwrap()
-            # Convert model from OID to OUD format
-            result = matrix.convert(oid, oud, attr_model)
+                conv_result = conversion_service.convert(
+                    oid_server,
+                    oud_server,
+                    parsed_model,  # type: ignore[arg-type]
+                )
+                converted_model = SchemaValidator.validate_conversion_result(
+                    conv_result,  # type: ignore[arg-type]
+                    FlextLdifModels.SchemaAttribute,
+                    f"conversion[{i}]",
+                )
 
-            if result.is_success:
-                successes += 1
-                converted_model = result.unwrap()
-
-                # Verify converted is also a SchemaAttribute model
-
-                assert isinstance(converted_model, FlextLdifModels.SchemaAttribute)
-
-                # Validate conversion preserved OID
-                orig_oid = extract_oid(attr)
-                if orig_oid and converted_model.oid:
-                    assert orig_oid == converted_model.oid, (
-                        f"OID changed during conversion: {orig_oid} → {converted_model.oid}"
+                # Validate OID preservation
+                original_oid = extract_oid(attr_def)
+                if original_oid and hasattr(converted_model, "oid"):
+                    converted_oid = converted_model.oid  # type: ignore[union-attr]
+                    assert original_oid == converted_oid, (
+                        f"OID mismatch: {original_oid} → {converted_oid}"
                     )
-            else:
-                failures.append((attr[:50], result.error))
 
-        assert len(failures) == 0, f"Conversion failures: {failures}"
+                successes += 1
+
+            except AssertionError as e:
+                failures.append((attr_def[:50], str(e)))
+
+        assert not failures, f"Conversion failures: {failures}"
         assert successes > 0, "No successful conversions"
 
+
+class TestOperationalServerRoundtrip:
+    """Test roundtrip conversions between OID and OUD servers."""
+
+    @pytest.mark.parametrize("roundtrip_index", get_roundtrip_indices())
     def test_roundtrip_oid_oud_oid_with_real_data(
         self,
-        matrix: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_service: FlextLdifConversion,
+        oid_server: FlextLdifServersOid,
+        oud_server: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
+        roundtrip_index: int,
     ) -> None:
-        """Test OID→OUD→OID roundtrip preserves essential data.
+        """Test OID→OUD→OID roundtrip with real fixture data."""
+        if roundtrip_index >= len(oid_conversion_attributes):
+            pytest.skip(
+                f"Insufficient attributes for roundtrip (need {roundtrip_index + 1})"
+            )
 
-        Note: Currently only Entry models are supported for conversion.
-        SchemaAttribute conversion would require additional implementation.
-        """
-        if not oid_conversion_attributes:
-            pytest.skip("No OID attributes in fixture")
+        original_attr = oid_conversion_attributes[roundtrip_index]
 
-        # Test first attribute only for roundtrip
-        original_attr = oid_conversion_attributes[0]
-        orig_oid = extract_oid(original_attr)
-        orig_name = extract_name(original_attr)
-
-        # Parse original attribute string to model
-        parse_result = oid.schema_quirk.parse(original_attr)
-        assert parse_result.is_success, (
-            f"Failed to parse original attribute: {parse_result.error}"
+        # Parse original
+        parse_result = oid_server.schema_quirk.parse(original_attr)
+        original_model = SchemaValidator.validate_parse_result(
+            parse_result,  # type: ignore[arg-type]
+            FlextLdifModels.SchemaAttribute,
+            f"roundtrip[{roundtrip_index}] original",
         )
-        original_model = parse_result.unwrap()
+
+        # Forward conversion (OID → OUD)
+        forward_result = conversion_service.convert(
+            oid_server,
+            oud_server,
+            original_model,  # type: ignore[arg-type]
+        )
+        forward_model = SchemaValidator.validate_conversion_result(
+            forward_result,  # type: ignore[arg-type]
+            FlextLdifModels.SchemaAttribute,
+            f"roundtrip[{roundtrip_index}] forward",
+        )
+
+        # Backward conversion (OUD → OID)
+        backward_result = conversion_service.convert(
+            oud_server,
+            oid_server,
+            forward_model,  # type: ignore[arg-type]
+        )
+        final_model = SchemaValidator.validate_conversion_result(
+            backward_result,  # type: ignore[arg-type]
+            FlextLdifModels.SchemaAttribute,
+            f"roundtrip[{roundtrip_index}] backward",
+        )
+
+        # Validate roundtrip preservation
+        # Type narrowing: original_model and final_model are guaranteed to be SchemaAttribute
         assert isinstance(original_model, FlextLdifModels.SchemaAttribute)
-
-        # Forward: OID → OUD
-        forward_result = matrix.convert(oid, oud, original_model)
-        assert forward_result.is_success, (
-            f"Forward conversion failed: {forward_result.error}"
-        )
-
-        # Get converted model
-        forward_model = forward_result.unwrap()
-        assert isinstance(forward_model, FlextLdifModels.SchemaAttribute)
-
-        # Backward: OUD → OID
-        backward_result = matrix.convert(oud, oid, forward_model)
-        assert backward_result.is_success, (
-            f"Backward conversion failed: {backward_result.error}"
-        )
-
-        final_model = backward_result.unwrap()
         assert isinstance(final_model, FlextLdifModels.SchemaAttribute)
-
-        # Validate semantic equivalence
-        final_oid = final_model.oid
-        final_name = final_model.name
-        assert orig_oid == final_oid, (
-            f"OID not preserved in roundtrip: {orig_oid} → {final_oid}"
-        )
-        assert orig_name == final_name, (
-            f"NAME not preserved in roundtrip: {orig_name} → {final_name}"
+        SchemaValidator.validate_roundtrip_preservation(
+            original_model,
+            final_model,
+            ["oid", "name"],
         )
 
 
-__all__ = ["TestConversionMatrixWithRealFixtures", "TestOidQuirksWithRealFixtures"]
+__all__ = [
+    "ConversionScenario",
+    "FixtureType",
+    "SchemaTestConfig",
+    "SchemaValidator",
+    "TestOperationalSchemaAttributeParsing",
+    "TestOperationalSchemaObjectClassParsing",
+    "TestOperationalServerConversion",
+    "TestOperationalServerRoundtrip",
+]

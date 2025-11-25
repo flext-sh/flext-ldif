@@ -13,6 +13,8 @@ from flext_ldif import (
     FlextLdifConstants,
     FlextLdifModels,
     FlextLdifParser,
+    FlextLdifProtocols,
+    FlextLdifTypes,
     FlextLdifWriter,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -47,19 +49,23 @@ def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 
 
 @pytest.fixture
-def rfc_schema_quirk(rfc_quirk: FlextLdifServersBase) -> object:
+def rfc_schema_quirk(
+    rfc_quirk: FlextLdifServersBase,
+) -> FlextLdifProtocols.SchemaProtocol:
     """Provides RFC Schema quirk instance for tests."""
     return rfc_quirk.schema_quirk
 
 
 @pytest.fixture
-def rfc_entry_quirk(rfc_quirk: FlextLdifServersBase) -> object:
+def rfc_entry_quirk(
+    rfc_quirk: FlextLdifServersBase,
+) -> FlextLdifTypes.EntryQuirkInstance:
     """Provides RFC Entry quirk instance for tests."""
     return rfc_quirk.entry_quirk
 
 
 @pytest.fixture
-def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> object:
+def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> FlextLdifTypes.AclQuirkInstance:
     """Provides RFC ACL quirk instance for tests."""
     return rfc_quirk.acl_quirk
 
@@ -211,7 +217,7 @@ def sample_entry_with_metadata() -> FlextLdifModels.Entry:
 
 # Conversion test fixtures and constants
 @pytest.fixture
-def conversion_matrix() -> object:
+def conversion_matrix() -> FlextLdifConversion:
     """Provides FlextLdifConversion instance for conversion tests."""
     return FlextLdifConversion()
 
@@ -233,25 +239,29 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 
 
 @pytest.fixture
-def oid_schema_quirk(oid_quirk: FlextLdifServersBase) -> object:
+def oid_schema_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifProtocols.Quirks.SchemaProtocol:
     """Provides OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
 
 @pytest.fixture
-def oud_schema_quirk(oud_quirk: FlextLdifServersBase) -> object:
+def oud_schema_quirk(
+    oud_quirk: FlextLdifServersBase,
+) -> FlextLdifProtocols.Quirks.SchemaProtocol:
     """Provides OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 
 
 @pytest.fixture
-def real_writer_service() -> object:
+def real_writer_service() -> FlextLdifWriter:
     """Provides real writer service for conversion tests."""
     return FlextLdifWriter()
 
 
 @pytest.fixture
-def real_parser_service() -> object:
+def real_parser_service() -> FlextLdifParser:
     """Provides real parser service for conversion tests."""
     return FlextLdifParser()
 

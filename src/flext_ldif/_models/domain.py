@@ -23,9 +23,11 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
-    FlextRuntime,
     FlextUtilities,
 )
+
+# No import from models.py to avoid circular import
+# Use FlextLdifModelsDomains classes directly
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -424,11 +426,12 @@ class FlextLdifModelsDomains:
             parts = self.oid.split(".")
             return parts[-1] if parts else None
 
-        @staticmethod
+        @classmethod
         def resolve_syntax_oid(
+            cls,
             oid: str,
             server_type: str = "rfc",
-        ) -> FlextLdifModelsDomains.Syntax | None:
+        ) -> Self | None:
             """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
 
             This method is used by both models and the syntax service to avoid circular dependencies.
@@ -480,7 +483,7 @@ class FlextLdifModelsDomains:
                 )
 
                 # Create and validate Syntax model
-                return FlextLdifModelsDomains.Syntax(
+                return cls(
                     oid=oid,
                     name=name,
                     desc=None,
@@ -753,9 +756,9 @@ class FlextLdifModelsDomains:
                 # Normalize values to list[str]
                 normalized_attrs: dict[str, list[str]] = {}
                 for key, val in attrs_data.items():
-                    if FlextRuntime.is_list_like(val):
+                    if isinstance(val, list):
                         # Type guard: val is list-like, so it's iterable
-                        val_list = val
+                        val_list = cast("list[object]", val)
                         normalized_attrs[key] = [str(v) for v in val_list]
                     elif isinstance(val, str):
                         normalized_attrs[key] = [val]
@@ -983,14 +986,8 @@ class FlextLdifModelsDomains:
                     )
 
             if inconsistencies:
-                result = FlextResult[bool].ok(False)
-                result.metadata = FlextModels.Metadata(
-                    attributes={
-                        "inconsistencies": inconsistencies,
-                        "warning": f"Found {len(inconsistencies)} DNs with case inconsistencies",
-                    },
-                )
-                return result
+                # Return False with warning (metadata not supported in FlextResult)
+                return FlextResult[bool].ok(False)
 
             return FlextResult[bool].ok(True)
 
@@ -1031,7 +1028,7 @@ class FlextLdifModelsDomains:
                         normalized_data[field_name] = self._normalize_single_dn(
                             field_value,
                         )
-                    elif FlextRuntime.is_list_like(field_value):
+                    elif isinstance(field_value, list):
                         # Type guard: field_value is list-like, so it's a list
                         field_value_list = field_value
                         normalized_data[field_name] = self._normalize_dn_list(
@@ -1780,7 +1777,7 @@ class FlextLdifModelsDomains:
 
             # Get server-injected validation rules
             validation_rules = self.metadata.extensions.get("validation_rules")
-            if not FlextRuntime.is_dict_like(validation_rules):
+            if not isinstance(validation_rules, dict):
                 return self
 
             # Type guard: validation_rules passed is_dict_like check
@@ -1824,9 +1821,7 @@ class FlextLdifModelsDomains:
                 else {}
             )
             # Type guard: ensure we return dict[str, object]
-            return cast(
-                "dict[str, object]", result if FlextRuntime.is_dict_like(result) else {}
-            )
+            return cast("dict[str, object]", result if isinstance(result, dict) else {})
 
         class Builder:
             """Builder pattern for Entry creation (reduces complexity, improves readability)."""
@@ -2047,7 +2042,7 @@ class FlextLdifModelsDomains:
                 msg = "Attributes cannot be None (required per RFC 2849 § 2)"
                 raise ValueError(msg)
 
-            if FlextRuntime.is_dict_like(attributes):
+            if isinstance(attributes, dict):
                 # Lenient processing: Accept empty dict (violation captured in validation_metadata)
                 # Empty dict is valid LdifAttributes (Pydantic allows it)
                 attrs_dict: dict[str, list[str]] = {}
@@ -2055,7 +2050,7 @@ class FlextLdifModelsDomains:
                     # Normalize to list if string
                     if isinstance(attr_values, str):
                         values_list: list[str] = [str(attr_values)]
-                    elif FlextRuntime.is_list_like(attr_values):
+                    elif isinstance(attr_values, list):
                         values_list = [str(v) for v in attr_values]
                     else:
                         # Single value - convert to list
@@ -2239,7 +2234,7 @@ class FlextLdifModelsDomains:
                 # entry_attrs_raw is always dict from ldap3_entry.entry_attributes_as_dict
                 if entry_attrs_raw:
                     for attr_name, attr_value_list in entry_attrs_raw.items():
-                        if FlextRuntime.is_list_like(attr_value_list):
+                        if isinstance(attr_value_list, list):
                             # Type guard: attr_value_list is list-like, so it's iterable
                             attrs_dict[str(attr_name)] = [
                                 str(v) for v in attr_value_list
@@ -2427,6 +2422,29 @@ class FlextLdifModelsDomains:
             """Get list of objectClass attribute values from entry."""
             return self.get_attribute_values(FlextLdifConstants.DictKeys.OBJECTCLASS)
 
+        def get_entries(self) -> list[FlextLdifModelsDomains.Entry]:
+            """Get this entry as a list for unified protocol.
+
+            Returns:
+                List containing this entry
+
+            """
+            # Convert domain entry to public facade entry
+            return [
+                FlextLdifModelsDomains.Entry(
+                    dn=FlextLdifModelsDomains.DistinguishedName(
+                        value=self.dn.value
+                        if hasattr(self.dn, "value")
+                        else str(self.dn)
+                    ),
+                    attributes=FlextLdifModelsDomains.LdifAttributes(
+                        attributes=dict(self.attributes.attributes)
+                        if hasattr(self.attributes, "attributes")
+                        else dict(self.attributes)
+                    ),
+                )
+            ]
+
     class AttributeTransformation(BaseModel):
         """Detailed tracking of attribute transformation operations.
 
@@ -2474,7 +2492,7 @@ class FlextLdifModelsDomains:
         )
         transformation_type: str = Field(
             ...,
-            description="Type of transformation: renamed, removed, modified, added, soft_deleted",
+            description="Type of transformation: renamed, removed, modified, added",
         )
         reason: str = Field(
             default="",
@@ -2485,7 +2503,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def validate_transformation_type(cls, v: str) -> str:
             """Validate transformation type is one of the allowed values."""
-            allowed_types = {"renamed", "removed", "modified", "added", "soft_deleted"}
+            allowed_types = {"renamed", "removed", "modified", "added"}
             if v not in allowed_types:
                 msg = (
                     f"Invalid transformation_type '{v}'. "

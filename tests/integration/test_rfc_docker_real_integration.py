@@ -267,7 +267,6 @@ class TestRfcExceptionHandlingRealScenarios:
             )
 
             writer = FlextLdifWriter(
-                config=FlextLdifConfig(),
                 quirk_registry=quirk_registry,
             )
 

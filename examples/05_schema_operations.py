@@ -225,6 +225,8 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
         if isinstance(dn, dict):
             # Skip invalid scenarios with dict dn for this example
             continue
+        if not isinstance(dn, str):
+            continue
         if isinstance(attributes, dict):
             # Ensure attributes are in correct format
             attrs_dict = cast("dict[str, list[str] | str]", attributes)
@@ -315,7 +317,7 @@ mail: modern@example.com
     migration_results: dict[str, object] = {}
 
     # Step 1: Parse source data with schema validation
-    all_entries = []
+    all_entries: list[FlextLdifModels.Entry] = []
     for ldif_file in source_dir.glob("*.ldif"):
         parse_result = api.parse(ldif_file)
         if parse_result.is_success:
@@ -336,12 +338,14 @@ mail: modern@example.com
 
     # Step 3: Schema-aware migration (attribute name changes, etc.)
     # This would transform legacy 'emailAddress' to 'mail', etc.
-    migrated_entries = []
-    for entry in all_entries:
+    migrated_entries: list[FlextLdifModels.Entry] = []
+    for ldif_entry in all_entries:
         # Transform legacy attributes to modern schema
-        attrs_dict = {}
-        if hasattr(entry, "attributes") and hasattr(entry.attributes, "attributes"):
-            for attr_name, attr_values in entry.attributes.attributes.items():
+        attrs_dict: dict[str, str | list[str]] = {}
+        if hasattr(ldif_entry, "attributes") and hasattr(
+            ldif_entry.attributes, "attributes"
+        ):
+            for attr_name, attr_values in ldif_entry.attributes.attributes.items():
                 if attr_name == "emailAddress":
                     # Migrate legacy emailAddress to mail
                     attrs_dict["mail"] = attr_values
@@ -349,8 +353,13 @@ mail: modern@example.com
                     attrs_dict[attr_name] = attr_values
 
         # Create migrated entry
+        entry_dn: str = (
+            ldif_entry.dn.value
+            if hasattr(ldif_entry.dn, "value")
+            else str(ldif_entry.dn)
+        )
         migrate_result = api.create_entry(
-            dn=entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn),
+            dn=entry_dn,
             attributes=attrs_dict,
         )
         if migrate_result.is_success:
@@ -452,7 +461,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
     schema_batches.append(("object_classes", object_classes))
 
     # Process batches in parallel
-    batch_results = {}
+    batch_results: dict[str, object] = {}
     total_schema_entries = 0
 
     for batch_name, entries in schema_batches:
