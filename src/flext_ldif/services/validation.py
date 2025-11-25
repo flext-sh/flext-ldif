@@ -110,19 +110,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import Self, override
 
 from flext_core import FlextDecorators, FlextResult
 from pydantic import Field
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[FlextLdifModels.ValidationServiceStatus],
+    LdifServiceBase,
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
@@ -209,17 +209,17 @@ class FlextLdifValidation(
         """
         return cls()
 
-    def with_attribute_names(self, names: list[str]) -> FlextLdifValidation:
+    def with_attribute_names(self, names: list[str]) -> Self:
         """Set attribute names to validate (fluent builder)."""
         self.attribute_names = names
         return self
 
-    def with_objectclass_names(self, names: list[str]) -> FlextLdifValidation:
+    def with_objectclass_names(self, names: list[str]) -> Self:
         """Set objectClass names to validate (fluent builder)."""
         self.objectclass_names = names
         return self
 
-    def with_max_attr_value_length(self, length: int) -> FlextLdifValidation:
+    def with_max_attr_value_length(self, length: int) -> Self:
         """Set maximum attribute value length (fluent builder)."""
         self.max_attr_value_length = length
         return self

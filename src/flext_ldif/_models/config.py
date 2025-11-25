@@ -9,11 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, FlextModels
+from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+
+# Type alias for forward reference (avoids circular import with config.py)
+# The actual FlextLdifConfig type is resolved at runtime via string annotation
+# when from __future__ import annotations is active
 
 
 class FlextLdifModelsConfig:
@@ -166,7 +169,7 @@ class FlextLdifModelsConfig:
             description="Attribute names containing ACL information",
         )
 
-    class MigrateOptions(BaseModel):
+    class MigrateOptions(FlextModels.Value):
         """Options for FlextLdif.migrate() operation.
 
         Consolidates 12+ optional parameters into single typed Model.
@@ -177,12 +180,11 @@ class FlextLdifModelsConfig:
         - Categorized: Custom multi-file output (via categorization_rules)
         - Simple: Single output file (default)
 
+        Inherits from FlextModels.Value:
+        - Immutable (frozen=True)
+        - Validates assignment
+        - Extra fields forbidden
         """
-
-        model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
 
         # Structured migration (preferred for production)
         migration_config: dict[str, object] | None = Field(
@@ -328,6 +330,35 @@ class FlextLdifModelsConfig:
     class WriteFormatOptions(BaseModel):
         """Formatting options for LDIF serialization.
 
+        .. deprecated:: 0.9.0
+            Use FlextLdifConfig fields (ldif_write_*) instead.
+            This class will be removed in version 1.0.0.
+
+        **Migration Guide**:
+            Replace WriteFormatOptions with FlextLdifConfig:
+
+            .. code-block:: python
+
+                # OLD (deprecated):
+                options = WriteFormatOptions(line_width=80, fold_long_lines=True)
+                result = ldif.write(entries, options=options)
+
+                # NEW (correct):
+                from flext_ldif import FlextLdifConfig
+
+                config = FlextConfig.get_global_instance().get_namespace(
+                    "ldif", FlextLdifConfig
+                )
+                # Override if needed: config.ldif_write_fold_long_lines = True
+                result = ldif.write(entries)  # Uses config.ldif_write_* fields
+
+        **Mapping Table**:
+            - line_width → config.ldif_max_line_length
+            - fold_long_lines → config.ldif_write_fold_long_lines
+            - respect_attribute_order → config.ldif_write_respect_attribute_order
+            - sort_attributes → config.ldif_write_sort_attributes
+            - (see FlextLdifConfig for complete list of ldif_write_* fields)
+
         Provides detailed control over the output format, including line width
         for folding, and whether to respect attribute ordering from metadata.
         """
@@ -442,13 +473,6 @@ class FlextLdifModelsConfig:
                 "If True, writes rejection reasons as comments for rejected entries."
             ),
         )
-        write_transformation_comments: bool = Field(
-            default=False,
-            description=(
-                "If True, writes transformation details as comments "
-                "(e.g., objectClass changes)."
-            ),
-        )
         include_removal_statistics: bool = Field(
             default=False,
             description=(
@@ -494,6 +518,107 @@ class FlextLdifModelsConfig:
             description=(
                 "If True, ACL attributes are written as comments when "
                 "entry_category != 'acl'."
+            ),
+        )
+        use_rfc_attribute_order: bool = Field(
+            default=False,
+            description=(
+                "If True, writes attributes in RFC 2849 order: "
+                "objectClass first after DN, then remaining attributes alphabetically. "
+                "DN is always first (handled automatically by writer)."
+            ),
+        )
+        rfc_order_priority_attributes: list[str] = Field(
+            default_factory=lambda: ["objectClass"],
+            description=(
+                "Attributes to write first after DN, in order. "
+                "Default: ['objectClass']. Remaining attributes sorted alphabetically."
+            ),
+        )
+        write_transformation_comments: bool = Field(
+            default=False,
+            description=(
+                "If True, writes transformation comments with tags before modified attributes. "
+                "Tags: [REMOVED], [RENAMED], [TRANSFORMED]. "
+                "Example: '# [REMOVED] oldattr: value' or '# [RENAMED] old -> new: value'."
+            ),
+        )
+        use_original_acl_format_as_name: bool = Field(
+            default=False,
+            description=(
+                "If True and entry_category='acl', uses the original ACL format from "
+                "metadata (ACL_ORIGINAL_FORMAT) as the ACI name instead of generated name. "
+                "Control characters are sanitized (ASCII < 0x20 or > 0x7E replaced with "
+                "spaces, double quotes removed). Useful for OID→OUD migration to preserve "
+                "original ACL context as the new ACI name."
+            ),
+        )
+
+    class WriteOutputOptions(BaseModel):
+        """Output visibility options for attributes based on their marker status.
+
+        This class controls how attributes are rendered in LDIF output based on
+        their status in entry metadata. It works in conjunction with
+        AttributeMarkerStatus to implement proper SRP architecture:
+
+        **SRP Architecture**:
+            - filters.py: MARKS attributes with AttributeMarkerStatus (never removes)
+            - entry.py: REMOVES attributes based on markers
+            - writer.py: Uses WriteOutputOptions to determine output visibility
+
+        **Output Modes**:
+            - "show": Write attribute normally
+            - "hide": Don't write attribute at all
+            - "comment": Write attribute as a comment (# attr: value)
+
+        Example:
+            .. code-block:: python
+
+                options = WriteOutputOptions(
+                    show_operational_attributes="hide",
+                    show_removed_attributes="comment",
+                    show_filtered_attributes="hide",
+                )
+                result = ldif.write(entries, output_options=options)
+
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        show_operational_attributes: str = Field(
+            default="hide",
+            description=(
+                "How to handle operational attributes in output. "
+                "Options: 'show' (write normally), 'hide' (don't write), "
+                "'comment' (write as LDIF comment)."
+            ),
+        )
+        show_removed_attributes: str = Field(
+            default="comment",
+            description=(
+                "How to handle removed attributes in output. "
+                "Default 'comment' writes removed attrs as '# [REMOVED] attr: value'."
+            ),
+        )
+        show_filtered_attributes: str = Field(
+            default="hide",
+            description=(
+                "How to handle filtered attributes in output. "
+                "Default 'hide' completely omits filtered attributes."
+            ),
+        )
+        show_hidden_attributes: str = Field(
+            default="hide",
+            description=(
+                "How to handle explicitly hidden attributes in output. "
+                "Default 'hide' completely omits hidden attributes."
+            ),
+        )
+        show_renamed_original: str = Field(
+            default="comment",
+            description=(
+                "How to handle original names of renamed attributes. "
+                "Default 'comment' writes '# [RENAMED] old -> new: value'."
             ),
         )
 
@@ -573,7 +698,43 @@ class FlextLdifModelsConfig:
         )
 
     class ParseFormatOptions(BaseModel):
-        """Formatting options for LDIF parsing."""
+        """Formatting options for LDIF parsing (VIEW MODEL).
+
+        **Architecture**: This is a Pydantic VIEW MODEL that represents
+        parse format options. The SOURCE OF TRUTH is FlextLdifConfig fields
+        (ldif_parse_*). Use `config.to_parse_options()` to convert config to
+        this model.
+
+        **Usage Pattern**:
+            .. code-block:: python
+
+                # Config is source of truth
+                from flext_ldif import FlextLdifConfig
+
+                config = FlextConfig.get_global_instance().get_namespace(
+                    "ldif", FlextLdifConfig
+                )
+
+                # Override specific fields if needed
+                config.ldif_parse_auto_parse_schema = False
+                config.ldif_parse_normalize_dns = True
+
+                # Convert to Pydantic model for service use
+                options = config.to_parse_options()
+
+                # Pass Pydantic model (NOT dict) to services
+                result = parser.parse(file_path, options=options)
+
+        **Field Mapping** (Config → This Model):
+            - ldif_parse_auto_parse_schema → auto_parse_schema
+            - ldif_parse_auto_extract_acls → auto_extract_acls
+            - ldif_parse_preserve_attribute_order → preserve_attribute_order
+            - ldif_parse_validate_entries → validate_entries
+            - ldif_parse_normalize_dns → normalize_dns
+            - ldif_parse_max_parse_errors → max_parse_errors
+            - ldif_parse_include_operational_attrs → include_operational_attrs
+            - ldif_parse_strict_schema_validation → strict_schema_validation
+        """
 
         model_config = ConfigDict(frozen=True)
 
@@ -768,32 +929,3 @@ class FlextLdifModelsConfig:
         enable_relaxed_parsing: bool = Field(
             description="Whether relaxed parsing mode is enabled",
         )
-
-        @classmethod
-        def from_config(
-            cls,
-            config: FlextLdifConfig,
-        ) -> FlextLdifModelsConfig.ConfigInfo:
-            """Create ConfigInfo from FlextLdifConfig.
-
-            Args:
-                config: FlextLdifConfig instance
-
-            Returns:
-                ConfigInfo with values extracted from config
-
-            """
-            # Get global config for root-level settings
-            global_config = FlextConfig.get_global_instance()
-
-            return cls(
-                ldif_encoding=config.ldif_encoding,
-                strict_rfc_compliance=config.strict_rfc_compliance,
-                ldif_chunk_size=config.ldif_chunk_size,
-                max_workers=global_config.max_workers,
-                debug=global_config.debug,
-                log_level=global_config.log_level,
-                quirks_detection_mode=config.quirks_detection_mode,
-                quirks_server_type=config.quirks_server_type,
-                enable_relaxed_parsing=config.enable_relaxed_parsing,
-            )

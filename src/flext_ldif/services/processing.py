@@ -16,14 +16,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from flext_core import FlextResult
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifProcessing(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
+    LdifServiceBase,
 ):
     """Service for batch and parallel entry processing.
 

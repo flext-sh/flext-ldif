@@ -1,17 +1,20 @@
 """FLEXT-LDIF Entry Transformer Service - Entry transformation operations.
 
-This service handles transformation of entries including:
-- Removing attributes from entries
-- Removing objectClasses from entries
-- Preserving removed values in metadata
+This module provides entry transformation operations for flext-ldif including:
+- Removing attributes from entries (with metadata preservation)
+- Removing objectClasses from entries (with RFC compliance validation)
+- Preserving removed values in entry metadata for audit trails
 
-Extracted from FlextLdifFilters to follow Single Responsibility Principle.
+Scope: Entry transformation operations, metadata tracking, RFC compliance validation.
+Modules: flext_ldif.services.entry_transformer
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 from flext_core import FlextResult, FlextService
 
@@ -24,205 +27,159 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifEntryTransformer(
     FlextService[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
-    """Service for entry transformation operations.
+    """FLEXT-LDIF Entry Transformer Service.
 
-    Provides methods for:
-    - Removing attributes from entries (with metadata tracking)
-    - Removing objectClasses from entries (with validation)
-    - Preserving removed values in entry metadata
-
-    Example:
-        transformer = FlextLdifEntryTransformer()
-
-        # Remove temporary attributes
-        result = transformer.remove_attributes(
-            entry,
-            attributes=["nsAccountLock", "userPassword"]
-        )
-        modified_entry = result.unwrap()
-
-        # Remove obsolete objectClasses
-        result = transformer.remove_objectclasses(
-            entry,
-            objectclasses=["obsoleteClass", "deprecatedClass"]
-        )
-
+    Provides entry transformation operations with metadata preservation and RFC compliance.
+    Scope: Attribute removal, objectClass removal, metadata tracking for audit trails.
     """
 
     def execute(
         self,
         **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
-        """Execute method required by FlextService abstract base class.
-
-        This service provides specific methods (remove_attributes, remove_objectclasses)
-        rather than a generic execute operation.
-
-        Args:
-            **_kwargs: Ignored parameters for FlextService protocol compatibility
-
-        Returns:
-            FlextResult with not implemented error
-
-        """
+        """Execute method for FlextService protocol compatibility."""
         return FlextResult.fail(
-            "FlextLdifEntryTransformer does not support generic execute(). Use specific methods instead.",
+            "Use specific methods: remove_attributes(), remove_objectclasses()",
         )
+
+    def _validate_entry_dn(self, entry: FlextLdifModels.Entry) -> FlextResult[str]:
+        """Validate entry has DN."""
+        if not entry.dn:
+            return FlextResult.fail("Entry has no DN")
+        dn_value = FlextLdifUtilities.DN.get_dn_value(entry.dn)
+        return FlextResult.ok(dn_value)
+
+    def _validate_entry_attributes(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[bool]:
+        """Validate entry has attributes."""
+        if entry.attributes is None:
+            dn_value = self._validate_entry_dn(entry).unwrap_or("unknown")
+            return FlextResult.fail(f"Entry {dn_value} has no attributes")
+        return FlextResult.ok(True)
+
+    def _create_entry_with_metadata(
+        self,
+        dn: str | FlextLdifModels.DistinguishedName,
+        attributes: FlextLdifModels.LdifAttributes,
+        metadata: FlextLdifModels.QuirkMetadata | None,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Create entry preserving metadata."""
+        entry_result = FlextLdifModels.Entry.create(
+            dn=dn,
+            attributes=attributes,
+            metadata=metadata,
+        )
+        if entry_result.is_failure:
+            error = entry_result.error or "Entry creation failed"
+            return FlextResult.fail(error)
+
+        new_entry = entry_result.unwrap()
+        if not isinstance(new_entry, FlextLdifModels.Entry):
+            return FlextResult.fail("Entry.create() returned wrong type")
+
+        return FlextResult.ok(new_entry)
 
     def remove_attributes(
         self,
         entry: FlextLdifModels.Entry,
         attributes: list[str],
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Remove attributes from entry, preserving removed values in metadata.
-
-        Removes specified attributes from entry and stores them in
-        metadata.removed_attributes for audit trail.
-
-        Args:
-            entry: Entry to modify
-            attributes: List of attribute names to remove (case-insensitive)
-
-        Returns:
-            FlextResult with modified entry (removed attributes stored in metadata)
-
-        Example:
-            result = transformer.remove_attributes(
-                entry,
-                attributes=["nsAccountLock", "userPassword"]
-            )
-            if result.is_success:
-                modified_entry = result.unwrap()
-                # Removed attributes are in modified_entry.metadata.removed_attributes
-
-        """
+        """Remove attributes from entry with metadata preservation."""
         try:
-            if entry.attributes is None:
-                error_msg = f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
-                return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            # Validate entry
+            if (attr_validation := self._validate_entry_attributes(entry)).is_failure:
+                error = attr_validation.error or "Validation failed"
+                return FlextResult.fail(error)
+            if (dn_validation := self._validate_entry_dn(entry)).is_failure:
+                error = dn_validation.error or "DN validation failed"
+                return FlextResult.fail(error)
 
             blocked_lower = {attr.lower() for attr in attributes}
 
-            # Store removed attributes with their values in metadata BEFORE filtering
-            removed_attrs_with_values = {
+            # Store removed attributes with values for metadata
+            removed_attrs = {
                 key: value
                 for key, value in entry.attributes.attributes.items()
                 if key.lower() in blocked_lower
             }
 
             # Filter attributes
-            filtered_attrs_dict = {
+            filtered_attrs = {
                 key: value
                 for key, value in entry.attributes.attributes.items()
                 if key.lower() not in blocked_lower
             }
 
             new_attributes = FlextLdifModels.LdifAttributes(
-                attributes=filtered_attrs_dict,
+                attributes=filtered_attrs,
                 metadata=entry.attributes.metadata,
             )
 
-            # Check DN is not None before creating entry
-            if not entry.dn:
-                return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
-
-            # Create entry with removed attributes metadata, preserving original metadata
-            entry_result = FlextLdifModels.Entry.create(
-                dn=entry.dn,
+            # Create entry preserving metadata
+            entry_result = self._create_entry_with_metadata(
+                dn=cast("FlextLdifModels.DistinguishedName", entry.dn),
                 attributes=new_attributes,
-                metadata=entry.metadata,  # Preserve metadata including processing_stats
+                metadata=cast("FlextLdifModels.QuirkMetadata | None", entry.metadata),
             )
-
             if entry_result.is_failure:
-                # Convert domain Entry result to public Entry result
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    entry_result.error or "Unknown error",
-                )
+                error = entry_result.error or "Entry creation failed"
+                return FlextResult.fail(error)
 
-            new_entry_domain = entry_result.unwrap()
-            # Type narrowing: Entry.create returns Domain.Entry, but we need Models.Entry
-            # Since Models.Entry extends Domain.Entry, we can safely use it
-            if isinstance(new_entry_domain, FlextLdifModels.Entry):
-                new_entry = new_entry_domain
-            else:
-                # Convert domain Entry to public Entry if needed
-                # This should not happen in practice, but handle it defensively
-                error_msg = (
-                    "Entry.create() returned domain Entry instead of public Entry"
-                )
-                return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            new_entry = entry_result.unwrap()
 
-            # RFC Compliance: Store removed attributes in metadata.removed_attributes
-            if removed_attrs_with_values:
-                # Update metadata with removed attributes
-                new_removed = {
-                    **entry.metadata.removed_attributes,
-                    **removed_attrs_with_values,
-                }
+            # Store removed attributes in metadata if any
+            if removed_attrs:
                 new_metadata = new_entry.metadata.model_copy(
-                    update={"removed_attributes": new_removed},
+                    update={
+                        "removed_attributes": {
+                            **entry.metadata.removed_attributes,
+                            **removed_attrs,
+                        }
+                    },
                 )
                 new_entry = new_entry.model_copy(update={"metadata": new_metadata})
 
-                # Track in statistics (only names) if statistics exist
+                # Track statistics
                 if new_entry.metadata.processing_stats:
-                    for attr_name in removed_attrs_with_values:
+                    for attr_name in removed_attrs:
                         new_entry.metadata.processing_stats.track_attribute_change(
-                            attr_name,
-                            "removed",
+                            attr_name, "removed"
                         )
 
-            return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+            return FlextResult.ok(new_entry)
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg = f"Failed to remove attributes: {e}"
-            return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            return FlextResult.fail(f"Failed to remove attributes: {e}")
 
     def remove_objectclasses(
         self,
         entry: FlextLdifModels.Entry,
         objectclasses: list[str],
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Remove objectClasses from entry.
-
-        Removes specified objectClasses from entry, validating that at least
-        one objectClass remains (RFC requirement).
-
-        Args:
-            entry: Entry to modify
-            objectclasses: List of objectClass names to remove (case-insensitive)
-
-        Returns:
-            FlextResult with modified entry
-
-        Example:
-            result = transformer.remove_objectclasses(
-                entry,
-                objectclasses=["obsoleteClass"]
-            )
-            if result.is_success:
-                modified_entry = result.unwrap()
-
-        """
+        """Remove objectClasses from entry with RFC compliance validation."""
         try:
-            if entry.attributes is None:
-                error_msg = f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
-                return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            # Validate entry
+            if (attr_validation := self._validate_entry_attributes(entry)).is_failure:
+                error = attr_validation.error or "Validation failed"
+                return FlextResult.fail(error)
+            if (dn_validation := self._validate_entry_dn(entry)).is_failure:
+                error = dn_validation.error or "DN validation failed"
+                return FlextResult.fail(error)
 
             blocked_lower = {oc.lower() for oc in objectclasses}
 
             oc_values = entry.get_attribute_values(
-                FlextLdifConstants.DictKeys.OBJECTCLASS,
+                FlextLdifConstants.DictKeys.OBJECTCLASS
             )
             if not oc_values:
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                return FlextResult.ok(entry)
 
             filtered_ocs = [oc for oc in oc_values if oc.lower() not in blocked_lower]
             if not filtered_ocs:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    "All objectClasses would be removed",
-                )
+                return FlextResult.fail("All objectClasses would be removed")
 
+            # Create new attributes dict with filtered objectClasses
             new_attrs_dict = dict(entry.attributes.attributes)
             new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS] = filtered_ocs
 
@@ -231,34 +188,20 @@ class FlextLdifEntryTransformer(
                 metadata=entry.attributes.metadata,
             )
 
-            # Check DN is not None before creating entry
-            if not entry.dn:
-                return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
-
-            # Create entry with filtered objectClasses, preserving original metadata
-            entry_result = FlextLdifModels.Entry.create(
-                dn=entry.dn,
+            # Create entry preserving metadata
+            entry_result = self._create_entry_with_metadata(
+                dn=cast("FlextLdifModels.DistinguishedName", entry.dn),
                 attributes=new_attributes,
-                metadata=entry.metadata,  # Preserve metadata including processing_stats
+                metadata=cast("FlextLdifModels.QuirkMetadata | None", entry.metadata),
             )
-
             if entry_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    entry_result.error or "Unknown error",
-                )
+                error = entry_result.error or "Entry creation failed"
+                return FlextResult.fail(error)
 
-            new_entry_domain = entry_result.unwrap()
-            # Type narrowing: Entry.create returns Domain.Entry, but we need Models.Entry
-            if isinstance(new_entry_domain, FlextLdifModels.Entry):
-                return FlextResult[FlextLdifModels.Entry].ok(new_entry_domain)
-
-            # Convert domain Entry to public Entry if needed
-            error_msg = "Entry.create() returned domain Entry instead of public Entry"
-            return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            return entry_result
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg = f"Failed to remove objectClasses: {e}"
-            return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+            return FlextResult.fail(f"Failed to remove objectClasses: {e}")
 
 
 __all__ = ["FlextLdifEntryTransformer"]

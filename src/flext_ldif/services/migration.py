@@ -10,12 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.categorization import FlextLdifCategorization
@@ -28,7 +29,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResult]):
+class FlextLdifMigrationPipeline(LdifServiceBase):
     """LDIF Migration Pipeline - Direct Implementation.
 
     Zero private methods - pure service orchestration.
@@ -112,17 +113,24 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
     ) -> FlextResult[FlextLdifModels.WriteFormatOptions]:
         """Set default write options for structured and categorized modes using FlextResult.
 
+        Architecture:
+            - FlextLdifConfig is the source of truth for all write options
+            - This method allows CLI overrides via write_options parameter
+            - If no override, gets from config and applies mode-specific settings
+            - Always returns WriteFormatOptions Pydantic model (never dict)
+
         Uses FlextResult for error handling - no None returns.
 
         Args:
             mode: Migration mode ("structured", "categorized", or "simple")
-            write_options: WriteFormatOptions model, dict, or None
+            write_options: WriteFormatOptions model, dict, or None (CLI override)
             config_model: MigrationConfig model or None
 
         Returns:
-            FlextResult with WriteFormatOptions model or error
+            FlextResult with WriteFormatOptions Pydantic model or error
 
         """
+        # CLI override provided - validate and use it
         if write_options is not None:
             # Convert dict to WriteFormatOptions if necessary
             if FlextRuntime.is_dict_like(write_options):
@@ -141,28 +149,112 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 f"Invalid WriteFormatOptions type: {type(write_options).__name__}",
             )
 
+        # No CLI override - create WriteFormatOptions with mode-specific settings
         match mode:
             case "structured":
                 if config_model is None:
                     return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
                         "MigrationConfig required for structured mode",
                     )
-                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
+                # Create WriteFormatOptions for structured mode
+                return FlextResult[
+                    FlextLdifModels.WriteFormatOptions
+                ].ok(
                     FlextLdifModels.WriteFormatOptions(
-                        fold_long_lines=False,
-                        write_removed_attributes_as_comments=(
-                            config_model.write_removed_as_comments
-                        ),
+                        line_width=78,
+                        respect_attribute_order=True,
+                        sort_attributes=False,
+                        write_hidden_attributes_as_comments=False,
+                        write_metadata_as_comments=False,
+                        include_version_header=True,
+                        include_timestamps=False,
+                        base64_encode_binary=False,
+                        fold_long_lines=False,  # Override for structured mode
+                        restore_original_format=False,
+                        write_empty_values=True,
+                        normalize_attribute_names=False,
+                        include_dn_comments=False,
+                        write_removed_attributes_as_comments=config_model.write_removed_as_comments,  # Override
+                        write_migration_header=False,
+                        migration_header_template=None,
+                        write_rejection_reasons=False,
+                        write_transformation_comments=False,
+                        include_removal_statistics=False,
+                        ldif_changetype=None,
+                        ldif_modify_operation="add",
+                        write_original_entry_as_comment=False,
+                        entry_category=None,
+                        acl_attribute_names=frozenset(),
+                        comment_acl_in_non_acl_phases=True,
+                        use_rfc_attribute_order=False,
+                        rfc_order_priority_attributes=["objectClass"],
                     ),
                 )
             case "categorized":
+                # Create WriteFormatOptions for categorized mode
                 return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
-                    FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
+                    FlextLdifModels.WriteFormatOptions(
+                        line_width=78,
+                        respect_attribute_order=True,
+                        sort_attributes=False,
+                        write_hidden_attributes_as_comments=False,
+                        write_metadata_as_comments=False,
+                        include_version_header=True,
+                        include_timestamps=False,
+                        base64_encode_binary=False,
+                        fold_long_lines=False,  # Override for categorized mode
+                        restore_original_format=False,
+                        write_empty_values=True,
+                        normalize_attribute_names=False,
+                        include_dn_comments=False,
+                        write_removed_attributes_as_comments=False,
+                        write_migration_header=False,
+                        migration_header_template=None,
+                        write_rejection_reasons=False,
+                        write_transformation_comments=False,
+                        include_removal_statistics=False,
+                        ldif_changetype=None,
+                        ldif_modify_operation="add",
+                        write_original_entry_as_comment=False,
+                        entry_category=None,
+                        acl_attribute_names=frozenset(),
+                        comment_acl_in_non_acl_phases=True,
+                        use_rfc_attribute_order=False,
+                        rfc_order_priority_attributes=["objectClass"],
+                    ),
                 )
             case "simple":
-                # Simple mode doesn't require write options
+                # Simple mode uses default config
                 return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
-                    FlextLdifModels.WriteFormatOptions(),
+                    FlextLdifModels.WriteFormatOptions(
+                        line_width=78,
+                        respect_attribute_order=True,
+                        sort_attributes=False,
+                        write_hidden_attributes_as_comments=False,
+                        write_metadata_as_comments=False,
+                        include_version_header=True,
+                        include_timestamps=False,
+                        base64_encode_binary=False,
+                        fold_long_lines=True,
+                        restore_original_format=False,
+                        write_empty_values=True,
+                        normalize_attribute_names=False,
+                        include_dn_comments=False,
+                        write_removed_attributes_as_comments=False,
+                        write_migration_header=False,
+                        migration_header_template=None,
+                        write_rejection_reasons=False,
+                        write_transformation_comments=False,
+                        include_removal_statistics=False,
+                        ldif_changetype=None,
+                        ldif_modify_operation="add",
+                        write_original_entry_as_comment=False,
+                        entry_category=None,
+                        acl_attribute_names=frozenset(),
+                        comment_acl_in_non_acl_phases=True,
+                        use_rfc_attribute_order=False,
+                        rfc_order_priority_attributes=["objectClass"],
+                    ),
                 )
             case _:
                 return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
@@ -358,7 +450,12 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         self._source_server = source_server
         self._target_server = target_server
         self._sort_hierarchically = sort_entries_hierarchically
-        self._write_opts = write_options or FlextLdifModels.WriteFormatOptions()
+        # Architecture: Model defaults are used, CLI can override via write_options
+        if write_options is not None:
+            self._write_opts = write_options
+        else:
+            # Use model defaults (Field(default=...) definitions)
+            self._write_opts = FlextLdifModels.WriteFormatOptions()
 
         # Create service instances (all public APIs)
         self._categorization = FlextLdifCategorization(
@@ -421,7 +518,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 )
 
             parse_response = parse_result.unwrap()
-            # Type narrowing: ParseResponse has entries attribute, or parse_response is list
+            # parse_response is always ParseResponse with entries attribute
             if isinstance(parse_response, FlextLdifModels.ParseResponse):
                 # ParseResponse.entries is list[FlextLdifModelsDomains.Entry]
                 # which is compatible with list[FlextLdifModels.Entry] (inheritance)
@@ -430,13 +527,6 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 entries: list[FlextLdifModels.Entry] = [
                     entry
                     for entry in response_entries
-                    if isinstance(entry, FlextLdifModels.Entry)
-                ]
-            elif isinstance(parse_response, list):
-                # Filter to ensure all entries are FlextLdifModels.Entry
-                entries = [
-                    entry
-                    for entry in parse_response
                     if isinstance(entry, FlextLdifModels.Entry)
                 ]
             else:
@@ -470,9 +560,23 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         categorized_result = (
             FlextResult[list[FlextLdifModels.Entry]]
             .ok(entries)
-            .flat_map(self._categorization.validate_dns)
-            .flat_map(self._categorization.categorize_entries)
-            .map(self._categorization.filter_by_base_dn)
+            .flat_map(
+                cast(
+                    "Callable[[list[FlextLdifModels.Entry]], FlextResult[object]]",
+                    self._categorization.validate_dns,
+                )
+            )
+            .flat_map(
+                cast(
+                    "Callable[[object], FlextResult[object]]",
+                    self._categorization.categorize_entries,
+                )
+            )
+            .map(
+                cast(
+                    "Callable[[object], object]", self._categorization.filter_by_base_dn
+                )
+            )
         )
 
         if categorized_result.is_failure:
@@ -481,7 +585,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             )
 
         return FlextResult[FlextLdifModels.FlexibleCategories].ok(
-            categorized_result.unwrap(),
+            cast("FlextLdifModels.FlexibleCategories", categorized_result.unwrap()),
         )
 
     def _filter_forbidden_attributes(
@@ -619,14 +723,19 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             cat_entries = categories.get(cat)
             if cat_entries:
                 # FlexibleCategories uses FlextLdifModels.Entry directly
-                sorted_entries = (
-                    FlextLdifSorting.builder()
-                    .with_entries(cat_entries)
-                    .with_target("entries")
-                    .with_strategy("hierarchy")
-                    .build()
+                sort_result = FlextLdifSorting.sort(
+                    entries=cat_entries,
+                    target="entries",
+                    by="hierarchy",
                 )
-                categories[cat] = sorted_entries
+                if sort_result.is_success:
+                    categories[cat] = sort_result.unwrap()
+                else:
+                    logger.warning(
+                        "Failed to sort category entries",
+                        category=cat,
+                        error=sort_result.error,
+                    )
                 logger.info(
                     "Sorted category entries hierarchically",
                     category=cat,

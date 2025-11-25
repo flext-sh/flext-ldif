@@ -41,7 +41,9 @@ class TestFlextLdifServer:
         stats = registry.get_registry_stats()
 
         # Registry should have auto-discovered servers
-        assert stats["total_servers"] > 0
+        total_servers = stats["total_servers"]
+        assert isinstance(total_servers, int)
+        assert total_servers > 0
         # Note: API changed - stats now use "quirks_by_server" instead of separate dicts
         assert "quirks_by_server" in stats
         assert isinstance(stats["quirks_by_server"], dict)
@@ -219,19 +221,27 @@ class TestRegistryStats:
 
         # Should have all SUPPORTED_SERVERS from constants
         total_servers = stats["total_servers"]
+        assert isinstance(total_servers, int)
         assert (
             total_servers >= 8
         )  # At least OID, OUD, OpenLDAP, AD, 389DS, Apache, Novell, Tivoli
 
         # Updated API: get_registry_stats() returns quirks_by_server, not schemas_by_server
         quirks = stats["quirks_by_server"]
+        assert isinstance(quirks, dict)
         assert "oid" in quirks
         assert "oud" in quirks
         assert "openldap" in quirks
         # Verify nested quirks
-        assert quirks["oid"]["has_schema"]
-        assert quirks["oud"]["has_schema"]
-        assert quirks["openldap"]["has_schema"]
+        oid_quirks = quirks["oid"]
+        assert isinstance(oid_quirks, dict)
+        assert oid_quirks["has_schema"]
+        oud_quirks = quirks["oud"]
+        assert isinstance(oud_quirks, dict)
+        assert oud_quirks["has_schema"]
+        openldap_quirks = quirks["openldap"]
+        assert isinstance(openldap_quirks, dict)
+        assert openldap_quirks["has_schema"]
 
     def test_list_registered_servers(self) -> None:
         """Test listing all registered server types."""
@@ -256,8 +266,11 @@ class TestRegistryStats:
         # Note: API changed - stats now use "quirks_by_server" instead of separate dicts
         assert "quirks_by_server" in stats
         assert "total_servers" in stats
+        quirks_by_server = stats["quirks_by_server"]
+        assert isinstance(quirks_by_server, dict)
         # Verify each server has quirk type flags
-        for server_quirks in stats["quirks_by_server"].values():
+        for server_quirks in quirks_by_server.values():
+            assert isinstance(server_quirks, dict)
             assert "has_schema" in server_quirks
             assert "has_acl" in server_quirks
             assert "has_entry" in server_quirks

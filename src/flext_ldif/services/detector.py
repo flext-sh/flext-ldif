@@ -21,7 +21,7 @@ from typing import Protocol, cast
 
 from flext_core import FlextResult, FlextRuntime
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -43,7 +43,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
+class FlextLdifDetector(LdifServiceBase):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -193,7 +193,11 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             return target_server_type
 
         # Priority 2: Relaxed parsing mode takes precedence
-        if config.enable_relaxed_parsing:
+        if getattr(
+            config,
+            "enable_relaxed_parsing",
+            getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
+        ):
             return FlextLdifConstants.ServerTypes.RELAXED
 
         # Priority 3: Manual configuration mode

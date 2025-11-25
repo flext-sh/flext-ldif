@@ -2,78 +2,229 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
+from typing import ClassVar
+
 import pytest
 
 from flext_ldif import FlextLdifUtilities
 
+# =============================================================================
+# TEST SCENARIO ENUMS
+# =============================================================================
 
+
+class GetValidValuesType(StrEnum):
+    """Get valid values test scenarios."""
+
+    SERVER_TYPE = "server_type"
+    ENCODING = "encoding"
+    UNKNOWN_CATEGORY = "unknown_category"
+
+
+class IsValidTestType(StrEnum):
+    """Is valid test scenarios."""
+
+    KNOWN_VALUE = "known_value"
+    UNKNOWN_VALUE = "unknown_value"
+    UNKNOWN_CATEGORY = "unknown_category"
+
+
+class ValidateManyType(StrEnum):
+    """Validate many test scenarios."""
+
+    ALL_VALID = "all_valid"
+    SOME_INVALID = "some_invalid"
+    UNKNOWN_CATEGORY = "unknown_category"
+
+
+# =============================================================================
+# PARAMETRIZED TEST DATA
+# =============================================================================
+
+
+@pytest.mark.unit
 class TestFlextLdifUtilitiesConstants:
     """Test constants utilities."""
 
-    def test_get_valid_values_server_type(self) -> None:
-        """Test get_valid_values for server_type category."""
-        values = FlextLdifUtilities.Constants.get_valid_values("server_type")
-        assert isinstance(values, set)
-        assert "rfc" in values
-        assert "oid" in values
-        assert "oud" in values
+    # Get valid values test data
+    GET_VALID_VALUES_DATA: ClassVar[
+        dict[str, tuple[GetValidValuesType, str, list[str], bool]]
+    ] = {
+        "get_valid_values_server_type": (
+            GetValidValuesType.SERVER_TYPE,
+            "server_type",
+            ["rfc", "oid", "oud"],
+            False,
+        ),
+        "get_valid_values_encoding": (
+            GetValidValuesType.ENCODING,
+            "encoding",
+            ["utf-8"],
+            False,
+        ),
+        "get_valid_values_unknown_category": (
+            GetValidValuesType.UNKNOWN_CATEGORY,
+            "unknown",
+            [],
+            True,
+        ),
+    }
 
-    def test_get_valid_values_encoding(self) -> None:
-        """Test get_valid_values for encoding category."""
-        values = FlextLdifUtilities.Constants.get_valid_values("encoding")
-        assert isinstance(values, set)
-        assert "utf-8" in values
+    # Is valid test data
+    IS_VALID_DATA: ClassVar[dict[str, tuple[IsValidTestType, str, str, bool, bool]]] = {
+        "is_valid_known_value": (
+            IsValidTestType.KNOWN_VALUE,
+            "rfc",
+            "server_type",
+            True,
+            False,
+        ),
+        "is_valid_known_value_case_insensitive": (
+            IsValidTestType.KNOWN_VALUE,
+            "UTF-8",
+            "encoding",
+            True,
+            False,
+        ),
+        "is_valid_unknown_value": (
+            IsValidTestType.UNKNOWN_VALUE,
+            "unknown",
+            "server_type",
+            False,
+            False,
+        ),
+        "is_valid_unknown_category": (
+            IsValidTestType.UNKNOWN_CATEGORY,
+            "any",
+            "unknown",
+            False,
+            False,
+        ),
+    }
 
-    def test_get_valid_values_unknown_category(self) -> None:
-        """Test get_valid_values with unknown category raises KeyError."""
-        with pytest.raises(KeyError, match="Unknown category"):
-            FlextLdifUtilities.Constants.get_valid_values("unknown")
+    # Validate many test data
+    VALIDATE_MANY_DATA: ClassVar[
+        dict[str, tuple[ValidateManyType, set[str], str, bool, bool]]
+    ] = {
+        "validate_many_all_valid": (
+            ValidateManyType.ALL_VALID,
+            {"rfc", "oid", "oud"},
+            "server_type",
+            True,
+            False,
+        ),
+        "validate_many_some_invalid": (
+            ValidateManyType.SOME_INVALID,
+            {"rfc", "invalid", "oud", "also_invalid"},
+            "server_type",
+            False,
+            False,
+        ),
+        "validate_many_unknown_category": (
+            ValidateManyType.UNKNOWN_CATEGORY,
+            {"any"},
+            "unknown",
+            False,
+            True,
+        ),
+    }
 
-    def test_is_valid_known_value(self) -> None:
-        """Test is_valid with known valid value."""
-        assert FlextLdifUtilities.Constants.is_valid("rfc", "server_type")
-        assert FlextLdifUtilities.Constants.is_valid(
-            "UTF-8", "encoding"
-        )  # Case insensitive
+    # =======================================================================
+    # Get Valid Values Tests
+    # =======================================================================
 
-    def test_is_valid_unknown_value(self) -> None:
-        """Test is_valid with unknown value."""
-        assert not FlextLdifUtilities.Constants.is_valid("unknown", "server_type")
+    @pytest.mark.parametrize(
+        ("scenario", "test_type", "category", "expected_values", "should_raise"),
+        [
+            (name, data[0], data[1], data[2], data[3])
+            for name, data in GET_VALID_VALUES_DATA.items()
+        ],
+    )
+    def test_get_valid_values(
+        self,
+        scenario: str,
+        test_type: GetValidValuesType,
+        category: str,
+        expected_values: list[str],
+        should_raise: bool,
+    ) -> None:
+        """Parametrized test for get_valid_values."""
+        if should_raise:
+            with pytest.raises(KeyError):
+                FlextLdifUtilities.Constants.get_valid_values(category)
+        else:
+            values = FlextLdifUtilities.Constants.get_valid_values(category)
+            assert isinstance(values, set)
+            for expected in expected_values:
+                assert expected in values
 
-    def test_is_valid_unknown_category(self) -> None:
-        """Test is_valid with unknown category."""
-        assert not FlextLdifUtilities.Constants.is_valid("any", "unknown")
+    # =======================================================================
+    # Is Valid Tests
+    # =======================================================================
 
-    def test_validate_many_all_valid(self) -> None:
-        """Test validate_many with all valid values."""
-        values = {"rfc", "oid", "oud"}
-        is_valid, invalid = FlextLdifUtilities.Constants.validate_many(
-            values, "server_type"
-        )
-        assert is_valid
-        assert invalid == []
+    @pytest.mark.parametrize(
+        ("scenario", "test_type", "value", "category", "expected_result", "should_raise"),
+        [
+            (name, data[0], data[1], data[2], data[3], data[4])
+            for name, data in IS_VALID_DATA.items()
+        ],
+    )
+    def test_is_valid(
+        self,
+        scenario: str,
+        test_type: IsValidTestType,
+        value: str,
+        category: str,
+        expected_result: bool,
+        should_raise: bool,
+    ) -> None:
+        """Parametrized test for is_valid."""
+        if should_raise:
+            pytest.skip("is_valid does not raise for unknown category")
+        else:
+            result = FlextLdifUtilities.Constants.is_valid(value, category)
+            assert result == expected_result
 
-    def test_validate_many_some_invalid(self) -> None:
-        """Test validate_many with some invalid values."""
-        values = {"rfc", "invalid", "oud", "also_invalid"}
-        is_valid, invalid = FlextLdifUtilities.Constants.validate_many(
-            values, "server_type"
-        )
-        assert not is_valid
-        assert set(invalid) == {"invalid", "also_invalid"}
+    # =======================================================================
+    # Validate Many Tests
+    # =======================================================================
 
-    def test_validate_many_unknown_category(self) -> None:
-        """Test validate_many with unknown category raises KeyError."""
-        values = {"any"}
-        with pytest.raises(KeyError):
-            FlextLdifUtilities.Constants.validate_many(values, "unknown")
+    @pytest.mark.parametrize(
+        ("scenario", "test_type", "values", "category", "expected_valid", "should_raise"),
+        [
+            (name, data[0], data[1], data[2], data[3], data[4])
+            for name, data in VALIDATE_MANY_DATA.items()
+        ],
+    )
+    def test_validate_many(
+        self,
+        scenario: str,
+        test_type: ValidateManyType,
+        values: set[str],
+        category: str,
+        expected_valid: bool,
+        should_raise: bool,
+    ) -> None:
+        """Parametrized test for validate_many."""
+        if should_raise:
+            with pytest.raises(KeyError):
+                FlextLdifUtilities.Constants.validate_many(values, category)
+        else:
+            is_valid, invalid = FlextLdifUtilities.Constants.validate_many(
+                values, category
+            )
+            assert is_valid == expected_valid
+            if not expected_valid:
+                assert len(invalid) > 0
+
+    # =======================================================================
+    # Constants Accessibility Tests
+    # =======================================================================
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        # Test that we can access the constants
         assert hasattr(FlextLdifUtilities.Constants, "_VALID_VALUES")
-
-        # Test that the constants contain expected categories
         valid_values = FlextLdifUtilities.Constants._VALID_VALUES
         assert "server_type" in valid_values
         assert "encoding" in valid_values

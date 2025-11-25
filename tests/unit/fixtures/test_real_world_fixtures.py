@@ -20,6 +20,19 @@ from flext_ldif.services.server import FlextLdifServer
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
+# Helper to get fixture paths relative to test file
+def _get_fixture_path(relative_path: str) -> Path:
+    """Get absolute path to fixture file relative to tests/fixtures directory."""
+    base_dir = Path(__file__).parent.parent.parent
+    fixture_path = base_dir / "fixtures" / relative_path
+    if not fixture_path.exists():
+        # Try alternative path if running from different directory
+        alt_path = Path("flext-ldif/tests/fixtures") / relative_path
+        if alt_path.exists():
+            return alt_path
+    return fixture_path
+
+
 class TestRFCFixtures:
     """Test RFC-compliant LDIF fixtures with 50+ real-world entries."""
 
@@ -31,8 +44,8 @@ class TestRFCFixtures:
 
     def test_rfc_parse_all_entries(self) -> None:
         """Test parsing all RFC entries from fixture file."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        result = self.ldif.parse(fixture_path)
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
+        result = self.ldif.parse(fixture_path, server_type="rfc")
         assert result.is_success, f"Failed to parse RFC fixtures: {result.error}"
 
         unwrapped = result.unwrap()
@@ -42,8 +55,8 @@ class TestRFCFixtures:
 
     def test_rfc_entry_categories(self) -> None:
         """Test categorization of RFC entries by type."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        result = self.ldif.parse(fixture_path)
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
+        result = self.ldif.parse(fixture_path, server_type="rfc")
         assert result.is_success
 
         unwrapped = result.unwrap()
@@ -93,7 +106,7 @@ class TestRFCFixtures:
 
     def test_rfc_dn_validation(self) -> None:
         """Test DN validation for RFC entries."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -114,7 +127,7 @@ class TestRFCFixtures:
 
     def test_rfc_multi_valued_attributes(self) -> None:
         """Test handling of multi-valued attributes in RFC entries."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -139,7 +152,7 @@ class TestRFCFixtures:
 
     def test_rfc_dn_components(self) -> None:
         """Test proper DN component structure in RFC entries."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -169,8 +182,8 @@ class TestOIDFixtures:
 
     def test_oid_parse_entries(self) -> None:
         """Test parsing OID entry fixtures."""
-        fixture_path = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
-        result = self.ldif.parse(fixture_path)
+        fixture_path = _get_fixture_path("oid/oid_entries_fixtures.ldif")
+        result = self.ldif.parse(fixture_path, server_type="oid")
         assert result.is_success, f"Failed to parse OID fixtures: {result.error}"
 
         unwrapped = result.unwrap()
@@ -182,8 +195,8 @@ class TestOIDFixtures:
 
     def test_oid_organizational_structure(self) -> None:
         """Test OID organizational structure."""
-        fixture_path = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
-        result = self.ldif.parse(fixture_path)
+        fixture_path = _get_fixture_path("oid/oid_entries_fixtures.ldif")
+        result = self.ldif.parse(fixture_path, server_type="oid")
         assert result.is_success
 
         unwrapped = result.unwrap()
@@ -201,7 +214,7 @@ class TestOIDFixtures:
 
     def test_oid_user_entries(self) -> None:
         """Test OID user entries with OID-specific attributes."""
-        fixture_path = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("oid/oid_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -237,8 +250,8 @@ class TestOUDFixtures:
 
     def test_oud_parse_entries(self) -> None:
         """Test parsing OUD entry fixtures."""
-        fixture_path = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
-        result = self.ldif.parse(fixture_path)
+        fixture_path = _get_fixture_path("oud/oud_entries_fixtures.ldif")
+        result = self.ldif.parse(fixture_path, server_type="oud")
         assert result.is_success, f"Failed to parse OUD fixtures: {result.error}"
 
         unwrapped = result.unwrap()
@@ -250,8 +263,8 @@ class TestOUDFixtures:
 
     def test_oud_oracle_container_entries(self) -> None:
         """Test OUD-specific orclContainer entries."""
-        fixture_path = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
-        result = self.ldif.parse(fixture_path)
+        fixture_path = _get_fixture_path("oud/oud_entries_fixtures.ldif")
+        result = self.ldif.parse(fixture_path, server_type="oud")
         assert result.is_success
 
         unwrapped = result.unwrap()
@@ -272,7 +285,7 @@ class TestOUDFixtures:
 
     def test_oud_oracle_specific_attributes(self) -> None:
         """Test OUD Oracle-specific attributes and objectClasses."""
-        fixture_path = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("oud/oud_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -296,7 +309,7 @@ class TestOpenLDAP2Fixtures:
 
     def test_openldap2_parse_50_entries(self) -> None:
         """Test parsing 50+ OpenLDAP 2.x entries."""
-        fixture_path = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success, f"Failed to parse OpenLDAP2 fixtures: {result.error}"
 
@@ -309,7 +322,7 @@ class TestOpenLDAP2Fixtures:
 
     def test_openldap2_posix_accounts(self) -> None:
         """Test posixAccount entries in OpenLDAP 2.x."""
-        fixture_path = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -341,7 +354,7 @@ class TestOpenLDAP2Fixtures:
 
     def test_openldap2_posix_groups(self) -> None:
         """Test posixGroup entries in OpenLDAP 2.x."""
-        fixture_path = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -372,7 +385,7 @@ class TestOpenLDAP2Fixtures:
 
     def test_openldap2_service_accounts(self) -> None:
         """Test OpenLDAP system service accounts."""
-        fixture_path = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -393,7 +406,7 @@ class TestOpenLDAP2Fixtures:
 
     def test_openldap2_utf8_entries(self) -> None:
         """Test UTF-8 handling in OpenLDAP entries."""
-        fixture_path = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -424,7 +437,18 @@ class TestCrossServerFixtures:
         ]
 
         for server_name, fixture_path in servers:
-            result = self.ldif.parse(Path(fixture_path))
+            # Extract server type from server name
+            server_type_map = {
+                "RFC": "rfc",
+                "OID": "oid",
+                "OUD": "oud",
+                "OpenLDAP2": "openldap",
+            }
+            server_type = server_type_map.get(server_name, "rfc")
+            result = self.ldif.parse(
+                _get_fixture_path(fixture_path.replace("tests/fixtures/", "")),
+                server_type=server_type,
+            )
             assert result.is_success, (
                 f"{server_name}: Failed to parse {fixture_path}: {result.error}"
             )
@@ -493,7 +517,7 @@ class TestFixtureEdgeCases:
 
     def test_dn_with_special_characters(self) -> None:
         """Test handling of special characters in DNs."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -506,7 +530,7 @@ class TestFixtureEdgeCases:
 
     def test_multiple_attribute_values(self) -> None:
         """Test handling of multiple values for same attribute."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
@@ -529,7 +553,7 @@ class TestFixtureEdgeCases:
 
     def test_empty_attribute_values(self) -> None:
         """Test handling of empty attribute values if present."""
-        fixture_path = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
+        fixture_path = _get_fixture_path("rfc/rfc_entries_fixtures.ldif")
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 

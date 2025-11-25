@@ -9,11 +9,104 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
+from enum import StrEnum
+
 import pytest
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.schema import FlextLdifSchema
+
+# ════════════════════════════════════════════════════════════════════════════
+# TEST SCENARIO ENUMS
+# ════════════════════════════════════════════════════════════════════════════
+
+
+class ServerType(StrEnum):
+    """Server types for schema testing."""
+
+    RFC = "rfc"
+    OUD = "oud"
+
+
+class SchemaElement(StrEnum):
+    """Schema element types."""
+
+    ATTRIBUTE = "attribute"
+    OBJECTCLASS = "objectclass"
+
+
+class DefinitionStatus(StrEnum):
+    """Definition validation status."""
+
+    VALID = "valid"
+    INVALID = "invalid"
+    WHITESPACE_ONLY = "whitespace_only"
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TEST DATA STRUCTURES
+# ════════════════════════════════════════════════════════════════════════════
+
+
+@dataclasses.dataclass(frozen=True)
+class AttributeParseTestCase:
+    """Attribute parsing test case."""
+
+    definition: str
+    should_succeed: bool
+    expected_oid: str | None = None
+    expected_name: str | None = None
+    description: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class ObjectClassParseTestCase:
+    """ObjectClass parsing test case."""
+
+    definition: str
+    should_succeed: bool
+    expected_oid: str | None = None
+    expected_name: str | None = None
+    expected_kind: str | None = None
+    description: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class AttributeValidationTestCase:
+    """Attribute validation test case."""
+
+    oid: str
+    name: str
+    syntax: str | None
+    should_succeed: bool
+    error_keywords: list[str] | None = None
+    description: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class ObjectClassValidationTestCase:
+    """ObjectClass validation test case."""
+
+    oid: str
+    name: str
+    kind: str
+    should_succeed: bool
+    error_keywords: list[str] | None = None
+    description: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class SchemaCanHandleTestCase:
+    """Can handle method test case."""
+
+    element: str
+    input_str: str
+    should_handle: bool
+    element_type: SchemaElement
+    description: str = ""
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -45,12 +138,230 @@ def sample_objectclass_definition() -> str:
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# TEST EXECUTE METHOD
+# TEST DATA MAPPINGS
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestExecute:
-    """Test execute() method for service status."""
+ATTRIBUTE_PARSE_TESTS = [
+    AttributeParseTestCase(
+        "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+        True,
+        "2.5.4.3",
+        "cn",
+        "Valid standard attribute",
+    ),
+    AttributeParseTestCase("", False, None, None, "Empty definition"),
+    AttributeParseTestCase("   ", False, None, None, "Whitespace-only definition"),
+    AttributeParseTestCase(
+        "invalid format", False, None, None, "Invalid format without parentheses"
+    ),
+    AttributeParseTestCase(
+        "( 2.5.4.0 NAME 'objectClass' )",
+        True,
+        "2.5.4.0",
+        "objectClass",
+        "Simple attribute definition",
+    ),
+]
+
+OBJECTCLASS_PARSE_TESTS = [
+    ObjectClassParseTestCase(
+        "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber ) )",
+        True,
+        "2.5.6.6",
+        "person",
+        "STRUCTURAL",
+        "Valid standard objectClass",
+    ),
+    ObjectClassParseTestCase("", False, None, None, None, "Empty definition"),
+    ObjectClassParseTestCase(
+        "   ", False, None, None, None, "Whitespace-only definition"
+    ),
+    ObjectClassParseTestCase(
+        "( 2.5.6.0 NAME 'top' ABSTRACT )",
+        True,
+        "2.5.6.0",
+        "top",
+        "ABSTRACT",
+        "Simple abstract objectClass",
+    ),
+]
+
+ATTRIBUTE_VALIDATION_TESTS = [
+    AttributeValidationTestCase(
+        "1.2.3.4",
+        "testAttr",
+        "1.3.6.1.4.1.1466.115.121.1.15",
+        True,
+        None,
+        "Valid attribute with all fields",
+    ),
+    AttributeValidationTestCase(
+        "1.2.3.4",
+        "",
+        "1.3.6.1.4.1.1466.115.121.1.15",
+        False,
+        ["NAME"],
+        "Invalid - empty name",
+    ),
+    AttributeValidationTestCase(
+        "",
+        "testAttr",
+        "1.3.6.1.4.1.1466.115.121.1.15",
+        False,
+        ["OID"],
+        "Invalid - empty OID",
+    ),
+    AttributeValidationTestCase(
+        "1.2.3.4",
+        "testAttr",
+        "invalid-oid",
+        False,
+        ["SYNTAX", "OID"],
+        "Invalid - malformed syntax OID",
+    ),
+    AttributeValidationTestCase(
+        "1.2.3.4",
+        "testAttr",
+        None,
+        True,
+        None,
+        "Valid attribute without syntax",
+    ),
+]
+
+OBJECTCLASS_VALIDATION_TESTS = [
+    ObjectClassValidationTestCase(
+        "1.2.3.4",
+        "testOC",
+        "STRUCTURAL",
+        True,
+        None,
+        "Valid STRUCTURAL objectClass",
+    ),
+    ObjectClassValidationTestCase(
+        "1.2.3.4",
+        "",
+        "STRUCTURAL",
+        False,
+        ["NAME"],
+        "Invalid - empty name",
+    ),
+    ObjectClassValidationTestCase(
+        "",
+        "testOC",
+        "STRUCTURAL",
+        False,
+        ["OID"],
+        "Invalid - empty OID",
+    ),
+    ObjectClassValidationTestCase(
+        "1.2.3.4",
+        "testOC",
+        "INVALID",
+        False,
+        ["kind"],
+        "Invalid - unknown kind",
+    ),
+    ObjectClassValidationTestCase(
+        "1.2.3.4",
+        "testOC",
+        "ABSTRACT",
+        True,
+        None,
+        "Valid ABSTRACT objectClass",
+    ),
+    ObjectClassValidationTestCase(
+        "1.2.3.4",
+        "testOC",
+        "AUXILIARY",
+        True,
+        None,
+        "Valid AUXILIARY objectClass",
+    ),
+]
+
+SCHEMA_CAN_HANDLE_TESTS = [
+    SchemaCanHandleTestCase(
+        "attribute",
+        "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+        True,
+        SchemaElement.ATTRIBUTE,
+        "Valid attribute definition",
+    ),
+    SchemaCanHandleTestCase(
+        "attribute", "", False, SchemaElement.ATTRIBUTE, "Empty attribute"
+    ),
+    SchemaCanHandleTestCase(
+        "attribute", "   ", False, SchemaElement.ATTRIBUTE, "Whitespace attribute"
+    ),
+    SchemaCanHandleTestCase(
+        "attribute",
+        "invalid format",
+        False,
+        SchemaElement.ATTRIBUTE,
+        "Invalid attribute",
+    ),
+    SchemaCanHandleTestCase(
+        "objectclass",
+        "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber ) )",
+        True,
+        SchemaElement.OBJECTCLASS,
+        "Valid objectClass definition",
+    ),
+    SchemaCanHandleTestCase(
+        "objectclass", "", False, SchemaElement.OBJECTCLASS, "Empty objectClass"
+    ),
+    SchemaCanHandleTestCase(
+        "objectclass", "   ", False, SchemaElement.OBJECTCLASS, "Whitespace objectClass"
+    ),
+    SchemaCanHandleTestCase(
+        "objectclass",
+        "invalid format",
+        False,
+        SchemaElement.OBJECTCLASS,
+        "Invalid objectClass",
+    ),
+]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# PARAMETRIZATION FUNCTIONS
+# ════════════════════════════════════════════════════════════════════════════
+
+
+def get_attribute_parse_tests() -> list[AttributeParseTestCase]:
+    """Generate attribute parse test cases."""
+    return ATTRIBUTE_PARSE_TESTS
+
+
+def get_objectclass_parse_tests() -> list[ObjectClassParseTestCase]:
+    """Generate objectClass parse test cases."""
+    return OBJECTCLASS_PARSE_TESTS
+
+
+def get_attribute_validation_tests() -> list[AttributeValidationTestCase]:
+    """Generate attribute validation test cases."""
+    return ATTRIBUTE_VALIDATION_TESTS
+
+
+def get_objectclass_validation_tests() -> list[ObjectClassValidationTestCase]:
+    """Generate objectClass validation test cases."""
+    return OBJECTCLASS_VALIDATION_TESTS
+
+
+def get_schema_can_handle_tests() -> list[SchemaCanHandleTestCase]:
+    """Generate schema can handle test cases."""
+    return SCHEMA_CAN_HANDLE_TESTS
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TEST CLASSES - CONSOLIDATED WITH PARAMETRIZATION
+# ════════════════════════════════════════════════════════════════════════════
+
+
+class TestExecuteAndBuilder:
+    """Test execute() method and builder pattern."""
 
     def test_execute_returns_status(
         self,
@@ -75,15 +386,6 @@ class TestExecute:
         assert result.is_success
         status = result.unwrap()
         assert status.server_type == "oud"
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST BUILDER PATTERN
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestBuilderPattern:
-    """Test fluent builder pattern."""
 
     def test_builder_creates_instance(self) -> None:
         """Test builder creates service instance."""
@@ -112,307 +414,104 @@ class TestBuilderPattern:
         assert service.server_type == "oid"
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# TEST PARSE ATTRIBUTE
-# ════════════════════════════════════════════════════════════════════════════
+class TestParsing:
+    """Test attribute and objectClass parsing with parametrization."""
 
-
-class TestParseAttribute:
-    """Test parse_attribute method."""
-
-    def test_parse_attribute_success(
+    @pytest.mark.parametrize("test_case", get_attribute_parse_tests())
+    def test_parse_attribute(
         self,
         schema_service: FlextLdifSchema,
-        sample_attribute_definition: str,
+        test_case: AttributeParseTestCase,
     ) -> None:
-        """Test parsing valid attribute definition."""
-        result = schema_service.parse_attribute(sample_attribute_definition)
-        assert result.is_success
-        attr = result.unwrap()
-        assert attr.oid == "2.5.4.3"
-        assert attr.name == "cn"
+        """Test parsing attribute definitions with parametrized test cases."""
+        result = schema_service.parse_attribute(test_case.definition)
 
-    def test_parse_attribute_empty(
+        if test_case.should_succeed:
+            assert result.is_success, f"Failed to parse: {test_case.description}"
+            attr = result.unwrap()
+            if test_case.expected_oid:
+                assert attr.oid == test_case.expected_oid
+            if test_case.expected_name:
+                assert attr.name == test_case.expected_name
+        else:
+            assert result.is_failure, f"Should have failed: {test_case.description}"
+
+    @pytest.mark.parametrize("test_case", get_objectclass_parse_tests())
+    def test_parse_objectclass(
         self,
         schema_service: FlextLdifSchema,
+        test_case: ObjectClassParseTestCase,
     ) -> None:
-        """Test parsing empty attribute definition."""
-        result = schema_service.parse_attribute("")
-        assert result.is_failure
-        error_msg = result.error or ""
-        assert "empty" in error_msg.lower()
+        """Test parsing objectClass definitions with parametrized test cases."""
+        result = schema_service.parse_objectclass(test_case.definition)
 
-    def test_parse_attribute_whitespace(
+        if test_case.should_succeed:
+            assert result.is_success, f"Failed to parse: {test_case.description}"
+            oc = result.unwrap()
+            if test_case.expected_oid:
+                assert oc.oid == test_case.expected_oid
+            if test_case.expected_name:
+                assert oc.name == test_case.expected_name
+            if test_case.expected_kind:
+                assert oc.kind == test_case.expected_kind
+        else:
+            assert result.is_failure, f"Should have failed: {test_case.description}"
+
+
+class TestValidation:
+    """Test attribute and objectClass validation with parametrization."""
+
+    @pytest.mark.parametrize("test_case", get_attribute_validation_tests())
+    def test_validate_attribute(
         self,
         schema_service: FlextLdifSchema,
+        test_case: AttributeValidationTestCase,
     ) -> None:
-        """Test parsing whitespace-only attribute definition."""
-        result = schema_service.parse_attribute("   ")
-        assert result.is_failure
-
-    def test_parse_attribute_invalid_format(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test parsing invalid attribute format."""
-        result = schema_service.parse_attribute("invalid format")
-        # May succeed or fail depending on parser leniency
-        assert isinstance(result, FlextResult)
-
-    def test_parse_attribute_simple(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test parsing simple attribute definition."""
-        simple_attr = "( 2.5.4.0 NAME 'objectClass' )"
-        result = schema_service.parse_attribute(simple_attr)
-        # Should parse successfully
-        assert isinstance(result, FlextResult)
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST PARSE OBJECTCLASS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestParseObjectClass:
-    """Test parse_objectclass method."""
-
-    def test_parse_objectclass_success(
-        self,
-        schema_service: FlextLdifSchema,
-        sample_objectclass_definition: str,
-    ) -> None:
-        """Test parsing valid objectClass definition."""
-        result = schema_service.parse_objectclass(sample_objectclass_definition)
-        assert result.is_success
-        oc = result.unwrap()
-        assert oc.oid == "2.5.6.6"
-        assert oc.name == "person"
-        assert oc.kind == "STRUCTURAL"
-
-    def test_parse_objectclass_empty(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test parsing empty objectClass definition."""
-        result = schema_service.parse_objectclass("")
-        assert result.is_failure
-        assert "empty" in result.error.lower()
-
-    def test_parse_objectclass_whitespace(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test parsing whitespace-only objectClass definition."""
-        result = schema_service.parse_objectclass("   ")
-        assert result.is_failure
-
-    def test_parse_objectclass_simple(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test parsing simple objectClass definition."""
-        simple_oc = "( 2.5.6.0 NAME 'top' ABSTRACT )"
-        result = schema_service.parse_objectclass(simple_oc)
-        # Should parse successfully
-        assert isinstance(result, FlextResult)
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST VALIDATE ATTRIBUTE
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestValidateAttribute:
-    """Test validate_attribute method."""
-
-    def test_validate_attribute_success(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating valid attribute."""
+        """Test validating attributes with parametrized test cases."""
         attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            oid=test_case.oid,
+            name=test_case.name,
+            syntax=test_case.syntax,
         )
         result = schema_service.validate_attribute(attr)
-        assert result.is_success
-        assert result.unwrap() is True
 
-    def test_validate_attribute_none(
+        if test_case.should_succeed:
+            assert result.is_success, f"Validation failed: {test_case.description}"
+            assert result.unwrap() is True
+        else:
+            assert result.is_failure, f"Should have failed: {test_case.description}"
+            error = result.error or ""
+            if test_case.error_keywords:
+                for keyword in test_case.error_keywords:
+                    assert keyword in error, f"Expected '{keyword}' in error: {error}"
+
+    @pytest.mark.parametrize("test_case", get_objectclass_validation_tests())
+    def test_validate_objectclass(
         self,
         schema_service: FlextLdifSchema,
+        test_case: ObjectClassValidationTestCase,
     ) -> None:
-        """Test validating None attribute."""
-        result = schema_service.validate_attribute(None)
-        assert result.is_failure
-        assert "None" in result.error
-
-    def test_validate_attribute_no_name(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating attribute without name."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="",  # Empty name
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        result = schema_service.validate_attribute(attr)
-        assert result.is_failure
-        assert "NAME" in result.error
-
-    def test_validate_attribute_no_oid(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating attribute without OID."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="",  # Empty OID
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        result = schema_service.validate_attribute(attr)
-        assert result.is_failure
-        assert "OID" in result.error
-
-    def test_validate_attribute_invalid_syntax_oid(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating attribute with invalid syntax OID."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="invalid-oid",  # Invalid OID format
-        )
-        result = schema_service.validate_attribute(attr)
-        assert result.is_failure
-        assert "SYNTAX" in result.error or "OID" in result.error
-
-    def test_validate_attribute_no_syntax(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating attribute without syntax (should pass)."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax=None,
-        )
-        result = schema_service.validate_attribute(attr)
-        assert result.is_success
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST VALIDATE OBJECTCLASS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestValidateObjectClass:
-    """Test validate_objectclass method."""
-
-    def test_validate_objectclass_success(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating valid objectClass."""
+        """Test validating objectClasses with parametrized test cases."""
         oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="STRUCTURAL",
+            oid=test_case.oid,
+            name=test_case.name,
+            kind=test_case.kind,
         )
         result = schema_service.validate_objectclass(oc)
-        assert result.is_success
-        assert result.unwrap() is True
 
-    def test_validate_objectclass_none(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating None objectClass."""
-        result = schema_service.validate_objectclass(None)
-        assert result.is_failure
-        assert "None" in result.error
-
-    def test_validate_objectclass_no_name(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating objectClass without name."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="",  # Empty name
-            kind="STRUCTURAL",
-        )
-        result = schema_service.validate_objectclass(oc)
-        assert result.is_failure
-        assert "NAME" in result.error
-
-    def test_validate_objectclass_no_oid(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating objectClass without OID."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="",  # Empty OID
-            name="testOC",
-            kind="STRUCTURAL",
-        )
-        result = schema_service.validate_objectclass(oc)
-        assert result.is_failure
-        assert "OID" in result.error
-
-    def test_validate_objectclass_invalid_kind(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating objectClass with invalid kind."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="INVALID",  # Invalid kind
-        )
-        result = schema_service.validate_objectclass(oc)
-        assert result.is_failure
-        assert "kind" in result.error.lower() or "KIND" in result.error
-
-    def test_validate_objectclass_abstract(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating ABSTRACT objectClass."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="ABSTRACT",
-        )
-        result = schema_service.validate_objectclass(oc)
-        assert result.is_success
-
-    def test_validate_objectclass_auxiliary(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test validating AUXILIARY objectClass."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="AUXILIARY",
-        )
-        result = schema_service.validate_objectclass(oc)
-        assert result.is_success
+        if test_case.should_succeed:
+            assert result.is_success, f"Validation failed: {test_case.description}"
+            assert result.unwrap() is True
+        else:
+            assert result.is_failure, f"Should have failed: {test_case.description}"
+            error = result.error or ""
+            if test_case.error_keywords:
+                for keyword in test_case.error_keywords:
+                    assert keyword in error, f"Expected '{keyword}' in error: {error}"
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# TEST WRITE ATTRIBUTE
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestWriteAttribute:
-    """Test write_attribute method."""
+class TestWriting:
+    """Test attribute and objectClass writing."""
 
     def test_write_attribute_success(
         self,
@@ -442,16 +541,9 @@ class TestWriteAttribute:
         )
         result = schema_service.write_attribute(attr)
         assert result.is_failure
-        assert "OID" in result.error or "validation" in result.error.lower()
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST WRITE OBJECTCLASS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestWriteObjectClass:
-    """Test write_objectclass method."""
+        assert result.error is not None and (
+            "OID" in result.error or "validation" in result.error.lower()
+        )
 
     def test_write_objectclass_success(
         self,
@@ -481,89 +573,30 @@ class TestWriteObjectClass:
         )
         result = schema_service.write_objectclass(oc)
         assert result.is_failure
-        assert "OID" in result.error or "validation" in result.error.lower()
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST CAN HANDLE METHODS
-# ════════════════════════════════════════════════════════════════════════════
+        assert result.error is not None and (
+            "OID" in result.error or "validation" in result.error.lower()
+        )
 
 
 class TestCanHandle:
-    """Test can_handle methods."""
+    """Test can_handle methods with parametrization."""
 
-    def test_can_handle_attribute_valid(
+    @pytest.mark.parametrize("test_case", get_schema_can_handle_tests())
+    def test_can_handle_methods(
         self,
         schema_service: FlextLdifSchema,
-        sample_attribute_definition: str,
+        test_case: SchemaCanHandleTestCase,
     ) -> None:
-        """Test can_handle_attribute with valid definition."""
-        can_handle = schema_service.can_handle_attribute(sample_attribute_definition)
-        assert can_handle is True
+        """Test can_handle methods with parametrized test cases."""
+        if test_case.element_type == SchemaElement.ATTRIBUTE:
+            can_handle = schema_service.can_handle_attribute(test_case.input_str)
+        else:
+            can_handle = schema_service.can_handle_objectclass(test_case.input_str)
 
-    def test_can_handle_attribute_empty(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle_attribute with empty string."""
-        can_handle = schema_service.can_handle_attribute("")
-        assert can_handle is False
-
-    def test_can_handle_attribute_whitespace(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle_attribute with whitespace."""
-        can_handle = schema_service.can_handle_attribute("   ")
-        assert can_handle is False
-
-    def test_can_handle_attribute_no_parentheses(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle_attribute without parentheses."""
-        can_handle = schema_service.can_handle_attribute("invalid format")
-        assert can_handle is False
-
-    def test_can_handle_objectclass_valid(
-        self,
-        schema_service: FlextLdifSchema,
-        sample_objectclass_definition: str,
-    ) -> None:
-        """Test can_handle_objectclass with valid definition."""
-        can_handle = schema_service.can_handle_objectclass(
-            sample_objectclass_definition,
+        assert can_handle is test_case.should_handle, (
+            f"can_handle returned {can_handle}, expected {test_case.should_handle}: "
+            f"{test_case.description}"
         )
-        assert can_handle is True
-
-    def test_can_handle_objectclass_empty(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle_objectclass with empty string."""
-        can_handle = schema_service.can_handle_objectclass("")
-        assert can_handle is False
-
-    def test_can_handle_objectclass_whitespace(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle_objectclass with whitespace."""
-        can_handle = schema_service.can_handle_objectclass("   ")
-        assert can_handle is False
-
-    def test_can_handle_objectclass_no_parentheses(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle_objectclass without parentheses."""
-        can_handle = schema_service.can_handle_objectclass("invalid format")
-        assert can_handle is False
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST ROUNDTRIP OPERATIONS
-# ════════════════════════════════════════════════════════════════════════════
 
 
 class TestRoundtrip:
@@ -612,11 +645,6 @@ class TestRoundtrip:
         assert isinstance(parse2_result, FlextResult)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# TEST REPR
-# ════════════════════════════════════════════════════════════════════════════
-
-
 class TestRepr:
     """Test string representation."""
 
@@ -633,6 +661,25 @@ class TestRepr:
         repr_str = repr(service)
         assert "FlextLdifSchema" in repr_str
         assert "oud" in repr_str
+
+
+__all__ = [
+    "AttributeParseTestCase",
+    "AttributeValidationTestCase",
+    "DefinitionStatus",
+    "ObjectClassParseTestCase",
+    "ObjectClassValidationTestCase",
+    "SchemaCanHandleTestCase",
+    "SchemaElement",
+    "ServerType",
+    "TestCanHandle",
+    "TestExecuteAndBuilder",
+    "TestParsing",
+    "TestRepr",
+    "TestRoundtrip",
+    "TestValidation",
+    "TestWriting",
+]
 
 
 if __name__ == "__main__":

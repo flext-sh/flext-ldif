@@ -329,13 +329,15 @@ def test_builder_pattern() -> None:
         create_entry("cn=aaa,dc=example,dc=com", {"aaa": ["a"], "cn": ["aaa"]}),
     ]
 
-    sorted_entries = (
+    result = (
         FlextLdifSorting.builder()
         .with_entries(entries)
         .with_strategy("hierarchy")
-        .build()
+        .execute()
     )
 
+    assert result.is_success
+    sorted_entries = result.unwrap()
     assert isinstance(sorted_entries, list)
     assert len(sorted_entries) == 2
 
@@ -346,14 +348,17 @@ def test_builder_with_attribute_sorting() -> None:
         create_entry("cn=test,dc=example,dc=com", {"zzz": ["z"], "aaa": ["a"]}),
     ]
 
-    sorted_entries = (
+    result = (
         FlextLdifSorting.builder()
         .with_entries(entries)
         .with_strategy("hierarchy")
         .with_target("combined")
         .with_attribute_sorting(alphabetical=True)
-        .build()
+        .execute()
     )
+
+    assert result.is_success
+    sorted_entries = result.unwrap()
 
     assert len(sorted_entries) == 1
     assert sorted_entries[0].attributes is not None
@@ -374,14 +379,17 @@ def test_builder_with_attribute_order() -> None:
         ),
     ]
 
-    sorted_entries = (
+    result = (
         FlextLdifSorting.builder()
         .with_entries(entries)
         .with_strategy("hierarchy")
         .with_target("combined")
         .with_attribute_sorting(order=["cn", "zzz"])
-        .build()
+        .execute()
     )
+
+    assert result.is_success
+    sorted_entries = result.unwrap()
 
     assert len(sorted_entries) == 1
     assert sorted_entries[0].attributes is not None

@@ -424,11 +424,20 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ACL_TYPE_PATTERN: ClassVar[str] = r"^(orclaci|orclentrylevelaci):"
         ACL_TARGET_PATTERN: ClassVar[str] = r"access to (entry|attr=\(([^)]+)\))"
         ACL_SUBJECT_PATTERN: ClassVar[str] = (
-            r"by\s+(group=\"[^\"]+\"|dnattr=\([^)]+\)|guidattr=\([^)]+\"|groupattr=\([^)]+\)|\"[^\"]+\"|self|\*)"
+            r"by\s+(group=\"[^\"]+\"|dnattr=\([^)]+\)|guidattr=\([^)]+\"|groupattr=\([^)]+\"|\"[^\"]+\"|self|\*)"
         )
         ACL_PERMISSIONS_PATTERN: ClassVar[str] = r"\(([^)]+)\)(?:\s*$)"
         ACL_FILTER_PATTERN: ClassVar[str] = r"filter=(\([^)]*(?:\([^)]*\)[^)]*)*\))"
         ACL_CONSTRAINT_PATTERN: ClassVar[str] = r"added_object_constraint=\(([^)]+)\)"
+
+        # ACL parsing patterns for OID-specific extensions (validated against Oracle OID documentation)
+        ACL_BINDMODE_PATTERN: ClassVar[str] = r"bindmode\s*=\s*\(([^)]+)\)"
+        ACL_DENY_GROUP_OVERRIDE_PATTERN: ClassVar[str] = r"DenyGroupOverride"
+        ACL_APPEND_TO_ALL_PATTERN: ClassVar[str] = r"AppendToAll"
+        ACL_BIND_IP_FILTER_PATTERN: ClassVar[str] = r"bindipfilter\s*=\s*\(([^)]+)\)"
+        ACL_CONSTRAIN_TO_ADDED_PATTERN: ClassVar[str] = (
+            r"constraintonaddedobject\s*=\s*\(([^)]+)\)"
+        )
 
         # ACL pattern dictionary keys (used in _get_oid_patterns)
         ACL_PATTERN_KEY_TYPE: ClassVar[str] = "acl_type"
@@ -747,7 +756,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         result: FlextResult[dict[str, list[str] | str]] = (
             schema_quirk.extract_schemas_from_ldif(ldif_content)
         )
-        return result.map(lambda d: cast("dict[str, object]", d))
+        mapped_result = result.map(lambda d: cast("dict[str, object]", d))
+        return cast("FlextResult[dict[str, object]]", mapped_result)
 
     class Schema(
         FlextLdifServersRfc.Schema,
@@ -1873,8 +1883,34 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             target_attrs: list[str] | None,
             acl_filter: str | None,
             acl_constraint: str | None,
+            bindmode: str | None = None,
+            deny_group_override: bool | None = None,  # noqa: FBT001
+            append_to_all: bool | None = None,  # noqa: FBT001
+            bind_ip_filter: str | None = None,
+            constrain_to_added_object: str | None = None,
         ) -> dict[str, object]:
-            """Build metadata extensions for OID ACL."""
+            """Build metadata extensions for OID ACL with Oracle-specific features.
+
+            Args:
+                acl_line: Original ACL line
+                oid_subject_type: OID subject type (user, group, dn_attr, etc.)
+                rfc_subject_type: RFC-normalized subject type
+                oid_subject_value: Original subject value
+                perms_dict: Permissions dictionary
+                target_dn: Target DN
+                target_attrs: Target attributes
+                acl_filter: OID filter expression
+                acl_constraint: OID added_object_constraint
+                bindmode: OID BINDMODE (authentication/encryption requirements)
+                deny_group_override: OID DenyGroupOverride flag
+                append_to_all: OID AppendToAll flag
+                bind_ip_filter: OID BINDIPFILTER expression
+                constrain_to_added_object: OID constraintonaddedobject filter
+
+            Returns:
+                Metadata extensions dict for zero-data-loss preservation
+
+            """
             extensions: dict[str, object] = {
                 FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line.strip(),
                 FlextLdifConstants.MetadataKeys.ACL_SOURCE_SERVER: "oid",
@@ -1888,12 +1924,31 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 },
             }
 
+            # Add optional OID-specific metadata (original format)
             if acl_filter:
                 extensions[FlextLdifConstants.MetadataKeys.ACL_FILTER] = acl_filter
             if acl_constraint:
                 extensions[FlextLdifConstants.MetadataKeys.ACL_CONSTRAINT] = (
                     acl_constraint
                 )
+
+            # Add OID-specific extensions (validated against Oracle OID documentation)
+            if bindmode:
+                extensions[FlextLdifConstants.MetadataKeys.ACL_BINDMODE] = bindmode
+            if deny_group_override is True:
+                extensions[FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE] = (
+                    True
+                )
+            if append_to_all is True:
+                extensions[FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL] = True
+            if bind_ip_filter:
+                extensions[FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER] = (
+                    bind_ip_filter
+                )
+            if constrain_to_added_object:
+                extensions[
+                    FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
+                ] = constrain_to_added_object
 
             return extensions
 
@@ -1945,6 +2000,53 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
                 acl_constraint = constraint_match.group(1) if constraint_match else None
 
+                # Extract OID-specific extensions (validated against Oracle OID documentation)
+                # BINDMODE: Authentication/encryption requirements
+                bindmode_match = re.search(
+                    FlextLdifServersOid.Constants.ACL_BINDMODE_PATTERN,
+                    acl_line,
+                    re.IGNORECASE,
+                )
+                bindmode = bindmode_match.group(1) if bindmode_match else None
+
+                # DenyGroupOverride: Prevents override by higher ACPs
+                deny_group_override = bool(
+                    re.search(
+                        FlextLdifServersOid.Constants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
+                        acl_line,
+                    )
+                )
+
+                # AppendToAll: Adds subject to all other ACIs
+                append_to_all = bool(
+                    re.search(
+                        FlextLdifServersOid.Constants.ACL_APPEND_TO_ALL_PATTERN,
+                        acl_line,
+                    )
+                )
+
+                # BINDIPFILTER: IP-based access filtering
+                bind_ip_filter_match = re.search(
+                    FlextLdifServersOid.Constants.ACL_BIND_IP_FILTER_PATTERN,
+                    acl_line,
+                    re.IGNORECASE,
+                )
+                bind_ip_filter = (
+                    bind_ip_filter_match.group(1) if bind_ip_filter_match else None
+                )
+
+                # constraintonaddedobject: Entry type constraints for newly added objects
+                constrain_to_added_match = re.search(
+                    FlextLdifServersOid.Constants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
+                    acl_line,
+                    re.IGNORECASE,
+                )
+                constrain_to_added_object = (
+                    constrain_to_added_match.group(1)
+                    if constrain_to_added_match
+                    else None
+                )
+
                 # Build metadata extensions
                 extensions = self._build_oid_acl_metadata(
                     acl_line,
@@ -1956,6 +2058,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     target_attrs,
                     acl_filter,
                     acl_constraint,
+                    bindmode,
+                    deny_group_override,
+                    append_to_all,
+                    bind_ip_filter,
+                    constrain_to_added_object,
                 )
 
                 # Create ACL model with parsed data (Python 3.13: cleaner dict creation)
@@ -2057,7 +2164,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """
             return FlextResult.ok(rfc_acl_attrs)
 
-        def _write_acl(
+        def _write_acl(  # noqa: C901
             self,
             acl_data: FlextLdifModels.Acl,
             _format_option: str | None = None,
@@ -2160,6 +2267,38 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
             ):
                 acl_parts.append(f"added_object_constraint=({acl_constraint})")
+
+            # Add OID-specific extensions from metadata (validated against Oracle OID documentation)
+            if acl_data.metadata and acl_data.metadata.extensions:
+                # BINDMODE: Authentication/encryption requirements
+                if bindmode := acl_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.ACL_BINDMODE,
+                ):
+                    acl_parts.append(f"bindmode=({bindmode})")
+
+                # DenyGroupOverride: Prevents override by higher ACPs
+                if acl_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+                ):
+                    acl_parts.append("DenyGroupOverride")
+
+                # AppendToAll: Adds subject to all other ACIs
+                if acl_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL,
+                ):
+                    acl_parts.append("AppendToAll")
+
+                # BINDIPFILTER: IP-based access restriction
+                if bind_ip_filter := acl_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER,
+                ):
+                    acl_parts.append(f"bindipfilter=({bind_ip_filter})")
+
+                # constraintonaddedobject: Entry type constraints
+                if constrain_to_added := acl_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
+                ):
+                    acl_parts.append(f"constraintonaddedobject=({constrain_to_added})")
 
             # Join parts (both formats use same join - DRY)
             orclaci_str = " ".join(acl_parts)

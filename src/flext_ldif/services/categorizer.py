@@ -16,7 +16,7 @@ from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
@@ -29,7 +29,7 @@ def _get_server_registry() -> FlextLdifServer:
 
 
 class FlextLdifCategorizer(
-    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
+    LdifServiceBase,
 ):
     """Service for entry categorization.
 

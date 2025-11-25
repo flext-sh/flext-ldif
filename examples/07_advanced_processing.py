@@ -24,7 +24,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
@@ -79,7 +78,7 @@ def parallel_processing() -> None:
     # Create larger dataset for parallel processing benefit
     entries: list[FlextLdifModels.Entry] = []
     for i in range(10):
-        result = api.models.Entry.create(
+        result = api.create_entry(
             dn=f"cn=User{i},ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
@@ -88,7 +87,7 @@ def parallel_processing() -> None:
             },
         )
         if result.is_success:
-            entries.append(cast("FlextLdifModels.Entry", result.unwrap()))
+            entries.append(result.unwrap())
 
     # Process in parallel using ThreadPoolExecutor
     parallel_result = api.process("validate", entries, parallel=True)

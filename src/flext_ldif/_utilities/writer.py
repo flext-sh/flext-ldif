@@ -651,6 +651,113 @@ class FlextLdifUtilitiesWriter:
             f"{schema_type}: {schema_value}\n"
         )
 
+    @staticmethod
+    def _apply_output_options(
+        attr_name: str,
+        attr_values: list[str],
+        entry_metadata: FlextLdifModels.QuirkMetadata,
+        output_options: FlextLdifModels.WriteOutputOptions,
+    ) -> tuple[str, list[str]] | None:
+        """Apply output visibility options based on attribute status.
+
+        SRP: Writer determines output format based on marker status and options.
+
+        Args:
+            attr_name: Attribute name to check
+            attr_values: Attribute values to write
+            entry_metadata: Entry metadata containing marker status
+            output_options: Output visibility configuration
+
+        Returns:
+            - (attr_name, values): Write normally
+            - ("# " + attr_name, values): Write as comment
+            - None: Don't write at all (hide)
+
+        Example:
+            result = FlextLdifUtilitiesWriter._apply_output_options(
+                "telephoneNumber",
+                ["+1234567890"],
+                entry.metadata,
+                output_options
+            )
+            if result is None:
+                # Don't write this attribute
+                pass
+            else:
+                attr_name, values = result
+                # Write attribute (possibly as comment)
+
+        """
+        # Get marked_attributes from metadata (type narrowing)
+        marked_attrs_raw = entry_metadata.extensions.get("marked_attributes", {})
+        if not isinstance(marked_attrs_raw, dict):
+            return (attr_name, attr_values)
+
+        marked_attrs = cast("dict[str, dict[str, object]]", marked_attrs_raw)
+        attr_info = marked_attrs.get(attr_name)
+
+        # If attribute not marked, write normally
+        if not attr_info:
+            return (attr_name, attr_values)
+
+        # Check removed_attributes for already-removed attributes
+        removed_attrs_raw = entry_metadata.extensions.get("removed_attributes", {})
+        if isinstance(removed_attrs_raw, dict) and attr_name in removed_attrs_raw:
+            return FlextLdifUtilitiesWriter._handle_removed_attribute(
+                attr_name,
+                attr_values,
+                output_options,
+            )
+
+        # Handle based on status - extracted to reduce complexity
+        status = attr_info.get("status", FlextLdifConstants.AttributeMarkerStatus.NORMAL)
+        return FlextLdifUtilitiesWriter._handle_attribute_status(
+            attr_name,
+            attr_values,
+            status,
+            output_options,
+        )
+
+    @staticmethod
+    def _handle_removed_attribute(
+        attr_name: str,
+        attr_values: list[str],
+        output_options: FlextLdifModels.WriteOutputOptions,
+    ) -> tuple[str, list[str]] | None:
+        """Handle already-removed attributes (extracted to reduce complexity)."""
+        if output_options.show_removed_attributes:
+            return (f"# {attr_name}", attr_values)
+        return None
+
+    @staticmethod
+    def _handle_attribute_status(
+        attr_name: str,
+        attr_values: list[str],
+        status: object,
+        output_options: FlextLdifModels.WriteOutputOptions,
+    ) -> tuple[str, list[str]] | None:
+        """Handle attribute based on status (extracted to reduce complexity)."""
+        if status == FlextLdifConstants.AttributeMarkerStatus.OPERATIONAL:
+            if output_options.show_operational_attributes:
+                return (attr_name, attr_values)
+            return None
+
+        if status == FlextLdifConstants.AttributeMarkerStatus.FILTERED:
+            if output_options.show_filtered_attributes:
+                return (f"# {attr_name}", attr_values)
+            return None
+
+        if status == FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL:
+            if output_options.show_removed_attributes:
+                return (f"# {attr_name}", attr_values)
+            return None
+
+        if status == FlextLdifConstants.AttributeMarkerStatus.HIDDEN:
+            return None
+
+        # Default: write normally
+        return (attr_name, attr_values)
+
 
 __all__ = [
     "FlextLdifUtilitiesWriter",

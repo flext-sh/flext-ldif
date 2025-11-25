@@ -521,14 +521,16 @@ class TestComprehensiveAPIUsage:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        sorted_entries = (
+        result = (
             FlextLdifSorting.builder()
             .with_entries(oid_entries)
             .with_strategy("hierarchy")
             .with_attribute_sorting(alphabetical=True)
-            .build()
+            .execute()
         )
 
+        assert result.is_success
+        sorted_entries = result.unwrap()
         assert isinstance(sorted_entries, list)
         assert len(sorted_entries) == len(oid_entries)
 

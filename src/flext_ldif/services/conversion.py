@@ -90,7 +90,7 @@ def _get_schema_quirk(
             msg = "Quirk has schema_quirk attribute but it is None"
             raise TypeError(msg)
         # Type narrowing: schema_quirk is already FlextLdifServersBase.Schema after None check
-        return schema
+        return cast("FlextLdifServersBase.Schema", schema)
 
     msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
     raise TypeError(msg)

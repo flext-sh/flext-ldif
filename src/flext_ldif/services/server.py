@@ -275,6 +275,25 @@ class FlextLdifServer:
         """
         return self._bases.get(self._normalize_server_type(server_type))
 
+    def get_all_quirks(self, server_type: str) -> dict[str, object]:
+        """Get all quirk types for a server.
+
+        Args:
+            server_type: Server type (e.g., 'oid', 'oud', 'openldap')
+
+        Returns:
+            Dict with 'schema', 'acl', 'entry' keys containing quirk instances
+
+        """
+        base = self._bases.get(self._normalize_server_type(server_type))
+        if not base:
+            return {}
+        return {
+            "schema": base.schema_quirk,
+            "acl": base.acl_quirk,
+            "entry": base.entry_quirk,
+        }
+
     def schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
         """Get schema quirk for a server type.
 
@@ -423,6 +442,39 @@ class FlextLdifServer:
 
         """
         return sorted(self._bases.keys())
+
+    def get_registry_stats(self) -> dict[str, object]:
+        """Get comprehensive registry statistics.
+
+        Returns:
+            Dictionary with registry statistics including:
+            - total_servers: Number of registered server types
+            - quirks_by_server: Dict mapping server types to their quirks
+            - server_priorities: Dict mapping server types to their priorities
+
+        """
+        quirks_by_server = {}
+        server_priorities = {}
+
+        for server_type, base_quirk in self._bases.items():
+            quirks_by_server[server_type] = {
+                "schema": base_quirk.schema_quirk.__class__.__name__
+                if base_quirk.schema_quirk
+                else None,
+                "acl": base_quirk.acl_quirk.__class__.__name__
+                if base_quirk.acl_quirk
+                else None,
+                "entry": base_quirk.entry_quirk.__class__.__name__
+                if base_quirk.entry_quirk
+                else None,
+            }
+            server_priorities[server_type] = base_quirk.priority
+
+        return {
+            "total_servers": len(self._bases),
+            "quirks_by_server": quirks_by_server,
+            "server_priorities": server_priorities,
+        }
 
     class _GlobalAccess:
         """Nested singleton management for global quirk registry."""

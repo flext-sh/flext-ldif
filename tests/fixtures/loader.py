@@ -471,6 +471,48 @@ class FlextLdifFixtures:
             """Load all OUD fixtures."""
             return self._loader.load_all(FlextLdifFixtures.ServerType.OUD)
 
+    class RFC:
+        """RFC fixture loader.
+
+        Provides direct access to RFC-compliant fixtures.
+        """
+
+        def __init__(self, fixtures_root: Path | None = None) -> None:
+            """Initialize RFC fixture loader."""
+            self._loader = FlextLdifFixtures.Loader(fixtures_root)
+
+        def schema(self) -> str:
+            """Load RFC schema fixtures."""
+            return self._loader.load(
+                FlextLdifFixtures.ServerType.RFC,
+                FlextLdifFixtures.FixtureType.SCHEMA,
+            )
+
+        def acl(self) -> str:
+            """Load RFC ACL fixtures."""
+            return self._loader.load(
+                FlextLdifFixtures.ServerType.RFC,
+                FlextLdifFixtures.FixtureType.ACL,
+            )
+
+        def entries(self) -> str:
+            """Load RFC entry fixtures."""
+            return self._loader.load(
+                FlextLdifFixtures.ServerType.RFC,
+                FlextLdifFixtures.FixtureType.ENTRIES,
+            )
+
+        def integration(self) -> str:
+            """Load RFC integration fixtures."""
+            return self._loader.load(
+                FlextLdifFixtures.ServerType.RFC,
+                FlextLdifFixtures.FixtureType.INTEGRATION,
+            )
+
+        def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
+            """Load all RFC fixtures."""
+            return self._loader.load_all(FlextLdifFixtures.ServerType.RFC)
+
     class OpenLDAP:
         """OpenLDAP fixture loader.
 

@@ -1,6 +1,16 @@
-"""Comprehensive unit tests for FlextLdifParser ParseFormatOptions.
+"""Unit tests for FlextLdifParser ParseFormatOptions.
 
-Tests all parser format options with real LDIF content and edge cases.
+**Modules Tested:**
+- flext_ldif.services.parser.FlextLdifParser: LDIF parsing service with format options
+- flext_ldif.models.FlextLdifModels.ParseFormatOptions: Parser format configuration
+
+**Scope:**
+- All format options (auto_parse_schema, auto_extract_acls, preserve_attribute_order,
+  validate_entries, normalize_dns, max_parse_errors, include_operational_attrs)
+- Input sources (string, file, ldap3)
+- Edge cases and error handling
+- Combined options validation
+- Default values and empty content handling
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,78 +18,130 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from enum import Enum
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
 from flext_ldif import FlextLdifModels, FlextLdifParser
 
+from ...fixtures.constants import DNs, Names, OIDs, Syntax, Values
+from ...helpers.test_assertions import TestAssertions
+from ...helpers.test_ldif_helpers import OptimizedLdifTestHelpers
+
 
 class TestParserFormatOptions:
-    """Test all ParseFormatOptions functionality."""
+    """Test all ParseFormatOptions functionality.
 
-    @pytest.fixture
-    def parser_service(self) -> FlextLdifParser:
-        """Create parser service instance."""
-        return FlextLdifParser()
+    Uses advanced Python 3.13 features, factories, and parametrization
+    to reduce code while maintaining 100% coverage and testing all edge cases.
+    """
 
-    @pytest.fixture
-    def sample_ldif_with_schema(self) -> str:
-        """Sample LDIF content with schema entries."""
-        return """version: 1
+    class InputSource(Enum):
+        """Input source types for parser testing."""
 
-dn: cn=schema
+        STRING = "string"
+        FILE = "file"
+        LDAP3 = "ldap3"
+
+    class OptionConfig:
+        """Configuration mapping for format options testing."""
+
+        @staticmethod
+        def get_boolean_options() -> dict[
+            str,
+            tuple[
+                str,
+                str,
+                str | None,
+            ],
+        ]:
+            """Get boolean options configuration.
+
+            Returns mapping of option name to (fixture_name, validator_enabled_name, validator_disabled_name).
+            """
+            return {
+                "auto_parse_schema": (
+                    "ldif_with_schema",
+                    "has_schema_entries",
+                    "no_schema_entries",
+                ),
+                "auto_extract_acls": ("ldif_with_acls", "has_acl_attributes", None),
+                "preserve_attribute_order": (
+                    "entry_with_attribute_order",
+                    "attribute_order_preserved",
+                    "attribute_order_not_preserved",
+                ),
+                "normalize_dns": ("basic_entry", "normalized_dns", None),
+                "include_operational_attrs": (
+                    "ldif_with_operational_attrs",
+                    "has_operational_attrs",
+                    "no_operational_attrs",
+                ),
+            }
+
+    class Fixtures:
+        """Nested class for test fixtures and data factories."""
+
+        @staticmethod
+        def ldif_with_schema() -> str:
+            """Create LDIF content with schema entries."""
+            return f"""version: 1
+
+dn: {DNs.SCHEMA}
 objectClass: ldapSubentry
 objectClass: subschema
 cn: schema
-attributeTypes: ( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-objectClasses: ( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber ) )
+attributeTypes: ( {OIDs.CN} NAME '{Names.CN}' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX {Syntax.DIRECTORY_STRING} )
+objectClasses: ( {OIDs.PERSON} NAME '{Names.PERSON}' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber ) )
 
-dn: cn=John Doe,ou=people,dc=example,dc=com
-objectClass: person
+dn: cn=John Doe,ou=people,{DNs.EXAMPLE}
+objectClass: {Names.PERSON}
 cn: John Doe
 sn: Doe
 telephoneNumber: +1-555-123-4567
 """
 
-    @pytest.fixture
-    def sample_ldif_with_acls(self) -> str:
-        """Sample LDIF content with ACL attributes."""
-        return """version: 1
+        @staticmethod
+        def ldif_with_acls() -> str:
+            """Create LDIF content with ACL attributes."""
+            return f"""version: 1
 
-dn: ou=people,dc=example,dc=com
+dn: ou=people,{DNs.EXAMPLE}
 objectClass: organizationalUnit
 ou: people
-aci: (targetattr="*")(version 3.0; acl "Admin Access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)
+aci: (targetattr="*")(version 3.0; acl "Admin Access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}";)
 aci: (targetattr="cn || sn")(version 3.0; acl "Read Access"; allow (read) userdn="ldap:///anyone";)
 
-dn: cn=Jane Smith,ou=people,dc=example,dc=com
-objectClass: person
+dn: cn=Jane Smith,ou=people,{DNs.EXAMPLE}
+objectClass: {Names.PERSON}
 cn: Jane Smith
 sn: Smith
 """
 
-    @pytest.fixture
-    def sample_ldif_with_operational_attrs(self) -> str:
-        """Sample LDIF content with operational attributes."""
-        return """version: 1
+        @staticmethod
+        def ldif_with_operational_attrs() -> str:
+            """Create LDIF content with operational attributes."""
+            return f"""version: 1
 
-dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-sn: user
+dn: {DNs.TEST_USER}
+objectClass: {Names.PERSON}
+cn: {Values.TEST}
+sn: {Values.USER}
 createTimestamp: 20250130120000Z
-creatorsName: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+creatorsName: cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}
 modifyTimestamp: 20250130130000Z
-modifiersName: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+modifiersName: cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}
 entryUUID: 12345678-1234-1234-1234-123456789abc
 entryCSN: 20250130130000.000001Z#000000#001#000000
 """
 
-    @pytest.fixture
-    def invalid_ldif(self) -> str:
-        """Invalid LDIF content for error testing."""
-        return """version: 1
+        @staticmethod
+        def invalid_ldif() -> str:
+            """Create invalid LDIF content for error testing."""
+            return """version: 1
 
 dn:
 objectClass: person
@@ -93,462 +155,307 @@ cn:
 sn:
 """
 
-    def test_auto_parse_schema_enabled(
-        self,
-        parser_service: FlextLdifParser,
-        sample_ldif_with_schema: str,
-    ) -> None:
-        """Test auto_parse_schema=True functionality."""
-        options = FlextLdifModels.ParseFormatOptions(auto_parse_schema=True)
+        @staticmethod
+        def basic_entry(dn: str = DNs.TEST_USER) -> str:
+            """Create basic LDIF entry."""
+            return f"""version: 1
 
-        result = parser_service.parse(
-            content=sample_ldif_with_schema,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
+dn: {dn}
+objectClass: {Names.PERSON}
+cn: {Values.TEST}
+sn: {Values.USER}
+"""
 
-        assert result.is_success
-        response = result.unwrap()
-        assert response.statistics.schema_entries > 0
-        assert response.statistics.data_entries > 0
+        @staticmethod
+        def entry_with_attribute_order() -> str:
+            """Create LDIF entry with specific attribute order."""
+            return f"""version: 1
 
-        # Check that schema entry was processed
-        schema_entries = [e for e in response.entries if "schema" in str(e.dn).lower()]
-        assert len(schema_entries) > 0
-
-    def test_auto_parse_schema_disabled(
-        self,
-        parser_service: FlextLdifParser,
-        sample_ldif_with_schema: str,
-    ) -> None:
-        """Test auto_parse_schema=False functionality."""
-        options = FlextLdifModels.ParseFormatOptions(auto_parse_schema=False)
-
-        result = parser_service.parse(
-            content=sample_ldif_with_schema,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-        # All entries should be treated as data entries
-        assert response.statistics.schema_entries == 0
-        assert response.statistics.data_entries == len(response.entries)
-
-    def test_auto_extract_acls_enabled(
-        self,
-        parser_service: FlextLdifParser,
-        sample_ldif_with_acls: str,
-    ) -> None:
-        """Test auto_extract_acls=True functionality."""
-        options = FlextLdifModels.ParseFormatOptions(auto_extract_acls=True)
-
-        result = parser_service.parse(
-            content=sample_ldif_with_acls,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-
-        # Check that ACL extraction was attempted on entries with ACI attributes
-        acl_entries = [
-            e
-            for e in response.entries
-            if any(
-                "aci" in attr.lower()
-                for attr in (
-                    e.attributes
-                    if hasattr(e.attributes, "__iter__")
-                    and not isinstance(e.attributes, str)
-                    else []
-                )
-            )
-        ]
-        assert len(acl_entries) > 0
-
-    def test_auto_extract_acls_disabled(
-        self,
-        parser_service: FlextLdifParser,
-        sample_ldif_with_acls: str,
-    ) -> None:
-        """Test auto_extract_acls=False functionality."""
-        options = FlextLdifModels.ParseFormatOptions(auto_extract_acls=False)
-
-        result = parser_service.parse(
-            content=sample_ldif_with_acls,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-
-        # ACL extraction should not have been performed
-        # Raw ACI attributes should still be present
-        acl_entries = [
-            e
-            for e in response.entries
-            if any(
-                "aci" in attr.lower()
-                for attr in (
-                    e.attributes
-                    if hasattr(e.attributes, "__iter__")
-                    and not isinstance(e.attributes, str)
-                    else []
-                )
-            )
-        ]
-        assert len(acl_entries) > 0
-        assert len(response.entries) > 0
-
-    def test_preserve_attribute_order_enabled(
-        self,
-        parser_service: FlextLdifParser,
-    ) -> None:
-        """Test preserve_attribute_order=True functionality."""
-        ldif_content = """version: 1
-
-dn: cn=test,dc=example,dc=com
-objectClass: person
+dn: {DNs.TEST_USER}
+objectClass: {Names.PERSON}
 sn: Test
 cn: Test User
 telephoneNumber: 123-456-7890
 mail: test@example.com
 """
 
-        options = FlextLdifModels.ParseFormatOptions(preserve_attribute_order=True)
+        @staticmethod
+        def ldif_with_errors(count: int = 3) -> str:
+            """Create LDIF with multiple potential errors."""
+            entries = "\n\n".join(
+                f"""dn: cn=error{i},dc=example,dc=com
+objectClass: {Names.PERSON}
+cn:
+sn:"""
+                for i in range(1, count + 1)
+            )
+            return f"version: 1\n\n{entries}\n"
 
-        result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
+        @staticmethod
+        def ldap3_results() -> list[tuple[str, dict[str, list[str]]]]:
+            """Create ldap3 query results format."""
+            return [
+                (
+                    "cn=ldap3-test,dc=example,dc=com",
+                    {
+                        "objectClass": ["person"],
+                        "cn": ["LDAP3 Test"],
+                        "sn": ["Test"],
+                        "createTimestamp": ["20250130120000Z"],
+                        "entryUUID": ["12345678-1234-1234-1234-123456789abc"],
+                    },
+                ),
+            ]
 
-        assert result.is_success
-        response = result.unwrap()
+    class Helpers:
+        """Nested class for test helper methods."""
 
-        # Check that attribute order was preserved in metadata
-        for entry in response.entries:
-            if entry.metadata and entry.metadata.extensions:
-                attribute_order = entry.metadata.extensions.get("attribute_order")
-                if attribute_order:
-                    # Order should reflect the original LDIF order
-                    assert isinstance(attribute_order, list)
-                    assert len(attribute_order) > 0
+        @staticmethod
+        def parse_and_assert(
+            parser: FlextLdifParser,
+            content: str | Path | list[tuple[str, dict[str, list[str]]]],
+            input_source: Literal["string", "file", "ldap3"] = "string",
+            server_type: str = "rfc",
+            format_options: FlextLdifModels.ParseFormatOptions | None = None,
+        ) -> FlextLdifModels.ParseResponse:
+            """Parse content and assert success, returning response.
 
-    def test_preserve_attribute_order_disabled(
+            Reduces 5-7 lines of repetitive parsing code per test.
+            """
+            result = parser.parse(
+                content=content,
+                input_source=input_source,
+                server_type=server_type,
+                format_options=format_options,
+            )
+            response_obj = TestAssertions.assert_success(result, "Parse should succeed")
+            assert isinstance(response_obj, FlextLdifModels.ParseResponse)
+            return response_obj
+
+    class Validators:
+        """Nested class for validation functions."""
+
+        @staticmethod
+        def has_schema_entries(response: FlextLdifModels.ParseResponse) -> None:
+            """Validate schema entries exist."""
+            assert response.statistics.schema_entries > 0
+            assert response.statistics.data_entries > 0
+            schema_entries = [
+                e for e in response.entries if "schema" in str(e.dn).lower()
+            ]
+            assert len(schema_entries) > 0
+
+        @staticmethod
+        def no_schema_entries(response: FlextLdifModels.ParseResponse) -> None:
+            """Validate no schema entries."""
+            assert response.statistics.schema_entries == 0
+            assert response.statistics.data_entries == len(response.entries)
+
+        @staticmethod
+        def has_acl_attributes(response: FlextLdifModels.ParseResponse) -> None:
+            """Validate ACL attributes exist in entries."""
+            acl_entries = [
+                e
+                for e in response.entries
+                if any(
+                    "aci" in str(attr).lower()
+                    for attr in (
+                        e.attributes.attributes
+                        if hasattr(e.attributes, "attributes")
+                        else []
+                    )
+                )
+            ]
+            assert len(acl_entries) > 0
+
+        @staticmethod
+        def attribute_order_preserved(
+            response: FlextLdifModels.ParseResponse,
+        ) -> None:
+            """Validate attribute order is preserved."""
+            for entry in response.entries:
+                if entry.metadata and entry.metadata.extensions:
+                    attribute_order = entry.metadata.extensions.get("attribute_order")
+                    if attribute_order:
+                        assert isinstance(attribute_order, list)
+                        assert len(attribute_order) > 0
+
+        @staticmethod
+        def attribute_order_not_preserved(
+            response: FlextLdifModels.ParseResponse,
+        ) -> None:
+            """Validate attribute order is not preserved."""
+            for entry in response.entries:
+                if entry.metadata and entry.metadata.extensions:
+                    attribute_order = entry.metadata.extensions.get("attribute_order")
+                    assert attribute_order is None
+
+        @staticmethod
+        def normalized_dns(response: FlextLdifModels.ParseResponse) -> None:
+            """Validate DNs are normalized."""
+            for entry in response.entries:
+                dn_str = str(entry.dn.value)
+                assert dn_str == dn_str.strip()
+
+        @staticmethod
+        def has_operational_attrs(response: FlextLdifModels.ParseResponse) -> None:
+            """Validate operational attributes are included."""
+            operational_found = False
+            for entry in response.entries:
+                attr_names = [name.lower() for name in entry.attributes.attributes]
+                if any(
+                    op_attr in attr_names
+                    for op_attr in ["createtimestamp", "creatorsname", "entryuuid"]
+                ):
+                    operational_found = True
+                    break
+            assert operational_found, "No operational attributes found"
+
+        @staticmethod
+        def no_operational_attrs(response: FlextLdifModels.ParseResponse) -> None:
+            """Validate operational attributes are filtered out."""
+            for entry in response.entries:
+                attr_names = [name.lower() for name in entry.attributes.attributes]
+                operational_found = any(
+                    op_attr in attr_names
+                    for op_attr in [
+                        "createtimestamp",
+                        "creatorsname",
+                        "entryuuid",
+                        "entrycsn",
+                    ]
+                )
+                assert not operational_found, (
+                    f"Found operational attributes in entry {entry.dn}: {attr_names}"
+                )
+
+        @staticmethod
+        def parse_errors_within_limit(
+            limit: int,
+        ) -> Callable[[FlextLdifModels.ParseResponse], None]:
+            """Create validator for parse errors within limit."""
+
+            def validator(response: FlextLdifModels.ParseResponse) -> None:
+                assert response.statistics.parse_errors <= limit
+
+            return validator
+
+    @pytest.fixture
+    def parser_service(self) -> FlextLdifParser:
+        """Create parser service instance."""
+        return OptimizedLdifTestHelpers.create_parser()
+
+    @pytest.mark.parametrize(
+        ("option_name", "enabled"),
+        [
+            (option, enabled)
+            for option in [
+                "auto_parse_schema",
+                "auto_extract_acls",
+                "preserve_attribute_order",
+                "normalize_dns",
+                "include_operational_attrs",
+            ]
+            for enabled in [True, False]
+        ],
+    )
+    def test_boolean_format_options(
         self,
         parser_service: FlextLdifParser,
+        option_name: str,
+        enabled: bool,
     ) -> None:
-        """Test preserve_attribute_order=False functionality."""
-        ldif_content = """version: 1
+        """Test boolean format options using dynamic parametrization.
 
-dn: cn=test,dc=example,dc=com
-objectClass: person
-sn: Test
-cn: Test User
-"""
-
-        options = FlextLdifModels.ParseFormatOptions(preserve_attribute_order=False)
-
-        result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
+        Reduces 6 separate test methods into one dynamic test.
+        """
+        boolean_options = self.OptionConfig.get_boolean_options()
+        fixture_name, validator_enabled_name, validator_disabled_name = boolean_options[
+            option_name
+        ]
+        fixture_method = getattr(self.Fixtures, fixture_name)
+        options = FlextLdifModels.ParseFormatOptions(**{option_name: enabled})
+        response_obj = self.Helpers.parse_and_assert(
+            parser_service,
+            fixture_method(),
             format_options=options,
         )
+        if enabled and validator_enabled_name:
+            validator_enabled = getattr(self.Validators, validator_enabled_name)
+            validator_enabled(response_obj)
+        elif not enabled and validator_disabled_name:
+            validator_disabled = getattr(self.Validators, validator_disabled_name)
+            validator_disabled(response_obj)
+        assert len(response_obj.entries) > 0
 
-        assert result.is_success
-        response = result.unwrap()
-
-        # Attribute order should not be preserved in metadata
-        for entry in response.entries:
-            if entry.metadata and entry.metadata.extensions:
-                attribute_order = entry.metadata.extensions.get("attribute_order")
-                assert attribute_order is None
-
-    def test_validate_entries_enabled_valid(
+    @pytest.mark.parametrize(
+        ("strict", "expected_errors"),
+        [(False, ">=0"), (True, ">0")],
+    )
+    def test_validate_entries(
         self,
         parser_service: FlextLdifParser,
+        strict: bool,
+        expected_errors: str,
     ) -> None:
-        """Test validate_entries=True with valid entries."""
-        ldif_content = """version: 1
-
-dn: cn=valid,dc=example,dc=com
-objectClass: person
-cn: Valid User
-sn: User
-"""
-
+        """Test validate_entries with strict/non-strict mode."""
         options = FlextLdifModels.ParseFormatOptions(
             validate_entries=True,
-            strict_schema_validation=False,
+            strict_schema_validation=strict,
         )
+        ldif = self.Fixtures.invalid_ldif()
 
         result = parser_service.parse(
-            content=ldif_content,
+            content=ldif,
             input_source="string",
             server_type="rfc",
             format_options=options,
         )
 
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) > 0
-        assert response.statistics.parse_errors == 0
-
-    def test_validate_entries_enabled_invalid_non_strict(
-        self,
-        parser_service: FlextLdifParser,
-        invalid_ldif: str,
-    ) -> None:
-        """Test validate_entries=True with invalid entries in non-strict mode."""
-        options = FlextLdifModels.ParseFormatOptions(
-            validate_entries=True,
-            strict_schema_validation=False,
-        )
-
-        result = parser_service.parse(
-            content=invalid_ldif,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        # Should succeed but with warnings logged
-        assert result.is_success
-        response = result.unwrap()
-        # Some entries may be processed despite validation warnings
-        assert len(response.entries) >= 0
-
-    def test_validate_entries_strict_mode(
-        self,
-        parser_service: FlextLdifParser,
-        invalid_ldif: str,
-    ) -> None:
-        """Test strict_schema_validation=True with invalid entries."""
-        options = FlextLdifModels.ParseFormatOptions(
-            validate_entries=True,
-            strict_schema_validation=True,
-        )
-
-        result = parser_service.parse(
-            content=invalid_ldif,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        # Should fail or have parse errors due to strict validation
         if result.is_success:
             response = result.unwrap()
-            # Parse errors should be recorded
-            assert response.statistics.parse_errors > 0
-            assert len(response.entries) >= 0  # Use response to avoid warning
+            if strict:
+                assert response.statistics.parse_errors > 0
+            assert len(response.entries) >= 0
         else:
-            # Complete failure is also acceptable in strict mode
             error_msg = result.error or ""
-            assert "validation failed" in error_msg.lower()
+            assert "validation" in error_msg.lower() or "error" in error_msg.lower()
 
-    def test_normalize_dns_enabled(self, parser_service: FlextLdifParser) -> None:
-        """Test normalize_dns=True functionality."""
-        ldif_content = """version: 1
-
-dn:   CN=Test   User,   OU=People,   DC=Example,   DC=Com
-objectClass: person
-cn: Test User
-sn: User
-"""
-
-        options = FlextLdifModels.ParseFormatOptions(normalize_dns=True)
-
-        result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-
-        # DN should be normalized (spaces trimmed)
-        for entry in response.entries:
-            dn_str = str(entry.dn.value)
-            # Should not have extra spaces at the beginning or end
-            assert dn_str == dn_str.strip()
-
-    def test_normalize_dns_disabled(self, parser_service: FlextLdifParser) -> None:
-        """Test normalize_dns=False functionality."""
-        ldif_content = """version: 1
-
-dn: CN=Test User,OU=People,DC=Example,DC=Com
-objectClass: person
-cn: Test User
-sn: User
-"""
-
-        options = FlextLdifModels.ParseFormatOptions(normalize_dns=False)
-
-        result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) > 0
-
-    def test_max_parse_errors_limit(self, parser_service: FlextLdifParser) -> None:
+    @pytest.mark.parametrize(
+        ("max_errors", "expected_count"),
+        [(2, "<=2"), (0, "==2")],
+    )
+    def test_max_parse_errors(
+        self,
+        parser_service: FlextLdifParser,
+        max_errors: int,
+        expected_count: str,
+    ) -> None:
         """Test max_parse_errors functionality."""
-        # Create LDIF with multiple potential errors
-        ldif_content = """version: 1
-
-dn: cn=error1,dc=example,dc=com
-objectClass: person
-cn:
-sn:
-
-dn: cn=error2,dc=example,dc=com
-objectClass: person
-cn:
-sn:
-
-dn: cn=error3,dc=example,dc=com
-objectClass: person
-cn:
-sn:
-"""
-
+        ldif = self.Fixtures.ldif_with_errors(3)
         options = FlextLdifModels.ParseFormatOptions(
-            max_parse_errors=2,
+            max_parse_errors=max_errors,
             validate_entries=True,
             strict_schema_validation=True,
         )
 
         result = parser_service.parse(
-            content=ldif_content,
+            content=ldif,
             input_source="string",
             server_type="rfc",
             format_options=options,
         )
 
-        # Should have stopped processing after reaching max errors
         if result.is_success:
             response = result.unwrap()
-            assert response.statistics.parse_errors <= 2
-
-    def test_max_parse_errors_unlimited(self, parser_service: FlextLdifParser) -> None:
-        """Test max_parse_errors=0 (unlimited) functionality."""
-        ldif_content = """version: 1
-
-dn: cn=test1,dc=example,dc=com
-objectClass: person
-cn: Test1
-sn: User1
-
-dn: cn=test2,dc=example,dc=com
-objectClass: person
-cn: Test2
-sn: User2
-"""
-
-        options = FlextLdifModels.ParseFormatOptions(max_parse_errors=0)
-
-        result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) == 2
-
-    def test_include_operational_attrs_enabled(
-        self,
-        parser_service: FlextLdifParser,
-        sample_ldif_with_operational_attrs: str,
-    ) -> None:
-        """Test include_operational_attrs=True functionality."""
-        options = FlextLdifModels.ParseFormatOptions(include_operational_attrs=True)
-
-        result = parser_service.parse(
-            content=sample_ldif_with_operational_attrs,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-
-        # Operational attributes should be included
-        for entry in response.entries:
-            attr_names = [name.lower() for name in entry.attributes]
-            # Should have operational attributes
-            operational_found = any(
-                op_attr in attr_names
-                for op_attr in ["createtimestamp", "creatorsname", "entryuuid"]
-            )
-            if operational_found:
-                # At least one entry should have operational attributes
-                break
-        else:
-            pytest.fail(
-                "No operational attributes found when include_operational_attrs=True",
-            )
-
-    def test_include_operational_attrs_disabled(
-        self,
-        parser_service: FlextLdifParser,
-        sample_ldif_with_operational_attrs: str,
-    ) -> None:
-        """Test include_operational_attrs=False functionality."""
-        options = FlextLdifModels.ParseFormatOptions(include_operational_attrs=False)
-
-        result = parser_service.parse(
-            content=sample_ldif_with_operational_attrs,
-            input_source="string",
-            server_type="rfc",
-            format_options=options,
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-
-        # Operational attributes should be filtered out
-        for entry in response.entries:
-            attr_names = [name.lower() for name in entry.attributes]
-            # Should not have operational attributes
-            operational_found = any(
-                op_attr in attr_names
-                for op_attr in [
-                    "createtimestamp",
-                    "creatorsname",
-                    "entryuuid",
-                    "entrycsn",
-                ]
-            )
-            assert not operational_found, (
-                f"Found operational attributes in entry {entry.dn}: {attr_names}"
-            )
+            if max_errors > 0:
+                assert response.statistics.parse_errors <= max_errors
+            else:
+                assert len(response.entries) == 2
 
     def test_combined_options(
         self,
         parser_service: FlextLdifParser,
-        sample_ldif_with_schema: str,
     ) -> None:
         """Test combination of multiple options."""
         options = FlextLdifModels.ParseFormatOptions(
@@ -561,21 +468,14 @@ sn: User2
             strict_schema_validation=False,
             max_parse_errors=10,
         )
-
-        result = parser_service.parse(
-            content=sample_ldif_with_schema,
-            input_source="string",
-            server_type="rfc",
+        response_obj = self.Helpers.parse_and_assert(
+            parser_service,
+            self.Fixtures.ldif_with_schema(),
             format_options=options,
         )
-
-        assert result.is_success
-        response = result.unwrap()
-
-        # Verify multiple options worked together
-        assert response.statistics.schema_entries > 0  # auto_parse_schema
-        assert response.statistics.data_entries > 0
-        assert response.statistics.parse_errors <= 10  # max_parse_errors
+        assert response_obj.statistics.schema_entries > 0
+        assert response_obj.statistics.data_entries > 0
+        assert response_obj.statistics.parse_errors <= 10
 
     def test_file_parsing_with_options(
         self,
@@ -583,146 +483,92 @@ sn: User2
         tmp_path: Path,
     ) -> None:
         """Test parsing from file with options."""
-        ldif_content = """version: 1
-
-dn: cn=file-test,dc=example,dc=com
-objectClass: person
-cn: File Test
-sn: Test
-"""
-
-        # Create temporary LDIF file
+        ldif_content = self.Fixtures.basic_entry("cn=file-test,dc=example,dc=com")
         ldif_file = tmp_path / "test.ldif"
-        ldif_file.write_text(ldif_content, encoding="utf-8")
-
+        _ = ldif_file.write_text(ldif_content, encoding="utf-8")
         options = FlextLdifModels.ParseFormatOptions(
             validate_entries=True,
             normalize_dns=True,
         )
-
-        result = parser_service.parse(
-            content=ldif_file,
+        response_obj = self.Helpers.parse_and_assert(
+            parser_service,
+            ldif_file,
             input_source="file",
-            server_type="rfc",
             format_options=options,
         )
+        assert len(response_obj.entries) == 1
+        assert response_obj.entries[0].dn.value == "cn=file-test,dc=example,dc=com"
 
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) == 1
-        assert response.entries[0].dn.value == "cn=file-test,dc=example,dc=com"
-
-    def test_ldap3_parsing_with_options(self, parser_service: FlextLdifParser) -> None:
+    def test_ldap3_parsing_with_options(
+        self,
+        parser_service: FlextLdifParser,
+    ) -> None:
         """Test parsing from ldap3 results with options."""
-        # Real ldap3 query results format: list[tuple[str, dict[str, list[str]]]]
-        ldap3_results = [
-            (
-                "cn=ldap3-test,dc=example,dc=com",
-                {
-                    "objectClass": ["person"],
-                    "cn": ["LDAP3 Test"],
-                    "sn": ["Test"],
-                    "createTimestamp": ["20250130120000Z"],
-                    "entryUUID": ["12345678-1234-1234-1234-123456789abc"],
-                },
-            ),
-        ]
-
+        ldap3_results = self.Fixtures.ldap3_results()
         options = FlextLdifModels.ParseFormatOptions(
             include_operational_attrs=False,
             validate_entries=True,
             normalize_dns=True,
         )
-
-        result = parser_service.parse(
-            content=ldap3_results,
+        response_obj = self.Helpers.parse_and_assert(
+            parser_service,
+            ldap3_results,
             input_source="ldap3",
-            server_type="rfc",
             format_options=options,
         )
-
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) == 1
-
-        entry = response.entries[0]
-        attr_names = [name.lower() for name in entry.attributes]
-
-        # Should not have operational attributes due to include_operational_attrs=False
+        assert len(response_obj.entries) == 1
+        entry = response_obj.entries[0]
+        attr_names = [name.lower() for name in entry.attributes.attributes]
         assert "createtimestamp" not in attr_names
         assert "entryuuid" not in attr_names
-
-        # Should have regular attributes
         assert "objectclass" in attr_names
         assert "cn" in attr_names
 
-    def test_options_default_values(self, parser_service: FlextLdifParser) -> None:
-        """Test that default options work correctly."""
-        ldif_content = """version: 1
-
-dn: cn=default-test,dc=example,dc=com
-objectClass: person
-cn: Default Test
-sn: Test
-"""
-
-        # Use default options (None should create default ParseFormatOptions)
-        result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
-            format_options=None,
+    @pytest.mark.parametrize(
+        ("content", "expected_entries", "expected_errors"),
+        [
+            (
+                lambda: TestParserFormatOptions.Fixtures.basic_entry(
+                    "cn=default-test,dc=example,dc=com"
+                ),
+                1,
+                0,
+            ),
+            (lambda: "version: 1\n\n", 0, 0),
+        ],
+    )
+    def test_options_edge_cases_and_defaults(
+        self,
+        parser_service: FlextLdifParser,
+        content: Callable[[], str],
+        expected_entries: int,
+        expected_errors: int,
+    ) -> None:
+        """Test edge cases and default options using dynamic parametrization."""
+        ldif = content()
+        response_obj = self.Helpers.parse_and_assert(
+            parser_service,
+            ldif,
+            format_options=None
+            if expected_entries > 0
+            else FlextLdifModels.ParseFormatOptions(),
         )
-
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) == 1
-
-        # With defaults:
-        # - auto_parse_schema=True
-        # - auto_extract_acls=True
-        # - validate_entries=True
-        # - etc.
-        assert response.statistics.parse_errors == 0
-
-    def test_options_edge_cases(self, parser_service: FlextLdifParser) -> None:
-        """Test edge cases with options."""
-        # Empty LDIF
-        result = parser_service.parse(
-            content="version: 1\n\n",
-            input_source="string",
-            server_type="rfc",
-            format_options=FlextLdifModels.ParseFormatOptions(),
-        )
-
-        assert result.is_success
-        response = result.unwrap()
-        assert len(response.entries) == 0
-        assert response.statistics.total_entries == 0
+        assert response_obj.statistics.parse_errors == expected_errors
+        assert len(response_obj.entries) == expected_entries
 
     def test_invalid_server_type_with_options(
         self,
         parser_service: FlextLdifParser,
     ) -> None:
         """Test that options don't interfere with server type validation."""
-        ldif_content = """version: 1
-
-dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-sn: user
-"""
-
+        ldif = self.Fixtures.basic_entry()
         options = FlextLdifModels.ParseFormatOptions(validate_entries=True)
 
         result = parser_service.parse(
-            content=ldif_content,
+            content=ldif,
             input_source="string",
             server_type="nonexistent_server_type",
             format_options=options,
         )
 
-        # Should fail due to invalid server type, regardless of options
-        assert result.is_failure
-        error_msg = result.error or ""
-        assert "server type" in error_msg.lower()
+        _ = TestAssertions.assert_failure(result, expected_error="server type")

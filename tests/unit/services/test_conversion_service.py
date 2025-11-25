@@ -273,7 +273,7 @@ class TestConversionServiceConvert:
 
         # Should fail with unsupported model type error
         assert result.is_failure
-        assert "Unsupported model type" in result.error
+        assert result.error is not None and "Unsupported model type" in result.error
 
     def test_convert_entry_with_invalid_dn(
         self,

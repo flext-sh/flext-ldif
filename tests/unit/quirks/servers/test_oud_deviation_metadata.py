@@ -10,132 +10,168 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
+from typing import ClassVar
+
 import pytest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oud import FlextLdifServersOud
 
+# =============================================================================
+# TEST SCENARIO ENUMS & CONSTANTS
+# =============================================================================
 
-class TestOudAttributeCaseMetadata:
-    """Test suite for OUD attribute case metadata tracking."""
 
-    @pytest.fixture
-    def oud_entry(self) -> FlextLdifServersOud.Entry:
-        """Create OUD entry quirk instance."""
-        return FlextLdifServersOud().entry_quirk
+class OudMetadataTestType(StrEnum):
+    """OUD metadata tracking test scenarios."""
 
-    def test_original_format_details_populated(
-        self,
-        oud_entry: FlextLdifServersOud.Entry,
-    ) -> None:
-        """Test that original_format_details is populated for round-trip."""
-        entry_attrs = {
-            "objectClass": ["top", "person"],
-            "cn": ["test"],
-            "sn": ["User"],
-        }
+    FORMAT_DETAILS_POPULATED = "format_details_populated"
+    DN_PRESERVED = "dn_preserved"
+    OBJECTCLASS_CASE = "objectclass_case"
+    ATTRIBUTE_CASE_TYPE = "attribute_case_type"
+    FORMAT_DETAILS_INTEGRATION = "format_details_integration"
 
-        result = oud_entry._parse_entry(
+
+# =============================================================================
+# FIXTURES
+# =============================================================================
+
+
+@pytest.fixture
+def oud_entry() -> object:
+    """Create OUD entry quirk instance."""
+    return FlextLdifServersOud().entry_quirk
+
+
+# =============================================================================
+# TEST CLASS
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestOudDeviationMetadata:
+    """Test OUD metadata tracking for zero data loss during parsing.
+
+    Consolidates three test classes into parametrized test scenarios.
+    """
+
+    # Test data mapping for attribute case metadata tests
+    ATTRIBUTE_CASE_DATA: ClassVar[
+        dict[str, tuple[OudMetadataTestType, str, dict[str, list[str]]]]
+    ] = {
+        "test_original_format_details_populated": (
+            OudMetadataTestType.FORMAT_DETAILS_POPULATED,
             "cn=test,dc=example,dc=com",
-            entry_attrs,
-        )
-
-        assert result.is_success
-        entry = result.unwrap()
-
-        # Verify original_format_details is populated
-        assert entry.metadata is not None
-        assert len(entry.metadata.original_format_details) > 0
-
-        # Verify essential fields
-        assert entry.metadata.original_format_details.get("server_type") == "oud"
-        assert "dn_spacing" in entry.metadata.original_format_details
-
-    def test_original_dn_preserved_in_metadata(
-        self,
-        oud_entry: FlextLdifServersOud.Entry,
-    ) -> None:
-        """Test original DN is preserved for round-trip."""
-        original_dn = "cn=test, dc=example, dc=com"  # DN with spaces
-        entry_attrs = {
-            "objectClass": ["top", "person"],
-            "cn": ["test"],
-        }
-
-        result = oud_entry._parse_entry(
-            original_dn,
-            entry_attrs,
-        )
-
-        assert result.is_success
-        entry = result.unwrap()
-
-        # Verify original DN is preserved
-        assert entry.metadata is not None
-        preserved_dn = entry.metadata.original_format_details.get("dn_spacing")
-        assert preserved_dn == original_dn
-
-
-class TestOudObjectClassCaseMetadata:
-    """Test suite for OUD objectClass case preservation."""
-
-    @pytest.fixture
-    def oud_entry(self) -> FlextLdifServersOud.Entry:
-        """Create OUD entry quirk instance."""
-        return FlextLdifServersOud().entry_quirk
-
-    def test_objectclass_case_tracked(
-        self,
-        oud_entry: FlextLdifServersOud.Entry,
-    ) -> None:
-        """Test that objectClass case is tracked in metadata."""
-        entry_attrs = {
-            "objectClass": ["Top", "Person", "organizationalPerson"],
-            "cn": ["test"],
-        }
-
-        result = oud_entry._parse_entry(
+            {
+                "objectClass": ["top", "person"],
+                "cn": ["test"],
+                "sn": ["User"],
+            },
+        ),
+        "test_original_dn_preserved_in_metadata": (
+            OudMetadataTestType.DN_PRESERVED,
+            "cn=test, dc=example, dc=com",
+            {
+                "objectClass": ["top", "person"],
+                "cn": ["test"],
+            },
+        ),
+        "test_objectclass_case_tracked": (
+            OudMetadataTestType.OBJECTCLASS_CASE,
             "cn=test,dc=example,dc=com",
-            entry_attrs,
-        )
+            {
+                "objectClass": ["Top", "Person", "organizationalPerson"],
+                "cn": ["test"],
+            },
+        ),
+    }
 
-        assert result.is_success
+    # Test data mapping for metadata utilities integration tests
+    UTILITIES_DATA: ClassVar[dict[str, tuple[OudMetadataTestType]]] = {
+        "test_quirk_metadata_original_attribute_case_field_type": (
+            OudMetadataTestType.ATTRIBUTE_CASE_TYPE,
+        ),
+        "test_quirk_metadata_original_format_details_for_oud": (
+            OudMetadataTestType.FORMAT_DETAILS_INTEGRATION,
+        ),
+    }
+
+    # =========================================================================
+    # Attribute Case Metadata Tests
+    # =========================================================================
+
+    @pytest.mark.parametrize(
+        ("scenario", "test_type", "dn", "entry_attrs"),
+        [
+            (name, data[0], data[1], data[2])
+            for name, data in ATTRIBUTE_CASE_DATA.items()
+        ],
+    )
+    def test_attribute_metadata_tracking(
+        self,
+        scenario: str,
+        test_type: OudMetadataTestType,
+        dn: str,
+        entry_attrs: dict[str, list[str]],
+        oud_entry: object,
+    ) -> None:
+        """Parametrized test for OUD attribute case metadata tracking."""
+        result = oud_entry._parse_entry(dn, entry_attrs)  # type: ignore[attr-defined]
+
+        assert result.is_success, f"Entry parsing failed for {scenario}"
         entry = result.unwrap()
 
-        # Verify objectClass case is tracked
-        assert entry.metadata is not None
+        if test_type == OudMetadataTestType.FORMAT_DETAILS_POPULATED:
+            # Verify original_format_details is populated
+            assert entry.metadata is not None
+            assert len(entry.metadata.original_format_details) > 0
+            assert entry.metadata.original_format_details.get("server_type") == "oud"
+            assert "dn_spacing" in entry.metadata.original_format_details
 
-        # Check that casing is preserved for objectClasses
-        # "Top" -> objectclass_case_top = "Top"
-        if "objectclass_case_top" in entry.metadata.original_format_details:
+        elif test_type == OudMetadataTestType.DN_PRESERVED:
+            # Verify original DN is preserved
+            assert entry.metadata is not None
+            preserved_dn = entry.metadata.original_format_details.get("dn_spacing")
+            assert preserved_dn == dn
+
+        elif test_type == OudMetadataTestType.OBJECTCLASS_CASE:
+            # Verify objectClass case is tracked
+            assert entry.metadata is not None
+            if "objectclass_case_top" in entry.metadata.original_format_details:
+                assert (
+                    entry.metadata.original_format_details["objectclass_case_top"]
+                    == "Top"
+                )
+
+    # =========================================================================
+    # Metadata Utilities Integration Tests
+    # =========================================================================
+
+    @pytest.mark.parametrize(
+        ("scenario", "test_type"),
+        [(name, data[0]) for name, data in UTILITIES_DATA.items()],
+    )
+    def test_metadata_utilities_integration(
+        self,
+        scenario: str,
+        test_type: OudMetadataTestType,
+    ) -> None:
+        """Parametrized test for OUD metadata utilities integration."""
+        if test_type == OudMetadataTestType.ATTRIBUTE_CASE_TYPE:
+            metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
+            metadata.original_attribute_case["objectClass"] = "objectclass"
+            assert len(metadata.original_attribute_case) == 1
+            assert metadata.original_attribute_case["objectClass"] == "objectclass"
+
+        elif test_type == OudMetadataTestType.FORMAT_DETAILS_INTEGRATION:
+            metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
+            metadata.original_format_details = {
+                "server_type": "oud",
+                "dn_spacing": "cn=test, dc=example",
+                "objectclass_case_person": "Person",
+            }
+            assert metadata.original_format_details["server_type"] == "oud"
             assert (
-                entry.metadata.original_format_details["objectclass_case_top"] == "Top"
+                metadata.original_format_details["objectclass_case_person"] == "Person"
             )
-
-
-class TestMetadataUtilitiesIntegration:
-    """Test suite for OUD metadata utilities integration."""
-
-    def test_quirk_metadata_original_attribute_case_field_type(self) -> None:
-        """Test that original_attribute_case field has correct type."""
-        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
-
-        # Field should be dict[str, str]
-        metadata.original_attribute_case["objectClass"] = "objectclass"
-
-        assert len(metadata.original_attribute_case) == 1
-        assert metadata.original_attribute_case["objectClass"] == "objectclass"
-
-    def test_quirk_metadata_original_format_details_for_oud(self) -> None:
-        """Test that original_format_details works for OUD."""
-        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
-
-        # Populate with OUD-specific format details
-        metadata.original_format_details = {
-            "server_type": "oud",
-            "dn_spacing": "cn=test, dc=example",
-            "objectclass_case_person": "Person",
-        }
-
-        assert metadata.original_format_details["server_type"] == "oud"
-        assert metadata.original_format_details["objectclass_case_person"] == "Person"

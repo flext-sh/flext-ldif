@@ -27,9 +27,10 @@ from __future__ import annotations
 
 from flext_ldif.api import FlextLdif
 from flext_ldif.base import FlextLdifServiceBase, LdifServiceBase
-from flext_ldif.config import FlextLdifConfig, LdifFlextConfig
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.detector import FlextLdifDetector
@@ -57,11 +58,11 @@ __all__ = [
     "FlextLdifMigrationPipeline",  # ✅ High-level service (OK to expose)
     "FlextLdifModels",  # ✅ Domain models
     "FlextLdifParser",  # ✅ Parser service (required by flext-ldap)
+    "FlextLdifProtocols",  # ✅ Protocols and type definitions
     "FlextLdifServiceBase",  # ✅ Base class for services (alias for LdifServiceBase)
     "FlextLdifSorting",  # ✅ Sorting service (public API)
     "FlextLdifTypes",  # ✅ Type definitions
     "FlextLdifUtilities",  # ✅ Public helpers
     "FlextLdifWriter",  # ✅ Writer service (public API)
-    "LdifFlextConfig",  # ✅ Typed FlextConfig with ldif namespace
     "LdifServiceBase",  # ✅ Base class for services with typed config
 ]

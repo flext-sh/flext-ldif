@@ -1,5 +1,11 @@
 """Tests for operational attributes stripping in entry quirks.
 
+Modules tested: FlextLdifEntry (remove_operational_attributes)
+Scope: Common operational attributes stripping, server-specific preservation
+Tests with real entry models using factories.
+
+Uses advanced Python 3.13 patterns: StrEnum, frozen dataclasses, parametrization.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -7,396 +13,288 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
+from enum import StrEnum
+from typing import Final, cast
+
 import pytest
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.services.entry import FlextLdifEntry
+from tests.helpers.test_factories import FlextLdifTestFactories
+
+
+class OperationalAttrTestType(StrEnum):
+    """Types of operational attributes tests."""
+
+    COMMON_STRIP = "common_strip"
+    OID_PRESERVE = "oid_preserve"
+    USER_ATTRS = "user_attrs"
+    CASE_INSENSITIVE = "case_insensitive"
+    REAL_LDIF = "real_ldif"
+    OUD_PRESERVE = "oud_preserve"
+    OPENLDAP_PRESERVE = "openldap_preserve"
+    AD_PRESERVE = "ad_preserve"
+    GENERIC_DEFAULT = "generic_default"
+    MIXED_ATTRS = "mixed_attrs"
+
+
+@dataclasses.dataclass(frozen=True)
+class OpAttrTestCase:
+    """Operational attribute test case."""
+
+    test_type: OperationalAttrTestType
+    dn: str
+    attributes: dict[str, list[str]]
+    expected_preserved: list[str]
+    expected_stripped: list[str]
+    description: str = ""
+
+
+# Test cases for comprehensive coverage
+OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
+    OpAttrTestCase(
+        OperationalAttrTestType.COMMON_STRIP,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectclass": ["person", "top"],
+            "createTimestamp": ["20250113100000Z"],
+            "modifyTimestamp": ["20250113100000Z"],
+            "entryUUID": ["12345-67890-abcdef"],
+        },
+        expected_preserved=["cn", "objectclass"],
+        expected_stripped=["createTimestamp", "modifyTimestamp", "entryUUID"],
+        description="Common operational attributes should be stripped",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.OID_PRESERVE,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectclass": ["person"],
+            "orclGUID": ["ABC123"],
+            "orclPasswordChangedTime": ["20250113"],
+            "createTimestamp": ["20250113100000Z"],
+        },
+        expected_preserved=["cn", "orclGUID", "orclPasswordChangedTime"],
+        expected_stripped=["createTimestamp"],
+        description="OID-specific attrs preserved, COMMON stripped",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.USER_ATTRS,
+        "cn=user,ou=Users,dc=client-a",
+        {
+            "cn": ["user"],
+            "sn": ["User"],
+            "mail": ["user@client-a.com"],
+            "uid": ["user123"],
+            "userPassword": ["{SSHA}abcdef"],
+            "objectclass": ["inetOrgPerson", "person", "top"],
+        },
+        expected_preserved=["cn", "sn", "mail", "uid", "userPassword", "objectclass"],
+        expected_stripped=[],
+        description="User attributes should never be stripped",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.CASE_INSENSITIVE,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectclass": ["person"],
+            "CreateTimestamp": ["20250113100000Z"],
+            "MODIFYTIMESTAMP": ["20250113100000Z"],
+        },
+        expected_preserved=["cn", "objectclass"],
+        expected_stripped=["CreateTimestamp", "MODIFYTIMESTAMP"],
+        description="Operational attrs stripped case-insensitively",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.REAL_LDIF,
+        "cn=John Doe,ou=Users,dc=ctbc",
+        {
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
+            "givenName": ["John"],
+            "mail": ["john.doe@ctbc.com.br"],
+            "uid": ["jdoe"],
+            "objectclass": ["top", "person", "organizationalPerson", "inetOrgPerson"],
+            "orclGUID": ["F1234567890ABCDEF"],
+            "createTimestamp": ["20230601120000Z"],
+            "modifyTimestamp": ["20250113100000Z"],
+            "creatorsName": ["cn=orclREDACTED_LDAP_BIND_PASSWORD"],
+            "modifiersName": ["cn=orclREDACTED_LDAP_BIND_PASSWORD"],
+        },
+        expected_preserved=[
+            "cn",
+            "sn",
+            "givenName",
+            "mail",
+            "uid",
+            "objectclass",
+            "orclGUID",
+        ],
+        expected_stripped=[
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
+        ],
+        description="Real LDIF with mixed user and operational attrs",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.OUD_PRESERVE,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectclass": ["person"],
+            "ds-sync-hist": ["sync-data"],
+            "ds-sync-state": ["active"],
+            "ds-pwp-account-disabled": ["false"],
+            "createTimestamp": ["20250113100000Z"],
+        },
+        expected_preserved=[
+            "cn",
+            "ds-sync-hist",
+            "ds-sync-state",
+            "ds-pwp-account-disabled",
+        ],
+        expected_stripped=["createTimestamp"],
+        description="OUD-specific attrs preserved, COMMON stripped",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.OPENLDAP_PRESERVE,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectclass": ["person"],
+            "structuralObjectClass": ["person"],
+            "contextCSN": ["20250113100000.000000Z#000000#000#000000"],
+            "entryCSN": ["20250113100000.000000Z#000000#000#000000"],
+            "createTimestamp": ["20250113100000Z"],
+        },
+        expected_preserved=["cn", "structuralObjectClass", "contextCSN"],
+        expected_stripped=["createTimestamp", "entryCSN"],
+        description="OpenLDAP non-COMMON attrs preserved",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.AD_PRESERVE,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectclass": ["person"],
+            "objectGUID": ["guid-12345"],
+            "objectSid": ["S-1-5-21-..."],
+            "whenCreated": ["20250113100000.0Z"],
+            "whenChanged": ["20250113100000.0Z"],
+            "uSNCreated": ["12345"],
+            "uSNChanged": ["12346"],
+            "createTimestamp": ["20250113100000Z"],
+        },
+        expected_preserved=[
+            "cn",
+            "objectGUID",
+            "objectSid",
+            "whenCreated",
+            "whenChanged",
+            "uSNCreated",
+            "uSNChanged",
+        ],
+        expected_stripped=["createTimestamp"],
+        description="AD-specific attrs preserved, COMMON stripped",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.GENERIC_DEFAULT,
+        "cn=test,dc=client-a",
+        {
+            "cn": ["test"],
+            "objectClass": ["person"],
+            "createTimestamp": ["20250113100000Z"],
+            "orclGUID": ["ABC123"],
+        },
+        expected_preserved=["cn", "orclGUID"],
+        expected_stripped=["createTimestamp"],
+        description="Generic target strips COMMON only",
+    ),
+    OpAttrTestCase(
+        OperationalAttrTestType.MIXED_ATTRS,
+        "cn=mixed,dc=client-a",
+        {
+            "cn": ["mixed"],
+            "sn": ["Test"],
+            "mail": ["test@client-a.com"],
+            "objectclass": ["inetOrgPerson", "person", "top"],
+            "createTimestamp": ["20250113100000Z"],
+            "modifyTimestamp": ["20250113100000Z"],
+            "orclGUID": ["GUID123"],
+            "telephoneNumber": ["+55 11 1234-5678"],
+            "title": ["Engineer"],
+            "creatorsName": ["cn=REDACTED_LDAP_BIND_PASSWORD"],
+            "entryUUID": ["uuid-12345"],
+        },
+        expected_preserved=[
+            "cn",
+            "sn",
+            "mail",
+            "objectclass",
+            "orclGUID",
+            "telephoneNumber",
+            "title",
+        ],
+        expected_stripped=[
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "entryUUID",
+        ],
+        description="Mix of operational and user attributes",
+    ),
+]
+
+
+def get_op_attr_tests() -> list[OpAttrTestCase]:
+    """Parametrization helper for operational attr tests."""
+    return OP_ATTR_TESTS
 
 
 class TestOperationalAttributesStripping:
     """Test operational attributes stripping functionality."""
 
-    def _create_entry(
+    @pytest.mark.parametrize("test_case", get_op_attr_tests())
+    def test_operational_attributes_stripping(
         self,
-        dn_string: str,
-        attributes: dict[str, list[str]],
-    ) -> FlextLdifModels.Entry:
-        """Helper to create entry with DN and attributes.
-
-        Args:
-            dn_string: DN as string
-            attributes: Attributes dict
-
-        Returns:
-            Entry instance
-
-        """
-        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
-        # If DN is invalid, ValidationError will be raised
-        try:
-            dn = FlextLdifModels.DistinguishedName(value=dn_string)
-        except (ValueError, TypeError, AttributeError) as e:
-            msg = f"Failed to create DN: {e}"
-            raise AssertionError(msg) from e
-
-        # Convert attributes to LdifAttributes format manually
-        # LdifAttributes now uses dict[str, list[str]] directly
-        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=attributes)
-
-        entry_result = FlextLdifModels.Entry.create(dn=dn, attributes=ldif_attributes)
-        assert entry_result.is_success, f"Failed to create entry: {entry_result.error}"
-        return entry_result.unwrap()
-
-    def test_strip_common_operational_attrs(self) -> None:
-        """Common operational attributes should be stripped for oracle_oud."""
+        test_case: OpAttrTestCase,
+    ) -> None:
+        """Test operational attribute stripping for all scenarios."""
         entrys = FlextLdifEntry()
 
-        # Create entry with operational attributes
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectclass": ["person", "top"],
-                "createTimestamp": ["20250113100000Z"],
-                "modifyTimestamp": ["20250113100000Z"],
-                "entryUUID": ["12345-67890-abcdef"],
-            },
-        )
+        # Create entry from test case data (cast to proper type for variance)
+        attrs = cast("dict[str, str | list[str]]", test_case.attributes)
+        entry = FlextLdifTestFactories.create_entry(test_case.dn, attrs)
 
-        # Remove operational attributes - COMMON operational attrs are stripped
+        # Remove operational attributes
         result = entrys.remove_operational_attributes(entry)
 
-        assert result.is_success
+        assert result.is_success, f"Failed to strip attributes: {result.error}"
         adapted = result.unwrap()
 
-        # User attributes should be preserved
-        assert adapted.has_attribute("cn")
-        assert adapted.has_attribute("objectclass")
+        # Verify all expected preserved attributes are present
+        for attr in test_case.expected_preserved:
+            assert adapted.has_attribute(attr), (
+                f"{test_case.description}: {attr} should be preserved"
+            )
 
-        # Operational attributes should be stripped
-        assert not adapted.has_attribute("createTimestamp")
-        assert not adapted.has_attribute("modifyTimestamp")
-        assert not adapted.has_attribute("entryUUID")
+        # Verify all expected stripped attributes are removed
+        for attr in test_case.expected_stripped:
+            assert not adapted.has_attribute(attr), (
+                f"{test_case.description}: {attr} should be stripped"
+            )
 
-    def test_strip_oid_specific_operational_attrs(self) -> None:
-        """OID-specific operational attributes are preserved when source is unknown."""
-        entrys = FlextLdifEntry()
 
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectclass": ["person"],
-                "orclGUID": ["ABC123"],
-                "orclPasswordChangedTime": ["20250113"],
-                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # User attributes preserved
-        assert adapted.has_attribute("cn")
-
-        # COMMON operational attributes stripped
-        assert not adapted.has_attribute("createTimestamp")
-
-        # OID-specific operational attributes preserved (source unknown)
-        # Only COMMON attrs are stripped by default, not server-specific ones
-        assert adapted.has_attribute("orclGUID")
-        assert adapted.has_attribute("orclPasswordChangedTime")
-
-    def test_preserve_user_attributes(self) -> None:
-        """User attributes should never be stripped."""
-        entrys = FlextLdifEntry()
-
-        # Entry with only user attributes (no operational)
-        entry = self._create_entry(
-            "cn=user,ou=Users,dc=client-a",
-            {
-                "cn": ["user"],
-                "sn": ["User"],
-                "mail": ["user@client-a.com"],
-                "uid": ["user123"],
-                "userPassword": ["{SSHA}abcdef"],
-                "objectclass": ["inetOrgPerson", "person", "top"],
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # ALL user attributes should be preserved
-        assert adapted.has_attribute("cn")
-        assert adapted.has_attribute("sn")
-        assert adapted.has_attribute("mail")
-        assert adapted.has_attribute("uid")
-        assert adapted.has_attribute("userPassword")
-        assert adapted.has_attribute("objectclass")
-
-    def test_case_insensitive_stripping(self) -> None:
-        """Operational attributes should be stripped case-insensitively."""
-        entrys = FlextLdifEntry()
-
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectclass": ["person"],
-                "CreateTimestamp": ["20250113100000Z"],  # Mixed case
-                "MODIFYTIMESTAMP": ["20250113100000Z"],  # Upper case
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # User attribute preserved
-        assert adapted.has_attribute("cn")
-
-        # Operational attributes stripped (case-insensitive)
-        assert not adapted.has_attribute("CreateTimestamp")
-        assert not adapted.has_attribute("MODIFYTIMESTAMP")
-
-    def test_integration_with_real_ldif(self) -> None:
-        """Test with realistic LDIF entry from OID export (source unknown)."""
-        entrys = FlextLdifEntry()
-
-        # Realistic OID entry - but source is unknown when calling adapt_entry
-        entry = self._create_entry(
-            "cn=John Doe,ou=Users,dc=ctbc",
-            {
-                "cn": ["John Doe"],
-                "sn": ["Doe"],
-                "givenName": ["John"],
-                "mail": ["john.doe@ctbc.com.br"],
-                "uid": ["jdoe"],
-                "objectclass": [
-                    "top",
-                    "person",
-                    "organizationalPerson",
-                    "inetOrgPerson",
-                ],
-                # Operational attributes from OID
-                "orclGUID": ["F1234567890ABCDEF"],
-                "createTimestamp": ["20230601120000Z"],
-                "modifyTimestamp": ["20250113100000Z"],
-                "creatorsName": ["cn=orclREDACTED_LDAP_BIND_PASSWORD"],
-                "modifiersName": ["cn=orclREDACTED_LDAP_BIND_PASSWORD"],
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # All user attributes preserved
-        assert adapted.has_attribute("cn")
-        assert adapted.has_attribute("sn")
-        assert adapted.has_attribute("givenName")
-        assert adapted.has_attribute("mail")
-        assert adapted.has_attribute("uid")
-        assert adapted.has_attribute("objectclass")
-
-        # COMMON operational attributes stripped
-        assert not adapted.has_attribute("createTimestamp")
-        assert not adapted.has_attribute("modifyTimestamp")
-        assert not adapted.has_attribute("creatorsName")
-        assert not adapted.has_attribute("modifiersName")
-
-        # OID-specific operational attributes preserved (source unknown)
-        assert adapted.has_attribute("orclGUID")
-
-    def test_strip_oud_specific_operational_attrs(self) -> None:
-        """OUD-specific operational attributes are preserved when source is unknown."""
-        entrys = FlextLdifEntry()
-
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectclass": ["person"],
-                "ds-sync-hist": ["sync-data"],
-                "ds-sync-state": ["active"],
-                "ds-pwp-account-disabled": ["false"],
-                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # User attribute preserved
-        assert adapted.has_attribute("cn")
-
-        # COMMON operational attributes stripped
-        assert not adapted.has_attribute("createTimestamp")
-
-        # OUD-specific operational attributes preserved (source unknown)
-        assert adapted.has_attribute("ds-sync-hist")
-        assert adapted.has_attribute("ds-sync-state")
-        assert adapted.has_attribute("ds-pwp-account-disabled")
-
-    def test_strip_openldap_specific_operational_attrs(self) -> None:
-        """OpenLDAP-specific operational attributes (non-COMMON) are preserved when source is unknown."""
-        entrys = FlextLdifEntry()
-
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectclass": ["person"],
-                "structuralObjectClass": ["person"],  # OpenLDAP-specific, NOT in COMMON
-                "contextCSN": [
-                    "20250113100000.000000Z#000000#000#000000",
-                ],  # OpenLDAP-specific, NOT in COMMON
-                "entryCSN": [
-                    "20250113100000.000000Z#000000#000#000000",
-                ],  # Both COMMON and OpenLDAP-specific
-                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # User attribute preserved
-        assert adapted.has_attribute("cn")
-
-        # COMMON operational attributes stripped (includes entryCSN)
-        assert not adapted.has_attribute("createTimestamp")
-        assert not adapted.has_attribute("entryCSN")
-
-        # OpenLDAP-specific operational attributes (non-COMMON) preserved
-        assert adapted.has_attribute("structuralObjectClass")
-        assert adapted.has_attribute("contextCSN")
-
-    def test_strip_ad_specific_operational_attrs(self) -> None:
-        """Active Directory-specific operational attributes are preserved when source is unknown."""
-        entrys = FlextLdifEntry()
-
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectclass": ["person"],
-                "objectGUID": ["guid-12345"],
-                "objectSid": ["S-1-5-21-..."],
-                "whenCreated": ["20250113100000.0Z"],
-                "whenChanged": ["20250113100000.0Z"],
-                "uSNCreated": ["12345"],
-                "uSNChanged": ["12346"],
-                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # User attribute preserved
-        assert adapted.has_attribute("cn")
-
-        # COMMON operational attributes stripped
-        assert not adapted.has_attribute("createTimestamp")
-
-        # AD-specific operational attributes preserved (source unknown)
-        assert adapted.has_attribute("objectGUID")
-        assert adapted.has_attribute("objectSid")
-        assert adapted.has_attribute("whenCreated")
-        assert adapted.has_attribute("whenChanged")
-        assert adapted.has_attribute("uSNCreated")
-        assert adapted.has_attribute("uSNChanged")
-
-    def test_no_source_server_defaults_to_generic(self) -> None:
-        """Entry with generic target_server should strip COMMON only."""
-        entrys = FlextLdifEntry()
-
-        entry = self._create_entry(
-            "cn=test,dc=client-a",
-            {
-                "cn": ["test"],
-                "objectClass": ["person"],
-                "createTimestamp": ["20250113100000Z"],  # COMMON
-                "orclGUID": ["ABC123"],  # OID-specific - should NOT be stripped
-            },
-        )
-        # Don't set source_server - defaults to "generic"
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # User attribute preserved
-        assert adapted.has_attribute("cn")
-
-        # COMMON operational attribute stripped
-        assert not adapted.has_attribute("createTimestamp")
-
-        # OID-specific NOT stripped (no source_server = generic)
-        assert adapted.has_attribute("orclGUID")
-
-    def test_mixed_operational_and_user_attributes(self) -> None:
-        """Mix of operational and user attributes should filter correctly."""
-        entrys = FlextLdifEntry()
-
-        entry = self._create_entry(
-            "cn=mixed,dc=client-a",
-            {
-                # User attributes
-                "cn": ["mixed"],
-                "sn": ["Test"],
-                "mail": ["test@client-a.com"],
-                "objectclass": ["inetOrgPerson", "person", "top"],
-                # COMMON operational
-                "createTimestamp": ["20250113100000Z"],
-                "modifyTimestamp": ["20250113100000Z"],
-                # OID operational
-                "orclGUID": ["GUID123"],
-                # More user attributes
-                "telephoneNumber": ["+55 11 1234-5678"],
-                "title": ["Engineer"],
-                # More operational
-                "creatorsName": ["cn=REDACTED_LDAP_BIND_PASSWORD"],
-                "entryUUID": ["uuid-12345"],
-            },
-        )
-
-        result = entrys.remove_operational_attributes(entry)
-
-        assert result.is_success
-        adapted = result.unwrap()
-
-        # All user attributes preserved
-        assert adapted.has_attribute("cn")
-        assert adapted.has_attribute("sn")
-        assert adapted.has_attribute("mail")
-        assert adapted.has_attribute("objectclass")
-        assert adapted.has_attribute("telephoneNumber")
-        assert adapted.has_attribute("title")
-
-        # COMMON operational attributes stripped
-        assert not adapted.has_attribute("createTimestamp")
-        assert not adapted.has_attribute("modifyTimestamp")
-        assert not adapted.has_attribute("creatorsName")
-        assert not adapted.has_attribute("entryUUID")
-
-        # OID-specific operational attributes preserved (source unknown)
-        assert adapted.has_attribute("orclGUID")
+__all__ = [
+    "OpAttrTestCase",
+    "OperationalAttrTestType",
+    "TestOperationalAttributesStripping",
+]
 
 
 if __name__ == "__main__":

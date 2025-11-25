@@ -8,15 +8,13 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_ldif import FlextLdifModels
-from flext_ldif import FlextLdif
 
 from pathlib import Path
 from typing import cast
 
 import pytest
 
-from flext_ldif.typings import FlextLdifTypes, ServiceT
+from flext_ldif.typings import FlextLdifTypes
 
 
 class TestFlextLdifTypesNamespace:
@@ -50,7 +48,7 @@ class TestFlextLdifTypesNamespace:
         """typings.py must only import from flext_core, flext_ldif.constants, and flext_ldif.models.
 
         NOTE: flext_ldif.models IS imported directly (not through TYPE_CHECKING) to avoid
-        TYPE_CHECKING complexity. This is SAFE because models.py does not import typings.py,
+        TYPE_CHECKING complexity. This is SAFE because models.py does not import types.py,
         preventing circular dependencies.
         """
         import ast
@@ -58,8 +56,8 @@ class TestFlextLdifTypesNamespace:
 
         # Use path relative to project root
         project_root = Path(__file__).parent.parent.parent.parent
-        typings_path = project_root / "src" / "flext_ldif" / "typings.py"
-        tree = ast.parse(typings_path.read_text())
+        types_path = project_root / "src" / "flext_ldif" / "typings.py"
+        tree = ast.parse(types_path.read_text())
 
         flext_ldif_imports = []
         for node in ast.walk(tree):
@@ -84,14 +82,13 @@ class TestCommonDictionaryTypes:
         """AttributeDict must work with real LDIF entry attributes."""
         # Real LDIF entry attributes from fixtures
         attr_dict: FlextLdifTypes.CommonDict.AttributeDict = {
-            "dn": "cn=John Doe,ou=users,dc=example,dc=com",
-            "cn": "John Doe",
-            "sn": "Doe",
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
             "mail": ["john@example.com", "john.doe@example.com"],
             "objectClass": ["person", "inetOrgPerson"],
         }
         assert isinstance(attr_dict, dict)
-        assert attr_dict["cn"] == "John Doe"
+        assert attr_dict["cn"] == ["John Doe"]
         assert isinstance(attr_dict["mail"], list)
         assert len(attr_dict["mail"]) == 2
 
@@ -153,16 +150,13 @@ class TestEntryTypes:
         """EntryCreateData must support nested structures from LDIF."""
         data: FlextLdifTypes.Entry.EntryCreateData = {
             "dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "permissions": [
-                {"type": "read", "scope": "subtree"},
-                {"type": "write", "scope": "entry"},
-            ],
+            "permissions": ["read", "write"],
             "metadata": {
                 "source": "oid",
-                "imported": True,
+                "imported": "true",
                 "timestamp": "2025-01-01T00:00:00Z",
             },
-            "attributes_count": 12,
+            "attributes_count": "12",
         }
         assert isinstance(data, dict)
         assert isinstance(data["permissions"], list)
@@ -261,7 +255,7 @@ class TestModelsNamespace:
         assert isinstance(data, dict)
         assert len(data) == 3
         assert data["inetOrgPerson"]["oid"] == "2.16.840.1.113730.3.2.2"
-        may_values = cast(list[str], data["inetOrgPerson"]["may"])
+        may_values = cast("list[str]", data["inetOrgPerson"]["may"])
         assert "mail" in may_values
 
     def test_extensions_with_reals(self) -> None:
@@ -307,15 +301,6 @@ class TestLiteralTypes:
         ]
         for literal_name in required_literals:
             assert hasattr(FlextLdifTypes, literal_name), f"Missing {literal_name}"
-
-
-class TestTypeVarDefinitions:
-    """Test TypeVar definitions."""
-
-    def test_service_t_typevar_exists(self) -> None:
-        """ServiceT TypeVar must be defined for service retrieval."""
-        assert ServiceT is not None
-        assert isinstance(ServiceT, type(ServiceT))
 
 
 class TestRemovalOfOverEngineering:
@@ -390,7 +375,7 @@ class TestPhase1StandardizationResults:
         assert hasattr(FlextLdifTypes.Entry, "EntryCreateData")
 
         # Verify they work with real data
-        attr_dict: FlextLdifTypes.CommonDict.AttributeDict = {"cn": "test"}
+        attr_dict: FlextLdifTypes.CommonDict.AttributeDict = {"cn": ["test"]}
         dist: FlextLdifTypes.CommonDict.DistributionDict = {"type": 100}
         entry_data: FlextLdifTypes.Entry.EntryCreateData = {"dn": "cn=test,dc=com"}
 
@@ -419,7 +404,7 @@ class TestIntegrationWithLdifFixtures:
 
         # Simulate processing LDIF entry with AttributeDict type
         entry_attrs: FlextLdifTypes.CommonDict.AttributeDict = {
-            "cn": "Test Entry",
+            "cn": ["Test Entry"],
             "objectClass": ["person", "inetOrgPerson"],
             "mail": ["test@example.com"],
         }

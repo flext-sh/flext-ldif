@@ -14,25 +14,34 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifModels
 
 
-def parallel_server_migration() -> FlextResult[FlextLdifModels.EntryResult]:
-    """Parallel migration between servers with comprehensive error handling."""
-    api = FlextLdif.get_instance()
+class ExampleServerMigration:
+    """Demonstrates advanced server migration capabilities with parallel processing.
 
-    # Create test directories
-    input_dir = Path("examples/migration_input")
-    output_dir = Path("examples/migration_output")
-    input_dir.mkdir(exist_ok=True, parents=True)
-    output_dir.mkdir(exist_ok=True, parents=True)
+    This class provides examples of flext-ldif migration features including:
+    - Parallel migration between different LDAP servers
+    - Automatic server type detection
+    - Batch comparison across multiple servers
+    - Comprehensive migration workflows with validation
+    """
 
-    # Create diverse test data for different server types
-    oid_ldif = """dn: cn=OID User,ou=People,dc=example,dc=com
+    def parallel_server_migration(self) -> FlextResult[FlextLdifModels.EntryResult]:
+        """Parallel migration between servers with comprehensive error handling."""
+        api = FlextLdif.get_instance()
+
+        # Create test directories
+        input_dir = Path("examples/migration_input")
+        output_dir = Path("examples/migration_output")
+        input_dir.mkdir(exist_ok=True, parents=True)
+        output_dir.mkdir(exist_ok=True, parents=True)
+
+        # Create diverse test data for different server types
+        oid_ldif = """dn: cn=OID User,ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 cn: OID User
@@ -47,7 +56,7 @@ cn: OID Group
 uniquemember: cn=OID User,ou=People,dc=example,dc=com
 """
 
-    oud_ldif = """dn: cn=OUD User,ou=People,dc=example,dc=com
+        oud_ldif = """dn: cn=OUD User,ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 cn: OUD User
@@ -61,45 +70,46 @@ cn: OUD Group
 member: cn=OUD User,ou=People,dc=example,dc=com
 """
 
-    # Write test files
-    (input_dir / "oid_data.ldif").write_text(oid_ldif)
-    (input_dir / "oud_data.ldif").write_text(oud_ldif)
+        # Write test files
+        (input_dir / "oid_data.ldif").write_text(oid_ldif)
+        (input_dir / "oud_data.ldif").write_text(oud_ldif)
 
-    # Parallel migration: OID → OUD with auto-detection
-    migration_result = api.migrate(
-        input_dir=input_dir,
-        output_dir=output_dir,
-        source_server="oid",  # Source server with specific quirks
-        target_server="oud",  # Target server with different quirks
-        options=FlextLdifModels.MigrateOptions(
-            # Enable parallel processing for large datasets
-            write_options=FlextLdifModels.WriteFormatOptions(
-                fold_long_lines=False,
-                sort_attributes=True,
-            ).model_dump(),
-        ),
-    )
+        # Parallel migration: OID → OUD with auto-detection
+        migration_result = api.migrate(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server="oid",  # Source server with specific quirks
+            target_server="oud",  # Target server with different quirks
+            options=FlextLdifModels.MigrateOptions(
+                # Enable parallel processing for large datasets
+                write_options=FlextLdifModels.WriteFormatOptions(
+                    fold_long_lines=False,
+                    sort_attributes=True,
+                ).model_dump(),
+            ),
+        )
 
-    if migration_result.is_failure:
-        return FlextResult.fail(f"Migration failed: {migration_result.error}")
+        if migration_result.is_failure:
+            return FlextResult.fail(f"Migration failed: {migration_result.error}")
 
-    result = migration_result.unwrap()
+        result = migration_result.unwrap()
 
-    # Verify migration results
-    if hasattr(result, "entries_by_category"):
-        sum(len(entries) for entries in result.entries_by_category.values())
-    else:
-        len(result.entries_by_category) if hasattr(result, "entries_by_category") else 0
+        # Verify migration results
+        if hasattr(result, "entries_by_category"):
+            sum(len(entries) for entries in result.entries_by_category.values())
+        else:
+            len(result.entries_by_category) if hasattr(
+                result, "entries_by_category"
+            ) else 0
 
-    return FlextResult.ok(result)
+        return FlextResult.ok(result)
 
+    def auto_detection_migration_pipeline(self) -> FlextResult[dict[str, object]]:
+        """Migration pipeline with automatic server detection."""
+        api = FlextLdif.get_instance()
 
-def auto_detection_migration_pipeline() -> FlextResult[dict[str, object]]:
-    """Migration pipeline with automatic server detection."""
-    api = FlextLdif.get_instance()
-
-    # Create test data with mixed server characteristics
-    mixed_ldif = """dn: cn=Auto Detect Test,ou=People,dc=example,dc=com
+        # Create test data with mixed server characteristics
+        mixed_ldif = """dn: cn=Auto Detect Test,ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 cn: Auto Detect Test
@@ -117,54 +127,55 @@ uniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com
 member: cn=Auto Detect Test,ou=People,dc=example,dc=com
 """
 
-    # Auto-detect source server type
-    detect_result = api.detect_server_type(ldif_content=mixed_ldif)
-    if detect_result.is_failure:
-        return FlextResult.fail(f"Server detection failed: {detect_result.error}")
+        # Auto-detect source server type
+        detect_result = api.detect_server_type(ldif_content=mixed_ldif)
+        if detect_result.is_failure:
+            return FlextResult.fail(f"Server detection failed: {detect_result.error}")
 
-    detection = detect_result.unwrap()
-    detected_server = detection.detected_server_type or "rfc"
+        detection = detect_result.unwrap()
+        detected_server = detection.detected_server_type or "rfc"
 
-    # Parse with detected server type
-    parse_result = api.parse(mixed_ldif, server_type=detected_server)
-    if parse_result.is_failure:
-        return FlextResult.fail(f"Parse failed: {parse_result.error}")
+        # Parse with detected server type
+        parse_result = api.parse(mixed_ldif, server_type=detected_server)
+        if parse_result.is_failure:
+            return FlextResult.fail(f"Parse failed: {parse_result.error}")
 
-    entries = parse_result.unwrap()
+        entries = parse_result.unwrap()
 
-    # Migrate to standardized RFC format
-    migration_dir = Path("examples/auto_migration")
-    migration_dir.mkdir(exist_ok=True, parents=True)
+        # Migrate to standardized RFC format
+        migration_dir = Path("examples/auto_migration")
+        migration_dir.mkdir(exist_ok=True, parents=True)
 
-    # Write source data
-    (migration_dir / "source.ldif").write_text(mixed_ldif)
+        # Write source data
+        (migration_dir / "source.ldif").write_text(mixed_ldif)
 
-    # Migrate to RFC standard
-    migration_result = api.migrate(
-        input_dir=migration_dir,
-        output_dir=migration_dir / "migrated",
-        source_server=detected_server,
-        target_server="rfc",  # Standardize to RFC
-    )
+        # Migrate to RFC standard
+        migration_result = api.migrate(
+            input_dir=migration_dir,
+            output_dir=migration_dir / "migrated",
+            source_server=detected_server,
+            target_server="rfc",  # Standardize to RFC
+        )
 
-    if migration_result.is_failure:
-        return FlextResult.fail(f"Migration to RFC failed: {migration_result.error}")
+        if migration_result.is_failure:
+            return FlextResult.fail(
+                f"Migration to RFC failed: {migration_result.error}"
+            )
 
-    return FlextResult.ok({
-        "detected_server": detected_server,
-        "confidence": detection.confidence,
-        "patterns_found": detection.patterns_found,
-        "total_entries": len(entries),
-        "migration_success": True,
-    })
+        return FlextResult.ok({
+            "detected_server": detected_server,
+            "confidence": detection.confidence,
+            "patterns_found": detection.patterns_found,
+            "total_entries": len(entries),
+            "migration_success": True,
+        })
 
+    def batch_server_comparison(self) -> FlextResult[dict[str, object]]:
+        """Batch comparison of parsing across multiple LDAP servers."""
+        api = FlextLdif.get_instance()
 
-def batch_server_comparison() -> FlextResult[dict[str, object]]:
-    """Batch comparison of parsing across multiple LDAP servers."""
-    api = FlextLdif.get_instance()
-
-    # Test LDIF with server-specific characteristics
-    test_ldif = """dn: cn=Server Comparison,ou=People,dc=example,dc=com
+        # Test LDIF with server-specific characteristics
+        test_ldif = """dn: cn=Server Comparison,ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 cn: Server Comparison
@@ -180,87 +191,90 @@ entryUUID: 12345678-1234-1234-1234-123456789012
 entryCSN: 20240101000000.000000Z#000000#000#000000
 """
 
-    servers = ["rfc", "oid", "oud", "openldap"]
-    comparison_results = {}
+        servers = ["rfc", "oid", "oud", "openldap"]
+        comparison_results = {}
 
-    # Parallel parsing comparison
-    for server in servers:
-        parse_result = api.parse(test_ldif, server_type=server)
-        if parse_result.is_success:
-            entries = parse_result.unwrap()
-            comparison_results[server] = {
-                "parsed_successfully": True,
-                "entry_count": len(entries),
-                "server_type": server,
-            }
+        # Parallel parsing comparison
+        for server in servers:
+            parse_result = api.parse(test_ldif, server_type=server)
+            if parse_result.is_success:
+                entries = parse_result.unwrap()
+                comparison_results[server] = {
+                    "parsed_successfully": True,
+                    "entry_count": len(entries),
+                    "server_type": server,
+                }
 
-            # Validate entries for each server
-            if entries:
-                validate_result = api.validate_entries(entries)
-                if validate_result.is_success:
-                    report = validate_result.unwrap()
-                    comparison_results[server]["validation"] = {
-                        "is_valid": report.is_valid,
-                        "valid_entries": report.valid_entries,
-                        "invalid_entries": report.invalid_entries,
-                        "error_count": len(report.errors),
-                    }
-        else:
-            comparison_results[server] = {
-                "parsed_successfully": False,
-                "error": parse_result.error,
-                "server_type": server,
-            }
+                # Validate entries for each server
+                if entries:
+                    validate_result = api.validate_entries(entries)
+                    if validate_result.is_success:
+                        report = validate_result.unwrap()
+                        comparison_results[server]["validation"] = {
+                            "is_valid": report.is_valid,
+                            "valid_entries": report.valid_entries,
+                            "invalid_entries": report.invalid_entries,
+                            "error_count": len(report.errors),
+                        }
+            else:
+                comparison_results[server] = {
+                    "parsed_successfully": False,
+                    "error": parse_result.error,
+                    "server_type": server,
+                }
 
-    # Summary statistics
-    successful_parses = sum(
-        1 for r in comparison_results.values() if r.get("parsed_successfully", False)
-    )
-    total_servers = len(servers)
+        # Summary statistics
+        successful_parses = sum(
+            1
+            for r in comparison_results.values()
+            if r.get("parsed_successfully", False)
+        )
+        total_servers = len(servers)
 
-    return FlextResult.ok({
-        "servers_tested": total_servers,
-        "successful_parses": successful_parses,
-        "success_rate": successful_parses / total_servers if total_servers > 0 else 0,
-        "server_results": comparison_results,
-    })
+        return FlextResult.ok({
+            "servers_tested": total_servers,
+            "successful_parses": successful_parses,
+            "success_rate": successful_parses / total_servers
+            if total_servers > 0
+            else 0,
+            "server_results": comparison_results,
+        })
 
+    def comprehensive_migration_workflow(self) -> FlextResult[dict[str, object]]:
+        """Comprehensive migration workflow with parallel processing and validation."""
+        api = FlextLdif.get_instance()
 
-def comprehensive_migration_workflow() -> FlextResult[dict[str, object]]:
-    """Comprehensive migration workflow with parallel processing and validation."""
-    api = FlextLdif.get_instance()
+        # Setup directories
+        workflow_dir = Path("examples/comprehensive_migration")
+        source_dir = workflow_dir / "source"
+        intermediate_dir = workflow_dir / "intermediate"
+        final_dir = workflow_dir / "final"
 
-    # Setup directories
-    workflow_dir = Path("examples/comprehensive_migration")
-    source_dir = workflow_dir / "source"
-    intermediate_dir = workflow_dir / "intermediate"
-    final_dir = workflow_dir / "final"
+        for dir_path in [source_dir, intermediate_dir, final_dir]:
+            dir_path.mkdir(exist_ok=True, parents=True)
 
-    for dir_path in [source_dir, intermediate_dir, final_dir]:
-        dir_path.mkdir(exist_ok=True, parents=True)
-
-    # Create comprehensive test data
-    source_data = []
-    for i in range(20):
-        if i % 4 == 0:
-            # OU entries
-            entry = f"""dn: ou=Container{i},dc=example,dc=com
+        # Create comprehensive test data
+        source_data = []
+        for i in range(20):
+            if i % 4 == 0:
+                # OU entries
+                entry = f"""dn: ou=Container{i},dc=example,dc=com
 objectClass: organizationalUnit
 ou: Container{i}
 description: Container {i}
 orclaci: access to * by * read
 """
-        elif i % 2 == 0:
-            # Group entries with OID characteristics
-            entry = f"""dn: cn=Group{i},ou=Groups,dc=example,dc=com
+            elif i % 2 == 0:
+                # Group entries with OID characteristics
+                entry = f"""dn: cn=Group{i},ou=Groups,dc=example,dc=com
 objectClass: groupOfUniqueNames
 cn: Group{i}
 uniquemember: cn=User{i},ou=People,dc=example,dc=com
 orclguid: group{i}guid123
 """
-        else:
-            # Person entries with mixed characteristics
-            entry = f"""dn: cn=User{i},ou=People,dc=example,dc=com
+            else:
+                # Person entries with mixed characteristics
+                entry = f"""dn: cn=User{i},ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 cn: User{i}
@@ -269,73 +283,72 @@ mail: user{i}@example.com
 orclguid: user{i}guid456
 aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
 """
-        source_data.append(entry)
+            source_data.append(entry)
 
-    # Write source files
-    for i, entry in enumerate(source_data):
-        (source_dir / f"data_{i:02d}.ldif").write_text(entry)
+        # Write source files
+        for i, entry in enumerate(source_data):
+            (source_dir / f"data_{i:02d}.ldif").write_text(entry)
 
-    workflow_results: dict[str, str | int | float | bool] = {}
+        workflow_results: dict[str, object] = {}
 
-    # Step 1: Detect server type from source data
-    sample_file = source_dir / "data_00.ldif"
-    detect_result = api.detect_server_type(ldif_path=sample_file)
-    if detect_result.is_success:
-        detection = detect_result.unwrap()
-        workflow_results["detected_server"] = detection.detected_server_type
-        workflow_results["detection_confidence"] = detection.confidence
-        source_server = detection.detected_server_type or "oid"
-    else:
-        source_server = "oid"  # Default fallback
+        # Step 1: Detect server type from source data
+        sample_file = source_dir / "data_00.ldif"
+        detect_result = api.detect_server_type(ldif_path=sample_file)
+        if detect_result.is_success:
+            detection = detect_result.unwrap()
+            workflow_results["detected_server"] = detection.detected_server_type
+            workflow_results["detection_confidence"] = detection.confidence
+            source_server = detection.detected_server_type or "oid"
+        else:
+            source_server = "oid"  # Default fallback
 
-    # Step 2: Migrate OID → Intermediate (OUD format)
-    intermediate_migration = api.migrate(
-        input_dir=source_dir,
-        output_dir=intermediate_dir,
-        source_server=source_server,
-        target_server="oud",
-        options=FlextLdifModels.MigrateOptions(
-            write_options=FlextLdifModels.WriteFormatOptions(
-                fold_long_lines=False,
-                sort_attributes=True,
-            ).model_dump(),
-        ),
-    )
-
-    if intermediate_migration.is_success:
-        workflow_results["intermediate_migration"] = "success"
-    else:
-        return FlextResult.fail(
-            f"Intermediate migration failed: {intermediate_migration.error}"
+        # Step 2: Migrate OID → Intermediate (OUD format)
+        intermediate_migration = api.migrate(
+            input_dir=source_dir,
+            output_dir=intermediate_dir,
+            source_server=source_server,
+            target_server="oud",
+            options=FlextLdifModels.MigrateOptions(
+                write_options=FlextLdifModels.WriteFormatOptions(
+                    fold_long_lines=False,
+                    sort_attributes=True,
+                ).model_dump(),
+            ),
         )
 
-    # Step 3: Final migration to RFC standard
-    final_migration = api.migrate(
-        input_dir=intermediate_dir,
-        output_dir=final_dir,
-        source_server="oud",
-        target_server="rfc",
-    )
+        if intermediate_migration.is_success:
+            workflow_results["intermediate_migration"] = "success"
+        else:
+            return FlextResult.fail(
+                f"Intermediate migration failed: {intermediate_migration.error}"
+            )
 
-    if final_migration.is_success:
-        workflow_results["final_migration"] = "success"
-        result = final_migration.unwrap()
+        # Step 3: Final migration to RFC standard
+        final_migration = api.migrate(
+            input_dir=intermediate_dir,
+            output_dir=final_dir,
+            source_server="oud",
+            target_server="rfc",
+        )
 
-        # Count final entries
-        final_count = 0
-        if hasattr(result, "statistics") and result.statistics:
-            final_count = result.statistics.processed_entries
-        workflow_results["final_entry_count"] = final_count
-    else:
-        return FlextResult.fail(f"Final migration failed: {final_migration.error}")
+        if final_migration.is_success:
+            workflow_results["final_migration"] = "success"
+            result = final_migration.unwrap()
 
-    # Step 4: Validate final results
-    FlextResult.ok({"workflow_completed": True})
-    workflow_results.update({
-        "source_server_detected": source_server,
-        "migration_pipeline": "oid → oud → rfc",
-        "parallel_processing": True,
-        "validation_performed": True,
-    })
+            # Count final entries
+            final_count = 0
+            if hasattr(result, "statistics") and result.statistics:
+                final_count = result.statistics.processed_entries
+            workflow_results["final_entry_count"] = final_count
+        else:
+            return FlextResult.fail(f"Final migration failed: {final_migration.error}")
 
-    return FlextResult.ok(cast("dict[str, object]", workflow_results))
+        # Step 4: Validate final results
+        workflow_results.update({
+            "source_server_detected": source_server,
+            "migration_pipeline": "oid → oud → rfc",
+            "parallel_processing": True,
+            "validation_performed": True,
+        })
+
+        return FlextResult.ok(workflow_results)

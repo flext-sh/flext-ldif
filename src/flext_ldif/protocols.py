@@ -28,7 +28,7 @@ TResult = TypeVar("TResult")
 
 
 class FlextLdifProtocols(FlextProtocols):
-    r"""Unified LDIF protocol definitions extending FlextProtocols.
+    """Unified LDIF protocol definitions extending FlextProtocols.
 
     This class extends the base FlextProtocols with LDIF-specific protocol
     definitions for the minimal, streamlined public interfaces of quirks.
@@ -37,7 +37,7 @@ class FlextLdifProtocols(FlextProtocols):
     1. All quirk classes inherit from ABC base classes (Schema, Acl, Entry)
     2. All base classes satisfy protocols through structural typing (duck typing)
     3. isinstance() checks validate protocol compliance at runtime
-            4. All methods use "FlextResult[T]" for railway-oriented error handling
+    4. All methods use "FlextResult[T]" for railway-oriented error handling
     5. execute() method provides polymorphic type-based routing
 
     **Minimal Public Interface:**
@@ -50,45 +50,123 @@ class FlextLdifProtocols(FlextProtocols):
     - can_handle_* methods for internal detection logic
     - _hook_* methods for customization points
     - process_entry, convert_entry (handled via hooks or conversion)
-
-    **Usage Pattern - Maximum Automation:**
-        >>> from flext_ldif.servers.base import FlextLdifServersBase
-        >>> from flext_ldif.models import FlextLdifModels
-        >>>
-        >>> # Entry: auto-routes based on data type
-        >>> entry = FlextLdifServersRfc.Entry()
-        >>> entries = entry.execute("dn: cn=test\\n...")  # Parse
-        >>> ldif = entry.execute([entry1, entry2])  # Write
-        >>>
-        >>> # Schema: auto-routes based on data type
-        >>> schema = FlextLdifServersRfc.Schema()
-        >>> attr = schema.execute("( 1.3... )")  # Parse attribute
-        >>> text = schema.execute(attr)  # Write attribute
-        >>>
-        >>> # ACL: auto-routes based on data type
-        >>> acl = FlextLdifServersRfc.Acl()
-        >>> model = acl.execute("(target=...)")  # Parse
-        >>> line = acl.execute(model)  # Write
-
-    **Registration and Validation:**
-        The FlextLdifServer validates protocol compliance automatically when quirks are:
-        1. Auto-discovered during initialization
-        2. Registered manually via registry.register(quirk)
-
-        This happens at REGISTRATION TIME, not at type-checking time, ensuring all
-        quirks satisfy their protocols before being used by the framework.
     """
 
-    # =========================================================================
-    # LDIF-SPECIFIC PROTOCOLS - Domain extension for LDIF operations
-    # =========================================================================
+    class Services:
+        """Service interface protocols for LDIF operations."""
+
+        @runtime_checkable
+        class HasParseMethodProtocol(Protocol):
+            """Protocol for objects with parse method."""
+
+            def parse(
+                self,
+                ldif_input: str | Path,
+                server_type: str | None = None,
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+                """Parse LDIF content."""
+                ...
+
+        @runtime_checkable
+        class HasWriteMethodProtocol(Protocol):
+            """Protocol for objects with write method."""
+
+            def write(
+                self,
+                entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
+            ) -> FlextResult[str]:
+                """Write entries to LDIF."""
+                ...
+
+        @runtime_checkable
+        class HasEntryWriteMethodProtocol(Protocol):
+            """Protocol for entry quirk instances with write method."""
+
+            def write(
+                self,
+                entries: list[FlextLdifModels.Entry],
+            ) -> FlextResult[str]:
+                """Write entries to LDIF."""
+                ...
+
+        @runtime_checkable
+        class HasEntriesProtocol(Protocol):
+            """Protocol for objects that have an entries attribute."""
+
+            entries: list[FlextLdifModels.Entry]
+
+        @runtime_checkable
+        class HasContentProtocol(Protocol):
+            """Protocol for objects that have a content attribute."""
+
+            content: str | None
+
+        @runtime_checkable
+        class UnifiedParseResultProtocol(Protocol):
+            """Unified protocol for all parse result types."""
+
+            def get_entries(self) -> list[FlextLdifModels.Entry]:
+                """Get parsed entries."""
+                ...
+
+        @runtime_checkable
+        class UnifiedWriteResultProtocol(Protocol):
+            """Unified protocol for all write result types."""
+
+            def get_content(self) -> str:
+                """Get written content."""
+                ...
+
+        @runtime_checkable
+        class ServiceWithExecuteProtocol(Protocol[TResult]):
+            """Protocol for services with execute method."""
+
+            def execute(self, **_kwargs: object) -> FlextResult[TResult]:
+                """Execute service operation."""
+                ...
+
+        @runtime_checkable
+        class ObjectWithMetadataProtocol(Protocol):
+            """Protocol for objects with metadata."""
+
+            metadata: dict[str, object]
+
+        @runtime_checkable
+        class ConstantsClassProtocol(Protocol):
+            """Protocol for classes with constants."""
+
+            SERVER_TYPE: ClassVar[str]
+            PRIORITY: ClassVar[int]
+
+        @runtime_checkable
+        class FixtureLoaderProtocol(Protocol):
+            """Protocol for fixture loaders."""
+
+            def load_fixture(self, name: str) -> object:
+                """Load fixture by name."""
+                ...
+
+            def get_fixture_path(self, server_type: str, fixture_name: str) -> Path:
+                """Get fixture path for server type and name."""
+                ...
+
+        @runtime_checkable
+        class QuirkInstanceProtocol(Protocol):
+            """Protocol for quirk instances."""
+
+            server_type: str
+            priority: int
+
+        @runtime_checkable
+        class ServiceInstanceProtocol(Protocol):
+            """Protocol for service instances."""
+
+            def parse(self, data: object) -> FlextResult[object]:
+                """Parse data."""
+                ...
 
     class Quirks:
         """LDIF quirk protocols for server-specific extensions."""
-
-        # =====================================================================
-        # SCHEMA QUIRK PROTOCOLS - For attribute and objectClass processing
-        # =====================================================================
 
         @runtime_checkable
         class SchemaProtocol(Protocol):
@@ -123,44 +201,48 @@ class FlextLdifProtocols(FlextProtocols):
             priority: int
             """Quirk priority (lower number = higher priority)."""
 
-            # -----------------------------------------------------------------
-            # PUBLIC METHODS - Required
-            # -----------------------------------------------------------------
-
             def parse(
                 self,
                 definition: str,
             ) -> FlextResult[
                 FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
             ]:
-                """Parse schema definition (attribute or objectClass).
-
-                Auto-detects type from content and routes appropriately.
-
-                Args:
-                    definition: RFC 4512 AttributeType or ObjectClass definition string
-
-                Returns:
-                    "FlextResult[SchemaAttribute | SchemaObjectClass]"
-
-                """
+                """Parse schema definition."""
                 ...
 
             def write(
                 self,
                 model: object,
             ) -> FlextResult[object]:
-                """Write schema model to RFC-compliant string.
+                """Write schema model."""
+                ...
 
-                Auto-detects model type and routes to appropriate writer.
+            def parse_attribute(
+                self,
+                definition: str,
+            ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+                """Parse attribute definition."""
+                ...
 
-                Args:
-                    model: SchemaAttribute or SchemaObjectClass model
+            def write_attribute(
+                self,
+                model: FlextLdifModels.SchemaAttribute,
+            ) -> FlextResult[str]:
+                """Write attribute model."""
+                ...
 
-                Returns:
-                    "FlextResult[str]" with RFC 4512 schema definition
+            def parse_objectclass(
+                self,
+                definition: str,
+            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+                """Parse objectclass definition."""
+                ...
 
-                """
+            def write_objectclass(
+                self,
+                model: FlextLdifModels.SchemaObjectClass,
+            ) -> FlextResult[str]:
+                """Write objectclass model."""
                 ...
 
             def execute(
@@ -168,27 +250,8 @@ class FlextLdifProtocols(FlextProtocols):
                 data: str | object | None = None,
                 operation: str | None = None,
             ) -> FlextResult[object]:
-                """Execute with automatic type detection and routing.
-
-                Polymorphic dispatch based on data type:
-                - str -> auto-detect attribute vs OC -> parse()
-                - SchemaAttribute -> write()
-                - SchemaObjectClass -> write()
-
-                Args:
-                    data: Schema definition string OR SchemaAttribute OR
-                        SchemaObjectClass
-                    operation: Force operation ('parse' or 'write'), optional
-
-                Returns:
-                    "FlextResult[SchemaAttribute | SchemaObjectClass | str]"
-
-                """
+                """Execute operation."""
                 ...
-
-        # =====================================================================
-        # ACL QUIRK PROTOCOLS - For access control processing
-        # =====================================================================
 
         @runtime_checkable
         class AclProtocol(Protocol):
@@ -232,7 +295,7 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
-            def write(self, acl_data: object) -> FlextResult[object]:
+            def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
                 """Write Acl model to string format.
 
                 Args:
@@ -281,10 +344,6 @@ class FlextLdifProtocols(FlextProtocols):
 
                 """
                 ...
-
-        # =====================================================================
-        # ENTRY QUIRK PROTOCOLS - For entry processing
-        # =====================================================================
 
         @runtime_checkable
         class EntryProtocol(Protocol):
@@ -335,9 +394,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             def write(
                 self,
-                entry_data: object,
-                write_options: object | None = None,
-            ) -> FlextResult[object]:
+                entry_data: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
+                write_options: FlextLdifModels.WriteFormatOptions | None = None,
+            ) -> FlextResult[str]:
                 """Write Entry model to RFC-compliant LDIF string.
 
                 Args:
@@ -390,10 +449,6 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
-        # =====================================================================
-        # UNIVERSAL QUIRK PROTOCOL - For all server-specific conversions
-        # =====================================================================
-
         @runtime_checkable
         class QuirksPort(Protocol):
             """A universal, model-driven port for handling server-specific LDIF quirks.
@@ -422,14 +477,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirk priority (lower number = higher priority). Used by the registry
             to select the most specific quirk available.
             """
-
-            # =====================================================================
-            # Generalized Quirk Methods - Entry-by-Entry Routing Only
-            # =====================================================================
-            # Only entry-by-entry routing methods are defined in the protocol.
-            # Individual item methods should be called directly on the quirk subclasses
-            # (entry, schema, acl) instead of through the base port.
-            # These methods route each entry to the appropriate quirk based on its type.
 
             def parse(
                 self,
@@ -460,10 +507,6 @@ class FlextLdifProtocols(FlextProtocols):
 
                 """
                 ...
-
-        # =====================================================================
-        # CONVERSION MATRIX PROTOCOLS - For server-to-server conversions
-        # =====================================================================
 
         @runtime_checkable
         class ConversionMatrixProtocol(Protocol):
@@ -512,10 +555,6 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
-        # =====================================================================
-        # REGISTRY PROTOCOLS - For quirk discovery and management
-        # =====================================================================
-
         @runtime_checkable
         class QuirkRegistryProtocol(Protocol):
             """Protocol for quirk registry operations.
@@ -556,190 +595,15 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
-    # =========================================================================
-    # SERVICES PROTOCOLS - For service and utility interfaces
-    # =========================================================================
-
-    class Services:
-        """Service and utility protocols for LDIF operations."""
-
-        @runtime_checkable
-        class HasParseMethodProtocol(Protocol):
-            """Protocol for objects with parse method.
-
-            Used by services and utilities that need to parse LDIF content.
-            Provides type-safe interface for parse operations.
-
-            Implemented by:
-            - FlextLdifParser
-            - FlextLdif API
-            - Entry quirks
-            """
-
-            def parse(
-                self,
-                ldif_input: str | Path,
-                server_type: str | None = None,
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
-                """Parse LDIF content.
-
-                Args:
-                    ldif_input: LDIF content as string or file path
-                    server_type: Optional server type override
-
-                Returns:
-                    FlextResult with list of parsed entries
-
-                """
-                ...
-
-        @runtime_checkable
-        class HasWriteMethodProtocol(Protocol):
-            """Protocol for objects with write method.
-
-            Used by services and utilities that need to write LDIF content.
-            Provides type-safe interface for write operations.
-
-            Implemented by:
-            - FlextLdifWriter
-            - FlextLdif API
-            - Entry quirks
-            """
-
-            def write(
-                self,
-                entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
-            ) -> FlextResult[str]:
-                """Write entries to LDIF.
-
-                Args:
-                    entries: Entry or list of entries to write
-
-                Returns:
-                    FlextResult with LDIF string
-
-                """
-                ...
-
-        @runtime_checkable
-        class HasEntryWriteMethodProtocol(Protocol):
-            """Protocol for entry quirk instances with write method.
-
-            Used specifically for entry quirks that write entries.
-            Provides type-safe interface for entry write operations.
-
-            Implemented by:
-            - Entry quirks (FlextLdifServersBase.Entry, etc.)
-            """
-
-            def write(
-                self,
-                entries: list[FlextLdifModels.Entry],
-            ) -> FlextResult[str]:
-                """Write entries to LDIF.
-
-                Args:
-                    entries: List of entries to write
-
-                Returns:
-                    FlextResult with LDIF string
-
-                """
-                ...
-
-        @runtime_checkable
-        class ServiceWithExecuteProtocol(Protocol):
-            """Protocol for services that have an execute method.
-
-            Used by services that follow the FlextService pattern.
-            Provides type-safe interface for service execution.
-
-            Implemented by:
-            - FlextService subclasses
-            - Service instances with execute() method
-            """
-
-            def execute(self) -> FlextResult[TResult]:
-                """Execute the service.
-
-                Returns:
-                    FlextResult with service result
-
-                """
-                ...
-
-        @runtime_checkable
-        class ObjectWithMetadataProtocol(Protocol):
-            """Protocol for objects that have metadata attribute.
-
-            Used by models and utilities that carry metadata.
-            Provides type-safe interface for metadata access.
-
-            Implemented by:
-            - Entry models with metadata
-            - Schema models with metadata
-            - Other domain models with metadata
-            """
-
-            @property
-            def metadata(self) -> object:
-                """Metadata attribute.
-
-                Returns:
-                    Metadata object (typically QuirkMetadata or similar)
-
-                """
-                ...
-
-        @runtime_checkable
-        class HasEntriesProtocol(Protocol):
-            """Protocol for objects that have an entries attribute.
-
-            Used by parse results and response objects.
-            Provides type-safe interface for accessing entries.
-
-            Implemented by:
-            - ParseResponse objects
-            - Other response objects with entries
-            """
-
-            entries: list[FlextLdifModels.Entry]
-            """List of entries in the object."""
-
-    # =========================================================================
-    # ENTRY PROTOCOLS - General entry processing protocols
-    # =========================================================================
-
     class Entry:
         """General entry processing protocols for LDIF operations."""
 
         @runtime_checkable
         class EntryWithDnProtocol(Protocol):
-            """Protocol for objects that have a DN and attributes.
+            """Protocol for objects that have a DN and attributes."""
 
-            This protocol defines the minimal interface for LDAP entries
-            that can be processed by the LDIF API. Objects satisfying this
-            protocol have a DN (distinguished name) and attributes dictionary.
-
-            Used by:
-            - FlextLdif API methods for entry processing
-            - Migration operations between servers
-            - Entry validation and transformation
-
-            Implementation:
-            Any object with 'dn' and 'attributes' attributes satisfies this
-            protocol through structural typing (duck typing).
-            """
-
-            dn: object  # Can be str or object with .value property
-            """Entry distinguished name (DN). Can be string or object with .value."""
-
-            attributes: object  # Entry attributes dictionary or LdifAttributes
-            """Entry attributes as dictionary mapping attribute names to values."""
-
-    # =========================================================================
-    # ATTRIBUTE VALUE PROTOCOLS - For attribute value extraction
-    # =========================================================================
+            dn: object
+            attributes: object
 
     @runtime_checkable
     class AttributeValueProtocol(Protocol):
@@ -762,10 +626,6 @@ class FlextLdifProtocols(FlextProtocols):
         values: list[str] | str
         """Attribute values as list or single string value."""
 
-    # =========================================================================
-    # SERVER ACL PROTOCOLS - For server-specific ACL attribute handling
-    # =========================================================================
-
     @runtime_checkable
     class ServerAclProtocol(Protocol):
         """Protocol for LDAP server ACL attribute handling.
@@ -780,33 +640,17 @@ class FlextLdifProtocols(FlextProtocols):
         4. is_acl_attribute() - Checks if attribute is ACL (case-insensitive)
 
         Usage:
-            >>> from flext_ldif.servers.oid import FlextLdifServersOid
-            >>> acl = FlextLdifServersOid.Acl()
-            >>> attrs = acl.get_acl_attributes()
-            >>> # Returns RFC + OID-specific ACL attributes
-            >>> assert "aci" in attrs  # RFC foundation
-            >>> assert "orclaci" in attrs  # OID-specific
-            >>> assert acl.is_acl_attribute("ACI")  # Case-insensitive
-
-        Implementation Pattern:
-            class FlextLdifServerOidAcl:
-                RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
-                    "aci", "acl", "olcAccess", "aclRights", "aclEntry"
-                ]
-                OID_ACL_ATTRIBUTES: ClassVar[list[str]] = [
-                    "orclaci", "orclentrylevelaci"
-                ]
-
-                def get_acl_attributes(self) -> list[str]:
-                    return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
-
-                def is_acl_attribute(self, attribute_name: str) -> bool:
-                    all_attrs = self.get_acl_attributes()
-                    return attribute_name.lower() in [a.lower() for a in all_attrs]
+        >>> from flext_ldif.servers.oid import FlextLdifServersOid
+        >>> acl = FlextLdifServersOid.Acl()
+        >>> attrs = acl.get_acl_attributes()
+        >>> # Returns RFC + OID-specific ACL attributes
+        >>> assert "aci" in attrs  # RFC foundation
+        >>> assert "orclaci" in attrs  # OID-specific
+        >>> assert acl.is_acl_attribute("ACI")  # Case-insensitive
         """
 
-        # RFC Foundation - Standard LDAP attributes (all servers start here)
         RFC_ACL_ATTRIBUTES: ClassVar[list[str]]
+        """RFC Foundation - Standard LDAP attributes (all servers start here)."""
 
         def get_acl_attributes(self) -> list[str]:
             """Get ACL attributes for this server.
@@ -833,6 +677,13 @@ class FlextLdifProtocols(FlextProtocols):
             ...
 
 
+# Export top-level protocols for convenience
+EntryWithDnProtocol = FlextLdifProtocols.Entry.EntryWithDnProtocol
+AttributeValueProtocol = FlextLdifProtocols.AttributeValueProtocol
+
+
 __all__ = [
+    "AttributeValueProtocol",
+    "EntryWithDnProtocol",
     "FlextLdifProtocols",
 ]

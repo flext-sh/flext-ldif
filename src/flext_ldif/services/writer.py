@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 import time
 from collections.abc import Sequence
 from io import StringIO
@@ -16,15 +17,16 @@ from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
+from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
+class FlextLdifWriter(LdifServiceBase):
     """Unified, stateless LDIF Writer Service.
 
     This service acts as a versatile serializer, converting Entry models into
@@ -134,8 +136,22 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             return "\n".join(result)
 
         @staticmethod
-        def _sort_entry_lines(entry_block: str) -> str:
-            """Sort attribute lines alphabetically within entry."""
+        def _sort_entry_lines(
+            entry_block: str,
+            use_rfc_order: bool = False,  # noqa: FBT001, FBT002
+            priority_attrs: list[str] | None = None,
+        ) -> str:
+            """Sort attribute lines within entry.
+
+            Args:
+                entry_block: LDIF entry block to sort
+                use_rfc_order: If True, use RFC 2849 ordering (priority attrs first, then alphabetical)
+                priority_attrs: List of attribute names to prioritize (default: ['objectClass'])
+
+            Returns:
+                Sorted entry block
+
+            """
             lines = entry_block.split("\n")
             if not lines:
                 return entry_block
@@ -155,8 +171,31 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                 else:
                     attr_lines.append(line)
 
-            # Sort attributes while preserving folded lines
-            attr_lines.sort()
+            # Sort attributes based on RFC order or alphabetical
+            if use_rfc_order:
+                # RFC 2849 ordering: priority attributes first, then alphabetical
+                priority_list = priority_attrs or ["objectClass"]
+                priority_lower = [attr.lower() for attr in priority_list]
+
+                def sort_key(line: str) -> tuple[int, str]:
+                    """Sort key: priority attrs first (by index), then alphabetical."""
+                    attr_name = (
+                        line.split(":", maxsplit=1)[0].lower()
+                        if ":" in line
+                        else line.lower()
+                    )
+                    try:
+                        # Priority attribute: use its index as priority (0, 1, 2, ...)
+                        priority_idx = priority_lower.index(attr_name)
+                        return (priority_idx, attr_name)
+                    except ValueError:
+                        # Non-priority attribute: sort alphabetically after priorities
+                        return (len(priority_list), attr_name)
+
+                attr_lines.sort(key=sort_key)
+            else:
+                # Simple alphabetical sort (backward compatible)
+                attr_lines.sort()
 
             return "\n".join(header_lines + attr_lines)
 
@@ -217,7 +256,11 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
 
                 # Apply sort_attributes
                 if format_options.sort_attributes:
-                    processed_block = cls._sort_entry_lines(processed_block)
+                    processed_block = cls._sort_entry_lines(
+                        processed_block,
+                        use_rfc_order=format_options.use_rfc_attribute_order,
+                        priority_attrs=format_options.rfc_order_priority_attributes,
+                    )
 
                 # Apply write_empty_values filtering
                 if not format_options.write_empty_values:
@@ -320,29 +363,6 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
 
             return FlextResult.ok(entry_quirk)
 
-        def _validate_entry_quirk(
-            self,
-            entry_quirk: object,
-        ) -> FlextResult[FlextLdifProtocols.Quirks.EntryProtocol]:
-            """Validate entry quirk implements EntryProtocol."""
-            self.logger.debug(
-                "Entry quirk type info",
-                entry_quirk_type=type(entry_quirk).__name__,
-                entry_quirk_module=type(entry_quirk).__module__,
-                is_entry_protocol=isinstance(
-                    entry_quirk,
-                    FlextLdifProtocols.Quirks.EntryProtocol,
-                ),
-            )
-            if not isinstance(entry_quirk, FlextLdifProtocols.Quirks.EntryProtocol):
-                self.logger.error(
-                    "Entry quirk does not implement EntryProtocol",
-                    entry_quirk_type=type(entry_quirk).__name__,
-                )
-                return FlextResult.fail("Entry quirk does not implement EntryProtocol")
-            # entry_quirk is now typed as EntryProtocol - no cast needed
-            return FlextResult.ok(entry_quirk)
-
         def _restore_original_ldif_if_available(
             self,
             output: StringIO,
@@ -403,6 +423,99 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                     )
             return entry
 
+        def _apply_original_acl_format_as_name(
+            self,
+            entry: FlextLdifModels.Entry,
+            format_options: FlextLdifModels.WriteFormatOptions,
+        ) -> FlextLdifModels.Entry:
+            """Apply original ACL format as ACI name if option is enabled.
+
+            When use_original_acl_format_as_name=True and entry has 'aci' attribute,
+            replaces the ACI name with the sanitized original ACL format from metadata.
+
+            Args:
+                entry: Entry to process
+                format_options: Write format options
+
+            Returns:
+                Entry with ACI names replaced if applicable, otherwise unchanged entry
+
+            """
+            # Check if option is enabled
+            if not format_options.use_original_acl_format_as_name:
+                return entry
+
+            # Check if entry has aci attribute
+            if not entry.attributes:
+                return entry
+
+            aci_attr_name = "aci"
+            if aci_attr_name not in entry.attributes.attributes:
+                return entry
+
+            # Get original ACL format from metadata
+            if not entry.metadata or not entry.metadata.extensions:
+                return entry
+
+            original_format = entry.metadata.extensions.get(
+                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT,
+            )
+            if not original_format:
+                return entry
+
+            # Sanitize the original format for use as ACL name
+            original_format_str = (
+                str(original_format)
+                if not isinstance(original_format, str)
+                else original_format
+            )
+            sanitized_name, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
+                original_format_str,
+            )
+
+            if not sanitized_name:
+                return entry
+
+            # Replace ACI names in all aci attribute values
+            aci_values = entry.attributes.attributes[aci_attr_name]
+            new_aci_values: list[str] = []
+
+            # Pattern to match acl "name" in ACI format
+            aci_name_pattern = re.compile(r'acl\s+"[^"]*"')
+
+            for aci_value in aci_values:
+                # Replace the acl "name" part with the sanitized original format
+                new_value = aci_name_pattern.sub(
+                    f'acl "{sanitized_name}"',
+                    aci_value,
+                )
+                new_aci_values.append(new_value)
+
+            # Update entry with new aci values
+            new_attrs = dict(entry.attributes.attributes)
+            new_attrs[aci_attr_name] = new_aci_values
+
+            # Store sanitization metadata if name was sanitized
+            new_metadata = entry.metadata
+            if was_sanitized:
+                new_extensions = dict(entry.metadata.extensions)
+                new_extensions[FlextLdifConstants.MetadataKeys.ACL_NAME_SANITIZED] = (
+                    True
+                )
+                new_extensions[
+                    FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_NAME_RAW
+                ] = original_format_str
+                new_metadata = entry.metadata.model_copy(
+                    update={"extensions": new_extensions},
+                )
+
+            return entry.model_copy(
+                update={
+                    "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
+                    "metadata": new_metadata,
+                },
+            )
+
         def _write_entry_with_quirk(
             self,
             output: StringIO,
@@ -453,7 +566,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             self,
             output: StringIO,
             entries: Sequence[FlextLdifModels.Entry],
-            entry_quirk: object,
+            entry_quirk: FlextLdifProtocols.Quirks.EntryProtocol | None,
             format_options: FlextLdifModels.WriteFormatOptions,
         ) -> FlextResult[bool]:
             """Write all entries using quirk.
@@ -468,13 +581,8 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                 FlextResult with True on success or error
 
             """
-            # Validate entry quirk
-            quirk_result = self._validate_entry_quirk(entry_quirk)
-            if quirk_result.is_failure:
-                # Convert FlextResult[EntryProtocol] error to FlextResult[bool]
-                error_msg = quirk_result.error or "Entry quirk validation failed"
-                return FlextResult[bool].fail(error_msg)
-            entry_quirk_typed = quirk_result.unwrap()
+            # For compatibility with code that expects entry_quirk_typed
+            # entry_quirk_typed = entry_quirk  # Removed unused variable
 
             # Write each entry
             for idx, entry in enumerate(entries):
@@ -497,11 +605,19 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                     updated_entry,
                 )
 
+                # Apply original ACL format as ACI name if option is enabled
+                updated_entry = self._apply_original_acl_format_as_name(
+                    updated_entry,
+                    format_options,
+                )
+
                 # Write entry using quirk
+                if entry_quirk is None:
+                    return FlextResult.fail("Entry quirk is required but not available")
                 write_result = self._write_entry_with_quirk(
                     output,
                     updated_entry,
-                    entry_quirk_typed,
+                    entry_quirk,
                     format_options,
                     idx,
                     len(entries),
@@ -547,7 +663,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
                 write_result = self._write_all_entries(
                     output,
                     entries,
-                    entry_quirk,
+                    cast("FlextLdifProtocols.Quirks.EntryProtocol | None", entry_quirk),
                     format_options,
                 )
                 if write_result.is_failure:
@@ -918,6 +1034,114 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             except Exception as e:
                 return FlextResult.fail(f"Header generation failed: {e}")
 
+    class OutputOptionsProcessor:
+        """Processes entry attributes based on WriteOutputOptions (SRP).
+
+        SRP Architecture:
+            - filters.py: MARKS attributes with status (never removes)
+            - entry.py: REMOVES attributes based on markers
+            - writer.py: Uses WriteOutputOptions to determine output visibility
+
+        This class decides how to render each attribute based on its marker status
+        and the WriteOutputOptions configuration (show/hide/comment).
+        """
+
+        @staticmethod
+        def apply_output_options(
+            entry: FlextLdifModels.Entry,
+            output_options: FlextLdifModels.WriteOutputOptions,
+        ) -> FlextLdifModels.Entry:
+            """Apply output options to entry based on marked attributes.
+
+            Args:
+                entry: Entry with marked attributes in metadata
+                output_options: Options controlling visibility
+
+            Returns:
+                Entry with attributes filtered/commented based on options
+            """
+            if not entry.metadata or not entry.attributes:
+                return entry
+
+            # Get marked attributes and objectclasses from metadata
+            marked_attrs = entry.metadata.extensions.get("marked_attributes", {})
+            marked_ocs = entry.metadata.extensions.get("marked_objectclasses", {})
+
+            if not marked_attrs and not marked_ocs:
+                return entry
+
+            # Build new attributes dict based on output options
+            new_attrs = dict(entry.attributes.attributes)
+            comments: list[str] = []
+
+            # Process marked attributes
+            for attr_name, marker_info in marked_attrs.items():
+                if not isinstance(marker_info, dict):
+                    continue
+
+                status = marker_info.get("status", "")
+                original_values = marker_info.get("original_value", [])
+
+                # Determine output mode based on status
+                output_mode = "show"  # default
+                if status == FlextLdifConstants.AttributeMarkerStatus.FILTERED:
+                    output_mode = output_options.show_filtered_attributes
+                elif status == FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL:
+                    output_mode = output_options.show_removed_attributes
+                elif status == FlextLdifConstants.AttributeMarkerStatus.HIDDEN:
+                    output_mode = output_options.show_hidden_attributes
+                elif status == FlextLdifConstants.AttributeMarkerStatus.RENAMED:
+                    output_mode = output_options.show_renamed_original
+
+                # Apply the output mode
+                if output_mode == "hide":
+                    # Remove attribute from output
+                    if attr_name in new_attrs:
+                        del new_attrs[attr_name]
+                elif output_mode == "comment":
+                    # Move to comments and remove from normal output
+                    if attr_name in new_attrs:
+                        for val in new_attrs[attr_name]:
+                            comments.append(f"# [{status.upper()}] {attr_name}: {val}")
+                        del new_attrs[attr_name]
+                # else "show" - keep as is
+
+            # Process marked objectClasses (similar logic)
+            if "objectClass" in new_attrs and marked_ocs:
+                remaining_ocs: list[str] = []
+                for oc_value in new_attrs["objectClass"]:
+                    if oc_value in marked_ocs:
+                        marker_info = marked_ocs[oc_value]
+                        status = marker_info.get("status", "") if isinstance(marker_info, dict) else ""
+                        output_mode = output_options.show_filtered_attributes
+                        if output_mode == "hide":
+                            continue  # Skip this objectClass
+                        elif output_mode == "comment":
+                            comments.append(f"# [{status.upper()}] objectClass: {oc_value}")
+                            continue
+                    remaining_ocs.append(oc_value)
+                new_attrs["objectClass"] = remaining_ocs
+
+            # Update entry with new attributes and store comments in metadata
+            if comments:
+                new_extensions = dict(entry.metadata.extensions)
+                new_extensions["_output_comments"] = comments
+                new_metadata = entry.metadata.model_copy(
+                    update={"extensions": new_extensions},
+                )
+                return entry.model_copy(
+                    update={
+                        "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
+                        "metadata": new_metadata,
+                    },
+                )
+
+            return entry.model_copy(
+                update={
+                    "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
+                },
+            )
+
     def write(
         self,
         entries: Sequence[FlextLdifModels.Entry],
@@ -927,6 +1151,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         header_template: str | None = None,
         template_data: dict[str, object] | None = None,
+        output_options: FlextLdifModels.WriteOutputOptions | None = None,
     ) -> FlextResult[
         str
         | FlextLdifModels.WriteResponse
@@ -965,11 +1190,40 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             header_builder = self.HeaderBuilder()
 
             # Setup format options
-            # RFC 2849: Use default options (includes version header) when not explicitly provided
+            # Architecture: Config is source of truth, CLI can override via format_options
             if format_options is None:
-                options = FlextLdifModels.WriteFormatOptions()
+                # Create WriteFormatOptions with default values
+                options = FlextLdifModels.WriteFormatOptions(
+                    line_width=78,  # RFC default
+                    respect_attribute_order=True,
+                    sort_attributes=False,
+                    write_hidden_attributes_as_comments=False,
+                    write_metadata_as_comments=False,
+                    include_version_header=True,
+                    include_timestamps=False,
+                    base64_encode_binary=False,
+                    fold_long_lines=True,
+                    restore_original_format=False,
+                    write_empty_values=True,
+                    normalize_attribute_names=False,
+                    include_dn_comments=False,
+                    write_removed_attributes_as_comments=False,
+                    write_migration_header=False,
+                    migration_header_template=None,
+                    write_rejection_reasons=False,
+                    write_transformation_comments=False,
+                    include_removal_statistics=False,
+                    ldif_changetype=None,
+                    ldif_modify_operation="add",
+                    write_original_entry_as_comment=False,
+                    entry_category=None,
+                    acl_attribute_names=frozenset(),
+                    comment_acl_in_non_acl_phases=True,
+                    use_rfc_attribute_order=False,
+                    rfc_order_priority_attributes=["objectClass"],
+                )
             else:
-                # Explicit format_options: respect user settings
+                # Explicit format_options: respect user settings (CLI override)
                 options = format_options
 
             # Pipeline: Format → Generate Header → Route Output

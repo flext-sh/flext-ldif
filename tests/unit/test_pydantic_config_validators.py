@@ -1,276 +1,311 @@
-"""Expert tests for Pydantic v2 validators in config - RFC compliance.
+"""Test suite for FlextLdifConfig Pydantic validators.
 
-Tests validate that FlextLdifConfig field_validators:
-1. Use @field_validator correctly (Pydantic v2 pattern)
-2. Validate RFC 2849 compliance (encoding, line separators, version)
-3. Validate server type against FlextLdifConstants.ServerTypes
-4. Reject invalid values with clear error messages
+Modules tested: FlextLdifConfig (field validators for encoding, server_type, line_separators, version_string)
+Scope: RFC 2849 compliance validation, Pydantic v2 @field_validator patterns, cross-field model_validator testing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import cast
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import ClassVar, Literal, cast
 
 import pytest
+from pydantic import ValidationError
 
 from flext_ldif import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
 
 
-class TestFlextLdifConfigEncodingValidator:
-    """FlextLdifConfig ldif_encoding field_validator tests."""
+class TestFlextLdifConfigValidators:
+    """Comprehensive test suite for FlextLdifConfig Pydantic validators.
 
-    def test_valid_utf8_encoding_accepted(self) -> None:
-        """Validate UTF-8 encoding is accepted (RFC 2849 recommended)."""
-        config = FlextLdifConfig(ldif_encoding="utf-8")
-        assert config.ldif_encoding == "utf-8"
+    Tests field validators (encoding, server_type, line_separator, version_string)
+    and cross-field model validators using parametrized test scenarios.
+    """
 
-    def test_valid_latin1_encoding_accepted(self) -> None:
-        """Validate latin-1 encoding is accepted (valid Python codec)."""
-        config = FlextLdifConfig(ldif_encoding="latin-1")
-        assert config.ldif_encoding == "latin-1"
+    # ═══════════════════════════════════════════════════════════════════════════
+    # TEST SCENARIO ENUMS
+    # ═══════════════════════════════════════════════════════════════════════════
 
-    def test_valid_ascii_encoding_accepted(self) -> None:
-        """Validate ASCII encoding is accepted (valid Python codec)."""
-        config = FlextLdifConfig(ldif_encoding="ascii")
-        assert config.ldif_encoding == "ascii"
+    class EncodingScenario(StrEnum):
+        """Test scenarios for ldif_encoding field_validator."""
 
-    def test_invalid_encoding_raises_validation_error(self) -> None:
-        """Validate invalid encoding raises ValidationError from field_validator."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(
-                ldif_encoding=cast(
-                    "FlextLdifConstants.LiteralTypes.EncodingType", "invalid-codec-xyz"
+        UTF8_VALID = "utf8_valid"
+        LATIN1_VALID = "latin1_valid"
+        ASCII_VALID = "ascii_valid"
+        INVALID_CODEC = "invalid_codec"
+        NONEXISTENT_CODEC = "nonexistent_codec"
+        FAKE_CODEC = "fake_codec"
+
+    class ServerTypeScenario(StrEnum):
+        """Test scenarios for server_type field_validator."""
+
+        RFC_VALID = "rfc_valid"
+        OID_VALID = "oid_valid"
+        OUD_VALID = "oud_valid"
+        OPENLDAP_VALID = "openldap_valid"
+        OPENLDAP1_VALID = "openldap1_valid"
+        AD_VALID = "ad_valid"
+        DS389_VALID = "ds389_valid"
+        APACHE_VALID = "apache_valid"
+        NOVELL_VALID = "novell_valid"
+        TIVOLI_VALID = "tivoli_valid"
+        RELAXED_VALID = "relaxed_valid"
+        GENERIC_VALID = "generic_valid"
+        INVALID_TYPE = "invalid_type"
+
+    class LineSeparatorScenario(StrEnum):
+        """Test scenarios for ldif_line_separator field_validator (RFC 2849)."""
+
+        LF_VALID = "lf_valid"
+        CRLF_VALID = "crlf_valid"
+        CR_VALID = "cr_valid"
+        DOUBLE_NEWLINE_INVALID = "double_newline_invalid"
+        EMPTY_INVALID = "empty_invalid"
+
+    class VersionStringScenario(StrEnum):
+        """Test scenarios for ldif_version_string field_validator (RFC 2849)."""
+
+        VERSION_1_STANDARD = "version_1_standard"
+        VERSION_1_NO_SPACE = "version_1_no_space"
+        VERSION_1_EXTRA_SPACES = "version_1_extra_spaces"
+        MISSING_COLON_INVALID = "missing_colon_invalid"
+        VERSION_2_INVALID = "version_2_invalid"
+        NON_NUMERIC_INVALID = "non_numeric_invalid"
+        EMPTY_INVALID = "empty_invalid"
+
+    class ModelValidatorScenario(StrEnum):
+        """Test scenarios for cross-field model_validator tests."""
+
+        MANUAL_WITH_SERVER_TYPE = "manual_with_server_type"
+        MANUAL_WITHOUT_SERVER_TYPE = "manual_without_server_type"
+        AUTO_WITH_NONE_SERVER_TYPE = "auto_with_none_server_type"
+        DISABLED_WITH_NONE_SERVER_TYPE = "disabled_with_none_server_type"
+
+    class DetectionMode(StrEnum):
+        """Valid detection modes for quirks_detection_mode field."""
+
+        MANUAL = "manual"
+        AUTO = "auto"
+        DISABLED = "disabled"
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # TEST DATA MAPPINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    ENCODING_TEST_DATA: ClassVar[dict[str, tuple[str, bool]]] = {
+        EncodingScenario.UTF8_VALID: ("utf-8", True),
+        EncodingScenario.LATIN1_VALID: ("latin-1", True),
+        EncodingScenario.ASCII_VALID: ("ascii", True),
+        EncodingScenario.INVALID_CODEC: ("invalid-codec-xyz", False),
+        EncodingScenario.NONEXISTENT_CODEC: ("nonexistent-encoding", False),
+        EncodingScenario.FAKE_CODEC: ("fake-codec", False),
+    }
+
+    SERVER_TYPE_TEST_DATA: ClassVar[dict[str, tuple[str, bool]]] = {
+        ServerTypeScenario.RFC_VALID: ("rfc", True),
+        ServerTypeScenario.OID_VALID: ("oid", True),
+        ServerTypeScenario.OUD_VALID: ("oud", True),
+        ServerTypeScenario.OPENLDAP_VALID: ("openldap", True),
+        ServerTypeScenario.OPENLDAP1_VALID: ("openldap1", True),
+        ServerTypeScenario.AD_VALID: ("active_directory", True),
+        ServerTypeScenario.DS389_VALID: ("389ds", True),
+        ServerTypeScenario.APACHE_VALID: ("apache_directory", True),
+        ServerTypeScenario.NOVELL_VALID: ("novell_edirectory", True),
+        ServerTypeScenario.TIVOLI_VALID: ("ibm_tivoli", True),
+        ServerTypeScenario.RELAXED_VALID: ("relaxed", True),
+        ServerTypeScenario.GENERIC_VALID: ("generic", True),
+        ServerTypeScenario.INVALID_TYPE: ("invalid-server-xyz", False),
+    }
+
+    LINE_SEPARATOR_TEST_DATA: ClassVar[dict[str, tuple[str, bool]]] = {
+        LineSeparatorScenario.LF_VALID: ("\n", True),
+        LineSeparatorScenario.CRLF_VALID: ("\r\n", True),
+        LineSeparatorScenario.CR_VALID: ("\r", True),
+        LineSeparatorScenario.DOUBLE_NEWLINE_INVALID: ("\\n\\n", False),
+        LineSeparatorScenario.EMPTY_INVALID: ("", False),
+    }
+
+    VERSION_STRING_TEST_DATA: ClassVar[dict[str, tuple[str, bool]]] = {
+        VersionStringScenario.VERSION_1_STANDARD: ("version: 1", True),
+        VersionStringScenario.VERSION_1_NO_SPACE: ("version:1", True),
+        VersionStringScenario.VERSION_1_EXTRA_SPACES: ("version:   1", True),
+        VersionStringScenario.MISSING_COLON_INVALID: ("version 1", False),
+        VersionStringScenario.VERSION_2_INVALID: ("version: 2", False),
+        VersionStringScenario.NON_NUMERIC_INVALID: ("version: abc", False),
+        VersionStringScenario.EMPTY_INVALID: ("", False),
+    }
+
+    MODEL_VALIDATOR_TEST_DATA: ClassVar[dict[str, tuple[str, str | None, bool]]] = {
+        ModelValidatorScenario.MANUAL_WITH_SERVER_TYPE: (
+            DetectionMode.MANUAL,
+            "oud",
+            True,
+        ),
+        ModelValidatorScenario.MANUAL_WITHOUT_SERVER_TYPE: (
+            DetectionMode.MANUAL,
+            None,
+            False,
+        ),
+        ModelValidatorScenario.AUTO_WITH_NONE_SERVER_TYPE: (
+            DetectionMode.AUTO,
+            None,
+            True,
+        ),
+        ModelValidatorScenario.DISABLED_WITH_NONE_SERVER_TYPE: (
+            DetectionMode.DISABLED,
+            None,
+            True,
+        ),
+    }
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PARAMETRIZED TESTS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    @pytest.mark.parametrize(
+        ("scenario", "encoding", "should_succeed"),
+        [(name, data[0], data[1]) for name, data in ENCODING_TEST_DATA.items()],
+    )
+    def test_encoding_field_validator(
+        self,
+        scenario: str,
+        encoding: str,
+        should_succeed: bool,
+    ) -> None:
+        """Test ldif_encoding field_validator with parametrized scenarios."""
+        if should_succeed:
+            config = FlextLdifConfig(
+                ldif_encoding=encoding,
+            )
+            assert config.ldif_encoding == encoding
+        else:
+            with pytest.raises(ValidationError) as exc_info:
+                FlextLdifConfig(
+                    ldif_encoding=encoding,
                 )
+            error_str = str(exc_info.value).lower()
+            assert encoding.lower() in error_str or "invalid encoding" in error_str, (
+                f"Failed for scenario {scenario}: {exc_info.value}"
             )
 
-        # Error should mention the invalid encoding
-        error_str = str(exc_info.value)
-        assert (
-            "invalid-codec-xyz" in error_str.lower()
-            or "invalid encoding" in error_str.lower()
-        )
-
-
-class TestFlextLdifConfigServerTypeValidator:
-    """FlextLdifConfig server_type field_validator tests."""
-
-    def test_valid_rfc_server_type_accepted(self) -> None:
-        """Validate 'rfc' server type is accepted."""
-        config = FlextLdifConfig(server_type="rfc")
-        assert config.server_type == "rfc"
-
-    def test_valid_oid_server_type_accepted(self) -> None:
-        """Validate 'oid' server type is accepted."""
-        config = FlextLdifConfig(server_type="oid")
-        assert config.server_type == "oid"
-
-    def test_valid_oud_server_type_accepted(self) -> None:
-        """Validate 'oud' server type is accepted."""
-        config = FlextLdifConfig(server_type="oud")
-        assert config.server_type == "oud"
-
-    def test_valid_openldap_server_type_accepted(self) -> None:
-        """Validate 'openldap' server type is accepted."""
-        config = FlextLdifConfig(server_type="openldap")
-        assert config.server_type == "openldap"
-
-    def test_valid_openldap1_server_type_accepted(self) -> None:
-        """Validate 'openldap1' server type is accepted."""
-        config = FlextLdifConfig(server_type="openldap1")
-        assert config.server_type == "openldap1"
-
-    def test_valid_ad_server_type_accepted(self) -> None:
-        """Validate 'active_directory' (Active Directory) server type is accepted."""
-        config = FlextLdifConfig(server_type="active_directory")
-        assert config.server_type == "active_directory"
-
-    def test_valid_ds389_server_type_accepted(self) -> None:
-        """Validate '389ds' (Red Hat Directory Server) server type is accepted."""
-        config = FlextLdifConfig(server_type="389ds")
-        assert config.server_type == "389ds"
-
-    def test_valid_apache_server_type_accepted(self) -> None:
-        """Validate 'apache_directory' (Apache Directory Server) server type is accepted."""
-        config = FlextLdifConfig(server_type="apache_directory")
-        assert config.server_type == "apache_directory"
-
-    def test_valid_novell_server_type_accepted(self) -> None:
-        """Validate 'novell_edirectory' (Novell eDirectory) server type is accepted."""
-        config = FlextLdifConfig(server_type="novell_edirectory")
-        assert config.server_type == "novell_edirectory"
-
-    def test_valid_tivoli_server_type_accepted(self) -> None:
-        """Validate 'ibm_tivoli' (IBM Tivoli Directory Server) server type is accepted."""
-        config = FlextLdifConfig(server_type="ibm_tivoli")
-        assert config.server_type == "ibm_tivoli"
-
-    def test_valid_relaxed_server_type_accepted(self) -> None:
-        """Validate 'relaxed' (lenient parsing mode) server type is accepted."""
-        config = FlextLdifConfig(server_type="relaxed")
-        assert config.server_type == "relaxed"
-
-    def test_valid_generic_server_type_accepted(self) -> None:
-        """Validate 'generic' (legacy alias for RFC) server type is accepted."""
-        config = FlextLdifConfig(server_type="generic")
-        assert config.server_type == "generic"
-
-    def test_invalid_server_type_raises_validation_error(self) -> None:
-        """Validate invalid server_type raises ValidationError from field_validator."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(
-                server_type=cast(
-                    "FlextLdifConstants.LiteralTypes.ServerType", "invalid-server-xyz"
+    @pytest.mark.parametrize(
+        ("scenario", "server_type", "should_succeed"),
+        [(name, data[0], data[1]) for name, data in SERVER_TYPE_TEST_DATA.items()],
+    )
+    def test_server_type_field_validator(
+        self,
+        scenario: str,
+        server_type: str,
+        should_succeed: bool,
+    ) -> None:
+        """Test server_type field_validator with parametrized scenarios."""
+        if should_succeed:
+            config = FlextLdifConfig(
+                server_type=server_type,
+            )
+            assert config.server_type == server_type
+        else:
+            with pytest.raises(ValidationError) as exc_info:
+                FlextLdifConfig(
+                    server_type=server_type,
                 )
+            error_str = str(exc_info.value).lower()
+            assert server_type.lower() in error_str or "invalid server" in error_str, (
+                f"Failed for scenario {scenario}: {exc_info.value}"
             )
 
-        # Error should mention the invalid server type
-        error_str = str(exc_info.value)
-        assert (
-            "invalid-server-xyz" in error_str.lower()
-            or "invalid server" in error_str.lower()
-        )
-
-
-class TestFlextLdifConfigLineSeparatorValidator:
-    """FlextLdifConfig ldif_line_separator field_validator tests (RFC 2849)."""
-
-    def test_valid_lf_line_separator_accepted(self) -> None:
-        r"""Validate LF (\\n) line separator is accepted (RFC 2849 § 2)."""
-        config = FlextLdifConfig(ldif_line_separator="\n")
-        assert config.ldif_line_separator == "\n"
-
-    def test_valid_crlf_line_separator_accepted(self) -> None:
-        r"""Validate CRLF (\\r\\n) line separator is accepted (RFC 2849 § 2)."""
-        config = FlextLdifConfig(ldif_line_separator="\r\n")
-        assert config.ldif_line_separator == "\r\n"
-
-    def test_valid_cr_line_separator_accepted(self) -> None:
-        r"""Validate CR (\\r) line separator is accepted (RFC 2849 § 2)."""
-        config = FlextLdifConfig(ldif_line_separator="\r")
-        assert config.ldif_line_separator == "\r"
-
-    def test_invalid_line_separator_raises_validation_error(self) -> None:
-        """Validate invalid line separator raises ValidationError from field_validator."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_line_separator="\\n\\n")  # Double newline - invalid
-
-        # Error should mention RFC 2849 compliance
-        error_str = str(exc_info.value)
-        assert "rfc 2849" in error_str.lower() or "invalid" in error_str.lower()
-
-    def test_empty_line_separator_raises_validation_error(self) -> None:
-        """Validate empty line separator raises ValidationError."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_line_separator="")
-
-        error_str = str(exc_info.value)
-        assert "rfc 2849" in error_str.lower() or "invalid" in error_str.lower()
-
-
-class TestFlextLdifConfigVersionStringValidator:
-    """FlextLdifConfig ldif_version_string field_validator tests (RFC 2849)."""
-
-    def test_valid_version_1_accepted(self) -> None:
-        """Validate 'version: 1' is accepted (RFC 2849 § 2)."""
-        config = FlextLdifConfig(ldif_version_string="version: 1")
-        assert config.ldif_version_string == "version: 1"
-
-    def test_valid_version_1_no_space_accepted(self) -> None:
-        """Validate 'version:1' (no space) is accepted."""
-        config = FlextLdifConfig(ldif_version_string="version:1")
-        assert config.ldif_version_string == "version:1"
-
-    def test_valid_version_1_extra_spaces_accepted(self) -> None:
-        """Validate 'version:   1' (extra spaces) is accepted."""
-        config = FlextLdifConfig(ldif_version_string="version:   1")
-        assert config.ldif_version_string == "version:   1"
-
-    def test_invalid_version_missing_colon_raises_error(self) -> None:
-        """Validate version string without colon raises ValidationError."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_version_string="version 1")
-
-        error_str = str(exc_info.value)
-        assert "version:" in error_str.lower() or "rfc 2849" in error_str.lower()
-
-    def test_invalid_version_2_raises_error(self) -> None:
-        """Validate version 2 raises ValidationError (only version 1 supported)."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_version_string="version: 2")
-
-        error_str = str(exc_info.value)
-        assert "version" in error_str.lower()
-        assert "1" in error_str or "unsupported" in error_str.lower()
-
-    def test_invalid_version_non_numeric_raises_error(self) -> None:
-        """Validate non-numeric version raises ValidationError."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_version_string="version: abc")
-
-        error_str = str(exc_info.value)
-        assert "invalid" in error_str.lower() or "format" in error_str.lower()
-
-    def test_invalid_version_empty_raises_error(self) -> None:
-        """Validate empty version string raises ValidationError."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_version_string="")
-
-        error_str = str(exc_info.value)
-        assert "version:" in error_str.lower() or "invalid" in error_str.lower()
-
-
-class TestFlextLdifConfigModelValidator:
-    """FlextLdifConfig model_validator tests (cross-field validation)."""
-
-    def test_manual_detection_mode_requires_quirks_server_type(self) -> None:
-        """Validate manual detection mode requires quirks_server_type."""
-        with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(
-                quirks_detection_mode="manual",
-                quirks_server_type=None,  # Missing required field
+    @pytest.mark.parametrize(
+        ("scenario", "line_separator", "should_succeed"),
+        [(name, data[0], data[1]) for name, data in LINE_SEPARATOR_TEST_DATA.items()],
+    )
+    def test_line_separator_field_validator(
+        self,
+        scenario: str,
+        line_separator: str,
+        should_succeed: bool,
+    ) -> None:
+        """Test ldif_line_separator field_validator (RFC 2849) with parametrized scenarios."""
+        if should_succeed:
+            config = FlextLdifConfig(
+                ldif_line_separator=line_separator,
+            )
+            assert config.ldif_line_separator == line_separator
+        else:
+            with pytest.raises(ValidationError) as exc_info:
+                FlextLdifConfig(
+                    ldif_line_separator=line_separator,
+                )
+            error_str = str(exc_info.value).lower()
+            assert "rfc 2849" in error_str or "invalid" in error_str, (
+                f"Failed for scenario {scenario}: {exc_info.value}"
             )
 
-        error_str = str(exc_info.value)
-        assert "quirks_server_type" in error_str.lower()
-        assert "manual" in error_str.lower()
+    @pytest.mark.parametrize(
+        ("scenario", "version_string", "should_succeed"),
+        [(name, data[0], data[1]) for name, data in VERSION_STRING_TEST_DATA.items()],
+    )
+    def test_version_string_field_validator(
+        self,
+        scenario: str,
+        version_string: str,
+        should_succeed: bool,
+    ) -> None:
+        """Test ldif_version_string field_validator (RFC 2849) with parametrized scenarios."""
+        if should_succeed:
+            config = FlextLdifConfig(
+                ldif_version_string=version_string,
+            )
+            assert config.ldif_version_string == version_string
+        else:
+            with pytest.raises(ValidationError) as exc_info:
+                FlextLdifConfig(
+                    ldif_version_string=version_string,
+                )
+            error_str = str(exc_info.value).lower()
+            assert (
+                "version:" in error_str
+                or "invalid" in error_str
+                or "rfc 2849" in error_str
+            ), f"Failed for scenario {scenario}: {exc_info.value}"
 
-    def test_manual_detection_mode_with_server_type_accepted(self) -> None:
-        """Validate manual detection mode with quirks_server_type is accepted."""
-        config = FlextLdifConfig(
-            quirks_detection_mode="manual",
-            quirks_server_type="oud",
-        )
-
-        assert config.quirks_detection_mode == "manual"
-        assert config.quirks_server_type == "oud"
-
-    def test_auto_detection_mode_allows_none_server_type(self) -> None:
-        """Validate auto detection mode allows None quirks_server_type."""
-        config = FlextLdifConfig(
-            quirks_detection_mode="auto",
-            quirks_server_type=None,
-        )
-
-        assert config.quirks_detection_mode == "auto"
-        assert config.quirks_server_type is None
-
-    def test_disabled_detection_mode_allows_none_server_type(self) -> None:
-        """Validate disabled detection mode allows None quirks_server_type."""
-        config = FlextLdifConfig(
-            quirks_detection_mode="disabled",
-            quirks_server_type=None,
-        )
-
-        assert config.quirks_detection_mode == "disabled"
-        assert config.quirks_server_type is None
+    @pytest.mark.parametrize(
+        ("scenario", "mode", "server_type", "should_succeed"),
+        [
+            (name, data[0], data[1], data[2])
+            for name, data in MODEL_VALIDATOR_TEST_DATA.items()
+        ],
+    )
+    def test_model_validator_quirks_consistency(
+        self,
+        scenario: str,
+        mode: str,
+        server_type: str | None,
+        should_succeed: bool,
+    ) -> None:
+        """Test cross-field model_validator for quirks_detection_mode consistency."""
+        detection_mode = cast("Literal['auto', 'manual', 'disabled']", mode)
+        if should_succeed:
+            config = FlextLdifConfig(
+                quirks_detection_mode=detection_mode,
+                quirks_server_type=server_type,
+            )
+            assert config.quirks_detection_mode == detection_mode
+            assert config.quirks_server_type == server_type
+        else:
+            with pytest.raises(ValidationError) as exc_info:
+                FlextLdifConfig(
+                    quirks_detection_mode=detection_mode,
+                    quirks_server_type=server_type,
+                )
+            error_str = str(exc_info.value).lower()
+            assert "quirks_server_type" in error_str and "manual" in error_str, (
+                f"Failed for scenario {scenario}: {exc_info.value}"
+            )
 
 
 __all__ = [
-    "TestFlextLdifConfigEncodingValidator",
-    "TestFlextLdifConfigLineSeparatorValidator",
-    "TestFlextLdifConfigModelValidator",
-    "TestFlextLdifConfigServerTypeValidator",
-    "TestFlextLdifConfigVersionStringValidator",
+    "TestFlextLdifConfigValidators",
 ]

@@ -173,6 +173,8 @@ class FlextLdifUtilitiesDN:
         - All components have attr=value format
         - Valid hex escape sequences (\XX where X is hex digit)
         """
+        if dn is None:
+            return False
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return False
@@ -291,12 +293,16 @@ class FlextLdifUtilitiesDN:
     ) -> FlextResult[list[tuple[str, str]]]: ...
 
     @staticmethod
-    def parse(dn: DnInput) -> FlextResult[list[tuple[str, str]]]:
+    def parse(
+        dn: str | FlextLdifModels.DistinguishedName | None,
+    ) -> FlextResult[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
         Pure RFC 4514 parsing without external dependencies.
         Returns FlextResult with [(attr1, value1), (attr2, value2), ...] or failure.
         """
+        if dn is None:
+            return FlextResult[list[tuple[str, str]]].fail("DN cannot be None")
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return FlextResult[list[tuple[str, str]]].fail("DN string is empty")
@@ -332,12 +338,14 @@ class FlextLdifUtilitiesDN:
     def norm(dn: FlextLdifModels.DistinguishedName) -> FlextResult[str]: ...
 
     @staticmethod
-    def norm(dn: DnInput) -> FlextResult[str]:
+    def norm(dn: str | FlextLdifModels.DistinguishedName | None) -> FlextResult[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Pure implementation without external dependencies.
         Returns FlextResult with normalized DN string or failure.
         """
+        if dn is None:
+            return FlextResult[str].fail("DN cannot be None")
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         try:
             if not dn_str:
@@ -430,7 +438,7 @@ class FlextLdifUtilitiesDN:
     def clean_dn(dn: FlextLdifModels.DistinguishedName) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: DnInput) -> str:
+    def clean_dn(dn: str | FlextLdifModels.DistinguishedName) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,

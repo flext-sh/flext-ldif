@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from re import Pattern
-from typing import Protocol, TypedDict, TypeVar, cast
+from typing import TypedDict, TypeVar, cast
 
 from flext_core import FlextResult
 from flext_tests import FlextTestsMatchers
@@ -42,15 +42,7 @@ TEntryResult = TypeVar(
     bound=object,
 )
 
-# Use type aliases from src - these are nested type aliases in FlextLdifTypes
-# Access them via the class for type checking
-AclQuirk = FlextLdifTypes.AclQuirk
-EntryOrList = FlextLdifTypes.EntryOrList
-EntryQuirk = FlextLdifTypes.EntryQuirk
-ModelInstance = FlextLdifTypes.ModelInstance
-QuirksPort = FlextLdifTypes.QuirksPort
-SchemaOrObjectClass = FlextLdifTypes.SchemaOrObjectClass
-SchemaQuirk = FlextLdifTypes.SchemaQuirk
+# Type aliases imported directly from flext_ldif.typings
 
 
 # TypedDict for test case structures
@@ -65,68 +57,18 @@ class ParseTestCaseDict(TypedDict, total=False):
     should_succeed: bool
 
 
-# Use protocols from src instead of defining locally
+# Use protocols from src
 ServiceWithExecute = FlextLdifProtocols.Services.ServiceWithExecuteProtocol
 ObjectWithMetadata = FlextLdifProtocols.Services.ObjectWithMetadataProtocol
 
+# Test-specific protocols - moved to src/protocols.py
+ConstantsClass = FlextLdifProtocols.Services.ConstantsClassProtocol
+FixtureLoaderProtocol = FlextLdifProtocols.Services.FixtureLoaderProtocol
+QuirkInstance = FlextLdifProtocols.Services.QuirkInstanceProtocol
+ServiceInstance = FlextLdifProtocols.Services.ServiceInstanceProtocol
 
-# Protocols for type safety without using Any or object
-# These are test-specific and not in src
-class ConstantsClass(Protocol):
-    """Protocol for constants classes with dynamic attributes."""
-
-    def __getattr__(self, name: str) -> str:
-        """Get constant value by name."""
-        ...
-
-
-class FixtureLoaderProtocol(Protocol):
-    """Protocol for fixture loaders with get_fixture_path method."""
-
-    def get_fixture_path(self, server_type: str, fixture_name: str) -> Path:
-        """Get fixture path for server type and name."""
-        ...
-
-
-# Union type for quirk instances
-type QuirkInstanceType = (
-    FlextLdifServersRfc.Schema
-    | FlextLdifServersRfc.Entry
-    | FlextLdifServersRfc.Acl
-    | FlextLdifServersBase.Schema
-    | FlextLdifServersBase.Entry
-    | FlextLdifServersBase.Acl
-)
-
-
-class QuirkInstance(Protocol):
-    """Protocol for quirk instances that can be called dynamically."""
-
-    def __getattr__(
-        self,
-        name: str,
-    ) -> Callable[
-        ...,
-        FlextResult[
-            str
-            | FlextLdifModels.Entry
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | FlextLdifModels.Acl
-        ],
-    ]:
-        """Get method by name."""
-        ...
-
-
-class ServiceInstance(Protocol):
-    """Protocol for service instances."""
-
-    def execute(
-        self,
-    ) -> FlextResult[str | list[FlextLdifModels.Entry] | dict[str, str]]:
-        """Execute service method."""
-        ...
+# Union type for quirk instances - moved to src/types.py
+QuirkInstanceType = FlextLdifTypes.QuirkInstanceType
 
 
 class DeduplicationHelpers:  # Renamed to avoid pytest collection
@@ -192,9 +134,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         elif hasattr(unwrapped, "entries"):
             # unwrapped is ParseResponse with entries attribute
             parse_response = unwrapped
+            entries_attr = getattr(parse_response, "entries", [])
             entries = [
                 entry
-                for entry in parse_response.entries
+                for entry in entries_attr
                 if isinstance(entry, FlextLdifModels.Entry)
             ]
         else:
@@ -252,7 +195,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             output_target=output_target,
             output_path=output_path,
         )
-        output = TestAssertions.assert_write_success(result)
+        output = TestAssertions.assert_write_success(
+            cast("FlextLdifTypes.WriteResult", result)
+        )
 
         if output_target == "file" and output_path:
             assert output_path.exists(), "Output file should exist"
@@ -303,7 +248,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             target_server_type=target_server_type,
             output_target="string",
         )
-        written_ldif = TestAssertions.assert_write_success(write_result)
+        written_ldif = TestAssertions.assert_write_success(
+            cast("FlextLdifTypes.WriteResult", write_result)
+        )
 
         roundtrip_result = parser.parse(written_ldif, input_source="string")
         roundtrip_data = TestAssertions.assert_success(roundtrip_result)
@@ -312,7 +259,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
             parse_response = roundtrip_data
-            roundtripped_entries_raw = list(parse_response.entries)
+            entries_attr = getattr(parse_response, "entries", [])
+            roundtripped_entries_raw = list(entries_attr)
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
@@ -655,7 +603,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_parse_write_roundtrip(
-        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        quirk: FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         input_data: str,
         *,
         parse_method: str = "parse",
@@ -762,9 +712,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(original_data, list):
             original_entries = original_data
         elif hasattr(original_data, "entries"):
-            parse_response = original_data
+            parse_response = cast("FlextLdifModels.ParseResponse", original_data)
+            entries_attr = getattr(parse_response, "entries", [])
             original_entries = [
-                cast("FlextLdifModels.Entry", entry) for entry in parse_response.entries
+                cast("FlextLdifModels.Entry", entry) for entry in entries_attr
             ]
         else:
             msg = "Parse returned unexpected type"
@@ -786,7 +737,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Write
         write_result = api.write(original_entries)
-        written_ldif = TestAssertions.assert_write_success(write_result)
+        written_ldif = TestAssertions.assert_write_success(
+            cast("FlextLdifTypes.WriteResult", write_result)
+        )
         assert isinstance(written_ldif, str), "Write should return string"
 
         # Roundtrip parse
@@ -799,8 +752,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(roundtrip_data, list):
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
-            parse_response = roundtrip_data
-            roundtripped_entries_raw = list(parse_response.entries)
+            parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
+            entries_attr = getattr(parse_response, "entries", [])
+            roundtripped_entries_raw = list(entries_attr)
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
@@ -968,7 +922,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_method_batch(
-        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        quirk: FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         method_name: str,
         test_cases: list[dict[str, object]],
         *,
@@ -998,7 +954,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         results: list[TResult] = []
         for i, test_case in enumerate(test_cases):
             args = test_case.get("args", ())
-            kwargs = test_case.get("kwargs", {})
+            kwargs_raw = test_case.get("kwargs", {})
+            kwargs = cast("dict[str, object]", kwargs_raw) if kwargs_raw else {}
             expected_result = test_case.get("expected_result")
             should_succeed = test_case.get("should_succeed", True)
 
@@ -1063,9 +1020,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(original_data, list):
             original_entries = original_data
         elif hasattr(original_data, "entries"):
-            parse_response = original_data
+            parse_response = cast("FlextLdifModels.ParseResponse", original_data)
+            entries_attr = getattr(parse_response, "entries", [])
             original_entries = [
-                cast("FlextLdifModels.Entry", entry) for entry in parse_response.entries
+                cast("FlextLdifModels.Entry", entry) for entry in entries_attr
             ]
         else:
             msg = "Parse returned unexpected type"
@@ -1100,8 +1058,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(roundtrip_data, list):
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
-            parse_response = roundtrip_data
-            roundtripped_entries_raw = list(parse_response.entries)
+            parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
+            entries_attr = getattr(parse_response, "entries", [])
+            roundtripped_entries_raw = list(entries_attr)
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
@@ -1166,19 +1125,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         unwrapped = TestAssertions.assert_success(result, error_msg)
         if isinstance(unwrapped, list):
             entries: list[FlextLdifModels.Entry] = [
-                e
-                for e in unwrapped
-                if isinstance(e, FlextLdifModels.Entry)
+                e for e in unwrapped if isinstance(e, FlextLdifModels.Entry)
             ]
         elif hasattr(unwrapped, "entries"):
             parse_response = cast("FlextLdifModels.ParseResponse", unwrapped)
-            entries_list = parse_response.entries
+            entries_attr = getattr(parse_response, "entries", [])
             # ParseResponse.entries is list[Domain.Entry], convert to list[Entry]
-            entries = [
-                e
-                for e in entries_list
-                if isinstance(e, FlextLdifModels.Entry)
-            ]
+            entries = [e for e in entries_attr if isinstance(e, FlextLdifModels.Entry)]
         elif isinstance(unwrapped, FlextLdifModels.Entry):
             entries = [unwrapped]
         else:
@@ -1367,7 +1320,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_schema_and_unwrap(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str | None = None,
@@ -1427,7 +1380,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_schema_and_unwrap(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
         must_contain: list[str] | None = None,
@@ -1457,7 +1410,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_and_unwrap(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         ldif_content: str,
         *,
         expected_dn: str | None = None,
@@ -1491,7 +1444,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_entry_and_unwrap(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         must_contain: list[str] | None = None,
@@ -1516,7 +1469,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         result = entry_quirk.write(entry)
         # EntryProtocol.write() returns FlextResult[str], unwrap and verify it's str
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[str]", result),
+            result,
             "Entry write should succeed",
         )
         assert isinstance(unwrapped, str), f"Expected str, got {type(unwrapped)}"
@@ -1667,8 +1620,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def oid_validation_and_parse(
-        oid_utility: type[FlextLdifUtilities.OID],
-        schema_quirk: SchemaQuirk,
+        oid_utility: FlextLdifUtilities.OID,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         oid: str,
         schema_def: str,
         *,
@@ -1751,14 +1704,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_parse_from_fixtures(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         fixture_content: str,
         detection_pattern: Pattern[str],
         *,
         schema_type: str = "attribute",
         expected_count: int | None = None,
         validate_oids: bool = True,
-        oid_utility: type[FlextLdifUtilities.OID] | None = None,
+        oid_utility: FlextLdifUtilities.OID | None = None,
     ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
         """Parse schema from fixtures with full validation - replaces 50-80+ lines.
 
@@ -1828,14 +1781,16 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_parse_with_detection_pattern(
-        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        quirk: FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         content: str,
         detection_pattern: Pattern[str],
         *,
         parse_method: str = "parse",
         should_match: bool = True,
         validate_result: bool = True,
-    ) -> TResult:
+    ) -> object:
         """Test quirk parse with detection pattern validation - replaces 15-25 lines.
 
         Args:
@@ -1872,7 +1827,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_quirk_parse_with_validation(
-        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        quirk: FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         test_cases: list[dict[str, str | bool | Pattern[str] | None]],
         *,
         parse_method: str = "parse",
@@ -1985,10 +1942,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             if isinstance(entries_data, list):
                 entries = entries_data
             elif hasattr(entries_data, "entries"):
-                parse_response = entries_data
+                parse_response = cast("FlextLdifModels.ParseResponse", entries_data)
+                entries_attr = getattr(parse_response, "entries", [])
                 entries = [
-                    cast("FlextLdifModels.Entry", entry)
-                    for entry in parse_response.entries
+                    cast("FlextLdifModels.Entry", entry) for entry in entries_attr
                 ]
             else:
                 msg = "Parse returned unexpected type"
@@ -2023,7 +1980,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_route_write_and_assert(
-        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        quirk: FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         data: FlextLdifModels.Entry
         | FlextLdifModels.SchemaAttribute
         | FlextLdifModels.SchemaObjectClass
@@ -2084,7 +2043,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     # @staticmethod
     # def quirk_route_can_handle_and_assert(
-    #     quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+    #     quirk: FlextLdifTypes.SchemaQuirk | FlextLdifTypes.EntryQuirk | FlextLdifTypes.AclQuirk,
     #     data: FlextLdifModels.Entry
     #     | FlextLdifModels.SchemaAttribute
     #     | FlextLdifModels.SchemaObjectClass
@@ -2119,7 +2078,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def quirk_write_and_assert_content(
-        quirk: SchemaQuirk | EntryQuirk | AclQuirk,
+        quirk: FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         data: FlextLdifModels.Entry
         | FlextLdifModels.SchemaAttribute
         | FlextLdifModels.SchemaObjectClass
@@ -2184,12 +2145,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def service_execute_and_assert_fields(
-        service: ServiceWithExecute,
+        service: ServiceWithExecute[object],
         *,
         expected_fields: dict[str, object] | None = None,
         expected_type: type | None = None,
         must_contain_in_fields: dict[str, object] | None = None,
-    ) -> TResult:
+    ) -> object:
         """Test service execute and assert fields - replaces 8-12 lines.
 
         Common pattern:
@@ -2240,7 +2201,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                         f"Field '{field_name}' must contain '{substring}', got '{actual_value}'"
                     )
 
-        return cast("TResult", unwrapped)
+        return unwrapped
 
     @staticmethod
     def assert_entry_has_attributes(
@@ -3054,9 +3015,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def service_execute_and_unwrap(
-        service: ServiceWithExecute,
+        service: ServiceWithExecute[object],
         error_msg: str | None = None,
-    ) -> TResult:
+    ) -> object:
         """Execute service and unwrap result - replaces 2-3 lines per use.
 
         Common pattern (appears 19+ times):
@@ -3171,7 +3132,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_and_unwrap_simple(
-        parser: FlextLdifParser | SchemaQuirk | EntryQuirk,
+        parser: FlextLdifParser
+        | FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk,
         content: str | Path,
         *,
         parse_method: str = "parse",
@@ -3223,7 +3186,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_and_unwrap_simple(
-        writer: FlextLdifWriter | SchemaQuirk | EntryQuirk | AclQuirk,
+        writer: FlextLdifWriter
+        | FlextLdifTypes.SchemaQuirk
+        | FlextLdifTypes.EntryQuirk
+        | FlextLdifTypes.AclQuirk,
         data: FlextLdifModels.Entry
         | list[FlextLdifModels.Entry]
         | FlextLdifModels.SchemaAttribute
@@ -3646,7 +3612,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert hasattr(obj, "metadata"), (
             f"Object {type(obj)} does not have metadata attribute"
         )
-        metadata = obj.metadata
+        obj_with_metadata = cast("ObjectWithMetadata", obj)
+        metadata = obj_with_metadata.metadata
         assert metadata is not None, "Object must have metadata"
         assert hasattr(metadata, "extensions"), (
             f"Metadata {type(metadata)} does not have extensions attribute"
@@ -3679,13 +3646,18 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert hasattr(obj, "metadata"), (
             f"Object {type(obj)} does not have metadata attribute"
         )
-        metadata = obj.metadata
+        obj_with_metadata = cast("ObjectWithMetadata", obj)
+        metadata = obj_with_metadata.metadata
         assert metadata is not None, "Object must have metadata"
         assert hasattr(metadata, "extensions"), (
             f"Metadata {type(metadata)} does not have extensions attribute"
         )
         assert metadata.extensions is not None, "Object must have extensions"
-        actual_value = obj.metadata.extensions.get(key)
+        extensions_dict = getattr(metadata, "extensions", {})
+        if isinstance(extensions_dict, dict):
+            actual_value = extensions_dict.get(key)
+        else:
+            actual_value = getattr(extensions_dict, "get", lambda k: None)(key)
         assert actual_value == expected_value, (
             error_msg
             or f"Expected metadata.extensions['{key}'] == {expected_value!r}, got {actual_value!r}"
@@ -3737,10 +3709,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             "Object must have metadata"
         )
         metadata = obj.metadata
+        assert metadata is not None, "Object must have metadata"
         assert hasattr(metadata, "quirk_type"), "Metadata must have quirk_type"
-        assert metadata.quirk_type == expected_quirk_type, (
+        quirk_type_attr = getattr(metadata, "quirk_type", None)
+        assert quirk_type_attr == expected_quirk_type, (
             error_msg
-            or f"Expected quirk_type '{expected_quirk_type}', got '{metadata.quirk_type}'"
+            or f"Expected quirk_type '{expected_quirk_type}', got '{quirk_type_attr}'"
         )
 
     @staticmethod
@@ -4303,7 +4277,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_attribute_unwrap_and_assert(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
         expected_oid: str | None = None,
@@ -4333,7 +4307,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert hasattr(schema_quirk, "parse_attribute"), (
             f"Schema quirk {type(schema_quirk)} does not have parse_attribute method"
         )
-        result = schema_quirk.parse_attribute(attr_def)
+        # Use getattr for type safety - parse_attribute exists on schema quirks
+        parse_method = schema_quirk.parse_attribute
+        result = parse_method(attr_def)
         if should_succeed:
             attr = TestAssertions.assert_success(
                 result,
@@ -4361,7 +4337,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_objectclass_unwrap_and_assert(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         oc_def: str,
         *,
         expected_oid: str | None = None,
@@ -4391,7 +4367,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert hasattr(schema_quirk, "parse_objectclass"), (
             f"Schema quirk {type(schema_quirk)} does not have parse_objectclass method"
         )
-        result = schema_quirk.parse_objectclass(oc_def)
+        # Use getattr for type safety - parse_objectclass exists on schema quirks
+        parse_method = schema_quirk.parse_objectclass
+        result = parse_method(oc_def)
         if should_succeed:
             oc = TestAssertions.assert_success(
                 result,
@@ -4419,7 +4397,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_roundtrip_simple(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         parse_method: str | None = None,
@@ -4484,7 +4462,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def entry_roundtrip_simple(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         ldif_content: str,
         *,
         must_contain: list[str] | None = None,
@@ -4515,7 +4493,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             entries_raw = entries_data
         elif hasattr(entries_data, "entries"):
             parse_response = cast("FlextLdifModels.ParseResponse", entries_data)
-            entries_raw = list(parse_response.entries)
+            entries_attr = getattr(parse_response, "entries", [])
+            entries_raw = list(entries_attr)
         else:
             msg = "Parse returned unexpected type"
             raise AssertionError(msg)
@@ -4606,7 +4585,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_schema_roundtrip(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         test_cases: list[dict[str, object]],
         *,
         validate_all: bool = True,
@@ -4659,7 +4638,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_entry_roundtrip(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         test_cases: list[dict[str, object]],
         *,
         validate_all: bool = True,
@@ -4889,7 +4868,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_parse_and_assert_oid_name(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str,
@@ -4961,7 +4940,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_and_assert_dn_attributes(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         ldif_content: str,
         *,
         expected_dn: str,
@@ -5062,7 +5041,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_attribute_and_validate_all_fields(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
         expected_fields: dict[str, object],
@@ -5099,7 +5078,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_objectclass_and_validate_all_fields(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         oc_def: str,
         *,
         expected_fields: dict[str, object],
@@ -5136,7 +5115,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_minimal_schema_and_validate(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str,
@@ -5289,7 +5268,24 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Call write method with output_path
         if write_method == "write" and hasattr(writer, "write"):
-            result = writer.write(data, output_path=output_path)
+            writer_with_write = cast("FlextLdifWriter", writer)
+            # Ensure data is properly typed
+            if isinstance(data, list):
+                entries_data = cast("list[FlextLdifModels.Entry]", data)
+                result = writer_with_write.write(
+                    entries=entries_data,
+                    target_server_type="rfc",
+                    output_target="file",
+                    output_path=output_path,
+                )
+            else:
+                # For other data types, use the generic write method
+                result = writer_with_write.write(
+                    entries=[cast("FlextLdifModels.Entry", data)],
+                    target_server_type="rfc",
+                    output_target="file",
+                    output_path=output_path,
+                )
         else:
             # For other methods, try calling with output_path as kwarg
             result = method(data, output_path=output_path)
@@ -5418,7 +5414,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def schema_parse_write_roundtrip(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str | None = None,
@@ -5475,7 +5471,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_attribute_complete(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
         expected_oid: str,
@@ -5526,7 +5522,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_objectclass_complete(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         oc_def: str,
         *,
         expected_oid: str,
@@ -5577,7 +5573,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_schema_complete(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
         must_contain: list[str],
@@ -5611,7 +5607,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_complete(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         ldif_content: str,
         *,
         expected_dn: str,
@@ -5948,7 +5944,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def write_entry_complete(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         entry: FlextLdifModels.Entry,
         *,
         must_contain: list[str],
@@ -6257,7 +6253,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_schema_parse_write_and_assert_oid(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         expected_oid: str,
@@ -6515,7 +6511,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_schema_from_entry_attributes(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         entries: list[FlextLdifModels.Entry],
         *,
         schema_type: str = "attribute",
@@ -6578,7 +6574,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             assert result.is_success
             parse_response = result.unwrap()
             assert isinstance(parse_response, FlextLdifModels.ParseResponse)
-            assert len(parse_response.entries) > 0
+            entries_attr = getattr(parse_response, "entries", [])
+            assert len(entries_attr) > 0
 
         Args:
             parser: Parser instance
@@ -6597,8 +6594,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             f"Expected ParseResponse, got {type(parse_response)}"
         )
         if expected_entry_count is not None:
-            assert len(parse_response.entries) == expected_entry_count, (
-                f"Expected {expected_entry_count} entries, got {len(parse_response.entries)}"
+            entries_attr = getattr(parse_response, "entries", [])
+            assert len(entries_attr) == expected_entry_count, (
+                f"Expected {expected_entry_count} entries, got {len(entries_attr)}"
             )
         return parse_response
 
@@ -6688,7 +6686,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_entry_ldif_and_unwrap(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         ldif_text: str,
         *,
         parse_method: str = "parse",
@@ -6748,7 +6746,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_parse_entries_with_validation(
-        entry_quirk: EntryQuirk,
+        entry_quirk: FlextLdifTypes.EntryQuirk,
         test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
@@ -6830,7 +6828,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def parse_schema_with_constants(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         *,
         parse_method: str = "parse",
@@ -6879,7 +6877,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_parse_schema_with_constants(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         test_cases: list[dict[str, object]],
         *,
         parse_method: str = "parse",
@@ -7322,7 +7320,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         write_method: str = "write",
         expected_error_substring: str | None = None,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[str | FlextLdifModels.WriteResponse]:
         """Write failure with error validation - replaces 3-5 lines per use.
 
         Common pattern:
@@ -7347,11 +7345,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         result = method(data)
         TestAssertions.assert_failure(result, expected_error_substring)
-        return result
+        return cast("FlextResult[str | FlextLdifModels.WriteResponse]", result)
 
     @staticmethod
     def helper_parse_attribute_and_assert_syntax(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
         parse_method: str = "parse",
@@ -7415,9 +7413,18 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             assert hasattr(attr, "syntax_definition"), (
                 "Attribute must have syntax_definition"
             )
-            assert attr.syntax_definition == expected_syntax_definition, (
-                f"Expected syntax_definition '{expected_syntax_definition}', got '{attr.syntax_definition}'"
-            )
+            syntax_def = attr.syntax_definition
+            if syntax_def is not None:
+                syntax_def_str = (
+                    str(syntax_def) if not isinstance(syntax_def, str) else syntax_def
+                )
+                assert syntax_def_str == expected_syntax_definition, (
+                    f"Expected syntax_definition '{expected_syntax_definition}', got '{syntax_def_str}'"
+                )
+            else:
+                assert expected_syntax_definition is None, (
+                    f"Expected syntax_definition '{expected_syntax_definition}', got None"
+                )
 
         return attr
 
@@ -7465,7 +7472,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_attribute_complete_validation(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
         parse_method: str = "parse",
@@ -7663,7 +7670,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_attribute_with_all_fields(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
         parse_method: str = "parse",
@@ -7750,14 +7757,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert hasattr(quirk, "execute"), (
             f"Quirk {type(quirk)} does not have execute method"
         )
+        quirk_with_execute = cast("ServiceWithExecute[object]", quirk)
         if data is not None and operation is not None:
-            result = quirk.execute(data=data, operation=operation)
+            result = quirk_with_execute.execute(data=data, operation=operation)
         elif data is not None:
-            result = quirk.execute(data=data)
+            result = quirk_with_execute.execute(data=data)
         elif operation is not None:
-            result = quirk.execute(operation=operation)
+            result = quirk_with_execute.execute(operation=operation)
         else:
-            result = quirk.execute()
+            result = quirk_with_execute.execute()
 
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap(result)
 
@@ -7899,49 +7907,36 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(data, FlextLdifModels.Entry):
             model = data
         elif isinstance(data, str):
-            # Parse string to model based on data_type
-            if data_type.lower() == "attribute":
-                parse_result = source_quirk.schema_quirk.parse_attribute(data)
-                if parse_result.is_failure:
-                    if should_succeed:
-                        msg = f"Failed to parse attribute: {parse_result.error}"
-                        raise AssertionError(
-                            msg,
-                        )
-                    return ""
-                model = parse_result.unwrap()
-            elif data_type.lower() in {"objectclass", "objectclasses"}:
-                parse_result = source_quirk.schema_quirk.parse_objectclass(data)
-                if parse_result.is_failure:
-                    if should_succeed:
-                        msg = f"Failed to parse objectClass: {parse_result.error}"
-                        raise AssertionError(
-                            msg,
-                        )
-                    return ""
-                model = parse_result.unwrap()
-            elif data_type.lower() == "acl":
-                assert hasattr(source_quirk, "acl_quirk"), (
-                    f"Source quirk {type(source_quirk)} does not have acl_quirk"
-                )
-                acl_quirk = source_quirk.acl_quirk
-                assert hasattr(acl_quirk, "parse"), (
-                    f"ACL quirk {type(acl_quirk)} does not have parse method"
-                )
-                parse_result = acl_quirk.parse(data)
-                if parse_result.is_failure:
-                    if should_succeed:
-                        msg = f"Failed to parse ACL: {parse_result.error}"
-                        raise AssertionError(
-                            msg,
-                        )
-                    return ""
-                model = parse_result.unwrap()
-            else:
-                msg = f"Unsupported data_type for string parsing: {data_type}"
-                raise ValueError(
-                    msg,
-                )
+            # Parse string to model using protocol's parse method
+            parse_result = source_quirk.schema_quirk.parse(data)
+            if parse_result.is_failure:
+                if should_succeed:
+                    msg = f"Failed to parse {data_type}: {parse_result.error}"
+                    raise AssertionError(
+                        msg,
+                    )
+                return ""
+            model = parse_result.unwrap()
+        elif data_type.lower() == "acl":
+            if not isinstance(data, str):
+                msg = f"ACL data must be string, got {type(data).__name__}"
+                raise ValueError(msg)
+            assert hasattr(source_quirk, "acl_quirk"), (
+                f"Source quirk {type(source_quirk)} does not have acl_quirk"
+            )
+            acl_quirk = source_quirk.acl_quirk
+            assert hasattr(acl_quirk, "parse"), (
+                f"ACL quirk {type(acl_quirk)} does not have parse method"
+            )
+            parse_result = acl_quirk.parse(data)
+            if parse_result.is_failure:
+                if should_succeed:
+                    msg = f"Failed to parse ACL: {parse_result.error}"
+                    raise AssertionError(
+                        msg,
+                    )
+                return ""
+            model = parse_result.unwrap()
         else:
             msg = (
                 f"Unsupported data type: {type(data).__name__}. "
@@ -7974,23 +7969,30 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             target_quirk = target
 
         # Write converted model to string for validation
-        if isinstance(converted_model, FlextLdifModels.SchemaAttribute):
-            write_result = target_quirk.schema_quirk.write_attribute(converted_model)
-        elif isinstance(converted_model, FlextLdifModels.SchemaObjectClass):
-            write_result = target_quirk.schema_quirk.write_objectclass(converted_model)
+        write_result: FlextResult[str] | FlextResult[FlextLdifModels.WriteResponse]
+        if isinstance(
+            converted_model,
+            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+        ):
+            assert hasattr(target_quirk, "schema_quirk"), (
+                f"Target quirk {type(target_quirk)} does not have schema_quirk"
+            )
+            schema_quirk = target_quirk.schema_quirk
+            assert schema_quirk is not None, "Schema quirk must not be None"
+            write_result = schema_quirk.write(converted_model)
         elif isinstance(converted_model, FlextLdifModels.Acl):
             assert hasattr(target_quirk, "acl_quirk"), (
                 f"Target quirk {type(target_quirk)} does not have acl_quirk"
             )
-            acl_quirk = cast(
-                "FlextLdifProtocols.Quirks.AclProtocol", target_quirk.acl_quirk
-            )
-            write_result = acl_quirk.write(converted_model)
+            acl_quirk = target_quirk.acl_quirk
+            assert acl_quirk is not None, "ACL quirk must not be None"
+            write_result: FlextResult[str] = acl_quirk.write(converted_model)
         elif isinstance(converted_model, FlextLdifModels.Entry):
             assert hasattr(target_quirk, "entry_quirk"), (
                 f"Target quirk {type(target_quirk)} does not have entry_quirk"
             )
             entry_quirk = target_quirk.entry_quirk
+            assert entry_quirk is not None, "Entry quirk must not be None"
             assert hasattr(entry_quirk, "write"), (
                 f"Entry quirk {type(entry_quirk)} does not have write method"
             )
@@ -8082,6 +8084,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         else:
             source_quirk = source
 
+        # Ensure source_quirk is not None
+        assert source_quirk is not None, "Source quirk must not be None"
+
         # Parse all items to models
         models: list[
             FlextLdifModels.SchemaAttribute
@@ -8093,57 +8098,55 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             if isinstance(item, FlextLdifModels.Entry):
                 models.append(item)
             elif isinstance(item, str):
-                # Parse string to model based on data_type
-                if data_type.lower() == "attribute":
-                    parse_result = source_quirk.schema_quirk.parse_attribute(item)
-                    if parse_result.is_failure:
-                        if should_succeed and not allow_partial:
-                            msg = f"Failed to parse attribute: {parse_result.error}"
-                            raise AssertionError(
-                                msg,
-                            )
-                        continue
-                    models.append(parse_result.unwrap())
-                elif data_type.lower() in {"objectclass", "objectclasses"}:
-                    parse_result = source_quirk.schema_quirk.parse_objectclass(item)
-                    if parse_result.is_failure:
-                        if should_succeed and not allow_partial:
-                            msg = f"Failed to parse objectClass: {parse_result.error}"
-                            raise AssertionError(
-                                msg,
-                            )
-                        continue
-                    models.append(parse_result.unwrap())
-                elif data_type.lower() == "acl":
-                    assert hasattr(source_quirk, "acl_quirk"), (
-                        f"Source quirk {type(source_quirk)} does not have acl_quirk"
-                    )
-                    acl_quirk = source_quirk.acl_quirk
-                    assert hasattr(acl_quirk, "parse"), (
-                        f"ACL quirk {type(acl_quirk)} does not have parse method"
-                    )
-                    parse_result = acl_quirk.parse(item)
-                    if parse_result.is_failure:
-                        if should_succeed and not allow_partial:
-                            msg = f"Failed to parse ACL: {parse_result.error}"
-                            raise AssertionError(
-                                msg,
-                            )
-                        continue
-                    models.append(parse_result.unwrap())
-                else:
-                    msg = f"Unsupported data_type for string parsing: {data_type}"
-                    raise ValueError(
-                        msg,
-                    )
-            else:
-                msg = (
-                    f"Unsupported item type: {type(item).__name__}. "
-                    "Expected str, Entry model, or dict[str, object]"
+                # Parse string to model using protocol's parse method
+                assert hasattr(source_quirk, "schema_quirk"), (
+                    "Source quirk must have schema_quirk"
                 )
+                schema_quirk = source_quirk.schema_quirk
+                assert schema_quirk is not None, "Schema quirk must not be None"
+                parse_result = schema_quirk.parse(item)
+                if parse_result.is_failure:
+                    if should_succeed and not allow_partial:
+                        msg = f"Failed to parse {data_type}: {parse_result.error}"
+                        raise AssertionError(
+                            msg,
+                        )
+                    continue
+                models.append(parse_result.unwrap())
+            elif data_type.lower() == "acl":
+                if not isinstance(item, str):
+                    msg = f"ACL item must be string, got {type(item).__name__}"
+                    raise ValueError(msg)
+                assert hasattr(source_quirk, "acl_quirk"), (
+                    f"Source quirk {type(source_quirk)} does not have acl_quirk"
+                )
+                assert source_quirk is not None, "Source quirk must not be None"
+                acl_quirk = source_quirk.acl_quirk
+                assert acl_quirk is not None, "ACL quirk must not be None"
+                assert hasattr(acl_quirk, "parse"), (
+                    f"ACL quirk {type(acl_quirk)} does not have parse method"
+                )
+                parse_result = acl_quirk.parse(item)
+                if parse_result.is_failure:
+                    if should_succeed and not allow_partial:
+                        msg = f"Failed to parse ACL: {parse_result.error}"
+                        raise AssertionError(
+                            msg,
+                        )
+                    continue
+                models.append(parse_result.unwrap())
+            else:
+                msg = f"Unsupported data_type for string parsing: {data_type}"
                 raise ValueError(
                     msg,
                 )
+        msg = (
+            f"Unsupported item type: {type(item).__name__}. "
+            "Expected str, Entry model, or dict[str, object]"
+        )
+        raise ValueError(
+            msg,
+        )
 
         # Convert models using new batch API
         result = conversion_matrix.batch_convert(source, target, models)
@@ -8175,14 +8178,24 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Write converted models to strings for validation
         converted: list[str] = []
         for model in converted_models:
-            if isinstance(model, FlextLdifModels.SchemaAttribute):
-                write_result = target_quirk.schema_quirk.write_attribute(model)
-            elif isinstance(model, FlextLdifModels.SchemaObjectClass):
-                write_result = target_quirk.schema_quirk.write_objectclass(model)
-            elif isinstance(model, FlextLdifModels.Acl):
-                acl_quirk = cast(
-                    "FlextLdifProtocols.Quirks.AclProtocol", target_quirk.acl_quirk
+            assert target_quirk is not None, "Target quirk must not be None"
+            if isinstance(
+                model,
+                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            ):
+                assert hasattr(target_quirk, "schema_quirk"), (
+                    "Target quirk must have schema_quirk"
                 )
+                schema_quirk = target_quirk.schema_quirk
+                assert schema_quirk is not None, "Schema quirk must not be None"
+                write_result = schema_quirk.write(model)
+            elif isinstance(model, FlextLdifModels.Acl):
+                assert hasattr(target_quirk, "acl_quirk"), (
+                    "Target quirk must have acl_quirk"
+                )
+                acl_quirk_raw = target_quirk.acl_quirk
+                assert acl_quirk_raw is not None, "ACL quirk must not be None"
+                acl_quirk = cast("FlextLdifProtocols.Quirks.AclProtocol", acl_quirk_raw)
                 write_result = acl_quirk.write(model)
             elif isinstance(model, FlextLdifModels.Entry):
                 assert hasattr(target_quirk, "entry_quirk"), (
@@ -8553,11 +8566,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = "Roundtrip test requires string input"
             raise ValueError(msg)
 
+        # Ensure source_quirk is not None
+        assert source_quirk is not None, "Source quirk must not be None"
+
         if data_type.lower() == "attribute":
             assert hasattr(source_quirk, "schema_quirk"), (
                 f"Source quirk {type(source_quirk)} does not have schema_quirk"
             )
             schema_quirk = source_quirk.schema_quirk
+            assert schema_quirk is not None, "Schema quirk must not be None"
             assert hasattr(schema_quirk, "parse_attribute"), (
                 f"Schema quirk {type(schema_quirk)} does not have parse_attribute method"
             )
@@ -8567,23 +8584,27 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 f"Source quirk {type(source_quirk)} does not have schema_quirk"
             )
             schema_quirk = source_quirk.schema_quirk
+            assert schema_quirk is not None, "Schema quirk must not be None"
             assert hasattr(schema_quirk, "parse_objectclass"), (
                 f"Schema quirk {type(schema_quirk)} does not have parse_objectclass method"
             )
             parse_result = schema_quirk.parse_objectclass(original_data)
         elif data_type.lower() == "acl":
-            acl_quirk = cast(
-                "FlextLdifProtocols.Quirks.AclProtocol", source_quirk.acl_quirk
+            assert hasattr(source_quirk, "acl_quirk"), (
+                "Source quirk must have acl_quirk"
             )
+            acl_quirk_raw = source_quirk.acl_quirk
+            assert acl_quirk_raw is not None, "ACL quirk must not be None"
+            acl_quirk = acl_quirk_raw
             parse_result = acl_quirk.parse(original_data)
         else:
             msg = f"Unsupported data_type for roundtrip: {data_type}"
             raise ValueError(msg)
 
         original_model = cast(
-            "ModelInstance",
+            "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | FlextLdifModels.Entry",
             TestAssertions.assert_success(
-                cast("FlextResult[object]", parse_result),
+                parse_result,
                 f"Failed to parse original {data_type}",
             ),
         )
@@ -8603,14 +8624,24 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         )
 
         # Write roundtrip model back to string
-        if isinstance(roundtrip_model, FlextLdifModels.SchemaAttribute):
-            write_result = source_quirk.schema_quirk.write_attribute(roundtrip_model)
-        elif isinstance(roundtrip_model, FlextLdifModels.SchemaObjectClass):
-            write_result = source_quirk.schema_quirk.write_objectclass(roundtrip_model)
-        elif isinstance(roundtrip_model, FlextLdifModels.Acl):
-            acl_quirk = cast(
-                "FlextLdifProtocols.Quirks.AclProtocol", source_quirk.acl_quirk
+        assert source_quirk is not None, "Source quirk must not be None"
+        if isinstance(
+            roundtrip_model,
+            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+        ):
+            assert hasattr(source_quirk, "schema_quirk"), (
+                "Source quirk must have schema_quirk"
             )
+            schema_quirk = source_quirk.schema_quirk
+            assert schema_quirk is not None, "Schema quirk must not be None"
+            write_result = schema_quirk.write(roundtrip_model)
+        elif isinstance(roundtrip_model, FlextLdifModels.Acl):
+            assert hasattr(source_quirk, "acl_quirk"), (
+                "Source quirk must have acl_quirk"
+            )
+            acl_quirk_raw = source_quirk.acl_quirk
+            assert acl_quirk_raw is not None, "ACL quirk must not be None"
+            acl_quirk = acl_quirk_raw
             write_result = acl_quirk.write(roundtrip_model)
         else:
             msg = f"Unexpected roundtrip model type: {type(roundtrip_model).__name__}"
@@ -8619,7 +8650,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             )
 
         roundtrip = TestAssertions.assert_success(
-            cast("FlextResult[object]", write_result),
+            write_result,
             f"Failed to write roundtrip {data_type}",
         )
 
@@ -9040,7 +9071,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_schema_with_constants_and_assert(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         constants: ConstantsClass,
         *,
@@ -9110,7 +9141,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_parse_write_schema_with_constants(
-        schema_quirk: SchemaQuirk,
+        schema_quirk: FlextLdifTypes.SchemaQuirk,
         schema_def: str,
         constants: ConstantsClass,
         *,
@@ -9273,9 +9304,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             name_value = getattr(constants, name_constant)
 
         # SchemaAttribute doesn't have create(), use constructor directly
+        # Ensure kwargs is a proper dict[str, object] for type safety
+        kwargs_dict = cast("dict[str, object]", kwargs) if kwargs else {}
+        # Ensure oid and name are strings (required fields)
+        oid_str: str = cast("str", oid_value) if oid_value is not None else ""
+        name_str: str = cast("str", name_value) if name_value is not None else ""
         return FlextLdifModels.SchemaAttribute(
-            oid=oid_value,
-            name=name_value,
+            oid=oid_str,
+            name=name_str,
             desc=desc,
             sup=sup,
             equality=equality,
@@ -9285,7 +9321,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             length=length,
             usage=usage,
             x_origin=x_origin,
-            **kwargs,
+            **kwargs_dict,
         )
 
     @staticmethod
@@ -9340,9 +9376,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Only pass fields that are not None (except for optional fields)
         oc_kwargs: dict[str, object] = {}
         if oid_value is not None:
-            oc_kwargs["oid"] = oid_value
+            oc_kwargs["oid"] = cast("str", oid_value)
         if name_value is not None:
-            oc_kwargs["name"] = name_value
+            oc_kwargs["name"] = cast("str", name_value)
         if desc is not None:
             oc_kwargs["desc"] = desc
         if sup is not None:
@@ -9821,8 +9857,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(unwrapped, list):
             entries = unwrapped
         elif hasattr(unwrapped, "entries"):
-            parse_response = unwrapped
-            entries = list(parse_response.entries)
+            parse_response = cast("FlextLdifModels.ParseResponse", unwrapped)
+            entries_attr = getattr(parse_response, "entries", [])
+            entries = list(entries_attr)
         else:
             entries = (
                 [unwrapped] if isinstance(unwrapped, FlextLdifModels.Entry) else []
@@ -9847,7 +9884,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     f"Attribute '{attr_name}' not found in entry"
                 )
 
-        return entries
+        return cast("list[FlextLdifModels.Entry]", entries)
 
     @staticmethod
     def api_parse_write_file_and_assert(
@@ -9930,7 +9967,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         result = api.write(list(entries), server_type=target_server_type)
-        ldif_string = TestAssertions.assert_write_success(result)
+        ldif_string = TestAssertions.assert_write_success(
+            cast("FlextLdifTypes.WriteResult", result)
+        )
         assert isinstance(ldif_string, str), "Write should return string"
         assert len(ldif_string) > 0, "LDIF string should not be empty"
 
@@ -10493,8 +10532,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if isinstance(filtered, list):
             entries_list = filtered
-        elif hasattr(filtered, "get_all_entries"):
-            entries_list = filtered.get_all_entries()
+        elif hasattr(filtered, "entries"):
+            # ParseResponse or WriteResponse have entries attribute
+            filtered_with_entries = cast(
+                "FlextLdifModels.ParseResponse | FlextLdifModels.WriteResponse",
+                filtered,
+            )
+            entries_attr = getattr(filtered_with_entries, "entries", [])
+            entries_list = list(entries_attr) if entries_attr else []
         else:
             entries_list = (
                 [filtered] if isinstance(filtered, FlextLdifModels.Entry) else []
@@ -10646,7 +10691,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 # Backward compatibility alias
 # Set __test__ = False to prevent pytest from collecting this as a test class
 TestDeduplicationHelpers = DeduplicationHelpers
-TestDeduplicationHelpers.__test__ = False  # Prevent pytest collection
+# Prevent pytest collection by setting attribute on class dict
+TestDeduplicationHelpers.__test__ = False
 
 # Add method aliases for backward compatibility
 TestDeduplicationHelpers.api_parse_and_unwrap = (

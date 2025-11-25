@@ -13,9 +13,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
-
-from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
@@ -65,12 +62,9 @@ class TestOperations:
         else:
             result = parser.parse(ldif_content)
 
-        # Type narrowing: result is FlextResult[list[Entry]], cast to broader type for assert_parse_success
+        # Use improved type alias for parse results
         return TestAssertions.assert_parse_success(
-            cast(
-                "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry] | str]",
-                result,
-            ),
+            result,
             expected_count,
         )
 

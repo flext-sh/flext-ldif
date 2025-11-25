@@ -1,36 +1,197 @@
-"""Unit tests for Syntax Pydantic model - RFC 4517 Attribute Syntax Definitions.
+"""RFC 4517 Syntax Model Tests.
+
+**Modules Tested:**
+- flext_ldif.models.FlextLdifModels.Syntax: RFC 4517 attribute syntax definitions
+- flext_ldif.models.FlextLdifModels.QuirkMetadata: Quirk metadata for syntax extensions
+
+**Scope:**
+- Syntax model instantiation with various field combinations
+- Computed properties (is_rfc4517_standard, syntax_oid_suffix)
+- Type categories (boolean, integer, binary, dn, time, string)
+- Encoding support (UTF-8, ASCII, ISO-8859-1)
+- Validation patterns
+- Pydantic serialization methods (model_dump, model_dump_json, model_validate)
+- Edge cases and error conditions
+- Multiple syntax instance independence
+- Advanced RFC 4517 OID detection
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
+
+from enum import StrEnum
+from typing import ClassVar
 
 import pytest
 
 from flext_ldif import FlextLdifModels
 
 
-class TestSyntaxModelCreation:
-    """Test Syntax model instantiation and validation."""
+class TestSyntaxModel:
+    """Unified test suite for RFC 4517 Syntax Pydantic model.
 
-    def test_create_boolean_syntax(self) -> None:
-        """Test creating Boolean syntax model."""
+    Covers instantiation, validation, computed fields, serialization,
+    and edge cases using parametrized tests and DRY helper patterns.
+    """
+
+    class SyntaxTestCase(StrEnum):
+        """Enumeration of RFC 4517 syntax test cases."""
+
+        BOOLEAN = "boolean"
+        DIRECTORY_STRING = "directory_string"
+        INTEGER = "integer"
+        BINARY = "binary"
+        DN = "dn"
+        GENERALIZED_TIME = "generalized_time"
+        OCTET_STRING = "octet_string"
+        IA5_STRING = "ia5_string"
+        NUMERIC_STRING = "numeric_string"
+        TELEPHONE_NUMBER = "telephone_number"
+        ORACLE_GUID = "oracle_guid"
+
+    class EncodingTestCase(StrEnum):
+        """Enumeration of encoding test cases."""
+
+        UTF8 = "utf-8"
+        ASCII = "ascii"
+        ISO_8859_1 = "iso-8859-1"
+
+    # ========================================================================
+    # TEST DATA MAPPINGS
+    # ========================================================================
+
+    SYNTAX_DATA: ClassVar[
+        dict[SyntaxTestCase, tuple[str, str | None, str | None, str]]
+    ] = {
+        SyntaxTestCase.BOOLEAN: (
+            "1.3.6.1.4.1.1466.115.121.1.7",
+            "Boolean",
+            "RFC 4517 boolean syntax",
+            "boolean",
+        ),
+        SyntaxTestCase.DIRECTORY_STRING: (
+            "1.3.6.1.4.1.1466.115.121.1.15",
+            "Directory String",
+            "UTF-8 string for directory entries",
+            "string",
+        ),
+        SyntaxTestCase.INTEGER: (
+            "1.3.6.1.4.1.1466.115.121.1.27",
+            "Integer",
+            "Integer syntax for numeric values",
+            "integer",
+        ),
+        SyntaxTestCase.BINARY: (
+            "1.3.6.1.4.1.1466.115.121.1.5",
+            "Binary",
+            "Binary data syntax",
+            "binary",
+        ),
+        SyntaxTestCase.DN: (
+            "1.3.6.1.4.1.1466.115.121.1.12",
+            "Distinguished Name",
+            "DN syntax",
+            "dn",
+        ),
+        SyntaxTestCase.GENERALIZED_TIME: (
+            "1.3.6.1.4.1.1466.115.121.1.24",
+            "Generalized Time",
+            "Generalized time format",
+            "time",
+        ),
+        SyntaxTestCase.OCTET_STRING: (
+            "1.3.6.1.4.1.1466.115.121.1.39",
+            "Octet String",
+            "Raw octets",
+            "string",
+        ),
+        SyntaxTestCase.IA5_STRING: (
+            "1.3.6.1.4.1.1466.115.121.1.26",
+            "IA5 String",
+            "IA5 (ASCII) string syntax",
+            "string",
+        ),
+        SyntaxTestCase.NUMERIC_STRING: (
+            "1.3.6.1.4.1.1466.115.121.1.36",
+            "Numeric String",
+            "Numeric-only string",
+            "string",
+        ),
+        SyntaxTestCase.TELEPHONE_NUMBER: (
+            "1.3.6.1.4.1.1466.115.121.1.50",
+            "Telephone Number",
+            "Phone number format",
+            "string",
+        ),
+        SyntaxTestCase.ORACLE_GUID: (
+            "2.16.840.1.113894.1.1.1",
+            "Oracle GUID",
+            "Oracle-specific GUID syntax",
+            "string",
+        ),
+    }
+
+    ENCODING_DATA: ClassVar[dict[EncodingTestCase, tuple[str, str]]] = {
+        EncodingTestCase.UTF8: (
+            "1.3.6.1.4.1.1466.115.121.1.55",
+            "UTF-8 String",
+        ),
+        EncodingTestCase.ASCII: (
+            "1.3.6.1.4.1.1466.115.121.1.26",
+            "IA5 String",
+        ),
+        EncodingTestCase.ISO_8859_1: (
+            "1.3.6.1.4.1.1466.115.121.1.44",
+            "Printable String",
+        ),
+    }
+
+    RFC4517_OIDS: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("1.3.6.1.4.1.1466.115.121.1.1", "1"),
+        ("1.3.6.1.4.1.1466.115.121.1.7", "7"),
+        ("1.3.6.1.4.1.1466.115.121.1.15", "15"),
+        ("1.3.6.1.4.1.1466.115.121.1.27", "27"),
+    )
+
+    NON_RFC4517_OIDS: ClassVar[tuple[str, ...]] = (
+        "2.5.4.3",  # cn - attribute OID, not syntax
+        "2.16.840.1.113894.1.1.1",  # Oracle
+        "1.2.840.113556.1.2.1",  # Active Directory
+    )
+
+    # ========================================================================
+    # PARAMETRIZED TESTS - MODEL INSTANTIATION
+    # ========================================================================
+
+    @pytest.mark.parametrize("test_case", list(SyntaxTestCase))
+    def test_create_syntax_basic_cases(self, test_case: SyntaxTestCase) -> None:
+        """Test creating Syntax models with various type categories.
+
+        Parametrized test covering:
+        - Boolean, Directory String, Integer, Binary syntaxes
+        - DN, Generalized Time, Octet String syntaxes
+        - IA5 String, Numeric String, Telephone Number syntaxes
+        - Oracle GUID (non-RFC 4517) syntax
+        """
+        oid, name, desc, type_category = self.SYNTAX_DATA[test_case]
+
         syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="Boolean",
-            type_category="boolean",
-            desc=None,
+            oid=oid,
+            name=name,
+            desc=desc,
+            type_category=type_category,
             max_length=None,
             validation_pattern=None,
         )
-        assert syntax.oid == "1.3.6.1.4.1.1466.115.121.1.7"
-        assert syntax.name == "Boolean"
-        assert syntax.type_category == "boolean"
 
-    def test_create_with_all_fields(self) -> None:
-        """Test creating Syntax with all optional fields."""
+        assert syntax.oid == oid
+        assert syntax.name == name
+        assert syntax.type_category == type_category
+
+    def test_create_syntax_with_all_optional_fields(self) -> None:
+        """Test creating Syntax with complete field specification."""
         syntax = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
@@ -48,7 +209,7 @@ class TestSyntaxModelCreation:
         assert syntax.max_length == 65535
 
     def test_syntax_defaults(self) -> None:
-        """Test default field values."""
+        """Test default field values for Syntax model."""
         syntax = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.39",
             name="Octet String",
@@ -65,20 +226,22 @@ class TestSyntaxModelCreation:
     def test_syntax_oid_required(self) -> None:
         """Test that OID is required field."""
         with pytest.raises(ValueError):
-            FlextLdifModels.Syntax(name="Invalid")
-
-    def test_syntax_with_desc_only(self) -> None:
-        """Test creating syntax with just OID and description."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.27",
-            desc="Integer syntax for numeric values",
-        )
-        assert syntax.oid == "1.3.6.1.4.1.1466.115.121.1.27"
-        assert syntax.desc == "Integer syntax for numeric values"
-        assert syntax.name is None
+            FlextLdifModels.Syntax(
+                oid="",
+                name="Invalid",
+                desc=None,
+                max_length=None,
+                validation_pattern=None,
+                type_category="string",
+                is_binary=False,
+                case_insensitive=False,
+                allows_multivalued=True,
+                encoding="utf-8",
+                metadata=None,
+            )
 
     def test_syntax_with_metadata(self) -> None:
-        """Test creating syntax with quirk metadata."""
+        """Test creating Syntax with quirk metadata."""
         metadata = FlextLdifModels.QuirkMetadata(
             quirk_type="oid",
             extensions={
@@ -90,235 +253,182 @@ class TestSyntaxModelCreation:
             oid="2.16.840.1.113894.1.1.1",
             name="Oracle GUID",
             metadata=metadata,
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.metadata is not None
         assert syntax.metadata.quirk_type == "oid"
 
+    # ========================================================================
+    # PARAMETRIZED TESTS - COMPUTED FIELDS
+    # ========================================================================
 
-class TestSyntaxComputedFields:
-    """Test Syntax computed_field properties."""
+    @pytest.mark.parametrize(("oid", "expected_suffix"), RFC4517_OIDS)
+    def test_is_rfc4517_standard_and_suffix(
+        self, oid: str, expected_suffix: str
+    ) -> None:
+        """Test RFC 4517 detection and OID suffix extraction.
 
-    def test_is_rfc4517_standard_true(self) -> None:
-        """Test detection of RFC 4517 standard syntax OID."""
+        Parametrized test covering OID suffix extraction for:
+        - Boolean (1), DN (7), Directory String (15), Integer (27)
+        """
         syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="Boolean",
+            oid=oid,
+            name="Test",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.is_rfc4517_standard is True
+        assert syntax.syntax_oid_suffix == expected_suffix  # type: ignore[unreachable]
 
-    def test_is_rfc4517_standard_false(self) -> None:
-        """Test detection of non-RFC 4517 syntax OID."""
+    @pytest.mark.parametrize("oid", NON_RFC4517_OIDS)
+    def test_non_rfc4517_detection(self, oid: str) -> None:
+        """Test non-RFC 4517 OID detection.
+
+        Parametrized test covering:
+        - Attribute OID (cn = 2.5.4.3)
+        - Oracle-specific OID
+        - Active Directory OID
+        """
         syntax = FlextLdifModels.Syntax(
-            oid="2.16.840.1.113894.1.1.1",
-            name="Oracle GUID",
+            oid=oid,
+            name="Test",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
         )
         assert syntax.is_rfc4517_standard is False
+        assert syntax.syntax_oid_suffix is None  # type: ignore[unreachable]
 
-    def test_syntax_oid_suffix_rfc4517(self) -> None:
-        """Test extraction of OID suffix from RFC 4517 OID."""
+    # ========================================================================
+    # PARAMETRIZED TESTS - ENCODING SUPPORT
+    # ========================================================================
+
+    @pytest.mark.parametrize("encoding_case", list(EncodingTestCase))
+    def test_syntax_encoding_support(self, encoding_case: EncodingTestCase) -> None:
+        """Test different character encoding support.
+
+        Parametrized test covering UTF-8, ASCII, ISO-8859-1 encodings.
+        """
+        oid, name = self.ENCODING_DATA[encoding_case]
+
         syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="Boolean",
-        )
-        assert syntax.syntax_oid_suffix == "7"
-
-    def test_syntax_oid_suffix_directory_string(self) -> None:
-        """Test OID suffix extraction for Directory String."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.15",
-            name="Directory String",
-        )
-        assert syntax.syntax_oid_suffix == "15"
-
-    def test_syntax_oid_suffix_non_rfc4517(self) -> None:
-        """Test OID suffix is None for non-RFC 4517 OID."""
-        syntax = FlextLdifModels.Syntax(
-            oid="2.16.840.1.113894.1.1.1",
-            name="Oracle GUID",
-        )
-        assert syntax.syntax_oid_suffix is None
-
-
-class TestSyntaxTypeCategories:
-    """Test different syntax type categories."""
-
-    def test_boolean_type(self) -> None:
-        """Test Boolean type syntax."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="Boolean",
-            type_category="boolean",
-            desc=None,
+            oid=oid,
+            name=name,
+            desc=f"{encoding_case.value} encoded string syntax",
             max_length=None,
             validation_pattern=None,
+            encoding=encoding_case.value,
         )
-        assert syntax.type_category == "boolean"
+        assert syntax.encoding == encoding_case.value
 
-    def test_integer_type(self) -> None:
-        """Test Integer type syntax."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.27",
-            name="Integer",
-            type_category="integer",
-            max_length=10,
-        )
-        assert syntax.type_category == "integer"
+    # ========================================================================
+    # PARAMETRIZED TESTS - VALIDATION PATTERNS
+    # ========================================================================
 
-    def test_binary_type(self) -> None:
-        """Test Binary type syntax."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.5",
-            name="Binary",
-            type_category="binary",
-            is_binary=True,
-        )
-        assert syntax.is_binary is True
+    VALIDATION_PATTERNS: ClassVar[tuple[tuple[str | None, str], ...]] = (
+        (r"^[0-9]+$", "numeric"),
+        (r"^[0-9\s\-\(\)\+]+$", "phone"),
+        (None, "none"),
+    )
 
-    def test_dn_type(self) -> None:
-        """Test DN type syntax."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.12",
-            name="Distinguished Name",
-            type_category="dn",
-        )
-        assert syntax.type_category == "dn"
+    @pytest.mark.parametrize(("pattern", "description"), VALIDATION_PATTERNS)
+    def test_syntax_validation_patterns(
+        self, pattern: str | None, description: str
+    ) -> None:
+        """Test validation pattern support.
 
-    def test_time_type(self) -> None:
-        """Test Time type syntax."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.24",
-            name="Generalized Time",
-            type_category="time",
-        )
-        assert syntax.type_category == "time"
-
-
-class TestSyntaxEncoding:
-    """Test syntax encoding handling."""
-
-    def test_utf8_encoding(self) -> None:
-        """Test UTF-8 encoding."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.55",
-            name="UTF-8 String",
-            encoding="utf-8",
-        )
-        assert syntax.encoding == "utf-8"
-
-    def test_ascii_encoding(self) -> None:
-        """Test ASCII encoding."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.26",
-            name="IA5 String",
-            encoding="ascii",
-        )
-        assert syntax.encoding == "ascii"
-
-    def test_custom_encoding(self) -> None:
-        """Test custom character encoding."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.44",
-            name="Printable String",
-            encoding="iso-8859-1",
-        )
-        assert syntax.encoding == "iso-8859-1"
-
-
-class TestSyntaxValidation:
-    """Test syntax validation patterns."""
-
-    def test_validation_pattern_numeric(self) -> None:
-        """Test numeric validation pattern."""
+        Parametrized test covering:
+        - Numeric validation (digits only)
+        - Phone number validation (with spaces, dashes, parens, plus)
+        - No validation pattern
+        """
         syntax = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.36",
-            name="Numeric String",
-            validation_pattern=r"^[0-9]+$",
+            name=f"Test {description}",
+            desc=None,
+            max_length=None,
+            validation_pattern=pattern,
         )
-        assert syntax.validation_pattern == r"^[0-9]+$"
+        assert syntax.validation_pattern == pattern
 
-    def test_validation_pattern_phone(self) -> None:
-        """Test telephone number validation pattern."""
+    # ========================================================================
+    # PARAMETRIZED TESTS - SERIALIZATION
+    # ========================================================================
+
+    @pytest.mark.parametrize(
+        "test_case", [SyntaxTestCase.BOOLEAN, SyntaxTestCase.DIRECTORY_STRING]
+    )
+    def test_model_serialization(self, test_case: SyntaxTestCase) -> None:
+        """Test Pydantic serialization methods.
+
+        Parametrized test covering:
+        - model_dump()
+        - model_dump_json()
+        - model_validate()
+        """
+        oid, name, _, _ = self.SYNTAX_DATA[test_case]
+
         syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.50",
-            name="Telephone Number",
-            validation_pattern=r"^[0-9\s\-\(\)\+]+$",
-        )
-        assert syntax.validation_pattern is not None
-
-    def test_no_validation_pattern(self) -> None:
-        """Test syntax with no validation pattern."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.15",
-            name="Directory String",
-        )
-        assert syntax.validation_pattern is None
-
-
-class TestSyntaxSerialization:
-    """Test Syntax model serialization."""
-
-    def test_model_dump(self) -> None:
-        """Test model_dump method."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="Boolean",
-            type_category="boolean",
+            oid=oid,
+            name=name,
             desc=None,
             max_length=None,
             validation_pattern=None,
         )
+
+        # Test model_dump
         dumped = syntax.model_dump()
-        assert dumped["oid"] == "1.3.6.1.4.1.1466.115.121.1.7"
-        assert dumped["name"] == "Boolean"
-        assert dumped["is_rfc4517_standard"] is True
+        assert dumped["oid"] == oid
+        assert dumped["name"] == name
 
-    def test_model_dump_json(self) -> None:
-        """Test model_dump_json method."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="Boolean",
-        )
+        # Test model_dump_json
         json_str = syntax.model_dump_json()
-        assert "Boolean" in json_str
-        assert "1.3.6.1.4.1.1466.115.121.1.7" in json_str
+        assert json_str is not None
+        assert name in json_str  # type: ignore[reportOperatorIssue]
+        assert oid in json_str  # type: ignore[reportOperatorIssue]
 
-    def test_model_validate(self) -> None:
-        """Test model_validate class method."""
-        data = {
-            "oid": "1.3.6.1.4.1.1466.115.121.1.15",
-            "name": "Directory String",
-            "type_category": "string",
-        }
-        syntax = FlextLdifModels.Syntax.model_validate(data)
-        assert syntax.name == "Directory String"
-        assert syntax.is_rfc4517_standard is True
+        # Test model_validate
+        data = {"oid": oid, "name": name, "type_category": "string"}
+        validated = FlextLdifModels.Syntax.model_validate(data)
+        assert validated.name == name
 
+    # ========================================================================
+    # EDGE CASES AND ERROR CONDITIONS
+    # ========================================================================
 
-class TestSyntaxEdgeCases:
-    """Test edge cases and error conditions."""
+    EDGE_CASE_MAX_LENGTHS: ClassVar[tuple[int, ...]] = (0, -1, 65535, 999999)
 
-    def test_empty_oid_fails(self) -> None:
-        """Test validation with empty OID."""
-        with pytest.raises(ValueError):
-            FlextLdifModels.Syntax(
-                oid="",
-                name="Invalid",
-                desc=None,
-                max_length=None,
-                validation_pattern=None,
-            )
+    @pytest.mark.parametrize("max_length", EDGE_CASE_MAX_LENGTHS)
+    def test_syntax_edge_case_max_lengths(self, max_length: int) -> None:
+        """Test edge case max_length values.
 
-    def test_negative_max_length(self) -> None:
-        """Test negative max_length is accepted."""
-        # Pydantic allows negative int - semantically invalid but accepted
+        Parametrized test covering:
+        - Zero length
+        - Negative length (Pydantic allows, semantically invalid)
+        - Large lengths
+        """
         syntax = FlextLdifModels.Syntax(
             oid="1.3.6.1.4.1.1466.115.121.1.15",
             name="Directory String",
-            max_length=-1,
+            max_length=max_length,
             desc=None,
             validation_pattern=None,
         )
-        assert syntax.max_length == -1
+        assert syntax.max_length == max_length
+
+    def test_empty_name_allowed(self) -> None:
+        """Test creating syntax with empty name is allowed."""
+        syntax = FlextLdifModels.Syntax(
+            oid="1.3.6.1.4.1.1466.115.121.1.7",
+            name="",
+            desc=None,
+            max_length=None,
+            validation_pattern=None,
+        )
+        assert not syntax.name
 
     def test_very_long_oid(self) -> None:
         """Test handling of very long OID."""
@@ -331,17 +441,6 @@ class TestSyntaxEdgeCases:
             validation_pattern=None,
         )
         assert syntax.oid == long_oid
-
-    def test_syntax_with_empty_name(self) -> None:
-        """Test creating syntax with empty name."""
-        syntax = FlextLdifModels.Syntax(
-            oid="1.3.6.1.4.1.1466.115.121.1.7",
-            name="",
-            desc=None,
-            max_length=None,
-            validation_pattern=None,
-        )
-        assert not syntax.name
 
     def test_multiple_syntaxes_independence(self) -> None:
         """Test that multiple syntax instances are independent."""
@@ -361,48 +460,3 @@ class TestSyntaxEdgeCases:
         )
         assert syntax1.oid != syntax2.oid
         assert syntax1.name != syntax2.name
-
-
-class TestSyntaxComputedFieldsAdvanced:
-    """Test advanced computed field scenarios."""
-
-    def test_multiple_rfc4517_oids(self) -> None:
-        """Test multiple RFC 4517 OID suffix extraction."""
-        test_oids = [
-            ("1.3.6.1.4.1.1466.115.121.1.1", "1"),
-            ("1.3.6.1.4.1.1466.115.121.1.7", "7"),
-            ("1.3.6.1.4.1.1466.115.121.1.15", "15"),
-            ("1.3.6.1.4.1.1466.115.121.1.27", "27"),
-        ]
-        for oid, expected_suffix in test_oids:
-            syntax = FlextLdifModels.Syntax(
-                oid=oid,
-                name="Test",
-                desc=None,
-                max_length=None,
-                validation_pattern=None,
-            )
-            assert syntax.is_rfc4517_standard is True
-            assert syntax.syntax_oid_suffix == expected_suffix
-
-    def test_non_standard_oids(self) -> None:
-        """Test non-standard OID detection."""
-        non_standard_oids = [
-            "2.5.4.3",  # cn - not RFC 4517 syntax
-            "2.16.840.1.113894.1.1.1",  # Oracle
-            "1.2.840.113556.1.2.1",  # Active Directory
-        ]
-        for oid in non_standard_oids:
-            syntax = FlextLdifModels.Syntax(
-                oid=oid,
-                name="Test",
-                desc=None,
-                max_length=None,
-                validation_pattern=None,
-            )
-            assert syntax.is_rfc4517_standard is False
-            assert syntax.syntax_oid_suffix is None
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

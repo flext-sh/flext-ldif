@@ -25,6 +25,10 @@ AclComponent = dict[str, str | object]
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
+    # ASCII control character boundaries for sanitization
+    ASCII_PRINTABLE_MIN: int = 0x20  # Space (first printable character)
+    ASCII_PRINTABLE_MAX: int = 0x7E  # Tilde (last printable character)
+
     @staticmethod
     def parser(acl_line: str) -> AclComponent | None:
         """Parse ACL line into components."""
@@ -888,6 +892,68 @@ class FlextLdifUtilitiesACL:
                 active_perms.append(output_name)
 
         return active_perms
+
+    @classmethod
+    def sanitize_acl_name(
+        cls,
+        raw_name: str,
+        max_length: int = 256,
+    ) -> tuple[str, bool]:
+        r"""Sanitize string for use as ACL name in ACI format.
+
+        Removes control characters (ASCII < 0x20 or > 0x7E) and
+        replaces double quotes to avoid ACI syntax issues.
+
+        Args:
+            raw_name: Original string (e.g., orclaci line)
+            max_length: Maximum allowed length for ACL name
+
+        Returns:
+            Tuple of (sanitized_name, was_sanitized)
+            - sanitized_name: Safe string for ACI name usage
+            - was_sanitized: True if any characters were replaced/removed
+
+        Example:
+            >>> FlextLdifUtilitiesACL.sanitize_acl_name(
+            ...     "access to attr=(cn) by self (read)"
+            ... )
+            ("access to attr=(cn) by self (read)", False)
+
+            >>> FlextLdifUtilitiesACL.sanitize_acl_name("access to\x00attr=(cn)")
+            ("access to attr=(cn)", True)
+
+        """
+        if not raw_name:
+            return raw_name, False
+
+        result: list[str] = []
+        was_sanitized = False
+
+        for char in raw_name:
+            char_ord = ord(char)
+            # Control characters: < ASCII_PRINTABLE_MIN (space) or > ASCII_PRINTABLE_MAX (~)
+            # Also exclude double quotes to avoid ACI syntax issues
+            if (
+                char_ord < cls.ASCII_PRINTABLE_MIN
+                or char_ord > cls.ASCII_PRINTABLE_MAX
+                or char == '"'
+            ):
+                was_sanitized = True
+                # Replace with space (multiple spaces will be collapsed)
+                if result and result[-1] != " ":
+                    result.append(" ")
+            else:
+                result.append(char)
+
+        # Collapse multiple spaces and trim
+        sanitized = " ".join("".join(result).split())
+
+        # Truncate if exceeds max_length
+        if len(sanitized) > max_length:
+            sanitized = sanitized[: max_length - 3] + "..."
+            was_sanitized = True
+
+        return sanitized, was_sanitized
 
 
 __all__ = [

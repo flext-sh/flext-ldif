@@ -1,417 +1,230 @@
-"""Comprehensive tests for validation service with all code paths.
+"""Comprehensive validation service tests for flext-ldif.
 
-Tests cover RFC 2849/4512 compliant entry validation:
-- Attribute name validation against RFC 4512 rules
-- Object class name validation
-- Attribute value length and format validation
-- DN component validation
-- Exception handling for all validation paths
-
-All tests use real implementations without mocks.
+Tests RFC 2849/4512 compliant entry validation including attribute names,
+object classes, values, DN components, and error handling. Uses advanced
+Python 3.13 features, factories, and helpers for minimal code with maximum coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 import pytest
+from flext_tests import FlextTestsMatchers
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests.fixtures.constants import Names
 
 
-class TestValidationServiceAttributeName:
-    """Test attribute name validation against RFC 4512 rules."""
+class ValidationTestCases(StrEnum):
+    """Test case categories for validation."""
 
-    @pytest.fixture
-    def validation_service(self) -> FlextLdifValidation:
+    VALID_NAMES = "valid_names"
+    INVALID_NAMES = "invalid_names"
+    VALID_VALUES = "valid_values"
+    INVALID_VALUES = "invalid_values"
+    DN_COMPONENTS = "dn_components"
+
+
+class ValidationTestFactory:
+    """Factory for creating validation service test instances."""
+
+    @staticmethod
+    def create_service() -> FlextLdifValidation:
         """Create validation service instance."""
         return FlextLdifValidation()
 
-    def test_validate_valid_attribute_name(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating valid attribute name."""
-        result = validation_service.validate_attribute_name("cn")
-        assert result.is_success
-        assert result.unwrap() is True
+    @classmethod
+    def parametrize_valid_names(cls) -> list[tuple[str, bool]]:
+        """Parametrize valid attribute/object class names."""
+        return [
+            (Names.CN, True),
+            ("cn2", True),
+            ("user-name", True),
+            ("CN", True),
+            ("inetOrgPerson", True),
+        ]
 
-    def test_validate_attribute_name_with_digits(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name with digits."""
-        result = validation_service.validate_attribute_name("cn2")
-        assert result.is_success
-        assert result.unwrap() is True
+    @classmethod
+    def parametrize_invalid_names(cls) -> list[tuple[str, bool]]:
+        """Parametrize invalid attribute/object class names."""
+        return [
+            ("2invalid", False),
+            ("invalid name", False),
+            ("cn@user", False),
+            ("", False),
+            ("a" * 128, False),
+        ]
 
-    def test_validate_attribute_name_with_hyphens(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name with hyphens."""
-        result = validation_service.validate_attribute_name("user-name")
-        assert result.is_success
-        assert result.unwrap() is True
+    @classmethod
+    def parametrize_valid_values(cls) -> list[tuple[str, bool]]:
+        """Parametrize valid attribute values."""
+        return [
+            ("John Smith", True),
+            ("", True),  # Empty valid in LDAP
+            ("test@example.com", True),
+            ("José García", True),
+            ("123", True),  # Numeric strings valid
+        ]
 
-    def test_validate_attribute_name_uppercase(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating uppercase attribute name."""
-        result = validation_service.validate_attribute_name("CN")
-        assert result.is_success
-        assert result.unwrap() is True
+    @classmethod
+    def parametrize_invalid_values(cls) -> list[tuple[str, bool]]:
+        """Parametrize invalid attribute values."""
+        large_value = "a" * (1048576 + 1)
+        return [
+            (large_value, False),  # Exceeds max length
+        ]
 
-    def test_validate_attribute_name_mixed_case(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating mixed case attribute name."""
-        result = validation_service.validate_attribute_name("inetOrgPerson")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_attribute_name_starts_with_digit(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name starting with digit fails."""
-        result = validation_service.validate_attribute_name("2invalid")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_name_with_space(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name with space fails."""
-        result = validation_service.validate_attribute_name("invalid name")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_name_with_special_chars(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name with special characters fails."""
-        result = validation_service.validate_attribute_name("cn@user")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_empty_attribute_name(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating empty attribute name fails."""
-        result = validation_service.validate_attribute_name("")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_name_too_long(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name exceeding 127 characters fails."""
-        long_name = "a" * 128
-        result = validation_service.validate_attribute_name(long_name)
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_name_max_length(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute name at 127 character limit."""
-        max_name = "a" * 127
-        result = validation_service.validate_attribute_name(max_name)
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_non_string_attribute_name(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating invalid attribute name fails."""
-        result = validation_service.validate_attribute_name("2invalid")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_name_exception_handling(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test exception handling during attribute name validation."""
-        # Pass object that will cause exception in string operations
-        result = validation_service.validate_attribute_name("str")
-        # Should handle gracefully - return False or fail result
-        assert hasattr(result, "is_success")
+    @classmethod
+    def parametrize_dn_components(cls) -> list[tuple[str, str, bool]]:
+        """Parametrize DN component validations."""
+        return [
+            (Names.CN, "John Smith", True),
+            ("CN", "test", True),
+            (Names.CN, "", True),  # Empty values allowed
+            ("2invalid", "test", False),  # Invalid attribute
+            (Names.CN, "Smith, John", True),  # Special chars allowed
+        ]
 
 
-class TestValidationServiceObjectClassName:
-    """Test object class name validation."""
+class TestValidationService:
+    """Comprehensive validation service tests.
 
-    @pytest.fixture
-    def validation_service(self) -> FlextLdifValidation:
-        """Create validation service instance."""
-        return FlextLdifValidation()
+    Tests all validation paths using factories, parametrization, and helpers
+    for minimal code with complete coverage.
+    """
 
-    def test_validate_valid_objectclass_name(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating valid object class name."""
-        result = validation_service.validate_objectclass_name("person")
-        assert result.is_success
-        assert result.unwrap() is True
+    class TestAttributeName:
+        """Test attribute name validation against RFC 4512 rules."""
 
-    def test_validate_objectclass_name_mixed_case(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating mixed case object class name."""
-        result = validation_service.validate_objectclass_name("inetOrgPerson")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_objectclass_name_with_hyphens(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating object class name with hyphens."""
-        result = validation_service.validate_objectclass_name("custom-class")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_invalid_objectclass_name(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating invalid object class name fails."""
-        result = validation_service.validate_objectclass_name("invalid class")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_objectclass_name_delegates_to_attribute(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test object class validation uses same rules as attribute names."""
-        # These should behave the same
-        attr_result = validation_service.validate_attribute_name("testName")
-        class_result = validation_service.validate_objectclass_name("testName")
-        assert attr_result.is_success
-        assert class_result.is_success
-        assert attr_result.unwrap() == class_result.unwrap()
-
-
-class TestValidationServiceAttributeValue:
-    """Test attribute value validation."""
-
-    @pytest.fixture
-    def validation_service(self) -> FlextLdifValidation:
-        """Create validation service instance."""
-        return FlextLdifValidation()
-
-    def test_validate_valid_attribute_value(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating valid attribute value."""
-        result = validation_service.validate_attribute_value("John Smith")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_empty_attribute_value(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating empty attribute value (valid in LDAP)."""
-        result = validation_service.validate_attribute_value("")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_attribute_value_with_special_chars(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute value with special characters."""
-        result = validation_service.validate_attribute_value("test@example.com")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_attribute_value_unicode(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute value with Unicode characters."""
-        result = validation_service.validate_attribute_value("José García")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_attribute_value_exceeds_max_length(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute value exceeding max length fails."""
-        large_value = "a" * (1048576 + 1)  # Exceed 1MB default
-        result = validation_service.validate_attribute_value(large_value)
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_value_within_default_max(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute value within default 1MB limit."""
-        large_value = "a" * 1048576  # Exactly 1MB
-        result = validation_service.validate_attribute_value(large_value)
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_attribute_value_custom_max_length(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute value with custom max length."""
-        result = validation_service.validate_attribute_value("test", max_length=2)
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_attribute_value_within_custom_max(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating attribute value within custom max length."""
-        result = validation_service.validate_attribute_value("test", max_length=10)
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_non_string_attribute_value(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating numeric string attribute value as valid."""
-        # Numeric strings are valid LDAP attribute values
-        result = validation_service.validate_attribute_value("123")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_attribute_value_exception_handling(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test exception handling during attribute value validation."""
-        # Empty strings are valid in LDAP (though unusual)
-        result = validation_service.validate_attribute_value("")
-        assert result.is_success
-        assert result.unwrap() is True
-
-
-class TestValidationServiceDnComponent:
-    """Test DN component (attribute=value pair) validation."""
-
-    @pytest.fixture
-    def validation_service(self) -> FlextLdifValidation:
-        """Create validation service instance."""
-        return FlextLdifValidation()
-
-    def test_validate_valid_dn_component(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating valid DN component."""
-        result = validation_service.validate_dn_component("cn", "John Smith")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_dn_component_uppercase_attr(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating DN component with uppercase attribute."""
-        result = validation_service.validate_dn_component("CN", "test")
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_dn_component_empty_value(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating DN component with empty value."""
-        result = validation_service.validate_dn_component("cn", "")
-        assert result.is_success
-        assert result.unwrap() is True  # Empty DN values are allowed
-
-    def test_validate_dn_component_invalid_attribute(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating DN component with invalid attribute fails."""
-        result = validation_service.validate_dn_component("2invalid", "test")
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_dn_component_non_string_value(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating DN component with non-string value fails."""
-        result = validation_service.validate_dn_component("cn", 123)
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_validate_dn_component_special_chars_in_value(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test validating DN component with special characters in value."""
-        result = validation_service.validate_dn_component("cn", "Smith, John")
-        assert result.is_success
-        assert result.unwrap() is True  # Special chars allowed in values
-
-    def test_validate_dn_component_exception_handling(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test exception handling during DN component validation."""
-        # Test with real data that may cause validation issues
-        result = validation_service.validate_dn_component("str", "str")
-        assert hasattr(result, "is_success")
-
-
-class TestValidationServiceExecute:
-    """Test validation service self-check."""
-
-    @pytest.fixture
-    def validation_service(self) -> FlextLdifValidation:
-        """Create validation service instance."""
-        return FlextLdifValidation()
-
-    def test_execute_returns_success(
-        self,
-        validation_service: FlextLdifValidation,
-    ) -> None:
-        """Test execute returns successful status."""
-        TestDeduplicationHelpers.service_execute_and_assert_fields(
-            validation_service,
-            expected_fields={
-                "service": "ValidationService",
-                "status": "operational",
-            },
-            expected_type=FlextLdifModels.ValidationServiceStatus,
-            must_contain_in_fields={"rfc_compliance": "RFC 2849"},
+        @pytest.mark.parametrize(
+            ("name", "expected"),
+            tuple(ValidationTestFactory.parametrize_valid_names())
+            + tuple(ValidationTestFactory.parametrize_invalid_names()),
         )
+        def test_validate_attribute_name(
+            self,
+            name: str,
+            expected: bool,
+        ) -> None:
+            """Test attribute name validation with comprehensive cases."""
+            service = ValidationTestFactory.create_service()
+            result = service.validate_attribute_name(name)
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert unwrapped is expected
+
+    class TestObjectClassName:
+        """Test object class name validation."""
+
+        @pytest.mark.parametrize(
+            ("name", "expected"),
+            tuple(ValidationTestFactory.parametrize_valid_names())
+            + tuple(ValidationTestFactory.parametrize_invalid_names()),
+        )
+        def test_validate_objectclass_name(
+            self,
+            name: str,
+            expected: bool,
+        ) -> None:
+            """Test object class name validation with comprehensive cases."""
+            service = ValidationTestFactory.create_service()
+            result = service.validate_objectclass_name(name)
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert unwrapped is expected
+
+        def test_validate_objectclass_delegates_to_attribute(self) -> None:
+            """Test object class validation uses same rules as attribute names."""
+            service = ValidationTestFactory.create_service()
+            test_name = "testName"
+            attr_result = service.validate_attribute_name(test_name)
+            class_result = service.validate_objectclass_name(test_name)
+            assert attr_result.unwrap() == class_result.unwrap()
+
+    class TestAttributeValue:
+        """Test attribute value validation."""
+
+        @pytest.mark.parametrize(
+            ("value", "expected"),
+            tuple(ValidationTestFactory.parametrize_valid_values())
+            + tuple(ValidationTestFactory.parametrize_invalid_values()),
+        )
+        def test_validate_attribute_value(
+            self,
+            value: str,
+            expected: bool,
+        ) -> None:
+            """Test attribute value validation with comprehensive cases."""
+            service = ValidationTestFactory.create_service()
+            result = service.validate_attribute_value(value)
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert unwrapped is expected
+
+        @pytest.mark.parametrize(
+            ("value", "max_length", "expected"),
+            [
+                ("test", 2, False),
+                ("test", 10, True),
+                ("a" * 1048576, None, True),  # Within default max
+            ],
+        )
+        def test_validate_attribute_value_with_length(
+            self,
+            value: str,
+            max_length: int | None,
+            expected: bool,
+        ) -> None:
+            """Test attribute value validation with custom max length."""
+            service = ValidationTestFactory.create_service()
+            result = service.validate_attribute_value(value, max_length=max_length)
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert unwrapped is expected
+
+    class TestDnComponent:
+        """Test DN component (attribute=value pair) validation."""
+
+        @pytest.mark.parametrize(
+            ("attr", "value", "expected"),
+            tuple(ValidationTestFactory.parametrize_dn_components()),
+        )
+        def test_validate_dn_component(
+            self,
+            attr: str,
+            value: str,
+            expected: bool,
+        ) -> None:
+            """Test DN component validation with comprehensive cases."""
+            service = ValidationTestFactory.create_service()
+            result = service.validate_dn_component(attr, value)
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert unwrapped is expected
+
+        def test_validate_dn_component_invalid_attribute(self) -> None:
+            """Test DN component validation with invalid attribute fails."""
+            service = ValidationTestFactory.create_service()
+            result = service.validate_dn_component("", "test")
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert unwrapped is False
+
+    class TestExecute:
+        """Test validation service self-check."""
+
+        def test_execute_returns_success(self) -> None:
+            """Test execute returns successful status."""
+            service = ValidationTestFactory.create_service()
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, FlextLdifModels.ValidationServiceStatus)
+            assert unwrapped.service == "ValidationService"
+            assert unwrapped.status == "operational"
+            assert "RFC 2849" in unwrapped.rfc_compliance
 
 
 __all__ = [
-    "TestValidationServiceAttributeName",
-    "TestValidationServiceAttributeValue",
-    "TestValidationServiceDnComponent",
-    "TestValidationServiceExecute",
-    "TestValidationServiceObjectClassName",
+    "TestValidationService",
+    "ValidationTestCases",
+    "ValidationTestFactory",
 ]

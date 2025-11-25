@@ -13,12 +13,85 @@ from pathlib import Path
 
 from flext_ldif import FlextLdif, FlextLdifModels
 
-from ..unit.quirks.servers.test_utils import FlextLdifTestUtils
 from .test_assertions import TestAssertions
 
 
 class FixtureTestHelpers:
     """High-level fixture test helpers that replace entire test functions."""
+
+    @staticmethod
+    def _get_fixture_path(
+        server_type: str,
+        fixture_filename: str,
+    ) -> Path:
+        """Get the path to a fixture file.
+
+        Args:
+            server_type: Server type identifier (e.g. 'oid', 'oud', 'rfc')
+            fixture_filename: Name of the fixture file
+
+        Returns:
+            Path to the fixture file
+
+        Raises:
+            FileNotFoundError: If fixture file doesn't exist
+
+        """
+        # Try multiple possible paths
+        test_file_path = Path(__file__)
+        possible_paths = [
+            test_file_path.parent.parent / "fixtures" / server_type / fixture_filename,
+            test_file_path.parent.parent.parent
+            / "fixtures"
+            / server_type
+            / fixture_filename,
+        ]
+
+        for fixture_path in possible_paths:
+            if fixture_path.exists():
+                return fixture_path
+
+        msg = f"Fixture not found: {fixture_filename} for server type {server_type}"
+        raise FileNotFoundError(msg)
+
+    @staticmethod
+    def _load_fixture(
+        ldif_api: FlextLdif,
+        server_type: str,
+        fixture_filename: str,
+    ) -> list[FlextLdifModels.Entry]:
+        """Load a fixture LDIF file and return parsed entries.
+
+        Args:
+            ldif_api: FlextLdif API instance
+            server_type: Server type identifier
+            fixture_filename: Name of the fixture file
+
+        Returns:
+            List of parsed entries
+
+        """
+        fixture_path = FixtureTestHelpers._get_fixture_path(
+            server_type,
+            fixture_filename,
+        )
+
+        parse_result = ldif_api.parse(
+            fixture_path,
+            server_type=server_type,
+        )
+
+        if not parse_result.is_success:
+            msg = f"Failed to parse fixture {fixture_path}: {parse_result.error}"
+            raise ValueError(msg)
+
+        parsed_data = parse_result.unwrap()
+        if isinstance(parsed_data, list):
+            return parsed_data
+        if hasattr(parsed_data, "entries"):
+            return parsed_data.entries
+        msg = f"Unexpected parse result type: {type(parsed_data)}"
+        raise TypeError(msg)
 
     @staticmethod
     def load_fixture_entries(
@@ -57,7 +130,7 @@ class FixtureTestHelpers:
             assert len(entries) > 0
 
         """
-        entries = FlextLdifTestUtils.load_fixture(
+        entries = FixtureTestHelpers._load_fixture(
             ldif_api,
             server_type,
             fixture_filename,
@@ -184,14 +257,50 @@ class FixtureTestHelpers:
             assert identical, "Roundtrip should preserve entries"
 
         """
-        original_entries, roundtrip_entries, is_identical = (
-            FlextLdifTestUtils.run_roundtrip_test(
-                ldif_api,
-                server_type,
-                fixture_filename,
-                tmp_path,
-            )
+        # Load original entries
+        original_entries = FixtureTestHelpers._load_fixture(
+            ldif_api,
+            server_type,
+            fixture_filename,
         )
+
+        # Write entries back to file
+        output_file = tmp_path / f"roundtrip_{fixture_filename}"
+        write_result = ldif_api.write(
+            original_entries,
+            output_path=output_file,
+            server_type=server_type,
+        )
+        TestAssertions.assert_success(write_result, "Write should succeed")
+
+        # Parse the written LDIF
+        parse_result = ldif_api.parse(
+            output_file,
+            server_type=server_type,
+        )
+        TestAssertions.assert_success(parse_result, "Re-parse should succeed")
+
+        parsed_data = parse_result.unwrap()
+        if isinstance(parsed_data, list):
+            roundtrip_entries = parsed_data
+        elif hasattr(parsed_data, "entries"):
+            roundtrip_entries = parsed_data.entries
+        else:
+            msg = f"Unexpected parse result type: {type(parsed_data)}"
+            raise TypeError(msg)
+
+        # Compare entries
+        is_identical = True
+        if len(original_entries) != len(roundtrip_entries):
+            is_identical = False
+        else:
+            for orig, rt in zip(original_entries, roundtrip_entries, strict=False):
+                if orig.dn is None or rt.dn is None:
+                    is_identical = False
+                    break
+                if orig.dn.value != rt.dn.value:
+                    is_identical = False
+                    break
 
         if validate_identical:
             assert is_identical, "Roundtrip should produce identical entries"

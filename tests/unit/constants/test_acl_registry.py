@@ -8,95 +8,206 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
+from typing import ClassVar
+
+import pytest
+
 from flext_ldif import FlextLdifConstants
 
+# =============================================================================
+# TEST SCENARIO ENUMS
+# =============================================================================
 
-class TestAclAttributeRegistry:
+
+class GetAclAttributesServerType(StrEnum):
+    """Server types for get_acl_attributes tests."""
+
+    RFC = "rfc"
+    OID = "oid"
+    OUD = "oud"
+    AD = "ad"
+    GENERIC = "generic"
+    UNKNOWN = "unknown_server"
+    NONE = "none"
+
+
+class IsAclAttributeType(StrEnum):
+    """Is ACL attribute test scenarios."""
+
+    VALID_RFC = "valid_rfc"
+    VALID_SERVER_SPECIFIC = "valid_server_specific"
+    INVALID = "invalid"
+    CASE_INSENSITIVE = "case_insensitive"
+
+
+# =============================================================================
+# PARAMETRIZED TEST DATA
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestFlextLdifAclAttributeRegistry:
     """Test suite for AclAttributeRegistry."""
 
-    def test_acl_registry_rfc_foundation(self) -> None:
-        """RFC foundation should be in all servers."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes()
-        assert "aci" in attrs
-        assert "acl" in attrs
-        assert "olcAccess" in attrs
-        assert "aclRights" in attrs
-        assert "aclEntry" in attrs
-
-    def test_acl_registry_oid_quirks(self) -> None:
-        """OID should have Oracle-specific attributes."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid")
-        assert "orclaci" in attrs
-        assert "orclentrylevelaci" in attrs
-        assert "orclContainerLevelACL" in attrs
-        # Should also have RFC foundation
-        assert "aci" in attrs
-        assert "acl" in attrs
-
-    def test_acl_registry_oud_quirks(self) -> None:
-        """OUD should have Oracle attributes."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oud")
-        assert "orclaci" in attrs
-        assert "orclentrylevelaci" in attrs
-        # Should also have RFC foundation
-        assert "aci" in attrs
-
-    def test_acl_registry_ad_quirks(self) -> None:
-        """AD should have Active Directory attributes."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("ad")
-        assert "nTSecurityDescriptor" in attrs
-        # Should also have RFC foundation
-        assert "aci" in attrs
-
-    def test_acl_registry_generic(self) -> None:
-        """Generic should only have RFC foundation."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("generic")
-        # Should have RFC foundation
-        assert "aci" in attrs
-        assert "acl" in attrs
-        # Should NOT have server-specific quirks
-        assert "orclaci" not in attrs
-        assert "nTSecurityDescriptor" not in attrs
-
-    def test_acl_registry_is_acl_attribute(self) -> None:
-        """Should detect ACL attributes correctly."""
-        registry = FlextLdifConstants.AclAttributeRegistry
-        assert registry.is_acl_attribute("aci")
-        assert registry.is_acl_attribute("acl")
-        assert registry.is_acl_attribute("olcAccess")
-        assert registry.is_acl_attribute("orclaci", "oid")
-        assert registry.is_acl_attribute("orclaci", "oud")
-        assert not registry.is_acl_attribute("cn")
-        assert not registry.is_acl_attribute("uid")
-
-    def test_acl_registry_case_insensitive(self) -> None:
-        """is_acl_attribute should be case-insensitive."""
-        registry = FlextLdifConstants.AclAttributeRegistry
-        assert registry.is_acl_attribute("ACI")
-        assert registry.is_acl_attribute("Acl")
-        assert registry.is_acl_attribute("OLCACCESS")
-        assert registry.is_acl_attribute("OrclAci", "oid")
-
-    def test_acl_registry_unknown_server_type(self) -> None:
-        """Unknown server type should return RFC foundation only."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+    # Get ACL attributes test data - (server_type, required_attrs, forbidden_attrs)
+    GET_ACL_ATTRIBUTES_DATA: ClassVar[
+        dict[str, tuple[GetAclAttributesServerType, str | None, list[str], list[str]]]
+    ] = {
+        "get_acl_attributes_rfc_foundation": (
+            GetAclAttributesServerType.RFC,
+            None,
+            ["aci", "acl", "olcAccess", "aclRights", "aclEntry"],
+            [],
+        ),
+        "get_acl_attributes_oid_quirks": (
+            GetAclAttributesServerType.OID,
+            "oid",
+            ["orclaci", "orclentrylevelaci", "aci", "acl"],
+            [],
+        ),
+        "get_acl_attributes_oud_quirks": (
+            GetAclAttributesServerType.OUD,
+            "oud",
+            ["orclaci", "orclentrylevelaci", "aci"],
+            [],
+        ),
+        "get_acl_attributes_ad_quirks": (
+            GetAclAttributesServerType.AD,
+            "ad",
+            ["nTSecurityDescriptor", "aci"],
+            [],
+        ),
+        "get_acl_attributes_generic": (
+            GetAclAttributesServerType.GENERIC,
+            "generic",
+            ["aci", "acl"],
+            ["orclaci", "nTSecurityDescriptor"],
+        ),
+        "get_acl_attributes_unknown": (
+            GetAclAttributesServerType.UNKNOWN,
             "unknown_server",
-        )
-        # Should have RFC foundation
-        assert "aci" in attrs
-        assert "acl" in attrs
-        # Should NOT have any server-specific quirks
-        assert "orclaci" not in attrs
-        assert "nTSecurityDescriptor" not in attrs
+            ["aci", "acl"],
+            ["orclaci", "nTSecurityDescriptor"],
+        ),
+        "get_acl_attributes_none": (
+            GetAclAttributesServerType.NONE,
+            None,
+            ["aci", "acl"],
+            ["orclaci"],
+        ),
+    }
 
-    def test_acl_registry_none_server_type(self) -> None:
-        """None server type should return RFC foundation only."""
-        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(None)
-        # Should have RFC foundation
-        assert "aci" in attrs
-        assert "acl" in attrs
-        # Should NOT have server-specific quirks
-        assert "orclaci" not in attrs
+    # Is ACL attribute test data - (attr_name, server_type, expected_result)
+    IS_ACL_ATTRIBUTE_DATA: ClassVar[
+        dict[str, tuple[IsAclAttributeType, str, str | None, bool]]
+    ] = {
+        "is_acl_attribute_rfc_aci": (IsAclAttributeType.VALID_RFC, "aci", None, True),
+        "is_acl_attribute_rfc_acl": (IsAclAttributeType.VALID_RFC, "acl", None, True),
+        "is_acl_attribute_rfc_olcAccess": (
+            IsAclAttributeType.VALID_RFC,
+            "olcAccess",
+            None,
+            True,
+        ),
+        "is_acl_attribute_oid_orclaci": (
+            IsAclAttributeType.VALID_SERVER_SPECIFIC,
+            "orclaci",
+            "oid",
+            True,
+        ),
+        "is_acl_attribute_oud_orclaci": (
+            IsAclAttributeType.VALID_SERVER_SPECIFIC,
+            "orclaci",
+            "oud",
+            True,
+        ),
+        "is_acl_attribute_invalid_cn": (IsAclAttributeType.INVALID, "cn", None, False),
+        "is_acl_attribute_invalid_uid": (IsAclAttributeType.INVALID, "uid", None, False),
+        "is_acl_attribute_case_insensitive_aci": (
+            IsAclAttributeType.CASE_INSENSITIVE,
+            "ACI",
+            None,
+            True,
+        ),
+        "is_acl_attribute_case_insensitive_acl": (
+            IsAclAttributeType.CASE_INSENSITIVE,
+            "Acl",
+            None,
+            True,
+        ),
+        "is_acl_attribute_case_insensitive_olcAccess": (
+            IsAclAttributeType.CASE_INSENSITIVE,
+            "OLCACCESS",
+            None,
+            True,
+        ),
+        "is_acl_attribute_case_insensitive_orclaci": (
+            IsAclAttributeType.CASE_INSENSITIVE,
+            "OrclAci",
+            "oid",
+            True,
+        ),
+    }
+
+    # =======================================================================
+    # Get ACL Attributes Tests
+    # =======================================================================
+
+    @pytest.mark.parametrize(
+        ("scenario", "server_type", "param_server_type", "required_attrs", "forbidden_attrs"),
+        [
+            (name, data[0], data[1], data[2], data[3])
+            for name, data in GET_ACL_ATTRIBUTES_DATA.items()
+        ],
+    )
+    def test_get_acl_attributes(
+        self,
+        scenario: str,
+        server_type: GetAclAttributesServerType,
+        param_server_type: str | None,
+        required_attrs: list[str],
+        forbidden_attrs: list[str],
+    ) -> None:
+        """Parametrized test for get_acl_attributes."""
+        attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+            param_server_type
+        )
+        for required in required_attrs:
+            assert required in attrs, f"{required} not in {scenario}"
+        for forbidden in forbidden_attrs:
+            assert forbidden not in attrs, f"{forbidden} should not be in {scenario}"
+
+    # =======================================================================
+    # Is ACL Attribute Tests
+    # =======================================================================
+
+    @pytest.mark.parametrize(
+        ("scenario", "test_type", "attr_name", "server_type", "expected_result"),
+        [
+            (name, data[0], data[1], data[2], data[3])
+            for name, data in IS_ACL_ATTRIBUTE_DATA.items()
+        ],
+    )
+    def test_is_acl_attribute(
+        self,
+        scenario: str,
+        test_type: IsAclAttributeType,
+        attr_name: str,
+        server_type: str | None,
+        expected_result: bool,
+    ) -> None:
+        """Parametrized test for is_acl_attribute."""
+        registry = FlextLdifConstants.AclAttributeRegistry
+        if server_type is not None:
+            result = registry.is_acl_attribute(attr_name, server_type)
+        else:
+            result = registry.is_acl_attribute(attr_name)
+        assert result == expected_result, f"{scenario} failed"
+
+    # =======================================================================
+    # Immutability Test
+    # =======================================================================
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""

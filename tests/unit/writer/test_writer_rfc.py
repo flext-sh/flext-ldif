@@ -2,12 +2,34 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
+from typing import ClassVar
+
 import pytest
 
 from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifWriter
-
-# Import RFC quirks to ensure they are auto-registered
 from flext_ldif.services.server import FlextLdifServer
+
+# =============================================================================
+# TEST SCENARIO ENUMS
+# =============================================================================
+
+
+class WriterOutputType(StrEnum):
+    """Writer output target types."""
+
+    STRING = "string"
+
+
+class WriterTestScenario(StrEnum):
+    """Writer test scenarios."""
+
+    BASIC_WRITE = "basic_write"
+
+
+# =============================================================================
+# TEST FIXTURES
+# =============================================================================
 
 
 @pytest.fixture
@@ -50,21 +72,51 @@ def simple_entry() -> FlextLdifModels.Entry:
     )
 
 
-def test_write_basic_string_output(
-    writer: FlextLdifWriter,
-    simple_entry: FlextLdifModels.Entry,
-) -> None:
-    """Test writing entries to string returns LDIF content."""
-    result = writer.write(
-        entries=[simple_entry],
-        target_server_type="rfc",
-        output_target="string",
+# =============================================================================
+# PARAMETRIZED TEST DATA
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestFlextLdifWriterRfc:
+    """Test FlextLdifWriter with RFC server type configuration."""
+
+    WRITER_OUTPUT_DATA: ClassVar[
+        dict[str, tuple[WriterTestScenario, WriterOutputType, str]]
+    ] = {
+        "write_basic_string_output": (
+            WriterTestScenario.BASIC_WRITE,
+            WriterOutputType.STRING,
+            "version: 1",
+        ),
+    }
+
+    @pytest.mark.parametrize(
+        ("scenario", "output_type", "expected_content"),
+        [
+            (data[0], data[1], data[2])
+            for data in WRITER_OUTPUT_DATA.values()
+        ],
     )
+    def test_writer_output(
+        self,
+        scenario: WriterTestScenario,
+        output_type: WriterOutputType,
+        expected_content: str,
+        writer: FlextLdifWriter,
+        simple_entry: FlextLdifModels.Entry,
+    ) -> None:
+        """Parametrized test for writer output generation."""
+        result = writer.write(
+            entries=[simple_entry],
+            target_server_type="rfc",
+            output_target=output_type.value,
+        )
 
-    assert result.is_success, f"Write failed: {result.error}"
-    content = result.unwrap()
+        assert result.is_success, f"Write failed: {result.error}"
+        content = result.unwrap()
 
-    # Verify it's a string with LDIF structure
-    assert isinstance(content, str)
-    assert "version: 1" in content
-    assert "dn: cn=test,dc=example,dc=com" in content
+        # Verify it's a string with LDIF structure
+        assert isinstance(content, str)
+        assert expected_content in content
+        assert "dn: cn=test,dc=example,dc=com" in content

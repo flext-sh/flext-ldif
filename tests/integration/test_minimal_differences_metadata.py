@@ -182,8 +182,7 @@ orcldasisenabled: 1
         # Write back to OID format
         write_result = writer.write(
             entries=[original_entry],
-            target_server_type="oid",
-            output_target="string",
+            server_type="oid",
         )
         assert write_result.is_success
 

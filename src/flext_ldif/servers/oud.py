@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
@@ -187,6 +187,25 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ACL_ALLOW_DENY_PATTERN: ClassVar[str] = r"(allow|deny)\s+\(([^)]+)\)"
         ACL_BY_GROUP_PATTERN: ClassVar[str] = r"by\s+group=\"[^\"]+\""
         ACL_BY_STAR_PATTERN: ClassVar[str] = r"by\s+\*"
+
+        # === ACL ADVANCED PATTERNS (RFC 4876 extensions validated against Oracle OUD documentation) ===
+        ACL_TARGATTRFILTERS_PATTERN: ClassVar[str] = (
+            r'\(targattrfilters\s*=\s*"([^"]+)"\)'
+        )
+        ACL_TARGETCONTROL_PATTERN: ClassVar[str] = r'\(targetcontrol\s*=\s*"([^"]+)"\)'
+        ACL_EXTOP_PATTERN: ClassVar[str] = r'\(extop\s*=\s*"([^"]+)"\)'
+        ACL_IP_PATTERN: ClassVar[str] = r'ip\s*=\s*"([^"]+)"'
+        ACL_DNS_PATTERN: ClassVar[str] = r'dns\s*=\s*"([^"]+)"'
+        ACL_DAYOFWEEK_PATTERN: ClassVar[str] = r'dayofweek\s*=\s*"([^"]+)"'
+        ACL_TIMEOFDAY_PATTERN: ClassVar[str] = r'timeofday\s*([<>=!]+)\s*"?(\d+)"?'
+        ACL_AUTHMETHOD_PATTERN: ClassVar[str] = r'authmethod\s*=\s*"?(\w+)"?'
+        ACL_SSF_PATTERN: ClassVar[str] = r'ssf\s*([<>=!]+)\s*"?(\d+)"?'
+
+        # === ACL BIND RULE TUPLE CONSTANTS ===
+        ACL_BIND_RULE_TUPLE_LENGTH: ClassVar[int] = (
+            2  # Expected length for (operator, value) tuples
+        )
+
         # NOTE: Alternative ACL format patterns (ACL_FILTER_PATTERN, ACL_CONSTRAINT_PATTERN) REMOVED
         # OUD only handles RFC 4876 ACI format - Alternative format data comes pre-converted via RFC Entry Model
 
@@ -380,15 +399,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # =====================================================================
         # OUD categorization uses standard RFC objectClasses
         # Priority: users → hierarchy → groups → acl
-
-        # Categorization priority (standard RFC order)
-        CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
-            "users",  # User accounts first
-            "hierarchy",  # Structural containers (ou, o, dc)
-            "groups",  # Groups
-            "acl",  # ACL entries
-        ]
-
         # ObjectClasses for each category (RFC-compliant)
         CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
             "users": frozenset(
@@ -430,6 +440,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 "aci",  # RFC 4876 ACI
             ],
         )
+
+        # Categorization priority order for OUD
+        # Schema first (always), then acl (OUD-specific ACL attributes), then users, hierarchy, groups, rejected
+        CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+            "schema",
+            "acl",
+            "users",
+            "hierarchy",
+            "groups",
+            "rejected",
+        ]
 
         # =====================================================================
         # DETECTION PATTERNS - Server type detection rules
@@ -743,7 +764,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
     @staticmethod
     def _get_oud_schema_quirk(
         parent_quirk: object | None,
-    ) -> FlextLdifServersBase.Schema:
+    ) -> FlextLdifProtocols.Quirks.SchemaProtocol:
         """Get OUD schema_quirk from parent or create new instance.
 
         Extracted helper to reduce complexity of _write_entry_modify_add_format_helper.
@@ -2026,155 +2047,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Replace quoted SYNTAX OID with unquoted version
             return syntax_pattern.sub(r"SYNTAX \1", value)
 
-        def _write_entry_modify_add_format(
-            self,
-            entry_data: FlextLdifModels.Entry,
-            allowed_schema_oids: frozenset[str] | None = None,
-        ) -> FlextResult[str]:
-            """Write schema entry in OUD modify-add format.
-
-            Delegates to shared helper method to avoid code duplication.
-            See FlextLdifServersOud._write_entry_modify_add_format_helper for full documentation.
-
-            Args:
-                entry_data: Schema entry to write
-                allowed_schema_oids: Optional set of allowed OIDs for filtering
-
-            Returns:
-                FlextResult with LDIF string (multiple entries, one per schema element)
-
-            """
-            # Get parent_quirk from Entry instance (set during __init__ in base.py)
-            # If not available, create new OUD instance to access schema_quirk
-            parent_quirk: object | None = getattr(self, "parent_quirk", None)
-            if parent_quirk is None:
-                parent_quirk = getattr(self, "_parent_quirk", None)
-            if parent_quirk is None:
-                # Fallback: create OUD instance to access schema_quirk
-                parent_quirk = FlextLdifServersOud()
-
-            return FlextLdifServersOud._write_entry_modify_add_format_helper(
-                entry_data,
-                allowed_schema_oids,
-                parent_quirk,
-            )
-
-        def _comment_acl_attributes(
-            self,
-            entry_data: FlextLdifModels.Entry,
-            acl_attr_names: frozenset[str],
-        ) -> FlextLdifModels.Entry:
-            """Move ACL attributes to metadata (RFC will comment them).
-
-            Moves ACL attributes from entry.attributes to entry_metadata[REMOVED_ATTRIBUTES_WITH_VALUES].
-            For entries with ACL transformations (from any source server), uses normalized attribute name.
-            The RFC layer's write_removed_attributes_as_comments feature will then write
-            them as commented lines in the LDIF output.
-
-            Args:
-                entry_data: Entry to process
-                acl_attr_names: Set of ACL attribute names to comment (e.g., {'aci'})
-
-            Returns:
-                New Entry with ACL attributes moved to metadata using original names from transformations
-
-            """
-            return FlextLdifServersOud._comment_acl_attributes_static(
-                entry_data,
-                acl_attr_names,
-            )
-
-        def _separate_acl_attributes(
-            self,
-            attrs_dict: dict[str, list[str]],
-            acl_attr_names: frozenset[str],
-        ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
-            """Separate ACL attributes from regular attributes."""
-            return FlextLdifServersOud._separate_acl_attributes_static(
-                attrs_dict,
-                acl_attr_names,
-            )
-
-        def _resolve_acl_original_names(
-            self,
-            entry_data: FlextLdifModels.Entry,
-            acl_attrs: dict[str, list[str]],
-        ) -> dict[str, list[str]]:
-            """Resolve original ACL attribute names from metadata transformations."""
-            return FlextLdifServersOud._resolve_acl_original_names_static(
-                entry_data,
-                acl_attrs,
-            )
-
-        def _create_entry_metadata_with_acl_comments(
-            self,
-            entry_metadata: dict[str, object] | None,
-            acl_attrs: dict[str, list[str]],
-        ) -> dict[str, object]:
-            """Create entry metadata with ACL attributes marked for commenting."""
-            return FlextLdifServersOud._create_entry_metadata_with_acl_comments_static(
-                entry_metadata,
-                acl_attrs,
-            )
-
-        def _create_entry_with_acl_comments(
-            self,
-            entry_data: FlextLdifModels.Entry,
-            remaining_attrs: dict[str, list[str]],
-            new_entry_metadata: dict[str, object],
-        ) -> FlextLdifModels.Entry:
-            """Create new entry with ACL attributes moved to metadata."""
-            return FlextLdifServersOud._create_entry_with_acl_comments_static(
-                entry_data,
-                remaining_attrs,
-                new_entry_metadata,
-            )
-
-        def _validate_aci_macros(self, aci_value: str) -> FlextResult[bool]:
-            """Validate OUD ACI macro consistency rules."""
-            return FlextLdifServersOud._validate_aci_macros_static(aci_value)
-
-        def _correct_rfc_syntax_in_attributes(
-            self,
-            attrs_dict: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Correct RFC syntax issues in attribute values (syntax only, not structure)."""
-            return FlextLdifServersOud._correct_rfc_syntax_in_attributes_static(
-                attrs_dict,
-            )
-
-        def _hook_pre_write_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Hook: Validate and CORRECT RFC syntax issues before writing Entry.
-
-            This hook ensures that Entry data with RFC-valid syntax is properly
-            formatted for OUD LDIF output. It does NOT alter data structure
-            (attributes, objectClasses, etc.) - only corrects syntax/formatting.
-
-            Corrections applied:
-            1. Validate ACI macros (syntax validation)
-            2. Ensure attribute values are properly encoded (RFC 2849)
-            3. Normalize string values to valid UTF-8 (RFC 2849 requirement)
-            4. Ensure all values are strings (convert non-strings)
-
-            IMPORTANT: Does NOT remove attributes, objectClasses, or alter data structure.
-            All data is preserved - only syntax/formatting is corrected.
-
-            Args:
-                entry: RFC Entry (already canonical, with aci: attributes)
-
-            Returns:
-                FlextResult[Entry] - entry with corrected syntax, fail() if syntax errors
-
-            """
-            return FlextLdifServersOud._hook_pre_write_entry_static(
-                entry,
-                self._validate_aci_macros,
-                self._correct_rfc_syntax_in_attributes,
-            )
-
         def _filter_and_sort_schema_values(
             self,
             values: list[str],
@@ -2187,122 +2059,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 allowed_oids=allowed_oids,
                 oid_pattern=oid_pattern,
             )
-
-        def _finalize_and_parse_entry(
-            self,
-            entry_dict: dict[str, object],
-            entries_list: list[FlextLdifModels.Entry],
-        ) -> None:
-            """Finalize entry dict and parse into entries list.
-
-            Args:
-                entry_dict: Entry dictionary with DN and attributes
-                entries_list: Target list to append parsed Entry models
-
-            """
-            if FlextLdifConstants.DictKeys.DN not in entry_dict:
-                return
-
-            dn = str(entry_dict.pop(FlextLdifConstants.DictKeys.DN))
-            # Use Entry quirk's parse_entry method via parent quirk
-            # Access entry_quirk from parent (Schema) instance using public property
-            parent_quirk = getattr(self, "parent_quirk", None)
-            if parent_quirk and hasattr(parent_quirk, "entry_quirk"):
-                # Use public entry_quirk property
-                entry_quirk = parent_quirk.entry_quirk
-                # Convert entry_dict to proper format for parse_entry
-                entry_attrs: dict[str, list[str]] = {
-                    k: [str(v)]
-                    if not FlextRuntime.is_list_like(v)
-                    else [str(item) for item in v]
-                    for k, v in entry_dict.items()
-                }
-                # Use public parse_entry method
-                result = entry_quirk.parse_entry(dn, entry_attrs)
-                if result.is_success:
-                    entries_list.append(result.unwrap())
-
-        def extract_entries_from_ldif(
-            self,
-            ldif_content: str,
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
-            """Extract and parse all directory entries from LDIF content.
-
-            Strategy pattern: OUD-specific approach to extract entries from LDIF.
-
-            Args:
-                ldif_content: Raw LDIF content containing directory entries
-
-            Returns:
-                FlextResult with list of parsed Entry models (RFC canonical)
-
-            """
-            try:
-                entries: list[FlextLdifModels.Entry] = []
-                current_entry: dict[str, object] = {}
-                current_attr: str | None = None
-                current_values: list[str] = []
-
-                for line in ldif_content.split("\n"):
-                    # Empty line indicates end of entry
-                    if not line.strip():
-                        if current_entry:
-                            # Finalize and process entry
-                            FlextLdifUtilities.Parser.finalize_pending_attribute(
-                                current_attr,
-                                current_values,
-                                current_entry,
-                            )
-                            self._finalize_and_parse_entry(current_entry, entries)
-                            current_entry = {}
-                            current_attr = None
-                            current_values = []
-                        continue
-
-                    # Skip comments
-                    if line.startswith("#"):
-                        continue
-
-                    # Continuation line (starts with space)
-                    if line.startswith(" ") and current_attr and current_values:
-                        current_values[-1] += line[1:]  # Remove leading space
-                        continue
-
-                    # Process new attribute line using utility
-                    current_attr, current_values = (
-                        FlextLdifUtilities.Parser.process_ldif_attribute_line(
-                            line,
-                            current_attr,
-                            current_values,
-                            current_entry,
-                        )
-                    )
-
-                # Process final entry
-                if current_entry:
-                    FlextLdifUtilities.Parser.finalize_pending_attribute(
-                        current_attr,
-                        current_values,
-                        current_entry,
-                    )
-                    self._finalize_and_parse_entry(current_entry, entries)
-
-                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-            except Exception as e:
-                logger.exception(
-                    "OUD entry extraction failed",
-                )
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"OUD entry extraction failed: {e}",
-                )
-
-        def _inject_validation_rules(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextLdifModels.Entry:
-            """Inject OUD-specific validation rules into Entry metadata via DI."""
-            return FlextLdifServersOud._inject_validation_rules_static(entry)
 
     class Acl(FlextLdifServersRfc.Acl):
         """Oracle OUD ACL quirk (nested).
@@ -2519,7 +2275,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # OUD-specific simple privilege names (config-read, password-reset, etc.)
             return self._parse_ds_privilege_name(normalized)
 
-        def _parse_aci_format(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        def _parse_aci_format(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:  # noqa: C901
             """Parse RFC 4876 ACI format using functional composition.
 
             Normalizes OUD ACI (Access Control Instruction) format to RFC-compliant
@@ -2589,6 +2345,75 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     FlextLdifServersOud.Constants.ACL_TARGETSCOPE_PATTERN,
                     group=1,
                 )
+
+                # Extract OUD advanced features (RFC 4876 extensions validated against Oracle OUD documentation)
+                # targattrfilters: Attribute value filtering
+                context["targattrfilters"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_TARGATTRFILTERS_PATTERN,
+                    group=1,
+                )
+
+                # targetcontrol: LDAP control OID targeting
+                context["targetcontrol"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_TARGETCONTROL_PATTERN,
+                    group=1,
+                )
+
+                # extop: Extended operation OID
+                context["extop"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_EXTOP_PATTERN,
+                    group=1,
+                )
+
+                # Bind rules (network and security restrictions)
+                # IP-based bind rule
+                context["bind_ip"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_IP_PATTERN,
+                    group=1,
+                )
+
+                # DNS-based bind rule
+                context["bind_dns"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_DNS_PATTERN,
+                    group=1,
+                )
+
+                # Day-of-week bind rule
+                context["bind_dayofweek"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_DAYOFWEEK_PATTERN,
+                    group=1,
+                )
+
+                # Time-of-day bind rule (captures operator and value)
+                timeofday_match = re.search(
+                    FlextLdifServersOud.Constants.ACL_TIMEOFDAY_PATTERN,
+                    aci_content,
+                )
+                if timeofday_match:
+                    context["bind_timeofday"] = (
+                        f"{timeofday_match.group(1)}{timeofday_match.group(2)}"
+                    )
+
+                # Authentication method bind rule
+                context["authmethod"] = FlextLdifUtilities.ACL.extract_component(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_AUTHMETHOD_PATTERN,
+                    group=1,
+                )
+
+                # Security Strength Factor (SSF) bind rule (captures operator and value)
+                ssf_match = re.search(
+                    FlextLdifServersOud.Constants.ACL_SSF_PATTERN,
+                    aci_content,
+                )
+                if ssf_match:
+                    context["ssf"] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
 
                 # Extract version and ACL name
                 version_match = re.search(
@@ -2673,7 +2498,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     f"Failed to parse OUD ds-privilege-name: {e}",
                 )
 
-        def _build_acl_model(
+        def _build_acl_model(  # noqa: C901
             self,
             context: dict[str, object],
         ) -> FlextResult[FlextLdifModels.Acl]:
@@ -2737,6 +2562,42 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 extensions = FlextLdifUtilities.ACL.build_metadata_extensions(
                     metadata_config,
                 )
+
+                # Add OUD advanced features to extensions (RFC 4876 extensions validated against Oracle OUD documentation)
+                if context.get("targattrfilters"):
+                    extensions[
+                        FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+                    ] = context["targattrfilters"]
+                if context.get("targetcontrol"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_TARGET_CONTROL] = (
+                        context["targetcontrol"]
+                    )
+                if context.get("extop"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_EXTOP] = context[
+                        "extop"
+                    ]
+                if context.get("bind_ip"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_BIND_IP] = context[
+                        "bind_ip"
+                    ]
+                if context.get("bind_dns"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_BIND_DNS] = context[
+                        "bind_dns"
+                    ]
+                if context.get("bind_dayofweek"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_BIND_DAYOFWEEK] = (
+                        context["bind_dayofweek"]
+                    )
+                if context.get("bind_timeofday"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY] = (
+                        context["bind_timeofday"]
+                    )
+                if context.get("authmethod"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_AUTHMETHOD] = (
+                        context["authmethod"]
+                    )
+                if context.get("ssf"):
+                    extensions[FlextLdifConstants.MetadataKeys.ACL_SSF] = context["ssf"]
 
                 # Create Acl model using functional composition
                 return self._create_acl_from_context(
@@ -3215,7 +3076,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 base_dn=base_dn,
             )
 
-        def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+        def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:  # noqa: C901
             """Write RFC-compliant ACL model to OUD ACI string format.
 
             Serializes the RFC-compliant internal model to Oracle OUD ACI format string,
@@ -3270,6 +3131,26 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Target attributes using helper
                 aci_parts.append(self._build_aci_target(acl_data))
 
+                # Add OUD target extensions from metadata (RFC 4876 extensions validated against Oracle OUD documentation)
+                if acl_data.metadata and acl_data.metadata.extensions:
+                    # targattrfilters: Attribute value filtering
+                    if targattrfilters := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS,
+                    ):
+                        aci_parts.append(f'(targattrfilters="{targattrfilters}")')
+
+                    # targetcontrol: LDAP control OID targeting
+                    if targetcontrol := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_TARGET_CONTROL,
+                    ):
+                        aci_parts.append(f'(targetcontrol="{targetcontrol}")')
+
+                    # extop: Extended operation OID
+                    if extop := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_EXTOP,
+                    ):
+                        aci_parts.append(f'(extop="{extop}")')
+
                 # Version and ACL name
                 acl_name = (
                     acl_data.name or FlextLdifServersOud.Constants.ACL_DEFAULT_NAME
@@ -3290,6 +3171,71 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     return FlextResult[str].fail(
                         "ACL subject DN was filtered out by base_dn",
                     )
+
+                # Add OUD bind rules from metadata (RFC 4876 extensions validated against Oracle OUD documentation)
+                if acl_data.metadata and acl_data.metadata.extensions:
+                    bind_rules: list[str] = []
+
+                    # ip: IP/CIDR filtering
+                    if bind_ip := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_BIND_IP,
+                    ):
+                        bind_rules.append(f'ip="{bind_ip}"')
+
+                    # dns: DNS pattern matching
+                    if bind_dns := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_BIND_DNS,
+                    ):
+                        bind_rules.append(f'dns="{bind_dns}"')
+
+                    # dayofweek: Day restrictions
+                    if bind_dayofweek := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_BIND_DAYOFWEEK,
+                    ):
+                        bind_rules.append(f'dayofweek="{bind_dayofweek}"')
+
+                    # timeofday: Time restrictions (stored as tuple: (operator, value))
+                    if bind_timeofday := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY,
+                    ):
+                        # Handle both tuple format (operator, value) and string format
+                        if (
+                            isinstance(bind_timeofday, tuple)
+                            and len(bind_timeofday)
+                            == FlextLdifServersOud.Constants.ACL_BIND_RULE_TUPLE_LENGTH
+                        ):
+                            operator, value = bind_timeofday
+                            bind_rules.append(f'timeofday {operator} "{value}"')
+                        else:
+                            bind_rules.append(f'timeofday = "{bind_timeofday}"')
+
+                    # authmethod: Required auth method
+                    if authmethod := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_AUTHMETHOD,
+                    ):
+                        bind_rules.append(f'authmethod = "{authmethod}"')
+
+                    # ssf: Security Strength Factor threshold (stored as tuple: (operator, value))
+                    if ssf := acl_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.ACL_SSF,
+                    ):
+                        # Handle both tuple format (operator, value) and string format
+                        if (
+                            isinstance(ssf, tuple)
+                            and len(ssf)
+                            == FlextLdifServersOud.Constants.ACL_BIND_RULE_TUPLE_LENGTH
+                        ):
+                            operator, value = ssf
+                            bind_rules.append(f'ssf {operator} "{value}"')
+                        else:
+                            bind_rules.append(f'ssf >= "{ssf}"')
+
+                    # If we have bind rules, append them to subject_str
+                    if bind_rules:
+                        # Remove trailing ";)" from subject_str
+                        subject_str = subject_str.rstrip(";)")
+                        # Append bind rules with " and " connector
+                        subject_str = f"{subject_str} and {' and '.join(bind_rules)};)"
 
                 aci_parts.extend(
                     [
@@ -4159,19 +4105,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Schema entry DN can be: cn=subschemasubentry, cn=subschema, or cn=schema
             return "cn=subschema" in dn_lower or dn_lower.startswith("cn=schema")
 
-        def _filter_and_sort_schema_values(
-            self,
-            values: list[str],
-            allowed_oids: set[str] | None,
-            oid_pattern: re.Pattern[str],
-        ) -> list[tuple[tuple[int, ...], str]]:
-            """Filter schema values by whitelist and sort by OID."""
-            return FlextLdifUtilities.OID.filter_and_sort_by_oid(
-                values,
-                allowed_oids=allowed_oids,
-                oid_pattern=oid_pattern,
-            )
-
         def _write_entry_modify_add_format(
             self,
             entry_data: FlextLdifModels.Entry,
@@ -4826,7 +4759,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         def write(
             self,
-            entry: FlextLdifModels.Entry,
+            entry_data: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
             write_options: FlextLdifModels.WriteFormatOptions | None = None,
         ) -> FlextResult[str]:
             r"""Public API: Write OUD entry to LDIF format.
@@ -4838,14 +4771,36 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             2. Call parent RFC._write_entry() to handle LDIF output (including modify format)
 
             Args:
-                entry: Entry model object (RFC canonical from parsing)
+                entry_data: Entry model object (RFC canonical from parsing)
 
             Returns:
                 FlextResult with LDIF formatted entry string
 
             """
+            # Handle list of entries by delegating to parent
+            if isinstance(entry_data, list):
+                if self.parent_quirk is not None and hasattr(
+                    self.parent_quirk, "write"
+                ):
+                    return self.parent_quirk.write(entry_data, write_options)
+                # Fallback: write each entry and join
+                results: list[str] = []
+                for entry in entry_data:
+                    result = self.write(entry, write_options)
+                    if result.is_success:
+                        unwrapped = result.unwrap()
+                        if isinstance(unwrapped, str):
+                            results.append(unwrapped)
+                    else:
+                        return result
+                return FlextResult[str].ok("\n\n".join(results))
+
+            # Cast entry_data to Entry model for type safety
+            entry_model = cast("FlextLdifModels.Entry", entry_data)
+            write_opts = write_options
+
             # Step 1: Apply pre-write hook for OUD-specific normalization
-            hook_result = self._hook_pre_write_entry(entry)
+            hook_result = self._hook_pre_write_entry(entry_model)
             if hook_result.is_failure:
                 return FlextResult[str].fail(
                     f"Pre-write hook failed: {hook_result.error}",
@@ -4854,8 +4809,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             normalized_entry = hook_result.unwrap()
 
             # Step 2: Check if modify format is requested
-            if write_options and write_options.ldif_changetype == "modify":
-                return self._write_entry_modify_format(normalized_entry, write_options)
+            if write_opts and write_opts.ldif_changetype == "modify":
+                return self._write_entry_modify_format(normalized_entry, write_opts)
 
             # Step 3: Call OUD _write_entry() which handles schema entries specially
             # For schema entries, uses modify-add format

@@ -19,7 +19,7 @@ from typing import cast
 from flext_core import FlextResult, T
 from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdifModels, FlextLdifTypes
 
 from .test_factories import FlextLdifTestFactories
 
@@ -164,10 +164,12 @@ class TestAssertions:
 
     @staticmethod
     def assert_parse_success(
-        result: FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry] | str],
+        result: FlextLdifTypes.ParseResult,
         expected_count: int | None = None,
     ) -> list[FlextLdifModels.Entry]:
         """Assert parse result is success and return entries.
+
+        Uses unified result extraction to reduce type guards and custom conversion code.
 
         Args:
             result: Parse result
@@ -184,49 +186,10 @@ class TestAssertions:
         if isinstance(unwrapped, str):
             msg = "Parse returned string instead of entries"
             raise AssertionError(msg)
-        # Handle ParseResponse objects
-        entries: list[FlextLdifModels.Entry]
-        # Check if unwrapped has entries attribute (ParseResponse-like)
-        if hasattr(unwrapped, "entries"):
-            # unwrapped is ParseResponse-like object - use protocol for type safety
-            from flext_ldif.protocols import FlextLdifProtocols
 
-            if isinstance(unwrapped, FlextLdifProtocols.Services.HasEntriesProtocol):
-                entries_raw = unwrapped.entries
-                if isinstance(entries_raw, list):
-                    entries = [
-                        entry
-                        for entry in entries_raw
-                        if isinstance(entry, FlextLdifModels.Entry)
-                    ]
-                elif isinstance(entries_raw, FlextLdifModels.Entry):
-                    entries = [entries_raw]
-                else:
-                    msg = "Parse returned unexpected entry type"
-                    raise AssertionError(msg)
-            else:
-                # Fallback for objects with entries attribute but not protocol
-                entries_raw = unwrapped.entries
-                if isinstance(entries_raw, list):
-                    entries = [
-                        entry
-                        for entry in entries_raw
-                        if isinstance(entry, FlextLdifModels.Entry)
-                    ]
-                elif isinstance(entries_raw, FlextLdifModels.Entry):
-                    entries = [entries_raw]
-                else:
-                    msg = "Parse returned unexpected entry type"
-                    raise AssertionError(msg)
-        elif isinstance(unwrapped, list):
-            entries = [
-                entry for entry in unwrapped if isinstance(entry, FlextLdifModels.Entry)
-            ]
-        elif isinstance(unwrapped, FlextLdifModels.Entry):
-            entries = [unwrapped]
-        else:
-            msg = "Parse returned unexpected type"
-            raise AssertionError(msg)
+        # Use unified extraction to handle all result types
+        entries = FlextLdifTypes.ResultExtractors.extract_entries(unwrapped)
+
         if expected_count is not None:
             assert len(entries) == expected_count, (
                 f"Expected {expected_count} entries, got {len(entries)}"
@@ -236,10 +199,12 @@ class TestAssertions:
 
     @staticmethod
     def assert_write_success(
-        result: FlextResult[T],
+        result: FlextLdifTypes.WriteResult,
         expected_content: str | None = None,
     ) -> str:
         """Assert write result is success and return LDIF string.
+
+        Uses unified result extraction to reduce type guards.
 
         Args:
             result: Write result
@@ -252,8 +217,11 @@ class TestAssertions:
             AssertionError: If write failed
 
         """
-        ldif = TestAssertions.assert_success(result, "Write should succeed")
-        assert isinstance(ldif, str), "Write should return string"
+        unwrapped = TestAssertions.assert_success(result, "Write should succeed")
+
+        # Use unified extraction to handle all result types
+        ldif = FlextLdifTypes.ResultExtractors.extract_content(unwrapped)
+
         if expected_content:
             assert expected_content in ldif, (
                 f"Expected content '{expected_content}' not found in LDIF"

@@ -55,20 +55,31 @@ mail: railway@example.com
 
     # Railway-oriented composition - errors propagate automatically
     # Each operation returns FlextResult, enabling fluent chaining
-    result = (
-        api.parse(ldif_content)
-        .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
-        .flat_map(
-            lambda entries: api.analyze(entries).map(lambda stats: (entries, stats)),
-        )
-        .flat_map(lambda data: api.write(data[0]).map(lambda ldif: (ldif, data[1])))
-    )
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_failure:
+        return
+
+    entries = parse_result.unwrap()
+
+    validate_result = api.validate_entries(entries)
+    if validate_result.is_failure:
+        return
+
+    analyze_result = api.analyze(entries)
+    if analyze_result.is_failure:
+        return
+
+    stats = analyze_result.unwrap()
+
+    write_result = api.write(entries)
+    if write_result.is_failure:
+        return
+
+    _ldif_output = write_result.unwrap()
 
     # Handle final result
-    if result.is_success:
-        _ldif_output, stats = result.unwrap()
-        # stats is EntryAnalysisResult model, access attributes directly
-        getattr(stats, "total_entries", 0)
+    # stats is EntryAnalysisResult model, access attributes directly
+    getattr(stats, "total_entries", 0)
 
 
 def configuration_from_env_example() -> None:
@@ -361,7 +372,7 @@ def batch_processing_workflow() -> None:
     # Create large dataset
     entries: list[FlextLdifModels.Entry] = []
     for i in range(20):
-        result = api.models.Entry.create(
+        result = api.create_entry(
             dn=f"cn=BatchUser{i},ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
@@ -370,7 +381,7 @@ def batch_processing_workflow() -> None:
             },
         )
         if result.is_success:
-            entries.append(cast("FlextLdifModels.Entry", result.unwrap()))
+            entries.append(result.unwrap())
 
     # Validate all entries
     validation_result = api.validate_entries(entries)
@@ -427,7 +438,7 @@ def access_all_namespace_classes() -> None:
     # processor = api.processors.get_processors()
 
     # Access Config
-    encoding = api.config.ldif_encoding
+    encoding = api.config.ldif.ldif_encoding
     max_workers = api.config.max_workers
 
     _ = (

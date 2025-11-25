@@ -22,11 +22,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextRuntime
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
@@ -35,7 +35,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
+class FlextLdifAcl(LdifServiceBase):
     """Unified ACL management service.
 
     Provides ACL parsing via quirks and direct context evaluation.
@@ -77,6 +77,12 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
             - Uses FlextResult for error handling - no None returns
 
         """
+        # Validate entry is not None before processing
+        if entry is None:
+            return FlextResult[FlextLdifModels.AclResponse].fail(
+                "Entry cannot be None",
+            )
+
         # Get ACL attribute name for this server type (from quirk)
         acl_attribute_result = self._get_acl_attribute_for_server(server_type)
 
@@ -99,12 +105,6 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                         acl_attribute_name=None,
                     ),
                 ),
-            )
-
-        # Validate entry is not None
-        if entry is None:
-            return FlextResult[FlextLdifModels.AclResponse].fail(
-                "Entry cannot be None",
             )
 
         # Type annotation guarantees entry is not None after validation
@@ -213,7 +213,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
     @override
     @FlextDecorators.log_operation("acl_service_health_check")
     @FlextDecorators.track_performance()
-    def execute(self, **kwargs: object) -> FlextResult[FlextLdifModels.AclResponse]:
+    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.AclResponse]:
         """Execute ACL service health check.
 
         Args:
@@ -267,32 +267,31 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
 
             # Delegate to quirk for parsing - NO FALLBACK
             # If the quirk can't parse it, the parsing fails
-            # Type guard: registry returns quirk with parse method
-            if hasattr(acl, "parse"):
-                # Use cast() to guide type checker - runtime hasattr already verified
-                acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", acl)
-                parse_result = acl_typed.parse(acl_string)
-                # Type narrowing: parse returns FlextResult[object], but we know it's Acl
-                if parse_result.is_success:
-                    parsed_acl = parse_result.unwrap()
-                    if isinstance(parsed_acl, FlextLdifModels.Acl):
-                        return FlextResult[FlextLdifModels.Acl].ok(parsed_acl)
-                    return FlextResult[FlextLdifModels.Acl].fail(
-                        f"ACL parse returned unexpected type: {type(parsed_acl).__name__}",
-                    )
-                self.logger.warning(
-                    "Failed to parse ACL",
-                    server_type=server_type,
-                    error=str(parse_result.error),
-                    acl_preview=acl_string[: FlextLdifConstants.ACI_PREVIEW_LENGTH]
-                    if len(acl_string) > FlextLdifConstants.ACI_PREVIEW_LENGTH
-                    else acl_string,
-                )
+            # Validate protocol compliance using isinstance
+            if not isinstance(acl, FlextLdifProtocols.Quirks.AclProtocol):
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    parse_result.error or "Unknown error",
+                    f"ACL quirk for {server_type} does not implement AclProtocol",
                 )
+            # acl is now typed as AclProtocol - no cast needed
+            parse_result = acl.parse(acl_string)
+            # Type narrowing: parse returns FlextResult[Acl]
+            if parse_result.is_success:
+                parsed_acl = parse_result.unwrap()
+                if isinstance(parsed_acl, FlextLdifModels.Acl):
+                    return FlextResult[FlextLdifModels.Acl].ok(parsed_acl)
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    f"ACL parse returned unexpected type: {type(parsed_acl).__name__}",
+                )
+            self.logger.warning(
+                "Failed to parse ACL",
+                server_type=server_type,
+                error=str(parse_result.error),
+                acl_preview=acl_string[: FlextLdifConstants.ACI_PREVIEW_LENGTH]
+                if len(acl_string) > FlextLdifConstants.ACI_PREVIEW_LENGTH
+                else acl_string,
+            )
             return FlextResult[FlextLdifModels.Acl].fail(
-                f"ACL quirk for {server_type} does not implement parse method",
+                parse_result.error or "Unknown error",
             )
 
         except (ValueError, TypeError, AttributeError) as e:
@@ -300,7 +299,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                 f"ACL parsing failed for {server_type}: {e}",
             )
 
-    def convert_acl_attributes_to_aci(
+    def convert_acl_attributes_to_aci(  # noqa: C901
         self,
         entry_data: dict[str, object],
         source_server: str,
@@ -363,14 +362,17 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                         f"No ACL quirk available for target server {target_server}",
                     )
 
-                # hasattr check ensures method exists - Protocol structural typing handles this
-                if hasattr(target_acl_quirk, "convert_rfc_acl_to_aci"):
-                    # target_acl_quirk satisfies AclProtocol via structural typing
-                    acl_protocol: FlextLdifProtocols.Quirks.AclProtocol = cast(
-                        "FlextLdifProtocols.Quirks.AclProtocol",
-                        target_acl_quirk,
+                # Validate protocol compliance first
+                if not isinstance(
+                    target_acl_quirk, FlextLdifProtocols.Quirks.AclProtocol
+                ):
+                    return FlextResult[dict[str, object]].fail(
+                        f"Target ACL quirk for {target_server} does not implement AclProtocol",
                     )
-                    aci_result = acl_protocol.convert_rfc_acl_to_aci(
+                # Check for optional method (not in base protocol, but some quirks implement it)
+                if hasattr(target_acl_quirk, "convert_rfc_acl_to_aci"):
+                    # target_acl_quirk is already typed as AclProtocol - no cast needed
+                    aci_result = target_acl_quirk.convert_rfc_acl_to_aci(
                         rfc_acl_attrs,
                         target_server,
                     )

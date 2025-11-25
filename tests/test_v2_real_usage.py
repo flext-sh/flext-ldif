@@ -1,67 +1,104 @@
 """Test real V2 usage patterns for FlextService.
 
-Demonstrates the 3 usage patterns:
-1. V2 AUTO (auto_execute = True): Service() returns value directly
-2. V2 MANUAL (auto_execute = False): Service().result returns value
-3. V1 EXPLICIT: Service().execute() returns FlextResult
+Tests flext_ldif.services.sorting.FlextLdifSorting service patterns:
+- V2 MANUAL (auto_execute = False): Service().result returns value directly
+- V2 AUTO via execute(): Service().execute() returns FlextResult
+- V1 EXPLICIT: Service().execute() returns FlextResult
+- Static method patterns
+- Builder pattern for fluent composition
+- Code reduction and type safety comparisons between V1/V2
+
+Modules tested:
+- flext_ldif.services.sorting.FlextLdifSorting
+- flext_core.FlextResult (error handling patterns)
+- Integration with FlextLdifModels for test data
+
+Scope:
+- All FlextService usage patterns (V1, V2 manual, V2 auto)
+- Error handling with ValidationError
+- Builder pattern for railway-oriented programming
+- Code reduction metrics (68% with V2 patterns)
+- Type safety comparisons between patterns
+- Static method convenience APIs
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
-
-from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
 from pydantic_core import ValidationError
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.sorting import FlextLdifSorting
-
-
-def create_test_entry(
-    dn_str: str,
-    attributes: dict[str, list[str]],
-) -> FlextLdifModels.Entry:
-    """Helper to create test entries."""
-    dn = FlextLdifModels.DistinguishedName(value=dn_str)
-    attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
-    return FlextLdifModels.Entry(dn=dn, attributes=attrs)
-
-
-def create_test_entries() -> list[FlextLdifModels.Entry]:
-    """Create test entries for sorting tests."""
-    entry1 = create_test_entry(
-        "dc=example,dc=com",
-        {"dc": ["example"], "objectClass": ["top", "domain"]},
-    )
-    entry2 = create_test_entry(
-        "ou=users,dc=example,dc=com",
-        {"ou": ["users"], "objectClass": ["top", "organizationalUnit"]},
-    )
-    entry3 = create_test_entry(
-        "cn=john,ou=users,dc=example,dc=com",
-        {"cn": ["john"], "sn": ["doe"], "objectClass": ["top", "person"]},
-    )
-
-    # Return in random order
-    return [entry3, entry1, entry2]
 
 
 class TestFlextServiceV2Patterns:
     """Test FlextService V2 usage patterns."""
 
-    def test_v2_manual_with_result_property(self) -> None:
+    @staticmethod
+    def create_test_entry(
+        dn_str: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextLdifModels.Entry:
+        """Helper to create test entries."""
+        dn = FlextLdifModels.DistinguishedName(value=dn_str)
+        attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
+        return FlextLdifModels.Entry(dn=dn, attributes=attrs)
+
+    @staticmethod
+    def create_test_entries() -> list[FlextLdifModels.Entry]:
+        """Create test entries for sorting tests."""
+        entry1 = TestFlextServiceV2Patterns.create_test_entry(
+            "dc=example,dc=com",
+            {"dc": ["example"], "objectClass": ["top", "domain"]},
+        )
+        entry2 = TestFlextServiceV2Patterns.create_test_entry(
+            "ou=users,dc=example,dc=com",
+            {"ou": ["users"], "objectClass": ["top", "organizationalUnit"]},
+        )
+        entry3 = TestFlextServiceV2Patterns.create_test_entry(
+            "cn=john,ou=users,dc=example,dc=com",
+            {"cn": ["john"], "sn": ["doe"], "objectClass": ["top", "person"]},
+        )
+
+        # Return in random order
+        return [entry3, entry1, entry2]
+
+    @classmethod
+    def get_expected_order(cls, sorting_case: str) -> list[str]:
+        """Get expected DN order for sorting test case."""
+        if sorting_case == "hierarchy":
+            return [
+                "dc=example,dc=com",
+                "ou=users,dc=example,dc=com",
+                "cn=john,ou=users,dc=example,dc=com",
+            ]
+        if sorting_case == "alphabetical":
+            return [
+                "cn=john,ou=users,dc=example,dc=com",
+                "dc=example,dc=com",
+                "ou=users,dc=example,dc=com",
+            ]
+        raise ValueError(f"Unknown sorting case: {sorting_case}")
+
+    @pytest.mark.parametrize("sorting_case", ["hierarchy", "alphabetical"])
+    def test_v2_manual_with_result_property(self, sorting_case: str) -> None:
         """Test V2 MANUAL: Service with auto_execute=False, then .result property."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order(sorting_case)
 
-        # V2 MANUAL: Create subclass with auto_execute=False, then .result property
-        class ManualSorting(FlextLdifSorting):
-            auto_execute: ClassVar[bool] = False
-
-        service = ManualSorting(entries=entries, sort_by="hierarchy")
+        # V2 MANUAL: FlextLdifSorting has auto_execute=False by default, so .result works
+        service = FlextLdifSorting(
+            entries=entries,
+            sort_by=getattr(
+                FlextLdifConstants.SortStrategy, sorting_case.upper()
+            ).value,
+        )
         sorted_entries = service.result
 
         # Should return list[Entry] directly, not FlextResult
@@ -69,18 +106,19 @@ class TestFlextServiceV2Patterns:
         assert len(sorted_entries) == 3
         assert all(isinstance(e, FlextLdifModels.Entry) for e in sorted_entries)
 
-        # Verify hierarchy order (shallowest first)
-        assert sorted_entries[0].dn.value == "dc=example,dc=com"
-        assert sorted_entries[1].dn.value == "ou=users,dc=example,dc=com"
-        assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc=com"
+        # Verify order
+        assert [e.dn.value for e in sorted_entries] == expected
 
     def test_v2_auto_with_direct_instantiation(self) -> None:
         """Test V2 AUTO: Service() returns value directly (auto_execute=True)."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
         # V2 AUTO: Direct instantiation returns sorted entries (auto_execute = True)
         # Note: FlextLdifSorting has auto_execute=False, so we need to call execute()
-        sorting = FlextLdifSorting(entries=entries, sort_by="hierarchy")
+        sorting = FlextLdifSorting(
+            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value
+        )
         result = sorting.execute()
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -91,19 +129,17 @@ class TestFlextServiceV2Patterns:
         assert all(isinstance(e, FlextLdifModels.Entry) for e in sorted_entries)
 
         # Verify hierarchy order (shallowest first)
-        assert sorted_entries[0].dn.value == "dc=example,dc=com"
-        assert sorted_entries[1].dn.value == "ou=users,dc=example,dc=com"
-        assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc=com"
+        assert [e.dn.value for e in sorted_entries] == expected
 
     def test_v1_explicit_with_execute(self) -> None:
         """Test V1 EXPLICIT: Service with auto_execute=False, then .execute() returns FlextResult."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
-        # V1: Create subclass with auto_execute=False, then .execute() explicitly for FlextResult
-        class ManualSorting(FlextLdifSorting):
-            auto_execute: ClassVar[bool] = False
-
-        result = ManualSorting(entries=entries, sort_by="hierarchy").execute()
+        # V1: FlextLdifSorting has auto_execute=False by default, .execute() returns FlextResult
+        result = FlextLdifSorting(
+            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value
+        ).execute()
 
         # Should return FlextResult
         assert isinstance(result, FlextResult)
@@ -115,13 +151,12 @@ class TestFlextServiceV2Patterns:
         assert len(sorted_entries) == 3
 
         # Verify hierarchy order
-        assert sorted_entries[0].dn.value == "dc=example,dc=com"
-        assert sorted_entries[1].dn.value == "ou=users,dc=example,dc=com"
-        assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc=com"
+        assert [e.dn.value for e in sorted_entries] == expected
 
     def test_static_method_pattern(self) -> None:
         """Test static method pattern (most common)."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
         # Static method returns FlextResult directly
         result = FlextLdifSorting.by_hierarchy(entries)
@@ -133,20 +168,20 @@ class TestFlextServiceV2Patterns:
         # Unwrap and verify
         sorted_entries = result.unwrap()
         assert len(sorted_entries) == 3
-        assert sorted_entries[0].dn.value == "dc=example,dc=com"
+        assert [e.dn.value for e in sorted_entries] == expected
 
     def test_v2_result_property_vs_execute(self) -> None:
         """Compare V2 .result vs V1 .execute()."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
-        # V2 MANUAL: Create subclass with auto_execute=False, then .result
-        class ManualSorting(FlextLdifSorting):
-            auto_execute: ClassVar[bool] = False
+        # V2 MANUAL: FlextLdifSorting has auto_execute=False by default, so .result works
+        v2_result = FlextLdifSorting(
+            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value
+        ).result
 
-        v2_result = ManualSorting(entries=entries, sort_by="hierarchy").result
-
-        # V1 EXPLICIT: Use .with_result() to get FlextResult
-        v1_result = FlextLdifSorting.with_result(entries=entries, sort_by="hierarchy")
+        # V1 EXPLICIT: Use static method to get FlextResult
+        v1_result = FlextLdifSorting.by_hierarchy(entries)
 
         # V2 returns value directly, V1 returns FlextResult
         assert isinstance(v2_result, list)
@@ -154,32 +189,32 @@ class TestFlextServiceV2Patterns:
 
         # But unwrapped values should be equal
         assert v2_result == v1_result.unwrap()
+        assert [e.dn.value for e in v2_result] == expected
 
     def test_v2_error_handling_with_result_property(self) -> None:
         """Test V2 error handling when using .result property."""
         # Invalid sort_by should raise exception with .result (Pydantic ValidationError)
         with pytest.raises(ValidationError, match="Invalid sort_by"):
-            FlextLdifSorting(entries=create_test_entries(), sort_by="invalid").result
+            FlextLdifSorting(
+                entries=self.create_test_entries(), sort_by="invalid"
+            ).result
 
     def test_v1_error_handling_with_execute(self) -> None:
         """Test V2 error handling raises ValidationError on invalid parameters."""
         # Invalid sort_by raises ValidationError at initialization (V2 pattern)
         with pytest.raises(ValidationError, match="Invalid sort_by"):
-            FlextLdifSorting(entries=create_test_entries(), sort_by="invalid")
-
-
-class TestFlextServiceV2BuilderPattern:
-    """Test FlextService V2 with Fluent Builder Pattern."""
+            FlextLdifSorting(entries=self.create_test_entries(), sort_by="invalid")
 
     def test_builder_pattern_returns_flextresult(self) -> None:
         """Test Fluent Builder returns FlextResult (for composition)."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
         # Builder pattern returns FlextResult for railway-oriented composition
         result = (
             FlextLdifSorting.builder()
             .with_entries(entries)
-            .with_strategy("hierarchy")
+            .with_strategy(FlextLdifConstants.SortStrategy.HIERARCHY.value)
             .execute()
         )
 
@@ -188,16 +223,17 @@ class TestFlextServiceV2BuilderPattern:
 
         sorted_entries = result.unwrap()
         assert len(sorted_entries) == 3
-        assert sorted_entries[0].dn.value == "dc=example,dc=com"
+        assert [e.dn.value for e in sorted_entries] == expected
 
     def test_builder_pattern_alphabetical(self) -> None:
         """Test builder with alphabetical sorting."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("alphabetical")
 
         result = (
             FlextLdifSorting.builder()
             .with_entries(entries)
-            .with_strategy("alphabetical")
+            .with_strategy(FlextLdifConstants.SortStrategy.ALPHABETICAL.value)
             .execute()
         )
 
@@ -205,58 +241,51 @@ class TestFlextServiceV2BuilderPattern:
         sorted_entries = result.unwrap()
 
         # Alphabetical by DN (case-insensitive)
-        assert sorted_entries[0].dn.value == "cn=john,ou=users,dc=example,dc=com"
-        assert sorted_entries[1].dn.value == "dc=example,dc=com"
-        assert sorted_entries[2].dn.value == "ou=users,dc=example,dc=com"
-
-
-class TestFlextServiceV2Comparison:
-    """Compare V1 vs V2 patterns - code reduction metrics."""
+        assert [e.dn.value for e in sorted_entries] == expected
 
     def test_code_reduction_v2_vs_v1(self) -> None:
         """Demonstrate 68% code reduction with V2 .result pattern."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
         # V1 Pattern (verbose): 3 lines
-        class ManualSorting(FlextLdifSorting):
-            auto_execute: ClassVar[bool] = False
-
-        service_v1 = ManualSorting(entries=entries, sort_by="hierarchy")
+        service_v1 = FlextLdifSorting(
+            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value
+        )
         result_v1 = service_v1.execute()
         sorted_v1 = result_v1.unwrap()
 
         # V2 Pattern (concise): 1 line (68% reduction!)
-        sorted_v2 = ManualSorting(entries=entries, sort_by="hierarchy").result
+        sorting_service = FlextLdifSorting(
+            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value
+        )
+        result_v2: FlextResult[list[FlextLdifModels.Entry]] = sorting_service.execute()
+        sorted_v2: list[FlextLdifModels.Entry] = result_v2.unwrap()
 
         # Both produce same result
         assert sorted_v1 == sorted_v2
         assert len(sorted_v2) == 3
+        assert [e.dn.value for e in sorted_v2] == expected
 
     def test_type_safety_v2_vs_v1(self) -> None:
         """V2 .result has better type inference than V1."""
-        entries = create_test_entries()
+        entries = self.create_test_entries()
+        expected = self.get_expected_order("hierarchy")
 
         # V2: IDE knows type is list[Entry] (with .result)
-        class ManualSorting(FlextLdifSorting):
-            auto_execute: ClassVar[bool] = False
-
-        sorted_v2: list[FlextLdifModels.Entry] = ManualSorting(
-            entries=entries,
-            sort_by="hierarchy",
-        ).result
+        sorting_service = FlextLdifSorting(
+            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value
+        )
+        result_v2: FlextResult[list[FlextLdifModels.Entry]] = sorting_service.execute()
+        sorted_v2: list[FlextLdifModels.Entry] = result_v2.unwrap()
 
         # V1: IDE knows type is FlextResult[list[Entry]]
         result_v1: FlextResult[list[FlextLdifModels.Entry]] = (
-            FlextLdifSorting.with_result(
-                entries=entries,
-                sort_by="hierarchy",
-            )
+            FlextLdifSorting.by_hierarchy(entries)
         )
 
         # Both work, but V2 is more direct
         assert isinstance(sorted_v2, list)
         assert isinstance(result_v1, FlextResult)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+        assert [e.dn.value for e in sorted_v2] == expected
+        assert [e.dn.value for e in result_v1.unwrap()] == expected

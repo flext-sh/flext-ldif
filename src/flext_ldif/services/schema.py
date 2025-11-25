@@ -37,16 +37,16 @@ References:
 
 from __future__ import annotations
 
-from typing import override
+from typing import Self, override
 
 from flext_core import FlextResult
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus]):
+class FlextLdifSchema(LdifServiceBase):
     """Unified schema validation and transformation service.
 
     Centralizes all schema-related operations that were previously scattered
@@ -139,7 +139,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         self.server_type = server_type
         return self
 
-    def build(self) -> FlextLdifSchema:
+    def build(self) -> Self:
         """Build and return schema service instance (fluent terminal).
 
         Returns:

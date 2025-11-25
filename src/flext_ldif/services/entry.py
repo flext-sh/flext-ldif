@@ -127,13 +127,13 @@ from typing import cast, override
 from flext_core import FlextResult
 from pydantic import Field
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifEntry(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
+class FlextLdifEntry(LdifServiceBase):
     """Universal entry transformation and cleanup service.
 
     Handles entry adaptation, DN cleaning, and attribute removal for
@@ -164,7 +164,7 @@ class FlextLdifEntry(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
     # ════════════════════════════════════════════════════════════════════════
 
     @override
-    def execute(self, **kwargs: object) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def execute(self, **_kwargs: object) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute entry transformation operation.
 
         Args:
@@ -290,6 +290,28 @@ class FlextLdifEntry(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             attributes_to_remove=attributes,
         ).execute()
 
+    @classmethod
+    def filter_entry_attributes(
+        cls,
+        entry: FlextLdifModels.Entry,
+        attributes_to_remove: list[str],
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove specified attributes from entry (alias for remove_attributes).
+
+        This method provides a filtering interface for attribute removal,
+        consolidating all attribute removal logic in the entry service
+        rather than in the filters service (SRP principle).
+
+        Args:
+            entry: Entry to filter
+            attributes_to_remove: List of attribute names to remove (case-insensitive)
+
+        Returns:
+            FlextResult with filtered entry
+
+        """
+        return cls.remove_attributes(entry, attributes_to_remove)
+
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN
     # ════════════════════════════════════════════════════════════════════════
@@ -383,11 +405,12 @@ class FlextLdifEntry(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         if not entry.dn:
             return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
 
-        adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
+        adapted_entry_result = cast(
+            "FlextResult[FlextLdifModels.Entry]",
             FlextLdifModels.Entry.create(
                 dn=entry.dn,
                 attributes=ldif_attributes,
-            ).map(lambda e: cast("FlextLdifModels.Entry", e))
+            ),
         )
 
         if adapted_entry_result.is_failure:
@@ -454,6 +477,122 @@ class FlextLdifEntry(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
                     error=str(e),
                 )
             return FlextResult[FlextLdifModels.Entry].fail(error_msg or "Unknown error")
+
+    @classmethod
+    def apply_marked_removals(
+        cls,
+        entry: FlextLdifModels.Entry,
+    ) -> FlextLdifModels.Entry:
+        """Remove attributes that were marked for removal by filters.
+
+        SRP: Entry service performs actual removal based on metadata markers.
+
+        Reads: entry.metadata.extensions["marked_attributes"]
+        Removes: Attributes with status == "marked_for_removal" or "filtered"
+        Preserves: Removal info in metadata for writer to show as comments
+
+        Args:
+            entry: Entry to process
+
+        Returns:
+            Entry with marked attributes removed
+
+        Example:
+            # Filter marks attributes
+            marked_entry = filter_service.mark_attributes(entry, attrs_to_remove)
+
+            # Entry service removes marked attributes
+            cleaned_entry = FlextLdifEntry.apply_marked_removals(marked_entry)
+
+        """
+        # Check if entry has metadata and marked attributes
+        if not entry.metadata:
+            return entry
+
+        # Get marked_attributes from metadata extensions (narrowed type)
+        marked_attrs_raw = entry.metadata.extensions.get("marked_attributes", {})
+        if not isinstance(marked_attrs_raw, dict):
+            return entry
+
+        marked_attrs = cast("dict[str, dict[str, object]]", marked_attrs_raw)
+        if not marked_attrs:
+            return entry
+
+        # Collect attributes to remove - extracted to reduce complexity
+        attrs_to_remove = cls._collect_attributes_to_remove(marked_attrs)
+        if not attrs_to_remove or not entry.attributes:
+            return entry
+
+        # Remove marked attributes and update metadata
+        return cls._create_cleaned_entry(entry, attrs_to_remove, marked_attrs)
+
+    @staticmethod
+    def _collect_attributes_to_remove(
+        marked_attrs: dict[str, dict[str, object]],
+    ) -> list[str]:
+        """Collect attribute names marked for removal (extracted to reduce complexity)."""
+        attrs_to_remove: list[str] = []
+        removal_statuses = {
+            FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL,
+            FlextLdifConstants.AttributeMarkerStatus.FILTERED,
+        }
+
+        for attr_name, attr_info in marked_attrs.items():
+            status = attr_info.get("status")
+            if status in removal_statuses:
+                attrs_to_remove.append(attr_name)
+
+        return attrs_to_remove
+
+    @staticmethod
+    def _create_cleaned_entry(
+        entry: FlextLdifModels.Entry,
+        attrs_to_remove: list[str],
+        marked_attrs: dict[str, dict[str, object]],
+    ) -> FlextLdifModels.Entry:
+        """Create entry with removed attributes (extracted to reduce complexity)."""
+        # Remove marked attributes from entry.attributes
+        cleaned_attrs: dict[str, list[str]] = {}
+        if entry.attributes:
+            for attr_name, attr_values in entry.attributes.attributes.items():
+                if attr_name not in attrs_to_remove:
+                    cleaned_attrs[attr_name] = attr_values.copy()
+
+        # Create new attributes object
+        new_attributes = FlextLdifModels.LdifAttributes(attributes=cleaned_attrs)
+
+        # Store removed attributes in metadata for writer to show as comments
+        removed_attributes: dict[str, object] = {}
+        for attr_name in attrs_to_remove:
+            if attr_name in marked_attrs:
+                removed_attributes[attr_name] = marked_attrs[attr_name]
+
+        # Update metadata extensions with removed_attributes
+        if not entry.metadata:
+            return entry
+
+        new_extensions = entry.metadata.extensions.copy()
+        new_extensions["removed_attributes"] = removed_attributes
+
+        # Create new metadata with updated extensions
+        new_metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type=entry.metadata.quirk_type,
+            extensions=new_extensions,
+            rfc_violations=entry.metadata.rfc_violations,
+            rfc_warnings=entry.metadata.rfc_warnings,
+        )
+
+        # Return entry with cleaned attributes and updated metadata
+        result = FlextLdifModels.Entry.create(
+            dn=entry.dn,
+            attributes=new_attributes,
+            metadata=new_metadata,
+        )
+
+        # Cast result to public Entry type (create returns domain Entry, we need public Entry)
+        if result.is_success:
+            return cast("FlextLdifModels.Entry", result.unwrap())
+        return entry
 
 
 __all__ = ["FlextLdifEntry"]

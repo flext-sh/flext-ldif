@@ -140,7 +140,7 @@ class TestZeroDataLossOidOud:
 
         # Convert to OUD (via RFC intermediate)
         # Write OID entries
-        write_result = api.write(oid_entries, target_server_type="rfc")
+        write_result = api.write(oid_entries, server_type="rfc")
         assert write_result.is_success
         rfc_ldif = write_result.unwrap()
 
@@ -183,7 +183,7 @@ class TestZeroDataLossOidOud:
         original_entries = parse_oid.unwrap()
 
         # OID → OUD
-        write_oud = api.write(original_entries, target_server_type="oud")
+        write_oud = api.write(original_entries, server_type="oud")
         assert write_oud.is_success
         oud_ldif = write_oud.unwrap()
 
@@ -194,7 +194,7 @@ class TestZeroDataLossOidOud:
         # OUD → OID (round-trip)
         write_oid = api.write(
             oud_entries,
-            target_server_type="oid",
+            server_type="oid",
             format_options=FlextLdifModels.WriteFormatOptions(
                 restore_original_format=True,
             ),
@@ -357,7 +357,7 @@ class TestZeroDataLossOidOud:
         # Write with restore_original_format=True
         write_result = api.write(
             entries,
-            target_server_type="oid",
+            server_type="oid",
             format_options=FlextLdifModels.WriteFormatOptions(
                 restore_original_format=True,
             ),

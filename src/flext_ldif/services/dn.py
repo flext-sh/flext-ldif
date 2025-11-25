@@ -97,7 +97,7 @@ from collections.abc import Callable
 from flext_core import FlextResult
 from pydantic import Field, PrivateAttr, field_validator
 
-from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.base import LdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -105,7 +105,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 type DN = str
 
 
-class FlextLdifDn(FlextLdifServiceBase[str]):
+class FlextLdifDn(LdifServiceBase):
     r"""RFC 4514 Compliant DN Operations Service with Nested Classes.
 
     Handles Distinguished Name parsing, validation, normalization, and escaping
@@ -462,16 +462,22 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
     # INSTANCE METHOD SHORTCUTS (for execute pattern)
     # ════════════════════════════════════════════════════════════════════════
 
-    def parse(self, dn: str) -> FlextResult[list[tuple[str, str]]]:
+    def parse(self, dn: str | None) -> FlextResult[list[tuple[str, str]]]:
         """Instance method shortcut for parse_components."""
+        if dn is None:
+            return FlextResult.fail("DN cannot be None")
         return self.parse_components(dn)
 
-    def validate_dn(self, dn: str) -> FlextResult[bool]:
+    def validate_dn(self, dn: str | None) -> FlextResult[bool]:
         """Instance method shortcut for validate_format."""
+        if dn is None:
+            return FlextResult.fail("DN cannot be None")
         return self.validate_format(dn)
 
-    def norm(self, dn: str) -> FlextResult[str]:
+    def norm(self, dn: str | None) -> FlextResult[str]:
         """Instance method shortcut for normalize."""
+        if dn is None:
+            return FlextResult.fail("DN cannot be None")
         return self.normalize(dn)
 
     def esc(self, value: str) -> str:
