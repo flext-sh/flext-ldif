@@ -118,15 +118,15 @@ def ldap_container_shared(ldap_container: dict[str, object]) -> str:
 
 
 @pytest.fixture(scope="module")
-def ldap_connection(ldap_container: dict[str, object]) -> object:
+def ldap_connection(ldap_container: dict[str, object]) -> Generator[object]:
     """Create LDAP connection."""
-    return conftest_instance.ldap_connection(ldap_container)
+    yield from conftest_instance.ldap_connection(ldap_container)
 
 
 @pytest.fixture
-def clean_test_ou(ldap_connection: object, make_test_base_dn: object) -> object:
+def clean_test_ou(ldap_connection: object, make_test_base_dn: object) -> Generator[object]:
     """Create and clean isolated test OU."""
-    return conftest_instance.clean_test_ou(ldap_connection, make_test_base_dn)
+    yield from conftest_instance.clean_test_ou(ldap_connection, make_test_base_dn)
 
 
 @pytest.fixture
@@ -162,7 +162,7 @@ def ldif_test_data() -> LdifTestData:
 @pytest.fixture
 def test_file_manager() -> Generator[FileManager]:
     """Test file manager."""
-    return conftest_instance.test_file_manager()
+    yield from conftest_instance.test_file_manager()
 
 
 @pytest.fixture
@@ -174,7 +174,7 @@ def test_validators() -> TestValidators:
 @pytest.fixture
 def test_ldif_dir() -> Generator[Path]:
     """Temporary LDIF directory."""
-    return conftest_instance.test_ldif_dir()
+    yield from conftest_instance.test_ldif_dir()
 
 
 @pytest.fixture

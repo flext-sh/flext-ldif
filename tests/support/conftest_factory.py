@@ -82,8 +82,13 @@ class FlextLdifTestConftest:
     ]
 
     def docker_control(self) -> FlextTestDocker:
-        """Provide FlextTestDocker instance for container management."""
-        return FlextTestDocker()
+        """Provide FlextTestDocker instance for container management.
+
+        Uses the FLEXT workspace root to ensure compose file paths
+        are resolved correctly regardless of which project runs the tests.
+        """
+        workspace_root = Path("/home/marlonsc/flext")
+        return FlextTestDocker(workspace_root=workspace_root)
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
         """Get pytest-xdist worker ID for DN namespacing."""
@@ -173,7 +178,12 @@ class FlextLdifTestConftest:
         docker_control: FlextTestDocker,
         worker_id: str,
     ) -> dict[str, object]:
-        """Session-scoped LDAP container configuration."""
+        """Session-scoped LDAP container configuration.
+
+        Uses FlextTestDocker.SHARED_CONTAINERS for container config.
+        Compose file paths in SHARED_CONTAINERS are relative to the
+        FLEXT workspace root (which is set in docker_control).
+        """
         logger = FlextLogger(__name__)
         container_name = "flext-openldap-test"
         container_config = FlextTestDocker.SHARED_CONTAINERS.get(container_name)
@@ -181,10 +191,10 @@ class FlextLdifTestConftest:
         if not container_config:
             pytest.skip(f"Container {container_name} not found")
 
+        # Resolve compose file path using docker_control's workspace_root
         compose_file = str(container_config["compose_file"])
         if not compose_file.startswith("/"):
-            workspace_root = Path("/home/marlonsc/flext")
-            compose_file = str(workspace_root / "flext-ldap" / compose_file)
+            compose_file = str(docker_control.workspace_root / compose_file)
 
         is_dirty = docker_control.is_container_dirty(container_name)
 

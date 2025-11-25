@@ -21,6 +21,7 @@ from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.services.entry import FlextLdifEntry
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.utilities import FlextLdifUtilities
@@ -611,6 +612,27 @@ class FlextLdifWriter(LdifServiceBase):
                     format_options,
                 )
 
+                # SRP: Apply marked attribute visibility based on format_options
+                # If write_removed_attributes_as_comments=False, apply removals
+                if (
+                    updated_entry.metadata
+                    and not format_options.write_removed_attributes_as_comments
+                ):
+                    marked_attrs = updated_entry.metadata.extensions.get(
+                        "marked_attributes",
+                        {},
+                    )
+                    marked_ocs = updated_entry.metadata.extensions.get(
+                        "marked_objectclasses",
+                        {},
+                    )
+                    if marked_attrs or marked_ocs:
+                        removal_result = FlextLdifEntry.apply_marked_removals(
+                            updated_entry,
+                        )
+                        if removal_result.is_success:
+                            updated_entry = removal_result.unwrap()
+
                 # Write entry using quirk
                 if entry_quirk is None:
                     return FlextResult.fail("Entry quirk is required but not available")
@@ -1034,114 +1056,6 @@ class FlextLdifWriter(LdifServiceBase):
             except Exception as e:
                 return FlextResult.fail(f"Header generation failed: {e}")
 
-    class OutputOptionsProcessor:
-        """Processes entry attributes based on WriteOutputOptions (SRP).
-
-        SRP Architecture:
-            - filters.py: MARKS attributes with status (never removes)
-            - entry.py: REMOVES attributes based on markers
-            - writer.py: Uses WriteOutputOptions to determine output visibility
-
-        This class decides how to render each attribute based on its marker status
-        and the WriteOutputOptions configuration (show/hide/comment).
-        """
-
-        @staticmethod
-        def apply_output_options(
-            entry: FlextLdifModels.Entry,
-            output_options: FlextLdifModels.WriteOutputOptions,
-        ) -> FlextLdifModels.Entry:
-            """Apply output options to entry based on marked attributes.
-
-            Args:
-                entry: Entry with marked attributes in metadata
-                output_options: Options controlling visibility
-
-            Returns:
-                Entry with attributes filtered/commented based on options
-            """
-            if not entry.metadata or not entry.attributes:
-                return entry
-
-            # Get marked attributes and objectclasses from metadata
-            marked_attrs = entry.metadata.extensions.get("marked_attributes", {})
-            marked_ocs = entry.metadata.extensions.get("marked_objectclasses", {})
-
-            if not marked_attrs and not marked_ocs:
-                return entry
-
-            # Build new attributes dict based on output options
-            new_attrs = dict(entry.attributes.attributes)
-            comments: list[str] = []
-
-            # Process marked attributes
-            for attr_name, marker_info in marked_attrs.items():
-                if not isinstance(marker_info, dict):
-                    continue
-
-                status = marker_info.get("status", "")
-                original_values = marker_info.get("original_value", [])
-
-                # Determine output mode based on status
-                output_mode = "show"  # default
-                if status == FlextLdifConstants.AttributeMarkerStatus.FILTERED:
-                    output_mode = output_options.show_filtered_attributes
-                elif status == FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL:
-                    output_mode = output_options.show_removed_attributes
-                elif status == FlextLdifConstants.AttributeMarkerStatus.HIDDEN:
-                    output_mode = output_options.show_hidden_attributes
-                elif status == FlextLdifConstants.AttributeMarkerStatus.RENAMED:
-                    output_mode = output_options.show_renamed_original
-
-                # Apply the output mode
-                if output_mode == "hide":
-                    # Remove attribute from output
-                    if attr_name in new_attrs:
-                        del new_attrs[attr_name]
-                elif output_mode == "comment":
-                    # Move to comments and remove from normal output
-                    if attr_name in new_attrs:
-                        for val in new_attrs[attr_name]:
-                            comments.append(f"# [{status.upper()}] {attr_name}: {val}")
-                        del new_attrs[attr_name]
-                # else "show" - keep as is
-
-            # Process marked objectClasses (similar logic)
-            if "objectClass" in new_attrs and marked_ocs:
-                remaining_ocs: list[str] = []
-                for oc_value in new_attrs["objectClass"]:
-                    if oc_value in marked_ocs:
-                        marker_info = marked_ocs[oc_value]
-                        status = marker_info.get("status", "") if isinstance(marker_info, dict) else ""
-                        output_mode = output_options.show_filtered_attributes
-                        if output_mode == "hide":
-                            continue  # Skip this objectClass
-                        elif output_mode == "comment":
-                            comments.append(f"# [{status.upper()}] objectClass: {oc_value}")
-                            continue
-                    remaining_ocs.append(oc_value)
-                new_attrs["objectClass"] = remaining_ocs
-
-            # Update entry with new attributes and store comments in metadata
-            if comments:
-                new_extensions = dict(entry.metadata.extensions)
-                new_extensions["_output_comments"] = comments
-                new_metadata = entry.metadata.model_copy(
-                    update={"extensions": new_extensions},
-                )
-                return entry.model_copy(
-                    update={
-                        "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
-                        "metadata": new_metadata,
-                    },
-                )
-
-            return entry.model_copy(
-                update={
-                    "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
-                },
-            )
-
     def write(
         self,
         entries: Sequence[FlextLdifModels.Entry],
@@ -1151,7 +1065,6 @@ class FlextLdifWriter(LdifServiceBase):
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         header_template: str | None = None,
         template_data: dict[str, object] | None = None,
-        output_options: FlextLdifModels.WriteOutputOptions | None = None,
     ) -> FlextResult[
         str
         | FlextLdifModels.WriteResponse
