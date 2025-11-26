@@ -38,7 +38,6 @@ from typing import (
     Literal,
     Protocol,
     Self,
-    cast,
     overload,
 )
 
@@ -231,6 +230,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             Schema quirk instance
 
         """
+        # Return via property which handles type conversion
         return self.schema_quirk
 
     def acl(
@@ -322,16 +322,20 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         parse_response = parse_result.unwrap()
         if not parse_response.entries:
             return FlextResult[FlextLdifModels.Entry].fail("No entries parsed")
-        # Convert domain Entry to public Entry (they're the same class via inheritance)
+        # Convert domain Entry to public Entry (public inherits from domain)
         first_entry = parse_response.entries[0]
-        # Type narrowing: FlextLdifModels.Entry inherits from FlextLdifModels.Entry
-        # so this is safe, but we need explicit cast for type checker
+        # Convert domain Entry to public Entry using model_validate
+        if isinstance(first_entry, FlextLdifModels.Entry):
+            entry_public = FlextLdifModels.Entry.model_validate(
+                first_entry.model_dump()
+            )
+            return FlextResult[FlextLdifModels.Entry].ok(entry_public)
+        # Type narrowing: already public Entry
         if isinstance(first_entry, FlextLdifModels.Entry):
             return FlextResult[FlextLdifModels.Entry].ok(first_entry)
-        # Fallback: create new Entry from domain Entry (shouldn't happen in practice)
-        return FlextResult[FlextLdifModels.Entry].ok(
-            FlextLdifModels.Entry.model_validate(first_entry.model_dump()),
-        )
+        # Fallback: use model_copy() for safety (shouldn't happen in practice)
+        entry_public = FlextLdifModels.Entry.model_validate(first_entry.model_dump())
+        return FlextResult[FlextLdifModels.Entry].ok(entry_public)
 
     @overload
     def __call__(
@@ -411,51 +415,81 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         Returns:
             Service instance OR unwrapped domain result (cast to Self for type safety).
 
-        Note:
-            When auto_execute=True, the actual runtime value is list[Entry] | str,
-            but it's cast to Self for type checker. Callers should
-            type-annotate with the domain result type for auto_execute services.
-
         """
         # Use object.__new__ directly to avoid FlextService.__new__
-        # calling execute() without params
-        # This allows us to control when execute() is called with proper parameters
-        instance: Self = cast("Self", object.__new__(cls))
+        instance_raw = object.__new__(cls)
+        if not isinstance(instance_raw, cls):
+            msg = f"Expected {cls.__name__}, got {type(instance_raw)}"
+            raise TypeError(msg)
+        instance: Self = instance_raw
 
         # Initialize the instance
         type(instance).__init__(instance, **kwargs)
 
         if cls.auto_execute:
-            # Extract operation parameters from kwargs
-            # Note: kwargs values are dynamically typed as object,
-            # type narrowing via isinstance checks
-            ldif_text = (
-                cast("str | None", kwargs.get("ldif_text"))
-                if "ldif_text" in kwargs
-                else None
-            )
-            entries = (
-                cast("list[FlextLdifModels.Entry] | None", kwargs.get("entries"))
-                if "entries" in kwargs
-                else None
-            )
-            operation = (
-                cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
-                if "operation" in kwargs
-                else None
-            )
-            # Auto-execute and return unwrapped result (cast for type safety)
+            # Extract and execute with type-safe params
+            ldif_text, entries, operation = cls._extract_execute_params(kwargs)
             result = instance.execute(
                 ldif_text=ldif_text,
                 entries=entries,
                 operation=operation,
             )
             unwrapped: FlextLdifTypes.EntryOrString = result.unwrap()
-            # Type narrowing: unwrapped is EntryOrString, but we need to return Self
-            # This is safe because auto_execute returns the domain result directly
-            return cast("Self", unwrapped)
+            if not isinstance(unwrapped, cls):
+                msg = f"Expected {cls.__name__}, got {type(unwrapped)}"
+                raise TypeError(msg)
+            return unwrapped
 
         return instance
+
+    @classmethod
+    def _extract_execute_params(
+        cls,
+        kwargs: dict[str, object],
+    ) -> tuple[
+        str | None, list[FlextLdifModels.Entry] | None, Literal["parse", "write"] | None
+    ]:
+        """Extract type-safe execution parameters from kwargs.
+
+        Helper to reduce complexity of __new__.
+        """
+        # Extract ldif_text
+        ldif_text: str | None = None
+        if "ldif_text" in kwargs:
+            raw = kwargs.get("ldif_text")
+            if raw is None or isinstance(raw, str):
+                ldif_text = raw
+            else:
+                msg = f"Expected str | None for ldif_text, got {type(raw)}"
+                raise TypeError(msg)
+
+        # Extract entries
+        entries: list[FlextLdifModels.Entry] | None = None
+        if "entries" in kwargs:
+            raw = kwargs.get("entries")
+            if raw is None:
+                entries = None
+            elif isinstance(raw, list):
+                entries = raw
+            else:
+                msg = f"Expected list[Entry] | None for entries, got {type(raw)}"
+                raise TypeError(msg)
+
+        # Extract operation
+        operation: Literal["parse", "write"] | None = None
+        if "operation" in kwargs:
+            raw = kwargs.get("operation")
+            if raw is None:
+                operation = None
+            elif raw == "parse":
+                operation = "parse"
+            elif raw == "write":
+                operation = "write"
+            else:
+                msg = f"Expected 'parse' | 'write' | None for operation, got {raw}"
+                raise ValueError(msg)
+
+        return ldif_text, entries, operation
 
     def _initialize_nested_classes(self) -> None:
         """Initialize nested Schema, Acl, and Entry classes with server_type.
@@ -482,9 +516,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """
         # Initialize nested class instances with private names to avoid
         # Pydantic conflicts. Concrete implementations in subclasses.
-        self._schema_quirk = self.Schema()
-        self._acl_quirk = self.Acl()
-        self._entry_quirk = self.Entry()
+        # Type annotation ensures protocol compliance
+        self._schema_quirk: FlextLdifProtocols.Quirks.SchemaProtocol = self.Schema()
+        self._acl_quirk: FlextLdifProtocols.Quirks.AclProtocol = self.Acl()
+        self._entry_quirk: FlextLdifProtocols.Quirks.EntryProtocol = self.Entry()
 
         # Use schema_quirk, acl_quirk, entry_quirk properties
         # Old: object.__setattr__(self, "schema", self._schema_quirk)
@@ -497,17 +532,60 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     @property
     def schema_quirk(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
         """Get the Schema quirk instance."""
-        return cast("FlextLdifProtocols.Quirks.SchemaProtocol", self._schema_quirk)
+        # Type narrowing: _schema_quirk implements SchemaProtocol structurally
+        # The concrete Schema class implements all protocol methods
+        # Structural typing ensures protocol compliance at runtime
+        schema_instance = self._schema_quirk
+        # Verify protocol compliance via structural typing
+        if not hasattr(schema_instance, "parse") or not hasattr(
+            schema_instance, "write"
+        ):
+            msg = "Schema instance does not implement SchemaProtocol"
+            raise TypeError(msg)
+        # Type assertion: Schema class implements SchemaProtocol structurally
+        # All required methods are present, so this is safe
+        # Return as protocol type - structural typing ensures compatibility
+        # Protocol compliance verified at runtime via hasattr checks above
+        # Type assertion: Schema implements SchemaProtocol structurally
+        # This is safe because all protocol methods are verified above
+        # and Schema class implements all required protocol methods
+        # Runtime checkable protocol allows isinstance check
+        if isinstance(schema_instance, FlextLdifProtocols.Quirks.SchemaProtocol):
+            return schema_instance
+        # Fallback: structural typing ensures compatibility even if isinstance fails
+        # This should never happen due to hasattr checks above
+        msg = "Schema instance does not satisfy SchemaProtocol"
+        raise TypeError(msg)
 
     @property
     def acl_quirk(self) -> FlextLdifProtocols.Quirks.AclProtocol:
         """Get the Acl quirk instance."""
-        return cast("FlextLdifProtocols.Quirks.AclProtocol", self._acl_quirk)
+        # Type narrowing: _acl_quirk implements AclProtocol structurally
+        # The concrete Acl class implements all protocol methods
+        # Structural typing ensures protocol compliance at runtime
+        # Note: mypy may not infer this automatically due to method signature differences
+        # but the types are structurally compatible
+        acl_instance = self._acl_quirk
+        # Verify protocol compliance via structural typing
+        if not hasattr(acl_instance, "parse") or not hasattr(acl_instance, "write"):
+            msg = "Acl instance does not implement AclProtocol"
+            raise TypeError(msg)
+        return acl_instance
 
     @property
     def entry_quirk(self) -> FlextLdifProtocols.Quirks.EntryProtocol:
         """Get the Entry quirk instance."""
-        return cast("FlextLdifProtocols.Quirks.EntryProtocol", self._entry_quirk)
+        # Type narrowing: _entry_quirk implements EntryProtocol structurally
+        # The concrete Entry class implements all protocol methods
+        # Structural typing ensures protocol compliance at runtime
+        # Note: mypy may not infer this automatically due to method signature differences
+        # but the types are structurally compatible
+        entry_instance = self._entry_quirk
+        # Verify protocol compliance via structural typing
+        if not hasattr(entry_instance, "parse") or not hasattr(entry_instance, "write"):
+            msg = "Entry instance does not implement EntryProtocol"
+            raise TypeError(msg)
+        return entry_instance
 
     # =========================================================================
     # Core Quirk Methods - Parsing and Writing (Primary Interface)
@@ -552,13 +630,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             processed_entries=len(entries),
             detected_server_type=detected_server,
         )
-        # Convert entries to domain type for ParseResponse (it expects domain Entry)
-        # Since FlextLdifModels.Entry inherits from FlextLdifModels.Entry, this is safe
-
+        # Convert entries for ParseResponse - use model_copy() for safety
         domain_entries: Sequence[FlextLdifModels.Entry] = [
             entry
             if isinstance(entry, FlextLdifModels.Entry)
-            else FlextLdifModels.Entry.model_validate(entry.model_dump())
+            else entry.model_copy(deep=True)
             for entry in entries
         ]
         parse_response = FlextLdifModels.ParseResponse(
@@ -904,7 +980,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 and hasattr(parent, "Constants")
                 and hasattr(parent.Constants, "PRIORITY")
             ):
-                return cast("int", parent.Constants.PRIORITY)
+                priority_value = parent.Constants.PRIORITY
+                if not isinstance(priority_value, int):
+                    msg = f"Expected int, got {type(priority_value)}"
+                    raise TypeError(msg)
+                return priority_value
             return 100  # Default priority
 
         # Control auto-execution
@@ -1144,15 +1224,17 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # Subclasses should override to provide better auto-detection
             attr_result = self.parse_attribute(definition)
             if attr_result.is_success:
-                return cast(
-                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
-                    attr_result,
-                )
+                # Type narrowing: convert SchemaAttribute result to union type
+                attr_unwrapped = attr_result.unwrap()
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+                ].ok(attr_unwrapped)
             oc_result = self.parse_objectclass(definition)
-            return cast(
-                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
-                oc_result,
-            )
+            # Type narrowing: convert SchemaObjectClass result to union type
+            oc_unwrapped = oc_result.unwrap()
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+            ].ok(oc_unwrapped)
 
         def write_attribute(
             self,
@@ -1430,7 +1512,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 and hasattr(parent, "Constants")
                 and hasattr(parent.Constants, "PRIORITY")
             ):
-                return cast("int", parent.Constants.PRIORITY)
+                priority_value = parent.Constants.PRIORITY
+                if not isinstance(priority_value, int):
+                    msg = f"Expected int, got {type(priority_value)}"
+                    raise TypeError(msg)
+                return priority_value
             return 100  # Default priority
 
         # =====================================================================
@@ -1675,6 +1761,27 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             return FlextResult[FlextLdifModels.Acl | str].ok("")
 
+        def convert_rfc_acl_to_aci(
+            self,
+            rfc_acl_attrs: dict[str, list[str]],
+            target_server: str,
+        ) -> FlextResult[dict[str, list[str]]]:
+            """Convert RFC ACL format to server-specific ACI format.
+
+            Base implementation: Pass-through (RFC ACLs are already in RFC format).
+            Subclasses should override for server-specific conversions.
+
+            Args:
+                rfc_acl_attrs: ACL attributes in RFC format
+                target_server: Target server type identifier
+
+            Returns:
+                FlextResult[dict[str, list[str]]] with server-specific ACL attributes
+
+            """
+            _ = target_server
+            return FlextResult[dict[str, list[str]]].ok(rfc_acl_attrs)
+
     class Entry(
         FlextService[FlextLdifModels.Entry | str],
     ):
@@ -1769,7 +1876,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 and hasattr(parent, "Constants")
                 and hasattr(parent.Constants, "PRIORITY")
             ):
-                return cast("int", parent.Constants.PRIORITY)
+                priority_value = parent.Constants.PRIORITY
+                if not isinstance(priority_value, int):
+                    msg = f"Expected int, got {type(priority_value)}"
+                    raise TypeError(msg)
+                return priority_value
             return 100  # Default priority
 
         # Control auto-execution
@@ -1923,43 +2034,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         # Concrete Helper Methods - Moved to rfc.py.Entry
         # =====================================================================
         # parse_entry is now a concrete implementation in FlextLdifServersRfc.Entry
-
-        def can_handle_attribute(
-            self,
-            attribute: FlextLdifModels.SchemaAttribute,
-        ) -> bool:
-            """Check if this Entry quirk has special handling for an attribute definition.
-
-            Entry processing logic might change based on an attribute's schema
-            (e.g., handling operational attributes differently).
-
-            Args:
-                attribute: The SchemaAttribute model to check.
-
-            Returns:
-                True if this quirk has specific processing logic for this attribute.
-
-            """
-            _ = attribute  # Explicitly mark as intentionally unused in base
-            return False  # Must be implemented by subclass
-
-        def can_handle_objectclass(
-            self,
-            objectclass: FlextLdifModels.SchemaObjectClass,
-        ) -> bool:
-            """Check if this Entry quirk has special handling for an objectClass definition.
-
-            Entry processing logic might change based on an entry's objectClasses.
-
-            Args:
-                objectclass: The SchemaObjectClass model to check.
-
-            Returns:
-                True if this quirk has specific processing logic for this objectClass.
-
-            """
-            _ = objectclass  # Explicitly mark as intentionally unused in base
-            return False  # Must be implemented by subclass
+        # NOTE: can_handle_attribute() and can_handle_objectclass() are Schema-level
+        # methods only. Entry detection uses can_handle(dn, attributes) instead.
 
         def _write_entry(
             self,
@@ -2028,7 +2104,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 if self.parent_quirk is not None and hasattr(
                     self.parent_quirk, "write"
                 ):
-                    return self.parent_quirk.write(entry_data)
+                    write_result = self.parent_quirk.write(entry_data)
+                    # Type-safe extraction and re-wrapping
+                    if write_result.is_success:
+                        value = write_result.unwrap()
+                        if isinstance(value, str):
+                            return FlextResult[str].ok(value)
+                        return FlextResult[str].ok(str(value))
+                    return FlextResult[str].fail(write_result.error or "Write failed")
                 # Fallback: write each entry and join
                 results: list[str] = []
                 for entry in entry_data:
@@ -2063,6 +2146,56 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             return FlextResult[FlextLdifModels.Entry | str].ok("")
 
+        def parse_entry(
+            self,
+            entry_dn: str,
+            entry_attrs: Mapping[str, object] | object,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Parse a single entry from DN and attributes.
+
+            Base implementation delegates to _parse_content() after constructing
+            LDIF content string. Subclasses should override for server-specific parsing.
+
+            Args:
+                entry_dn: Entry distinguished name
+                entry_attrs: Entry attributes mapping (Mapping[str, object] or dict)
+
+            Returns:
+                FlextResult[Entry] with parsed entry model
+
+            """
+            # Convert entry_attrs to dict if needed
+            if isinstance(entry_attrs, Mapping):
+                attrs_dict: dict[str, object] = dict(entry_attrs)
+            elif isinstance(entry_attrs, dict):
+                attrs_dict = entry_attrs
+            else:
+                msg = f"Expected Mapping | dict, got {type(entry_attrs)}"
+                raise TypeError(msg)
+
+            # Build LDIF content string from DN and attributes
+            ldif_lines = [f"dn: {entry_dn}"]
+            for attr_name, attr_values in attrs_dict.items():
+                if FlextRuntime.is_list_like(attr_values):
+                    if not isinstance(attr_values, list):
+                        msg = f"Expected list, got {type(attr_values)}"
+                        raise TypeError(msg)
+                    ldif_lines.extend(f"{attr_name}: {value}" for value in attr_values)
+                else:
+                    ldif_lines.append(f"{attr_name}: {attr_values}")
+            ldif_content = "\n".join(ldif_lines) + "\n"
+
+            # Parse using _parse_content and return first entry
+            result = self._parse_content(ldif_content)
+            if result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    result.error or "Failed to parse entry",
+                )
+            entries = result.unwrap()
+            if not entries:
+                return FlextResult[FlextLdifModels.Entry].fail("No entries parsed")
+            return FlextResult[FlextLdifModels.Entry].ok(entries[0])
+
 
 # =========================================================================
 
@@ -2070,7 +2203,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 class _DescriptorProtocol(Protocol):
     """Protocol for descriptors that behave like their return type."""
 
-    def __get__(self, obj: object | None, objtype: type | None = None) -> str | int: ...
+    def __get__(
+        self, obj: object | None, _objtype: type | None = None
+    ) -> str | int: ...
 
 
 class _ServerTypeDescriptor:
@@ -2079,7 +2214,7 @@ class _ServerTypeDescriptor:
     def __init__(self, value: str) -> None:
         self.value = value
 
-    def __get__(self, obj: object | None, objtype: type | None = None) -> str:
+    def __get__(self, obj: object | None, _objtype: type | None = None) -> str:
         """Return the stored SERVER_TYPE value."""
         return self.value
 
@@ -2090,7 +2225,7 @@ class _PriorityDescriptor:
     def __init__(self, value: int) -> None:
         self.value = value
 
-    def __get__(self, obj: object | None, objtype: type | None = None) -> int:
+    def __get__(self, obj: object | None, _objtype: type | None = None) -> int:
         """Return the stored PRIORITY value."""
         return self.value
 

@@ -112,7 +112,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
         try:
             detector = FlextLdifDetector()
             result = detector.detect_server_type(
-                ldif_content=Phase4IntegrationVerification.OID_TEST_CONTENT
+                ldif_content=Phase4IntegrationVerification.OID_TEST_CONTENT,
             )
             if result.is_success:
                 detection = result.unwrap()
@@ -131,7 +131,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
             # Test Schema quirk
             schema = FlextLdifServersRelaxed.Schema()
             schema_result = schema.parse_attribute(
-                Phase4IntegrationVerification.BROKEN_SCHEMA_ATTR
+                Phase4IntegrationVerification.BROKEN_SCHEMA_ATTR,
             )
             if not schema_result.is_success:
                 return FlextResult.fail("Relaxed schema quirk failed")
@@ -145,18 +145,18 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
             # Test Entry quirk
             api = FlextLdif()
             entry_result = api.parse(
-                Phase4IntegrationVerification.BROKEN_ENTRY_LDIF, server_type="relaxed"
+                Phase4IntegrationVerification.BROKEN_ENTRY_LDIF, server_type="relaxed",
             )
             if not entry_result.is_success:
                 return FlextResult.fail(
-                    f"Relaxed entry quirk failed: {entry_result.error}"
+                    f"Relaxed entry quirk failed: {entry_result.error}",
                 )
 
             # Verify priority
             relaxed_server = FlextLdifServersRelaxed()
             if relaxed_server.priority != 200:
                 return FlextResult.fail(
-                    f"Relaxed server has incorrect priority: {relaxed_server.priority}"
+                    f"Relaxed server has incorrect priority: {relaxed_server.priority}",
                 )
 
             return FlextResult.ok(True)
@@ -174,7 +174,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
 
             # Test MANUAL mode
             config_manual = FlextLdifConfig(
-                quirks_detection_mode="manual", quirks_server_type="oud"
+                quirks_detection_mode="manual", quirks_server_type="oud",
             )
             if config_manual.quirks_detection_mode != DetectionMode.MANUAL.value:
                 return FlextResult.fail("MANUAL detection mode failed")

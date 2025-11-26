@@ -1,7 +1,12 @@
-"""Comprehensive unit tests for FlextLdifSchema.
+"""Test suite for FlextLdifSchema Service.
+
+Modules tested: FlextLdifSchema
+Scope: Schema parsing, validation, transformation, attribute operations,
+objectClass operations, builder pattern, error handling
 
 Tests all schema parsing, validation, and transformation methods with REAL implementations.
 Validates attribute and objectClass operations, builder pattern, and error handling.
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -153,7 +158,7 @@ ATTRIBUTE_PARSE_TESTS = [
     AttributeParseTestCase("", False, None, None, "Empty definition"),
     AttributeParseTestCase("   ", False, None, None, "Whitespace-only definition"),
     AttributeParseTestCase(
-        "invalid format", False, None, None, "Invalid format without parentheses"
+        "invalid format", False, None, None, "Invalid format without parentheses",
     ),
     AttributeParseTestCase(
         "( 2.5.4.0 NAME 'objectClass' )",
@@ -175,7 +180,7 @@ OBJECTCLASS_PARSE_TESTS = [
     ),
     ObjectClassParseTestCase("", False, None, None, None, "Empty definition"),
     ObjectClassParseTestCase(
-        "   ", False, None, None, None, "Whitespace-only definition"
+        "   ", False, None, None, None, "Whitespace-only definition",
     ),
     ObjectClassParseTestCase(
         "( 2.5.6.0 NAME 'top' ABSTRACT )",
@@ -290,10 +295,10 @@ SCHEMA_CAN_HANDLE_TESTS = [
         "Valid attribute definition",
     ),
     SchemaCanHandleTestCase(
-        "attribute", "", False, SchemaElement.ATTRIBUTE, "Empty attribute"
+        "attribute", "", False, SchemaElement.ATTRIBUTE, "Empty attribute",
     ),
     SchemaCanHandleTestCase(
-        "attribute", "   ", False, SchemaElement.ATTRIBUTE, "Whitespace attribute"
+        "attribute", "   ", False, SchemaElement.ATTRIBUTE, "Whitespace attribute",
     ),
     SchemaCanHandleTestCase(
         "attribute",
@@ -310,10 +315,10 @@ SCHEMA_CAN_HANDLE_TESTS = [
         "Valid objectClass definition",
     ),
     SchemaCanHandleTestCase(
-        "objectclass", "", False, SchemaElement.OBJECTCLASS, "Empty objectClass"
+        "objectclass", "", False, SchemaElement.OBJECTCLASS, "Empty objectClass",
     ),
     SchemaCanHandleTestCase(
-        "objectclass", "   ", False, SchemaElement.OBJECTCLASS, "Whitespace objectClass"
+        "objectclass", "   ", False, SchemaElement.OBJECTCLASS, "Whitespace objectClass",
     ),
     SchemaCanHandleTestCase(
         "objectclass",

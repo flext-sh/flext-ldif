@@ -1,13 +1,20 @@
-"""Test suite for SchemaTransformer utility class.
+"""Test suite for Schema Transformer Utility.
+
+Modules tested: FlextLdifUtilities.Schema
+Scope: Schema transformations, attribute name normalization, matching rule normalization,
+syntax OID normalization, field transformations, attribute and objectClass pipelines
 
 Tests for the new SchemaTransformer class that handles generic schema
 transformations used across OID, OUD, OpenLDAP, and other servers.
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from collections.abc import Callable
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
@@ -154,32 +161,51 @@ class TestSchemaTransformerApplyAttributeTransformations:
             syntax="'1.3.6.1.4.1.1466.115.121.1.1'",
         )
 
-        field_transforms = {
-            "name": lambda n: FlextLdifUtilities.Schema.normalize_name(
-                str(n) if n else n,
+        def transform_name(n: object) -> object:
+            n_str: str | None = str(n) if isinstance(n, str) else (n if n is None else str(n))
+            return FlextLdifUtilities.Schema.normalize_name(
+                n_str,
                 suffixes_to_remove=[";binary"],
                 char_replacements={"_": "-"},
-            ),
-            "equality": lambda eq: FlextLdifUtilities.Schema.normalize_matching_rules(
-                str(eq) if eq else None,
+            )
+
+        def transform_equality(eq: object) -> object:
+            eq_str: str | None = str(eq) if isinstance(eq, str) else (eq if eq is None else str(eq))
+            return FlextLdifUtilities.Schema.normalize_matching_rules(
+                eq_str,
                 None,  # substr is None initially
                 substr_rules_in_equality={
                     "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
                 },
-            )[0],
-            "substr": lambda sub: FlextLdifUtilities.Schema.normalize_matching_rules(
+            )[0]
+
+        def transform_substr(sub: object) -> object:
+            sub_str: str | None = str(sub) if isinstance(sub, str) else (sub if sub is None else str(sub))
+            return FlextLdifUtilities.Schema.normalize_matching_rules(
                 attr.equality,
-                str(sub) if sub else None,
+                sub_str,
                 substr_rules_in_equality={
                     "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
                 },
-            )[1],
-            "syntax": lambda syn: FlextLdifUtilities.Schema.normalize_syntax_oid(
-                str(syn) if syn else None,
+            )[1]
+
+        def transform_syntax(syn: object) -> object:
+            syn_str: str | None = str(syn) if isinstance(syn, str) else (syn if syn is None else str(syn))
+            return FlextLdifUtilities.Schema.normalize_syntax_oid(
+                syn_str,
                 replacements={
                     "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
                 },
-            ),
+            )
+
+        field_transforms: dict[
+            str,
+            Callable[[object], object] | str | list[str] | None,
+        ] = {
+            "name": transform_name,
+            "equality": transform_equality,
+            "substr": transform_substr,
+            "syntax": transform_syntax,
         }
         result = FlextLdifUtilities.Schema.apply_transformations(
             attr,
@@ -188,6 +214,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         assert result.is_success
         transformed = result.unwrap()
+        assert isinstance(transformed, FlextLdifModels.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
         assert transformed.substr == "caseIgnoreSubstringsMatch"
@@ -201,12 +228,19 @@ class TestSchemaTransformerApplyAttributeTransformations:
             equality="caseIgnoreMatch",
         )
 
-        field_transforms = {
-            "name": lambda n: FlextLdifUtilities.Schema.normalize_name(
-                str(n) if n else n,
+        def transform_name(n: object) -> object:
+            n_str: str | None = str(n) if isinstance(n, str) else (n if n is None else str(n))
+            return FlextLdifUtilities.Schema.normalize_name(
+                n_str,
                 suffixes_to_remove=[";binary"],
                 char_replacements={"_": "-"},
-            ),
+            )
+
+        field_transforms: dict[
+            str,
+            Callable[[object], object] | str | list[str] | None,
+        ] = {
+            "name": transform_name,
         }
         result = FlextLdifUtilities.Schema.apply_transformations(
             attr,
@@ -215,6 +249,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         assert result.is_success
         transformed = result.unwrap()
+        assert isinstance(transformed, FlextLdifModels.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
 

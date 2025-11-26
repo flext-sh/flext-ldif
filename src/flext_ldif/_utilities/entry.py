@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
@@ -76,7 +78,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def convert_boolean_attributes(
-        attributes: dict[str, list[str] | list[bytes] | bytes | str],
+        attributes: Mapping[str, list[str] | list[bytes] | bytes | str],
         boolean_attr_names: set[str],
         *,
         source_format: str = "0/1",
@@ -344,8 +346,161 @@ class FlextLdifUtilitiesEntry:
         )
         if result.is_failure:
             return entry
-        # Entry.create returns FlextResult[FlextLdifModelsDomains.Entry]
-        return cast("FlextLdifModels.Entry", result.unwrap())
+        # Entry.create returns Entry - convert domain to public if needed
+        entry_unwrapped = result.unwrap()
+        if isinstance(entry_unwrapped, FlextLdifModelsDomains.Entry) and not isinstance(
+            entry_unwrapped, FlextLdifModels.Entry
+        ):
+            return FlextLdifModels.Entry.model_validate(entry_unwrapped.model_dump())
+        if isinstance(entry_unwrapped, FlextLdifModels.Entry):
+            return entry_unwrapped
+        # Fallback: convert via model_validate
+        return FlextLdifModels.Entry.model_validate(entry_unwrapped.model_dump())
+
+    @staticmethod
+    def analyze_differences(
+        entry_attrs: Mapping[str, object],
+        converted_attrs: dict[str, list[str]],
+        original_dn: str,
+        cleaned_dn: str,
+        normalize_attr_fn: Callable[[str], str] | None = None,
+    ) -> tuple[
+        dict[str, object],
+        dict[str, dict[str, object]],
+        dict[str, object],
+        dict[str, str],
+    ]:
+        """Analyze DN and attribute differences for round-trip support (DRY utility).
+
+        Extracted from server quirks for reuse across RFC, OID, OUD, etc.
+
+        Args:
+            entry_attrs: Original raw attributes
+            converted_attrs: Converted attributes
+            original_dn: Original DN string
+            cleaned_dn: Cleaned/normalized DN
+            normalize_attr_fn: Optional function to normalize attribute names
+
+        Returns:
+            Tuple of (dn_differences, attribute_differences, original_attrs_complete, original_case)
+
+        """
+        # Default normalizer: lowercase
+        normalize = normalize_attr_fn or (lambda x: x.lower())
+
+        # Analyze DN differences
+        dn_differences = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
+            original=original_dn,
+            converted=cleaned_dn if cleaned_dn != original_dn else None,
+            context="dn",
+        )
+
+        # Track original attribute case
+        original_attribute_case: dict[str, str] = {}
+        for attr_name in entry_attrs:
+            attr_str = str(attr_name)
+            canonical = normalize(attr_str)
+            if canonical != attr_str:
+                original_attribute_case[canonical] = attr_str
+
+        # Analyze attribute differences
+        attribute_differences: dict[str, dict[str, object]] = {}
+        original_attributes_complete: dict[str, object] = {}
+
+        for attr_name, attr_values in entry_attrs.items():
+            original_attr_name = str(attr_name)
+            canonical_name = normalize(original_attr_name)
+
+            # Preserve original values
+            original_values = (
+                list(attr_values)
+                if isinstance(attr_values, (list, tuple))
+                else [attr_values] if attr_values is not None else []
+            )
+            original_attributes_complete[original_attr_name] = original_values
+
+            converted_values = converted_attrs.get(canonical_name, [])
+
+            # Build string representations
+            original_str = f"{original_attr_name}: {', '.join(str(v) for v in original_values)}"
+            converted_str = (
+                f"{canonical_name}: {', '.join(str(v) for v in converted_values)}"
+                if converted_values
+                else None
+            )
+
+            # Analyze differences
+            attr_diff = FlextLdifUtilitiesMetadata.analyze_minimal_differences(
+                original=original_str,
+                converted=converted_str if converted_str != original_str else None,
+                context="attribute",
+            )
+            attribute_differences[canonical_name] = attr_diff
+
+        return (
+            dn_differences,
+            attribute_differences,
+            original_attributes_complete,
+            original_attribute_case,
+        )
+
+    @staticmethod
+    def matches_server_patterns(
+        entry_dn: str,
+        attributes: Mapping[str, object],
+        *,
+        dn_patterns: tuple[tuple[str, ...], ...] = (),
+        attr_prefixes: tuple[str, ...] | frozenset[str] = (),
+        attr_names: frozenset[str] | set[str] = frozenset(),
+        keyword_patterns: tuple[str, ...] = (),
+    ) -> bool:
+        """Check if entry matches server-specific patterns.
+
+        Generic pattern matcher for server detection. Servers provide patterns,
+        this utility does the matching.
+
+        Args:
+            entry_dn: Entry DN string
+            attributes: Entry attributes dict/mapping
+            dn_patterns: Tuple of DN pattern tuples - entry matches if ALL patterns
+                        in ANY tuple match (OR of ANDs)
+            attr_prefixes: Attribute name prefixes to check
+            attr_names: Set of attribute names that indicate this server
+            keyword_patterns: Keywords to search in attribute names
+
+        Returns:
+            True if entry matches any pattern set
+
+        """
+        if not entry_dn or not attributes:
+            return False
+
+        # Convert to dict for easier access
+        attrs = dict(attributes) if not isinstance(attributes, dict) else attributes
+        attr_names_lower = {k.lower() for k in attrs}
+
+        # Check DN patterns (OR of ANDs)
+        for pattern_set in dn_patterns:
+            if all(p in entry_dn for p in pattern_set):
+                return True
+
+        # Check attribute prefixes
+        for attr in attrs:
+            for prefix in attr_prefixes:
+                if attr.startswith(prefix):
+                    return True
+
+        # Check known attribute names
+        if attr_names_lower & set(attr_names):
+            return True
+
+        # Check keyword patterns in attribute names
+        for attr in attr_names_lower:
+            for keyword in keyword_patterns:
+                if keyword in attr:
+                    return True
+
+        return False
 
 
 __all__ = [

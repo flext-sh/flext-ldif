@@ -205,7 +205,7 @@ class FlextLdifTestFactory:
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
-                None, quirk_registry
+                None, quirk_registry,
             ),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
                 config,

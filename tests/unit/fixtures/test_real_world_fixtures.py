@@ -23,11 +23,15 @@ from tests.helpers.test_rfc_helpers import RfcTestHelpers
 # Helper to get fixture paths relative to test file
 def _get_fixture_path(relative_path: str) -> Path:
     """Get absolute path to fixture file relative to tests/fixtures directory."""
+    # __file__ is tests/unit/fixtures/test_real_world_fixtures.py
+    # .parent → tests/unit/fixtures
+    # .parent.parent → tests/unit
+    # .parent.parent.parent → tests (THIS is where fixtures should be)
     base_dir = Path(__file__).parent.parent.parent
     fixture_path = base_dir / "fixtures" / relative_path
     if not fixture_path.exists():
         # Try alternative path if running from different directory
-        alt_path = Path("flext-ldif/tests/fixtures") / relative_path
+        alt_path = Path("flext-ldif") / "tests" / "fixtures" / relative_path
         if alt_path.exists():
             return alt_path
     return fixture_path
@@ -499,10 +503,10 @@ class TestCrossServerFixtures:
     def test_fixture_entry_validation(self) -> None:
         """Test that all fixture entries validate successfully."""
         servers = {
-            "RFC": "tests/fixtures/rfc/rfc_entries_fixtures.ldif",
-            "OID": "tests/fixtures/oid/oid_entries_fixtures.ldif",
-            "OUD": "tests/fixtures/oud/oud_entries_fixtures.ldif",
-            "OpenLDAP2": "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
+            "RFC": _get_fixture_path("rfc/rfc_entries_fixtures.ldif"),
+            "OID": _get_fixture_path("oid/oid_entries_fixtures.ldif"),
+            "OUD": _get_fixture_path("oud/oud_entries_fixtures.ldif"),
+            "OpenLDAP2": _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif"),
         }
         RfcTestHelpers.test_fixture_parse_and_validate_batch(self.ldif, servers)
 

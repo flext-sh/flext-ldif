@@ -1,10 +1,12 @@
-"""Unit tests for Relaxed Quirks - Lenient LDIF Processing.
+"""Test suite for Relaxed Quirks - Lenient LDIF Processing.
+
+Modules tested: FlextLdifServersRelaxed.Schema, FlextLdifServersRelaxed.Acl,
+FlextLdifServersRelaxed.Entry
+Scope: Lenient LDIF processing, malformed file handling, best-effort parsing,
+error recovery, edge cases
 
 Tests for relaxed/lenient quirks that allow processing of broken, non-compliant,
-or malformed LDIF files. Tests all three relaxed quirk classes:
-- FlextLdifServersRelaxedSchema
-- FlextLdifServersRelaxedAcl
-- FlextLdifServersRelaxedEntry
+or malformed LDIF files. Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -147,8 +149,8 @@ class TestRelaxedSchemas:
             oid="2.5.4.3",
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="relaxed",
-                original_format=definition,
                 extensions={
+                    "original_format": definition,
                     meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
                 },
             ),
@@ -515,7 +517,7 @@ class TestRelaxedQuirksParseAttribute:
         assert parsed.oid == "incomplete_oid"
         # But with numeric OID, should work even with other issues
         attr_def_valid = "( 1.2.3.4 NAME 'test' )"
-        result = relaxed.parse(attr_def_valid)
+        result = relaxed.parse_attribute(attr_def_valid)
         assert result.is_success
 
     def test_parse_attribute_missing_name(
@@ -564,7 +566,7 @@ class TestRelaxedQuirksParseAttribute:
         """Test parse_attribute handles exceptions gracefully."""
         # Even with invalid content, relaxed mode can recover if OID is present
         # Need numeric OID for parsing to work
-        result = relaxed.parse("( 1.2.3.4 \x00\x01\x02 INVALID )")
+        result = relaxed.parse_attribute("( 1.2.3.4 \x00\x01\x02 INVALID )")
         assert result.is_success
         parsed = result.unwrap()
         assert parsed.metadata
@@ -579,7 +581,7 @@ class TestRelaxedQuirksParseAttribute:
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
-        result = relaxed.parse(original)
+        result = relaxed.parse_attribute(original)
         assert result.is_success
         parsed = result.unwrap()
         assert parsed.metadata
@@ -647,7 +649,7 @@ class TestRelaxedQuirksParseObjectclass:
     ) -> None:
         """Test parse_objectclass handles exceptions gracefully."""
         # Need valid structure with OID - relaxed mode is lenient but requires basic structure
-        result = relaxed.parse("( 1.2.3.4 NAME 'test' INVALID )")
+        result = relaxed.parse_objectclass("( 1.2.3.4 NAME 'test' INVALID )")
         assert result.is_success  # Succeeds with numeric OID
         parsed = result.unwrap()
         assert parsed.metadata
@@ -787,7 +789,7 @@ class TestRelaxedQuirksErrorRecovery:
         """Test parse_attribute logs failures but returns valid result."""
         # Even severe failures don't crash - but need some valid structure
         # Test with something that has OID-like structure
-        result = relaxed.parse("( 1.2.3.4 💣 🔥 \x00 INVALID )")
+        result = relaxed.parse_attribute("( 1.2.3.4 💣 🔥 \x00 INVALID )")
         assert result.is_success  # Should succeed if OID can be extracted
         parsed = result.unwrap()
         assert parsed.metadata
@@ -803,7 +805,7 @@ class TestRelaxedQuirksErrorRecovery:
     ) -> None:
         """Test parse_objectclass logs failures but returns valid result."""
         # Invalid input without OID should fail
-        result = relaxed.parse("💣 \x00\x01\x02 INVALID")
+        result = relaxed.parse_objectclass("💣 \x00\x01\x02 INVALID")
         # Should fail if no OID can be extracted
         assert (
             result.is_failure or result.is_success
@@ -849,7 +851,7 @@ class TestRelaxedQuirksEdgeCases:
         relaxed: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test parsing objectClass with Unicode characters."""
-        result = relaxed.parse("( 1.2.3.4 NAME 'тест' 😀 )")
+        result = relaxed.parse_objectclass("( 1.2.3.4 NAME 'тест' 😀 )")
         assert result.is_success
 
     def test_can_handle_with_very_long_definition(
@@ -881,10 +883,10 @@ class TestRelaxedQuirksFallbackBehavior:
     ) -> None:
         """Test parse_attribute handles exceptions without fallback."""
         # Need OID for parsing - without it, should fail
-        result = relaxed.parse("( \x00 )")
+        result = relaxed.parse_attribute("( \x00 )")
         assert result.is_failure  # No OID to extract
         # With OID, should work even with binary data
-        result = relaxed.parse("( 1.2.3.4 \x00 )")
+        result = relaxed.parse_attribute("( 1.2.3.4 \x00 )")
         assert result.is_success
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
@@ -895,10 +897,10 @@ class TestRelaxedQuirksFallbackBehavior:
     ) -> None:
         """Test parse_objectclass handles exceptions without fallback."""
         # Need OID for parsing - without it, should fail
-        result = relaxed.parse("( \x00 )")
+        result = relaxed.parse_objectclass("( \x00 )")
         assert result.is_failure  # No OID to extract
         # With OID, should work even with binary data
-        result = relaxed.parse("( 1.2.3.4 \x00 )")
+        result = relaxed.parse_objectclass("( 1.2.3.4 \x00 )")
         assert result.is_success
         parsed = result.unwrap()
         assert hasattr(parsed, "name")

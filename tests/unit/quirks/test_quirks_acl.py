@@ -1,6 +1,11 @@
-"""Comprehensive ACL conversion tests covering all types, subtypes, and parameters.
+"""Test suite for ACL Quirks Conversion.
 
-This test suite validates COMPLETE ACL conversion coverage between OID and OUD:
+Modules tested: FlextLdifServersOid.Acl, FlextLdifServersOud.Acl, FlextLdifConversion
+Scope: ACL conversion between OID and OUD, subject types, permission types,
+target types, advanced features, round-trip validation
+
+This test suite validates COMPLETE ACL conversion coverage between OID and OUD.
+Uses parametrized tests and factory patterns.
 
 SUBJECT TYPES (Bind Rules):
 ========================

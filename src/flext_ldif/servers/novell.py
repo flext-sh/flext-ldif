@@ -219,47 +219,38 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
-            if isinstance(attr_definition, str):
-                attr_lower = attr_definition.lower()
-                # Check OID pattern from Constants
-                if re.search(
-                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                    attr_definition,
-                ):
-                    return True
-
-                name_matches = re.findall(
-                    FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                    attr_definition,
-                    re.IGNORECASE,
-                )
-                if any(
-                    name.lower().startswith(
-                        tuple(
-                            FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                        ),
-                    )
-                    for name in name_matches
-                ):
-                    return True
-
-                return any(
-                    prefix in attr_lower
-                    for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                )
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                # Check OID pattern from Constants
-                if re.search(
-                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                    attr_definition.oid,
-                ):
-                    return True
-                attr_name_lower = attr_definition.name.lower()
-                return any(
-                    attr_name_lower.startswith(prefix)
-                    for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=attr_definition,
+                    oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    use_prefix_match=True,
                 )
-            return False
+            # For string definitions, extract NAME and check prefix match
+            attr_lower = attr_definition.lower()
+            if re.search(
+                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                attr_definition,
+            ):
+                return True
+            name_matches = re.findall(
+                FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                attr_definition,
+                re.IGNORECASE,
+            )
+            if any(
+                name.lower().startswith(
+                    tuple(
+                        FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    ),
+                )
+                for name in name_matches
+            ):
+                return True
+            return any(
+                prefix in attr_lower
+                for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
+            )
 
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
         # These methods are inherited from RFC base class:
@@ -278,38 +269,28 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
-            if isinstance(oc_definition, str):
-                # Check OID pattern from Constants
-                if re.search(
-                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                    oc_definition,
-                ):
-                    return True
-
-                # Use regex pattern from Constants
-                name_matches = re.findall(
-                    FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                    oc_definition,
-                    re.IGNORECASE,
-                )
-                return any(
-                    name.lower()
-                    in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for name in name_matches
-                )
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                # Check OID pattern from Constants
-                if re.search(
-                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                    oc_definition.oid,
-                ):
-                    return True
-                oc_name_lower = oc_definition.name.lower()
-                return (
-                    oc_name_lower
-                    in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=oc_definition,
+                    oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
-            return False
+            # For string definitions, extract NAME and check exact match
+            if re.search(
+                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                oc_definition,
+            ):
+                return True
+            name_matches = re.findall(
+                FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                oc_definition,
+                re.IGNORECASE,
+            )
+            return any(
+                name.lower()
+                in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
+                for name in name_matches
+            )
 
         def _parse_attribute(
             self,

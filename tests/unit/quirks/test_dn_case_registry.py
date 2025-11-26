@@ -46,7 +46,7 @@ class TestDnNormalization:
         return FlextLdifModels.DnRegistry()
 
     def test_normalize_removes_spaces(
-        self, registry: FlextLdifModels.DnRegistry
+        self, registry: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that DN normalization removes all spaces."""
         dn_with_spaces = "CN=Test, DC=Example, DC=Com"

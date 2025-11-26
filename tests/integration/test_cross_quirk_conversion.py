@@ -58,7 +58,11 @@ class TestOidToOudSchemaConversion:
         # Parse with OID quirk
         parse_result = oid_schema_quirk.parse(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
-        parsed_data: FlextLdifModels.SchemaAttribute = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, FlextLdifModels.SchemaAttribute), (
+            f"Expected SchemaAttribute, got {type(unwrapped).__name__}"
+        )
+        parsed_data: FlextLdifModels.SchemaAttribute = unwrapped
 
         # Verify parsed data (SchemaAttribute object, not dict)
         assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
@@ -78,7 +82,11 @@ class TestOidToOudSchemaConversion:
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
-        oud_data: FlextLdifModels.SchemaAttribute = oud_parse_result.unwrap()
+        oud_unwrapped = oud_parse_result.unwrap()
+        assert isinstance(oud_unwrapped, FlextLdifModels.SchemaAttribute), (
+            f"Expected SchemaAttribute, got {type(oud_unwrapped).__name__}"
+        )
+        oud_data: FlextLdifModels.SchemaAttribute = oud_unwrapped
 
         # Verify conversion preserved key fields (both are objects, not dicts)
         assert oud_data.oid == parsed_data.oid
@@ -97,7 +105,11 @@ class TestOidToOudSchemaConversion:
         # Parse with OID quirk
         parse_result = oid_schema_quirk.parse(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
-        parsed_data: FlextLdifModels.SchemaObjectClass = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, FlextLdifModels.SchemaObjectClass), (
+            f"Expected SchemaObjectClass, got {type(unwrapped).__name__}"
+        )
+        parsed_data: FlextLdifModels.SchemaObjectClass = unwrapped
 
         # Verify parsed data (object, not dict)
         assert parsed_data.oid == "2.16.840.1.113894.2.1.1"
@@ -115,7 +127,11 @@ class TestOidToOudSchemaConversion:
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
-        oud_data: FlextLdifModels.SchemaObjectClass = oud_parse_result.unwrap()
+        oud_unwrapped = oud_parse_result.unwrap()
+        assert isinstance(oud_unwrapped, FlextLdifModels.SchemaObjectClass), (
+            f"Expected SchemaObjectClass, got {type(oud_unwrapped).__name__}"
+        )
+        oud_data: FlextLdifModels.SchemaObjectClass = oud_unwrapped
 
         # Verify conversion preserved key fields (objects, not dicts)
         assert oud_data.oid == parsed_data.oid

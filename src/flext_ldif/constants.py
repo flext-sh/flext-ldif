@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Final, Literal
 
 from flext_core import FlextConstants
@@ -136,6 +137,12 @@ class FlextLdifConstants(FlextConstants):
     LDIF_URL_INDICATOR: Final[str] = ":<"
     LDIF_DEFAULT_ENCODING: Final[str] = "utf-8"
 
+    # ===== TUPLE LENGTH VALIDATION CONSTANTS =====
+    # Used for type-safe tuple unpacking in migration and parsing operations
+    TUPLE_LEN_2: Final[int] = 2  # (dn, attrs) tuples, (options, config) pairs
+    TUPLE_LEN_3: Final[int] = 3  # (options, config, rules) triples
+    TUPLE_LEN_4: Final[int] = 4  # (options, config, rules, whitelist) quadruples
+
     # ===== ACL SUBJECT TYPE ENUMS (Type-Safe) =====
     class AclSubjectType(StrEnum):
         """ACL subject/who types for permission subjects.
@@ -240,6 +247,608 @@ class FlextLdifConstants(FlextConstants):
         # LDIF version constants
         LDIF_VERSION_1: Final[str] = "1"
         DEFAULT_LDIF_VERSION: Final[str] = LDIF_VERSION_1
+
+    class Rfc:
+        """RFC 2849/4512/4514 Standard Constants.
+
+        Official IETF RFC specifications for LDAP/LDIF processing.
+        All constants derived from official RFC documents.
+
+        References:
+            RFC 2849: LDIF Data Interchange Format
+            RFC 4512: LDAP Directory Information Models
+            RFC 4514: LDAP Distinguished Names
+            RFC 4517: LDAP Syntaxes and Matching Rules
+
+        """
+
+        # =================================================================
+        # RFC 2849: LDIF Data Interchange Format
+        # =================================================================
+
+        # RFC 2849 §2 - Characters requiring base64 encoding at value start
+        # "The distinguishing characteristic of an LDIF file is that it
+        #  begins with a version number."
+        BASE64_START_CHARS: Final[frozenset[str]] = frozenset(
+            {
+                " ",  # ASCII 32 - space at start
+                "<",  # Less-than sign (URL indicator conflict)
+                ":",  # Colon (separator conflict)
+            }
+        )
+
+        # RFC 2849 §2 - Characters requiring base64 encoding anywhere in value
+        BASE64_CONTENT_CHARS: Final[frozenset[str]] = frozenset(
+            {
+                "\x00",  # NUL character
+                "\n",  # Newline (line separator)
+                "\r",  # Carriage return
+            }
+        )
+
+        # RFC 2849 §2 - SAFE-CHAR range (no base64 needed)
+        # SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F (all but NUL, LF, CR)
+        SAFE_CHAR_MIN: Final[int] = 0x01
+        SAFE_CHAR_MAX: Final[int] = 0x7F
+        SAFE_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({0x00, 0x0A, 0x0D})
+
+        # RFC 2849 §2 - SAFE-INIT-CHAR (valid first character of SAFE-STRING)
+        # SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B / %x3D-7F
+        # Excludes: NUL, LF, CR, SPACE(0x20), COLON(0x3A), LESSTHAN(0x3C)
+        SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset(
+            {0x00, 0x0A, 0x0D, 0x20, 0x3A, 0x3C}
+        )
+
+        # RFC 2849 §2 - BASE64-CHAR (valid characters in base64 encoding)
+        # BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
+        # Characters: + / 0-9 = A-Z a-z
+        BASE64_CHARS: Final[frozenset[str]] = frozenset(
+            "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        )
+
+        # RFC 2849 §3 - Line folding constants
+        LINE_FOLD_WIDTH: Final[int] = 76  # Max chars before fold
+        LINE_CONTINUATION_SPACE: Final[str] = " "  # Single space for continuation
+        LINE_SEPARATOR: Final[str] = "\n"  # Unix line ending (default)
+
+        # RFC 2849 §3 - LDIF separators
+        ENTRY_SEPARATOR: Final[str] = "\n\n"  # Empty line between entries
+        ATTR_SEPARATOR: Final[str] = ":"  # attribute: value
+        BASE64_SEPARATOR: Final[str] = "::"  # attribute:: base64value
+        URL_SEPARATOR: Final[str] = ":<"  # attribute:< url
+
+        # RFC 2849 §4 - Change record types
+        CHANGETYPE_ADD: Final[str] = "add"
+        CHANGETYPE_DELETE: Final[str] = "delete"
+        CHANGETYPE_MODIFY: Final[str] = "modify"
+        CHANGETYPE_MODRDN: Final[str] = "modrdn"
+        CHANGETYPE_MODDN: Final[str] = "moddn"
+
+        CHANGETYPES: Final[frozenset[str]] = frozenset(
+            {
+                CHANGETYPE_ADD,
+                CHANGETYPE_DELETE,
+                CHANGETYPE_MODIFY,
+                CHANGETYPE_MODRDN,
+                CHANGETYPE_MODDN,
+            }
+        )
+
+        # RFC 2849 §4 - Modify operation types
+        MODIFY_ADD: Final[str] = "add"
+        MODIFY_DELETE: Final[str] = "delete"
+        MODIFY_REPLACE: Final[str] = "replace"
+
+        MODIFY_OPERATIONS: Final[frozenset[str]] = frozenset(
+            {MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE}
+        )
+
+        # RFC 2849 §5 - Control record keywords
+        KEYWORD_DN: Final[str] = "dn"
+        KEYWORD_CHANGETYPE: Final[str] = "changetype"
+        KEYWORD_CONTROL: Final[str] = "control"
+        KEYWORD_NEWRDN: Final[str] = "newrdn"
+        KEYWORD_DELETEOLDRDN: Final[str] = "deleteoldrdn"
+        KEYWORD_NEWSUPERIOR: Final[str] = "newsuperior"
+
+        # =================================================================
+        # RFC 4512: LDAP Directory Information Models
+        # =================================================================
+
+        # RFC 4512 §4.1 - Schema usage values for attributeType
+        SCHEMA_USAGE_USER_APPLICATIONS: Final[str] = "userApplications"
+        SCHEMA_USAGE_DIRECTORY_OPERATION: Final[str] = "directoryOperation"
+        SCHEMA_USAGE_DISTRIBUTED_OPERATION: Final[str] = "distributedOperation"
+        SCHEMA_USAGE_DSA_OPERATION: Final[str] = "dSAOperation"
+
+        SCHEMA_USAGE_VALUES: Final[frozenset[str]] = frozenset(
+            {
+                SCHEMA_USAGE_USER_APPLICATIONS,
+                SCHEMA_USAGE_DIRECTORY_OPERATION,
+                SCHEMA_USAGE_DISTRIBUTED_OPERATION,
+                SCHEMA_USAGE_DSA_OPERATION,
+            }
+        )
+
+        # RFC 4512 §4.1.1 - ObjectClass kinds
+        SCHEMA_KIND_ABSTRACT: Final[str] = "ABSTRACT"
+        SCHEMA_KIND_STRUCTURAL: Final[str] = "STRUCTURAL"
+        SCHEMA_KIND_AUXILIARY: Final[str] = "AUXILIARY"
+
+        SCHEMA_KINDS: Final[frozenset[str]] = frozenset(
+            {
+                SCHEMA_KIND_ABSTRACT,
+                SCHEMA_KIND_STRUCTURAL,
+                SCHEMA_KIND_AUXILIARY,
+            }
+        )
+
+        # RFC 4512 - ABNF Syntax Characters
+        # WSP = 0*SPACE, SP = 1*SPACE, SPACE = %x20
+        SCHEMA_WSP: Final[str] = " "  # Whitespace (0 or more spaces)
+        SCHEMA_SPACE: Final[str] = " "  # Single space %x20
+
+        # RFC 4512 - ABNF Delimiters
+        SCHEMA_LPAREN: Final[str] = "("  # Left parenthesis %x28
+        SCHEMA_RPAREN: Final[str] = ")"  # Right parenthesis %x29
+        SCHEMA_SQUOTE: Final[str] = "'"  # Single quote %x27
+        SCHEMA_DQUOTE: Final[str] = '"'  # Double quote %x22
+        SCHEMA_LCURLY: Final[str] = "{"  # Left curly brace %x7B
+        SCHEMA_RCURLY: Final[str] = "}"  # Right curly brace %x7D
+        SCHEMA_DOLLAR: Final[str] = "$"  # Dollar sign %x24
+
+        # RFC 4512 §4.1 - Schema extension prefix (X-<name>)
+        SCHEMA_EXTENSION_PREFIX: Final[str] = "X-"
+
+        # RFC 4512 §4.1 - Schema definition keywords
+        SCHEMA_KW_NAME: Final[str] = "NAME"
+        SCHEMA_KW_DESC: Final[str] = "DESC"
+        SCHEMA_KW_OBSOLETE: Final[str] = "OBSOLETE"
+        SCHEMA_KW_SUP: Final[str] = "SUP"
+        SCHEMA_KW_EQUALITY: Final[str] = "EQUALITY"
+        SCHEMA_KW_ORDERING: Final[str] = "ORDERING"
+        SCHEMA_KW_SUBSTR: Final[str] = "SUBSTR"
+        SCHEMA_KW_SYNTAX: Final[str] = "SYNTAX"
+        SCHEMA_KW_SINGLE_VALUE: Final[str] = "SINGLE-VALUE"
+        SCHEMA_KW_COLLECTIVE: Final[str] = "COLLECTIVE"
+        SCHEMA_KW_NO_USER_MODIFICATION: Final[str] = "NO-USER-MODIFICATION"
+        SCHEMA_KW_USAGE: Final[str] = "USAGE"
+        SCHEMA_KW_MUST: Final[str] = "MUST"
+        SCHEMA_KW_MAY: Final[str] = "MAY"
+        SCHEMA_KW_APPLIES: Final[str] = "APPLIES"
+        SCHEMA_KW_AUX: Final[str] = "AUX"
+        SCHEMA_KW_NOT: Final[str] = "NOT"
+        SCHEMA_KW_OC: Final[str] = "OC"
+        SCHEMA_KW_FORM: Final[str] = "FORM"
+
+        # RFC 4512 §4.2.1 - Standard operational attributes
+        ATTR_CREATORS_NAME: Final[str] = "creatorsName"
+        ATTR_CREATE_TIMESTAMP: Final[str] = "createTimestamp"
+        ATTR_MODIFIERS_NAME: Final[str] = "modifiersName"
+        ATTR_MODIFY_TIMESTAMP: Final[str] = "modifyTimestamp"
+        ATTR_STRUCTURAL_OBJECTCLASS: Final[str] = "structuralObjectClass"
+        ATTR_GOVERNING_STRUCTURE_RULE: Final[str] = "governingStructureRule"
+        ATTR_SUBSCHEMA_SUBENTRY: Final[str] = "subschemaSubentry"
+        ATTR_ENTRY_DN: Final[str] = "entryDN"
+
+        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            {
+                ATTR_CREATORS_NAME,
+                ATTR_CREATE_TIMESTAMP,
+                ATTR_MODIFIERS_NAME,
+                ATTR_MODIFY_TIMESTAMP,
+                ATTR_STRUCTURAL_OBJECTCLASS,
+                ATTR_GOVERNING_STRUCTURE_RULE,
+                ATTR_SUBSCHEMA_SUBENTRY,
+                ATTR_ENTRY_DN,
+            }
+        )
+
+        # RFC 4512 - Schema entry attribute names
+        ATTR_OBJECTCLASSES: Final[str] = "objectClasses"
+        ATTR_ATTRIBUTETYPES: Final[str] = "attributeTypes"
+        ATTR_MATCHINGRULES: Final[str] = "matchingRules"
+        ATTR_MATCHINGRULEUSE: Final[str] = "matchingRuleUse"
+        ATTR_LDAPSYNTAXES: Final[str] = "ldapSyntaxes"
+        ATTR_DITCONTENTRULES: Final[str] = "dITContentRules"
+        ATTR_DITSTRUCTURERULES: Final[str] = "dITStructureRules"
+        ATTR_NAMEFORMS: Final[str] = "nameForms"
+
+        SCHEMA_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            {
+                ATTR_OBJECTCLASSES,
+                ATTR_ATTRIBUTETYPES,
+                ATTR_MATCHINGRULES,
+                ATTR_MATCHINGRULEUSE,
+                ATTR_LDAPSYNTAXES,
+                ATTR_DITCONTENTRULES,
+                ATTR_DITSTRUCTURERULES,
+                ATTR_NAMEFORMS,
+            }
+        )
+
+        # =================================================================
+        # RFC 4514: LDAP Distinguished Names
+        # =================================================================
+
+        # RFC 4514 - ABNF Character Classes for DN String Representation
+        # LUTF1 = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+        # (leadchar - not SPACE, not '#', not special)
+        # TUTF1 = %x01-1F / %x21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+        # (trailchar - not SPACE, can have '#')
+        # SUTF1 = %x01-21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+        # (stringchar - allows SPACE except at boundaries)
+
+        # Characters excluded from LUTF1 (lead char) - includes SPACE(0x20), SHARP(0x23)
+        DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
+            {0x00, 0x20, 0x22, 0x23, 0x2B, 0x2C, 0x3B, 0x3C, 0x3E, 0x5C}
+        )
+        # Characters excluded from TUTF1 (trail char) - includes SPACE(0x20)
+        DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
+            {0x00, 0x20, 0x22, 0x2B, 0x2C, 0x3B, 0x3C, 0x3E, 0x5C}
+        )
+        # Characters excluded from SUTF1 (string char)
+        DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
+            {0x00, 0x22, 0x2B, 0x2C, 0x3B, 0x3C, 0x3E, 0x5C}
+        )
+
+        # RFC 4514 §2.4 - special = escaped / SPACE / SHARP / EQUALS
+        # escaped = DQUOTE / PLUS / COMMA / SEMI / LANGLE / RANGLE
+        DN_SPECIAL_CHARS: Final[frozenset[str]] = frozenset(
+            {'"', "+", ",", ";", "<", ">", " ", "#", "="}
+        )
+        DN_ESCAPED_CHARS: Final[frozenset[str]] = frozenset(
+            {'"', "+", ",", ";", "<", ">"}
+        )
+
+        # RFC 4514 §2.4 - Characters requiring escaping in DN attribute values
+        DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset(
+            {
+                '"',  # Quotation mark
+                "+",  # Plus sign (RDN separator)
+                ",",  # Comma (RDN separator)
+                ";",  # Semicolon (alternative RDN separator)
+                "<",  # Less-than
+                ">",  # Greater-than
+                "\\",  # Backslash (escape character)
+            }
+        )
+
+        # RFC 4514 §2.4 - Characters requiring escaping at value start/end
+        DN_ESCAPE_AT_START: Final[frozenset[str]] = frozenset(
+            {
+                " ",  # Space at start
+                "#",  # Hash at start (indicates hex string)
+            }
+        )
+        DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({" "})  # Space at end
+
+        # RFC 4514 §3 - Required attribute type short names
+        DN_ATTR_CN: Final[str] = "CN"  # commonName (2.5.4.3)
+        DN_ATTR_L: Final[str] = "L"  # localityName (2.5.4.7)
+        DN_ATTR_ST: Final[str] = "ST"  # stateOrProvinceName (2.5.4.8)
+        DN_ATTR_O: Final[str] = "O"  # organizationName (2.5.4.10)
+        DN_ATTR_OU: Final[str] = "OU"  # organizationalUnitName (2.5.4.11)
+        DN_ATTR_C: Final[str] = "C"  # countryName (2.5.4.6)
+        DN_ATTR_STREET: Final[str] = "STREET"  # streetAddress (2.5.4.9)
+        DN_ATTR_DC: Final[str] = "DC"  # domainComponent (0.9.2342.19200300.100.1.25)
+        DN_ATTR_UID: Final[str] = "UID"  # userId (0.9.2342.19200300.100.1.1)
+
+        # RFC 4514 §3 - Mapping from short name to OID
+        DN_ATTRIBUTE_TYPES: Final[MappingProxyType[str, str]] = MappingProxyType(
+            {
+                "CN": "2.5.4.3",
+                "L": "2.5.4.7",
+                "ST": "2.5.4.8",
+                "O": "2.5.4.10",
+                "OU": "2.5.4.11",
+                "C": "2.5.4.6",
+                "STREET": "2.5.4.9",
+                "DC": "0.9.2342.19200300.100.1.25",
+                "UID": "0.9.2342.19200300.100.1.1",
+            }
+        )
+
+        # RFC 4514 - RDN separator (comma is primary, semicolon is alternative)
+        DN_RDN_SEPARATOR: Final[str] = ","
+        DN_RDN_SEPARATOR_ALT: Final[str] = ";"
+        DN_MULTIVALUE_SEPARATOR: Final[str] = "+"  # Multi-valued RDN separator
+        DN_ATTR_VALUE_SEPARATOR: Final[str] = "="  # Attribute=Value separator
+
+        # =================================================================
+        # RFC 4517: LDAP Syntaxes and Matching Rules (common OIDs)
+        # =================================================================
+
+        # Common LDAP syntax OIDs
+        SYNTAX_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
+        SYNTAX_OCTET_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.40"
+        SYNTAX_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
+        SYNTAX_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
+        SYNTAX_DN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.12"
+        SYNTAX_GENERALIZED_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.24"
+        SYNTAX_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
+        SYNTAX_BIT_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.6"
+        SYNTAX_JPEG: Final[str] = "1.3.6.1.4.1.1466.115.121.1.28"
+
+        # Common matching rule OIDs
+        MATCH_CASE_IGNORE: Final[str] = "2.5.13.2"
+        MATCH_CASE_EXACT: Final[str] = "2.5.13.5"
+        MATCH_DISTINGUISHED_NAME: Final[str] = "2.5.13.1"
+        MATCH_INTEGER: Final[str] = "2.5.13.14"
+        MATCH_GENERALIZED_TIME: Final[str] = "2.5.13.27"
+        MATCH_OID: Final[str] = "2.5.13.0"
+
+        # =================================================================
+        # RFC Parsing/Writing Metadata Keys
+        # =================================================================
+        # Used for tracking RFC compliance and transformation metadata
+
+        # RFC 2849 - Entry/LDIF Metadata
+        META_RFC_VERSION: Final[str] = "_rfc_version"  # LDIF version (1)
+        META_RFC_LINE_FOLDING: Final[str] = "_rfc_line_folding"  # Line was folded
+        META_RFC_BASE64_ENCODED: Final[str] = "_rfc_base64"  # Value was base64
+        META_RFC_URL_REFERENCE: Final[str] = "_rfc_url_ref"  # Value from URL
+        META_RFC_CHANGETYPE: Final[str] = "_rfc_changetype"  # Change record type
+        META_RFC_CONTROLS: Final[str] = "_rfc_controls"  # LDAP controls
+
+        # RFC 4512 - Schema Metadata
+        META_SCHEMA_EXTENSIONS: Final[str] = "_schema_extensions"  # X-* extensions
+        META_SCHEMA_ORIGIN: Final[str] = "_schema_origin"  # X-ORIGIN value
+        META_SCHEMA_OBSOLETE: Final[str] = "_schema_obsolete"  # OBSOLETE flag
+
+        # RFC 4514 - DN Metadata
+        META_DN_ORIGINAL: Final[str] = "_dn_original"  # Original DN before norm
+        META_DN_WAS_BASE64: Final[str] = "_dn_was_base64"  # DN was base64 encoded
+        META_DN_ESCAPES_APPLIED: Final[str] = "_dn_escapes"  # Escape sequences used
+
+        # Transformation Tracking
+        META_TRANSFORMATION_SOURCE: Final[str] = "_transform_source"  # Source server
+        META_TRANSFORMATION_TARGET: Final[str] = "_transform_target"  # Target server
+        META_TRANSFORMATION_TIMESTAMP: Final[str] = "_transform_ts"  # When transformed
+
+    # =============================================================================
+    # FEATURE CAPABILITIES - Cross-Server Translation System
+    # =============================================================================
+
+    class FeatureCapabilities:
+        r"""Feature capability definitions for cross-server translation.
+
+        This system enables:
+        1. RFC as STRICT baseline - always supported by all servers
+        2. Vendor features mapped to standard feature IDs
+        3. Metadata preservation for round-trip conversion
+        4. Servers declare their own capabilities without knowing other servers
+
+        Architecture:
+        =============
+        Server A → RFC Intermediate → Server B
+                   (features preserved in metadata)
+
+        Feature Categories:
+        ===================
+        - RFC_STANDARD: Core RFC features (mandatory for all servers)
+        - ACL_VENDOR: Server-specific ACL features (may not translate)
+        - SCHEMA_VENDOR: Server-specific schema features
+        - ENTRY_VENDOR: Server-specific entry features
+
+        Server Implementation Pattern:
+        ==============================
+        Each server declares in its OWN Constants class:
+
+        class Constants:
+            # Features this server supports
+            SUPPORTED_FEATURES: frozenset[str] = frozenset({
+                FeatureCapabilities.ACL_SELF_WRITE,
+                FeatureCapabilities.ACL_PROXY_AUTH,
+                ...
+            })
+
+            # Local permission name → feature ID mapping
+            LOCAL_TO_FEATURE: dict[str, str] = {
+                "selfwrite": FeatureCapabilities.ACL_SELF_WRITE,
+                "proxy": FeatureCapabilities.ACL_PROXY_AUTH,
+            }
+
+            # Feature ID → local permission name mapping
+            FEATURE_TO_LOCAL: dict[str, str] = {
+                FeatureCapabilities.ACL_SELF_WRITE: "selfwrite",
+                FeatureCapabilities.ACL_PROXY_AUTH: "proxy",
+            }
+
+        Hook Methods (in rfc.py base, servers override):
+        =================================================
+        - _normalize_feature(feature_id, value) → RFC value + metadata
+        - _denormalize_feature(feature_id, rfc_value, metadata) → server value
+        - _supports_feature(feature_id) → bool
+        - _get_feature_fallback(feature_id) → RFC_FALLBACKS value or None
+
+        """
+
+        # =====================================================================
+        # RFC STANDARD FEATURES (supported by ALL servers)
+        # =====================================================================
+
+        # ACL Permission Features (RFC 4876 / RFC 2820 concepts)
+        ACL_READ: Final[str] = "acl:read"
+        ACL_WRITE: Final[str] = "acl:write"
+        ACL_ADD: Final[str] = "acl:add"
+        ACL_DELETE: Final[str] = "acl:delete"
+        ACL_SEARCH: Final[str] = "acl:search"
+        ACL_COMPARE: Final[str] = "acl:compare"
+
+        # ACL Subject Features
+        ACL_SUBJECT_USER_DN: Final[str] = "acl:subject:user_dn"
+        ACL_SUBJECT_GROUP_DN: Final[str] = "acl:subject:group_dn"
+        ACL_SUBJECT_SELF: Final[str] = "acl:subject:self"
+        ACL_SUBJECT_ANONYMOUS: Final[str] = "acl:subject:anonymous"
+        ACL_SUBJECT_ALL: Final[str] = "acl:subject:all"
+
+        # ACL Target Features
+        ACL_TARGET_ENTRY: Final[str] = "acl:target:entry"
+        ACL_TARGET_ATTRS: Final[str] = "acl:target:attrs"
+        ACL_TARGET_DN: Final[str] = "acl:target:dn"
+
+        # Schema Features (RFC 4512)
+        SCHEMA_ATTR_SYNTAX: Final[str] = "schema:attr:syntax"
+        SCHEMA_ATTR_MATCHING: Final[str] = "schema:attr:matching"
+        SCHEMA_ATTR_SINGLE_VALUE: Final[str] = "schema:attr:single_value"
+        SCHEMA_OC_SUP: Final[str] = "schema:oc:sup"
+        SCHEMA_OC_KIND: Final[str] = "schema:oc:kind"
+
+        # Entry Features (RFC 2849)
+        ENTRY_DN: Final[str] = "entry:dn"
+        ENTRY_CHANGETYPE: Final[str] = "entry:changetype"
+        ENTRY_CONTROLS: Final[str] = "entry:controls"
+
+        # =====================================================================
+        # VENDOR ACL FEATURES (may not translate between servers)
+        # =====================================================================
+        # Each server declares which of these it supports in its Constants
+
+        # Self-write permission (user can modify own entry)
+        ACL_SELF_WRITE: Final[str] = "acl:vendor:self_write"
+
+        # Proxy authentication permission
+        ACL_PROXY_AUTH: Final[str] = "acl:vendor:proxy_auth"
+
+        # Browse permission (typically read+search combined)
+        ACL_BROWSE_PERMISSION: Final[str] = "acl:vendor:browse"
+
+        # Authentication permission
+        ACL_AUTH_PERMISSION: Final[str] = "acl:vendor:auth"
+
+        # All permissions macro (expands to full permission set)
+        ACL_ALL_PERMISSIONS: Final[str] = "acl:vendor:all"
+
+        # Negative/deny permissions (noread, nowrite, etc.)
+        ACL_NEGATIVE_PERMISSIONS: Final[str] = "acl:vendor:negative"
+
+        # DN attribute-based subject (subject from entry attribute)
+        ACL_DNATTR_SUBJECT: Final[str] = "acl:vendor:dnattr"
+
+        # GUID attribute-based subject
+        ACL_GUIDATTR_SUBJECT: Final[str] = "acl:vendor:guidattr"
+
+        # IP-based bind rules
+        ACL_BIND_IP: Final[str] = "acl:vendor:bind_ip"
+
+        # Time-based bind rules (time of day, day of week)
+        ACL_BIND_TIME: Final[str] = "acl:vendor:bind_time"
+
+        # Authentication method requirement
+        ACL_BIND_AUTHMETHOD: Final[str] = "acl:vendor:bind_authmethod"
+
+        # Security strength factor threshold
+        ACL_BIND_SSF: Final[str] = "acl:vendor:bind_ssf"
+
+        # Filter-based target selection
+        ACL_TARGET_FILTER: Final[str] = "acl:vendor:target_filter"
+
+        # =====================================================================
+        # VENDOR SCHEMA FEATURES
+        # =====================================================================
+
+        # X-ORIGIN extension (common but not RFC-required)
+        SCHEMA_X_ORIGIN: Final[str] = "schema:vendor:x_origin"
+
+        # X-SCHEMA-FILE extension
+        SCHEMA_X_SCHEMA_FILE: Final[str] = "schema:vendor:x_schema_file"
+
+        # Custom syntaxes (vendor-specific OIDs)
+        SCHEMA_CUSTOM_SYNTAX: Final[str] = "schema:vendor:custom_syntax"
+
+        # =====================================================================
+        # VENDOR ENTRY FEATURES
+        # =====================================================================
+
+        # Operational attributes preservation
+        ENTRY_OPERATIONAL_ATTRS: Final[str] = "entry:vendor:operational"
+
+        # Server-specific controls
+        ENTRY_VENDOR_CONTROLS: Final[str] = "entry:vendor:controls"
+
+        # =====================================================================
+        # FEATURE CATEGORY SETS
+        # =====================================================================
+
+        RFC_STANDARD_FEATURES: Final[frozenset[str]] = frozenset(
+            {
+                ACL_READ,
+                ACL_WRITE,
+                ACL_ADD,
+                ACL_DELETE,
+                ACL_SEARCH,
+                ACL_COMPARE,
+                ACL_SUBJECT_USER_DN,
+                ACL_SUBJECT_GROUP_DN,
+                ACL_SUBJECT_SELF,
+                ACL_SUBJECT_ANONYMOUS,
+                ACL_SUBJECT_ALL,
+                ACL_TARGET_ENTRY,
+                ACL_TARGET_ATTRS,
+                ACL_TARGET_DN,
+                SCHEMA_ATTR_SYNTAX,
+                SCHEMA_ATTR_MATCHING,
+                SCHEMA_ATTR_SINGLE_VALUE,
+                SCHEMA_OC_SUP,
+                SCHEMA_OC_KIND,
+                ENTRY_DN,
+                ENTRY_CHANGETYPE,
+                ENTRY_CONTROLS,
+            }
+        )
+
+        VENDOR_ACL_FEATURES: Final[frozenset[str]] = frozenset(
+            {
+                ACL_SELF_WRITE,
+                ACL_PROXY_AUTH,
+                ACL_BROWSE_PERMISSION,
+                ACL_AUTH_PERMISSION,
+                ACL_ALL_PERMISSIONS,
+                ACL_NEGATIVE_PERMISSIONS,
+                ACL_DNATTR_SUBJECT,
+                ACL_GUIDATTR_SUBJECT,
+                ACL_BIND_IP,
+                ACL_BIND_TIME,
+                ACL_BIND_AUTHMETHOD,
+                ACL_BIND_SSF,
+                ACL_TARGET_FILTER,
+            }
+        )
+
+        # =====================================================================
+        # RFC FALLBACK VALUES (when vendor feature not supported)
+        # =====================================================================
+        # Servers declare their own FEATURE_TO_LOCAL mappings in their Constants
+        # These are generic RFC fallbacks when a feature cannot be translated
+
+        RFC_FALLBACKS: Final[MappingProxyType[str, str | None]] = MappingProxyType(
+            {
+                ACL_SELF_WRITE: "write",  # Degrade to write
+                ACL_BROWSE_PERMISSION: "read,search",  # Expand to RFC permissions
+                ACL_PROXY_AUTH: None,  # No RFC equivalent, preserve in metadata
+                ACL_AUTH_PERMISSION: None,  # No RFC equivalent, preserve in metadata
+                ACL_ALL_PERMISSIONS: "read,write,add,delete,search,compare",
+                ACL_DNATTR_SUBJECT: None,  # Server-specific, preserve in metadata
+                ACL_GUIDATTR_SUBJECT: None,  # Server-specific, preserve in metadata
+                ACL_NEGATIVE_PERMISSIONS: None,  # Preserve in metadata
+                ACL_BIND_IP: None,  # Preserve in metadata
+                ACL_BIND_TIME: None,  # Preserve in metadata
+                ACL_BIND_AUTHMETHOD: None,  # Preserve in metadata
+                ACL_BIND_SSF: None,  # Preserve in metadata
+                ACL_TARGET_FILTER: None,  # Preserve in metadata
+            }
+        )
+
+        # =====================================================================
+        # METADATA KEYS FOR FEATURE PRESERVATION
+        # =====================================================================
+
+        META_UNSUPPORTED_FEATURES: Final[str] = "_unsupported_features"
+        META_FEATURE_SOURCE: Final[str] = "_feature_source_server"
+        META_FEATURE_ORIGINAL_VALUE: Final[str] = "_feature_original_value"
+        META_FEATURE_FALLBACK_USED: Final[str] = "_feature_fallback_used"
+        META_FEATURE_EXPANSION_APPLIED: Final[str] = "_feature_expansion_applied"
 
     # =============================================================================
     # PROCESSING CONSTANTS
@@ -1972,6 +2581,31 @@ class FlextLdifConstants(FlextConstants):
         REMOVED_ATTRIBUTES_WITH_VALUES: Final[str] = (
             "removed_attributes_with_values"  # Attributes with values for RFC writer
         )
+
+        # ===== ROUNDTRIP METADATA KEYS (Used for perfect round-trip conversion) =====
+        # These keys store original data for exact LDIF recreation after processing
+        MINIMAL_DIFFERENCES_DN: Final[str] = (
+            "minimal_differences_dn"  # DN differences between original and converted
+        )
+        MINIMAL_DIFFERENCES_ATTRIBUTES: Final[str] = (
+            "minimal_differences_attributes"  # Attribute differences
+        )
+        HAS_DIFFERENCES: Final[str] = (
+            "has_differences"  # Boolean flag indicating DN/attribute differences exist
+        )
+        ORIGINAL_DN_COMPLETE: Final[str] = (
+            "original_dn_complete"  # Original DN string before any normalization
+        )
+        ORIGINAL_ATTRIBUTES_COMPLETE: Final[str] = (
+            "original_attributes_complete"  # Complete original attributes dict
+        )
+        ORIGINAL_DN_LINE_COMPLETE: Final[str] = (
+            "original_dn_line_complete"  # Original DN line from LDIF file
+        )
+        ORIGINAL_ATTR_LINES_COMPLETE: Final[str] = (
+            "original_attr_lines_complete"  # Original attribute lines from LDIF
+        )
+
         WRITE_OPTIONS: Final[str] = (
             "_write_options"  # Write format options for LDIF output
         )

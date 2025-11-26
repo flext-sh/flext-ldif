@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
 
@@ -271,12 +270,25 @@ class FlextLdifCategorizer(
         ) or not FlextRuntime.is_dict_like(category_map):
             return ("rejected", "Invalid constants type")
 
-        # Categorize by priority order
+        # Categorize by priority order with proper type construction
+        if not isinstance(priority_order, list):
+            msg = f"Expected list, got {type(priority_order)}"
+            raise TypeError(msg)
+        priority_order_list: list[str] = [str(item) for item in priority_order]
+
+        if not isinstance(category_map, dict):
+            msg = f"Expected dict, got {type(category_map)}"
+            raise TypeError(msg)
+        category_map_dict: dict[str, frozenset[str]] = {
+            str(k): (v if isinstance(v, frozenset) else frozenset([str(v)]))
+            for k, v in category_map.items()
+        }
+
         return self._categorize_by_priority(
             entry,
             constants,
-            cast("list[str]", priority_order),
-            cast("dict[str, frozenset[str]]", category_map),
+            priority_order_list,
+            category_map_dict,
         )
 
 

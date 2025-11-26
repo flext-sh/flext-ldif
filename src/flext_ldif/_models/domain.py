@@ -17,7 +17,7 @@ import contextlib
 import logging
 import re
 from collections.abc import Callable, Mapping
-from typing import ClassVar, Self, TypedDict, Unpack, cast
+from typing import ClassVar, Self, TypedDict, Unpack
 
 from flext_core import (
     FlextLogger,
@@ -758,8 +758,7 @@ class FlextLdifModelsDomains:
                 for key, val in attrs_data.items():
                     if isinstance(val, list):
                         # Type guard: val is list-like, so it's iterable
-                        val_list = cast("list[object]", val)
-                        normalized_attrs[key] = [str(v) for v in val_list]
+                        normalized_attrs[key] = [str(v) for v in val]
                     elif isinstance(val, str):
                         normalized_attrs[key] = [val]
                     else:
@@ -1821,7 +1820,9 @@ class FlextLdifModelsDomains:
                 else {}
             )
             # Type guard: ensure we return dict[str, object]
-            return cast("dict[str, object]", result if isinstance(result, dict) else {})
+            if isinstance(result, dict):
+                return result
+            return {}
 
         class Builder:
             """Builder pattern for Entry creation (reduces complexity, improves readability)."""
@@ -1972,7 +1973,7 @@ class FlextLdifModelsDomains:
             unconverted_attributes: dict[str, object] | None = None,  # New parameter
             statistics: FlextLdifModelsDomains.EntryStatistics
             | None = None,  # New parameter
-        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+        ) -> FlextResult[Self]:
             """Create a new Entry instance with composition fields (legacy method, prefer builder())."""
             return cls._create_entry(
                 dn=dn,
@@ -2135,7 +2136,7 @@ class FlextLdifModelsDomains:
             unconverted_attributes: dict[str, object] | None = None,  # New parameter
             statistics: FlextLdifModelsDomains.EntryStatistics
             | None = None,  # New parameter
-        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+        ) -> FlextResult[Self]:
             """Internal method for Entry creation with composition fields.
 
             Args:
@@ -2196,11 +2197,10 @@ class FlextLdifModelsDomains:
                 if statistics is not None:
                     entry_data["statistics"] = statistics
 
-                return FlextResult[FlextLdifModelsDomains.Entry].ok(
-                    cls.model_validate(entry_data),
-                )
+                entry_instance = cls.model_validate(entry_data)
+                return FlextResult.ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                return FlextResult.fail(
                     f"Failed to create Entry: {e}",
                 )
 
@@ -2208,7 +2208,7 @@ class FlextLdifModelsDomains:
         def from_ldap3(
             cls,
             ldap3_entry: object,
-        ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+        ) -> FlextResult[Self]:
             """Create Entry from ldap3 Entry object.
 
             Args:
@@ -2245,13 +2245,17 @@ class FlextLdifModelsDomains:
                             attrs_dict[str(attr_name)] = [str(attr_value_list)]
 
                 # Use Entry.create to handle DN and attribute conversion
+                # attrs_dict is already dict[str, list[str]], convert to dict[str, str | list[str]]
+                # Entry.create accepts dict[str, str | list[str]], so we can use attrs_dict directly
+                # since list[str] is compatible with str | list[str]
+                attrs_typed: dict[str, str | list[str]] = dict(attrs_dict.items())
                 return cls.create(
                     dn=dn_str,
-                    attributes=cast("dict[str, str | list[str]]", attrs_dict),
+                    attributes=attrs_typed,
                 )
 
             except Exception as e:
-                return FlextResult[FlextLdifModelsDomains.Entry].fail(
+                return FlextResult.fail(
                     f"Failed to create Entry from ldap3: {e}",
                 )
 
@@ -2796,6 +2800,249 @@ class FlextLdifModelsDomains:
                 quirk_type=default_quirk_type,
                 extensions=extensions_dict,
             )
+
+        def track_attribute_transformation(
+            self,
+            original_name: str,
+            new_name: str | None,
+            transformation_type: str,
+            original_values: list[str] | None = None,
+            new_values: list[str] | None = None,
+            reason: str | None = None,
+        ) -> Self:
+            """Track an attribute transformation in metadata.
+
+            RFC Compliance: Stores original data for round-trip support.
+
+            Args:
+                original_name: Original attribute name before transformation
+                new_name: New attribute name (None if removed)
+                transformation_type: Type of transformation (renamed/removed/modified/added)
+                original_values: Original values before transformation
+                new_values: New values after transformation
+                reason: Human-readable reason for transformation
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.track_attribute_transformation(
+                ...     original_name="orclPassword",
+                ...     new_name="userPassword",
+                ...     transformation_type="renamed",
+                ...     reason="OID→OUD attribute mapping"
+                ... )
+
+            """
+            transformation = FlextLdifModelsDomains.AttributeTransformation(
+                original_name=original_name,
+                new_name=new_name,
+                transformation_type=transformation_type,
+                original_values=original_values or [],
+                new_values=new_values or [],
+            )
+            self.attribute_transformations[original_name] = transformation
+
+            # Add conversion note for audit trail
+            note_key = f"attr_{original_name}_{transformation_type}"
+            self.conversion_notes[note_key] = reason or f"{transformation_type}: {original_name} → {new_name}"
+
+            return self
+
+        def track_attribute_removal(
+            self,
+            attribute_name: str,
+            values: list[str],
+            reason: str | None = None,
+        ) -> Self:
+            """Track an attribute removal in metadata.
+
+            RFC Compliance: Preserves removed attribute data for round-trip conversions.
+            Uses FlextLdifConstants.MetadataKeys.SKIPPED_ATTRIBUTES tracking.
+
+            Args:
+                attribute_name: Name of removed attribute
+                values: Values that were removed
+                reason: Human-readable reason for removal
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.track_attribute_removal(
+                ...     attribute_name="orclLastAppliedChangeNumber",
+                ...     values=["12345"],
+                ...     reason="OID-specific operational attribute"
+                ... )
+
+            """
+            self.removed_attributes[attribute_name] = values
+            return self.track_attribute_transformation(
+                original_name=attribute_name,
+                new_name=None,
+                transformation_type="removed",
+                original_values=values,
+                reason=reason,
+            )
+
+        def track_dn_transformation(
+            self,
+            original_dn: str,
+            transformed_dn: str,
+            transformation_type: str = "normalized",
+            was_base64: bool = False,
+            escapes_applied: list[str] | None = None,
+        ) -> Self:
+            """Track a DN transformation in metadata.
+
+            RFC 4514 Compliance: Tracks DN normalization and transformations.
+            Uses FlextLdifConstants.Rfc.META_DN_* keys.
+
+            Args:
+                original_dn: Original DN before transformation
+                transformed_dn: DN after transformation
+                transformation_type: Type of transformation (normalized/basedn_transform/etc.)
+                was_base64: Whether original DN was base64 encoded
+                escapes_applied: List of escape sequences that were applied
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.track_dn_transformation(
+                ...     original_dn="cn=test, dc=example",
+                ...     transformed_dn="cn=test,dc=example",
+                ...     transformation_type="normalized",
+                ... )
+
+            """
+            from flext_ldif import FlextLdifConstants
+
+            self.original_strings[FlextLdifConstants.Rfc.META_DN_ORIGINAL] = original_dn
+            self.extensions[FlextLdifConstants.Rfc.META_DN_WAS_BASE64] = was_base64
+            if escapes_applied:
+                self.extensions[FlextLdifConstants.Rfc.META_DN_ESCAPES_APPLIED] = escapes_applied
+
+            # Add to conversion notes
+            self.conversion_notes[f"dn_{transformation_type}"] = (
+                f"DN {transformation_type}: '{original_dn}' → '{transformed_dn}'"
+            )
+
+            return self
+
+        def track_rfc_violation(
+            self,
+            violation: str,
+            severity: str = "error",
+        ) -> Self:
+            """Track an RFC violation or warning.
+
+            RFC Compliance: Captures deviations from RFC 2849/4512/4514 standards.
+
+            Args:
+                violation: Description of RFC violation (e.g., "RFC 2849 §2: DN required")
+                severity: Severity level ("error" or "warning")
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.track_rfc_violation(
+                ...     violation="RFC 4514 §2.3: Invalid escape sequence",
+                ...     severity="error"
+                ... )
+
+            """
+            if severity == "warning":
+                self.rfc_warnings.append(violation)
+            else:
+                self.rfc_violations.append(violation)
+            return self
+
+        def add_conversion_note(
+            self,
+            operation: str,
+            description: str,
+        ) -> Self:
+            """Add a conversion note to the audit trail.
+
+            Args:
+                operation: Operation identifier (e.g., "oid_to_oud", "schema_normalize")
+                description: Human-readable description of the operation
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.add_conversion_note(
+                ...     operation="oid_to_rfc",
+                ...     description="Converted OID ACL format to RFC 4515 filter"
+                ... )
+
+            """
+            self.conversion_notes[operation] = description
+            return self
+
+        def set_server_context(
+            self,
+            source_server: str,
+            target_server: str | None = None,
+        ) -> Self:
+            """Set source and target server context.
+
+            Args:
+                source_server: Source LDAP server type (oid, oud, openldap, etc.)
+                target_server: Target LDAP server type (optional)
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.set_server_context(
+                ...     source_server="oid",
+                ...     target_server="oud"
+                ... )
+
+            """
+            from flext_ldif import FlextLdifConstants
+
+            self.original_server_type = source_server
+            self.target_server_type = target_server
+
+            # Also store in extensions for generic access
+            self.extensions[FlextLdifConstants.Rfc.META_TRANSFORMATION_SOURCE] = source_server
+            if target_server:
+                self.extensions[FlextLdifConstants.Rfc.META_TRANSFORMATION_TARGET] = target_server
+
+            return self
+
+        def record_original_format(
+            self,
+            original_ldif: str,
+            attribute_case: dict[str, str] | None = None,
+        ) -> Self:
+            """Record original LDIF format for round-trip conversion.
+
+            RFC Compliance: Preserves ALL original formatting details.
+
+            Args:
+                original_ldif: Complete original LDIF string
+                attribute_case: Map of normalized→original attribute case
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> metadata.record_original_format(
+                ...     original_ldif="dn: CN=test\\nCN: test\\n",
+                ...     attribute_case={"cn": "CN"}
+                ... )
+
+            """
+            self.original_strings["entry_original_ldif"] = original_ldif
+            if attribute_case:
+                self.original_attribute_case.update(attribute_case)
+            return self
 
     class _DNStatisticsFlags(TypedDict, total=False):
         """Optional flags for DNStatistics.create_with_transformation()."""

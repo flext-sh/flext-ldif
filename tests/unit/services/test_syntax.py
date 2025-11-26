@@ -266,7 +266,7 @@ class TestSyntaxModel:
 
     @pytest.mark.parametrize(("oid", "expected_suffix"), RFC4517_OIDS)
     def test_is_rfc4517_standard_and_suffix(
-        self, oid: str, expected_suffix: str
+        self, oid: str, expected_suffix: str,
     ) -> None:
         """Test RFC 4517 detection and OID suffix extraction.
 
@@ -281,7 +281,7 @@ class TestSyntaxModel:
             validation_pattern=None,
         )
         assert syntax.is_rfc4517_standard is True
-        assert syntax.syntax_oid_suffix == expected_suffix  # type: ignore[unreachable]
+        assert syntax.syntax_oid_suffix == expected_suffix
 
     @pytest.mark.parametrize("oid", NON_RFC4517_OIDS)
     def test_non_rfc4517_detection(self, oid: str) -> None:
@@ -300,7 +300,7 @@ class TestSyntaxModel:
             validation_pattern=None,
         )
         assert syntax.is_rfc4517_standard is False
-        assert syntax.syntax_oid_suffix is None  # type: ignore[unreachable]
+        assert syntax.syntax_oid_suffix is None
 
     # ========================================================================
     # PARAMETRIZED TESTS - ENCODING SUPPORT
@@ -336,7 +336,7 @@ class TestSyntaxModel:
 
     @pytest.mark.parametrize(("pattern", "description"), VALIDATION_PATTERNS)
     def test_syntax_validation_patterns(
-        self, pattern: str | None, description: str
+        self, pattern: str | None, description: str,
     ) -> None:
         """Test validation pattern support.
 
@@ -359,7 +359,7 @@ class TestSyntaxModel:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        "test_case", [SyntaxTestCase.BOOLEAN, SyntaxTestCase.DIRECTORY_STRING]
+        "test_case", [SyntaxTestCase.BOOLEAN, SyntaxTestCase.DIRECTORY_STRING],
     )
     def test_model_serialization(self, test_case: SyntaxTestCase) -> None:
         """Test Pydantic serialization methods.
@@ -387,8 +387,8 @@ class TestSyntaxModel:
         # Test model_dump_json
         json_str = syntax.model_dump_json()
         assert json_str is not None
-        assert name in json_str  # type: ignore[reportOperatorIssue]
-        assert oid in json_str  # type: ignore[reportOperatorIssue]
+        assert name in json_str
+        assert oid in json_str
 
         # Test model_validate
         data = {"oid": oid, "name": name, "type_category": "string"}

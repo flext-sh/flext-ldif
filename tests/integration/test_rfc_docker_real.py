@@ -16,7 +16,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifConfig,
     FlextLdifModels,
     FlextLdifParser,
     FlextLdifWriter,
@@ -58,9 +57,7 @@ class TestRfcDockerRealData:
         if not schema_file.exists():
             pytest.skip(f"OID schema fixtures not found: {schema_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(schema_file)
         assert result.is_success, f"Failed to parse OID schema: {result.error}"
@@ -90,9 +87,7 @@ class TestRfcDockerRealData:
         if not entries_file.exists():
             pytest.skip(f"OUD entries fixtures not found: {entries_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(entries_file)
         assert result.is_success, f"Failed to parse OUD entries: {result.error}"
@@ -113,9 +108,7 @@ class TestRfcDockerRealData:
         if not integration_file.exists():
             pytest.skip(f"OpenLDAP integration fixtures not found: {integration_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(integration_file)
         assert result.is_success or (
@@ -138,9 +131,7 @@ class TestRfcDockerRealData:
         if not source_file.exists():
             pytest.skip(f"OID entries fixtures not found: {source_file}")
             # Parse original
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
         parse_result = parser.parse_ldif_file(source_file)
 
         if not parse_result.is_success:
@@ -152,7 +143,6 @@ class TestRfcDockerRealData:
         output_file = tmp_path / "roundtrip.ldif"
 
         writer = FlextLdifWriter(
-            config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
         )
         write_result = writer.write(
@@ -164,9 +154,7 @@ class TestRfcDockerRealData:
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
         # Re-parse written file
-        reparser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        reparser = FlextLdifParser()
         reparse_result = reparser.parse_ldif_file(output_file)
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_response = reparse_result.unwrap()
@@ -185,9 +173,7 @@ class TestRfcDockerRealData:
         if not acl_file.exists():
             pytest.skip(f"OUD ACL fixtures not found: {acl_file}")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(acl_file)
 
@@ -212,9 +198,7 @@ class TestRfcDockerRealData:
         unicode_files = list(unicode_dir.glob("*.ldif"))
 
         for ldif_file in unicode_files:
-            parser = FlextLdifParser(
-                config=FlextLdifConfig(),
-            )
+            parser = FlextLdifParser()
 
             result = parser.parse_ldif_file(ldif_file)
             # Should handle Unicode gracefully
@@ -242,7 +226,6 @@ class TestRfcDockerRealData:
             )
 
             writer = FlextLdifWriter(
-                config=FlextLdifConfig(),
                 quirk_registry=quirk_registry,
             )
 
@@ -275,10 +258,8 @@ class TestRfcDockerRealData:
         broken_files = list(broken_dir.glob("*.ldif"))
 
         for broken_file in broken_files:
-            parser = FlextLdifParser(
-                config=FlextLdifConfig(),
-                # Use relaxed mode for broken LDIF
-            )
+            parser = FlextLdifParser()
+            # Use relaxed mode for broken LDIF
 
             result = parser.parse_ldif_file(broken_file)
             # Relaxed mode should attempt to parse even broken LDIF
@@ -297,9 +278,7 @@ class TestRfcDockerRealData:
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(schema_file)
 
@@ -339,9 +318,7 @@ class TestRfcIntegrationRealWorld:
         file_size = schema_file.stat().st_size
         assert file_size > 300000, "Expected large schema file"
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(schema_file)
         assert result.is_success, f"Failed to parse large schema: {result.error}"
@@ -356,9 +333,7 @@ class TestRfcIntegrationRealWorld:
         if not integration_file.exists():
             pytest.skip("OUD integration fixtures not found")
 
-        parser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        parser = FlextLdifParser()
 
         result = parser.parse_ldif_file(integration_file)
 
@@ -395,7 +370,6 @@ class TestRfcIntegrationRealWorld:
         output_file = tmp_path / "large_output.ldif"
 
         writer = FlextLdifWriter(
-            config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
         )
 

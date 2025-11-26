@@ -75,6 +75,157 @@ class FlextLdifModelsConfig:
             description="ACL action type (allow or deny) - for OUD deny rules support",
         )
 
+    class AciParserConfig(FlextModels.Value):
+        """Configuration for ACI parsing.
+
+        Consolidates all parser parameters to enable generic utility methods.
+        Each server (OUD, OID, RFC) provides its Constants-based config.
+
+        Example:
+            parser_config = FlextLdifModels.AciParserConfig(
+                server_type="oud",
+                aci_prefix="aci:",
+                version_acl_pattern=Constants.ACL_VERSION_ACL_PATTERN,
+                ...
+            )
+            result = FlextLdifUtilities.ACL.parse_aci(acl_line, parser_config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        server_type: str = Field(..., description="Server type for metadata")
+        aci_prefix: str = Field(
+            default="aci:",
+            description="ACI attribute prefix",
+        )
+        version_acl_pattern: str = Field(
+            ...,
+            description="Regex pattern for version and ACL name extraction",
+        )
+        targetattr_pattern: str = Field(
+            ...,
+            description="Regex pattern for targetattr extraction",
+        )
+        allow_deny_pattern: str = Field(
+            ...,
+            description="Regex pattern for allow/deny permissions",
+        )
+        bind_patterns: dict[str, str] = Field(
+            default_factory=dict,
+            description="Mapping of bind type to regex pattern",
+        )
+        default_name: str = Field(
+            default="ACL",
+            description="Default ACL name if not found",
+        )
+        default_targetattr: str = Field(
+            default="*",
+            description="Default target attribute",
+        )
+        ops_separator: str = Field(
+            default=",",
+            description="Permissions separator",
+        )
+        action_filter: str = Field(
+            default="allow",
+            description="Action to filter (allow or deny)",
+        )
+
+        # === EXTRA PATTERNS (Optional - for server-specific extensions) ===
+        # These are passed as a dict to avoid bloating the base config
+        # Keys are pattern names, values are regex patterns
+        # Example: {"targetscope": r'\(targetscope\s*=\s*"([^"]+)"\)'}
+        extra_patterns: dict[str, str] = Field(
+            default_factory=dict,
+            description="Extra regex patterns for server-specific fields",
+        )
+
+        # Permission mapping for server-specific permission names
+        permission_map: dict[str, str] = Field(
+            default_factory=lambda: {
+                "read": "read",
+                "write": "write",
+                "add": "add",
+                "delete": "delete",
+                "search": "search",
+                "compare": "compare",
+            },
+            description="Mapping of permission name to normalized name",
+        )
+
+        # Special subject values (self, anonymous, etc.)
+        special_subjects: dict[str, tuple[str, str]] = Field(
+            default_factory=lambda: {
+                "ldap:///self": ("self", "ldap:///self"),
+                "ldap:///anyone": ("anonymous", "ldap:///anyone"),
+            },
+            description="Special subject DN to (type, value) mapping",
+        )
+
+    class AciWriterConfig(FlextModels.Value):
+        """Configuration for ACI writing.
+
+        Consolidates all writer parameters to enable generic utility methods.
+        Each server (OUD, OID, RFC) provides its Constants-based config.
+
+        Example:
+            writer_config = FlextLdifModels.AciWriterConfig(
+                aci_prefix="aci:",
+                version="3.0",
+                ...
+            )
+            result = FlextLdifUtilities.ACL.write_aci(acl, writer_config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        aci_prefix: str = Field(
+            default="aci: ",
+            description="Prefix for ACI line",
+        )
+        version: str = Field(
+            default="3.0",
+            description="ACI version",
+        )
+        allow_prefix: str = Field(
+            default="allow (",
+            description="Prefix for allow clause",
+        )
+        self_subject: str = Field(
+            default="ldap:///self",
+            description="Value for self subject",
+        )
+        anonymous_subject: str = Field(
+            default="ldap:///anyone",
+            description="Value for anonymous subject",
+        )
+        supported_permissions: frozenset[str] | None = Field(
+            default=None,
+            description="Optional set of supported permissions to filter",
+        )
+        attr_separator: str = Field(
+            default=" || ",
+            description="Separator for multiple attributes in targetattr",
+        )
+        bind_operators: dict[str, str] = Field(
+            default_factory=lambda: {
+                "user": "userdn",
+                "group": "groupdn",
+                "role": "roledn",
+                "self": "userdn",
+                "anonymous": "userdn",
+            },
+            description="Mapping of subject type to bind operator",
+        )
+
     class LogContextExtras(FlextModels.Value):
         """Additional context fields for logging events.
 
@@ -326,6 +477,42 @@ class FlextLdifModelsConfig:
             default_factory=list,
             description="OID patterns for allowed matchingRuleUse definitions",
         )
+
+    class EncodingRules(FlextModels.Value):
+        """Generic encoding rules - server classes provide values."""
+
+        default_encoding: str
+        allowed_encodings: list[str] = Field(default_factory=list)
+
+    class DnCaseRules(FlextModels.Value):
+        """Generic DN case rules - server classes provide values."""
+
+        preserve_case: bool
+        normalize_to: str | None = Field(default=None)
+
+    class AclFormatRules(FlextModels.Value):
+        """Generic ACL format rules - server classes provide values."""
+
+        format: str
+        attribute_name: str
+        requires_target: bool
+        requires_subject: bool
+
+    class ServerValidationRules(FlextModels.Value):
+        """Generic server validation rules - server classes provide values.
+
+        No defaults - each server class must provide all values via Constants.
+        """
+
+        requires_objectclass: bool
+        requires_naming_attr: bool
+        requires_binary_option: bool
+        encoding_rules: FlextLdifModelsConfig.EncodingRules
+        dn_case_rules: FlextLdifModelsConfig.DnCaseRules
+        acl_format_rules: FlextLdifModelsConfig.AclFormatRules
+        track_deletions: bool
+        track_modifications: bool
+        track_conversions: bool
 
     class WriteFormatOptions(BaseModel):
         """Formatting options for LDIF serialization.

@@ -230,13 +230,13 @@ class TestEntryRfcCompliance:
                 if dn is not None
                 else None,
                 attributes=FlextLdifModels.LdifAttributes.model_construct(
-                    attributes=attributes or {}
+                    attributes=attributes or {},
                 )
                 if attributes is not None
                 else None,
             )
         result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes)
-        return result.unwrap() if result.is_success else result  # type: ignore[return-value]
+        return result.unwrap() if result.is_success else result
 
     # =========================================================================
     # Parametrized Tests Using Mapping-Driven Approach

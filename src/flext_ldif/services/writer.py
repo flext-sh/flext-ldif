@@ -13,7 +13,6 @@ import time
 from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
@@ -320,7 +319,10 @@ class FlextLdifWriter(LdifServiceBase):
                 output.write(f"# Generated on: {timestamp}\n")
                 output.write(f"# Total entries: {entry_count}\n\n")
 
-        def _get_entry_quirk(self, target_server_type: str) -> FlextResult[object]:
+        def _get_entry_quirk(
+            self,
+            target_server_type: str,
+        ) -> FlextResult[FlextLdifProtocols.Quirks.EntryProtocol]:
             """Get entry quirk for target server type.
 
             Args:
@@ -627,11 +629,9 @@ class FlextLdifWriter(LdifServiceBase):
                         {},
                     )
                     if marked_attrs or marked_ocs:
-                        removal_result = FlextLdifEntry.apply_marked_removals(
+                        updated_entry = FlextLdifEntry.apply_marked_removals(
                             updated_entry,
                         )
-                        if removal_result.is_success:
-                            updated_entry = removal_result.unwrap()
 
                 # Write entry using quirk
                 if entry_quirk is None:
@@ -685,7 +685,7 @@ class FlextLdifWriter(LdifServiceBase):
                 write_result = self._write_all_entries(
                     output,
                     entries,
-                    cast("FlextLdifProtocols.Quirks.EntryProtocol | None", entry_quirk),
+                    entry_quirk,
                     format_options,
                 )
                 if write_result.is_failure:
@@ -792,12 +792,7 @@ class FlextLdifWriter(LdifServiceBase):
                         | FlextLdifModels.WriteResponse
                         | list[tuple[str, dict[str, list[str]]]]
                         | list[FlextLdifModels.Entry]
-                    ].ok(
-                        cast(
-                            "str | FlextLdifModels.WriteResponse | list[tuple[str, dict[str, list[str]]]] | list[FlextLdifModels.Entry]",
-                            string_result.unwrap(),
-                        ),
-                    )
+                    ].ok(string_result.unwrap())
                 case "file":
                     file_result = self._to_file(
                         entries,
@@ -820,12 +815,7 @@ class FlextLdifWriter(LdifServiceBase):
                         | FlextLdifModels.WriteResponse
                         | list[tuple[str, dict[str, list[str]]]]
                         | list[FlextLdifModels.Entry]
-                    ].ok(
-                        cast(
-                            "str | FlextLdifModels.WriteResponse | list[tuple[str, dict[str, list[str]]]] | list[FlextLdifModels.Entry]",
-                            file_result.unwrap(),
-                        ),
-                    )
+                    ].ok(file_result.unwrap())
                 case "ldap3":
                     ldap3_result = self.serializer.to_ldap3_format(entries)
                     if ldap3_result.is_failure:
@@ -842,12 +832,7 @@ class FlextLdifWriter(LdifServiceBase):
                         | FlextLdifModels.WriteResponse
                         | list[tuple[str, dict[str, list[str]]]]
                         | list[FlextLdifModels.Entry]
-                    ].ok(
-                        cast(
-                            "str | FlextLdifModels.WriteResponse | list[tuple[str, dict[str, list[str]]]] | list[FlextLdifModels.Entry]",
-                            ldap3_result.unwrap(),
-                        ),
-                    )
+                    ].ok(ldap3_result.unwrap())
                 case "model":
                     return FlextResult[
                         str
@@ -920,7 +905,9 @@ class FlextLdifWriter(LdifServiceBase):
                     file_path=str(path),
                     error=str(ldif_result.error),
                 )
-                return cast("FlextResult[FlextLdifModels.WriteResponse]", ldif_result)
+                return FlextResult.fail(
+                    ldif_result.error or "Unknown error",
+                )
 
             try:
                 # Python 3.13: DRY - extract content once

@@ -1,15 +1,16 @@
 """Test suite for OID quirks schema writing functionality.
 
-Comprehensive testing for OID schema writing, transformations, and roundtrip stability.
+Modules tested: FlextLdifServersOid.Schema (write_attribute, write_objectclass)
+Scope: Comprehensive testing for OID schema writing, transformations, and roundtrip
+stability. Tests minimal attributes, all RFC options, structural/auxiliary/abstract
+objectClasses, SUP inheritance, roundtrip stability, syntax/matching rule transformations,
+and attribute name preservation. Uses real OID fixtures for validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
-
-from typing import cast
 
 import pytest
 
@@ -30,7 +31,9 @@ class TestOidSchemaWriting:
     @pytest.fixture
     def oid_schema(self, oid_server: FlextLdifServersOid) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return oid_server.schema_quirk
+        schema = oid_server.schema_quirk
+        assert isinstance(schema, FlextLdifServersOid.Schema)
+        return schema
 
     @pytest.fixture
     def oid_fixtures(self) -> FlextLdifFixtures.OID:
@@ -49,14 +52,14 @@ class TestOidSchemaWriting:
         )
 
         # Parse and write using helpers
-        parsed_attr = cast(
-            "FlextLdifModels.SchemaAttribute",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                attr_def,
-                parse_method="parse_attribute",
-            ),
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            attr_def,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_attr,
@@ -89,14 +92,14 @@ class TestOidSchemaWriting:
         )
 
         # Parse
-        parsed_attr = cast(
-            "FlextLdifModels.SchemaAttribute",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                attr_def,
-                parse_method="parse_attribute",
-            ),
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            attr_def,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_attr,
@@ -124,14 +127,14 @@ class TestOidSchemaWriting:
         )
 
         # Parse and write using helpers
-        parsed_oc = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                oc_def,
-                parse_method="parse_objectclass",
-            ),
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_oc,
@@ -156,14 +159,14 @@ class TestOidSchemaWriting:
         )
 
         # Parse and write using helpers
-        parsed_oc = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                oc_def,
-                parse_method="parse_objectclass",
-            ),
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_oc,
@@ -187,14 +190,14 @@ class TestOidSchemaWriting:
         )
 
         # Parse and write using helpers
-        parsed_oc = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                oc_def,
-                parse_method="parse_objectclass",
-            ),
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_oc,
@@ -218,14 +221,14 @@ class TestOidSchemaWriting:
         )
 
         # Parse and write using helpers
-        parsed_oc = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                oc_def,
-                parse_method="parse_objectclass",
-            ),
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_oc,
@@ -249,27 +252,27 @@ class TestOidSchemaWriting:
         )
 
         # Parse 1, write, and roundtrip using helpers
-        parsed1 = cast(
-            "FlextLdifModels.SchemaAttribute",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                original,
-                parse_method="parse_attribute",
-            ),
+        parsed1_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            original,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed1_result, FlextLdifModels.SchemaAttribute)
+        parsed1 = parsed1_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed1,
             write_method="write_attribute",
         )
-        parsed2 = cast(
-            "FlextLdifModels.SchemaAttribute",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                written,
-                parse_method="parse_attribute",
-            ),
+        parsed2_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            written,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed2_result, FlextLdifModels.SchemaAttribute)
+        parsed2 = parsed2_result
 
         # Verify round trip preserves essential properties
         TestDeduplicationHelpers.assert_schema_objects_preserve_properties(
@@ -295,27 +298,27 @@ class TestOidSchemaWriting:
         )
 
         # Parse 1, write, and roundtrip using helpers
-        parsed1 = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                original,
-                parse_method="parse_objectclass",
-            ),
+        parsed1_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            original,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed1_result, FlextLdifModels.SchemaObjectClass)
+        parsed1 = parsed1_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed1,
             write_method="write_objectclass",
         )
-        parsed2 = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                written,
-                parse_method="parse_objectclass",
-            ),
+        parsed2_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            written,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed2_result, FlextLdifModels.SchemaObjectClass)
+        parsed2 = parsed2_result
 
         # Verify round trip preserves essential properties
         TestDeduplicationHelpers.assert_schema_objects_preserve_properties(
@@ -347,14 +350,14 @@ class TestOidSchemaWriting:
             pytest.skip("Fixture does not contain expected OID attribute definitions")
 
         # Parse and write
-        parsed_attr = cast(
-            "FlextLdifModels.SchemaAttribute",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                attr_lines[0],
-                parse_method="parse_attribute",
-            ),
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            attr_lines[0],
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_attr,
@@ -387,14 +390,14 @@ class TestOidSchemaWriting:
             pytest.skip("Fixture does not contain expected OID objectClass definitions")
 
         # Parse and write using helpers
-        parsed_oc = cast(
-            "FlextLdifModels.SchemaObjectClass",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                oc_lines[0],
-                parse_method="parse_objectclass",
-            ),
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            oc_lines[0],
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
+        assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
             parsed_oc,
@@ -413,7 +416,9 @@ class TestOidObjectclassTypoFix:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        schema = FlextLdifServersOid().schema_quirk
+        assert isinstance(schema, FlextLdifServersOid.Schema)
+        return schema
 
     def test_write_fixes_auxillary_typo(
         self,
@@ -452,12 +457,15 @@ class TestOidObjectclassTypoFix:
             "MAY ( description ) )"
         )
 
-        parsed_oc = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
             oc_def,
             parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
         )
-        assert parsed_oc.is_auxiliary is True
+        assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
+        parsed_oc = parsed_oc_result
+        assert parsed_oc.kind == "AUXILIARY"
 
 
 class TestOidSyntaxAndMatchingRuleTransformations:
@@ -466,7 +474,9 @@ class TestOidSyntaxAndMatchingRuleTransformations:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        schema = FlextLdifServersOid().schema_quirk
+        assert isinstance(schema, FlextLdifServersOid.Schema)
+        return schema
 
     def test_parse_applies_syntax_oid_replacement(
         self,
@@ -480,11 +490,14 @@ class TestOidSyntaxAndMatchingRuleTransformations:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 )"  # ACI List OID
         )
 
-        parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
 
         # Verify syntax was replaced
         expected_syntax = "1.3.6.1.4.1.1466.115.121.1.15"  # Directory String
@@ -502,11 +515,14 @@ class TestOidSyntaxAndMatchingRuleTransformations:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"  # Directory String (not replaced)
         )
 
-        parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
 
         # Verify syntax preserved
         assert parsed_attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
@@ -523,11 +539,14 @@ class TestOidSyntaxAndMatchingRuleTransformations:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
 
-        parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
 
         # Verify matching rule was replaced/fixed
         assert parsed_attr.substr == "caseIgnoreSubstringsMatch", (
@@ -545,11 +564,14 @@ class TestOidSyntaxAndMatchingRuleTransformations:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
 
-        parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
 
         # Verify standard rule preserved
         assert parsed_attr.equality == "caseIgnoreMatch"
@@ -568,11 +590,14 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         )
 
         # Parse (OID → RFC normalization)
-        parsed_attr = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
         # Verify parsing normalized to RFC
         assert "1.3.6.1.4.1.1466.115.121.1.15" in str(parsed_attr.syntax)
 
@@ -593,7 +618,9 @@ class TestOidAttributeNameTransformations:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        schema = FlextLdifServersOid().schema_quirk
+        assert isinstance(schema, FlextLdifServersOid.Schema)
+        return schema
 
     def test_write_preserves_attribute_names(
         self,
@@ -606,14 +633,14 @@ class TestOidAttributeNameTransformations:
         )
 
         # Parse
-        parsed_attr = cast(
-            "FlextLdifModels.SchemaAttribute",
-            TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                oid_schema,
-                attr_def,
-                parse_method="parse_attribute",
-            ),
+        parsed_attr_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            oid_schema,
+            attr_def,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
         )
+        assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
+        parsed_attr = parsed_attr_result
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,

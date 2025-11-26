@@ -6,48 +6,282 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
 import re
 import string
 from collections.abc import Generator
-from typing import cast, overload
+from pathlib import Path
+from typing import overload
 
 from flext_core import FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
+
+
+@dataclasses.dataclass
+class _TransformationFlags:
+    """Type-safe container for DN transformation flags."""
+
+    had_tab_chars: bool = False
+    had_trailing_spaces: bool = False
+    had_leading_spaces: bool = False
+    had_extra_spaces: bool = False
+    was_base64_encoded: bool = False
+    had_utf8_chars: bool = False
+    had_escape_sequences: bool = False
+    validation_status: str = ""
+    validation_warnings: list[str] = dataclasses.field(default_factory=list)
+    validation_errors: list[str] = dataclasses.field(default_factory=list)
+
 
 # Type alias from FlextLdifTypes
 DnInput = FlextLdifTypes.DnInput
 
 
 class FlextLdifUtilitiesDN:
-    """RFC 4514 DN Operations - Works with both DN models and string values.
+    r"""RFC 4514 DN Operations - STRICT Implementation.
+
+    RFC 4514 ABNF Grammar (Section 2):
+    ==================================
+    distinguishedName = [ relativeDistinguishedName
+                         *( COMMA relativeDistinguishedName ) ]
+    relativeDistinguishedName = attributeTypeAndValue
+                         *( PLUS attributeTypeAndValue )
+    attributeTypeAndValue = attributeType EQUALS attributeValue
+    attributeType = descr / numericoid
+    attributeValue = string / hexstring
+
+    String Encoding (Section 2.4):
+    ==============================
+    string = [ ( leadchar / pair ) [ *( stringchar / pair )
+               ( trailchar / pair ) ] ]
+    leadchar = LUTF1 / UTFMB  ; not SPACE, not '#', not special
+    trailchar = TUTF1 / UTFMB  ; not SPACE
+    stringchar = SUTF1 / UTFMB
+
+    Escape Mechanism:
+    =================
+    pair = ESC ( ESC / special / hexpair )
+    special = escaped / SPACE / SHARP / EQUALS  ; Rfc.DN_SPECIAL_CHARS
+    escaped = DQUOTE / PLUS / COMMA / SEMI / LANGLE / RANGLE
+              ; Rfc.DN_ESCAPED_CHARS
+    hexstring = SHARP 1*hexpair
+    hexpair = HEX HEX
+
+    Character Classes (FlextLdifConstants.Rfc):
+    ============================================
+    LUTF1  = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+             ; Rfc.DN_LUTF1_EXCLUDE
+    TUTF1  = %x01-1F / %x21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+             ; Rfc.DN_TUTF1_EXCLUDE
+    SUTF1  = %x01-21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+             ; Rfc.DN_SUTF1_EXCLUDE
+    COMMA  = %x2C  ; Rfc.DN_RDN_SEPARATOR
+    PLUS   = %x2B  ; Rfc.DN_MULTIVALUE_SEPARATOR
+    EQUALS = %x3D  ; Rfc.DN_ATTR_VALUE_SEPARATOR
+    SPACE  = %x20
+    SHARP  = %x23  ; '#'
+    ESC    = %x5C  ; '\'
+
+    Escaping Rules (FlextLdifConstants.Rfc):
+    ========================================
+    - Characters always requiring escaping: Rfc.DN_ESCAPE_CHARS
+    - Characters requiring escaping at start: Rfc.DN_ESCAPE_AT_START
+    - Characters requiring escaping at end: Rfc.DN_ESCAPE_AT_END
+
+    Metadata Keys (FlextLdifConstants.Rfc):
+    =======================================
+    - META_DN_ORIGINAL: Original DN before normalization
+    - META_DN_WAS_BASE64: DN was base64 encoded
+    - META_DN_ESCAPES_APPLIED: Escape sequences used
 
     All methods return primitives (str, list, tuple, bool, int, None).
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - Any (DN model)
+    - FlextLdifModels.DistinguishedName (DN model)
     - str (DN string value)
-
-    Methods:
-    - split: Split DN string into components
-    - norm_component: Normalize single DN component
-    - norm_string: Normalize full DN to RFC 4514 format
-    - validate: Validate DN format according to RFC 4514
-    - parse: Parse DN into (attr, value) tuples
-    - norm: Normalize DN per RFC 4514 (lowercase attrs, preserve values)
-    - clean_dn: Clean DN string to fix spacing and escaping issues
-    - esc: Escape special characters in DN value per RFC 4514
-    - unesc: Unescape special characters in DN value per RFC 4514
-    - compare_dns: Compare two DNs per RFC 4514 (case-insensitive)
-    - parse_rdn: Parse a single RDN component per RFC 4514
 
     """
 
     # Minimum length for valid DN strings (to check trailing escape)
     MIN_DN_LENGTH: int = 2
+
+    # ==========================================================================
+    # RFC 4514 Character Class Validation (ABNF-based)
+    # ==========================================================================
+
+    @staticmethod
+    def is_lutf1_char(char: str) -> bool:
+        """Check if char is valid LUTF1 (lead char) per RFC 4514.
+
+        LUTF1 = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+        (excludes NUL, SPACE, DQUOTE, SHARP, PLUS, COMMA, SEMI, LANGLE, RANGLE, ESC)
+
+        Uses FlextLdifConstants.Rfc.DN_LUTF1_EXCLUDE for exclusion set.
+
+        Args:
+            char: Single character to validate
+
+        Returns:
+            True if char is valid LUTF1, False otherwise
+
+        """
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        # Must be in ASCII range 0x01-0x7F and not in exclusion set
+        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
+        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        if code < safe_min or code > safe_max:
+            return False
+        return code not in FlextLdifConstants.Rfc.DN_LUTF1_EXCLUDE
+
+    @staticmethod
+    def is_tutf1_char(char: str) -> bool:
+        """Check if char is valid TUTF1 (trail char) per RFC 4514.
+
+        TUTF1 = %x01-1F / %x21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+        (excludes NUL, SPACE, and special chars but allows SHARP)
+
+        Uses FlextLdifConstants.Rfc.DN_TUTF1_EXCLUDE for exclusion set.
+
+        Args:
+            char: Single character to validate
+
+        Returns:
+            True if char is valid TUTF1, False otherwise
+
+        """
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
+        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        if code < safe_min or code > safe_max:
+            return False
+        return code not in FlextLdifConstants.Rfc.DN_TUTF1_EXCLUDE
+
+    @staticmethod
+    def is_sutf1_char(char: str) -> bool:
+        """Check if char is valid SUTF1 (string char) per RFC 4514.
+
+        SUTF1 = %x01-21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
+        (excludes special chars but allows SPACE and SHARP)
+
+        Uses FlextLdifConstants.Rfc.DN_SUTF1_EXCLUDE for exclusion set.
+
+        Args:
+            char: Single character to validate
+
+        Returns:
+            True if char is valid SUTF1, False otherwise
+
+        """
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
+        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        if code < safe_min or code > safe_max:
+            return False
+        return code not in FlextLdifConstants.Rfc.DN_SUTF1_EXCLUDE
+
+    @staticmethod
+    def needs_escaping_at_position(char: str, position: int, total_len: int) -> bool:
+        r"""Check if char needs escaping based on position per RFC 4514.
+
+        RFC 4514 Escaping Requirements:
+        - Always escape: DN_ESCAPE_CHARS (" + , ; < > \)
+        - At start (position=0): DN_ESCAPE_AT_START (SPACE, #)
+        - At end (position=total_len-1): DN_ESCAPE_AT_END (SPACE)
+
+        Args:
+            char: Single character to check
+            position: Position in the value string (0-indexed)
+            total_len: Total length of the value string
+
+        Returns:
+            True if char needs escaping at this position
+
+        """
+        if not char:
+            return False
+
+        # Always escape these characters
+        if char in FlextLdifConstants.Rfc.DN_ESCAPE_CHARS:
+            return True
+
+        # Escape at start
+        if position == 0 and char in FlextLdifConstants.Rfc.DN_ESCAPE_AT_START:
+            return True
+
+        # Escape at end
+        is_last = position == total_len - 1
+        return is_last and char in FlextLdifConstants.Rfc.DN_ESCAPE_AT_END
+
+    @staticmethod
+    def is_valid_dn_string(
+        value: str,
+        *,
+        strict: bool = True,
+    ) -> tuple[bool, list[str]]:
+        """Validate DN attribute value per RFC 4514 string production.
+
+        RFC 4514 ABNF:
+            string = [ ( leadchar / pair ) [ *( stringchar / pair )
+                       ( trailchar / pair ) ] ]
+
+        Args:
+            value: DN attribute value to validate
+            strict: If True, apply strict RFC 4514 validation
+
+        Returns:
+            Tuple of (is_valid, list of validation errors)
+
+        """
+        errors: list[str] = []
+
+        if not value:
+            return True, errors  # Empty string is valid
+
+        # Single character
+        if len(value) == 1:
+            if not FlextLdifUtilitiesDN.is_lutf1_char(value) and strict:
+                errors.append(f"Invalid lead character: {value!r}")
+            return len(errors) == 0, errors
+
+        # Check lead character - not LUTF1 and not escaped (pair)
+        is_escaped_lead = value[0] == "\\" and len(value) > 1
+        is_bad_lead = not FlextLdifUtilitiesDN.is_lutf1_char(value[0]) and not is_escaped_lead
+        if is_bad_lead and strict:
+            errors.append(f"Invalid lead character: {value[0]!r}")
+
+        # Check trail character - not TUTF1 and not escaped
+        min_len_for_escape = FlextLdifUtilitiesDN.MIN_DN_LENGTH
+        is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
+        is_bad_trail = not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and not is_escaped_trail
+        if is_bad_trail and strict:
+            errors.append(f"Invalid trail character: {value[-1]!r}")
+
+        # Check middle characters (stringchar or pair)
+        for i, char in enumerate(value[1:-1], start=1):
+            if FlextLdifUtilitiesDN.is_sutf1_char(char):
+                continue
+            # Check if part of escape pair
+            is_escape_char = char == "\\"
+            is_after_escape = i > 0 and value[i - 1] == "\\"
+            if not is_escape_char and not is_after_escape and strict:
+                errors.append(f"Invalid character at position {i}: {char!r}")
+
+        return len(errors) == 0, errors
+
+    # ==========================================================================
+    # Core DN Operations
+    # ==========================================================================
 
     @staticmethod
     def get_dn_value(
@@ -80,7 +314,13 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def split(dn: str | object) -> list[str]:
-        r"""Split DN string into individual components respecting RFC 4514 escapes.
+        r"""Split DN string into individual RDN components per RFC 4514.
+
+        RFC 4514 Section 2 ABNF:
+        ========================
+        distinguishedName = [ relativeDistinguishedName
+                             *( COMMA relativeDistinguishedName ) ]
+        COMMA = %x2C  ; comma (",")
 
         Properly handles escaped commas (\\,) and other special characters.
         Does NOT treat escaped commas as component separators.
@@ -298,8 +538,16 @@ class FlextLdifUtilitiesDN:
     ) -> FlextResult[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
-        Pure RFC 4514 parsing without external dependencies.
-        Returns FlextResult with [(attr1, value1), (attr2, value2), ...] or failure.
+        RFC 4514 Section 3 - Parsing a String Back to DN:
+        =================================================
+        1. Split on unescaped commas to get RDNs
+        2. For each RDN, split on unescaped plus signs for multi-valued
+        3. Each AVA is attributeType=attributeValue
+        4. Unescape the attributeValue
+
+        Returns:
+            FlextResult with [(attr1, value1), (attr2, value2), ...] or failure.
+
         """
         if dn is None:
             return FlextResult[list[tuple[str, str]]].fail("DN cannot be None")
@@ -411,16 +659,22 @@ class FlextLdifUtilitiesDN:
         if dn_str != normalized:
             transformations.append(FlextLdifConstants.TransformationType.DN_NORMALIZED)
 
-        # Create statistics
-        stats = cast(
-            "FlextLdifModels.DNStatistics",
-            FlextLdifModels.DNStatistics.create_with_transformation(
-                original_dn=orig,
-                cleaned_dn=dn_str,
-                normalized_dn=normalized,
-                transformations=transformations,
-            ),
+        # Create statistics - use model_copy() for safety
+        stats_domain = FlextLdifModels.DNStatistics.create_with_transformation(
+            original_dn=orig,
+            cleaned_dn=dn_str,
+            normalized_dn=normalized,
+            transformations=transformations,
         )
+        # Convert domain DNStatistics to public DNStatistics
+        if isinstance(
+            stats_domain, FlextLdifModelsDomains.DNStatistics
+        ) and not isinstance(stats_domain, FlextLdifModels.DNStatistics):
+            stats = FlextLdifModels.DNStatistics.model_validate(
+                stats_domain.model_dump()
+            )
+        else:
+            stats = stats_domain
 
         return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].ok(
             (
@@ -514,169 +768,163 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            # create_minimal returns FlextLdifModels.DNStatistics, cast to FlextLdifModels.DNStatistics
-            stats_minimal = cast(
-                "FlextLdifModels.DNStatistics",
-                FlextLdifModels.DNStatistics.create_minimal(original_dn),
+            stats_domain = FlextLdifModels.DNStatistics.create_minimal(original_dn)
+            stats = FlextLdifModels.DNStatistics.model_validate(
+                stats_domain.model_dump()
             )
-            return original_dn, stats_minimal
+            return original_dn, stats
 
-        # Track transformations and flags
-        transformations: list[str] = []
-        # Transformation flags as dict for DNStatistics.create_with_transformation
-        # Type-safe flags matching _DNStatisticsFlags TypedDict
-        transformation_flags: dict[str, bool | str | list[str]] = {
-            "had_tab_chars": False,
-            "had_trailing_spaces": False,
-            "had_leading_spaces": False,
-            "had_extra_spaces": False,
-            "was_base64_encoded": False,
-            "had_utf8_chars": False,
-            "had_escape_sequences": False,
-            "validation_status": "",
-            "validation_warnings": [],
-            "validation_errors": [],
-        }
-
-        # Detect transformation needs BEFORE applying changes
-        had_tab_chars = bool(re.search(r"[\t\r\n\x0b\x0c]", original_dn))
-        had_spaces_before_equals = bool(re.search(r"\s+=", original_dn))
-        had_spaces_before_comma = bool(re.search(r"\s+,", original_dn))
-        had_trailing_backslash_space = bool(
-            re.search(
-                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                original_dn,
-            ),
-        )
-        had_spaces_around_comma = bool(
-            re.search(
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
-                original_dn,
-            ),
-        )
-        had_unnecessary_escapes = bool(
-            re.search(
-                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                original_dn,
-            ),
-        )
-        had_multiple_spaces = bool(
-            re.search(FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, original_dn),
+        # Apply transformations and collect flags
+        result, transformations, flags = FlextLdifUtilitiesDN._apply_dn_transformations(
+            original_dn,
         )
 
-        # Apply transformations (same order as clean_dn)
-        result = original_dn
-
-        # 1. Normalize whitespace control characters (TAB, CR, LF)
-        if had_tab_chars:
-            result = re.sub(r"[\t\r\n\x0b\x0c]", " ", result)
-            transformations.append(FlextLdifConstants.TransformationType.TAB_NORMALIZED)
-            transformation_flags["had_tab_chars"] = True
-
-        # 2. Remove spaces before '='
-        if had_spaces_before_equals:
-            result = re.sub(r"\s+=", "=", result)
-            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
-            transformation_flags["had_leading_spaces"] = True
-
-        # 3. Remove spaces before commas
-        if had_spaces_before_comma:
-            result = re.sub(r"\s+,", ",", result)
-            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
-            transformation_flags["had_trailing_spaces"] = True
-
-        # 4. Fix trailing backslash+space
-        if had_trailing_backslash_space:
-            result = re.sub(
-                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                FlextLdifConstants.DnPatterns.DN_COMMA,
-                result,
-            )
-            transformations.append(
-                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED,
-            )
-            transformation_flags["had_escape_sequences"] = True
-
-        # 5. Normalize spaces around commas
-        if had_spaces_around_comma:
-            result = re.sub(
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
-                FlextLdifConstants.DnPatterns.DN_COMMA,
-                result,
-            )
-            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
-
-        # 6. Remove unnecessary escapes
-        if had_unnecessary_escapes:
-            result = re.sub(
-                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                r"\1",
-                result,
-            )
-            transformations.append(
-                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED,
-            )
-
-        # 7. Normalize multiple spaces
-        if had_multiple_spaces:
-            result = re.sub(
-                FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES,
-                " ",
-                result,
-            )
-            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
-            transformation_flags["had_extra_spaces"] = True
-
-        # Create statistics using FlextLdifModels.DNStatistics
-        # Pass flags explicitly to ensure type safety
-        # Values are already correct types, use cast to help type checker
-        validation_warnings_list = cast(
-            "list[str]",
-            transformation_flags["validation_warnings"],
-        )
-        validation_errors_list = cast(
-            "list[str]",
-            transformation_flags["validation_errors"],
-        )
+        # Create statistics using type-safe flags from dataclass
         stats_domain = FlextLdifModels.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
             transformations=transformations,
-            had_tab_chars=cast("bool", transformation_flags["had_tab_chars"]),
-            had_trailing_spaces=cast(
-                "bool",
-                transformation_flags["had_trailing_spaces"],
-            ),
-            had_leading_spaces=cast("bool", transformation_flags["had_leading_spaces"]),
-            had_extra_spaces=cast("bool", transformation_flags["had_extra_spaces"]),
-            was_base64_encoded=cast("bool", transformation_flags["was_base64_encoded"]),
-            had_utf8_chars=cast("bool", transformation_flags["had_utf8_chars"]),
-            had_escape_sequences=cast(
-                "bool",
-                transformation_flags["had_escape_sequences"],
-            ),
-            validation_status=cast("str", transformation_flags["validation_status"]),
-            validation_warnings=validation_warnings_list,
-            validation_errors=validation_errors_list,
+            had_tab_chars=flags.had_tab_chars,
+            had_trailing_spaces=flags.had_trailing_spaces,
+            had_leading_spaces=flags.had_leading_spaces,
+            had_extra_spaces=flags.had_extra_spaces,
+            was_base64_encoded=flags.was_base64_encoded,
+            had_utf8_chars=flags.had_utf8_chars,
+            had_escape_sequences=flags.had_escape_sequences,
+            validation_status=flags.validation_status,
+            validation_warnings=flags.validation_warnings,
+            validation_errors=flags.validation_errors,
         )
-        # Cast to expected return type (FlextLdifModels.DNStatistics extends domain type)
-        stats = cast("FlextLdifModels.DNStatistics", stats_domain)
+        # Convert domain DNStatistics to public DNStatistics
+        if isinstance(
+            stats_domain, FlextLdifModelsDomains.DNStatistics
+        ) and not isinstance(stats_domain, FlextLdifModels.DNStatistics):
+            stats = FlextLdifModels.DNStatistics.model_validate(
+                stats_domain.model_dump()
+            )
+        else:
+            stats = stats_domain
         return result, stats
 
     @staticmethod
+    def _apply_dn_transformations(
+        original_dn: str,
+    ) -> tuple[str, list[str], _TransformationFlags]:
+        """Apply DN transformations and collect flags.
+
+        Extracted to reduce complexity of clean_dn_with_statistics.
+        """
+        transformations: list[str] = []
+        flags = _TransformationFlags()
+        result = original_dn
+
+        # Define transformation rules: (detect_pattern, replace_pattern, replacement, transform_type, flag_name)
+        # Each rule: (detect_regex, replace_regex, replacement, transformation_type, flag_attr)
+        transform_rules: list[tuple[str, str, str, str, str]] = [
+            # 1. Tab/whitespace control chars
+            (
+                r"[\t\r\n\x0b\x0c]",
+                r"[\t\r\n\x0b\x0c]",
+                " ",
+                FlextLdifConstants.TransformationType.TAB_NORMALIZED,
+                "had_tab_chars",
+            ),
+            # 2. Spaces before equals
+            (
+                r"\s+=",
+                r"\s+=",
+                "=",
+                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                "had_leading_spaces",
+            ),
+            # 3. Spaces before commas
+            (
+                r"\s+,",
+                r"\s+,",
+                ",",
+                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                "had_trailing_spaces",
+            ),
+            # 4. Trailing backslash+space
+            (
+                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                FlextLdifConstants.DnPatterns.DN_COMMA,
+                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED,
+                "had_escape_sequences",
+            ),
+            # 5. Spaces around commas
+            (
+                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
+                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
+                FlextLdifConstants.DnPatterns.DN_COMMA,
+                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                "",
+            ),
+            # 6. Unnecessary escapes
+            (
+                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                r"\1",
+                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED,
+                "",
+            ),
+            # 7. Multiple spaces
+            (
+                FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES,
+                FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES,
+                " ",
+                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                "had_extra_spaces",
+            ),
+        ]
+
+        for (
+            detect_pattern,
+            replace_pattern,
+            replacement,
+            transform_type,
+            flag_name,
+        ) in transform_rules:
+            if re.search(detect_pattern, result):
+                result = re.sub(replace_pattern, replacement, result)
+                transformations.append(transform_type)
+                if flag_name:
+                    setattr(flags, flag_name, True)
+
+        return result, transformations, flags
+
+    @staticmethod
     def esc(value: str) -> str:
-        """Escape special characters in DN value per RFC 4514."""
+        r"""Escape special characters in DN value per RFC 4514 Section 2.4.
+
+        RFC 4514 Escaping Requirements:
+        ===============================
+        - Special characters MUST be escaped: " + , ; < > \
+        - A leading SHARP ('#') MUST be escaped
+        - A leading/trailing SPACE MUST be escaped
+        - Characters can be escaped as \\XX where XX is hex
+
+        Args:
+            value: The DN attribute value to escape.
+
+        Returns:
+            The escaped value string.
+
+        """
         if not value:
             return value
 
-        escape_chars = {",", "+", '"', "\\", "<", ">", ";", "#"}
+        escape_chars = FlextLdifConstants.Rfc.DN_ESCAPE_CHARS
         result: list[str] = []
 
         for i, char in enumerate(value):
             is_special = char in escape_chars
-            is_edge_space = (i == 0 or i == len(value) - 1) and char == " "
-            if is_special or is_edge_space:
+            is_leading_space = i == 0 and char == " "
+            is_trailing_space = i == len(value) - 1 and char == " "
+            is_leading_sharp = i == 0 and char == "#"
+            if is_special or is_leading_space or is_trailing_space or is_leading_sharp:
                 result.append(f"\\{ord(char):02x}")
             else:
                 result.append(char)
@@ -685,7 +933,21 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def unesc(value: str) -> str:
-        """Unescape special characters in DN value per RFC 4514."""
+        r"""Unescape special characters in DN value per RFC 4514 Section 3.
+
+        RFC 4514 Unescaping Requirements:
+        =================================
+        - \\XX where XX is hex digits -> character with that code
+        - \\<special> -> the literal special character
+        - Escape sequences: \\", \\+, \\,, \\;, \\<, \\>, \\\\
+
+        Args:
+            value: The escaped DN attribute value.
+
+        Returns:
+            The unescaped value string.
+
+        """
         if not value or "\\" not in value:
             return value
 
@@ -1103,6 +1365,439 @@ class FlextLdifUtilitiesDN:
                 )
 
         return FlextResult[bool].ok(True)
+
+    @overload
+    @staticmethod
+    def transform_dn_attribute(
+        value: str,
+        source_dn: str,
+        target_dn: str,
+    ) -> str: ...
+
+    @overload
+    @staticmethod
+    def transform_dn_attribute(
+        value: FlextLdifModels.DistinguishedName,
+        source_dn: str,
+        target_dn: str,
+    ) -> str: ...
+
+    @overload
+    @staticmethod
+    def transform_dn_attribute(
+        value: FlextLdifModelsDomains.DistinguishedName,
+        source_dn: str,
+        target_dn: str,
+    ) -> str: ...
+
+    @staticmethod
+    def transform_dn_attribute(
+        value: str
+        | FlextLdifModels.DistinguishedName
+        | FlextLdifModelsDomains.DistinguishedName
+        | object,
+        source_dn: str,
+        target_dn: str,
+    ) -> str:
+        """Transform a single DN attribute value by replacing base DN.
+
+        Used for transforming DN-syntax attributes (member, uniqueMember, manager, etc.)
+        when migrating from one LDAP server to another with different base DNs.
+
+        Args:
+            value: DN value to transform (str or DistinguishedName model)
+            source_dn: Source base DN to replace (e.g., "dc=ctbc")
+            target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
+
+        Returns:
+            Transformed DN with base DN replaced, or original value if no match
+
+        Example:
+            transform_dn_attribute(
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc",
+                "dc=ctbc",
+                "dc=example,dc=com"
+            )
+            # Returns: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+
+        """
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(value)
+        if not dn_str or not source_dn or not target_dn:
+            return dn_str
+
+        # Normalize the DN first
+        norm_result = FlextLdifUtilitiesDN.norm(dn_str)
+        normalized_dn = norm_result.unwrap() if norm_result.is_success else dn_str
+
+        # Use regex to replace source base DN suffix with target base DN
+        # Pattern: match either:
+        # 1. ",source_dn" at the END of DN (e.g., "ou=people,dc=ctbc")
+        # 2. "source_dn" alone at the END of DN (e.g., "dc=ctbc" as root DN)
+        # Both cases are case-insensitive
+        source_escaped = re.escape(source_dn)
+
+        # Try replacing with comma first (non-root DN case: "ou=people,dc=ctbc")
+        result = re.sub(
+            f",{source_escaped}$",
+            f",{target_dn}",
+            normalized_dn,
+            flags=re.IGNORECASE,
+        )
+
+        # If no substitution happened, try without comma (root DN case: "dc=ctbc")
+        if result == normalized_dn:
+            result = re.sub(
+                f"^{source_escaped}$",
+                target_dn,
+                normalized_dn,
+                flags=re.IGNORECASE,
+            )
+
+        return result
+
+    @staticmethod
+    def replace_base_dn(
+        entries: list[FlextLdifModels.Entry],
+        source_dn: str,
+        target_dn: str,
+    ) -> list[FlextLdifModels.Entry]:
+        """Replace base DN in all entries and DN-valued attributes.
+
+        Transforms:
+        - Entry DNs (dn property)
+        - DN-syntax attributes (member, uniqueMember, manager, owner, seeAlso, etc.)
+        - Any other DN references in attribute values
+
+        Used for server-to-server migration when source and target have different base DNs.
+
+        Args:
+            entries: List of Entry models to transform
+            source_dn: Source base DN to replace (e.g., "dc=ctbc")
+            target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
+
+        Returns:
+            List of Entry models with all base DN references replaced
+
+        Example:
+            entries = [
+                Entry(
+                    dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc",
+                    attributes={"member": ["cn=user,dc=ctbc"]}
+                ),
+                ...
+            ]
+            transformed = replace_base_dn(entries, "dc=ctbc", "dc=example,dc=com")
+            # transformed[0].dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            # transformed[0].attributes["member"][0] == "cn=user,dc=example,dc=com"
+
+        """
+        if not entries or not source_dn or not target_dn:
+            return entries
+
+        # DN-syntax attribute names that may contain DN references
+        dn_attributes = {
+            "member",
+            "uniquemember",
+            "manager",
+            "owner",
+            "seealso",
+            "memberof",
+            "distinguishedname",
+        }
+
+        transformed_entries: list[FlextLdifModels.Entry] = []
+
+        for entry in entries:
+            # Transform entry DN
+            transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
+                entry.dn,
+                source_dn,
+                target_dn,
+            )
+
+            # Transform DN-valued attributes
+            transformed_attrs: dict[str, list[str]] = {}
+            for attr_name, attr_values in entry.attributes.items():
+                attr_lower = attr_name.lower()
+                if attr_lower in dn_attributes:
+                    # Transform each value in DN-syntax attributes
+                    transformed_attrs[attr_name] = [
+                        FlextLdifUtilitiesDN.transform_dn_attribute(
+                            val,
+                            source_dn,
+                            target_dn,
+                        )
+                        for val in attr_values
+                    ]
+                else:
+                    # Keep other attributes unchanged
+                    transformed_attrs[attr_name] = attr_values
+
+            # Create new entry with transformed DN and attributes
+            # Use model_copy to preserve all other properties
+            new_attributes = FlextLdifModels.LdifAttributes(
+                attributes=transformed_attrs
+            )
+            transformed_entry = entry.model_copy(
+                update={
+                    "dn": transformed_dn,
+                    "attributes": new_attributes,
+                }
+            )
+            transformed_entries.append(transformed_entry)
+
+        return transformed_entries
+
+    @staticmethod
+    def transform_ldif_files_in_directory(
+        ldif_dir: Path,
+        source_basedn: str,
+        target_basedn: str,
+    ) -> FlextResult[dict[str, object]]:
+        """Transform BaseDN in all LDIF files in directory.
+
+        Reads all *.ldif files from directory, transforms BaseDN in entries,
+        and writes updated files back. Preserves file organization and metadata.
+
+        Args:
+            ldif_dir: Directory containing LDIF files
+            source_basedn: Source base DN to replace
+            target_basedn: Target base DN replacement
+
+        Returns:
+            FlextResult with dict containing:
+            - transformed_count: Number of successfully transformed files
+            - failed_count: Number of files that failed
+            - total_count: Total LDIF files processed
+
+        """
+        try:
+            if not ldif_dir.exists():
+                return FlextResult.fail(f"Directory not found: {ldif_dir}")
+
+            transformed_count = 0
+            failed_count = 0
+
+            for ldif_file in sorted(ldif_dir.glob("*.ldif")):
+                try:
+                    content = ldif_file.read_text(encoding="utf-8")
+                    lines = content.split("\n")
+                    transformed_lines: list[str] = []
+
+                    for line in lines:
+                        if not line or ":" not in line:
+                            transformed_lines.append(line)
+                            continue
+
+                        parts = line.split(":", 1)
+                        attr_name = parts[0]
+                        attr_value = parts[1].strip() if len(parts) > 1 else ""
+
+                        if not attr_value or source_basedn not in attr_value:
+                            transformed_lines.append(line)
+                            continue
+
+                        # Check if attribute is DN-valued
+                        dn_attrs = {
+                            "dn",
+                            "member",
+                            "uniquemember",
+                            "manager",
+                            "owner",
+                            "seealso",
+                            "memberof",
+                            "distinguishedname",
+                        }
+                        is_dn_attr = attr_name.lower() in dn_attrs
+                        is_dn_like = "=" in attr_value and "," in attr_value
+
+                        if is_dn_attr or is_dn_like:
+                            transformed_value = (
+                                FlextLdifUtilitiesDN.transform_dn_attribute(
+                                    attr_value,
+                                    source_basedn,
+                                    target_basedn,
+                                )
+                            )
+                            transformed_lines.append(f"{attr_name}: {transformed_value}")
+                        else:
+                            transformed_lines.append(line)
+
+                    transformed_content = "\n".join(transformed_lines)
+                    ldif_file.write_text(transformed_content, encoding="utf-8")
+                    transformed_count += 1
+
+                except (OSError, ValueError):
+                    failed_count += 1
+                    continue
+
+            return FlextResult.ok({
+                "transformed_count": transformed_count,
+                "failed_count": failed_count,
+                "total_count": transformed_count + failed_count,
+            })
+
+        except Exception as e:
+            return FlextResult.fail(f"LDIF directory transformation failed: {e}")
+
+    @staticmethod
+    def transform_dn_with_metadata(
+        entry: FlextLdifModels.Entry,
+        source_dn: str,
+        target_dn: str,
+    ) -> FlextLdifModels.Entry:
+        """Transform DN and DN-valued attributes with metadata tracking.
+
+        RFC Compliant: Tracks all transformations in QuirkMetadata for round-trip support.
+        Uses FlextLdifConstants.Rfc.META_DN_* and MetadataKeys for standardized tracking.
+
+        Args:
+            entry: Entry to transform
+            source_dn: Source base DN to replace
+            target_dn: Target base DN replacement
+
+        Returns:
+            New Entry with transformed DN, attributes, and metadata tracking
+
+        Example:
+            >>> entry = FlextLdifModels.Entry(
+            ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc",
+            ...     attributes={"member": ["cn=user,dc=ctbc"]}
+            ... )
+            >>> transformed = FlextLdifUtilitiesDN.transform_dn_with_metadata(
+            ...     entry, "dc=ctbc", "dc=example,dc=com"
+            ... )
+            >>> # DN transformed: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+            >>> # metadata.conversion_notes tracks the transformation
+
+        """
+        if not source_dn or not target_dn:
+            return entry
+
+        from flext_ldif import FlextLdifConstants
+
+        # DN-syntax attribute names
+        dn_attributes = {
+            "member",
+            "uniquemember",
+            "manager",
+            "owner",
+            "seealso",
+            "memberof",
+            "distinguishedname",
+        }
+
+        original_dn_str = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
+
+        # Transform entry DN
+        transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
+            entry.dn,
+            source_dn,
+            target_dn,
+        )
+
+        # Transform DN-valued attributes and track changes
+        transformed_attrs: dict[str, list[str]] = {}
+        transformed_attr_names: list[str] = []
+
+        for attr_name, attr_values in entry.attributes.items():
+            attr_lower = attr_name.lower()
+            if attr_lower in dn_attributes:
+                new_values = [
+                    FlextLdifUtilitiesDN.transform_dn_attribute(
+                        val,
+                        source_dn,
+                        target_dn,
+                    )
+                    for val in attr_values
+                ]
+                transformed_attrs[attr_name] = new_values
+
+                # Track if values actually changed
+                if new_values != attr_values:
+                    transformed_attr_names.append(attr_name)
+            else:
+                transformed_attrs[attr_name] = attr_values
+
+        # Create updated metadata with transformation tracking
+        metadata = entry.metadata.model_copy(deep=True)
+
+        # Track DN transformation
+        if transformed_dn != original_dn_str:
+            metadata.track_dn_transformation(
+                original_dn=original_dn_str,
+                transformed_dn=transformed_dn,
+                transformation_type="basedn_transform",
+            )
+
+        # Track attribute transformations
+        for attr_name in transformed_attr_names:
+            original_values = list(entry.attributes.get(attr_name, []))
+            new_values = transformed_attrs[attr_name]
+            metadata.track_attribute_transformation(
+                original_name=attr_name,
+                new_name=attr_name,
+                transformation_type="modified",
+                original_values=original_values,
+                new_values=new_values,
+                reason=f"BaseDN transformation: {source_dn} → {target_dn}",
+            )
+
+        # Add overall conversion note
+        metadata.add_conversion_note(
+            operation="basedn_transform",
+            description=f"Transformed BaseDN from {source_dn} to {target_dn}",
+        )
+
+        # Store transformation context in extensions
+        metadata.extensions[
+            FlextLdifConstants.MetadataKeys.ENTRY_SOURCE_DN_CASE
+        ] = original_dn_str
+        metadata.extensions[
+            FlextLdifConstants.MetadataKeys.ENTRY_TARGET_DN_CASE
+        ] = transformed_dn
+
+        # Create new entry with transformed data and metadata
+        return entry.model_copy(
+            update={
+                "dn": transformed_dn,
+                "attributes": transformed_attrs,
+                "metadata": metadata,
+            }
+        )
+
+    @staticmethod
+    def replace_base_dn_with_metadata(
+        entries: list[FlextLdifModels.Entry],
+        source_dn: str,
+        target_dn: str,
+    ) -> list[FlextLdifModels.Entry]:
+        """Replace base DN in all entries with metadata tracking.
+
+        RFC Compliant: Tracks all transformations for audit trail and round-trip support.
+
+        Args:
+            entries: List of Entry models to transform
+            source_dn: Source base DN to replace
+            target_dn: Target base DN replacement
+
+        Returns:
+            List of Entry models with transformed DNs and metadata
+
+        Example:
+            >>> entries = FlextLdifUtilitiesDN.replace_base_dn_with_metadata(
+            ...     entries, "dc=ctbc", "dc=example,dc=com"
+            ... )
+            >>> # Each entry.metadata.conversion_notes tracks transformation
+
+        """
+        if not entries or not source_dn or not target_dn:
+            return entries
+
+        return [
+            FlextLdifUtilitiesDN.transform_dn_with_metadata(entry, source_dn, target_dn)
+            for entry in entries
+        ]
 
 
 __all__ = [

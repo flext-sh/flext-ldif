@@ -7,12 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextResult
 
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
@@ -59,6 +56,27 @@ class FlextLdifUtilitiesACL:
         return result
 
     @staticmethod
+    def split_acl_line(acl_line: str) -> tuple[str, str]:
+        r"""Split an ACL line into attribute name and payload.
+
+        Generic utility for splitting ACL lines at the colon separator,
+        used by multiple server implementations (RFC, OUD, OID, etc.).
+
+        Args:
+            acl_line: The raw ACL line string.
+
+        Returns:
+            Tuple of (attribute_name, payload).
+
+        Example:
+            >>> split_acl_line("aci: (version 3.0; acl \"test\"; ...)")
+            ("aci", "(version 3.0; acl \"test\"; ...)")
+
+        """
+        attr_name, _, remainder = acl_line.partition(":")
+        return attr_name.strip(), remainder.strip()
+
+    @staticmethod
     def extract_component(content: str, pattern: str, group: int = 1) -> str | None:
         r"""Extract single ACL component using regex pattern.
 
@@ -99,861 +117,791 @@ class FlextLdifUtilitiesACL:
         Returns:
             List of permission strings
 
-        Example:
-            >>> pattern = r"(allow|deny)\\s*\\(([^)]+)\\)"
-            >>> extract_permissions(aci, pattern, action_filter="allow")
-            ["read", "write", "search"]
-
         """
         if not content or not allow_deny_pattern:
             return []
 
         permissions: list[str] = []
-        matches = re.findall(allow_deny_pattern, content)
+        matches = re.finditer(allow_deny_pattern, content, re.IGNORECASE)
 
-        for action, ops in matches:
-            if action_filter and action != action_filter:
+        min_groups_for_action = 1
+        min_groups_for_ops = 2
+        for match in matches:
+            action = match.group(1) if match.lastindex >= min_groups_for_action else ""
+            ops = match.group(2) if match.lastindex >= min_groups_for_ops else ""
+
+            # Filter by action if specified
+            if action_filter and action.lower() != action_filter.lower():
                 continue
 
-            ops_list = [op.strip() for op in ops.split(ops_separator) if op.strip()]
-            permissions.extend(ops_list)
+            if ops:
+                perms = [op.strip() for op in ops.split(ops_separator)]
+                permissions.extend([p for p in perms if p])
 
         return permissions
 
     @staticmethod
     def extract_bind_rules(
         content: str,
-        patterns: dict[str, str],
+        bind_patterns: dict[str, str] | None = None,
     ) -> list[dict[str, str]]:
-        r"""Extract bind rules from ACL content using configurable patterns.
+        r"""Extract bind rules from ACL content.
+
+        Finds userdn, groupdn, or other bind rule specifications.
 
         Args:
             content: ACL content string
-            patterns: Dict mapping rule types to regex patterns
-                Example: {"userdn": r'userdn\\s*=\\s*"ldap:///([^"]+)"'}
+            bind_patterns: Optional dict mapping bind type names to regex patterns.
+                          Each pattern MUST have a capturing group for the value.
+                          If None, uses default RFC patterns.
 
         Returns:
-            List of bind rule dicts with 'type' and 'value' keys
-
-        Example:
-            >>> patterns = {
-            ...     "userdn": r'userdn="ldap:///([^"]+)"',
-            ...     "groupdn": r'groupdn="ldap:///([^"]+)"',
-            ... }
-            >>> extract_bind_rules(aci, patterns)
-            [
-                {"type": "userdn", "value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"},
-                {"type": "groupdn", "value": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"}
-            ]
+            List of dicts with 'type' and 'value' keys.
 
         """
-        if not content or not patterns:
+        if not content:
             return []
 
-        bind_rules: list[dict[str, str]] = []
+        # Default patterns with capturing groups for values
+        default_patterns: dict[str, str] = {
+            "userdn": r'userdn\s*=\s*"([^"]*)"',
+            "groupdn": r'groupdn\s*=\s*"([^"]*)"',
+            "roledn": r'roledn\s*=\s*"([^"]*)"',
+        }
 
-        for rule_type, pattern in patterns.items():
-            matches = re.findall(pattern, content)
-            bind_rules.extend(
-                {
-                    "type": rule_type,
-                    "value": match if isinstance(match, str) else match[0],
-                }
-                for match in matches
-            )
+        patterns = bind_patterns or default_patterns
+
+        bind_rules: list[dict[str, str]] = []
+        for bind_type, pattern in patterns.items():
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            bind_rules.extend({"type": bind_type, "value": m} for m in matches)
 
         return bind_rules
 
     @staticmethod
     def build_permissions_dict(
-        permission_list: list[str],
-        permission_mapping: dict[str, str],
-    ) -> dict[str, bool]:
-        """Build permissions dictionary from permission list.
+        allow_permissions: list[str],
+        permission_map: dict[str, str] | None = None,
+        deny_permissions: list[str] | None = None,
+    ) -> dict[str, object]:
+        """Build permissions dictionary from allow/deny lists.
 
         Args:
-            permission_list: List of permission strings (e.g., ["read", "write"])
-            permission_mapping: Map from permission names to dict keys
-                Example: {"read": "can_read", "write": "can_write"}
+            allow_permissions: List of allowed permission names
+            permission_map: Optional dict to normalize permission names.
+                           Maps server-specific names to canonical names.
+            deny_permissions: Optional list of denied permission names
 
         Returns:
-            Dict with all permissions as keys, True for present permissions
-
-        Example:
-            >>> mapping = {
-            ...     "read": "can_read",
-            ...     "write": "can_write",
-            ...     "add": "can_add",
-            ... }
-            >>> build_permissions_dict(["read", "write"], mapping)
-            {"can_read": True, "can_write": True, "can_add": False}
+            Dictionary mapping permission names to True (allow) or False (deny)
 
         """
-        # Initialize all permissions to False
-        result: dict[str, bool] = dict.fromkeys(permission_mapping.values(), False)
+        permissions: dict[str, object] = {}
 
-        # Set True for permissions in list
-        for perm in permission_list:
-            perm_lower = perm.lower()
-            if perm_lower in permission_mapping:
-                dict_key = permission_mapping[perm_lower]
-                result[dict_key] = True
+        def normalize(perm: str) -> str:
+            """Normalize permission name using map if available."""
+            if permission_map and perm in permission_map:
+                return permission_map[perm]
+            return perm
 
-        return result
+        if allow_permissions:
+            for perm in allow_permissions:
+                if perm:
+                    permissions[normalize(perm)] = True
+
+        if deny_permissions:
+            for perm in deny_permissions:
+                if perm:
+                    permissions[normalize(perm)] = False
+
+        return permissions
+
+    # NOTE: OID-specific methods (extract_oid_target, detect_oid_subject, parse_oid_permissions,
+    # format_oid_target, format_oid_subject, format_oid_permissions) were REMOVED from here.
+    # They are now in FlextLdifServersOid.Acl class where OID knowledge belongs.
+    # Servers must encapsulate their own knowledge - utilities should be generic/parametrized.
 
     @staticmethod
-    def detect_line_breaks(
-        content: str,
-        newline_separator: str = "\n",
-    ) -> list[int]:
-        r"""Detect line break positions in multi-line ACL content.
+    def format_aci_subject(
+        _subject_type: str,
+        subject_value: str,
+        bind_operator: str = "userdn",
+    ) -> str:
+        """Format ACL subject into ACI bind rule format.
+
+        Supports both RFC (userdn/groupdn with ldap:///) and OID (by DN=) formats.
 
         Args:
-            content: ACL content string
-            newline_separator: Separator character for lines
+            _subject_type: "user", "group", "role" (reserved for future use)
+            subject_value: Subject DN or value
+            bind_operator: "userdn", "groupdn", "roledn"
 
         Returns:
-            List of byte positions where line breaks occur
-
-        Example:
-            >>> detect_line_breaks("line1\\nline2\\nline3")
-            [5, 11]  # Positions after "line1" and "line2"
+            Formatted ACI bind rule
 
         """
-        if not content or newline_separator not in content:
-            return []
+        # Clean up subject value if it contains spaces
+        cleaned_value = subject_value.replace(", ", ",")
 
-        line_breaks: list[int] = []
-        current_pos = 0
+        # OUD ACI format: userdn="ldap:///..." or groupdn="ldap:///..."
+        if bind_operator in {"userdn", "groupdn", "roledn"}:
+            return f'{bind_operator}="ldap:///{cleaned_value}"'
 
-        for line_num, line in enumerate(content.split(newline_separator)):
-            if line_num > 0:  # Skip first line
-                line_breaks.append(current_pos)
-            current_pos += len(line) + len(newline_separator)
-
-        return line_breaks
+        # OID format: by dn="..."
+        return f'by dn="{cleaned_value}"'
 
     @staticmethod
     def build_acl_subject(
-        bind_rules: list[dict[str, str]],
+        bind_rules_data: list[dict[str, str]],
         subject_type_map: dict[str, str],
-        special_values: dict[str, tuple[str, str]] | None = None,
+        special_values: dict[str, tuple[str, str]],
     ) -> tuple[str, str]:
-        """Build ACL subject from bind rules using configuration.
+        """Build ACL subject from bind rules - generic implementation.
 
         Args:
-            bind_rules: List of bind rule dicts with 'type' and 'value' keys
-            subject_type_map: Map from bind rule type to subject type
-                Example: {"userdn": "bind_rules", "groupdn": "group"}
-            special_values: Map from rule values to (subject_type, subject_value)
-                Example: {"self": ("self", "ldap:///self")}
+            bind_rules_data: List of dicts with 'type' and 'value' keys
+            subject_type_map: Maps bind rule types to subject types
+            special_values: Maps special values to (type, value) tuples
 
         Returns:
             Tuple of (subject_type, subject_value)
 
-        Example:
-            >>> rules = [{"type": "userdn", "value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"}]
-            >>> type_map = {"userdn": "bind_rules", "groupdn": "group"}
-            >>> build_acl_subject(rules, type_map)
-            ("bind_rules", 'userdn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"')
-
         """
-        # Default anonymous
-        if not bind_rules:
-            return ("anonymous", "*")
+        if not bind_rules_data:
+            return ("", "")
 
-        first_rule = bind_rules[0]
-        rule_type = first_rule["type"]
-        rule_value = first_rule["value"]
+        first_rule = bind_rules_data[0]
+        rule_type = first_rule.get("type", "")
+        rule_value = first_rule.get("value", "")
 
-        # Check special values first
-        if special_values and rule_value in special_values:
+        # Check for special values first
+        if rule_value in special_values:
             return special_values[rule_value]
 
-        # Map rule type to subject type
-        if rule_type in subject_type_map:
-            subject_type = subject_type_map[rule_type]
+        # Map the type
+        subject_type = subject_type_map.get(rule_type, rule_type)
 
-            # Format based on rule type
-            if rule_type == "groupdn":
-                return (subject_type, rule_value)
-            # Default format for userdn and others
-            return (subject_type, f'{rule_type}="{rule_value}"')
-
-        # Fallback
-        return ("anonymous", "*")
+        return (subject_type, rule_value)
 
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModels.AclMetadataConfig,
     ) -> dict[str, object]:
-        """Build QuirkMetadata extensions dict from ACL metadata configuration.
+        """Build QuirkMetadata extensions for ACL.
 
         Args:
-            config: ACL metadata configuration model
+            config: ACL metadata configuration
 
         Returns:
-            Dict of metadata extensions
-
-        Example:
-            >>> config = FlextLdifModels.AclMetadataConfig(
-            ...     line_breaks=[10, 20],
-            ...     dn_spaces=True,
-            ...     targetscope="subtree",
-            ...     version="3.0",
-            ... )
-            >>> build_metadata_extensions(config)
-            {
-                "line_breaks": [10, 20],
-                "is_multiline": True,
-                "dn_spaces": True,
-                "targetscope": "subtree"
-            }
+            Metadata extensions dictionary
 
         """
         extensions: dict[str, object] = {}
 
-        if config.line_breaks:
-            extensions["line_breaks"] = config.line_breaks
-            extensions["is_multiline"] = True
-
-        if config.dn_spaces:
-            extensions["dn_spaces"] = True
-
-        if config.targetscope:
-            extensions["targetscope"] = config.targetscope
-
-        if config.version and config.version != config.default_version:
-            extensions["version"] = config.version
+        if config.acl_format:
+            extensions["acl_format"] = config.acl_format
+        if config.server_type:
+            extensions["server_type"] = config.server_type
+        if config.transformation_applied:
+            extensions["transformation_applied"] = config.transformation_applied
 
         return extensions
 
     @staticmethod
-    def extract_oid_target(
-        acl_line: str,
-    ) -> tuple[str, list[str]]:
-        """Extract target DN and attributes from OID ACL line.
-
-        OID ACL format: orclaci: access to [entry|attr=(...)] by subject (permissions)
-
-        Args:
-            acl_line: OID ACL definition line
-
-        Returns:
-            Tuple of (target_dn, target_attributes)
-
-        Example:
-            >>> extract_oid_target(
-            ...     "orclaci: access to attr=(cn,mail) by self (read,write)"
-            ... )
-            ("cn", ["cn", "mail"])
-
-        """
-        target_dn = "*"
-        target_attrs: list[str] = []
-
-        acl_line_lower = acl_line.strip().lower()
-        if "attr=" in acl_line_lower:
-            match = re.search(r"attr\s*=\s*\(([^)]+)\)", acl_line)
-            if match:
-                attrs_str = match.group(1)
-                target_attrs = [a.strip() for a in attrs_str.split(",")]
-                target_dn = attrs_str.split(",")[0].strip() if attrs_str else "*"
-
-        return (target_dn, target_attrs)
-
-    @staticmethod
-    def detect_oid_subject(
-        acl_line: str,
-        subject_patterns: dict[str, tuple[str | None, str, str]],
-    ) -> tuple[str, str]:
-        r"""Detect OID ACL subject type and value using pattern matching.
-
-        Args:
-            acl_line: OID ACL definition line
-            subject_patterns: Dict mapping check strings to (regex, type, value_format)
-                Example: {
-                    " by self ": (None, "self", "ldap:///self"),
-                    ' by "': (r'by\\s+"([^"]+)"', "user_dn", "ldap:///{0}")
-                }
-
-        Returns:
-            Tuple of (subject_type, subject_value)
-
-        Example:
-            >>> patterns = {
-            ...     " by self ": (None, "self", "ldap:///self"),
-            ...     ' by "': (r'by\\s+"([^"]+)"', "user_dn", "ldap:///{0}"),
-            ... }
-            >>> detect_oid_subject(
-            ...     'orclaci: ... by "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example" (read)', patterns
-            ... )
-            ("user_dn", "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example")
-
-        """
-        acl_line_lower = acl_line.strip().lower()
-
-        for check_str, (
-            pattern,
-            subj_type,
-            value_format,
-        ) in subject_patterns.items():
-            if check_str in acl_line_lower:
-                if pattern is None:
-                    # No regex needed, use format directly
-                    return (subj_type, value_format)
-                # Extract using regex
-                match = re.search(pattern, acl_line)
-                if match:
-                    # Format value with match groups
-                    value = value_format.format(*match.groups())
-                    return (subj_type, value)
-
-        # Default: anonymous
-        return ("*", "*")
-
-    @staticmethod
-    def parse_oid_permissions(
-        acl_line: str,
-        permission_mapping: dict[str, list[str]],
-    ) -> dict[str, bool]:
-        """Parse OID ACL permissions from line.
-
-        OID permissions are at the end in parentheses: (read,write,add)
-        Special handling for "all" and "browse" permissions.
-
-        Args:
-            acl_line: OID ACL definition line
-            permission_mapping: Map from permission names to result keys
-                Example: {
-                    "all": ["read", "write", "add", "delete", "search", "compare", "proxy"],
-                    "browse": ["read", "search"],
-                    "read": ["read"],
-                    "write": ["write"]
-                }
-
-        Returns:
-            Dict with all permission keys, True for granted permissions
-
-        Example:
-            >>> mapping = {
-            ...     "all": ["read", "write", "add"],
-            ...     "read": ["read"],
-            ...     "write": ["write"],
-            ... }
-            >>> parse_oid_permissions("orclaci: ... (read,write)", mapping)
-            {"read": True, "write": True, "add": False}
-
-        """
-        # Initialize all permissions to False
-        all_keys = set()
-        for keys_list in permission_mapping.values():
-            all_keys.update(keys_list)
-        perms_dict = dict.fromkeys(all_keys, False)
-
-        # Find permission list at end of line
-        perm_match = re.search(r"\(([^)]+)\)\s*$", acl_line)
-        if not perm_match:
-            return perms_dict
-
-        perms_str = perm_match.group(1).lower()
-
-        # Check each permission in the string
-        for perm_name, keys_to_set in permission_mapping.items():
-            if perm_name in perms_str:
-                for key in keys_to_set:
-                    perms_dict[key] = True
-
-        return perms_dict
-
-    @staticmethod
-    def format_oid_target(
-        target: FlextLdifModels.AclTarget | None,
-    ) -> str:
-        """Format OID ACL target clause.
-
-        Args:
-            target: AclTarget model with target_dn and attributes
-
-        Returns:
-            Formatted target string ("entry" or "attr=(...)")
-
-        Example:
-            >>> format_oid_target(AclTarget(attributes=["cn", "mail"]))
-            "attr=(cn,mail)"
-
-        """
-        if not target:
-            return "entry"
-
-        if hasattr(target, "attributes") and target.attributes:
-            attrs = ",".join(target.attributes)
-            return f"attr=({attrs})"
-        if (
-            hasattr(target, "target_dn")
-            and target.target_dn
-            and target.target_dn != "*"
-        ):
-            return f"attr=({target.target_dn})"
-        return "entry"
-
-    @staticmethod
-    def format_oid_subject(
-        subject: object | None,
-        subject_formatters: dict[str, tuple[str, bool]],
-    ) -> str:
-        """Format OID ACL subject clause.
-
-        Args:
-            subject: AclSubject model with subject_type and subject_value
-            subject_formatters: Dict mapping subject_type to (format_str, needs_dn_extraction)
-
-        Returns:
-            Formatted subject string (default: "*")
-
-        """
-        # Guard clause: no subject or unknown type
-        if not subject:
-            return "*"
-
-        subject_type = getattr(subject, "subject_type", "*")
-        subject_value = getattr(subject, "subject_value", "*")
-
-        if subject_type not in subject_formatters:
-            return "*"
-
-        format_str, needs_dn_extraction = subject_formatters[subject_type]
-
-        # Determine value to format based on extraction needs
-        if needs_dn_extraction:
-            # Extract DN from LDAP URL if present
-            value = (
-                subject_value.split("ldap:///", 1)[1].split("?", 1)[0]
-                if "ldap:///" in subject_value
-                else subject_value
-            )
-            # Guard clause: invalid DN
-            if not value or value == "*":
-                return "*"
-        else:
-            # Extract attribute name (before #)
-            value = (
-                subject_value.split("#", 1)[0]
-                if "#" in subject_value
-                else subject_value
-            )
-
-        return format_str.format(value)
-
-    @staticmethod
-    def format_oid_permissions(
-        permissions: object | None,
-        permission_names: dict[str, str],
-    ) -> str:
-        """Format OID ACL permissions clause.
-
-        Args:
-            permissions: AclPermissions model
-            permission_names: Dict mapping permission attribute to OID name
-                Example: {"read": "read", "write": "write", "self_write": "selfwrite"}
-
-        Returns:
-            Formatted permissions string in parentheses: "(read,write)"
-
-        Example:
-            >>> names = {"read": "read", "write": "write"}
-            >>> format_oid_permissions(AclPermissions(read=True, write=True), names)
-            "(read,write)"
-
-        """
-        if not permissions:
-            return "(all)"
-
-        perms = []
-        for attr_name, oid_name in permission_names.items():
-            if hasattr(permissions, attr_name) and getattr(permissions, attr_name):
-                perms.append(oid_name)
-
-        return f"({','.join(perms)})" if perms else "(all)"
-
-    @staticmethod
-    def filter_supported_permissions(
-        permissions: list[str],
-        supported_set: set[str] | frozenset[str],
-    ) -> list[str]:
-        """Filter permissions to only supported ones.
-
-        Args:
-            permissions: List of permission names
-            supported_set: Set or frozenset of supported permission names
-
-        Returns:
-            Filtered list of permissions
-
-        """
-        return [perm for perm in permissions if perm in supported_set]
-
-    @staticmethod
-    def _normalize_dn_for_aci(
-        value: str,
-        constants: object,
-        base_dn: str | None = None,
-    ) -> str:
-        """Normalize DN value for ACI format (helper to reduce complexity).
-
-        Removes spaces after commas, preserves case, and filters by base_dn if provided.
-
-        Args:
-            value: DN value to normalize
-            constants: Constants class with ACL format definitions
-            base_dn: Optional base DN for filtering
-
-        Returns:
-            Normalized DN value or empty string if filtered out
-
-        """
-        if not value:
-            return value
-
-        prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-        has_prefix = value.startswith(prefix)
-        dn_part = value[len(prefix) :] if has_prefix else value
-        cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_part)
-        if (
-            base_dn
-            and cleaned_dn
-            and not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn)
-        ):
-            return ""
-        return f"{prefix}{cleaned_dn}" if has_prefix else cleaned_dn
-
-    @staticmethod
-    def _ensure_ldap_url_format(
-        value: str,
-        constants: object,
-        base_dn: str | None = None,
-    ) -> str:
-        """Ensure value has LDAP URL format (helper to reduce complexity).
-
-        Args:
-            value: Subject value to format
-            constants: Constants class with ACL format definitions
-            base_dn: Optional base DN for filtering
-
-        Returns:
-            Value with LDAP URL prefix or empty string
-
-        """
-        prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-        normalized = FlextLdifUtilitiesACL._normalize_dn_for_aci(
-            value,
-            constants,
-            base_dn,
-        )
-        if not normalized:
-            return ""
-        return normalized if normalized.startswith(prefix) else f"{prefix}{normalized}"
-
-    @staticmethod
-    def _handle_self_subject(constants: object) -> str:
-        """Handle self subject type (helper to reduce complexity)."""
-        acl_self = getattr(constants, "ACL_SELF_SUBJECT", "self")
-        return f'userdn="{acl_self}";)'
-
-    @staticmethod
-    def _handle_anonymous_subject(constants: object) -> str:
-        """Handle anonymous subject type (helper to reduce complexity)."""
-        acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
-        return f'userdn="{acl_anon}";)'
-
-    @staticmethod
-    def _handle_group_subject(
-        subject_value: str,
-        constants: object,
-        base_dn: str | None = None,
-    ) -> str:
-        """Handle group subject type (helper to reduce complexity)."""
-        normalized_value = FlextLdifUtilitiesACL._ensure_ldap_url_format(
-            subject_value,
-            constants,
-            base_dn,
-        )
-        return "" if not normalized_value else f'groupdn="{normalized_value}";)'
-
-    @staticmethod
-    def _handle_attribute_subject(subject_value: str) -> str:
-        """Handle attribute subject type (helper to reduce complexity)."""
-        return f'userattr="{subject_value}";)'
-
-    @staticmethod
-    def _handle_bind_rules_subject(
-        subject_value: str,
-        constants: object,
-        base_dn: str | None = None,
-    ) -> str:
-        """Handle bind rules subject type (helper to reduce complexity)."""
-
-        def normalize_match(match: re.Match[str]) -> str:
-            prefix = match.group(2) or ""
-            return f'{match.group(1)}="{prefix}{FlextLdifUtilitiesACL._normalize_dn_for_aci(match.group(3), constants, base_dn)}"'
-
-        normalized_bind = re.sub(
-            r'(userdn|groupdn)="(ldap:///)?([^"]+)"',
-            normalize_match,
-            subject_value,
-        )
-        return f"{normalized_bind};)"
-
-    @staticmethod
-    def _handle_default_subject(
-        subject_value: str,
-        constants: object,
-        base_dn: str | None = None,
-    ) -> str:
-        """Handle default subject type (helper to reduce complexity)."""
-        normalized_value = FlextLdifUtilitiesACL._ensure_ldap_url_format(
-            subject_value,
-            constants,
-            base_dn,
-        )
-        return "" if not normalized_value else f'userdn="{normalized_value}";)'
-
-    @staticmethod
-    def format_aci_subject(
-        subject_type: str,
-        subject_value: str,
-        constants: object,  # Server-specific Constants class with ACL attributes
-        base_dn: str | None = None,  # Optional base DN for filtering DNs inside ACLs
-    ) -> str:
-        """Format ACL subject into ACI bind rule format.
-
-        Normalizes DNs in userdn and groupdn by:
-        - Removing spaces after commas (e.g., "cn=Group, cn=Sub" -> "cn=Group,cn=Sub")
-        - Preserving case (no lowercase conversion)
-        - Cleaning whitespace issues
-
-        Args:
-            subject_type: Type of subject (self, anonymous, group, etc.)
-            subject_value: Subject value (may contain DN with spacing issues)
-            constants: Constants class with ACL format definitions
-
-        Returns:
-            Formatted bind rule string with normalized DNs
-
-        """
-        # Dispatch table mapping subject types to handlers
-        bind_rules_type = getattr(
-            constants,
-            "ACL_SUBJECT_TYPE_BIND_RULES",
-            "bind_rules",
-        )
-        handlers: dict[str, Callable[[], str]] = {
-            FlextLdifConstants.AclSubjectTypes.SELF: lambda: FlextLdifUtilitiesACL._handle_self_subject(
-                constants,
-            ),
-            FlextLdifConstants.AclSubjectTypes.ANONYMOUS: lambda: FlextLdifUtilitiesACL._handle_anonymous_subject(
-                constants,
-            ),
-            FlextLdifConstants.AclSubjectTypes.GROUP: lambda: FlextLdifUtilitiesACL._handle_group_subject(
-                subject_value,
-                constants,
-                base_dn,
-            ),
-            "group_dn": lambda: FlextLdifUtilitiesACL._handle_group_subject(
-                subject_value,
-                constants,
-                base_dn,
-            ),
-            "dn_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
-                subject_value,
-            ),
-            "guid_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
-                subject_value,
-            ),
-            "group_attr": lambda: FlextLdifUtilitiesACL._handle_attribute_subject(
-                subject_value,
-            ),
-            bind_rules_type: lambda: FlextLdifUtilitiesACL._handle_bind_rules_subject(
-                subject_value,
-                constants,
-                base_dn,
-            ),
-        }
-
-        # Execute handler or use default
-        handler = handlers.get(subject_type)
-        return (
-            handler()
-            if handler
-            else FlextLdifUtilitiesACL._handle_default_subject(
-                subject_value,
-                constants,
-                base_dn,
-            )
-        )
-
-    @staticmethod
-    def parse_novell_rights(
-        rights_str: str,
-        char_mapping: dict[str, list[str]],
-    ) -> list[str]:
-        """Parse Novell eDirectory rights string into permission list.
-
-        Novell format: [BCDRWASE] where each letter represents a permission.
-
-        Args:
-            rights_str: Rights string like "[BCDRSE]" or "BCDR"
-            char_mapping: Dict mapping chars to permission names
-                Example: {"B": ["search"], "C": ["compare"], "R": ["read"]}
-
-        Returns:
-            List of permission names
-
-        Example:
-            >>> mapping = {"B": ["search"], "C": ["compare"], "R": ["read"]}
-            >>> parse_novell_rights("[BCR]", mapping)
-            ["search", "compare", "read"]
-
-        """
-        rights: list[str] = []
-
-        if not rights_str:
-            return rights
-
-        # Remove brackets if present
-        rights_clean = rights_str.strip("[]")
-
-        # Parse individual permission letters
-        for char in rights_clean:
-            char_upper = char.upper()
-            if char_upper in char_mapping:
-                rights.extend(char_mapping[char_upper])
-
-        return rights
-
-    @staticmethod
-    def build_novell_permissions(
-        rights_list: list[str],
-        permission_checks: dict[str, str],
-    ) -> dict[str, bool]:
-        """Build Novell permissions dict from rights list.
-
-        **DRY Optimization**: Builds permission flags dict locally
-        to eliminate duplicated permission-building logic.
-
-        Args:
-            rights_list: List of permission names
-            permission_checks: Dict mapping permission names to check
-                Example: {"read": "read", "write": "write"}
-
-        Returns:
-            Dict with permission keys set to True/False
-
-        Example:
-            >>> checks = {"read": "read", "write": "write", "add": "add"}
-            >>> build_novell_permissions(["read", "write"], checks)
-            {"read": True, "write": True, "add": False}
-
-        """
-        # Build flags dict locally to avoid dependency issues
-        result = {}
-        for permission_name, check_value in permission_checks.items():
-            result[permission_name] = check_value in rights_list
-        return result
-
-    @staticmethod
-    def collect_active_permissions(
-        permissions: object | None,
-        permission_attrs: list[tuple[str, str]],
-    ) -> list[str]:
-        """Collect list of active permission names from permissions model.
-
-        Args:
-            permissions: AclPermissions model
-            permission_attrs: List of (attribute_name, output_name) tuples
-                Example: [("read", "read"), ("write", "write")]
-
-        Returns:
-            List of active permission names
-
-        Example:
-            >>> attrs = [("read", "read"), ("write", "write"), ("add", "add")]
-            >>> collect_active_permissions(AclPermissions(read=True, write=True), attrs)
-            ["read", "write"]
-
-        """
-        active_perms: list[str] = []
-
-        if not permissions:
-            return active_perms
-
-        for attr_name, output_name in permission_attrs:
-            if hasattr(permissions, attr_name) and getattr(permissions, attr_name):
-                active_perms.append(output_name)
-
-        return active_perms
-
-    @classmethod
     def sanitize_acl_name(
-        cls,
-        raw_name: str,
-        max_length: int = 256,
+        raw_name: str, max_length: int = 128
     ) -> tuple[str, bool]:
-        r"""Sanitize string for use as ACL name in ACI format.
-
-        Removes control characters (ASCII < 0x20 or > 0x7E) and
-        replaces double quotes to avoid ACI syntax issues.
-
-        Args:
-            raw_name: Original string (e.g., orclaci line)
-            max_length: Maximum allowed length for ACL name
-
-        Returns:
-            Tuple of (sanitized_name, was_sanitized)
-            - sanitized_name: Safe string for ACI name usage
-            - was_sanitized: True if any characters were replaced/removed
-
-        Example:
-            >>> FlextLdifUtilitiesACL.sanitize_acl_name(
-            ...     "access to attr=(cn) by self (read)"
-            ... )
-            ("access to attr=(cn) by self (read)", False)
-
-            >>> FlextLdifUtilitiesACL.sanitize_acl_name("access to\x00attr=(cn)")
-            ("access to attr=(cn)", True)
-
-        """
-        if not raw_name:
-            return raw_name, False
+        """Sanitize ACL name for ACI format."""
+        if not raw_name or not raw_name.strip():
+            return "", False
 
         result: list[str] = []
         was_sanitized = False
 
         for char in raw_name:
             char_ord = ord(char)
-            # Control characters: < ASCII_PRINTABLE_MIN (space) or > ASCII_PRINTABLE_MAX (~)
-            # Also exclude double quotes to avoid ACI syntax issues
             if (
-                char_ord < cls.ASCII_PRINTABLE_MIN
-                or char_ord > cls.ASCII_PRINTABLE_MAX
+                char_ord < FlextLdifUtilitiesACL.ASCII_PRINTABLE_MIN
+                or char_ord > FlextLdifUtilitiesACL.ASCII_PRINTABLE_MAX
                 or char == '"'
             ):
                 was_sanitized = True
-                # Replace with space (multiple spaces will be collapsed)
                 if result and result[-1] != " ":
                     result.append(" ")
             else:
                 result.append(char)
 
-        # Collapse multiple spaces and trim
         sanitized = " ".join("".join(result).split())
 
-        # Truncate if exceeds max_length
         if len(sanitized) > max_length:
             sanitized = sanitized[: max_length - 3] + "..."
             was_sanitized = True
 
         return sanitized, was_sanitized
+
+    # =========================================================================
+    # GENERIC ACI PARSING - Parametrized for OUD/RFC/OID
+    # =========================================================================
+
+    @staticmethod
+    def validate_aci_format(
+        acl_line: str,
+        aci_prefix: str = "aci:",
+    ) -> tuple[bool, str]:
+        """Validate and extract ACI content from line.
+
+        Args:
+            acl_line: Raw ACL line
+            aci_prefix: Expected prefix (default: "aci:")
+
+        Returns:
+            Tuple of (is_valid, aci_content)
+
+        """
+        if not acl_line or not acl_line.strip():
+            return False, ""
+        first_line = acl_line.split("\n", maxsplit=1)[0].strip()
+        if not first_line.startswith(aci_prefix):
+            return False, ""
+        if "\n" in acl_line:
+            lines = acl_line.split("\n")
+            first_line_content = lines[0].split(":", 1)[1].strip()
+            aci_content = first_line_content + "\n" + "\n".join(lines[1:])
+        else:
+            aci_content = acl_line.split(":", 1)[1].strip()
+        return True, aci_content
+
+    @staticmethod
+    def extract_aci_components(
+        aci_content: str,
+        patterns: dict[str, tuple[str, int]],
+        defaults: dict[str, str | None] | None = None,
+    ) -> dict[str, object]:
+        """Extract all ACI components using configurable patterns.
+
+        Args:
+            aci_content: ACI content string (without prefix)
+            patterns: Dict mapping component name to (pattern, group) tuple
+            defaults: Default values for components
+
+        Returns:
+            Context dict with extracted components
+
+        """
+        context: dict[str, object] = dict(defaults or {})
+        context["aci_content"] = aci_content
+
+        for name, (pattern, group) in patterns.items():
+            if not pattern:
+                continue
+            value = FlextLdifUtilitiesACL.extract_component(aci_content, pattern, group)
+            if value is not None:
+                context[name] = value
+
+        return context
+
+    @staticmethod
+    def parse_targetattr(
+        targetattr_str: str | None,
+        separator: str = "||",
+    ) -> tuple[list[str], str]:
+        """Parse targetattr string to attributes list and target DN.
+
+        Args:
+            targetattr_str: Target attribute string
+            separator: Separator for multiple attributes (default: "||")
+
+        Returns:
+            Tuple of (target_attributes, target_dn)
+
+        """
+        if not targetattr_str:
+            return [], "*"
+        if separator in targetattr_str:
+            return [a.strip() for a in targetattr_str.split(separator) if a.strip()], "*"
+        if targetattr_str != "*":
+            return [targetattr_str.strip()], "*"
+        return [], "*"
+
+    @staticmethod
+    def build_aci_subject(
+        bind_rules_data: list[dict[str, str]],
+        subject_type_map: dict[str, str],
+        special_values: dict[str, tuple[str, str]],
+    ) -> tuple[str, str]:
+        """Build ACL subject from bind rules using configurable maps.
+
+        Args:
+            bind_rules_data: List of bind rule dicts with 'type' and 'value'
+            subject_type_map: Mapping of bind type to subject type
+            special_values: Special subject values (self, anonymous, etc.)
+
+        Returns:
+            Tuple of (subject_type, subject_value)
+
+        """
+        if not bind_rules_data:
+            return "self", "ldap:///self"
+
+        for rule in bind_rules_data:
+            rule_type = rule.get("type", "").lower()
+            rule_value = rule.get("value", "")
+
+            # Check special values first
+            for special_key, (stype, svalue) in special_values.items():
+                if rule_value.lower() == special_key.lower():
+                    return stype, svalue
+
+            # Map bind type to subject type
+            if rule_type in subject_type_map:
+                return subject_type_map[rule_type], rule_value
+
+        return "user", bind_rules_data[0].get("value", "")
+
+    @staticmethod
+    def filter_supported_permissions(
+        permissions: list[str],
+        supported: set[str] | frozenset[str],
+    ) -> list[str]:
+        """Filter permissions to only include supported ones.
+
+        Args:
+            permissions: List of permission names
+            supported: Set of supported permission names
+
+        Returns:
+            Filtered list of supported permissions
+
+        """
+        supported_lower = {s.lower() for s in supported}
+        return [p for p in permissions if p.lower() in supported_lower]
+
+    @staticmethod
+    def build_aci_target_clause(
+        target_attributes: list[str] | None,
+        target_dn: str | None = None,
+        separator: str = " || ",
+    ) -> str:
+        """Build ACI targetattr clause.
+
+        Args:
+            target_attributes: List of target attributes
+            target_dn: Target DN (used if no attributes)
+            separator: Separator for multiple attributes
+
+        Returns:
+            Formatted targetattr clause
+
+        """
+        if target_attributes:
+            return f'(targetattr="{separator.join(target_attributes)}")'
+        if target_dn and target_dn != "*":
+            return f'(targetattr="{target_dn}")'
+        return '(targetattr="*")'
+
+    @staticmethod
+    def build_aci_permissions_clause(
+        permissions: list[str],
+        allow_prefix: str = "(allow (",
+        supported_permissions: set[str] | frozenset[str] | None = None,
+    ) -> str | None:
+        """Build ACI permissions clause.
+
+        Args:
+            permissions: List of permission names
+            allow_prefix: Prefix for allow clause
+            supported_permissions: Optional set of supported permissions to filter
+
+        Returns:
+            Formatted permissions clause or None if empty
+
+        """
+        filtered = permissions
+        if supported_permissions:
+            filtered = FlextLdifUtilitiesACL.filter_supported_permissions(
+                permissions, supported_permissions
+            )
+        if not filtered:
+            return None
+        return f"{allow_prefix}{','.join(filtered)})"
+
+    @staticmethod
+    def build_aci_bind_rule(
+        subject_type: str,
+        subject_value: str,
+        bind_operators: dict[str, str] | None = None,
+        self_value: str = "ldap:///self",
+        anonymous_value: str = "ldap:///anyone",
+    ) -> str:
+        """Build ACI bind rule (subject) clause.
+
+        Args:
+            subject_type: Subject type (user, group, self, anonymous, etc.)
+            subject_value: Subject value (DN or special value)
+            bind_operators: Mapping of subject type to bind operator
+            self_value: Value for self subject
+            anonymous_value: Value for anonymous subject
+
+        Returns:
+            Formatted bind rule string
+
+        """
+        default_operators = {
+            "user": "userdn",
+            "group": "groupdn",
+            "role": "roledn",
+            "self": "userdn",
+            "anonymous": "userdn",
+        }
+        operators = bind_operators or default_operators
+
+        if subject_type == "self":
+            return f'{operators.get("self", "userdn")}="{self_value}"'
+        if subject_type == "anonymous":
+            return f'{operators.get("anonymous", "userdn")}="{anonymous_value}"'
+
+        operator = operators.get(subject_type, "userdn")
+        clean_value = subject_value.replace(", ", ",")
+        if not clean_value.startswith("ldap:///"):
+            clean_value = f"ldap:///{clean_value}"
+        return f'{operator}="{clean_value}"'
+
+    @staticmethod
+    def format_aci_line(
+        name: str,
+        target_clause: str,
+        permissions_clause: str,
+        bind_rule: str,
+        version: str = "3.0",
+        aci_prefix: str = "aci: ",
+    ) -> str:
+        """Format complete ACI line from components."""
+        sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(name)
+        return (
+            f'{aci_prefix}{target_clause}'
+            f'(version {version}; acl "{sanitized_name}"; '
+            f'{permissions_clause} {bind_rule};)'
+        )
+
+    # =========================================================================
+    # HIGH-LEVEL PARSE/WRITE - Uses Models for server-specific config
+    # =========================================================================
+
+    @staticmethod
+    def parse_aci(
+        acl_line: str,
+        config: FlextLdifModels.AciParserConfig,
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Parse ACI line using server-specific config Model.
+
+        Args:
+            acl_line: Raw ACL line string
+            config: AciParserConfig with server-specific patterns
+
+        Returns:
+            FlextResult with parsed Acl model
+
+        Example:
+            config = FlextLdifModels.AciParserConfig(
+                server_type="oud",
+                version_acl_pattern=OudConstants.ACL_VERSION_ACL_PATTERN,
+                targetattr_pattern=OudConstants.ACL_TARGETATTR_PATTERN,
+                allow_deny_pattern=OudConstants.ACL_ALLOW_DENY_PATTERN,
+                bind_patterns=dict(OudConstants.ACL_BIND_PATTERNS),
+            )
+            result = FlextLdifUtilities.ACL.parse_aci(acl_line, config)
+
+        """
+        # Validate and extract ACI content
+        is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
+            acl_line, config.aci_prefix
+        )
+        if not is_valid:
+            return FlextResult[FlextLdifModels.Acl].fail(
+                f"Not a valid ACI format: {config.aci_prefix}"
+            )
+
+        # Extract version and name
+        acl_name = config.default_name
+        version = "3.0"
+        version_match = re.search(config.version_acl_pattern, aci_content)
+        if version_match:
+            version = version_match.group(1)
+            acl_name = version_match.group(2)
+
+        # Extract targetattr
+        targetattr = config.default_targetattr
+        targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
+            aci_content, config.targetattr_pattern, group=2
+        )
+        if targetattr_extracted:
+            targetattr = targetattr_extracted
+        target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(targetattr)
+
+        # Extract permissions
+        permissions_list = FlextLdifUtilitiesACL.extract_permissions(
+            aci_content, config.allow_deny_pattern, config.ops_separator, config.action_filter
+        )
+
+        # Extract bind rules
+        bind_rules_data = FlextLdifUtilitiesACL.extract_bind_rules(
+            aci_content, config.bind_patterns
+        )
+
+        # Build subject using config's special_subjects
+        subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
+        subject_type, subject_value = FlextLdifUtilitiesACL.build_aci_subject(
+            bind_rules_data, subject_type_map, config.special_subjects
+        )
+
+        # Build permissions dict using config's permission_map
+        permissions_dict = FlextLdifUtilitiesACL.build_permissions_dict(
+            permissions_list, config.permission_map
+        )
+
+        # Extract extra fields via extra_patterns and build extensions
+        extensions: dict[str, str | object] = {
+            "version": version,
+            "original_format": acl_line,
+        }
+        for pattern_name, pattern in config.extra_patterns.items():
+            extracted = FlextLdifUtilitiesACL.extract_component(
+                aci_content, pattern, group=1
+            )
+            if extracted:
+                extensions[pattern_name] = extracted
+
+        # Create Acl model
+        acl = FlextLdifModels.Acl(
+            name=acl_name,
+            target=FlextLdifModels.AclTarget(
+                target_dn=target_dn,
+                attributes=target_attributes,
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type=subject_type,
+                subject_value=subject_value,
+            ),
+            permissions=FlextLdifModels.AclPermissions(**permissions_dict),
+            server_type=config.server_type,
+            raw_acl=acl_line,
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
+                config.server_type,
+                extensions=extensions,
+            ),
+        )
+        return FlextResult[FlextLdifModels.Acl].ok(acl)
+
+    @staticmethod
+    def write_aci(
+        acl_data: FlextLdifModels.Acl,
+        config: FlextLdifModels.AciWriterConfig,
+    ) -> FlextResult[str]:
+        """Write Acl model to ACI string using server-specific config Model.
+
+        Args:
+            acl_data: Acl model to write
+            config: AciWriterConfig with server-specific settings
+
+        Returns:
+            FlextResult with formatted ACI string
+
+        Example:
+            config = FlextLdifModels.AciWriterConfig(
+                aci_prefix="aci: ",
+                version="3.0",
+                supported_permissions=OudConstants.SUPPORTED_PERMISSIONS,
+            )
+            result = FlextLdifUtilities.ACL.write_aci(acl, config)
+
+        """
+        # Build target clause
+        target_attributes = acl_data.target.attributes if acl_data.target else None
+        target_dn = acl_data.target.target_dn if acl_data.target else None
+        target_clause = FlextLdifUtilitiesACL.build_aci_target_clause(
+            target_attributes, target_dn, config.attr_separator
+        )
+
+        # Build permissions clause
+        if not acl_data.permissions:
+            return FlextResult[str].fail("ACL has no permissions")
+
+        perm_names = [
+            name
+            for name in [
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "self_write",
+                "proxy",
+            ]
+            if getattr(acl_data.permissions, name, False)
+        ]
+        permissions_clause = FlextLdifUtilitiesACL.build_aci_permissions_clause(
+            perm_names, f"({config.allow_prefix}", config.supported_permissions
+        )
+        if not permissions_clause:
+            return FlextResult[str].fail("No supported permissions")
+
+        # Build bind rule
+        subject_type = acl_data.subject.subject_type if acl_data.subject else "self"
+        subject_value = (
+            acl_data.subject.subject_value if acl_data.subject else config.self_subject
+        )
+        bind_rule = FlextLdifUtilitiesACL.build_aci_bind_rule(
+            subject_type,
+            subject_value,
+            bind_operators=config.bind_operators,
+            self_value=config.self_subject,
+            anonymous_value=config.anonymous_subject,
+        )
+
+        # Format complete ACI
+        acl_name = acl_data.name or "ACL"
+        aci_line = FlextLdifUtilitiesACL.format_aci_line(
+            acl_name,
+            target_clause,
+            permissions_clause,
+            bind_rule,
+            config.version,
+            config.aci_prefix,
+        )
+        return FlextResult[str].ok(aci_line)
+
+    @staticmethod
+    def extract_bind_rules_from_extensions(
+        extensions: dict[str, object] | None,
+        rule_config: list[tuple[str, str, str | None]],
+        *,
+        tuple_length: int = 2,
+    ) -> list[str]:
+        """Extract and format bind rules from metadata extensions.
+
+        Generic utility for extracting bind rules like ip, dns, dayofweek, etc.
+        from ACL metadata extensions with consistent formatting.
+
+        Args:
+            extensions: Metadata extensions dict (may be None)
+            rule_config: List of (extension_key, format_template, operator_default) tuples.
+                        format_template can use {value} or {operator}/{value} placeholders.
+                        operator_default is used for tuple values that need operator.
+            tuple_length: Expected length for tuple values (default: 2 for (operator, value))
+
+        Returns:
+            List of formatted bind rule strings
+
+        Example:
+            >>> rule_config = [
+            ...     ("ACL_BIND_IP", 'ip="{value}"', None),
+            ...     ("ACL_BIND_DNS", 'dns="{value}"', None),
+            ...     ("ACL_BIND_TIMEOFDAY", 'timeofday {operator} "{value}"', "="),
+            ... ]
+            >>> extract_bind_rules_from_extensions(extensions, rule_config)
+            ['ip="192.168.1.0/24"', 'timeofday >= "0800"']
+
+        """
+        if not extensions:
+            return []
+
+        bind_rules: list[str] = []
+
+        for ext_key, format_template, operator_default in rule_config:
+            value = extensions.get(ext_key)
+            if not value:
+                continue
+
+            # Handle tuple values (operator, value)
+            if isinstance(value, tuple) and len(value) == tuple_length:
+                operator, val = value
+                if "{operator}" in format_template:
+                    bind_rules.append(
+                        format_template.format(operator=operator, value=val)
+                    )
+                else:
+                    bind_rules.append(format_template.format(value=val))
+            # Handle simple string values
+            elif "{operator}" in format_template and operator_default:
+                bind_rules.append(
+                    format_template.format(operator=operator_default, value=value)
+                )
+            else:
+                bind_rules.append(format_template.format(value=value))
+
+        return bind_rules
+
+    @staticmethod
+    def extract_target_extensions(
+        extensions: dict[str, object] | None,
+        target_config: list[tuple[str, str]],
+    ) -> list[str]:
+        """Extract and format target extensions from metadata extensions.
+
+        Generic utility for extracting target extensions like targattrfilters,
+        targetcontrol, extop, etc. from ACL metadata extensions.
+
+        Args:
+            extensions: Metadata extensions dict (may be None)
+            target_config: List of (extension_key, format_template) tuples.
+                          format_template uses {value} placeholder.
+
+        Returns:
+            List of formatted target extension strings
+
+        Example:
+            >>> target_config = [
+            ...     ("ACL_TARGETATTR_FILTERS", '(targattrfilters="{value}")'),
+            ...     ("ACL_TARGET_CONTROL", '(targetcontrol="{value}")'),
+            ...     ("ACL_EXTOP", '(extop="{value}")'),
+            ... ]
+            >>> extract_target_extensions(extensions, target_config)
+            ['(targetcontrol="1.2.840.113556.1.4.805")']
+
+        """
+        if not extensions:
+            return []
+
+        target_parts: list[str] = []
+
+        for ext_key, format_template in target_config:
+            value = extensions.get(ext_key)
+            if value:
+                target_parts.append(format_template.format(value=value))
+
+        return target_parts
+
+    @staticmethod
+    def format_conversion_comments(
+        extensions: dict[str, object] | None,
+        converted_from_key: str,
+        comments_key: str,
+    ) -> list[str]:
+        """Extract conversion comments from metadata extensions.
+
+        Args:
+            extensions: Metadata extensions dict (may be None)
+            converted_from_key: Key for checking if conversion occurred
+            comments_key: Key for the list of comment strings
+
+        Returns:
+            List of comment strings (with empty string at end if comments exist)
+
+        """
+        if not extensions:
+            return []
+
+        if not extensions.get(converted_from_key):
+            return []
+
+        comments = extensions.get(comments_key, [])
+        if not comments or not isinstance(comments, list):
+            return []
+
+        result = [str(comment) for comment in comments]
+        result.append("")  # Empty line after comments
+        return result
 
 
 __all__ = [

@@ -1,7 +1,7 @@
-"""Unit tests for LDIF ACL utilities.
+"""Test suite for FlextLdifModels ACL utilities.
 
 Modules tested: FlextLdifModels.Acl, FlextLdifModels.AclTarget,
-FlextLdifModels.AclSubject, FlextLdifModels.AclPermissions, ComponentFactory
+FlextLdifModels.AclSubject, FlextLdifModels.AclPermissions
 Scope: ACL component creation, unified ACL creation, server type validation,
 property preservation, exception handling, edge cases
 
@@ -70,7 +70,7 @@ class UnifiedAclTestCase:
     description: str = ""
 
 
-# Component creation test cases
+# Test constants organized as module-level constants
 COMPONENTS_TESTS: Final[list[AclComponentsTestCase]] = [
     AclComponentsTestCase(
         AclTestType.COMPONENTS_CREATION,
@@ -90,7 +90,6 @@ COMPONENTS_TESTS: Final[list[AclComponentsTestCase]] = [
     ),
 ]
 
-# Unified ACL test cases for different server types
 UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
     UnifiedAclTestCase(
         AclTestType.UNIFIED_BASIC,
@@ -180,151 +179,132 @@ UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
 ]
 
 
-def create_acl_components_helper() -> FlextResult[
-    tuple[
-        FlextLdifModels.AclTarget,
-        FlextLdifModels.AclSubject,
-        FlextLdifModels.AclPermissions,
-    ]
-]:
-    """Create ACL components with proper validation using railway pattern.
-
-    Returns:
-        FlextResult containing tuple of (target, subject, permissions) on success,
-        or failure with descriptive error message.
-
-    """
-    # Create ACL components using direct instantiation
-    target = FlextLdifModels.AclTarget(
-        target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
-    )
-    subject = FlextLdifModels.AclSubject(
-        subject_type=FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
-        subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
-    )
-    permissions = FlextLdifModels.AclPermissions(read=True)
-
-    return FlextResult[
-        tuple[
-            FlextLdifModels.AclTarget,
-            FlextLdifModels.AclSubject,
-            FlextLdifModels.AclPermissions,
-        ]
-    ].ok((target, subject, permissions))
-
-
-def create_unified_acl_helper(
-    name: str,
-    target: FlextLdifModels.AclTarget,
-    subject: FlextLdifModels.AclSubject,
-    permissions: FlextLdifModels.AclPermissions,
-    server_type: str,
-    raw_acl: str,
-) -> FlextResult[FlextLdifModels.Acl]:
-    """Create unified ACL with proper validation using railway pattern.
-
-    Args:
-        name: ACL name
-        target: ACL target component
-        subject: ACL subject component
-        permissions: ACL permissions component
-        server_type: Server type (openldap, oid, etc.)
-        raw_acl: Original ACL string
-
-    Returns:
-        FlextResult containing Acl instance on success, failure otherwise.
-
-    """
-    try:
-        # Validate server_type is supported
-        supported_servers = {
-            FlextLdifConstants.LdapServers.OPENLDAP,
-            FlextLdifConstants.LdapServers.OPENLDAP_2,
-            FlextLdifConstants.LdapServers.OPENLDAP_1,
-            FlextLdifConstants.LdapServers.ORACLE_OID,
-            FlextLdifConstants.LdapServers.ORACLE_OUD,
-            FlextLdifConstants.LdapServers.DS_389,
-        }
-
-        # Default to OpenLDAP for generic/unknown server types
-        effective_server_type = (
-            server_type
-            if server_type in supported_servers
-            else FlextLdifConstants.LdapServers.OPENLDAP
-        )
-
-        # Create ACL using consolidated Acl model
-        unified_acl = FlextLdifModels.Acl(
-            name=name,
-            target=target,
-            subject=subject,
-            permissions=permissions,
-            server_type=effective_server_type,
-            raw_acl=raw_acl,
-        )
-
-        return FlextResult[FlextLdifModels.Acl].ok(unified_acl)
-    except (ValueError, TypeError, AttributeError) as e:
-        return FlextResult[FlextLdifModels.Acl].fail(f"Failed to create ACL: {e}")
-
-
-def get_component_tests() -> list[AclComponentsTestCase]:
-    """Parametrization helper for component tests."""
-    return COMPONENTS_TESTS
-
-
-def get_unified_acl_tests() -> list[UnifiedAclTestCase]:
-    """Parametrization helper for unified ACL tests."""
-    return UNIFIED_ACL_TESTS
-
-
 class TestFlextLdifAclComponents(FlextTestsFactories):
     """Comprehensive LDIF ACL utilities test suite.
 
+    Organized as single class with nested classes for test organization.
     Tests component creation, unified ACL creation, server type validation,
     and property preservation with parametrized test cases.
     """
 
-    # =========================================================================
-    # ACL Component Creation Tests
-    # =========================================================================
+    class Helpers:
+        """Helper methods organized as nested class."""
 
-    @pytest.mark.parametrize("test_case", get_component_tests())
+        __test__ = False
+
+        @staticmethod
+        def create_acl_components() -> FlextResult[
+            tuple[
+                FlextLdifModels.AclTarget,
+                FlextLdifModels.AclSubject,
+                FlextLdifModels.AclPermissions,
+            ]
+        ]:
+            """Create ACL components with proper validation using railway pattern.
+
+            Returns:
+                FlextResult containing tuple of (target, subject, permissions) on success,
+                or failure with descriptive error message.
+
+            """
+            target = FlextLdifModels.AclTarget(
+                target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
+            )
+            subject = FlextLdifModels.AclSubject(
+                subject_type=FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
+                subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
+            )
+            permissions = FlextLdifModels.AclPermissions(read=True)
+
+            return FlextResult[
+                tuple[
+                    FlextLdifModels.AclTarget,
+                    FlextLdifModels.AclSubject,
+                    FlextLdifModels.AclPermissions,
+                ]
+            ].ok((target, subject, permissions))
+
+        @staticmethod
+        def create_unified_acl(
+            name: str,
+            target: FlextLdifModels.AclTarget,
+            subject: FlextLdifModels.AclSubject,
+            permissions: FlextLdifModels.AclPermissions,
+            server_type: str,
+            raw_acl: str,
+        ) -> FlextResult[FlextLdifModels.Acl]:
+            """Create unified ACL with proper validation using railway pattern.
+
+            Args:
+                name: ACL name
+                target: ACL target component
+                subject: ACL subject component
+                permissions: ACL permissions component
+                server_type: Server type (openldap, oid, etc.)
+                raw_acl: Original ACL string
+
+            Returns:
+                FlextResult containing Acl instance on success, failure otherwise.
+
+            """
+            try:
+                supported_servers = {
+                    FlextLdifConstants.LdapServers.OPENLDAP,
+                    FlextLdifConstants.LdapServers.OPENLDAP_2,
+                    FlextLdifConstants.LdapServers.OPENLDAP_1,
+                    FlextLdifConstants.LdapServers.ORACLE_OID,
+                    FlextLdifConstants.LdapServers.ORACLE_OUD,
+                    FlextLdifConstants.LdapServers.DS_389,
+                }
+
+                effective_server_type = (
+                    server_type
+                    if server_type in supported_servers
+                    else FlextLdifConstants.LdapServers.OPENLDAP
+                )
+
+                unified_acl = FlextLdifModels.Acl(
+                    name=name,
+                    target=target,
+                    subject=subject,
+                    permissions=permissions,
+                    server_type=effective_server_type,
+                    raw_acl=raw_acl,
+                )
+
+                return FlextResult[FlextLdifModels.Acl].ok(unified_acl)
+            except (ValueError, TypeError, AttributeError) as e:
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    f"Failed to create ACL: {e}",
+                )
+
+    @pytest.mark.parametrize("test_case", COMPONENTS_TESTS)
     def test_acl_components(self, test_case: AclComponentsTestCase) -> None:
         """Test ACL component creation and properties."""
-        result = create_acl_components_helper()
+        result = TestFlextLdifAclComponents.Helpers.create_acl_components()
         assert result.is_success
 
         target, subject, permissions = result.unwrap()
 
         match test_case.test_type:
             case AclTestType.COMPONENTS_CREATION:
-                # Test successful creation of ACL components
                 assert isinstance(target, FlextLdifModels.AclTarget)
                 assert isinstance(subject, FlextLdifModels.AclSubject)
                 assert isinstance(permissions, FlextLdifModels.AclPermissions)
 
             case AclTestType.COMPONENTS_TARGET:
-                # Test ACL target component properties
                 assert target.target_dn == "*"
 
             case AclTestType.COMPONENTS_SUBJECT:
-                # Test ACL subject component properties
                 assert subject.subject_type == "*"
                 assert subject.subject_value == "*"
 
             case AclTestType.COMPONENTS_PERMISSIONS:
-                # Test ACL permissions component properties
                 assert permissions.read is True
 
-    # =========================================================================
-    # Unified ACL Creation Tests
-    # =========================================================================
-
-    @pytest.mark.parametrize("test_case", get_unified_acl_tests())
+    @pytest.mark.parametrize("test_case", UNIFIED_ACL_TESTS)
     def test_unified_acl_creation(self, test_case: UnifiedAclTestCase) -> None:
         """Test unified ACL creation with various server types and configurations."""
-        # Create components
         target = FlextLdifModels.AclTarget(target_dn=test_case.target_dn)
         subject = FlextLdifModels.AclSubject(
             subject_type=test_case.subject_type,
@@ -336,8 +316,7 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
             delete=test_case.permissions_delete,
         )
 
-        # Create unified ACL
-        result = create_unified_acl_helper(
+        result = TestFlextLdifAclComponents.Helpers.create_unified_acl(
             name=test_case.acl_name,
             target=target,
             subject=subject,
@@ -346,7 +325,6 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
             raw_acl=test_case.raw_acl,
         )
 
-        # Type-specific validations
         match test_case.test_type:
             case AclTestType.UNIFIED_BASIC:
                 assert result.is_success, f"Failed to create ACL: {result.error}"
@@ -369,15 +347,9 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
                 assert isinstance(acl, FlextLdifModels.Acl)
 
             case AclTestType.UNIFIED_EXCEPTION_HANDLING:
-                # Should succeed (normal path)
                 assert result.is_success
 
             case AclTestType.UNIFIED_INVALID_SERVER_TYPE:
                 assert result.is_success
                 acl = result.unwrap()
-                # Should default to OpenLDAP for invalid server type
                 assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

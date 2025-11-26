@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from jinja2 import Environment
@@ -88,37 +87,76 @@ class FlextLdifUtilitiesWriter:
         return FlextLdifUtilitiesWriter.fold(line, width=width)
 
     @staticmethod
-    def fold(line: str, width: int = 78) -> list[str]:
-        """Fold long LDIF line according to RFC 2849.
+    def fold(
+        line: str,
+        width: int = FlextLdifConstants.Rfc.LINE_FOLD_WIDTH,
+    ) -> list[str]:
+        """Fold long LDIF line according to RFC 2849 §3.
 
-        LDIF line folding: continuation lines start with a single space.
+        RFC 2849 §3: Lines longer than 76 BYTES should be folded with
+        a newline followed by a single space. The fold point should
+        not split multi-byte UTF-8 sequences.
+
+        ABNF Grammar (RFC 2849):
+            ldif-content = *LDIF-attrval
+            LDIF-attrval = LDIF-dn / LDIF-attr-value-record
+            ; Lines may be folded by inserting:
+            ; CRLF followed by exactly one space or TAB
 
         Args:
-            line: Line to fold
-            width: Maximum line width (default: 78)
+            line: Line to fold (UTF-8 string)
+            width: Maximum line width in bytes (default: 76 per RFC 2849)
 
         Returns:
-            List of folded lines (first line + continuation lines)
+            List of folded lines (first line + continuation lines with space prefix)
 
         Example:
-            >>> LdifWriter.fold("cn: very long attribute value", width=10)
-            ['cn: very', ' long attr', 'ibute valu', 'e']
+            >>> FlextLdifUtilitiesWriter.fold("cn: very long value", width=10)
+            ['cn: very l', ' ong value']
 
         """
-        if not line or len(line) <= width:
+        if not line:
             return [line]
 
-        folded = [line[:width]]
-        remaining = line[width:]
+        line_bytes = line.encode("utf-8")
+        if len(line_bytes) <= width:
+            return [line]
 
-        while remaining:
-            # Continuation lines start with a single space (RFC 2849)
-            if len(remaining) > width - 1:
-                folded.append(f" {remaining[: width - 1]}")
-                remaining = remaining[width - 1 :]
+        # RFC 2849: Fold by bytes, ensuring we don't split multibyte UTF-8 sequences
+        folded: list[str] = []
+        pos = 0
+
+        while pos < len(line_bytes):
+            if not folded:
+                # First line: max_width bytes
+                chunk_end = min(pos + width, len(line_bytes))
             else:
-                folded.append(f" {remaining}")
-                break
+                # Continuation lines: width - 1 (space prefix takes 1 byte)
+                chunk_end = min(pos + width - 1, len(line_bytes))
+
+            # Find valid UTF-8 boundary (don't split multibyte chars)
+            while chunk_end > pos:
+                try:
+                    chunk = line_bytes[pos:chunk_end].decode("utf-8")
+                    break
+                except UnicodeDecodeError:
+                    # Backup to previous byte to find valid boundary
+                    chunk_end -= 1
+            else:
+                # Should not happen with valid UTF-8, but handle gracefully
+                chunk_end = pos + 1
+                chunk = line_bytes[pos:chunk_end].decode("utf-8", errors="replace")
+
+            if folded:
+                # Continuation line: prefix with space (RFC 2849 §3)
+                folded.append(
+                    FlextLdifConstants.Rfc.LINE_CONTINUATION_SPACE + chunk,
+                )
+            else:
+                # First line: no prefix
+                folded.append(chunk)
+
+            pos = chunk_end
 
         return folded
 
@@ -333,7 +371,10 @@ class FlextLdifUtilitiesWriter:
             return
 
         if FlextRuntime.is_list_like(attr_list):
-            attr_list_str = cast("list[str]", attr_list)
+            if not isinstance(attr_list, list):
+                msg = f"Expected list, got {type(attr_list)}"
+                raise TypeError(msg)
+            attr_list_str: list[str] = [str(item) for item in attr_list]
             if len(attr_list_str) == 1:
                 parts.append(f"{keyword} {attr_list_str[0]}")
             else:
@@ -364,7 +405,10 @@ class FlextLdifUtilitiesWriter:
             # Handle SUP as string or list
             if FlextRuntime.is_list_like(oc_data.sup):
                 # Multiple SUP values: format as ( value1 $ value2 $ ... )
-                sup_list_str = cast("list[str]", oc_data.sup)
+                if not isinstance(oc_data.sup, list):
+                    msg = f"Expected list, got {type(oc_data.sup)}"
+                    raise TypeError(msg)
+                sup_list_str: list[str] = [str(item) for item in oc_data.sup]
                 sup_str = " $ ".join(sup_list_str)
                 parts.append(f"SUP ( {sup_str} )")
             else:
@@ -401,6 +445,42 @@ class FlextLdifUtilitiesWriter:
             return FlextResult.fail(f"RFC objectClass writing failed: {e}")
 
     @staticmethod
+    def order_attribute_names(
+        attr_names: list[str],
+        *,
+        use_rfc_order: bool = False,
+        sort_alphabetical: bool = False,
+        priority_attrs: list[str] | None = None,
+    ) -> list[str]:
+        """Order attribute names using various strategies.
+
+        Pure ordering function - no models, no side effects.
+
+        Args:
+            attr_names: List of attribute names to order
+            use_rfc_order: If True, use RFC 2849 priority ordering
+            sort_alphabetical: If True, sort alphabetically
+            priority_attrs: Priority attributes for RFC ordering
+
+        Returns:
+            Ordered list of attribute names
+
+        """
+        # RFC 2849 priority ordering: priority attrs first, rest alphabetical
+        if use_rfc_order:
+            priority = priority_attrs or ["objectClass"]
+            priority_list = [a for a in priority if a in attr_names]
+            remaining = sorted(n for n in attr_names if n not in priority_list)
+            return priority_list + remaining
+
+        # Simple alphabetical ordering
+        if sort_alphabetical:
+            return sorted(attr_names)
+
+        # Default: preserve original order
+        return attr_names
+
+    @staticmethod
     def determine_attribute_order(
         entry_data: dict[str, object],
     ) -> list[tuple[str, object]] | None:
@@ -428,11 +508,15 @@ class FlextLdifUtilitiesWriter:
                 else None
             )
         elif FlextRuntime.is_dict_like(metadata):
-            extensions_dict = cast("dict[str, object]", metadata.get("extensions", {}))
-            if FlextRuntime.is_dict_like(extensions_dict):
-                attr_order = extensions_dict.get("attribute_order")
-            else:
+            extensions_raw = metadata.get("extensions", {})
+            if not isinstance(extensions_raw, dict):
                 attr_order = None
+            else:
+                extensions_dict: dict[str, object] = extensions_raw
+                if FlextRuntime.is_dict_like(extensions_dict):
+                    attr_order = extensions_dict.get("attribute_order")
+                else:
+                    attr_order = None
 
         if attr_order is None or not FlextRuntime.is_list_like(attr_order):
             return None
@@ -446,14 +530,14 @@ class FlextLdifUtilitiesWriter:
         }
 
         # Type narrowing: ensure tuple elements are (str, object) for return type
-        return cast(
-            "list[tuple[str, object]]",
-            [
-                (key, entry_data[cast("str", key)])
-                for key in attr_order
-                if key in entry_data and key not in skip_keys
-            ],
-        )
+        result: list[tuple[str, object]] = []
+        for key in attr_order:
+            if key in entry_data and key not in skip_keys:
+                if not isinstance(key, str):
+                    msg = f"Expected str key, got {type(key)}"
+                    raise TypeError(msg)
+                result.append((key, entry_data[key]))
+        return result
 
     @staticmethod
     def extract_base64_attrs(entry_data: dict[str, object]) -> set[str]:
@@ -471,9 +555,12 @@ class FlextLdifUtilitiesWriter:
 
         base64_data = entry_data["_base64_attrs"]
         if isinstance(base64_data, set):
-            return cast("set[str]", base64_data)
+            return base64_data  # Type narrowing: set is already set[str] if it contains strings
         if FlextRuntime.is_list_like(base64_data):
-            base64_list_str = cast("list[str]", base64_data)
+            if not isinstance(base64_data, list):
+                msg = f"Expected list, got {type(base64_data)}"
+                raise TypeError(msg)
+            base64_list_str: list[str] = [str(item) for item in base64_data]
             return set(base64_list_str)
 
         return set()
@@ -543,17 +630,134 @@ class FlextLdifUtilitiesWriter:
 
         return [f"{attr_prefix} {attr_value}"]
 
-    @staticmethod
-    def needs_base64_encoding(value: str) -> bool:
-        """Check if value needs base64 encoding per RFC 2849.
+    # ==========================================================================
+    # RFC 2849 Character Class Validation (ABNF-based)
+    # ==========================================================================
 
-        RFC 2849 section 3 requires base64 encoding for values that:
-        - Start with space ' ', colon ':', or less-than '<'
-        - End with space ' '
-        - Contain null bytes or control characters (< 0x20, > 0x7E)
+    @staticmethod
+    def is_safe_char(char: str) -> bool:
+        """Check if char is SAFE-CHAR per RFC 2849 §2.
+
+        SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F
+        (excludes NUL, LF, CR)
+
+        Uses FlextLdifConstants.Rfc.SAFE_CHAR_* for validation.
+
+        Args:
+            char: Single character to validate
+
+        Returns:
+            True if char is SAFE-CHAR, False otherwise
+
+        """
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
+        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        safe_exclude = FlextLdifConstants.Rfc.SAFE_CHAR_EXCLUDE
+        return safe_min <= code <= safe_max and code not in safe_exclude
+
+    @staticmethod
+    def is_safe_init_char(char: str) -> bool:
+        """Check if char is SAFE-INIT-CHAR per RFC 2849 §2.
+
+        SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B / %x3D-7F
+        (SAFE-CHAR excluding SPACE, COLON, LESS-THAN)
+
+        Uses FlextLdifConstants.Rfc.SAFE_INIT_CHAR_EXCLUDE for exclusion set.
+
+        Args:
+            char: Single character to validate
+
+        Returns:
+            True if char is SAFE-INIT-CHAR, False otherwise
+
+        """
+        if not char or len(char) != 1:
+            return False
+        code = ord(char)
+        # First check if it's a SAFE-CHAR
+        if not FlextLdifUtilitiesWriter.is_safe_char(char):
+            return False
+        # Then check SAFE-INIT-CHAR exclusions
+        return code not in FlextLdifConstants.Rfc.SAFE_INIT_CHAR_EXCLUDE
+
+    @staticmethod
+    def is_base64_char(char: str) -> bool:
+        """Check if char is BASE64-CHAR per RFC 2849 §2.
+
+        BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
+        (+ / 0-9 = A-Z a-z)
+
+        Uses FlextLdifConstants.Rfc.BASE64_CHARS for validation.
+
+        Args:
+            char: Single character to validate
+
+        Returns:
+            True if char is BASE64-CHAR, False otherwise
+
+        """
+        if not char or len(char) != 1:
+            return False
+        return char in FlextLdifConstants.Rfc.BASE64_CHARS
+
+    @staticmethod
+    def is_valid_safe_string(value: str) -> bool:
+        """Check if value is valid SAFE-STRING per RFC 2849 §2.
+
+        SAFE-STRING = [SAFE-INIT-CHAR *SAFE-CHAR]
+
+        Args:
+            value: String to validate
+
+        Returns:
+            True if value is valid SAFE-STRING, False otherwise
+
+        """
+        if not value:
+            return True  # Empty string is valid
+
+        # First char must be SAFE-INIT-CHAR
+        if not FlextLdifUtilitiesWriter.is_safe_init_char(value[0]):
+            return False
+
+        # Rest must be SAFE-CHAR
+        for char in value[1:]:
+            if not FlextLdifUtilitiesWriter.is_safe_char(char):
+                return False
+
+        # Trailing space is not allowed
+        return value[-1] != " "
+
+    # ==========================================================================
+    # RFC 2849 Encoding Helpers
+    # ==========================================================================
+
+    @staticmethod
+    def needs_base64_encoding(
+        value: str,
+        *,
+        check_trailing_space: bool = True,
+    ) -> bool:
+        """Check if value needs base64 encoding per RFC 2849 §2.
+
+        RFC 2849 §2 defines SAFE-CHAR and SAFE-INIT-CHAR:
+            SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F
+            SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F /
+                             %x21-39 / %x3B / %x3D-7F
+                             ; Any SAFE-CHAR except: SPACE, ':', '<'
+
+        Base64 encoding is required when:
+        - Value starts with SPACE ' ', COLON ':', or LESS-THAN '<'
+        - Value ends with SPACE ' ' (controllable via check_trailing_space)
+        - Value contains NUL, LF, CR, or non-ASCII chars
 
         Args:
             value: The attribute value to check
+            check_trailing_space: If True, trailing space requires base64
+                (default True per RFC, servers may override)
 
         Returns:
             True if value needs base64 encoding, False otherwise
@@ -562,26 +766,25 @@ class FlextLdifUtilitiesWriter:
         if not value:
             return False
 
-        # RFC 2849 unsafe start characters
-        unsafe_start_chars = {" ", ":", "<"}
-
-        # Check if starts with unsafe characters (space, colon, less-than)
-        if value[0] in unsafe_start_chars:
+        # RFC 2849 §2 - Unsafe characters at start (SAFE-INIT-CHAR exclusions)
+        if value[0] in FlextLdifConstants.Rfc.BASE64_START_CHARS:
             return True
 
-        # Check if ends with space
-        if value[-1] == " ":
+        # RFC 2849 - Value ending with space requires base64 (parameterizable)
+        if check_trailing_space and value[-1] == " ":
             return True
 
-        # RFC 2849 control character boundaries
-        min_printable = 0x20  # Space (first printable ASCII)
-        max_printable = 0x7E  # Tilde (last printable ASCII)
+        # Use the optimized is_valid_safe_string for full validation
+        # but we need char-by-char check for performance
+        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
+        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        safe_exclude = FlextLdifConstants.Rfc.SAFE_CHAR_EXCLUDE
 
         # Check for control characters or non-printable ASCII
         for char in value:
             byte_val = ord(char)
-            # Control chars (< 0x20) or non-ASCII (> 0x7E) require base64
-            if byte_val < min_printable or byte_val > max_printable:
+            # Outside SAFE-CHAR range or in exclusion set requires base64
+            if byte_val < safe_min or byte_val > safe_max or byte_val in safe_exclude:
                 return True
 
         return False
@@ -693,7 +896,7 @@ class FlextLdifUtilitiesWriter:
         if not isinstance(marked_attrs_raw, dict):
             return (attr_name, attr_values)
 
-        marked_attrs = cast("dict[str, dict[str, object]]", marked_attrs_raw)
+        marked_attrs: dict[str, dict[str, object]] = marked_attrs_raw
         attr_info = marked_attrs.get(attr_name)
 
         # If attribute not marked, write normally
@@ -710,7 +913,9 @@ class FlextLdifUtilitiesWriter:
             )
 
         # Handle based on status - extracted to reduce complexity
-        status = attr_info.get("status", FlextLdifConstants.AttributeMarkerStatus.NORMAL)
+        status = attr_info.get(
+            "status", FlextLdifConstants.AttributeMarkerStatus.NORMAL
+        )
         return FlextLdifUtilitiesWriter._handle_attribute_status(
             attr_name,
             attr_values,
@@ -757,6 +962,217 @@ class FlextLdifUtilitiesWriter:
 
         # Default: write normally
         return (attr_name, attr_values)
+
+    @staticmethod
+    def check_minimal_differences_restore(
+        ldif_lines: list[str],
+        attr_name: str,
+        minimal_differences_attrs: dict[str, object],
+    ) -> bool:
+        """Check minimal differences and restore original attribute line if needed.
+
+        DRY utility for _write_single_attribute patterns across servers.
+
+        Args:
+            ldif_lines: Output lines list (mutated in-place if restoring)
+            attr_name: Attribute name to check
+            minimal_differences_attrs: Dict of attribute differences
+
+        Returns:
+            True if original was restored (caller should return early)
+            False if no restoration needed (caller should continue writing)
+
+        """
+        mk = FlextLdifConstants.MetadataKeys
+        # Check for minimal differences using both possible keys
+        attr_diff = minimal_differences_attrs.get(
+            attr_name,
+        ) or minimal_differences_attrs.get(f"attribute_{attr_name}")
+
+        if FlextRuntime.is_dict_like(attr_diff) and attr_diff.get(mk.HAS_DIFFERENCES):
+            original_attr_str = attr_diff.get("original")
+            if original_attr_str and isinstance(original_attr_str, str):
+                ldif_lines.append(original_attr_str)
+                logger.debug(
+                    "Restored original attribute line",
+                    attribute_name=attr_name,
+                )
+                return True
+
+        return False
+
+    @staticmethod
+    def extract_typed_attr_values(
+        attr_values: object,
+    ) -> list[str] | str:
+        """Type-safe extraction of attribute values.
+
+        DRY utility for _write_single_attribute patterns across servers.
+
+        Args:
+            attr_values: Raw attribute values (str, list, or other)
+
+        Returns:
+            Typed attribute values as list[str] or str
+
+        """
+        if isinstance(attr_values, str):
+            return attr_values
+        if FlextRuntime.is_list_like(attr_values):
+            return [str(v) for v in attr_values]
+        return str(attr_values) if attr_values else ""
+
+    @staticmethod
+    def encode_attribute_value(
+        attr_name: str,
+        value: bytes | str,
+    ) -> str:
+        """Encode a single attribute value for LDIF output (RFC 2849).
+
+        Handles:
+        - bytes → base64 encoding
+        - str → UTF-8 validation + base64 if needed (control chars, etc.)
+        - Binary attributes → always base64
+
+        DRY utility replacing _write_modify_attribute_value patterns.
+
+        Args:
+            attr_name: Attribute name (for binary attribute check)
+            value: Value to encode (bytes or str)
+
+        Returns:
+            Formatted attribute line (e.g., "attr: value" or "attr:: base64value")
+
+        """
+        # Handle bytes - always base64
+        if isinstance(value, bytes):
+            encoded_value = base64.b64encode(value).decode("ascii")
+            return f"{attr_name}:: {encoded_value}"
+
+        # Ensure value is str
+        str_value = str(value) if not isinstance(value, str) else value
+
+        # UTF-8 validation (RFC 2849 requirement)
+        try:
+            str_value.encode("utf-8")
+        except UnicodeEncodeError:
+            str_value = str_value.encode("utf-8", errors="replace").decode(
+                "utf-8",
+                errors="replace",
+            )
+            logger.debug(
+                "Corrected invalid UTF-8 in attribute: attribute_name=%s, value_length=%s",
+                attr_name,
+                len(value),
+            )
+
+        # Check if binary attribute (RFC 4522) or needs base64
+        is_binary_attr = (
+            attr_name.lower()
+            in FlextLdifConstants.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
+        )
+        needs_base64 = (
+            is_binary_attr
+            or FlextLdifUtilitiesWriter.needs_base64_encoding(str_value)
+        )
+
+        if needs_base64:
+            encoded_value = base64.b64encode(str_value.encode("utf-8")).decode("ascii")
+            return f"{attr_name}:: {encoded_value}"
+        return f"{attr_name}: {str_value}"
+
+    @staticmethod
+    def build_entry_lines(
+        dn_value: str,
+        attributes: dict[str, list[str]],
+        *,
+        format_type: str = "add",
+        modify_operation: str = "add",
+        include_changetype: bool = False,
+        changetype_value: str | None = None,
+        hidden_attrs: set[str] | None = None,
+    ) -> list[str]:
+        """Build LDIF lines for an entry in ADD or MODIFY format.
+
+        Generalized method for both ADD and MODIFY formats (DRY consolidation).
+
+        Args:
+            dn_value: DN value (required)
+            attributes: Attributes dictionary {name: [values]}
+            format_type: "add" for content records, "modify" for change records
+            modify_operation: For modify format: "add", "replace", or "delete"
+            include_changetype: Whether to include changetype line
+            changetype_value: Explicit changetype value (for ADD format)
+            hidden_attrs: Attributes to skip (e.g., "changetype")
+
+        Returns:
+            List of LDIF lines
+
+        """
+        ldif_lines: list[str] = []
+        hidden = hidden_attrs or set()
+
+        # DN line (required for both formats)
+        ldif_lines.append(f"dn: {dn_value}")
+
+        # Changetype handling
+        if format_type == "modify":
+            ldif_lines.append("changetype: modify")
+        elif include_changetype and changetype_value:
+            ldif_lines.append(f"changetype: {changetype_value}")
+
+        # Process attributes based on format
+        if format_type == "modify":
+            # MODIFY format: operation directives per attribute
+            first_attr = True
+            for attr_name, values in attributes.items():
+                if not values or attr_name in hidden:
+                    continue
+
+                # Separator between attribute blocks (not before first)
+                if not first_attr:
+                    ldif_lines.append("-")
+                first_attr = False
+
+                # Operation directive
+                ldif_lines.append(f"{modify_operation}: {attr_name}")
+
+                # Attribute values
+                for value in values:
+                    ldif_lines.append(
+                        FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value),
+                    )
+
+            # Final separator for modify
+            if ldif_lines and ldif_lines[-1] != "-":
+                ldif_lines.append("-")
+        else:
+            # ADD format: standard attribute listing
+            for attr_name, values in attributes.items():
+                if not values or attr_name in hidden:
+                    continue
+                for value in values:
+                    ldif_lines.append(
+                        FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value),
+                    )
+
+        return ldif_lines
+
+    @staticmethod
+    def finalize_ldif_text(ldif_lines: list[str]) -> str:
+        """Join LDIF lines and ensure proper trailing newline.
+
+        Args:
+            ldif_lines: List of LDIF lines
+
+        Returns:
+            Properly formatted LDIF text
+
+        """
+        ldif_text = "\n".join(ldif_lines)
+        if ldif_text and not ldif_text.endswith("\n"):
+            ldif_text += "\n"
+        return ldif_text
 
 
 __all__ = [

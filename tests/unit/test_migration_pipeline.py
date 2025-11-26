@@ -1,21 +1,35 @@
 """Test suite for LDIF migration pipeline.
 
-Tests use the new API with individual parameters (input_dir, output_dir, source_server, target_server)
-not the old params dict approach.
+Tests validate that FlextLdifMigrationPipeline:
+1. Initializes correctly with required and optional parameters
+2. Handles different migration modes (simple, categorized)
+3. Supports various server type combinations
+4. Validates input/output directories
+5. Executes migrations successfully
+6. Handles edge cases (empty input, nonexistent directories)
+
+Modules tested:
+- flext_ldif.services.migration.FlextLdifMigrationPipeline (migration pipeline)
+
+Scope:
+- Pipeline initialization with new API (individual parameters)
+- Simple and categorized migration modes
+- Server-specific conversions (OID, OUD, OpenLDAP, RFC)
+- Input/output directory validation
+- Edge case handling
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from flext_ldif import FlextLdifMigrationPipeline
+from tests.fixtures.constants import DNs, Names
 
 
 class TestMigrationPipelineInitialization:
@@ -62,15 +76,12 @@ class TestMigrationPipelineInitialization:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["organization"],
-                "user_objectclasses": ["inetOrgPerson"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: dict[str, object] = {
+            "hierarchy_objectclasses": ["organization"],
+            "user_objectclasses": [Names.INET_ORG_PERSON],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -149,10 +160,12 @@ class TestMigrationPipelineValidation:
         input_dir.mkdir()
         nonexistent_output = tmp_path / "nonexistent"
 
-        # Create a simple LDIF file
-        (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
-        )
+        # Create a simple LDIF file using constants
+        ldif_content = f"""dn: {DNs.TEST_USER}
+{Names.OBJECTCLASS}: {Names.PERSON}
+{Names.CN}: {Names.CN}
+"""
+        (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -198,12 +211,12 @@ class TestMigrationPipelineSimpleMode:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        # Create a simple LDIF file
-        ldif_content = """dn: cn=test,dc=example,dc=com
-objectClass: person
-objectClass: top
-cn: test
-sn: test
+        # Create a simple LDIF file using constants
+        ldif_content = f"""dn: {DNs.TEST_USER}
+{Names.OBJECTCLASS}: {Names.PERSON}
+{Names.OBJECTCLASS}: {Names.TOP}
+{Names.CN}: test
+{Names.SN}: test
 """
         (input_dir / "test.ldif").write_text(ldif_content)
 
@@ -245,9 +258,12 @@ class TestMigrationPipelineServerConversions:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
-        )
+        # Create a simple LDIF file using constants
+        ldif_content = f"""dn: {DNs.TEST_USER}
+{Names.OBJECTCLASS}: {Names.PERSON}
+{Names.CN}: test
+"""
+        (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,

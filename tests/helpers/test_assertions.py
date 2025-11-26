@@ -19,7 +19,7 @@ from typing import cast
 from flext_core import FlextResult, T
 from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels, FlextLdifTypes
+from flext_ldif import FlextLdifModels, FlextLdifProtocols, FlextLdifTypes
 
 from .test_factories import FlextLdifTestFactories
 
@@ -164,7 +164,12 @@ class TestAssertions:
 
     @staticmethod
     def assert_parse_success(
-        result: FlextLdifTypes.ParseResult,
+        result: FlextResult[
+            FlextLdifModels.Entry
+            | list[FlextLdifModels.Entry]
+            | FlextLdifProtocols.Services.HasEntriesProtocol
+            | str
+        ],
         expected_count: int | None = None,
     ) -> list[FlextLdifModels.Entry]:
         """Assert parse result is success and return entries.
@@ -199,7 +204,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_write_success(
-        result: FlextLdifTypes.WriteResult,
+        result: FlextResult[str | FlextLdifProtocols.Services.HasContentProtocol],
         expected_content: str | None = None,
     ) -> str:
         """Assert write result is success and return LDIF string.

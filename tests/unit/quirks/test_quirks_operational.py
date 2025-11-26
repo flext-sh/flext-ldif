@@ -194,13 +194,13 @@ def get_roundtrip_indices() -> list[int]:
 @pytest.fixture
 def oid_server() -> FlextLdifServersOid:
     """Create OID server instance."""
-    return create_server(Fixtures.OID)  # type: ignore[return-value]
+    return create_server(Fixtures.OID)
 
 
 @pytest.fixture
 def oud_server() -> FlextLdifServersOud:
     """Create OUD server instance."""
-    return create_server(Fixtures.OUD)  # type: ignore[return-value]
+    return create_server(Fixtures.OUD)
 
 
 @pytest.fixture
@@ -251,7 +251,7 @@ class TestOperationalSchemaAttributeParsing:
         attr_def = oid_schema_attributes[attr_index]
         result = oid_server.schema_quirk.parse(attr_def)
         parsed = SchemaValidator.validate_parse_result(
-            result,  # type: ignore[arg-type]
+            result,
             FlextLdifModels.SchemaAttribute,
             f"attribute[{attr_index}]",
         )
@@ -266,7 +266,7 @@ class TestOperationalSchemaAttributeParsing:
         """Test that high percentage of real OID attributes parse successfully."""
 
         def parse_attribute(attr: str) -> FlextResult[object]:
-            return oid_server.parse(attr)  # type: ignore[return-value]
+            return oid_server.parse(attr)
 
         SchemaValidator.validate_success_rate(
             oid_schema_attributes,
@@ -292,7 +292,7 @@ class TestOperationalSchemaObjectClassParsing:
         oc_def = oid_schema_objectclasses[oc_index]
         result = oid_server.schema_quirk.parse(oc_def)
         SchemaValidator.validate_parse_result(
-            result,  # type: ignore[arg-type]
+            result,
             FlextLdifModels.SchemaObjectClass,
             f"objectClass[{oc_index}]",
         )
@@ -305,7 +305,7 @@ class TestOperationalSchemaObjectClassParsing:
         """Test that high percentage of OID objectClasses parse successfully."""
 
         def parse_objectclass(oc: str) -> FlextResult[object]:
-            return oid_server.parse(oc)  # type: ignore[return-value]
+            return oid_server.parse(oc)
 
         SchemaValidator.validate_success_rate(
             oid_schema_objectclasses,
@@ -341,7 +341,7 @@ class TestOperationalServerConversion:
             try:
                 parse_result = oid_server.schema_quirk.parse(attr_def)
                 parsed_model = SchemaValidator.validate_parse_result(
-                    parse_result,  # type: ignore[arg-type]
+                    parse_result,
                     FlextLdifModels.SchemaAttribute,
                     f"attribute[{i}]",
                 )
@@ -349,10 +349,10 @@ class TestOperationalServerConversion:
                 conv_result = conversion_service.convert(
                     oid_server,
                     oud_server,
-                    parsed_model,  # type: ignore[arg-type]
+                    parsed_model,
                 )
                 converted_model = SchemaValidator.validate_conversion_result(
-                    conv_result,  # type: ignore[arg-type]
+                    conv_result,
                     FlextLdifModels.SchemaAttribute,
                     f"conversion[{i}]",
                 )
@@ -360,7 +360,7 @@ class TestOperationalServerConversion:
                 # Validate OID preservation
                 original_oid = extract_oid(attr_def)
                 if original_oid and hasattr(converted_model, "oid"):
-                    converted_oid = converted_model.oid  # type: ignore[union-attr]
+                    converted_oid = converted_model.oid
                     assert original_oid == converted_oid, (
                         f"OID mismatch: {original_oid} → {converted_oid}"
                     )
@@ -389,7 +389,7 @@ class TestOperationalServerRoundtrip:
         """Test OID→OUD→OID roundtrip with real fixture data."""
         if roundtrip_index >= len(oid_conversion_attributes):
             pytest.skip(
-                f"Insufficient attributes for roundtrip (need {roundtrip_index + 1})"
+                f"Insufficient attributes for roundtrip (need {roundtrip_index + 1})",
             )
 
         original_attr = oid_conversion_attributes[roundtrip_index]
@@ -397,7 +397,7 @@ class TestOperationalServerRoundtrip:
         # Parse original
         parse_result = oid_server.schema_quirk.parse(original_attr)
         original_model = SchemaValidator.validate_parse_result(
-            parse_result,  # type: ignore[arg-type]
+            parse_result,
             FlextLdifModels.SchemaAttribute,
             f"roundtrip[{roundtrip_index}] original",
         )
@@ -406,10 +406,10 @@ class TestOperationalServerRoundtrip:
         forward_result = conversion_service.convert(
             oid_server,
             oud_server,
-            original_model,  # type: ignore[arg-type]
+            original_model,
         )
         forward_model = SchemaValidator.validate_conversion_result(
-            forward_result,  # type: ignore[arg-type]
+            forward_result,
             FlextLdifModels.SchemaAttribute,
             f"roundtrip[{roundtrip_index}] forward",
         )
@@ -418,10 +418,10 @@ class TestOperationalServerRoundtrip:
         backward_result = conversion_service.convert(
             oud_server,
             oid_server,
-            forward_model,  # type: ignore[arg-type]
+            forward_model,
         )
         final_model = SchemaValidator.validate_conversion_result(
-            backward_result,  # type: ignore[arg-type]
+            backward_result,
             FlextLdifModels.SchemaAttribute,
             f"roundtrip[{roundtrip_index}] backward",
         )

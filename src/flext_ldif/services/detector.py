@@ -43,7 +43,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(LdifServiceBase):
+class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -165,11 +165,8 @@ class FlextLdifDetector(LdifServiceBase):
                 error_msg,
             )
 
-    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.ClientStatus]:
+    def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:
         """Execute server detector self-check (required by FlextService).
-
-        Args:
-            **_kwargs: Ignored parameters for FlextService protocol compatibility
 
         Returns:
             FlextResult with detector status
@@ -251,7 +248,10 @@ class FlextLdifDetector(LdifServiceBase):
                         and "detected_server_type" in result
                     ):
                         server_type = result["detected_server_type"]
-                        return FlextResult[str].ok(cast("str", server_type))
+                        if not isinstance(server_type, str):
+                            msg = f"Expected str, got {type(server_type)}"
+                            raise TypeError(msg)
+                        return FlextResult[str].ok(server_type)
 
             # Default to RFC
             return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RFC)
@@ -740,7 +740,7 @@ class FlextLdifDetector(LdifServiceBase):
             if constants is None:
                 return None
 
-            # Type cast to Protocol for type safety
+            # Type narrowing: constants is a class that satisfies ServerDetectionConstants protocol
             return cast("type[ServerDetectionConstants]", constants)
         except ValueError:
             # Unknown server type

@@ -1,8 +1,25 @@
 """Test suite for FlextLdifWriter RFC compliance.
 
-Modules tested: FlextLdifWriter (RFC 2849 writing, format options, output targets)
-Scope: Single/multiple entry writing, string/file output, statistics, multi-value
-attributes, empty entries, server validation
+Tests validate that FlextLdifWriter:
+1. Writes single and multiple entries correctly (RFC 2849)
+2. Supports string and file output targets
+3. Handles multi-value attributes correctly
+4. Provides entry statistics
+5. Validates server types
+6. Handles edge cases (empty lists, invalid servers)
+
+Modules tested:
+- flext_ldif.writer.FlextLdifWriter (RFC 2849 writing)
+- flext_ldif.models.FlextLdifModels.WriteFormatOptions (format options)
+- flext_ldif.models.FlextLdifModels.Entry (entry writing)
+
+Scope:
+- Single/multiple entry writing
+- String/file output targets
+- Statistics collection
+- Multi-value attributes
+- Empty entries handling
+- Server validation
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -115,7 +132,7 @@ class WriterTestFactory:
 
     @staticmethod
     def create_format_options(
-        *, base64_encode: bool = False
+        *, base64_encode: bool = False,
     ) -> FlextLdifModels.WriteFormatOptions:
         """Create write format options."""
         return FlextLdifModels.WriteFormatOptions(base64_encode_binary=base64_encode)

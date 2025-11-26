@@ -160,86 +160,64 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
-            # Handle both string and model inputs
-            if isinstance(attr_definition, str):
-                attr_lower = attr_definition.lower()
-
-                # Check OID pattern from constants (use DETECTION_OID_PATTERN)
-                if re.search(
-                    FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    attr_definition,
-                ):
-                    return True
-
-                # Check attribute name prefixes (use DETECTION_ATTRIBUTE_PREFIXES)
-                name_matches = re.findall(
-                    FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                    attr_definition,
-                    re.IGNORECASE,
-                )
-                if any(
-                    name.lower().startswith(
-                        tuple(
-                            FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                        ),
-                    )
-                    for name in name_matches
-                ):
-                    return True
-
-                prefixes = FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                return any(prefix in attr_lower for prefix in prefixes)
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                # Check OID pattern from constants (use DETECTION_OID_PATTERN)
-                if re.search(
-                    FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    attr_definition.oid,
-                ):
-                    return True
-
-                # Check attribute name prefixes (use DETECTION_ATTRIBUTE_PREFIXES)
-                attr_name_lower = attr_definition.name.lower()
-                prefixes = FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                return any(attr_name_lower.startswith(prefix) for prefix in prefixes)
-            return False
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=attr_definition,
+                    oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    use_prefix_match=True,
+                )
+            # For string definitions, extract NAME and check prefix match
+            attr_lower = attr_definition.lower()
+            if re.search(
+                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+                attr_definition,
+            ):
+                return True
+            name_matches = re.findall(
+                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                attr_definition,
+                re.IGNORECASE,
+            )
+            if any(
+                name.lower().startswith(
+                    tuple(
+                        FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    ),
+                )
+                for name in name_matches
+            ):
+                return True
+            prefixes = FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
+            return any(prefix in attr_lower for prefix in prefixes)
 
         def can_handle_objectclass(
             self,
             oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, str):
-                if re.search(
-                    FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    oc_definition,
-                ):
-                    return True
-
-                name_matches = re.findall(
-                    FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                    oc_definition,
-                    re.IGNORECASE,
-                )
-                return any(
-                    name.lower()
-                    in FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for name in name_matches
-                )
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                # Check OID pattern from constants (use DETECTION_OID_PATTERN)
-                if re.search(
-                    FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    oc_definition.oid,
-                ):
-                    return True
-
-                # Check objectClass name (use DETECTION_OBJECTCLASS_NAMES)
-                oc_name_lower = oc_definition.name.lower()
-                return (
-                    oc_name_lower
-                    in FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=oc_definition,
+                    oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
-            return False
+            # For string definitions, extract NAME and check exact match
+            if re.search(
+                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+                oc_definition,
+            ):
+                return True
+            name_matches = re.findall(
+                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                oc_definition,
+                re.IGNORECASE,
+            )
+            return any(
+                name.lower()
+                in FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES
+                for name in name_matches
+            )
 
         def _parse_attribute(
             self,
@@ -362,65 +340,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
                 )
             return False
-
-        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-            """Parse ApacheDS ACI definition.
-
-            Override RFC implementation with Apache-specific parsing.
-
-            Args:
-                acl_line: ACL definition line
-
-            Returns:
-                FlextResult with parsed Acl model
-
-            """
-            # Always try parent's _parse_acl first (RFC format)
-            parent_result = super()._parse_acl(acl_line)
-            if parent_result.is_success:
-                # RFC parser succeeded - enhance with Apache-specific name
-                acl_model = parent_result.unwrap()
-                if not acl_model.name:
-                    # Extract attribute name from ACL line for default name
-                    attr_name, _ = self._splitacl_line(acl_line)
-                    acl_model.name = (
-                        f"{FlextLdifServersApache.Constants.ACL_NAME_PREFIX}{attr_name}"
-                    )
-                return FlextResult[FlextLdifModels.Acl].ok(acl_model)
-
-            # RFC parser failed - use Apache-specific parsing
-            try:
-                attr_name, _content = self._splitacl_line(acl_line)
-
-                # Create proper Acl model
-                acl_model = FlextLdifModels.Acl(
-                    name=f"{FlextLdifServersApache.Constants.ACL_NAME_PREFIX}{attr_name}",
-                    target=FlextLdifModels.AclTarget(
-                        target_dn=getattr(
-                            FlextLdifConstants.Acl,
-                            "ACL_TARGET_DN_WILDCARD",
-                            "*",
-                        ),
-                        attributes=[attr_name] if attr_name else [],
-                    ),
-                    subject=FlextLdifModels.AclSubject(
-                        subject_type=FlextLdifServersApache.Constants.ACL_SUBJECT_TYPE_ANONYMOUS,
-                        subject_value=FlextLdifServersApache.Constants.ACL_SUBJECT_VALUE_WILDCARD,
-                    ),
-                    permissions=FlextLdifModels.AclPermissions(),
-                    raw_acl=acl_line,
-                    metadata=FlextLdifModels.QuirkMetadata(
-                        quirk_type=self._get_server_type(),
-                        extensions={"original_format": acl_line.strip()},
-                    ),
-                )
-
-                return FlextResult[FlextLdifModels.Acl].ok(acl_model)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"Apache Directory Server ACL parsing failed: {exc}",
-                )
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to Apache Directory Server ACI format.

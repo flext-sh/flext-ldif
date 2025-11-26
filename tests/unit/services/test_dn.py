@@ -174,7 +174,7 @@ class TestDnService:
 
     @pytest.mark.parametrize(("dn", "should_succeed", "expected_len"), PARSING_DATA)
     def test_parse_components(
-        self, dn: str, should_succeed: bool, expected_len: int
+        self, dn: str, should_succeed: bool, expected_len: int,
     ) -> None:
         """Test DN parsing into RFC 4514 components."""
         dn_service = FlextLdifDn()
@@ -279,7 +279,7 @@ class TestDnService:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        ("rdn", "should_succeed", "expected_len"), RDN_PARSING_DATA
+        ("rdn", "should_succeed", "expected_len"), RDN_PARSING_DATA,
     )
     def test_parse_rdn(self, rdn: str, should_succeed: bool, expected_len: int) -> None:
         """Test RDN (Relative Distinguished Name) parsing."""
@@ -297,10 +297,10 @@ class TestDnService:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        ("dn", "operation", "expected_contains"), BUILDER_OPERATIONS
+        ("dn", "operation", "expected_contains"), BUILDER_OPERATIONS,
     )
     def test_builder_pattern(
-        self, dn: str, operation: str, expected_contains: str
+        self, dn: str, operation: str, expected_contains: str,
     ) -> None:
         """Test fluent builder pattern for DN service."""
         dn_service = FlextLdifDn()
@@ -318,7 +318,7 @@ class TestDnService:
         """Execute various DN operations in batch."""
         # Test normalize operation
         service1 = self.create_dn_service(
-            dn=f"CN={Values.ADMIN},DC=Example,DC=Com", operation="normalize"
+            dn=f"CN={Values.ADMIN},DC=Example,DC=Com", operation="normalize",
         )
         result1 = service1.execute()
         assert result1.is_success or result1.is_failure
@@ -354,7 +354,7 @@ class TestDnService:
         registry = FlextLdifModels.DnRegistry()
         registry.register_dn(f"CN={Values.ADMIN},DC=Example,DC=Com")
         canonical = registry.get_canonical_dn(
-            f"cn={Values.ADMIN.lower()},dc=example,dc=com"
+            f"cn={Values.ADMIN.lower()},dc=example,dc=com",
         )
         assert canonical == f"CN={Values.ADMIN},DC=Example,DC=Com"
 
@@ -372,7 +372,7 @@ class TestDnService:
         registry.register_dn(f"cn={Values.ADMIN.lower()},dc=example,dc=com")
         registry.register_dn(f"cn={Values.ADMIN.upper()},dc=EXAMPLE,dc=COM")
         variants = registry.get_case_variants(
-            f"cn={Values.ADMIN.lower()},dc=example,dc=com"
+            f"cn={Values.ADMIN.lower()},dc=example,dc=com",
         )
         assert len(variants) == 3
 
@@ -399,9 +399,10 @@ class TestDnService:
 
     def test_registry_stats(self) -> None:
         """Get registry statistics."""
-        registry = self.create_registry_with_dns(
-            f"CN={Values.ADMIN},DC=Example,DC=Com", DNs.TEST_USER
-        )
+        # Register the same DN with different case representations
+        base_dn = f"CN={Values.ADMIN},DC=Example,DC=Com"
+        variant_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        registry = self.create_registry_with_dns(base_dn, variant_dn)
         stats = registry.get_stats()
         assert stats["total_dns"] == 1
         assert stats["total_variants"] == 2

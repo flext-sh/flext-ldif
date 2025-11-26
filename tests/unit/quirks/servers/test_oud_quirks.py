@@ -1,7 +1,12 @@
-"""Comprehensive test suite for Oracle Unified Directory (OUD) quirks.
+"""Test suite for Oracle Unified Directory (OUD) Quirks.
+
+Modules tested: FlextLdifServersOud, FlextLdif (parse, write)
+Scope: OUD-specific quirks, schema parsing, entry parsing, ACL parsing,
+round-trip validation, Oracle-specific attributes, password hash preservation
 
 High-coverage testing using real OUD LDIF fixtures from tests/fixtures/oud/.
 All tests use actual implementations with real data, no mocks.
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,7 +16,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, cast
 
 import pytest
 
@@ -20,7 +24,6 @@ from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oud import FlextLdifServersOud
 from tests.helpers import FixtureTestHelpers
 from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 from .test_utils import FlextLdifTestUtils
 
@@ -134,11 +137,11 @@ class OudTestHelpers:
         operation: str = "write",
     ) -> None:
         """Validate all entries can be written successfully - replaces 8-12 lines per test."""
+        # Ignore the operation parameter - always use write() method directly
+        _ = operation  # for backward compatibility
         for entry in entries:
-            result = quirk.execute(
-                entries=[entry],
-                operation=cast("Literal['parse', 'write']", operation),
-            )
+            # Use the correct write() API instead of execute()
+            result = quirk.write([entry])
             _ = TestAssertions.assert_success(result, "Entry write should succeed")
             written_str = result.unwrap()
             assert isinstance(written_str, str), "Write should return string"
@@ -151,12 +154,12 @@ class TestOudQuirksWithRealFixtures:
     @pytest.mark.timeout(30)
     def test_parse_oud_schema_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD schema file."""
-        _ = TestDeduplicationHelpers.api_parse_fixture_and_assert(
+        entries = FlextLdifTestUtils.load_fixture(
             ldif_api,
-            FlextLdifTestUtils,
             "oud",
             "oud_schema_fixtures.ldif",
         )
+        assert len(entries) > 0
 
     @pytest.mark.timeout(10)
     def test_parse_oud_entries_fixture(self, ldif_api: FlextLdif) -> None:

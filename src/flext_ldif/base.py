@@ -19,10 +19,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TypeVar
+
 from flext_core import FlextService
 
+TDomainResult = TypeVar("TDomainResult")
 
-class LdifServiceBase(FlextService):
+
+class LdifServiceBase(FlextService[TDomainResult]):
     """Base class for LDIF services.
 
     Inherits all functionality from FlextService:

@@ -65,9 +65,7 @@ class TestOidQuirksWithRealFixtures:
     """
 
     # Fixture file mapping - {test_name: (fixture_type, has_objectclass, has_oracle_attrs, has_passwords)}
-    PARSE_DATA: ClassVar[
-        dict[str, tuple[OidFixtureType, bool, bool, bool]]
-    ] = {
+    PARSE_DATA: ClassVar[dict[str, tuple[OidFixtureType, bool, bool, bool]]] = {
         "parse_oid_schema": (OidFixtureType.SCHEMA, False, False, False),
         "parse_oid_entries": (OidFixtureType.ENTRIES, True, True, True),
         "parse_oid_acl": (OidFixtureType.ACL, False, False, False),
@@ -85,7 +83,13 @@ class TestOidQuirksWithRealFixtures:
     # =========================================================================
 
     @pytest.mark.parametrize(
-        ("scenario", "fixture_type", "expected_objectclass", "expected_oracle_attrs", "expected_passwords"),
+        (
+            "scenario",
+            "fixture_type",
+            "expected_objectclass",
+            "_expected_oracle_attrs",
+            "_expected_passwords",
+        ),
         [
             (name, data[0], data[1], data[2], data[3])
             for name, data in PARSE_DATA.items()
@@ -96,8 +100,8 @@ class TestOidQuirksWithRealFixtures:
         scenario: str,
         fixture_type: OidFixtureType,
         expected_objectclass: bool,
-        expected_oracle_attrs: bool,
-        expected_passwords: bool,
+        _expected_oracle_attrs: bool,
+        _expected_passwords: bool,
         ldif_api: FlextLdif,
     ) -> None:
         """Parametrized test for parsing OID fixture files."""
@@ -135,13 +139,11 @@ class TestOidQuirksWithRealFixtures:
         fixture_filename = f"oid_{fixture_type}_fixtures.ldif"
 
         # Run roundtrip using helper
-        original_entries, roundtrip_entries, _ = (
-            FlextLdifTestUtils.run_roundtrip_test(
-                ldif_api,
-                "oid",
-                fixture_filename,
-                tmp_path,
-            )
+        original_entries, roundtrip_entries, _ = FlextLdifTestUtils.run_roundtrip_test(
+            ldif_api,
+            "oid",
+            fixture_filename,
+            tmp_path,
         )
 
         # Validate roundtrip results

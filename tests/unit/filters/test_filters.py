@@ -1,7 +1,11 @@
-"""Refactored comprehensive tests for FlextLdifFilters - AGGRESSIVE code reduction.
+"""Test suite for FlextLdifFilters Service.
+
+Modules tested: FlextLdifFilters
+Scope: Entry filtering, exclusion metadata, regex patterns, ACL attributes,
+exclusion marking, categorization, DN filtering, objectClass filtering
 
 Uses StrEnum, frozen dataclasses, parametrization to reduce 776 lines to ~400 lines
-while maintaining 100% coverage of all code paths.
+while maintaining 100% coverage of all code paths. Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

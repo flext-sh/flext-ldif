@@ -1,10 +1,12 @@
-"""Test ACL service with real OID/OUD fixtures.
+"""Test suite for FlextLdifAcl Service with Real Fixtures.
+
+Modules tested: FlextLdifAcl
+Scope: ACL service functionality, ACL parsing, structure validation,
+content integrity, real-world fixture validation, OID/OUD ACL handling
 
 Tests FlextLdifAcl service operations using actual LDIF fixture data from
 OID and OUD servers. Validates ACL parsing, structure, and content integrity.
-
-Scope: ACL service functionality with real-world fixture validation.
-Modules tested: flext_ldif.services.acl, flext_ldif.models
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -189,7 +191,7 @@ class TestFlextLdifAclWithRealFixtures:
         return isinstance(content, str) and len(content) > 0
 
     def _validate_server_specific_acls(
-        self, content: str, server_type: ServerType
+        self, content: str, server_type: ServerType,
     ) -> None:
         """Validate server-specific ACL attributes."""
         if server_type == ServerType.OID:

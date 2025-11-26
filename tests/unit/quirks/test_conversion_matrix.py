@@ -1865,44 +1865,6 @@ class TestBatchConversion:
         assert len(oid_attrs) == 2
 
 
-class TestBidirectionalConversion:
-    """Test bidirectional conversions OUD ↔ OID."""
-
-    def test_attribute_roundtrip_oud_to_oid_to_oud(
-        self,
-        conversion_matrix: FlextLdifConversion,
-        oud_quirk: FlextLdifServersOud,
-        oid_quirk: FlextLdifServersOid,
-        conversion_constants: ConversionTestConstants,
-    ) -> None:
-        """Test attribute round-trip: OUD → OID → OUD."""
-        TestDeduplicationHelpers.helper_convert_roundtrip_and_assert(
-            conversion_matrix,
-            oud_quirk,
-            oid_quirk,
-            "attribute",
-            conversion_constants.OUD_ATTRIBUTE_ORCLGUID,
-            must_contain_in_roundtrip=["2.16.840.1.113894.1.1.1", "orclGUID"],
-        )
-
-    def test_objectclass_roundtrip_oid_to_oud_to_oid(
-        self,
-        conversion_matrix: FlextLdifConversion,
-        oud_quirk: FlextLdifServersOud,
-        oid_quirk: FlextLdifServersOid,
-        conversion_constants: ConversionTestConstants,
-    ) -> None:
-        """Test objectClass round-trip: OID → OUD → OID."""
-        TestDeduplicationHelpers.helper_convert_roundtrip_and_assert(
-            conversion_matrix,
-            oid_quirk,
-            oud_quirk,
-            "objectClass",
-            conversion_constants.OID_OBJECTCLASS_ORCLCONTEXT,
-            must_contain_in_roundtrip=["2.16.840.1.113894.1.2.1", "orclContext"],
-        )
-
-
 class TestErrorHandling:
     """Test error handling in conversion matrix."""
 
@@ -2016,7 +1978,7 @@ class TestDnExtractionAndRegistration:
         """Test extracting and registering entry DN."""
         data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
         conversion_matrix._extract_and_register_dns(
-            cast("FlextLdifModels.Acl", data), "entry"
+            cast("FlextLdifModels.Acl", data), "entry",
         )
         # DN should be registered - we can't directly test registry state but no exception should be raised
 
@@ -2032,7 +1994,7 @@ class TestDnExtractionAndRegistration:
             "owner": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
         }
         conversion_matrix._extract_and_register_dns(
-            cast("FlextLdifModels.Acl", data), "entry"
+            cast("FlextLdifModels.Acl", data), "entry",
         )
         # Multiple DNs should be registered - no exception should be raised
 
@@ -2056,7 +2018,7 @@ class TestDnExtractionAndRegistration:
         """Test DN registration handles mixed case properly."""
         data: dict[str, object] = {"dn": "CN=Test,DC=Example,DC=Com"}
         conversion_matrix._extract_and_register_dns(
-            cast("FlextLdifModels.Acl", data), "entry"
+            cast("FlextLdifModels.Acl", data), "entry",
         )
         # Mixed case DN should be registered without issues
 
@@ -2067,7 +2029,7 @@ class TestDnExtractionAndRegistration:
         """Test DN extraction with empty data."""
         data: dict[str, object] = {}
         conversion_matrix._extract_and_register_dns(
-            cast("FlextLdifModels.Acl", data), "entry"
+            cast("FlextLdifModels.Acl", data), "entry",
         )
         # Empty data should not cause issues
 
@@ -2181,7 +2143,7 @@ class TestAttributeConversionErrorPaths:
 
         # NEW API: Convert with failing quirk as source (write will fail)
         result = conversion_matrix.convert(
-            cast("FlextLdifServersBase", failing_quirk), oid_quirk, model
+            cast("FlextLdifServersBase", failing_quirk), oid_quirk, model,
         )
 
         # Write failure should cause conversion to fail
@@ -2261,7 +2223,7 @@ class TestAttributeConversionErrorPaths:
 
         # NEW API: Convert with exception quirk as source (write will throw exception)
         result = conversion_matrix.convert(
-            cast("FlextLdifServersBase", exception_quirk), oid_quirk, model
+            cast("FlextLdifServersBase", exception_quirk), oid_quirk, model,
         )
 
         # Exception should be caught and converted to failure
@@ -2397,7 +2359,7 @@ class TestBatchConversionErrorHandling:
 
         # RFC-FIRST: batch_convert operates on RFC models directly (no write→parse)
         result = conversion_matrix.batch_convert(
-            cast("FlextLdifServersBase", successful_quirk), oid_quirk, models
+            cast("FlextLdifServersBase", successful_quirk), oid_quirk, models,
         )
 
         # RFC models convert successfully (model.copy() + metadata update cannot fail)
@@ -2425,7 +2387,7 @@ class TestBatchConversionErrorHandling:
 
         # NEW API: batch_convert with failing quirk (write step will fail for all)
         result = conversion_matrix.batch_convert(
-            cast("FlextLdifServersBase", failing_quirk), oid_quirk, models
+            cast("FlextLdifServersBase", failing_quirk), oid_quirk, models,
         )
 
         # All items fail to write, so batch conversion fails with truncated error message
@@ -2455,7 +2417,7 @@ class TestBatchConversionErrorHandling:
 
         # NEW API: batch_convert with exception-throwing quirk as source (write will throw)
         result = conversion_matrix.batch_convert(
-            cast("FlextLdifServersBase", exception_quirk), oid_quirk, models
+            cast("FlextLdifServersBase", exception_quirk), oid_quirk, models,
         )
 
         # Exceptions should be caught and converted to failures

@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.base import LdifServiceBase
@@ -240,9 +238,10 @@ class FlextLdifAnalysis(
         oc_values = entry.attributes.attributes.get("objectClass", [])
         if FlextRuntime.is_list_like(oc_values):
             for oc in oc_values:
-                oc_result = validation_service.validate_objectclass_name(
-                    cast("str", oc),
-                )
+                if not isinstance(oc, str):
+                    msg = f"Expected str, got {type(oc)}"
+                    raise TypeError(msg)
+                oc_result = validation_service.validate_objectclass_name(oc)
                 if oc_result.is_failure or not oc_result.unwrap():
                     errors.append(f"Entry {dn_str}: Invalid objectClass '{oc}'")
                     is_entry_valid = False

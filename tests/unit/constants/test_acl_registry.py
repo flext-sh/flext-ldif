@@ -123,7 +123,12 @@ class TestFlextLdifAclAttributeRegistry:
             True,
         ),
         "is_acl_attribute_invalid_cn": (IsAclAttributeType.INVALID, "cn", None, False),
-        "is_acl_attribute_invalid_uid": (IsAclAttributeType.INVALID, "uid", None, False),
+        "is_acl_attribute_invalid_uid": (
+            IsAclAttributeType.INVALID,
+            "uid",
+            None,
+            False,
+        ),
         "is_acl_attribute_case_insensitive_aci": (
             IsAclAttributeType.CASE_INSENSITIVE,
             "ACI",
@@ -155,7 +160,13 @@ class TestFlextLdifAclAttributeRegistry:
     # =======================================================================
 
     @pytest.mark.parametrize(
-        ("scenario", "server_type", "param_server_type", "required_attrs", "forbidden_attrs"),
+        (
+            "scenario",
+            "server_type",
+            "param_server_type",
+            "required_attrs",
+            "forbidden_attrs",
+        ),
         [
             (name, data[0], data[1], data[2], data[3])
             for name, data in GET_ACL_ATTRIBUTES_DATA.items()
@@ -171,7 +182,7 @@ class TestFlextLdifAclAttributeRegistry:
     ) -> None:
         """Parametrized test for get_acl_attributes."""
         attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
-            param_server_type
+            param_server_type,
         )
         for required in required_attrs:
             assert required in attrs, f"{required} not in {scenario}"

@@ -148,7 +148,9 @@ class TestAttributeExtraction:
         """Test normalizing None value."""
         result = EntryManipulationServices.normalize_attribute_value(None)
         assert result.is_failure
-        assert "None" in result.error
+        error_msg = result.error
+        assert error_msg is not None
+        assert "None" in error_msg
 
     def test_normalize_attribute_value_empty_string(self) -> None:
         """Test normalizing empty string."""
@@ -597,7 +599,8 @@ class TestUsernameGeneration:
         result = entry_manipulation_service.generate_unique_username(
             "johndoe",
             existing_users,
-            validation_service,
+            max_attempts=100,
+            validation_service=validation_service,
         )
         assert result.is_success
         username = result.unwrap()

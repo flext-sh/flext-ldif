@@ -14,7 +14,6 @@ and registered automatically.
 from __future__ import annotations
 
 import inspect
-from typing import cast
 
 from flext_core import (
     FlextLogger,
@@ -109,8 +108,16 @@ class FlextLdifServer:
                     # Validate it has required properties
                     try:
                         # Descriptors return str/int when accessed
-                        server_type = cast("str", instance.server_type)
-                        priority = cast("int", instance.priority)
+                        server_type_value = instance.server_type
+                        priority_value = instance.priority
+                        if not isinstance(server_type_value, str):
+                            msg = f"server_type must be str, got {type(server_type_value)}"
+                            raise TypeError(msg)
+                        if not isinstance(priority_value, int):
+                            msg = f"priority must be int, got {type(priority_value)}"
+                            raise TypeError(msg)
+                        server_type: str = server_type_value
+                        priority: int = priority_value
                     except AttributeError as e:
                         logger.warning(
                             "Skipping quirk: missing Constants",
@@ -175,7 +182,11 @@ class FlextLdifServer:
             # Validate it has required properties by accessing server_type
             try:
                 # Descriptor returns str when accessed
-                server_type = cast("str", quirk.server_type)
+                server_type_value = quirk.server_type
+                if not isinstance(server_type_value, str):
+                    msg = f"server_type must be str, got {type(server_type_value)}"
+                    raise TypeError(msg)
+                server_type: str = server_type_value
             except AttributeError as e:
                 return FlextResult[bool].fail(
                     f"Quirk missing Constants.SERVER_TYPE: {e}",
@@ -282,12 +293,12 @@ class FlextLdifServer:
             server_type: Server type (e.g., 'oid', 'oud', 'openldap')
 
         Returns:
-            Dict with 'schema', 'acl', 'entry' keys containing quirk instances
+            Dict with 'schema', 'acl', 'entry' keys containing quirk instances or None
 
         """
         base = self._bases.get(self._normalize_server_type(server_type))
         if not base:
-            return {}
+            return {"schema": None, "acl": None, "entry": None}
         return {
             "schema": base.schema_quirk,
             "acl": base.acl_quirk,
@@ -305,7 +316,12 @@ class FlextLdifServer:
 
         """
         result = self._get_attr(server_type, "schema")
-        return cast("FlextLdifServersBase.Schema | None", result)
+        if result is None:
+            return None
+        if not isinstance(result, FlextLdifServersBase.Schema):
+            msg = f"Expected FlextLdifServersBase.Schema, got {type(result)}"
+            raise TypeError(msg)
+        return result
 
     def acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
         """Get ACL quirk for a server type.
@@ -318,7 +334,12 @@ class FlextLdifServer:
 
         """
         result = self._get_attr(server_type, "acl")
-        return cast("FlextLdifServersBase.Acl | None", result)
+        if result is None:
+            return None
+        if not isinstance(result, FlextLdifServersBase.Acl):
+            msg = f"Expected FlextLdifServersBase.Acl, got {type(result)}"
+            raise TypeError(msg)
+        return result
 
     def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
         """Get entry quirk for a server type.
@@ -331,7 +352,12 @@ class FlextLdifServer:
 
         """
         result = self._get_attr(server_type, "entry")
-        return cast("FlextLdifServersBase.Entry | None", result)
+        if result is None:
+            return None
+        if not isinstance(result, FlextLdifServersBase.Entry):
+            msg = f"Expected FlextLdifServersBase.Entry, got {type(result)}"
+            raise TypeError(msg)
+        return result
 
     # =========================================================================
     # SERVER-AGNOSTIC QUIRK FINDING

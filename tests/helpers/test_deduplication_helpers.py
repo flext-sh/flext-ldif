@@ -119,7 +119,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         )
         if should_succeed:
             unwrapped = FlextTestsMatchers.assert_success(
-                result, "Parse should succeed"
+                result, "Parse should succeed",
             )
         else:
             _ = TestAssertions.assert_failure(result)
@@ -196,7 +196,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             output_path=output_path,
         )
         output = TestAssertions.assert_write_success(
-            cast("FlextLdifTypes.WriteResult", result)
+            cast("FlextLdifTypes.WriteResult", result),
         )
 
         if output_target == "file" and output_path:
@@ -249,7 +249,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             output_target="string",
         )
         written_ldif = TestAssertions.assert_write_success(
-            cast("FlextLdifTypes.WriteResult", write_result)
+            cast("FlextLdifTypes.WriteResult", write_result),
         )
 
         roundtrip_result = parser.parse(written_ldif, input_source="string")
@@ -481,7 +481,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Parsed Acl model
 
         """
-        result = acl_quirk.parse_acl(acl_line)
+        result = acl_quirk.parse(acl_line)
         acl = TestAssertions.assert_success(result, "ACL parse should succeed")
         assert isinstance(acl, FlextLdifModels.Acl), "Parse should return Acl"
         assert acl.server_type == expected_server_type
@@ -738,7 +738,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Write
         write_result = api.write(original_entries)
         written_ldif = TestAssertions.assert_write_success(
-            cast("FlextLdifTypes.WriteResult", write_result)
+            cast("FlextLdifTypes.WriteResult", write_result),
         )
         assert isinstance(written_ldif, str), "Write should return string"
 
@@ -868,7 +868,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
             must_have_attributes = test_case.get("must_have_attributes")
             assert must_have_attributes is None or isinstance(
-                must_have_attributes, list
+                must_have_attributes, list,
             ), f"Test case {i} must_have_attributes must be list | None"
 
             schema_obj = DeduplicationHelpers.schema_parse_and_assert(
@@ -1305,11 +1305,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         if isinstance(entries, list):
             result = writer.write(
-                entries, target_server_type="rfc", output_target="string"
+                entries, target_server_type="rfc", output_target="string",
             )
         else:
             result = writer.write(
-                [entries], target_server_type="rfc", output_target="string"
+                [entries], target_server_type="rfc", output_target="string",
             )
 
         return DeduplicationHelpers.assert_success_and_unwrap_string(
@@ -1610,7 +1610,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             raise AttributeError(msg)
         result = parse_method(entry_model)
         ldif = DeduplicationHelpers.assert_success_and_unwrap_string(
-            cast("FlextResult[str]", result)
+            cast("FlextResult[str]", result),
         )
 
         if expected_dn:
@@ -1996,7 +1996,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """Test quirk execute write and assert content - replaces 5-10 lines.
 
         Common pattern:
-            result = quirk.execute(data, "write")
+            result = quirk.execute(data=data, operation="write")
             assert result.is_success
             assert "something" in result.unwrap()
 
@@ -2011,7 +2011,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        result = quirk.execute(data, "write")
+        result = quirk.execute(data=data, operation="write")
 
         if should_succeed:
             written = TestAssertions.assert_success(
@@ -3907,7 +3907,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 cast("str | Path", ldif_content),
                 expected_dn=cast("str | None", test_case.get("expected_dn")),
                 required_attributes=cast(
-                    "list[str] | None", test_case.get("required_attributes")
+                    "list[str] | None", test_case.get("required_attributes"),
                 ),
                 expected_count=cast("int | None", test_case.get("expected_count")),
             )
@@ -4569,7 +4569,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
             should_succeed = test_case.get("should_succeed", False)
             expected_error = cast(
-                "str | None", test_case.get("expected_error_substring")
+                "str | None", test_case.get("expected_error_substring"),
             )
 
             result = parse_func(test_input)
@@ -4620,7 +4620,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 write_method=cast("str | None", test_case.get("write_method")),
                 must_contain=cast("list[str] | None", test_case.get("must_contain")),
                 validate_fields=cast(
-                    "dict[str, object] | None", test_case.get("validate_fields")
+                    "dict[str, object] | None", test_case.get("validate_fields"),
                 )
                 if validate_all
                 else None,
@@ -4673,7 +4673,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 if validate_all
                 else False,
                 validate_attributes=cast(
-                    "list[str] | None", test_case.get("validate_attributes")
+                    "list[str] | None", test_case.get("validate_attributes"),
                 )
                 if validate_all
                 else None,
@@ -4818,7 +4818,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         if not allow_extra:
             DeduplicationHelpers.assert_list_length(
-                cast("list[object]", entries), len(expected_dns)
+                cast("list[object]", entries), len(expected_dns),
             )
 
         entry_dns = [entry.dn.value for entry in entries if entry.dn is not None]
@@ -5011,7 +5011,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 raise ValueError(msg)
 
             DeduplicationHelpers.assert_list_length(
-                cast("list[object]", items), cast("int", expected_length)
+                cast("list[object]", items), cast("int", expected_length),
             )
 
     @staticmethod
@@ -6490,10 +6490,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     data,
                     write_method=write_method,
                     must_contain=cast(
-                        "list[str] | str | None", test_case.get("must_contain")
+                        "list[str] | str | None", test_case.get("must_contain"),
                     ),
                     must_not_contain=cast(
-                        "list[str] | str | None", test_case.get("must_not_contain")
+                        "list[str] | str | None", test_case.get("must_not_contain"),
                     ),
                 )
                 results.append(written)
@@ -6503,7 +6503,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     data,
                     write_method=write_method,
                     expected_error_substring=cast(
-                        "str | None", test_case.get("expected_error_substring")
+                        "str | None", test_case.get("expected_error_substring"),
                     ),
                 )
                 results.append("")  # Placeholder for failed writes
@@ -6659,7 +6659,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         result: FlextResult[object],
         *,
         expected_error_substring: str | None = None,
-        error_message: str | None = None,
+        _error_message: str | None = None,
     ) -> str:
         """Assert failure and optionally check error message - replaces 3-5 lines.
 
@@ -6671,7 +6671,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Args:
             result: FlextResult to check
             expected_error_substring: Substring that must be in error (optional)
-            error_message: Custom error message for assertion
+            _error_message: Custom error message for assertion
 
         Returns:
             Error string
@@ -6815,7 +6815,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 )
                 test_case_dict = test_case
                 required_attrs = cast(
-                    "list[str]", test_case_dict["required_attributes"]
+                    "list[str]", test_case_dict["required_attributes"],
                 )
                 for attr_name in required_attrs:
                     assert attr_name in entries[0].attributes.attributes, (
@@ -6976,7 +6976,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
             result = method(data)
             expected_error = cast(
-                "str | None", test_case.get("expected_error_substring")
+                "str | None", test_case.get("expected_error_substring"),
             )
             TestAssertions.assert_failure(result, expected_error)
             results.append(result)
@@ -7907,40 +7907,40 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(data, FlextLdifModels.Entry):
             model = data
         elif isinstance(data, str):
-            # Parse string to model using protocol's parse method
-            parse_result = source_quirk.schema_quirk.parse(data)
-            if parse_result.is_failure:
-                if should_succeed:
-                    msg = f"Failed to parse {data_type}: {parse_result.error}"
-                    raise AssertionError(
-                        msg,
-                    )
-                return ""
-            model = parse_result.unwrap()
-        elif data_type.lower() == "acl":
-            if not isinstance(data, str):
-                msg = f"ACL data must be string, got {type(data).__name__}"
-                raise ValueError(msg)
-            assert hasattr(source_quirk, "acl_quirk"), (
-                f"Source quirk {type(source_quirk)} does not have acl_quirk"
-            )
-            acl_quirk = source_quirk.acl_quirk
-            assert hasattr(acl_quirk, "parse"), (
-                f"ACL quirk {type(acl_quirk)} does not have parse method"
-            )
-            parse_result = acl_quirk.parse(data)
-            if parse_result.is_failure:
-                if should_succeed:
-                    msg = f"Failed to parse ACL: {parse_result.error}"
-                    raise AssertionError(
-                        msg,
-                    )
-                return ""
-            model = parse_result.unwrap()
+            # Parse string to model using appropriate parser based on data_type
+            if data_type.lower() == "acl":
+                # Parse as ACL
+                assert hasattr(source_quirk, "acl_quirk"), (
+                    f"Source quirk {type(source_quirk)} does not have acl_quirk"
+                )
+                acl_quirk = source_quirk.acl_quirk
+                assert hasattr(acl_quirk, "parse"), (
+                    f"ACL quirk {type(acl_quirk)} does not have parse method"
+                )
+                parse_result = acl_quirk.parse(data)
+                if parse_result.is_failure:
+                    if should_succeed:
+                        msg = f"Failed to parse ACL: {parse_result.error}"
+                        raise AssertionError(
+                            msg,
+                        )
+                    return ""
+                model = parse_result.unwrap()
+            else:
+                # Parse as schema (attribute or objectClass)
+                parse_result = source_quirk.schema_quirk.parse(data)
+                if parse_result.is_failure:
+                    if should_succeed:
+                        msg = f"Failed to parse {data_type}: {parse_result.error}"
+                        raise AssertionError(
+                            msg,
+                        )
+                    return ""
+                model = parse_result.unwrap()
         else:
             msg = (
                 f"Unsupported data type: {type(data).__name__}. "
-                "Expected str, Entry model, or dict[str, object]"
+                "Expected str or Entry model"
             )
             raise ValueError(
                 msg,
@@ -7986,7 +7986,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             )
             acl_quirk = target_quirk.acl_quirk
             assert acl_quirk is not None, "ACL quirk must not be None"
-            write_result: FlextResult[str] = acl_quirk.write(converted_model)
+            write_result = acl_quirk.write(acl_data=converted_model)
         elif isinstance(converted_model, FlextLdifModels.Entry):
             assert hasattr(target_quirk, "entry_quirk"), (
                 f"Target quirk {type(target_quirk)} does not have entry_quirk"
@@ -8098,55 +8098,51 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             if isinstance(item, FlextLdifModels.Entry):
                 models.append(item)
             elif isinstance(item, str):
-                # Parse string to model using protocol's parse method
-                assert hasattr(source_quirk, "schema_quirk"), (
-                    "Source quirk must have schema_quirk"
-                )
-                schema_quirk = source_quirk.schema_quirk
-                assert schema_quirk is not None, "Schema quirk must not be None"
-                parse_result = schema_quirk.parse(item)
-                if parse_result.is_failure:
-                    if should_succeed and not allow_partial:
-                        msg = f"Failed to parse {data_type}: {parse_result.error}"
-                        raise AssertionError(
-                            msg,
-                        )
-                    continue
-                models.append(parse_result.unwrap())
-            elif data_type.lower() == "acl":
-                if not isinstance(item, str):
-                    msg = f"ACL item must be string, got {type(item).__name__}"
-                    raise ValueError(msg)
-                assert hasattr(source_quirk, "acl_quirk"), (
-                    f"Source quirk {type(source_quirk)} does not have acl_quirk"
-                )
-                assert source_quirk is not None, "Source quirk must not be None"
-                acl_quirk = source_quirk.acl_quirk
-                assert acl_quirk is not None, "ACL quirk must not be None"
-                assert hasattr(acl_quirk, "parse"), (
-                    f"ACL quirk {type(acl_quirk)} does not have parse method"
-                )
-                parse_result = acl_quirk.parse(item)
-                if parse_result.is_failure:
-                    if should_succeed and not allow_partial:
-                        msg = f"Failed to parse ACL: {parse_result.error}"
-                        raise AssertionError(
-                            msg,
-                        )
-                    continue
-                models.append(parse_result.unwrap())
+                # Parse string to model using appropriate quirk based on data_type
+                if data_type.lower() == "acl":
+                    # Use ACL quirk for ACL strings
+                    assert hasattr(source_quirk, "acl_quirk"), (
+                        f"Source quirk {type(source_quirk)} does not have acl_quirk"
+                    )
+                    assert source_quirk is not None, "Source quirk must not be None"
+                    acl_quirk = source_quirk.acl_quirk
+                    assert acl_quirk is not None, "ACL quirk must not be None"
+                    assert hasattr(acl_quirk, "parse"), (
+                        f"ACL quirk {type(acl_quirk)} does not have parse method"
+                    )
+                    parse_result = acl_quirk.parse(item)
+                    if parse_result.is_failure:
+                        if should_succeed and not allow_partial:
+                            msg = f"Failed to parse ACL: {parse_result.error}"
+                            raise AssertionError(
+                                msg,
+                            )
+                        continue
+                    models.append(parse_result.unwrap())
+                else:
+                    # Use schema quirk for attribute/objectClass strings
+                    assert hasattr(source_quirk, "schema_quirk"), (
+                        "Source quirk must have schema_quirk"
+                    )
+                    schema_quirk = source_quirk.schema_quirk
+                    assert schema_quirk is not None, "Schema quirk must not be None"
+                    parse_result = schema_quirk.parse(item)
+                    if parse_result.is_failure:
+                        if should_succeed and not allow_partial:
+                            msg = f"Failed to parse {data_type}: {parse_result.error}"
+                            raise AssertionError(
+                                msg,
+                            )
+                        continue
+                    models.append(parse_result.unwrap())
             else:
-                msg = f"Unsupported data_type for string parsing: {data_type}"
+                msg = (
+                    f"Unsupported item type: {type(item).__name__}. "
+                    "Expected str or Entry model"
+                )
                 raise ValueError(
                     msg,
                 )
-        msg = (
-            f"Unsupported item type: {type(item).__name__}. "
-            "Expected str, Entry model, or dict[str, object]"
-        )
-        raise ValueError(
-            msg,
-        )
 
         # Convert models using new batch API
         result = conversion_matrix.batch_convert(source, target, models)
@@ -8195,8 +8191,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 )
                 acl_quirk_raw = target_quirk.acl_quirk
                 assert acl_quirk_raw is not None, "ACL quirk must not be None"
-                acl_quirk = cast("FlextLdifProtocols.Quirks.AclProtocol", acl_quirk_raw)
-                write_result = acl_quirk.write(model)
+                acl_quirk = acl_quirk_raw
+                write_result = acl_quirk.write(acl_data=model)
             elif isinstance(model, FlextLdifModels.Entry):
                 assert hasattr(target_quirk, "entry_quirk"), (
                     f"Target quirk {type(target_quirk)} does not have entry_quirk"
@@ -8609,15 +8605,32 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             ),
         )
 
+        # Extract server types from base instances if needed
+        # Conversion expects either server type strings or quirk instances
+        source_for_conversion: str | FlextLdifServersBase = (
+            source.server_type if isinstance(source, FlextLdifServersBase) else source
+        )
+        target_for_conversion: str | FlextLdifServersBase = (
+            target.server_type if isinstance(target, FlextLdifServersBase) else target
+        )
+
         # Forward conversion: source model → target model
-        forward_result = conversion_matrix.convert(source, target, original_model)
+        forward_result = conversion_matrix.convert(
+            source_for_conversion,
+            target_for_conversion,
+            original_model,
+        )
         forward_model = TestAssertions.assert_success(
             forward_result,
             "Forward conversion should succeed",
         )
 
         # Backward conversion: target model → source model
-        backward_result = conversion_matrix.convert(target, source, forward_model)
+        backward_result = conversion_matrix.convert(
+            target_for_conversion,
+            source_for_conversion,
+            forward_model,
+        )
         roundtrip_model = TestAssertions.assert_success(
             backward_result,
             "Backward conversion should succeed",
@@ -8642,7 +8655,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             acl_quirk_raw = source_quirk.acl_quirk
             assert acl_quirk_raw is not None, "ACL quirk must not be None"
             acl_quirk = acl_quirk_raw
-            write_result = acl_quirk.write(roundtrip_model)
+            write_result = acl_quirk.write(acl_data=roundtrip_model)
         else:
             msg = f"Unexpected roundtrip model type: {type(roundtrip_model).__name__}"
             raise ValueError(
@@ -9968,7 +9981,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         result = api.write(list(entries), server_type=target_server_type)
         ldif_string = TestAssertions.assert_write_success(
-            cast("FlextLdifTypes.WriteResult", result)
+            cast("FlextLdifTypes.WriteResult", result),
         )
         assert isinstance(ldif_string, str), "Write should return string"
         assert len(ldif_string) > 0, "LDIF string should not be empty"
@@ -10532,6 +10545,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if isinstance(filtered, list):
             entries_list = filtered
+        elif hasattr(filtered, "entries_by_category"):
+            # EntryResult has entries_by_category attribute
+            entries_by_category = getattr(filtered, "entries_by_category", {})
+            entries_list = list(entries_by_category.get("all", []))
         elif hasattr(filtered, "entries"):
             # ParseResponse or WriteResponse have entries attribute
             filtered_with_entries = cast(

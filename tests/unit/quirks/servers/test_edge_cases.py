@@ -1,6 +1,11 @@
-"""Test suite for LDIF edge cases and complex scenarios.
+"""Test suite for LDIF Edge Cases and Complex Scenarios.
+
+Modules tested: FlextLdif (parse, write)
+Scope: Unicode handling, binary data, size limits, special characters,
+deep DN hierarchies, large multivalue attributes, round-trip validation
 
 Tests unicode, binary data, size limits, and special characters using real fixtures.
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,7 +19,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
 @pytest.fixture(scope="module")
@@ -80,7 +84,7 @@ objectClass: person
         )
         if not fixture_path.exists():
             fixture_path = Path(
-                "flext-ldif/tests/fixtures/edge_cases/size/large_multivalue.ldif"
+                "flext-ldif/tests/fixtures/edge_cases/size/large_multivalue.ldif",
             )
         result = ldif_api.parse(
             fixture_path,
@@ -118,13 +122,22 @@ sn: García
 objectClass: person
 
 """
-        RfcTestHelpers.test_api_roundtrip(
-            ldif_api,
-            unicode_ldif,
-            expected_count=1,
-            server_type="rfc",
-            tmp_path=tmp_path,
-        )
+        # Parse
+        parse_result = ldif_api.parse(unicode_ldif, server_type="rfc")
+        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.unwrap()
+        assert len(entries) == 1
+
+        # Write
+        output_path = tmp_path / "unicode_roundtrip.ldif"
+        write_result = ldif_api.write(entries, output_path=output_path, server_type="rfc")
+        assert write_result.is_success, f"Write failed: {write_result.error}"
+
+        # Parse back
+        roundtrip_result = ldif_api.parse(output_path, server_type="rfc")
+        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        roundtrip_entries = roundtrip_result.unwrap()
+        assert len(roundtrip_entries) == 1
 
     def test_roundtrip_deep_dn(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of deep DN entries."""
@@ -134,13 +147,22 @@ cn: level1
 objectClass: person
 
 """
-        RfcTestHelpers.test_api_roundtrip(
-            ldif_api,
-            deep_dn_ldif,
-            expected_count=1,
-            server_type="rfc",
-            tmp_path=tmp_path,
-        )
+        # Parse
+        parse_result = ldif_api.parse(deep_dn_ldif, server_type="rfc")
+        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.unwrap()
+        assert len(entries) == 1
+
+        # Write
+        output_path = tmp_path / "deep_dn_roundtrip.ldif"
+        write_result = ldif_api.write(entries, output_path=output_path, server_type="rfc")
+        assert write_result.is_success, f"Write failed: {write_result.error}"
+
+        # Parse back
+        roundtrip_result = ldif_api.parse(output_path, server_type="rfc")
+        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        roundtrip_entries = roundtrip_result.unwrap()
+        assert len(roundtrip_entries) == 1
 
     def test_roundtrip_large_multivalue(
         self,
@@ -159,10 +181,19 @@ member: cn=user5,dc=example,dc=com
 objectClass: groupOfNames
 
 """
-        RfcTestHelpers.test_api_roundtrip(
-            ldif_api,
-            large_multivalue_ldif,
-            expected_count=1,
-            server_type="rfc",
-            tmp_path=tmp_path,
-        )
+        # Parse
+        parse_result = ldif_api.parse(large_multivalue_ldif, server_type="rfc")
+        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.unwrap()
+        assert len(entries) == 1
+
+        # Write
+        output_path = tmp_path / "large_multivalue_roundtrip.ldif"
+        write_result = ldif_api.write(entries, output_path=output_path, server_type="rfc")
+        assert write_result.is_success, f"Write failed: {write_result.error}"
+
+        # Parse back
+        roundtrip_result = ldif_api.parse(output_path, server_type="rfc")
+        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        roundtrip_entries = roundtrip_result.unwrap()
+        assert len(roundtrip_entries) == 1

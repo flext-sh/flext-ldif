@@ -16,7 +16,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifConfig,
     FlextLdifModels,
     FlextLdifParser,
     FlextLdifWriter,
@@ -46,7 +45,7 @@ class TestRfcParserRealFixtures:
 
         # Using optimized helper - reduces 8 lines to 1 line
         parse_response = OptimizedLdifTestHelpers.parse_ldif_file_and_validate(
-            entries_file
+            entries_file,
         )
 
         # Additional validation specific to this test
@@ -165,7 +164,6 @@ class TestRfcWriterRealFixtures:
         output_file = tmp_path / "roundtrip.ldif"
 
         writer = FlextLdifWriter(
-            config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
         )
         write_result = writer.write(
@@ -179,9 +177,7 @@ class TestRfcWriterRealFixtures:
         assert output_file.exists()
 
         # Re-parse
-        reparser = FlextLdifParser(
-            config=FlextLdifConfig(),
-        )
+        reparser = FlextLdifParser()
         reparse_result = reparser.parse_ldif_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"

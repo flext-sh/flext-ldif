@@ -1,11 +1,13 @@
 """Test suite for OUD deviation metadata tracking.
 
-Tests for zero data loss metadata tracking during OUD entry parsing.
-Validates that original values are preserved in QuirkMetadata for round-trip support.
+Modules tested: FlextLdifServersOud.Entry, FlextLdifModels.QuirkMetadata
+Scope: Zero data loss metadata tracking during OUD→RFC conversions. Validates that
+original values (boolean conversions, DN spacing, schema quirks) are preserved in
+QuirkMetadata for round-trip support. Tests format_details, DN preservation, case
+handling, and integration scenarios.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -117,7 +119,7 @@ class TestOudDeviationMetadata:
         oud_entry: object,
     ) -> None:
         """Parametrized test for OUD attribute case metadata tracking."""
-        result = oud_entry._parse_entry(dn, entry_attrs)  # type: ignore[attr-defined]
+        result = oud_entry._parse_entry(dn, entry_attrs)
 
         assert result.is_success, f"Entry parsing failed for {scenario}"
         entry = result.unwrap()

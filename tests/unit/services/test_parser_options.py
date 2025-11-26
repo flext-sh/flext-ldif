@@ -6,7 +6,7 @@
 
 **Scope:**
 - All format options (auto_parse_schema, auto_extract_acls, preserve_attribute_order,
-  validate_entries, normalize_dns, max_parse_errors, include_operational_attrs)
+  validate_entries, normalize_dns, max_parse_errors)
 - Input sources (string, file, ldap3)
 - Edge cases and error handling
 - Combined options validation
@@ -75,11 +75,6 @@ class TestParserFormatOptions:
                     "attribute_order_not_preserved",
                 ),
                 "normalize_dns": ("basic_entry", "normalized_dns", None),
-                "include_operational_attrs": (
-                    "ldif_with_operational_attrs",
-                    "has_operational_attrs",
-                    "no_operational_attrs",
-                ),
             }
 
     class Fixtures:
@@ -119,23 +114,6 @@ dn: cn=Jane Smith,ou=people,{DNs.EXAMPLE}
 objectClass: {Names.PERSON}
 cn: Jane Smith
 sn: Smith
-"""
-
-        @staticmethod
-        def ldif_with_operational_attrs() -> str:
-            """Create LDIF content with operational attributes."""
-            return f"""version: 1
-
-dn: {DNs.TEST_USER}
-objectClass: {Names.PERSON}
-cn: {Values.TEST}
-sn: {Values.USER}
-createTimestamp: 20250130120000Z
-creatorsName: cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}
-modifyTimestamp: 20250130130000Z
-modifiersName: cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}
-entryUUID: 12345678-1234-1234-1234-123456789abc
-entryCSN: 20250130130000.000001Z#000000#001#000000
 """
 
         @staticmethod
@@ -181,14 +159,35 @@ mail: test@example.com
 
         @staticmethod
         def ldif_with_errors(count: int = 3) -> str:
-            """Create LDIF with multiple potential errors."""
-            entries = "\n\n".join(
+            """Create LDIF with both valid and invalid entries.
+
+            Creates entries: valid1, error1, valid2, error2, error3.
+            So with count=3, you get 2 valid + 3 invalid = 5 total.
+            When max_parse_errors=0 (no limit), all should parse.
+            When strict validation is on, invalid entries have errors marked.
+            """
+            valid_entries = [
+                f"""dn: cn=valid{i},dc=example,dc=com
+objectClass: {Names.PERSON}
+cn: Valid User {i}
+sn: User{i}"""
+                for i in range(1, 3)  # 2 valid entries
+            ]
+            invalid_entries = [
                 f"""dn: cn=error{i},dc=example,dc=com
 objectClass: {Names.PERSON}
 cn:
 sn:"""
-                for i in range(1, count + 1)
-            )
+                for i in range(1, count + 1)  # N invalid entries with empty cn/sn
+            ]
+            # Interleave valid and invalid: valid1, invalid1, valid2, invalid2, invalid3
+            all_entries = []
+            for i, invalid in enumerate(invalid_entries):
+                if i < len(valid_entries):
+                    all_entries.append(valid_entries[i])
+                all_entries.append(invalid)
+
+            entries = "\n\n".join(all_entries)
             return f"version: 1\n\n{entries}\n"
 
         @staticmethod
@@ -354,7 +353,6 @@ sn:"""
                 "auto_extract_acls",
                 "preserve_attribute_order",
                 "normalize_dns",
-                "include_operational_attrs",
             ]
             for enabled in [True, False]
         ],
@@ -529,7 +527,7 @@ sn:"""
         [
             (
                 lambda: TestParserFormatOptions.Fixtures.basic_entry(
-                    "cn=default-test,dc=example,dc=com"
+                    "cn=default-test,dc=example,dc=com",
                 ),
                 1,
                 0,

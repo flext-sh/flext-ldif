@@ -410,7 +410,7 @@ class TestRfcAttributeParser:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        ("attr_def", "expected_oid", "expected_name"), ROUNDTRIP_CASES
+        ("attr_def", "expected_oid", "expected_name"), ROUNDTRIP_CASES,
     )
     @pytest.mark.timeout(5)
     def test_roundtrip_validation(

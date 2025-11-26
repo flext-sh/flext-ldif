@@ -10,11 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
 
 from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
@@ -106,16 +105,49 @@ class FlextLdifMigrationPipeline(LdifServiceBase):
         return "simple"
 
     @staticmethod
+    def _get_default_write_options() -> FlextLdifModels.WriteFormatOptions:
+        """Get default WriteFormatOptions with common settings."""
+        return FlextLdifModels.WriteFormatOptions(
+            line_width=78,
+            respect_attribute_order=True,
+            sort_attributes=False,
+            write_hidden_attributes_as_comments=False,
+            write_metadata_as_comments=False,
+            include_version_header=True,
+            include_timestamps=False,
+            base64_encode_binary=False,
+            restore_original_format=False,
+            write_empty_values=True,
+            normalize_attribute_names=False,
+            include_dn_comments=False,
+            write_migration_header=False,
+            migration_header_template=None,
+            write_rejection_reasons=False,
+            write_transformation_comments=False,
+            include_removal_statistics=False,
+            ldif_changetype=None,
+            ldif_modify_operation="add",
+            write_original_entry_as_comment=False,
+            entry_category=None,
+            acl_attribute_names=frozenset(),
+            comment_acl_in_non_acl_phases=True,
+            use_rfc_attribute_order=False,
+            rfc_order_priority_attributes=["objectClass"],
+        )
+
+    @staticmethod
     def get_write_options_for_mode(
         mode: str,
         write_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None,
         config_model: FlextLdifModels.MigrationConfig | None,
+        **format_kwargs: object,
     ) -> FlextResult[FlextLdifModels.WriteFormatOptions]:
         """Set default write options for structured and categorized modes using FlextResult.
 
         Architecture:
+            - Uses FlextUtilities.Configuration.build_options_from_kwargs for automatic conversion
             - FlextLdifConfig is the source of truth for all write options
-            - This method allows CLI overrides via write_options parameter
+            - This method allows CLI overrides via write_options parameter or **format_kwargs
             - If no override, gets from config and applies mode-specific settings
             - Always returns WriteFormatOptions Pydantic model (never dict)
 
@@ -125,141 +157,60 @@ class FlextLdifMigrationPipeline(LdifServiceBase):
             mode: Migration mode ("structured", "categorized", or "simple")
             write_options: WriteFormatOptions model, dict, or None (CLI override)
             config_model: MigrationConfig model or None
+            **format_kwargs: Individual option overrides (snake_case field names)
 
         Returns:
             FlextResult with WriteFormatOptions Pydantic model or error
 
         """
-        # CLI override provided - validate and use it
-        if write_options is not None:
-            # Convert dict to WriteFormatOptions if necessary
-            if FlextRuntime.is_dict_like(write_options):
-                try:
-                    model = FlextLdifModels.WriteFormatOptions.model_validate(
-                        write_options,
-                    )
-                    return FlextResult[FlextLdifModels.WriteFormatOptions].ok(model)
-                except Exception as e:
-                    return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                        f"Failed to validate WriteFormatOptions from dict: {e}",
-                    )
-            if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
-                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(write_options)
-            return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                f"Invalid WriteFormatOptions type: {type(write_options).__name__}",
-            )
+        # Use FlextUtilities.Configuration.build_options_from_kwargs for automatic conversion
+        default_factory = FlextLdifMigrationPipeline._get_default_write_options
+        mode_overrides: dict[str, object] = {}
 
-        # No CLI override - create WriteFormatOptions with mode-specific settings
+        # Apply mode-specific overrides
         match mode:
             case "structured":
                 if config_model is None:
                     return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
                         "MigrationConfig required for structured mode",
                     )
-                # Create WriteFormatOptions for structured mode
-                return FlextResult[
-                    FlextLdifModels.WriteFormatOptions
-                ].ok(
-                    FlextLdifModels.WriteFormatOptions(
-                        line_width=78,
-                        respect_attribute_order=True,
-                        sort_attributes=False,
-                        write_hidden_attributes_as_comments=False,
-                        write_metadata_as_comments=False,
-                        include_version_header=True,
-                        include_timestamps=False,
-                        base64_encode_binary=False,
-                        fold_long_lines=False,  # Override for structured mode
-                        restore_original_format=False,
-                        write_empty_values=True,
-                        normalize_attribute_names=False,
-                        include_dn_comments=False,
-                        write_removed_attributes_as_comments=config_model.write_removed_as_comments,  # Override
-                        write_migration_header=False,
-                        migration_header_template=None,
-                        write_rejection_reasons=False,
-                        write_transformation_comments=False,
-                        include_removal_statistics=False,
-                        ldif_changetype=None,
-                        ldif_modify_operation="add",
-                        write_original_entry_as_comment=False,
-                        entry_category=None,
-                        acl_attribute_names=frozenset(),
-                        comment_acl_in_non_acl_phases=True,
-                        use_rfc_attribute_order=False,
-                        rfc_order_priority_attributes=["objectClass"],
-                    ),
-                )
+                mode_overrides = {
+                    "fold_long_lines": False,
+                    "write_removed_attributes_as_comments": config_model.write_removed_as_comments,
+                }
             case "categorized":
-                # Create WriteFormatOptions for categorized mode
-                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
-                    FlextLdifModels.WriteFormatOptions(
-                        line_width=78,
-                        respect_attribute_order=True,
-                        sort_attributes=False,
-                        write_hidden_attributes_as_comments=False,
-                        write_metadata_as_comments=False,
-                        include_version_header=True,
-                        include_timestamps=False,
-                        base64_encode_binary=False,
-                        fold_long_lines=False,  # Override for categorized mode
-                        restore_original_format=False,
-                        write_empty_values=True,
-                        normalize_attribute_names=False,
-                        include_dn_comments=False,
-                        write_removed_attributes_as_comments=False,
-                        write_migration_header=False,
-                        migration_header_template=None,
-                        write_rejection_reasons=False,
-                        write_transformation_comments=False,
-                        include_removal_statistics=False,
-                        ldif_changetype=None,
-                        ldif_modify_operation="add",
-                        write_original_entry_as_comment=False,
-                        entry_category=None,
-                        acl_attribute_names=frozenset(),
-                        comment_acl_in_non_acl_phases=True,
-                        use_rfc_attribute_order=False,
-                        rfc_order_priority_attributes=["objectClass"],
-                    ),
-                )
+                mode_overrides = {"fold_long_lines": False}
             case "simple":
-                # Simple mode uses default config
-                return FlextResult[FlextLdifModels.WriteFormatOptions].ok(
-                    FlextLdifModels.WriteFormatOptions(
-                        line_width=78,
-                        respect_attribute_order=True,
-                        sort_attributes=False,
-                        write_hidden_attributes_as_comments=False,
-                        write_metadata_as_comments=False,
-                        include_version_header=True,
-                        include_timestamps=False,
-                        base64_encode_binary=False,
-                        fold_long_lines=True,
-                        restore_original_format=False,
-                        write_empty_values=True,
-                        normalize_attribute_names=False,
-                        include_dn_comments=False,
-                        write_removed_attributes_as_comments=False,
-                        write_migration_header=False,
-                        migration_header_template=None,
-                        write_rejection_reasons=False,
-                        write_transformation_comments=False,
-                        include_removal_statistics=False,
-                        ldif_changetype=None,
-                        ldif_modify_operation="add",
-                        write_original_entry_as_comment=False,
-                        entry_category=None,
-                        acl_attribute_names=frozenset(),
-                        comment_acl_in_non_acl_phases=True,
-                        use_rfc_attribute_order=False,
-                        rfc_order_priority_attributes=["objectClass"],
-                    ),
-                )
+                mode_overrides = {"fold_long_lines": True}
             case _:
                 return FlextResult[FlextLdifModels.WriteFormatOptions].fail(
-                    f"Unknown migration mode: {mode}",
+                    f"Invalid migration mode: {mode}",
                 )
+
+        # Merge all overrides: mode_overrides < format_kwargs < explicit write_options
+        all_kwargs = {**mode_overrides, **format_kwargs}
+
+        # Type narrowing: convert dict to WriteFormatOptions if needed
+        explicit_options_typed: FlextLdifModels.WriteFormatOptions | None = None
+        if write_options is not None:
+            if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
+                explicit_options_typed = write_options
+            elif isinstance(write_options, dict):
+                # Convert dict to WriteFormatOptions model
+                explicit_options_typed = (
+                    FlextLdifModels.WriteFormatOptions.model_validate(write_options)
+                )
+            else:
+                msg = f"Expected WriteFormatOptions | dict, got {type(write_options)}"
+                raise TypeError(msg)
+
+        # Use build_options_from_kwargs for automatic conversion
+        return FlextUtilities.Configuration.build_options_from_kwargs(
+            model_class=FlextLdifModels.WriteFormatOptions,
+            explicit_options=explicit_options_typed,
+            default_factory=default_factory,
+            **all_kwargs,
+        )
 
     @staticmethod
     def validate_simple_mode_params(
@@ -557,36 +508,25 @@ class FlextLdifMigrationPipeline(LdifServiceBase):
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
         """Apply categorization chain using railway pattern."""
-        categorized_result = (
-            FlextResult[list[FlextLdifModels.Entry]]
-            .ok(entries)
-            .flat_map(
-                cast(
-                    "Callable[[list[FlextLdifModels.Entry]], FlextResult[object]]",
-                    self._categorization.validate_dns,
-                )
-            )
-            .flat_map(
-                cast(
-                    "Callable[[object], FlextResult[object]]",
-                    self._categorization.categorize_entries,
-                )
-            )
-            .map(
-                cast(
-                    "Callable[[object], object]", self._categorization.filter_by_base_dn
-                )
-            )
-        )
-
-        if categorized_result.is_failure:
+        # Apply categorization chain: validate -> categorize -> filter
+        validate_result = self._categorization.validate_dns(entries)
+        if validate_result.is_failure:
             return FlextResult[FlextLdifModels.FlexibleCategories].fail(
-                categorized_result.error or "Categorization failed",
+                validate_result.error or "DN validation failed",
             )
+        validated_entries = validate_result.unwrap()
 
-        return FlextResult[FlextLdifModels.FlexibleCategories].ok(
-            cast("FlextLdifModels.FlexibleCategories", categorized_result.unwrap()),
-        )
+        categorize_result = self._categorization.categorize_entries(validated_entries)
+        if categorize_result.is_failure:
+            return FlextResult[FlextLdifModels.FlexibleCategories].fail(
+                categorize_result.error or "Categorization failed",
+            )
+        categories = categorize_result.unwrap()
+
+        # Filter by base DN (returns FlexibleCategories directly)
+        filtered_categories = self._categorization.filter_by_base_dn(categories)
+
+        return FlextResult[FlextLdifModels.FlexibleCategories].ok(filtered_categories)
 
     def _filter_forbidden_attributes(
         self,

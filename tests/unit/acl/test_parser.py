@@ -1,8 +1,11 @@
-"""Test suite for FlextLdifAcl parsing functionality.
+"""Test suite for FlextLdifAcl Parser.
 
-Modules tested: FlextLdifAcl (initialization, parsing, extraction, evaluation)
-Scope: Service initialization, parsing for OpenLDAP/OID, context evaluation
+Modules tested: FlextLdifAcl
+Scope: ACL parsing, initialization, extraction, evaluation, OpenLDAP/OID formats,
+context evaluation, unsupported server types
+
 Tests all ACL operations with proper type safety and parametrization.
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,13 +16,15 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import Final
+from typing import Final, cast
 
 import pytest
 from flext_core import FlextResult
+from flext_tests import FlextTestsMatchers
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
+from tests.fixtures.constants import RFC, DNs, Fixtures
 
 
 class AclParserTestType(StrEnum):
@@ -59,14 +64,14 @@ PARSER_TESTS: Final[list[AclParserTestCase]] = [
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_OPENLDAP,
-        server_type="openldap",
-        acl_line='access to * by dn.exact="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write',
+        server_type=Fixtures.OPENLDAP,
+        acl_line=f'access to * by dn.exact="{DNs.TEST_USER}" write',
         description="Parse OpenLDAP ACL format",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_OID,
-        server_type="oracle_oid",
-        acl_line='orclaci: access to entry by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" (read)',
+        server_type=Fixtures.OID,
+        acl_line=f'orclaci: access to entry by dn="{DNs.TEST_USER}" (read)',
         description="Parse Oracle OID ACL format",
     ),
     AclParserTestCase(
@@ -108,8 +113,8 @@ class AclParserTestFactory:
         read: bool = False,
         write: bool = False,
         delete: bool = False,
-        server_type: str = "openldap",
-        raw_acl: str = "test",
+        server_type: str = Fixtures.OPENLDAP,
+        raw_acl: str = RFC.ACL_SAMPLE_READ,
     ) -> FlextLdifModels.Acl:
         """Create test ACL model."""
         return FlextLdifModels.Acl(
@@ -184,40 +189,52 @@ class TestFlextLdifAclParser:
 
             case AclParserTestType.PARSE_OPENLDAP:
                 # Test parsing OpenLDAP ACL format
-                result = acl_service.parse(test_case.acl_line, test_case.server_type)
-                assert isinstance(result, FlextResult)
+                parse_result_openldap: FlextResult[FlextLdifModels.Acl] = (
+                    acl_service.parse(test_case.acl_line, test_case.server_type)
+                )
+                assert isinstance(parse_result_openldap, FlextResult)
 
             case AclParserTestType.PARSE_OID:
                 # Test parsing Oracle OID ACL format
-                result = acl_service.parse(test_case.acl_line, test_case.server_type)
-                assert isinstance(result, FlextResult)
+                parse_result_oid: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
+                    test_case.acl_line, test_case.server_type,
+                )
+                assert isinstance(parse_result_oid, FlextResult)
 
             case AclParserTestType.PARSE_UNSUPPORTED:
                 # Test parsing with unsupported server type
-                result = acl_service.parse(test_case.acl_line, test_case.server_type)
-                assert isinstance(result, FlextResult)
+                parse_result_unsupported: FlextResult[FlextLdifModels.Acl] = (
+                    acl_service.parse(test_case.acl_line, test_case.server_type)
+                )
+                assert isinstance(parse_result_unsupported, FlextResult)
 
             case AclParserTestType.EVALUATE_EMPTY:
                 # Test evaluating empty ACL list
-                result = acl_service.evaluate_acl_context([])
-                assert result.is_success
-                assert result.unwrap() is True
+                eval_result_empty: FlextResult[bool] = (
+                    acl_service.evaluate_acl_context([])
+                )
+                assert FlextTestsMatchers.assert_success(eval_result_empty) is True
 
             case AclParserTestType.EVALUATE_VALID:
                 # Test evaluating ACL with valid permissions
                 acl = AclParserTestFactory.create_test_acl(read=True)
                 context = AclParserTestFactory.create_context(read=True)
-                result = acl_service.evaluate_acl_context([acl], context)
-                assert result.is_success
-                assert result.unwrap() is True
+                eval_result_valid: FlextResult[bool] = acl_service.evaluate_acl_context(
+                    [acl], context,
+                )
+                assert FlextTestsMatchers.assert_success(eval_result_valid) is True
 
             case AclParserTestType.EVALUATE_MISMATCH:
                 # Test evaluating ACL with permission mismatch
                 acl = AclParserTestFactory.create_test_acl(write=True)
                 context = AclParserTestFactory.create_context(read=True)
-                result = acl_service.evaluate_acl_context([acl], context)
-                assert result.is_failure
-                assert "write" in str(result.error).lower()
+                eval_result_mismatch: FlextResult[bool] = (
+                    acl_service.evaluate_acl_context([acl], context)
+                )
+                # Cast to object for assert_failure which expects FlextResult[object]
+                FlextTestsMatchers.assert_failure(
+                    cast("FlextResult[object]", eval_result_mismatch), "write",
+                )
 
 
 __all__ = [

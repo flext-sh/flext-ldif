@@ -1,4 +1,8 @@
-"""Comprehensive unit tests for FlextLdifSorting using REAL LDIF fixtures.
+"""Test suite for FlextLdifSorting Service with Real LDIF Fixtures.
+
+Modules tested: FlextLdifSorting, FlextLdif (parse)
+Scope: Entry sorting, hierarchy sorting, DN sorting, attribute sorting,
+real LDIF fixture validation
 
 This test file validates ALL sorting functionality with authentic LDIF data from:
   - tests/fixtures/oid/oid_entries_fixtures.ldif
@@ -6,6 +10,7 @@ This test file validates ALL sorting functionality with authentic LDIF data from
   - tests/fixtures/oid/oid_acl_fixtures.ldif
 
 Tests verify that sorting works correctly with real-world LDIF data.
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

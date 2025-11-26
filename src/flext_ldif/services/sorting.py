@@ -19,7 +19,7 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Callable
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self
 
 from flext_core import FlextResult, FlextRuntime
 from pydantic import Field, field_validator, model_validator
@@ -482,17 +482,13 @@ class FlextLdifSorting(LdifServiceBase):
                 processed.append(entry)
                 continue
 
-            # Access the actual attributes dict
-            # entry.attributes.attributes is dict[str, list[str]], ensure correct type
-            attrs_dict_raw = entry.attributes.attributes
-            attrs_dict: dict[str, list[str]] = {}
-            for key, value in attrs_dict_raw.items():
-                # Ensure value is list[str] (LdifAttributes.attributes is dict[str, list[str]])
-                if FlextRuntime.is_list_like(value):
-                    # Type narrowing: cast list[object] to list[str]
-                    attrs_dict[key] = cast("list[str]", value)
-                else:
-                    attrs_dict[key] = [str(value)]
+            # Access the actual attributes dict - LdifAttributes.attributes is dict[str, list[str]]
+            attrs_dict: dict[str, list[str]] = {
+                str(k): [str(v) for v in vals]
+                if isinstance(vals, list)
+                else [str(vals)]
+                for k, vals in entry.attributes.attributes.items()
+            }
             modified = False
 
             # Sort each ACL attribute's values
@@ -505,14 +501,16 @@ class FlextLdifSorting(LdifServiceBase):
                     else:
                         acl_values = [str(acl_values_raw)]
                     if len(acl_values) > 1:
-                        # Type narrowing: sorted returns list[object], cast to list[str]
-                        attrs_dict[acl_attr] = cast(
-                            "list[str]",
-                            sorted(
-                                acl_values,
-                                key=lambda x: str(x).lower(),
-                            ),
+                        # Type narrowing: ensure acl_values is list[str] before sorting
+                        if not isinstance(acl_values, list):
+                            msg = f"Expected list, got {type(acl_values)}"
+                            raise TypeError(msg)
+                        # Sort and ensure result is list[str]
+                        sorted_acl_raw = sorted(
+                            acl_values, key=lambda x: str(x).lower()
                         )
+                        sorted_acl: list[str] = [str(item) for item in sorted_acl_raw]
+                        attrs_dict[acl_attr] = sorted_acl
                         modified = True
 
             if modified:

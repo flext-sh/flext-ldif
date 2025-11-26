@@ -25,7 +25,7 @@ from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from tests.fixtures.constants import DNs, Names, OIDs, Syntax
 
 
-class TestScenarios(StrEnum):
+class ParserWriterScenarios(StrEnum):
     """Test scenarios for parser-writer integration testing."""
 
     ROUNDTRIP_BASIC = "roundtrip_basic"
@@ -102,8 +102,8 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
     @pytest.mark.parametrize(
         ("scenario", "content"),
         [
-            (TestScenarios.ROUNDTRIP_BASIC, IntegrationTestData.BASIC_LDIF),
-            (TestScenarios.ROUNDTRIP_COMPLEX, IntegrationTestData.COMPLEX_LDIF),
+            (ParserWriterScenarios.ROUNDTRIP_BASIC, IntegrationTestData.BASIC_LDIF),
+            (ParserWriterScenarios.ROUNDTRIP_COMPLEX, IntegrationTestData.COMPLEX_LDIF),
         ],
     )
     def test_roundtrip_scenarios_dynamic(
@@ -116,7 +116,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         """Dynamically test roundtrip operations for different content types."""
         # Parse the content
         parse_result = parser_service.parse(
-            content=content, input_source="string", server_type="rfc"
+            content=content, input_source="string", server_type="rfc",
         )
 
         assert parse_result.is_success, f"Failed to parse content for {scenario}"
@@ -132,7 +132,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
 
         # Write the entries back
         write_result = writer_service.write(
-            entries=entries, target_server_type="rfc", output_target="string"
+            entries=entries, target_server_type="rfc", output_target="string",
         )
 
         assert write_result.is_success, f"Failed to write entries for {scenario}"
@@ -153,7 +153,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
 
         # Re-parse the output to verify roundtrip integrity
         reparse_result = parser_service.parse(
-            content=output_content, input_source="string", server_type="rfc"
+            content=output_content, input_source="string", server_type="rfc",
         )
 
         assert reparse_result.is_success, f"Failed to re-parse output for {scenario}"
@@ -178,7 +178,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
 
         # Parse from file
         parse_result = parser_service.parse(
-            content=str(input_file), input_source="file", server_type="rfc"
+            content=str(input_file), input_source="file", server_type="rfc",
         )
 
         assert parse_result.is_success, "Failed to parse from file"
@@ -208,7 +208,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
 
         # Re-parse from file to verify integrity
         reparse_result = parser_service.parse(
-            content=str(output_file), input_source="file", server_type="rfc"
+            content=str(output_file), input_source="file", server_type="rfc",
         )
 
         assert reparse_result.is_success, "Failed to re-parse from file"
@@ -219,12 +219,12 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         )
 
     def test_error_handling_invalid_content(
-        self, parser_service: FlextLdifParser, writer_service: FlextLdifWriter
+        self, parser_service: FlextLdifParser, writer_service: FlextLdifWriter,
     ) -> None:
         """Test error handling with invalid LDIF content."""
         # Try to parse invalid content
         parse_result = parser_service.parse(
-            content=self._INVALID_LDIF, input_source="string", server_type="rfc"
+            content=self._INVALID_LDIF, input_source="string", server_type="rfc",
         )
 
         # Should either fail or succeed with errors
@@ -265,7 +265,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         # Measure parse time
         start_time = time.time()
         parse_result = parser_service.parse(
-            content=content, input_source="string", server_type="rfc"
+            content=content, input_source="string", server_type="rfc",
         )
         parse_time = (time.time() - start_time) * 1000
 
@@ -283,7 +283,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         # Measure write time
         start_time = time.time()
         write_result = writer_service.write(
-            entries=entries, target_server_type="rfc", output_target="string"
+            entries=entries, target_server_type="rfc", output_target="string",
         )
         write_time = (time.time() - start_time) * 1000
 
@@ -295,12 +295,12 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         )
 
     def test_edge_cases_empty_and_special(
-        self, parser_service: FlextLdifParser, writer_service: FlextLdifWriter
+        self, parser_service: FlextLdifParser, writer_service: FlextLdifWriter,
     ) -> None:
         """Test edge cases with empty content and special scenarios."""
         # Test empty content
         parse_result = parser_service.parse(
-            content="", input_source="string", server_type="rfc"
+            content="", input_source="string", server_type="rfc",
         )
         assert parse_result.is_success, "Empty content should parse successfully"
         parse_response = parse_result.unwrap()
@@ -310,7 +310,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         # Test content with only version
         version_only = "version: 1\n"
         parse_result = parser_service.parse(
-            content=version_only, input_source="string", server_type="rfc"
+            content=version_only, input_source="string", server_type="rfc",
         )
         assert parse_result.is_success, "Version-only content should parse successfully"
         parse_response = parse_result.unwrap()
