@@ -356,7 +356,7 @@ class TestOpenLDAP2xAcls:
         acl_line = "to attrs=userPassword by self write by * read"
         if isinstance(acl, FlextLdifServersRfc.Acl):
             acl_model_untyped = RfcTestHelpers.test_quirk_parse_success_and_unwrap(
-                acl, acl_line
+                acl, acl_line,
             )
             if isinstance(acl_model_untyped, FlextLdifModels.Acl):
                 acl_model = acl_model_untyped
@@ -373,7 +373,7 @@ class TestOpenLDAP2xAcls:
         acl_line = "{0}to * by * read"
         if isinstance(acl, FlextLdifServersRfc.Acl):
             acl_model_untyped = RfcTestHelpers.test_quirk_parse_success_and_unwrap(
-                acl, acl_line
+                acl, acl_line,
             )
             if isinstance(acl_model_untyped, FlextLdifModels.Acl):
                 acl_model = acl_model_untyped
@@ -387,7 +387,7 @@ class TestOpenLDAP2xAcls:
         acl_line = 'olcAccess: to dn.base="" by * read'
         if isinstance(acl, FlextLdifServersRfc.Acl):
             acl_model_untyped = RfcTestHelpers.test_quirk_parse_success_and_unwrap(
-                acl, acl_line
+                acl, acl_line,
             )
             if isinstance(acl_model_untyped, FlextLdifModels.Acl):
                 acl_model = acl_model_untyped
@@ -403,7 +403,7 @@ class TestOpenLDAP2xAcls:
         acl_line = "by * read"
         if isinstance(acl, FlextLdifServersRfc.Acl):
             acl_model_untyped = RfcTestHelpers.test_quirk_parse_success_and_unwrap(
-                acl, acl_line
+                acl, acl_line,
             )
             if isinstance(acl_model_untyped, FlextLdifModels.Acl):
                 acl_model = acl_model_untyped
@@ -482,7 +482,7 @@ class TestOpenldapSchemaCanHandleAttribute:
         attr_def = "( 2.5.4.3 NAME 'olcAttributeTypes' DESC 'OpenLDAP attribute' )"
         if isinstance(openldap.schema_quirk, FlextLdifServersRfc.Schema):
             assert isinstance(
-                openldap.schema_quirk.can_handle_attribute(attr_def), bool
+                openldap.schema_quirk.can_handle_attribute(attr_def), bool,
             )
 
     def test_can_handle_standard_attribute(
@@ -493,7 +493,7 @@ class TestOpenldapSchemaCanHandleAttribute:
         attr_def = "( 2.5.4.3 NAME 'cn' DESC 'RFC2256: common name' )"
         if isinstance(openldap.schema_quirk, FlextLdifServersRfc.Schema):
             assert isinstance(
-                openldap.schema_quirk.can_handle_attribute(attr_def), bool
+                openldap.schema_quirk.can_handle_attribute(attr_def), bool,
             )
 
     def test_can_handle_empty_attribute(
@@ -597,7 +597,7 @@ class TestOpenldapSchemaCanHandleObjectClass:
         )
         if isinstance(openldap.schema_quirk, FlextLdifServersRfc.Schema):
             assert isinstance(
-                openldap.schema_quirk.can_handle_objectclass(oc_def), bool
+                openldap.schema_quirk.can_handle_objectclass(oc_def), bool,
             )
 
     def test_can_handle_standard_objectclass(
@@ -608,7 +608,7 @@ class TestOpenldapSchemaCanHandleObjectClass:
         oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' )"
         if isinstance(openldap.schema_quirk, FlextLdifServersRfc.Schema):
             assert isinstance(
-                openldap.schema_quirk.can_handle_objectclass(oc_def), bool
+                openldap.schema_quirk.can_handle_objectclass(oc_def), bool,
             )
 
 

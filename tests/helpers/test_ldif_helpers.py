@@ -147,7 +147,7 @@ class OptimizedLdifTestHelpers:
 
         # Parse again
         reparsed = OptimizedLdifTestHelpers.parse_ldif_string_and_validate(
-            written, expected_entries=len(original_parse.entries)
+            written, expected_entries=len(original_parse.entries),
         )
 
         return original_parse, written, reparsed
@@ -165,7 +165,7 @@ class OptimizedLdifTestHelpers:
         Replaces 5-8 lines of entry creation code.
         """
         return TestAssertions.create_entry(
-            dn=dn, attributes=attributes, validate=validate
+            dn=dn, attributes=attributes, validate=validate,
         )
 
     @staticmethod

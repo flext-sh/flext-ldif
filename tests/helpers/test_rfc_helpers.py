@@ -14,12 +14,13 @@ from typing import Literal, TypeVar, cast
 
 from flext_core import FlextResult
 from flext_tests import FlextTestsMatchers
-from unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
-from unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 from .test_assertions import TestAssertions
 
@@ -326,7 +327,7 @@ class RfcTestHelpers:
         attr: FlextLdifModels.SchemaAttribute = cast(
             "FlextLdifModels.SchemaAttribute",
             FlextTestsMatchers.assert_success(
-                cast("FlextResult[object]", result), "Attribute parse should succeed"
+                cast("FlextResult[object]", result), "Attribute parse should succeed",
             ),
         )
         assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
@@ -358,7 +359,7 @@ class RfcTestHelpers:
         oc: FlextLdifModels.SchemaObjectClass = cast(
             "FlextLdifModels.SchemaObjectClass",
             FlextTestsMatchers.assert_success(
-                cast("FlextResult[object]", result), "ObjectClass parse should succeed"
+                cast("FlextResult[object]", result), "ObjectClass parse should succeed",
             ),
         )
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
@@ -636,7 +637,7 @@ class RfcTestHelpers:
         """
         result = entry_quirk.write(entry)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "Entry write should succeed"
+            result, "Entry write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         assert len(ldif_text) > 0, "Written LDIF should not be empty"
@@ -671,7 +672,7 @@ class RfcTestHelpers:
         """
         result = entry_quirk._write_entry(entry)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "Entry write should succeed"
+            result, "Entry write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -892,7 +893,7 @@ class RfcTestHelpers:
         """
         result = schema_quirk._route_write(schema_obj)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "Route write should succeed"
+            result, "Route write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -989,7 +990,7 @@ class RfcTestHelpers:
         """
         result = acl_quirk._write_acl(acl)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "ACL write should succeed"
+            result, "ACL write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if expected_content:
@@ -1738,7 +1739,7 @@ class RfcTestHelpers:
             input_source="string",
             server_type=server_type,
             format_options=cast(
-                "FlextLdifModels.ParseFormatOptions | None", parse_options
+                "FlextLdifModels.ParseFormatOptions | None", parse_options,
             ),
         )
         parse_response_untyped = TestAssertions.assert_success(parse_result)
@@ -1756,7 +1757,7 @@ class RfcTestHelpers:
             target_server_type=server_type,
             output_target="string",
             format_options=cast(
-                "FlextLdifModels.WriteFormatOptions | None", write_options
+                "FlextLdifModels.WriteFormatOptions | None", write_options,
             ),
         )
         written = cast("str", TestAssertions.assert_success(write_result))
@@ -2018,7 +2019,7 @@ class RfcTestHelpers:
             result = quirk.execute(data=data, operation=operation_typed)
         if should_succeed:
             unwrapped = TestAssertions.assert_success(
-                cast("FlextResult[object]", result)
+                cast("FlextResult[object]", result),
             )
             if expected_type:
                 assert isinstance(unwrapped, expected_type)
@@ -2196,7 +2197,7 @@ class RfcTestHelpers:
         schema_quirk: FlextLdifServersRfc.Schema,
         definitions: list[str],
         *,
-        definition_type: str = "attribute",
+        _definition_type: str = "attribute",
         expected_oids: list[str] | None = None,
         expected_names: list[str] | None = None,
     ) -> list[object]:
@@ -2205,7 +2206,7 @@ class RfcTestHelpers:
         Args:
             schema_quirk: Schema quirk instance
             definitions: List of schema definition strings
-            definition_type: "attribute" or "objectclass"
+            _definition_type: "attribute" or "objectclass" (unused parameter, kept for compatibility)
             expected_oids: Optional list of expected OIDs
             expected_names: Optional list of expected names
 
@@ -2822,20 +2823,24 @@ class RfcTestHelpers:
             else None
         )
 
-        # Entry.create expects domain types
+        # Entry.create expects domain types - facade types inherit from domain types
+        # Type narrowing: convert list[FacadeType] to list[DomainType] for type checker
+        acls_domain: list[FlextLdifModelsDomains.Acl] | None = (
+            list(acls) if acls is not None else None
+        )
+        objectclasses_domain: list[FlextLdifModelsDomains.SchemaObjectClass] | None = (
+            list(objectclasses) if objectclasses is not None else None
+        )
+        attributes_schema_domain: list[FlextLdifModelsDomains.SchemaAttribute] | None = (
+            list(attributes_schema) if attributes_schema is not None else None
+        )
         result = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=attributes_typed,
             metadata=metadata,
-            acls=cast("list[FlextLdifModels.Acl] | None", acls),
-            objectclasses=cast(
-                "list[FlextLdifModels.SchemaObjectClass] | None",
-                objectclasses,
-            ),
-            attributes_schema=cast(
-                "list[FlextLdifModels.SchemaAttribute] | None",
-                attributes_schema,
-            ),
+            acls=acls_domain,
+            objectclasses=objectclasses_domain,
+            attributes_schema=attributes_schema_domain,
             entry_metadata=entry_metadata,
             validation_metadata=validation_metadata,
             server_type=server_type_kwarg,

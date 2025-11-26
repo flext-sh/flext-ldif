@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, Protocol, TypeVar, runtime_checkable
 
@@ -212,45 +213,61 @@ class FlextLdifProtocols(FlextProtocols):
 
             def write(
                 self,
-                model: object,
-            ) -> FlextResult[object]:
+                model: FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass,
+            ) -> FlextResult[str]:
                 """Write schema model."""
                 ...
 
             def parse_attribute(
                 self,
-                definition: str,
+                attr_definition: str,
             ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
                 """Parse attribute definition."""
                 ...
 
             def write_attribute(
                 self,
-                model: FlextLdifModels.SchemaAttribute,
+                attr_data: FlextLdifModels.SchemaAttribute,
             ) -> FlextResult[str]:
                 """Write attribute model."""
                 ...
 
             def parse_objectclass(
                 self,
-                definition: str,
+                oc_definition: str,
             ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
                 """Parse objectclass definition."""
                 ...
 
             def write_objectclass(
                 self,
-                model: FlextLdifModels.SchemaObjectClass,
+                oc_data: FlextLdifModels.SchemaObjectClass,
             ) -> FlextResult[str]:
                 """Write objectclass model."""
                 ...
 
             def execute(
                 self,
-                data: str | object | None = None,
-                operation: str | None = None,
-            ) -> FlextResult[object]:
-                """Execute operation."""
+                **kwargs: object,
+            ) -> FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ]:
+                """Execute operation with automatic type detection and routing.
+
+                Polymorphic dispatch based on kwargs:
+                - definition (str) -> parse -> SchemaAttribute | SchemaObjectClass
+                - model (SchemaAttribute | SchemaObjectClass) -> write -> str
+
+                Args:
+                    **kwargs: definition (str) OR model (SchemaAttribute | SchemaObjectClass)
+
+                Returns:
+                    FlextResult[SchemaAttribute | SchemaObjectClass | str]
+
+                """
                 ...
 
         @runtime_checkable
@@ -309,21 +326,19 @@ class FlextLdifProtocols(FlextProtocols):
 
             def execute(
                 self,
-                data: str | object | None = None,
-                operation: str | None = None,
-            ) -> FlextResult[object]:
+                **_kwargs: object,
+            ) -> FlextResult[FlextLdifModels.Acl | str]:
                 """Execute with automatic type detection and routing.
 
-                Polymorphic dispatch based on data type:
-                - str -> parse
-                - Acl -> write
+                Polymorphic dispatch based on kwargs:
+                - acl_line (str) -> parse -> Acl
+                - acl_model (Acl) -> write -> str
 
                 Args:
-                    data: ACL line string OR Acl model
-                    operation: Force operation ('parse' or 'write'), optional
+                    **_kwargs: acl_line (str) OR acl_model (Acl)
 
                 Returns:
-                    "FlextResult[Acl | str]"
+                    FlextResult[Acl | str]
 
                 """
                 ...
@@ -364,11 +379,13 @@ class FlextLdifProtocols(FlextProtocols):
             3. execute(data, operation) -> "FlextResult[list[Entry] | str]"
 
             **Private Methods** (NOT in protocol, internal only):
-            - can_handle() - Detection logic
-            - can_handle_attribute() - Detection logic
-            - can_handle_objectclass() - Detection logic
+            - can_handle(dn, attributes) - Entry detection logic
+            - can_handle_entry(entry) - Entry-level validation
             - Hooks: _hook_validate_entry_raw(), _hook_post_parse_entry(), _hook_pre_write_entry()
             - process_entry, convert_entry handled via hooks or conversion
+
+            NOTE: can_handle_attribute() and can_handle_objectclass() are Schema-level
+            methods only, not used at Entry level.
             """
 
             server_type: str
@@ -414,8 +431,8 @@ class FlextLdifProtocols(FlextProtocols):
             def parse_entry(
                 self,
                 entry_dn: str,
-                entry_attrs: object,
-            ) -> FlextResult[object]:
+                entry_attrs: Mapping[str, object] | object,
+            ) -> FlextResult[FlextLdifModels.Entry]:
                 """Parse a single entry from DN and attributes.
 
                 Args:
@@ -423,28 +440,26 @@ class FlextLdifProtocols(FlextProtocols):
                     entry_attrs: Entry attributes mapping
 
                 Returns:
-                    "FlextResult[Entry]" with parsed entry model
+                    FlextResult[Entry] with parsed entry model
 
                 """
                 ...
 
             def execute(
                 self,
-                data: str | list[object] | object | None = None,
-                operation: str | None = None,
-            ) -> FlextResult[object]:
+                **_kwargs: object,
+            ) -> FlextResult[FlextLdifModels.Entry | str]:
                 """Execute with automatic type detection and routing.
 
-                Polymorphic dispatch based on data type:
-                - str -> parse -> list[Entry]
-                - list[Entry] -> write -> str
+                Polymorphic dispatch based on kwargs:
+                - ldif_content (str) -> parse -> Entry
+                - entry_model (Entry) -> write -> str
 
                 Args:
-                    data: LDIF content string OR list of Entry models
-                    operation: Force operation ('parse' or 'write'), optional
+                    **_kwargs: ldif_content (str) OR entry_model (Entry)
 
                 Returns:
-                    "FlextResult[list[Entry] | str]"
+                    FlextResult[Entry | str]
 
                 """
                 ...

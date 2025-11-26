@@ -160,19 +160,37 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def unfold_lines(ldif_content: str) -> list[str]:
-        """Unfold LDIF lines folded across multiple lines per RFC 2849.
+        """Unfold LDIF lines folded across multiple lines per RFC 2849 §3.
 
-        Continuation lines start with a single space.
+        RFC 2849 §3: Folded lines are created by inserting a line separator
+        (CRLF or LF) followed by exactly one space. This function reverses
+        that process by joining continuation lines.
+
+        ABNF Grammar (RFC 2849):
+            ; Long lines may be folded by inserting:
+            ; SEP (CRLF or LF) followed by exactly one SPACE or HTAB
+            ; Continuation lines start with exactly one whitespace char
+
+        Args:
+            ldif_content: Raw LDIF content with potentially folded lines
+
+        Returns:
+            List of unfolded logical lines
+
         """
         lines: list[str] = []
         current_line = ""
+        continuation_space = FlextLdifConstants.Rfc.LINE_CONTINUATION_SPACE
 
-        for raw_line in ldif_content.split("\n"):
-            if raw_line.startswith(" ") and current_line:
+        for raw_line in ldif_content.split(FlextLdifConstants.Rfc.LINE_SEPARATOR):
+            if raw_line.startswith(continuation_space) and current_line:
                 # Continuation line - append to current (skip leading space)
                 current_line += raw_line[1:]
+            elif raw_line.startswith("\t") and current_line:
+                # RFC 2849: TAB is also valid continuation char
+                current_line += raw_line[1:]
             else:
-                # New line
+                # New logical line
                 if current_line:
                     lines.append(current_line)
                 current_line = raw_line

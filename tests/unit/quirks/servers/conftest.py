@@ -51,7 +51,7 @@ def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 @pytest.fixture
 def rfc_schema_quirk(
     rfc_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.SchemaProtocol:
+) -> FlextLdifProtocols.Quirks.SchemaProtocol:
     """Provides RFC Schema quirk instance for tests."""
     return rfc_quirk.schema_quirk
 
@@ -106,7 +106,7 @@ def sample_schema_objectclass() -> FlextLdifModels.SchemaObjectClass:
 @pytest.fixture
 def sample_entry() -> FlextLdifModels.Entry:
     """Provides a sample Entry for tests."""
-    return FlextLdifModels.Entry.create(
+    result = FlextLdifModels.Entry.create(
         dn=TestGeneralConstants.SAMPLE_DN,
         attributes={
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
@@ -114,7 +114,14 @@ def sample_entry() -> FlextLdifModels.Entry:
             ],
             TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
         },
-    ).unwrap()
+    )
+    entry_domain = result.unwrap()
+    # Create new instance using FlextLdifModels.Entry to ensure correct type
+    return FlextLdifModels.Entry(
+        dn=entry_domain.dn,
+        attributes=entry_domain.attributes,
+        metadata=entry_domain.metadata,
+    )
 
 
 @pytest.fixture
@@ -201,7 +208,7 @@ invalidAttribute: value without proper formatting
 @pytest.fixture
 def sample_entry_with_metadata() -> FlextLdifModels.Entry:
     """Provides a sample Entry with metadata for tests."""
-    return FlextLdifModels.Entry.create(
+    result = FlextLdifModels.Entry.create(
         dn=TestGeneralConstants.SAMPLE_DN,
         attributes={
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
@@ -212,7 +219,14 @@ def sample_entry_with_metadata() -> FlextLdifModels.Entry:
         entry_metadata={
             "write_options": FlextLdifModels.WriteFormatOptions(),
         },
-    ).unwrap()
+    )
+    entry_domain = result.unwrap()
+    # Create new instance using FlextLdifModels.Entry to ensure correct type
+    return FlextLdifModels.Entry(
+        dn=entry_domain.dn,
+        attributes=entry_domain.attributes,
+        metadata=entry_domain.metadata,
+    )
 
 
 # Conversion test fixtures and constants

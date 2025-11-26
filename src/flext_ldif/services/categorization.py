@@ -441,10 +441,11 @@ class FlextLdifCategorization(LdifServiceBase):
                 FlextLdifConstants.Categories.ACL,
             }:
                 # Convert domain entries to models entries for by_base_dn
+                # Use model_copy() instead of model_dump()+model_validate()
                 model_entries: list[FlextLdifModels.Entry] = [
                     entry
                     if isinstance(entry, FlextLdifModels.Entry)
-                    else FlextLdifModels.Entry.model_validate(entry.model_dump())
+                    else entry.model_copy(deep=True)
                     for entry in entries
                 ]
                 included, excluded = FlextLdifFilters.by_base_dn(
@@ -526,3 +527,69 @@ class FlextLdifCategorization(LdifServiceBase):
             )
 
         return result
+
+    @staticmethod
+    def filter_categories_by_base_dn(
+        categories: FlextLdifModels.FlexibleCategories,
+        base_dn: str,
+    ) -> FlextLdifModels.FlexibleCategories:
+        """Filter categorized entries by base DN.
+
+        Applies base DN filtering to HIERARCHY, USERS, GROUPS, and ACL categories.
+        Excluded entries are moved to REJECTED category with processing stats.
+
+        Returns:
+            FlexibleCategories with filtered entries by base DN
+
+        """
+        if not base_dn or not categories:
+            return categories
+
+        filtered = FlextLdifModels.FlexibleCategories()
+        excluded_entries: list[FlextLdifModels.Entry] = []
+
+        filterable_categories = {
+            FlextLdifConstants.Categories.HIERARCHY,
+            FlextLdifConstants.Categories.USERS,
+            FlextLdifConstants.Categories.GROUPS,
+            FlextLdifConstants.Categories.ACL,
+        }
+
+        for category, entries in categories.items():
+            if not entries:
+                filtered[category] = []
+                continue
+
+            if category in filterable_categories:
+                model_entries: list[FlextLdifModels.Entry] = [
+                    entry
+                    if isinstance(entry, FlextLdifModels.Entry)
+                    else entry.model_copy(deep=True)
+                    for entry in entries
+                ]
+                included, excluded = FlextLdifFilters.by_base_dn(
+                    model_entries,
+                    base_dn,
+                    mark_excluded=True,
+                )
+                filtered[category] = included
+
+                for entry in excluded:
+                    if entry.metadata.processing_stats:
+                        _ = entry.metadata.processing_stats.mark_rejected(
+                            FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
+                            f"DN not under base DN: {base_dn}",
+                        )
+                excluded_entries.extend(excluded)
+            else:
+                filtered[category] = entries
+
+        if excluded_entries:
+            existing_rejected = filtered.get(FlextLdifConstants.Categories.REJECTED, [])
+            if existing_rejected is None:
+                existing_rejected = []
+            filtered[FlextLdifConstants.Categories.REJECTED] = (
+                existing_rejected + excluded_entries
+            )
+
+        return filtered

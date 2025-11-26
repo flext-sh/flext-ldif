@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 import re
 from collections.abc import Callable
-from typing import TypedDict, cast
+from typing import TypedDict
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -177,6 +177,97 @@ class FlextLdifUtilitiesSchema:
             result = replacements[result]
 
         return result
+
+    @staticmethod
+    def validate_syntax_oid(syntax: str | None) -> str | None:
+        r"""Validate syntax OID format.
+
+        Generic validation for syntax OID fields used across server implementations.
+        Checks that OID syntax conforms to standard OID format (numeric dot notation).
+
+        Args:
+            syntax: Syntax OID to validate
+
+        Returns:
+            Error message if validation fails, None otherwise
+
+        """
+        if syntax is None or not syntax.strip():
+            return None
+
+        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
+        if validate_result.is_failure:
+            return f"Syntax OID validation failed: {validate_result.error}"
+        if not validate_result.unwrap():
+            return f"Invalid syntax OID format: {syntax}"
+
+        return None
+
+    @staticmethod
+    def detect_schema_type(
+        definition: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+        ),
+    ) -> str:
+        r"""Detect schema type (attribute or objectclass) for automatic routing.
+
+        Generic utility used by multiple server implementations to automatically
+        classify schema definitions. Detects based on model type first, then
+        uses RFC 4512 keyword patterns for string detection.
+
+        Args:
+            definition: Schema definition string or model.
+
+        Returns:
+            "attribute" or "objectclass".
+
+        """
+        if isinstance(definition, FlextLdifModels.SchemaAttribute):
+            return "attribute"
+        if isinstance(definition, FlextLdifModels.SchemaObjectClass):
+            return "objectclass"
+        # Try to detect from string content (definition is str at this point)
+        definition_str = str(definition)
+        definition_lower = definition_str.lower()
+
+        # Check for objectClass-specific keywords (RFC 4512)
+        # ObjectClasses have: STRUCTURAL, AUXILIARY, ABSTRACT, MUST, MAY
+        # (Note: SUP is valid for both attributes and objectClasses, so excluded)
+        # Attributes have: EQUALITY, SUBSTR, ORDERING, SYNTAX, USAGE, SINGLE-VALUE, NO-USER-MODIFICATION
+        objectclass_only_keywords = [
+            " structural",
+            " auxiliary",
+            " abstract",
+            " must (",
+            " may (",
+        ]
+        for keyword in objectclass_only_keywords:
+            if keyword in definition_lower:
+                return "objectclass"
+
+        # Check for attribute-specific keywords (more accurate detection)
+        # These keywords ONLY appear in attribute definitions
+        attribute_only_keywords = [
+            " equality ",
+            " substr ",
+            " ordering ",
+            " syntax ",
+            " usage ",
+            " single-value",
+            " no-user-modification",
+        ]
+        for keyword in attribute_only_keywords:
+            if keyword in definition_lower:
+                return "attribute"
+
+        # Legacy check for explicit objectclass keyword
+        if "objectclass" in definition_lower or "oclass" in definition_lower:
+            return "objectclass"
+
+        # Default to attribute if ambiguous
+        return "attribute"
 
     @staticmethod
     def _apply_field_transformation(
@@ -885,12 +976,188 @@ class FlextLdifUtilitiesSchema:
         }
 
     @staticmethod
+    def _try_restore_original_format(
+        attr_data: FlextLdifModels.SchemaAttribute,
+    ) -> list[str] | None:
+        """Try to restore original format from metadata for perfect round-trip.
+
+        Args:
+            attr_data: SchemaAttribute model with potential metadata
+
+        Returns:
+            List with original format if available, None otherwise
+
+        """
+        if not (
+            attr_data.metadata
+            and attr_data.metadata.schema_format_details
+            and attr_data.metadata.schema_format_details.get("original_string_complete")
+        ):
+            return None
+
+        original = str(
+            attr_data.metadata.schema_format_details.get("original_string_complete", "")
+        )
+        if not original:
+            return None
+
+        # Extract definition part (remove prefix, handle nested parens)
+        definition_match = re.search(r"\(.*\)", original, re.DOTALL)
+        return [definition_match.group(0)] if definition_match else None
+
+    @staticmethod
+    def _build_name_part(
+        attr_data: FlextLdifModels.SchemaAttribute,
+        *,
+        restore_format: bool = False,
+    ) -> str | None:
+        """Build NAME part with optional format restoration.
+
+        Args:
+            attr_data: SchemaAttribute model
+            restore_format: If True, restore multiple names format from metadata
+
+        Returns:
+            NAME part string or None if no name
+
+        """
+        if not attr_data.name:
+            return None
+
+        if not restore_format or not attr_data.metadata:
+            return f"NAME '{attr_data.name}'"
+
+        schema_details = attr_data.metadata.schema_format_details or {}
+        name_format = schema_details.get("name_format", "single")
+        name_values_ = schema_details.get("name_values", [])
+        name_values: list[str] = (
+            [str(v) for v in name_values_]
+            if isinstance(name_values_, list)
+            else []
+        )
+
+        if name_format == "multiple" and name_values:
+            names_str = " ".join(f"'{n}'" for n in name_values)
+            return f"NAME ( {names_str} )"
+
+        return f"NAME '{attr_data.name}'"
+
+    @staticmethod
+    def _build_obsolete_part(
+        attr_data: FlextLdifModels.SchemaAttribute,
+        parts: list[str],
+        field_order: list[str] | None,
+        *,
+        restore_position: bool = False,
+    ) -> None:
+        """Build OBSOLETE part with optional position restoration.
+
+        Args:
+            attr_data: SchemaAttribute model
+            parts: Parts list to modify
+            field_order: Field order from metadata (if available)
+            restore_position: If True, restore original position
+
+        """
+        has_obsolete = False
+        if attr_data.metadata:
+            schema_details = attr_data.metadata.schema_format_details or {}
+            has_obsolete = bool(schema_details.get("obsolete_presence", False))
+            if not has_obsolete:
+                has_obsolete = bool(
+                    attr_data.metadata.extensions.get(
+                        FlextLdifConstants.MetadataKeys.OBSOLETE
+                    )
+                )
+
+        if not has_obsolete:
+            return
+
+        if restore_position and field_order and "OBSOLETE" in field_order:
+            obs_pos = field_order.index("OBSOLETE")
+            parts.insert(min(obs_pos, len(parts)), "OBSOLETE")
+        else:
+            parts.append("OBSOLETE")
+
+    @staticmethod
+    def _build_x_origin_part(
+        attr_data: FlextLdifModels.SchemaAttribute,
+        *,
+        restore_format: bool = False,
+    ) -> str | None:
+        """Build X-ORIGIN part with optional format restoration.
+
+        Args:
+            attr_data: SchemaAttribute model
+            restore_format: If True, use metadata value if available
+
+        Returns:
+            X-ORIGIN part string or None
+
+        """
+        if not attr_data.metadata:
+            return None
+
+        schema_details = attr_data.metadata.schema_format_details or {}
+        x_origin_value = None
+
+        if (
+            restore_format
+            and schema_details.get("x_origin_presence")
+            and schema_details.get("x_origin_value")
+        ):
+            x_origin_value = schema_details.get("x_origin_value")
+
+        if not x_origin_value:
+            x_origin_value = attr_data.metadata.extensions.get("x_origin")
+
+        return f"X-ORIGIN '{x_origin_value}'" if x_origin_value else None
+
+    @staticmethod
+    def _get_field_order(
+        attr_data: FlextLdifModels.SchemaAttribute,
+    ) -> list[str] | None:
+        """Extract field order from metadata if available.
+
+        Args:
+            attr_data: SchemaAttribute model
+
+        Returns:
+            Field order list or None
+
+        """
+        if not attr_data.metadata or not attr_data.metadata.schema_format_details:
+            return None
+
+        field_order_ = attr_data.metadata.schema_format_details.get("field_order")
+        if field_order_ and isinstance(field_order_, list):
+            return [str(item) for item in field_order_]
+        return None
+
+    @staticmethod
+    def _apply_trailing_spaces(
+        attr_data: FlextLdifModels.SchemaAttribute,
+        parts: list[str],
+    ) -> None:
+        """Apply trailing spaces from metadata if available.
+
+        Args:
+            attr_data: SchemaAttribute model
+            parts: Parts list to modify (modifies last element)
+
+        """
+        if not attr_data.metadata or not attr_data.metadata.schema_format_details:
+            return
+
+        trailing = attr_data.metadata.schema_format_details.get("trailing_spaces", "")
+        if trailing and parts:
+            parts[-1] += str(trailing)
+
+    @staticmethod
     def _build_attribute_parts_from_model(
         attr_data: FlextLdifModels.SchemaAttribute,
     ) -> list[str]:
-        """Build RFC 4512 attribute definition parts (extracted to reduce complexity)."""
-        # Import directly from _utilities submodule to avoid circular dependency
-
+        """Build RFC 4512 attribute definition parts (simple version)."""
         parts: list[str] = [f"( {attr_data.oid}"]
 
         if attr_data.name:
@@ -918,6 +1185,182 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'")
 
         parts.append(")")
+
+        return parts
+
+    @staticmethod
+    def build_attribute_parts_with_metadata(
+        attr_data: FlextLdifModels.SchemaAttribute,
+        *,
+        restore_original: bool = True,
+    ) -> list[str]:
+        """Build RFC 4512 attribute parts with full metadata restoration.
+
+        Generalized version that supports perfect round-trip by restoring
+        original format, NAME format, OBSOLETE position, X-ORIGIN, and
+        trailing spaces from metadata when available.
+
+        Args:
+            attr_data: SchemaAttribute model
+            restore_original: If True, try to restore original format first
+
+        Returns:
+            List of RFC-compliant attribute definition parts
+
+        """
+        # Try original format restoration first (perfect round-trip)
+        if restore_original:
+            original_parts = FlextLdifUtilitiesSchema._try_restore_original_format(
+                attr_data
+            )
+            if original_parts:
+                return original_parts
+
+        # Build RFC-compliant parts with metadata restoration
+        parts: list[str] = [f"( {attr_data.oid}"]
+        field_order = FlextLdifUtilitiesSchema._get_field_order(attr_data)
+
+        # NAME with format restoration
+        name_part = FlextLdifUtilitiesSchema._build_name_part(
+            attr_data, restore_format=True
+        )
+        if name_part:
+            parts.append(name_part)
+
+        # DESC and SUP (simple fields)
+        if attr_data.desc:
+            parts.append(f"DESC '{attr_data.desc}'")
+        if attr_data.sup:
+            parts.append(f"SUP {attr_data.sup}")
+        if attr_data.usage:
+            parts.append(f"USAGE {attr_data.usage}")
+
+        # OBSOLETE with position restoration
+        FlextLdifUtilitiesSchema._build_obsolete_part(
+            attr_data, parts, field_order, restore_position=True
+        )
+
+        # Matching rules, syntax, flags
+        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
+
+        # X-ORIGIN with restoration
+        x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
+            attr_data, restore_format=True
+        )
+        if x_origin_part:
+            parts.append(x_origin_part)
+
+        parts.append(")")
+
+        # Trailing spaces restoration
+        FlextLdifUtilitiesSchema._apply_trailing_spaces(attr_data, parts)
+
+        return parts
+
+    @staticmethod
+    def build_objectclass_parts_with_metadata(
+        oc_data: FlextLdifModels.SchemaObjectClass,
+        *,
+        restore_original: bool = True,
+    ) -> list[str]:
+        """Build RFC 4512 objectClass parts with full metadata restoration.
+
+        Generalized version that supports perfect round-trip by restoring
+        original format, NAME format, OBSOLETE position, SUP format, and
+        X-ORIGIN from metadata when available.
+
+        Args:
+            oc_data: SchemaObjectClass model
+            restore_original: If True, try to restore original format first
+
+        Returns:
+            List of RFC-compliant objectClass definition parts
+
+        """
+        # Try original format restoration first (perfect round-trip)
+        if restore_original and oc_data.metadata and oc_data.metadata.schema_format_details:
+            original = str(
+                oc_data.metadata.schema_format_details.get("original_string_complete", "")
+            )
+            if original:
+                definition_match = re.search(r"\(.*\)", original, re.DOTALL)
+                if definition_match:
+                    return [definition_match.group(0)]
+
+        # Build RFC-compliant parts with metadata restoration
+        parts: list[str] = [f"( {oc_data.oid}"]
+
+        # NAME with format restoration
+        name_part = FlextLdifUtilitiesSchema._build_name_part(
+            oc_data, restore_format=True  # type: ignore[arg-type]
+        )
+        if name_part:
+            parts.append(name_part)
+
+        # DESC (simple field)
+        if oc_data.desc:
+            parts.append(f"DESC '{oc_data.desc}'")
+
+        # OBSOLETE with position restoration
+        field_order = None
+        if oc_data.metadata and oc_data.metadata.schema_format_details:
+            field_order_ = oc_data.metadata.schema_format_details.get("field_order")
+            if field_order_ and isinstance(field_order_, list):
+                field_order = [str(item) for item in field_order_]
+
+        FlextLdifUtilitiesSchema._build_obsolete_part(
+            oc_data, parts, field_order, restore_position=True  # type: ignore[arg-type]
+        )
+
+        # SUP - handle single or multiple
+        if oc_data.sup:
+            if FlextRuntime.is_list_like(oc_data.sup) and isinstance(oc_data.sup, list):
+                sup_list_str = [str(item) for item in oc_data.sup]
+                sup_str = " $ ".join(sup_list_str)
+                parts.append(f"SUP ( {sup_str} )")
+            else:
+                parts.append(f"SUP {oc_data.sup}")
+
+        # KIND (structural, auxiliary, abstract)
+        kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
+        parts.append(str(kind))
+
+        # MUST and MAY attributes
+        if oc_data.must:
+            if FlextRuntime.is_list_like(oc_data.must) and isinstance(oc_data.must, list):
+                must_list_str = [str(item) for item in oc_data.must]
+                if len(must_list_str) == 1:
+                    parts.append(f"MUST {must_list_str[0]}")
+                else:
+                    must_str = " $ ".join(must_list_str)
+                    parts.append(f"MUST ( {must_str} )")
+            else:
+                parts.append(f"MUST {oc_data.must}")
+
+        if oc_data.may:
+            if FlextRuntime.is_list_like(oc_data.may) and isinstance(oc_data.may, list):
+                may_list_str = [str(item) for item in oc_data.may]
+                if len(may_list_str) == 1:
+                    parts.append(f"MAY {may_list_str[0]}")
+                else:
+                    may_str = " $ ".join(may_list_str)
+                    parts.append(f"MAY ( {may_str} )")
+            else:
+                parts.append(f"MAY {oc_data.may}")
+
+        # X-ORIGIN with restoration
+        x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
+            oc_data, restore_format=True  # type: ignore[arg-type]
+        )
+        if x_origin_part:
+            parts.append(x_origin_part)
+
+        parts.append(")")
+
+        # Trailing spaces restoration
+        FlextLdifUtilitiesSchema._apply_trailing_spaces(oc_data, parts)  # type: ignore[arg-type]
 
         return parts
 
@@ -989,7 +1432,10 @@ class FlextLdifUtilitiesSchema:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
             if FlextRuntime.is_list_like(oc_data.sup):
-                sup_list_str = cast("list[str]", oc_data.sup)
+                if not isinstance(oc_data.sup, list):
+                    msg = f"Expected list, got {type(oc_data.sup)}"
+                    raise TypeError(msg)
+                sup_list_str: list[str] = [str(item) for item in oc_data.sup]
                 if len(sup_list_str) == 1:
                     parts.append(f"SUP {sup_list_str[0]}")
                 else:
@@ -1006,7 +1452,10 @@ class FlextLdifUtilitiesSchema:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
             if FlextRuntime.is_list_like(oc_data.must):
-                must_list_str = cast("list[str]", oc_data.must)
+                if not isinstance(oc_data.must, list):
+                    msg = f"Expected list, got {type(oc_data.must)}"
+                    raise TypeError(msg)
+                must_list_str: list[str] = [str(item) for item in oc_data.must]
                 if len(must_list_str) == 1:
                     parts.append(f"MUST {must_list_str[0]}")
                 else:
@@ -1017,7 +1466,10 @@ class FlextLdifUtilitiesSchema:
 
         if oc_data.may:
             if FlextRuntime.is_list_like(oc_data.may):
-                may_list_str = cast("list[str]", oc_data.may)
+                if not isinstance(oc_data.may, list):
+                    msg = f"Expected list, got {type(oc_data.may)}"
+                    raise TypeError(msg)
+                may_list_str: list[str] = [str(item) for item in oc_data.may]
                 if len(may_list_str) == 1:
                     parts.append(f"MAY {may_list_str[0]}")
                 else:
@@ -1206,6 +1658,78 @@ class FlextLdifUtilitiesSchema:
             FlextLdifUtilitiesSchema.normalize_attribute_name(attr) == normalized_input
             for attr in attribute_list
         )
+
+    @staticmethod
+    def find_missing_attributes(
+        attr_list: list[str] | list[object] | str | None,
+        available_attributes: set[str],
+    ) -> list[str]:
+        """Find attributes missing from available set.
+
+        Generic helper for validating MUST/MAY attribute dependencies.
+
+        Args:
+            attr_list: List of attribute names or single name
+            available_attributes: Set of available attributes
+
+        Returns:
+            List of missing attribute names
+
+        """
+        if not attr_list:
+            return []
+
+        # Normalize to list of strings
+        if isinstance(attr_list, str):
+            attrs = [attr_list]
+        elif isinstance(attr_list, list):
+            attrs = [str(a) for a in attr_list]
+        else:
+            return []
+
+        return [
+            a for a in attrs
+            if not FlextLdifUtilitiesSchema.is_attribute_in_list(a, available_attributes)
+        ]
+
+    @staticmethod
+    def validate_objectclass_dependencies(
+        oc_name: str | None,
+        oc_oid: str | None,
+        must_attrs: list[str] | list[object] | str | None,
+        may_attrs: list[str] | list[object] | str | None,
+        available_attributes: set[str],
+    ) -> tuple[bool, list[str]]:
+        """Validate objectclass attribute dependencies.
+
+        Checks if all MUST and MAY attributes exist in available set.
+
+        Args:
+            oc_name: ObjectClass name
+            oc_oid: ObjectClass OID
+            must_attrs: Required attributes list
+            may_attrs: Optional attributes list
+            available_attributes: Set of available attribute names
+
+        Returns:
+            Tuple of (is_valid, missing_attributes)
+
+        """
+        if not oc_name or not oc_oid:
+            return False, []
+
+        missing: list[str] = []
+        missing.extend(
+            FlextLdifUtilitiesSchema.find_missing_attributes(
+                must_attrs, available_attributes
+            )
+        )
+        missing.extend(
+            FlextLdifUtilitiesSchema.find_missing_attributes(
+                may_attrs, available_attributes
+            )
+        )
+        return len(missing) == 0, missing
 
 
 __all__ = [

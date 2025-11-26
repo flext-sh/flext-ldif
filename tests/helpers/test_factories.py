@@ -31,11 +31,11 @@ class EntryTemplate:
     dn_template: str
     base_attrs: dict[str, str | list[str]]
     variations: dict[str, dict[str, str | list[str]]] = dataclasses.field(
-        default_factory=dict
+        default_factory=dict,
     )
 
     def create(
-        self, variation: str = "default", **overrides: str | list[str]
+        self, variation: str = "default", **overrides: str | list[str],
     ) -> dict[str, str | list[str]]:
         """Create entry data with variation and overrides."""
         attrs = self.base_attrs.copy()

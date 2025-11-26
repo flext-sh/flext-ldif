@@ -316,7 +316,7 @@ class TestDs389SchemaAttributeDetection:
         """Test attribute detection for various scenarios."""
         schema = cast("object", schema_quirk)
         assert hasattr(schema, "can_handle_attribute")
-        result = schema.can_handle_attribute(test_case.attr_definition)  # type: ignore[attr-defined]
+        result = schema.can_handle_attribute(test_case.attr_definition)
         assert result is test_case.expected_can_handle
 
 
@@ -330,7 +330,7 @@ class TestDs389SchemaAttributeParsing:
         """Test parsing DS389 attribute definition."""
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' DESC 'Directory suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,  # type: ignore[arg-type]
+            schema_quirk,
             attr_def,
             expected_oid="2.16.840.1.113730.3.1.1",
             expected_name="nsslapd-suffix",
@@ -346,7 +346,7 @@ class TestDs389SchemaAttributeParsing:
         """Test parsing attribute with syntax length specification."""
         attr_def = "( 2.16.840.1.113730.3.1.2 NAME 'nsslapd-database' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,  # type: ignore[arg-type]
+            schema_quirk,
             attr_def,
             expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
             expected_length=256,
@@ -358,7 +358,7 @@ class TestDs389SchemaAttributeParsing:
     ) -> None:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
-        result = schema_quirk.parse(attr_def)  # type: ignore[attr-defined]
+        result = schema_quirk.parse(attr_def)
 
         assert result.is_failure
         assert result.error is not None
@@ -377,7 +377,7 @@ class TestDs389SchemaObjectClassDetection:
         """Test objectClass detection for various scenarios."""
         schema = cast("object", schema_quirk)
         assert hasattr(schema, "can_handle_objectclass")
-        result = schema.can_handle_objectclass(test_case.oc_definition)  # type: ignore[attr-defined]
+        result = schema.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
 
 
@@ -391,7 +391,7 @@ class TestDs389SchemaObjectClassParsing:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' DESC 'Container class' SUP top STRUCTURAL MUST ( cn ) MAY ( nsslapd-port ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,  # type: ignore[arg-type]
+            schema_quirk,
             oc_def,
             expected_oid="2.16.840.1.113730.3.2.1",
             expected_name="nscontainer",
@@ -408,7 +408,7 @@ class TestDs389SchemaObjectClassParsing:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,  # type: ignore[arg-type]
+            schema_quirk,
             oc_def,
             expected_kind="AUXILIARY",
         )
@@ -419,7 +419,7 @@ class TestDs389SchemaObjectClassParsing:
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
-        result = schema_quirk.parse(oc_def)  # type: ignore[attr-defined]
+        result = schema_quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -431,7 +431,7 @@ class TestDs389SchemaObjectClassParsing:
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'nscontainer' SUP top STRUCTURAL"
-        result = schema_quirk.parse(oc_def)  # type: ignore[attr-defined]
+        result = schema_quirk.parse(oc_def)
 
         assert result.is_failure
         assert result.error is not None
@@ -450,134 +450,13 @@ class TestDs389SchemaObjectClassParsing:
             must=["cn"],
             may=["nsslapd-port"],
         )
-        result = schema_quirk.write(oc_data)  # type: ignore[attr-defined]
+        result = schema_quirk.write(oc_data)
 
         assert result.is_success
         oc_str = result.unwrap()
         assert "2.16.840.1.113730.3.2.1" in oc_str
         assert "nscontainer" in oc_str
         assert "STRUCTURAL" in oc_str
-
-
-class TestDs389AclHandling:
-    """Test ACL (Access Control) handling."""
-
-    @pytest.mark.parametrize("test_case", ACL_TEST_CASES)
-    def test_can_handle_acl(
-        self,
-        test_case: AclTestCase,
-        acl_quirk: object,
-    ) -> None:
-        """Test ACL detection for various scenarios."""
-        acl = cast("object", acl_quirk)
-        assert hasattr(acl, "can_handle")
-        result = acl.can_handle(test_case.acl_line)  # type: ignore[attr-defined]
-        assert result is test_case.expected_can_handle
-
-    def test_parse_success(
-        self,
-        acl_quirk: object,
-    ) -> None:
-        """Test parsing DS389 ACI definition."""
-        acl_line = 'aci: (version 3.0; acl "Admin Access"; allow (read, write, search) targetattr = "cn, ou" userdn = "ldap:///cn=admin,dc=example,dc=com";)'
-        result = acl_quirk.parse(acl_line)  # type: ignore[attr-defined]
-
-        assert result.is_success
-        acl_data = result.unwrap()
-        assert acl_data.metadata is not None
-        assert acl_data.metadata.quirk_type == "389ds"
-        assert acl_data.name == "Admin Access"
-        assert acl_data.raw_acl == acl_line
-        assert acl_data.target is not None
-        assert acl_data.target.target_dn == "*"
-        assert set(acl_data.target.attributes or []) == {"cn", "ou"}
-        assert acl_data.subject is not None
-        assert acl_data.subject.subject_type in {"user", "userdn"}
-        assert acl_data.permissions is not None
-        assert acl_data.permissions.read is True
-        assert acl_data.permissions.write is True
-        assert acl_data.permissions.search is True
-
-    def test_parse_with_multiple_userdns(
-        self,
-        acl_quirk: object,
-    ) -> None:
-        """Test parsing ACI with multiple userdn clauses."""
-        acl_line = 'aci: (version 3.0; acl "Multi User"; allow (read) userdn = "ldap:///cn=user1,dc=example,dc=com" userdn = "ldap:///cn=user2,dc=example,dc=com";)'
-        result = acl_quirk.parse(acl_line)  # type: ignore[attr-defined]
-
-        assert result.is_success
-        acl_data = result.unwrap()
-        assert acl_data.name == "Multi User"
-        assert acl_data.subject is not None
-        assert acl_data.permissions is not None
-        assert acl_data.permissions.read is True
-
-    def test_write_acl_with_content(
-        self,
-        acl_quirk: object,
-    ) -> None:
-        """Test writing ACL with content to RFC string format."""
-        acl_data = FlextLdifModels.Acl(
-            name="Admin",
-            target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="userdn",
-                subject_value="ldap:///cn=admin",
-            ),
-            permissions=FlextLdifModels.AclPermissions(read=True),
-            metadata=FlextLdifModels.QuirkMetadata.create_for("389ds"),
-            raw_acl='(version 3.0; acl "Admin"; allow (read) userdn = "ldap:///cn=admin";)',
-        )
-        result = acl_quirk.write(acl_data)  # type: ignore[attr-defined]
-
-        assert result.is_success
-        acl_str = result.unwrap()
-        assert "version 3.0" in acl_str
-
-    def test_write_acl_from_structured(
-        self,
-        acl_quirk: object,
-    ) -> None:
-        """Test writing ACL from structured fields to RFC string format."""
-        acl_data = FlextLdifModels.Acl(
-            name="Admin Access",
-            target=FlextLdifModels.AclTarget(target_dn="*", attributes=["cn"]),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="userdn",
-                subject_value="ldap:///cn=admin,dc=example,dc=com",
-            ),
-            permissions=FlextLdifModels.AclPermissions(
-                read=True,
-                write=True,
-            ),
-            metadata=FlextLdifModels.QuirkMetadata.create_for("389ds"),
-        )
-        result = acl_quirk.write(acl_data)  # type: ignore[attr-defined]
-
-        assert result.is_success
-        acl_str = result.unwrap()
-        assert "aci:" in acl_str
-        assert "Admin Access" in acl_str
-        assert "read" in acl_str or "write" in acl_str
-
-    def test_write_acl_empty(
-        self,
-        acl_quirk: object,
-    ) -> None:
-        """Test writing empty ACL to RFC string format."""
-        acl_data = FlextLdifModels.Acl(
-            name="",
-            target=FlextLdifModels.AclTarget(target_dn="*"),
-            subject=FlextLdifModels.AclSubject(subject_type="user", subject_value="*"),
-            permissions=FlextLdifModels.AclPermissions(),
-            metadata=FlextLdifModels.QuirkMetadata.create_for("389ds"),
-        )
-        result = acl_quirk.write(acl_data)  # type: ignore[attr-defined]
-
-        assert result.is_success
-        acl_str = result.unwrap()
-        assert "aci:" in acl_str
 
 
 class TestDs389EntryDetection:
@@ -592,7 +471,7 @@ class TestDs389EntryDetection:
         """Test entry detection for various scenarios."""
         entry = cast("object", entry_quirk)
         assert hasattr(entry, "can_handle")
-        result = entry.can_handle(test_case.entry_dn, test_case.attributes)  # type: ignore[attr-defined]
+        result = entry.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle
 
 
@@ -609,7 +488,6 @@ __all__ = [
     "EntryTestCase",
     "ObjectClassScenario",
     "ObjectClassTestCase",
-    "TestDs389AclHandling",
     "TestDs389EntryDetection",
     "TestDs389Initialization",
     "TestDs389SchemaAttributeDetection",

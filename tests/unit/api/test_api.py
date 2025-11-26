@@ -1,4 +1,9 @@
-"""Comprehensive test suite for FlextLdif API operations and functionality.
+"""Test suite for FlextLdif API Operations.
+
+Modules tested: FlextLdif
+Scope: Core parsing operations, server-specific quirk handling, advanced parsing features,
+LDIF writing, entry and schema validation, migration pipelines, filtering, categorization,
+transformation, statistics, structure analysis, entry building, batch processing
 
 This module tests the complete FlextLdif API surface including:
 - Core parsing operations (string, file, Path inputs)
@@ -34,9 +39,9 @@ from flext_ldif import (
     FlextLdifConstants,
     FlextLdifModels,
 )
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 # ============================================================================
 # TEST SCENARIO ENUMS - Semantic test categorization
@@ -408,25 +413,22 @@ class TestAPIParsingOperations:
     ) -> None:
         """Test parse() with parametrized inputs and server types."""
         if test_case.input_type == InputType.STRING:
-            RfcTestHelpers.test_api_parse_and_assert(
-                api,
-                test_case.content,
-                expected_count=test_case.expected_count,
-            )
+            result = api.parse(test_case.content)
+            assert result.is_success, f"Parse failed: {result.error}"
+            entries = result.unwrap()
+            assert len(entries) == test_case.expected_count
         elif test_case.input_type == InputType.FILE:
             ldif_file = tmp_path / "test.ldif"
             ldif_file.write_text(test_case.content)
-            RfcTestHelpers.test_api_parse_and_assert(
-                api,
-                ldif_file,
-                expected_count=test_case.expected_count,
-            )
+            result = api.parse(ldif_file)
+            assert result.is_success, f"Parse failed: {result.error}"
+            entries = result.unwrap()
+            assert len(entries) == test_case.expected_count
         elif test_case.input_type == InputType.EMPTY:
-            RfcTestHelpers.test_api_parse_and_assert(
-                api,
-                test_case.content,
-                expected_count=test_case.expected_count,
-            )
+            result = api.parse(test_case.content)
+            assert result.is_success, f"Parse failed: {result.error}"
+            entries = result.unwrap()
+            assert len(entries) == test_case.expected_count
 
     def test_parse_with_comments_and_line_folding(self, api: FlextLdif) -> None:
         """Test parse() handles comments and line folding."""
@@ -438,11 +440,10 @@ objectClass: {Names.PERSON}
 description: This is a long description that
  continues on the next line with proper line folding
 """
-        RfcTestHelpers.test_api_parse_and_assert(
-            api,
-            content,
-            expected_count=1,
-        )
+        result = api.parse(content)
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 1
 
     def test_parse_with_multiple_attribute_values(self, api: FlextLdif) -> None:
         """Test parse() with multiple values for single attribute."""
@@ -453,19 +454,16 @@ mail: {Values.MAIL_VALUES[1]}
 mail: {Values.MAIL_VALUES[2]}
 objectClass: {Names.PERSON}
 """
-        entries = RfcTestHelpers.test_api_parse_and_assert(
-            api,
-            content,
-            expected_count=1,
-        )
+        result = api.parse(content)
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 1
         if entries and entries[0].attributes:
             assert "mail" in entries[0].attributes.attributes
 
     def test_parse_multiple_entries_with_changetype(self, api: FlextLdif) -> None:
         """Test parse() with multiple entries and changetype operations."""
-        RfcTestHelpers.test_api_parse_and_assert(
-            api,
-            f"""dn: cn=First,{DNs.EXAMPLE}
+        content = f"""dn: cn=First,{DNs.EXAMPLE}
 cn: First
 objectClass: person
 
@@ -476,15 +474,15 @@ objectClass: person
 dn: cn=Third,{DNs.EXAMPLE}
 cn: Third
 objectClass: person
-""",
-            expected_count=3,
-        )
+"""
+        result = api.parse(content)
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 3
 
     def test_parse_with_changetype_operations(self, api: FlextLdif) -> None:
         """Test parse() with changetype operations."""
-        RfcTestHelpers.test_api_parse_and_assert(
-            api,
-            f"""dn: cn=Test,{DNs.EXAMPLE}
+        content = f"""dn: cn=Test,{DNs.EXAMPLE}
 changetype: add
 cn: Test
 objectClass: person
@@ -493,9 +491,11 @@ dn: cn=Other,{DNs.EXAMPLE}
 changetype: modify
 cn: Other
 objectClass: person
-""",
-            expected_count=2,
-        )
+"""
+        result = api.parse(content)
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 2
 
     def test_parse_nonexistent_file_fails(self, api: FlextLdif) -> None:
         """Test parse() fails with nonexistent file."""
@@ -643,11 +643,11 @@ class TestAPIWritingOperations:
         sample_write_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test write() produces properly formatted LDIF."""
-        RfcTestHelpers.test_api_write_and_assert(
-            api,
-            sample_write_entries,
-            must_contain=["dn:", "version:"],
-        )
+        result = api.write(sample_write_entries)
+        assert result.is_success, f"Write failed: {result.error}"
+        ldif_string = result.unwrap()
+        assert "dn:" in ldif_string
+        assert "version:" in ldif_string
 
 
 class TestAPIEntryManipulation:
@@ -755,7 +755,7 @@ class TestAPIValidationAndFiltering:
     @pytest.fixture
     def validation_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for validation testing."""
-        entries: list[FlextLdifModels.Entry] = []
+        entries: list[FlextLdifModels.Entry | FlextLdifModelsDomains.Entry] = []
 
         # First entry - valid
         entry1_result = FlextLdifModels.Entry.create(
@@ -767,7 +767,10 @@ class TestAPIValidationAndFiltering:
             },
         )
         if entry1_result.is_success:
-            entries.append(entry1_result.unwrap())
+            # Entry.create returns domain Entry which is compatible with facade Entry
+            # (FlextLdifModels.Entry inherits from FlextLdifModelsDomains.Entry)
+            entry1 = entry1_result.unwrap()
+            entries.append(entry1)
 
         # Second entry - also valid
         entry2_result = FlextLdifModels.Entry.create(
@@ -779,9 +782,13 @@ class TestAPIValidationAndFiltering:
             },
         )
         if entry2_result.is_success:
-            entries.append(entry2_result.unwrap())
+            # Entry.create returns domain Entry which is compatible with facade Entry
+            # (FlextLdifModels.Entry inherits from FlextLdifModelsDomains.Entry)
+            entry2 = entry2_result.unwrap()
+            entries.append(entry2)
 
-        return entries
+        # Convert to facade Entry list for return type
+        return [FlextLdifModels.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
 
     def test_validate_entries_with_valid_entries(
         self,
@@ -907,11 +914,11 @@ class TestAPIConversionAndMigration:
         migration_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test writing entries to LDIF string."""
-        RfcTestHelpers.test_api_write_and_assert(
-            api,
-            migration_entries,
-            must_contain=["dn:", "version:"],
-        )
+        result = api.write(migration_entries)
+        assert result.is_success, f"Write failed: {result.error}"
+        ldif_string = result.unwrap()
+        assert "dn:" in ldif_string
+        assert "version:" in ldif_string
 
     def test_parse_ldif_string(self, api: FlextLdif) -> None:
         """Test parsing LDIF string."""
@@ -919,7 +926,10 @@ class TestAPIConversionAndMigration:
 cn: Test
 objectClass: person
 """
-        RfcTestHelpers.test_api_parse_and_assert(api, ldif_content, expected_count=1)
+        result = api.parse(ldif_content)
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 1
 
     def test_create_entry_validation(self, api: FlextLdif) -> None:
         """Test create_entry validates required parameters."""

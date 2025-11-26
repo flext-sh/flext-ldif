@@ -1,7 +1,23 @@
 """Test suite for FlextLdifConfig Pydantic validators.
 
-Modules tested: FlextLdifConfig (field validators for encoding, server_type, line_separators, version_string)
-Scope: RFC 2849 compliance validation, Pydantic v2 @field_validator patterns, cross-field model_validator testing
+Tests validate that FlextLdifConfig models:
+1. Validate encoding, server_type, line_separators, version_string fields
+2. Use field_validator and model_validator correctly (Pydantic v2)
+3. Enforce RFC 2849 compliance for line separators and version strings
+4. Validate cross-field consistency for quirks_detection_mode
+
+Modules tested:
+- flext_ldif.config.FlextLdifConfig (field validators)
+- flext_ldif.config.FlextLdifConfig (model validators)
+
+Scope:
+- RFC 2849 compliance validation
+- Pydantic v2 @field_validator patterns
+- Cross-field model_validator testing
+- Encoding validation
+- Server type validation
+- Line separator validation
+- Version string validation
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,7 +26,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, Literal
 
 import pytest
 from pydantic import ValidationError
@@ -84,13 +100,6 @@ class TestFlextLdifConfigValidators:
         AUTO_WITH_NONE_SERVER_TYPE = "auto_with_none_server_type"
         DISABLED_WITH_NONE_SERVER_TYPE = "disabled_with_none_server_type"
 
-    class DetectionMode(StrEnum):
-        """Valid detection modes for quirks_detection_mode field."""
-
-        MANUAL = "manual"
-        AUTO = "auto"
-        DISABLED = "disabled"
-
     # ═══════════════════════════════════════════════════════════════════════════
     # TEST DATA MAPPINGS
     # ═══════════════════════════════════════════════════════════════════════════
@@ -138,24 +147,26 @@ class TestFlextLdifConfigValidators:
         VersionStringScenario.EMPTY_INVALID: ("", False),
     }
 
-    MODEL_VALIDATOR_TEST_DATA: ClassVar[dict[str, tuple[str, str | None, bool]]] = {
+    MODEL_VALIDATOR_TEST_DATA: ClassVar[
+        dict[str, tuple[Literal["auto", "manual", "disabled"], str | None, bool]]
+    ] = {
         ModelValidatorScenario.MANUAL_WITH_SERVER_TYPE: (
-            DetectionMode.MANUAL,
+            "manual",
             "oud",
             True,
         ),
         ModelValidatorScenario.MANUAL_WITHOUT_SERVER_TYPE: (
-            DetectionMode.MANUAL,
+            "manual",
             None,
             False,
         ),
         ModelValidatorScenario.AUTO_WITH_NONE_SERVER_TYPE: (
-            DetectionMode.AUTO,
+            "auto",
             None,
             True,
         ),
         ModelValidatorScenario.DISABLED_WITH_NONE_SERVER_TYPE: (
-            DetectionMode.DISABLED,
+            "disabled",
             None,
             True,
         ),
@@ -281,23 +292,26 @@ class TestFlextLdifConfigValidators:
     def test_model_validator_quirks_consistency(
         self,
         scenario: str,
-        mode: str,
+        mode: Literal["auto", "manual", "disabled"],
         server_type: str | None,
         should_succeed: bool,
     ) -> None:
-        """Test cross-field model_validator for quirks_detection_mode consistency."""
-        detection_mode = cast("Literal['auto', 'manual', 'disabled']", mode)
+        """Test cross-field model_validator for quirks_detection_mode consistency.
+
+        mode uses Literal type matching FlextLdifConstants.LiteralTypes.DetectionMode.
+        Pydantic validates the value at runtime.
+        """
         if should_succeed:
             config = FlextLdifConfig(
-                quirks_detection_mode=detection_mode,
+                quirks_detection_mode=mode,
                 quirks_server_type=server_type,
             )
-            assert config.quirks_detection_mode == detection_mode
+            assert config.quirks_detection_mode == mode
             assert config.quirks_server_type == server_type
         else:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
-                    quirks_detection_mode=detection_mode,
+                    quirks_detection_mode=mode,
                     quirks_server_type=server_type,
                 )
             error_str = str(exc_info.value).lower()

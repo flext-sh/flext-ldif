@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -135,7 +135,15 @@ class TestRealLdapBatchOperations:
                 objectclasses=["inetOrgPerson", "person", "top"],
             )
             if result.is_success:
-                entries.append(result.unwrap())
+                unwrapped_entry = result.unwrap()
+                # Convert domain Entry to facade Entry if needed
+                if isinstance(unwrapped_entry, FlextLdifModels.Entry):
+                    entries.append(unwrapped_entry)
+                else:
+                    # Convert domain Entry to facade Entry
+                    entry_dict = unwrapped_entry.model_dump()
+                    facade_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                    entries.append(facade_entry)
 
         assert len(entries) == 20
 
@@ -234,7 +242,15 @@ class TestRealLdapBatchOperations:
                 metadata=None,
             )
             assert result.is_success
-            entries.append(result.unwrap())
+            unwrapped_entry = result.unwrap()
+            # Convert domain Entry to facade Entry if needed
+            if isinstance(unwrapped_entry, FlextLdifModels.Entry):
+                entries.append(unwrapped_entry)
+            else:
+                # Convert domain Entry to facade Entry
+                entry_dict = unwrapped_entry.model_dump()
+                facade_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                entries.append(facade_entry)
 
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write(entries, export_file)

@@ -1,9 +1,14 @@
-"""Unit tests for LDIF ACL utilities.
+"""Test suite for LDIF ACL Utilities.
+
+Modules tested: FlextLdifModels (AclTarget, AclSubject, AclPermissions, Acl)
+Scope: ACL component creation, unified ACL creation, error handling,
+type validation, server type variations
 
 Tests cover:
 - ComponentFactory.create_acl_components()
 - ComponentFactory.create_unified_acl() with various server types
 - Error handling and type validation
+Uses parametrized tests and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

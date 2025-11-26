@@ -122,11 +122,12 @@ portable_entries = result.unwrap()
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import LdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -364,7 +365,9 @@ class FlextLdifEntry(LdifServiceBase):
         for entry in self.entries:
             result = self.remove_operational_attributes_single(entry)
             if result.is_failure:
-                return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    result.error or "Unknown error",
+                )
             adapted_entries.append(result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
@@ -405,13 +408,26 @@ class FlextLdifEntry(LdifServiceBase):
         if not entry.dn:
             return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
 
-        adapted_entry_result = cast(
-            "FlextResult[FlextLdifModels.Entry]",
-            FlextLdifModels.Entry.create(
-                dn=entry.dn,
-                attributes=ldif_attributes,
-            ),
+        create_result = FlextLdifModels.Entry.create(
+            dn=entry.dn,
+            attributes=ldif_attributes,
         )
+        if create_result.is_failure:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                create_result.error or "Unknown error",
+            )
+        # Entry.create() already returns FlextLdifModels.Entry
+        # Convert domain Entry to public Entry if needed
+        internal_entry = create_result.unwrap()
+        if isinstance(internal_entry, FlextLdifModelsDomains.Entry) and not isinstance(
+            internal_entry, FlextLdifModels.Entry
+        ):
+            entry_public = FlextLdifModels.Entry.model_validate(
+                internal_entry.model_dump()
+            )
+        else:
+            entry_public = internal_entry
+        adapted_entry_result = FlextResult[FlextLdifModels.Entry].ok(entry_public)
 
         if adapted_entry_result.is_failure:
             error_msg = f"Failed to adapt entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {adapted_entry_result.error}"
@@ -432,7 +448,9 @@ class FlextLdifEntry(LdifServiceBase):
         for entry in self.entries:
             result = self.remove_attributes_single(entry, self.attributes_to_remove)
             if result.is_failure:
-                return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    result.error or "Unknown error",
+                )
             adapted_entries.append(result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
@@ -514,7 +532,7 @@ class FlextLdifEntry(LdifServiceBase):
         if not isinstance(marked_attrs_raw, dict):
             return entry
 
-        marked_attrs = cast("dict[str, dict[str, object]]", marked_attrs_raw)
+        marked_attrs: dict[str, dict[str, object]] = marked_attrs_raw
         if not marked_attrs:
             return entry
 
@@ -589,9 +607,13 @@ class FlextLdifEntry(LdifServiceBase):
             metadata=new_metadata,
         )
 
-        # Cast result to public Entry type (create returns domain Entry, we need public Entry)
+        # Type narrowing: create returns Entry, unwrap() returns Entry when is_success
         if result.is_success:
-            return cast("FlextLdifModels.Entry", result.unwrap())
+            entry_unwrapped = result.unwrap()
+            if not isinstance(entry_unwrapped, FlextLdifModels.Entry):
+                msg = f"Expected Entry, got {type(entry_unwrapped)}"
+                raise TypeError(msg)
+            return entry_unwrapped
         return entry
 
 

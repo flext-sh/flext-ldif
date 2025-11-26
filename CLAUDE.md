@@ -19,6 +19,11 @@
 - ✅ Coverage: 78% (1861 uncovered lines)
 - ✅ Mock Tests: 0 remaining (all use REAL implementations)
 
+**Server Implementation Status** (see [SERVER_IMPLEMENTATIONS.md](SERVER_IMPLEMENTATIONS.md)):
+- ✅ **RFC Stub Servers** (Detection + RFC Baseline): Apache, 389DS, Novell, Tivoli, AD - **174 tests passing**
+- ✅ **Real Implementations**: OpenLDAP 2.x (olc* format), OpenLDAP 1.x, OID, OUD
+- ✅ **Tests**: All stub servers 100% passing. OpenLDAP fixture tests blocked by RFC refactoring (other agents)
+
 ---
 
 ## Architecture

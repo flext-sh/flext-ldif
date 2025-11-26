@@ -55,7 +55,7 @@ def session_id() -> str:
 
 @pytest.fixture
 def unique_dn_suffix(
-    worker_id: str, session_id: str, request: pytest.FixtureRequest
+    worker_id: str, session_id: str, request: pytest.FixtureRequest,
 ) -> str:
     """Generate unique DN suffix using factory pattern."""
     return conftest_instance.unique_dn_suffix(worker_id, session_id, request)
@@ -63,7 +63,7 @@ def unique_dn_suffix(
 
 @pytest.fixture
 def make_user_dn(
-    unique_dn_suffix: str, ldap_container: dict[str, object]
+    unique_dn_suffix: str, ldap_container: dict[str, object],
 ) -> Callable[[str], str]:
     """Factory for unique user DNs."""
     return conftest_instance.make_user_dn(unique_dn_suffix, ldap_container)
@@ -71,7 +71,7 @@ def make_user_dn(
 
 @pytest.fixture
 def make_group_dn(
-    unique_dn_suffix: str, ldap_container: dict[str, object]
+    unique_dn_suffix: str, ldap_container: dict[str, object],
 ) -> Callable[[str], str]:
     """Factory for unique group DNs."""
     return conftest_instance.make_group_dn(unique_dn_suffix, ldap_container)
@@ -79,7 +79,7 @@ def make_group_dn(
 
 @pytest.fixture
 def make_test_base_dn(
-    unique_dn_suffix: str, ldap_container: dict[str, object]
+    unique_dn_suffix: str, ldap_container: dict[str, object],
 ) -> Callable[[str], str]:
     """Factory for unique base DNs."""
     return conftest_instance.make_test_base_dn(unique_dn_suffix, ldap_container)
@@ -105,7 +105,7 @@ def reset_flextldif_singleton() -> Generator[None]:
 
 @pytest.fixture(scope="session")
 def ldap_container(
-    docker_control: FlextTestDocker, worker_id: str
+    docker_control: FlextTestDocker, worker_id: str,
 ) -> dict[str, object]:
     """Session-scoped LDAP container configuration."""
     return conftest_instance.ldap_container(docker_control, worker_id)
@@ -124,7 +124,9 @@ def ldap_connection(ldap_container: dict[str, object]) -> Generator[object]:
 
 
 @pytest.fixture
-def clean_test_ou(ldap_connection: object, make_test_base_dn: object) -> Generator[object]:
+def clean_test_ou(
+    ldap_connection: object, make_test_base_dn: object,
+) -> Generator[object]:
     """Create and clean isolated test OU."""
     yield from conftest_instance.clean_test_ou(ldap_connection, make_test_base_dn)
 
@@ -273,7 +275,7 @@ def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str,
 
 @pytest.fixture
 def flext_result_composition_helper() -> Callable[
-    [list[FlextResult[object]]], dict[str, object]
+    [list[FlextResult[object]]], dict[str, object],
 ]:
     """Result composition helper."""
     return conftest_instance.flext_result_composition_helper()
@@ -442,7 +444,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
+    config: pytest.Config, items: list[pytest.Item],
 ) -> None:
     """Filter test items."""
     conftest_instance.pytest_collection_modifyitems(config, items)

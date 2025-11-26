@@ -140,7 +140,7 @@ class TestFixtureDiscoveryValidation:
         return self.Helpers.create_parser()
 
     def test_discovery_comprehensive(
-        self, discovery: FlextLdifFixtureDiscovery
+        self, discovery: FlextLdifFixtureDiscovery,
     ) -> None:
         """Test comprehensive fixture discovery across all categories using mapping validation."""
         fixtures = discovery.discover_all()
@@ -226,7 +226,7 @@ class TestFixtureDiscoveryValidation:
         assert expected["count"] == expected_count
 
     def test_fixture_parsing_roundtrip(
-        self, discovery: FlextLdifFixtureDiscovery, ldif_parser: FlextLdif
+        self, discovery: FlextLdifFixtureDiscovery, ldif_parser: FlextLdif,
     ) -> None:
         """Test complete fixture parsing and roundtrip validation using domain helpers."""
         # Use first RFC fixture for roundtrip test
@@ -247,7 +247,7 @@ class TestFixtureDiscoveryValidation:
         expected_count = expected.get("count", 0)
         # Assert success and get entries
         parsed_entries = TestAssertions.assert_success(
-            parse_result, "Parse should succeed"
+            parse_result, "Parse should succeed",
         )
         assert isinstance(parsed_entries, list), (
             "Parse result should be list of entries"
@@ -259,7 +259,7 @@ class TestFixtureDiscoveryValidation:
         # Validate roundtrip preserves structure
         if parsed_entries:
             TestAssertions.assert_roundtrip_preserves(
-                [parsed_entries[0]], [parsed_entries[0]]
+                [parsed_entries[0]], [parsed_entries[0]],
             )
 
         # Compare with expected results using discovery's comparison
@@ -267,7 +267,7 @@ class TestFixtureDiscoveryValidation:
         assert comparison is not None, "Comparison should return results"
 
     def test_multivalue_fixture_handling(
-        self, discovery: FlextLdifFixtureDiscovery
+        self, discovery: FlextLdifFixtureDiscovery,
     ) -> None:
         """Test multivalue attribute fixtures with advanced validation using helpers."""
         category, fixture_name = Fixtures.RFC, "multivalue_long"
@@ -316,7 +316,7 @@ class TestFixtureDiscoveryValidation:
                 )
 
     def test_server_specific_fixtures(
-        self, discovery: FlextLdifFixtureDiscovery
+        self, discovery: FlextLdifFixtureDiscovery,
     ) -> None:
         """Test server-specific fixture discovery using mapping iteration."""
         server_fixtures = [
@@ -366,7 +366,7 @@ class TestFixtureDiscoveryValidation:
                 )
 
     def test_broken_fixtures_validation(
-        self, discovery: FlextLdifFixtureDiscovery
+        self, discovery: FlextLdifFixtureDiscovery,
     ) -> None:
         """Test broken/error condition fixtures using generic validation."""
         broken_fixtures = [

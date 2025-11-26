@@ -1,4 +1,14 @@
-"""Test FlextLdifUtilities.Constants module."""
+"""Test suite for FlextLdifUtilities.Constants module.
+
+Modules tested: FlextLdifUtilities.Constants (get_valid_values, is_valid, validate_many)
+Scope: Validates constants utilities for server types, encodings, and other categories.
+Tests parametrized scenarios for getting valid values, validating single values, and
+validating multiple values. Includes tests for unknown categories and case-insensitive
+validation.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -164,7 +174,14 @@ class TestFlextLdifUtilitiesConstants:
     # =======================================================================
 
     @pytest.mark.parametrize(
-        ("scenario", "test_type", "value", "category", "expected_result", "should_raise"),
+        (
+            "scenario",
+            "test_type",
+            "value",
+            "category",
+            "expected_result",
+            "should_raise",
+        ),
         [
             (name, data[0], data[1], data[2], data[3], data[4])
             for name, data in IS_VALID_DATA.items()
@@ -191,7 +208,14 @@ class TestFlextLdifUtilitiesConstants:
     # =======================================================================
 
     @pytest.mark.parametrize(
-        ("scenario", "test_type", "values", "category", "expected_valid", "should_raise"),
+        (
+            "scenario",
+            "test_type",
+            "values",
+            "category",
+            "expected_valid",
+            "should_raise",
+        ),
         [
             (name, data[0], data[1], data[2], data[3], data[4])
             for name, data in VALIDATE_MANY_DATA.items()
@@ -212,7 +236,7 @@ class TestFlextLdifUtilitiesConstants:
                 FlextLdifUtilities.Constants.validate_many(values, category)
         else:
             is_valid, invalid = FlextLdifUtilities.Constants.validate_many(
-                values, category
+                values, category,
             )
             assert is_valid == expected_valid
             if not expected_valid:

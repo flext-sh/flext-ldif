@@ -183,7 +183,7 @@ class TestFlextLdifServerQuirkRetrieval:
         # The result depends on the server type and line content
         try:
             registry.find_acl_for_line(
-                FlextLdifConstants.LdapServers.OPENLDAP_1, "test line"
+                FlextLdifConstants.LdapServers.OPENLDAP_1, "test line",
             )
             # If we got here, the method works
         except AttributeError as e:

@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.base import LdifServiceBase
@@ -313,8 +311,15 @@ class FlextLdifEntries(
             )
 
             if create_result.is_success:
-                # Cast to ensure type compatibility between FlextLdifModelsDomains.Entry and FlextLdifModels.Entry
-                return cast("FlextResult[FlextLdifModels.Entry]", create_result)
+                # Type narrowing: convert internal Entry to public Entry
+                entry_unwrapped = create_result.unwrap()
+                if not isinstance(entry_unwrapped, FlextLdifModels.Entry):
+                    entry_public = FlextLdifModels.Entry.model_validate(
+                        entry_unwrapped.model_dump(),
+                    )
+                else:
+                    entry_public = entry_unwrapped
+                return FlextResult[FlextLdifModels.Entry].ok(entry_public)
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Failed to create entry: {create_result.error}",
             )

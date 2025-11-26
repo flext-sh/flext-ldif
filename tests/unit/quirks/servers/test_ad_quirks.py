@@ -1,4 +1,10 @@
-"""Tests for Active Directory quirks implementation.
+"""Test suite for Active Directory quirks implementation.
+
+Modules tested: FlextLdifServersAd (Schema, Acl, Entry quirks)
+Scope: Active Directory-specific LDIF processing quirks including Microsoft OID namespace
+handling, SDDL (Security Descriptor Definition Language) ACL parsing, base64-encoded
+nTSecurityDescriptor handling, and AD-specific DN markers. Tests verify AD quirk detection
+and parsing behavior.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,7 +34,9 @@ class TestActiveDirectorySchemas:
     @pytest.fixture
     def ad_schema(self, ad_server: FlextLdifServersAd) -> FlextLdifServersAd.Schema:
         """Create Active Directory schema quirk instance."""
-        return ad_server.schema_quirk
+        schema = ad_server.schema_quirk
+        assert isinstance(schema, FlextLdifServersAd.Schema)
+        return schema
 
     def test_initialization(self, ad_server: FlextLdifServersAd) -> None:
         """Test Active Directory quirk initialization."""
@@ -284,7 +292,9 @@ class TestActiveDirectoryAcls:
     @pytest.fixture
     def ad_acl(self, ad_acl_server: FlextLdifServersAd) -> FlextLdifServersAd.Acl:
         """Create Active Directory ACL quirk instance."""
-        return ad_acl_server.acl_quirk
+        acl = ad_acl_server.acl_quirk
+        assert isinstance(acl, FlextLdifServersAd.Acl)
+        return acl
 
     def test_acl_initialization(self, ad_acl_server: FlextLdifServersAd) -> None:
         """Test ACL quirk initialization."""
@@ -303,6 +313,7 @@ class TestActiveDirectoryAcls:
         # Parse string ACL into model object
 
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
+        assert isinstance(acl_model, FlextLdifModels.Acl)
 
         # Test with the model object
 
@@ -323,6 +334,7 @@ class TestActiveDirectoryAcls:
         # Parse string ACL into model object
 
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
+        assert isinstance(acl_model, FlextLdifModels.Acl)
 
         # Test with the model object
 
@@ -342,6 +354,7 @@ class TestActiveDirectoryAcls:
         # Parse string ACL into model object
 
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
+        assert isinstance(acl_model, FlextLdifModels.Acl)
 
         # Test with the model object
 
@@ -367,6 +380,7 @@ class TestActiveDirectoryAcls:
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.raw_acl == acl_line
         # Base64 decoded value stored in subject_value
+        assert acl_model.subject is not None
         assert acl_model.subject.subject_value is not None
 
     def test_parse_with_sddl_string(self, ad_acl: FlextLdifServersAd.Acl) -> None:
@@ -380,6 +394,7 @@ class TestActiveDirectoryAcls:
         acl_model = result.unwrap()
         assert isinstance(acl_model, FlextLdifModels.Acl)
         assert acl_model.name == "nTSecurityDescriptor"
+        assert acl_model.subject is not None
         assert acl_model.subject.subject_value == "O:BAG:BAD:S:"
 
     def test_parse_empty_line(self, ad_acl: FlextLdifServersAd.Acl) -> None:
@@ -430,7 +445,9 @@ class TestActiveDirectoryEntrys:
     @pytest.fixture
     def ad_entry(self, ad_entry_server: FlextLdifServersAd) -> FlextLdifServersAd.Entry:
         """Create Active Directory entry quirk instance."""
-        return ad_entry_server.entry_quirk
+        entry = ad_entry_server.entry_quirk
+        assert isinstance(entry, FlextLdifServersAd.Entry)
+        return entry
 
     def test_entry_initialization(self, ad_entry_server: FlextLdifServersAd) -> None:
         """Test entry quirk initialization."""

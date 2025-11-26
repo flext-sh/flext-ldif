@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -688,12 +688,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 and attr_data.metadata.extensions.get("original_format")
             ):
                 # Data came from relaxed → use original_format as fallback
-                return FlextResult[str].ok(
-                    cast(
-                        "str",
-                        attr_data.metadata.extensions.get("original_format", ""),
-                    ),
+                original_format_raw = attr_data.metadata.extensions.get(
+                    "original_format", ""
                 )
+                if not isinstance(original_format_raw, str):
+                    msg = f"Expected str, got {type(original_format_raw)}"
+                    raise TypeError(msg)
+                return FlextResult[str].ok(original_format_raw)
 
             # Data did NOT come from relaxed → write RFC pure (minimal format)
             if not attr_data.oid:
@@ -740,12 +741,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 and oc_data.metadata.extensions.get("original_format")
             ):
                 # Data came from relaxed → use original_format as fallback
-                return FlextResult[str].ok(
-                    cast(
-                        "str",
-                        oc_data.metadata.extensions.get("original_format", ""),
-                    ),
+                original_format_raw = oc_data.metadata.extensions.get(
+                    "original_format", ""
                 )
+                if not isinstance(original_format_raw, str):
+                    msg = f"Expected str, got {type(original_format_raw)}"
+                    raise TypeError(msg)
+                return FlextResult[str].ok(original_format_raw)
 
             # Data did NOT come from relaxed → write RFC pure (minimal format)
             if not oc_data.oid:

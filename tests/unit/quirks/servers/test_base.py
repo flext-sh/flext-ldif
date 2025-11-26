@@ -255,71 +255,61 @@ class TestFlextLdifServersBaseInitializeNestedClasses:
 class TestFlextLdifServersBaseProperties:
     """Test FlextLdifServersBase properties."""
 
-    def test_schema_quirk_property(self) -> None:
-        """Test schema_quirk property."""
+    @pytest.mark.parametrize(
+        ("property_name", "expected_type"),
+        [
+            ("schema_quirk", FlextLdifServersBase.Schema),
+            ("acl_quirk", FlextLdifServersBase.Acl),
+            ("entry_quirk", FlextLdifServersBase.Entry),
+        ],
+    )
+    def test_quirk_properties(
+        self,
+        property_name: str,
+        expected_type: type[
+            FlextLdifServersBase.Schema
+            | FlextLdifServersBase.Acl
+            | FlextLdifServersBase.Entry
+        ],
+    ) -> None:
+        """Test quirk properties return correct types."""
         rfc = FlextLdifServersRfc()
-        schema_quirk = rfc.schema_quirk
-        assert schema_quirk is not None
-        assert isinstance(schema_quirk, FlextLdifServersBase.Schema)
-
-    def test_acl_quirk_property(self) -> None:
-        """Test acl_quirk property."""
-        rfc = FlextLdifServersRfc()
-        acl_quirk = rfc.acl_quirk
-        assert acl_quirk is not None
-        assert isinstance(acl_quirk, FlextLdifServersBase.Acl)
-
-    def test_entry_quirk_property(self) -> None:
-        """Test entry_quirk property."""
-        rfc = FlextLdifServersRfc()
-        entry_quirk = rfc.entry_quirk
-        assert entry_quirk is not None
-        assert isinstance(entry_quirk, FlextLdifServersBase.Entry)
+        quirk = getattr(rfc, property_name)
+        assert quirk is not None
+        assert isinstance(quirk, expected_type)
 
 
 class TestFlextLdifServersBaseSchemaAclEntryMethods:
     """Test FlextLdifServersBase schema/acl/entry methods."""
 
-    def test_schema_method_no_server_type(self) -> None:
-        """Test get_schema_quirk() method without server_type parameter."""
+    @pytest.mark.parametrize(
+        ("method_name", "method_kwargs", "expected_type"),
+        [
+            ("get_schema_quirk", {}, FlextLdifServersBase.Schema),
+            ("get_schema_quirk", {"server_type": "rfc"}, FlextLdifServersBase.Schema),
+            ("acl", {}, FlextLdifServersBase.Acl),
+            ("acl", {"server_type": "rfc"}, FlextLdifServersBase.Acl),
+            ("entry", {}, FlextLdifServersBase.Entry),
+            ("entry", {"server_type": "rfc"}, FlextLdifServersBase.Entry),
+        ],
+    )
+    def test_quirk_methods(
+        self,
+        method_name: str,
+        method_kwargs: dict[str, str],
+        expected_type: type[
+            FlextLdifServersBase.Schema
+            | FlextLdifServersBase.Acl
+            | FlextLdifServersBase.Entry
+        ],
+    ) -> None:
+        """Test quirk methods return correct types."""
         rfc = FlextLdifServersRfc()
-        schema_quirk = rfc.get_schema_quirk()
-        assert schema_quirk is not None
-        assert isinstance(schema_quirk, FlextLdifServersBase.Schema)
-
-    def test_schema_method_with_server_type(self) -> None:
-        """Test get_schema_quirk() method with server_type parameter."""
-        rfc = FlextLdifServersRfc()
-        # get_schema_quirk uses _server_type parameter (ignored, but accepts it)
-        schema_quirk = rfc.get_schema_quirk(server_type="rfc")
-        assert schema_quirk is not None
-
-    def test_acl_method_no_server_type(self) -> None:
-        """Test acl() method without server_type parameter."""
-        rfc = FlextLdifServersRfc()
-        acl_quirk = rfc.acl()
-        assert acl_quirk is not None
-        assert isinstance(acl_quirk, FlextLdifServersBase.Acl)
-
-    def test_acl_method_with_server_type(self) -> None:
-        """Test acl() method with server_type parameter."""
-        rfc = FlextLdifServersRfc()
-        # acl() accepts server_type parameter (ignored, but accepts it)
-        acl_quirk = rfc.acl(server_type="rfc")
-        assert acl_quirk is not None
-
-    def test_entry_method_no_server_type(self) -> None:
-        """Test entry() method without server_type parameter."""
-        rfc = FlextLdifServersRfc()
-        entry_quirk = rfc.entry()
-        assert entry_quirk is not None
-        assert isinstance(entry_quirk, FlextLdifServersBase.Entry)
-
-    def test_entry_method_with_server_type(self) -> None:
-        """Test entry() method with server_type parameter."""
-        rfc = FlextLdifServersRfc()
-        entry_quirk = rfc.entry(server_type="rfc")
-        assert entry_quirk is not None
+        method = getattr(rfc, method_name)
+        quirk = method(**method_kwargs)
+        assert quirk is not None
+        if not method_kwargs:  # Only check type when no kwargs (full validation)
+            assert isinstance(quirk, expected_type)
 
 
 class TestFlextLdifServersBaseParse:
@@ -497,8 +487,9 @@ class TestFlextLdifServersBaseNestedSchema:
     def test_schema_get_server_type(self) -> None:
         """Test Schema._get_server_type."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
-        server_type = schema._get_server_type()
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
+        server_type = schema_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_schema_parse_attribute_abstract(self) -> None:
@@ -546,53 +537,58 @@ class TestFlextLdifServersBaseNestedSchema:
     def test_schema_can_handle_attribute(self) -> None:
         """Test Schema.can_handle_attribute."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         # Base implementation returns False
         # RFC implementation should return True for valid definitions
-        result = schema.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN)
+        result = schema_concrete.can_handle_attribute(TestsRfcConstants.ATTR_DEF_CN)
         assert isinstance(result, bool)
 
     def test_schema_can_handle_objectclass(self) -> None:
         """Test Schema.can_handle_objectclass."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         # Base implementation returns False
         # RFC implementation should return True for valid definitions
-        result = schema.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON)
+        result = schema_concrete.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON)
         assert isinstance(result, bool)
 
     def test_schema_hook_post_parse_attribute(self) -> None:
         """Test Schema._hook_post_parse_attribute."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
             oid=TestsRfcConstants.ATTR_OID_CN,
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
         attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
-        result = schema._hook_post_parse_attribute(attr)
+        result = schema_concrete._hook_post_parse_attribute(attr)
         assert result.is_success
         assert result.unwrap() == attr
 
     def test_schema_hook_post_parse_objectclass(self) -> None:
         """Test Schema._hook_post_parse_objectclass."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
             oid=TestsRfcConstants.OC_OID_PERSON,
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
         oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
-        result = schema._hook_post_parse_objectclass(oc)
+        result = schema_concrete._hook_post_parse_objectclass(oc)
         assert result.is_success
         assert result.unwrap() == oc
 
     def test_schema_hook_validate_attributes(self) -> None:
         """Test Schema._hook_validate_attributes."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         attrs = [
             cast(
                 "FlextLdifModels.SchemaAttribute",
@@ -602,7 +598,7 @@ class TestFlextLdifServersBaseNestedSchema:
                 ),
             ),
         ]
-        result = schema._hook_validate_attributes(attrs, {"cn"})
+        result = schema_concrete._hook_validate_attributes(attrs, {"cn"})
         assert result.is_success
 
 
@@ -618,67 +614,74 @@ class TestFlextLdifServersBaseNestedAcl:
     def test_acl_get_server_type(self) -> None:
         """Test Acl._get_server_type."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
-        server_type = acl._get_server_type()
+        # Access private method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
+        server_type = acl_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_acl_get_acl_attributes(self) -> None:
         """Test Acl.get_acl_attributes."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
-        attrs = acl.get_acl_attributes()
+        # Access method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
+        attrs = acl_concrete.get_acl_attributes()
         assert isinstance(attrs, list)
         assert len(attrs) > 0
 
     def test_acl_is_acl_attribute(self) -> None:
         """Test Acl.is_acl_attribute."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
-        assert acl.is_acl_attribute("aci")
-        assert acl.is_acl_attribute("ACL")  # Case insensitive
-        assert not acl.is_acl_attribute("cn")
+        # Access method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
+        assert acl_concrete.is_acl_attribute("aci")
+        assert acl_concrete.is_acl_attribute("ACL")  # Case insensitive
+        assert not acl_concrete.is_acl_attribute("cn")
 
     def test_acl_can_handle_acl(self) -> None:
         """Test Acl.can_handle_acl."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
+        # Access method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
         # Base implementation returns False
         # RFC implementation should handle RFC ACLs
-        result = acl.can_handle_acl("test: acl")
+        result = acl_concrete.can_handle_acl("test: acl")
         assert isinstance(result, bool)
 
     def test_acl_can_handle_attribute(self) -> None:
         """Test Acl.can_handle_attribute."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
+        # Access method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
             oid=TestsRfcConstants.ATTR_OID_CN,
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
         attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
-        result = acl.can_handle_attribute(attr)
+        result = acl_concrete.can_handle_attribute(attr)
         assert isinstance(result, bool)
 
     def test_acl_can_handle_objectclass(self) -> None:
         """Test Acl.can_handle_objectclass."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
+        # Access method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
             oid=TestsRfcConstants.OC_OID_PERSON,
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
         oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
-        result = acl.can_handle_objectclass(oc)
+        result = acl_concrete.can_handle_objectclass(oc)
         assert isinstance(result, bool)
 
     def test_acl_hook_post_parse_acl(self) -> None:
         """Test Acl._hook_post_parse_acl."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
+        # Access private method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
         acl_model = FlextLdifModels.Acl()
-        result = acl._hook_post_parse_acl(acl_model)
+        result = acl_concrete._hook_post_parse_acl(acl_model)
         assert result.is_success
         assert result.unwrap() == acl_model
 
@@ -695,50 +698,55 @@ class TestFlextLdifServersBaseNestedEntry:
     def test_entry_get_server_type(self) -> None:
         """Test Entry._get_server_type."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        server_type = entry._get_server_type()
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        server_type = entry_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_entry_can_handle(self) -> None:
         """Test Entry.can_handle."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
+        # Access method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
         # Base implementation returns False
         # RFC implementation should handle RFC entries
-        result = entry.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
+        result = entry_concrete.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
         assert isinstance(result, bool)
 
     def test_entry_can_handle_attribute(self) -> None:
         """Test Entry.can_handle_attribute."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
+        # Access method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
             oid=TestsRfcConstants.ATTR_OID_CN,
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
         attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
-        result = entry.can_handle_attribute(attr)
+        result = entry_concrete.can_handle_attribute(attr)
         assert isinstance(result, bool)
 
     def test_entry_can_handle_objectclass(self) -> None:
         """Test Entry.can_handle_objectclass."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
+        # Access method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
             oid=TestsRfcConstants.OC_OID_PERSON,
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
         oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
-        result = entry.can_handle_objectclass(oc)
+        result = entry_concrete.can_handle_objectclass(oc)
         assert isinstance(result, bool)
 
     def test_entry_hook_validate_entry_raw(self) -> None:
         """Test Entry._hook_validate_entry_raw."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        result = entry._hook_validate_entry_raw(
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        result = entry_concrete._hook_validate_entry_raw(
             TestsRfcConstants.TEST_DN,
             {"cn": ["test"]},
         )
@@ -747,34 +755,37 @@ class TestFlextLdifServersBaseNestedEntry:
     def test_entry_hook_validate_entry_raw_empty_dn(self) -> None:
         """Test Entry._hook_validate_entry_raw with empty DN."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        result = entry._hook_validate_entry_raw("", {"cn": ["test"]})
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        result = entry_concrete._hook_validate_entry_raw("", {"cn": ["test"]})
         assert result.is_failure
         assert "DN cannot be empty" in (result.error or "")
 
     def test_entry_hook_post_parse_entry(self) -> None:
         """Test Entry._hook_post_parse_entry."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
         entry_model_raw = RfcTestHelpers.test_create_entry_and_unwrap(
             dn=TestsRfcConstants.TEST_DN,
             attributes={"cn": ["test"]},
         )
         entry_model: FlextLdifModels.Entry = entry_model_raw
-        result = entry._hook_post_parse_entry(entry_model)
+        result = entry_concrete._hook_post_parse_entry(entry_model)
         assert result.is_success
         assert result.unwrap() == entry_model
 
     def test_entry_hook_pre_write_entry(self) -> None:
         """Test Entry._hook_pre_write_entry."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
         entry_model_raw = RfcTestHelpers.test_create_entry_and_unwrap(
             dn=TestsRfcConstants.TEST_DN,
             attributes={"cn": ["test"]},
         )
         entry_model: FlextLdifModels.Entry = entry_model_raw
-        result = entry._hook_pre_write_entry(entry_model)
+        result = entry_concrete._hook_pre_write_entry(entry_model)
         assert result.is_success
         assert result.unwrap() == entry_model
 
@@ -894,22 +905,25 @@ class TestFlextLdifServersBaseAdditionalCoverage:
     def test_schema_get_server_type_success(self) -> None:
         """Test Schema._get_server_type with real RFC instance."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
-        server_type = schema._get_server_type()
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
+        server_type = schema_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_acl_get_server_type_success(self) -> None:
         """Test Acl._get_server_type with real RFC instance."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
-        server_type = acl._get_server_type()
+        # Access private method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
+        server_type = acl_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_entry_get_server_type_success(self) -> None:
         """Test Entry._get_server_type with real RFC instance."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        server_type = entry._get_server_type()
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        server_type = entry_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_schema_abstract_methods(self) -> None:
@@ -924,19 +938,21 @@ class TestFlextLdifServersBaseAdditionalCoverage:
     def test_acl_abstract_methods(self) -> None:
         """Test Acl abstract methods return failure."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
+        # Access method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
         # Test base abstract methods through RFC implementation
         # can_handle_acl is implemented in RFC
-        result = acl.can_handle_acl("test acl")
+        result = acl_concrete.can_handle_acl("test acl")
         assert isinstance(result, bool)
 
     def test_entry_abstract_methods(self) -> None:
         """Test Entry abstract methods return failure."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
+        # Access method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
         # Test base abstract methods through RFC implementation
         # can_handle is implemented in RFC
-        result = entry.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
+        result = entry_concrete.can_handle(TestsRfcConstants.TEST_DN, {"cn": ["test"]})
         assert isinstance(result, bool)
 
     def test_execute_parse_operation_requires_ldif_text(self) -> None:
@@ -1053,35 +1069,38 @@ class TestFlextLdifServersBaseAdditionalCoverage:
     def test_schema_hook_post_parse_attribute(self) -> None:
         """Test Schema._hook_post_parse_attribute."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         attr_raw = RfcTestHelpers.test_create_schema_attribute_and_unwrap(
             oid=TestsRfcConstants.ATTR_OID_CN,
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
         attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
-        result = schema._hook_post_parse_attribute(attr)
+        result = schema_concrete._hook_post_parse_attribute(attr)
         assert result.is_success
         assert result.unwrap() == attr
 
     def test_schema_hook_post_parse_objectclass(self) -> None:
         """Test Schema._hook_post_parse_objectclass."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         oc_raw = RfcTestHelpers.test_create_schema_objectclass_and_unwrap(
             oid=TestsRfcConstants.OC_OID_PERSON,
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
         oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
-        result = schema._hook_post_parse_objectclass(oc)
+        result = schema_concrete._hook_post_parse_objectclass(oc)
         assert result.is_success
         assert result.unwrap() == oc
 
     def test_schema_hook_validate_attributes(self) -> None:
         """Test Schema._hook_validate_attributes."""
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
         attrs = [
             cast(
                 "FlextLdifModels.SchemaAttribute",
@@ -1092,23 +1111,25 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             ),
         ]
         available_attrs = {"cn"}
-        result = schema._hook_validate_attributes(attrs, available_attrs)
+        result = schema_concrete._hook_validate_attributes(attrs, available_attrs)
         assert result.is_success
 
     def test_acl_hook_post_parse_acl(self) -> None:
         """Test Acl._hook_post_parse_acl."""
         rfc = FlextLdifServersRfc()
-        acl_quirk = rfc.acl_quirk
+        # Access private method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
         acl = FlextLdifModels.Acl()
-        result = acl_quirk._hook_post_parse_acl(acl)
+        result = acl_concrete._hook_post_parse_acl(acl)
         assert result.is_success
         assert result.unwrap() == acl
 
     def test_entry_hook_validate_entry_raw(self) -> None:
         """Test Entry._hook_validate_entry_raw."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        result = entry._hook_validate_entry_raw(
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        result = entry_concrete._hook_validate_entry_raw(
             TestsRfcConstants.TEST_DN,
             {"cn": ["test"]},
         )
@@ -1117,8 +1138,9 @@ class TestFlextLdifServersBaseAdditionalCoverage:
     def test_entry_hook_validate_entry_raw_empty_dn(self) -> None:
         """Test Entry._hook_validate_entry_raw with empty DN."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        result = entry._hook_validate_entry_raw("", {"cn": ["test"]})
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        result = entry_concrete._hook_validate_entry_raw("", {"cn": ["test"]})
         assert result.is_failure
         assert "DN cannot be empty" in (result.error or "")
 
@@ -1226,22 +1248,25 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # This is hard to test without creating a standalone Schema
         # So we test the success path with RFC
         rfc = FlextLdifServersRfc()
-        schema = rfc.schema_quirk
-        server_type = schema._get_server_type()
+        # Access private method through concrete class, not protocol
+        schema_concrete = rfc._schema_quirk
+        server_type = schema_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_acl_get_server_type_error_path(self) -> None:
         """Test Acl._get_server_type error path when parent not found."""
         rfc = FlextLdifServersRfc()
-        acl = rfc.acl_quirk
-        server_type = acl._get_server_type()
+        # Access private method through concrete class, not protocol
+        acl_concrete = rfc._acl_quirk
+        server_type = acl_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_entry_get_server_type_error_path(self) -> None:
         """Test Entry._get_server_type error path when parent not found."""
         rfc = FlextLdifServersRfc()
-        entry = rfc.entry_quirk
-        server_type = entry._get_server_type()
+        # Access private method through concrete class, not protocol
+        entry_concrete = rfc._entry_quirk
+        server_type = entry_concrete._get_server_type()
         assert server_type == "rfc"
 
     def test_schema_parse_attribute_delegates(self) -> None:
@@ -2458,7 +2483,7 @@ class TestFlextLdifServersBaseGetattr:
         rfc = FlextLdifServersRfc()
         # Call a method that exists on schema quirk
         result = rfc.can_handle_attribute(
-            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         )
         assert isinstance(result, bool)
 

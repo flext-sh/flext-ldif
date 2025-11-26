@@ -1,10 +1,20 @@
-"""Expert tests for server-specific Entry validators - FASE 9.
+"""Expert tests for server-specific Entry validators.
 
 Tests validate that Entry.validate_entry_consistency applies correct
 server-specific rules based on self.metadata.server_type while maintaining
 RFC baseline.
 
-Coverage:
+Tests validate that Entry models:
+1. Apply server-specific validation rules correctly
+2. Maintain RFC baseline compliance
+3. Handle different server quirks appropriately
+4. Capture violations in metadata without rejecting entries
+
+Modules tested:
+- flext_ldif.models.FlextLdifModels.Entry (server-specific validation)
+- flext_ldif.models.FlextLdifModels.QuirkMetadata (server type tracking)
+
+Scope:
 - OID (Oracle Internet Directory) - lenient objectClass, binary auto-detect
 - OUD (Oracle Unified Directory) - strict objectClass, naming attr, ;binary
 - OpenLDAP - flexible schema, strict ;binary

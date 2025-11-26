@@ -438,7 +438,7 @@ def access_all_namespace_classes() -> None:
     # processor = api.processors.get_processors()
 
     # Access Config
-    encoding = api.config.ldif.ldif_encoding
+    encoding = api.ldif_config.ldif_encoding
     max_workers = api.config.max_workers
 
     _ = (

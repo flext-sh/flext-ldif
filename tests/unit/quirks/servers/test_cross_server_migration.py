@@ -1,7 +1,11 @@
-"""Cross-server migration tests using real fixtures.
+"""Test suite for Cross-Server Migration.
+
+Modules tested: FlextLdif (write, parse)
+Scope: Cross-server migrations, RFC-as-hub strategy, OID↔OUD↔RFC conversions,
+round-trip validation, entry preservation
 
 Tests migrations between all server types to ensure perfect conversions.
-Uses RFC-as-hub strategy for all conversions.
+Uses RFC-as-hub strategy for all conversions. Uses real fixtures and parametrized tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

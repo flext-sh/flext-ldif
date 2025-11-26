@@ -105,7 +105,7 @@ class TestFlextLdifWriterAlgarRealData:
         scenario: str,
         test_type: WriterRfc2849TestType,
         writer: FlextLdifWriter,
-        rfc_config: FlextLdifConfig,
+        _rfc_config: FlextLdifConfig,
     ) -> None:
         """Parametrized test for RFC 2849 compliance with real algar-oud-mig data.
 
@@ -148,10 +148,7 @@ class TestFlextLdifWriterAlgarRealData:
                 continue
 
             byte_len = len(line.encode("utf-8"))
-            if (
-                not line.startswith(" ")
-                and byte_len > RFC2849_MAX_LINE_BYTES
-            ):
+            if not line.startswith(" ") and byte_len > RFC2849_MAX_LINE_BYTES:
                 violations.append((i, byte_len, line[:80]))
 
         # Assert RFC 2849 compliance

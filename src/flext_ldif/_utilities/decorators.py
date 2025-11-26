@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import wraps
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
@@ -158,8 +158,8 @@ class FlextLdifUtilitiesDecorators:
 
                 return result
 
-            # Use cast to preserve original function signature for type checkers
-            return cast("Callable[..., FlextResult[T]]", wrapper)
+            # Type narrowing: wrapper already has correct type signature
+            return wrapper
 
         return decorator
 
@@ -202,8 +202,8 @@ class FlextLdifUtilitiesDecorators:
                 # So metadata attachment would be on the input model
                 return func(self, *args, **kwargs)
 
-            # Use cast to preserve original function signature for type checkers
-            return cast("Callable[..., FlextResult[T]]", wrapper)
+            # Type narrowing: wrapper already has correct type signature
+            return wrapper
 
         return decorator
 

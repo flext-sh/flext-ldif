@@ -1,7 +1,12 @@
-"""Tests for OpenLDAP 1.x server quirks.
+"""Test suite for OpenLDAP 1.x server quirks.
 
-Comprehensive tests for OpenLDAP 1.x-specific LDIF processing quirks including
-schema, ACL, and entry handling for legacy slapd.conf-based configurations.
+Modules tested: FlextLdifServersOpenldap1 (Schema, Acl, Entry quirks)
+Scope: OpenLDAP 1.x-specific LDIF processing quirks including schema parsing/writing,
+ACL parsing with 'access to' syntax, and entry handling for legacy slapd.conf-based
+configurations. Tests verify rejection of OpenLDAP 2.x features (olc*, cn=config).
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -253,8 +258,11 @@ class TestOpenLDAP1xAcls:
         assert result.is_success
         acl_data = result.unwrap()
         assert isinstance(acl_data, FlextLdifModels.Acl)
+        assert acl_data.target is not None
         assert acl_data.target.attributes == ["userPassword"]
+        assert acl_data.subject is not None
         assert acl_data.subject.subject_value == "self"
+        assert acl_data.permissions is not None
         assert acl_data.permissions.write is True
 
     def test_parse_missing_to_clause(self) -> None:

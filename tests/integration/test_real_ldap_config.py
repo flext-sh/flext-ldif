@@ -141,7 +141,7 @@ class TestRealLdapRailwayComposition:
         # Railway composition: write → parse → validate
         output_file = tmp_path / "railway.ldif"
         result = (
-            flext_api.write([flext_entry], output_file)
+            flext_api.write([flext_entry], output_path=output_file)
             .flat_map(lambda _: flext_api.parse(output_file))
             .flat_map(
                 lambda entries: flext_api.validate_entries(entries).map(

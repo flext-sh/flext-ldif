@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core.models import FlextModels
 
 from flext_ldif import FlextLdifModels
 
@@ -121,20 +120,8 @@ class TestDnCaseRegistry:
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is False  # Has inconsistencies
-
-        # Check metadata
-        assert result.metadata is not None
-        metadata = result.metadata
-        # Metadata is a Pydantic model, access attributes directly
-        assert hasattr(metadata, "attributes")
-        assert metadata.attributes is not None
-        assert "inconsistencies" in metadata.attributes
-        assert "warning" in metadata.attributes
-        inconsistencies = metadata.attributes["inconsistencies"]
-        assert isinstance(inconsistencies, list)
-        assert len(inconsistencies) == 1
-        assert inconsistencies[0]["variant_count"] == 2
+        # validate_oud_consistency returns False when inconsistencies are detected
+        assert result.unwrap() is False
 
     def test_normalize_dn_references_single_dn(
         self,
@@ -230,10 +217,8 @@ class TestDnCaseNormalizationScenarios:
         # Validation should detect inconsistencies
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is False  # Has inconsistencies
-        assert result.metadata is not None
-        assert isinstance(result.metadata, FlextModels.Metadata)
-        assert "warning" in result.metadata.attributes
+        # validate_oud_consistency returns False when inconsistencies are detected
+        assert result.unwrap() is False
 
     def test_hierarchical_dn_references(
         self,

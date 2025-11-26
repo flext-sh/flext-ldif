@@ -46,7 +46,7 @@ cn: test
 
         # Check BINDMODE in extensions
         bindmode = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_BINDMODE
+            FlextLdifConstants.MetadataKeys.ACL_BINDMODE,
         )
         assert bindmode == "Simple", "BINDMODE not preserved"
 
@@ -65,7 +65,7 @@ cn: test
 
         # Check DenyGroupOverride in extensions
         deny_override = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+            FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
         )
         assert deny_override is True, "DenyGroupOverride not preserved"
 
@@ -84,7 +84,7 @@ cn: test
 
         # Check AppendToAll in extensions
         append_to_all = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL
+            FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL,
         )
         assert append_to_all is True, "AppendToAll not preserved"
 
@@ -103,7 +103,7 @@ cn: test
 
         # Check BINDIPFILTER in extensions
         bind_ip_filter = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER
+            FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER,
         )
         assert bind_ip_filter == "orclipaddress=192.168.1.*", (
             "BINDIPFILTER not preserved"
@@ -124,7 +124,7 @@ cn: test
 
         # Check constraintonaddedobject in extensions
         constrain = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
+            FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         )
         assert constrain == "objectclass=person", (
             "constraintonaddedobject not preserved"
@@ -150,25 +150,25 @@ cn: test
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+                FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
             )
             is True
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL
+                FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL,
             )
             is True
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER
+                FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER,
             )
             == "orclipaddress=192.168.1.*"
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
+                FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
             )
             == "objectclass=person"
         )
@@ -201,7 +201,7 @@ cn: test
 
         # Check targattrfilters in extensions
         targattrfilters = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+            FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS,
         )
         assert targattrfilters == "add=cn:(cn=admin)", "targattrfilters not preserved"
 
@@ -220,7 +220,7 @@ cn: test
 
         # Check targetcontrol in extensions
         targetcontrol = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_TARGET_CONTROL
+            FlextLdifConstants.MetadataKeys.ACL_TARGET_CONTROL,
         )
         assert targetcontrol == "1.3.6.1.4.1.42.2.27.9.5.2", (
             "targetcontrol not preserved"
@@ -258,7 +258,7 @@ cn: test
 
         # Check ip bind rule in extensions
         bind_ip = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_BIND_IP
+            FlextLdifConstants.MetadataKeys.ACL_BIND_IP,
         )
         assert bind_ip == "192.168.1.0/24", "bind_ip not preserved"
 
@@ -277,7 +277,7 @@ cn: test
 
         # Check dns bind rule in extensions
         bind_dns = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_BIND_DNS
+            FlextLdifConstants.MetadataKeys.ACL_BIND_DNS,
         )
         assert bind_dns == "*.example.com", "bind_dns not preserved"
 
@@ -296,7 +296,7 @@ cn: test
 
         # Check dayofweek bind rule in extensions
         bind_dayofweek = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_BIND_DAYOFWEEK
+            FlextLdifConstants.MetadataKeys.ACL_BIND_DAYOFWEEK,
         )
         assert bind_dayofweek == "Mon,Tue,Wed", "bind_dayofweek not preserved"
 
@@ -315,7 +315,7 @@ cn: test
 
         # Check timeofday bind rule in extensions (stored as tuple)
         bind_timeofday = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY
+            FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY,
         )
         assert bind_timeofday is not None, "bind_timeofday not preserved"
         # Should be tuple (operator, value) or string
@@ -336,7 +336,7 @@ cn: test
 
         # Check authmethod bind rule in extensions
         authmethod = entry.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.ACL_AUTHMETHOD
+            FlextLdifConstants.MetadataKeys.ACL_AUTHMETHOD,
         )
         assert authmethod == "ssl", "authmethod not preserved"
 
@@ -375,13 +375,13 @@ cn: test
         # Verify target extensions
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+                FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS,
             )
             == "add=cn:(cn=admin)"
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_TARGET_CONTROL
+                FlextLdifConstants.MetadataKeys.ACL_TARGET_CONTROL,
             )
             == "1.3.6.1.4.1.42.2.27.9.5.2"
         )
@@ -401,19 +401,19 @@ cn: test
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_BIND_DAYOFWEEK
+                FlextLdifConstants.MetadataKeys.ACL_BIND_DAYOFWEEK,
             )
             == "Mon,Tue,Wed"
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY
+                FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY,
             )
             is not None
         )
         assert (
             entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_AUTHMETHOD
+                FlextLdifConstants.MetadataKeys.ACL_AUTHMETHOD,
             )
             == "ssl"
         )
@@ -461,13 +461,13 @@ cn: test
         # Verify metadata preserved
         assert (
             reparsed_entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_BINDMODE
+                FlextLdifConstants.MetadataKeys.ACL_BINDMODE,
             )
             == "Simple"
         )
         assert (
             reparsed_entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+                FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
             )
             is True
         )
@@ -502,13 +502,13 @@ cn: test
         # Verify metadata preserved
         assert (
             reparsed_entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+                FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS,
             )
             == "add=cn:(cn=admin)"
         )
         assert (
             reparsed_entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_BIND_IP
+                FlextLdifConstants.MetadataKeys.ACL_BIND_IP,
             )
             == "192.168.1.0/24"
         )

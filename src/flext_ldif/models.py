@@ -25,11 +25,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Self
 
 from flext_core import FlextModels
 from flext_core.models import FlextModelsCollections
-from pydantic import computed_field
+from pydantic import Field, computed_field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -48,6 +48,14 @@ class FlextLdifModels(FlextModels):
     This class extends flext-core FlextModels and organizes LDIF-specific
     models into focused sub-modules for better maintainability.
     """
+
+    # =========================================================================
+    # BASE TYPE ALIASES - For type compatibility with internal domain models
+    # =========================================================================
+
+    # Base Entry type for type aliases that need to accept both domain and public Entry
+    # Use this in type unions where internal ParseResponse.entries returns domain Entry
+    BaseEntry = FlextLdifModelsDomains.Entry
 
     # =========================================================================
     # DOMAIN MODELS - Core business entities
@@ -91,6 +99,12 @@ class FlextLdifModels(FlextModels):
 
     class AclMetadataConfig(FlextLdifModelsConfig.AclMetadataConfig):
         """Configuration for ACL metadata extensions."""
+
+    class AciParserConfig(FlextLdifModelsConfig.AciParserConfig):
+        """Configuration for ACI parsing using server Constants."""
+
+    class AciWriterConfig(FlextLdifModelsConfig.AciWriterConfig):
+        """Configuration for ACI writing using server Constants."""
 
     # LogContextExtras moved to _models/config.py
 
@@ -220,6 +234,18 @@ class FlextLdifModels(FlextModels):
         Replaces dict[str, Any] with type-safe Pydantic model.
         """
 
+    class EncodingRules(FlextLdifModelsConfig.EncodingRules):
+        """Generic encoding rules - server classes provide values."""
+
+    class DnCaseRules(FlextLdifModelsConfig.DnCaseRules):
+        """Generic DN case rules - server classes provide values."""
+
+    class AclFormatRules(FlextLdifModelsConfig.AclFormatRules):
+        """Generic ACL format rules - server classes provide values."""
+
+    class ServerValidationRules(FlextLdifModelsConfig.ServerValidationRules):
+        """Generic server validation rules - server classes provide values."""
+
     class ExclusionInfo(FlextLdifModelsDomains.ExclusionInfo):
         """Metadata for excluded entries/schema items.
 
@@ -293,14 +319,28 @@ class FlextLdifModels(FlextModels):
 
             # Convert internal domain model to public API model
             # Parent result is guaranteed to be FlextLdifModelsDomains.Syntax
-            # Type checker knows this after None check
-            internal_syntax = cast("FlextLdifModelsDomains.Syntax", parent_result)
+            # Type narrowing: after None check, parent_result is FlextLdifModelsDomains.Syntax
+            if not isinstance(
+                parent_result,
+                FlextLdifModelsDomains.Syntax,
+            ):
+                msg = (
+                    "Parent syntax_definition must return FlextLdifModelsDomains.Syntax"
+                )
+                raise TypeError(msg)
+            internal_syntax = parent_result
 
             # Extract core fields for public model (exclude internal computed fields)
             data = internal_syntax.model_dump(
                 mode="python",
                 exclude={"is_rfc4517_standard", "syntax_oid_suffix"},
             )
+
+            # Remove server-specific fields that should not be in public model
+            # These fields are internal implementation details from schema parsing
+            data.pop("has_metadata", None)
+            data.pop("server_type", None)
+            data.pop("has_server_extensions", None)
 
             # Validate as public Syntax model
             return FlextLdifModels.Syntax.model_validate(data)
@@ -318,7 +358,153 @@ class FlextLdifModels(FlextModels):
         """
 
     class Entry(FlextLdifModelsDomains.Entry):
-        """LDIF entry domain model (RFC 2849 compliant)."""
+        """LDIF entry domain model (RFC 2849 compliant).
+
+        Overrides metadata field to use facade QuirkMetadata type for proper type inference.
+        Provides helper methods for metadata tracking during transformations.
+        """
+
+        # Override metadata field to use facade type
+        # Use lambda to defer evaluation until FlextLdifModels is fully defined
+        # This ensures the correct subclass is created, not the domain parent class
+        metadata: FlextLdifModels.QuirkMetadata = Field(
+            default_factory=lambda: FlextLdifModels.QuirkMetadata.create_for(),
+            description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
+        )
+
+        def track_transformation(
+            self,
+            original_name: str,
+            new_name: str | None,
+            transformation_type: str,
+            original_values: list[str] | None = None,
+            new_values: list[str] | None = None,
+            reason: str | None = None,
+        ) -> Self:
+            """Track an attribute transformation in metadata.
+
+            Convenience method that delegates to metadata.track_attribute_transformation().
+
+            Args:
+                original_name: Original attribute name before transformation
+                new_name: New attribute name (None if removed)
+                transformation_type: Type of transformation (renamed/removed/modified/added)
+                original_values: Original values before transformation
+                new_values: New values after transformation
+                reason: Human-readable reason for transformation
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> entry.track_transformation(
+                ...     original_name="orclPassword",
+                ...     new_name="userPassword",
+                ...     transformation_type="renamed",
+                ...     reason="OID→OUD attribute mapping"
+                ... )
+
+            """
+            self.metadata.track_attribute_transformation(
+                original_name=original_name,
+                new_name=new_name,
+                transformation_type=transformation_type,
+                original_values=original_values,
+                new_values=new_values,
+                reason=reason,
+            )
+            return self
+
+        def track_removal(
+            self,
+            attribute_name: str,
+            values: list[str],
+            reason: str | None = None,
+        ) -> Self:
+            """Track an attribute removal in metadata.
+
+            Convenience method that delegates to metadata.track_attribute_removal().
+
+            Args:
+                attribute_name: Name of removed attribute
+                values: Values that were removed
+                reason: Human-readable reason for removal
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> entry.track_removal(
+                ...     attribute_name="orclLastAppliedChangeNumber",
+                ...     values=["12345"],
+                ...     reason="OID-specific operational attribute"
+                ... )
+
+            """
+            self.metadata.track_attribute_removal(
+                attribute_name=attribute_name,
+                values=values,
+                reason=reason,
+            )
+            return self
+
+        def set_server_context(
+            self,
+            source_server: str,
+            target_server: str | None = None,
+        ) -> Self:
+            """Set source and target server context in metadata.
+
+            Convenience method that delegates to metadata.set_server_context().
+
+            Args:
+                source_server: Source LDAP server type (oid, oud, openldap, etc.)
+                target_server: Target LDAP server type (optional)
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> entry.set_server_context(
+                ...     source_server="oid",
+                ...     target_server="oud"
+                ... )
+
+            """
+            self.metadata.set_server_context(
+                source_server=source_server,
+                target_server=target_server,
+            )
+            return self
+
+        def add_rfc_violation(
+            self,
+            violation: str,
+            severity: str = "error",
+        ) -> Self:
+            """Track an RFC violation or warning in metadata.
+
+            Convenience method that delegates to metadata.track_rfc_violation().
+
+            Args:
+                violation: Description of RFC violation
+                severity: Severity level ("error" or "warning")
+
+            Returns:
+                Self for method chaining
+
+            Example:
+                >>> entry.add_rfc_violation(
+                ...     violation="RFC 2849 §2: Empty attribute value",
+                ...     severity="warning"
+                ... )
+
+            """
+            self.metadata.track_rfc_violation(
+                violation=violation,
+                severity=severity,
+            )
+            return self
 
     class LdifAttributes(FlextLdifModelsDomains.LdifAttributes):
         """LDIF attributes container - simplified dict-like interface."""
@@ -456,9 +642,6 @@ class FlextLdifModels(FlextModels):
 
         Combines Entry models with statistics from parse operation.
         Uses model composition instead of dict intermediaries.
-
-        Note: entries field inherits from parent but all entries are
-        compatible with FlextLdifModels.Entry through inheritance.
         """
 
     class WriteResponse(FlextLdifModelsResults.WriteResponse):

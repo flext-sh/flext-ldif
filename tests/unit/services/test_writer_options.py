@@ -28,7 +28,9 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-def config_to_write_options(config: FlextLdifConfig) -> FlextLdifModels.WriteFormatOptions:
+def config_to_write_options(
+    config: FlextLdifConfig,
+) -> FlextLdifModels.WriteFormatOptions:
     """Convert FlextLdifConfig to WriteFormatOptions."""
     return FlextLdifModels.WriteFormatOptions(
         line_width=config.ldif_max_line_length,
@@ -175,7 +177,7 @@ class TestWriterFormatOptions:
                 "sn": ["Test"],
                 "userPassword": ["{SSHA}abcdefghijklmnopqrstuvwxyz0123456789=="],
                 "jpegPhoto": [
-                    "binary data with \x00 null bytes and \x01 control chars"
+                    "binary data with \x00 null bytes and \x01 control chars",
                 ],
                 "description": ["value\x00with\x01null"],
                 "comment": ["ends with null\x00"],
@@ -274,9 +276,6 @@ class TestWriterFormatOptions:
                 False,
             ),
             (WriterOption.INCLUDE_TIMESTAMPS, False, "# Generated on:", True),
-            # Write metadata as comments
-            (WriterOption.WRITE_METADATA_AS_COMMENTS, True, "# Entry Metadata:", False),
-            (WriterOption.WRITE_METADATA_AS_COMMENTS, False, "# Entry Metadata:", True),
             # Write hidden attrs as comments
             (
                 WriterOption.WRITE_HIDDEN_ATTRS_AS_COMMENTS,
@@ -308,7 +307,6 @@ class TestWriterFormatOptions:
             entry_with_metadata
             if option_field
             in {
-                WriterOption.WRITE_METADATA_AS_COMMENTS,
                 WriterOption.WRITE_HIDDEN_ATTRS_AS_COMMENTS,
                 WriterOption.WRITE_EMPTY_VALUES,
             }
@@ -606,7 +604,7 @@ class TestWriterFormatOptions:
 
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
-            "ldif", FlextLdifConfig
+            "ldif", FlextLdifConfig,
         )
         config.ldif_write_include_version_header = True
         config.ldif_write_include_timestamps = True
@@ -645,7 +643,7 @@ class TestWriterFormatOptions:
         """Test ldap3 and model output formats."""
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
-            "ldif", FlextLdifConfig
+            "ldif", FlextLdifConfig,
         )
         config.ldif_write_normalize_attribute_names = True
         options = config_to_write_options(config)
@@ -712,7 +710,7 @@ class TestWriterFormatOptions:
         """Test that options don't interfere with server type validation."""
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
-            "ldif", FlextLdifConfig
+            "ldif", FlextLdifConfig,
         )
         config.ldif_write_include_version_header = True
         options = config_to_write_options(config)
@@ -794,7 +792,7 @@ class TestSanitizeAclName:
         """Test truncation of long strings."""
         input_str = "a" * 300
         sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
-            input_str, max_length=50
+            input_str, max_length=50,
         )
 
         assert len(sanitized) == 50

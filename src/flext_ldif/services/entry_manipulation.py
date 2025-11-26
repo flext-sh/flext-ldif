@@ -12,8 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from enum import StrEnum
-from typing import ClassVar, Final
+from typing import ClassVar, Final, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from ldap3 import Connection
@@ -722,8 +723,12 @@ class EntryManipulationServices:
         # Convert dict[str, list[str]] to dict[str, str | list[str]] for ldap3.add
         # ldap3.add accepts dict[str, str | list[str]], and we have dict[str, list[str]]
         # which is compatible (list[str] is a subtype of str | list[str])
-        # Note: connection.add() is not typed in ldap3
-        result = connection.add(
+        # Note: connection.add() is not typed in ldap3, so we need to type it explicitly
+        add_method: Callable[..., object] = cast(
+            "Callable[..., object]",
+            connection.add,
+        )
+        result = add_method(
             dn_str,
             object_class=object_class,
             attributes=attempted_attributes,

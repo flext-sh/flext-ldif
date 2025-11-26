@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
 
 from flext_ldif.models import FlextLdifModels
 
@@ -80,7 +79,11 @@ class FlextLdifUtilitiesServer:
                         parent_server_cls.Constants,
                         "SERVER_TYPE",
                     ):
-                        return cast("str", parent_server_cls.Constants.SERVER_TYPE)
+                        server_type_value = parent_server_cls.Constants.SERVER_TYPE
+                        if not isinstance(server_type_value, str):
+                            msg = f"Expected str, got {type(server_type_value)}"
+                            raise TypeError(msg)
+                        return server_type_value
             except AttributeError:
                 pass
 

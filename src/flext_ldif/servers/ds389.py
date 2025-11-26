@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
@@ -228,39 +228,28 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, str):
-                # Check OID pattern first
-                if re.search(
-                    FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                    attr_definition,
-                ):
-                    return True
-                # Extract attribute name from string definition.
-                # Look for NAME 'attributename' pattern
-                # (supports hyphens and underscores)
-                name_match = re.search(
-                    FlextLdifServersDs389.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                    attr_definition,
-                    re.IGNORECASE,
-                )
-                if name_match:
-                    attr_name = name_match.group(1).lower()
-                    return any(
-                        attr_name.startswith(prefix)
-                        for prefix in (
-                            FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                        )
-                    )
-                return False
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                if re.search(
-                    FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                    attr_definition.oid,
-                ):
-                    return True
-                attr_name_lower = attr_definition.name.lower()
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=attr_definition,
+                    oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    use_prefix_match=True,
+                )
+            # For string definitions, extract NAME and check prefix match
+            if re.search(
+                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
+                attr_definition,
+            ):
+                return True
+            name_match = re.search(
+                FlextLdifServersDs389.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                attr_definition,
+                re.IGNORECASE,
+            )
+            if name_match:
+                attr_name = name_match.group(1).lower()
                 return any(
-                    attr_name_lower.startswith(prefix)
+                    attr_name.startswith(prefix)
                     for prefix in (
                         FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES
                     )
@@ -272,37 +261,26 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, str):
-                # Check OID pattern first
-                if re.search(
-                    FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                    oc_definition,
-                ):
-                    return True
-                # Extract objectClass name from string definition
-                # Look for NAME 'objectclassname' pattern
-                name_match = re.search(
-                    FlextLdifServersDs389.Constants.SCHEMA_OBJECTCLASS_NAME_REGEX,
-                    oc_definition,
-                    re.IGNORECASE,
-                )
-                if name_match:
-                    oc_name = name_match.group(1).lower()
-                    return oc_name in (
-                        FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
-                    )
-                return False
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                if re.search(
-                    FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                    oc_definition.oid,
-                ):
-                    return True
-                oc_name_lower = oc_definition.name.lower() if oc_definition.name else ""
-                return (
-                    oc_name_lower
-                    in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=oc_definition,
+                    oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
+            # For string definitions, extract NAME and check exact match
+            if re.search(
+                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
+                oc_definition,
+            ):
+                return True
+            name_match = re.search(
+                FlextLdifServersDs389.Constants.SCHEMA_OBJECTCLASS_NAME_REGEX,
+                oc_definition,
+                re.IGNORECASE,
+            )
+            if name_match:
+                oc_name = name_match.group(1).lower()
+                return oc_name in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
             return False
 
         def _parse_attribute(
@@ -549,15 +527,28 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 acl_name = (
                     acl_data.name or FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
-                permissions = self._extract_acl_permissions(
-                    cast("FlextLdifModels.AclPermissions | None", acl_data.permissions),
-                )
-                targetattr = self._resolve_acl_targetattr(
-                    cast("FlextLdifModels.AclTarget | None", acl_data.target),
-                )
-                userdn = self._resolve_acl_userdn(
-                    cast("FlextLdifModels.AclSubject | None", acl_data.subject),
-                )
+                # Type narrowing: ensure correct types for ACL methods
+                permissions_raw = acl_data.permissions
+                if not isinstance(
+                    permissions_raw, (FlextLdifModels.AclPermissions, type(None))
+                ):
+                    msg = f"Expected AclPermissions | None, got {type(permissions_raw)}"
+                    raise TypeError(msg)
+                permissions = self._extract_acl_permissions(permissions_raw)
+
+                target_raw = acl_data.target
+                if not isinstance(target_raw, (FlextLdifModels.AclTarget, type(None))):
+                    msg = f"Expected AclTarget | None, got {type(target_raw)}"
+                    raise TypeError(msg)
+                targetattr = self._resolve_acl_targetattr(target_raw)
+
+                subject_raw = acl_data.subject
+                if not isinstance(
+                    subject_raw, (FlextLdifModels.AclSubject, type(None))
+                ):
+                    msg = f"Expected AclSubject | None, got {type(subject_raw)}"
+                    raise TypeError(msg)
+                userdn = self._resolve_acl_userdn(subject_raw)
 
                 # Build ACI string from structured fields
                 return self._build_acl_string(acl_name, permissions, targetattr, userdn)

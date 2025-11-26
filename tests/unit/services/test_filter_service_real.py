@@ -1,10 +1,11 @@
-"""Comprehensive filter service tests using REAL LDIF fixtures.
+"""Test suite for filter service using real LDIF fixtures.
 
-Tests all filtering functionality with authentic LDIF data from project fixtures.
-NO MOCKS - only real LDIF entries parsed from actual fixture files.
-
-Uses advanced Python 3.13 patterns: StrEnum, frozen dataclasses, parametrized tests,
-and factory patterns to reduce code by 70%+ while maintaining comprehensive coverage.
+Modules tested: FlextLdifFilters (filtering, DN patterns, objectClass/attribute filtering,
+base DN hierarchy, schema detection, ACL extraction, entry categorization, fluent builder)
+Scope: Comprehensive filter service tests using real LDIF fixtures. Tests all filtering
+functionality with authentic LDIF data from project fixtures. NO MOCKS - only real LDIF
+entries parsed from actual fixture files. Uses advanced Python 3.13 patterns: StrEnum,
+frozen dataclasses, parametrized tests, and factory patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -228,11 +229,11 @@ class TestFlextLdifFilterService(FlextTestsFactories):
         ), f"Not all entries contain {test_case.expected_contains}"
 
     def test_dn_filter_excludes_non_matching(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self, oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test that non-matching entries are excluded."""
         result = FlextLdifFilters.by_dn(
-            oid_entries, "*,ou=people,*", mode="include", mark_excluded=False
+            oid_entries, "*,ou=people,*", mode="include", mark_excluded=False,
         )
 
         assert result.is_success
@@ -242,13 +243,13 @@ class TestFlextLdifFilterService(FlextTestsFactories):
         assert len(base_entries) == 0, "Base domain entry should be excluded"
 
     def test_dn_filter_with_mark_excluded(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self, oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test mark_excluded=True returns all entries with metadata."""
         original_count = len(oid_entries)
 
         result = FlextLdifFilters.by_dn(
-            oid_entries, "*,ou=people,*", mode="include", mark_excluded=True
+            oid_entries, "*,ou=people,*", mode="include", mark_excluded=True,
         )
 
         assert result.is_success
@@ -266,7 +267,7 @@ class TestFlextLdifFilterService(FlextTestsFactories):
         assert len(excluded_entries) > 0, "Should have some entries marked as excluded"
 
     def test_dn_filter_exclude_mode(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self, oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test exclude mode removes matching entries."""
         original_count = len(oid_entries)
@@ -316,7 +317,7 @@ class TestFlextLdifFilterService(FlextTestsFactories):
     ) -> None:
         """Test attribute filtering for various combinations."""
         result = FlextLdifFilters.by_attributes(
-            oid_entries, test_case.attributes, match_all=test_case.match_all
+            oid_entries, test_case.attributes, match_all=test_case.match_all,
         )
 
         assert result.is_success, (
@@ -349,7 +350,7 @@ class TestFlextLdifFilterService(FlextTestsFactories):
     ) -> None:
         """Test base DN filtering for hierarchy levels."""
         included, _excluded = FlextLdifFilters.by_base_dn(
-            oid_entries, test_case.base_dn
+            oid_entries, test_case.base_dn,
         )
         filtered = included
 
@@ -365,7 +366,7 @@ class TestFlextLdifFilterService(FlextTestsFactories):
             assert len(filtered) > 0, f"No entries found for {test_case.name}"
 
     def test_schema_detection(
-        self, oid_schema_entries: list[FlextLdifModels.Entry]
+        self, oid_schema_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test schema entry detection with real schema data."""
         # Check individual entries for schema attributes
@@ -388,7 +389,8 @@ class TestFlextLdifFilterService(FlextTestsFactories):
         # OID uses orclaci and orclentrylevelaci attributes
         oid_acl_attributes = ["orclaci", "orclentrylevelaci"]
         result = FlextLdifFilters.extract_acl_entries(
-            oid_acl_entries, acl_attributes=oid_acl_attributes,
+            oid_acl_entries,
+            acl_attributes=oid_acl_attributes,
         )
 
         assert result.is_success
@@ -397,14 +399,13 @@ class TestFlextLdifFilterService(FlextTestsFactories):
 
         # Verify ACL entries have OID ACL attributes
         for entry in acl_entries:
-            has_acl_attr = (
-                entry.has_attribute("orclaci")
-                or entry.has_attribute("orclentrylevelaci")
+            has_acl_attr = entry.has_attribute("orclaci") or entry.has_attribute(
+                "orclentrylevelaci",
             )
             assert has_acl_attr, "ACL entry should have OID ACL attributes"
 
     def test_entry_categorization(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self, oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test entry categorization with real data."""
         # Test categorization of a few sample entries
@@ -442,7 +443,7 @@ class TestFlextLdifFilterService(FlextTestsFactories):
                 )
 
     def test_objectclass_removal(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self, oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test objectClass removal from real entries."""
         # Find an entry with objectClasses
@@ -508,12 +509,12 @@ class TestFlextLdifFilterService(FlextTestsFactories):
                 )
 
     def test_multi_stage_filtering(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self, oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test complex multi-stage filtering pipeline."""
         # Stage 1: Filter by DN pattern
         stage1_result = FlextLdifFilters.by_dn(
-            oid_entries, "*,ou=people,*", mode="include"
+            oid_entries, "*,ou=people,*", mode="include",
         )
         assert stage1_result.is_success
         stage1_entries = stage1_result.unwrap()

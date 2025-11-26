@@ -132,7 +132,7 @@ def create_entry(
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
-    attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)  # type: ignore[arg-type]
+    attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)
     return FlextLdifModels.Entry(dn=dn, attributes=attrs)
 
 
@@ -197,7 +197,9 @@ def entries_batch() -> list[FlextLdifModels.Entry]:
 class TestDnCleaningPublicApi:
     """Test DN cleaning public API."""
 
-    DN_CLEANING_DATA: ClassVar[dict[str, tuple[DnCleaningTestType, str, str | None, str | None]]] = {
+    DN_CLEANING_DATA: ClassVar[
+        dict[str, tuple[DnCleaningTestType, str, str | None, str | None]]
+    ] = {
         "test_clean_dn_with_spaces": (
             DnCleaningTestType.WITH_SPACES,
             "cn = John Doe , ou = users , dc = example , dc = com",
@@ -317,7 +319,14 @@ class TestAttributeRemovalPublicApi:
     }
 
     @pytest.mark.parametrize(
-        ("scenario", "test_type", "fixture_name", "attrs_to_remove", "attrs_to_check", "is_selective"),
+        (
+            "scenario",
+            "test_type",
+            "fixture_name",
+            "attrs_to_remove",
+            "attrs_to_check",
+            "is_selective",
+        ),
         [
             (name, data[0], data[1], data[2], data[3], data[4])
             for name, data in REMOVAL_DATA.items()
@@ -344,11 +353,17 @@ class TestAttributeRemovalPublicApi:
         fixture_data = fixtures[fixture_name]
 
         if is_selective and fixture_name == "simple_entry":
-            result = FlextLdifEntry.remove_attributes(fixture_data, attributes=attrs_to_remove or [])
+            result = FlextLdifEntry.remove_attributes(
+                fixture_data, attributes=attrs_to_remove or [],
+            )
         elif is_selective and fixture_name == "entries_batch":
-            result = FlextLdifEntry.remove_attributes_batch(fixture_data, attributes=attrs_to_remove or [])
+            result = FlextLdifEntry.remove_attributes_batch(
+                fixture_data, attributes=attrs_to_remove or [],
+            )
         else:
-            result = FlextLdifEntry.remove_operational_attributes(fixture_data if fixture_name != "entries_batch" else fixture_data[0])
+            result = FlextLdifEntry.remove_operational_attributes(
+                fixture_data if fixture_name != "entries_batch" else fixture_data[0],
+            )
 
         if isinstance(fixture_data, list):
             result = FlextLdifEntry.remove_operational_attributes_batch(fixture_data)
@@ -389,7 +404,7 @@ class TestPatterns:
             operation="remove_operational_attributes",
         )
         result1 = RfcTestHelpers.test_service_execute_and_assert(
-            service1,  # type: ignore[arg-type]
+            service1,
             expected_type=list,
             expected_count=3,
         )
@@ -402,10 +417,10 @@ class TestPatterns:
             attributes_to_remove=["mail"],
         )
         result2 = RfcTestHelpers.test_service_execute_and_assert(
-            service2,  # type: ignore[arg-type]
+            service2,
             expected_type=list,
         )
-        assert "mail" not in result2[0].attributes.attributes  # type: ignore[index,attr-defined]
+        assert "mail" not in result2[0].attributes.attributes
 
         # Test 3: Empty batch
         service4 = FlextLdifEntry(
@@ -413,7 +428,7 @@ class TestPatterns:
             operation="remove_operational_attributes",
         )
         result4 = RfcTestHelpers.test_service_execute_and_assert(
-            service4,  # type: ignore[arg-type]
+            service4,
             expected_type=list,
             expected_count=0,
         )
@@ -456,7 +471,9 @@ class TestPatterns:
     ) -> None:
         """Test realistic processing pipelines."""
         # Single entry pipeline
-        result1 = FlextLdifEntry.remove_operational_attributes(entry_with_operational_attrs)
+        result1 = FlextLdifEntry.remove_operational_attributes(
+            entry_with_operational_attrs,
+        )
         assert result1.is_success
         intermediate = result1.unwrap()
         result2 = FlextLdifEntry.remove_attributes(intermediate, attributes=["mail"])
@@ -471,7 +488,9 @@ class TestPatterns:
         result3 = FlextLdifEntry.remove_operational_attributes_batch(entries_batch)
         assert result3.is_success
         cleaned_batch = result3.unwrap()
-        result4 = FlextLdifEntry.remove_attributes_batch(cleaned_batch, attributes=["cn"])
+        result4 = FlextLdifEntry.remove_attributes_batch(
+            cleaned_batch, attributes=["cn"],
+        )
         assert result4.is_success
         final_batch = result4.unwrap()
         assert len(final_batch) == len(entries_batch)
@@ -490,7 +509,9 @@ class TestEdgeCases:
 
     EDGE_CASE_DATA: ClassVar[dict[str, tuple[EdgeCaseTestType]]] = {
         "test_entry_with_no_attributes": (EdgeCaseTestType.NO_ATTRIBUTES,),
-        "test_entry_with_only_operational_attributes": (EdgeCaseTestType.ONLY_OPERATIONAL,),
+        "test_entry_with_only_operational_attributes": (
+            EdgeCaseTestType.ONLY_OPERATIONAL,
+        ),
         "test_unicode_in_dn": (EdgeCaseTestType.UNICODE_DN,),
         "test_very_long_attribute_values": (EdgeCaseTestType.LONG_VALUES,),
         "test_entry_with_many_attributes": (EdgeCaseTestType.MANY_ATTRIBUTES,),
@@ -552,8 +573,12 @@ class TestEdgeCases:
             )
             assert result.is_success
             cleaned = result.unwrap()
-            assert all(f"attr{i}" not in cleaned.attributes.attributes for i in range(50))
-            assert all(f"attr{i}" in cleaned.attributes.attributes for i in range(50, 100))
+            assert all(
+                f"attr{i}" not in cleaned.attributes.attributes for i in range(50)
+            )
+            assert all(
+                f"attr{i}" in cleaned.attributes.attributes for i in range(50, 100)
+            )
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -566,12 +591,18 @@ class TestValidation:
     """RFC 4512/4514 LDAP validation tests."""
 
     VALIDATION_DATA: ClassVar[dict[str, tuple[ValidationTestType]]] = {
-        "test_validate_attribute_name_valid": (ValidationTestType.VALIDATE_ATTR_NAME_VALID,),
-        "test_validate_attribute_name_invalid": (ValidationTestType.VALIDATE_ATTR_NAME_INVALID,),
+        "test_validate_attribute_name_valid": (
+            ValidationTestType.VALIDATE_ATTR_NAME_VALID,
+        ),
+        "test_validate_attribute_name_invalid": (
+            ValidationTestType.VALIDATE_ATTR_NAME_INVALID,
+        ),
         "test_validate_objectclass_name": (ValidationTestType.VALIDATE_OBJECTCLASS,),
         "test_validate_attribute_value": (ValidationTestType.VALIDATE_ATTR_VALUE,),
         "test_validate_dn_component": (ValidationTestType.VALIDATE_DN_COMPONENT,),
-        "test_validate_attribute_names_batch": (ValidationTestType.VALIDATE_ATTR_NAMES_BATCH,),
+        "test_validate_attribute_names_batch": (
+            ValidationTestType.VALIDATE_ATTR_NAMES_BATCH,
+        ),
     }
 
     @pytest.mark.parametrize(
@@ -587,7 +618,13 @@ class TestValidation:
         service = FlextLdifValidation()
 
         if test_type == ValidationTestType.VALIDATE_ATTR_NAME_VALID:
-            for name in ["cn", "mail", "objectClass", "user-account", "extensionAttribute123"]:
+            for name in [
+                "cn",
+                "mail",
+                "objectClass",
+                "user-account",
+                "extensionAttribute123",
+            ]:
                 assert service.validate_attribute_name(name).unwrap() is True
 
         elif test_type == ValidationTestType.VALIDATE_ATTR_NAME_INVALID:
@@ -600,14 +637,21 @@ class TestValidation:
 
         elif test_type == ValidationTestType.VALIDATE_ATTR_VALUE:
             assert service.validate_attribute_value("John Smith").unwrap() is True
-            assert service.validate_attribute_value("test", max_length=2).unwrap() is False
+            assert (
+                service.validate_attribute_value("test", max_length=2).unwrap() is False
+            )
 
         elif test_type == ValidationTestType.VALIDATE_DN_COMPONENT:
             assert service.validate_dn_component("cn", "John Smith").unwrap() is True
             assert service.validate_dn_component("2invalid", "value").unwrap() is False
 
         elif test_type == ValidationTestType.VALIDATE_ATTR_NAMES_BATCH:
-            validated = service.validate_attribute_names(["cn", "mail", "2invalid", "objectClass"]).unwrap()
+            validated = service.validate_attribute_names([
+                "cn",
+                "mail",
+                "2invalid",
+                "objectClass",
+            ]).unwrap()
             assert validated["cn"] is True
             assert validated["2invalid"] is False
 

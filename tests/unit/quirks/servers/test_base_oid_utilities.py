@@ -1,9 +1,10 @@
 """Test suite for FlextLdifUtilities OID extraction utilities.
 
-Tests for extract_from_schema_object, matches_pattern, extract_from_definition,
-validate_format, get_server_type_from_oid, and is_*_oid utilities.
+Modules tested: FlextLdifUtilities.OID
+Scope: OID extraction, validation, pattern matching, server type detection
 
 All tests use REAL implementations without mocks for authentic behavior validation.
+Uses parametrized test scenarios and factory patterns for reduced code size.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -123,7 +124,7 @@ class TestFlextLdifUtilitiesOid:
         dict[
             str,
             tuple[
-                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str,
             ],
         ]
     ] = {

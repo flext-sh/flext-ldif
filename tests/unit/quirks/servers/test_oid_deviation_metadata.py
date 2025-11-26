@@ -1,7 +1,10 @@
 """Test suite for OID deviation metadata tracking.
 
-Tests for zero data loss metadata tracking during OID→RFC conversions.
-Validates that original values are preserved in QuirkMetadata for round-trip support.
+Modules tested: FlextLdifServersOid.Entry, FlextLdifModels.QuirkMetadata
+Scope: Zero data loss metadata tracking during OID→RFC conversions. Validates that
+original values (boolean conversions, DN spacing, schema quirks) are preserved in
+QuirkMetadata for round-trip support. Tests boolean_conversions, original_format_details,
+and schema_quirks_applied fields.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,10 +13,60 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
+
+
+def build_ldif_text(dn: str, attrs: Mapping[str, object]) -> str:
+    """Build LDIF text from DN and attributes dict.
+
+    Args:
+        dn: Distinguished Name
+        attrs: Attributes dict (name → value or list of values)
+
+    Returns:
+        LDIF text string ready for parse()
+
+    """
+    lines = [f"dn: {dn}"]
+    for attr_name, attr_values in attrs.items():
+        if isinstance(attr_values, list):
+            for val in attr_values:
+                lines.append(f"{attr_name}: {val}")
+        else:
+            lines.append(f"{attr_name}: {attr_values}")
+    return "\n".join(lines) + "\n"
+
+
+def parse_entry_and_unwrap(
+    entry_quirk: FlextLdifServersOid.Entry,
+    dn: str,
+    attrs: Mapping[str, object],
+) -> FlextLdifModels.Entry:
+    """Parse entry using public API and unwrap result.
+
+    Args:
+        entry_quirk: OID Entry quirk instance
+        dn: Distinguished Name
+        attrs: Attributes dict
+
+    Returns:
+        Parsed Entry model
+
+    Raises:
+        AssertionError: If parse fails
+
+    """
+    ldif_text = build_ldif_text(dn, attrs)
+    result = entry_quirk.parse(ldif_text)
+    assert result.is_success, f"Parse failed: {result.error}"
+    entries = result.unwrap()
+    assert len(entries) > 0, "No entries parsed"
+    return entries[0]
 
 
 class TestOidBooleanConversionMetadata:
@@ -37,13 +90,12 @@ class TestOidBooleanConversionMetadata:
             "pwdlockout": ["0"],  # Another OID boolean
         }
 
-        result = oid_entry._parse_entry(
+        # Use public API via helper
+        entry = parse_entry_and_unwrap(
+            oid_entry,
             "cn=test,dc=example,dc=com",
             entry_attrs,
         )
-
-        assert result.is_success
-        entry = result.unwrap()
 
         # Verify metadata exists
         assert entry.metadata is not None

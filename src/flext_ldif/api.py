@@ -20,7 +20,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar, Literal, TypeVar, cast, overload, override
+from typing import ClassVar, Literal, TypeVar, overload, override
 
 from flext_core import (
     FlextConfig,
@@ -282,14 +282,14 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         # Services initialized in model_post_init for proper initialization order
 
-    def model_post_init(self, __context: object, /) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize private attributes after Pydantic initialization.
 
         Uses DRY mapping to initialize all services dynamically, eliminating
         repetitive initialization code while maintaining SOLID principles.
 
         Args:
-            __context: Pydantic's validation context dictionary or None (unused).
+            _context: Pydantic's validation context dictionary or None (unused).
 
         """
         # Initialize context
@@ -704,6 +704,99 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         entries_service = self._get_service(ServiceType.ENTRIES)
         return entries_service.get_attribute_values(attribute)
 
+    @staticmethod
+    def _convert_mode_to_typed(
+        mode: str,
+    ) -> FlextLdifConstants.LiteralTypes.MigrationMode:
+        """Convert string mode to typed MigrationMode literal."""
+        if mode == "simple":
+            return "simple"
+        if mode == "categorized":
+            return "categorized"
+        if mode == "structured":
+            return "structured"
+        msg = f"Expected 'simple' | 'categorized' | 'structured', got {mode}"
+        raise ValueError(msg)
+
+    @staticmethod
+    def _narrow_migration_types(
+        migration_tuple_raw: object,
+    ) -> tuple[
+        FlextLdifModels.MigrateOptions,
+        FlextLdifModels.MigrationConfig | None,
+        FlextLdifModels.CategoryRules | None,
+        FlextLdifModels.WhitelistRules | None,
+    ]:
+        """Narrow types for migration tuple from railway pattern result."""
+        if (
+            not isinstance(migration_tuple_raw, tuple)
+            or len(migration_tuple_raw) != FlextLdifConstants.TUPLE_LEN_4
+        ):
+            msg = f"Expected tuple of length 4, got {type(migration_tuple_raw)}"
+            raise TypeError(msg)
+
+        opts, config_model, categorization_rules, schema_whitelist_rules = (
+            migration_tuple_raw
+        )
+
+        # Type narrowing: ensure correct types
+        if not isinstance(opts, FlextLdifModels.MigrateOptions):
+            msg = f"Expected MigrateOptions, got {type(opts)}"
+            raise TypeError(msg)
+        if config_model is not None and not isinstance(
+            config_model, FlextLdifModels.MigrationConfig
+        ):
+            msg = f"Expected MigrationConfig | None, got {type(config_model)}"
+            raise TypeError(msg)
+        if categorization_rules is not None and not isinstance(
+            categorization_rules, FlextLdifModels.CategoryRules
+        ):
+            msg = f"Expected CategoryRules | None, got {type(categorization_rules)}"
+            raise TypeError(msg)
+        if schema_whitelist_rules is not None and not isinstance(
+            schema_whitelist_rules, FlextLdifModels.WhitelistRules
+        ):
+            msg = f"Expected WhitelistRules | None, got {type(schema_whitelist_rules)}"
+            raise TypeError(msg)
+
+        return (opts, config_model, categorization_rules, schema_whitelist_rules)
+
+    @staticmethod
+    def _normalize_category_rules_for_migrate(t: object) -> FlextResult[object]:
+        """Normalize category rules with type narrowing for migrate method."""
+        if not isinstance(t, tuple) or len(t) != FlextLdifConstants.TUPLE_LEN_2:
+            return FlextResult.fail("Invalid tuple")
+        opts_t, config_t = t
+        if not isinstance(opts_t, FlextLdifModels.MigrateOptions):
+            return FlextResult.fail("Invalid MigrateOptions")
+        return FlextLdifMigrationPipeline.normalize_category_rules(
+            opts_t.categorization_rules
+        ).map(lambda r: (opts_t, config_t, r))
+
+    @staticmethod
+    def _validate_simple_mode_params_for_migrate(t: object) -> FlextResult[object]:
+        """Validate simple mode params with type narrowing for migrate method."""
+        if not isinstance(t, tuple) or len(t) != FlextLdifConstants.TUPLE_LEN_3:
+            return FlextResult.fail("Invalid tuple")
+        opts_t, config_t, rules_t = t
+        if not isinstance(opts_t, FlextLdifModels.MigrateOptions):
+            return FlextResult.fail("Invalid MigrateOptions")
+        return FlextLdifMigrationPipeline.validate_simple_mode_params(
+            opts_t.input_filename, opts_t.output_filename
+        ).map(lambda _: (opts_t, config_t, rules_t))
+
+    @staticmethod
+    def _normalize_whitelist_rules_for_migrate(t: object) -> FlextResult[object]:
+        """Normalize whitelist rules with type narrowing for migrate method."""
+        if not isinstance(t, tuple) or len(t) != FlextLdifConstants.TUPLE_LEN_3:
+            return FlextResult.fail("Invalid tuple")
+        opts_t, config_t, rules_t = t
+        if not isinstance(opts_t, FlextLdifModels.MigrateOptions):
+            return FlextResult.fail("Invalid MigrateOptions")
+        return FlextLdifMigrationPipeline.normalize_whitelist_rules(
+            opts_t.schema_whitelist_rules
+        ).map(lambda w: (opts_t, config_t, rules_t, w))
+
     def migrate(
         self,
         input_dir: Path,
@@ -803,7 +896,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         # DRY migration setup using service normalization methods
         opts = options or FlextLdifModels.MigrateOptions()
 
-        # Chain validation steps using railway pattern
+        # Chain validation steps using railway pattern with extracted methods
         migration_setup = (
             FlextResult.ok(opts)
             .flat_map(
@@ -811,35 +904,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                     o.migration_config
                 ).map(lambda c: (o, c))
             )
-            .flat_map(
-                lambda t: (
-                    t_cast := cast("tuple[FlextLdifModels.MigrateOptions, object]", t),
-                    FlextLdifMigrationPipeline.normalize_category_rules(
-                        t_cast[0].categorization_rules
-                    ).map(lambda r: (t_cast[0], t_cast[1], r)),
-                )[1]
-            )
-            .flat_map(
-                lambda t: (
-                    t_cast := cast(
-                        "tuple[FlextLdifModels.MigrateOptions, object, object]", t
-                    ),
-                    FlextLdifMigrationPipeline.validate_simple_mode_params(
-                        t_cast[0].input_filename, t_cast[0].output_filename
-                    ).map(lambda _: t_cast),
-                )[1]
-            )
-            .flat_map(
-                lambda t: (
-                    t_cast := cast(
-                        "tuple[FlextLdifModels.MigrateOptions, object, object, object]",
-                        t,
-                    ),
-                    FlextLdifMigrationPipeline.normalize_whitelist_rules(
-                        t_cast[0].schema_whitelist_rules
-                    ).map(lambda w: (t_cast[0], t_cast[1], t_cast[2], w)),
-                )[1]
-            )
+            .flat_map(self._normalize_category_rules_for_migrate)
+            .flat_map(self._validate_simple_mode_params_for_migrate)
+            .flat_map(self._normalize_whitelist_rules_for_migrate)
         )
 
         if migration_setup.is_failure:
@@ -847,29 +914,17 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 migration_setup.error or "Migration setup failed"
             )
 
-        migration_tuple = cast(
-            "tuple[FlextLdifModels.MigrateOptions, object, object, object]",
-            migration_setup.unwrap(),
-        )
-        opts, config_model, categorization_rules, schema_whitelist_rules = (
-            migration_tuple
-        )
-
-        # Types are already correct after casting the tuple
-        config_model = cast("FlextLdifModels.MigrationConfig | None", config_model)
-        categorization_rules = cast(
-            "FlextLdifModels.CategoryRules | None", categorization_rules
-        )
-        schema_whitelist_rules = cast(
-            "FlextLdifModels.WhitelistRules | None", schema_whitelist_rules
+        # Extract and type-narrow results from railway pattern
+        opts, config_model_typed, categorization_rules_typed, schema_whitelist_rules = (
+            self._narrow_migration_types(migration_setup.unwrap())
         )
 
         # Auto-detect mode and create write options
         mode = FlextLdifMigrationPipeline.detect_migration_mode(
-            config_model, categorization_rules
+            config_model_typed, categorization_rules_typed
         )
         write_options_result = FlextLdifMigrationPipeline.get_write_options_for_mode(
-            mode, opts.write_options, config_model
+            mode, opts.write_options, config_model_typed
         )
 
         if write_options_result.is_failure:
@@ -879,11 +934,14 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         write_options = write_options_result.unwrap()
 
+        # Convert mode string to typed literal
+        mode_typed = self._convert_mode_to_typed(mode)
+
         # Initialize and execute migration pipeline with all normalized parameters
         migration_pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode=cast("FlextLdifConstants.LiteralTypes.MigrationMode", mode),
+            mode=mode_typed,
             source_server=source_server,
             target_server=target_server,
             forbidden_attributes=opts.forbidden_attributes,
@@ -891,7 +949,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             base_dn=opts.base_dn,
             sort_entries_hierarchically=opts.sort_entries_hierarchically,
             write_options=write_options,
-            categorization_rules=categorization_rules,
+            categorization_rules=categorization_rules_typed,
             input_files=opts.input_files,
             output_files=opts.output_files,
             schema_whitelist_rules=schema_whitelist_rules,
@@ -1321,7 +1379,15 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         if not self._context:
             # Initialize with empty dict
             self._context = {}
-        return cast("FlextContext", self._context)
+        # Type narrowing: _context is dict[str, object], need to create FlextContext instance
+        if not isinstance(self._context, dict):
+            msg = f"Expected dict, got {type(self._context)}"
+            raise TypeError(msg)
+        # Create FlextContext instance from dict
+        context_instance = FlextContext()
+        for key, value in self._context.items():
+            context_instance.set(key, value)
+        return context_instance
 
     # =========================================================================
     # MONADIC METHODS - Railway-oriented composition
@@ -1352,10 +1418,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        return cast(
-            "FlextResult[U]",
-            self.parse(source, server_type, format_options).map(transform),
-        )
+        # Type narrowing: map returns FlextResult[object], need to convert to FlextResult[U]
+        parse_result = self.parse(source, server_type, format_options)
+        if parse_result.is_failure:
+            return FlextResult[U].fail(parse_result.error or "Parse failed")
+        entries = parse_result.unwrap()
+        transformed = transform(entries)
+        return FlextResult[U].ok(transformed)
 
     def parse_and_flat_map(
         self,
@@ -1382,13 +1451,16 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        result = self.parse(source, server_type, format_options).flat_map(
-            cast(
-                "Callable[[list[FlextLdifModels.Entry]], FlextResult[object]]",
-                transform,
-            )
-        )
-        return cast("FlextResult[U]", result)
+        # Type narrowing: flat_map returns FlextResult[object], need to convert to FlextResult[U]
+        parse_result = self.parse(source, server_type, format_options)
+        if parse_result.is_failure:
+            return FlextResult[U].fail(parse_result.error or "Parse failed")
+        entries = parse_result.unwrap()
+        transform_result = transform(entries)
+        if transform_result.is_failure:
+            return FlextResult[U].fail(transform_result.error or "Transform failed")
+        transformed = transform_result.unwrap()
+        return FlextResult[U].ok(transformed)
 
     def filter_and_map(
         self,
@@ -1413,12 +1485,15 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult with transformed value
 
         """
-        return cast(
-            "FlextResult[U]",
-            self.filter(
-                entries, objectclass, dn_pattern, attributes, custom_filter
-            ).map(transform),
+        # Type narrowing: map returns FlextResult[object], need to convert to FlextResult[U]
+        filter_result = self.filter(
+            entries, objectclass, dn_pattern, attributes, custom_filter
         )
+        if filter_result.is_failure:
+            return FlextResult[U].fail(filter_result.error or "Filter failed")
+        filtered_entries = filter_result.unwrap()
+        transformed = transform(filtered_entries)
+        return FlextResult[U].ok(transformed)
 
     def filter_and_flat_map(
         self,
@@ -1443,15 +1518,18 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult from chained operation
 
         """
-        result = self.filter(
+        # Type narrowing: flat_map returns FlextResult[object], need to convert to FlextResult[U]
+        filter_result = self.filter(
             entries, objectclass, dn_pattern, attributes, custom_filter
-        ).flat_map(
-            cast(
-                "Callable[[list[FlextLdifModels.Entry]], FlextResult[object]]",
-                transform,
-            )
         )
-        return cast("FlextResult[U]", result)
+        if filter_result.is_failure:
+            return FlextResult[U].fail(filter_result.error or "Filter failed")
+        filtered_entries = filter_result.unwrap()
+        transform_result = transform(filtered_entries)
+        if transform_result.is_failure:
+            return FlextResult[U].fail(transform_result.error or "Transform failed")
+        transformed = transform_result.unwrap()
+        return FlextResult[U].ok(transformed)
 
     # =========================================================================
     # BUILDER METHODS - Fluent API for complex operations (no additional class)
@@ -1561,22 +1639,40 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         """
         if self._builder_write_result is not None:
-            # Convert FlextResult[str] to Union type
-            return cast(
-                "FlextResult[list[FlextLdifModels.Entry] | str]",
-                self._builder_write_result,
+            # Type narrowing: convert FlextResult[str] to Union type
+            write_result = self._builder_write_result
+            if write_result.is_success:
+                value_str = write_result.unwrap()
+                if not isinstance(value_str, str):
+                    msg = f"Expected str, got {type(value_str)}"
+                    raise TypeError(msg)
+                return FlextResult[list[FlextLdifModels.Entry] | str].ok(value_str)
+            return FlextResult[list[FlextLdifModels.Entry] | str].fail(
+                write_result.error or "Write failed"
             )
         if self._builder_filter_result is not None:
-            # Convert FlextResult[list[Entry]] to Union type
-            return cast(
-                "FlextResult[list[FlextLdifModels.Entry] | str]",
-                self._builder_filter_result,
+            # Type narrowing: convert FlextResult[list[Entry]] to Union type
+            filter_result = self._builder_filter_result
+            if filter_result.is_success:
+                value_entries = filter_result.unwrap()
+                if not isinstance(value_entries, list):
+                    msg = f"Expected list[Entry], got {type(value_entries)}"
+                    raise TypeError(msg)
+                return FlextResult[list[FlextLdifModels.Entry] | str].ok(value_entries)
+            return FlextResult[list[FlextLdifModels.Entry] | str].fail(
+                filter_result.error or "Filter failed"
             )
         if self._builder_parse_result is not None:
-            # Convert FlextResult[list[Entry]] to Union type
-            return cast(
-                "FlextResult[list[FlextLdifModels.Entry] | str]",
-                self._builder_parse_result,
+            # Type narrowing: convert FlextResult[list[Entry]] to Union type
+            parse_result = self._builder_parse_result
+            if parse_result.is_success:
+                value_entries = parse_result.unwrap()
+                if not isinstance(value_entries, list):
+                    msg = f"Expected list[Entry], got {type(value_entries)}"
+                    raise TypeError(msg)
+                return FlextResult[list[FlextLdifModels.Entry] | str].ok(value_entries)
+            return FlextResult[list[FlextLdifModels.Entry] | str].fail(
+                parse_result.error or "Parse failed"
             )
         error_msg = "Must call parse_builder() before execute_builder()"
         return FlextResult[list[FlextLdifModels.Entry] | str].fail(error_msg)

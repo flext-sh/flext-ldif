@@ -27,12 +27,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, TypedDict, cast
+from typing import ClassVar, TypedDict
 
 import pytest
-from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
+from tests.fixtures.constants import RFC, DNs, Names, OIDs, Values
+from tests.helpers import FlextLdifTestFactories, TestAssertions
 
 
 class RfcViolationType(StrEnum):
@@ -43,7 +44,7 @@ class RfcViolationType(StrEnum):
     DN_FORMAT = "dn_format"
 
 
-class TestEntryType(StrEnum):
+class EntryType(StrEnum):
     """Entry types for testing."""
 
     NORMAL = "normal"
@@ -71,20 +72,20 @@ class TestPydanticValidatorsRfcCompliance:
     - Reduced code through mappings and enums
     """
 
-    # Test data constants for DRY
-    TEST_DN: ClassVar[str] = "uid=test,dc=example,dc=com"
-    SCHEMA_DN: ClassVar[str] = "cn=schema"
+    # Test data constants using centralized constants
+    TEST_DN: ClassVar[str] = f"uid={Values.TEST},{DNs.EXAMPLE}"
+    SCHEMA_DN: ClassVar[str] = DNs.SCHEMA
     INVALID_DN: ClassVar[str] = "invalid-dn-without-equals"
 
-    # RFC compliant attributes mapping
+    # RFC compliant attributes mapping using constants
     RFC_COMPLIANT_ATTRS: ClassVar[dict[str, list[str]]] = {
-        "cn": ["Test"],
-        "sn": ["User"],
-        "mail": ["test@example.com"],
-        "objectClass": ["person", "inetOrgPerson"],
+        Names.CN: [Values.TEST],
+        Names.SN: [Values.USER],
+        Names.MAIL: [Values.TEST_EMAIL],
+        Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
         "userPassword": ["{SSHA}hash"],
         "employee-number": ["12345"],
-        "cn;lang-en": ["Test"],
+        "cn;lang-en": [Values.TEST],
     }
 
     # Server-specific attributes (non-RFC but allowed)
@@ -92,42 +93,40 @@ class TestPydanticValidatorsRfcCompliance:
         "ds-cfg-enabled": ["true"],
         "ds-cfg-java-class": ["org.opends.server.Example"],
         "orclGUID": ["12345678"],
-        "orclentrylevelaci": ["access to entry by * (browse)"],
+        "orclentrylevelaci": [RFC.ACL_SAMPLE_BROWSE],
     }
 
-    # Numeric OID attributes
+    # Numeric OID attributes using constants
     NUMERIC_OID_ATTRS: ClassVar[dict[str, list[str]]] = {
-        "2.5.4.3": ["CommonName"],
-        "1.3.6.1.4.1.1466.115.121.1.15": ["DirectoryString"],
+        OIDs.CN: ["CommonName"],
+        OIDs.DIRECTORY_STRING: ["DirectoryString"],
         "2.16.840.1.113894.1.1.1": ["orclGUID"],
     }
 
-    # Test cases for entry creation
-    ENTRY_TEST_CASES: ClassVar[dict[TestEntryType, EntryTestCase]] = {
-        TestEntryType.NORMAL: {
+    # Test cases for entry creation using factories and constants
+    ENTRY_TEST_CASES: ClassVar[dict[EntryType, EntryTestCase]] = {
+        EntryType.NORMAL: {
             "dn": TEST_DN,
             "attributes": {
-                "uid": ["test"],
-                "cn": ["Test User"],
-                "objectClass": ["person", "inetOrgPerson"],
+                Names.UID: [Values.TEST],
+                Names.CN: [f"{Values.TEST} {Values.USER}"],
+                Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
             },
             "expect_violations": False,
         },
-        TestEntryType.SCHEMA: {
+        EntryType.SCHEMA: {
             "dn": SCHEMA_DN,
             "attributes": {
-                "cn": ["schema"],
-                "attributeTypes": [
-                    "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-                ],
+                Names.CN: ["schema"],
+                "attributeTypes": [RFC.ATTR_DEF_CN],
             },
             "expect_violations": False,
         },
-        TestEntryType.VIOLATION: {
+        EntryType.VIOLATION: {
             "dn": TEST_DN,
             "attributes": {
-                "uid": ["test"],
-                "objectClass": ["person"],
+                Names.UID: [Values.TEST],
+                Names.OBJECTCLASS: [Names.PERSON],
                 "ds-cfg-enabled": ["true"],
                 "orclGUID": ["12345678"],
                 "_internal_id": ["999"],
@@ -148,37 +147,33 @@ class TestPydanticValidatorsRfcCompliance:
     @classmethod
     def create_test_entry(
         cls,
-        entry_type: TestEntryType,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Factory method for creating test entries."""
+        entry_type: EntryType,
+    ) -> FlextLdifModels.Entry:
+        """Factory method for creating test entries using FlextLdifTestFactories."""
         case = cls.ENTRY_TEST_CASES[entry_type]
-        return cast(
-            "FlextResult[FlextLdifModels.Entry]",
-            FlextLdifModels.Entry.create(
-                dn=case["dn"],
-                attributes=case["attributes"],
-            ),
+        return FlextLdifTestFactories.create_entry(
+            dn=case["dn"],
+            attributes=case["attributes"],
         )
 
     @pytest.mark.parametrize(
         ("entry_type", "expect_violations"),
         [
-            (TestEntryType.NORMAL, False),
-            (TestEntryType.SCHEMA, False),
-            (TestEntryType.VIOLATION, True),
+            (EntryType.NORMAL, False),
+            (EntryType.SCHEMA, False),
+            (EntryType.VIOLATION, True),
         ],
     )
     def test_entry_rfc_validation(
         self,
-        entry_type: TestEntryType,
+        entry_type: EntryType,
         expect_violations: bool,
     ) -> None:
         """Parametrized test for Entry RFC 2849/4512 validation using factory patterns."""
-        entry_result = self.create_test_entry(entry_type)
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
+        entry = self.create_test_entry(entry_type)
+        TestAssertions.assert_entry_valid(entry)
 
-        # Verify DN
+        # Verify DN using constants
         case = self.ENTRY_TEST_CASES[entry_type]
         assert entry.dn is not None
         assert entry.dn.value == case["dn"]
@@ -193,7 +188,7 @@ class TestPydanticValidatorsRfcCompliance:
             assert len(rfc_violations) > 0
 
             # For violation case, check specific violation content
-            if entry_type == TestEntryType.VIOLATION:
+            if entry_type == EntryType.VIOLATION:
                 violation_text = str(rfc_violations[0])
                 assert "RFC 4512" in violation_text
                 assert "_internal_id" in violation_text
@@ -212,29 +207,39 @@ class TestPydanticValidatorsRfcCompliance:
         for attr_name in case["attributes"]:
             assert attr_name in entry.attributes.attributes
 
-    def test_ldif_attributes_rfc_compliance(self) -> None:
-        """Test LdifAttributes RFC 4512 § 2.5 compliance using mapping-driven approach."""
-        # Test RFC compliant attributes
-        rfc_attrs = FlextLdifModels.LdifAttributes(attributes=self.RFC_COMPLIANT_ATTRS)
-        for attr_name in self.RFC_COMPLIANT_ATTRS:
-            assert attr_name in rfc_attrs.attributes
+    @pytest.mark.parametrize(
+        ("attr_dict", "description"),
+        [
+            ("RFC_COMPLIANT_ATTRS", "RFC compliant attributes"),
+            ("SERVER_SPECIFIC_ATTRS", "Server-specific attributes"),
+            ("NUMERIC_OID_ATTRS", "Numeric OID attributes"),
+        ],
+    )
+    def test_ldif_attributes_rfc_compliance(
+        self,
+        attr_dict: str,
+        description: str,
+    ) -> None:
+        """Test LdifAttributes RFC 4512 § 2.5 compliance using parametrized approach."""
+        attrs_dict = getattr(self, attr_dict)
+        ldif_attrs = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
+        for attr_name in attrs_dict:
+            assert attr_name in ldif_attrs.attributes, (
+                f"{description}: {attr_name} not found in attributes"
+            )
 
-        # Test server-specific attributes (logged but allowed)
-        server_attrs = {**self.RFC_COMPLIANT_ATTRS, **self.SERVER_SPECIFIC_ATTRS}
-        server_ldif_attrs = FlextLdifModels.LdifAttributes(attributes=server_attrs)
-        for attr_name in server_attrs:
+    def test_ldif_attributes_combined_compliance(self) -> None:
+        """Test LdifAttributes with combined RFC and server-specific attributes."""
+        combined_attrs = {**self.RFC_COMPLIANT_ATTRS, **self.SERVER_SPECIFIC_ATTRS}
+        server_ldif_attrs = FlextLdifModels.LdifAttributes(attributes=combined_attrs)
+        for attr_name in combined_attrs:
             assert attr_name in server_ldif_attrs.attributes
-
-        # Test numeric OID attributes (allowed for future enhancement)
-        oid_attrs = FlextLdifModels.LdifAttributes(attributes=self.NUMERIC_OID_ATTRS)
-        for attr_name in self.NUMERIC_OID_ATTRS:
-            assert attr_name in oid_attrs.attributes
 
     @pytest.mark.parametrize(
         ("dn_value", "expected_components"),
         [
-            ("uid=test,ou=users,dc=example,dc=com", 4),
-            ("uid=test, ou=users, dc=example, dc=com", 4),  # Spaces after comma
+            (f"uid={Values.TEST},ou=users,{DNs.EXAMPLE}", 4),
+            (f"uid={Values.TEST}, ou=users, {DNs.EXAMPLE}", 4),  # Spaces after comma
         ],
     )
     def test_distinguished_name_rfc_compliance(
@@ -291,25 +296,25 @@ class TestPydanticValidatorsRfcCompliance:
             extensions=test_extensions,
         )
 
-        # Verify extensions contain violations
+        # Verify extensions contain violations using mapping
         assert metadata.extensions == test_extensions
-        assert "rfc_violations" in metadata.extensions
-        assert "attribute_name_violations" in metadata.extensions
+        violation_keys = ("rfc_violations", "attribute_name_violations")
+        for key in violation_keys:
+            assert key in metadata.extensions
+            violations_obj = metadata.extensions[key]
+            assert isinstance(violations_obj, list)
+            violations = list(violations_obj)
+            assert len(violations) == 2
 
-        # Verify counts and content
-        rfc_viol = metadata.extensions["rfc_violations"]
-        attr_viol = metadata.extensions["attribute_name_violations"]
-        assert isinstance(rfc_viol, list)
-        assert isinstance(attr_viol, list)
-        assert len(rfc_viol) == 2
-        assert len(attr_viol) == 2
+        # Verify specific content
+        rfc_viol_obj = metadata.extensions["rfc_violations"]
+        assert isinstance(rfc_viol_obj, list)
+        rfc_viol = list(rfc_viol_obj)
         assert "RFC 4512" in str(rfc_viol[0])
 
     def test_rfc_violations_consistency_in_entry(self) -> None:
         """Validate RFC violations consistency between validation_metadata and extensions."""
-        entry_result = self.create_test_entry(TestEntryType.VIOLATION)
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
+        entry = self.create_test_entry(EntryType.VIOLATION)
 
         # Get violations from both locations
         validation_metadata = self.get_validation_metadata(entry)

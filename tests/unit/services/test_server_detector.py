@@ -68,7 +68,7 @@ class DetectorTestData:
                 "orclPassword: secret",
             ],
             "attribute_types": [
-                "attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )"
+                "attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )",
             ],
         },
         SERVER_OUD: {
@@ -95,7 +95,7 @@ class DetectorTestData:
                 "samAccountName: testuser",
             ],
             "attribute_types": [
-                "attributeTypes: ( 1.2.840.113556.1.4.1 NAME 'objectGUID' )"
+                "attributeTypes: ( 1.2.840.113556.1.4.1 NAME 'objectGUID' )",
             ],
         },
         "389ds": {
@@ -210,7 +210,7 @@ class TestServerDetector:
             patterns = DetectorTestData.SERVER_PATTERNS[server_type]
             if pattern_key not in patterns:
                 pytest.skip(
-                    f"Pattern key {pattern_key} not available for {server_type}"
+                    f"Pattern key {pattern_key} not available for {server_type}",
                 )
 
             # Build content using first pattern of the key
@@ -308,7 +308,7 @@ class TestServerDetector:
                 assert detection.is_confident is not None
 
         def test_low_confidence_fallback_to_rfc(
-            self, detector: FlextLdifDetector
+            self, detector: FlextLdifDetector,
         ) -> None:
             """Test low confidence detection falls back to RFC."""
             content = f"""{DetectorTestData.LDIF_VERSION_HEADER}{DetectorTestData.LDIF_BASIC_ENTRY}cn: test
@@ -440,11 +440,11 @@ class TestServerDetector:
             assert detection.confidence >= 0
 
         def test_detect_with_nonexistent_file(
-            self, detector: FlextLdifDetector
+            self, detector: FlextLdifDetector,
         ) -> None:
             """Test detection with nonexistent file path."""
             result = detector.detect_server_type(
-                ldif_path=DetectorTestData.NONEXISTENT_FILE
+                ldif_path=DetectorTestData.NONEXISTENT_FILE,
             )
             assert hasattr(result, "is_success")
 
@@ -504,7 +504,7 @@ class TestServerDetector:
             config = FlextConfig.get_global_instance()
             ldif_config = config.ldif
             result = FlextLdifDetector.resolve_from_config(
-                ldif_config, target_server_type=target_server_type
+                ldif_config, target_server_type=target_server_type,
             )
             assert result == expected
 

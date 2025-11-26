@@ -1624,6 +1624,229 @@ class FlextLdifFilters(
         return transformer.remove_objectclasses(entry, objectclasses)
 
     @classmethod
+    def remove_attributes_with_tracking(
+        cls,
+        entry: FlextLdifModels.Entry,
+        attributes: list[str],
+        *,
+        reason: str = "",
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove attributes and record transformation tracking in metadata.
+
+        Combines attribute removal with metadata tracking for transformation comments.
+        Useful for migrations where you need to record which attributes were removed
+        and why (for documentation/audit purposes).
+
+        Args:
+            entry: Entry to modify
+            attributes: List of attribute names to remove
+            reason: Human-readable reason for removal (tracked in metadata)
+
+        Returns:
+            FlextResult with updated entry (attributes removed + transformation tracked)
+
+        Example:
+            result = FlextLdif.filters.remove_attributes_with_tracking(
+                entry,
+                ["nsds5ReplicaId", "nsslapd-maxbersize"],
+                reason="Removed Oracle-specific attributes"
+            )
+
+        """
+        if not attributes:
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        # Track each attribute removal in metadata for transformation comments
+        updated_entry = entry
+        for attr_name in attributes:
+            # Get original values before removal (for metadata tracking)
+            attr_lower = attr_name.lower()
+            matching_attr = None
+            original_values: list[str] = []
+
+            for key, values in updated_entry.attributes.items():
+                if key.lower() == attr_lower:
+                    matching_attr = key
+                    original_values = list(values)
+                    break
+
+            if matching_attr:
+                # Track the transformation
+                FlextLdifUtilities.Metadata.track_transformation(
+                    metadata=updated_entry.metadata,
+                    original_name=matching_attr,
+                    target_name=None,
+                    original_values=original_values,
+                    target_values=None,
+                    transformation_type="removed",
+                    reason=reason,
+                )
+
+            # Remove the attribute using standard removal
+            remove_result = cls.remove_attributes(updated_entry, [attr_name])
+            if remove_result.is_success:
+                updated_entry = remove_result.unwrap()
+
+        return FlextResult[FlextLdifModels.Entry].ok(updated_entry)
+
+    @classmethod
+    def filter_entry(
+        cls,
+        entry: FlextLdifModels.Entry,
+        forbidden_attributes: list[str] | None = None,
+        forbidden_objectclasses: list[str] | None = None,
+        *,
+        track_removed: bool = False,
+        removal_reason: str = "",
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Unified entry filtering for both attributes and objectClasses.
+
+        Convenience method that removes forbidden attributes and objectClasses
+        in a single operation, optionally tracking transformations for comments.
+
+        Args:
+            entry: Entry to filter
+            forbidden_attributes: List of attribute names to remove
+            forbidden_objectclasses: List of objectClass names to remove
+            track_removed: If True, track removed attributes in metadata
+            removal_reason: Reason for removal (used in metadata tracking)
+
+        Returns:
+            FlextResult with filtered entry
+
+        Example:
+            result = FlextLdif.filters.filter_entry(
+                entry,
+                forbidden_attributes=["nsds5ReplicaId"],
+                forbidden_objectclasses=["top"],
+                track_removed=True,
+                removal_reason="Blocked by policy"
+            )
+
+        """
+        filtered_entry = entry
+
+        # Remove attributes
+        if forbidden_attributes:
+            if track_removed:
+                remove_result = cls.remove_attributes_with_tracking(
+                    filtered_entry,
+                    forbidden_attributes,
+                    reason=removal_reason,
+                )
+            else:
+                remove_result = cls.remove_attributes(
+                    filtered_entry,
+                    forbidden_attributes,
+                )
+            if not remove_result.is_success:
+                return remove_result
+            filtered_entry = remove_result.unwrap()
+
+        # Remove objectClasses
+        if forbidden_objectclasses:
+            oc_result = cls.remove_objectclasses(
+                filtered_entry,
+                forbidden_objectclasses,
+            )
+            if not oc_result.is_success:
+                return oc_result
+            filtered_entry = oc_result.unwrap()
+
+        return FlextResult[FlextLdifModels.Entry].ok(filtered_entry)
+
+    @classmethod
+    def filter_acls_by_base_dn(
+        cls,
+        acl_entries: list[FlextLdifModels.Entry],
+        base_dn: str,
+    ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
+        """Filter ACL entries with special handling for system ACLs.
+
+        ACLs have special filtering rules:
+        - ACLs WITH base DN in DN → filter by base DN using by_base_dn()
+        - ACLs WITHOUT base DN in DN → keep all (system ACLs)
+
+        This is a specialized filter method for LDAP migrations where system ACLs
+        (those not tied to a specific base DN) must be preserved.
+
+        Args:
+            acl_entries: List of ACL entries to filter
+            base_dn: Base DN to filter by (e.g., "dc=example,dc=com")
+
+        Returns:
+            Tuple of (included_acls, excluded_acls) where:
+            - included_acls = ACLs with base DN + all ACLs without base DN (system ACLs)
+            - excluded_acls = ACLs with base DN outside filter
+
+        Example:
+            included, excluded = FlextLdif.filters.filter_acls_by_base_dn(
+                acl_entries,
+                "dc=example,dc=com"
+            )
+
+        """
+        if not base_dn:
+            # No base DN filter - return all as included
+            return (acl_entries, [])
+
+        # Separate ACLs based on whether they have the base DN in their DN
+        acls_with_basedn: list[FlextLdifModels.Entry] = []
+        acls_without_basedn: list[FlextLdifModels.Entry] = []
+
+        base_dn_norm_result = FlextLdifUtilities.DN.norm(base_dn)
+        base_dn_norm = (
+            base_dn_norm_result.unwrap()
+            if base_dn_norm_result.is_success
+            else base_dn.lower()
+        )
+
+        for acl_entry in acl_entries:
+            if acl_entry.dn:
+                # Get DN value (handle both DistinguishedName model and string)
+                dn_value = (
+                    acl_entry.dn.value
+                    if hasattr(acl_entry.dn, "value")
+                    else str(acl_entry.dn)
+                )
+                entry_dn_norm_result = FlextLdifUtilities.DN.norm(dn_value)
+                entry_dn_norm = (
+                    entry_dn_norm_result.unwrap()
+                    if entry_dn_norm_result.is_success
+                    else dn_value.lower()
+                )
+                (
+                    acls_with_basedn
+                    if base_dn_norm in entry_dn_norm
+                    else acls_without_basedn
+                ).append(acl_entry)
+            else:
+                acls_without_basedn.append(acl_entry)
+
+        # Filter ACLs that have base DN
+        if not acls_with_basedn:
+            # No ACLs to filter - return all system ACLs as included
+            return (acls_without_basedn, [])
+
+        # Filter by base DN (returns tuple of included, excluded)
+        included_acls, excluded_acls = cls.by_base_dn(
+            acls_with_basedn,
+            base_dn,
+            mark_excluded=True,
+        )
+
+        # Mark excluded ACLs as rejected in metadata
+        for entry in excluded_acls:
+            if entry.metadata and entry.metadata.processing_stats:
+                _ = entry.metadata.processing_stats.mark_rejected(
+                    FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
+                    f"ACL DN outside base DN: {entry.dn}",
+                )
+
+        # Combine: filtered ACLs + all system ACLs (kept because they're not base DN specific)
+        return (included_acls + acls_without_basedn, excluded_acls)
+
+    @classmethod
     def _check_hierarchy_priority(
         cls,
         entry: FlextLdifModels.Entry,

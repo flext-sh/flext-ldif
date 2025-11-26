@@ -105,7 +105,7 @@ CASE_INSENSITIVE_TESTS = [
     CaseInsensitivityTestCase(ServerType.OID, "orclaci", True, "OID lowercase orclaci"),
     CaseInsensitivityTestCase(ServerType.OID, "ORCLACI", True, "OID uppercase ORCLACI"),
     CaseInsensitivityTestCase(
-        ServerType.OID, "OrclAci", True, "OID mixed case OrclAci"
+        ServerType.OID, "OrclAci", True, "OID mixed case OrclAci",
     ),
     CaseInsensitivityTestCase(ServerType.OID, "cn", False, "OID non-ACL attribute"),
     # OUD case-insensitive tests
@@ -125,7 +125,7 @@ CASE_INSENSITIVE_TESTS = [
         "OUD uppercase DS-PRIVILEGE-NAME",
     ),
     CaseInsensitivityTestCase(
-        ServerType.OUD, "orclaci", False, "OUD should not match OID attribute"
+        ServerType.OUD, "orclaci", False, "OUD should not match OID attribute",
     ),
     CaseInsensitivityTestCase(ServerType.OUD, "cn", False, "OUD non-ACL attribute"),
 ]
@@ -171,13 +171,13 @@ def get_case_insensitive_tests() -> list[CaseInsensitivityTestCase]:
 @pytest.fixture
 def oid_acl() -> FlextLdifServersOid.Acl:
     """Create OID ACL instance."""
-    return get_acl_instance(ServerType.OID)  # type: ignore[return-value]
+    return get_acl_instance(ServerType.OID)
 
 
 @pytest.fixture
 def oud_acl() -> FlextLdifServersOud.Acl:
     """Create OUD ACL instance."""
-    return get_acl_instance(ServerType.OUD)  # type: ignore[return-value]
+    return get_acl_instance(ServerType.OUD)
 
 
 class TestAclProtocolCompliance:

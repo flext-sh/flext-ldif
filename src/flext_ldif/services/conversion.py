@@ -20,7 +20,7 @@ from __future__ import annotations
 import time
 import traceback
 from collections.abc import Sequence
-from typing import ClassVar, Self, Union, cast, override
+from typing import ClassVar, Self, Union, override
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 from pydantic import Field
@@ -70,28 +70,44 @@ def _get_schema_quirk(
 
     """
     # Check if already a Schema quirk (has parse/write methods directly)
-    if needs_write and hasattr(quirk, "write_attribute"):
-        # Type narrowing: quirk with write_attribute is a Schema quirk
-        return cast("FlextLdifServersBase.Schema", quirk)
-    if needs_parse and hasattr(quirk, "parse_attribute"):
-        # Type narrowing: quirk with parse_attribute is a Schema quirk
-        return cast("FlextLdifServersBase.Schema", quirk)
-    if needs_write and hasattr(quirk, "write_objectclass"):
-        # Type narrowing: quirk with write_objectclass is a Schema quirk
-        return cast("FlextLdifServersBase.Schema", quirk)
-    if needs_parse and hasattr(quirk, "parse_objectclass"):
-        # Type narrowing: quirk with parse_objectclass is a Schema quirk
-        return cast("FlextLdifServersBase.Schema", quirk)
+    # Data-driven check for schema methods
+    schema_method_checks: list[tuple[bool, str]] = [
+        (needs_write, "write_attribute"),
+        (needs_parse, "parse_attribute"),
+        (needs_write, "write_objectclass"),
+        (needs_parse, "parse_objectclass"),
+    ]
+    for condition, method_name in schema_method_checks:
+        if condition and hasattr(quirk, method_name):
+            return _validate_schema_quirk(quirk)
 
     # Check if base quirk has schema_quirk attribute
+    return _get_schema_from_attribute(quirk)
+
+
+def _validate_schema_quirk(
+    quirk: FlextLdifServersBase,
+) -> FlextLdifServersBase.Schema:
+    """Validate and return quirk as Schema type."""
+    if not isinstance(quirk, FlextLdifServersBase.Schema):
+        msg = f"Expected Schema quirk, got {type(quirk)}"
+        raise TypeError(msg)
+    return quirk
+
+
+def _get_schema_from_attribute(
+    quirk: FlextLdifServersBase,
+) -> FlextLdifServersBase.Schema:
+    """Get schema quirk from schema_quirk attribute."""
     if hasattr(quirk, "schema_quirk"):
         schema = quirk.schema_quirk
         if schema is None:
             msg = "Quirk has schema_quirk attribute but it is None"
             raise TypeError(msg)
-        # Type narrowing: schema_quirk is already FlextLdifServersBase.Schema after None check
-        return cast("FlextLdifServersBase.Schema", schema)
-
+        if not isinstance(schema, FlextLdifServersBase.Schema):
+            msg = f"Expected Schema quirk, got {type(schema)}"
+            raise TypeError(msg)
+        return schema
     msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
     raise TypeError(msg)
 
@@ -133,7 +149,12 @@ class FlextLdifConversion(
 
     def __new__(cls) -> Self:
         """Create service instance with matching signature for type checker."""
-        return super().__new__(cls)
+        instance = super().__new__(cls)
+        # Type narrowing: ensure instance is of correct type
+        if not isinstance(instance, cls):
+            msg = f"Expected {cls.__name__}, got {type(instance).__name__}"
+            raise TypeError(msg)
+        return instance
 
     def __init__(self) -> None:
         """Initialize the conversion facade with DN case registry."""
@@ -815,8 +836,13 @@ class FlextLdifConversion(
             # Get first ACL from metadata (should be the converted one)
             # Type narrowing: metadata.acls contains FlextLdifModelsDomains.Acl, convert to FlextLdifModels.Acl
             domain_acl = converted_entry.metadata.acls[0]
-            # Convert domain Acl to public Acl model (they are aliases, but type checker needs explicit cast)
-            converted_acl = cast("FlextLdifModels.Acl", domain_acl)
+            # Convert domain Acl to public Acl model
+            if not isinstance(domain_acl, FlextLdifModels.Acl):
+                converted_acl = FlextLdifModels.Acl.model_validate(
+                    domain_acl.model_dump()
+                )
+            else:
+                converted_acl = domain_acl
 
             # Preserve permissions and metadata from original ACL
             self._preserve_acl_metadata(acl, converted_acl)
@@ -1016,26 +1042,23 @@ class FlextLdifConversion(
         """Write target attribute to final format."""
         # Type narrowing: write_attribute requires SchemaAttribute
         if not isinstance(parsed_attr, FlextLdifModels.SchemaAttribute):
-            # Return as-is if not SchemaAttribute - cast to match return type
-            return FlextResult[
-                FlextLdifModels.SchemaAttribute | dict[str, object] | str
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaAttribute | dict[str, object] | str",
-                    parsed_attr,
-                ),
-            )
+            # Return as-is if not SchemaAttribute - type narrowing for union type
+            if isinstance(parsed_attr, dict):
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute | dict[str, object] | str
+                ].ok(parsed_attr)
+            if isinstance(parsed_attr, str):
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute | dict[str, object] | str
+                ].ok(parsed_attr)
+            msg = f"Expected SchemaAttribute | dict | str, got {type(parsed_attr)}"
+            raise TypeError(msg)
 
         # Model-based conversion - return parsed attribute as-is
         # Schema quirks write via model conversion, not string-based
         return FlextResult[
             FlextLdifModels.SchemaAttribute | dict[str, object] | str
-        ].ok(
-            cast(
-                "FlextLdifModels.SchemaAttribute | dict[str, object] | str",
-                parsed_attr,
-            ),
-        )
+        ].ok(parsed_attr)
 
     def _write_objectclass_to_rfc(
         self,
@@ -1052,15 +1075,17 @@ class FlextLdifConversion(
         # Check if source is already a Schema object (direct usage)
         # Type narrowing: ensure source_oc is SchemaObjectClass
         if not isinstance(source_oc, FlextLdifModels.SchemaObjectClass):
-            # Pass-through if not SchemaObjectClass - cast to match return type
-            return FlextResult[
-                str | FlextLdifModels.SchemaObjectClass | dict[str, object]
-            ].ok(
-                cast(
-                    "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
-                    source_oc,
-                ),
-            )
+            # Pass-through if not SchemaObjectClass - type narrowing for union type
+            if isinstance(source_oc, str):
+                return FlextResult[
+                    str | FlextLdifModels.SchemaObjectClass | dict[str, object]
+                ].ok(source_oc)
+            if isinstance(source_oc, dict):
+                return FlextResult[
+                    str | FlextLdifModels.SchemaObjectClass | dict[str, object]
+                ].ok(source_oc)
+            msg = f"Expected SchemaObjectClass | str | dict, got {type(source_oc)}"
+            raise TypeError(msg)
 
         # Resolve quirk if it's a string
         source_quirk = self._resolve_quirk(source)
@@ -1072,30 +1097,21 @@ class FlextLdifConversion(
             if write_result.is_failure:
                 return FlextResult[
                     str | FlextLdifModels.SchemaObjectClass | dict[str, object]
-                ].ok(
-                    cast(
-                        "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
-                        source_oc,
-                    ),
-                )
+                ].ok(source_oc)
             write_unwrapped = write_result.unwrap()
+            # Type narrowing: write_objectclass returns str
+            if not isinstance(write_unwrapped, str):
+                msg = (
+                    f"Expected str from write_objectclass, got {type(write_unwrapped)}"
+                )
+                raise TypeError(msg)
             return FlextResult[
                 str | FlextLdifModels.SchemaObjectClass | dict[str, object]
-            ].ok(
-                cast(
-                    "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
-                    write_unwrapped,
-                ),
-            )
+            ].ok(write_unwrapped)
         except TypeError:
             return FlextResult[
                 str | FlextLdifModels.SchemaObjectClass | dict[str, object]
-            ].ok(
-                cast(
-                    "str | FlextLdifModels.SchemaObjectClass | dict[str, object]",
-                    source_oc,
-                ),
-            )
+            ].ok(source_oc)
 
     def _convert_objectclass(
         self,
@@ -1129,14 +1145,17 @@ class FlextLdifConversion(
 
             # If result is not a string, return as-is (pass-through)
             if not isinstance(rfc_value, str):
-                return FlextResult[
-                    FlextLdifModels.SchemaObjectClass | str | dict[str, object]
-                ].ok(
-                    cast(
-                        "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
-                        rfc_value,
-                    ),
-                )
+                # Type narrowing for union type
+                if isinstance(rfc_value, FlextLdifModels.SchemaObjectClass):
+                    return FlextResult[
+                        FlextLdifModels.SchemaObjectClass | str | dict[str, object]
+                    ].ok(rfc_value)
+                if isinstance(rfc_value, dict):
+                    return FlextResult[
+                        FlextLdifModels.SchemaObjectClass | str | dict[str, object]
+                    ].ok(rfc_value)
+                msg = f"Expected SchemaObjectClass | str | dict, got {type(rfc_value)}"
+                raise TypeError(msg)
 
             # Step 3: Parse RFC string with target quirk
             target_result = self._parse_target_objectclass(target, rfc_value)
@@ -1198,15 +1217,17 @@ class FlextLdifConversion(
         """Write target objectClass to final format."""
         # Type narrowing: write_objectclass requires SchemaObjectClass
         if not isinstance(parsed_oc, FlextLdifModels.SchemaObjectClass):
-            # Return as-is if not SchemaObjectClass - cast to match return type
-            return FlextResult[
-                FlextLdifModels.SchemaObjectClass | str | dict[str, object]
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
-                    parsed_oc,
-                ),
-            )
+            # Return as-is if not SchemaObjectClass - type narrowing for union type
+            if isinstance(parsed_oc, str):
+                return FlextResult[
+                    FlextLdifModels.SchemaObjectClass | str | dict[str, object]
+                ].ok(parsed_oc)
+            if isinstance(parsed_oc, dict):
+                return FlextResult[
+                    FlextLdifModels.SchemaObjectClass | str | dict[str, object]
+                ].ok(parsed_oc)
+            msg = f"Expected SchemaObjectClass | str | dict, got {type(parsed_oc)}"
+            raise TypeError(msg)
 
         target_quirk = self._resolve_quirk(target)
 
@@ -1217,45 +1238,20 @@ class FlextLdifConversion(
             # Return as-is if no writer available
             return FlextResult[
                 FlextLdifModels.SchemaObjectClass | str | dict[str, object]
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
-                    parsed_oc,
-                ),
-            )
-            return FlextResult[
-                FlextLdifModels.SchemaObjectClass | str | dict[str, object]
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
-                    parsed_oc,
-                ),
-            )
-
-        # Type narrowing: write_objectclass requires SchemaObjectClass
-        if not isinstance(parsed_oc, FlextLdifModels.SchemaObjectClass):
-            return FlextResult[
-                FlextLdifModels.SchemaObjectClass | str | dict[str, object]
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
-                    parsed_oc,
-                ),
-            )
+            ].ok(parsed_oc)
 
         # schema_quirk is already properly typed from _get_schema_quirk
         write_result = schema_quirk.write_objectclass(parsed_oc)
         # write_objectclass returns FlextResult[str] - convert to union type
         if write_result.is_success:
             written_str = write_result.unwrap()
+            # Type narrowing: write_objectclass returns str
+            if not isinstance(written_str, str):
+                msg = f"Expected str from write_objectclass, got {type(written_str)}"
+                raise TypeError(msg)
             return FlextResult[
                 FlextLdifModels.SchemaObjectClass | str | dict[str, object]
-            ].ok(
-                cast(
-                    "FlextLdifModels.SchemaObjectClass | str | dict[str, object]",
-                    written_str,
-                ),
-            )
+            ].ok(written_str)
         error_msg = write_result.error or "Failed to write objectClass"
         return FlextResult[
             FlextLdifModels.SchemaObjectClass | str | dict[str, object]
@@ -1509,11 +1505,17 @@ class FlextLdifConversion(
         """
         # Check if quirk is already a Schema quirk (has parse_attribute directly)
         if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
+            # Type narrowing: quirks with schema methods are Schema instances
+            if isinstance(quirk, FlextLdifServersBase.Schema):
+                return quirk
+            # If not Schema instance, return as-is (may be protocol-compliant)
             return quirk
         # Check if quirk is a base quirk with schema_quirk attribute
-        schema_quirk = getattr(quirk, "schema_quirk", None)
-        if schema_quirk is not None:
-            return cast("object", schema_quirk)
+        schema_quirk_raw = getattr(quirk, "schema_quirk", None)
+        if schema_quirk_raw is not None:
+            # Type narrowing: schema_quirk is already the correct type
+            schema_quirk: object = schema_quirk_raw
+            return schema_quirk
         return None
 
     def _check_attribute_support(

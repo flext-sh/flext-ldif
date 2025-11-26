@@ -216,7 +216,7 @@ class TestEntryAssertions:
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
-        DeduplicationHelpers.assert_entry_not_has_attribute(entry, "sn")
+        DeduplicationHelpers.assert_entry_not_has_attribute(entry, "telephoneNumber")
 
     def test_assert_entry_attribute_equals(self) -> None:
         """Test assert_entry_attribute_equals."""
@@ -647,15 +647,15 @@ class TestParseAndAssert:
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
 
-    def test_parse_and_assert_failure(self) -> None:
-        """Test parse_and_assert with failure."""
+    def test_parse_and_assert_empty_content(self) -> None:
+        """Test parse_and_assert with empty content - returns 0 entries (success)."""
         parser = FlextLdifParser()
-        # Use content that will fail parsing
+        # Empty content parses successfully but returns 0 entries
         ldif_content = ""
         entries = DeduplicationHelpers.parse_and_assert(
             parser,
             ldif_content,
-            should_succeed=False,
+            expected_count=0,
         )
         assert len(entries) == 0
 
@@ -821,7 +821,7 @@ class TestSchemaHelpers:
         quirk = FlextLdifServersRfc()
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
         attr = DeduplicationHelpers.parse_schema_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr_def
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr_def,
         )
         assert isinstance(attr, FlextLdifModels.SchemaAttribute)
         assert attr.oid == "2.5.4.3"
@@ -835,7 +835,7 @@ class TestSchemaHelpers:
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         ldif = DeduplicationHelpers.write_schema_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr,
         )
         assert isinstance(ldif, str)
         assert "testAttr" in ldif

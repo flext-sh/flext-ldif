@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Generator, Mapping
 from dataclasses import dataclass
-from typing import Protocol, TypeVar, cast
+from typing import Protocol, TypeVar
 
 import structlog
 from flext_core import FlextResult, FlextRuntime
@@ -270,12 +270,19 @@ class FlextLdifUtilitiesParsers:
                             )
                             stats.with_metadata += 1
                         elif entry.metadata:
-                            # Type cast: FlextLdifModelsDomains.QuirkMetadata → FlextLdifModels.QuirkMetadata
+                            # Type narrowing: convert internal QuirkMetadata to public QuirkMetadata
+                            if not isinstance(
+                                entry.metadata, FlextLdifModels.QuirkMetadata
+                            ):
+                                metadata_public = (
+                                    FlextLdifModels.QuirkMetadata.model_validate(
+                                        entry.metadata.model_dump(),
+                                    )
+                                )
+                            else:
+                                metadata_public = entry.metadata
                             FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
-                                metadata=cast(
-                                    "FlextLdifModels.QuirkMetadata",
-                                    entry.metadata,
-                                ),
+                                metadata=metadata_public,
                                 ldif_content=original_ldif,
                                 context="entry_original_ldif",
                             )
@@ -445,7 +452,7 @@ class FlextLdifUtilitiesParsers:
                 # Validate structural if hook provided
                 if validate_structural_hook:
                     # Convert sup to list[str] if it's a string
-                    sup_list = (
+                    sup_list_raw = (
                         objectclass.sup
                         if FlextRuntime.is_list_like(objectclass.sup)
                         else [objectclass.sup]
@@ -453,15 +460,22 @@ class FlextLdifUtilitiesParsers:
                         else []
                     )
                     # Type narrowing: list[object] | list[str] → list[str]
+                    if not isinstance(sup_list_raw, list):
+                        msg = f"Expected list, got {type(sup_list_raw)}"
+                        raise TypeError(msg)
+                    # Filter to only str items
+                    sup_list_validate: list[str] = [
+                        str(item) for item in sup_list_raw if isinstance(item, str)
+                    ]
                     validate_structural_hook(
                         objectclass.kind or "STRUCTURAL",
-                        cast("list[str]", sup_list),
+                        sup_list_validate,
                     )
 
                 # Transform SUP if hook provided
                 if transform_sup_hook and objectclass.sup:
                     # Convert sup to list[str] if it's a string
-                    sup_list = (
+                    sup_list_raw = (
                         objectclass.sup
                         if FlextRuntime.is_list_like(objectclass.sup)
                         else [objectclass.sup]
@@ -469,7 +483,14 @@ class FlextLdifUtilitiesParsers:
                         else []
                     )
                     # Type narrowing: list[object] | list[str] → list[str]
-                    objectclass.sup = transform_sup_hook(cast("list[str]", sup_list))
+                    if not isinstance(sup_list_raw, list):
+                        msg = f"Expected list, got {type(sup_list_raw)}"
+                        raise TypeError(msg)
+                    # Filter to only str items
+                    sup_list_transform: list[str] = [
+                        str(item) for item in sup_list_raw if isinstance(item, str)
+                    ]
+                    objectclass.sup = transform_sup_hook(sup_list_transform)
 
                 # Enrich metadata if hook provided
                 if enrich_metadata_hook:

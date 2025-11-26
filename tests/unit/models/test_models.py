@@ -325,7 +325,11 @@ class TestFlextLdifModels(FlextTestsFactories):
         # Type-specific validations
         match test_case.test_type:
             case ModelTestType.DN_CREATION:
-                assert len(dn.components) == 3
+                # components is a @computed_field property, access directly
+                # Access the computed field value
+                components_list = dn.components
+                assert isinstance(components_list, list)
+                assert len(components_list) == 3
             case ModelTestType.DN_CASE_PRESERVATION:
                 assert dn.value == test_case.dn_value
             case ModelTestType.DN_INVALID_PRESERVED:
@@ -370,8 +374,8 @@ class TestFlextLdifModels(FlextTestsFactories):
 
             case ModelTestType.ATTRS_MISSING:
                 attrs = FlextLdifModels.LdifAttributes(attributes={})
-                result = attrs.get(test_case.attr_name or "missing")
-                assert result == []
+                values = attrs.get(test_case.attr_name or "missing")
+                assert values == []
 
             case ModelTestType.ATTRS_EMPTY_VALUES:
                 attrs = FlextLdifModels.LdifAttributes(
@@ -389,9 +393,12 @@ class TestFlextLdifModels(FlextTestsFactories):
         """Test Entry model creation, validation, and serialization."""
         match test_case.test_type:
             case ModelTestType.ENTRY_CREATION:
+                attrs_dict: dict[str, str | list[str]] = {}
+                if test_case.attributes:
+                    attrs_dict.update(test_case.attributes)
                 result = FlextLdifModels.Entry.create(
                     dn=test_case.dn,
-                    attributes=test_case.attributes or {},
+                    attributes=attrs_dict,
                 )
                 assert result.is_success
                 entry = result.unwrap()
@@ -402,7 +409,9 @@ class TestFlextLdifModels(FlextTestsFactories):
             case ModelTestType.ENTRY_BINARY:
                 binary_data = b"binary content"
                 encoded_data = base64.b64encode(binary_data).decode("ascii")
-                attrs = (test_case.attributes or {}).copy()
+                attrs: dict[str, str | list[str]] = {}
+                if test_case.attributes:
+                    attrs.update(test_case.attributes)
                 attrs["userCertificate;binary"] = [encoded_data]
                 result = FlextLdifModels.Entry.create(
                     dn=test_case.dn,
@@ -420,9 +429,12 @@ class TestFlextLdifModels(FlextTestsFactories):
                 assert "attributes" in data
 
             case ModelTestType.ENTRY_VALIDATION_LENIENT:
+                attrs_dict_lenient: dict[str, str | list[str]] = {}
+                if test_case.attributes:
+                    attrs_dict_lenient.update(test_case.attributes)
                 result = FlextLdifModels.Entry.create(
                     dn=test_case.dn,
-                    attributes=test_case.attributes or {},
+                    attributes=attrs_dict_lenient,
                 )
                 assert result.is_success
 
@@ -509,7 +521,8 @@ class TestFlextLdifModels(FlextTestsFactories):
                     subject_value=test_case.subject_value or "",
                 )
                 assert subject.subject_type == test_case.subject_type
-                assert test_case.subject_value in subject.subject_value
+                if test_case.subject_value:
+                    assert test_case.subject_value in subject.subject_value
 
             case ModelTestType.ACL_PERMISSIONS:
                 perms = FlextLdifModels.AclPermissions(

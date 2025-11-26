@@ -14,8 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
@@ -117,10 +115,28 @@ class FlextLdifEntryTransformer(
             )
 
             # Create entry preserving metadata
+            # DN is already validated by _validate_entry_dn() above
+            # Use duck typing instead of isinstance to avoid class identity issues
+            # between internal (FlextLdifModelsDomains) and public (FlextLdifModels) classes
+            # Convert internal QuirkMetadata to public QuirkMetadata if needed
+            metadata_public: FlextLdifModels.QuirkMetadata | None = None
+            if entry.metadata is not None:
+                metadata_public = FlextLdifModels.QuirkMetadata.model_validate(
+                    entry.metadata.model_dump(),
+                )
+            # Convert internal DistinguishedName to public DistinguishedName if needed
+            dn_public: str | FlextLdifModels.DistinguishedName
+            if isinstance(entry.dn, FlextLdifModels.DistinguishedName):
+                dn_public = entry.dn
+            else:
+                # Convert internal DN to public DN
+                dn_public = FlextLdifModels.DistinguishedName.model_validate(
+                    entry.dn.model_dump(),
+                )
             entry_result = self._create_entry_with_metadata(
-                dn=cast("FlextLdifModels.DistinguishedName", entry.dn),
+                dn=dn_public,
                 attributes=new_attributes,
-                metadata=cast("FlextLdifModels.QuirkMetadata | None", entry.metadata),
+                metadata=metadata_public,
             )
             if entry_result.is_failure:
                 error = entry_result.error or "Entry creation failed"
@@ -189,10 +205,28 @@ class FlextLdifEntryTransformer(
             )
 
             # Create entry preserving metadata
+            # DN is already validated by _validate_entry_dn() above
+            # Use duck typing instead of isinstance to avoid class identity issues
+            # between internal (FlextLdifModelsDomains) and public (FlextLdifModels) classes
+            # Convert internal QuirkMetadata to public QuirkMetadata if needed
+            metadata_public: FlextLdifModels.QuirkMetadata | None = None
+            if entry.metadata is not None:
+                metadata_public = FlextLdifModels.QuirkMetadata.model_validate(
+                    entry.metadata.model_dump(),
+                )
+            # Convert internal DistinguishedName to public DistinguishedName if needed
+            dn_public: str | FlextLdifModels.DistinguishedName
+            if isinstance(entry.dn, FlextLdifModels.DistinguishedName):
+                dn_public = entry.dn
+            else:
+                # Convert internal DN to public DN
+                dn_public = FlextLdifModels.DistinguishedName.model_validate(
+                    entry.dn.model_dump(),
+                )
             entry_result = self._create_entry_with_metadata(
-                dn=cast("FlextLdifModels.DistinguishedName", entry.dn),
+                dn=dn_public,
                 attributes=new_attributes,
-                metadata=cast("FlextLdifModels.QuirkMetadata | None", entry.metadata),
+                metadata=metadata_public,
             )
             if entry_result.is_failure:
                 error = entry_result.error or "Entry creation failed"

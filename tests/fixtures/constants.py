@@ -264,12 +264,55 @@ class SortingCases:
         raise ValueError(f"Unknown sorting strategy: {strategy}")
 
 
+class Statistics:
+    """Statistics service test constants."""
+
+    # Categories
+    CATEGORY_USERS = "users"
+    CATEGORY_GROUPS = "groups"
+    CATEGORY_ROLES = "roles"
+    CATEGORY_VALID = "valid"
+    CATEGORY_REJECTED = "rejected"
+    CATEGORY_ENTRIES = "entries"
+
+    # Rejection reasons
+    REJECTION_MISSING_ATTRIBUTE = "Missing required attribute"
+    REJECTION_INVALID_DN = "Invalid DN format"
+    REJECTION_SCHEMA_VIOLATION = "Schema violation"
+    REJECTION_DUPLICATE_DN = "Duplicate DN"
+    REJECTION_INVALID_ATTRIBUTES = "Invalid attributes"
+    REJECTION_INVALID_FORMAT = "Invalid format"
+
+    # Output paths
+    OUTPUT_DIR_TMP = "/tmp"
+    OUTPUT_DIR_LDIF = "/tmp/ldif"
+    OUTPUT_DIR_EXPORT = "/output/ldif"
+    OUTPUT_DIR_BASE = "/output"
+
+    # File names
+    FILE_USERS = "users.ldif"
+    FILE_GROUPS = "groups.ldif"
+    FILE_ROLES = "roles.ldif"
+    FILE_REJECTED = "rejected.ldif"
+    FILE_USERS_EXPORT = "users_export.ldif"
+    FILE_GROUPS_EXPORT = "groups_export.ldif"
+    FILE_EXPORTED_USERS = "exported_users.ldif"
+
+    # Service status
+    SERVICE_NAME = "StatisticsService"
+    STATUS_OPERATIONAL = "operational"
+    CAPABILITY_GENERATE = "generate_statistics"
+    CAPABILITY_COUNT = "count_entries"
+    CAPABILITY_ANALYZE = "analyze_rejections"
+    VERSION = "1.0.0"
+
+
 class TestData:
     """Structured test data builders."""
 
     @staticmethod
     def user_entry(
-        dn: str = DNs.TEST_USER, **overrides: str | list[str]
+        dn: str = DNs.TEST_USER, **overrides: str | list[str],
     ) -> dict[str, str | list[str]]:
         """Create user entry test data."""
         base: dict[str, str | list[str]] = {
@@ -294,7 +337,7 @@ class TestData:
 
     @staticmethod
     def multivalue_entry(
-        dn: str = DNs.TEST_USER, **overrides: str | list[str]
+        dn: str = DNs.TEST_USER, **overrides: str | list[str],
     ) -> dict[str, str | list[str]]:
         """Create multivalue attribute entry test data."""
         base: dict[str, str | list[str]] = {
@@ -312,7 +355,7 @@ class TestData:
 
     @staticmethod
     def schema_attribute(
-        oid: str = OIDs.CN, name: str = Names.CN, **overrides: str
+        oid: str = OIDs.CN, name: str = Names.CN, **overrides: str,
     ) -> dict[str, str]:
         """Create schema attribute test data."""
         base: dict[str, str] = {
@@ -326,6 +369,36 @@ class TestData:
         }
         base.update(compatible_overrides)
         return base
+
+    @staticmethod
+    def categorized_entry(
+        dn: str,
+        category: str = Statistics.CATEGORY_USERS,
+        rejection_reason: str | None = None,
+    ) -> dict[str, object]:
+        """Create categorized entry for statistics testing."""
+        entry: dict[str, object] = {"dn": dn, "attributes": {}}
+        if rejection_reason:
+            entry["attributes"] = {"rejectionReason": rejection_reason}
+        return entry
+
+    @staticmethod
+    def categorized_batch(
+        category: str,
+        count: int,
+        base_dn: str = DNs.EXAMPLE,
+        prefix: str = "user",
+        rejection_reason: str | None = None,
+    ) -> list[dict[str, object]]:
+        """Create batch of categorized entries."""
+        return [
+            TestData.categorized_entry(
+                dn=f"cn={prefix}{i},{base_dn}",
+                category=category,
+                rejection_reason=rejection_reason,
+            )
+            for i in range(1, count + 1)
+        ]
 
 
 # Re-export for backward compatibility and convenience
@@ -341,5 +414,6 @@ General = type(
         **{k: v for k, v in Errors.__dict__.items() if not k.startswith("_")},
         **{k: v for k, v in RFC.__dict__.items() if not k.startswith("_")},
         **{k: v for k, v in SortingCases.__dict__.items() if not k.startswith("_")},
+        **{k: v for k, v in Statistics.__dict__.items() if not k.startswith("_")},
     },
 )

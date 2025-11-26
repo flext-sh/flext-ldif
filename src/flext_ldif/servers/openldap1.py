@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
@@ -410,11 +410,17 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
                 if must and FlextRuntime.is_list_like(must):
-                    must_list_str = cast("list[str]", must)
+                    if not isinstance(must, list):
+                        msg = f"Expected list, got {type(must)}"
+                        raise TypeError(msg)
+                    must_list_str: list[str] = [str(item) for item in must]
                     must_attrs = " $ ".join(must_list_str)
                     oc_str += f" MUST ( {must_attrs} )"
                 if may and FlextRuntime.is_list_like(may):
-                    may_list_str = cast("list[str]", may)
+                    if not isinstance(may, list):
+                        msg = f"Expected list, got {type(may)}"
+                        raise TypeError(msg)
+                    may_list_str: list[str] = [str(item) for item in may]
                     may_attrs = " $ ".join(may_list_str)
                     oc_str += f" MAY ( {may_attrs} )"
                 oc_str += " )"

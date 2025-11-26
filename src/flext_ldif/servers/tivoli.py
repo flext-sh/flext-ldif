@@ -6,7 +6,7 @@ import base64
 import enum
 import re
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
@@ -206,54 +206,45 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
-            if isinstance(attr_definition, str):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                    attr_definition,
-                ):
-                    return True
-                attr_lower = attr_definition.lower()
-                return any(
-                    prefix in attr_lower
-                    for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                )
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                    attr_definition.oid,
-                ):
-                    return True
-                attr_name_lower = attr_definition.name.lower()
-                return any(
-                    attr_name_lower.startswith(prefix)
-                    for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=attr_definition,
+                    oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                    use_prefix_match=True,
                 )
-            return False
+            # For string definitions
+            if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
+                attr_definition,
+            ):
+                return True
+            attr_lower = attr_definition.lower()
+            return any(
+                prefix in attr_lower
+                for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
+            )
 
         def can_handle_objectclass(
             self,
             oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
-            if isinstance(oc_definition, str):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                    oc_definition,
-                ):
-                    return True
-                oc_lower = oc_definition.lower()
-                return any(
-                    oc_name in oc_lower
-                    for oc_name in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
-                )
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                    oc_definition.oid,
-                ):
-                    return True
-                oc_name_lower = oc_definition.name.lower()
-                return (
-                    oc_name_lower
-                    in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
+                return FlextLdifUtilities.Server.matches_server_patterns(
+                    value=oc_definition,
+                    oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
+                    detection_names=FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
-            return False
+            # For string definitions
+            if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
+                oc_definition,
+            ):
+                return True
+            oc_lower = oc_definition.lower()
+            return any(
+                oc_name in oc_lower
+                for oc_name in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
+            )
 
         def _parse_attribute(
             self,
@@ -390,10 +381,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                             == FlextLdifServersTivoli.Constants.PERMISSION_WRITE
                         ),
                     ),
-                    server_type=cast(
-                        "FlextLdifConstants.LiteralTypes.ServerType",
-                        self._get_server_type(),
-                    ),
+                    server_type=self._get_server_type(),
                     raw_acl=acl_line,
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
