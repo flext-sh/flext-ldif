@@ -19,6 +19,7 @@ from flext_core import FlextConfig, FlextConstants, FlextProtocols
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -775,6 +776,19 @@ class FlextLdifConfigModule:
             if self.server_type == FlextLdifConstants.ServerTypes.AD:
                 return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
             return self.ldif_encoding
+
+        # =========================================================================
+        # PUBLIC API - Type Aliases for External Access
+        # =========================================================================
+
+        class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
+            """Formatting options for LDIF serialization.
+
+            Provides complete control over LDIF output format including line width,
+            attribute ordering, and RFC compliance.
+
+            Public API: Accessible as FlextLdifConfig.WriteFormatOptions
+            """
 
 
 # Global instances for backward compatibility

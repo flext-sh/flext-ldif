@@ -128,7 +128,10 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
         ],
     )
     def test_filter_by_objectclass_dynamic(
-        self, test_name: str, objectclass: str, expected_count: int,
+        self,
+        test_name: str,
+        objectclass: str,
+        expected_count: int,
     ) -> None:
         """Dynamically test filtering by different objectClass values."""
         ldif = FlextLdif()
@@ -153,7 +156,10 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
         ],
     )
     def test_filter_by_dn_pattern_dynamic(
-        self, test_name: str, dn_pattern: str, expected_count: int,
+        self,
+        test_name: str,
+        dn_pattern: str,
+        expected_count: int,
     ) -> None:
         """Dynamically test filtering by different DN patterns."""
         ldif = FlextLdif()

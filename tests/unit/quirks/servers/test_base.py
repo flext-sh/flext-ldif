@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 from flext_core import FlextResult
 
@@ -517,7 +515,7 @@ class TestFlextLdifServersBaseNestedSchema:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         result = schema.write_attribute(attr)
         assert result.is_success
 
@@ -530,7 +528,7 @@ class TestFlextLdifServersBaseNestedSchema:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         result = schema.write_objectclass(oc)
         assert result.is_success
 
@@ -564,7 +562,7 @@ class TestFlextLdifServersBaseNestedSchema:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         result = schema_concrete._hook_post_parse_attribute(attr)
         assert result.is_success
         assert result.unwrap() == attr
@@ -579,7 +577,7 @@ class TestFlextLdifServersBaseNestedSchema:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         result = schema_concrete._hook_post_parse_objectclass(oc)
         assert result.is_success
         assert result.unwrap() == oc
@@ -590,12 +588,9 @@ class TestFlextLdifServersBaseNestedSchema:
         # Access private method through concrete class, not protocol
         schema_concrete = rfc._schema_quirk
         attrs = [
-            cast(
-                "FlextLdifModels.SchemaAttribute",
-                RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-                    oid=TestsRfcConstants.ATTR_OID_CN,
-                    name=TestsRfcConstants.ATTR_NAME_CN,
-                ),
+            RfcTestHelpers.test_create_schema_attribute_and_unwrap(
+                oid=TestsRfcConstants.ATTR_OID_CN,
+                name=TestsRfcConstants.ATTR_NAME_CN,
             ),
         ]
         result = schema_concrete._hook_validate_attributes(attrs, {"cn"})
@@ -657,7 +652,7 @@ class TestFlextLdifServersBaseNestedAcl:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         result = acl_concrete.can_handle_attribute(attr)
         assert isinstance(result, bool)
 
@@ -671,7 +666,7 @@ class TestFlextLdifServersBaseNestedAcl:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         result = acl_concrete.can_handle_objectclass(oc)
         assert isinstance(result, bool)
 
@@ -723,7 +718,7 @@ class TestFlextLdifServersBaseNestedEntry:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         result = entry_concrete.can_handle_attribute(attr)
         assert isinstance(result, bool)
 
@@ -737,7 +732,7 @@ class TestFlextLdifServersBaseNestedEntry:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         result = entry_concrete.can_handle_objectclass(oc)
         assert isinstance(result, bool)
 
@@ -1076,7 +1071,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         result = schema_concrete._hook_post_parse_attribute(attr)
         assert result.is_success
         assert result.unwrap() == attr
@@ -1091,7 +1086,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         result = schema_concrete._hook_post_parse_objectclass(oc)
         assert result.is_success
         assert result.unwrap() == oc
@@ -1102,12 +1097,9 @@ class TestFlextLdifServersBaseAdditionalCoverage:
         # Access private method through concrete class, not protocol
         schema_concrete = rfc._schema_quirk
         attrs = [
-            cast(
-                "FlextLdifModels.SchemaAttribute",
-                RfcTestHelpers.test_create_schema_attribute_and_unwrap(
-                    oid=TestsRfcConstants.ATTR_OID_CN,
-                    name=TestsRfcConstants.ATTR_NAME_CN,
-                ),
+            RfcTestHelpers.test_create_schema_attribute_and_unwrap(
+                oid=TestsRfcConstants.ATTR_OID_CN,
+                name=TestsRfcConstants.ATTR_NAME_CN,
             ),
         ]
         available_attrs = {"cn"}
@@ -1296,7 +1288,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         # This calls write_attribute which delegates to _write_attribute
         # In RFC, _write_attribute is implemented, so this succeeds
         result = schema.write_attribute(attr)
@@ -1310,7 +1302,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             oid=TestsRfcConstants.OC_OID_PERSON,
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         # This calls write_objectclass which delegates to _write_objectclass
         # In RFC, _write_objectclass is implemented, so this succeeds
         result = schema.write_objectclass(oc)
@@ -1555,7 +1547,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         # This should call _write_attribute which returns fail in base
         result = schema.write_attribute(attr)
         assert result.is_failure
@@ -1583,7 +1575,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         # This should call _write_objectclass which returns fail in base
         result = schema.write_objectclass(oc)
         assert result.is_failure
@@ -1779,7 +1771,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         # Base implementation should return False
         result = acl.can_handle_attribute(attr)
         assert result is False
@@ -1801,7 +1793,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         # Base implementation should return False
         result = acl.can_handle_objectclass(oc)
         assert result is False
@@ -1890,7 +1882,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.ATTR_NAME_CN,
         )
 
-        attr = cast("FlextLdifModels.SchemaAttribute", attr_raw)
+        attr = attr_raw
         # Base implementation should return False
         result = entry.can_handle_attribute(attr)
         assert result is False
@@ -1912,7 +1904,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name=TestsRfcConstants.OC_NAME_PERSON,
         )
 
-        oc = cast("FlextLdifModels.SchemaObjectClass", oc_raw)
+        oc = oc_raw
         # Base implementation should return False
         result = entry.can_handle_objectclass(oc)
         assert result is False
@@ -1933,10 +1925,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             dn=TestsRfcConstants.TEST_DN,
             attributes={"cn": ["test"]},
         ).unwrap()
-        entry_model: FlextLdifModels.Entry = cast(
-            "FlextLdifModels.Entry",
-            entry_model_raw,
-        )
+        entry_model = entry_model_raw
         # Base implementation should return fail
         result = entry._write_entry(entry_model)
         assert result.is_failure
@@ -2308,9 +2297,9 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             name="testAttr",
         )
 
-        attr1 = cast("FlextLdifModels.SchemaAttribute", attr1_raw)
+        attr1 = attr1_raw
 
-        attr2 = cast("FlextLdifModels.SchemaAttribute", attr2_raw)
+        attr2 = attr2_raw
         attributes = [attr1, attr2]
         available_attrs = {TestsRfcConstants.ATTR_NAME_CN.lower(), "testattr"}
         # Call the hook directly - should return success (default implementation)

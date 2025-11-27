@@ -102,8 +102,6 @@ class TestFlextLdifProtocols:
         ATTR_SCHEMA: str = "schema"
         ATTR_ACL: str = "acl"
         ATTR_ENTRY: str = "entry"
-        ATTR_FIND_SCHEMA_FOR_ATTRIBUTE: str = "find_schema_for_attribute"
-        ATTR_FIND_SCHEMA_FOR_OBJECTCLASS: str = "find_schema_for_objectclass"
         ATTR_IS_SUCCESS: str = "is_success"
         SAMPLE_ATTR_DEF: str = (
             "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -126,19 +124,23 @@ class TestFlextLdifProtocols:
                 getattr(schema, TestFlextLdifProtocols.Constants.ATTR_WRITE),
             )
             assert hasattr(
-                schema, TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                schema,
+                TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
             )
             assert callable(
                 getattr(
-                    schema, TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                    schema,
+                    TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
                 ),
             )
             assert hasattr(
-                schema, TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                schema,
+                TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
             )
             assert callable(
                 getattr(
-                    schema, TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                    schema,
+                    TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
                 ),
             )
 
@@ -163,8 +165,6 @@ class TestFlextLdifProtocols:
                 TestFlextLdifProtocols.Constants.ATTR_SCHEMA,
                 TestFlextLdifProtocols.Constants.ATTR_ACL,
                 TestFlextLdifProtocols.Constants.ATTR_ENTRY,
-                TestFlextLdifProtocols.Constants.ATTR_FIND_SCHEMA_FOR_ATTRIBUTE,
-                TestFlextLdifProtocols.Constants.ATTR_FIND_SCHEMA_FOR_OBJECTCLASS,
             ]
             for method in methods:
                 assert hasattr(registry, method)
@@ -175,7 +175,9 @@ class TestFlextLdifProtocols:
         """Get all server implementations for testing."""
         return [
             cls.ProtocolServer(
-                name=name, server_class=server_class, schema_class=schema_class,
+                name=name,
+                server_class=server_class,
+                schema_class=schema_class,
             )
             for name, server_class, schema_class in _create_server_implementations()
         ]

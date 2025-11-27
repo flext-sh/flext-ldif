@@ -26,7 +26,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.api import FlextLdif
-from flext_ldif.base import FlextLdifServiceBase, LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -59,10 +59,14 @@ __all__ = [
     "FlextLdifModels",  # ✅ Domain models
     "FlextLdifParser",  # ✅ Parser service (required by flext-ldap)
     "FlextLdifProtocols",  # ✅ Protocols and type definitions
-    "FlextLdifServiceBase",  # ✅ Base class for services (alias for LdifServiceBase)
+    "FlextLdifServiceBase",  # ✅ Base class for services (alias for FlextLdifServiceBase)
+    "FlextLdifServiceBase",  # ✅ Base class for services with typed config
     "FlextLdifSorting",  # ✅ Sorting service (public API)
     "FlextLdifTypes",  # ✅ Type definitions
     "FlextLdifUtilities",  # ✅ Public helpers
     "FlextLdifWriter",  # ✅ Writer service (public API)
-    "LdifServiceBase",  # ✅ Base class for services with typed config
 ]
+
+# Forward references are resolved automatically by Pydantic when using string literals
+# Build models to resolve all forward references
+FlextLdifModels.Entry.model_rebuild()

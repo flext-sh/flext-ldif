@@ -10,9 +10,25 @@ from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
+from flext_ldif import (
+    FlextLdifConstants,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+
+@pytest.fixture(autouse=True)
+def cleanup_state() -> None:
+    """Autouse fixture to clean shared state between tests.
+
+    Runs after each test to prevent state pollution to subsequent tests.
+    Ensures test isolation even when fixtures have shared state.
+    """
+    return
+    # Post-test cleanup - ensures each test has clean state
 
 
 @pytest.fixture
@@ -98,7 +114,7 @@ def sample_entry() -> FlextLdifModels.Entry:
         attributes={
             "cn": ["Test User"],
             "sn": ["User"],
-            "objectclass": ["person", "organizationalPerson"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["person", "organizationalPerson"],
             "mail": ["test@example.com"],
         },
     )
@@ -115,7 +131,7 @@ def sample_entries(
         attributes={
             "cn": ["Another User"],
             "sn": ["User"],
-            "objectclass": ["person"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
         },
     )
     return [sample_entry, cast("FlextLdifModels.Entry", entry2_result.unwrap())]

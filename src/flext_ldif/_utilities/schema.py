@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import copy
 import re
-from collections.abc import Callable
-from typing import TypedDict
+from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -18,41 +17,12 @@ from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
 
-# TypedDicts for parse methods return types (replaces dict[str, Any])
-class ParsedAttributeDict(TypedDict, total=False):
-    """Type-safe dictionary structure for parsed attribute definitions."""
-
-    oid: str
-    name: str | None
-    desc: str | None
-    syntax: str | None
-    length: int | None
-    equality: str | None
-    ordering: str | None
-    substr: str | None
-    single_value: bool
-    no_user_modification: bool
-    sup: str | None
-    usage: str | None
-    metadata_extensions: dict[str, object]
-    syntax_validation: dict[str, object] | None
-
-
-class ParsedObjectClassDict(TypedDict, total=False):
-    """Type-safe dictionary structure for parsed objectClass definitions."""
-
-    oid: str
-    name: str | None
-    desc: str | None
-    sup: str | None
-    kind: str
-    must: list[str] | None
-    may: list[str] | None
-    metadata_extensions: dict[str, object]
+# TypedDicts moved to typings.py - import from there
 
 
 class FlextLdifUtilitiesSchema:
@@ -206,9 +176,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def detect_schema_type(
         definition: (
-            str
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
+            str | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
         ),
     ) -> str:
         r"""Detect schema type (attribute or objectclass) for automatic routing.
@@ -713,10 +681,8 @@ class FlextLdifUtilitiesSchema:
     def parse_attribute(
         attr_definition: str,
         *,
-        _case_insensitive: bool = False,
-        _allow_syntax_quotes: bool = False,
         validate_syntax: bool = True,
-    ) -> ParsedAttributeDict:
+    ) -> FlextLdifTypes.ModelMetadata.ParsedAttributeDict:
         """Parse RFC 4512 attribute definition into structured data.
 
         Generic parsing method that extracts all fields from attribute definition.
@@ -724,8 +690,6 @@ class FlextLdifUtilitiesSchema:
 
         Args:
             attr_definition: RFC 4512 attribute definition string
-            _case_insensitive: If True, use case-insensitive NAME matching (unused)
-            _allow_syntax_quotes: If True, allow optional quotes in SYNTAX (unused)
             validate_syntax: If True, validate syntax OID format
 
         Returns:
@@ -822,12 +786,11 @@ class FlextLdifUtilitiesSchema:
             FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE,
         )
 
-        no_user_modification = False
-        if _case_insensitive:  # Lenient mode (OID)
-            no_user_modification = FlextLdifUtilitiesParser.extract_boolean_flag(
-                attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
-            )
+        # Always extract NO-USER-MODIFICATION (RFC 4512 standard flag)
+        no_user_modification = FlextLdifUtilitiesParser.extract_boolean_flag(
+            attr_definition,
+            FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+        )
 
         # Extract SUP and USAGE (optional)
         sup = FlextLdifUtilitiesParser.extract_optional_field(
@@ -865,9 +828,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-        *,
-        _case_insensitive: bool = False,
-    ) -> ParsedObjectClassDict:
+    ) -> FlextLdifTypes.ModelMetadata.ParsedObjectClassDict:
         """Parse RFC 4512 objectClass definition into structured data.
 
         Generic parsing method that extracts all fields from objectClass definition.
@@ -875,7 +836,6 @@ class FlextLdifUtilitiesSchema:
 
         Args:
             oc_definition: RFC 4512 objectClass definition string
-            _case_insensitive: If True, use case-insensitive NAME matching (unused)
 
         Returns:
             Dictionary with parsed fields:
@@ -1031,9 +991,7 @@ class FlextLdifUtilitiesSchema:
         name_format = schema_details.get("name_format", "single")
         name_values_ = schema_details.get("name_values", [])
         name_values: list[str] = (
-            [str(v) for v in name_values_]
-            if isinstance(name_values_, list)
-            else []
+            [str(v) for v in name_values_] if isinstance(name_values_, list) else []
         )
 
         if name_format == "multiple" and name_values:
@@ -1260,6 +1218,87 @@ class FlextLdifUtilitiesSchema:
         return parts
 
     @staticmethod
+    def _format_attribute_list(
+        attr_list: object,
+        prefix: str,
+    ) -> str | None:
+        """Format attribute list (MUST/MAY) for objectClass definition.
+
+        Args:
+            attr_list: Attribute list (single value or list)
+            prefix: Prefix string (MUST or MAY)
+
+        Returns:
+            Formatted string or None if empty
+
+        """
+        if not attr_list:
+            return None
+
+        if FlextRuntime.is_list_like(attr_list) and isinstance(attr_list, list):
+            attr_strs = [str(item) for item in attr_list]
+            if len(attr_strs) == 1:
+                return f"{prefix} {attr_strs[0]}"
+            return f"{prefix} ( {' $ '.join(attr_strs)} )"
+
+        return f"{prefix} {attr_list}"
+
+    @staticmethod
+    def _format_sup_list(
+        sup_value: object,
+    ) -> str | None:
+        """Format SUP (superior) list for objectClass definition.
+
+        Args:
+            sup_value: SUP value (single value or list)
+
+        Returns:
+            Formatted string or None if empty
+
+        """
+        if not sup_value:
+            return None
+
+        if FlextRuntime.is_list_like(sup_value) and isinstance(sup_value, list):
+            sup_strs = [str(item) for item in sup_value]
+            return f"SUP ( {' $ '.join(sup_strs)} )"
+
+        return f"SUP {sup_value}"
+
+    @staticmethod
+    def _try_restore_objectclass_original_format(
+        oc_data: FlextLdifModels.SchemaObjectClass,
+        *,
+        restore_original: bool = True,
+    ) -> list[str] | None:
+        """Try to restore original format from metadata for objectClass.
+
+        Args:
+            oc_data: SchemaObjectClass model
+            restore_original: Whether to attempt restoration
+
+        Returns:
+            Original format parts if found, None otherwise
+
+        """
+        if not restore_original or not oc_data.metadata:
+            return None
+
+        schema_details = oc_data.metadata.schema_format_details
+        if not schema_details:
+            return None
+
+        original = str(schema_details.get("original_string_complete", ""))
+        if not original:
+            return None
+
+        definition_match = re.search(r"\(.*\)", original, re.DOTALL)
+        if definition_match:
+            return [definition_match.group(0)]
+
+        return None
+
+    @staticmethod
     def build_objectclass_parts_with_metadata(
         oc_data: FlextLdifModels.SchemaObjectClass,
         *,
@@ -1280,21 +1319,21 @@ class FlextLdifUtilitiesSchema:
 
         """
         # Try original format restoration first (perfect round-trip)
-        if restore_original and oc_data.metadata and oc_data.metadata.schema_format_details:
-            original = str(
-                oc_data.metadata.schema_format_details.get("original_string_complete", "")
+        original_parts = (
+            FlextLdifUtilitiesSchema._try_restore_objectclass_original_format(
+                oc_data, restore_original=restore_original
             )
-            if original:
-                definition_match = re.search(r"\(.*\)", original, re.DOTALL)
-                if definition_match:
-                    return [definition_match.group(0)]
+        )
+        if original_parts:
+            return original_parts
 
         # Build RFC-compliant parts with metadata restoration
         parts: list[str] = [f"( {oc_data.oid}"]
 
         # NAME with format restoration
         name_part = FlextLdifUtilitiesSchema._build_name_part(
-            oc_data, restore_format=True  # type: ignore[arg-type]
+            oc_data,
+            restore_format=True,
         )
         if name_part:
             parts.append(name_part)
@@ -1311,48 +1350,36 @@ class FlextLdifUtilitiesSchema:
                 field_order = [str(item) for item in field_order_]
 
         FlextLdifUtilitiesSchema._build_obsolete_part(
-            oc_data, parts, field_order, restore_position=True  # type: ignore[arg-type]
+            oc_data,
+            parts,
+            field_order,
+            restore_position=True,
         )
 
         # SUP - handle single or multiple
-        if oc_data.sup:
-            if FlextRuntime.is_list_like(oc_data.sup) and isinstance(oc_data.sup, list):
-                sup_list_str = [str(item) for item in oc_data.sup]
-                sup_str = " $ ".join(sup_list_str)
-                parts.append(f"SUP ( {sup_str} )")
-            else:
-                parts.append(f"SUP {oc_data.sup}")
+        sup_part = FlextLdifUtilitiesSchema._format_sup_list(oc_data.sup)
+        if sup_part:
+            parts.append(sup_part)
 
         # KIND (structural, auxiliary, abstract)
         kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
         parts.append(str(kind))
 
-        # MUST and MAY attributes
-        if oc_data.must:
-            if FlextRuntime.is_list_like(oc_data.must) and isinstance(oc_data.must, list):
-                must_list_str = [str(item) for item in oc_data.must]
-                if len(must_list_str) == 1:
-                    parts.append(f"MUST {must_list_str[0]}")
-                else:
-                    must_str = " $ ".join(must_list_str)
-                    parts.append(f"MUST ( {must_str} )")
-            else:
-                parts.append(f"MUST {oc_data.must}")
+        # MUST and MAY attributes (using helper)
+        must_part = FlextLdifUtilitiesSchema._format_attribute_list(
+            oc_data.must, "MUST"
+        )
+        if must_part:
+            parts.append(must_part)
 
-        if oc_data.may:
-            if FlextRuntime.is_list_like(oc_data.may) and isinstance(oc_data.may, list):
-                may_list_str = [str(item) for item in oc_data.may]
-                if len(may_list_str) == 1:
-                    parts.append(f"MAY {may_list_str[0]}")
-                else:
-                    may_str = " $ ".join(may_list_str)
-                    parts.append(f"MAY ( {may_str} )")
-            else:
-                parts.append(f"MAY {oc_data.may}")
+        may_part = FlextLdifUtilitiesSchema._format_attribute_list(oc_data.may, "MAY")
+        if may_part:
+            parts.append(may_part)
 
         # X-ORIGIN with restoration
         x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
-            oc_data, restore_format=True  # type: ignore[arg-type]
+            oc_data,
+            restore_format=True,
         )
         if x_origin_part:
             parts.append(x_origin_part)
@@ -1360,7 +1387,7 @@ class FlextLdifUtilitiesSchema:
         parts.append(")")
 
         # Trailing spaces restoration
-        FlextLdifUtilitiesSchema._apply_trailing_spaces(oc_data, parts)  # type: ignore[arg-type]
+        FlextLdifUtilitiesSchema._apply_trailing_spaces(oc_data, parts)
 
         return parts
 
@@ -1688,8 +1715,11 @@ class FlextLdifUtilitiesSchema:
             return []
 
         return [
-            a for a in attrs
-            if not FlextLdifUtilitiesSchema.is_attribute_in_list(a, available_attributes)
+            a
+            for a in attrs
+            if not FlextLdifUtilitiesSchema.is_attribute_in_list(
+                a, available_attributes
+            )
         ]
 
     @staticmethod
@@ -1730,6 +1760,48 @@ class FlextLdifUtilitiesSchema:
             )
         )
         return len(missing) == 0, missing
+
+    @staticmethod
+    def replace_invalid_substr_rule(
+        substr: str | None,
+        invalid_rules: Mapping[str, str | None],
+    ) -> str | None:
+        """Replace invalid SUBSTR rule with valid replacement.
+
+        Centralizes invalid SUBSTR rule replacement logic used by multiple
+        server implementations (OID, OUD, etc.).
+
+        Args:
+            substr: Current SUBSTR rule value
+            invalid_rules: Mapping of invalid rules to replacements.
+                           If value is None, rule is removed (returns None).
+                           If value is str, rule is replaced with that value.
+
+        Returns:
+            Replacement SUBSTR rule, or original if not in invalid_rules
+
+        Example:
+            >>> invalid = {
+            ...     "caseExactSubstringsMatch": "caseIgnoreSubstringsMatch",
+            ...     "unsupportedRule": None,
+            ... }  # None = remove
+            >>> FlextLdifUtilitiesSchema.replace_invalid_substr_rule(
+            ...     "caseExactSubstringsMatch", invalid
+            ... )
+            'caseIgnoreSubstringsMatch'
+            >>> FlextLdifUtilitiesSchema.replace_invalid_substr_rule(
+            ...     "unsupportedRule", invalid
+            ... )
+            None
+
+        """
+        if not substr or not invalid_rules:
+            return substr
+
+        if substr in invalid_rules:
+            return invalid_rules[substr]
+
+        return substr
 
 
 __all__ = [

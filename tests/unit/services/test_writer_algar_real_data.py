@@ -105,7 +105,7 @@ class TestFlextLdifWriterAlgarRealData:
         scenario: str,
         test_type: WriterRfc2849TestType,
         writer: FlextLdifWriter,
-        _rfc_config: FlextLdifConfig,
+        rfc_config: FlextLdifConfig,
     ) -> None:
         """Parametrized test for RFC 2849 compliance with real algar-oud-mig data.
 

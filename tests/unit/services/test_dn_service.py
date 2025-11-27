@@ -392,6 +392,252 @@ class TestDnService:
                 assert isinstance(component[0], str)  # Attribute type
                 assert component[1] is not None  # Attribute value
 
+    class TestValidators:
+        """Test Pydantic field validators."""
+
+        def test_validate_operation_invalid(self) -> None:
+            """Test operation validator with invalid value."""
+            with pytest.raises(ValueError, match="Invalid operation"):
+                FlextLdifDn(dn="test", operation="invalid_operation")
+
+        def test_validate_escape_mode_invalid(self) -> None:
+            """Test escape_mode validator with invalid value."""
+            with pytest.raises(ValueError, match="Invalid escape_mode"):
+                FlextLdifDn(dn="test", escape_mode="invalid_mode")
+
+    class TestExecuteOperations:
+        """Test execute() method with various operations."""
+
+        def test_execute_parse(self) -> None:
+            """Test execute with parse operation."""
+            service = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="parse")
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_validate(self) -> None:
+            """Test execute with validate operation."""
+            service = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="validate")
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_clean(self) -> None:
+            """Test execute with clean operation."""
+            service = FlextLdifDn(dn="  cn=test , dc=example ", operation="clean")
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_escape(self) -> None:
+            """Test execute with escape operation."""
+            service = FlextLdifDn(dn="test,value", operation="escape")
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_escape_hex(self) -> None:
+            """Test execute with escape operation in hex mode."""
+            service = FlextLdifDn(
+                dn="test",
+                operation="escape",
+                escape_mode="hex",
+            )
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_unescape(self) -> None:
+            """Test execute with unescape operation."""
+            service = FlextLdifDn(dn=r"test\,value", operation="unescape")
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_compare(self) -> None:
+            """Test execute with compare operation."""
+            service = FlextLdifDn(
+                dn="cn=test,dc=example,dc=com",
+                other_dn="cn=test,dc=example,dc=com",
+                operation="compare",
+            )
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+        def test_execute_compare_missing_other_dn(self) -> None:
+            """Test execute with compare operation without other_dn."""
+            service = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="compare")
+            result = service.execute()
+            assert result.is_failure
+            assert result.error is not None
+            assert "other_dn required" in result.error
+
+        def test_execute_parse_rdn(self) -> None:
+            """Test execute with parse_rdn operation."""
+            service = FlextLdifDn(dn="cn=test+ou=people", operation="parse_rdn")
+            result = service.execute()
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, str)
+
+    class TestInstanceMethods:
+        """Test instance method shortcuts."""
+
+        def test_parse_with_none(self) -> None:
+            """Test parse instance method with None."""
+            service = DnTestFactory.create_service()
+            result = service.parse(None)
+            assert result.is_failure
+            assert result.error is not None
+            assert "cannot be None" in result.error
+
+        def test_validate_dn_with_none(self) -> None:
+            """Test validate_dn instance method with None."""
+            service = DnTestFactory.create_service()
+            result = service.validate_dn(None)
+            assert result.is_failure
+            assert result.error is not None
+            assert "cannot be None" in result.error
+
+        def test_norm_with_none(self) -> None:
+            """Test norm instance method with None."""
+            service = DnTestFactory.create_service()
+            result = service.norm(None)
+            assert result.is_failure
+            assert result.error is not None
+            assert "cannot be None" in result.error
+
+        def test_esc(self) -> None:
+            """Test esc instance method."""
+            service = DnTestFactory.create_service()
+            result = service.esc("test,value")
+            assert isinstance(result, str)
+            # Escape can be either \2c (hex) or \, (standard)
+            assert "\\" in result
+
+        def test_unesc(self) -> None:
+            """Test unesc instance method."""
+            service = DnTestFactory.create_service()
+            result = service.unesc(r"test\,value")
+            assert isinstance(result, str)
+
+    class TestBuilderPattern:
+        """Test fluent builder pattern."""
+
+        def test_builder_creates_instance(self) -> None:
+            """Test builder() creates service instance."""
+            builder = FlextLdifDn.builder()
+            assert isinstance(builder, FlextLdifDn)
+
+        def test_with_dn(self) -> None:
+            """Test with_dn fluent method."""
+            builder = FlextLdifDn.builder()
+            result = builder.with_dn("cn=test,dc=example,dc=com")
+            assert result is builder
+            assert builder.dn == "cn=test,dc=example,dc=com"
+
+        def test_with_operation(self) -> None:
+            """Test with_operation fluent method."""
+            builder = FlextLdifDn.builder()
+            result = builder.with_operation("normalize")
+            assert result is builder
+            assert builder.operation == "normalize"
+
+        def test_with_escape_mode(self) -> None:
+            """Test with_escape_mode fluent method."""
+            builder = FlextLdifDn.builder()
+            result = builder.with_escape_mode("hex")
+            assert result is builder
+            assert builder.escape_mode == "hex"
+
+        def test_build(self) -> None:
+            """Test build() executes and returns unwrapped result."""
+            result = (
+                FlextLdifDn.builder()
+                .with_dn("CN=Test,DC=Example,DC=Com")
+                .with_operation("normalize")
+                .build()
+            )
+            assert isinstance(result, str)
+            assert "cn=test" in result.lower()
+
+    class TestClassMethods:
+        """Test classmethod helpers."""
+
+        def test_clean_dn_classmethod(self) -> None:
+            """Test clean_dn classmethod."""
+            result = FlextLdifDn.clean_dn("  cn=test , dc=example ")
+            assert isinstance(result, str)
+            assert " " not in result or result.strip() != result
+
+        def test_escape_dn_value_classmethod(self) -> None:
+            """Test escape_dn_value classmethod."""
+            result = FlextLdifDn.escape_dn_value("test,value")
+            assert isinstance(result, str)
+
+        def test_unescape_dn_value_classmethod(self) -> None:
+            """Test unescape_dn_value classmethod."""
+            result = FlextLdifDn.unescape_dn_value(r"test\,value")
+            assert isinstance(result, str)
+
+        def test_compare_dns_classmethod(self) -> None:
+            """Test compare_dns classmethod."""
+            result = FlextLdifDn.compare_dns(
+                "cn=test,dc=example,dc=com",
+                "CN=TEST,DC=EXAMPLE,DC=COM",
+            )
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, int)
+
+        def test_parse_rdn_classmethod(self) -> None:
+            """Test parse_rdn classmethod."""
+            result = FlextLdifDn.parse_rdn("cn=test+ou=people")
+            unwrapped = FlextTestsMatchers.assert_success(result)
+            assert isinstance(unwrapped, list)
+
+    class TestHexEscape:
+        """Test hex escape/unescape operations."""
+
+        def test_hex_escape(self) -> None:
+            """Test hex_escape method."""
+            result = FlextLdifDn.Normalizer.hex_escape("abc")
+            assert isinstance(result, str)
+            assert "\\" in result
+
+        def test_hex_unescape(self) -> None:
+            """Test hex_unescape method."""
+            hex_escaped = FlextLdifDn.Normalizer.hex_escape("abc")
+            result = FlextLdifDn.Normalizer.hex_unescape(hex_escaped)
+            assert result == "abc"
+
+        def test_hex_unescape_invalid_hex(self) -> None:
+            """Test hex_unescape with invalid hex sequence."""
+            result = FlextLdifDn.Normalizer.hex_unescape("\\ZZ")
+            # Should handle gracefully
+            assert isinstance(result, str)
+
+    class TestEvents:
+        """Test event handling."""
+
+        def test_get_last_event_without_events(self) -> None:
+            """Test get_last_event when events are disabled."""
+            service = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="normalize")
+            service.execute()
+            event = service.get_last_event()
+            assert event is None
+
+        def test_get_last_event_with_events(self) -> None:
+            """Test get_last_event when events are enabled."""
+            service = FlextLdifDn(
+                dn="cn=test,dc=example,dc=com",
+                operation="normalize",
+                enable_events=True,
+            )
+            service.execute()
+            event = service.get_last_event()
+            # Event may be None if logger is not available
+            assert event is None or hasattr(event, "dn_operation")
+
 
 __all__ = [
     "DnTestData",

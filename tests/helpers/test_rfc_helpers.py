@@ -327,7 +327,8 @@ class RfcTestHelpers:
         attr: FlextLdifModels.SchemaAttribute = cast(
             "FlextLdifModels.SchemaAttribute",
             FlextTestsMatchers.assert_success(
-                cast("FlextResult[object]", result), "Attribute parse should succeed",
+                cast("FlextResult[object]", result),
+                "Attribute parse should succeed",
             ),
         )
         assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
@@ -359,7 +360,8 @@ class RfcTestHelpers:
         oc: FlextLdifModels.SchemaObjectClass = cast(
             "FlextLdifModels.SchemaObjectClass",
             FlextTestsMatchers.assert_success(
-                cast("FlextResult[object]", result), "ObjectClass parse should succeed",
+                cast("FlextResult[object]", result),
+                "ObjectClass parse should succeed",
             ),
         )
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
@@ -637,7 +639,8 @@ class RfcTestHelpers:
         """
         result = entry_quirk.write(entry)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "Entry write should succeed",
+            result,
+            "Entry write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         assert len(ldif_text) > 0, "Written LDIF should not be empty"
@@ -672,7 +675,8 @@ class RfcTestHelpers:
         """
         result = entry_quirk._write_entry(entry)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "Entry write should succeed",
+            result,
+            "Entry write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -893,7 +897,8 @@ class RfcTestHelpers:
         """
         result = schema_quirk._route_write(schema_obj)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "Route write should succeed",
+            result,
+            "Route write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if must_contain:
@@ -990,7 +995,8 @@ class RfcTestHelpers:
         """
         result = acl_quirk._write_acl(acl)
         ldif_text = FlextTestsMatchers.assert_success(
-            result, "ACL write should succeed",
+            result,
+            "ACL write should succeed",
         )
         assert isinstance(ldif_text, str), "Write should return string"
         if expected_content:
@@ -1739,7 +1745,8 @@ class RfcTestHelpers:
             input_source="string",
             server_type=server_type,
             format_options=cast(
-                "FlextLdifModels.ParseFormatOptions | None", parse_options,
+                "FlextLdifModels.ParseFormatOptions | None",
+                parse_options,
             ),
         )
         parse_response_untyped = TestAssertions.assert_success(parse_result)
@@ -1757,7 +1764,8 @@ class RfcTestHelpers:
             target_server_type=server_type,
             output_target="string",
             format_options=cast(
-                "FlextLdifModels.WriteFormatOptions | None", write_options,
+                "FlextLdifModels.WriteFormatOptions | None",
+                write_options,
             ),
         )
         written = cast("str", TestAssertions.assert_success(write_result))
@@ -2831,9 +2839,9 @@ class RfcTestHelpers:
         objectclasses_domain: list[FlextLdifModelsDomains.SchemaObjectClass] | None = (
             list(objectclasses) if objectclasses is not None else None
         )
-        attributes_schema_domain: list[FlextLdifModelsDomains.SchemaAttribute] | None = (
-            list(attributes_schema) if attributes_schema is not None else None
-        )
+        attributes_schema_domain: (
+            list[FlextLdifModelsDomains.SchemaAttribute] | None
+        ) = list(attributes_schema) if attributes_schema is not None else None
         result = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=attributes_typed,
@@ -2857,7 +2865,7 @@ class RfcTestHelpers:
         oid: str | None = None,
         name: str | None = None,
         **kwargs: object,
-    ) -> object:
+    ) -> FlextLdifModels.SchemaAttribute:
         """Create SchemaAttribute and unwrap result - replaces 2-3 lines.
 
         Args:
@@ -2878,20 +2886,20 @@ class RfcTestHelpers:
         return FlextLdifModels.SchemaAttribute(
             oid=oid,
             name=name,
-            desc=cast("str | None", kwargs.get("desc")),
-            sup=cast("str | None", kwargs.get("sup")),
-            equality=cast("str | None", kwargs.get("equality")),
-            ordering=cast("str | None", kwargs.get("ordering")),
-            substr=cast("str | None", kwargs.get("substr")),
-            syntax=cast("str | None", kwargs.get("syntax")),
-            length=cast("int | None", kwargs.get("length")),
-            single_value=cast("bool", kwargs.get("single_value", False)),
-            usage=cast("str | None", kwargs.get("usage")),
-            x_origin=cast("str | None", kwargs.get("x_origin")),
-            x_file_ref=cast("str | None", kwargs.get("x_file_ref")),
-            x_name=cast("str | None", kwargs.get("x_name")),
-            x_alias=cast("str | None", kwargs.get("x_alias")),
-            x_oid=cast("str | None", kwargs.get("x_oid")),
+            desc=kwargs.get("desc") if isinstance(kwargs.get("desc"), (str, type(None))) else None,
+            sup=kwargs.get("sup") if isinstance(kwargs.get("sup"), (str, type(None))) else None,
+            equality=kwargs.get("equality") if isinstance(kwargs.get("equality"), (str, type(None))) else None,
+            ordering=kwargs.get("ordering") if isinstance(kwargs.get("ordering"), (str, type(None))) else None,
+            substr=kwargs.get("substr") if isinstance(kwargs.get("substr"), (str, type(None))) else None,
+            syntax=kwargs.get("syntax") if isinstance(kwargs.get("syntax"), (str, type(None))) else None,
+            length=kwargs.get("length") if isinstance(kwargs.get("length"), (int, type(None))) else None,
+            single_value=bool(kwargs.get("single_value")),
+            usage=kwargs.get("usage") if isinstance(kwargs.get("usage"), (str, type(None))) else None,
+            x_origin=kwargs.get("x_origin") if isinstance(kwargs.get("x_origin"), (str, type(None))) else None,
+            x_file_ref=kwargs.get("x_file_ref") if isinstance(kwargs.get("x_file_ref"), (str, type(None))) else None,
+            x_name=kwargs.get("x_name") if isinstance(kwargs.get("x_name"), (str, type(None))) else None,
+            x_alias=kwargs.get("x_alias") if isinstance(kwargs.get("x_alias"), (str, type(None))) else None,
+            x_oid=kwargs.get("x_oid") if isinstance(kwargs.get("x_oid"), (str, type(None))) else None,
         )
 
     @staticmethod
@@ -2900,7 +2908,7 @@ class RfcTestHelpers:
         oid: str | None = None,
         name: str | None = None,
         **kwargs: object,
-    ) -> object:
+    ) -> FlextLdifModels.SchemaObjectClass:
         """Create SchemaObjectClass and unwrap result - replaces 2-3 lines.
 
         Args:
@@ -2921,15 +2929,12 @@ class RfcTestHelpers:
         return FlextLdifModels.SchemaObjectClass(
             oid=oid,
             name=name,
-            desc=cast("str | None", kwargs.get("desc")),
-            sup=cast("str | list[str] | None", kwargs.get("sup")),
-            kind=cast("str", kwargs.get("kind", "STRUCTURAL")),
-            must=cast("list[str] | None", kwargs.get("must")),
-            may=cast("list[str] | None", kwargs.get("may")),
-            metadata=cast(
-                "FlextLdifModels.QuirkMetadata | None",
-                kwargs.get("metadata"),
-            ),
+            desc=kwargs.get("desc") if isinstance(kwargs.get("desc"), (str, type(None))) else None,
+            sup=kwargs.get("sup") if isinstance(kwargs.get("sup"), (str, list, type(None))) else None,
+            kind=kwargs.get("kind", "STRUCTURAL") if isinstance(kwargs.get("kind", "STRUCTURAL"), str) else "STRUCTURAL",
+            must=kwargs.get("must") if isinstance(kwargs.get("must"), (list, type(None))) else None,
+            may=kwargs.get("may") if isinstance(kwargs.get("may"), (list, type(None))) else None,
+            metadata=kwargs.get("metadata") if isinstance(kwargs.get("metadata"), (FlextLdifModels.QuirkMetadata, type(None))) else None,
         )
 
     @staticmethod

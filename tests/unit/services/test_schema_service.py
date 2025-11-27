@@ -605,65 +605,6 @@ class TestSchemaServiceCanHandleAttribute:
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# TEST CAN_HANDLE_OBJECTCLASS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestSchemaServiceCanHandleObjectClass:
-    """Test can_handle_objectclass() method."""
-
-    def test_can_handle_valid_objectclass_definition(
-        self,
-        schema_service: FlextLdifSchema,
-        simple_objectclass_definition: str,
-    ) -> None:
-        """Test can_handle with valid objectClass definition."""
-        result = schema_service.can_handle_objectclass(simple_objectclass_definition)
-        assert result is True
-
-    def test_can_handle_complex_objectclass_definition(
-        self,
-        schema_service: FlextLdifSchema,
-        complex_objectclass_definition: str,
-    ) -> None:
-        """Test can_handle with complex objectClass definition."""
-        result = schema_service.can_handle_objectclass(complex_objectclass_definition)
-        assert result is True
-
-    def test_can_handle_empty_string(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle with empty string."""
-        result = schema_service.can_handle_objectclass("")
-        assert result is False
-
-    def test_can_handle_whitespace_only(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle with whitespace only."""
-        result = schema_service.can_handle_objectclass("   ")
-        assert result is False
-
-    def test_can_handle_invalid_format(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle with invalid format (no parentheses)."""
-        result = schema_service.can_handle_objectclass("invalid format")
-        assert result is False
-
-    def test_can_handle_with_parentheses(
-        self,
-        schema_service: FlextLdifSchema,
-    ) -> None:
-        """Test can_handle with parentheses (should return True)."""
-        result = schema_service.can_handle_objectclass("( test )")
-        assert result is True
-
-
-# ════════════════════════════════════════════════════════════════════════════
 # TEST REPR
 # ════════════════════════════════════════════════════════════════════════════
 

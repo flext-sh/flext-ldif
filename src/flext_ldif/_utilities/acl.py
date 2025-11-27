@@ -27,35 +27,6 @@ class FlextLdifUtilitiesACL:
     ASCII_PRINTABLE_MAX: int = 0x7E  # Tilde (last printable character)
 
     @staticmethod
-    def parser(acl_line: str) -> AclComponent | None:
-        """Parse ACL line into components."""
-        if not acl_line or not acl_line.strip():
-            return None
-
-        result: AclComponent = {}
-        line = acl_line.strip()
-
-        if line.startswith("("):
-            result["format"] = "oid"
-            result["content"] = line
-        elif ":" in line:
-            parts = line.split(":", 1)
-            result["format"] = "oud"
-            result["key"] = parts[0]
-            result["value"] = parts[1] if len(parts) > 1 else ""
-        else:
-            result["format"] = "unknown"
-            result["content"] = line
-
-        # Validate result dict has required content before returning
-        if not result:
-            return None
-        # Result dict should always have at least "format" key
-        if "format" not in result:
-            return None
-        return result
-
-    @staticmethod
     def split_acl_line(acl_line: str) -> tuple[str, str]:
         r"""Split an ACL line into attribute name and payload.
 
@@ -69,7 +40,7 @@ class FlextLdifUtilitiesACL:
             Tuple of (attribute_name, payload).
 
         Example:
-            >>> split_acl_line("aci: (version 3.0; acl \"test\"; ...)")
+            >>> split_acl_line('aci: (version 3.0; acl "test"; ...)')
             ("aci", "(version 3.0; acl \"test\"; ...)")
 
         """
@@ -127,8 +98,16 @@ class FlextLdifUtilitiesACL:
         min_groups_for_action = 1
         min_groups_for_ops = 2
         for match in matches:
-            action = match.group(1) if match.lastindex >= min_groups_for_action else ""
-            ops = match.group(2) if match.lastindex >= min_groups_for_ops else ""
+            action = (
+                match.group(1)
+                if match.lastindex and match.lastindex >= min_groups_for_action
+                else ""
+            )
+            ops = (
+                match.group(2)
+                if match.lastindex and match.lastindex >= min_groups_for_ops
+                else ""
+            )
 
             # Filter by action if specified
             if action_filter and action.lower() != action_filter.lower():
@@ -298,19 +277,21 @@ class FlextLdifUtilitiesACL:
         """
         extensions: dict[str, object] = {}
 
-        if config.acl_format:
-            extensions["acl_format"] = config.acl_format
-        if config.server_type:
-            extensions["server_type"] = config.server_type
-        if config.transformation_applied:
-            extensions["transformation_applied"] = config.transformation_applied
+        if config.line_breaks:
+            extensions["line_breaks"] = config.line_breaks
+        if config.dn_spaces:
+            extensions["dn_spaces"] = config.dn_spaces
+        if config.targetscope:
+            extensions["targetscope"] = config.targetscope
+        if config.version:
+            extensions["version"] = config.version
+        if config.action_type:
+            extensions["action_type"] = config.action_type
 
         return extensions
 
     @staticmethod
-    def sanitize_acl_name(
-        raw_name: str, max_length: int = 128
-    ) -> tuple[str, bool]:
+    def sanitize_acl_name(raw_name: str, max_length: int = 128) -> tuple[str, bool]:
         """Sanitize ACL name for ACI format."""
         if not raw_name or not raw_name.strip():
             return "", False
@@ -418,7 +399,9 @@ class FlextLdifUtilitiesACL:
         if not targetattr_str:
             return [], "*"
         if separator in targetattr_str:
-            return [a.strip() for a in targetattr_str.split(separator) if a.strip()], "*"
+            return [
+                a.strip() for a in targetattr_str.split(separator) if a.strip()
+            ], "*"
         if targetattr_str != "*":
             return [targetattr_str.strip()], "*"
         return [], "*"
@@ -578,9 +561,9 @@ class FlextLdifUtilitiesACL:
         """Format complete ACI line from components."""
         sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(name)
         return (
-            f'{aci_prefix}{target_clause}'
+            f"{aci_prefix}{target_clause}"
             f'(version {version}; acl "{sanitized_name}"; '
-            f'{permissions_clause} {bind_rule};)'
+            f"{permissions_clause} {bind_rule};)"
         )
 
     # =========================================================================
@@ -636,11 +619,16 @@ class FlextLdifUtilitiesACL:
         )
         if targetattr_extracted:
             targetattr = targetattr_extracted
-        target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(targetattr)
+        target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(
+            targetattr
+        )
 
         # Extract permissions
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
-            aci_content, config.allow_deny_pattern, config.ops_separator, config.action_filter
+            aci_content,
+            config.allow_deny_pattern,
+            config.ops_separator,
+            config.action_filter,
         )
 
         # Extract bind rules
@@ -655,9 +643,16 @@ class FlextLdifUtilitiesACL:
         )
 
         # Build permissions dict using config's permission_map
-        permissions_dict = FlextLdifUtilitiesACL.build_permissions_dict(
+        permissions_dict_raw = FlextLdifUtilitiesACL.build_permissions_dict(
             permissions_list, config.permission_map
         )
+
+        # Convert to typed permissions dict for AclPermissions model
+        # AclPermissions expects bool fields, so ensure all values are bool
+        permissions_dict: dict[str, bool] = {
+            k: bool(v) if isinstance(v, (bool, int, str)) else False
+            for k, v in permissions_dict_raw.items()
+        }
 
         # Extract extra fields via extra_patterns and build extensions
         extensions: dict[str, str | object] = {
@@ -816,14 +811,15 @@ class FlextLdifUtilitiesACL:
             # Handle tuple values (operator, value)
             if isinstance(value, tuple) and len(value) == tuple_length:
                 operator, val = value
-                if "{operator}" in format_template:
+                operator_placeholder = "{" + "operator" + "}"
+                if operator_placeholder in format_template:
                     bind_rules.append(
                         format_template.format(operator=operator, value=val)
                     )
                 else:
                     bind_rules.append(format_template.format(value=val))
             # Handle simple string values
-            elif "{operator}" in format_template and operator_default:
+            elif operator_placeholder in format_template and operator_default:
                 bind_rules.append(
                     format_template.format(operator=operator_default, value=value)
                 )
@@ -902,6 +898,162 @@ class FlextLdifUtilitiesACL:
         result = [str(comment) for comment in comments]
         result.append("")  # Empty line after comments
         return result
+
+    @staticmethod
+    def parser(acl_string: str) -> dict[str, str] | None:
+        """Detect ACL format and return format information.
+
+        Generic utility for detecting ACL format from raw string,
+        used to determine which server-specific quirk to apply.
+
+        Args:
+            acl_string: Raw ACL string to analyze
+
+        Returns:
+            Dict with "format" key ("oid", "oud", "rfc") or None if unrecognized
+
+        Example:
+            >>> parser("orclaci: access to entry by * (browse)")
+            {"format": "oid"}
+            >>> parser('aci: (version 3.0; acl "test"; ...)')
+            {"format": "oud"}
+
+        """
+        if not acl_string or not acl_string.strip():
+            return None
+
+        first_line = acl_string.split("\n", maxsplit=1)[0].strip()
+
+        # Check OID format (orclaci: or orclentrylevelaci:)
+        if first_line.startswith(("orclaci:", "orclentrylevelaci:")):
+            return {"format": "oid"}
+
+        # Check OUD/RFC ACI format (aci:)
+        if first_line.startswith("aci:"):
+            return {"format": "oud"}  # OUD uses RFC ACI format
+
+        return None
+
+    @staticmethod
+    def map_oid_to_oud_permissions(
+        oid_permissions: dict[str, bool],
+    ) -> dict[str, bool]:
+        """Map OID-specific permissions to OUD-equivalent permissions.
+
+        Handles OID → OUD permission conversion:
+        - browse → read + search (OID browse allows listing, OUD requires read+search)
+        - selfwrite → write (OID-specific self-write becomes OUD write)
+        - Other permissions (read, write, add, delete, search, compare, all) pass through
+
+        Args:
+            oid_permissions: Dict with OID permission names as keys (e.g., browse, selfwrite)
+
+        Returns:
+            Dict with OUD-compatible permission names mapped correctly
+
+        Example:
+            >>> oid_perms = {"browse": True, "write": False}
+            >>> oud_perms = FlextLdifUtilitiesACL.map_oid_to_oud_permissions(oid_perms)
+            >>> print(oud_perms)  # {"read": True, "search": True, "write": False}
+
+        """
+        oud_permissions: dict[str, bool] = {}
+
+        # Direct pass-through permissions (exist in both OID and OUD)
+        pass_through_perms = {
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
+        }
+
+        # Process each OID permission
+        for perm_name, perm_value in oid_permissions.items():
+            if perm_name in pass_through_perms:
+                # Standard permission - use as-is
+                oud_permissions[perm_name] = perm_value
+            elif perm_name == "browse":
+                # OID browse → OUD read + search
+                oud_permissions["read"] = (
+                    oud_permissions.get("read", False) or perm_value
+                )
+                oud_permissions["search"] = (
+                    oud_permissions.get("search", False) or perm_value
+                )
+            elif perm_name == "selfwrite":
+                # OID selfwrite → OUD write
+                oud_permissions["write"] = (
+                    oud_permissions.get("write", False) or perm_value
+                )
+            elif perm_name == "proxy":
+                # OID proxy has no direct OUD equivalent - skip for now
+                # Could be preserved in metadata for potential future OUD extensions
+                pass
+            # Skip unknown OID-specific permissions
+
+        return oud_permissions
+
+    @staticmethod
+    def map_oud_to_oid_permissions(
+        oud_permissions: dict[str, bool],
+    ) -> dict[str, bool]:
+        """Map OUD-specific permissions to OID-equivalent permissions.
+
+        Handles OUD → OID permission conversion (reverse mapping):
+        - read + search → browse (OUD read+search becomes OID browse)
+        - write → write (standard mapping, no special handling needed)
+        - Other permissions (add, delete, compare, all) pass through
+
+        Args:
+            oud_permissions: Dict with OUD permission names as keys
+
+        Returns:
+            Dict with OID-compatible permission names mapped correctly
+
+        Example:
+            >>> oud_perms = {"read": True, "search": True, "write": False}
+            >>> oid_perms = FlextLdifUtilitiesACL.map_oud_to_oid_permissions(oud_perms)
+            >>> print(oid_perms)  # {"browse": True, "write": False}
+
+        """
+        oid_permissions: dict[str, bool] = {}
+
+        # Direct pass-through permissions (exist in both OUD and OID)
+        pass_through_perms = {
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
+        }
+
+        # Track which permissions we've processed
+        processed = set()
+
+        # Handle read + search → browse conversion
+        has_read = oud_permissions.get("read", False)
+        has_search = oud_permissions.get("search", False)
+        if has_read or has_search:
+            # Set browse if both read and search are present
+            oid_permissions["browse"] = has_read and has_search
+            processed.add("read")
+            processed.add("search")
+
+        # Pass through standard permissions (except read/search already processed)
+        for perm_name in pass_through_perms:
+            if (
+                perm_name not in processed
+                and perm_name not in {"read", "search"}
+                and perm_name in oud_permissions
+            ):
+                oid_permissions[perm_name] = oud_permissions[perm_name]
+
+        return oid_permissions
 
 
 __all__ = [

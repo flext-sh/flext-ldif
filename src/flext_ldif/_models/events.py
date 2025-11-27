@@ -16,6 +16,8 @@ from pathlib import Path
 from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldif._models.config import FlextLdifModelsConfig
+
 
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class.
@@ -215,7 +217,7 @@ class FlextLdifModelsEvents:
             ...,
             description="Number of entries after filtering",
         )
-        filter_criteria: list[dict[str, object]] = Field(
+        filter_criteria: list[FlextLdifModelsConfig.FilterCriteria] = Field(
             default_factory=list,
             description="Filter criteria applied",
         )

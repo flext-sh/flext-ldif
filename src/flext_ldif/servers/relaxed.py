@@ -222,9 +222,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-            *,
-            _case_insensitive: bool = False,
-            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline.
 
@@ -233,8 +230,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             Args:
                 attr_definition: AttributeType definition string
-                _case_insensitive: Whether to use case-insensitive pattern matching (unused)
-                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with parsed SchemaAttribute or error
@@ -247,11 +242,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
             # Always try parent's _parse_attribute first (RFC format)
-            parent_result = super()._parse_attribute(
-                attr_definition,
-                _case_insensitive=_case_insensitive,
-                _allow_syntax_quotes=_allow_syntax_quotes,
-            )
+            parent_result = super()._parse_attribute(attr_definition)
             if parent_result.is_success:
                 # RFC parser succeeded - enhance metadata as relaxed mode
                 attribute = parent_result.unwrap()

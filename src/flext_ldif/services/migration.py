@@ -15,7 +15,7 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.categorization import FlextLdifCategorization
@@ -28,7 +28,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifMigrationPipeline(LdifServiceBase):
+class FlextLdifMigrationPipeline(FlextLdifServiceBase):
     """LDIF Migration Pipeline - Direct Implementation.
 
     Zero private methods - pure service orchestration.
@@ -856,13 +856,8 @@ class FlextLdifMigrationPipeline(LdifServiceBase):
             return self._write_simple_mode(categories)
         return self._write_structured_mode(categories)
 
-    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.EntryResult]:
-        """Execute migration - pure railway pattern with public services.
-
-        Args:
-            **_kwargs: Ignored parameters for FlextService protocol compatibility
-
-        """
+    def execute(self) -> FlextResult[FlextLdifModels.EntryResult]:
+        """Execute migration - pure railway pattern with public services."""
         start_time = time.time()
 
         # Step 1: Create output directory

@@ -13,15 +13,66 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
 from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifMigrationPipeline
+from flext_ldif import FlextLdifMigrationPipeline, FlextLdifModels
 
 
-class TestMigrationPipelineInitialization:
-    """Test suite for migration pipeline initialization with new API."""
+class TestFlextLdifMigrationPipeline:
+    """Consolidated test suite for LDIF migration pipeline.
+
+    Tests all aspects: initialization, validation, empty input, simple mode,
+    categorized mode, multiple files, and server-specific conversions.
+    """
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SCENARIO ENUMS
+    # ════════════════════════════════════════════════════════════════════════
+
+    class InitializationScenario(StrEnum):
+        """Initialization test scenarios."""
+
+        REQUIRED_PARAMS = "required_params"
+        SIMPLE_MODE = "simple_mode"
+        CATEGORIZED_MODE = "categorized_mode"
+
+    class ValidationScenario(StrEnum):
+        """Parameter validation test scenarios."""
+
+        NONEXISTENT_INPUT_DIR = "nonexistent_input_dir"
+        CREATE_MISSING_OUTPUT_DIR = "create_missing_output_dir"
+
+    class EmptyInputScenario(StrEnum):
+        """Empty input handling test scenarios."""
+
+        SIMPLE_MODE_EMPTY = "simple_mode_empty"
+        CATEGORIZED_MODE_EMPTY = "categorized_mode_empty"
+
+    class SimpleModeScenario(StrEnum):
+        """Simple mode execution test scenarios."""
+
+        BASIC_EXECUTION = "basic_execution"
+        WITH_FILTERING = "with_filtering"
+
+    class CategorizedModeScenario(StrEnum):
+        """Categorized mode execution test scenarios."""
+
+        BASIC_EXECUTION = "basic_execution"
+        WITH_BASE_DN_FILTERING = "with_base_dn_filtering"
+        WITH_FORBIDDEN_ATTRIBUTES = "with_forbidden_attributes"
+
+    class MultipleFilesScenario(StrEnum):
+        """Multiple file handling test scenarios."""
+
+        SIMPLE_MODE_MULTIPLE = "simple_mode_multiple"
+        CATEGORIZED_MODE_CUSTOM_OUTPUT = "categorized_mode_custom_output"
+
+    # ════════════════════════════════════════════════════════════════════════
+    # INITIALIZATION TESTS (4 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_initialization_with_required_params(self, tmp_path: Path) -> None:
         """Test pipeline initializes with required parameters."""
@@ -114,9 +165,9 @@ class TestMigrationPipelineInitialization:
 
         assert pipeline is not None
 
-
-class TestMigrationPipelineValidation:
-    """Test suite for parameter validation."""
+    # ════════════════════════════════════════════════════════════════════════
+    # VALIDATION TESTS (2 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_execute_fails_with_nonexistent_input_dir(self, tmp_path: Path) -> None:
         """Test pipeline fails when input directory doesn't exist."""
@@ -164,9 +215,9 @@ class TestMigrationPipelineValidation:
         assert result.is_success
         assert nonexistent_output.exists()
 
-
-class TestMigrationPipelineWithEmptyInput:
-    """Test suite for handling empty input directories."""
+    # ════════════════════════════════════════════════════════════════════════
+    # EMPTY INPUT TESTS (2 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_simple_mode_with_empty_input(self, tmp_path: Path) -> None:
         """Test simple mode handles empty input directory gracefully."""
@@ -187,8 +238,20 @@ class TestMigrationPipelineWithEmptyInput:
         result = pipeline.execute()
 
         # Pipeline should handle gracefully (no entries to process)
-        # Should either succeed with 0 entries or fail with informative message
-        assert result.is_success or result.is_failure
+        # Should either succeed with 0 entries migrated or fail with informative message
+        assert result.is_success, f"Pipeline should succeed or fail gracefully, got error: {result.error}"
+
+        if result.is_success:
+            entry_result = result.unwrap()
+            assert isinstance(entry_result, FlextLdifModels.EntryResult)
+            assert entry_result.statistics is not None
+            # With no input files, should have 0 entries migrated
+            events = entry_result.statistics.events
+            assert len(events) > 0, "Should have at least one migration event"
+            migration_event = events[0]
+            # Validate that either 0 entries processed or explicit handling documented
+            assert migration_event.entries_migrated == 0 or migration_event.entries_processed == 0, \
+                f"Empty input should migrate 0 entries, got migrated={migration_event.entries_migrated}, processed={migration_event.entries_processed}"
 
     def test_categorized_mode_with_empty_input(self, tmp_path: Path) -> None:
         """Test categorized mode handles empty input directory gracefully."""
@@ -215,12 +278,24 @@ class TestMigrationPipelineWithEmptyInput:
 
         result = pipeline.execute()
 
-        # Pipeline should handle gracefully
-        assert result.is_success or result.is_failure
+        # Pipeline should handle gracefully with no input files
+        assert result.is_success, f"Pipeline should succeed with empty input, got error: {result.error}"
 
+        if result.is_success:
+            entry_result = result.unwrap()
+            assert isinstance(entry_result, FlextLdifModels.EntryResult)
+            assert entry_result.statistics is not None
+            # With no input files, should have 0 entries migrated
+            events = entry_result.statistics.events
+            assert len(events) > 0, "Should have at least one migration event"
+            migration_event = events[0]
+            # Validate categorized mode also handles empty input gracefully
+            assert migration_event.entries_migrated == 0 or migration_event.entries_processed == 0, \
+                f"Empty input in categorized mode should migrate 0 entries, got migrated={migration_event.entries_migrated}, processed={migration_event.entries_processed}"
 
-class TestMigrationPipelineSimpleMode:
-    """Test suite for simple migration mode."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SIMPLE MODE TESTS (2 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_simple_mode_basic_execution(self, tmp_path: Path) -> None:
         """Test simple mode executes successfully."""
@@ -249,7 +324,30 @@ sn: test
 
         result = pipeline.execute()
 
-        assert result.is_success or result.is_failure
+        # Validate migration succeeded with proper output
+        assert result.is_success, f"Simple mode migration should succeed, got error: {result.error}"
+
+        entry_result = result.unwrap()
+        assert isinstance(entry_result, FlextLdifModels.EntryResult)
+        assert entry_result.statistics is not None
+
+        # Validate statistics contain migration event
+        events = entry_result.statistics.events
+        assert len(events) > 0, "Should have at least one migration event"
+        migration_event = events[0]
+
+        # Validate entry was processed
+        assert migration_event.entries_processed >= 1, \
+            f"Should process at least 1 entry, processed={migration_event.entries_processed}"
+        assert migration_event.entries_migrated >= 1, \
+            f"Should migrate at least 1 entry, migrated={migration_event.entries_migrated}"
+
+        # Validate output file was created
+        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
+            "Should create output files"
+        output_file = Path(entry_result.file_paths[0])
+        assert output_file.exists(), f"Output file should exist: {output_file}"
+        assert output_file.stat().st_size > 0, f"Output file should not be empty: {output_file}"
 
     def test_simple_mode_with_filtering(self, tmp_path: Path) -> None:
         """Test simple mode with attribute filtering."""
@@ -276,11 +374,40 @@ mail: test@example.com
 
         result = pipeline.execute()
 
-        assert result.is_success or result.is_failure
+        # Validate filtering succeeded
+        assert result.is_success, f"Simple mode with filtering should succeed, got error: {result.error}"
 
+        entry_result = result.unwrap()
+        assert isinstance(entry_result, FlextLdifModels.EntryResult)
+        assert entry_result.statistics is not None
 
-class TestMigrationPipelineCategorizedMode:
-    """Test suite for categorized migration mode."""
+        # Validate event shows entries were processed
+        events = entry_result.statistics.events
+        assert len(events) > 0, "Should have at least one migration event"
+        migration_event = events[0]
+
+        # Validate entry was processed
+        assert migration_event.entries_processed >= 1, \
+            f"Should process at least 1 entry, processed={migration_event.entries_processed}"
+        assert migration_event.entries_migrated >= 1, \
+            f"Should migrate at least 1 entry, migrated={migration_event.entries_migrated}"
+
+        # Validate output file was created
+        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
+            "Should create output files"
+        output_file = Path(entry_result.file_paths[0])
+        assert output_file.exists(), f"Output file should exist: {output_file}"
+
+        # Validate that forbidden attribute is filtered out
+        output_content = output_file.read_text(encoding="utf-8")
+        assert "mail:" not in output_content, "Forbidden attribute 'mail' should be filtered out"
+        assert "test@example.com" not in output_content, "Forbidden attribute value should be filtered out"
+        # But other attributes should remain
+        assert "cn: test" in output_content, "Non-forbidden attributes should remain"
+
+    # ════════════════════════════════════════════════════════════════════════
+    # CATEGORIZED MODE TESTS (3 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_categorized_mode_basic_execution(self, tmp_path: Path) -> None:
         """Test categorized mode executes successfully."""
@@ -317,7 +444,27 @@ cn: admin
 
         result = pipeline.execute()
 
-        assert result.is_success or result.is_failure
+        # Validate categorized mode execution succeeded
+        assert result.is_success, f"Categorized mode should succeed, got error: {result.error}"
+
+        entry_result = result.unwrap()
+        assert isinstance(entry_result, FlextLdifModels.EntryResult)
+        assert entry_result.statistics is not None
+
+        # Validate event shows entries were processed
+        events = entry_result.statistics.events
+        assert len(events) > 0, "Should have at least one migration event"
+        migration_event = events[0]
+
+        # Validate entries were processed
+        assert migration_event.entries_processed >= 2, \
+            f"Should process at least 2 entries (hierarchy+user), processed={migration_event.entries_processed}"
+        assert migration_event.entries_migrated >= 2, \
+            f"Should migrate at least 2 entries, migrated={migration_event.entries_migrated}"
+
+        # Validate output files were created for each category
+        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
+            "Should create output files for categories"
 
     def test_categorized_mode_with_base_dn_filtering(self, tmp_path: Path) -> None:
         """Test categorized mode with base DN filtering."""
@@ -355,7 +502,37 @@ cn: user
 
         result = pipeline.execute()
 
-        assert result.is_success or result.is_failure
+        # Validate base DN filtering succeeded
+        assert result.is_success, f"Categorized mode with base DN filtering should succeed, got error: {result.error}"
+
+        entry_result = result.unwrap()
+        assert isinstance(entry_result, FlextLdifModels.EntryResult)
+        assert entry_result.statistics is not None
+
+        # Validate event shows entries were processed
+        events = entry_result.statistics.events
+        assert len(events) > 0, "Should have at least one migration event"
+        migration_event = events[0]
+
+        # Only 1 entry should match the base DN (dc=example,dc=com)
+        assert migration_event.entries_processed == 1, \
+            f"Should only process entry matching base DN, processed={migration_event.entries_processed}"
+        assert migration_event.entries_migrated == 1, \
+            f"Should only migrate entry matching base DN, migrated={migration_event.entries_migrated}"
+
+        # Validate output shows only the matching entry
+        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
+            "Should create output files"
+        for file_path in entry_result.file_paths:
+            output_file = Path(file_path)
+            if output_file.exists() and output_file.stat().st_size > 0:
+                output_content = output_file.read_text(encoding="utf-8")
+                # Should contain the matching entry
+                if "admin" in output_content:
+                    assert "dc=example,dc=com" in output_content
+                # Should NOT contain the non-matching entry
+                assert "dc=other,dc=com" not in output_content, \
+                    "Should filter out entries outside the base DN"
 
     def test_categorized_mode_with_forbidden_attributes(self, tmp_path: Path) -> None:
         """Test categorized mode filtering forbidden attributes."""
@@ -393,9 +570,9 @@ userPassword: secret
 
         assert result.is_success or result.is_failure
 
-
-class TestMigrationPipelineMultipleFiles:
-    """Test suite for handling multiple input files."""
+    # ════════════════════════════════════════════════════════════════════════
+    # MULTIPLE FILES TESTS (2 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_simple_mode_with_multiple_files(self, tmp_path: Path) -> None:
         """Test simple mode processes multiple input files."""
@@ -466,9 +643,9 @@ class TestMigrationPipelineMultipleFiles:
 
         assert result.is_success or result.is_failure
 
-
-class TestMigrationPipelineServerConversions:
-    """Test suite for server-specific conversions."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SERVER CONVERSION TESTS (1 parametrized test with 4 variations)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         ("source", "target"),

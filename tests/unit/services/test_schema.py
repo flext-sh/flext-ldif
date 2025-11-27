@@ -102,17 +102,6 @@ class ObjectClassValidationTestCase:
     description: str = ""
 
 
-@dataclasses.dataclass(frozen=True)
-class SchemaCanHandleTestCase:
-    """Can handle method test case."""
-
-    element: str
-    input_str: str
-    should_handle: bool
-    element_type: SchemaElement
-    description: str = ""
-
-
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
 # ════════════════════════════════════════════════════════════════════════════
@@ -158,7 +147,11 @@ ATTRIBUTE_PARSE_TESTS = [
     AttributeParseTestCase("", False, None, None, "Empty definition"),
     AttributeParseTestCase("   ", False, None, None, "Whitespace-only definition"),
     AttributeParseTestCase(
-        "invalid format", False, None, None, "Invalid format without parentheses",
+        "invalid format",
+        False,
+        None,
+        None,
+        "Invalid format without parentheses",
     ),
     AttributeParseTestCase(
         "( 2.5.4.0 NAME 'objectClass' )",
@@ -180,7 +173,12 @@ OBJECTCLASS_PARSE_TESTS = [
     ),
     ObjectClassParseTestCase("", False, None, None, None, "Empty definition"),
     ObjectClassParseTestCase(
-        "   ", False, None, None, None, "Whitespace-only definition",
+        "   ",
+        False,
+        None,
+        None,
+        None,
+        "Whitespace-only definition",
     ),
     ObjectClassParseTestCase(
         "( 2.5.6.0 NAME 'top' ABSTRACT )",
@@ -286,49 +284,6 @@ OBJECTCLASS_VALIDATION_TESTS = [
     ),
 ]
 
-SCHEMA_CAN_HANDLE_TESTS = [
-    SchemaCanHandleTestCase(
-        "attribute",
-        "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        True,
-        SchemaElement.ATTRIBUTE,
-        "Valid attribute definition",
-    ),
-    SchemaCanHandleTestCase(
-        "attribute", "", False, SchemaElement.ATTRIBUTE, "Empty attribute",
-    ),
-    SchemaCanHandleTestCase(
-        "attribute", "   ", False, SchemaElement.ATTRIBUTE, "Whitespace attribute",
-    ),
-    SchemaCanHandleTestCase(
-        "attribute",
-        "invalid format",
-        False,
-        SchemaElement.ATTRIBUTE,
-        "Invalid attribute",
-    ),
-    SchemaCanHandleTestCase(
-        "objectclass",
-        "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber ) )",
-        True,
-        SchemaElement.OBJECTCLASS,
-        "Valid objectClass definition",
-    ),
-    SchemaCanHandleTestCase(
-        "objectclass", "", False, SchemaElement.OBJECTCLASS, "Empty objectClass",
-    ),
-    SchemaCanHandleTestCase(
-        "objectclass", "   ", False, SchemaElement.OBJECTCLASS, "Whitespace objectClass",
-    ),
-    SchemaCanHandleTestCase(
-        "objectclass",
-        "invalid format",
-        False,
-        SchemaElement.OBJECTCLASS,
-        "Invalid objectClass",
-    ),
-]
-
 
 # ════════════════════════════════════════════════════════════════════════════
 # PARAMETRIZATION FUNCTIONS
@@ -353,11 +308,6 @@ def get_attribute_validation_tests() -> list[AttributeValidationTestCase]:
 def get_objectclass_validation_tests() -> list[ObjectClassValidationTestCase]:
     """Generate objectClass validation test cases."""
     return OBJECTCLASS_VALIDATION_TESTS
-
-
-def get_schema_can_handle_tests() -> list[SchemaCanHandleTestCase]:
-    """Generate schema can handle test cases."""
-    return SCHEMA_CAN_HANDLE_TESTS
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -583,27 +533,6 @@ class TestWriting:
         )
 
 
-class TestCanHandle:
-    """Test can_handle methods with parametrization."""
-
-    @pytest.mark.parametrize("test_case", get_schema_can_handle_tests())
-    def test_can_handle_methods(
-        self,
-        schema_service: FlextLdifSchema,
-        test_case: SchemaCanHandleTestCase,
-    ) -> None:
-        """Test can_handle methods with parametrized test cases."""
-        if test_case.element_type == SchemaElement.ATTRIBUTE:
-            can_handle = schema_service.can_handle_attribute(test_case.input_str)
-        else:
-            can_handle = schema_service.can_handle_objectclass(test_case.input_str)
-
-        assert can_handle is test_case.should_handle, (
-            f"can_handle returned {can_handle}, expected {test_case.should_handle}: "
-            f"{test_case.description}"
-        )
-
-
 class TestRoundtrip:
     """Test roundtrip operations (parse -> write -> parse)."""
 
@@ -674,10 +603,8 @@ __all__ = [
     "DefinitionStatus",
     "ObjectClassParseTestCase",
     "ObjectClassValidationTestCase",
-    "SchemaCanHandleTestCase",
     "SchemaElement",
     "ServerType",
-    "TestCanHandle",
     "TestExecuteAndBuilder",
     "TestParsing",
     "TestRepr",

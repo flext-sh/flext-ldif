@@ -145,7 +145,8 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
             # Test Entry quirk
             api = FlextLdif()
             entry_result = api.parse(
-                Phase4IntegrationVerification.BROKEN_ENTRY_LDIF, server_type="relaxed",
+                Phase4IntegrationVerification.BROKEN_ENTRY_LDIF,
+                server_type="relaxed",
             )
             if not entry_result.is_success:
                 return FlextResult.fail(
@@ -174,7 +175,8 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
 
             # Test MANUAL mode
             config_manual = FlextLdifConfig(
-                quirks_detection_mode="manual", quirks_server_type="oud",
+                quirks_detection_mode="manual",
+                quirks_server_type="oud",
             )
             if config_manual.quirks_detection_mode != DetectionMode.MANUAL.value:
                 return FlextResult.fail("MANUAL detection mode failed")
@@ -210,7 +212,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
 
 @pytest.mark.parametrize(
     "component",
-    [(comp,) for comp in IntegrationComponent],
+    list(IntegrationComponent),
 )
 def test_integration_component(component: IntegrationComponent) -> None:
     """Test integration components using parametrized validation."""

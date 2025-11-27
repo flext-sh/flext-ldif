@@ -138,7 +138,7 @@ class TestPydanticValidatorsRfcCompliance:
     @staticmethod
     def get_validation_metadata(
         entry: FlextLdifModels.Entry,
-    ) -> dict[str, object] | None:
+    ) -> FlextLdifModels.ValidationMetadata | None:
         """Helper to get validation_metadata from entry.metadata.validation_results."""
         if not entry.metadata or not entry.metadata.validation_results:
             return None
@@ -182,8 +182,7 @@ class TestPydanticValidatorsRfcCompliance:
         validation_metadata = self.get_validation_metadata(entry)
         if expect_violations:
             assert validation_metadata is not None
-            assert "rfc_violations" in validation_metadata
-            rfc_violations = validation_metadata["rfc_violations"]
+            rfc_violations = validation_metadata.rfc_violations
             assert isinstance(rfc_violations, list)
             assert len(rfc_violations) > 0
 
@@ -194,13 +193,13 @@ class TestPydanticValidatorsRfcCompliance:
                 assert "_internal_id" in violation_text
                 assert "must start with letter" in violation_text
 
-            # Violations also in metadata.extensions
+            # Violations stored in validation_results (not extensions)
             assert entry.metadata is not None
-            assert "rfc_violations" in entry.metadata.extensions
-            assert entry.metadata.extensions["rfc_violations"] == rfc_violations
+            assert entry.metadata.validation_results is not None
+            assert entry.metadata.validation_results.rfc_violations == rfc_violations
         # No violations expected
         elif validation_metadata is not None:
-            assert "rfc_violations" not in validation_metadata
+            assert len(validation_metadata.rfc_violations) == 0
 
         # All attributes preserved regardless of violations
         assert entry.attributes is not None
@@ -313,21 +312,22 @@ class TestPydanticValidatorsRfcCompliance:
         assert "RFC 4512" in str(rfc_viol[0])
 
     def test_rfc_violations_consistency_in_entry(self) -> None:
-        """Validate RFC violations consistency between validation_metadata and extensions."""
+        """Validate RFC violations consistency in validation_results."""
         entry = self.create_test_entry(EntryType.VIOLATION)
 
-        # Get violations from both locations
+        # Get violations from validation_results
         validation_metadata = self.get_validation_metadata(entry)
         assert validation_metadata is not None
-        assert "rfc_violations" in validation_metadata
+        assert len(validation_metadata.rfc_violations) > 0
 
+        # Verify validation_results is accessible via metadata
         assert entry.metadata is not None
-        assert "rfc_violations" in entry.metadata.extensions
+        assert entry.metadata.validation_results is not None
 
-        # Verify they are identical
+        # Verify consistency - both point to same data
         assert (
-            validation_metadata["rfc_violations"]
-            == entry.metadata.extensions["rfc_violations"]
+            validation_metadata.rfc_violations
+            == entry.metadata.validation_results.rfc_violations
         )
 
 

@@ -162,7 +162,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         def transform_name(n: object) -> object:
-            n_str: str | None = str(n) if isinstance(n, str) else (n if n is None else str(n))
+            n_str: str | None = (
+                str(n) if isinstance(n, str) else (n if n is None else str(n))
+            )
             return FlextLdifUtilities.Schema.normalize_name(
                 n_str,
                 suffixes_to_remove=[";binary"],
@@ -170,7 +172,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )
 
         def transform_equality(eq: object) -> object:
-            eq_str: str | None = str(eq) if isinstance(eq, str) else (eq if eq is None else str(eq))
+            eq_str: str | None = (
+                str(eq) if isinstance(eq, str) else (eq if eq is None else str(eq))
+            )
             return FlextLdifUtilities.Schema.normalize_matching_rules(
                 eq_str,
                 None,  # substr is None initially
@@ -180,7 +184,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )[0]
 
         def transform_substr(sub: object) -> object:
-            sub_str: str | None = str(sub) if isinstance(sub, str) else (sub if sub is None else str(sub))
+            sub_str: str | None = (
+                str(sub) if isinstance(sub, str) else (sub if sub is None else str(sub))
+            )
             return FlextLdifUtilities.Schema.normalize_matching_rules(
                 attr.equality,
                 sub_str,
@@ -190,7 +196,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )[1]
 
         def transform_syntax(syn: object) -> object:
-            syn_str: str | None = str(syn) if isinstance(syn, str) else (syn if syn is None else str(syn))
+            syn_str: str | None = (
+                str(syn) if isinstance(syn, str) else (syn if syn is None else str(syn))
+            )
             return FlextLdifUtilities.Schema.normalize_syntax_oid(
                 syn_str,
                 replacements={
@@ -229,7 +237,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         def transform_name(n: object) -> object:
-            n_str: str | None = str(n) if isinstance(n, str) else (n if n is None else str(n))
+            n_str: str | None = (
+                str(n) if isinstance(n, str) else (n if n is None else str(n))
+            )
             return FlextLdifUtilities.Schema.normalize_name(
                 n_str,
                 suffixes_to_remove=[";binary"],

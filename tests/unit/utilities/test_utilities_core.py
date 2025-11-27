@@ -54,19 +54,54 @@ class TestDnOperationsPure:
         result = FlextLdifUtilities.DN.split(dn)
         assert result == ["cn=John", "ou=Users", "dc=example", "dc=com"]
 
+    def test_split_dn_with_escaped_commas(self) -> None:
+        """Test splitting DN with escaped commas."""
+        dn = r"cn=Test\, User,ou=Users,dc=example,dc=com"
+        result = FlextLdifUtilities.DN.split(dn)
+        assert result == [r"cn=Test\, User", "ou=Users", "dc=example", "dc=com"]
+
+    def test_split_dn_edge_cases(self) -> None:
+        """Test splitting DN edge cases."""
+        # Empty DN
+        assert FlextLdifUtilities.DN.split("") == []
+
+        # Single component
+        assert FlextLdifUtilities.DN.split("cn=test") == ["cn=test"]
+
+        # Multiple escaped characters
+        dn = r"cn=Test\, User\\More,ou=Users\, Group,dc=example"
+        result = FlextLdifUtilities.DN.split(dn)
+        assert result == [r"cn=Test\, User\\More", r"ou=Users\, Group", "dc=example"]
+
     def test_validate_dn_format_valid(self) -> None:
         """Test valid DN validation."""
         valid_dns = [
             "cn=John,dc=example,dc=com",
             "ou=Users,dc=example,dc=com",
             "cn=admin,o=example",
+            r"cn=Test\, User,dc=example,dc=com",  # Escaped comma
+            r"cn=Test\5CUser,dc=example,dc=com",   # Escaped backslash
+            r"cn=Test#User,dc=example,dc=com",   # Hash character
+            r"cn=Test\2BUser,dc=example,dc=com",  # Valid hex escape (+)
+            r"cn=Test\3DUser,dc=example,dc=com",  # Valid hex escape (=)
         ]
         for dn in valid_dns:
             assert FlextLdifUtilities.DN.validate(dn), f"DN should be valid: {dn}"
 
     def test_validate_dn_format_invalid(self) -> None:
         """Test invalid DN validation."""
-        invalid_dns = ["", "no_equals_sign", "cn=", "=value"]
+        invalid_dns = [
+            "",  # Empty string
+            "no_equals_sign",  # No equals sign
+            "cn=",  # Empty value
+            "=value",  # Empty attribute
+            "cn=test,",  # Trailing comma
+            ",cn=test",  # Leading comma
+            "cn=test,,ou=users",  # Double comma
+            "cn=test\\",  # Trailing backslash
+            "cn=test\\Z",  # Invalid hex escape
+            "cn=test\\XY",  # Invalid hex escape (non-hex chars)
+        ]
         for dn in invalid_dns:
             assert not FlextLdifUtilities.DN.validate(dn), f"DN should be invalid: {dn}"
 
@@ -273,7 +308,7 @@ class TestAclParser:
 
     def test_parse_oid_format(self) -> None:
         """Test parsing OID ACL format."""
-        acl_line = '( VERSION 3.0; ACETYPE ALLOW; (USERDN="ldap:///cn=*,ou=users,o=test");(ACITYPE ALLOW))'
+        acl_line = 'orclaci: ( VERSION 3.0; ACETYPE ALLOW; (USERDN="ldap:///cn=*,ou=users,o=test");(ACITYPE ALLOW))'
         result = FlextLdifUtilities.ACL.parser(acl_line)
         assert result is not None
         assert result.get("format") == "oid"

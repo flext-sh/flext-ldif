@@ -96,7 +96,8 @@ class TestFlextServiceV2Patterns:
         service = FlextLdifSorting(
             entries=entries,
             sort_by=getattr(
-                FlextLdifConstants.SortStrategy, sorting_case.upper(),
+                FlextLdifConstants.SortStrategy,
+                sorting_case.upper(),
             ).value,
         )
         sorted_entries = service.result
@@ -117,7 +118,8 @@ class TestFlextServiceV2Patterns:
         # V2 AUTO: Direct instantiation returns sorted entries (auto_execute = True)
         # Note: FlextLdifSorting has auto_execute=False, so we need to call execute()
         sorting = FlextLdifSorting(
-            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
+            entries=entries,
+            sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
         )
         result = sorting.execute()
         assert result.is_success
@@ -138,7 +140,8 @@ class TestFlextServiceV2Patterns:
 
         # V1: FlextLdifSorting has auto_execute=False by default, .execute() returns FlextResult
         result = FlextLdifSorting(
-            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
+            entries=entries,
+            sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
         ).execute()
 
         # Should return FlextResult
@@ -177,7 +180,8 @@ class TestFlextServiceV2Patterns:
 
         # V2 MANUAL: FlextLdifSorting has auto_execute=False by default, so .result works
         v2_result = FlextLdifSorting(
-            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
+            entries=entries,
+            sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
         ).result
 
         # V1 EXPLICIT: Use static method to get FlextResult
@@ -196,7 +200,8 @@ class TestFlextServiceV2Patterns:
         # Invalid sort_by should raise exception with .result (Pydantic ValidationError)
         with pytest.raises(ValidationError, match="Invalid sort_by"):
             FlextLdifSorting(
-                entries=self.create_test_entries(), sort_by="invalid",
+                entries=self.create_test_entries(),
+                sort_by="invalid",
             ).result
 
     def test_v1_error_handling_with_execute(self) -> None:
@@ -250,14 +255,16 @@ class TestFlextServiceV2Patterns:
 
         # V1 Pattern (verbose): 3 lines
         service_v1 = FlextLdifSorting(
-            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
+            entries=entries,
+            sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
         )
         result_v1 = service_v1.execute()
         sorted_v1 = result_v1.unwrap()
 
         # V2 Pattern (concise): 1 line (68% reduction!)
         sorting_service = FlextLdifSorting(
-            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
+            entries=entries,
+            sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
         )
         result_v2: FlextResult[list[FlextLdifModels.Entry]] = sorting_service.execute()
         sorted_v2: list[FlextLdifModels.Entry] = result_v2.unwrap()
@@ -274,7 +281,8 @@ class TestFlextServiceV2Patterns:
 
         # V2: IDE knows type is list[Entry] (with .result)
         sorting_service = FlextLdifSorting(
-            entries=entries, sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
+            entries=entries,
+            sort_by=FlextLdifConstants.SortStrategy.HIERARCHY.value,
         )
         result_v2: FlextResult[list[FlextLdifModels.Entry]] = sorting_service.execute()
         sorted_v2: list[FlextLdifModels.Entry] = result_v2.unwrap()

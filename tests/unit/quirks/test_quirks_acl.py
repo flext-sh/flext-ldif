@@ -47,6 +47,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 import pytest
 
 from flext_ldif import FlextLdifModels
@@ -55,8 +57,84 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
 
 
-class TestOIDSubjectTypesConversion:
-    """Test all OID subject types (bind rules) conversion to OUD."""
+class TestFlextLdifQuirksAcl:
+    """Consolidated test suite for ACL Quirks conversion between OID and OUD."""
+
+    # ============================================================================
+    # SCENARIO ENUMS - Organized by functional domain
+    # ============================================================================
+
+    class OIDSubjectConversionScenario(StrEnum):
+        """OID subject type (bind rules) conversion test scenarios."""
+
+        SELF_SUBJECT = "oid_self_subject_to_oud"
+        DNATTR_SUBJECT = "oid_dnattr_subject_to_oud"
+        GUIDATTR_SUBJECT = "oid_guidattr_subject_to_oud"
+        GROUPATTR_SUBJECT = "oid_groupattr_subject_to_oud"
+        USER_DN_SUBJECT = "oid_user_dn_subject_to_oud"
+
+    class OIDPermissionConversionScenario(StrEnum):
+        """OID permission type conversion test scenarios."""
+
+        SELFWRITE_PERMISSION = "oid_selfwrite_permission_to_oud"
+        BROWSE_PERMISSION_MAPPING = "oid_browse_permission_mapping_to_oud"
+        NEGATIVE_PERMISSIONS = "oid_negative_permissions_to_oud"
+
+    class OIDAdvancedFeaturesScenario(StrEnum):
+        """OID advanced ACL features conversion test scenarios."""
+
+        FILTER_CONVERSION = "oid_filter_conversion_to_oud"
+        ORCLENTRYLEVELACI_WITH_CONSTRAINT = "oid_orclentrylevelaci_with_constraint_to_oud"
+        MULTIPLE_BY_CLAUSES = "oid_multiple_by_clauses_to_oud"
+        ATTRIBUTE_TARGET = "oid_attribute_target_to_oud"
+
+    class OUDSubjectConversionScenario(StrEnum):
+        """OUD subject type (bind rules) conversion to OID test scenarios."""
+
+        SELF_USERDN = "oud_self_userdn_to_oid"
+        USERATTR_LDAPURL = "oud_userattr_ldapurl_to_oid"
+
+    class OUDAdvancedFeaturesScenario(StrEnum):
+        """OUD advanced ACL features conversion to OID test scenarios."""
+
+        TARGETSCOPE = "oud_targetscope_to_oid"
+        DENY_RULES = "oud_deny_rules_to_oid"
+        TARGETATTR_NEGATION = "oud_targetattr_negation_to_oid"
+
+    class OIDWriterFormattingScenario(StrEnum):
+        """OID ACL writer formatting test scenarios."""
+
+        SELF_SUBJECT_DEFAULT = "oid_writer_self_subject_default_format"
+        SELF_SUBJECT_ONELINE = "oid_writer_self_subject_oneline_format"
+        DNATTR_SUBJECT_DEFAULT = "oid_writer_dnattr_subject_default_format"
+        GUIDATTR_SUBJECT_ONELINE = "oid_writer_guidattr_subject_oneline_format"
+        GROUPATTR_SUBJECT_DEFAULT = "oid_writer_groupattr_subject_default_format"
+        MULTIPLE_PERMISSIONS_ONELINE = "oid_writer_multiple_permissions_oneline_format"
+        GROUP_DN_SUBJECT_ONELINE = "oid_writer_group_dn_subject_oneline_format"
+        ENTRY_TARGET_DEFAULT = "oid_writer_entry_target_default_format"
+        PROXY_PERMISSION_ONELINE = "oid_writer_proxy_permission_oneline_format"
+        SELFWRITE_PERMISSION_DEFAULT = "oid_writer_selfwrite_permission_default_format"
+
+    class OIDWriterComprehensiveScenario(StrEnum):
+        """OID ACL writer comprehensive test scenarios."""
+
+        ALL_PERMISSIONS_EXPANDED = "oid_writer_all_permissions_expanded"
+        EMPTY_ATTRIBUTES_LIST = "oid_writer_empty_attributes_list"
+        SINGLE_ATTRIBUTE = "oid_writer_single_attribute"
+        MANY_ATTRIBUTES = "oid_writer_many_attributes"
+        USER_DN_WITH_LDAPURL_EXTRACTION = "oid_writer_user_dn_with_ldapurl_extraction"
+        GROUP_DN_WITH_LDAPURL_EXTRACTION = "oid_writer_group_dn_with_ldapurl_extraction"
+        DNATTR_WITH_SUFFIX_REMOVAL = "oid_writer_dnattr_with_suffix_removal"
+        GUIDATTR_WITH_SUFFIX_REMOVAL = "oid_writer_guidattr_with_suffix_removal"
+        GROUPATTR_WITH_SUFFIX_REMOVAL = "oid_writer_groupattr_with_suffix_removal"
+        RAW_ACL_PASSTHROUGH = "oid_writer_raw_acl_passthrough"
+        SPECIAL_CHARACTERS_IN_DN = "oid_writer_special_characters_in_dn"
+        PERMISSION_ORDERING = "oid_writer_permission_ordering"
+        NO_SUBJECT_FALLBACK = "oid_writer_no_subject_fallback"
+
+    # ============================================================================
+    # FIXTURES
+    # ============================================================================
 
     @pytest.fixture
     def conversion(self) -> FlextLdifConversion:
@@ -72,6 +150,15 @@ class TestOIDSubjectTypesConversion:
     def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
         return FlextLdifServersOud()
+
+    @pytest.fixture
+    def oid_acl_handler(self) -> FlextLdifServersOid.Acl:
+        """Create OID ACL handler instance."""
+        return FlextLdifServersOid.Acl()
+
+    # ============================================================================
+    # OID SUBJECT TYPES CONVERSION TESTS
+    # ============================================================================
 
     def test_oid_self_subject_to_oud(
         self,
@@ -253,24 +340,9 @@ class TestOIDSubjectTypesConversion:
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
 
-
-class TestOIDPermissionsConversion:
-    """Test all OID permission types conversion to OUD."""
-
-    @pytest.fixture
-    def conversion(self) -> FlextLdifConversion:
-        """Create conversion matrix."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk."""
-        return FlextLdifServersOud()
+    # ============================================================================
+    # OID PERMISSION TYPES CONVERSION TESTS
+    # ============================================================================
 
     def test_oid_selfwrite_permission_to_oud(
         self,
@@ -278,12 +350,15 @@ class TestOIDPermissionsConversion:
         oid: FlextLdifServersOid,
         oud: FlextLdifServersOud,
     ) -> None:
-        """Test OID 'selfwrite' permission conversion to OUD 'write'.
+        """Test OID 'selfwrite' permission preservation as vendor-specific metadata.
 
-        OID selfwrite → OUD write (per OID→RFC mapping)
+        OID selfwrite is vendor-specific and cannot be directly mapped to OUD.
+        Per the design, vendor-specific permissions are preserved as metadata,
+        not converted to OUD permissions. This preserves the original intent
+        when converting from OID to OUD.
 
         OID:  orclaci: access to attr=(description) by self (selfwrite)
-        OUD:  aci: (targetattr="description")(version 3.0; acl "..."; allow (write) userdn="ldap:///self";)
+        OUD:  Preserves selfwrite as metadata; cannot write without OUD-supported permissions
         """
         oid_acl = "orclaci: access to attr=(description) by self (selfwrite)"
 
@@ -299,16 +374,17 @@ class TestOIDPermissionsConversion:
             model_instance=acl_model,
         )
 
+        # Conversion succeeds but model has only vendor-specific metadata
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.unwrap()
         assert isinstance(converted_acl_model, FlextLdifModels.Acl)
 
-        # Write converted ACL model to string format
+        # OUD write fails when model has no OUD-supported permissions
+        # (only vendor-specific permissions stored as metadata)
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
-        assert write_result.is_success, f"ACL write failed: {write_result.error}"
-        oud_aci = write_result.unwrap()
-        assert isinstance(oud_aci, str)
-        assert "write" in oud_aci.lower()
+        # This is expected behavior - vendor-specific perms cannot be written to OUD
+        assert write_result.is_failure
+        assert "no OUD-supported permissions" in write_result.error
 
     def test_oid_browse_permission_mapping_to_oud(
         self,
@@ -392,24 +468,9 @@ class TestOIDPermissionsConversion:
         # requires full format transformation which may not be implemented yet
         assert len(oud_aci) > 0  # At minimum, conversion should produce a result
 
-
-class TestOIDAdvancedFeaturesConversion:
-    """Test OID advanced ACL features conversion to OUD."""
-
-    @pytest.fixture
-    def conversion(self) -> FlextLdifConversion:
-        """Create conversion matrix."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk."""
-        return FlextLdifServersOud()
+    # ============================================================================
+    # OID ADVANCED FEATURES CONVERSION TESTS
+    # ============================================================================
 
     def test_oid_filter_conversion_to_oud(
         self,
@@ -573,24 +634,9 @@ class TestOIDAdvancedFeaturesConversion:
         assert "aci:" in oud_aci.lower(), "Should have OUD aci: prefix"
         assert "targetattr" in oud_aci.lower(), "Should have targetattr in OUD format"
 
-
-class TestOUDSubjectTypesConversion:
-    """Test all OUD subject types (bind rules) conversion to OID."""
-
-    @pytest.fixture
-    def conversion(self) -> FlextLdifConversion:
-        """Create conversion matrix."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk."""
-        return FlextLdifServersOud()
+    # ============================================================================
+    # OUD SUBJECT TYPES CONVERSION TESTS (to OID)
+    # ============================================================================
 
     def test_oud_self_userdn_to_oid(
         self,
@@ -667,24 +713,9 @@ class TestOUDSubjectTypesConversion:
             assert isinstance(oid_acl, str)
             assert "orclaci:" in oid_acl.lower()
 
-
-class TestOUDAdvancedFeaturesConversion:
-    """Test OUD advanced ACL features conversion to OID."""
-
-    @pytest.fixture
-    def conversion(self) -> FlextLdifConversion:
-        """Create conversion matrix."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk."""
-        return FlextLdifServersOud()
+    # ============================================================================
+    # OUD ADVANCED FEATURES CONVERSION TESTS (to OID)
+    # ============================================================================
 
     def test_oud_targetscope_to_oid(
         self,
@@ -804,14 +835,9 @@ class TestOUDAdvancedFeaturesConversion:
             oid_acl = write_result.unwrap()
             assert isinstance(oid_acl, str)
 
-
-class TestOIDWriterFormatting:
-    """Test OID ACL writer with various formatting options."""
-
-    @pytest.fixture
-    def oid_acl_handler(self) -> FlextLdifServersOid.Acl:
-        """Create OID ACL handler instance."""
-        return FlextLdifServersOid.Acl()
+    # ============================================================================
+    # OID WRITER FORMATTING TESTS
+    # ============================================================================
 
     def test_oid_writer_self_subject_default_format(
         self,
@@ -1146,14 +1172,9 @@ class TestOIDWriterFormatting:
         assert "by self" in oid_acl
         assert "(read,selfwrite)" in oid_acl
 
-
-class TestOIDWriterComprehensive:
-    """Comprehensive tests for all OID ACL writer options and combinations."""
-
-    @pytest.fixture
-    def oid_acl_handler(self) -> FlextLdifServersOid.Acl:
-        """Create OID ACL handler instance."""
-        return FlextLdifServersOid.Acl()
+    # ============================================================================
+    # OID WRITER COMPREHENSIVE TESTS
+    # ============================================================================
 
     def test_oid_writer_all_permissions_expanded(
         self,
@@ -1500,11 +1521,5 @@ class TestOIDWriterComprehensive:
 
 
 __all__ = [
-    "TestOIDAdvancedFeaturesConversion",
-    "TestOIDPermissionsConversion",
-    "TestOIDSubjectTypesConversion",
-    "TestOIDWriterComprehensive",
-    "TestOIDWriterFormatting",
-    "TestOUDAdvancedFeaturesConversion",
-    "TestOUDSubjectTypesConversion",
+    "TestFlextLdifQuirksAcl",
 ]

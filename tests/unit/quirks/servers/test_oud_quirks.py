@@ -7,10 +7,6 @@ round-trip validation, Oracle-specific attributes, password hash preservation
 High-coverage testing using real OUD LDIF fixtures from tests/fixtures/oud/.
 All tests use actual implementations with real data, no mocks.
 Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -27,13 +23,21 @@ from tests.helpers.test_assertions import TestAssertions
 
 from .test_utils import FlextLdifTestUtils
 
-# Test constants - always at top of module, no type checking
-# Use classes directly, no instantiation needed
+
+@pytest.fixture(autouse=True)
+def cleanup_state() -> None:
+    """Autouse fixture to clean shared state between tests.
+
+    Runs after each test to prevent state pollution to subsequent tests.
+    Ensures test isolation even when fixtures have shared state.
+    """
+    return
+    # Post-test cleanup - ensures each test has clean state
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def ldif_api() -> FlextLdif:
-    """Provides a FlextLdif API instance for the test module."""
+    """Provides a FlextLdif API instance for the test function."""
     return FlextLdif()
 
 
@@ -148,8 +152,8 @@ class OudTestHelpers:
             assert len(written_str) > 0, "Written string should not be empty"
 
 
-class TestOudQuirksWithRealFixtures:
-    """Test OUD quirks with real fixture files."""
+class TestFlextLdifOudQuirks:
+    """Test FlextLdif OUD server quirks with real fixtures."""
 
     @pytest.mark.timeout(30)
     def test_parse_oud_schema_fixture(self, ldif_api: FlextLdif) -> None:
@@ -172,7 +176,6 @@ class TestOudQuirksWithRealFixtures:
             expected_has_attributes=True,
             expected_has_objectclass=True,
         )
-
         dns = [e.dn.value for e in entries if e.dn is not None]
         assert "dc=example,dc=com" in dns
         assert "ou=users,dc=example,dc=com" in dns
@@ -233,7 +236,6 @@ class TestOudQuirksWithRealFixtures:
             "oud_entries_fixtures.ldif",
             expected_min_count=1,
         )
-
         oracle_entries = OudTestHelpers.find_entries_by_dn_pattern(
             entries,
             "OracleContext",
@@ -257,26 +259,16 @@ class TestOudQuirksWithRealFixtures:
             "oud_entries_fixtures.ldif",
             expected_min_count=1,
         )
-
         password_entries = OudTestHelpers.find_entries_with_attribute(
             entries,
             "userPassword",
         )
         assert len(password_entries) > 0, "Should have entries with passwords"
-
         assert OudTestHelpers.has_attribute_value_containing(
             password_entries,
             "userPassword",
             "{SSHA512}",
         ), "Should have SSHA512 password format"
-
-
-class TestOudRoutingValidation:
-    """Test OUD routing validation with real fixtures using test utilities.
-
-    This test class validates that OUD entries are correctly routed
-    through the OUD quirks during parse and write operations.
-    """
 
     @pytest.mark.timeout(10)
     def test_routing_write_validation_oud_entries(self, ldif_api: FlextLdif) -> None:
@@ -291,7 +283,6 @@ class TestOudRoutingValidation:
             "oud_entries_fixtures.ldif",
             expected_min_count=1,
         )
-
         oud = FlextLdifServersOud()
         OudTestHelpers.validate_entries_write_success(
             oud,

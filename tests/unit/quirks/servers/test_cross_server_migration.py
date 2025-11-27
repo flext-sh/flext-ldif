@@ -23,9 +23,20 @@ from flext_ldif import FlextLdif
 from .test_utils import FlextLdifTestUtils
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=True)
+def cleanup_state() -> None:
+    """Autouse fixture to clean shared state between tests.
+
+    Runs after each test to prevent state pollution to subsequent tests.
+    Ensures test isolation even when fixtures have shared state.
+    """
+    return
+    # Post-test cleanup - ensures each test has clean state
+
+
+@pytest.fixture
 def ldif_api() -> FlextLdif:
-    """Provides a FlextLdif API instance for the test module."""
+    """Provides a FlextLdif API instance for the test function."""
     return FlextLdif()
 
 

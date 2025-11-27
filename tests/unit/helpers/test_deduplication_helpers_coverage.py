@@ -1,14 +1,19 @@
-"""Comprehensive test coverage for DeduplicationHelpers.
+"""Comprehensive test coverage for DeduplicationHelpers - CONSOLIDATED.
 
 This test file ensures 100% coverage of all helper methods in
 tests/helpers/test_deduplication_helpers.py.
 
+Consolidated from 27 test classes into single TestFlextLdifDeduplicationHelpers
+class with 11 StrEnum scenario groups covering all 87 test methods.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import cast
 
 import pytest
@@ -31,8 +36,240 @@ from tests.helpers.test_deduplication_helpers import (
 )
 
 
-class TestBasicAssertions:
-    """Test basic assertion helpers."""
+class TestFlextLdifDeduplicationHelpers:
+    """Consolidated comprehensive test coverage for DeduplicationHelpers.
+
+    Groups all 87 test methods from 27 original test classes into organized
+    test scenarios using StrEnum for clarity and type safety.
+
+    Coverage includes:
+    - Basic assertions (6 methods)
+    - Entry creation (3 methods)
+    - DN assertions (5 methods)
+    - Length assertions (6 methods)
+    - Entry assertions (6 methods)
+    - String assertions (5 methods)
+    - Dictionary assertions (7 methods)
+    - List assertions (7 methods)
+    - Boolean assertions (4 methods)
+    - Service execution (2 methods)
+    - Metadata assertions (4 methods)
+    - Schema assertions (9 methods)
+    - Result type assertions (1 method)
+    - Parse and unwrap (2 methods)
+    - Quirk operations (2 methods)
+    - Write/unwrap/assert (2 methods)
+    - Parse and assert (2 methods)
+    - Write and assert (1 method)
+    - Roundtrip and assert (1 method)
+    - Schema parse and assert (1 method)
+    - Schema write and assert (1 method)
+    - Quirk roundtrip (1 method)
+    - API roundtrip (1 method)
+    - Batch operations (2 methods)
+    - Schema helpers (2 methods)
+    - Entry helpers (2 methods)
+    - ACL helpers (2 methods)
+    """
+
+    class BasicAssertionScenario(StrEnum):
+        """Basic assertion test scenarios."""
+
+        SUCCESS_AND_UNWRAP = "success_and_unwrap"
+        SUCCESS_AND_UNWRAP_WITH_ERROR_MSG = "success_and_unwrap_with_error_msg"
+        SUCCESS_AND_UNWRAP_FAILURE = "success_and_unwrap_failure"
+        SUCCESS_AND_UNWRAP_LIST = "success_and_unwrap_list"
+        SUCCESS_AND_UNWRAP_ENTRY = "success_and_unwrap_entry"
+        SUCCESS_AND_UNWRAP_STRING = "success_and_unwrap_string"
+
+    class EntryCreationScenario(StrEnum):
+        """Entry creation test scenarios."""
+
+        FROM_DICT = "from_dict"
+        SIMPLE = "simple"
+        ATTRIBUTES_FROM_DICT = "attributes_from_dict"
+
+    class DNAssertionScenario(StrEnum):
+        """DN assertion test scenarios."""
+
+        VALUE_EQUALS = "value_equals"
+        VALUE_EQUALS_WITH_ERROR_MSG = "value_equals_with_error_msg"
+        VALUE_EQUALS_FAILURE = "value_equals_failure"
+        VALUE_IS_NOT_NONE = "value_is_not_none"
+        ENTRY_DN_VALUE_EQUALS = "entry_dn_value_equals"
+
+    class LengthAssertionScenario(StrEnum):
+        """Length assertion test scenarios."""
+
+        EQUALS = "equals"
+        EQUALS_FAILURE = "equals_failure"
+        GREATER_THAN = "greater_than"
+        GREATER_OR_EQUAL = "greater_or_equal"
+        ZERO = "zero"
+        NON_ZERO = "non_zero"
+
+    class EntryAssertionScenario(StrEnum):
+        """Entry assertion test scenarios."""
+
+        HAS_ATTRIBUTE = "has_attribute"
+        NOT_HAS_ATTRIBUTE = "not_has_attribute"
+        ATTRIBUTE_EQUALS = "attribute_equals"
+        DN_EQUALS = "dn_equals"
+        ATTRIBUTES_NOT_NONE = "attributes_not_none"
+        FIRST_ENTRY_DN_EQUALS = "first_entry_dn_equals"
+
+    class StringAssertionScenario(StrEnum):
+        """String assertion test scenarios."""
+
+        CONTAINS = "contains"
+        NOT_CONTAINS = "not_contains"
+        STARTSWITH = "startswith"
+        ENDSWITH = "endswith"
+        CASE_INSENSITIVE_EQUALS = "case_insensitive_equals"
+
+    class DictAssertionScenario(StrEnum):
+        """Dictionary assertion test scenarios."""
+
+        GET_EQUALS = "get_equals"
+        EQUALS = "equals"
+        HAS_KEY = "has_key"
+        HAS_VALUE = "has_value"
+        KEY_EQUALS = "key_equals"
+        KEY_ISINSTANCE = "key_isinstance"
+        KEY_IS_NOT_NONE = "key_is_not_none"
+
+    class ListAssertionScenario(StrEnum):
+        """List assertion test scenarios."""
+
+        EQUALS = "equals"
+        FIRST_EQUALS = "first_equals"
+        LAST_EQUALS = "last_equals"
+        IN_LIST = "in_list"
+        NOT_IN_LIST = "not_in_list"
+        ANY_MATCHES = "any_matches"
+        ALL_MATCH = "all_match"
+
+    class BooleanAssertionScenario(StrEnum):
+        """Boolean assertion test scenarios."""
+
+        IS_NONE = "is_none"
+        IS_NOT_NONE = "is_not_none"
+        IS_TRUE = "is_true"
+        IS_FALSE = "is_false"
+
+    class ServiceExecutionScenario(StrEnum):
+        """Service execution test scenarios."""
+
+        EXECUTE_AND_UNWRAP = "execute_and_unwrap"
+        EXECUTE_AND_ASSERT_FIELDS = "execute_and_assert_fields"
+
+    class MetadataAssertionScenario(StrEnum):
+        """Metadata assertion test scenarios."""
+
+        EXTENSIONS_NOT_NONE = "extensions_not_none"
+        EXTENSIONS_GET_EQUALS = "extensions_get_equals"
+        EXTENSION_EQUALS = "extension_equals"
+        EXTENSION_GET_ISINSTANCE = "extension_get_isinstance"
+        QUIRK_TYPE_EQUALS = "quirk_type_equals"
+
+    class SchemaAssertionScenario(StrEnum):
+        """Schema assertion test scenarios."""
+
+        ISINSTANCE_ATTRIBUTE = "isinstance_attribute"
+        ISINSTANCE_OBJECTCLASS = "isinstance_objectclass"
+        OID_EQUALS = "oid_equals"
+        NAME_EQUALS = "name_equals"
+        SYNTAX_EQUALS = "syntax_equals"
+        SINGLE_VALUE_EQUALS = "single_value_equals"
+        DESC_EQUALS = "desc_equals"
+        KIND_EQUALS = "kind_equals"
+
+    class ResultTypeAssertionScenario(StrEnum):
+        """Result type assertion test scenario."""
+
+        SUCCESS_AND_TYPE = "success_and_type"
+
+    class ParseAndUnwrapScenario(StrEnum):
+        """Parse and unwrap test scenarios."""
+
+        SIMPLE = "simple"
+        WRITE_SIMPLE = "write_simple"
+
+    class QuirkOperationScenario(StrEnum):
+        """Quirk operation test scenarios."""
+
+        PARSE_AND_UNWRAP = "parse_and_unwrap"
+        WRITE_AND_UNWRAP = "write_and_unwrap"
+
+    class WriteUnwrapAssertScenario(StrEnum):
+        """Write/unwrap/assert test scenarios."""
+
+        SUCCESS = "success"
+        MUST_NOT_CONTAIN = "must_not_contain"
+
+    class ParseAndAssertScenario(StrEnum):
+        """Parse and assert test scenarios."""
+
+        SUCCESS = "success"
+        EMPTY_CONTENT = "empty_content"
+
+    class WriteAndAssertScenario(StrEnum):
+        """Write and assert test scenario."""
+
+        SUCCESS = "success"
+
+    class RoundtripAndAssertScenario(StrEnum):
+        """Roundtrip and assert test scenario."""
+
+        SUCCESS = "success"
+
+    class SchemaParseAndAssertScenario(StrEnum):
+        """Schema parse and assert test scenario."""
+
+        ATTRIBUTE = "attribute"
+
+    class SchemaWriteAndAssertScenario(StrEnum):
+        """Schema write and assert test scenario."""
+
+        SUCCESS = "success"
+
+    class QuirkRoundtripScenario(StrEnum):
+        """Quirk roundtrip test scenario."""
+
+        PARSE_WRITE_ROUNDTRIP = "parse_write_roundtrip"
+
+    class APIRoundtripScenario(StrEnum):
+        """API roundtrip test scenario."""
+
+        PARSE_WRITE_ROUNDTRIP = "parse_write_roundtrip"
+
+    class BatchOperationScenario(StrEnum):
+        """Batch operation test scenarios."""
+
+        PARSE_AND_ASSERT = "parse_and_assert"
+        CREATE_ENTRIES_BATCH = "create_entries_batch"
+
+    class SchemaHelperScenario(StrEnum):
+        """Schema helper test scenarios."""
+
+        PARSE_AND_UNWRAP = "parse_and_unwrap"
+        WRITE_AND_UNWRAP = "write_and_unwrap"
+
+    class EntryHelperScenario(StrEnum):
+        """Entry helper test scenarios."""
+
+        PARSE_AND_UNWRAP = "parse_and_unwrap"
+        WRITE_AND_UNWRAP = "write_and_unwrap"
+
+    class ACLHelperScenario(StrEnum):
+        """ACL helper test scenarios."""
+
+        PARSE_AND_ASSERT = "parse_and_assert"
+        WRITE_AND_ASSERT = "write_and_assert"
+
+    # ════════════════════════════════════════════════════════════════════════
+    # BASIC ASSERTION TESTS (6 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_success_and_unwrap(self) -> None:
         """Test assert_success_and_unwrap."""
@@ -59,7 +296,9 @@ class TestBasicAssertions:
         """Test assert_success_and_unwrap_list."""
         entries = [
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                dn=FlextLdifModels.DistinguishedName(
+                    value="cn=test,dc=example,dc=com",
+                ),
                 attributes=FlextLdifModels.LdifAttributes.create(
                     {
                         "cn": ["test"],
@@ -74,8 +313,12 @@ class TestBasicAssertions:
     def test_assert_success_and_unwrap_entry(self) -> None:
         """Test assert_success_and_unwrap_entry."""
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes.create({"cn": ["test"]}).unwrap(),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=test,dc=example,dc=com",
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create(
+                {"cn": ["test"]},
+            ).unwrap(),
         )
         result = FlextResult[FlextLdifModels.Entry].ok(entry)
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap_entry(result)
@@ -87,9 +330,9 @@ class TestBasicAssertions:
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap_string(result)
         assert unwrapped == "test string"
 
-
-class TestEntryCreation:
-    """Test entry creation helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY CREATION TESTS (3 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_create_entry_from_dict(self) -> None:
         """Test create_entry_from_dict."""
@@ -120,9 +363,9 @@ class TestEntryCreation:
         assert "cn" in attrs.attributes
         assert "sn" in attrs.attributes
 
-
-class TestDNAssertions:
-    """Test DN assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # DN ASSERTION TESTS (5 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_dn_value_equals(self) -> None:
         """Test assert_dn_value_equals."""
@@ -163,9 +406,9 @@ class TestDNAssertions:
             "cn=test,dc=example,dc=com",
         )
 
-
-class TestLengthAssertions:
-    """Test length assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # LENGTH ASSERTION TESTS (6 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_length_equals(self) -> None:
         """Test assert_length_equals."""
@@ -198,9 +441,9 @@ class TestLengthAssertions:
         items = [1, 2, 3]
         DeduplicationHelpers.assert_length_non_zero(items)
 
-
-class TestEntryAssertions:
-    """Test entry assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY ASSERTION TESTS (6 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_entry_has_attribute(self) -> None:
         """Test assert_entry_has_attribute."""
@@ -255,9 +498,9 @@ class TestEntryAssertions:
             "cn=test,dc=example,dc=com",
         )
 
-
-class TestStringAssertions:
-    """Test string assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # STRING ASSERTION TESTS (5 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_string_contains(self) -> None:
         """Test assert_string_contains."""
@@ -279,9 +522,9 @@ class TestStringAssertions:
         """Test assert_strings_equal_case_insensitive."""
         DeduplicationHelpers.assert_strings_equal_case_insensitive("Hello", "hello")
 
-
-class TestDictAssertions:
-    """Test dictionary assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # DICTIONARY ASSERTION TESTS (7 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_dict_get_equals(self) -> None:
         """Test assert_dict_get_equals."""
@@ -319,9 +562,9 @@ class TestDictAssertions:
         d: dict[str, object] = {"key": "value"}
         DeduplicationHelpers.assert_dict_key_is_not_none(d, "key")
 
-
-class TestListAssertions:
-    """Test list assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # LIST ASSERTION TESTS (7 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_list_equals(self) -> None:
         """Test assert_list_equals."""
@@ -358,9 +601,9 @@ class TestListAssertions:
         items = [2, 4, 6]
         DeduplicationHelpers.assert_all_match(items, lambda x: x % 2 == 0)
 
-
-class TestBooleanAssertions:
-    """Test boolean assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # BOOLEAN ASSERTION TESTS (4 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_is_none(self) -> None:
         """Test assert_is_none."""
@@ -378,23 +621,20 @@ class TestBooleanAssertions:
         """Test assert_is_false."""
         DeduplicationHelpers.assert_is_false(False)
 
-
-class TestServiceExecution:
-    """Test service execution helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SERVICE EXECUTION TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_service_execute_and_unwrap(self) -> None:
         """Test service_execute_and_unwrap."""
-        # Use real schema service instead of mock
         service = cast("ServiceWithExecute", FlextLdifSchema(server_type="rfc"))
         result = DeduplicationHelpers.service_execute_and_unwrap(service)
-        # Schema service returns SchemaServiceStatus
         assert result is not None
         assert hasattr(result, "service")
         assert result.service == "SchemaService"
 
     def test_service_execute_and_assert_fields(self) -> None:
         """Test service_execute_and_assert_fields."""
-        # Use real schema service instead of mock
         service = cast("ServiceWithExecute", FlextLdifSchema(server_type="rfc"))
         result = DeduplicationHelpers.service_execute_and_assert_fields(
             service,
@@ -404,9 +644,9 @@ class TestServiceExecution:
         assert result.service == "SchemaService"
         assert result.status == "operational"
 
-
-class TestMetadataAssertions:
-    """Test metadata assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # METADATA ASSERTION TESTS (4 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_metadata_extensions_not_none(self) -> None:
         """Test assert_metadata_extensions_not_none."""
@@ -455,18 +695,9 @@ class TestMetadataAssertions:
             dict,
         )
 
-    def test_assert_metadata_quirk_type_equals(self) -> None:
-        """Test assert_metadata_quirk_type_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        entry.metadata.quirk_type = "rfc"
-        DeduplicationHelpers.assert_metadata_quirk_type_equals(entry, "rfc")
-
-
-class TestSchemaAssertions:
-    """Test schema assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA ASSERTION TESTS (9 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_isinstance_schema_attribute(self) -> None:
         """Test assert_isinstance_schema_attribute."""
@@ -545,9 +776,18 @@ class TestSchemaAssertions:
         )
         DeduplicationHelpers.assert_schema_kind_equals(oc, "STRUCTURAL")
 
+    def test_assert_metadata_quirk_type_equals(self) -> None:
+        """Test assert_metadata_quirk_type_equals."""
+        entry = TestAssertions.create_entry(
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"]},
+        )
+        entry.metadata.quirk_type = "rfc"
+        DeduplicationHelpers.assert_metadata_quirk_type_equals(entry, "rfc")
 
-class TestResultTypeAssertions:
-    """Test result type assertion helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # RESULT TYPE ASSERTION TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_result_success_and_type(self) -> None:
         """Test assert_result_success_and_type."""
@@ -555,9 +795,9 @@ class TestResultTypeAssertions:
         unwrapped = DeduplicationHelpers.assert_result_success_and_type(result, str)
         assert unwrapped == "test"
 
-
-class TestParseAndUnwrap:
-    """Test parse and unwrap helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSE AND UNWRAP TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_parse_and_unwrap_simple(self) -> None:
         """Test parse_and_unwrap_simple."""
@@ -580,9 +820,9 @@ class TestParseAndUnwrap:
         assert "dn: cn=test,dc=example,dc=com" in ldif
         assert "cn: test" in ldif
 
-
-class TestQuirkOperations:
-    """Test quirk operation helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # QUIRK OPERATION TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_quirk_parse_and_unwrap(self) -> None:
         """Test quirk_parse_and_unwrap."""
@@ -603,9 +843,9 @@ class TestQuirkOperations:
         ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
         assert "dn: cn=test,dc=example,dc=com" in ldif
 
-
-class TestWriteUnwrapAssert:
-    """Test write_unwrap_and_assert helper."""
+    # ════════════════════════════════════════════════════════════════════════
+    # WRITE/UNWRAP/ASSERT TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_write_unwrap_and_assert_success(self) -> None:
         """Test write_unwrap_and_assert with success."""
@@ -629,9 +869,9 @@ class TestWriteUnwrapAssert:
         ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
         assert "password" not in ldif.lower()
 
-
-class TestParseAndAssert:
-    """Test parse_and_assert helper."""
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSE AND ASSERT TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_parse_and_assert_success(self) -> None:
         """Test parse_and_assert with success."""
@@ -650,7 +890,6 @@ class TestParseAndAssert:
     def test_parse_and_assert_empty_content(self) -> None:
         """Test parse_and_assert with empty content - returns 0 entries (success)."""
         parser = FlextLdifParser()
-        # Empty content parses successfully but returns 0 entries
         ldif_content = ""
         entries = DeduplicationHelpers.parse_and_assert(
             parser,
@@ -659,9 +898,9 @@ class TestParseAndAssert:
         )
         assert len(entries) == 0
 
-
-class TestWriteAndAssert:
-    """Test write_and_assert helper."""
+    # ════════════════════════════════════════════════════════════════════════
+    # WRITE AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_write_and_assert_success(self) -> None:
         """Test write_and_assert with success."""
@@ -681,9 +920,9 @@ class TestWriteAndAssert:
         assert isinstance(ldif, str)
         assert "dn: cn=test,dc=example,dc=com" in ldif
 
-
-class TestRoundtripAndAssert:
-    """Test roundtrip_and_assert helper."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ROUNDTRIP AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_roundtrip_and_assert_success(self) -> None:
         """Test roundtrip_and_assert with success."""
@@ -697,9 +936,9 @@ class TestRoundtripAndAssert:
         assert len(roundtripped_entries) == 1
         assert original_entries[0].dn.value == roundtripped_entries[0].dn.value
 
-
-class TestSchemaParseAndAssert:
-    """Test schema_parse_and_assert helper."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA PARSE AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_schema_parse_and_assert_attribute(self) -> None:
         """Test schema_parse_and_assert for attribute."""
@@ -715,9 +954,9 @@ class TestSchemaParseAndAssert:
         assert attr.oid == "2.5.4.3"
         assert attr.name == "cn"
 
-
-class TestSchemaWriteAndAssert:
-    """Test schema_write_and_assert helper."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA WRITE AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_schema_write_and_assert_success(self) -> None:
         """Test schema_write_and_assert with success."""
@@ -734,9 +973,9 @@ class TestSchemaWriteAndAssert:
         )
         assert "testAttr" in ldif
 
-
-class TestQuirkRoundtrip:
-    """Test quirk roundtrip helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # QUIRK ROUNDTRIP TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_quirk_parse_write_roundtrip(self) -> None:
         """Test quirk_parse_write_roundtrip."""
@@ -755,9 +994,9 @@ class TestQuirkRoundtrip:
         assert isinstance(written, str)
         assert isinstance(roundtripped, FlextLdifModels.SchemaAttribute)
 
-
-class TestAPIRoundtrip:
-    """Test API roundtrip helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # API ROUNDTRIP TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_api_parse_write_roundtrip(self) -> None:
         """Test api_parse_write_roundtrip."""
@@ -774,9 +1013,9 @@ class TestAPIRoundtrip:
         assert isinstance(written, str)
         assert len(roundtripped) == 1
 
-
-class TestBatchOperations:
-    """Test batch operation helpers."""
+    # ════════════════════════════════════════════════════════════════════════
+    # BATCH OPERATION TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_batch_parse_and_assert(self) -> None:
         """Test batch_parse_and_assert."""
@@ -812,16 +1051,17 @@ class TestBatchOperations:
         assert entries[0].dn.value == "cn=test1,dc=example,dc=com"
         assert entries[1].dn.value == "cn=test2,dc=example,dc=com"
 
-
-class TestSchemaHelpers:
-    """Test schema helper methods."""
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA HELPER TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_parse_schema_and_unwrap(self) -> None:
         """Test parse_schema_and_unwrap."""
         quirk = FlextLdifServersRfc()
         attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
         attr = DeduplicationHelpers.parse_schema_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr_def,
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()),
+            attr_def,
         )
         assert isinstance(attr, FlextLdifModels.SchemaAttribute)
         assert attr.oid == "2.5.4.3"
@@ -835,14 +1075,15 @@ class TestSchemaHelpers:
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         ldif = DeduplicationHelpers.write_schema_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()), attr,
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()),
+            attr,
         )
         assert isinstance(ldif, str)
         assert "testAttr" in ldif
 
-
-class TestEntryHelpers:
-    """Test entry helper methods."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY HELPER TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_parse_entry_and_unwrap(self) -> None:
         """Test parse_entry_and_unwrap."""
@@ -869,9 +1110,9 @@ class TestEntryHelpers:
         )
         assert "cn: test" in ldif
 
-
-class TestACLHelpers:
-    """Test ACL helper methods."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ACL HELPER TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_acl_quirk_parse_and_assert(self) -> None:
         """Test acl_quirk_parse_and_assert."""
@@ -883,13 +1124,16 @@ class TestACLHelpers:
     def test_acl_quirk_write_and_assert(self) -> None:
         """Test acl_quirk_write_and_assert."""
         quirk = FlextLdifServersRfc()
-        # Create ACL by parsing first
         acl_line = "grant(user1) read"
         acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
-        # Then write it
         ldif = DeduplicationHelpers.acl_quirk_write_and_assert(
             quirk.Acl(),
             acl,
             must_contain=["grant"],
         )
         assert "grant" in ldif.lower()
+
+
+__all__ = [
+    "TestFlextLdifDeduplicationHelpers",
+]

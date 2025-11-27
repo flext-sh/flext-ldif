@@ -14,10 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif.constants import FlextLdifConstants
 
-# Type alias for forward reference (avoids circular import with config.py)
-# The actual FlextLdifConfig type is resolved at runtime via string annotation
-# when from __future__ import annotations is active
-
 
 class FlextLdifModelsConfig:
     """LDIF configuration models container class.
@@ -338,11 +334,11 @@ class FlextLdifModelsConfig:
         """
 
         # Structured migration (preferred for production)
-        migration_config: dict[str, object] | None = Field(
+        migration_config: dict[str, str | int | bool] | None = Field(
             default=None,
             description="Structured migration config with 6-file output and tracking",
         )
-        write_options: dict[str, object] | None = Field(
+        write_options: BaseModel | None = Field(
             default=None,
             description=(
                 "Write format options (line folding, removed attrs as comments)"
@@ -476,6 +472,10 @@ class FlextLdifModelsConfig:
         allowed_matchingruleuse_oids: list[str] = Field(
             default_factory=list,
             description="OID patterns for allowed matchingRuleUse definitions",
+        )
+        allowed_ldapsyntax_oids: list[str] = Field(
+            default_factory=list,
+            description="OID patterns for allowed ldapSyntaxes definitions",
         )
 
     class EncodingRules(FlextModels.Value):
@@ -722,6 +722,14 @@ class FlextLdifModelsConfig:
                 "Default: ['objectClass']. Remaining attributes sorted alphabetically."
             ),
         )
+        sort_objectclass_values: bool = Field(
+            default=False,
+            description=(
+                "If True, sorts objectClass values with 'top' first, followed by "
+                "other objectClasses in alphabetical order. This ensures proper "
+                "objectClass hierarchy ordering in LDIF output."
+            ),
+        )
         write_transformation_comments: bool = Field(
             default=False,
             description=(
@@ -738,6 +746,35 @@ class FlextLdifModelsConfig:
                 "Control characters are sanitized (ASCII < 0x20 or > 0x7E replaced with "
                 "spaces, double quotes removed). Useful for OID→OUD migration to preserve "
                 "original ACL context as the new ACI name."
+            ),
+        )
+        include_entry_markers: bool = Field(
+            default=False,
+            description=(
+                "If True, includes entry type markers as comments before each entry. "
+                "Markers indicate entry category (e.g., '# === USER ENTRY ===' or "
+                "'# === GROUP ENTRY ==='). Useful for visual separation in large files."
+            ),
+        )
+        entry_marker_template: str | None = Field(
+            default=None,
+            description=(
+                "Custom Jinja2 template for entry markers. Variables: entry_type, dn, "
+                "entry_index. If None, uses default format '# === {entry_type} ==='."
+            ),
+        )
+        include_statistics_summary: bool = Field(
+            default=False,
+            description=(
+                "If True, includes a statistics summary in the file header showing "
+                "entry counts by category and other migration metadata."
+            ),
+        )
+        statistics_categories: dict[str, int] = Field(
+            default_factory=dict,
+            description=(
+                "Dictionary of category names to entry counts for statistics summary. "
+                "Example: {'users': 150, 'groups': 25, 'acl': 42}."
             ),
         )
 
@@ -879,7 +916,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Jinja2 template for file headers",
         )
-        header_data: dict[str, object] = Field(
+        header_data: dict[str, str | int | bool] = Field(
             default_factory=dict,
             description="Data to pass to header template",
         )

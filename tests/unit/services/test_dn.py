@@ -174,7 +174,10 @@ class TestDnService:
 
     @pytest.mark.parametrize(("dn", "should_succeed", "expected_len"), PARSING_DATA)
     def test_parse_components(
-        self, dn: str, should_succeed: bool, expected_len: int,
+        self,
+        dn: str,
+        should_succeed: bool,
+        expected_len: int,
     ) -> None:
         """Test DN parsing into RFC 4514 components."""
         dn_service = FlextLdifDn()
@@ -279,7 +282,8 @@ class TestDnService:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        ("rdn", "should_succeed", "expected_len"), RDN_PARSING_DATA,
+        ("rdn", "should_succeed", "expected_len"),
+        RDN_PARSING_DATA,
     )
     def test_parse_rdn(self, rdn: str, should_succeed: bool, expected_len: int) -> None:
         """Test RDN (Relative Distinguished Name) parsing."""
@@ -297,10 +301,14 @@ class TestDnService:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        ("dn", "operation", "expected_contains"), BUILDER_OPERATIONS,
+        ("dn", "operation", "expected_contains"),
+        BUILDER_OPERATIONS,
     )
     def test_builder_pattern(
-        self, dn: str, operation: str, expected_contains: str,
+        self,
+        dn: str,
+        operation: str,
+        expected_contains: str,
     ) -> None:
         """Test fluent builder pattern for DN service."""
         dn_service = FlextLdifDn()
@@ -318,7 +326,8 @@ class TestDnService:
         """Execute various DN operations in batch."""
         # Test normalize operation
         service1 = self.create_dn_service(
-            dn=f"CN={Values.ADMIN},DC=Example,DC=Com", operation="normalize",
+            dn=f"CN={Values.ADMIN},DC=Example,DC=Com",
+            operation="normalize",
         )
         result1 = service1.execute()
         assert result1.is_success or result1.is_failure
@@ -378,14 +387,17 @@ class TestDnService:
 
     def test_validate_oud_consistency(self) -> None:
         """Validate OUD consistency in batch."""
+        # Test 1: Single DN registration - consistent (True)
         registry1 = self.create_registry_with_dns(DNs.TEST_USER)
         result1 = registry1.validate_oud_consistency()
         is_consistent = TestAssertions.assert_success(result1)
         assert is_consistent
 
+        # Test 2: Same DN registered with multiple case variants - inconsistent (False)
         registry2 = FlextLdifModels.DnRegistry()
         registry2.register_dn(f"CN={Values.ADMIN},DC=Example,DC=Com")
-        registry2.register_dn(DNs.TEST_USER)
+        # Register the SAME DN with different case
+        registry2.register_dn(f"cn={Values.ADMIN.lower()},dc=example,dc=com")
         result2 = registry2.validate_oud_consistency()
         is_consistent2 = TestAssertions.assert_success(result2)
         assert not is_consistent2

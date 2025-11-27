@@ -26,27 +26,21 @@ from flext_core import (
 )
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-# Import specialized services for delegation (SRP compliance)
-from flext_ldif.services.acl_extractor import FlextLdifAclExtractor
-from flext_ldif.services.categorizer import FlextLdifCategorizer
-from flext_ldif.services.entry_transformer import FlextLdifEntryTransformer
-from flext_ldif.services.schema_detector import FlextLdifSchemaDetector
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.services.acl import FlextLdifAcl
+from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.entries import FlextLdifEntries
+from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-def _get_server_registry() -> FlextLdifServer:
-    """Get server registry instance."""
-    return FlextLdifServer.get_global_instance()
-
-
 class FlextLdifFilters(
-    LdifServiceBase,
+    FlextLdifServiceBase[FlextLdifTypes.Models.ServiceResponseTypes],
 ):
     """Universal LDIF Entry Filtering and Categorization Service.
 
@@ -85,6 +79,28 @@ class FlextLdifFilters(
     # INTERNAL NORMALIZATION HELPERS
     # ════════════════════════════════════════════════════════════════════════
     @staticmethod
+    def _get_or_create_metadata(
+        entry: FlextLdifModels.Entry,
+        quirk_type: str,
+    ) -> FlextLdifModels.QuirkMetadata:
+        """Get or create metadata for entry using FlextLdifUtilities pattern.
+
+        Reduces code duplication across metadata operations.
+        Uses Entry + Metadata pattern consistently.
+
+        Args:
+            entry: Entry to get/create metadata for
+            quirk_type: Quirk type identifier for new metadata
+
+        Returns:
+            QuirkMetadata instance (existing or newly created)
+
+        """
+        if entry.metadata is not None:
+            return entry.metadata
+        return FlextLdifModels.QuirkMetadata(quirk_type=quirk_type)
+
+    @staticmethod
     def _ensure_str_list(value: object) -> list[str]:
         """Ensure configuration values are normalized to list[str]."""
         if value is None:
@@ -107,11 +123,12 @@ class FlextLdifFilters(
             return FlextResult.ok(FlextLdifModels.CategoryRules())
 
         # Type narrowing: at this point rules must be Mapping[str, object]
-        # but we validate it anyway for runtime safety
+        # Validate for runtime safety
         if not isinstance(rules, Mapping):
-            return FlextResult.fail(
+            return FlextResult[FlextLdifModels.CategoryRules].fail(
                 "Category rules must be a mapping or CategoryRules model",
             )
+        # Type narrowing: rules is now guaranteed to be Mapping[str, object]
 
         normalized: dict[str, list[str]] = {}
 
@@ -154,11 +171,12 @@ class FlextLdifFilters(
             return FlextResult.ok(FlextLdifModels.WhitelistRules())
 
         # Type narrowing: at this point rules must be Mapping[str, object]
-        # but we validate it anyway for runtime safety
+        # Validate for runtime safety
         if not isinstance(rules, Mapping):
-            return FlextResult.fail(
+            return FlextResult[FlextLdifModels.WhitelistRules].fail(
                 "Whitelist rules must be a mapping or WhitelistRules model",
             )
+        # Type narrowing: rules is now guaranteed to be Mapping[str, object]
 
         normalized = {
             "blocked_objectclasses": FlextLdifFilters._ensure_str_list(
@@ -214,7 +232,7 @@ class FlextLdifFilters(
                 pattern = dn_pattern  # Type narrowing
                 filtered = []
                 for entry in entries:
-                    # Use DN utility to get string value (supports both DN model and str)
+                    # Use DN utility to get string value (supports DN model and str)
                     entry_dn_str = FlextLdifUtilities.DN.get_dn_value(entry.dn)
                     matches = fnmatch.fnmatch(entry_dn_str.lower(), pattern.lower())
                     include = (
@@ -238,12 +256,12 @@ class FlextLdifFilters(
                 )
 
         @staticmethod
-        def _normalize_objectclass_tuple(oc: str | tuple[str, ...]) -> tuple[str, ...]:
+        def normalize_objectclass_tuple(oc: str | tuple[str, ...]) -> tuple[str, ...]:
             """Normalize objectclass to tuple."""
             return oc if isinstance(oc, tuple) else (oc,)
 
         @staticmethod
-        def _matches_objectclass_entry(
+        def matches_objectclass_entry(
             entry: FlextLdifModels.Entry,
             oc_tuple: tuple[str, ...],
             required_attributes: list[str] | None,
@@ -260,14 +278,14 @@ class FlextLdifFilters(
             return has_oc and has_attrs
 
         @staticmethod
-        def _should_include_entry(*, matches: bool, filter_mode: str) -> bool:
+        def should_include_entry(*, matches: bool, filter_mode: str) -> bool:
             """Determine if entry should be included based on mode."""
             return (filter_mode == FlextLdifConstants.Modes.INCLUDE and matches) or (
                 filter_mode == FlextLdifConstants.Modes.EXCLUDE and not matches
             )
 
         @staticmethod
-        def _process_objectclass_entry(
+        def process_objectclass_entry(
             entry: FlextLdifModels.Entry,
             oc_tuple: tuple[str, ...],
             required_attributes: list[str] | None,
@@ -276,13 +294,13 @@ class FlextLdifFilters(
             mark_excluded: bool,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
-            # Call static methods within same nested class (accessing private members is acceptable)
-            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(  # noqa: SLF001
+            # Call static methods within same nested class (private access ok)
+            entry_matches = FlextLdifFilters.Filter.matches_objectclass_entry(
                 entry,
                 oc_tuple,
                 required_attributes,
             )
-            if FlextLdifFilters.Filter._should_include_entry(  # noqa: SLF001
+            if FlextLdifFilters.Filter.should_include_entry(
                 matches=entry_matches,
                 filter_mode=filter_mode,
             ):
@@ -307,14 +325,14 @@ class FlextLdifFilters(
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
-                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(  # noqa: SLF001
+                oc_tuple = FlextLdifFilters.Filter.normalize_objectclass_tuple(
                     objectclass,
                 )
 
                 # Process all entries
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
-                    result = FlextLdifFilters.Filter._process_objectclass_entry(  # noqa: SLF001
+                    result = FlextLdifFilters.Filter.process_objectclass_entry(
                         entry,
                         oc_tuple,
                         required_attributes,
@@ -427,7 +445,7 @@ class FlextLdifFilters(
 
             return (included, excluded)
 
-        # Removed has_objectclass and has_attributes helpers - use FlextLdifUtilities.Entry directly
+        # Removed has_objectclass/has_attributes helpers - use FlextLdifUtilities.Entry
         # These were just wrappers without added functionality
 
     class Categorizer:
@@ -518,7 +536,7 @@ class FlextLdifFilters(
         - Filter entry objectClasses (internal use only)
 
         NOTE: Public remove_attributes() and remove_objectclasses() are delegated
-        to FlextLdifEntryTransformer service. See classmethod implementations below.
+        to FlextLdifEntries service. See classmethod implementations below.
         """
 
         @staticmethod
@@ -531,9 +549,8 @@ class FlextLdifFilters(
 
             SRP: Filters MARK only, entry service REMOVES.
 
-            This method marks attributes for removal by storing metadata about them
-            without actually removing them from entry.attributes. The marked attributes
-            will be removed later by the entry service (FlextLdifEntryTransformer).
+            Uses FlextLdifUtilities.Metadata and Entry + Metadata patterns.
+            Marks attributes using removed_attributes field in QuirkMetadata.
 
             Args:
                 entry: Entry to mark attributes in
@@ -554,53 +571,73 @@ class FlextLdifFilters(
                         f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes",
                     )
 
-                # Build marked attributes metadata
+                # Get or create metadata using FlextLdifUtilities pattern
+                current_metadata = entry.metadata
+                if current_metadata is None:
+                    current_metadata = FlextLdifModels.QuirkMetadata(
+                        quirk_type="filter_marked",
+                    )
+
+                # Build marked attributes dict with original values
                 attrs_lower = {attr.lower() for attr in attributes_to_mark}
-                marked_attributes: dict[str, dict[str, str | list[str]]] = {}
+                marked_attributes: dict[str, list[str]] = {}
+                marked_for_tracking: dict[str, list[str]] = {}
+                marked_with_status: dict[str, dict[str, object]] = {}
 
                 for attr_name, attr_values in entry.attributes.items():
                     if attr_name.lower() in attrs_lower:
-                        # Store original values for recovery if needed
-                        marked_attributes[attr_name] = {
-                            "status": status,
-                            "original_value": attr_values,
-                        }
+                        # Store original values for recovery
+                        values_list = (
+                            list(attr_values)
+                            if isinstance(attr_values, (list, tuple))
+                            else [str(attr_values)]
+                        )
+                        marked_attributes[attr_name] = values_list
+                        marked_for_tracking[attr_name] = values_list
+                        # Build status dict for extensions
+                        marked_with_status[attr_name] = {"status": status}
 
-                # Create or update metadata with marked attributes
-                if entry.metadata is None:
-                    new_metadata = FlextLdifModels.QuirkMetadata(
-                        quirk_type="marked_attributes",
-                        extensions={
-                            "marked_attributes": marked_attributes,
-                        },
+                if not marked_attributes:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+                # Update removed_attributes in metadata (standard field)
+                updated_removed = {**current_metadata.removed_attributes}
+                updated_removed.update(marked_attributes)
+
+                # Update extensions with marked_attributes
+                updated_extensions = {**current_metadata.extensions}
+                updated_extensions["marked_attributes"] = marked_with_status
+
+                # Track transformation for each marked attribute using FlextLdifUtilities.Metadata
+                updated_metadata = current_metadata.model_copy(
+                    update={
+                        "removed_attributes": updated_removed,
+                        "extensions": updated_extensions,
+                    },
+                )
+
+                for attr_name, original_values in marked_for_tracking.items():
+                    FlextLdifUtilities.Metadata.track_transformation(
+                        metadata=updated_metadata,
+                        original_name=attr_name,
+                        target_name=None,
+                        original_values=original_values,
+                        target_values=None,
+                        transformation_type="removed",
+                        reason=f"Marked for removal with status: {status}",
                     )
-                else:
-                    new_extensions = {**entry.metadata.extensions}
-                    # Merge with existing marked_attributes if present
-                    existing_marked = new_extensions.get("marked_attributes", {})
-                    if isinstance(existing_marked, dict):
-                        existing_marked.update(marked_attributes)
-                        new_extensions["marked_attributes"] = existing_marked
-                    else:
-                        new_extensions["marked_attributes"] = marked_attributes
 
-                    new_metadata = FlextLdifModels.QuirkMetadata(
-                        quirk_type=entry.metadata.quirk_type,
-                        extensions=new_extensions,
-                    )
-
-                new_entry = entry.model_copy(update={"metadata": new_metadata})
+                new_entry = entry.model_copy(update={"metadata": updated_metadata})
 
                 # Log marking operation
-                if marked_attributes:
-                    FlextLogger.get_logger().debug(
-                        "Marked attributes for removal in metadata",
-                        action_taken="mark_attributes_for_removal",
-                        entry_dn=str(entry.dn) if entry.dn else None,
-                        marked_attributes=list(marked_attributes.keys()),
-                        marked_count=len(marked_attributes),
-                        status=status,
-                    )
+                FlextLogger.get_logger().debug(
+                    "Marked attributes for removal in metadata",
+                    action_taken="mark_attributes_for_removal",
+                    entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
+                    marked_attributes=list(marked_attributes.keys()),
+                    marked_count=len(marked_attributes),
+                    status=status,
+                )
 
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
@@ -619,9 +656,8 @@ class FlextLdifFilters(
 
             SRP: Filters MARK only, entry service REMOVES.
 
-            This method marks specific objectClass values for removal by storing
-            metadata about them without actually removing them from entry.attributes.
-            The marked objectClasses will be removed later by the entry service.
+            Uses FlextLdifUtilities.Metadata and Entry + Metadata patterns.
+            Marks objectClasses using removed_attributes field in QuirkMetadata.
 
             Args:
                 entry: Entry to mark objectClasses in
@@ -640,54 +676,72 @@ class FlextLdifFilters(
                 if not current_ocs:
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-                # Build marked objectclasses metadata (case-insensitive)
+                # Build marked objectclasses (case-insensitive)
                 ocs_lower = {oc.lower() for oc in objectclasses_to_mark}
-                marked_ocs: dict[str, dict[str, str | list[str]]] = {}
-
-                for oc_value in current_ocs:
-                    if oc_value.lower() in ocs_lower:
-                        marked_ocs[oc_value] = {
-                            "status": status,
-                            "original_value": [oc_value],
-                        }
+                marked_ocs = [
+                    oc_value
+                    for oc_value in current_ocs
+                    if oc_value.lower() in ocs_lower
+                ]
 
                 if not marked_ocs:
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-                # Create or update metadata with marked objectclasses
-                if entry.metadata is None:
-                    new_metadata = FlextLdifModels.QuirkMetadata(
-                        quirk_type="marked_objectclasses",
-                        extensions={
-                            "marked_objectclasses": marked_ocs,
-                        },
-                    )
-                else:
-                    new_extensions = {**entry.metadata.extensions}
-                    existing_marked = new_extensions.get("marked_objectclasses", {})
-                    if isinstance(existing_marked, dict):
-                        existing_marked.update(marked_ocs)
-                        new_extensions["marked_objectclasses"] = existing_marked
-                    else:
-                        new_extensions["marked_objectclasses"] = marked_ocs
+                # Get or create metadata using FlextLdifUtilities pattern
+                current_metadata = FlextLdifFilters._get_or_create_metadata(
+                    entry,
+                    "filter_marked",
+                )
 
-                    new_metadata = FlextLdifModels.QuirkMetadata(
-                        quirk_type=entry.metadata.quirk_type,
-                        extensions=new_extensions,
-                    )
+                # Store marked objectClasses in removed_attributes using objectClass key
+                updated_removed = {**current_metadata.removed_attributes}
+                objectclass_key = FlextLdifConstants.DictKeys.OBJECTCLASS
+                existing_ocs = updated_removed.get(objectclass_key, [])
+                if not isinstance(existing_ocs, list):
+                    existing_ocs = []
+                # Merge marked objectClasses (avoid duplicates)
+                merged_ocs = list(set(existing_ocs + marked_ocs))
+                updated_removed[objectclass_key] = merged_ocs
 
-                new_entry = entry.model_copy(update={"metadata": new_metadata})
+                # Build marked_with_status for extensions (like attributes)
+                marked_with_status: dict[str, dict[str, object]] = {}
+                for oc_name in marked_ocs:
+                    marked_with_status[oc_name] = {"status": status}
+
+                # Update extensions with marked_objectclasses
+                updated_extensions = {**current_metadata.extensions}
+                updated_extensions["marked_objectclasses"] = marked_with_status
+
+                # Update metadata with both removed_attributes and extensions
+                updated_metadata = current_metadata.model_copy(
+                    update={
+                        "removed_attributes": updated_removed,
+                        "extensions": updated_extensions,
+                    },
+                )
+
+                # Track transformation for objectClass using FlextLdifUtilities.Metadata
+                FlextLdifUtilities.Metadata.track_transformation(
+                    metadata=updated_metadata,
+                    original_name=objectclass_key,
+                    target_name=None,
+                    original_values=marked_ocs,
+                    target_values=None,
+                    transformation_type="removed",
+                    reason=f"Marked objectClasses for removal with status: {status}",
+                )
+
+                new_entry = entry.model_copy(update={"metadata": updated_metadata})
 
                 # Log marking operation
-                if marked_ocs:
-                    FlextLogger.get_logger().debug(
-                        "Marked objectClasses for removal in metadata",
-                        action_taken="mark_objectclasses_for_removal",
-                        entry_dn=str(entry.dn) if entry.dn else None,
-                        marked_objectclasses=list(marked_ocs.keys()),
-                        marked_count=len(marked_ocs),
-                        status=status,
-                    )
+                FlextLogger.get_logger().debug(
+                    "Marked objectClasses for removal in metadata",
+                    action_taken="mark_objectclasses_for_removal",
+                    entry_dn=FlextLdifUtilities.DN.get_dn_value(entry.dn),
+                    marked_objectclasses=marked_ocs,
+                    marked_count=len(marked_ocs),
+                    status=status,
+                )
 
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
@@ -848,27 +902,41 @@ class FlextLdifFilters(
             entry: FlextLdifModels.Entry,
             reason: str,
         ) -> FlextLdifModels.Entry:
-            """Mark entry as excluded."""
+            """Mark entry as excluded using Entry + Metadata pattern.
+
+            Uses FlextLdifUtilities.Metadata and standard ExclusionInfo model.
+            Stores exclusion info in metadata.extensions using standard pattern.
+
+            Args:
+                entry: Entry to mark as excluded
+                reason: Exclusion reason
+
+            Returns:
+                Entry with exclusion metadata
+
+            """
             exclusion_info = FlextLdifModels.ExclusionInfo(
                 excluded=True,
                 exclusion_reason=reason,
                 timestamp=FlextUtilities.Generators.generate_iso_timestamp(),
             )
 
-            if entry.metadata is None:
-                new_metadata = FlextLdifModels.QuirkMetadata(
+            # Get or create metadata using FlextLdifUtilities pattern
+            current_metadata = entry.metadata
+            if current_metadata is None:
+                current_metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="filter_excluded",
-                    extensions={"exclusion_info": exclusion_info},
-                )
-            else:
-                new_extensions = {**entry.metadata.extensions}
-                new_extensions["exclusion_info"] = exclusion_info
-                new_metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type=entry.metadata.quirk_type,
-                    extensions=new_extensions,
                 )
 
-            return entry.model_copy(update={"metadata": new_metadata})
+            # Update extensions with exclusion info
+            updated_extensions = {**current_metadata.extensions}
+            updated_extensions["exclusion_info"] = exclusion_info
+
+            updated_metadata = current_metadata.model_copy(
+                update={"extensions": updated_extensions},
+            )
+
+            return entry.model_copy(update={"metadata": updated_metadata})
 
         @staticmethod
         def is_entry_excluded(entry: FlextLdifModels.Entry) -> bool:
@@ -1002,28 +1070,26 @@ class FlextLdifFilters(
                         )
 
                     if should_delete:
-                        # Mark as virtually deleted (non-destructive)
-                        existing_metadata = entry.metadata
-                        if existing_metadata is None:
-                            new_metadata = FlextLdifModels.QuirkMetadata(
+                        # Mark as virtually deleted using Entry + Metadata pattern
+                        current_metadata = entry.metadata
+                        if current_metadata is None:
+                            current_metadata = FlextLdifModels.QuirkMetadata(
                                 quirk_type="virtual_deleted",
-                                extensions={
-                                    "virtual_deleted": True,
-                                    "deletion_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-                                },
-                            )
-                        else:
-                            new_extensions = {**existing_metadata.extensions}
-                            new_extensions["virtual_deleted"] = True
-                            new_extensions["deletion_timestamp"] = (
-                                FlextUtilities.Generators.generate_iso_timestamp()
-                            )
-                            new_metadata = existing_metadata.model_copy(
-                                update={"extensions": new_extensions},
                             )
 
+                        # Update extensions with virtual delete markers
+                        updated_extensions = {**current_metadata.extensions}
+                        updated_extensions["virtual_deleted"] = True
+                        updated_extensions["deletion_timestamp"] = (
+                            FlextUtilities.Generators.generate_iso_timestamp()
+                        )
+
+                        updated_metadata = current_metadata.model_copy(
+                            update={"extensions": updated_extensions},
+                        )
+
                         deleted_entry = entry.model_copy(
-                            update={"metadata": new_metadata},
+                            update={"metadata": updated_metadata},
                         )
                         deleted_entries.append(deleted_entry)
                     else:
@@ -1223,14 +1289,8 @@ class FlextLdifFilters(
 
     def execute(
         self,
-        **_kwargs: object,
     ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
-        """Execute filtering based on filter_criteria and mode.
-
-        Args:
-            **_kwargs: Unused keyword arguments for FlextService compatibility.
-
-        """
+        """Execute filtering based on filter_criteria and mode."""
         if not self.entries:
             return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].ok(
                 FlextLdifModels.EntryResult.empty(),
@@ -1580,9 +1640,9 @@ class FlextLdifFilters(
     def is_schema(cls, entry: FlextLdifModels.Entry) -> bool:
         """Check if entry is a REAL schema entry with schema definitions.
 
-        DELEGATED TO: FlextLdifSchemaDetector.is_schema()
+        DELEGATED TO: FlextLdifSchema.is_schema()
         """
-        return FlextLdifSchemaDetector.is_schema(entry)
+        return FlextLdifSchema.is_schema(entry)
 
     @classmethod
     def extract_acl_entries(
@@ -1592,10 +1652,10 @@ class FlextLdifFilters(
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Extract entries with ACL attributes.
 
-        DELEGATED TO: FlextLdifAclExtractor.extract_acl_entries()
+        DELEGATED TO: FlextLdifAcl.extract_acl_entries()
         """
-        extractor = FlextLdifAclExtractor()
-        return extractor.extract_acl_entries(entries, acl_attributes)
+        acl_service = FlextLdifAcl()
+        return acl_service.extract_acl_entries(entries, acl_attributes)
 
     @classmethod
     def remove_attributes(
@@ -1605,10 +1665,10 @@ class FlextLdifFilters(
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Remove attributes from entry.
 
-        DELEGATED TO: FlextLdifEntryTransformer.remove_attributes()
+        DELEGATED TO: FlextLdifEntries.remove_attributes()
         """
-        transformer = FlextLdifEntryTransformer()
-        return transformer.remove_attributes(entry, attributes)
+        entries_service = FlextLdifEntries()
+        return entries_service.remove_attributes(entry, attributes)
 
     @classmethod
     def remove_objectclasses(
@@ -1618,10 +1678,10 @@ class FlextLdifFilters(
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Remove objectClasses from entry.
 
-        DELEGATED TO: FlextLdifEntryTransformer.remove_objectclasses()
+        DELEGATED TO: FlextLdifEntries.remove_objectclasses()
         """
-        transformer = FlextLdifEntryTransformer()
-        return transformer.remove_objectclasses(entry, objectclasses)
+        entries_service = FlextLdifEntries()
+        return entries_service.remove_objectclasses(entry, objectclasses)
 
     @classmethod
     def remove_attributes_with_tracking(
@@ -1649,7 +1709,7 @@ class FlextLdifFilters(
             result = FlextLdif.filters.remove_attributes_with_tracking(
                 entry,
                 ["nsds5ReplicaId", "nsslapd-maxbersize"],
-                reason="Removed Oracle-specific attributes"
+                reason="Removed server-specific attributes"
             )
 
         """
@@ -1657,6 +1717,13 @@ class FlextLdifFilters(
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         # Track each attribute removal in metadata for transformation comments
+        # Ensure metadata exists before tracking
+        current_metadata = entry.metadata
+        if current_metadata is None:
+            current_metadata = FlextLdifModels.QuirkMetadata(
+                quirk_type="filter_tracking"
+            )
+
         updated_entry = entry
         for attr_name in attributes:
             # Get original values before removal (for metadata tracking)
@@ -1667,13 +1734,17 @@ class FlextLdifFilters(
             for key, values in updated_entry.attributes.items():
                 if key.lower() == attr_lower:
                     matching_attr = key
-                    original_values = list(values)
+                    original_values = (
+                        list(values)
+                        if isinstance(values, (list, tuple))
+                        else [str(values)]
+                    )
                     break
 
             if matching_attr:
-                # Track the transformation
+                # Track the transformation using FlextLdifUtilities.Metadata
                 FlextLdifUtilities.Metadata.track_transformation(
-                    metadata=updated_entry.metadata,
+                    metadata=current_metadata,
                     original_name=matching_attr,
                     target_name=None,
                     original_values=original_values,
@@ -1686,6 +1757,15 @@ class FlextLdifFilters(
             remove_result = cls.remove_attributes(updated_entry, [attr_name])
             if remove_result.is_success:
                 updated_entry = remove_result.unwrap()
+                # Update metadata reference for next iteration
+                if updated_entry.metadata:
+                    current_metadata = updated_entry.metadata
+
+        # Ensure final entry has updated metadata
+        if current_metadata and updated_entry.metadata != current_metadata:
+            updated_entry = updated_entry.model_copy(
+                update={"metadata": current_metadata}
+            )
 
         return FlextResult[FlextLdifModels.Entry].ok(updated_entry)
 
@@ -1835,156 +1915,85 @@ class FlextLdifFilters(
             mark_excluded=True,
         )
 
-        # Mark excluded ACLs as rejected in metadata
+        # Mark excluded ACLs as rejected in metadata using FlextLdifUtilities.Metadata
+        updated_excluded: list[FlextLdifModels.Entry] = []
         for entry in excluded_acls:
             if entry.metadata and entry.metadata.processing_stats:
-                _ = entry.metadata.processing_stats.mark_rejected(
-                    FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
-                    f"ACL DN outside base DN: {entry.dn}",
+                updated_entry = FlextLdifUtilities.Metadata.update_entry_statistics(
+                    entry,
+                    mark_rejected=(
+                        FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
+                        f"ACL DN outside base DN: {entry.dn}",
+                    ),
                 )
+                updated_excluded.append(updated_entry)
+            else:
+                updated_excluded.append(entry)
+        excluded_acls = updated_excluded
 
         # Combine: filtered ACLs + all system ACLs (kept because they're not base DN specific)
         return (included_acls + acls_without_basedn, excluded_acls)
-
-    @classmethod
-    def _check_hierarchy_priority(
-        cls,
-        entry: FlextLdifModels.Entry,
-        constants: type,
-    ) -> bool:
-        """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES.
-
-        Args:
-            entry: Entry to check
-            constants: Server Constants class
-
-        Returns:
-            True if entry has priority hierarchy objectClass
-
-        """
-        if not hasattr(constants, "HIERARCHY_PRIORITY_OBJECTCLASSES"):
-            return False
-
-        priority_classes = constants.HIERARCHY_PRIORITY_OBJECTCLASSES
-        entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
-        return any(oc.lower() in entry_ocs for oc in priority_classes)
-
-    @classmethod
-    def _get_server_constants(cls, server_type: str) -> FlextResult[type]:
-        """Get and validate server constants via FlextLdifServer registry.
-
-        Args:
-            server_type: Server type identifier
-
-        Returns:
-            FlextResult with constants class or error message
-
-        """
-        try:
-            registry = _get_server_registry()
-            server_quirk = registry.quirk(server_type)
-
-            if not server_quirk:
-                return FlextResult[type].fail(f"Unknown server type: {server_type}")
-
-            quirk_class = type(server_quirk)
-            constants = getattr(quirk_class, "Constants", None)
-            if constants is None:
-                return FlextResult[type].fail(
-                    f"Server type {server_type} missing Constants class",
-                )
-
-            if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
-                return FlextResult[type].fail(
-                    f"Server {server_type} missing CATEGORIZATION_PRIORITY",
-                )
-            if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
-                return FlextResult[type].fail(
-                    f"Server {server_type} missing CATEGORY_OBJECTCLASSES",
-                )
-
-            return FlextResult[type].ok(constants)
-        except ValueError as e:
-            return FlextResult[type].fail(f"Failed to get server constants: {e}")
-
-    @classmethod
-    def _categorize_by_priority(
-        cls,
-        entry: FlextLdifModels.Entry,
-        constants: type,
-        priority_order: list[str],
-        category_map: dict[str, frozenset[str]],
-    ) -> tuple[str, str | None]:
-        """Categorize entry by iterating through priority order.
-
-        Args:
-            entry: Entry to categorize
-            constants: Server Constants class
-            priority_order: Category priority order
-            category_map: Category to objectClasses mapping
-
-        Returns:
-            Tuple of (category, rejection_reason)
-
-        """
-        for category in priority_order:
-            if category == "acl":
-                if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
-                    acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)
-                    # Use direct utility method - no helper wrapper
-                    if FlextLdifUtilities.Entry.has_any_attributes(
-                        entry,
-                        acl_attributes,
-                    ):
-                        return ("acl", None)
-                continue
-
-            category_objectclasses = category_map.get(category)
-            if not category_objectclasses:
-                continue
-
-            # Use direct utility method - no helper wrapper
-            if FlextLdifUtilities.Entry.has_objectclass(
-                entry,
-                tuple(category_objectclasses),
-            ):
-                return (category, None)
-
-        return ("rejected", "No category match")
 
     @classmethod
     def categorize(
         cls,
         entry: FlextLdifModels.Entry,
         rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
-        server_type: str = "rfc",
+        server_type: str | None = None,
+        *,
+        server_registry: FlextLdifServer | None = None,
     ) -> tuple[str, str | None]:
         """Categorize entry using SERVER-SPECIFIC rules.
 
-        DELEGATED TO: FlextLdifCategorizer.categorize_entry()
+        DELEGATED TO: FlextLdifCategorization.categorize_entry()
 
-        Uses server-specific constants from servers/oid.py, servers/oud.py, etc.
-        for objectClass prioritization and ACL detection.
+        Uses server-specific constants from FlextLdifServer registry via DI.
+        No direct knowledge of OID, OUD, etc. - all via server registry.
 
-        Categories (server-specific priority):
+        Uses Entry + Metadata pattern: determines server_type from entry.metadata.quirk_type
+        if not provided, falling back to FlextLdifServer registry defaults.
+
+        Categories (server-specific priority via FlextLdifServer):
         - schema: Has attributeTypes/objectClasses
-        - users: User accounts (person, inetOrgPerson, orcluser for OID)
-        - hierarchy: Containers (organizationalUnit, orclContainer for OID)
-        - groups: Group entries (groupOfNames, orclGroup for OID)
-        - acl: Entries with ACL attributes (orclaci for OID, aci for OUD)
+        - users: User accounts (server-specific objectClasses from registry)
+        - hierarchy: Containers (server-specific objectClasses from registry)
+        - groups: Group entries (server-specific objectClasses from registry)
+        - acl: Entries with ACL attributes (server-specific attributes from registry)
         - rejected: No match
 
         Args:
             entry: LDIF entry to categorize
             rules: Category rules (can override server defaults)
-            server_type: Server type ("oid", "oud", "rfc") determines constants
+            server_type: Server type ("oid", "oud", "rfc") - if None, uses entry.metadata.quirk_type
+            server_registry: FlextLdifServer instance for DI (defaults to global instance)
 
         Returns:
             Tuple of (category, rejection_reason)
 
         """
-        categorizer = FlextLdifCategorizer()
-        return categorizer.categorize_entry(entry, rules, server_type)
+        # Determine effective server_type using Entry + Metadata pattern
+        effective_server_type = server_type
+        if (
+            effective_server_type is None
+            and entry.metadata
+            and entry.metadata.quirk_type
+        ):
+            effective_server_type = entry.metadata.quirk_type
+        if effective_server_type is None:
+            # Fallback to global registry default (first registered server or "rfc")
+            registry = server_registry or FlextLdifServer.get_global_instance()
+            registered = registry.list_registered_servers()
+            effective_server_type = registered[0] if registered else "rfc"
+
+        categorization_service: FlextLdifProtocols.Services.CategorizationServiceProtocol = (
+            FlextLdifCategorization(
+                server_type=effective_server_type,
+                server_registry=server_registry,
+            )
+        )
+        return categorization_service.categorize_entry(
+            entry, rules, effective_server_type
+        )
 
     @staticmethod
     def _extract_allowed_oids(
@@ -2010,7 +2019,19 @@ class FlextLdifFilters(
         if mru_oids is None:
             mru_oids = allowed_oids.get("matchingruleuse")
         allowed_mru_oids = mru_oids if mru_oids is not None else []
-        return allowed_attr_oids, allowed_oc_oids, allowed_mr_oids, allowed_mru_oids
+
+        ls_oids = allowed_oids.get("allowed_ldapsyntaxes_oids")
+        if ls_oids is None:
+            ls_oids = allowed_oids.get("ldapsyntaxes")
+        allowed_ls_oids = ls_oids if ls_oids is not None else []
+
+        return (
+            allowed_attr_oids,
+            allowed_oc_oids,
+            allowed_mr_oids,
+            allowed_mru_oids,
+            allowed_ls_oids,
+        )
 
     @classmethod
     def _filter_schema_attribute(
@@ -2042,6 +2063,7 @@ class FlextLdifFilters(
                 attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses"),
                 attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules"),
                 attrs_copy.get("matchingRuleUse") or attrs_copy.get("matchingruleuse"),
+                attrs_copy.get("ldapSyntaxes") or attrs_copy.get("ldapsyntaxes"),
             ],
         )
 
@@ -2054,7 +2076,7 @@ class FlextLdifFilters(
         """Filter schema entries by allowed OID patterns.
 
         Filters INDIVIDUAL DEFINITIONS within schema attributes (attributeTypes,
-        objectClasses, matchingRules, matchingRuleUse) to keep only those with
+        objectClasses, matchingRules, matchingRuleUse, ldapSyntaxes) to keep only those with
         OIDs matching the allowed patterns.
 
         Key improvement: Instead of filtering entire entries based on whether they
@@ -2064,10 +2086,14 @@ class FlextLdifFilters(
         if not entries or not allowed_oids:
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        # Extract allowed OIDs for each schema type
-        allowed_attr_oids, allowed_oc_oids, allowed_mr_oids, allowed_mru_oids = (
-            cls._extract_allowed_oids(allowed_oids)
-        )
+        # Extract allowed OIDs for each schema type (all 4 types: attributetypes, objectclasses, matchingrules, ldapsyntaxes)
+        (
+            allowed_attr_oids,
+            allowed_oc_oids,
+            allowed_mr_oids,
+            allowed_mru_oids,
+            allowed_ls_oids,
+        ) = cls._extract_allowed_oids(allowed_oids)
 
         filtered = []
         for entry in entries:
@@ -2097,6 +2123,11 @@ class FlextLdifFilters(
                 attrs_copy,
                 ("matchingRuleUse", "matchingruleuse"),
                 allowed_mru_oids,
+            )
+            cls._filter_schema_attribute(
+                attrs_copy,
+                ("ldapSyntaxes", "ldapsyntaxes"),
+                allowed_ls_oids,
             )
 
             # Only keep entry if it has definitions remaining after filtering
@@ -2382,18 +2413,24 @@ class FlextLdifFilters(
         whitelist_rules: FlextLdifModels.WhitelistRules
         | Mapping[str, object]
         | None = None,
-        server_type: str = "rfc",
+        server_type: str | None = None,
+        *,
+        server_registry: FlextLdifServer | None = None,
     ) -> tuple[str, str | None]:
         """Categorize entry into 6 categories.
 
         Uses type-safe Pydantic models instead of dict[str, Any].
         Delegates to FlextLdifFilters.categorize, with optional whitelist validation.
 
+        Uses Entry + Metadata pattern: determines server_type from entry.metadata.quirk_type
+        if not provided, falling back to FlextLdifServer registry defaults.
+
         Args:
             entry: Entry to categorize
             rules: Categorization rules (model or dict)
             whitelist_rules: Schema whitelist rules (optional)
-            server_type: LDAP server type (oid, oud, rfc, etc.) - defaults to "rfc"
+            server_type: LDAP server type (oid, oud, rfc, etc.) - if None, uses entry.metadata.quirk_type
+            server_registry: FlextLdifServer instance for DI (defaults to global instance)
 
         Returns:
             Tuple of (category, reason) where category is one of:
@@ -2413,20 +2450,29 @@ class FlextLdifFilters(
         if is_blocked:
             return ("rejected", reason)
 
-        # Use server_type parameter (passed from migration service) instead of
-        # extracting from entry metadata. This ensures correct server-specific
-        # constants are used even if entries don't have metadata set.
-        # Priority: parameter > entry.metadata.quirk_type > "rfc" fallback
+        # Determine effective server_type using Entry + Metadata pattern
+        # Priority: parameter > entry.metadata.quirk_type > registry default
         effective_server_type = server_type
         if (
-            entry.metadata
-            and hasattr(entry.metadata, "quirk_type")
+            effective_server_type is None
+            and entry.metadata
             and entry.metadata.quirk_type
         ):
             effective_server_type = entry.metadata.quirk_type
+        if effective_server_type is None:
+            # Fallback to global registry default (first registered server or "rfc")
+            registry = server_registry or FlextLdifServer.get_global_instance()
+            registered = registry.list_registered_servers()
+            effective_server_type = registered[0] if registered else "rfc"
 
-        # Delegate to FilterService for main categorization with server_type
-        category, reason = FlextLdifFilters.categorize(
+        # Delegate to categorizer service for main categorization with server_type via DI
+        categorization_service: FlextLdifProtocols.Services.CategorizationServiceProtocol = (
+            FlextLdifCategorization(
+                server_type=effective_server_type,
+                server_registry=server_registry,
+            )
+        )
+        category, reason = categorization_service.categorize_entry(
             entry,
             normalized_rules,
             effective_server_type,

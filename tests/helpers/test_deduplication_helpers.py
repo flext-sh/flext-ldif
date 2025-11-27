@@ -119,7 +119,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         )
         if should_succeed:
             unwrapped = FlextTestsMatchers.assert_success(
-                result, "Parse should succeed",
+                result,
+                "Parse should succeed",
             )
         else:
             _ = TestAssertions.assert_failure(result)
@@ -868,7 +869,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
             must_have_attributes = test_case.get("must_have_attributes")
             assert must_have_attributes is None or isinstance(
-                must_have_attributes, list,
+                must_have_attributes,
+                list,
             ), f"Test case {i} must_have_attributes must be list | None"
 
             schema_obj = DeduplicationHelpers.schema_parse_and_assert(
@@ -1305,11 +1307,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         if isinstance(entries, list):
             result = writer.write(
-                entries, target_server_type="rfc", output_target="string",
+                entries,
+                target_server_type="rfc",
+                output_target="string",
             )
         else:
             result = writer.write(
-                [entries], target_server_type="rfc", output_target="string",
+                [entries],
+                target_server_type="rfc",
+                output_target="string",
             )
 
         return DeduplicationHelpers.assert_success_and_unwrap_string(
@@ -3907,7 +3913,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 cast("str | Path", ldif_content),
                 expected_dn=cast("str | None", test_case.get("expected_dn")),
                 required_attributes=cast(
-                    "list[str] | None", test_case.get("required_attributes"),
+                    "list[str] | None",
+                    test_case.get("required_attributes"),
                 ),
                 expected_count=cast("int | None", test_case.get("expected_count")),
             )
@@ -4569,7 +4576,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
             should_succeed = test_case.get("should_succeed", False)
             expected_error = cast(
-                "str | None", test_case.get("expected_error_substring"),
+                "str | None",
+                test_case.get("expected_error_substring"),
             )
 
             result = parse_func(test_input)
@@ -4620,7 +4628,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 write_method=cast("str | None", test_case.get("write_method")),
                 must_contain=cast("list[str] | None", test_case.get("must_contain")),
                 validate_fields=cast(
-                    "dict[str, object] | None", test_case.get("validate_fields"),
+                    "dict[str, object] | None",
+                    test_case.get("validate_fields"),
                 )
                 if validate_all
                 else None,
@@ -4673,7 +4682,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 if validate_all
                 else False,
                 validate_attributes=cast(
-                    "list[str] | None", test_case.get("validate_attributes"),
+                    "list[str] | None",
+                    test_case.get("validate_attributes"),
                 )
                 if validate_all
                 else None,
@@ -4818,7 +4828,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         if not allow_extra:
             DeduplicationHelpers.assert_list_length(
-                cast("list[object]", entries), len(expected_dns),
+                cast("list[object]", entries),
+                len(expected_dns),
             )
 
         entry_dns = [entry.dn.value for entry in entries if entry.dn is not None]
@@ -5011,7 +5022,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 raise ValueError(msg)
 
             DeduplicationHelpers.assert_list_length(
-                cast("list[object]", items), cast("int", expected_length),
+                cast("list[object]", items),
+                cast("int", expected_length),
             )
 
     @staticmethod
@@ -6466,7 +6478,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Args:
             writer: Writer instance
             test_cases: List of test case dicts with keys:
-                - data: object (required) - data to write  # noqa: ANN401
+                - data: object (required) - data to write
                 - must_contain: str | list[str] | None
                 - must_not_contain: str | list[str] | None
                 - should_succeed: bool (default: True)
@@ -6490,10 +6502,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     data,
                     write_method=write_method,
                     must_contain=cast(
-                        "list[str] | str | None", test_case.get("must_contain"),
+                        "list[str] | str | None",
+                        test_case.get("must_contain"),
                     ),
                     must_not_contain=cast(
-                        "list[str] | str | None", test_case.get("must_not_contain"),
+                        "list[str] | str | None",
+                        test_case.get("must_not_contain"),
                     ),
                 )
                 results.append(written)
@@ -6503,7 +6517,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     data,
                     write_method=write_method,
                     expected_error_substring=cast(
-                        "str | None", test_case.get("expected_error_substring"),
+                        "str | None",
+                        test_case.get("expected_error_substring"),
                     ),
                 )
                 results.append("")  # Placeholder for failed writes
@@ -6815,7 +6830,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 )
                 test_case_dict = test_case
                 required_attrs = cast(
-                    "list[str]", test_case_dict["required_attributes"],
+                    "list[str]",
+                    test_case_dict["required_attributes"],
                 )
                 for attr_name in required_attrs:
                     assert attr_name in entries[0].attributes.attributes, (
@@ -6957,7 +6973,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Args:
             writer: Writer instance
             test_cases: List of dicts with keys:
-                - data: object (required) - data to write  # noqa: ANN401
+                - data: object (required) - data to write
                 - expected_error_substring: str | None
             write_method: Method name (default: "write")
 
@@ -6976,7 +6992,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
             result = method(data)
             expected_error = cast(
-                "str | None", test_case.get("expected_error_substring"),
+                "str | None",
+                test_case.get("expected_error_substring"),
             )
             TestAssertions.assert_failure(result, expected_error)
             results.append(result)

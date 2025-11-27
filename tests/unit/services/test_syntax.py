@@ -266,7 +266,9 @@ class TestSyntaxModel:
 
     @pytest.mark.parametrize(("oid", "expected_suffix"), RFC4517_OIDS)
     def test_is_rfc4517_standard_and_suffix(
-        self, oid: str, expected_suffix: str,
+        self,
+        oid: str,
+        expected_suffix: str,
     ) -> None:
         """Test RFC 4517 detection and OID suffix extraction.
 
@@ -336,7 +338,9 @@ class TestSyntaxModel:
 
     @pytest.mark.parametrize(("pattern", "description"), VALIDATION_PATTERNS)
     def test_syntax_validation_patterns(
-        self, pattern: str | None, description: str,
+        self,
+        pattern: str | None,
+        description: str,
     ) -> None:
         """Test validation pattern support.
 
@@ -359,7 +363,8 @@ class TestSyntaxModel:
     # ========================================================================
 
     @pytest.mark.parametrize(
-        "test_case", [SyntaxTestCase.BOOLEAN, SyntaxTestCase.DIRECTORY_STRING],
+        "test_case",
+        [SyntaxTestCase.BOOLEAN, SyntaxTestCase.DIRECTORY_STRING],
     )
     def test_model_serialization(self, test_case: SyntaxTestCase) -> None:
         """Test Pydantic serialization methods.

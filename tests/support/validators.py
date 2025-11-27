@@ -86,7 +86,9 @@ class TestValidators:
         if not dn:
             return False
         return FlextUtilities.Validation.validate_pattern(
-            dn.strip(), _DN_PATTERN, "DN",
+            dn.strip(),
+            _DN_PATTERN,
+            "DN",
         ).is_success
 
     @staticmethod
@@ -134,7 +136,8 @@ class TestValidators:
 
     @staticmethod
     def validate_file_operations(
-        file_path: Path, expected_content: str,
+        file_path: Path,
+        expected_content: str,
     ) -> dict[str, bool]:
         """Validate file operations for LDIF files."""
         validations = {
@@ -223,7 +226,9 @@ class TestValidators:
 
     @staticmethod
     def assert_flext_result_chain(
-        results: list[FlextResult[object]], *, expect_all_success: bool = True,
+        results: list[FlextResult[object]],
+        *,
+        expect_all_success: bool = True,
     ) -> None:
         """Assert FlextResult chain operations."""
         if expect_all_success:

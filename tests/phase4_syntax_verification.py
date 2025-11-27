@@ -11,7 +11,6 @@ Modules tested:
 - flext_ldif.services.schema.FlextLdifSchema
 - flext_ldif.services.server.FlextLdifServer
 - flext_ldif.services.entry_manipulation.FlextLdifEntryManipulation
-- flext_ldif.services.filter_engine.FlextLdifFilterEngine
 - flext_ldif.services.migration.FlextLdifMigration
 - flext_ldif.services.statistics.FlextLdifStatistics
 
@@ -50,7 +49,6 @@ class ServiceModule(StrEnum):
     SCHEMA = "schema"
     SERVER = "server"
     ENTRY_MANIPULATION = "entry_manipulation"
-    FILTER_ENGINE = "filter_engine"
     MIGRATION = "migration"
     STATISTICS = "statistics"
 
@@ -65,7 +63,6 @@ class ServiceClass(StrEnum):
     SCHEMA = "FlextLdifSchema"
     SERVER = "FlextLdifServer"
     ENTRY_MANIPULATION = "FlextLdifEntryManipulation"
-    FILTER_ENGINE = "FlextLdifFilterEngine"
     MIGRATION = "FlextLdifMigration"
     STATISTICS = "FlextLdifStatistics"
 
@@ -91,7 +88,6 @@ class Phase4SyntaxVerification:
         ServiceModule.SCHEMA: ServiceClass.SCHEMA,
         ServiceModule.SERVER: ServiceClass.SERVER,
         ServiceModule.ENTRY_MANIPULATION: ServiceClass.ENTRY_MANIPULATION,
-        ServiceModule.FILTER_ENGINE: ServiceClass.FILTER_ENGINE,
         ServiceModule.MIGRATION: ServiceClass.MIGRATION,
         ServiceModule.STATISTICS: ServiceClass.STATISTICS,
     }
@@ -105,7 +101,6 @@ class Phase4SyntaxVerification:
         ServiceClass.SCHEMA: ["validate_schema", "execute"],
         ServiceClass.SERVER: ["get_server_config", "execute"],
         ServiceClass.ENTRY_MANIPULATION: ["manipulate", "execute"],
-        ServiceClass.FILTER_ENGINE: ["filter", "execute"],
         ServiceClass.MIGRATION: ["migrate", "execute"],
         ServiceClass.STATISTICS: ["calculate", "execute"],
     }

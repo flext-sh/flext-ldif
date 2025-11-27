@@ -1,9 +1,10 @@
-"""FLEXT-LDIF Analysis Service - Entry analysis and validation.
+"""Analysis Service - Entry Analysis and Validation.
 
-This service handles entry analysis, statistics generation, and validation
-operations.
+Provides comprehensive analysis and validation for LDIF entries including
+statistics generation, pattern detection, and RFC 2849/4512 compliance validation.
 
-Extracted from FlextLdif facade to follow Single Responsibility Principle.
+Scope: Entry collection analysis, object class distribution, pattern detection,
+DN validation, attribute validation, and ObjectClass validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,16 +12,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import Counter
+from typing import override
+
 from flext_core import FlextResult, FlextRuntime
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifAnalysis(
-    LdifServiceBase,
+    FlextLdifServiceBase[FlextLdifModels.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation.
 
@@ -46,23 +49,20 @@ class FlextLdifAnalysis(
 
     """
 
+    @override
     def execute(
         self,
-        **_kwargs: object,
-    ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
+    ) -> FlextResult[FlextLdifModels.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class.
 
         This service provides specific methods (analyze, validate_entries)
         rather than a generic execute operation.
 
-        Args:
-            **_kwargs: Ignored parameters for FlextService protocol compatibility
-
         Returns:
             FlextResult with not implemented error
 
         """
-        return FlextResult.fail(
+        return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(
             "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
@@ -91,48 +91,28 @@ class FlextLdifAnalysis(
                 print(f"Classes: {stats.objectclass_distribution}")
 
         """
-        try:
-            total_entries = len(entries)
+        total_entries = len(entries)
 
-            # Analyze object class distribution
-            objectclass_distribution: dict[str, int] = {}
-            patterns_detected: list[str] = []
+        objectclass_distribution: Counter[str] = Counter()
+        patterns_detected: set[str] = set()
 
-            for entry in entries:
-                # Count object classes
-                if entry.metadata.objectclasses:
-                    for oc in entry.metadata.objectclasses:
-                        oc_name = oc.name if hasattr(oc, "name") else str(oc)
-                        objectclass_distribution[oc_name] = (
-                            objectclass_distribution.get(oc_name, 0) + 1
-                        )
+        for entry in entries:
+            for oc_name in entry.get_objectclass_names():
+                objectclass_distribution[oc_name] += 1
 
-                # Simple pattern detection
-                dn_str = str(entry.dn)
-                if (
-                    "ou=users" in dn_str.lower()
-                    and "user pattern" not in patterns_detected
-                ):
-                    patterns_detected.append("user pattern")
-                if (
-                    "ou=groups" in dn_str.lower()
-                    and "group pattern" not in patterns_detected
-                ):
-                    patterns_detected.append("group pattern")
+            dn_str_lower = str(entry.dn).lower()
+            if "ou=users" in dn_str_lower:
+                patterns_detected.add("user pattern")
+            if "ou=groups" in dn_str_lower:
+                patterns_detected.add("group pattern")
 
-            # Create analysis result
-            analysis_result = FlextLdifModels.EntryAnalysisResult(
+        return FlextResult[FlextLdifModels.EntryAnalysisResult].ok(
+            FlextLdifModels.EntryAnalysisResult(
                 total_entries=total_entries,
-                objectclass_distribution=objectclass_distribution,
-                patterns_detected=patterns_detected,
-            )
-
-            return FlextResult[FlextLdifModels.EntryAnalysisResult].ok(analysis_result)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(
-                f"Entry analysis failed: {e}",
-            )
+                objectclass_distribution=dict(objectclass_distribution),
+                patterns_detected=sorted(patterns_detected),
+            ),
+        )
 
     def validate_entries(
         self,
@@ -164,40 +144,30 @@ class FlextLdifAnalysis(
                 print(f"Valid entries: {report.valid_entries}/{report.total_entries}")
 
         """
-        try:
-            errors: list[str] = []
-            valid_count = 0
-            invalid_count = 0
+        errors: list[str] = []
+        valid_count = 0
 
-            for entry in entries:
-                is_entry_valid, entry_errors = self._validate_single_entry(
-                    entry,
-                    validation_service,
-                )
-                errors.extend(entry_errors)
+        for entry in entries:
+            is_entry_valid, entry_errors = self._validate_single_entry(
+                entry,
+                validation_service,
+            )
+            errors.extend(entry_errors)
+            if is_entry_valid:
+                valid_count += 1
 
-                if is_entry_valid:
-                    valid_count += 1
-                else:
-                    invalid_count += 1
+        total_entries = len(entries)
+        invalid_count = total_entries - valid_count
 
-            total_entries = len(entries)
-            is_valid = invalid_count == 0
-
-            result = FlextLdifModels.ValidationResult(
-                is_valid=is_valid,
+        return FlextResult[FlextLdifModels.ValidationResult].ok(
+            FlextLdifModels.ValidationResult(
+                is_valid=invalid_count == 0,
                 total_entries=total_entries,
                 valid_entries=valid_count,
                 invalid_entries=invalid_count,
-                errors=errors[:100],  # Limit errors to 100
-            )
-
-            return FlextResult[FlextLdifModels.ValidationResult].ok(result)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[FlextLdifModels.ValidationResult].fail(
-                f"Entry validation failed: {e}",
-            )
+                errors=errors[:100],
+            ),
+        )
 
     def _validate_single_entry(
         self,
@@ -222,7 +192,7 @@ class FlextLdifAnalysis(
 
         # Validate DN (dn is required, cannot be None)
         dn_str = entry.dn.value
-        if not dn_str or not isinstance(dn_str, str):
+        if not dn_str:
             errors.append(f"Entry has invalid DN: {entry.dn}")
             is_entry_valid = False
 

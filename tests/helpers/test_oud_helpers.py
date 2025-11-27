@@ -43,13 +43,13 @@ class OudTestHelpers:
         """
         result = schema_quirk.parse(attr_def)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result),
+            result,
             "Attribute parse should succeed",
         )
-        attr = cast("FlextLdifModels.SchemaAttribute", unwrapped)
-        assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
+        assert isinstance(unwrapped, FlextLdifModels.SchemaAttribute), (
             "Parse should return SchemaAttribute"
         )
+        attr = unwrapped
         if expected_oid is not None:
             assert attr.oid == expected_oid, (
                 f"Expected OID {expected_oid}, got {attr.oid}"
@@ -86,13 +86,13 @@ class OudTestHelpers:
         """
         result = schema_quirk.parse(oc_def)
         unwrapped = TestAssertions.assert_success(
-            cast("FlextResult[object]", result),
+            result,
             "ObjectClass parse should succeed",
         )
-        oc = cast("FlextLdifModels.SchemaObjectClass", unwrapped)
-        assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
+        assert isinstance(unwrapped, FlextLdifModels.SchemaObjectClass), (
             "Parse should return SchemaObjectClass"
         )
+        oc = unwrapped
         if expected_oid is not None:
             assert oc.oid == expected_oid, f"Expected OID {expected_oid}, got {oc.oid}"
         if expected_name is not None:

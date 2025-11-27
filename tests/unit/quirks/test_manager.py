@@ -177,18 +177,6 @@ class TestFlextLdifServerQuirkRetrieval:
         quirk = registry.entry(test_case.server_type)
         assert quirk is not None, f"Entry quirk not found for {test_case.server_type}"
 
-    def test_find_acl_for_line_is_callable(self, registry: FlextLdifServer) -> None:
-        """Test that find_acl_for_line method is available and callable."""
-        # Test that the method exists and can be called without raising an exception
-        # The result depends on the server type and line content
-        try:
-            registry.find_acl_for_line(
-                FlextLdifConstants.LdapServers.OPENLDAP_1, "test line",
-            )
-            # If we got here, the method works
-        except AttributeError as e:
-            pytest.fail(f"find_acl_for_line method not found on FlextLdifServer: {e}")
-
 
 class TestFlextLdifServerRegistryCompletion:
     """Test registry completeness for all supported server types."""

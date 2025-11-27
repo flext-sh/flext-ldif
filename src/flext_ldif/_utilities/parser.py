@@ -10,6 +10,7 @@ import base64
 import contextlib
 import re
 from collections.abc import Callable
+from typing import TypedDict
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -25,6 +26,45 @@ _DEFAULT_ENCODING = FlextLdifConstants.LDIF_DEFAULT_ENCODING
 logger = FlextLogger(__name__)
 
 
+# Type definitions for parser utilities
+class ExtensionsDict(TypedDict, total=False):
+    """Type-safe dictionary for schema extensions.
+
+    Contains X- custom extensions, DESC descriptions, and other
+    schema definition extensions.
+    """
+
+    DESC: str | None
+    # X- extensions (custom properties)
+    # Any other schema extensions
+
+
+class MetadataDict(TypedDict, total=False):
+    """Type-safe dictionary for parsed metadata structures."""
+
+    extensions: ExtensionsDict | None
+    # Other metadata fields
+
+
+class EntryAttributesDict(TypedDict, total=False):
+    """Type-safe dictionary for LDIF entry attributes.
+
+    Maps attribute names to lists of values (RFC 2849 format).
+    """
+
+    objectClass: list[str] | None
+    # Other attributes
+    # Internal metadata fields
+    _original_dn_line: list[str] | None
+    _original_lines: list[str] | None
+    _base64_dn: list[str] | None
+
+
+# Type aliases for backwards compatibility
+Extensions = ExtensionsDict
+Metadata = MetadataDict
+
+
 class FlextLdifUtilitiesParser:
     """Generic LDIF parsing utilities - simple helper functions.
 
@@ -34,7 +74,7 @@ class FlextLdifUtilitiesParser:
     """
 
     @staticmethod
-    def ext(metadata: dict[str, object]) -> dict[str, object]:
+    def ext(metadata: MetadataDict) -> ExtensionsDict:
         """Extract extension information from parsed metadata."""
         result = metadata.get("extensions", {})
         return result if FlextRuntime.is_dict_like(result) else {}
@@ -115,7 +155,7 @@ class FlextLdifUtilitiesParser:
         return re.search(pattern, definition) is not None
 
     @staticmethod
-    def extract_extensions(definition: str) -> dict[str, object]:
+    def extract_extensions(definition: str) -> ExtensionsDict:
         """Extract extension information from schema definition string.
 
         Simple helper to extract X- extensions, DESC, ORDERING, SUBSTR from
@@ -126,7 +166,7 @@ class FlextLdifUtilitiesParser:
         if not definition or not isinstance(definition, str):
             return {}
 
-        extensions: dict[str, object] = {}
+        extensions: ExtensionsDict = {}
 
         # Extract X- extensions (custom properties)
         x_pattern = re.compile(
@@ -204,9 +244,9 @@ class FlextLdifUtilitiesParser:
     def _process_ldif_line(
         line: str,
         current_dn: str | None,
-        current_attrs: dict[str, list[str]],
-        entries: list[tuple[str, dict[str, list[str]]]],
-    ) -> tuple[str | None, dict[str, list[str]]]:
+        current_attrs: EntryAttributesDict,
+        entries: list[tuple[str, EntryAttributesDict]],
+    ) -> tuple[str | None, EntryAttributesDict]:
         """Process single LDIF line with RFC 2849 base64 detection.
 
         Root Cause Fix: Correctly handle :: (base64) vs : (regular) indicators.
@@ -274,7 +314,7 @@ class FlextLdifUtilitiesParser:
                 entries.append((current_dn, current_attrs))
 
             # Track if DN was base64-encoded (for metadata preservation)
-            new_attrs: dict[str, list[str]] = {}
+            new_attrs: EntryAttributesDict = {}
             if is_base64:
                 # Store metadata flag for server layer to preserve
                 new_attrs["_base64_dn"] = ["true"]
@@ -296,7 +336,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif_lines(
         ldif_content: str,
-    ) -> list[tuple[str, dict[str, list[str]]]]:
+    ) -> list[tuple[str, EntryAttributesDict]]:
         """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant.
 
         Returns list of (dn, {attr: [values...]}) tuples where:
@@ -311,9 +351,9 @@ class FlextLdifUtilitiesParser:
         if not ldif_content or not isinstance(ldif_content, str):
             return []
 
-        entries: list[tuple[str, dict[str, list[str]]]] = []
+        entries: list[tuple[str, EntryAttributesDict]] = []
         current_dn: str | None = None
-        current_attrs: dict[str, list[str]] = {}
+        current_attrs: EntryAttributesDict = {}
         unfolded_lines = FlextLdifUtilitiesParser.unfold_lines(ldif_content)
 
         for raw_line in unfolded_lines:

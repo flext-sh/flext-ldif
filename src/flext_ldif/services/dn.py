@@ -1,103 +1,27 @@
-r"""Distinguished Name (DN) Operations Service - RFC 4514 Compliant Parsing & Normalization.
+"""DN Service - Distinguished Name Operations (RFC 4514).
 
-╔══════════════════════════════════════════════════════════════════════════╗
-║  RFC 4514 COMPLIANT DN OPERATIONS SERVICE                               ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║  ✅ Parse DN into components (RFC 4514)                                 ║
-║  ✅ Validate DN format (RFC 4514)                                       ║
-║  ✅ Normalize DN (lowercase attrs, preserve values)                      ║
-║  ✅ Clean DN (fix spacing, escapes)                                     ║
-║  ✅ Escape/unescape DN values (hex & backslash format)                   ║
-║  ✅ Compare DNs (case-insensitive)                                      ║
-║  ✅ Parse RDNs (single components, multi-valued)                        ║
-║  ✅ Case registry for server-specific DN tracking                       ║
-║  ✅ 100% type-safe with Pydantic v2 validation                          ║
-║  ✅ Multiple API patterns: execute(), classmethod, builder()            ║
-╚══════════════════════════════════════════════════════════════════════════╝
+Provides RFC 4514 compliant DN operations including parsing, validation,
+normalization, cleaning, escaping/unescaping, comparison, and RDN parsing.
 
-═══════════════════════════════════════════════════════════════════════════
-ARCHITECTURE (Nested Class Organization)
-
-The DN service is organized with SRP-compliant nested classes:
-
-1. **Parser** - Handles all parsing and validation operations
-   - parse_components: Parse DN into components
-   - validate_format: Validate DN format
-   - parse_rdn: Parse RDN components
-   - Internal: _parse_operation, _validate_operation, _parse_rdn_operation
-
-2. **Normalizer** - Handles normalization, cleaning, and escaping
-   - normalize: Normalize DN per RFC 4514
-   - clean_dn: Fix spacing and escaping
-   - escape_dn_value/unescape_dn_value: RFC 4514 escaping
-   - hex_escape/hex_unescape: Hex format escaping
-   - Internal: _normalize_operation, _clean_operation, _escape_operation, _unescape_operation
-
-3. **Registry** - Tracks canonical DN case for conversions (unchanged)
-   - register_dn, get_canonical_dn, has_dn, validate_oud_consistency, etc.
-
-4. **FlextLdifDn** (Facade) - Routes operations to nested classes
-   - execute(): Main service execution
-   - Builder pattern: builder(), with_dn(), build()
-   - Delegates to nested classes for actual work
-
-═══════════════════════════════════════════════════════════════════════════
-RESPONSIBILITY (SRP)
-
-This service handles DN OPERATIONS ONLY:
-- Parsing DNs into components (RFC 4514)
-- Validating DN format
-- Normalizing DN strings
-- Cleaning malformed DNs
-- Escaping/unescaping special characters
-- Comparing DNs
-- Parsing RDN components
-- Tracking canonical DN case (CaseRegistry)
-
-What it does NOT do:
-- Filter entries (use FlextLdifFilters)
-- Sort entries (use FlextLdifSorting)
-- Validate schema (use validation services)
-
-═══════════════════════════════════════════════════════════════════════════
-QUICK REFERENCE
-
-# Parse DN components
-result = FlextLdifDn.parse(dn)
-components = result.unwrap()
-
-# Validate DN
-result = FlextLdifDn.validate(dn)
-is_valid = result.unwrap()
-
-# Normalize DN (RFC 4514)
-result = FlextLdifDn.norm(dn)
-normalized = result.unwrap()
-
-# Clean malformed DN (fix spacing/escaping)
-cleaned = FlextLdifDn.clean_dn("  cn = admin , dc = example ")
-
-# Escape special chars
-escaped = FlextLdifDn.esc("Smith, John")
-
-# Case registry for conversions
-registry = FlextLdifDn.Registry()
-canonical = registry.register_dn(dn)
+Scope: DN parsing into components, DN format validation, DN normalization,
+DN cleaning (spacing/escaping fixes), DN value escaping/unescaping (standard
+and hex formats), DN comparison (case-insensitive), RDN parsing, case registry
+for server-specific DN tracking.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from typing import override
 
 from flext_core import FlextResult
 from pydantic import Field, PrivateAttr, field_validator
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -105,7 +29,9 @@ from flext_ldif.utilities import FlextLdifUtilities
 type DN = str
 
 
-class FlextLdifDn(LdifServiceBase):
+class FlextLdifDn(
+    FlextLdifServiceBase[str],
+):
     r"""RFC 4514 Compliant DN Operations Service with Nested Classes.
 
     Handles Distinguished Name parsing, validation, normalization, and escaping
@@ -234,53 +160,45 @@ class FlextLdifDn(LdifServiceBase):
             return FlextResult[str].fail("other_dn required for compare operation")
         return self._parser.compare_operation(self.dn, self.other_dn)
 
-    def execute(self, **_kwargs: object) -> FlextResult[str]:
-        """Execute DN operation based on configuration.
-
-        Args:
-            **_kwargs: Ignored parameters for FlextService protocol compatibility
-
-        """
+    @override
+    def execute(self) -> FlextResult[str]:
+        """Execute DN operation based on configuration."""
         start_time = time.perf_counter() if self.enable_events else 0
 
-        try:
-            result = self._dispatch_operation()
+        result = self._dispatch_operation()
 
-            # Emit domain event if enabled
-            if self.enable_events and hasattr(self, "logger"):
-                duration_ms = (time.perf_counter() - start_time) * 1000.0
+        # Emit domain event if enabled
+        if self.enable_events and hasattr(self, "logger"):
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
 
-                # Parse components if operation was parse
-                parse_components = None
-                if self.operation == "parse" and result.is_success:
-                    # Result value is string representation, need to parse
-                    parse_result = self.parse_components(self.dn)
-                    if parse_result.is_success:
-                        parse_components = parse_result.unwrap()
+            # Parse components if operation was parse
+            parse_components = None
+            if self.operation == "parse" and result.is_success:
+                parse_result = self.parse_components(self.dn)
+                if parse_result.is_success:
+                    parse_components = parse_result.unwrap()
 
-                # Create DN event config
-                dn_config = FlextLdifModels.DnEventConfig(
-                    dn_operation=self.operation,
-                    input_dn=self.dn,
-                    output_dn=result.unwrap() if result.is_success else None,
-                    operation_duration_ms=duration_ms,
-                    validation_result=result.is_success
-                    if self.operation == "validate"
-                    else None,
-                    parse_components=parse_components,
-                )
-                event = FlextLdifUtilities.Events.log_and_emit_dn_event(
-                    logger=self.logger,
-                    config=dn_config,
-                    log_level="info" if result.is_success else "error",
-                )
+            # Create DN event config
+            dn_config = FlextLdifModels.DnEventConfig(
+                dn_operation=self.operation,
+                input_dn=self.dn,
+                output_dn=result.unwrap() if result.is_success else None,
+                operation_duration_ms=duration_ms,
+                validation_result=result.is_success
+                if self.operation == "validate"
+                else None,
+                parse_components=parse_components,
+            )
+            event = FlextLdifUtilities.Events.log_and_emit_dn_event(
+                logger=self.logger,
+                config=dn_config,
+                log_level="info" if result.is_success else "error",
+            )
 
-                # Store event in instance
-                self._last_event = event
+            # Store event in instance
+            self._last_event = event
 
-            return result
-        except Exception as e:
-            return FlextResult[str].fail(f"DN operation failed: {e}")
+        return result
 
     def get_last_event(self) -> FlextLdifModels.DnEvent | None:
         """Retrieve last emitted DnEvent.
@@ -465,19 +383,19 @@ class FlextLdifDn(LdifServiceBase):
     def parse(self, dn: str | None) -> FlextResult[list[tuple[str, str]]]:
         """Instance method shortcut for parse_components."""
         if dn is None:
-            return FlextResult.fail("DN cannot be None")
+            return FlextResult[list[tuple[str, str]]].fail("DN cannot be None")
         return self.parse_components(dn)
 
     def validate_dn(self, dn: str | None) -> FlextResult[bool]:
         """Instance method shortcut for validate_format."""
         if dn is None:
-            return FlextResult.fail("DN cannot be None")
+            return FlextResult[bool].fail("DN cannot be None")
         return self.validate_format(dn)
 
     def norm(self, dn: str | None) -> FlextResult[str]:
         """Instance method shortcut for normalize."""
         if dn is None:
-            return FlextResult.fail("DN cannot be None")
+            return FlextResult[str].fail("DN cannot be None")
         return self.normalize(dn)
 
     def esc(self, value: str) -> str:

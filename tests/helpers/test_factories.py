@@ -35,7 +35,9 @@ class EntryTemplate:
     )
 
     def create(
-        self, variation: str = "default", **overrides: str | list[str],
+        self,
+        variation: str = "default",
+        **overrides: str | list[str],
     ) -> dict[str, str | list[str]]:
         """Create entry data with variation and overrides."""
         attrs = self.base_attrs.copy()

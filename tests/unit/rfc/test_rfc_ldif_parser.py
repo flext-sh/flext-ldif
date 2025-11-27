@@ -1,7 +1,8 @@
 """Test suite for RFC LDIF parsers and writers.
 
-This module provides comprehensive testing for RFC-compliant LDIF processing
-using real services and FlextTests infrastructure.
+Consolidated test module for RFC-compliant LDIF processing using real services
+and FlextTests infrastructure. Consolidates 11 test classes into single
+TestFlextLdifRfcLdifParser class with organized test scenarios.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+from enum import StrEnum
 from pathlib import Path
 
 import pytest
@@ -22,20 +24,121 @@ from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 from ...helpers.test_rfc_helpers import RfcTestHelpers
 from ..quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
-# Test constants - always at top of module, no type checking
-# Use classes directly, no instantiation needed
 
+class TestFlextLdifRfcLdifParser:
+    """Consolidated test suite for RFC LDIF parsers and writers.
 
-class TestRfcLdifParserService:
-    """Test RFC LDIF parser service."""
+    Combines functionality from:
+    - TestRfcLdifParserService (5 tests)
+    - TestRfcLdifWriterService (4 tests)
+    - TestRfcParserEdgeCases (1 test)
+    - TestRfcParserQuirksIntegration (1 test)
+    - TestRfcParserErrorHandling (3 tests)
+    - TestRfcParserLargeFiles (3 tests)
+    - TestRfcLdifWriterComprehensive (7 tests)
+    - TestRfcLdifWriterFileOperations (1 test)
+    - TestRfcEntryQuirkIntegration (4 tests)
+    - TestRfcAclQuirkIntegration (4 tests)
+    - TestRfcConstants (1 test)
+
+    Total: 34 test methods across 11 functional areas.
+    """
+
+    class ParserScenario(StrEnum):
+        """Parser service test scenarios."""
+
+        INITIALIZATION = "initialization"
+        PARSE_BASIC_ENTRY = "parse_basic_entry"
+        PARSE_INVALID_DN = "parse_invalid_dn"
+        PARSE_MULTIPLE_ENTRIES = "parse_multiple_entries"
+        PARSE_WITH_BINARY_DATA = "parse_with_binary_data"
+
+    class WriterScenario(StrEnum):
+        """Writer service test scenarios."""
+
+        INITIALIZATION = "initialization"
+        WRITE_BASIC_ENTRY = "write_basic_entry"
+        WRITE_TO_FILE = "write_to_file"
+        WRITE_MULTIPLE_ENTRIES = "write_multiple_entries"
+
+    class EdgeCaseScenario(StrEnum):
+        """Parser edge cases test scenario."""
+
+        BATCH_EDGE_CASES = "batch_edge_cases"
+
+    class QuirksIntegrationScenario(StrEnum):
+        """Parser quirks integration test scenario."""
+
+        SERVER_QUIRKS = "server_quirks"
+
+    class ErrorHandlingScenario(StrEnum):
+        """Error handling test scenarios."""
+
+        ERROR_CASES_BATCH = "error_cases_batch"
+        EMPTY_CONTENT = "empty_content"
+        WHITESPACE_ONLY_CONTENT = "whitespace_only_content"
+
+    class LargeFilesScenario(StrEnum):
+        """Large files handling test scenarios."""
+
+        LARGE_NUMBER_OF_ENTRIES = "large_number_of_entries"
+        MANY_ATTRIBUTES = "many_attributes"
+        LARGE_ATTRIBUTE_VALUES = "large_attribute_values"
+
+    class WriterComprehensiveScenario(StrEnum):
+        """Comprehensive writer test scenarios."""
+
+        WRITER_INITIALIZATION = "writer_initialization"
+        WRITE_ENTRIES_VARIATIONS = "write_entries_variations"
+        WRITE_EMPTY_ENTRIES_LIST = "write_empty_entries_list"
+        WRITE_ENTRY_VARIATIONS = "write_entry_variations"
+        WRITE_TO_FILE = "write_to_file"
+        WRITE_TO_NONEXISTENT_DIRECTORY = "write_to_nonexistent_directory"
+        WRITER_ERROR_HANDLING = "writer_error_handling"
+
+    class WriterFileOperationsScenario(StrEnum):
+        """Writer file operations test scenario."""
+
+        FILE_OPERATIONS = "file_operations"
+
+    class EntryQuirkScenario(StrEnum):
+        """Entry quirk integration test scenarios."""
+
+        CAN_HANDLE_ENTRY_CASES = "can_handle_entry_cases"
+        NORMALIZE_ATTRIBUTE_NAME = "normalize_attribute_name"
+        BASE64_ENCODING = "base64_encoding"
+        CAN_HANDLE_METHODS = "can_handle_methods"
+
+    class AclQuirkScenario(StrEnum):
+        """ACL quirk integration test scenarios."""
+
+        CAN_HANDLE_METHODS = "can_handle_methods"
+        PARSE_AND_WRITE = "parse_and_write"
+        CONVERT_TO_ACI = "convert_to_aci"
+        CREATE_METADATA = "create_metadata"
+
+    class ConstantsScenario(StrEnum):
+        """Constants test scenario."""
+
+        ACCESSIBILITY = "accessibility"
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSER SERVICE TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
-    def test_initialization(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parser_initialization(
+        self,
+        real_parser_service: FlextLdifParser,
+    ) -> None:
         """Test parser initialization."""
         assert real_parser_service is not None
 
     @pytest.mark.timeout(5)
-    def test_parse_basic_entry(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parse_basic_entry(
+        self,
+        real_parser_service: FlextLdifParser,
+    ) -> None:
         """Test parsing basic LDIF entry."""
         _ = RfcTestHelpers.test_parse_and_assert_entry_structure(
             real_parser_service,
@@ -49,7 +152,10 @@ class TestRfcLdifParserService:
         )
 
     @pytest.mark.timeout(5)
-    def test_parse_invalid_dn(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parse_invalid_dn(
+        self,
+        real_parser_service: FlextLdifParser,
+    ) -> None:
         """Test parsing invalid DN."""
         ldif_content = f"""dn: {TestsRfcConstants.INVALID_DN}
 objectClass: person
@@ -63,7 +169,10 @@ objectClass: person
         assert result.is_success or result.is_failure
 
     @pytest.mark.timeout(5)
-    def test_parse_multiple_entries(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parse_multiple_entries(
+        self,
+        real_parser_service: FlextLdifParser,
+    ) -> None:
         """Test parsing multiple entries."""
         _ = RfcTestHelpers.test_parse_and_assert_multiple_entries(
             real_parser_service,
@@ -76,7 +185,10 @@ objectClass: person
         )
 
     @pytest.mark.timeout(5)
-    def test_parse_with_binary_data(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parse_with_binary_data(
+        self,
+        real_parser_service: FlextLdifParser,
+    ) -> None:
         """Test parsing entry with binary data."""
         _ = RfcTestHelpers.test_parse_and_assert_entry_structure(
             real_parser_service,
@@ -86,12 +198,15 @@ objectClass: person
             expected_count=1,
         )
 
-
-class TestRfcLdifWriterService:
-    """Test RFC LDIF writer service."""
+    # ════════════════════════════════════════════════════════════════════════
+    # WRITER SERVICE TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
-    def test_initialization(self, real_writer_service: FlextLdifWriter) -> None:
+    def test_writer_initialization(
+        self,
+        real_writer_service: FlextLdifWriter,
+    ) -> None:
         """Test writer initialization."""
         assert real_writer_service is not None
 
@@ -162,12 +277,9 @@ class TestRfcLdifWriterService:
             [entry1, entry2],
         )
 
-
-# Comprehensive RFC Parser Tests from test_rfc_parser_comprehensive.py
-
-
-class TestRfcParserEdgeCases:
-    """Test suite for RFC parser edge cases."""
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSER EDGE CASES TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(10)
     def test_parse_edge_cases_batch(
@@ -286,9 +398,9 @@ cn: test2
             validate_all=True,
         )
 
-
-class TestRfcParserQuirksIntegration:
-    """Test suite for RFC parser quirks integration."""
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSER QUIRKS INTEGRATION TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(10)
     def test_parse_with_server_quirks(
@@ -340,9 +452,9 @@ cn: test
                 should_succeed=None,
             )
 
-
-class TestRfcParserErrorHandling:
-    """Test suite for RFC parser error handling."""
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSER ERROR HANDLING TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(10)
     def test_parse_error_cases_batch(
@@ -396,7 +508,10 @@ description::
         )
 
     @pytest.mark.timeout(5)
-    def test_parse_empty_content(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parse_empty_content(
+        self,
+        real_parser_service: FlextLdifParser,
+    ) -> None:
         """Test parsing empty LDIF content."""
         entries = RfcTestHelpers.test_parse_ldif_content(
             real_parser_service,
@@ -420,9 +535,9 @@ description::
         )
         assert len(entries) == 0
 
-
-class TestRfcParserLargeFiles:
-    """Test suite for RFC parser large file handling."""
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSER LARGE FILES TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(15)
     def test_parse_large_number_of_entries(
@@ -472,19 +587,16 @@ description: {large_value}
 """
         RfcTestHelpers.test_parse_edge_case(real_parser_service, ldif_content)
 
-
-# Comprehensive RFC Schema Parser Tests from test_rfc_schema_parser_comprehensive.py
-
-
-class TestRfcLdifWriterComprehensive:
-    """Comprehensive test suite for RFC LDIF writer."""
+    # ════════════════════════════════════════════════════════════════════════
+    # WRITER COMPREHENSIVE TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
-    def test_writer_initialization(
+    def test_writer_comprehensive_initialization(
         self,
         real_writer_service: FlextLdifWriter,
     ) -> None:
-        """Test writer initialization."""
+        """Test writer comprehensive initialization."""
         assert real_writer_service is not None
 
     @pytest.mark.timeout(5)
@@ -557,7 +669,7 @@ class TestRfcLdifWriterComprehensive:
         RfcTestHelpers.test_write_entry_variations(real_writer_service, entry_data)
 
     @pytest.mark.timeout(5)
-    def test_write_to_file(
+    def test_write_comprehensive_to_file(
         self,
         real_writer_service: FlextLdifWriter,
         sample_entries: list[FlextLdifModels.Entry],
@@ -587,7 +699,7 @@ class TestRfcLdifWriterComprehensive:
         )
 
     @pytest.mark.timeout(5)
-    def test_writer_error_handling(
+    def test_writer_comprehensive_error_handling(
         self,
         real_writer_service: FlextLdifWriter,
     ) -> None:
@@ -620,9 +732,9 @@ class TestRfcLdifWriterComprehensive:
             [minimal_entry],
         )
 
-
-class TestRfcLdifWriterFileOperations:
-    """Test suite for RFC LDIF writer file operations."""
+    # ════════════════════════════════════════════════════════════════════════
+    # WRITER FILE OPERATIONS TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
     def test_write_entries_to_file_operations(
@@ -662,9 +774,9 @@ class TestRfcLdifWriterFileOperations:
         assert result.is_success
         assert empty_file.exists()
 
-
-class TestRfcEntryQuirkIntegration:
-    """Test RFC Entry quirk integration methods."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY QUIRK INTEGRATION TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
     def test_can_handle_entry_cases(
@@ -806,9 +918,9 @@ objectClass: person
             rfc_entry_quirk.can_handle_objectclass(sample_schema_objectclass) is False
         )
 
-
-class TestRfcAclQuirkIntegration:
-    """Test RFC ACL quirk integration methods."""
+    # ════════════════════════════════════════════════════════════════════════
+    # ACL QUIRK INTEGRATION TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
     def test_acl_quirk_can_handle_methods(
@@ -873,7 +985,7 @@ class TestRfcAclQuirkIntegration:
         assert result.unwrap() == rfc_acl_attrs
 
     @pytest.mark.timeout(5)
-    def test_create_metadata(
+    def test_acl_create_metadata(
         self,
         rfc_acl_quirk: FlextLdifServersRfc.Acl,
     ) -> None:
@@ -887,9 +999,9 @@ class TestRfcAclQuirkIntegration:
         assert metadata.extensions["original_format"] == "access to entry by * (browse)"
         assert metadata.extensions["custom"] == "value"
 
-
-class TestRfcConstants:
-    """Test RFC Constants."""
+    # ════════════════════════════════════════════════════════════════════════
+    # CONSTANTS TESTS
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.timeout(5)
     def test_constants_accessible(self) -> None:
@@ -903,3 +1015,8 @@ class TestRfcConstants:
         assert TestsRfcConstants.ATTR_NAME_CN == "cn"
         assert TestsRfcConstants.OC_OID_PERSON == "2.5.6.6"
         assert TestsRfcConstants.SCHEMA_DN_SCHEMA == "cn=schema"
+
+
+__all__ = [
+    "TestFlextLdifRfcLdifParser",
+]

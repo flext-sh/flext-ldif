@@ -14,6 +14,8 @@ from typing import cast
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.typings import FlextLdifTypes
 
 from .test_assertions import TestAssertions
@@ -69,7 +71,13 @@ class EntryTestHelpers:
 
         """
         result = entry_quirk.write(entry)
-        ldif = TestAssertions.assert_write_success(cast("FlextResult[str]", result))
+        result_typed: FlextResult[
+            str | FlextLdifProtocols.Services.HasContentProtocol
+        ] = cast(
+            "FlextResult[str | FlextLdifProtocols.Services.HasContentProtocol]",
+            result,
+        )
+        ldif = TestAssertions.assert_write_success(result_typed)
 
         if expected_dn_in_output:
             assert entry.dn.value in ldif, (
@@ -291,11 +299,17 @@ class EntryTestHelpers:
         result = entry_quirk.parse(ldif_content)
 
         if should_succeed:
+            result_typed: FlextResult[
+                FlextLdifModels.Entry
+                | list[FlextLdifModels.Entry]
+                | FlextLdifProtocols.Services.HasEntriesProtocol
+                | str
+            ] = cast(
+                "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry] | FlextLdifProtocols.Services.HasEntriesProtocol | str]",
+                result,
+            )
             entries = TestAssertions.assert_parse_success(
-                cast(
-                    "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry] | str]",
-                    result,
-                ),
+                result_typed,
                 expected_entry_count,
             )
 
@@ -427,7 +441,13 @@ class EntryTestHelpers:
             entry.metadata.extensions["write_options"] = write_options
 
         result = entry_quirk.write(entry)
-        ldif = TestAssertions.assert_write_success(cast("FlextResult[str]", result))
+        result_typed: FlextResult[
+            str | FlextLdifProtocols.Services.HasContentProtocol
+        ] = cast(
+            "FlextResult[str | FlextLdifProtocols.Services.HasContentProtocol]",
+            result,
+        )
+        ldif = TestAssertions.assert_write_success(result_typed)
 
         if expected_content:
             for content in expected_content:
@@ -442,6 +462,158 @@ class EntryTestHelpers:
                 assert content not in ldif, f"Must not contain '{content}' found"
 
         return ldif
+
+    @staticmethod
+    def test_remove_attributes_complete(
+        entry: FlextLdifModels.Entry,
+        attributes_to_remove: list[str],
+        *,
+        expected_removed: list[str] | None = None,
+        expected_present: list[str] | None = None,
+        should_succeed: bool = True,
+    ) -> FlextLdifModels.Entry | None:
+        """Complete attribute removal test - replaces 10-15 lines of test code.
+
+        Args:
+            entry: Entry to test
+            attributes_to_remove: List of attribute names to remove
+            expected_removed: Optional list of attributes that should be removed
+            expected_present: Optional list of attributes that should remain
+            should_succeed: Whether operation should succeed (default: True)
+
+        Returns:
+            Entry with attributes removed if success, None if failure
+
+        Example:
+            cleaned = EntryTestHelpers.test_remove_attributes_complete(
+                entry,
+                ["mail", "sn"],
+                expected_removed=["mail", "sn"],
+                expected_present=["cn", "objectClass"]
+            )
+
+        """
+        result = FlextLdifEntries.remove_attributes(entry, attributes_to_remove)
+
+        if should_succeed:
+            cleaned = TestAssertions.assert_success(result)
+            if expected_removed:
+                for attr in expected_removed:
+                    assert not cleaned.has_attribute(attr), (
+                        f"Attribute '{attr}' should be removed"
+                    )
+            if expected_present:
+                for attr in expected_present:
+                    assert cleaned.has_attribute(attr), (
+                        f"Attribute '{attr}' should be present"
+                    )
+            return cleaned
+        TestAssertions.assert_failure(result)
+        return None
+
+    @staticmethod
+    def test_remove_operational_attributes_complete(
+        entry: FlextLdifModels.Entry,
+        *,
+        expected_removed: list[str] | None = None,
+        expected_present: list[str] | None = None,
+        should_succeed: bool = True,
+    ) -> FlextLdifModels.Entry | None:
+        """Complete operational attribute removal test - replaces 10-15 lines.
+
+        Args:
+            entry: Entry to test
+            expected_removed: Optional list of operational attributes that should be removed
+            expected_present: Optional list of attributes that should remain
+            should_succeed: Whether operation should succeed (default: True)
+
+        Returns:
+            Entry with operational attributes removed if success, None if failure
+
+        """
+        result = FlextLdifEntries.remove_operational_attributes(entry)
+
+        if should_succeed:
+            cleaned = TestAssertions.assert_success(result)
+            if expected_removed:
+                for attr in expected_removed:
+                    assert not cleaned.has_attribute(attr), (
+                        f"Operational attribute '{attr}' should be removed"
+                    )
+            if expected_present:
+                for attr in expected_present:
+                    assert cleaned.has_attribute(attr), (
+                        f"Attribute '{attr}' should be present"
+                    )
+            return cleaned
+        TestAssertions.assert_failure(result)
+        return None
+
+    @staticmethod
+    def test_batch_remove_attributes_complete(
+        entries: list[FlextLdifModels.Entry],
+        attributes_to_remove: list[str],
+        *,
+        expected_removed: list[str] | None = None,
+        should_succeed: bool = True,
+    ) -> list[FlextLdifModels.Entry] | None:
+        """Complete batch attribute removal test - replaces 10-15 lines.
+
+        Args:
+            entries: List of entries to test
+            attributes_to_remove: List of attribute names to remove
+            expected_removed: Optional list of attributes that should be removed
+            should_succeed: Whether operation should succeed (default: True)
+
+        Returns:
+            List of entries with attributes removed if success, None if failure
+
+        """
+        result = FlextLdifEntries.remove_attributes_batch(entries, attributes_to_remove)
+
+        if should_succeed:
+            cleaned_batch = TestAssertions.assert_success(result)
+            if expected_removed:
+                for entry in cleaned_batch:
+                    for attr in expected_removed:
+                        assert not entry.has_attribute(attr), (
+                            f"Attribute '{attr}' should be removed from all entries"
+                        )
+            return cleaned_batch
+        TestAssertions.assert_failure(result)
+        return None
+
+    @staticmethod
+    def test_batch_remove_operational_attributes_complete(
+        entries: list[FlextLdifModels.Entry],
+        *,
+        expected_removed: list[str] | None = None,
+        should_succeed: bool = True,
+    ) -> list[FlextLdifModels.Entry] | None:
+        """Complete batch operational attribute removal test - replaces 10-15 lines.
+
+        Args:
+            entries: List of entries to test
+            expected_removed: Optional list of operational attributes that should be removed
+            should_succeed: Whether operation should succeed (default: True)
+
+        Returns:
+            List of entries with operational attributes removed if success, None if failure
+
+        """
+        result = FlextLdifEntries.remove_operational_attributes_batch(entries)
+
+        if should_succeed:
+            cleaned_batch = TestAssertions.assert_success(result)
+            if expected_removed:
+                for entry in cleaned_batch:
+                    for attr in expected_removed:
+                        assert not entry.has_attribute(attr), (
+                            f"Operational attribute '{attr}' should be removed from all entries"
+                        )
+            return cleaned_batch
+        TestAssertions.assert_failure(result)
+        return None
 
 
 __all__ = ["EntryTestHelpers"]

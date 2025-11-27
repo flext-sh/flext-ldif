@@ -295,26 +295,17 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-            *,
-            _case_insensitive: bool = False,
-            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute definition and add Novell metadata.
 
             Args:
                 attr_definition: Attribute definition string
-                _case_insensitive: Whether to use case-insensitive pattern matching
-                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with SchemaAttribute marked with Novell metadata
 
             """
-            result = super()._parse_attribute(
-                attr_definition,
-                _case_insensitive=_case_insensitive,
-                _allow_syntax_quotes=_allow_syntax_quotes,
-            )
+            result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
