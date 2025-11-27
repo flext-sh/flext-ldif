@@ -19,6 +19,7 @@ import base64
 import binascii
 import re
 from collections.abc import Mapping
+from contextlib import suppress
 from enum import StrEnum
 from typing import ClassVar
 
@@ -288,26 +289,17 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-            *,
-            _case_insensitive: bool = False,
-            _allow_syntax_quotes: bool = False,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Parse attribute definition and add AD metadata.
 
             Args:
                 attr_definition: Attribute definition string
-                _case_insensitive: Whether to use case-insensitive pattern matching
-                _allow_syntax_quotes: Whether to allow quoted syntax values
 
             Returns:
                 FlextResult with SchemaAttribute marked with AD metadata
 
             """
-            result = super()._parse_attribute(
-                attr_definition,
-                _case_insensitive=_case_insensitive,
-                _allow_syntax_quotes=_allow_syntax_quotes,
-            )
+            result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
@@ -579,6 +571,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     for oc in object_classes
                 ),
             )
+
+
+# Rebuild Pydantic models after all imports are resolved
+# This fixes circular import issues with forward references
+with suppress(Exception):
+    from flext_ldif.typings import FlextLdifTypes
+    # Forward references resolved automatically by Pydantic
 
 
 __all__ = ["FlextLdifServersAd"]

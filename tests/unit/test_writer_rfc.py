@@ -132,7 +132,8 @@ class WriterTestFactory:
 
     @staticmethod
     def create_format_options(
-        *, base64_encode: bool = False,
+        *,
+        base64_encode: bool = False,
     ) -> FlextLdifModels.WriteFormatOptions:
         """Create write format options."""
         return FlextLdifModels.WriteFormatOptions(base64_encode_binary=base64_encode)

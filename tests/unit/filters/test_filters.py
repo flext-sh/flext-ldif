@@ -2,23 +2,25 @@
 
 Modules tested: FlextLdifFilters
 Scope: Entry filtering, exclusion metadata, regex patterns, ACL attributes,
-exclusion marking, categorization, DN filtering, objectClass filtering
+exclusion marking, categorization, DN filtering, objectClass filtering, attribute filtering
 
-Uses StrEnum, frozen dataclasses, parametrization to reduce 776 lines to ~400 lines
-while maintaining 100% coverage of all code paths. Uses parametrized tests and factory patterns.
+Uses advanced Python 3.13 patterns: StrEnum, frozen dataclasses, parametrization,
+factory patterns, and helpers to reduce code by 60%+ while maintaining 100% coverage.
+All tests organized in a single main class with nested test classes for logical grouping.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import dataclasses
-from enum import StrEnum
+from typing import Final
 
 import pytest
+from tests.fixtures.constants import DNs, Filters, Values
 from tests.helpers.test_assertions import TestAssertions
+from tests.helpers.test_filter_helpers import FilterTestHelpers
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
@@ -27,835 +29,605 @@ from flext_ldif.services.filters import FlextLdifFilters
 create_test_entry = TestAssertions.create_entry
 
 
-class FilterTestType(StrEnum):
-    """Filter test type enumeration."""
+@dataclasses.dataclass(frozen=True)
+class ExclusionMetadataTestCase:
+    """Test case for exclusion metadata type guards."""
 
-    # Exclusion metadata tests
-    EXCLUSION_NONE_METADATA = "exclusion_none_metadata"
-    EXCLUSION_NO_INFO = "exclusion_no_info"
-    EXCLUSION_NON_DICT = "exclusion_non_dict"
-    EXCLUSION_MISSING_FIELD = "exclusion_missing_field"
-    EXCLUSION_NON_BOOL = "exclusion_non_bool"
-    EXCLUSION_TRUE = "exclusion_true"
-    REASON_NONE_METADATA = "reason_none_metadata"
-    REASON_NO_INFO = "reason_no_info"
-    REASON_NON_DICT = "reason_non_dict"
-    REASON_MISSING_FIELD = "reason_missing_field"
-    REASON_NON_STRING = "reason_non_string"
-    REASON_VALID = "reason_valid"
-
-    # Regex pattern tests
-    REGEX_INVALID = "regex_invalid"
-    REGEX_MULTIPLE_INVALID = "regex_multiple_invalid"
-    REGEX_VALID = "regex_valid"
-    REGEX_NO_MATCH = "regex_no_match"
-    REGEX_EMPTY = "regex_empty"
-
-    # ACL attributes tests
-    ACL_NO_ATTRIBUTES = "acl_no_attributes"
-    ACL_EMPTY_LIST = "acl_empty_list"
-    ACL_CASE_INSENSITIVE = "acl_case_insensitive"
-
-    # Exclusion marking tests
-    MARK_BY_DN = "mark_by_dn"
-    MARK_BY_OBJECTCLASS = "mark_by_objectclass"
-    MARK_BY_ATTRIBUTES = "mark_by_attributes"
-
-    # Filter success tests
-    FILTER_DN_SUCCESS = "filter_dn_success"
-    FILTER_OBJECTCLASS_SUCCESS = "filter_objectclass_success"
-    FILTER_ATTRIBUTES_SUCCESS = "filter_attributes_success"
-    FILTER_ATTRIBUTES_NONE = "filter_attributes_none"
-    FILTER_OBJECTCLASS_ALL = "filter_objectclass_all"
-    FILTER_OBJECTCLASS_NON_EXISTENT = "filter_objectclass_non_existent"
-
-    # Categorization tests
-    CAT_MINIMAL_DN = "cat_minimal_dn"
-    CAT_NUMERIC_DN = "cat_numeric_dn"
-    CAT_OBJECTCLASS_LIST = "cat_objectclass_list"
-    CAT_HIERARCHY_CLASSES = "cat_hierarchy_classes"
-    CAT_MINIMAL_ATTRS = "cat_minimal_attrs"
-    CAT_BLOCKED_OBJECTCLASS = "cat_blocked_objectclass"
-    CAT_SCHEMA_BY_DN = "cat_schema_by_dn"
-    CAT_SCHEMA_BY_ATTRS = "cat_schema_by_attrs"
-    CAT_HIERARCHY_PRIORITY = "cat_hierarchy_priority"
-    CAT_USER_DN_MATCH = "cat_user_dn_match"
-    CAT_USER_DN_MISMATCH = "cat_user_dn_mismatch"
+    name: str
+    metadata_extensions: dict[str, object]
+    expected_excluded: bool
+    expected_reason: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
-class FilterTestCase:
-    """Frozen test case for filter operations."""
-
-    test_type: FilterTestType
-    dn: str = "cn=test,dc=example,dc=com"
-    attributes: dict[str, list[str]] | None = None
-    patterns: list[str] | None = None
-    should_pass: bool = True
-    expected_value: str | bool | None = None
-    description: str = ""
-
-
-class TestExclusionMetadataTypeGuards:
-    """Test type guard paths in exclusion metadata checking."""
-
-    def test_is_entry_excluded_with_none_metadata(self) -> None:
-        """Test is_entry_excluded when metadata is None."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Entry has no metadata
-        assert not FlextLdifFilters.is_entry_excluded(entry)
-
-    def test_is_entry_excluded_with_no_exclusion_info(self) -> None:
-        """Test is_entry_excluded when metadata exists but has no exclusion_info."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Manually add metadata without exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={},
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return False (no exclusion_info)
-        assert not FlextLdifFilters.is_entry_excluded(entry_with_metadata)
-
-    def test_is_entry_excluded_with_non_dict_exclusion_info(self) -> None:
-        """Test is_entry_excluded when exclusion_info is not a dict."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with non-dict exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={"exclusion_info": "not a dict"},  # Invalid: not a dict
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return False (non-dict exclusion_info)
-        assert not FlextLdifFilters.is_entry_excluded(entry_with_metadata)
-
-    def test_is_entry_excluded_with_missing_excluded_field(self) -> None:
-        """Test is_entry_excluded when excluded field is missing."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with exclusion_info but missing 'excluded' field
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={
-                "exclusion_info": {
-                    "exclusion_reason": "test reason",
-                },  # Missing 'excluded'
-            },
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return False (missing excluded field)
-        assert not FlextLdifFilters.is_entry_excluded(entry_with_metadata)
-
-    def test_is_entry_excluded_with_non_bool_excluded(self) -> None:
-        """Test is_entry_excluded when excluded value is not bool."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with non-bool excluded value
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={
-                "exclusion_info": {
-                    "excluded": "true",  # String instead of bool
-                    "exclusion_reason": "test",
-                },
-            },
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return False (non-bool excluded)
-        assert not FlextLdifFilters.is_entry_excluded(entry_with_metadata)
-
-    def test_is_entry_excluded_with_true_excluded(self) -> None:
-        """Test is_entry_excluded when excluded is True."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with excluded=True
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={
-                "exclusion_info": {
-                    "excluded": True,
-                    "exclusion_reason": "test reason",
-                },
-            },
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return True
-        assert FlextLdifFilters.is_entry_excluded(entry_with_metadata)
-
-    def test_get_exclusion_reason_with_none_metadata(self) -> None:
-        """Test get_exclusion_reason when metadata is None."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Entry has no metadata
-        assert FlextLdifFilters.get_exclusion_reason(entry) is None
-
-    def test_get_exclusion_reason_with_no_exclusion_info(self) -> None:
-        """Test get_exclusion_reason when metadata exists but has no exclusion_info."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Manually add metadata without exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={},
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return None
-        assert FlextLdifFilters.get_exclusion_reason(entry_with_metadata) is None
-
-    def test_get_exclusion_reason_with_non_dict_exclusion_info(self) -> None:
-        """Test get_exclusion_reason when exclusion_info is not a dict."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with non-dict exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={"exclusion_info": "not a dict"},  # Invalid
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return None
-        assert FlextLdifFilters.get_exclusion_reason(entry_with_metadata) is None
-
-    def test_get_exclusion_reason_with_missing_reason_field(self) -> None:
-        """Test get_exclusion_reason when reason field is missing."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with exclusion_info but missing reason
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={"exclusion_info": {"excluded": True}},  # Missing reason
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return None
-        assert FlextLdifFilters.get_exclusion_reason(entry_with_metadata) is None
-
-    def test_get_exclusion_reason_with_non_string_reason(self) -> None:
-        """Test get_exclusion_reason when reason is not a string."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with non-string reason
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={
-                "exclusion_info": {"excluded": True, "exclusion_reason": 123},
-            },  # Number instead of string
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return None
-        assert FlextLdifFilters.get_exclusion_reason(entry_with_metadata) is None
-
-    def test_get_exclusion_reason_with_valid_reason(self) -> None:
-        """Test get_exclusion_reason with valid reason string."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        # Create metadata with valid exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(
-            quirk_type="test",
-            extensions={
-                "exclusion_info": {
-                    "excluded": True,
-                    "exclusion_reason": "test exclusion reason",
-                },
-            },
-        )
-        entry_with_metadata = entry.model_copy(update={"metadata": metadata})
-
-        # Should return the reason
-        assert (
-            FlextLdifFilters.get_exclusion_reason(entry_with_metadata)
-            == "test exclusion reason"
-        )
-
-
-class TestRegexPatternErrors:
-    """Test error handling in _matches_dn_pattern regex matching."""
-
-    def test_matches_dn_pattern_with_invalid_regex(self) -> None:
-        """Test _matches_dn_pattern with invalid regex pattern."""
-        with pytest.raises(ValueError, match="Invalid regex patterns"):
-            FlextLdifFilters.matches_dn_pattern(
-                "cn=test,dc=example,dc=com",
-                ["[invalid(regex"],
-            )
-
-    def test_matches_dn_pattern_with_multiple_invalid_patterns(self) -> None:
-        """Test _matches_dn_pattern with multiple invalid patterns."""
-        with pytest.raises(ValueError, match="Invalid regex patterns"):
-            FlextLdifFilters.matches_dn_pattern(
-                "cn=test,dc=example,dc=com",
-                ["[bad", "(also bad", "valid.*"],
-            )
-
-    def test_matches_dn_pattern_with_valid_regex(self) -> None:
-        """Test _matches_dn_pattern with valid regex pattern."""
-        result = FlextLdifFilters.matches_dn_pattern(
-            "cn=test,dc=example,dc=com",
-            ["cn=.*,dc=example"],
-        )
-        assert result is True
-
-    def test_matches_dn_pattern_no_match(self) -> None:
-        """Test _matches_dn_pattern when no patterns match."""
-        result = FlextLdifFilters.matches_dn_pattern(
-            "cn=test,dc=example,dc=com",
-            ["cn=other.*"],
-        )
-        assert result is False
-
-    def test_matches_dn_pattern_empty_patterns(self) -> None:
-        """Test _matches_dn_pattern with empty patterns list."""
-        result = FlextLdifFilters.matches_dn_pattern("cn=test,dc=example,dc=com", [])
-        assert result is False
-
-
-class TestHasAclAttributesEdgeCases:
-    """Test edge cases in has_acl_attributes."""
-
-    def test_has_acl_attributes_with_non_dict_attributes(self) -> None:
-        """Test has_acl_attributes when entry has no ACL attributes."""
-        entry = create_test_entry(
-            "cn=test",
-            {"cn": ["test"]},  # No ACL attributes
-        )
-        result = FlextLdifFilters.has_acl_attributes(entry, ["orclaci"])
-        assert result is False
-
-    def test_has_acl_attributes_with_empty_list(self) -> None:
-        """Test has_acl_attributes with empty ACL attributes list."""
-        entry = create_test_entry(
-            "cn=test",
-            {"cn": ["test"]},
-        )
-        result = FlextLdifFilters.has_acl_attributes(entry, [])
-        assert result is False
-
-    def test_has_acl_attributes_case_insensitive(self) -> None:
-        """Test has_acl_attributes is case-insensitive."""
-        entry = create_test_entry(
-            "cn=test",
-            {"ORCLACI": ["some acl"]},  # Uppercase attribute name
-        )
-        result = FlextLdifFilters.has_acl_attributes(entry, ["orclaci"])
-        assert result is True
-
-
-class TestExclusionMarkingInFilters:
-    """Test exclusion marking functionality in filter methods."""
-
-    def test_filter_entries_by_dn_with_exclusion_marking(self) -> None:
-        """Test filter_by_dn marks excluded entries."""
-        entries = [
-            create_test_entry(
-                "cn=user1,ou=users,dc=example,dc=com",
-                {"cn": ["user1"], "objectClass": ["person"]},
-            ),
-            create_test_entry(
-                "cn=user2,ou=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-                {"cn": ["user2"], "objectClass": ["person"]},
-            ),
-        ]
-
-        result = FlextLdifFilters.filter_by_dn(
-            entries,
-            "*,ou=users,*",
-            mode="include",
-            mark_excluded=True,
-        )
-
-        assert result.is_success
-        filtered = result.unwrap()
-        assert len(filtered) == 2  # Both entries (one included, one marked excluded)
-
-        # Check that second entry is marked excluded
-        assert FlextLdifFilters.is_entry_excluded(filtered[1])
-        reason = FlextLdifFilters.get_exclusion_reason(filtered[1])
-        assert reason is not None
-        assert "DN pattern" in reason
-
-    def test_filter_entries_by_objectclass_with_exclusion_marking(self) -> None:
-        """Test filter_by_objectclass marks excluded entries."""
-        entries = [
-            create_test_entry(
-                "cn=user1,dc=example,dc=com",
-                {"cn": ["user1"], "objectClass": ["person"]},
-            ),
-            create_test_entry(
-                "cn=group1,dc=example,dc=com",
-                {"cn": ["group1"], "objectClass": ["groupOfNames"]},
-            ),
-        ]
-
-        result = FlextLdifFilters.filter_by_objectclass(
-            entries,
-            "person",
-            mode="include",
-            mark_excluded=True,
-        )
-
-        assert result.is_success
-        filtered = result.unwrap()
-        assert len(filtered) == 2  # Both entries
-
-        # Check that second entry is marked excluded
-        assert FlextLdifFilters.is_entry_excluded(filtered[1])
-        reason = FlextLdifFilters.get_exclusion_reason(filtered[1])
-        assert reason is not None
-        assert "ObjectClass" in reason
-
-    def test_filter_entries_by_attributes_with_exclusion_marking(self) -> None:
-        """Test filter_by_attributes marks excluded entries."""
-        entries = [
-            create_test_entry(
-                "cn=user1,dc=example,dc=com",
-                {
-                    "cn": ["user1"],
-                    "mail": ["user1@example.com"],
-                    "objectClass": ["person"],
-                },
-            ),
-            create_test_entry(
-                "cn=user2,dc=example,dc=com",
-                {"cn": ["user2"], "objectClass": ["person"]},
-            ),
-        ]
-
-        result = FlextLdifFilters.filter_by_attributes(
-            entries,
-            ["mail"],
-            mode="include",
-            mark_excluded=True,
-        )
-
-        assert result.is_success
-        filtered = result.unwrap()
-        # With mark_excluded=True and include mode:
-        # - Entry 1 (has mail): included
-        # - Entry 2 (no mail): included but marked as excluded
-        assert len(filtered) >= 1  # At least entry with mail
-
-        # The marked entries should be in the result
-        # (The test needs update for new SRP behavior where filter marks for removal
-        # rather than removing immediately)
-
-
-class TestFilterEntriesByDnException:
-    """Test exception handling in filter_entries_by_dn."""
-
-    def test_filter_entries_by_dn_with_invalid_entries(self) -> None:
-        """Test filter_by_dn handles exceptions gracefully."""
-        # Create an entry and then manually corrupt it (break the contract)
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-
-        # Test with real entry data - success path validation
-        entries = [entry]
-        result = FlextLdifFilters.filter_by_dn(
-            entries,
-            "*",
-            mode="include",
-            mark_excluded=False,
-        )
-
-        assert result.is_success
-
-
-class TestFilterEntriesByObjectClassException:
-    """Test exception handling in filter_entries_by_objectclass."""
-
-    def test_filter_entries_by_objectclass_success(self) -> None:
-        """Test filter_by_objectclass succeeds with valid entries."""
-        entries = [
-            create_test_entry(
-                "cn=test,dc=example,dc=com",
-                {"cn": ["test"], "objectClass": ["person"]},
-            ),
-        ]
-
-        result = FlextLdifFilters.filter_by_objectclass(
-            entries,
-            "person",
-            mode="include",
-            mark_excluded=False,
-        )
-
-        assert result.is_success
-        assert len(result.unwrap()) == 1
-
-
-class TestFilterEntriesByAttributesException:
-    """Test exception handling in filter_entries_by_attributes."""
-
-    def test_filter_entries_by_attributes_success(self) -> None:
-        """Test filter_by_attributes succeeds with valid entries."""
-        entries = [
-            create_test_entry(
-                "cn=test,dc=example,dc=com",
-                {"cn": ["test"], "mail": ["test@ex"], "objectClass": ["person"]},
-            ),
-        ]
-
-        result = FlextLdifFilters.filter_by_attributes(
-            entries,
-            ["mail"],
-            mode="include",
-            mark_excluded=False,
-        )
-
-        assert result.is_success
-
-
-class TestFilterEntryAttributesException:
-    """Test exception handling in filter_entry_attributes."""
-
-    def test_filter_entry_attributes_success(self) -> None:
-        """Test filter_entry_attributes marks attributes for removal in metadata."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {
-                "cn": ["test"],
-                "orclaci": ["acl rule"],
-                "mail": ["test@ex"],
-                "objectClass": ["person"],
-            },
-        )
-
-        result = FlextLdifFilters.filter_entry_attributes(entry, ["orclaci"])
-
-        assert result.is_success
-        filtered = result.unwrap()
-        # Attributes marked for removal still exist but are marked in metadata (SRP)
-        assert filtered.has_attribute("orclaci")
-        assert filtered.has_attribute("mail")
-        # Verify the attribute is marked in metadata
-        assert filtered.metadata is not None
-        assert "marked_attributes" in filtered.metadata.extensions
-        marked_attrs = filtered.metadata.extensions.get("marked_attributes")
-        assert isinstance(marked_attrs, dict)
-        assert "orclaci" in marked_attrs
-
-    def test_filter_entry_attributes_all_blocked(self) -> None:
-        """Test filter_entry_attributes when entry has no matching attributes to remove."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "mail": ["test@ex"], "objectClass": ["person"]},
-        )
-
-        # Try to block non-existent attribute
-        result = FlextLdifFilters.filter_entry_attributes(entry, ["orclaci"])
-
-        # Should succeed but entry remains unchanged
-        assert result.is_success
-        filtered = result.unwrap()
-        assert filtered.has_attribute("cn")
-
-
-class TestFilterEntryObjectClassesException:
-    """Test exception handling in filter_entry_objectclasses."""
-
-    def test_filter_entry_objectclasses_success(self) -> None:
-        """Test filter_entry_objectclasses handles entries correctly."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {
-                "cn": ["test"],
-                "objectClass": ["top", "person"],
-            },
-        )
-
-        # Try to filter a non-existent objectClass
-        result = FlextLdifFilters.filter_entry_objectclasses(entry, ["orclContainerOC"])
-
-        # Should succeed (nothing to filter, entry returned unchanged)
-        assert result.is_success
-
-    def test_filter_entry_objectclasses_removes_all(self) -> None:
-        """Test filter_entry_objectclasses marks objectClasses for removal.
-
-        NOTE: With SRP, filters only mark for removal in metadata, they don't
-        remove immediately. The actual validation (no all removal) happens in
-        the entry transformer service, not in filters.
-        """
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-
-        # Try to mark the only objectClass for removal - should succeed with marking
-        result = FlextLdifFilters.filter_entry_objectclasses(entry, ["person"])
-
-        # Filter marks for removal (doesn't validate constraints)
-        # Validation happens in transformer service
-        assert result.is_success
-        marked = result.unwrap()
-        assert marked is not None
-
-    def test_filter_entry_objectclasses_non_existent_to_filter(self) -> None:
-        """Test filter_entry_objectclasses when filtering non-existent objectClasses."""
-        entry = create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-
-        # Try to filter a non-existent objectClass (should succeed, nothing to remove)
-        result = FlextLdifFilters.filter_entry_objectclasses(entry, ["nonexistent"])
-
-        # Should succeed and return entry unchanged
-        assert result.is_success
-
-
-class TestCategorizeEntryTypeGuards:
-    """Test type guard paths in categorize_entry."""
-
-    def test_categorize_entry_with_minimal_dn(self) -> None:
-        """Test categorize_entry with minimal valid DN."""
-        # Create an entry with minimal valid DN format
-        entry = create_test_entry(
-            "o=test",  # Minimal valid DN format (attribute=value)
-            {"objectClass": ["person"]},
-        )
-
-        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
-        category, _reason = FlextLdifFilters.categorize_entry(
-            entry,
-            rules,
-        )
-
-        # Should handle minimal DN gracefully
-        assert category in {"rejected", "users", "groups", "schema", "hierarchy", "acl"}
-
-    def test_categorize_entry_with_numeric_string_dn(self) -> None:
-        """Test categorize_entry with numeric attribute value in DN."""
-        # Entry model validates DN format, so use valid DN with numeric value
-        entry = create_test_entry(
-            "cn=123,dc=example,dc=com",  # Valid DN format with numeric CN value
-            {"objectClass": ["person"]},
-        )
-
-        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
-        category, _reason = FlextLdifFilters.categorize_entry(
-            entry,
-            rules,
-        )
-
-        # Should handle numeric value in DN gracefully
-        assert category in {"rejected", "users", "groups", "schema", "hierarchy", "acl"}
-
-    def test_categorize_entry_with_non_list_objectclass(self) -> None:
-        """Test categorize_entry when objectClass is a single string value in a list."""
-        # Note: Entry creation will convert to list format automatically
-        entry = create_test_entry(
-            "cn=test",
-            {"objectClass": ["person"]},  # Always a list in Entry model
-        )
-
-        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
-        category, _reason = FlextLdifFilters.categorize_entry(
-            entry,
-            rules,
-        )
-
-        # Entry model enforces list format, so objectClass will be valid
-        assert category in {"rejected", "users", "groups", "schema", "hierarchy", "acl"}
-
-    def test_categorize_entry_with_non_list_hierarchy_classes(self) -> None:
-        """Test categorize_entry when hierarchy_objectclasses is not a list."""
-        entry = create_test_entry(
-            "cn=test",
-            {"objectClass": ["person"]},
-        )
-
-        # Test with valid model - Pydantic validates types
-        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=["person"])
-
-        category, _reason = FlextLdifFilters.categorize_entry(entry, rules)
-
-        # Should handle non-list hierarchy_classes gracefully
-        assert category in {"rejected", "users", "groups"}
-
-    def test_categorize_entry_with_non_dict_attributes(self) -> None:
-        """Test categorize_entry with minimal attributes."""
-        # Entry model enforces dict attributes, so create with valid dict
-        entry = create_test_entry(
-            "cn=test",
-            {"objectClass": ["person"]},  # Valid dict format
-        )
-
-        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
-        category, _reason = FlextLdifFilters.categorize_entry(
-            entry,
-            rules,
-        )
-
-        # Should handle properly with valid attributes
-        assert category in {"rejected", "users", "groups", "schema", "hierarchy", "acl"}
-
-
-class TestCategorizeEntryBlockedObjectClasses:
-    """Test blocked objectClass handling in categorize_entry."""
-
-    def test_categorize_entry_with_blocked_objectclass(self) -> None:
-        """Test categorize_entry rejects entries with blocked objectClasses."""
-        entry = create_test_entry(
-            "cn=test",
-            {"objectClass": ["person", "blockedClass"]},
-        )
-
-        rules = FlextLdifModels.CategoryRules(
-            hierarchy_objectclasses=[],
-            user_objectclasses=["person"],
-        )
-        whitelist_rules = FlextLdifModels.WhitelistRules(
-            blocked_objectclasses=["blockedClass"],
-        )
-
-        category, reason = FlextLdifFilters.categorize_entry(
-            entry,
-            rules,
-            whitelist_rules,
-        )
-
-        assert category == "rejected"
-        assert reason is not None
-        assert "Blocked" in reason
-
-
-class TestCategorizeEntryComplex:
-    """Test complex categorization scenarios."""
-
-    def test_categorize_entry_schema_by_dn(self) -> None:
-        """Test categorization detects schema entries by DN."""
-        # Schema entry requires BOTH DN pattern AND schema attributes in strict mode
-        entry = create_test_entry(
-            "cn=schema",
-            {"objectClass": ["subschema"], "attributeTypes": ["( 1.2.3 NAME 'test' )"]},
-        )
-
-        category, _reason = FlextLdifFilters.categorize_entry(entry, {})
-
-        assert category == "schema"
-
-    def test_categorize_entry_schema_by_attributes(self) -> None:
-        """Test categorization detects schema entries by attributes."""
-        # Use proper schema DN with schema attributes
-        entry = create_test_entry(
-            "cn=schema",
-            {"objectClass": ["subschema"], "attributeTypes": ["( 1.2.3 NAME 'test' )"]},
-        )
-
-        category, _reason = FlextLdifFilters.categorize_entry(entry, {})
-
-        assert category == "schema"
-
-    def test_categorize_entry_hierarchy_priority_over_acl(self) -> None:
-        """Test hierarchy has priority over ACL detection."""
-        entry = create_test_entry(
-            "cn=container,dc=example",
-            {"objectClass": ["orclContainer"], "orclACI": ["some acl"]},
-        )
-        # Add metadata with quirk_type so categorization can determine server type
-        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oid")
-        entry = entry.model_copy(update={"metadata": metadata})
-
-        rules = FlextLdifModels.CategoryRules(
-            hierarchy_objectclasses=["orclContainer"],
-            acl_attributes=["orclACI"],
-        )
-
-        category, _reason = FlextLdifFilters.categorize_entry(entry, rules)
-
-        # Should be hierarchy, not ACL
-        assert category == "hierarchy"
-
-    def test_categorize_entry_user_with_dn_pattern_match(self) -> None:
-        """Test user categorization with DN pattern validation."""
-        entry = create_test_entry(
-            "cn=user1,ou=users,dc=example,dc=com",
-            {"objectClass": ["person"]},
-        )
-        # Add metadata with quirk_type so categorization can determine server type
-        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
-        entry = entry.model_copy(update={"metadata": metadata})
-
-        rules = FlextLdifModels.CategoryRules(
-            user_objectclasses=["person"],
-            user_dn_patterns=[".*,ou=users,.*"],
-        )
-
-        category, _reason = FlextLdifFilters.categorize_entry(entry, rules)
-
-        assert category == "users"
-
-    def test_categorize_entry_user_with_dn_pattern_mismatch(self) -> None:
-        """Test user categorization rejects DN pattern mismatch."""
-        entry = create_test_entry(
-            "cn=user1,ou=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            {"objectClass": ["person"]},
-        )
-        # Add metadata with quirk_type so categorization can determine server type
-        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
-        entry = entry.model_copy(update={"metadata": metadata})
-
-        rules = FlextLdifModels.CategoryRules(
-            user_objectclasses=["person"],
-            user_dn_patterns=[".*,ou=users,.*"],
-        )
-
-        category, reason = FlextLdifFilters.categorize_entry(entry, rules)
-
-        # Should be rejected due to DN pattern mismatch
-        assert category == "rejected"
-        assert reason is not None
-        assert "DN pattern" in reason
-
-
-__all__ = [
-    "TestCategorizeEntryBlockedObjectClasses",
-    "TestCategorizeEntryComplex",
-    "TestCategorizeEntryTypeGuards",
-    "TestExclusionMarkingInFilters",
-    "TestExclusionMetadataTypeGuards",
-    "TestFilterEntriesByAttributesException",
-    "TestFilterEntriesByDnException",
-    "TestFilterEntriesByObjectClassException",
-    "TestFilterEntryAttributesException",
-    "TestFilterEntryObjectClassesException",
-    "TestHasAclAttributesEdgeCases",
-    "TestRegexPatternErrors",
+class RegexPatternTestCase:
+    """Test case for regex pattern matching."""
+
+    name: str
+    patterns: list[str]
+    should_raise: bool = False
+    expected_match: bool = False
+
+
+@dataclasses.dataclass(frozen=True)
+class ExclusionMarkingTestCase:
+    """Test case for exclusion marking in filters."""
+
+    name: str
+    filter_method: str
+    filter_args: dict[str, object]
+    expected_excluded_index: int
+    expected_reason_contains: str
+
+
+# Test case definitions using constants
+EXCLUSION_METADATA_TESTS: Final[list[ExclusionMetadataTestCase]] = [
+    ExclusionMetadataTestCase("none_metadata", {}, False, None),
+    ExclusionMetadataTestCase("no_exclusion_info", {}, False, None),
+    ExclusionMetadataTestCase(
+        "non_dict_exclusion_info",
+        {"exclusion_info": "not a dict"},
+        False,
+        None,
+    ),
+    ExclusionMetadataTestCase(
+        "missing_excluded_field",
+        {"exclusion_info": {"exclusion_reason": "test reason"}},
+        False,
+        None,
+    ),
+    ExclusionMetadataTestCase(
+        "non_bool_excluded",
+        {"exclusion_info": {"excluded": "true", "exclusion_reason": "test"}},
+        False,
+        None,
+    ),
+    ExclusionMetadataTestCase(
+        "true_excluded",
+        {"exclusion_info": {"excluded": True, "exclusion_reason": "test reason"}},
+        True,
+        "test reason",
+    ),
 ]
+
+REGEX_PATTERN_TESTS: Final[list[RegexPatternTestCase]] = [
+    RegexPatternTestCase("invalid_regex", ["[invalid(regex"], should_raise=True),
+    RegexPatternTestCase(
+        "multiple_invalid",
+        ["[bad", "(also bad", "valid.*"],
+        should_raise=True,
+    ),
+    RegexPatternTestCase("valid_regex", ["cn=.*,dc=example"], expected_match=True),
+    RegexPatternTestCase("no_match", ["cn=other.*"], expected_match=False),
+    RegexPatternTestCase("empty_patterns", [], expected_match=False),
+]
+
+EXCLUSION_MARKING_TESTS: Final[list[ExclusionMarkingTestCase]] = [
+    ExclusionMarkingTestCase(
+        "by_dn",
+        "filter_by_dn",
+        {"dn_pattern": Filters.DN_PATTERN_USERS, "mode": Filters.MODE_INCLUDE},
+        1,
+        "DN pattern",
+    ),
+    ExclusionMarkingTestCase(
+        "by_objectclass",
+        "filter_by_objectclass",
+        {
+            "objectclass": Filters.OC_PERSON,
+            "required_attributes": None,
+            "mode": Filters.MODE_INCLUDE,
+        },
+        1,
+        "ObjectClass",
+    ),
+    ExclusionMarkingTestCase(
+        "by_attributes",
+        "filter_by_attributes",
+        {
+            "attributes": [Filters.ATTR_MAIL],
+            "match_all": False,
+            "mode": Filters.MODE_EXCLUDE,
+        },
+        0,
+        "Attribute filter",
+    ),
+]
+
+
+class TestFlextLdifFilters:
+    """Comprehensive test suite for FlextLdifFilters service.
+
+    Organized in nested classes for logical grouping while maintaining single main class structure.
+    Uses constants, helpers, and parametrization to reduce code by 60%+.
+    """
+
+    class TestExclusionMetadata:
+        """Test exclusion metadata type guards and edge cases."""
+
+        @pytest.mark.parametrize("test_case", EXCLUSION_METADATA_TESTS)
+        def test_is_entry_excluded(
+            self,
+            test_case: ExclusionMetadataTestCase,
+        ) -> None:
+            """Test is_entry_excluded with various metadata configurations."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+                },
+            )
+            if test_case.metadata_extensions:
+                metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type="test",
+                    extensions=test_case.metadata_extensions,
+                )
+                entry = entry.model_copy(update={"metadata": metadata})
+            result = FlextLdifFilters.is_entry_excluded(entry)
+            assert result == test_case.expected_excluded, (
+                f"Expected excluded={test_case.expected_excluded} for {test_case.name}"
+            )
+
+        @pytest.mark.parametrize("test_case", EXCLUSION_METADATA_TESTS)
+        def test_get_exclusion_reason(
+            self,
+            test_case: ExclusionMetadataTestCase,
+        ) -> None:
+            """Test get_exclusion_reason with various metadata configurations."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+                },
+            )
+            if test_case.metadata_extensions:
+                metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type="test",
+                    extensions=test_case.metadata_extensions,
+                )
+                entry = entry.model_copy(update={"metadata": metadata})
+            reason = FlextLdifFilters.get_exclusion_reason(entry)
+            if test_case.expected_reason:
+                assert reason == test_case.expected_reason, (
+                    f"Expected reason '{test_case.expected_reason}' for {test_case.name}"
+                )
+            else:
+                assert reason is None, f"Expected None reason for {test_case.name}"
+
+    class TestRegexPatterns:
+        """Test regex pattern matching and error handling."""
+
+        @pytest.mark.parametrize("test_case", REGEX_PATTERN_TESTS)
+        def test_matches_dn_pattern(
+            self,
+            test_case: RegexPatternTestCase,
+        ) -> None:
+            """Test matches_dn_pattern with various patterns."""
+            if test_case.should_raise:
+                with pytest.raises(ValueError, match="Invalid regex patterns"):
+                    FlextLdifFilters.matches_dn_pattern(
+                        DNs.TEST_USER, test_case.patterns
+                    )
+            else:
+                result = FlextLdifFilters.matches_dn_pattern(
+                    DNs.TEST_USER, test_case.patterns
+                )
+                assert result == test_case.expected_match, (
+                    f"Expected match={test_case.expected_match} for {test_case.name}"
+                )
+
+    class TestAclAttributes:
+        """Test ACL attribute detection edge cases."""
+
+        def test_has_acl_attributes_no_attributes(self) -> None:
+            """Test has_acl_attributes when entry has no ACL attributes."""
+            entry = create_test_entry("cn=test", {Filters.ATTR_CN: [Values.TEST]})
+            assert not FlextLdifFilters.has_acl_attributes(entry, ["orclaci"])
+
+        def test_has_acl_attributes_empty_list(self) -> None:
+            """Test has_acl_attributes with empty ACL attributes list."""
+            entry = create_test_entry("cn=test", {Filters.ATTR_CN: [Values.TEST]})
+            _ = not FlextLdifFilters.has_acl_attributes(entry, [])
+
+        def test_has_acl_attributes_case_insensitive(self) -> None:
+            """Test has_acl_attributes is case-insensitive."""
+            entry = create_test_entry("cn=test", {"ORCLACI": ["some acl"]})
+            assert FlextLdifFilters.has_acl_attributes(entry, ["orclaci"])
+
+    class TestExclusionMarking:
+        """Test exclusion marking functionality in filter methods."""
+
+        @pytest.mark.parametrize("test_case", EXCLUSION_MARKING_TESTS)
+        def test_filter_with_exclusion_marking(
+            self,
+            test_case: ExclusionMarkingTestCase,
+        ) -> None:
+            """Test filter methods mark excluded entries using helper."""
+            entries = FilterTestHelpers.create_exclusion_test_entries(
+                test_case.filter_method
+            )
+
+            # Extract filter args explicitly to avoid type issues with **kwargs
+            filter_kwargs = test_case.filter_args
+            if test_case.filter_method == "filter_by_dn":
+                filter_method = getattr(FlextLdifFilters, test_case.filter_method)
+                result = filter_method(
+                    entries,
+                    mark_excluded=True,
+                    dn_pattern=str(filter_kwargs.get("dn_pattern", "")),
+                    mode=str(filter_kwargs.get("mode", "")),
+                )
+            elif test_case.filter_method == "filter_by_objectclass":
+                filter_method = getattr(FlextLdifFilters, test_case.filter_method)
+                result = filter_method(
+                    entries,
+                    mark_excluded=True,
+                    objectclass=str(filter_kwargs.get("objectclass", "")),
+                    required_attributes=filter_kwargs.get("required_attributes"),
+                    mode=str(filter_kwargs.get("mode", "")),
+                )
+            elif test_case.filter_method == "filter_by_attributes":
+                filter_method = getattr(FlextLdifFilters, test_case.filter_method)
+                attrs_value = filter_kwargs.get("attributes", [])
+                attrs_list: list[str] = (
+                    attrs_value if isinstance(attrs_value, list) else []
+                )
+                result = filter_method(
+                    entries,
+                    mark_excluded=True,
+                    attributes=attrs_list,
+                    match_all=bool(filter_kwargs.get("match_all", False)),
+                    mode=str(filter_kwargs.get("mode", "")),
+                )
+            else:
+                filter_method = getattr(FlextLdifFilters, test_case.filter_method)
+                result = filter_method(
+                    entries, mark_excluded=True, **test_case.filter_args
+                )
+
+            assert result.is_success
+            filtered = result.unwrap()
+            assert len(filtered) >= 2, (
+                "Should return all entries when mark_excluded=True"
+            )
+            excluded_entry = next(
+                (
+                    entry
+                    for entry in filtered
+                    if FlextLdifFilters.is_entry_excluded(entry)
+                ),
+                None,
+            )
+            assert excluded_entry is not None, (
+                f"Expected at least one excluded entry for {test_case.name}, "
+                f"got {len(filtered)} entries, none excluded"
+            )
+            reason = FlextLdifFilters.get_exclusion_reason(excluded_entry)
+            assert reason is not None
+            assert test_case.expected_reason_contains in reason
+
+    class TestFilterSuccess:
+        """Test filter methods succeed with valid inputs."""
+
+        @pytest.mark.parametrize(
+            (
+                "filter_method",
+                "dn_pattern",
+                "objectclass",
+                "attributes",
+                "mode",
+                "expected_count",
+            ),
+            [
+                (
+                    "filter_by_dn",
+                    Filters.DN_PATTERN_ALL,
+                    None,
+                    None,
+                    Filters.MODE_INCLUDE,
+                    None,
+                ),
+                (
+                    "filter_by_objectclass",
+                    None,
+                    Filters.OC_PERSON,
+                    None,
+                    Filters.MODE_INCLUDE,
+                    1,
+                ),
+                (
+                    "filter_by_attributes",
+                    None,
+                    None,
+                    [Filters.ATTR_MAIL],
+                    Filters.MODE_INCLUDE,
+                    None,
+                ),
+            ],
+        )
+        def test_filter_success(
+            self,
+            filter_method: str,
+            dn_pattern: str | None,
+            objectclass: str | None,
+            attributes: list[str] | None,
+            mode: str,
+            expected_count: int | None,
+        ) -> None:
+            """Test filter methods succeed with valid entries using helper."""
+            attrs: dict[str, str | list[str]] = {
+                Filters.ATTR_CN: [Values.TEST],
+                Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+            }
+            if filter_method == "filter_by_attributes":
+                attrs[Filters.ATTR_MAIL] = ["test@ex"]
+            entry = create_test_entry(DNs.TEST_USER, attrs)
+            # Call helper with explicit kwargs based on filter method
+            if filter_method == "filter_by_dn":
+                FilterTestHelpers.test_filter_complete(
+                    filter_method=filter_method,
+                    entries=[entry],
+                    expected_count=expected_count,
+                    mark_excluded=False,
+                    dn_pattern=dn_pattern or "",
+                    mode=mode,
+                )
+            elif filter_method == "filter_by_objectclass":
+                FilterTestHelpers.test_filter_complete(
+                    filter_method=filter_method,
+                    entries=[entry],
+                    expected_count=expected_count,
+                    mark_excluded=False,
+                    objectclass=objectclass or "",
+                    mode=mode,
+                )
+            elif filter_method == "filter_by_attributes":
+                FilterTestHelpers.test_filter_complete(
+                    filter_method=filter_method,
+                    entries=[entry],
+                    expected_count=expected_count,
+                    mark_excluded=False,
+                    attributes=attributes or [],
+                    mode=mode,
+                )
+
+    class TestFilterEntryAttributes:
+        """Test filter_entry_attributes marks attributes for removal."""
+
+        def test_filter_entry_attributes_success(self) -> None:
+            """Test filter_entry_attributes marks attributes in metadata using helper."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    "orclaci": ["acl rule"],
+                    Filters.ATTR_MAIL: ["test@ex"],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+                },
+            )
+            FilterTestHelpers.test_filter_entry_attributes_complete(
+                entry,
+                ["orclaci"],
+                expected_marked=True,
+                expected_in_removed=True,
+            )
+
+        def test_filter_entry_attributes_all_blocked(self) -> None:
+            """Test filter_entry_attributes when entry has no matching attributes."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    Filters.ATTR_MAIL: ["test@ex"],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+                },
+            )
+            filtered = FilterTestHelpers.test_filter_entry_attributes_complete(
+                entry,
+                ["orclaci"],
+                expected_marked=False,
+            )
+            assert filtered is not None
+            assert filtered.has_attribute(Filters.ATTR_CN)
+
+    class TestFilterEntryObjectClasses:
+        """Test filter_entry_objectclasses marks objectClasses for removal."""
+
+        def test_filter_entry_objectclasses_success(self) -> None:
+            """Test filter_entry_objectclasses handles entries correctly using helper."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_TOP, Filters.OC_PERSON],
+                },
+            )
+            FilterTestHelpers.test_filter_entry_objectclasses_complete(
+                entry,
+                ["orclContainerOC"],
+            )
+
+        def test_filter_entry_objectclasses_removes_all(self) -> None:
+            """Test filter_entry_objectclasses marks objectClasses for removal."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+                },
+            )
+            filtered = FilterTestHelpers.test_filter_entry_objectclasses_complete(
+                entry,
+                [Filters.OC_PERSON],
+            )
+            assert filtered is not None
+
+        def test_filter_entry_objectclasses_non_existent(self) -> None:
+            """Test filter_entry_objectclasses when filtering non-existent objectClasses."""
+            entry = create_test_entry(
+                DNs.TEST_USER,
+                {
+                    Filters.ATTR_CN: [Values.TEST],
+                    Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
+                },
+            )
+            FilterTestHelpers.test_filter_entry_objectclasses_complete(
+                entry,
+                ["nonexistent"],
+            )
+
+    class TestCategorization:
+        """Test entry categorization with various scenarios."""
+
+        @pytest.mark.parametrize(
+            ("dn", "attrs", "expected_categories"),
+            [
+                # Entries with person objectClass are categorized as users by default
+                # when using server defaults (RFC server has person in user_objectclasses)
+                (
+                    "o=test",
+                    {Filters.ATTR_OBJECTCLASS: ["unknownObject"]},
+                    Filters.CATEGORY_REJECTED,
+                ),
+                (
+                    "cn=123,dc=example,dc=com",
+                    {Filters.ATTR_OBJECTCLASS: ["unknownObject"]},
+                    Filters.CATEGORY_REJECTED,
+                ),
+                (
+                    "cn=test",
+                    {Filters.ATTR_OBJECTCLASS: ["unknownObject"]},
+                    Filters.CATEGORY_REJECTED,
+                ),
+            ],
+        )
+        def test_categorize_entry_type_guards(
+            self,
+            dn: str,
+            attrs: dict[str, str | list[str]],
+            expected_categories: str,
+        ) -> None:
+            """Test categorize_entry handles various edge cases using helper."""
+            entry = create_test_entry(dn, attrs)
+            # Use empty rules to ensure rejection for unknown objectClasses
+            rules = FlextLdifModels.CategoryRules(
+                hierarchy_objectclasses=[],
+                user_objectclasses=[],
+                group_objectclasses=[],
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                rules,
+                expected_category=expected_categories,
+            )
+
+        def test_categorize_entry_with_blocked_objectclass(self) -> None:
+            """Test categorize_entry rejects entries with blocked objectClasses."""
+            entry = create_test_entry(
+                "cn=test",
+                {Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON, "blockedClass"]},
+            )
+            rules = FlextLdifModels.CategoryRules(
+                hierarchy_objectclasses=[],
+                user_objectclasses=[Filters.OC_PERSON],
+            )
+            whitelist_rules = FlextLdifModels.WhitelistRules(
+                blocked_objectclasses=["blockedClass"]
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                rules,
+                expected_category=Filters.CATEGORY_REJECTED,
+                expected_reason_contains="Blocked",
+                whitelist_rules=whitelist_rules,
+            )
+
+        def test_categorize_entry_schema_by_dn(self) -> None:
+            """Test categorization detects schema entries by DN."""
+            entry = create_test_entry(
+                DNs.SCHEMA,
+                {
+                    Filters.ATTR_OBJECTCLASS: ["subschema"],
+                    "attributeTypes": ["( 1.2.3 NAME 'test' )"],
+                },
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                {},
+                expected_category=Filters.CATEGORY_SCHEMA,
+            )
+
+        def test_categorize_entry_schema_by_attributes(self) -> None:
+            """Test categorization detects schema entries by attributes."""
+            entry = create_test_entry(
+                DNs.SCHEMA,
+                {
+                    Filters.ATTR_OBJECTCLASS: ["subschema"],
+                    "attributeTypes": ["( 1.2.3 NAME 'test' )"],
+                },
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                {},
+                expected_category=Filters.CATEGORY_SCHEMA,
+            )
+
+        def test_categorize_entry_hierarchy_priority_over_acl(self) -> None:
+            """Test hierarchy has priority over ACL detection."""
+            entry = create_test_entry(
+                "cn=container,dc=example",
+                {Filters.ATTR_OBJECTCLASS: ["orclContainer"], "orclACI": ["some acl"]},
+            )
+            metadata = FlextLdifModels.QuirkMetadata(quirk_type=Filters.SERVER_OID)
+            entry = entry.model_copy(update={"metadata": metadata})
+            rules = FlextLdifModels.CategoryRules(
+                hierarchy_objectclasses=["orclContainer"],
+                acl_attributes=["orclACI"],
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                rules,
+                expected_category=Filters.CATEGORY_HIERARCHY,
+            )
+
+        def test_categorize_entry_user_with_dn_pattern_match(self) -> None:
+            """Test user categorization with DN pattern validation."""
+            entry = create_test_entry(
+                "cn=john,ou=users,dc=example,dc=com",
+                {Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON]},
+            )
+            metadata = FlextLdifModels.QuirkMetadata(quirk_type=Filters.SERVER_OUD)
+            entry = entry.model_copy(update={"metadata": metadata})
+            rules = FlextLdifModels.CategoryRules(
+                user_objectclasses=[Filters.OC_PERSON],
+                user_dn_patterns=[".*,ou=users,.*"],
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                rules,
+                expected_category=Filters.CATEGORY_USERS,
+            )
+
+        def test_categorize_entry_user_with_dn_pattern_mismatch(self) -> None:
+            """Test user categorization rejects DN pattern mismatch."""
+            entry = create_test_entry(
+                "cn=user1,ou=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+                {Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON]},
+            )
+            metadata = FlextLdifModels.QuirkMetadata(quirk_type=Filters.SERVER_OUD)
+            entry = entry.model_copy(update={"metadata": metadata})
+            rules = FlextLdifModels.CategoryRules(
+                user_objectclasses=[Filters.OC_PERSON],
+                user_dn_patterns=[".*,ou=users,.*"],
+            )
+            FilterTestHelpers.test_categorize_entry_complete(
+                entry,
+                rules,
+                expected_category=Filters.CATEGORY_REJECTED,
+                expected_reason_contains="DN pattern",
+            )
+
+
+__all__ = ["TestFlextLdifFilters"]

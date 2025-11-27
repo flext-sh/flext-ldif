@@ -1,18 +1,22 @@
 """FLEXT LDIF ACL Service - Enterprise Access Control Management.
 
 This module provides comprehensive Access Control List (ACL) management for LDIF entries
-by delegating format-specific parsing to quirks.
+by delegating format-specific parsing to quirks via FlextLdifServer DI.
 
 Features:
 - Quirks-based server-specific ACL syntax support (no fallback)
 - Direct ACL context evaluation without unnecessary abstractions
 - ACL extraction and validation with detailed error reporting
+- Entry extraction with ACL attributes (excluding schema entries)
 - Integration with LDIF entry processing pipeline
+- Metadata management via FlextLdifUtilities.Metadata
 
 Architecture:
 - ACL Parsing: Delegated entirely to quirks via FlextLdifServer (RFC/server-specific/relaxed)
 - ACL Evaluation: Direct context matching against ACL attributes
-- No unnecessary abstraction layers or unused pattern implementations
+- Entry Extraction: Filtering entries with ACL attributes (excluding schema)
+- Metadata: Uses FlextLdifUtilities.Metadata for all metadata operations
+- No server-specific knowledge in service layer - all via FlextLdifServer DI
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,21 +25,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextRuntime
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAcl(LdifServiceBase):
+class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.ServiceStatus]):
     """Unified ACL management service.
 
     Provides ACL parsing via quirks and direct context evaluation.
@@ -43,7 +47,7 @@ class FlextLdifAcl(LdifServiceBase):
 
     Returns composed AclResponse models with extracted ACLs and statistics.
 
-    Config access via self.config.ldif (inherited from LdifServiceBase).
+    Config access via self.config.ldif (inherited from FlextLdifServiceBase).
     """
 
     _registry: FlextLdifServer
@@ -52,7 +56,7 @@ class FlextLdifAcl(LdifServiceBase):
         """Initialize ACL service.
 
         Uses quirks registry for server-specific ACL handling (no fallback).
-        Config is accessed via self.config.ldif (inherited from LdifServiceBase).
+        Config is accessed via self.config.ldif (inherited from FlextLdifServiceBase).
         """
         super().__init__()
         self._registry = FlextLdifServer()
@@ -77,12 +81,6 @@ class FlextLdifAcl(LdifServiceBase):
             - Uses FlextResult for error handling - no None returns
 
         """
-        # Validate entry is not None before processing
-        if entry is None:
-            return FlextResult[FlextLdifModels.AclResponse].fail(
-                "Entry cannot be None",
-            )
-
         # Get ACL attribute name for this server type (from quirk)
         acl_attribute_result = self._get_acl_attribute_for_server(server_type)
 
@@ -149,13 +147,38 @@ class FlextLdifAcl(LdifServiceBase):
                 )
                 continue
 
-            acls.append(parse_result.unwrap())
+            parsed_acl = parse_result.unwrap()
+            # Preserve entry metadata in ACL metadata using FlextLdifUtilities.Metadata
+            if entry.metadata:
+                # Ensure ACL has metadata
+                if not parsed_acl.metadata:
+                    parsed_acl.metadata = FlextLdifModels.QuirkMetadata.create_for(
+                        server_type,
+                    )
+                # Track ACL extraction from entry preserving original entry metadata
+                FlextLdifUtilities.Metadata.track_minimal_differences_in_metadata(
+                    metadata=parsed_acl.metadata,
+                    original=acl_value,
+                    converted=None,
+                    context="acl_extraction",
+                    attribute_name=acl_attribute,
+                )
+                # Preserve entry metadata extensions in ACL metadata
+                if entry.metadata.extensions:
+                    if not parsed_acl.metadata.extensions:
+                        parsed_acl.metadata.extensions = {}
+                    # Copy relevant entry metadata extensions to ACL metadata
+                    entry_dn = entry.dn.value if entry.dn else "unknown"
+                    parsed_acl.metadata.extensions[
+                        FlextLdifConstants.MetadataKeys.ENTRY_SOURCE_DN_CASE
+                    ] = entry_dn
+            acls.append(parsed_acl)
 
         # FlextLdifModels.Acl inherits from FlextLdifModelsDomains.Acl
         # No conversion needed - use directly
         return FlextResult[FlextLdifModels.AclResponse].ok(
             FlextLdifModels.AclResponse(
-                acls=list(acls) if isinstance(acls, Sequence) else acls,
+                acls=list(acls),
                 statistics=FlextLdifModels.Statistics(
                     processed_entries=1,
                     acls_extracted=len(acls),
@@ -211,13 +234,16 @@ class FlextLdifAcl(LdifServiceBase):
             )
 
     @override
-    @FlextDecorators.log_operation("acl_service_health_check")
+    @FlextDecorators.log_operation("acl_service_execute")
     @FlextDecorators.track_performance()
-    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.AclResponse]:
-        """Execute ACL service health check.
+    def execute(self) -> FlextResult[FlextLdifModels.ServiceStatus]:
+        """Execute ACL service with empty initialization.
+
+        Returns empty AclResponse with no ACLs extracted. This serves as a baseline
+        for ACL processing - callers use parse() and evaluate_acl_context() methods.
 
         Args:
-            **kwargs: Ignored parameters for FlextService protocol compatibility
+            None
 
         FlextDecorators automatically:
         - Log operation start/completion/failure
@@ -225,17 +251,14 @@ class FlextLdifAcl(LdifServiceBase):
         - Handle context propagation (correlation_id, operation_name)
 
         Returns:
-            FlextResult containing composed AclResponse with service status
+            FlextResult containing empty AclResponse
 
         """
-        return FlextResult[FlextLdifModels.AclResponse].ok(
-            FlextLdifModels.AclResponse(
-                acls=[],
-                statistics=FlextLdifModels.Statistics(
-                    processed_entries=0,
-                    acls_extracted=0,
-                    acl_attribute_name=None,
-                ),
+        return FlextResult[FlextLdifModels.ServiceStatus].ok(
+            FlextLdifModels.ServiceStatus(
+                service="acl",
+                status="operational",
+                rfc_compliance="RFC 2849",
             ),
         )
 
@@ -259,7 +282,7 @@ class FlextLdifAcl(LdifServiceBase):
         try:
             # Find the appropriate quirk that can handle this ACL line
             # Registry returns the quirk that can_handle(acl_line)
-            acl = self._registry.find_acl_for_line(server_type, acl_string)
+            acl = self._registry.acl(server_type)
             if not acl:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"No ACL quirk available to parse for {server_type}: {acl_string[:50]}...",
@@ -277,11 +300,7 @@ class FlextLdifAcl(LdifServiceBase):
             # Type narrowing: parse returns FlextResult[Acl]
             if parse_result.is_success:
                 parsed_acl = parse_result.unwrap()
-                if isinstance(parsed_acl, FlextLdifModels.Acl):
-                    return FlextResult[FlextLdifModels.Acl].ok(parsed_acl)
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"ACL parse returned unexpected type: {type(parsed_acl).__name__}",
-                )
+                return FlextResult[FlextLdifModels.Acl].ok(parsed_acl)
             self.logger.warning(
                 "Failed to parse ACL",
                 server_type=server_type,
@@ -299,111 +318,10 @@ class FlextLdifAcl(LdifServiceBase):
                 f"ACL parsing failed for {server_type}: {e}",
             )
 
-    def convert_acl_attributes_to_aci(  # noqa: C901
-        self,
-        entry_data: dict[str, object],
-        source_server: str,
-        target_server: str,
-    ) -> FlextResult[dict[str, object]]:
-        """Convert _acl_attributes to proper ACI attributes using server-specific quirks.
-
-        Uses a two-step conversion process:
-        1. Source server ACLs -> RFC format (using source server quirks)
-        2. RFC ACLs -> Target server ACI format (using target server quirks)
-
-        Works on RFC as the intermediate base format with metadata preservation.
-
-        Args:
-            entry_data: Entry data with _acl_attributes metadata
-            source_server: Source server type where ACLs were originally extracted
-            target_server: Target server type for final ACI attribute format
-
-        Returns:
-            FlextResult with entry data containing proper ACI attributes for target server
-
-        """
-        try:
-            # Make a copy to avoid modifying the original
-            # Type annotation: entry_data is dict[str, object], converted_data should match
-            converted_data: dict[str, object] = dict(entry_data)
-
-            # Check if entry has ACL attributes to convert
-            acl_attrs = entry_data.get("_acl_attributes")
-            if not acl_attrs or not FlextRuntime.is_dict_like(acl_attrs):
-                # No ACL attributes to convert, return as-is
-                return FlextResult[dict[str, object]].ok(converted_data)
-
-            # Step 1: ACLs are expected to be in RFC-compliant format already
-            # Convert to dict[str, list[str]] format required by protocol
-            # Type narrowing: acl_attrs is dict[str, object] from is_dict_like check
-            # Convert values to list[str] format
-            rfc_acl_attrs: dict[str, list[str]] = {}
-            for key, value in acl_attrs.items():
-                if FlextRuntime.is_list_like(value):
-                    # Type narrowing: is_list_like ensures list[object]
-                    rfc_acl_attrs[key] = [str(v) for v in value]
-                elif isinstance(value, str):
-                    rfc_acl_attrs[key] = [value]
-                else:
-                    rfc_acl_attrs[key] = [str(value)]
-
-            # Step 2: Convert RFC ACLs to target server ACI format using target server ACL quirks
-            final_aci_attrs: dict[str, object]
-            if target_server.lower() == FlextLdifConstants.ServerTypes.RFC:
-                # Target is RFC, use the RFC ACLs directly
-                # Convert dict[str, list[str]] to dict[str, object]
-                final_aci_attrs = dict(rfc_acl_attrs)
-            else:
-                # Use ACL quirk for the target server to convert RFC ACLs to ACI format
-                # ACL quirks handle the conversion from internal format to server-specific ACI format
-                target_acl_quirk = self._registry.find_acl_for_line(target_server, "")
-                if not target_acl_quirk:
-                    return FlextResult[dict[str, object]].fail(
-                        f"No ACL quirk available for target server {target_server}",
-                    )
-
-                # Validate protocol compliance first
-                if not isinstance(
-                    target_acl_quirk, FlextLdifProtocols.Quirks.AclProtocol
-                ):
-                    return FlextResult[dict[str, object]].fail(
-                        f"Target ACL quirk for {target_server} does not implement AclProtocol",
-                    )
-                # Check for optional method (not in base protocol, but some quirks implement it)
-                if hasattr(target_acl_quirk, "convert_rfc_acl_to_aci"):
-                    # target_acl_quirk is already typed as AclProtocol - no cast needed
-                    aci_result = target_acl_quirk.convert_rfc_acl_to_aci(
-                        rfc_acl_attrs,
-                        target_server,
-                    )
-                    if aci_result.is_failure:
-                        return FlextResult[dict[str, object]].fail(
-                            f"RFC ACL to target ACI conversion failed: {aci_result.error}",
-                        )
-                    # Convert result back to dict[str, object] for entry_data
-                    aci_result_dict = aci_result.unwrap()
-                    # Type narrowing: convert dict[str, list[str]] to dict[str, object]
-                    final_aci_attrs = dict(aci_result_dict)
-                else:
-                    return FlextResult[dict[str, object]].fail(
-                        f"Target server ACL quirk {target_server} does not support RFC to ACI conversion",
-                    )
-
-            # Merge the final ACI attributes into the entry data
-            converted_data.update(final_aci_attrs)
-
-            # Remove the internal metadata
-            converted_data.pop("_acl_attributes", None)
-
-            return FlextResult[dict[str, object]].ok(converted_data)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[dict[str, object]].fail(
-                f"ACL attribute conversion failed from {source_server} to {target_server}: {e}",
-            )
-
     @staticmethod
-    def _extract_permissions(acl: FlextLdifModels.Acl) -> dict[str, object]:
+    def _extract_permissions(
+        acl: FlextLdifModels.Acl,
+    ) -> FlextLdifTypes.Acl.PermissionsDict:
         """Extract permissions dictionary from ACL.
 
         Args:
@@ -419,27 +337,44 @@ class FlextLdifAcl(LdifServiceBase):
         perms_data = acl.permissions
         if FlextRuntime.is_dict_like(perms_data):
             # Type narrowing: is_dict_like ensures dict[str, object]
-            return dict(perms_data)
+            # Convert to PermissionsDict type
+            raw_perms = dict(perms_data)
+            return FlextLdifTypes.Acl.PermissionsDict(
+                read=bool(raw_perms.get("read")),
+                write=bool(raw_perms.get("write")),
+                add=bool(raw_perms.get("add")),
+                delete=bool(raw_perms.get("delete")),
+                search=bool(raw_perms.get("search")),
+                compare=bool(raw_perms.get("compare")),
+                self_write=bool(raw_perms.get("self_write")),
+                proxy=bool(raw_perms.get("proxy")),
+                browse=bool(raw_perms.get("browse")),
+                auth=bool(raw_perms.get("auth")),
+                all=bool(raw_perms.get("all")),
+            )
 
         # Access permissions fields directly from model
         if isinstance(perms_data, FlextLdifModels.AclPermissions):
-            return {
-                "read": perms_data.read,
-                "write": perms_data.write,
-                "add": perms_data.add,
-                "delete": perms_data.delete,
-                "search": perms_data.search,
-                "compare": perms_data.compare,
-                "self_write": perms_data.self_write,
-                "proxy": perms_data.proxy,
-            }
+            return FlextLdifTypes.Acl.PermissionsDict(
+                read=perms_data.read,
+                write=perms_data.write,
+                add=perms_data.add,
+                delete=perms_data.delete,
+                search=perms_data.search,
+                compare=perms_data.compare,
+                self_write=perms_data.self_write,
+                proxy=perms_data.proxy,
+                browse=False,  # Not in AclPermissions model
+                auth=False,  # Not in AclPermissions model
+                all=False,  # Not in AclPermissions model
+            )
 
-        return {}
+        return FlextLdifTypes.Acl.PermissionsDict()
 
     @staticmethod
     def _validate_permissions(
-        perms: dict[str, object],
-        context: dict[str, object],
+        perms: FlextLdifTypes.Acl.PermissionsDict,
+        context: FlextLdifTypes.Acl.EvaluationContextDict,
     ) -> FlextResult[bool]:
         """Validate permissions against context.
 
@@ -478,7 +413,7 @@ class FlextLdifAcl(LdifServiceBase):
     def evaluate_acl_context(
         self,
         acls: list[FlextLdifModels.Acl],
-        context: dict[str, object] | None = None,
+        context: FlextLdifTypes.Acl.EvaluationContextDict | None = None,
     ) -> FlextResult[bool]:
         """Evaluate ACLs against a context.
 
@@ -498,7 +433,9 @@ class FlextLdifAcl(LdifServiceBase):
                 return FlextResult[bool].ok(True)
 
             # Use empty dict as default value, not fallback
-            eval_context: dict[str, object] = context if context is not None else {}
+            eval_context: FlextLdifTypes.Acl.EvaluationContextDict = (
+                context if context is not None else {}
+            )
 
             # Evaluate each ACL against the context
             for acl in acls:
@@ -654,8 +591,10 @@ class FlextLdifAcl(LdifServiceBase):
         # silent data loss from ACL transformations.
         dn_value = entry.dn.value
         return FlextResult[FlextLdifModels.Entry].fail(
-            f"ACL transformation not yet supported for {source_type}→{target_type}: "
-            f"entry with ACLs requires manual validation (DN: {dn_value})",
+            (
+                f"ACL transformation not yet supported for {source_type}→{target_type}: "
+                f"entry with ACLs requires manual validation (DN: {dn_value})"
+            ),
         )
 
     def transform_acl_entries(
@@ -675,8 +614,8 @@ class FlextLdifAcl(LdifServiceBase):
 
         Args:
             entries: List of entries with ACL attributes in source format
-            source_server: Source server type (e.g., "OID", "OpenLDAP")
-            target_server: Target server type (e.g., "OUD", "AD")
+            source_server: Source server type (obtained via FlextLdifServer)
+            target_server: Target server type (obtained via FlextLdifServer)
 
         Returns:
             FlextResult containing list of entries with ACL attributes in target format
@@ -771,6 +710,76 @@ class FlextLdifAcl(LdifServiceBase):
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"ACL transformation failed: {e}",
             )
+
+    # =========================================================================
+    # ACL ENTRY EXTRACTION
+    # =========================================================================
+
+    @staticmethod
+    def _is_schema_entry(entry: FlextLdifModels.Entry) -> bool:
+        """Check if entry is a schema definition.
+
+        Schema entries are detected by presence of attributeTypes, objectClasses,
+        ldapSyntaxes, or matchingRules attributes (case-insensitive).
+
+        Args:
+            entry: Entry to check
+
+        Returns:
+            True if entry is a schema definition
+
+        """
+        entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
+        schema_attrs_lower = {
+            attr.lower() for attr in FlextLdifConstants.SchemaFields.ALL_SCHEMA_FIELDS
+        }
+        return bool(schema_attrs_lower & entry_attrs)
+
+    def extract_acl_entries(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        acl_attributes: list[str] | None = None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Extract entries with ACL attributes.
+
+        Filters entries to find those with ACL attributes,
+        while excluding schema entries.
+
+        Args:
+            entries: List of entries to filter
+            acl_attributes: List of ACL attribute names to look for
+                          Default: FlextLdifConstants.AclAttributeRegistry.RFC_FOUNDATION
+
+        Returns:
+            FlextResult with list of entries containing ACL attributes
+            (excluding schema entries)
+
+        Example:
+            # Extract with default ACL attributes
+            result = acl_service.extract_acl_entries(entries)
+
+            # Extract with custom ACL attributes
+            result = acl_service.extract_acl_entries(
+                entries,
+                acl_attributes=["orclaci", "aci"]
+            )
+
+        """
+        if not entries:
+            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+
+        filter_acl_attrs = (
+            acl_attributes
+            if acl_attributes is not None
+            else FlextLdifConstants.AclAttributeRegistry.RFC_FOUNDATION
+        )
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok([
+            entry
+            for entry in entries
+            if not self._is_schema_entry(entry)
+            and FlextLdifUtilities.Entry.has_any_attributes(entry, filter_acl_attrs)
+        ])
 
 
 __all__ = ["FlextLdifAcl"]

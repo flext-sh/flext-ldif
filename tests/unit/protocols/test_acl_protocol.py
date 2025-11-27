@@ -105,7 +105,10 @@ CASE_INSENSITIVE_TESTS = [
     CaseInsensitivityTestCase(ServerType.OID, "orclaci", True, "OID lowercase orclaci"),
     CaseInsensitivityTestCase(ServerType.OID, "ORCLACI", True, "OID uppercase ORCLACI"),
     CaseInsensitivityTestCase(
-        ServerType.OID, "OrclAci", True, "OID mixed case OrclAci",
+        ServerType.OID,
+        "OrclAci",
+        True,
+        "OID mixed case OrclAci",
     ),
     CaseInsensitivityTestCase(ServerType.OID, "cn", False, "OID non-ACL attribute"),
     # OUD case-insensitive tests
@@ -125,7 +128,10 @@ CASE_INSENSITIVE_TESTS = [
         "OUD uppercase DS-PRIVILEGE-NAME",
     ),
     CaseInsensitivityTestCase(
-        ServerType.OUD, "orclaci", False, "OUD should not match OID attribute",
+        ServerType.OUD,
+        "orclaci",
+        False,
+        "OUD should not match OID attribute",
     ),
     CaseInsensitivityTestCase(ServerType.OUD, "cn", False, "OUD non-ACL attribute"),
 ]

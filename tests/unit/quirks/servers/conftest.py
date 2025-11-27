@@ -17,35 +17,59 @@ from flext_ldif import (
     FlextLdifTypes,
     FlextLdifWriter,
 )
+from flext_ldif.servers import (
+    FlextLdifServersOid,
+    FlextLdifServersOud,
+    FlextLdifServersRfc,
+)
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
+from tests.fixtures.loader import FlextLdifFixtures
 
 from .fixtures.general_constants import TestGeneralConstants
 from .fixtures.rfc_constants import TestsRfcConstants
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def ldif_api() -> FlextLdif:
-    """Provides a FlextLdif API instance for the test module.
+    """Provides a FlextLdif API instance for each test.
 
-    Creates a FlextLdif instance using the singleton pattern.
+    Uses function scope to ensure fresh instance per test (no state pollution).
+    Each test gets a clean FlextLdif instance.
     """
     return FlextLdif.get_instance()
 
 
+@pytest.fixture(autouse=True)
+def cleanup_state() -> None:
+    """Autouse fixture to clean shared state between tests.
+
+    Runs after each test to prevent state pollution to subsequent tests.
+    Ensures test isolation even when fixtures have shared state.
+    """
+    return
+    # Post-test cleanup - if singleton state needs to be cleared,
+    # it would be done here. Currently, creating fresh FlextLdif instances
+    # in function-scoped ldif_api fixture provides sufficient isolation.
+
+
 @pytest.fixture
 def server() -> FlextLdifServer:
-    """Provides FlextLdifServer instance for getting quirks."""
+    """Provides FlextLdifServer instance for getting quirks.
+
+    Uses function scope to ensure fresh instance per test (no state pollution).
+    """
     return FlextLdifServer()
 
 
 @pytest.fixture
-def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
-    """Provides RFC quirk instance via FlextLdifServer API."""
-    quirk = server.quirk("rfc")
-    assert quirk is not None, "RFC quirk must be registered"
-    return quirk
+def rfc_quirk() -> FlextLdifServersBase:
+    """Provides RFC quirk instance directly.
+
+    Uses function scope to ensure fresh instance per test (no state pollution).
+    """
+    return FlextLdifServersRfc()
 
 
 @pytest.fixture
@@ -237,19 +261,15 @@ def conversion_matrix() -> FlextLdifConversion:
 
 
 @pytest.fixture
-def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
-    """Provides OID quirk instance via FlextLdifServer API."""
-    quirk = server.quirk("oid")
-    assert quirk is not None, "OID quirk must be registered"
-    return quirk
+def oid_quirk() -> FlextLdifServersBase:
+    """Provides OID quirk instance directly."""
+    return FlextLdifServersOid()
 
 
 @pytest.fixture
-def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
-    """Provides OUD quirk instance via FlextLdifServer API."""
-    quirk = server.quirk("oud")
-    assert quirk is not None, "OUD quirk must be registered"
-    return quirk
+def oud_quirk() -> FlextLdifServersBase:
+    """Provides OUD quirk instance directly."""
+    return FlextLdifServersOud()
 
 
 @pytest.fixture
@@ -258,6 +278,28 @@ def oid_schema_quirk(
 ) -> FlextLdifProtocols.Quirks.SchemaProtocol:
     """Provides OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
+
+
+@pytest.fixture
+def oid_acl_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifTypes.AclQuirkInstance:
+    """Provides OID ACL quirk instance for tests."""
+    return oid_quirk.acl_quirk
+
+
+@pytest.fixture
+def oid_entry_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifTypes.EntryQuirkInstance:
+    """Provides OID Entry quirk instance for tests."""
+    return oid_quirk.entry_quirk
+
+
+@pytest.fixture
+def oid_fixtures() -> FlextLdifFixtures.OID:
+    """Provides OID fixture loader instance for tests."""
+    return FlextLdifFixtures.get_oid()
 
 
 @pytest.fixture

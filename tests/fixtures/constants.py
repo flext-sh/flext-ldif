@@ -264,6 +264,69 @@ class SortingCases:
         raise ValueError(f"Unknown sorting strategy: {strategy}")
 
 
+class Filters:
+    """Filter service test constants organized in namespaces."""
+
+    # Filter criteria
+    CRITERIA_DN = "dn"
+    CRITERIA_OBJECTCLASS = "objectclass"
+    CRITERIA_ATTRIBUTES = "attributes"
+    CRITERIA_BASE_DN = "base_dn"
+
+    # Filter modes
+    MODE_INCLUDE = "include"
+    MODE_EXCLUDE = "exclude"
+
+    # DN patterns for testing
+    DN_PATTERN_USERS = "*,ou=users,*"
+    DN_PATTERN_ADMINS = "*,ou=REDACTED_LDAP_BIND_PASSWORDs,*"
+    DN_PATTERN_GROUPS = "*,ou=groups,*"
+    DN_PATTERN_ALL = "*"
+    DN_PATTERN_OU = "*,ou=*"
+
+    # ObjectClass values
+    OC_PERSON = Names.PERSON
+    OC_ORGANIZATIONAL_UNIT = "organizationalUnit"
+    OC_GROUP_OF_NAMES = "groupOfNames"
+    OC_GROUP = "group"
+    OC_DOMAIN = "domain"
+    OC_TOP = Names.TOP
+    OC_INET_ORG_PERSON = Names.INET_ORG_PERSON
+
+    # Attribute names
+    ATTR_CN = Names.CN
+    ATTR_MAIL = Names.MAIL
+    ATTR_OBJECTCLASS = Names.OBJECTCLASS
+    ATTR_SN = Names.SN
+    ATTR_UID = Names.UID
+
+    # Server types
+    SERVER_RFC = "rfc"
+    SERVER_OID = "oid"
+    SERVER_OUD = "oud"
+
+    # Categories
+    CATEGORY_USERS = "users"
+    CATEGORY_GROUPS = "groups"
+    CATEGORY_HIERARCHY = "hierarchy"
+    CATEGORY_SCHEMA = "schema"
+    CATEGORY_ACL = "acl"
+    CATEGORY_REJECTED = "rejected"
+
+    # Test entry DNs
+    DN_USER_JOHN = f"cn=john,ou=users,{DNs.EXAMPLE}"
+    DN_USER_JANE = f"cn=jane,ou=users,{DNs.EXAMPLE}"
+    DN_USER_ADMIN = f"cn=REDACTED_LDAP_BIND_PASSWORD,ou=REDACTED_LDAP_BIND_PASSWORDs,{DNs.EXAMPLE}"
+    DN_OU_USERS = f"ou=users,{DNs.EXAMPLE}"
+    DN_OU_GROUPS = f"ou=groups,{DNs.EXAMPLE}"
+    DN_ACL_POLICY = f"cn=acl-policy,{DNs.EXAMPLE}"
+    DN_REJECTED = f"cn=rejected,{DNs.EXAMPLE}"
+
+    # OID patterns for schema filtering
+    OID_PATTERN_CN = "2.5.4.*"
+    OID_PATTERN_PERSON = "2.5.6.*"
+
+
 class Statistics:
     """Statistics service test constants."""
 
@@ -307,12 +370,83 @@ class Statistics:
     VERSION = "1.0.0"
 
 
+class EntryTestConstants:
+    """Entry service test constants organized in namespaces."""
+
+    # Operational attributes for testing
+    OPERATIONAL_ATTRS: ClassVar[list[str]] = [
+        "createTimestamp",
+        "modifyTimestamp",
+        "creatorsName",
+        "modifiersName",
+        "entryCSN",
+        "entryUUID",
+    ]
+
+    # Common test attributes
+    COMMON_ATTRS: ClassVar[list[str]] = [
+        Names.CN,
+        Names.SN,
+        Names.MAIL,
+        Names.UID,
+        Names.OBJECTCLASS,
+    ]
+
+    # Edge case values
+    LONG_VALUE_LENGTH: ClassVar[int] = 10000
+    MANY_ATTRS_COUNT: ClassVar[int] = 100
+    MANY_ATTRS_REMOVE_COUNT: ClassVar[int] = 50
+
+    # Unicode test values
+    UNICODE_DN: ClassVar[str] = "cn=日本語,dc=example,dc=com"
+    UNICODE_VALUE: ClassVar[str] = "日本語"
+
+    # Validation test values
+    VALID_ATTR_NAMES: ClassVar[list[str]] = [
+        Names.CN,
+        Names.MAIL,
+        Names.OBJECTCLASS,
+        "user-account",
+        "extensionAttribute123",
+    ]
+    INVALID_ATTR_NAMES: ClassVar[list[str]] = [
+        "2invalid",
+        "user name",
+        "",
+        "user@name",
+    ]
+
+    # Syntax test values
+    BOOLEAN_OID: ClassVar[str] = OIDs.BOOLEAN
+    BOOLEAN_NAME: ClassVar[str] = "boolean"
+
+    # DN cleaning test cases
+    DN_CLEANING_CASES: ClassVar[dict[str, tuple[str, str | None, str | None]]] = {
+        "with_spaces": (
+            "cn = John Doe , ou = users , dc = example , dc = com",
+            "cn=",
+            " = ",
+        ),
+        "already_clean": (
+            "cn=john,ou=users,dc=example,dc=com",
+            "cn=john",
+            None,
+        ),
+        "with_escaped_chars": (
+            r"cn=John\, Doe,ou=users,dc=example,dc=com",
+            None,
+            None,
+        ),
+    }
+
+
 class TestData:
     """Structured test data builders."""
 
     @staticmethod
     def user_entry(
-        dn: str = DNs.TEST_USER, **overrides: str | list[str],
+        dn: str = DNs.TEST_USER,
+        **overrides: str | list[str],
     ) -> dict[str, str | list[str]]:
         """Create user entry test data."""
         base: dict[str, str | list[str]] = {
@@ -337,7 +471,8 @@ class TestData:
 
     @staticmethod
     def multivalue_entry(
-        dn: str = DNs.TEST_USER, **overrides: str | list[str],
+        dn: str = DNs.TEST_USER,
+        **overrides: str | list[str],
     ) -> dict[str, str | list[str]]:
         """Create multivalue attribute entry test data."""
         base: dict[str, str | list[str]] = {
@@ -355,7 +490,9 @@ class TestData:
 
     @staticmethod
     def schema_attribute(
-        oid: str = OIDs.CN, name: str = Names.CN, **overrides: str,
+        oid: str = OIDs.CN,
+        name: str = Names.CN,
+        **overrides: str,
     ) -> dict[str, str]:
         """Create schema attribute test data."""
         base: dict[str, str] = {
@@ -401,6 +538,172 @@ class TestData:
         ]
 
 
+class Writer:
+    """Constants for writer tests organized by category."""
+
+    # Test DNs
+    LONG_DN = (
+        "cn=Very Long Common Name That Exceeds Normal Length,"
+        "ou=Very Long Organizational Unit Name,"
+        "o=Very Long Organization Name,dc=example,dc=com"
+    )
+
+    # Line widths for testing
+    LINE_WIDTHS: ClassVar[list[int]] = [50, 76, 120]
+    MIN_LINE_WIDTH: ClassVar[int] = 1
+
+    # Output targets
+    OUTPUT_TARGET_STRING: ClassVar[str] = "string"
+    OUTPUT_TARGET_FILE: ClassVar[str] = "file"
+    OUTPUT_TARGET_LDAP3: ClassVar[str] = "ldap3"
+    OUTPUT_TARGET_MODEL: ClassVar[str] = "model"
+
+    # Patterns for assertions
+    PATTERN_VERSION: ClassVar[str] = "version: 1"
+    PATTERN_TIMESTAMP_REGEX: ClassVar[str] = (
+        r"# Generated on: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
+    )
+    PATTERN_TIMESTAMP_PREFIX: ClassVar[str] = "# Generated on:"
+    PATTERN_HIDDEN_ATTR: ClassVar[str] = "# telephoneNumber:"
+    PATTERN_EMPTY_ATTR: ClassVar[str] = "emptyAttr:"
+    PATTERN_DN_COMMENT: ClassVar[str] = "# Complex DN:"
+    PATTERN_ENTRY_METADATA: ClassVar[str] = "# Entry Metadata:"
+
+    # Regex special characters for pattern detection
+    REGEX_SPECIAL_CHARS: ClassVar[set[str]] = {
+        "\\d",
+        "\\w",
+        "\\s",
+        ".*",
+        ".+",
+        "^",
+        "$",
+        "[",
+        "]",
+        "(",
+        ")",
+        "?",
+        "*",
+        "+",
+        "|",
+    }
+
+
+class OidTestConstants:
+    """OID-specific test constants for Oracle Internet Directory (OID) testing.
+
+    Consolidates Oracle OID namespace OIDs, boolean conversions, schema definitions,
+    and ACL-related constants used across OID test suite.
+    """
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ORACLE OID NAMESPACE CONSTANTS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Oracle namespace: 2.16.840.1.113894.*
+    ORACLE_NAMESPACE = "2.16.840.1.113894"
+    ORACLE_ATTRIBUTE_OID = "2.16.840.1.113894.1.1.1"
+    ORACLE_OBJECTCLASS_OID = "2.16.840.1.113894.2.1.1"
+    ORACLE_ACL_OID = "2.16.840.1.113894.1.1.2"
+    ORACLE_GUID_OID = "2.16.840.1.113894.1.1.1"
+    ORACLE_CONTEXT_OID = "2.16.840.1.113894.2.1.1"
+
+    # OID namespace pattern for detection
+    ORACLE_OID_PATTERN = r"2\.16\.840\.1\.113894\."
+    ORACLE_OR_NOVELL_PATTERN = r"2\.16\.840\.1\.11(3894|3719)\."
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # BOOLEAN VALUE MAPPINGS (OID ↔ RFC)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    OID_TO_RFC_BOOLEAN: ClassVar[dict[str, str]] = {"0": "FALSE", "1": "TRUE"}
+    RFC_TO_OID_BOOLEAN: ClassVar[dict[str, str]] = {"TRUE": "1", "FALSE": "0"}
+    BOOLEAN_VALUES_OID: ClassVar[list[str]] = ["0", "1"]
+    BOOLEAN_VALUES_RFC: ClassVar[list[str]] = ["TRUE", "FALSE"]
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # SCHEMA DEFINITIONS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Basic Oracle attribute
+    ORACLE_ATTR_GUID = (
+        "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' "
+        "DESC 'Oracle GUID' "
+        "EQUALITY caseIgnoreMatch "
+        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+    )
+
+    # Basic Oracle objectClass
+    ORACLE_OC_CONTEXT = (
+        "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
+        "DESC 'Oracle Context' "
+        "SUP top STRUCTURAL "
+        "MUST cn "
+        "MAY ( orclguid ) )"
+    )
+
+    # Complex Oracle attribute with all options
+    ORACLE_ATTR_COMPLEX = (
+        "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
+        "DESC 'Oracle GUID' "
+        "EQUALITY caseIgnoreMatch "
+        "ORDERING caseIgnoreOrderingMatch "
+        "SUBSTR caseIgnoreSubstringsMatch "
+        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+        "SINGLE-VALUE )"
+    )
+
+    # Oracle attributes with special syntax (CASE-IGNORE-SUBSTRINGS)
+    ORACLE_ATTR_WITH_SUBSTR = (
+        "( 2.16.840.1.113894.1.1.1 NAME 'orclAttr' "
+        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+        "SUBSTR caseIgnoreSubstringsMatch )"
+    )
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ACL CONSTANTS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # ACL subject types (Oracle OID specific)
+    ACL_SUBJECT_TYPES: ClassVar[list[str]] = ["PUBLIC", "BIND_RULE"]
+    ACL_PERMISSION_NAMES: ClassVar[list[str]] = [
+        "read",
+        "write",
+        "delete",
+        "search",
+        "add",
+        "modifyrdn",
+    ]
+
+    # Sample Oracle ACL
+    ORACLE_ACL_SAMPLE = "PUBLIC/2=allow;/2=allow;PUBLIC/2=allow"
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # BOOLEAN ATTRIBUTE NAMES
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+        "pwdlockout",
+        "pwdAllowUserChange",
+        "pwdMustChange",
+        "pwdSafeModify",
+        "pwdInHistory",
+        "orclAccountStatus",
+    ])
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ENTRY TEST DATA
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    ORACLE_ENTRY_DN = "cn=test,dc=oracle,dc=com"
+    ORACLE_ENTRY_OBJECTCLASS: ClassVar[list[str]] = ["top", "person", "orclContext"]
+    ORACLE_ENTRY_ATTRS: ClassVar[dict[str, list[str]]] = {
+        "cn": ["test"],
+        "sn": ["user"],
+        "orclguid": ["oracle-guid-123"],
+    }
+
+
 # Re-export for backward compatibility and convenience
 General = type(
     "General",
@@ -415,5 +718,8 @@ General = type(
         **{k: v for k, v in RFC.__dict__.items() if not k.startswith("_")},
         **{k: v for k, v in SortingCases.__dict__.items() if not k.startswith("_")},
         **{k: v for k, v in Statistics.__dict__.items() if not k.startswith("_")},
+        **{k: v for k, v in Filters.__dict__.items() if not k.startswith("_")},
+        **{k: v for k, v in Writer.__dict__.items() if not k.startswith("_")},
+        **{k: v for k, v in OidTestConstants.__dict__.items() if not k.startswith("_")},
     },
 )

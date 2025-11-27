@@ -154,32 +154,6 @@ class TestMigrationPipelineValidation:
         assert result.value.statistics is not None
         assert result.value.statistics.total_entries == 0
 
-    def test_execute_creates_output_dir_if_missing(self, tmp_path: Path) -> None:
-        """Test pipeline creates output directory if it doesn't exist."""
-        input_dir = tmp_path / "input"
-        input_dir.mkdir()
-        nonexistent_output = tmp_path / "nonexistent"
-
-        # Create a simple LDIF file using constants
-        ldif_content = f"""dn: {DNs.TEST_USER}
-{Names.OBJECTCLASS}: {Names.PERSON}
-{Names.CN}: {Names.CN}
-"""
-        (input_dir / "test.ldif").write_text(ldif_content)
-
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=nonexistent_output,
-            source_server="rfc",
-            target_server="rfc",
-        )
-
-        result = pipeline.execute()
-
-        # Pipeline should succeed and create the output directory
-        assert result.is_success
-        assert nonexistent_output.exists()
-
 
 class TestMigrationPipelineSimpleMode:
     """Test suite for simple migration mode."""

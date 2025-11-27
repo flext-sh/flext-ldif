@@ -59,24 +59,30 @@ class TestFlextLdifUtilitiesConstants:
 
     # Get valid values test data
     GET_VALID_VALUES_DATA: ClassVar[
-        dict[str, tuple[GetValidValuesType, str, list[str], bool]]
+        dict[str, tuple[GetValidValuesType, str, set[str], bool]]
     ] = {
         "get_valid_values_server_type": (
             GetValidValuesType.SERVER_TYPE,
             "server_type",
-            ["rfc", "oid", "oud"],
+            {
+                "rfc", "oid", "oud", "openldap", "openldap1", "ad",
+                "apache", "389ds", "novell", "tivoli", "relaxed"
+            },
             False,
         ),
         "get_valid_values_encoding": (
             GetValidValuesType.ENCODING,
             "encoding",
-            ["utf-8"],
+            {
+                "utf-8", "utf-16", "utf-16-le", "utf-32", "ascii",
+                "latin-1", "cp1252", "iso-8859-1"
+            },
             False,
         ),
         "get_valid_values_unknown_category": (
             GetValidValuesType.UNKNOWN_CATEGORY,
             "unknown",
-            [],
+            set(),
             True,
         ),
     }
@@ -156,7 +162,7 @@ class TestFlextLdifUtilitiesConstants:
         scenario: str,
         test_type: GetValidValuesType,
         category: str,
-        expected_values: list[str],
+        expected_values: set[str],
         should_raise: bool,
     ) -> None:
         """Parametrized test for get_valid_values."""
@@ -166,8 +172,9 @@ class TestFlextLdifUtilitiesConstants:
         else:
             values = FlextLdifUtilities.Constants.get_valid_values(category)
             assert isinstance(values, set)
-            for expected in expected_values:
-                assert expected in values
+            assert values == expected_values, (
+                f"Expected {expected_values}, got {values}"
+            )
 
     # =======================================================================
     # Is Valid Tests
@@ -236,7 +243,8 @@ class TestFlextLdifUtilitiesConstants:
                 FlextLdifUtilities.Constants.validate_many(values, category)
         else:
             is_valid, invalid = FlextLdifUtilities.Constants.validate_many(
-                values, category,
+                values,
+                category,
             )
             assert is_valid == expected_valid
             if not expected_valid:

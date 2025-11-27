@@ -51,16 +51,11 @@ logger = FlextLogger(__name__)
 
 def _get_schema_quirk(
     quirk: FlextLdifServersBase,
-    *,
-    needs_write: bool = False,
-    needs_parse: bool = False,
 ) -> FlextLdifServersBase.Schema:
     """Get schema quirk from base quirk with proper type narrowing.
 
     Args:
         quirk: Base quirk instance
-        needs_write: If True, checks for write methods
-        needs_parse: If True, checks for parse methods
 
     Returns:
         Schema quirk instance with proper type
@@ -69,19 +64,12 @@ def _get_schema_quirk(
         TypeError: If quirk doesn't have schema capabilities
 
     """
-    # Check if already a Schema quirk (has parse/write methods directly)
-    # Data-driven check for schema methods
-    schema_method_checks: list[tuple[bool, str]] = [
-        (needs_write, "write_attribute"),
-        (needs_parse, "parse_attribute"),
-        (needs_write, "write_objectclass"),
-        (needs_parse, "parse_objectclass"),
-    ]
-    for condition, method_name in schema_method_checks:
-        if condition and hasattr(quirk, method_name):
-            return _validate_schema_quirk(quirk)
+    # FIRST: Check if already a Schema quirk instance (isinstance check)
+    # This avoids false positives from __getattr__ delegation in base class
+    if isinstance(quirk, FlextLdifServersBase.Schema):
+        return quirk
 
-    # Check if base quirk has schema_quirk attribute
+    # SECOND: Get schema from schema_quirk attribute
     return _get_schema_from_attribute(quirk)
 
 
@@ -187,7 +175,6 @@ class FlextLdifConversion(
     @override
     def execute(
         self,
-        **_kwargs: object,
     ) -> FlextResult[
         FlextLdifModels.Entry
         | FlextLdifModels.SchemaAttribute
@@ -552,7 +539,7 @@ class FlextLdifConversion(
         try:
             # Step 1: Get source schema quirk with proper type narrowing
             try:
-                source_schema = _get_schema_quirk(source_quirk, needs_write=True)
+                source_schema = _get_schema_quirk(source_quirk)
             except TypeError as e:
                 return FlextResult.fail(f"Source quirk error: {e}")
 
@@ -569,7 +556,7 @@ class FlextLdifConversion(
 
             # Step 3: Get target schema quirk with proper type narrowing
             try:
-                target_schema = _get_schema_quirk(target_quirk, needs_parse=True)
+                target_schema = _get_schema_quirk(target_quirk)
             except TypeError as e:
                 return FlextResult.fail(f"Target quirk error: {e}")
 
@@ -615,7 +602,7 @@ class FlextLdifConversion(
         try:
             # Step 1: Get source schema quirk with proper type narrowing
             try:
-                source_schema = _get_schema_quirk(source_quirk, needs_write=True)
+                source_schema = _get_schema_quirk(source_quirk)
             except TypeError as e:
                 return FlextResult.fail(f"Source quirk error: {e}")
 
@@ -634,7 +621,7 @@ class FlextLdifConversion(
 
             # Step 3: Get target schema quirk with proper type narrowing
             try:
-                target_schema = _get_schema_quirk(target_quirk, needs_parse=True)
+                target_schema = _get_schema_quirk(target_quirk)
             except TypeError as e:
                 return FlextResult.fail(f"Target quirk error: {e}")
 
@@ -753,12 +740,134 @@ class FlextLdifConversion(
         self,
         original_acl: FlextLdifModels.Acl,
         converted_acl: FlextLdifModels.Acl,
+        source_server_type: str | None = None,
+        target_server_type: str | None = None,
     ) -> None:
-        """Preserve permissions and metadata from original ACL."""
+        """Preserve permissions and metadata from original ACL.
+
+        Args:
+            original_acl: The original ACL before conversion
+            converted_acl: The converted ACL (modified in-place)
+            source_server_type: Server type of the source ACL (e.g., "oid", "oud")
+            target_server_type: Server type of the target ACL (e.g., "oud", "oid")
+
+        """
         # Preserve permissions from original ACL model since parsing may not extract them correctly
-        # ACL permissions are universal and don't change between server formats
-        if original_acl.permissions and not converted_acl.permissions:
-            converted_acl.permissions = original_acl.permissions.model_copy(deep=True)
+        # Check if converted ACL has no actual permissions set (all fields False/falsy)
+        converted_has_permissions = converted_acl.permissions and any(
+            getattr(converted_acl.permissions, field, False)
+            for field in (
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "self_write",
+                "proxy",
+                "browse",
+                "auth",
+                "all",
+            )
+        )
+
+        if original_acl.permissions:
+            # Get original permissions as dict for mapping
+            orig_perms_dict = original_acl.permissions.model_dump(exclude_unset=True)
+            # Remove None values and fields that are False (only keep True permissions)
+            orig_perms_dict = {
+                k: v
+                for k, v in orig_perms_dict.items()
+                if v is True  # Only include explicitly True permissions
+            }
+
+            logger.debug(
+                "ACL permission preservation",
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
+                original_permissions=orig_perms_dict,
+            )
+
+            if orig_perms_dict:
+                # Determine if we need to apply mapping based on server types
+                needs_oid_to_oud_mapping = (
+                    source_server_type
+                    and target_server_type
+                    and source_server_type.lower() == "oid"
+                    and target_server_type.lower() == "oud"
+                )
+                needs_oud_to_oid_mapping = (
+                    source_server_type
+                    and target_server_type
+                    and source_server_type.lower() == "oud"
+                    and target_server_type.lower() == "oid"
+                )
+
+                logger.debug(
+                    "ACL mapping decision",
+                    needs_oid_to_oud_mapping=needs_oid_to_oud_mapping,
+                    needs_oud_to_oid_mapping=needs_oud_to_oid_mapping,
+                )
+
+                # For cross-server conversions, ALWAYS apply mapping regardless of converted_has_permissions
+                # This ensures OID↔OUD permission mapping executes even if converted_acl already has permissions
+                if needs_oid_to_oud_mapping:
+                    # OID → OUD: Map OID-specific permissions to OUD equivalents
+                    mapped_perms = FlextLdifUtilities.ACL.map_oid_to_oud_permissions(
+                        orig_perms_dict
+                    )
+                    # Convert mapped permissions dict back to model
+                    # Create new permissions model with mapped values
+                    perms_data: dict[str, bool | None] = {
+                        "read": mapped_perms.get("read"),
+                        "write": mapped_perms.get("write"),
+                        "add": mapped_perms.get("add"),
+                        "delete": mapped_perms.get("delete"),
+                        "search": mapped_perms.get("search"),
+                        "compare": mapped_perms.get("compare"),
+                        "self_write": mapped_perms.get("selfwrite"),
+                        "proxy": mapped_perms.get("proxy"),
+                        "browse": mapped_perms.get("browse"),
+                        "auth": mapped_perms.get("auth"),
+                        "all": mapped_perms.get("all"),
+                    }
+                    # Remove None values for cleaner model
+                    perms_data = {k: v for k, v in perms_data.items() if v is not None}
+                    # Create new permissions model from mapped data
+                    converted_acl.permissions = FlextLdifModels.AclPermissions(
+                        **perms_data
+                    )
+                elif needs_oud_to_oid_mapping:
+                    # OUD → OID: Map OUD permissions to OID equivalents
+                    mapped_perms = FlextLdifUtilities.ACL.map_oud_to_oid_permissions(
+                        orig_perms_dict
+                    )
+                    # Convert mapped permissions dict back to model
+                    # Create new permissions model with mapped values
+                    perms_data: dict[str, bool | None] = {
+                        "read": mapped_perms.get("read"),
+                        "write": mapped_perms.get("write"),
+                        "add": mapped_perms.get("add"),
+                        "delete": mapped_perms.get("delete"),
+                        "search": mapped_perms.get("search"),
+                        "compare": mapped_perms.get("compare"),
+                        "self_write": mapped_perms.get("selfwrite"),
+                        "proxy": mapped_perms.get("proxy"),
+                        "browse": mapped_perms.get("browse"),
+                        "auth": mapped_perms.get("auth"),
+                        "all": mapped_perms.get("all"),
+                    }
+                    # Remove None values for cleaner model
+                    perms_data = {k: v for k, v in perms_data.items() if v is not None}
+                    # Create new permissions model from mapped data
+                    converted_acl.permissions = FlextLdifModels.AclPermissions(
+                        **perms_data
+                    )
+                elif not converted_has_permissions:
+                    # No mapping needed but converted is empty - preserve original as-is
+                    converted_acl.permissions = original_acl.permissions.model_copy(
+                        deep=True
+                    )
 
         # Preserve metadata from original ACL model for proper server-specific formatting
         # Metadata contains source_subject_type and other conversion hints needed by target writers
@@ -802,7 +911,7 @@ class FlextLdifConversion(
             entry_attributes = FlextLdifModels.LdifAttributes(attributes={})
 
             # Create metadata with ACL stored in metadata.acls
-            source_server_type = getattr(source_quirk, "server_name", "unknown")
+            source_server_type = getattr(source_quirk, "server_type", "unknown")
             metadata = FlextLdifModels.QuirkMetadata.create_for(
                 source_server_type,
                 extensions={},
@@ -844,10 +953,26 @@ class FlextLdifConversion(
             else:
                 converted_acl = domain_acl
 
-            # Preserve permissions and metadata from original ACL
-            self._preserve_acl_metadata(acl, converted_acl)
+            # Get target server type for permission mapping
+            target_server_type = getattr(target_quirk, "server_type", "unknown")
 
-            # Return converted ACL
+            # Preserve permissions and metadata from original ACL
+            # Pass server types so permission mapping can be applied during preservation
+            self._preserve_acl_metadata(
+                acl,
+                converted_acl,
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
+            )
+
+            # CRITICAL FIX: Update server_type to target server to ensure ACL writers recognize it
+            # This is required so that the OID writer knows to use "by group=" syntax for OID ACLs
+            converted_acl = converted_acl.model_copy(
+                update={"server_type": target_server_type},
+                deep=True,
+            )
+
+            # Return converted ACL with correct server_type
             return FlextResult.ok(converted_acl)
 
         except Exception as e:
@@ -939,7 +1064,7 @@ class FlextLdifConversion(
 
         # Get source schema quirk with proper type narrowing
         try:
-            schema_quirk = _get_schema_quirk(source_quirk, needs_write=True)
+            schema_quirk = _get_schema_quirk(source_quirk)
             write_result = schema_quirk.write_attribute(source_attr)
             if write_result.is_failure:
                 return FlextResult.ok(source_attr)  # Return as-is on write error
@@ -1028,7 +1153,7 @@ class FlextLdifConversion(
 
         # Get target schema quirk with proper type narrowing
         try:
-            target_schema = _get_schema_quirk(target_quirk, needs_parse=True)
+            target_schema = _get_schema_quirk(target_quirk)
         except TypeError as e:
             return FlextResult.fail(f"Target quirk error: {e}")
 
@@ -1092,7 +1217,7 @@ class FlextLdifConversion(
 
         # Get source schema quirk with proper type narrowing
         try:
-            schema_quirk = _get_schema_quirk(source_quirk, needs_write=True)
+            schema_quirk = _get_schema_quirk(source_quirk)
             write_result = schema_quirk.write_objectclass(source_oc)
             if write_result.is_failure:
                 return FlextResult[
@@ -1202,7 +1327,7 @@ class FlextLdifConversion(
 
         # Get target schema quirk with proper type narrowing
         try:
-            target_schema = _get_schema_quirk(target_quirk, needs_parse=True)
+            target_schema = _get_schema_quirk(target_quirk)
         except TypeError as e:
             return FlextResult.fail(f"Target quirk error: {e}")
 
@@ -1233,7 +1358,7 @@ class FlextLdifConversion(
 
         # Get target schema quirk with proper type narrowing
         try:
-            schema_quirk = _get_schema_quirk(target_quirk, needs_write=True)
+            schema_quirk = _get_schema_quirk(target_quirk)
         except TypeError:
             # Return as-is if no writer available
             return FlextResult[
@@ -1468,10 +1593,11 @@ class FlextLdifConversion(
             Dictionary mapping data_type to support status
 
         Examples:
-            >>> oud = FlextLdifServersOud()
-            >>> supported = matrix.get_supported_conversions(oud)
+            >>> registry = FlextLdifServer()
+            >>> quirk = registry.quirk("oud")
+            >>> supported = matrix.get_supported_conversions(quirk)
             >>> print(supported)
-            {'attribute': True, FlextLdifConstants.DictKeys.OBJECTCLASS: True, 'acl': True, 'entry': True}
+            {'attribute': True, 'objectclass': True, 'acl': True, 'entry': True}
 
         """
         support = {

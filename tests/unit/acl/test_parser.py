@@ -34,6 +34,9 @@ class AclParserTestType(StrEnum):
     EXECUTE = "execute"
     PARSE_OPENLDAP = "parse_openldap"
     PARSE_OID = "parse_oid"
+    PARSE_OUD = "parse_oud"
+    PARSE_REAL_OID_EXAMPLE = "parse_real_oid_example"
+    PARSE_REAL_OUD_EXAMPLE = "parse_real_oud_example"
     PARSE_UNSUPPORTED = "parse_unsupported"
     EVALUATE_EMPTY = "evaluate_empty"
     EVALUATE_VALID = "evaluate_valid"
@@ -73,6 +76,24 @@ PARSER_TESTS: Final[list[AclParserTestCase]] = [
         server_type=Fixtures.OID,
         acl_line=f'orclaci: access to entry by dn="{DNs.TEST_USER}" (read)',
         description="Parse Oracle OID ACL format",
+    ),
+    AclParserTestCase(
+        AclParserTestType.PARSE_OUD,
+        server_type=Fixtures.OUD,
+        acl_line=f'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///{DNs.TEST_USER}";)',
+        description="Parse Oracle OUD ACI format",
+    ),
+    AclParserTestCase(
+        AclParserTestType.PARSE_REAL_OID_EXAMPLE,
+        server_type=Fixtures.OID,
+        acl_line="orclaci: access to entry by * (browse,read) bindmode=(Simple)",
+        description="Parse real OID ACL example with bindmode",
+    ),
+    AclParserTestCase(
+        AclParserTestType.PARSE_REAL_OUD_EXAMPLE,
+        server_type=Fixtures.OUD,
+        acl_line='aci: (targetattr="*")(version 3.0; acl "Anonymous read"; allow (read,search) userdn="ldap:///anyone";)',
+        description="Parse real OUD ACI example with anonymous access",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_UNSUPPORTED,
@@ -181,11 +202,11 @@ class TestFlextLdifAclParser:
                 # Test execute method returns success
                 result = acl_service.execute()
                 assert result.is_success
-                acl_response = result.unwrap()
-                assert isinstance(acl_response, FlextLdifModels.AclResponse)
-                assert acl_response.acls == []
-                assert acl_response.statistics.acls_extracted == 0
-                assert acl_response.statistics.acl_entries == 0
+                service_status = result.unwrap()
+                assert isinstance(service_status, FlextLdifModels.ServiceStatus)
+                assert service_status.service == "acl"
+                assert service_status.status == "operational"
+                assert service_status.rfc_compliance == "RFC 2849"
 
             case AclParserTestType.PARSE_OPENLDAP:
                 # Test parsing OpenLDAP ACL format
@@ -193,13 +214,76 @@ class TestFlextLdifAclParser:
                     acl_service.parse(test_case.acl_line, test_case.server_type)
                 )
                 assert isinstance(parse_result_openldap, FlextResult)
+                # Validate successful parsing
+                assert parse_result_openldap.is_success, f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
+                parsed_acl = parse_result_openldap.unwrap()
+                assert isinstance(parsed_acl, FlextLdifModels.Acl)
+                assert parsed_acl.raw_acl == test_case.acl_line
+                # ACL server_type is determined by parsing, not input parameter
 
             case AclParserTestType.PARSE_OID:
                 # Test parsing Oracle OID ACL format
                 parse_result_oid: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
-                    test_case.acl_line, test_case.server_type,
+                    test_case.acl_line,
+                    test_case.server_type,
                 )
                 assert isinstance(parse_result_oid, FlextResult)
+                # Validate successful parsing
+                assert parse_result_oid.is_success, f"OID ACL parsing should succeed: {test_case.acl_line}"
+                parsed_acl = parse_result_oid.unwrap()
+                assert isinstance(parsed_acl, FlextLdifModels.Acl)
+                assert parsed_acl.raw_acl == test_case.acl_line
+                # ACL server_type is determined by parsing, not input parameter
+
+            case AclParserTestType.PARSE_OUD:
+                # Test parsing Oracle OUD ACI format
+                parse_result_oud: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
+                    test_case.acl_line,
+                    test_case.server_type,
+                )
+                assert isinstance(parse_result_oud, FlextResult)
+                # Validate successful parsing
+                assert parse_result_oud.is_success, f"OUD ACI parsing should succeed: {test_case.acl_line}"
+                parsed_acl = parse_result_oud.unwrap()
+                assert isinstance(parsed_acl, FlextLdifModels.Acl)
+                assert parsed_acl.raw_acl == test_case.acl_line
+                # ACL server_type is determined by parsing, not input parameter
+
+            case AclParserTestType.PARSE_REAL_OID_EXAMPLE:
+                # Test parsing real OID ACL example
+                parse_result_real_oid: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
+                    test_case.acl_line,
+                    test_case.server_type,
+                )
+                assert isinstance(parse_result_real_oid, FlextResult)
+                # Test parsing real OID ACL example - may succeed or fail based on quirk availability
+                # The important thing is that parsing either succeeds with valid ACL or fails with clear error
+                if parse_result_real_oid.is_success:
+                    parsed_acl = parse_result_real_oid.unwrap()
+                    assert isinstance(parsed_acl, FlextLdifModels.Acl)
+                    assert parsed_acl.raw_acl == test_case.acl_line
+                    # ACL server_type is determined by parsing, not input parameter
+                else:
+                    # If parsing fails, it should be due to unavailable quirk, not code error
+                    assert "No ACL quirk available" in str(parse_result_real_oid.error)
+
+            case AclParserTestType.PARSE_REAL_OUD_EXAMPLE:
+                # Test parsing real OUD ACI example
+                parse_result_real_oud: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
+                    test_case.acl_line,
+                    test_case.server_type,
+                )
+                assert isinstance(parse_result_real_oud, FlextResult)
+                # Test parsing real OUD ACI example - may succeed or fail based on quirk availability
+                # The important thing is that parsing either succeeds with valid ACI or fails with clear error
+                if parse_result_real_oud.is_success:
+                    parsed_acl = parse_result_real_oud.unwrap()
+                    assert isinstance(parsed_acl, FlextLdifModels.Acl)
+                    assert parsed_acl.raw_acl == test_case.acl_line
+                    # ACL server_type is determined by parsing, not input parameter
+                else:
+                    # If parsing fails, it should be due to unavailable quirk, not code error
+                    assert "No ACL quirk available" in str(parse_result_real_oud.error)
 
             case AclParserTestType.PARSE_UNSUPPORTED:
                 # Test parsing with unsupported server type
@@ -207,6 +291,8 @@ class TestFlextLdifAclParser:
                     acl_service.parse(test_case.acl_line, test_case.server_type)
                 )
                 assert isinstance(parse_result_unsupported, FlextResult)
+                # Should fail for unsupported server type
+                assert parse_result_unsupported.is_failure, f"Unsupported server type should fail: {test_case.server_type}"
 
             case AclParserTestType.EVALUATE_EMPTY:
                 # Test evaluating empty ACL list
@@ -220,7 +306,8 @@ class TestFlextLdifAclParser:
                 acl = AclParserTestFactory.create_test_acl(read=True)
                 context = AclParserTestFactory.create_context(read=True)
                 eval_result_valid: FlextResult[bool] = acl_service.evaluate_acl_context(
-                    [acl], context,
+                    [acl],
+                    context,
                 )
                 assert FlextTestsMatchers.assert_success(eval_result_valid) is True
 
@@ -233,7 +320,8 @@ class TestFlextLdifAclParser:
                 )
                 # Cast to object for assert_failure which expects FlextResult[object]
                 FlextTestsMatchers.assert_failure(
-                    cast("FlextResult[object]", eval_result_mismatch), "write",
+                    cast("FlextResult[object]", eval_result_mismatch),
+                    "write",
                 )
 
 

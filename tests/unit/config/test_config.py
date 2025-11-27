@@ -164,7 +164,9 @@ class TestFlextLdifConfig:
 
         @staticmethod
         def assert_config_field(
-            config: FlextLdifConfig, field_name: str, expected_value: object,
+            config: FlextLdifConfig,
+            field_name: str,
+            expected_value: object,
         ) -> None:
             """Assert config field has expected value."""
             assert getattr(config, field_name) == expected_value
@@ -194,35 +196,43 @@ class TestFlextLdifConfig:
 
         @pytest.mark.parametrize("validation_range", VALIDATION_RANGES)
         def test_numeric_validation_valid_values(
-            self, validation_range: ValidationRange,
+            self,
+            validation_range: ValidationRange,
         ) -> None:
             """Test numeric validation with valid values."""
             for valid_value in validation_range.valid_values:
                 config = TestFlextLdifConfig.Helpers.create_config_with_field(
-                    validation_range.field_name, valid_value,
+                    validation_range.field_name,
+                    valid_value,
                 )
                 TestFlextLdifConfig.Helpers.assert_config_field(
-                    config, validation_range.field_name, valid_value,
+                    config,
+                    validation_range.field_name,
+                    valid_value,
                 )
 
         @pytest.mark.parametrize("validation_range", VALIDATION_RANGES)
         def test_numeric_validation_below_minimum(
-            self, validation_range: ValidationRange,
+            self,
+            validation_range: ValidationRange,
         ) -> None:
             """Test numeric validation with value below minimum."""
             with pytest.raises(ValidationError):
                 TestFlextLdifConfig.Helpers.create_config_with_field(
-                    validation_range.field_name, validation_range.invalid_below,
+                    validation_range.field_name,
+                    validation_range.invalid_below,
                 )
 
         @pytest.mark.parametrize("validation_range", VALIDATION_RANGES)
         def test_numeric_validation_above_maximum(
-            self, validation_range: ValidationRange,
+            self,
+            validation_range: ValidationRange,
         ) -> None:
             """Test numeric validation with value above maximum."""
             with pytest.raises(ValidationError):
                 TestFlextLdifConfig.Helpers.create_config_with_field(
-                    validation_range.field_name, validation_range.invalid_above,
+                    validation_range.field_name,
+                    validation_range.invalid_above,
                 )
 
     class Serialization:
@@ -289,7 +299,8 @@ class TestFlextLdifConfig:
                 FlextLdifConfig(ldif_encoding="invalid-encoding")
 
         @pytest.mark.parametrize(
-            "level", [member.value for member in ValidationLevels.__members__.values()],
+            "level",
+            [member.value for member in ValidationLevels.__members__.values()],
         )
         def test_validation_level_valid(self, level: str) -> None:
             """Test valid validation_level values."""
@@ -302,7 +313,8 @@ class TestFlextLdifConfig:
                 FlextLdifConfig(validation_level="invalid")
 
         @pytest.mark.parametrize(
-            "server_type", [member.value for member in ServerTypes.__members__.values()],
+            "server_type",
+            [member.value for member in ServerTypes.__members__.values()],
         )
         def test_server_type_valid(self, server_type: str) -> None:
             """Test valid server_type values."""
@@ -329,7 +341,8 @@ class TestFlextLdifConfig:
                 FlextLdifConfig(analytics_detail_level="invalid")
 
         @pytest.mark.parametrize(
-            "mode", [member.value for member in ErrorRecoveryModes.__members__.values()],
+            "mode",
+            [member.value for member in ErrorRecoveryModes.__members__.values()],
         )
         def test_error_recovery_mode_valid(self, mode: str) -> None:
             """Test valid error_recovery_mode values."""

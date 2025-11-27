@@ -115,14 +115,14 @@ from typing import Self, override
 from flext_core import FlextDecorators, FlextResult
 from pydantic import Field
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifValidation(
-    LdifServiceBase,
+    FlextLdifServiceBase,
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
@@ -163,7 +163,6 @@ class FlextLdifValidation(
     @FlextDecorators.track_performance()
     def execute(
         self,
-        **kwargs: object,
     ) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
         """Execute validation service self-check.
 

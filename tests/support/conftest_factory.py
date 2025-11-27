@@ -265,7 +265,8 @@ class FlextLdifTestConftest:
         return str(ldap_container["server_url"])
 
     def ldap_connection(
-        self, ldap_container: dict[str, object],
+        self,
+        ldap_container: dict[str, object],
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container["host"])
@@ -296,7 +297,9 @@ class FlextLdifTestConftest:
         # Clean existing entries
         try:
             ldap_connection.search(
-                test_ou_dn, "(objectClass=*)", search_scope="SUBTREE",
+                test_ou_dn,
+                "(objectClass=*)",
+                search_scope="SUBTREE",
             )
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
@@ -311,7 +314,9 @@ class FlextLdifTestConftest:
         # Create test OU
         try:
             ldap_connection.add(
-                test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"},
+                test_ou_dn,
+                ["organizationalUnit"],
+                {"ou": "FlextLdifTests"},
             )
         except Exception:
             pass
@@ -321,7 +326,9 @@ class FlextLdifTestConftest:
         # Cleanup
         try:
             ldap_connection.search(
-                test_ou_dn, "(objectClass=*)", search_scope="SUBTREE",
+                test_ou_dn,
+                "(objectClass=*)",
+                search_scope="SUBTREE",
             )
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
@@ -395,7 +402,9 @@ class FlextLdifTestConftest:
         return ldif_file
 
     def ldif_changes_file(
-        self, test_ldif_dir: Path, sample_ldif_with_changes: str,
+        self,
+        test_ldif_dir: Path,
+        sample_ldif_with_changes: str,
     ) -> Path:
         """LDIF changes file."""
         ldif_file = test_ldif_dir / "test_changes.ldif"
@@ -403,7 +412,9 @@ class FlextLdifTestConftest:
         return ldif_file
 
     def ldif_binary_file(
-        self, test_ldif_dir: Path, sample_ldif_with_binary: str,
+        self,
+        test_ldif_dir: Path,
+        sample_ldif_with_binary: str,
     ) -> Path:
         """LDIF binary file."""
         ldif_file = test_ldif_dir / "test_binary.ldif"
@@ -431,13 +442,15 @@ class FlextLdifTestConftest:
         return RealServiceFactory.services_for_integration_test()
 
     def assert_result_success(
-        self, flext_matchers: TestAssertions,
+        self,
+        flext_matchers: TestAssertions,
     ) -> Callable[[FlextResult[object]], None]:
         """Result success assertion."""
         return flext_matchers.assert_result_success
 
     def assert_result_failure(
-        self, flext_matchers: TestAssertions,
+        self,
+        flext_matchers: TestAssertions,
     ) -> Callable[[FlextResult[object]], None]:
         """Result failure assertion."""
         return flext_matchers.assert_result_failure
@@ -663,7 +676,8 @@ objectClass: person
         }
 
     def ldif_performance_config(
-        self, flext_domains: LocalTestDomains,
+        self,
+        flext_domains: LocalTestDomains,
     ) -> dict[str, object]:
         """Performance config."""
         config = flext_domains.create_configuration(
@@ -693,11 +707,13 @@ objectClass: person
         config.addinivalue_line("markers", "performance: Performance tests")
         config.addinivalue_line("markers", "slow: Slow tests")
         config.addinivalue_line(
-            "markers", "docker: Tests requiring Docker OpenLDAP container",
+            "markers",
+            "docker: Tests requiring Docker OpenLDAP container",
         )
         config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
         config.addinivalue_line(
-            "markers", "flext_tests: Tests using FlextTests utilities",
+            "markers",
+            "flext_tests: Tests using FlextTests utilities",
         )
 
     def pytest_collection_modifyitems(

@@ -1,17 +1,25 @@
-"""Config integration tests verifying FlextLdifConfig through facade.
+"""Config Integration Tests - FlextLdifConfig Integration Verification.
 
-Tests config integration with FlextLdif:
+Tests comprehensive config integration with FlextLdif facade including:
 - Configuration initialization with facade
 - Server type selection and behavior
 - Quirks mode handling
 - Configuration impacts on parsing
+- Config consistency across operations
+
+Scope: Integration testing of FlextLdifConfig through FlextLdif facade,
+server type behavior, parsing consistency, and filtering operations.
+
+Modules tested: flext_ldif, flext_ldif.config
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Final
 
 import pytest
 from flext_core import FlextLogger
@@ -21,32 +29,79 @@ from flext_ldif import FlextLdif, FlextLdifConfig
 logger = FlextLogger(__name__)
 
 
-class TestFlextLdifConfigIntegration:
-    """Test FlextLdifConfig integration through FlextLdif facade."""
+class ConfigTestData:
+    """Test data constants and mappings for config integration tests."""
 
-    def test_default_config_initialization(self) -> None:
-        """Test facade initializes with default config."""
-        ldif = FlextLdif()
+    # Server types - use constants directly
+    SERVER_TYPES: Final[list[str]] = ["oid", "oud", "openldap", "rfc"]
 
-        content = """dn: cn=Test,dc=example,dc=com
+    # LDIF content templates
+    BASIC_ENTRY: Final[str] = """dn: cn=Test,dc=example,dc=com
 cn: Test
 objectClass: person
 """
 
-        result = ldif.parse(content)
+    MULTIPLE_ENTRIES: Final[str] = """dn: cn=User1,dc=example,dc=com
+cn: User1
+objectClass: person
+
+dn: cn=User2,dc=example,dc=com
+cn: User2
+objectClass: person
+
+dn: cn=User3,dc=example,dc=com
+cn: User3
+objectClass: person
+"""
+
+    FILTER_CONTENT: Final[str] = """dn: cn=Person1,dc=example,dc=com
+cn: Person1
+objectClass: person
+
+dn: cn=Group1,dc=example,dc=com
+cn: Group1
+objectClass: groupOfNames
+"""
+
+    # Server type specific content mapping
+    SERVER_CONTENT: Final[Mapping[str, str]] = {
+        "oid": """dn: cn=OID Test,dc=example,dc=com
+cn: OID Test
+objectClass: person
+""",
+        "oud": """dn: cn=OUD Test,dc=example,dc=com
+cn: OUD Test
+objectClass: person
+""",
+        "openldap": """dn: cn=OpenLDAP Test,dc=example,dc=com
+cn: OpenLDAP Test
+objectClass: person
+""",
+        "rfc": """dn: cn=RFC Test,dc=example,dc=com
+cn: RFC Test
+objectClass: person
+""",
+    }
+
+
+class TestFlextLdifConfigIntegration:
+    """Test FlextLdifConfig integration through FlextLdif facade.
+
+    All tests use real implementations without mocks.
+    Uses parametrization and mappings for maximum DRY.
+    """
+
+    def test_default_config_initialization(self) -> None:
+        """Test facade initializes with default config."""
+        ldif = FlextLdif()
+        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
 
     def test_custom_config_with_server_type(self) -> None:
         """Test facade with custom config and server type."""
         config = FlextLdifConfig(server_type="openldap")
         ldif = FlextLdif(config=config)
-
-        content = """dn: cn=Test,dc=example,dc=com
-cn: Test
-objectClass: person
-"""
-
-        result = ldif.parse(content)
+        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 1
@@ -55,90 +110,46 @@ objectClass: person
         """Test that multiple FlextLdif instances with different configs are independent."""
         config1 = FlextLdifConfig(server_type="oid")
         config2 = FlextLdifConfig(server_type="openldap")
-
         ldif1 = FlextLdif(config=config1)
         ldif2 = FlextLdif(config=config2)
 
-        content = """dn: cn=Test,dc=example,dc=com
-cn: Test
-objectClass: person
-"""
-
-        result1 = ldif1.parse(content)
-        result2 = ldif2.parse(content)
+        result1 = ldif1.parse(ConfigTestData.BASIC_ENTRY)
+        result2 = ldif2.parse(ConfigTestData.BASIC_ENTRY)
 
         assert result1.is_success
         assert result2.is_success
 
-    def test_config_affects_parsing_behavior(self) -> None:
+    @pytest.mark.parametrize("server_type", ConfigTestData.SERVER_TYPES[:3])
+    def test_config_affects_parsing_behavior(self, server_type: str) -> None:
         """Test that config settings affect parsing behavior."""
-        # Different server types might have different quirks
-        for server_type in ["oid", "oud", "openldap"]:
-            config = FlextLdifConfig(server_type=server_type)
-            ldif = FlextLdif(config=config)
-
-            content = """dn: cn=Test,dc=example,dc=com
-cn: Test
-objectClass: person
-"""
-
-            result = ldif.parse(content)
-            # All server types should support basic parsing
-            assert result.is_success
-
-    def test_config_with_rfc_server_type(self) -> None:
-        """Test config with OpenLDAP server type."""
-        config = FlextLdifConfig(server_type="openldap")
+        config = FlextLdifConfig(server_type=server_type)
         ldif = FlextLdif(config=config)
+        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
+        # All server types should support basic parsing
+        assert result.is_success
 
-        content = """dn: cn=RFC Test,dc=example,dc=com
-cn: RFC Test
-objectClass: person
-"""
-
+    @pytest.mark.parametrize(
+        ("server_type", "expected_content_key"),
+        [
+            ("rfc", "rfc"),
+            ("oid", "oid"),
+            ("oud", "oud"),
+            ("openldap", "openldap"),
+        ],
+    )
+    def test_config_with_server_type(
+        self,
+        server_type: str,
+        expected_content_key: str,
+    ) -> None:
+        """Test config with specific server type using parametrization."""
+        config = FlextLdifConfig(server_type=server_type)
+        ldif = FlextLdif(config=config)
+        content = ConfigTestData.SERVER_CONTENT[expected_content_key]
         result = ldif.parse(content)
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 1
-
-    def test_config_with_oid_server_type(self) -> None:
-        """Test config with Oracle Internet Directory server type."""
-        config = FlextLdifConfig(server_type="oid")
-        ldif = FlextLdif(config=config)
-
-        content = """dn: cn=OID Test,dc=example,dc=com
-cn: OID Test
-objectClass: person
-"""
-
-        result = ldif.parse(content)
-        assert result.is_success
-
-    def test_config_with_oud_server_type(self) -> None:
-        """Test config with Oracle Unified Directory server type."""
-        config = FlextLdifConfig(server_type="oud")
-        ldif = FlextLdif(config=config)
-
-        content = """dn: cn=OUD Test,dc=example,dc=com
-cn: OUD Test
-objectClass: person
-"""
-
-        result = ldif.parse(content)
-        assert result.is_success
-
-    def test_config_with_openldap_server_type(self) -> None:
-        """Test config with OpenLDAP server type."""
-        config = FlextLdifConfig(server_type="openldap")
-        ldif = FlextLdif(config=config)
-
-        content = """dn: cn=OpenLDAP Test,dc=example,dc=com
-cn: OpenLDAP Test
-objectClass: person
-"""
-
-        result = ldif.parse(content)
-        assert result.is_success
 
     def test_config_consistency_across_operations(self) -> None:
         """Test that config remains consistent across operations."""
@@ -150,7 +161,6 @@ objectClass: person
 cn: Test1
 objectClass: person
 """
-
         content2 = """dn: cn=Test2,dc=example,dc=com
 cn: Test2
 objectClass: person
@@ -166,21 +176,7 @@ objectClass: person
         """Test config handling with multiple entries."""
         config = FlextLdifConfig(server_type="rfc")
         ldif = FlextLdif(config=config)
-
-        content = """dn: cn=User1,dc=example,dc=com
-cn: User1
-objectClass: person
-
-dn: cn=User2,dc=example,dc=com
-cn: User2
-objectClass: person
-
-dn: cn=User3,dc=example,dc=com
-cn: User3
-objectClass: person
-"""
-
-        result = ldif.parse(content)
+        result = ldif.parse(ConfigTestData.MULTIPLE_ENTRIES)
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 3
@@ -190,16 +186,7 @@ objectClass: person
         config = FlextLdifConfig(server_type="rfc")
         ldif = FlextLdif(config=config)
 
-        content = """dn: cn=Person1,dc=example,dc=com
-cn: Person1
-objectClass: person
-
-dn: cn=Group1,dc=example,dc=com
-cn: Group1
-objectClass: groupOfNames
-"""
-
-        parse_result = ldif.parse(content)
+        parse_result = ldif.parse(ConfigTestData.FILTER_CONTENT)
         assert parse_result.is_success
 
         entries = parse_result.unwrap()

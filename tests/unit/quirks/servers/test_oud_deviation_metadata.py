@@ -18,6 +18,7 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oud import FlextLdifServersOud
 
 # =============================================================================
@@ -41,7 +42,7 @@ class OudMetadataTestType(StrEnum):
 
 
 @pytest.fixture
-def oud_entry() -> object:
+def oud_entry() -> FlextLdifProtocols.Quirks.EntryProtocol:
     """Create OUD entry quirk instance."""
     return FlextLdifServersOud().entry_quirk
 
@@ -116,10 +117,10 @@ class TestOudDeviationMetadata:
         test_type: OudMetadataTestType,
         dn: str,
         entry_attrs: dict[str, list[str]],
-        oud_entry: object,
+        oud_entry: FlextLdifProtocols.Quirks.EntryProtocol,
     ) -> None:
         """Parametrized test for OUD attribute case metadata tracking."""
-        result = oud_entry._parse_entry(dn, entry_attrs)
+        result = oud_entry.parse_entry(dn, entry_attrs)
 
         assert result.is_success, f"Entry parsing failed for {scenario}"
         entry = result.unwrap()
@@ -128,13 +129,13 @@ class TestOudDeviationMetadata:
             # Verify original_format_details is populated
             assert entry.metadata is not None
             assert len(entry.metadata.original_format_details) > 0
-            assert entry.metadata.original_format_details.get("server_type") == "oud"
-            assert "dn_spacing" in entry.metadata.original_format_details
+            assert entry.metadata.original_format_details.get("_transform_source") == "oud"
+            assert "_dn_original" in entry.metadata.original_format_details
 
         elif test_type == OudMetadataTestType.DN_PRESERVED:
             # Verify original DN is preserved
             assert entry.metadata is not None
-            preserved_dn = entry.metadata.original_format_details.get("dn_spacing")
+            preserved_dn = entry.metadata.original_format_details.get("_dn_original")
             assert preserved_dn == dn
 
         elif test_type == OudMetadataTestType.OBJECTCLASS_CASE:

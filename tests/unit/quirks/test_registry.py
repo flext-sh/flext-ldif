@@ -127,44 +127,6 @@ class TestQuirkPriorityOrdering:
         assert hasattr(quirk, "can_handle")
 
 
-class TestQuirkFinding:
-    """Test suite for finding specific quirks by capability."""
-
-    def test_find_schema_for_attribute(self) -> None:
-        """Test finding schema quirk that can handle attribute definition."""
-        registry = FlextLdifServer()
-
-        # OID attribute definition
-        attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclNetDescString' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )"
-
-        found = registry.find_schema_for_attribute("oid", attr_def)
-
-        # May or may not find depending on implementation - just verify no exception
-        # Schema quirks don't have server_type attribute anymore
-        assert found is None or hasattr(found, "parse")
-
-    def test_find_schema_for_objectclass(self) -> None:
-        """Test finding schema quirk that can handle objectClass definition."""
-        registry = FlextLdifServer()
-
-        # OID objectClass definition
-        oc_def = "( 2.16.840.1.113894.1.1.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
-
-        found = registry.find_schema_for_objectclass("oid", oc_def)
-
-        # May or may not find depending on implementation - just verify no exception
-        # Schema quirks don't have server_type attribute anymore
-        assert found is None or hasattr(found, "parse")
-
-    def test_find_returns_none_for_unknown_server(self) -> None:
-        """Test finding quirk returns None for unknown server type."""
-        registry = FlextLdifServer()
-
-        found = registry.find_schema_for_attribute("unknown", "attr def")
-
-        assert found is None
-
-
 class TestNestedQuirks:
     """Test suite for nested quirk access (ACL and Entry quirks)."""
 
@@ -194,7 +156,11 @@ class TestNestedQuirks:
         """Test retrieving all quirk types for a server."""
         registry = FlextLdifServer()
 
-        alls = registry.get_all_quirks("oid")
+        alls_result = registry.get_all_quirks("oid")
+
+        # Updated API: get_all_quirks now returns FlextResult
+        assert alls_result.is_success
+        alls = alls_result.unwrap()
 
         assert "schema" in alls
         assert "acl" in alls
@@ -226,22 +192,25 @@ class TestRegistryStats:
             total_servers >= 8
         )  # At least OID, OUD, OpenLDAP, AD, 389DS, Apache, Novell, Tivoli
 
-        # Updated API: get_registry_stats() returns quirks_by_server, not schemas_by_server
+        # Updated API: get_registry_stats() returns quirks_by_server with class names
         quirks = stats["quirks_by_server"]
         assert isinstance(quirks, dict)
         assert "oid" in quirks
         assert "oud" in quirks
         assert "openldap" in quirks
-        # Verify nested quirks
+        # Verify nested quirks - they contain class names (or None)
         oid_quirks = quirks["oid"]
         assert isinstance(oid_quirks, dict)
-        assert oid_quirks["has_schema"]
+        assert "schema" in oid_quirks
+        assert oid_quirks["schema"] is not None
         oud_quirks = quirks["oud"]
         assert isinstance(oud_quirks, dict)
-        assert oud_quirks["has_schema"]
+        assert "schema" in oud_quirks
+        assert oud_quirks["schema"] is not None
         openldap_quirks = quirks["openldap"]
         assert isinstance(openldap_quirks, dict)
-        assert openldap_quirks["has_schema"]
+        assert "schema" in openldap_quirks
+        assert openldap_quirks["schema"] is not None
 
     def test_list_registered_servers(self) -> None:
         """Test listing all registered server types."""
@@ -263,17 +232,17 @@ class TestRegistryStats:
 
         stats = registry.get_registry_stats()
 
-        # Note: API changed - stats now use "quirks_by_server" instead of separate dicts
+        # Note: API returns "quirks_by_server" with class names (or None) as values
         assert "quirks_by_server" in stats
         assert "total_servers" in stats
         quirks_by_server = stats["quirks_by_server"]
         assert isinstance(quirks_by_server, dict)
-        # Verify each server has quirk type flags
+        # Verify each server has quirk type keys
         for server_quirks in quirks_by_server.values():
             assert isinstance(server_quirks, dict)
-            assert "has_schema" in server_quirks
-            assert "has_acl" in server_quirks
-            assert "has_entry" in server_quirks
+            assert "schema" in server_quirks
+            assert "acl" in server_quirks
+            assert "entry" in server_quirks
 
 
 class TestServerQuirksAvailability:
@@ -320,13 +289,13 @@ class TestErrorHandling:
         assert quirk is None
 
     def test_find_with_empty_definition(self) -> None:
-        """Test finding quirk with empty definition string."""
+        """Test getting schema quirk with empty server type string."""
         registry = FlextLdifServer()
 
-        found = registry.find_schema_for_attribute("oid", "")
+        found = registry.schema("")
 
-        # Should handle gracefully (Schema quirks don't have server_type anymore)
-        assert found is None or hasattr(found, "parse")
+        # Should handle gracefully - empty server type returns None
+        assert found is None
 
     def test_get_alls_for_unknown_server(self) -> None:
         """Test getting all quirks for unknown server."""
@@ -334,5 +303,6 @@ class TestErrorHandling:
 
         alls = registry.get_all_quirks("unknown_server")
 
-        # Updated API: Unknown server returns None for all quirks, not empty lists
-        assert alls == {"schema": None, "acl": None, "entry": None}
+        # Updated API: Unknown server returns FlextResult.fail(), not dict
+        assert alls.is_failure
+        assert "No base found for server type: unknown_server" in alls.error

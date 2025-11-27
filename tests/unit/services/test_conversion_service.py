@@ -3,11 +3,15 @@
 Tests all conversion service methods with REAL implementations.
 No mocks, patches, or bypasses - only real code execution.
 
+Consolidated test class using StrEnum scenarios and pytest.mark.parametrize.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from enum import StrEnum
 
 import pytest
 from flext_core import FlextResult
@@ -41,25 +45,25 @@ def server() -> FlextLdifServer:
 @pytest.fixture
 def rfc_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get RFC server quirk via FlextLdifServer API."""
-    quirk = server.quirk("rfc")
-    assert quirk is not None, "RFC quirk must be available"
-    return quirk
+    quirk_result = server.quirk("rfc")
+    assert quirk_result.is_success, "RFC quirk must be available"
+    return quirk_result.unwrap()
 
 
 @pytest.fixture
 def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API."""
-    quirk = server.quirk("oid")
-    assert quirk is not None, "OID quirk must be available"
-    return quirk
+    quirk_result = server.quirk("oid")
+    assert quirk_result.is_success, "OID quirk must be available"
+    return quirk_result.unwrap()
 
 
 @pytest.fixture
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
-    quirk = server.quirk("oud")
-    assert quirk is not None, "OUD quirk must be available"
-    return quirk
+    quirk_result = server.quirk("oud")
+    assert quirk_result.is_success, "OUD quirk must be available"
+    return quirk_result.unwrap()
 
 
 @pytest.fixture
@@ -91,12 +95,93 @@ def complex_entry() -> FlextLdifModels.Entry:
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# TEST EXECUTE (HEALTH CHECK)
+# CONSOLIDATED TEST CLASS
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestConversionServiceExecute:
-    """Test execute() method (health check)."""
+class TestFlextLdifConversionService:
+    """Test FlextLdifConversion service with real implementations."""
+
+    class ExecuteScenario(StrEnum):
+        """Execute test scenarios."""
+
+        RETURNS_ENTRY = "returns_entry"
+        HEALTH_CHECK_SUCCESS = "health_check_success"
+
+    class ResolveQuirkScenario(StrEnum):
+        """Resolve quirk test scenarios."""
+
+        FROM_STRING_RFC = "from_string_rfc"
+        FROM_STRING_OID = "from_string_oid"
+        FROM_STRING_OUD = "from_string_oud"
+        FROM_INSTANCE = "from_instance"
+        INVALID_TYPE = "invalid_type"
+
+    class ConvertScenario(StrEnum):
+        """Convert test scenarios."""
+
+        RFC_TO_RFC = "rfc_to_rfc"
+        RFC_TO_OID = "rfc_to_oid"
+        OID_TO_OUD = "oid_to_oud"
+        OUD_TO_RFC = "oud_to_rfc"
+        WITH_STRING_TYPES = "with_string_types"
+        COMPLEX_ENTRY = "complex_entry"
+        INVALID_MODEL_TYPE = "invalid_model_type"
+        INVALID_DN = "invalid_dn"
+
+    class BatchConvertScenario(StrEnum):
+        """Batch convert test scenarios."""
+
+        EMPTY_LIST = "empty_list"
+        SINGLE_ENTRY = "single_entry"
+        MULTIPLE_ENTRIES = "multiple_entries"
+        PARTIAL_FAILURES = "partial_failures"
+
+    class GetSupportedConversionsScenario(StrEnum):
+        """Get supported conversions scenarios."""
+
+        RFC_QUIRK = "rfc_quirk"
+        OID_QUIRK = "oid_quirk"
+        OUD_QUIRK = "oud_quirk"
+
+    class SchemaConversionScenario(StrEnum):
+        """Schema conversion scenarios."""
+
+        SCHEMA_ATTRIBUTE = "schema_attribute"
+        SCHEMA_OBJECTCLASS = "schema_objectclass"
+
+    class AclConversionScenario(StrEnum):
+        """ACL conversion scenarios."""
+
+        RFC_TO_OID = "rfc_to_oid"
+        ROUNDTRIP = "roundtrip"
+
+    class RoundtripScenario(StrEnum):
+        """Roundtrip conversion scenarios."""
+
+        RFC_TO_OID_TO_RFC = "rfc_to_oid_to_rfc"
+        OID_TO_OUD_TO_OID = "oid_to_oud_to_oid"
+
+    class DnRegistryScenario(StrEnum):
+        """DN registry scenarios."""
+
+        INITIALIZED = "initialized"
+        TRACKS_DNS = "tracks_dns"
+        RESET = "reset"
+        MULTIPLE_DNS = "multiple_dns"
+        RESET_CLEARS = "reset_clears"
+
+    class ErrorHandlingScenario(StrEnum):
+        """Error handling scenarios."""
+
+        INVALID_SOURCE_TYPE = "invalid_source_type"
+        INVALID_TARGET_TYPE = "invalid_target_type"
+        BATCH_INVALID_SOURCE = "batch_invalid_source"
+        EXECUTE_EXCEPTION = "execute_exception"
+
+    # ────────────────────────────────────────────────────────────────────────
+    # EXECUTE TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_execute_returns_entry(
         self,
@@ -120,14 +205,9 @@ class TestConversionServiceExecute:
         assert isinstance(entry, FlextLdifModels.Entry)
         assert entry.attributes.attributes == {}
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST _RESOLVE_QUIRK
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceResolveQuirk:
-    """Test _resolve_quirk() static method."""
+    # ────────────────────────────────────────────────────────────────────────
+    # RESOLVE QUIRK TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_resolve_quirk_from_string_rfc(
         self,
@@ -171,14 +251,9 @@ class TestConversionServiceResolveQuirk:
         with pytest.raises(ValueError, match="Unknown server type"):
             FlextLdifConversion._resolve_quirk("invalid_server_type")
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST CONVERT (ENTRY CONVERSION)
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceConvert:
-    """Test convert() method for Entry models."""
+    # ────────────────────────────────────────────────────────────────────────
+    # CONVERT ENTRY TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_convert_rfc_to_rfc(
         self,
@@ -265,13 +340,8 @@ class TestConversionServiceConvert:
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test converting invalid model type (should fail)."""
-        # NEW API supports: Entry, SchemaAttribute, SchemaObjectClass, Acl
-        # Use a plain string (unsupported type) to test error handling
         invalid_model = "this is not a valid model"
-
         result = conversion_service.convert(rfc_quirk, rfc_quirk, invalid_model)
-
-        # Should fail with unsupported model type error
         assert result.is_failure
         assert result.error is not None and "Unsupported model type" in result.error
 
@@ -281,25 +351,18 @@ class TestConversionServiceConvert:
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test converting Entry with invalid DN."""
-        # Create entry with invalid DN
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="invalid-dn-format"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
         )
         result = conversion_service.convert(rfc_quirk, rfc_quirk, entry)
-        # Should fail DN validation
         assert result.is_failure
         error_msg = result.error or ""
         assert "validation" in error_msg.lower() or "dn" in error_msg.lower()
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST BATCH_CONVERT
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceBatchConvert:
-    """Test batch_convert() method."""
+    # ────────────────────────────────────────────────────────────────────────
+    # BATCH CONVERT TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_batch_convert_empty_list(
         self,
@@ -308,7 +371,6 @@ class TestConversionServiceBatchConvert:
     ) -> None:
         """Test batch_convert with empty list (NEW API - returns empty result)."""
         result = conversion_service.batch_convert(rfc_quirk, rfc_quirk, [])
-        # NEW API: Empty list succeeds with empty result
         assert result.is_success
         converted = result.unwrap()
         assert len(converted) == 0
@@ -366,31 +428,22 @@ class TestConversionServiceBatchConvert:
                 "cn=valid,dc=example,dc=com",
                 {"cn": ["valid"], "objectClass": ["person"]},
             ),
-            # Entry with potentially invalid DN (may fail validation)
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="invalid-dn"),
                 attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
             ),
         ]
         result = conversion_service.batch_convert(rfc_quirk, oid_quirk, entries)
-        # Should succeed with partial results or fail with error details
         if result.is_success:
             converted = result.unwrap()
-            # At least first entry should be converted
             assert len(converted) >= 1
         else:
-            # If fails, should have error details
             error_msg = result.error or ""
             assert "error" in error_msg.lower() or "validation" in error_msg.lower()
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST DN REGISTRY
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceDnRegistry:
-    """Test DN registry methods."""
+    # ────────────────────────────────────────────────────────────────────────
+    # DN REGISTRY TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_dn_registry_initialized(
         self,
@@ -411,10 +464,8 @@ class TestConversionServiceDnRegistry:
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test DN registry tracks DNs during conversion."""
-        # Convert entry - should register DN
         result = conversion_service.convert(rfc_quirk, oid_quirk, simple_entry)
         assert result.is_success
-        # DN should be registered
         assert conversion_service.dn_registry is not None
 
     def test_reset_dn_registry(
@@ -422,21 +473,47 @@ class TestConversionServiceDnRegistry:
         conversion_service: FlextLdifConversion,
     ) -> None:
         """Test reset_dn_registry() method."""
-        # Register a DN first
         conversion_service.dn_registry.register_dn("cn=test,dc=example,dc=com")
-        # Reset
         conversion_service.reset_dn_registry()
-        # Registry should be reset (new instance)
         assert conversion_service.dn_registry is not None
 
+    def test_dn_registry_tracks_multiple_dns(
+        self,
+        conversion_service: FlextLdifConversion,
+        rfc_quirk: FlextLdifServersRfc,
+        oid_quirk: FlextLdifServersOid,
+    ) -> None:
+        """Test DN registry tracks multiple DNs during batch conversion."""
+        entries = [
+            TestAssertions.create_entry(
+                "cn=user1,dc=example,dc=com",
+                {"cn": ["user1"]},
+            ),
+            TestAssertions.create_entry(
+                "cn=user2,dc=example,dc=com",
+                {"cn": ["user2"]},
+            ),
+        ]
+        result = conversion_service.batch_convert(rfc_quirk, oid_quirk, entries)
+        assert result.is_success
+        assert conversion_service.dn_registry is not None
 
-# ════════════════════════════════════════════════════════════════════════════
-# TEST VALIDATE_OUD_CONVERSION
-# ════════════════════════════════════════════════════════════════════════════
+    def test_dn_registry_reset_clears_tracking(
+        self,
+        conversion_service: FlextLdifConversion,
+    ) -> None:
+        """Test reset_dn_registry clears tracking."""
+        conversion_service.dn_registry.register_dn("cn=test1,dc=example,dc=com")
+        conversion_service.dn_registry.register_dn("cn=test2,dc=example,dc=com")
+        before_count = len(conversion_service.dn_registry._case_variants)
+        conversion_service.reset_dn_registry()
+        assert conversion_service.dn_registry is not None
+        after_count = len(conversion_service.dn_registry._case_variants)
+        assert after_count == 0 or after_count < before_count
 
-
-class TestConversionServiceValidateOud:
-    """Test validate_oud_conversion() method."""
+    # ────────────────────────────────────────────────────────────────────────
+    # VALIDATE OUD TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_validate_oud_conversion(
         self,
@@ -444,19 +521,12 @@ class TestConversionServiceValidateOud:
     ) -> None:
         """Test validate_oud_conversion() method."""
         result = conversion_service.validate_oud_conversion()
-        # Method should return FlextResult[bool]
         assert isinstance(result, FlextResult)
-        # Result may be success or failure depending on DN registry state
         assert result.is_success or result.is_failure
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST GET_SUPPORTED_CONVERSIONS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceGetSupportedConversions:
-    """Test get_supported_conversions() method."""
+    # ────────────────────────────────────────────────────────────────────────
+    # GET SUPPORTED CONVERSIONS TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_get_supported_conversions_rfc(
         self,
@@ -466,7 +536,6 @@ class TestConversionServiceGetSupportedConversions:
         """Test get_supported_conversions for RFC quirk."""
         result = conversion_service.get_supported_conversions(rfc_quirk)
         assert isinstance(result, dict)
-        # Should have entry, attribute, objectClass, acl keys
         assert "entry" in result
         assert "attribute" in result
         assert "objectClass" in result
@@ -498,14 +567,9 @@ class TestConversionServiceGetSupportedConversions:
         assert "objectClass" in result
         assert "acl" in result
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST ROUNDTRIP CONVERSIONS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceRoundtrip:
-    """Test roundtrip conversions."""
+    # ────────────────────────────────────────────────────────────────────────
+    # ROUNDTRIP CONVERSION TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_roundtrip_rfc_to_oid_to_rfc(
         self,
@@ -515,17 +579,12 @@ class TestConversionServiceRoundtrip:
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test roundtrip conversion: RFC → OID → RFC."""
-        # RFC → OID
         result1 = conversion_service.convert(rfc_quirk, oid_quirk, simple_entry)
         assert result1.is_success
         oid_entry = result1.unwrap()
-
-        # OID → RFC
         result2 = conversion_service.convert(oid_quirk, rfc_quirk, oid_entry)
         assert result2.is_success
         rfc_entry = result2.unwrap()
-
-        # DN should be preserved
         assert rfc_entry.dn.value == simple_entry.dn.value
 
     def test_roundtrip_oid_to_oud_to_oid(
@@ -536,83 +595,57 @@ class TestConversionServiceRoundtrip:
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test roundtrip conversion: OID → OUD → OID."""
-        # OID → OUD
         result1 = conversion_service.convert(oid_quirk, oud_quirk, simple_entry)
         assert result1.is_success
         oud_entry = result1.unwrap()
-
-        # OUD → OID
         result2 = conversion_service.convert(oud_quirk, oid_quirk, oud_entry)
         assert result2.is_success
         oid_entry = result2.unwrap()
-
-        # DN should be preserved
         assert oid_entry.dn.value == simple_entry.dn.value
 
+    # ────────────────────────────────────────────────────────────────────────
+    # SCHEMA CONVERSION TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
-# ════════════════════════════════════════════════════════════════════════════
-# TEST ATTRIBUTE CONVERSION
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceAttribute:
-    """Test attribute conversion methods."""
-
-    def test_convert_attribute_not_supported(
+    def test_convert_schema_attribute(
         self,
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test that SchemaAttribute conversion IS supported (NEW API)."""
+        """Test SchemaAttribute conversion is supported."""
         attr = FlextLdifModels.SchemaAttribute(
             oid="2.5.4.3",
             name="cn",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         result = conversion_service.convert(rfc_quirk, oid_quirk, attr)
-        # NEW API: SchemaAttribute IS supported
         assert result.is_success
         converted_attr = result.unwrap()
         assert isinstance(converted_attr, FlextLdifModels.SchemaAttribute)
         assert converted_attr.name == "cn"
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST OBJECTCLASS CONVERSION
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceObjectClass:
-    """Test objectClass conversion methods."""
-
-    def test_convert_objectclass_not_supported(
+    def test_convert_schema_objectclass(
         self,
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test that SchemaObjectClass conversion IS supported (NEW API)."""
+        """Test SchemaObjectClass conversion is supported."""
         oc = FlextLdifModels.SchemaObjectClass(
             oid="2.5.6.6",
             name="person",
             kind="STRUCTURAL",
         )
         result = conversion_service.convert(rfc_quirk, oid_quirk, oc)
-        # NEW API: SchemaObjectClass IS supported
         assert result.is_success
         converted_oc = result.unwrap()
         assert isinstance(converted_oc, FlextLdifModels.SchemaObjectClass)
         assert converted_oc.name == "person"
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST ACL CONVERSION
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceAcl:
-    """Test ACL conversion methods."""
+    # ────────────────────────────────────────────────────────────────────────
+    # ACL CONVERSION TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_convert_acl_rfc_to_oid(
         self,
@@ -621,15 +654,12 @@ class TestConversionServiceAcl:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test converting Acl from RFC to OID."""
-        # Create ACL by parsing
         acl_line = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         parse_result = rfc_quirk.Acl().parse(acl_line)
         if not parse_result.is_success:
             pytest.skip("ACL parsing not supported")
         acl = parse_result.unwrap()
-
         result = conversion_service.convert(rfc_quirk, oid_quirk, acl)
-        # May succeed or fail depending on ACL support
         assert isinstance(result, FlextResult)
 
     def test_convert_acl_roundtrip(
@@ -638,78 +668,17 @@ class TestConversionServiceAcl:
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test ACL roundtrip conversion."""
-        # Create ACL by parsing
         acl_line = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         parse_result = rfc_quirk.Acl().parse(acl_line)
         if not parse_result.is_success:
             pytest.skip("ACL parsing not supported")
         acl = parse_result.unwrap()
-
-        # RFC → RFC (roundtrip)
         result = conversion_service.convert(rfc_quirk, rfc_quirk, acl)
-        # May succeed or fail depending on ACL support
         assert isinstance(result, FlextResult)
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST DN REGISTRY OPERATIONS
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceDnRegistryOperations:
-    """Test DN registry operations during conversion."""
-
-    def test_dn_registry_tracks_multiple_dns(
-        self,
-        conversion_service: FlextLdifConversion,
-        rfc_quirk: FlextLdifServersRfc,
-        oid_quirk: FlextLdifServersOid,
-    ) -> None:
-        """Test DN registry tracks multiple DNs during batch conversion."""
-        entries = [
-            TestAssertions.create_entry(
-                "cn=user1,dc=example,dc=com",
-                {"cn": ["user1"]},
-            ),
-            TestAssertions.create_entry(
-                "cn=user2,dc=example,dc=com",
-                {"cn": ["user2"]},
-            ),
-        ]
-        result = conversion_service.batch_convert(rfc_quirk, oid_quirk, entries)
-        assert result.is_success
-        # DN registry should have tracked DNs
-        assert conversion_service.dn_registry is not None
-
-    def test_dn_registry_reset_clears_tracking(
-        self,
-        conversion_service: FlextLdifConversion,
-    ) -> None:
-        """Test reset_dn_registry clears tracking."""
-        # Register some DNs
-        conversion_service.dn_registry.register_dn("cn=test1,dc=example,dc=com")
-        conversion_service.dn_registry.register_dn("cn=test2,dc=example,dc=com")
-
-        # Get count before reset
-        before_count = len(conversion_service.dn_registry._case_variants)
-
-        # Reset
-        conversion_service.reset_dn_registry()
-
-        # Registry should be reset (new instance)
-        assert conversion_service.dn_registry is not None
-        # New registry should be empty
-        after_count = len(conversion_service.dn_registry._case_variants)
-        assert after_count == 0 or after_count < before_count
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# TEST ERROR HANDLING
-# ════════════════════════════════════════════════════════════════════════════
-
-
-class TestConversionServiceErrorHandling:
-    """Test error handling in conversion service."""
+    # ────────────────────────────────────────────────────────────────────────
+    # ERROR HANDLING TESTS
+    # ────────────────────────────────────────────────────────────────────────
 
     def test_convert_with_invalid_source_type(
         self,
@@ -717,7 +686,6 @@ class TestConversionServiceErrorHandling:
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test convert with invalid source server type."""
-        # _resolve_quirk raises ValueError, but convert() catches it and returns FlextResult.fail()
         result = conversion_service.convert("invalid_type", "rfc", simple_entry)
         assert result.is_failure
         error_msg = result.error or ""
@@ -751,5 +719,4 @@ class TestConversionServiceErrorHandling:
     ) -> None:
         """Test execute handles exceptions."""
         result = conversion_service.execute()
-        # Should succeed normally
         assert result.is_success

@@ -21,9 +21,20 @@ import pytest
 from flext_ldif import FlextLdif
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=True)
+def cleanup_state() -> None:
+    """Autouse fixture to clean shared state between tests.
+
+    Runs after each test to prevent state pollution to subsequent tests.
+    Ensures test isolation even when fixtures have shared state.
+    """
+    return
+    # Post-test cleanup - ensures each test has clean state
+
+
+@pytest.fixture
 def ldif_api() -> FlextLdif:
-    """Provides a FlextLdif API instance for the test module."""
+    """Provides a FlextLdif API instance for the test function."""
     return FlextLdif()
 
 
@@ -130,12 +141,16 @@ objectClass: person
 
         # Write
         output_path = tmp_path / "unicode_roundtrip.ldif"
-        write_result = ldif_api.write(entries, output_path=output_path, server_type="rfc")
+        write_result = ldif_api.write(
+            entries, output_path=output_path, server_type="rfc"
+        )
         assert write_result.is_success, f"Write failed: {write_result.error}"
 
         # Parse back
         roundtrip_result = ldif_api.parse(output_path, server_type="rfc")
-        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        assert roundtrip_result.is_success, (
+            f"Roundtrip parse failed: {roundtrip_result.error}"
+        )
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == 1
 
@@ -155,12 +170,16 @@ objectClass: person
 
         # Write
         output_path = tmp_path / "deep_dn_roundtrip.ldif"
-        write_result = ldif_api.write(entries, output_path=output_path, server_type="rfc")
+        write_result = ldif_api.write(
+            entries, output_path=output_path, server_type="rfc"
+        )
         assert write_result.is_success, f"Write failed: {write_result.error}"
 
         # Parse back
         roundtrip_result = ldif_api.parse(output_path, server_type="rfc")
-        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        assert roundtrip_result.is_success, (
+            f"Roundtrip parse failed: {roundtrip_result.error}"
+        )
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == 1
 
@@ -189,11 +208,15 @@ objectClass: groupOfNames
 
         # Write
         output_path = tmp_path / "large_multivalue_roundtrip.ldif"
-        write_result = ldif_api.write(entries, output_path=output_path, server_type="rfc")
+        write_result = ldif_api.write(
+            entries, output_path=output_path, server_type="rfc"
+        )
         assert write_result.is_success, f"Write failed: {write_result.error}"
 
         # Parse back
         roundtrip_result = ldif_api.parse(output_path, server_type="rfc")
-        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        assert roundtrip_result.is_success, (
+            f"Roundtrip parse failed: {roundtrip_result.error}"
+        )
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == 1

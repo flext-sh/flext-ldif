@@ -1,6 +1,6 @@
 """Tests for operational attributes stripping in entry quirks.
 
-Modules tested: FlextLdifEntry (remove_operational_attributes)
+Modules tested: FlextLdifEntries (remove_operational_attributes)
 Scope: Common operational attributes stripping, server-specific preservation
 Tests with real entry models using factories.
 
@@ -15,11 +15,11 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import Final, cast
+from typing import Final
 
 import pytest
 
-from flext_ldif.services.entry import FlextLdifEntry
+from flext_ldif.services.entries import FlextLdifEntries
 from tests.helpers.test_factories import FlextLdifTestFactories
 
 
@@ -265,11 +265,10 @@ class TestOperationalAttributesStripping:
         test_case: OpAttrTestCase,
     ) -> None:
         """Test operational attribute stripping for all scenarios."""
-        entrys = FlextLdifEntry()
+        entrys = FlextLdifEntries()
 
-        # Create entry from test case data (cast to proper type for variance)
-        attrs = cast("dict[str, str | list[str]]", test_case.attributes)
-        entry = FlextLdifTestFactories.create_entry(test_case.dn, attrs)
+        # Create entry from test case data
+        entry = FlextLdifTestFactories.create_entry(test_case.dn, test_case.attributes)
 
         # Remove operational attributes
         result = entrys.remove_operational_attributes(entry)

@@ -46,7 +46,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import Protocol, cast
+from typing import Protocol
 
 from flext_core import FlextRuntime
 
@@ -97,12 +97,12 @@ class FlextLdifUtilitiesDetection:
                     constants = cls.Constants
                     # If no required attribute specified, return any Constants class
                     if required_attr is None:
-                        # Constants is a class that satisfies ServerConstantsProtocol
-                        return cast("type[ServerConstantsProtocol]", constants)
+                        # Constants class satisfies ServerConstantsProtocol contract
+                        return constants
                     # Otherwise check if it has the required attribute
                     if constants and hasattr(constants, required_attr):
-                        # Constants is a class that satisfies ServerConstantsProtocol
-                        return cast("type[ServerConstantsProtocol]", constants)
+                        # Constants class satisfies ServerConstantsProtocol contract
+                        return constants
             return None
 
     class PatternDetectionMixin(BaseDetectionMixin):

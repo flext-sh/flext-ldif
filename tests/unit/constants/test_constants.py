@@ -18,17 +18,24 @@ import pytest
 from flext_ldif import FlextLdifConstants
 
 
-class EnumType(StrEnum):
-    """Enum types for testing."""
+class TestFlextLdifConstants:
+    """Consolidated test suite for FlextLdifConstants.
 
-    PROCESSING_STAGE = "processing_stage"
-    HEALTH_STATUS = "health_status"
-    ENTRY_TYPE = "entry_type"
-    ENTRY_MODIFICATION = "entry_modification"
+    Tests all constant groups: Format, Processing, Encoding, Validation,
+    Quality, ObjectClasses, LdapServers, RfcCompliance, Enums, and Namespace.
+    """
 
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST DATA DEFINITIONS
+    # ════════════════════════════════════════════════════════════════════════
 
-class TestFormatConstants:
-    """Test Format constants."""
+    class EnumType(StrEnum):
+        """Enum types for testing."""
+
+        PROCESSING_STAGE = "processing_stage"
+        HEALTH_STATUS = "health_status"
+        ENTRY_TYPE = "entry_type"
+        ENTRY_MODIFICATION = "entry_modification"
 
     FORMAT_CONSTANTS: ClassVar[dict[str, object]] = {
         "DN_ATTRIBUTE": "dn",
@@ -48,26 +55,6 @@ class TestFormatConstants:
         "LDIF_VERSION_1": "1",
     }
 
-    @pytest.mark.parametrize(
-        ("name", "expected_value"),
-        list(FORMAT_CONSTANTS.items()),
-    )
-    def test_format_constants(self, name: str, expected_value: object) -> None:
-        """Test format constant value."""
-        actual = getattr(FlextLdifConstants.Format, name)
-        assert actual == expected_value
-
-    def test_default_version_matches_version_1(self) -> None:
-        """Test that default LDIF version matches version 1."""
-        assert (
-            FlextLdifConstants.Format.DEFAULT_LDIF_VERSION
-            == FlextLdifConstants.Format.LDIF_VERSION_1
-        )
-
-
-class TestProcessingConstants:
-    """Test processing and worker constants."""
-
     PROCESSING_CONSTANTS: ClassVar[dict[str, object]] = {
         "LdifProcessing.MIN_WORKERS_FOR_PARALLEL": 2,
         "LdifProcessing.MAX_WORKERS_LIMIT": 16,
@@ -84,6 +71,93 @@ class TestProcessingConstants:
         "MIN_ATTRIBUTE_PARTS": 2,
     }
 
+    SUPPORTED_ENCODINGS: ClassVar[list[str]] = ["utf-8", "utf-16", "ascii"]
+
+    VALIDATION_CONSTANTS: ClassVar[dict[str, object]] = {
+        "LdifValidation.MIN_DN_COMPONENTS": 1,
+        "LdifValidation.MAX_DN_LENGTH": 2048,
+        "LdifValidation.MAX_ATTRIBUTES_PER_ENTRY": 1000,
+        "LdifValidation.MAX_VALUES_PER_ATTRIBUTE": 100,
+        "LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH": 10000,
+        "LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH": 1,
+        "LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH": 127,
+        "LdifValidation.MIN_URL_LENGTH": 1,
+        "LdifValidation.MAX_URL_LENGTH": 2048,
+        "LdifValidation.MIN_ENCODING_LENGTH": 1,
+        "LdifValidation.MAX_ENCODING_LENGTH": 50,
+    }
+
+    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
+        "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
+        "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
+    }
+
+    LDAP_SERVERS: ClassVar[dict[str, str]] = {
+        "ACTIVE_DIRECTORY": "active_directory",
+        "OPENLDAP": "openldap",
+        "ORACLE_OID": "oracle_oid",
+        "ORACLE_OUD": "oracle_oud",
+    }
+
+    REQUIRED_FEATURES: ClassVar[list[str]] = [
+        "base64_encoding",
+        "line_continuation",
+        "url_references",
+        "comments",
+        "change_records",
+    ]
+
+    OPTIONAL_FEATURES: ClassVar[list[str]] = [
+        "language_tags",
+        "large_entries",
+        "binary_data",
+    ]
+
+    COMPLIANCE_MODES: ClassVar[dict[str, str]] = {
+        "STRICT": "strict",
+        "MODERATE": "moderate",
+        "LENIENT": "lenient",
+    }
+
+    ENUM_TEST_CASES: ClassVar[list[tuple[str, str, str]]] = [
+        ("PROCESSING_STAGE", "PARSING", "parsing"),
+        ("PROCESSING_STAGE", "VALIDATION", "validation"),
+        ("PROCESSING_STAGE", "ANALYTICS", "analytics"),
+        ("PROCESSING_STAGE", "WRITING", "writing"),
+        ("HEALTH_STATUS", "HEALTHY", "healthy"),
+        ("HEALTH_STATUS", "DEGRADED", "degraded"),
+        ("HEALTH_STATUS", "UNHEALTHY", "unhealthy"),
+        ("ENTRY_TYPE", "PERSON", "person"),
+        ("ENTRY_TYPE", "GROUP", "group"),
+        ("ENTRY_TYPE", "ORGANIZATIONAL_UNIT", "organizationalunit"),
+        ("ENTRY_TYPE", "DOMAIN", "domain"),
+        ("ENTRY_TYPE", "OTHER", "other"),
+        ("ENTRY_MODIFICATION", "ADD", "add"),
+        ("ENTRY_MODIFICATION", "MODIFY", "modify"),
+        ("ENTRY_MODIFICATION", "DELETE", "delete"),
+        ("ENTRY_MODIFICATION", "MODRDN", "modrdn"),
+    ]
+
+    ENUM_CLASS_MAP: ClassVar[dict[str, type[object]]] = {
+        "PROCESSING_STAGE": FlextLdifConstants.ProcessingStage,
+        "HEALTH_STATUS": FlextLdifConstants.LdifHealthStatus,
+        "ENTRY_TYPE": FlextLdifConstants.EntryType,
+        "ENTRY_MODIFICATION": FlextLdifConstants.EntryModification,
+    }
+
+    NAMESPACE_GROUPS: ClassVar[list[str]] = [
+        "Encoding",
+        "Format",
+        "Processing",
+        "LdifGeneralValidation",
+        "Acl",
+        "Schema",
+    ]
+
+    # ════════════════════════════════════════════════════════════════════════
+    # HELPER METHODS
+    # ════════════════════════════════════════════════════════════════════════
+
     @staticmethod
     def _get_constant_value(path: str) -> object:
         """Get constant value by path."""
@@ -92,6 +166,30 @@ class TestProcessingConstants:
         for part in parts:
             value = getattr(value, part)
         return value
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FORMAT CONSTANTS TESTS (2 tests)
+    # ════════════════════════════════════════════════════════════════════════
+
+    @pytest.mark.parametrize(
+        ("name", "expected_value"),
+        list(FORMAT_CONSTANTS.items()),
+    )
+    def test_format_constants(self, name: str, expected_value: object) -> None:
+        """Test format constant value."""
+        actual = getattr(FlextLdifConstants.Format, name)
+        assert actual == expected_value
+
+    def test_default_version_matches_version_1(self) -> None:
+        """Test that default LDIF version matches version 1."""
+        assert (
+            FlextLdifConstants.Format.DEFAULT_LDIF_VERSION
+            == FlextLdifConstants.Format.LDIF_VERSION_1
+        )
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PROCESSING CONSTANTS TESTS (3 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         ("path", "expected_value"),
@@ -116,11 +214,9 @@ class TestProcessingConstants:
             <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
         )
 
-
-class TestEncodingConstants:
-    """Test encoding constants."""
-
-    SUPPORTED_ENCODINGS: ClassVar[list[str]] = ["utf-8", "utf-16", "ascii"]
+    # ════════════════════════════════════════════════════════════════════════
+    # ENCODING CONSTANTS TESTS (4 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_default_encoding_is_utf8(self) -> None:
         """Test default encoding is utf-8."""
@@ -142,32 +238,9 @@ class TestEncodingConstants:
         """Test encoding is in supported encodings."""
         assert encoding in FlextLdifConstants.SUPPORTED_ENCODINGS
 
-
-class TestValidationConstants:
-    """Test validation limit constants."""
-
-    VALIDATION_CONSTANTS: ClassVar[dict[str, object]] = {
-        "LdifValidation.MIN_DN_COMPONENTS": 1,
-        "LdifValidation.MAX_DN_LENGTH": 2048,
-        "LdifValidation.MAX_ATTRIBUTES_PER_ENTRY": 1000,
-        "LdifValidation.MAX_VALUES_PER_ATTRIBUTE": 100,
-        "LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH": 10000,
-        "LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH": 1,
-        "LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH": 127,
-        "LdifValidation.MIN_URL_LENGTH": 1,
-        "LdifValidation.MAX_URL_LENGTH": 2048,
-        "LdifValidation.MIN_ENCODING_LENGTH": 1,
-        "LdifValidation.MAX_ENCODING_LENGTH": 50,
-    }
-
-    @staticmethod
-    def _get_constant_value(path: str) -> object:
-        """Get constant value by path."""
-        parts = path.split(".")
-        value: object = FlextLdifConstants
-        for part in parts:
-            value = getattr(value, part)
-        return value
+    # ════════════════════════════════════════════════════════════════════════
+    # VALIDATION CONSTANTS TESTS (1 test)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         ("path", "expected_value"),
@@ -178,23 +251,9 @@ class TestValidationConstants:
         actual = self._get_constant_value(path)
         assert actual == expected_value
 
-
-class TestQualityConstants:
-    """Test quality analysis constants."""
-
-    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
-        "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
-        "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
-    }
-
-    @staticmethod
-    def _get_constant_value(path: str) -> object:
-        """Get constant value by path."""
-        parts = path.split(".")
-        value: object = FlextLdifConstants
-        for part in parts:
-            value = getattr(value, part)
-        return value
+    # ════════════════════════════════════════════════════════════════════════
+    # QUALITY CONSTANTS TESTS (1 test)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         ("path", "expected_value"),
@@ -205,9 +264,9 @@ class TestQualityConstants:
         actual = self._get_constant_value(path)
         assert actual == expected_value
 
-
-class TestObjectClassConstants:
-    """Test ObjectClasses constants."""
+    # ════════════════════════════════════════════════════════════════════════
+    # OBJECT CLASS CONSTANTS TESTS (2 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         "object_class",
@@ -225,16 +284,9 @@ class TestObjectClassConstants:
         """Test object class is in LDAP group classes."""
         assert object_class in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
 
-
-class TestLdapServerConstants:
-    """Test LdapServers constants."""
-
-    LDAP_SERVERS: ClassVar[dict[str, str]] = {
-        "ACTIVE_DIRECTORY": "active_directory",
-        "OPENLDAP": "openldap",
-        "ORACLE_OID": "oracle_oid",
-        "ORACLE_OUD": "oracle_oud",
-    }
+    # ════════════════════════════════════════════════════════════════════════
+    # LDAP SERVER CONSTANTS TESTS (1 test)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         ("attr_name", "expected_value"),
@@ -245,29 +297,9 @@ class TestLdapServerConstants:
         actual = getattr(FlextLdifConstants.LdapServers, attr_name)
         assert actual == expected_value
 
-
-class TestRfcComplianceConstants:
-    """Test RfcCompliance constants."""
-
-    REQUIRED_FEATURES: ClassVar[list[str]] = [
-        "base64_encoding",
-        "line_continuation",
-        "url_references",
-        "comments",
-        "change_records",
-    ]
-
-    OPTIONAL_FEATURES: ClassVar[list[str]] = [
-        "language_tags",
-        "large_entries",
-        "binary_data",
-    ]
-
-    COMPLIANCE_MODES: ClassVar[dict[str, str]] = {
-        "STRICT": "strict",
-        "MODERATE": "moderate",
-        "LENIENT": "lenient",
-    }
+    # ════════════════════════════════════════════════════════════════════════
+    # RFC COMPLIANCE CONSTANTS TESTS (3 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize("feature", REQUIRED_FEATURES)
     def test_required_features(self, feature: str) -> None:
@@ -288,60 +320,28 @@ class TestRfcComplianceConstants:
         actual = getattr(FlextLdifConstants.RfcCompliance, attr_name)
         assert actual == expected_value
 
-
-class TestEnumValues:
-    """Test enum values."""
-
-    ENUM_TEST_CASES: ClassVar[list[tuple[EnumType, str, str]]] = [
-        (EnumType.PROCESSING_STAGE, "PARSING", "parsing"),
-        (EnumType.PROCESSING_STAGE, "VALIDATION", "validation"),
-        (EnumType.PROCESSING_STAGE, "ANALYTICS", "analytics"),
-        (EnumType.PROCESSING_STAGE, "WRITING", "writing"),
-        (EnumType.HEALTH_STATUS, "HEALTHY", "healthy"),
-        (EnumType.HEALTH_STATUS, "DEGRADED", "degraded"),
-        (EnumType.HEALTH_STATUS, "UNHEALTHY", "unhealthy"),
-        (EnumType.ENTRY_TYPE, "PERSON", "person"),
-        (EnumType.ENTRY_TYPE, "GROUP", "group"),
-        (EnumType.ENTRY_TYPE, "ORGANIZATIONAL_UNIT", "organizationalunit"),
-        (EnumType.ENTRY_TYPE, "DOMAIN", "domain"),
-        (EnumType.ENTRY_TYPE, "OTHER", "other"),
-        (EnumType.ENTRY_MODIFICATION, "ADD", "add"),
-        (EnumType.ENTRY_MODIFICATION, "MODIFY", "modify"),
-        (EnumType.ENTRY_MODIFICATION, "DELETE", "delete"),
-        (EnumType.ENTRY_MODIFICATION, "MODRDN", "modrdn"),
-    ]
-
-    ENUM_CLASS_MAP: ClassVar[dict[EnumType, type[object]]] = {
-        EnumType.PROCESSING_STAGE: FlextLdifConstants.ProcessingStage,
-        EnumType.HEALTH_STATUS: FlextLdifConstants.LdifHealthStatus,
-        EnumType.ENTRY_TYPE: FlextLdifConstants.EntryType,
-        EnumType.ENTRY_MODIFICATION: FlextLdifConstants.EntryModification,
-    }
+    # ════════════════════════════════════════════════════════════════════════
+    # ENUM VALUES TESTS (1 test)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize(
         ("enum_type", "member_name", "expected_value"),
         ENUM_TEST_CASES,
     )
     def test_enum_values(
-        self, enum_type: EnumType, member_name: str, expected_value: str,
+        self,
+        enum_type: str,
+        member_name: str,
+        expected_value: str,
     ) -> None:
         """Test enum member value."""
         enum_class = self.ENUM_CLASS_MAP[enum_type]
         enum_member = getattr(enum_class, member_name)
         assert enum_member.value == expected_value
 
-
-class TestNamespaceValidation:
-    """Test FlextLdifConstants namespace access."""
-
-    NAMESPACE_GROUPS: ClassVar[list[str]] = [
-        "Encoding",
-        "Format",
-        "Processing",
-        "LdifGeneralValidation",
-        "Acl",
-        "Schema",
-    ]
+    # ════════════════════════════════════════════════════════════════════════
+    # NAMESPACE VALIDATION TESTS (4 tests)
+    # ════════════════════════════════════════════════════════════════════════
 
     @pytest.mark.parametrize("group_name", NAMESPACE_GROUPS)
     def test_constant_groups_accessible(self, group_name: str) -> None:

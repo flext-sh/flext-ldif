@@ -20,21 +20,12 @@ from typing import ClassVar, override
 
 from flext_core import FlextDecorators, FlextResult
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-def _is_integer(value: str) -> bool:
-    """Check if value is a valid integer."""
-    try:
-        int(value)
-        return True
-    except ValueError:
-        return False
-
-
-class FlextLdifSyntax(LdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
+class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and
@@ -46,7 +37,9 @@ class FlextLdifSyntax(LdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
 
     _VALIDATOR_MAP: ClassVar[dict[str, Callable[[str], FlextResult[bool]]]] = {
         "boolean": lambda v: FlextResult[bool].ok(v.upper() in {"TRUE", "FALSE"}),
-        "integer": lambda v: FlextResult[bool].ok(_is_integer(v)),
+        "integer": lambda v: FlextResult[bool].ok(
+            v.isdigit() or (v.startswith("-") and v[1:].isdigit())
+        ),
         "dn": lambda v: FlextResult[bool].ok("=" in v),
         "time": lambda v: FlextResult[bool].ok(bool(re.match(r"^\d{14}(\.\d+)?Z$", v))),
         "binary": lambda _: FlextResult[bool].ok(True),
@@ -64,7 +57,6 @@ class FlextLdifSyntax(LdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
     @FlextDecorators.track_performance()
     def execute(
         self,
-        **kwargs: object,
     ) -> FlextResult[FlextLdifModels.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 

@@ -191,7 +191,9 @@ class TestFlextLdifAclWithRealFixtures:
         return isinstance(content, str) and len(content) > 0
 
     def _validate_server_specific_acls(
-        self, content: str, server_type: ServerType,
+        self,
+        content: str,
+        server_type: ServerType,
     ) -> None:
         """Validate server-specific ACL attributes."""
         if server_type == ServerType.OID:

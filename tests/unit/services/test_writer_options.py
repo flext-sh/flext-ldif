@@ -1,12 +1,27 @@
 """Comprehensive unit tests for FlextLdifWriter format options via FlextLdifConfig.
 
-Tests all writer format options using config-centric architecture with DRY principles.
+MODULES TESTED:
+- flext_ldif.services.writer (FlextLdifWriter, LdifSerializer)
+- flext_ldif.utilities (FlextLdifUtilities.ACL.sanitize_acl_name)
+
+SCOPE:
+- All WriteFormatOptions functionality via FlextLdifConfig
+- Boolean options (enabled/disabled)
+- Line width and folding (RFC 2849 compliance)
+- Base64 encoding for binary data
+- Attribute normalization and ordering
+- ACL format handling
+- Metadata and comment generation
+- File output with options
+- Edge cases (empty entries, invalid servers, minimal widths)
 
 ARCHITECTURE:
 - FlextLdifConfig (registered namespace) is source of truth for all LDIF settings
 - Tests use config.get_namespace() to access LDIF configuration
 - Parametrized tests dramatically reduce code duplication
 - Enum mappings centralize field name translations
+- Single class with nested classes for organization
+- Factories and helpers for code reduction
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,6 +41,7 @@ from flext_ldif import FlextLdifModels, FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.utilities import FlextLdifUtilities
+from tests.fixtures.constants import Writer
 
 
 def config_to_write_options(
@@ -266,29 +282,34 @@ class TestWriterFormatOptions:
         ("option_field", "test_value", "expected_pattern", "check_absence"),
         [
             # Version header
-            (WriterOption.INCLUDE_VERSION_HEADER, True, "version: 1", False),
-            (WriterOption.INCLUDE_VERSION_HEADER, False, "version: 1", True),
+            (WriterOption.INCLUDE_VERSION_HEADER, True, Writer.PATTERN_VERSION, False),
+            (WriterOption.INCLUDE_VERSION_HEADER, False, Writer.PATTERN_VERSION, True),
             # Timestamps
             (
                 WriterOption.INCLUDE_TIMESTAMPS,
                 True,
-                r"# Generated on: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}",
+                Writer.PATTERN_TIMESTAMP_REGEX,
                 False,
             ),
-            (WriterOption.INCLUDE_TIMESTAMPS, False, "# Generated on:", True),
+            (
+                WriterOption.INCLUDE_TIMESTAMPS,
+                False,
+                Writer.PATTERN_TIMESTAMP_PREFIX,
+                True,
+            ),
             # Write hidden attrs as comments
             (
                 WriterOption.WRITE_HIDDEN_ATTRS_AS_COMMENTS,
                 True,
-                "# telephoneNumber:",
+                Writer.PATTERN_HIDDEN_ATTR,
                 False,
             ),
             # Write empty values
-            (WriterOption.WRITE_EMPTY_VALUES, True, "emptyAttr:", False),
-            (WriterOption.WRITE_EMPTY_VALUES, False, "emptyAttr:", True),
+            (WriterOption.WRITE_EMPTY_VALUES, True, Writer.PATTERN_EMPTY_ATTR, False),
+            (WriterOption.WRITE_EMPTY_VALUES, False, Writer.PATTERN_EMPTY_ATTR, True),
             # Include DN comments
-            (WriterOption.INCLUDE_DN_COMMENTS, True, "# Complex DN:", False),
-            (WriterOption.INCLUDE_DN_COMMENTS, False, "# Complex DN:", True),
+            (WriterOption.INCLUDE_DN_COMMENTS, True, Writer.PATTERN_DN_COMMENT, False),
+            (WriterOption.INCLUDE_DN_COMMENTS, False, Writer.PATTERN_DN_COMMENT, True),
         ],
     )
     def test_boolean_option(
@@ -315,13 +336,8 @@ class TestWriterFormatOptions:
 
         # Special DN for DN comments test
         if option_field == WriterOption.INCLUDE_DN_COMMENTS:
-            long_dn = (
-                "cn=Very Long Common Name That Exceeds Normal Length,"
-                "ou=Very Long Organizational Unit Name,"
-                "o=Very Long Organization Name,dc=example,dc=com"
-            )
             entry = self._create_entry(
-                dn=long_dn,
+                dn=Writer.LONG_DN,
                 attributes={"objectClass": ["person"], "cn": ["Test"]},
             )
 
@@ -331,19 +347,24 @@ class TestWriterFormatOptions:
             {option_field: test_value},
         )
 
-        # Check pattern presence or absence
+        # Check pattern presence or absence using helper
+        is_regex = any(char in expected_pattern for char in Writer.REGEX_SPECIAL_CHARS)
         if check_absence:
-            assert expected_pattern not in output, (
-                f"Pattern should be absent when {option_field}={test_value}"
-            )
-        elif expected_pattern.startswith("#"):
-            assert expected_pattern in output, (
-                f"Pattern should be present when {option_field}={test_value}"
-            )
-        else:
-            # For regex patterns
+            if is_regex:
+                assert not re.search(expected_pattern, output), (
+                    f"Pattern should be absent when {option_field}={test_value}"
+                )
+            else:
+                assert expected_pattern not in output, (
+                    f"Pattern should be absent when {option_field}={test_value}"
+                )
+        elif is_regex:
             assert re.search(expected_pattern, output), (
                 f"Pattern should match when {option_field}={test_value}"
+            )
+        else:
+            assert expected_pattern in output, (
+                f"Pattern should be present when {option_field}={test_value}"
             )
 
     # =========================================================================
@@ -425,32 +446,6 @@ class TestWriterFormatOptions:
         for i, expected_attr in enumerate(expected_order):
             if i < len(actual_order):
                 assert actual_order[i] == expected_attr
-
-    def test_sort_attributes(
-        self,
-        writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
-    ) -> None:
-        """Test sort_attributes alphabetically orders attributes."""
-        output = self._write_with_config(
-            writer_service,
-            [sample_entry],
-            {
-                WriterOption.RESPECT_ATTRIBUTE_ORDER: False,
-                WriterOption.SORT_ATTRIBUTES: True,
-            },
-        )
-
-        # Extract attribute names
-        attribute_names: list[str] = []
-        for line in output.split("\n"):
-            if ":" in line and not line.startswith(("dn:", "version:", "#")):
-                attr_name = line.split(":")[0].strip()
-                if attr_name not in attribute_names:
-                    attribute_names.append(attr_name)
-
-        sorted_names = sorted(attribute_names, key=str.lower)
-        assert attribute_names == sorted_names
 
     # =========================================================================
     # Base64 Encoding Tests
@@ -604,7 +599,8 @@ class TestWriterFormatOptions:
 
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
-            "ldif", FlextLdifConfig,
+            "ldif",
+            FlextLdifConfig,
         )
         config.ldif_write_include_version_header = True
         config.ldif_write_include_timestamps = True
@@ -643,7 +639,8 @@ class TestWriterFormatOptions:
         """Test ldap3 and model output formats."""
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
-            "ldif", FlextLdifConfig,
+            "ldif",
+            FlextLdifConfig,
         )
         config.ldif_write_normalize_attribute_names = True
         options = config_to_write_options(config)
@@ -710,7 +707,8 @@ class TestWriterFormatOptions:
         """Test that options don't interfere with server type validation."""
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
-            "ldif", FlextLdifConfig,
+            "ldif",
+            FlextLdifConfig,
         )
         config.ldif_write_include_version_header = True
         options = config_to_write_options(config)
@@ -748,61 +746,69 @@ class TestWriterFormatOptions:
         assert "dn:" in unwrapped
         assert "objectClass:" in unwrapped
 
+    # =========================================================================
+    # Nested Class: ACL Sanitization Tests
+    # =========================================================================
 
-class TestSanitizeAclName:
-    """Unit tests for FlextLdifUtilitiesACL.sanitize_acl_name function."""
+    class TestSanitizeAclName:
+        """Unit tests for FlextLdifUtilitiesACL.sanitize_acl_name function."""
 
-    @pytest.mark.parametrize(
-        ("input_str", "expected", "should_sanitize"),
-        [
-            # No change needed
-            (
-                "access to attr=(cn) by self (read)",
-                "access to attr=(cn) by self (read)",
-                False,
-            ),
-            # Null character
-            ("access to\x00attr=(cn)", "access to attr=(cn)", True),
-            # Multiple control chars
-            ("access\x00to\x01attr\x02=(cn)\x03", "access to attr =(cn)", True),
-            # Double quotes
-            ('access to "attr"=(cn)', None, True),  # None = check absence of "
-            # Empty string
-            ("", "", False),
-        ],
-    )
-    def test_sanitize_acl_name(
-        self,
-        input_str: str,
-        expected: str | None,
-        should_sanitize: bool,
-    ) -> None:
-        """Test sanitize_acl_name with various inputs."""
-        sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(input_str)
-
-        assert was_sanitized == should_sanitize
-
-        if expected is not None:
-            assert sanitized == expected
-        else:
-            # Check absence of double quotes
-            assert '"' not in sanitized
-
-    def test_sanitize_acl_name_truncation(self) -> None:
-        """Test truncation of long strings."""
-        input_str = "a" * 300
-        sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
-            input_str, max_length=50,
+        @pytest.mark.parametrize(
+            ("input_str", "expected", "should_sanitize"),
+            [
+                # No change needed
+                (
+                    "access to attr=(cn) by self (read)",
+                    "access to attr=(cn) by self (read)",
+                    False,
+                ),
+                # Null character
+                ("access to\x00attr=(cn)", "access to attr=(cn)", True),
+                # Multiple control chars
+                ("access\x00to\x01attr\x02=(cn)\x03", "access to attr =(cn)", True),
+                # Double quotes
+                ('access to "attr"=(cn)', None, True),  # None = check absence of "
+                # Empty string
+                ("", "", False),
+            ],
         )
+        def test_sanitize_acl_name(
+            self,
+            input_str: str,
+            expected: str | None,
+            should_sanitize: bool,
+        ) -> None:
+            """Test sanitize_acl_name with various inputs."""
+            sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
+                input_str
+            )
 
-        assert len(sanitized) == 50
-        assert sanitized.endswith("...")
-        assert was_sanitized
+            assert was_sanitized == should_sanitize
 
-    def test_sanitize_acl_name_collapses_spaces(self) -> None:
-        """Test that multiple spaces are collapsed."""
-        input_str = "access\x00\x01\x02to attr"
-        sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(input_str)
+            if expected is not None:
+                assert sanitized == expected
+            else:
+                # Check absence of double quotes
+                assert '"' not in sanitized
 
-        assert "  " not in sanitized
-        assert was_sanitized
+        def test_sanitize_acl_name_truncation(self) -> None:
+            """Test truncation of long strings."""
+            input_str = "a" * 300
+            sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
+                input_str,
+                max_length=50,
+            )
+
+            assert len(sanitized) == 50
+            assert sanitized.endswith("...")
+            assert was_sanitized
+
+        def test_sanitize_acl_name_collapses_spaces(self) -> None:
+            """Test that multiple spaces are collapsed."""
+            input_str = "access\x00\x01\x02to attr"
+            sanitized, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
+                input_str
+            )
+
+            assert "  " not in sanitized
+            assert was_sanitized

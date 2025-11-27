@@ -1071,9 +1071,8 @@ class FlextLdifUtilitiesWriter:
             attr_name.lower()
             in FlextLdifConstants.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
         )
-        needs_base64 = (
-            is_binary_attr
-            or FlextLdifUtilitiesWriter.needs_base64_encoding(str_value)
+        needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
+            str_value
         )
 
         if needs_base64:
@@ -1138,10 +1137,10 @@ class FlextLdifUtilitiesWriter:
                 ldif_lines.append(f"{modify_operation}: {attr_name}")
 
                 # Attribute values
-                for value in values:
-                    ldif_lines.append(
-                        FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value),
-                    )
+                ldif_lines.extend(
+                    FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value)
+                    for value in values
+                )
 
             # Final separator for modify
             if ldif_lines and ldif_lines[-1] != "-":
@@ -1151,10 +1150,10 @@ class FlextLdifUtilitiesWriter:
             for attr_name, values in attributes.items():
                 if not values or attr_name in hidden:
                     continue
-                for value in values:
-                    ldif_lines.append(
-                        FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value),
-                    )
+                ldif_lines.extend(
+                    FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value)
+                    for value in values
+                )
 
         return ldif_lines
 

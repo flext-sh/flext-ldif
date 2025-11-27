@@ -297,38 +297,6 @@ sn:"""
                 assert dn_str == dn_str.strip()
 
         @staticmethod
-        def has_operational_attrs(response: FlextLdifModels.ParseResponse) -> None:
-            """Validate operational attributes are included."""
-            operational_found = False
-            for entry in response.entries:
-                attr_names = [name.lower() for name in entry.attributes.attributes]
-                if any(
-                    op_attr in attr_names
-                    for op_attr in ["createtimestamp", "creatorsname", "entryuuid"]
-                ):
-                    operational_found = True
-                    break
-            assert operational_found, "No operational attributes found"
-
-        @staticmethod
-        def no_operational_attrs(response: FlextLdifModels.ParseResponse) -> None:
-            """Validate operational attributes are filtered out."""
-            for entry in response.entries:
-                attr_names = [name.lower() for name in entry.attributes.attributes]
-                operational_found = any(
-                    op_attr in attr_names
-                    for op_attr in [
-                        "createtimestamp",
-                        "creatorsname",
-                        "entryuuid",
-                        "entrycsn",
-                    ]
-                )
-                assert not operational_found, (
-                    f"Found operational attributes in entry {entry.dn}: {attr_names}"
-                )
-
-        @staticmethod
         def parse_errors_within_limit(
             limit: int,
         ) -> Callable[[FlextLdifModels.ParseResponse], None]:

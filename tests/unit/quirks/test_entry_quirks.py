@@ -1,6 +1,6 @@
 """Test suite for entry quirks module.
 
-Comprehensive testing for FlextLdifEntry which handles entry adaptation
+Comprehensive testing for FlextLdifEntries which handles entry adaptation
 for server-specific quirks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,15 +14,15 @@ from flext_core import FlextResult
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
-from flext_ldif.services.entry import FlextLdifEntry
+from flext_ldif.services.entries import FlextLdifEntries
 
 
-class TestFlextLdifEntryInitialization:
+class TestFlextLdifEntriesInitialization:
     """Test suite for entry quirks initialization."""
 
     def test_initialization_default(self) -> None:
         """Test entry service initialization."""
-        service = FlextLdifEntry()
+        service = FlextLdifEntries()
 
         assert service is not None
         assert service.operation == "remove_operational_attributes"
@@ -31,7 +31,7 @@ class TestFlextLdifEntryInitialization:
 
     def test_initialization_has_execute_method(self) -> None:
         """Test entry service execute method exists."""
-        service = FlextLdifEntry()
+        service = FlextLdifEntries()
         result = service.execute()
 
         assert result is not None
@@ -88,7 +88,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_generic_server(self) -> None:
         """Test adapting entry for generic LDAP server."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         # Create test entry
         entry = self._create_entry(
@@ -110,7 +110,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_oid_server(self) -> None:
         """Test adapting entry for OID server."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -130,7 +130,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_oud_server(self) -> None:
         """Test adapting entry for OUD server."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -150,7 +150,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_openldap_server(self) -> None:
         """Test adapting entry for OpenLDAP server."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -170,7 +170,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_with_operational_attrs(self) -> None:
         """Test that adapt_entry handles operational attributes."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -195,7 +195,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_case_insensitive_operational_attrs(self) -> None:
         """Test case-insensitive operational attribute stripping."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -218,7 +218,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_returns_flext_result(self) -> None:
         """Test that adapt_entry returns proper FlextResult."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -236,7 +236,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_preserves_user_attributes(self) -> None:
         """Test that all user attributes are preserved."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=John Doe,ou=Users,dc=example,dc=com",
@@ -274,7 +274,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_empty_entry(self) -> None:
         """Test adapting an entry with minimal attributes."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=minimal,dc=example,dc=com",
@@ -291,7 +291,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_multiple_values(self) -> None:
         """Test adapting entry with multi-valued attributes."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         entry = self._create_entry(
             "cn=user,dc=example,dc=com",
@@ -317,7 +317,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_preserves_dn(self) -> None:
         """Test that adaptation preserves the DN."""
-        quirks = FlextLdifEntry()
+        quirks = FlextLdifEntries()
 
         original_dn = "cn=test,ou=Users,dc=example,dc=com"
         entry = self._create_entry(

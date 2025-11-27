@@ -3,12 +3,12 @@
 This module provides the foundational base class for flext-ldif services.
 
 Scope:
-- LdifServiceBase: Service base class inheriting from FlextService
+- FlextLdifServiceBase: Service base class inheriting from FlextService
 - Full config access via self.config with namespace support
 
 Usage:
     # Service inheritance:
-    class MyService(LdifServiceBase[MyResult]):
+    class MyService(FlextLdifServiceBase[MyResult]):
         def execute(self) -> FlextResult[MyResult]:
             ldif_config = self.config.get_namespace("ldif", FlextLdifConfig)
             encoding = ldif_config.ldif_encoding
@@ -19,14 +19,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeVar
-
 from flext_core import FlextService
+from flext_core.typings import T
 
-TDomainResult = TypeVar("TDomainResult")
 
-
-class LdifServiceBase(FlextService[TDomainResult]):
+class FlextLdifServiceBase(FlextService[T]):
     """Base class for LDIF services.
 
     Inherits all functionality from FlextService:
@@ -39,7 +36,3 @@ class LdifServiceBase(FlextService[TDomainResult]):
         ldif_config = self.config.get_namespace("ldif", FlextLdifConfig)
         encoding = ldif_config.ldif_encoding
     """
-
-
-# Alias for backward compatibility
-FlextLdifServiceBase = LdifServiceBase

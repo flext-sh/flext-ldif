@@ -1,27 +1,27 @@
-"""Server Type Auto-Detection Service for LDIF Files.
+"""Detector Service - LDAP Server Type Auto-Detection from LDIF Content.
+
+Analyzes LDIF content to automatically detect the source LDAP server type using
+pattern matching and heuristics for server-specific features (OIDs, attributes,
+objectClasses, patterns).
+
+Scope: Server type detection from LDIF files/content, pattern matching for
+server-specific features (Oracle OID/OUD, OpenLDAP, Active Directory, 389 DS,
+Apache DS, Novell eDirectory, IBM Tivoli), confidence scoring, effective server
+type resolution based on config hierarchy.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Analyzes LDIF content to automatically detect the source LDAP server type.
-Uses pattern matching and heuristics to identify server-specific features.
-
-Detection Strategy:
-1. Scan for server-specific OIDs, attributes, and patterns
-2. Count matches for each server type
-3. Return highest-scoring server type
-4. Fall back to RFC or RELAXED if inconclusive
 """
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Protocol, override
 
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextResult
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -43,7 +43,7 @@ class ServerDetectionConstants(Protocol):
     DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
-class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
+class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -118,53 +118,42 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
             }
 
         """
-        try:
-            # Read LDIF content if path provided
-            if ldif_content is None:
-                if ldif_path is None:
-                    return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
-                        "Either ldif_path or ldif_content must be provided",
-                    )
-                # RFC 2849 mandates UTF-8 encoding - fail on invalid encoding or missing file
-                try:
-                    ldif_content = ldif_path.read_text(encoding="utf-8")
-                except FileNotFoundError:
-                    return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
-                        f"LDIF file not found: {ldif_path}",
-                    )
-                except UnicodeDecodeError as e:
-                    return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
-                        f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
-                    )
+        if ldif_content is None:
+            if ldif_path is None:
+                return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                    "Either ldif_path or ldif_content must be provided",
+                )
+            if not ldif_path.exists():
+                return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                    f"LDIF file not found: {ldif_path}",
+                )
+            try:
+                ldif_content = ldif_path.read_text(encoding="utf-8")
+            except UnicodeDecodeError as e:
+                return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                    f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
+                )
 
-            # Limit content for performance
-            lines = ldif_content.split("\n")
-            content_sample = "\n".join(lines[:max_lines])
+        lines = ldif_content.split("\n")
+        content_sample = "\n".join(lines[:max_lines])
 
-            # Run detection - let exceptions propagate with clear error messages
-            scores = self._calculate_scores(content_sample)
-            detected_type, confidence = self._determine_server_type(scores)
+        scores = self._calculate_scores(content_sample)
+        detected_type, confidence = self._determine_server_type(scores)
+        patterns_found = self._extract_patterns(content_sample)
 
-            patterns_found = self._extract_patterns(content_sample)
+        detection_result = FlextLdifModels.ServerDetectionResult(
+            detected_server_type=detected_type,
+            confidence=confidence,
+            scores=scores,
+            patterns_found=patterns_found,
+            is_confident=confidence
+            >= FlextLdifConstants.ServerDetection.CONFIDENCE_THRESHOLD,
+        )
+        return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
+            detection_result,
+        )
 
-            detection_result = FlextLdifModels.ServerDetectionResult(
-                detected_server_type=detected_type,
-                confidence=confidence,
-                scores=scores,
-                patterns_found=patterns_found,
-                is_confident=confidence
-                >= FlextLdifConstants.ServerDetection.CONFIDENCE_THRESHOLD,
-            )
-            return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
-                detection_result,
-            )
-        except (ValueError, TypeError, AttributeError) as e:
-            error_msg = f"Server detection failed: {e.__class__.__name__}: {e}"
-            self.logger.exception(error_msg)
-            return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
-                error_msg,
-            )
-
+    @override
     def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:
         """Execute server detector self-check (required by FlextService).
 
@@ -234,32 +223,17 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
             FlextResult with the server type string to use
 
         """
-        try:
-            # Priority 3: Auto-detection
-            if ldif_path is not None or ldif_content is not None:
-                detection_result = self.detect_server_type(
-                    ldif_path=ldif_path,
-                    ldif_content=ldif_content,
-                )
-                if detection_result.is_success:
-                    result = detection_result.unwrap()
-                    if (
-                        FlextRuntime.is_dict_like(result)
-                        and "detected_server_type" in result
-                    ):
-                        server_type = result["detected_server_type"]
-                        if not isinstance(server_type, str):
-                            msg = f"Expected str, got {type(server_type)}"
-                            raise TypeError(msg)
-                        return FlextResult[str].ok(server_type)
-
-            # Default to RFC
-            return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RFC)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[str].fail(
-                f"Failed to resolve effective server type: {e}",
+        if ldif_path is not None or ldif_content is not None:
+            detection_result = self.detect_server_type(
+                ldif_path=ldif_path,
+                ldif_content=ldif_content,
             )
+            if detection_result.is_success:
+                result = detection_result.unwrap()
+                if isinstance(result, FlextLdifModels.ServerDetectionResult):
+                    return FlextResult[str].ok(result.detected_server_type)
+
+        return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RFC)
 
     def _update_server_scores(
         self,
@@ -279,19 +253,10 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         if re.search(pattern, search_content):
             scores[server_type] += weight
 
-        for attr in attributes:
-            if attr.lower() in content_lower:
-                scores[server_type] += (
-                    FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
-                )
-
-        # Also score objectClass matches
-        if objectclasses:
-            for objclass in objectclasses:
-                if objclass.lower() in content_lower:
-                    scores[server_type] += (
-                        FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
-                    )
+        score_attr_match = FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
+        for item in (*attributes, *(objectclasses or [])):
+            if item.lower() in content_lower:
+                scores[server_type] += score_attr_match
 
     def _process_server_with_oid_pattern(
         self,
@@ -304,10 +269,9 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         case_sensitive: bool = False,
     ) -> None:
         """Process server detection using OID pattern."""
-        if not constants or not hasattr(constants, "DETECTION_OID_PATTERN"):
-            return
-
-        pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
+        pattern = (
+            getattr(constants, "DETECTION_OID_PATTERN", None) if constants else None
+        )
         if not pattern or not isinstance(pattern, str):
             return
 
@@ -333,18 +297,16 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         pattern_attr: str = "DETECTION_PATTERN",
     ) -> None:
         """Process server detection using pattern attribute."""
-        if not constants or not hasattr(constants, pattern_attr):
-            return
-
-        pattern = getattr(constants, pattern_attr, None)
+        pattern = getattr(constants, pattern_attr, None) if constants else None
         if not pattern:
             return
 
+        weight = getattr(constants, "DETECTION_WEIGHT", 6) if constants else 6
         if isinstance(pattern, re.Pattern):
             if pattern.search(content_lower):
-                scores[server_type] += getattr(constants, "DETECTION_WEIGHT", 6)
+                scores[server_type] += weight
         elif isinstance(pattern, str) and re.search(pattern, content_lower):
-            scores[server_type] += getattr(constants, "DETECTION_WEIGHT", 6)
+            scores[server_type] += weight
 
     def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type.
@@ -356,36 +318,32 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
             Dict with server type scores
 
         """
-        # Initialize scores for all supported server types
         scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
-
-        # Set base score for generic (fallback)
         scores[FlextLdifConstants.ServerTypes.GENERIC] = 1
-
-        # Lowercase content for case-insensitive matching
         content_lower = content.lower()
 
-        # Process servers with OID patterns
+        # Server processing configuration mapping
         oid_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OID)
-        self._process_server_with_oid_pattern(
-            FlextLdifConstants.ServerTypes.OID,
-            oid_constants,
-            content,
-            content_lower,
-            scores,
-            case_sensitive=True,
-        )
+        if oid_constants:
+            self._process_server_with_oid_pattern(
+                FlextLdifConstants.ServerTypes.OID,
+                oid_constants,
+                content,
+                content_lower,
+                scores,
+                case_sensitive=True,
+            )
 
         oud_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OUD)
-        self._process_server_with_oid_pattern(
-            FlextLdifConstants.ServerTypes.OUD,
-            oud_constants,
-            content,
-            content_lower,
-            scores,
-        )
+        if oud_constants:
+            self._process_server_with_oid_pattern(
+                FlextLdifConstants.ServerTypes.OUD,
+                oud_constants,
+                content,
+                content_lower,
+                scores,
+            )
 
-        # Process servers with standard patterns
         openldap_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.OPENLDAP,
         )
@@ -427,46 +385,17 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
                     ),
                 )
 
-        # Process simple pattern-based servers
-        novell_constants = self._get_server_constants(
+        for server_type in [
             FlextLdifConstants.ServerTypes.NOVELL,
-        )
-        self._process_server_with_pattern(
-            FlextLdifConstants.ServerTypes.NOVELL,
-            novell_constants,
-            content_lower,
-            scores,
-        )
-
-        tivoli_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.IBM_TIVOLI,
-        )
-        self._process_server_with_pattern(
-            FlextLdifConstants.ServerTypes.IBM_TIVOLI,
-            tivoli_constants,
-            content_lower,
-            scores,
-        )
-
-        ds389_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.DS_389,
-        )
-        self._process_server_with_pattern(
-            FlextLdifConstants.ServerTypes.DS_389,
-            ds389_constants,
-            content_lower,
-            scores,
-        )
-
-        apache_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.APACHE,
-        )
-        self._process_server_with_pattern(
-            FlextLdifConstants.ServerTypes.APACHE,
-            apache_constants,
-            content_lower,
-            scores,
-        )
+        ]:
+            constants = self._get_server_constants(server_type)
+            if constants:
+                self._process_server_with_pattern(
+                    server_type, constants, content_lower, scores
+                )
 
         return scores
 
@@ -508,30 +437,19 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         return detected, confidence
 
     @staticmethod
-    def _check_regex_pattern(
-        pattern: str,
-        content: str,
+    def _add_pattern_if_match(
+        *,
+        condition: bool,
         description: str,
         patterns: list[str],
     ) -> None:
-        """Check if pattern exists in content, append description if found."""
-        if re.search(pattern, content):
-            patterns.append(description)
-
-    @staticmethod
-    def _check_substring_pattern(
-        value: str,
-        content_lower: str,
-        description: str,
-        patterns: list[str],
-    ) -> None:
-        """Check if substring exists in content (case-insensitive), append if found."""
-        if value.lower() in content_lower:
+        """Add pattern description if condition is met."""
+        if condition:
             patterns.append(description)
 
     def _extract_oid_patterns(
         self,
-        constants: type[ServerDetectionConstants] | None,
+        _constants: type[ServerDetectionConstants] | None,
         pattern: str | None,
         description: str,
         content: str,
@@ -541,11 +459,15 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         case_sensitive: bool = False,
     ) -> None:
         """Extract patterns using OID pattern."""
-        if not constants or not pattern or not isinstance(pattern, str):
+        if not pattern or not isinstance(pattern, str):
             return
 
         search_content = content if case_sensitive else content_lower
-        self._check_regex_pattern(pattern, search_content, description, patterns)
+        self._add_pattern_if_match(
+            condition=bool(re.search(pattern, search_content)),
+            description=description,
+            patterns=patterns,
+        )
 
     def _extract_oid_specific_patterns(
         self,
@@ -557,22 +479,19 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         if not constants:
             return
 
-        orclaci = getattr(constants, "ORCLACI", None)
-        if orclaci and isinstance(orclaci, str):
-            self._check_substring_pattern(
-                orclaci,
-                content_lower,
-                "Oracle OID ACLs",
-                patterns,
-            )
-        orclentrylevelaci = getattr(constants, "ORCLENTRYLEVELACI", None)
-        if (
-            orclentrylevelaci
-            and isinstance(orclentrylevelaci, str)
-            and orclentrylevelaci.lower() in content_lower
-            and "Oracle OID ACLs" not in patterns
+        acl_attrs = [
+            getattr(constants, "ORCLACI", None),
+            getattr(constants, "ORCLENTRYLEVELACI", None),
+        ]
+        if any(
+            attr and isinstance(attr, str) and attr.lower() in content_lower
+            for attr in acl_attrs
         ):
-            patterns.append("Oracle OID ACLs")
+            self._add_pattern_if_match(
+                condition="Oracle OID ACLs" not in patterns,
+                description="Oracle OID ACLs",
+                patterns=patterns,
+            )
 
     def _extract_pattern_with_attr(
         self,
@@ -584,12 +503,13 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
     ) -> None:
         """Extract pattern using pattern attribute from constants."""
         constants = self._get_server_constants(server_type)
-        if not constants or not hasattr(constants, pattern_attr):
-            return
-
-        pattern = getattr(constants, pattern_attr, None)
+        pattern = getattr(constants, pattern_attr, None) if constants else None
         if pattern and isinstance(pattern, str):
-            self._check_regex_pattern(pattern, content_lower, description, patterns)
+            self._add_pattern_if_match(
+                condition=bool(re.search(pattern, content_lower)),
+                description=description,
+                patterns=patterns,
+            )
 
     def _extract_patterns(self, content: str) -> list[str]:
         """Extract detected patterns from content.
@@ -604,7 +524,7 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
         patterns: list[str] = []
         content_lower = content.lower()
 
-        # Oracle OID detection
+        # Oracle OID
         oid_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OID)
         if oid_constants:
             oid_pattern = getattr(oid_constants, "DETECTION_OID_PATTERN", None)
@@ -619,7 +539,7 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
             )
             self._extract_oid_specific_patterns(oid_constants, content_lower, patterns)
 
-        # Oracle OUD detection
+        # Oracle OUD
         oud_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OUD)
         if oud_constants:
             oud_pattern = getattr(oud_constants, "DETECTION_OID_PATTERN", None)
@@ -632,7 +552,7 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
                 patterns,
             )
 
-        # OpenLDAP detection
+        # OpenLDAP
         openldap_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.OPENLDAP,
         )
@@ -651,7 +571,7 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
                 patterns,
             )
 
-        # Active Directory detection
+        # Active Directory
         ad_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.AD)
         if ad_constants:
             ad_pattern = getattr(ad_constants, "DETECTION_OID_PATTERN", None)
@@ -664,48 +584,45 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
                 patterns,
                 case_sensitive=True,
             )
-            self._check_substring_pattern(
-                "samaccountname",
+            self._add_pattern_if_match(
+                condition="samaccountname" in content_lower,
+                description="Active Directory attributes",
+                patterns=patterns,
+            )
+
+        # Pattern-based servers
+        for server_type, description in [
+            (
+                FlextLdifConstants.ServerTypes.NOVELL,
+                "Novell eDirectory attributes (GUID, Modifiers, etc.)",
+            ),
+            (
+                FlextLdifConstants.ServerTypes.DS_389,
+                "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
+            ),
+            (
+                FlextLdifConstants.ServerTypes.APACHE,
+                "Apache DS attributes (apacheDS, apache-*)",
+            ),
+        ]:
+            self._extract_pattern_with_attr(
+                server_type,
+                "DETECTION_PATTERN",
+                description,
                 content_lower,
-                "Active Directory attributes",
                 patterns,
             )
 
-        # Pattern-based detections
-        self._extract_pattern_with_attr(
-            FlextLdifConstants.ServerTypes.NOVELL,
-            "DETECTION_PATTERN",
-            "Novell eDirectory attributes (GUID, Modifiers, etc.)",
-            content_lower,
-            patterns,
-        )
-
-        # IBM Tivoli detection (uses compiled pattern)
+        # Special handling for IBM Tivoli (compiled pattern)
         tivoli_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.IBM_TIVOLI,
         )
         if tivoli_constants:
-            tivoli_pattern = tivoli_constants.DETECTION_PATTERN
+            tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
             if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
                 content_lower,
             ):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
-
-        self._extract_pattern_with_attr(
-            FlextLdifConstants.ServerTypes.DS_389,
-            "DETECTION_PATTERN",
-            "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
-            content_lower,
-            patterns,
-        )
-
-        self._extract_pattern_with_attr(
-            FlextLdifConstants.ServerTypes.APACHE,
-            "DETECTION_PATTERN",
-            "Apache DS attributes (apacheDS, apache-*)",
-            content_lower,
-            patterns,
-        )
 
         return patterns
 
@@ -724,27 +641,29 @@ class FlextLdifDetector(LdifServiceBase[FlextLdifModels.ClientStatus]):
             Server Constants class if available, None otherwise
 
         """
-        try:
-            registry = _get_server_registry()
-            server_quirk = registry.quirk(server_type)
-            if not server_quirk:
-                return None
-
-            quirk_class = type(server_quirk)
-            # Type guard: ensure Constants exists and is not from base class
-            if not hasattr(quirk_class, "Constants"):
-                return None
-
-            # Get Constants - only concrete server classes have Constants, not base
-            constants = getattr(quirk_class, "Constants", None)
-            if constants is None:
-                return None
-
-            # Type narrowing: constants is a class that satisfies ServerDetectionConstants protocol
-            return cast("type[ServerDetectionConstants]", constants)
-        except ValueError:
-            # Unknown server type
+        registry = _get_server_registry()
+        server_quirk_result = registry.quirk(server_type)
+        if not server_quirk_result.is_success:
             return None
+
+        server_quirk = server_quirk_result.unwrap()
+        quirk_class = type(server_quirk)
+        if not hasattr(quirk_class, "Constants"):
+            return None
+
+        constants = getattr(quirk_class, "Constants", None)
+        if constants is None:
+            return None
+
+        if (
+            isinstance(constants, type)
+            and hasattr(constants, "DETECTION_WEIGHT")
+            and hasattr(constants, "DETECTION_ATTRIBUTES")
+            and (hasattr(constants, "DETECTION_PATTERN") or hasattr(constants, "DETECTION_OID_PATTERN"))
+        ):
+            return constants
+
+        return None
 
 
 __all__ = ["FlextLdifDetector"]

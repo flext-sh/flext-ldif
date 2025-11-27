@@ -415,14 +415,18 @@ class FlextLdifUtilitiesEntry:
             original_values = (
                 list(attr_values)
                 if isinstance(attr_values, (list, tuple))
-                else [attr_values] if attr_values is not None else []
+                else [attr_values]
+                if attr_values is not None
+                else []
             )
             original_attributes_complete[original_attr_name] = original_values
 
             converted_values = converted_attrs.get(canonical_name, [])
 
             # Build string representations
-            original_str = f"{original_attr_name}: {', '.join(str(v) for v in original_values)}"
+            original_str = (
+                f"{original_attr_name}: {', '.join(str(v) for v in original_values)}"
+            )
             converted_str = (
                 f"{canonical_name}: {', '.join(str(v) for v in converted_values)}"
                 if converted_values
@@ -475,32 +479,197 @@ class FlextLdifUtilitiesEntry:
         if not entry_dn or not attributes:
             return False
 
-        # Convert to dict for easier access
+        # Convert to dict and normalize attribute names
         attrs = dict(attributes) if not isinstance(attributes, dict) else attributes
         attr_names_lower = {k.lower() for k in attrs}
 
-        # Check DN patterns (OR of ANDs)
-        for pattern_set in dn_patterns:
-            if all(p in entry_dn for p in pattern_set):
-                return True
+        # Check DN patterns (OR of ANDs) - early return if match
+        if dn_patterns and any(
+            all(pattern in entry_dn for pattern in pattern_set)
+            for pattern_set in dn_patterns
+        ):
+            return True
 
-        # Check attribute prefixes
-        for attr in attrs:
-            for prefix in attr_prefixes:
-                if attr.startswith(prefix):
-                    return True
+        # Check attribute prefixes - early return if match
+        if attr_prefixes and any(
+            attr.startswith(prefix) for attr in attrs for prefix in attr_prefixes
+        ):
+            return True
 
-        # Check known attribute names
-        if attr_names_lower & set(attr_names):
+        # Check known attribute names - early return if match
+        if attr_names and (attr_names_lower & set(attr_names)):
             return True
 
         # Check keyword patterns in attribute names
-        for attr in attr_names_lower:
-            for keyword in keyword_patterns:
-                if keyword in attr:
-                    return True
+        if keyword_patterns:
+            return any(
+                keyword in attr
+                for attr in attr_names_lower
+                for keyword in keyword_patterns
+            )
 
         return False
+
+    @staticmethod
+    def denormalize_attributes_batch(
+        attributes: dict[str, list[str]],
+        *,
+        case_mappings: dict[str, str] | None = None,
+        boolean_mappings: dict[str, str] | None = None,
+        attr_name_mappings: dict[str, str] | None = None,
+        value_transformations: dict[str, dict[str, str]] | None = None,
+    ) -> dict[str, list[str]]:
+        """Batch denormalize attributes for output.
+
+        Inverse of normalization - converts RFC-normalized attributes back to
+        server-specific format. Consolidates denormalization patterns from
+        OID and OUD servers into a single parameterized utility.
+
+        Denormalization Steps
+        =====================
+
+        1. **Case Restoration**: Restores original attribute name case
+           - Example: objectclass -> objectClass (OID format)
+
+        2. **Boolean Conversion**: Converts TRUE/FALSE to server format
+           - OID: TRUE -> 1, FALSE -> 0
+           - OpenLDAP: Uses TRUE/FALSE (no change)
+
+        3. **Name Mapping**: Restores server-specific attribute names
+           - Example: cn -> commonName (if server prefers full name)
+
+        4. **Value Transformations**: Server-specific value adjustments
+           - Syntax conversions, encoding changes, etc.
+
+        Args:
+            attributes: Normalized attributes dictionary
+            case_mappings: Attribute case restoration {normalized: original}
+            boolean_mappings: Boolean value mappings {TRUE: "1", FALSE: "0"}
+            attr_name_mappings: Attribute name mappings {rfc_name: server_name}
+            value_transformations: Per-attribute value mappings
+
+        Returns:
+            Denormalized attributes dictionary for server-specific output
+
+        Example:
+            >>> normalized = {"objectclass": ["person"], "orclisvisible": ["TRUE"]}
+            >>> denorm = FlextLdifUtilitiesEntry.denormalize_attributes_batch(
+            ...     normalized,
+            ...     case_mappings={"objectclass": "objectClass"},
+            ...     boolean_mappings={"TRUE": "1", "FALSE": "0"},
+            ... )
+            >>> denorm
+            {"objectClass": ["person"], "orclisvisible": ["1"]}
+
+        """
+        result: dict[str, list[str]] = {}
+
+        for attr_name, values in attributes.items():
+            # Step 1: Restore case
+            output_name = attr_name
+            if case_mappings:
+                output_name = case_mappings.get(attr_name.lower(), attr_name)
+
+            # Step 2: Apply name mapping
+            if attr_name_mappings:
+                output_name = attr_name_mappings.get(output_name, output_name)
+
+            # Step 3: Transform values
+            output_values: list[str] = []
+            for value in values:
+                output_value = value
+
+                # Apply boolean mappings
+                if boolean_mappings and value in boolean_mappings:
+                    output_value = boolean_mappings[value]
+
+                # Apply per-attribute value transformations
+                if value_transformations and attr_name.lower() in value_transformations:
+                    attr_transforms = value_transformations[attr_name.lower()]
+                    output_value = attr_transforms.get(output_value, output_value)
+
+                output_values.append(output_value)
+
+            result[output_name] = output_values
+
+        return result
+
+    @staticmethod
+    def normalize_attributes_batch(
+        attributes: dict[str, list[str]],
+        *,
+        case_mappings: dict[str, str] | None = None,
+        boolean_mappings: dict[str, str] | None = None,
+        attr_name_mappings: dict[str, str] | None = None,
+        strip_operational: bool = False,
+        operational_attrs: set[str] | None = None,
+    ) -> dict[str, list[str]]:
+        """Batch normalize attributes from server format to RFC format.
+
+        Consolidates normalization patterns from OID and OUD servers into
+        a single parameterized utility.
+
+        Normalization Steps
+        ===================
+
+        1. **Case Normalization**: Normalizes attribute names to lowercase
+           - objectClass -> objectclass
+
+        2. **Boolean Normalization**: Converts server booleans to RFC format
+           - OID: 1 -> TRUE, 0 -> FALSE
+           - Preserves original format in metadata
+
+        3. **Name Normalization**: Maps server names to RFC names
+           - Example: commonName -> cn (if preferred)
+
+        4. **Operational Removal**: Optionally removes operational attributes
+           - createTimestamp, modifyTimestamp, etc.
+
+        Args:
+            attributes: Server-specific attributes dictionary
+            case_mappings: Attribute case normalization {original: normalized}
+            boolean_mappings: Boolean value mappings {"1": "TRUE", "0": "FALSE"}
+            attr_name_mappings: Attribute name mappings {server_name: rfc_name}
+            strip_operational: Whether to remove operational attributes
+            operational_attrs: Set of operational attribute names
+
+        Returns:
+            Normalized attributes dictionary in RFC format
+
+        """
+        result: dict[str, list[str]] = {}
+
+        operational_lower = (
+            {a.lower() for a in operational_attrs} if operational_attrs else set()
+        )
+        for attr_name, values in attributes.items():
+            # Step 1: Check if operational and should skip
+            if strip_operational and attr_name.lower() in operational_lower:
+                continue
+
+            # Step 2: Normalize case
+            output_name = attr_name.lower()
+            if case_mappings:
+                output_name = case_mappings.get(attr_name, output_name)
+
+            # Step 3: Apply name mapping
+            if attr_name_mappings:
+                output_name = attr_name_mappings.get(attr_name, output_name)
+
+            # Step 4: Transform values
+            output_values: list[str] = []
+            for value in values:
+                output_value = value
+
+                # Apply boolean normalization
+                if boolean_mappings and value in boolean_mappings:
+                    output_value = boolean_mappings[value]
+
+                output_values.append(output_value)
+
+            result[output_name] = output_values
+
+        return result
 
 
 __all__ = [

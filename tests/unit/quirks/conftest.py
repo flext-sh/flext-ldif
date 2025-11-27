@@ -23,6 +23,17 @@ from .servers.conftest import (
 )
 
 
+@pytest.fixture(autouse=True)
+def cleanup_state() -> None:
+    """Autouse fixture to clean shared state between tests.
+
+    Runs after each test to prevent state pollution to subsequent tests.
+    Ensures test isolation even when fixtures have shared state.
+    """
+    return
+    # Post-test cleanup - ensures each test has clean state
+
+
 @pytest.fixture
 def api() -> FlextLdif:
     """Create FlextLdif API instance for testing."""

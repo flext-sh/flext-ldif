@@ -1,0 +1,205 @@
+"""Metadata models for LDIF processing.
+
+Classes:
+    FlextLdifModelsMetadata: Container class with nested metadata models
+        - DynamicMetadata: Model with extra="allow" for flexible fields
+        - EntryMetadata: Model for entry processing metadata
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import ItemsView, Iterator, KeysView, ValuesView
+from typing import overload
+
+from flext_core import FlextModels
+from pydantic import ConfigDict
+
+from flext_ldif.typings import FlextLdifTypes
+
+
+class FlextLdifModelsMetadata:
+    """LDIF metadata models container.
+
+    Usage:
+        from flext_ldif._models.metadata import FlextLdifModelsMetadata
+
+        metadata = FlextLdifModelsMetadata.DynamicMetadata()
+        entry_meta = FlextLdifModelsMetadata.EntryMetadata()
+
+    """
+
+    class DynamicMetadata(FlextModels.ArbitraryTypesModel):
+        """Model with extra="allow" for dynamic field storage.
+
+        Replaces ALL dict[str, ...] patterns with proper Pydantic model.
+        Extra fields stored in __pydantic_extra__ via Pydantic v2.
+
+        Provides dict-like interface for accessing extra fields.
+
+        Example:
+            meta = DynamicMetadata(custom_field="value")
+            assert meta.model_extra == {"custom_field": "value"}
+            assert meta["custom_field"] == "value"
+            assert meta.get("custom_field") == "value"
+
+        """
+
+        model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
+        @overload
+        def get(self, key: str) -> FlextLdifTypes.MetadataValue: ...
+
+        @overload
+        def get(
+            self, key: str, default: FlextLdifTypes.MetadataValue
+        ) -> FlextLdifTypes.MetadataValue: ...
+
+        def get(
+            self,
+            key: str,
+            default: FlextLdifTypes.MetadataValue = None,
+        ) -> FlextLdifTypes.MetadataValue:
+            """Get value by key, returning default if not found."""
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                value = extra[key]
+                # Type guard: ensure return matches MetadataValue
+                if isinstance(value, str | float | bool | list):
+                    return value
+                return str(value) if value is not None else None
+            return default
+
+        def __getitem__(self, key: str) -> FlextLdifTypes.MetadataValue:
+            """Get value by key, raising KeyError if not found."""
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                value = extra[key]
+                if isinstance(value, str | float | bool | list):
+                    return value
+                return str(value) if value is not None else None
+            raise KeyError(key)
+
+        def __setitem__(
+            self, key: str, value: FlextLdifTypes.MetadataValue
+        ) -> None:
+            """Set value by key using Pydantic's extra field handling."""
+            setattr(self, key, value)
+
+        def __contains__(self, key: str) -> bool:
+            """Check if key exists."""
+            extra = self.__pydantic_extra__
+            return extra is not None and key in extra
+
+        def __len__(self) -> int:
+            """Return number of extra fields."""
+            extra = self.__pydantic_extra__
+            return len(extra) if extra is not None else 0
+
+        def __iter__(self) -> Iterator[str]:
+            """Iterate over keys from extra fields."""
+            extra = self.__pydantic_extra__
+            if extra is not None:
+                yield from extra.keys()
+
+        def keys(self) -> KeysView[str]:
+            """Return keys from extra fields."""
+            extra = self.__pydantic_extra__
+            return (extra or {}).keys()
+
+        def values(self) -> ValuesView[FlextLdifTypes.MetadataValue]:
+            """Return values from extra fields."""
+            extra = self.__pydantic_extra__
+            return (extra or {}).values()
+
+        def items(self) -> ItemsView[str, FlextLdifTypes.MetadataValue]:
+            """Return items from extra fields."""
+            extra = self.__pydantic_extra__
+            return (extra or {}).items()
+
+        def pop(
+            self, key: str, default: FlextLdifTypes.MetadataValue = None
+        ) -> FlextLdifTypes.MetadataValue:
+            """Pop value by key."""
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                value = extra.pop(key)
+                if isinstance(value, str | float | bool | list):
+                    return value
+                return str(value) if value is not None else None
+            return default
+
+        def clear(self) -> None:
+            """Clear all extra fields."""
+            extra = self.__pydantic_extra__
+            if extra is not None:
+                extra.clear()
+
+        def update(
+            self, other: dict[str, FlextLdifTypes.MetadataValue]
+        ) -> None:
+            """Update with values from another dict."""
+            for key, value in other.items():
+                setattr(self, key, value)
+
+        __hash__ = None  # Not hashable due to extra="allow"
+
+        def __eq__(self, other: object) -> bool:
+            """Compare with dict or another DynamicMetadata."""
+            if isinstance(other, dict):
+                return dict(self.items()) == other
+            if isinstance(other, FlextLdifModelsMetadata.DynamicMetadata):
+                return dict(self.items()) == dict(other.items())
+            return NotImplemented
+
+        def to_dict(self) -> dict[str, FlextLdifTypes.MetadataValue]:
+            """Convert to dict for serialization."""
+            return dict(self.items())
+
+    class EntryMetadata(FlextModels.ArbitraryTypesModel):
+        """Entry metadata for tracking processing details.
+
+        Stores additional metadata about entries processed.
+        Uses extra="allow" for flexible field storage with dict-like interface.
+
+        Example:
+            meta = EntryMetadata(original_format="base64", source="oid")
+            assert meta["original_format"] == "base64"
+
+        """
+
+        model_config = ConfigDict(extra="allow")
+
+        def __getitem__(self, key: str) -> FlextLdifTypes.MetadataValue:
+            """Get value by key, raising KeyError if not found."""
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                value = extra[key]
+                if isinstance(value, str | float | bool | list):
+                    return value
+                return str(value) if value is not None else None
+            raise KeyError(key)
+
+        def __contains__(self, key: str) -> bool:
+            """Check if key exists."""
+            extra = self.__pydantic_extra__
+            return extra is not None and key in extra
+
+        def get(
+            self,
+            key: str,
+            default: FlextLdifTypes.MetadataValue = None,
+        ) -> FlextLdifTypes.MetadataValue:
+            """Get value by key, returning default if not found."""
+            extra = self.__pydantic_extra__
+            if extra is not None and key in extra:
+                value = extra[key]
+                if isinstance(value, str | float | bool | list):
+                    return value
+                return str(value) if value is not None else None
+            return default
+
+
+__all__ = ["FlextLdifModelsMetadata"]

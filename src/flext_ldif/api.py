@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar, Literal, TypeVar, overload, override
 
@@ -34,9 +33,8 @@ from pydantic import PrivateAttr
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import (
-    EntryWithDnProtocol,
-)
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.categorization import FlextLdifCategorization
@@ -50,35 +48,17 @@ from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.processing import FlextLdifProcessing
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.sorting import FlextLdifSorting
+from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Type alias for service response type
-_ServiceResponseType = FlextLdifTypes.Models.ServiceResponseTypes
-
 # Type variable for monadic transformations
 U = TypeVar("U")
 
 
-class ServiceType(StrEnum):
-    """Service types for internal management."""
-
-    PARSER = "parser"
-    ACL = "acl"
-    WRITER = "writer"
-    ENTRIES = "entries"
-    ANALYSIS = "analysis"
-    PROCESSING = "processing"
-    DETECTOR = "detector"
-    FILTERS = "filters"
-    CATEGORIZATION = "categorization"
-    CONVERSION = "conversion"
-    VALIDATION = "validation"
-
-
-class FlextLdif(FlextService[_ServiceResponseType]):
+class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     r"""Main API facade for LDIF processing operations.
 
     This is the sole entry point for all LDIF operations, consolidating all
@@ -151,32 +131,37 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     """
 
     # Service mapping for DRY initialization and access
-    SERVICE_MAPPING: ClassVar[dict[ServiceType, type]] = {
-        ServiceType.PARSER: FlextLdifParser,
-        ServiceType.ACL: FlextLdifAcl,
-        ServiceType.WRITER: FlextLdifWriter,
-        ServiceType.ENTRIES: FlextLdifEntries,
-        ServiceType.ANALYSIS: FlextLdifAnalysis,
-        ServiceType.PROCESSING: FlextLdifProcessing,
-        ServiceType.DETECTOR: FlextLdifDetector,
-        ServiceType.FILTERS: FlextLdifFilters,
-        ServiceType.CATEGORIZATION: FlextLdifCategorization,
-        ServiceType.CONVERSION: FlextLdifConversion,
-        ServiceType.VALIDATION: FlextLdifValidation,
+    SERVICE_MAPPING: ClassVar[dict[FlextLdifConstants.ServiceType, type]] = {
+        FlextLdifConstants.ServiceType.PARSER: FlextLdifParser,
+        FlextLdifConstants.ServiceType.ACL: FlextLdifAcl,
+        FlextLdifConstants.ServiceType.WRITER: FlextLdifWriter,
+        FlextLdifConstants.ServiceType.ENTRIES: FlextLdifEntries,
+        FlextLdifConstants.ServiceType.ANALYSIS: FlextLdifAnalysis,
+        FlextLdifConstants.ServiceType.PROCESSING: FlextLdifProcessing,
+        FlextLdifConstants.ServiceType.DETECTOR: FlextLdifDetector,
+        FlextLdifConstants.ServiceType.FILTERS: FlextLdifFilters,
+        FlextLdifConstants.ServiceType.CATEGORIZATION: FlextLdifCategorization,
+        FlextLdifConstants.ServiceType.CONVERSION: FlextLdifConversion,
+        FlextLdifConstants.ServiceType.VALIDATION: FlextLdifValidation,
+        FlextLdifConstants.ServiceType.SYNTAX: FlextLdifSyntax,
     }
 
     # Private attributes - dynamically initialized from SERVICE_MAPPING
-    _services: dict[ServiceType, object] = PrivateAttr(default_factory=dict)
+    _services: dict[FlextLdifConstants.ServiceType, object] = PrivateAttr(
+        default_factory=dict
+    )
 
-    _context: dict[str, object] = PrivateAttr(default_factory=dict)
+    _context: dict[str, str] = PrivateAttr(default_factory=dict)
     _init_config_value: FlextLdifConfig | None = PrivateAttr(default=None)
-    _builder_entries: list[FlextLdifModels.Entry] | None = PrivateAttr(default=None)
-    _builder_parse_result: FlextResult[list[FlextLdifModels.Entry]] | None = (
+    _builder_entries: list[FlextLdifProtocols.Models.EntryProtocol] | None = (
         PrivateAttr(default=None)
     )
-    _builder_filter_result: FlextResult[list[FlextLdifModels.Entry]] | None = (
-        PrivateAttr(default=None)
-    )
+    _builder_parse_result: (
+        FlextResult[list[FlextLdifProtocols.Models.EntryProtocol]] | None
+    ) = PrivateAttr(default=None)
+    _builder_filter_result: (
+        FlextResult[list[FlextLdifProtocols.Models.EntryProtocol]] | None
+    ) = PrivateAttr(default=None)
     _builder_write_result: FlextResult[str] | None = PrivateAttr(default=None)
 
     # Direct class access for builders and services (no wrappers)
@@ -297,7 +282,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
         # DRY service initialization using mapping
         for service_type, service_class in self.SERVICE_MAPPING.items():
-            if service_type == ServiceType.WRITER:
+            if service_type == FlextLdifConstants.ServiceType.WRITER:
                 # Special case for writer with dependency
                 quirk_registry = FlextLdifServer.get_global_instance()
                 self._services[service_type] = service_class(
@@ -311,58 +296,65 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.PARSER]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.PARSER]
     ) -> FlextLdifParser: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.WRITER]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.WRITER]
     ) -> FlextLdifWriter: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.DETECTOR]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.DETECTOR]
     ) -> FlextLdifDetector: ...
 
     @overload
-    def _get_service(self, service_type: Literal[ServiceType.ACL]) -> FlextLdifAcl: ...
+    def _get_service(
+        self, service_type: Literal[FlextLdifConstants.ServiceType.ACL]
+    ) -> FlextLdifAcl: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.ANALYSIS]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.ANALYSIS]
     ) -> FlextLdifAnalysis: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.CATEGORIZATION]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.CATEGORIZATION]
     ) -> FlextLdifCategorization: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.CONVERSION]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.CONVERSION]
     ) -> FlextLdifConversion: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.ENTRIES]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.ENTRIES]
     ) -> FlextLdifEntries: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.FILTERS]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.FILTERS]
     ) -> FlextLdifFilters: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.PROCESSING]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.PROCESSING]
     ) -> FlextLdifProcessing: ...
 
     @overload
     def _get_service(
-        self, service_type: Literal[ServiceType.VALIDATION]
+        self, service_type: Literal[FlextLdifConstants.ServiceType.VALIDATION]
     ) -> FlextLdifValidation: ...
 
-    def _get_service(self, service_type: ServiceType) -> object:
+    @overload
+    def _get_service(
+        self, service_type: Literal[FlextLdifConstants.ServiceType.SYNTAX]
+    ) -> FlextLdifSyntax: ...
+
+    def _get_service(self, service_type: FlextLdifConstants.ServiceType) -> object:
         """Get service instance with type safety and error handling.
 
         DRY helper for service access, eliminating repetitive None checks.
@@ -438,7 +430,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = ldif.parse("dn: cn=test\ncn: test\n", validate_entries=True)
 
         """
-        parser_service = self._get_service(ServiceType.PARSER)
+        parser_service = self._get_service(FlextLdifConstants.ServiceType.PARSER)
 
         # Architecture: Options+kwargs pattern
         # - Model provides defaults via Field(default=...) definitions
@@ -483,32 +475,38 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     @overload
     def write(
         self,
-        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
+        entries: FlextLdifProtocols.Models.EntryProtocol
+        | list[FlextLdifProtocols.Models.EntryProtocol],
         output_path: None = None,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
-        template_data: dict[str, object] | None = None,
+        format_options: FlextLdifProtocols.Models.WriteFormatOptionsProtocol
+        | None = None,
+        template_data: dict[str, str] | None = None,
         **format_kwargs: object,
     ) -> FlextResult[str]: ...
 
     @overload
     def write(
         self,
-        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
+        entries: FlextLdifProtocols.Models.EntryProtocol
+        | list[FlextLdifProtocols.Models.EntryProtocol],
         output_path: Path,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
-        template_data: dict[str, object] | None = None,
+        format_options: FlextLdifProtocols.Models.WriteFormatOptionsProtocol
+        | None = None,
+        template_data: dict[str, str] | None = None,
         **format_kwargs: object,
     ) -> FlextResult[str]: ...
 
     def write(
         self,
-        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
+        entries: FlextLdifProtocols.Models.EntryProtocol
+        | list[FlextLdifProtocols.Models.EntryProtocol],
         output_path: Path | None = None,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
-        template_data: dict[str, object] | None = None,
+        format_options: FlextLdifProtocols.Models.WriteFormatOptionsProtocol
+        | None = None,
+        template_data: dict[str, str] | None = None,
         **format_kwargs: object,
     ) -> FlextResult[str]:
         """Write entries to LDIF format string or file.
@@ -552,15 +550,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             )
 
         """
-        writer_service = self._get_service(ServiceType.WRITER)
+        writer_service = self._get_service(FlextLdifConstants.ServiceType.WRITER)
 
-        # Normalize Entry | list[Entry] to list[Entry]
-        entries_list: list[FlextLdifModels.Entry]
-        if isinstance(entries, FlextLdifModels.Entry):
-            entries_list = [entries]
-        else:
-            # Type guarantees it's list[Entry] if not Entry
-            entries_list = entries
+        # Normalize EntryProtocol | list[EntryProtocol] to list[EntryProtocol]
+        # Services accept protocols - Entry implements EntryProtocol through structural typing
+        entries_list: list[FlextLdifProtocols.Models.EntryProtocol] = (
+            [entries] if not isinstance(entries, list) else entries
+        )
 
         # Delegate to writer service - service handles all logic
         target_server = server_type or "rfc"
@@ -610,7 +606,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
 
     def get_entry_dn(
         self,
-        entry: FlextLdifModels.Entry | EntryWithDnProtocol | dict[str, str | list[str]],
+        entry: FlextLdifModels.Entry
+        | FlextLdifProtocols.Entry.EntryWithDnProtocol
+        | dict[str, str | list[str]],
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
@@ -623,12 +621,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing DN as string
 
         """
-        entries_service = self._get_service(ServiceType.ENTRIES)
+        entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
         return entries_service.get_entry_dn(entry)
 
     def get_entry_attributes(
         self,
-        entry: FlextLdifModels.Entry | EntryWithDnProtocol,
+        entry: FlextLdifModels.Entry
+        | FlextLdifProtocols.Entry.EntryWithDnProtocol,
     ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
         """Extract attributes from any entry type.
 
@@ -642,7 +641,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             str | list[str] values matching FlextLdifTypes definition.
 
         """
-        entries_service = self._get_service(ServiceType.ENTRIES)
+        entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
         return entries_service.get_entry_attributes(entry)
 
     def create_entry(
@@ -665,12 +664,13 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing new FlextLdifModels.Entry
 
         """
-        entries_service = self._get_service(ServiceType.ENTRIES)
+        entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
         return entries_service.create_entry(dn, attributes, objectclasses)
 
     def get_entry_objectclasses(
         self,
-        entry: FlextLdifModels.Entry | EntryWithDnProtocol,
+        entry: FlextLdifModels.Entry
+        | FlextLdifProtocols.Entry.EntryWithDnProtocol,
     ) -> FlextResult[list[str]]:
         """Extract objectClass values from any entry type.
 
@@ -683,7 +683,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing list of objectClass values
 
         """
-        entries_service = self._get_service(ServiceType.ENTRIES)
+        entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
         return entries_service.get_entry_objectclasses(entry)
 
     def get_attribute_values(
@@ -701,7 +701,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing list of attribute values as strings.
 
         """
-        entries_service = self._get_service(ServiceType.ENTRIES)
+        entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
         return entries_service.get_attribute_values(attribute)
 
     @staticmethod
@@ -1044,7 +1044,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing EntryAnalysisResult with statistics
 
         """
-        analysis_service = self._get_service(ServiceType.ANALYSIS)
+        analysis_service = self._get_service(FlextLdifConstants.ServiceType.ANALYSIS)
         return analysis_service.analyze(entries)
 
     def validate_entries(
@@ -1062,8 +1062,10 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing ValidationResult with validation status
 
         """
-        analysis_service = self._get_service(ServiceType.ANALYSIS)
-        validation_service = self._get_service(ServiceType.VALIDATION)
+        analysis_service = self._get_service(FlextLdifConstants.ServiceType.ANALYSIS)
+        validation_service = self._get_service(
+            FlextLdifConstants.ServiceType.VALIDATION
+        )
 
         return analysis_service.validate_entries(entries, validation_service)
 
@@ -1092,7 +1094,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 acls = acl_response.acls
 
         """
-        acl_service = self._get_service(ServiceType.ACL)
+        acl_service = self._get_service(FlextLdifConstants.ServiceType.ACL)
         return acl_service.extract_acls_from_entry(entry, server_type)
 
     def evaluate_acl_rules(
@@ -1120,7 +1122,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 is_allowed = result.unwrap()
 
         """
-        acl_service = self._get_service(ServiceType.ACL)
+        acl_service = self._get_service(FlextLdifConstants.ServiceType.ACL)
 
         # Delegate to ACL service - service handles context conversion
         eval_context: dict[str, object] = (
@@ -1158,7 +1160,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 # ACL attributes now in OUD format (aci: instead of orclaci:)
 
         """
-        acl_service = self._get_service(ServiceType.ACL)
+        acl_service = self._get_service(FlextLdifConstants.ServiceType.ACL)
         return acl_service.transform_acl_entries(entries, source_server, target_server)
 
     # =========================================================================
@@ -1189,7 +1191,9 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             FlextResult containing processed results
 
         """
-        processing_service = self._get_service(ServiceType.PROCESSING)
+        processing_service = self._get_service(
+            FlextLdifConstants.ServiceType.PROCESSING
+        )
         return processing_service.process(
             processor_name,
             entries,
@@ -1236,7 +1240,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 print(f"Confidence: {detected.confidence:.2%}")
 
         """
-        detector_service = self._get_service(ServiceType.DETECTOR)
+        detector_service = self._get_service(FlextLdifConstants.ServiceType.DETECTOR)
 
         # Delegate to detector service - service handles all logic
         return detector_service.detect_server_type(
@@ -1266,10 +1270,252 @@ class FlextLdif(FlextService[_ServiceResponseType]):
                 print(f"Will use {server_type} quirks")
 
         """
-        detector_service = self._get_service(ServiceType.DETECTOR)
+        detector_service = self._get_service(FlextLdifConstants.ServiceType.DETECTOR)
 
         # Delegate to detector service - service handles all logic
         return detector_service.get_effective_server_type(ldif_path=ldif_path)
+
+    # =========================================================================
+    # SYNTAX SERVICE OPERATIONS
+    # =========================================================================
+
+    def validate_syntax_oid(self, oid: str) -> FlextResult[bool]:
+        """Validate OID format compliance with LDAP OID syntax.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            oid: OID string to validate
+
+        Returns:
+            FlextResult containing True if valid OID format, False otherwise
+
+        Example:
+            result = api.validate_syntax_oid("1.3.6.1.4.1.1466.115.121.1.15")
+            if result.is_success:
+                is_valid = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.validate_oid(oid)
+
+    def is_rfc4517_syntax(self, oid: str) -> FlextResult[bool]:
+        """Check if OID is a standard RFC 4517 syntax OID.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            oid: OID string to check
+
+        Returns:
+            FlextResult containing True if RFC 4517 standard OID, False otherwise
+
+        Example:
+            result = api.is_rfc4517_syntax("1.3.6.1.4.1.1466.115.121.1.15")
+            if result.is_success:
+                is_standard = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.is_rfc4517_standard(oid)
+
+    def lookup_syntax_oid(self, oid: str) -> FlextResult[str]:
+        """Look up syntax name for a given OID.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            oid: OID to look up
+
+        Returns:
+            FlextResult[str] containing syntax name if found, fails if not found
+
+        Example:
+            result = api.lookup_syntax_oid("1.3.6.1.4.1.1466.115.121.1.15")
+            if result.is_success:
+                syntax_name = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.lookup_oid(oid)
+
+    def lookup_syntax_name(self, name: str) -> FlextResult[str]:
+        """Look up OID for a given syntax name.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            name: Syntax name to look up (case-sensitive)
+
+        Returns:
+            FlextResult containing OID if found, failure otherwise
+
+        Example:
+            result = api.lookup_syntax_name("Directory String")
+            if result.is_success:
+                oid = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.lookup_name(name)
+
+    def resolve_syntax(
+        self,
+        oid: str,
+        name: str | None = None,
+        desc: str | None = None,
+        server_type: str = FlextLdifConstants.ServerTypes.RFC,
+    ) -> FlextResult[FlextLdifModels.Syntax]:
+        """Resolve OID to complete Syntax model with validation.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            oid: Syntax OID (required, must be valid format)
+            name: Human-readable syntax name (optional, auto-looked-up if not provided)
+            desc: Syntax description (optional)
+            server_type: LDAP server type for quirk metadata
+
+        Returns:
+            FlextResult containing fully resolved Syntax model
+
+        Example:
+            result = api.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.15")
+            if result.is_success:
+                syntax = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.resolve_syntax(oid, name, desc, server_type)
+
+    def validate_syntax_value(
+        self,
+        value: str,
+        syntax_oid: str,
+        server_type: str = FlextLdifConstants.ServerTypes.RFC,
+    ) -> FlextResult[bool]:
+        """Validate a value against its syntax type.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            value: Value to validate
+            syntax_oid: Syntax OID that defines validation rules
+            server_type: LDAP server type for quirk metadata
+
+        Returns:
+            FlextResult containing True if value is valid for syntax, False otherwise
+
+        Example:
+            result = api.validate_syntax_value("TRUE", "1.3.6.1.4.1.1466.115.121.1.7")
+            if result.is_success:
+                is_valid = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.validate_value(value, syntax_oid, server_type)
+
+    def get_syntax_category(self, oid: str) -> FlextResult[str]:
+        """Get type category for a syntax OID.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Args:
+            oid: Syntax OID
+
+        Returns:
+            FlextResult containing type category
+
+        Example:
+            result = api.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.15")
+            if result.is_success:
+                category = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.get_syntax_category(oid)
+
+    def list_common_syntaxes(self) -> FlextResult[list[str]]:
+        """List all supported RFC 4517 syntax OIDs.
+
+        Delegates to FlextLdifSyntax service for SRP compliance.
+
+        Returns:
+            FlextResult containing sorted list of OIDs
+
+        Example:
+            result = api.list_common_syntaxes()
+            if result.is_success:
+                syntax_oids = result.unwrap()
+
+        """
+        syntax_service = self._get_service(FlextLdifConstants.ServiceType.SYNTAX)
+        return syntax_service.list_common_syntaxes()
+
+    # =========================================================================
+    # CONVERSION SERVICE OPERATIONS
+    # =========================================================================
+
+    def validate_oud_conversion(self) -> FlextResult[bool]:
+        """Validate DN case consistency for OUD target conversion.
+
+        Delegates to FlextLdifConversion service for SRP compliance.
+
+        Returns:
+            FlextResult[bool]: Validation result with any inconsistencies in metadata
+
+        Example:
+            result = api.validate_oud_conversion()
+            if result.is_success:
+                is_valid = result.unwrap()
+
+        """
+        conversion_service = self._get_service(
+            FlextLdifConstants.ServiceType.CONVERSION
+        )
+        return conversion_service.validate_oud_conversion()
+
+    def reset_dn_registry(self) -> None:
+        """Clear DN registry for new conversion session.
+
+        Delegates to FlextLdifConversion service for SRP compliance.
+
+        Call this between independent conversion operations to avoid
+        DN case pollution from previous conversions.
+
+        Example:
+            api.reset_dn_registry()
+
+        """
+        conversion_service = self._get_service(
+            FlextLdifConstants.ServiceType.CONVERSION
+        )
+        conversion_service.reset_dn_registry()
+
+    def get_supported_conversions(
+        self,
+        quirk: FlextLdifServersBase,
+    ) -> dict[str, bool]:
+        """Check which data types a quirk supports for conversion.
+
+        Delegates to FlextLdifConversion service for SRP compliance.
+
+        Args:
+            quirk: Quirk instance to check
+
+        Returns:
+            Dictionary mapping data_type to support status
+
+        Example:
+            from flext_ldif.servers import FlextLdifServersOud
+            oud_quirk = FlextLdifServersOud()
+            supported = api.get_supported_conversions(oud_quirk)
+
+        """
+        conversion_service = self._get_service(
+            FlextLdifConstants.ServiceType.CONVERSION
+        )
+        return conversion_service.get_supported_conversions(quirk)
 
     @property
     def config(self) -> FlextConfig:
@@ -1334,7 +1580,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = parser.parse_ldif_file(Path("file.ldif"), "oid")
 
         """
-        return self._get_service(ServiceType.PARSER)
+        return self._get_service(FlextLdifConstants.ServiceType.PARSER)
 
     @property
     def detector(self) -> FlextLdifDetector:
@@ -1348,7 +1594,7 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = detector.detect_server_type(ldif_path=Path("file.ldif"))
 
         """
-        return self._get_service(ServiceType.DETECTOR)
+        return self._get_service(FlextLdifConstants.ServiceType.DETECTOR)
 
     @property
     def acl_service(self) -> FlextLdifAcl:
@@ -1362,7 +1608,34 @@ class FlextLdif(FlextService[_ServiceResponseType]):
             result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
         """
-        return self._get_service(ServiceType.ACL)
+        return self._get_service(FlextLdifConstants.ServiceType.ACL)
+
+    def get_server_acl_quirk(
+        self,
+        server_type: str,
+    ) -> object | None:
+        """Get ACL quirk for a specific server type.
+
+        Architecture: Public facade method to access server-specific ACL quirks
+        without exposing internal FlextLdifServer registry.
+
+        Args:
+            server_type: Server type (e.g., 'oid', 'oud', 'rfc', 'openldap')
+
+        Returns:
+            ACL quirk instance for the server type, or None if not found
+
+        Example:
+            rfc_acl_quirk = ldif.get_server_acl_quirk('rfc')
+            result = rfc_acl_quirk.write(acl_model)
+
+        """
+        server = FlextLdifServer.get_global_instance()
+        quirk_result = server.quirk(server_type)
+        if quirk_result.is_failure:
+            return None
+        quirk_base = quirk_result.unwrap()
+        return quirk_base.acl_quirk
 
     # INTERNAL: bus property is hidden from public API
     # Use models, config, constants for public access instead
@@ -1376,13 +1649,6 @@ class FlextLdif(FlextService[_ServiceResponseType]):
     @property
     def context(self) -> FlextContext:
         """Access to execution context with lazy initialization."""
-        if not self._context:
-            # Initialize with empty dict
-            self._context = {}
-        # Type narrowing: _context is dict[str, object], need to create FlextContext instance
-        if not isinstance(self._context, dict):
-            msg = f"Expected dict, got {type(self._context)}"
-            raise TypeError(msg)
         # Create FlextContext instance from dict
         context_instance = FlextContext()
         for key, value in self._context.items():
@@ -1596,7 +1862,8 @@ class FlextLdif(FlextService[_ServiceResponseType]):
         self,
         output_path: Path | None = None,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
+        format_options: FlextLdifProtocols.Models.WriteFormatOptionsProtocol
+        | None = None,
         template_data: dict[str, object] | None = None,
     ) -> FlextLdif:
         r"""Write entries to LDIF (fluent builder method).

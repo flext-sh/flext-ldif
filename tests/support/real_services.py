@@ -34,7 +34,7 @@ class FlextLdifTestFactory:
         ) -> FlextLdifParser:
             """Create unified LDIF parser service.
 
-            Config is accessed via LdifServiceBase.config.ldif (singleton pattern).
+            Config is accessed via FlextLdifServiceBase.config.ldif (singleton pattern).
             """
             # Note: params ignored - config is accessed via self.config.ldif
             _ = params  # Unused, kept for signature compatibility
@@ -48,7 +48,7 @@ class FlextLdifTestFactory:
 
             Note: Schema parsing is now handled by FlextLdifParser.SchemaParser nested class.
             This method returns the same parser for backward compatibility with tests.
-            Config is accessed via LdifServiceBase.config.ldif (singleton pattern).
+            Config is accessed via FlextLdifServiceBase.config.ldif (singleton pattern).
             """
             # Note: params ignored - config is accessed via self.config.ldif
             _ = params  # Unused, kept for signature compatibility
@@ -205,7 +205,8 @@ class FlextLdifTestFactory:
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
-                None, quirk_registry,
+                None,
+                quirk_registry,
             ),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
                 config,

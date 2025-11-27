@@ -143,7 +143,8 @@ class TestWriterValidationIntegration:
         """Test attribute name validation with parameterized test cases."""
         result = validation_service.validate_attribute_name(attr_name)
         TestAssertions.assert_success(
-            result, f"Validation should succeed for '{attr_name}'",
+            result,
+            f"Validation should succeed for '{attr_name}'",
         )
         is_valid = result.unwrap()
         assert is_valid == expected_valid, (

@@ -212,7 +212,9 @@ class TestQuirksPropertyValidation:
         assert oid.server_type == "oid"
         assert hasattr(oid, "priority")
         priority_value = oid.priority
-        assert isinstance(priority_value, int), f"priority should be int, got {type(priority_value).__name__}"
+        assert isinstance(priority_value, int), (
+            f"priority should be int, got {type(priority_value).__name__}"
+        )
         assert priority_value >= 0
 
     def test_ouds_properties(self, ouds: FlextLdifServersOud) -> None:
@@ -220,5 +222,7 @@ class TestQuirksPropertyValidation:
         assert ouds.server_type == "oud"
         assert hasattr(ouds, "priority")
         priority_value = ouds.priority
-        assert isinstance(priority_value, int), f"priority should be int, got {type(priority_value).__name__}"
+        assert isinstance(priority_value, int), (
+            f"priority should be int, got {type(priority_value).__name__}"
+        )
         assert priority_value >= 0

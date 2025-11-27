@@ -53,6 +53,13 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA = "schema"
         CUSTOM = "custom"
 
+    class SortingStrategyType(StrEnum):
+        """Sorting strategy types for metadata tracking."""
+
+        ALPHABETICAL_CASE_SENSITIVE = "alphabetical_case_sensitive"
+        ALPHABETICAL_CASE_INSENSITIVE = "alphabetical_case_insensitive"
+        CUSTOM_ORDER = "custom_order"
+
     class SortTarget(StrEnum):
         """What to sort in LDIF data (V2 type-safe enum)."""
 
@@ -269,22 +276,18 @@ class FlextLdifConstants(FlextConstants):
         # RFC 2849 §2 - Characters requiring base64 encoding at value start
         # "The distinguishing characteristic of an LDIF file is that it
         #  begins with a version number."
-        BASE64_START_CHARS: Final[frozenset[str]] = frozenset(
-            {
-                " ",  # ASCII 32 - space at start
-                "<",  # Less-than sign (URL indicator conflict)
-                ":",  # Colon (separator conflict)
-            }
-        )
+        BASE64_START_CHARS: Final[frozenset[str]] = frozenset({
+            " ",  # ASCII 32 - space at start
+            "<",  # Less-than sign (URL indicator conflict)
+            ":",  # Colon (separator conflict)
+        })
 
         # RFC 2849 §2 - Characters requiring base64 encoding anywhere in value
-        BASE64_CONTENT_CHARS: Final[frozenset[str]] = frozenset(
-            {
-                "\x00",  # NUL character
-                "\n",  # Newline (line separator)
-                "\r",  # Carriage return
-            }
-        )
+        BASE64_CONTENT_CHARS: Final[frozenset[str]] = frozenset({
+            "\x00",  # NUL character
+            "\n",  # Newline (line separator)
+            "\r",  # Carriage return
+        })
 
         # RFC 2849 §2 - SAFE-CHAR range (no base64 needed)
         # SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F (all but NUL, LF, CR)
@@ -295,9 +298,14 @@ class FlextLdifConstants(FlextConstants):
         # RFC 2849 §2 - SAFE-INIT-CHAR (valid first character of SAFE-STRING)
         # SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B / %x3D-7F
         # Excludes: NUL, LF, CR, SPACE(0x20), COLON(0x3A), LESSTHAN(0x3C)
-        SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset(
-            {0x00, 0x0A, 0x0D, 0x20, 0x3A, 0x3C}
-        )
+        SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({
+            0x00,
+            0x0A,
+            0x0D,
+            0x20,
+            0x3A,
+            0x3C,
+        })
 
         # RFC 2849 §2 - BASE64-CHAR (valid characters in base64 encoding)
         # BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
@@ -324,24 +332,24 @@ class FlextLdifConstants(FlextConstants):
         CHANGETYPE_MODRDN: Final[str] = "modrdn"
         CHANGETYPE_MODDN: Final[str] = "moddn"
 
-        CHANGETYPES: Final[frozenset[str]] = frozenset(
-            {
-                CHANGETYPE_ADD,
-                CHANGETYPE_DELETE,
-                CHANGETYPE_MODIFY,
-                CHANGETYPE_MODRDN,
-                CHANGETYPE_MODDN,
-            }
-        )
+        CHANGETYPES: Final[frozenset[str]] = frozenset({
+            CHANGETYPE_ADD,
+            CHANGETYPE_DELETE,
+            CHANGETYPE_MODIFY,
+            CHANGETYPE_MODRDN,
+            CHANGETYPE_MODDN,
+        })
 
         # RFC 2849 §4 - Modify operation types
         MODIFY_ADD: Final[str] = "add"
         MODIFY_DELETE: Final[str] = "delete"
         MODIFY_REPLACE: Final[str] = "replace"
 
-        MODIFY_OPERATIONS: Final[frozenset[str]] = frozenset(
-            {MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE}
-        )
+        MODIFY_OPERATIONS: Final[frozenset[str]] = frozenset({
+            MODIFY_ADD,
+            MODIFY_DELETE,
+            MODIFY_REPLACE,
+        })
 
         # RFC 2849 §5 - Control record keywords
         KEYWORD_DN: Final[str] = "dn"
@@ -361,27 +369,23 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_USAGE_DISTRIBUTED_OPERATION: Final[str] = "distributedOperation"
         SCHEMA_USAGE_DSA_OPERATION: Final[str] = "dSAOperation"
 
-        SCHEMA_USAGE_VALUES: Final[frozenset[str]] = frozenset(
-            {
-                SCHEMA_USAGE_USER_APPLICATIONS,
-                SCHEMA_USAGE_DIRECTORY_OPERATION,
-                SCHEMA_USAGE_DISTRIBUTED_OPERATION,
-                SCHEMA_USAGE_DSA_OPERATION,
-            }
-        )
+        SCHEMA_USAGE_VALUES: Final[frozenset[str]] = frozenset({
+            SCHEMA_USAGE_USER_APPLICATIONS,
+            SCHEMA_USAGE_DIRECTORY_OPERATION,
+            SCHEMA_USAGE_DISTRIBUTED_OPERATION,
+            SCHEMA_USAGE_DSA_OPERATION,
+        })
 
         # RFC 4512 §4.1.1 - ObjectClass kinds
         SCHEMA_KIND_ABSTRACT: Final[str] = "ABSTRACT"
         SCHEMA_KIND_STRUCTURAL: Final[str] = "STRUCTURAL"
         SCHEMA_KIND_AUXILIARY: Final[str] = "AUXILIARY"
 
-        SCHEMA_KINDS: Final[frozenset[str]] = frozenset(
-            {
-                SCHEMA_KIND_ABSTRACT,
-                SCHEMA_KIND_STRUCTURAL,
-                SCHEMA_KIND_AUXILIARY,
-            }
-        )
+        SCHEMA_KINDS: Final[frozenset[str]] = frozenset({
+            SCHEMA_KIND_ABSTRACT,
+            SCHEMA_KIND_STRUCTURAL,
+            SCHEMA_KIND_AUXILIARY,
+        })
 
         # RFC 4512 - ABNF Syntax Characters
         # WSP = 0*SPACE, SP = 1*SPACE, SPACE = %x20
@@ -431,18 +435,16 @@ class FlextLdifConstants(FlextConstants):
         ATTR_SUBSCHEMA_SUBENTRY: Final[str] = "subschemaSubentry"
         ATTR_ENTRY_DN: Final[str] = "entryDN"
 
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-            {
-                ATTR_CREATORS_NAME,
-                ATTR_CREATE_TIMESTAMP,
-                ATTR_MODIFIERS_NAME,
-                ATTR_MODIFY_TIMESTAMP,
-                ATTR_STRUCTURAL_OBJECTCLASS,
-                ATTR_GOVERNING_STRUCTURE_RULE,
-                ATTR_SUBSCHEMA_SUBENTRY,
-                ATTR_ENTRY_DN,
-            }
-        )
+        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+            ATTR_CREATORS_NAME,
+            ATTR_CREATE_TIMESTAMP,
+            ATTR_MODIFIERS_NAME,
+            ATTR_MODIFY_TIMESTAMP,
+            ATTR_STRUCTURAL_OBJECTCLASS,
+            ATTR_GOVERNING_STRUCTURE_RULE,
+            ATTR_SUBSCHEMA_SUBENTRY,
+            ATTR_ENTRY_DN,
+        })
 
         # RFC 4512 - Schema entry attribute names
         ATTR_OBJECTCLASSES: Final[str] = "objectClasses"
@@ -454,18 +456,16 @@ class FlextLdifConstants(FlextConstants):
         ATTR_DITSTRUCTURERULES: Final[str] = "dITStructureRules"
         ATTR_NAMEFORMS: Final[str] = "nameForms"
 
-        SCHEMA_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-            {
-                ATTR_OBJECTCLASSES,
-                ATTR_ATTRIBUTETYPES,
-                ATTR_MATCHINGRULES,
-                ATTR_MATCHINGRULEUSE,
-                ATTR_LDAPSYNTAXES,
-                ATTR_DITCONTENTRULES,
-                ATTR_DITSTRUCTURERULES,
-                ATTR_NAMEFORMS,
-            }
-        )
+        SCHEMA_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+            ATTR_OBJECTCLASSES,
+            ATTR_ATTRIBUTETYPES,
+            ATTR_MATCHINGRULES,
+            ATTR_MATCHINGRULEUSE,
+            ATTR_LDAPSYNTAXES,
+            ATTR_DITCONTENTRULES,
+            ATTR_DITSTRUCTURERULES,
+            ATTR_NAMEFORMS,
+        })
 
         # =================================================================
         # RFC 4514: LDAP Distinguished Names
@@ -480,47 +480,80 @@ class FlextLdifConstants(FlextConstants):
         # (stringchar - allows SPACE except at boundaries)
 
         # Characters excluded from LUTF1 (lead char) - includes SPACE(0x20), SHARP(0x23)
-        DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
-            {0x00, 0x20, 0x22, 0x23, 0x2B, 0x2C, 0x3B, 0x3C, 0x3E, 0x5C}
-        )
+        DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
+            0x00,
+            0x20,
+            0x22,
+            0x23,
+            0x2B,
+            0x2C,
+            0x3B,
+            0x3C,
+            0x3E,
+            0x5C,
+        })
         # Characters excluded from TUTF1 (trail char) - includes SPACE(0x20)
-        DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
-            {0x00, 0x20, 0x22, 0x2B, 0x2C, 0x3B, 0x3C, 0x3E, 0x5C}
-        )
+        DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
+            0x00,
+            0x20,
+            0x22,
+            0x2B,
+            0x2C,
+            0x3B,
+            0x3C,
+            0x3E,
+            0x5C,
+        })
         # Characters excluded from SUTF1 (string char)
-        DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset(
-            {0x00, 0x22, 0x2B, 0x2C, 0x3B, 0x3C, 0x3E, 0x5C}
-        )
+        DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
+            0x00,
+            0x22,
+            0x2B,
+            0x2C,
+            0x3B,
+            0x3C,
+            0x3E,
+            0x5C,
+        })
 
         # RFC 4514 §2.4 - special = escaped / SPACE / SHARP / EQUALS
         # escaped = DQUOTE / PLUS / COMMA / SEMI / LANGLE / RANGLE
-        DN_SPECIAL_CHARS: Final[frozenset[str]] = frozenset(
-            {'"', "+", ",", ";", "<", ">", " ", "#", "="}
-        )
-        DN_ESCAPED_CHARS: Final[frozenset[str]] = frozenset(
-            {'"', "+", ",", ";", "<", ">"}
-        )
+        DN_SPECIAL_CHARS: Final[frozenset[str]] = frozenset({
+            '"',
+            "+",
+            ",",
+            ";",
+            "<",
+            ">",
+            " ",
+            "#",
+            "=",
+        })
+        DN_ESCAPED_CHARS: Final[frozenset[str]] = frozenset({
+            '"',
+            "+",
+            ",",
+            ";",
+            "<",
+            ">",
+        })
 
         # RFC 4514 §2.4 - Characters requiring escaping in DN attribute values
-        DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset(
-            {
-                '"',  # Quotation mark
-                "+",  # Plus sign (RDN separator)
-                ",",  # Comma (RDN separator)
-                ";",  # Semicolon (alternative RDN separator)
-                "<",  # Less-than
-                ">",  # Greater-than
-                "\\",  # Backslash (escape character)
-            }
-        )
+        DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset({
+            '"',  # Quotation mark
+            "+",  # Plus sign (RDN separator)
+            ",",  # Comma (RDN separator)
+            ";",  # Semicolon (alternative RDN separator)
+            "<",  # Less-than
+            ">",  # Greater-than
+            "\\",  # Backslash (escape character)
+        })
 
         # RFC 4514 §2.4 - Characters requiring escaping at value start/end
-        DN_ESCAPE_AT_START: Final[frozenset[str]] = frozenset(
-            {
-                " ",  # Space at start
-                "#",  # Hash at start (indicates hex string)
-            }
-        )
+        DN_ESCAPE_AT_START: Final[frozenset[str]] = frozenset({
+            " ",  # Space at start
+            "#",  # Hash at start (indicates hex string)
+        })
         DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({" "})  # Space at end
 
         # RFC 4514 §3 - Required attribute type short names
@@ -535,19 +568,17 @@ class FlextLdifConstants(FlextConstants):
         DN_ATTR_UID: Final[str] = "UID"  # userId (0.9.2342.19200300.100.1.1)
 
         # RFC 4514 §3 - Mapping from short name to OID
-        DN_ATTRIBUTE_TYPES: Final[MappingProxyType[str, str]] = MappingProxyType(
-            {
-                "CN": "2.5.4.3",
-                "L": "2.5.4.7",
-                "ST": "2.5.4.8",
-                "O": "2.5.4.10",
-                "OU": "2.5.4.11",
-                "C": "2.5.4.6",
-                "STREET": "2.5.4.9",
-                "DC": "0.9.2342.19200300.100.1.25",
-                "UID": "0.9.2342.19200300.100.1.1",
-            }
-        )
+        DN_ATTRIBUTE_TYPES: Final[MappingProxyType[str, str]] = MappingProxyType({
+            "CN": "2.5.4.3",
+            "L": "2.5.4.7",
+            "ST": "2.5.4.8",
+            "O": "2.5.4.10",
+            "OU": "2.5.4.11",
+            "C": "2.5.4.6",
+            "STREET": "2.5.4.9",
+            "DC": "0.9.2342.19200300.100.1.25",
+            "UID": "0.9.2342.19200300.100.1.1",
+        })
 
         # RFC 4514 - RDN separator (comma is primary, semicolon is alternative)
         DN_RDN_SEPARATOR: Final[str] = ","
@@ -771,50 +802,46 @@ class FlextLdifConstants(FlextConstants):
         # FEATURE CATEGORY SETS
         # =====================================================================
 
-        RFC_STANDARD_FEATURES: Final[frozenset[str]] = frozenset(
-            {
-                ACL_READ,
-                ACL_WRITE,
-                ACL_ADD,
-                ACL_DELETE,
-                ACL_SEARCH,
-                ACL_COMPARE,
-                ACL_SUBJECT_USER_DN,
-                ACL_SUBJECT_GROUP_DN,
-                ACL_SUBJECT_SELF,
-                ACL_SUBJECT_ANONYMOUS,
-                ACL_SUBJECT_ALL,
-                ACL_TARGET_ENTRY,
-                ACL_TARGET_ATTRS,
-                ACL_TARGET_DN,
-                SCHEMA_ATTR_SYNTAX,
-                SCHEMA_ATTR_MATCHING,
-                SCHEMA_ATTR_SINGLE_VALUE,
-                SCHEMA_OC_SUP,
-                SCHEMA_OC_KIND,
-                ENTRY_DN,
-                ENTRY_CHANGETYPE,
-                ENTRY_CONTROLS,
-            }
-        )
+        RFC_STANDARD_FEATURES: Final[frozenset[str]] = frozenset({
+            ACL_READ,
+            ACL_WRITE,
+            ACL_ADD,
+            ACL_DELETE,
+            ACL_SEARCH,
+            ACL_COMPARE,
+            ACL_SUBJECT_USER_DN,
+            ACL_SUBJECT_GROUP_DN,
+            ACL_SUBJECT_SELF,
+            ACL_SUBJECT_ANONYMOUS,
+            ACL_SUBJECT_ALL,
+            ACL_TARGET_ENTRY,
+            ACL_TARGET_ATTRS,
+            ACL_TARGET_DN,
+            SCHEMA_ATTR_SYNTAX,
+            SCHEMA_ATTR_MATCHING,
+            SCHEMA_ATTR_SINGLE_VALUE,
+            SCHEMA_OC_SUP,
+            SCHEMA_OC_KIND,
+            ENTRY_DN,
+            ENTRY_CHANGETYPE,
+            ENTRY_CONTROLS,
+        })
 
-        VENDOR_ACL_FEATURES: Final[frozenset[str]] = frozenset(
-            {
-                ACL_SELF_WRITE,
-                ACL_PROXY_AUTH,
-                ACL_BROWSE_PERMISSION,
-                ACL_AUTH_PERMISSION,
-                ACL_ALL_PERMISSIONS,
-                ACL_NEGATIVE_PERMISSIONS,
-                ACL_DNATTR_SUBJECT,
-                ACL_GUIDATTR_SUBJECT,
-                ACL_BIND_IP,
-                ACL_BIND_TIME,
-                ACL_BIND_AUTHMETHOD,
-                ACL_BIND_SSF,
-                ACL_TARGET_FILTER,
-            }
-        )
+        VENDOR_ACL_FEATURES: Final[frozenset[str]] = frozenset({
+            ACL_SELF_WRITE,
+            ACL_PROXY_AUTH,
+            ACL_BROWSE_PERMISSION,
+            ACL_AUTH_PERMISSION,
+            ACL_ALL_PERMISSIONS,
+            ACL_NEGATIVE_PERMISSIONS,
+            ACL_DNATTR_SUBJECT,
+            ACL_GUIDATTR_SUBJECT,
+            ACL_BIND_IP,
+            ACL_BIND_TIME,
+            ACL_BIND_AUTHMETHOD,
+            ACL_BIND_SSF,
+            ACL_TARGET_FILTER,
+        })
 
         # =====================================================================
         # RFC FALLBACK VALUES (when vendor feature not supported)
@@ -822,23 +849,21 @@ class FlextLdifConstants(FlextConstants):
         # Servers declare their own FEATURE_TO_LOCAL mappings in their Constants
         # These are generic RFC fallbacks when a feature cannot be translated
 
-        RFC_FALLBACKS: Final[MappingProxyType[str, str | None]] = MappingProxyType(
-            {
-                ACL_SELF_WRITE: "write",  # Degrade to write
-                ACL_BROWSE_PERMISSION: "read,search",  # Expand to RFC permissions
-                ACL_PROXY_AUTH: None,  # No RFC equivalent, preserve in metadata
-                ACL_AUTH_PERMISSION: None,  # No RFC equivalent, preserve in metadata
-                ACL_ALL_PERMISSIONS: "read,write,add,delete,search,compare",
-                ACL_DNATTR_SUBJECT: None,  # Server-specific, preserve in metadata
-                ACL_GUIDATTR_SUBJECT: None,  # Server-specific, preserve in metadata
-                ACL_NEGATIVE_PERMISSIONS: None,  # Preserve in metadata
-                ACL_BIND_IP: None,  # Preserve in metadata
-                ACL_BIND_TIME: None,  # Preserve in metadata
-                ACL_BIND_AUTHMETHOD: None,  # Preserve in metadata
-                ACL_BIND_SSF: None,  # Preserve in metadata
-                ACL_TARGET_FILTER: None,  # Preserve in metadata
-            }
-        )
+        RFC_FALLBACKS: Final[MappingProxyType[str, str | None]] = MappingProxyType({
+            ACL_SELF_WRITE: "write",  # Degrade to write
+            ACL_BROWSE_PERMISSION: "read,search",  # Expand to RFC permissions
+            ACL_PROXY_AUTH: None,  # No RFC equivalent, preserve in metadata
+            ACL_AUTH_PERMISSION: None,  # No RFC equivalent, preserve in metadata
+            ACL_ALL_PERMISSIONS: "read,write,add,delete,search,compare",
+            ACL_DNATTR_SUBJECT: None,  # Server-specific, preserve in metadata
+            ACL_GUIDATTR_SUBJECT: None,  # Server-specific, preserve in metadata
+            ACL_NEGATIVE_PERMISSIONS: None,  # Preserve in metadata
+            ACL_BIND_IP: None,  # Preserve in metadata
+            ACL_BIND_TIME: None,  # Preserve in metadata
+            ACL_BIND_AUTHMETHOD: None,  # Preserve in metadata
+            ACL_BIND_SSF: None,  # Preserve in metadata
+            ACL_TARGET_FILTER: None,  # Preserve in metadata
+        })
 
         # =====================================================================
         # METADATA KEYS FOR FEATURE PRESERVATION
@@ -2023,6 +2048,13 @@ class FlextLdifConstants(FlextConstants):
         ACLRIGHTS: Final[str] = "aclrights"  # Generic ACL rights attribute
         ACLENTRY: Final[str] = "aclentry"  # Generic ACL entry attribute
 
+        # Default ACL attributes for sorting (RFC baseline + common server attributes)
+        DEFAULT_ACL_ATTRIBUTES: Final[list[str]] = [
+            "acl",  # Generic ACL attribute
+            ACI,  # RFC 4876 standard (OUD, 389 DS)
+            "olcAccess",  # OpenLDAP ACL attribute
+        ]
+
         # Set of RFC baseline ACL attributes for quick membership testing
         # NOTE: Server-specific attributes (e.g., orclaci, nTSecurityDescriptor, ads-aci)
         # are defined in their respective server Constants classes
@@ -2534,8 +2566,44 @@ class FlextLdifConstants(FlextConstants):
         SUBJECT_BINDING: Final[str] = "subject_binding"  # Subject binding type
 
         # =========================
+        # Sorting Metadata
+        # =========================
+
+        SORTING_NEW_ATTRIBUTE_ORDER: Final[str] = (
+            "sorting_new_attribute_order"  # New attribute order after sorting
+        )
+        SORTING_STRATEGY: Final[str] = (
+            "sorting_strategy"  # Sorting strategy used (alphabetical, custom_order, etc.)
+        )
+        SORTING_CUSTOM_ORDER: Final[str] = (
+            "sorting_custom_order"  # Custom attribute order list used for sorting
+        )
+        SORTING_ORDERED_ATTRIBUTES: Final[str] = (
+            "sorting_ordered_attributes"  # Attributes that were ordered by custom order
+        )
+        SORTING_REMAINING_ATTRIBUTES: Final[str] = (
+            "sorting_remaining_attributes"  # Attributes that remained after custom order
+        )
+        SORTING_ACL_ATTRIBUTES: Final[str] = (
+            "sorting_acl_attributes"  # ACL attribute names that were sorted
+        )
+        SORTING_ACL_SORTED: Final[str] = (
+            "sorting_acl_sorted"  # Flag indicating ACL attributes were sorted
+        )
+
+        # =========================
         # Processing Metadata
         # =========================
+
+        PARSED_TIMESTAMP: Final[str] = (
+            "parsed_timestamp"  # ISO timestamp when entry was parsed
+        )
+        SOURCE_FILE: Final[str] = (
+            "source_file"  # Source file path where entry was parsed from
+        )
+        HIDDEN_ATTRIBUTES: Final[str] = (
+            "hidden_attributes"  # List of attributes to write as comments (display/processing flag)
+        )
 
         METADATA: Final[str] = "_metadata"  # Root metadata container
         ACL_ATTRIBUTES: Final[str] = (
@@ -2608,6 +2676,33 @@ class FlextLdifConstants(FlextConstants):
 
         WRITE_OPTIONS: Final[str] = (
             "_write_options"  # Write format options for LDIF output
+        )
+
+        # ===== NESTED CONVERSION METADATA KEYS (Keys within CONVERTED_ATTRIBUTES structure) =====
+        # These keys are used within the nested structure stored under CONVERTED_ATTRIBUTES
+        # Structure: CONVERTED_ATTRIBUTES = {
+        #   "boolean_conversions": {...},
+        #   "attribute_name_conversions": {...},
+        #   "converted_attribute_names": [...]
+        # }
+        CONVERSION_BOOLEAN_CONVERSIONS: Final[str] = (
+            "boolean_conversions"  # Nested key: boolean attribute conversions dict
+        )
+        CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: Final[str] = (
+            "attribute_name_conversions"  # Nested key: attribute name conversions dict
+        )
+        CONVERSION_CONVERTED_ATTRIBUTE_NAMES: Final[str] = (
+            "converted_attribute_names"  # Nested key: list of converted attribute names
+        )
+        CONVERSION_ORIGINAL_VALUE: Final[str] = (
+            "original"  # Nested key: original value(s) in conversion dict
+        )
+        CONVERSION_CONVERTED_VALUE: Final[str] = (
+            "converted"  # Nested key: converted value(s) in conversion dict
+        )
+        # Legacy OID-specific key for backward compatibility (deprecated, use nested structure)
+        LEGACY_OID_BOOLEAN_CONVERSIONS_KEY: Final[str] = (
+            "oid_boolean_conversions"  # Legacy top-level key for boolean conversions (OID-specific, deprecated)
         )
 
         # =========================
@@ -3977,6 +4072,22 @@ class FlextLdifConstants(FlextConstants):
             """Check if attribute is an ACL attribute for given server."""
             acl_attrs = cls.get_acl_attributes(server_type)
             return attribute_name.lower() in [a.lower() for a in acl_attrs]
+
+    class ServiceType(StrEnum):
+        """Service types for internal management."""
+
+        PARSER = "parser"
+        ACL = "acl"
+        WRITER = "writer"
+        ENTRIES = "entries"
+        ANALYSIS = "analysis"
+        PROCESSING = "processing"
+        DETECTOR = "detector"
+        FILTERS = "filters"
+        CATEGORIZATION = "categorization"
+        CONVERSION = "conversion"
+        VALIDATION = "validation"
+        SYNTAX = "syntax"
 
 
 __all__ = [

@@ -15,20 +15,51 @@ import pytest
 from flext_ldif import FlextLdifModels
 
 
-class TestCaseRegistryInitialization:
-    """Test DN case registry initialization."""
+class TestFlextLdifDnCaseRegistry:
+    """Test DN Case Registry functionality with real implementations."""
 
-    def test_registry_starts_empty(self) -> None:
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST FIXTURES
+    # ════════════════════════════════════════════════════════════════════════
+
+    @pytest.fixture
+    def registry(self) -> FlextLdifModels.DnRegistry:
+        """Create fresh DN registry."""
+        return FlextLdifModels.DnRegistry()
+
+    @pytest.fixture
+    def registry_with_dns(self) -> FlextLdifModels.DnRegistry:
+        """Create registry with some DNs."""
+        reg = FlextLdifModels.DnRegistry()
+        reg.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
+        reg.register_dn("ou=users,dc=example,dc=com")
+        return reg
+
+    @pytest.fixture
+    def registry_with_references(self) -> FlextLdifModels.DnRegistry:
+        """Create registry with registered DNs for reference normalization."""
+        reg = FlextLdifModels.DnRegistry()
+        reg.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
+        reg.register_dn("cn=user1,dc=com")
+        reg.register_dn("cn=user2,dc=com")
+        return reg
+
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST INITIALIZATION
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_registry_starts_empty(self, registry: FlextLdifModels.DnRegistry) -> None:
         """Test that new registry has no DNs registered."""
-        registry = FlextLdifModels.DnRegistry()
         stats = registry.get_stats()
         assert stats["total_dns"] == 0
         assert stats["total_variants"] == 0
         assert stats["dns_with_multiple_variants"] == 0
 
-    def test_registry_has_empty_internal_structures(self) -> None:
+    def test_registry_has_empty_internal_structures(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test internal structures are initialized correctly."""
-        registry = FlextLdifModels.DnRegistry()
         assert hasattr(registry, "_registry")
         assert hasattr(registry, "_case_variants")
         assert isinstance(registry._registry, dict)
@@ -36,18 +67,11 @@ class TestCaseRegistryInitialization:
         assert len(registry._registry) == 0
         assert len(registry._case_variants) == 0
 
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST DN NORMALIZATION
+    # ════════════════════════════════════════════════════════════════════════
 
-class TestDnNormalization:
-    """Test DN normalization functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create fresh DN registry."""
-        return FlextLdifModels.DnRegistry()
-
-    def test_normalize_removes_spaces(
-        self, registry: FlextLdifModels.DnRegistry,
-    ) -> None:
+    def test_normalize_removes_spaces(self, registry: FlextLdifModels.DnRegistry) -> None:
         """Test that DN normalization removes all spaces."""
         dn_with_spaces = "CN=Test, DC=Example, DC=Com"
         normalized = registry._normalize_dn(dn_with_spaces)
@@ -93,14 +117,9 @@ class TestDnNormalization:
         second_normalized = registry._normalize_dn(first_normalized)
         assert first_normalized == second_normalized
 
-
-class TestDnRegistration:
-    """Test DN registration functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create fresh DN registry."""
-        return FlextLdifModels.DnRegistry()
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST DN REGISTRATION
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_register_first_dn_becomes_canonical(
         self,
@@ -124,10 +143,10 @@ class TestDnRegistration:
         assert canonical == first_dn
 
         result2 = registry.register_dn(second_dn)
-        assert result2 == first_dn  # Returns first canonical
+        assert result2 == first_dn
 
         result3 = registry.register_dn(third_dn)
-        assert result3 == first_dn  # Returns first canonical
+        assert result3 == first_dn
 
     def test_register_tracks_all_case_variants(
         self,
@@ -155,7 +174,6 @@ class TestDnRegistration:
         registry.register_dn(first_dn)
         assert registry.get_canonical_dn(first_dn) == first_dn
 
-        # Force new canonical
         canonical = registry.register_dn(second_dn, force=True)
         assert canonical == second_dn
         assert registry.get_canonical_dn(first_dn) == second_dn
@@ -187,108 +205,98 @@ class TestDnRegistration:
         canonical = registry.register_dn(dn_with_spaces)
         result = registry.register_dn(dn_without_spaces)
 
-        # Both should resolve to same canonical
         assert result == canonical
 
-
-class TestCanonicalDnRetrieval:
-    """Test canonical DN retrieval functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create registry with some DNs."""
-        reg = FlextLdifModels.DnRegistry()
-        reg.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
-        reg.register_dn("ou=users,dc=example,dc=com")
-        return reg
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST CANONICAL DN RETRIEVAL
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_get_canonical_exact_match(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_dns: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test getting canonical DN with exact match."""
-        canonical = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
+        canonical = registry_with_dns.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_get_canonical_different_case(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_dns: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test getting canonical DN with different case."""
-        canonical = registry.get_canonical_dn("CN=Admin,DC=Example,DC=Com")
+        canonical = registry_with_dns.get_canonical_dn("CN=Admin,DC=Example,DC=Com")
         assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_get_canonical_with_spaces(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_dns: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test getting canonical DN with spaces."""
-        canonical = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD, dc=example, dc=com")
+        canonical = registry_with_dns.get_canonical_dn(
+            "cn=REDACTED_LDAP_BIND_PASSWORD, dc=example, dc=com"
+        )
         assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_get_canonical_unregistered_returns_none(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_dns: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that unregistered DN returns None."""
-        canonical = registry.get_canonical_dn("cn=unknown,dc=com")
+        canonical = registry_with_dns.get_canonical_dn("cn=unknown,dc=com")
         assert canonical is None
 
-    def test_get_canonical_empty_registry(self) -> None:
-        """Test getting canonical from empty registry returns None."""
-        registry = FlextLdifModels.DnRegistry()
-        canonical = registry.get_canonical_dn("cn=test,dc=com")
-        assert canonical is None
-
-
-class TestDnExistenceCheck:
-    """Test DN existence checking functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create registry with some DNs."""
-        reg = FlextLdifModels.DnRegistry()
-        reg.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
-        reg.register_dn("ou=users,dc=com")
-        return reg
-
-    def test_has_dn_exact_match(self, registry: FlextLdifModels.DnRegistry) -> None:
-        """Test has_dn with exact match."""
-        assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
-        assert registry.has_dn("ou=users,dc=com")
-
-    def test_has_dn_different_case(self, registry: FlextLdifModels.DnRegistry) -> None:
-        """Test has_dn is case-insensitive."""
-        assert registry.has_dn("CN=Admin,DC=Com")
-        assert registry.has_dn("cn=ADMIN,dc=COM")
-        assert registry.has_dn("OU=Users,DC=Com")
-
-    def test_has_dn_with_spaces(self, registry: FlextLdifModels.DnRegistry) -> None:
-        """Test has_dn handles spaces."""
-        assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD, dc=com")
-        assert registry.has_dn("ou=users, dc=com")
-
-    def test_has_dn_unregistered_returns_false(
+    def test_get_canonical_empty_registry(
         self,
         registry: FlextLdifModels.DnRegistry,
     ) -> None:
-        """Test that unregistered DN returns False."""
-        assert not registry.has_dn("cn=unknown,dc=com")
-        assert not registry.has_dn("cn=other,dc=org")
+        """Test getting canonical from empty registry returns None."""
+        canonical = registry.get_canonical_dn("cn=test,dc=com")
+        assert canonical is None
 
-    def test_has_dn_empty_registry(self) -> None:
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST DN EXISTENCE CHECK
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_has_dn_exact_match(
+        self,
+        registry_with_dns: FlextLdifModels.DnRegistry,
+    ) -> None:
+        """Test has_dn with exact match."""
+        assert registry_with_dns.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
+        assert registry_with_dns.has_dn("ou=users,dc=example,dc=com")
+
+    def test_has_dn_different_case(
+        self,
+        registry_with_dns: FlextLdifModels.DnRegistry,
+    ) -> None:
+        """Test has_dn is case-insensitive."""
+        assert registry_with_dns.has_dn("CN=Admin,DC=Example,DC=Com")
+        assert registry_with_dns.has_dn("cn=ADMIN,dc=EXAMPLE,dc=COM")
+        assert registry_with_dns.has_dn("OU=Users,DC=Example,DC=Com")
+
+    def test_has_dn_with_spaces(
+        self,
+        registry_with_dns: FlextLdifModels.DnRegistry,
+    ) -> None:
+        """Test has_dn handles spaces."""
+        assert registry_with_dns.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD, dc=example, dc=com")
+        assert registry_with_dns.has_dn("ou=users, dc=example, dc=com")
+
+    def test_has_dn_unregistered_returns_false(
+        self,
+        registry_with_dns: FlextLdifModels.DnRegistry,
+    ) -> None:
+        """Test that unregistered DN returns False."""
+        assert not registry_with_dns.has_dn("cn=unknown,dc=com")
+        assert not registry_with_dns.has_dn("cn=other,dc=org")
+
+    def test_has_dn_empty_registry(self, registry: FlextLdifModels.DnRegistry) -> None:
         """Test has_dn on empty registry returns False."""
-        registry = FlextLdifModels.DnRegistry()
         assert not registry.has_dn("cn=test,dc=com")
 
-
-class TestCaseVariantsTracking:
-    """Test case variant tracking functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create fresh DN registry."""
-        return FlextLdifModels.DnRegistry()
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST CASE VARIANTS TRACKING
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_get_case_variants_single_variant(
         self,
@@ -324,7 +332,6 @@ class TestCaseVariantsTracking:
         registry.register_dn("cn=test,dc=com")
         registry.register_dn("CN=Test,DC=Com")
 
-        # All these should return same variants
         variants1 = registry.get_case_variants("cn=test,dc=com")
         variants2 = registry.get_case_variants("CN=TEST,DC=COM")
         variants3 = registry.get_case_variants("cn=Test,dc=Com")
@@ -341,14 +348,9 @@ class TestCaseVariantsTracking:
         assert len(variants) == 0
         assert isinstance(variants, set)
 
-
-class TestOudConsistencyValidation:
-    """Test OUD consistency validation functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create fresh DN registry."""
-        return FlextLdifModels.DnRegistry()
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST OUD CONSISTENCY VALIDATION
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_validate_empty_registry_success(
         self,
@@ -392,7 +394,7 @@ class TestOudConsistencyValidation:
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        assert result.unwrap() is False  # Has inconsistencies
+        assert result.unwrap() is False
 
     def test_validate_provides_inconsistency_metadata(
         self,
@@ -405,11 +407,9 @@ class TestOudConsistencyValidation:
 
         result = registry.validate_oud_consistency()
         assert result.is_success
-        # validate_oud_consistency returns False when inconsistencies are found
         is_consistent = result.unwrap()
-        assert is_consistent is False  # Has inconsistencies
+        assert is_consistent is False
 
-        # Verify the registry tracks all case variants
         variants = registry.get_case_variants("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         assert len(variants) == 3
         assert "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com" in variants
@@ -421,66 +421,57 @@ class TestOudConsistencyValidation:
         registry: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test validation with multiple DNs having case issues."""
-        # DN 1 - inconsistent
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
 
-        # DN 2 - consistent
         registry.register_dn("ou=users,dc=com")
 
-        # DN 3 - inconsistent
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("CN=User1,DC=Com")
 
         result = registry.validate_oud_consistency()
         assert result.is_success
         is_consistent = result.unwrap()
-        assert is_consistent is False  # Has inconsistencies
+        assert is_consistent is False
 
-        # Verify the registry tracks both inconsistent DNs
         REDACTED_LDAP_BIND_PASSWORD_variants = registry.get_case_variants("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         user_variants = registry.get_case_variants("cn=user1,dc=com")
 
         assert len(REDACTED_LDAP_BIND_PASSWORD_variants) == 2
         assert len(user_variants) == 2
 
-        # Consistent DN should have only one variant
         ou_variants = registry.get_case_variants("ou=users,dc=com")
         assert len(ou_variants) == 1
 
-
-class TestDnReferenceNormalization:
-    """Test DN reference normalization functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
-        """Create registry with registered DNs."""
-        reg = FlextLdifModels.DnRegistry()
-        reg.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
-        reg.register_dn("cn=user1,dc=com")
-        reg.register_dn("cn=user2,dc=com")
-        return reg
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST DN REFERENCE NORMALIZATION
+    # ════════════════════════════════════════════════════════════════════════
 
     def test_normalize_single_dn_field(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing single DN field."""
         data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
-        result = registry.normalize_dn_references(data, ["dn"])
+        result = registry_with_references.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
         normalized = result.unwrap()
         assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
-        assert normalized["cn"] == ["REDACTED_LDAP_BIND_PASSWORD"]  # Non-DN field unchanged
+        assert normalized["cn"] == ["REDACTED_LDAP_BIND_PASSWORD"]
 
-    def test_normalize_list_of_dns(self, registry: FlextLdifModels.DnRegistry) -> None:
+    def test_normalize_list_of_dns(
+        self,
+        registry_with_references: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test normalizing list of DNs (e.g., group members)."""
         data: dict[str, object] = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
-        result = registry.normalize_dn_references(data, ["dn", "member"])
+        result = registry_with_references.normalize_dn_references(
+            data, ["dn", "member"]
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -488,7 +479,7 @@ class TestDnReferenceNormalization:
 
     def test_normalize_multiple_dn_fields(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing multiple DN fields."""
         data: dict[str, object] = {
@@ -496,7 +487,9 @@ class TestDnReferenceNormalization:
             "manager": "cn=USER1,dc=com",
             "secretary": "cn=USER2,dc=com",
         }
-        result = registry.normalize_dn_references(data, ["dn", "manager", "secretary"])
+        result = registry_with_references.normalize_dn_references(
+            data, ["dn", "manager", "secretary"]
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -506,19 +499,19 @@ class TestDnReferenceNormalization:
 
     def test_normalize_unregistered_dn_unchanged(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
         data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
-        result = registry.normalize_dn_references(data, ["dn"])
+        result = registry_with_references.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
         normalized = result.unwrap()
-        assert normalized["dn"] == "cn=unknown,dc=com"  # Unchanged
+        assert normalized["dn"] == "cn=unknown,dc=com"
 
     def test_normalize_with_none_dn_fields_uses_defaults(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that None dn_fields uses default DN fields."""
         data: dict[str, object] = {
@@ -526,7 +519,7 @@ class TestDnReferenceNormalization:
             "member": ["cn=USER1,dc=com"],
             "owner": "cn=USER2,dc=com",
         }
-        result = registry.normalize_dn_references(data)  # No dn_fields specified
+        result = registry_with_references.normalize_dn_references(data)
 
         assert result.is_success
         normalized = result.unwrap()
@@ -536,44 +529,46 @@ class TestDnReferenceNormalization:
 
     def test_normalize_missing_fields_unchanged(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that missing fields don't cause errors."""
         data: dict[str, object] = {"cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
-        result = registry.normalize_dn_references(data, ["dn", "member"])
+        result = registry_with_references.normalize_dn_references(data, ["dn", "member"])
 
         assert result.is_success
         normalized = result.unwrap()
-        assert normalized == data  # Unchanged
+        assert normalized == data
 
     def test_normalize_mixed_registered_unregistered(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing mix of registered and unregistered DNs."""
         data: dict[str, object] = {
             "dn": "cn=group,dc=com",
             "member": [
-                "CN=User1,DC=Com",  # Registered
-                "cn=unknown,dc=com",  # Not registered
+                "CN=User1,DC=Com",
+                "cn=unknown,dc=com",
             ],
         }
-        result = registry.normalize_dn_references(data, ["dn", "member"])
+        result = registry_with_references.normalize_dn_references(data, ["dn", "member"])
 
         assert result.is_success
         normalized = result.unwrap()
         member_list = normalized["member"]
         assert isinstance(member_list, list)
-        assert member_list[0] == "cn=user1,dc=com"  # Normalized
-        assert member_list[1] == "cn=unknown,dc=com"  # Unchanged
+        assert member_list[0] == "cn=user1,dc=com"
+        assert member_list[1] == "cn=unknown,dc=com"
 
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST REGISTRY CLEAR
+    # ════════════════════════════════════════════════════════════════════════
 
-class TestRegistryClear:
-    """Test registry clearing functionality."""
-
-    def test_clear_removes_all_dns(self) -> None:
+    def test_clear_removes_all_dns(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test that clear removes all registered DNs."""
-        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("cn=user,dc=com")
 
@@ -585,9 +580,11 @@ class TestRegistryClear:
         assert not registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         assert not registry.has_dn("cn=user,dc=com")
 
-    def test_clear_resets_stats(self) -> None:
+    def test_clear_resets_stats(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test that clear resets statistics to zero."""
-        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
 
@@ -601,33 +598,38 @@ class TestRegistryClear:
         assert stats_after["total_variants"] == 0
         assert stats_after["dns_with_multiple_variants"] == 0
 
-    def test_clear_allows_reregistration(self) -> None:
+    def test_clear_allows_reregistration(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test that DNs can be re-registered after clear."""
-        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.clear()
-        registry.register_dn("CN=Admin,DC=Com")  # Different case
+        registry.register_dn("CN=Admin,DC=Com")
 
-        # After clear, new case should be canonical
         canonical = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         assert canonical == "CN=Admin,DC=Com"
 
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST REGISTRY STATISTICS
+    # ════════════════════════════════════════════════════════════════════════
 
-class TestRegistryStatistics:
-    """Test registry statistics functionality."""
-
-    def test_stats_empty_registry(self) -> None:
+    def test_stats_empty_registry(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test statistics for empty registry."""
-        registry = FlextLdifModels.DnRegistry()
         stats = registry.get_stats()
 
         assert stats["total_dns"] == 0
         assert stats["total_variants"] == 0
         assert stats["dns_with_multiple_variants"] == 0
 
-    def test_stats_single_dn_single_case(self) -> None:
+    def test_stats_single_dn_single_case(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test statistics with one DN, one case variant."""
-        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
         stats = registry.get_stats()
@@ -635,9 +637,11 @@ class TestRegistryStatistics:
         assert stats["total_variants"] == 1
         assert stats["dns_with_multiple_variants"] == 0
 
-    def test_stats_single_dn_multiple_cases(self) -> None:
+    def test_stats_single_dn_multiple_cases(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test statistics with one DN, multiple case variants."""
-        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
@@ -647,92 +651,90 @@ class TestRegistryStatistics:
         assert stats["total_variants"] == 3
         assert stats["dns_with_multiple_variants"] == 1
 
-    def test_stats_multiple_dns_mixed_variants(self) -> None:
+    def test_stats_multiple_dns_mixed_variants(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test statistics with multiple DNs, some with case variants."""
-        registry = FlextLdifModels.DnRegistry()
-        # DN 1 - multiple variants
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
 
-        # DN 2 - single variant
         registry.register_dn("ou=users,dc=com")
 
-        # DN 3 - multiple variants
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("CN=User1,DC=Com")
         registry.register_dn("cn=USER1,dc=COM")
 
         stats = registry.get_stats()
         assert stats["total_dns"] == 3
-        assert stats["total_variants"] == 6  # 2 + 1 + 3
-        assert stats["dns_with_multiple_variants"] == 2  # REDACTED_LDAP_BIND_PASSWORD and user1
+        assert stats["total_variants"] == 6
+        assert stats["dns_with_multiple_variants"] == 2
 
+    # ════════════════════════════════════════════════════════════════════════
+    # TEST EDGE CASES
+    # ════════════════════════════════════════════════════════════════════════
 
-class TestEdgeCases:
-    """Test edge cases and boundary conditions."""
-
-    def test_empty_dn_string(self) -> None:
+    def test_empty_dn_string(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test handling of empty DN string."""
-        registry = FlextLdifModels.DnRegistry()
         canonical = registry.register_dn("")
-        assert not canonical  # Empty string is falsey
+        assert not canonical
         assert registry.has_dn("")
 
-    def test_dn_with_special_characters(self) -> None:
+    def test_dn_with_special_characters(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test DN with special LDAP characters."""
-        registry = FlextLdifModels.DnRegistry()
         dn = "cn=Test\\, User,dc=example,dc=com"
         canonical = registry.register_dn(dn)
         assert canonical == dn
         assert registry.has_dn(dn)
 
-    def test_very_long_dn(self) -> None:
+    def test_very_long_dn(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test handling of very long DN."""
-        registry = FlextLdifModels.DnRegistry()
         dn = "cn=test," + ",".join([f"ou=level{i}" for i in range(50)]) + ",dc=com"
         canonical = registry.register_dn(dn)
         assert canonical == dn
         assert registry.has_dn(dn)
 
-    def test_dn_with_unicode_characters(self) -> None:
+    def test_dn_with_unicode_characters(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test DN with unicode characters."""
-        registry = FlextLdifModels.DnRegistry()
         dn = "cn=Tëst Üser,dc=example,dc=com"
         canonical = registry.register_dn(dn)
         assert canonical == dn
         assert registry.has_dn(dn)
 
-    def test_normalize_dn_references_with_non_dict_data(self) -> None:
+    def test_normalize_dn_references_with_non_dict_data(
+        self,
+        registry: FlextLdifModels.DnRegistry,
+    ) -> None:
         """Test that normalizing non-dict data fails gracefully."""
-        registry = FlextLdifModels.DnRegistry()
-        # Pass empty dict[str, object] instead of None to avoid type error
         result = registry.normalize_dn_references({}, ["dn"])
-        assert result.is_success  # Empty dict[str, object] succeeds
+        assert result.is_success
 
     def test_normalize_dn_references_with_non_list_non_string_value(
         self,
+        registry: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalization handles non-string, non-list values."""
-        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         data: dict[str, object] = {"dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com", "someField": 123}
         result = registry.normalize_dn_references(data, ["dn", "someField"])
 
         assert result.is_success
         normalized = result.unwrap()
-        assert normalized["someField"] == 123  # Unchanged
+        assert normalized["someField"] == 123
 
 
 __all__ = [
-    "TestCanonicalDnRetrieval",
-    "TestCaseRegistryInitialization",
-    "TestCaseVariantsTracking",
-    "TestDnExistenceCheck",
-    "TestDnNormalization",
-    "TestDnReferenceNormalization",
-    "TestDnRegistration",
-    "TestEdgeCases",
-    "TestOudConsistencyValidation",
-    "TestRegistryClear",
-    "TestRegistryStatistics",
+    "TestFlextLdifDnCaseRegistry",
 ]

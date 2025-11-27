@@ -1,6 +1,10 @@
-"""Unified LDIF Writer Service.
+"""Writer Service - LDIF Entry Writing and Serialization.
 
-Routes to quirks system via FlextLdifServer for RFC-compliant LDIF writing.
+Provides unified LDIF writing service routing to quirks system via FlextLdifServer
+for RFC-compliant LDIF writing with multiple output formats (file, string, ldap3, model).
+
+Scope: LDIF entry serialization, output routing, format options application,
+header generation, post-processing (folding, sorting), RFC 2849 compliance.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,25 +12,35 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 import time
 from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
+from typing import TypeAlias, override
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
-from flext_ldif.base import LdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.services.entry import FlextLdifEntry
+from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.utilities import FlextLdifUtilities
 
+# Type alias for writer result union - used throughout OutputRouter
+WriterResult: TypeAlias = (
+    str
+    | FlextLdifModels.WriteResponse
+    | list[tuple[str, dict[str, list[str]]]]
+    | list[FlextLdifModels.Entry]
+)
 
-class FlextLdifWriter(LdifServiceBase):
+
+class FlextLdifWriter(
+    FlextLdifServiceBase[FlextLdifModels.WriteResponse],
+):
     """Unified, stateless LDIF Writer Service.
 
     This service acts as a versatile serializer, converting Entry models into
@@ -68,7 +82,7 @@ class FlextLdifWriter(LdifServiceBase):
             quirk_registry: Optional quirk registry (primarily for testing/injection).
                 If None, creates a new FlextLdifServer instance.
 
-        Config is accessed via self.config.ldif (inherited from LdifServiceBase).
+        Config is accessed via self.config.ldif (inherited from FlextLdifServiceBase).
 
         """
         super().__init__()
@@ -91,113 +105,11 @@ class FlextLdifWriter(LdifServiceBase):
 
             Lines longer than max_width BYTES are folded with newline + space.
             RFC 2849 section 3: Lines must not exceed 76 bytes (not characters).
+
+            Uses FlextLdifUtilitiesWriter.fold() for RFC 2849 compliance.
             """
-            line_bytes = line.encode("utf-8")
-            if len(line_bytes) <= max_width:
-                return line
-
-            # Fold by bytes, ensuring we don't split multibyte UTF-8 sequences
-            result: list[str] = []
-            pos = 0
-
-            # First line: max_width bytes
-            while pos < len(line_bytes):
-                if not result:
-                    # First line gets full max_width
-                    chunk_end = min(pos + max_width, len(line_bytes))
-                else:
-                    # Continuation lines: max_width - 1 (space prefix takes 1 byte)
-                    chunk_end = min(pos + max_width - 1, len(line_bytes))
-
-                # Find valid UTF-8 boundary (don't split multibyte chars)
-                while chunk_end > pos:
-                    try:
-                        chunk = line_bytes[pos:chunk_end].decode("utf-8")
-                        break
-                    except UnicodeDecodeError:
-                        # Backup to previous byte to find valid boundary
-                        chunk_end -= 1
-
-                if chunk_end <= pos:
-                    # Should not happen with valid UTF-8, but handle gracefully
-                    chunk_end = pos + 1
-
-                chunk = line_bytes[pos:chunk_end].decode("utf-8")
-
-                if result:
-                    # Continuation line: prefix with space
-                    result.append(" " + chunk)
-                else:
-                    # First line: no prefix
-                    result.append(chunk)
-
-                pos = chunk_end
-
-            return "\n".join(result)
-
-        @staticmethod
-        def _sort_entry_lines(
-            entry_block: str,
-            use_rfc_order: bool = False,  # noqa: FBT001, FBT002
-            priority_attrs: list[str] | None = None,
-        ) -> str:
-            """Sort attribute lines within entry.
-
-            Args:
-                entry_block: LDIF entry block to sort
-                use_rfc_order: If True, use RFC 2849 ordering (priority attrs first, then alphabetical)
-                priority_attrs: List of attribute names to prioritize (default: ['objectClass'])
-
-            Returns:
-                Sorted entry block
-
-            """
-            lines = entry_block.split("\n")
-            if not lines:
-                return entry_block
-
-            # Separate header (DN, comments, changetype) from attributes
-            header_lines: list[str] = []
-            attr_lines: list[str] = []
-
-            for line in lines:
-                if not line.strip():
-                    continue
-                if line.startswith(("#", "version:", "dn:", "changetype:")):
-                    header_lines.append(line)
-                elif line.startswith(" "):  # Folded continuation
-                    if attr_lines:
-                        attr_lines[-1] += "\n" + line
-                else:
-                    attr_lines.append(line)
-
-            # Sort attributes based on RFC order or alphabetical
-            if use_rfc_order:
-                # RFC 2849 ordering: priority attributes first, then alphabetical
-                priority_list = priority_attrs or ["objectClass"]
-                priority_lower = [attr.lower() for attr in priority_list]
-
-                def sort_key(line: str) -> tuple[int, str]:
-                    """Sort key: priority attrs first (by index), then alphabetical."""
-                    attr_name = (
-                        line.split(":", maxsplit=1)[0].lower()
-                        if ":" in line
-                        else line.lower()
-                    )
-                    try:
-                        # Priority attribute: use its index as priority (0, 1, 2, ...)
-                        priority_idx = priority_lower.index(attr_name)
-                        return (priority_idx, attr_name)
-                    except ValueError:
-                        # Non-priority attribute: sort alphabetically after priorities
-                        return (len(priority_list), attr_name)
-
-                attr_lines.sort(key=sort_key)
-            else:
-                # Simple alphabetical sort (backward compatible)
-                attr_lines.sort()
-
-            return "\n".join(header_lines + attr_lines)
+            folded_lines = FlextLdifUtilities.Writer.fold(line, width=max_width)
+            return "\n".join(folded_lines)
 
         @staticmethod
         def _remove_empty_values(entry_block: str) -> str:
@@ -254,28 +166,20 @@ class FlextLdifWriter(LdifServiceBase):
 
                 processed_block = entry_block
 
-                # Apply sort_attributes
-                if format_options.sort_attributes:
-                    processed_block = cls._sort_entry_lines(
-                        processed_block,
-                        use_rfc_order=format_options.use_rfc_attribute_order,
-                        priority_attrs=format_options.rfc_order_priority_attributes,
-                    )
-
                 # Apply write_empty_values filtering
                 if not format_options.write_empty_values:
                     processed_block = cls._remove_empty_values(processed_block)
 
                 # RFC 2849 MANDATORY folding: ALWAYS apply when lines > 76 bytes
-                # Python 3.13: Optimize with list comprehension and walrus operator
-                max_width = format_options.line_width or 76
+                max_width = (
+                    format_options.line_width or FlextLdifConstants.Rfc.LINE_FOLD_WIDTH
+                )
                 lines = processed_block.split("\n")
-                folded_lines = [
-                    cls._fold_line(line, max_width)
-                    if len(_line_bytes := line.encode("utf-8")) > max_width
-                    else line
-                    for line in lines
-                ]
+                folded_lines: list[str] = []
+                for line in lines:
+                    # Use utility for folding (handles UTF-8 byte boundaries correctly)
+                    folded = FlextLdifUtilities.Writer.fold(line, width=max_width)
+                    folded_lines.extend(folded)
                 processed_block = "\n".join(folded_lines)
 
                 processed_entries.append(processed_block)
@@ -332,8 +236,8 @@ class FlextLdifWriter(LdifServiceBase):
                 FlextResult with entry quirk or error
 
             """
-            quirk = self.registry.quirk(target_server_type)
-            if quirk is None:
+            quirk_result = self.registry.quirk(target_server_type)
+            if quirk_result.is_failure:
                 self.logger.error(
                     "Quirk not found",
                     target_server_type=target_server_type,
@@ -343,18 +247,8 @@ class FlextLdifWriter(LdifServiceBase):
                     f"Invalid server type: '{target_server_type}' - no quirk found",
                 )
 
-            # Debug: trace the entry_quirk retrieval
-            self.logger.debug(
-                "DEBUG: Retrieved quirk from registry",
-                quirk_type=type(quirk).__name__,
-                target_server_type=target_server_type,
-            )
+            quirk = quirk_result.unwrap()
             entry_quirk = quirk.entry_quirk
-            self.logger.debug(
-                "DEBUG: Retrieved entry_quirk",
-                entry_quirk_type=type(entry_quirk).__name__,
-                entry_quirk_repr=repr(entry_quirk)[:100],
-            )
             if not entry_quirk:
                 self.logger.error(
                     "Entry quirk not found",
@@ -372,10 +266,17 @@ class FlextLdifWriter(LdifServiceBase):
             entry: FlextLdifModels.Entry,
             format_options: FlextLdifModels.WriteFormatOptions,
         ) -> bool:
-            """Restore original LDIF if available and enabled. Returns True if restored."""
+            """Restore original LDIF if available and enabled using Entry + Metadata pattern.
+
+            Uses FlextLdifUtilities.Metadata and FlextLdifConstants.MetadataKeys for
+            standardized metadata access.
+            """
             if not entry.metadata or not entry.metadata.original_strings:
                 return False
 
+            # Use original_strings dict directly (Entry + Metadata pattern)
+            # original_strings is a dict[str, str] in QuirkMetadata model
+            # Key "entry_original_ldif" is defined in parser when preserving original LDIF
             original_ldif = entry.metadata.original_strings.get("entry_original_ldif")
             restore_enabled = getattr(format_options, "restore_original_format", False)
             if original_ldif and restore_enabled:
@@ -390,10 +291,14 @@ class FlextLdifWriter(LdifServiceBase):
             entry: FlextLdifModels.Entry,
             format_options: FlextLdifModels.WriteFormatOptions,
         ) -> FlextLdifModels.Entry:
-            """Update entry metadata with write options."""
+            """Update entry metadata with write options using Entry + Metadata pattern.
+
+            Uses FlextLdifConstants.MetadataKeys for standardized metadata keys.
+            """
+            # Use constant for metadata key
             new_write_options = {
                 **entry.metadata.write_options,
-                "_write_options": format_options,
+                FlextLdifConstants.MetadataKeys.WRITE_OPTIONS: format_options,
             }
             new_metadata = entry.metadata.model_copy(
                 update={"write_options": new_write_options},
@@ -404,118 +309,27 @@ class FlextLdifWriter(LdifServiceBase):
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextLdifModels.Entry:
-            """Restore original DN formatting from metadata if available."""
+            """Restore original DN formatting from metadata using Entry + Metadata pattern.
+
+            Uses Entry + Metadata pattern - accesses metadata.extensions directly
+            with standardized constant keys from FlextLdifConstants.MetadataKeys.
+            """
             if not entry.metadata:
                 return entry
 
-            # Restore original DN if metadata has it
-            if "original_dn_complete" in entry.metadata.extensions:
-                original_dn = entry.metadata.extensions["original_dn_complete"]
-                if original_dn and entry.dn:
-                    original_dn_str = (
-                        str(original_dn)
-                        if not isinstance(original_dn, str)
-                        else original_dn
-                    )
-                    return entry.model_copy(
-                        update={
-                            "dn": FlextLdifModels.DistinguishedName(
-                                value=original_dn_str,
-                            ),
-                        },
-                    )
-            return entry
-
-        def _apply_original_acl_format_as_name(
-            self,
-            entry: FlextLdifModels.Entry,
-            format_options: FlextLdifModels.WriteFormatOptions,
-        ) -> FlextLdifModels.Entry:
-            """Apply original ACL format as ACI name if option is enabled.
-
-            When use_original_acl_format_as_name=True and entry has 'aci' attribute,
-            replaces the ACI name with the sanitized original ACL format from metadata.
-
-            Args:
-                entry: Entry to process
-                format_options: Write format options
-
-            Returns:
-                Entry with ACI names replaced if applicable, otherwise unchanged entry
-
-            """
-            # Check if option is enabled
-            if not format_options.use_original_acl_format_as_name:
-                return entry
-
-            # Check if entry has aci attribute
-            if not entry.attributes:
-                return entry
-
-            aci_attr_name = "aci"
-            if aci_attr_name not in entry.attributes.attributes:
-                return entry
-
-            # Get original ACL format from metadata
-            if not entry.metadata or not entry.metadata.extensions:
-                return entry
-
-            original_format = entry.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT,
+            # Use Entry + Metadata pattern - access via metadata.extensions with constant key
+            original_dn = entry.metadata.extensions.get(
+                FlextLdifConstants.MetadataKeys.ORIGINAL_DN_COMPLETE,
             )
-            if not original_format:
+            if not original_dn or not entry.dn:
                 return entry
 
-            # Sanitize the original format for use as ACL name
-            original_format_str = (
-                str(original_format)
-                if not isinstance(original_format, str)
-                else original_format
+            original_dn_str = (
+                str(original_dn) if not isinstance(original_dn, str) else original_dn
             )
-            sanitized_name, was_sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
-                original_format_str,
-            )
-
-            if not sanitized_name:
-                return entry
-
-            # Replace ACI names in all aci attribute values
-            aci_values = entry.attributes.attributes[aci_attr_name]
-            new_aci_values: list[str] = []
-
-            # Pattern to match acl "name" in ACI format
-            aci_name_pattern = re.compile(r'acl\s+"[^"]*"')
-
-            for aci_value in aci_values:
-                # Replace the acl "name" part with the sanitized original format
-                new_value = aci_name_pattern.sub(
-                    f'acl "{sanitized_name}"',
-                    aci_value,
-                )
-                new_aci_values.append(new_value)
-
-            # Update entry with new aci values
-            new_attrs = dict(entry.attributes.attributes)
-            new_attrs[aci_attr_name] = new_aci_values
-
-            # Store sanitization metadata if name was sanitized
-            new_metadata = entry.metadata
-            if was_sanitized:
-                new_extensions = dict(entry.metadata.extensions)
-                new_extensions[FlextLdifConstants.MetadataKeys.ACL_NAME_SANITIZED] = (
-                    True
-                )
-                new_extensions[
-                    FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_NAME_RAW
-                ] = original_format_str
-                new_metadata = entry.metadata.model_copy(
-                    update={"extensions": new_extensions},
-                )
-
             return entry.model_copy(
                 update={
-                    "attributes": FlextLdifModels.LdifAttributes(attributes=new_attrs),
-                    "metadata": new_metadata,
+                    "dn": FlextLdifModels.DistinguishedName(value=original_dn_str),
                 },
             )
 
@@ -584,9 +398,6 @@ class FlextLdifWriter(LdifServiceBase):
                 FlextResult with True on success or error
 
             """
-            # For compatibility with code that expects entry_quirk_typed
-            # entry_quirk_typed = entry_quirk  # Removed unused variable
-
             # Write each entry
             for idx, entry in enumerate(entries):
                 # Try to restore original LDIF first
@@ -608,30 +419,17 @@ class FlextLdifWriter(LdifServiceBase):
                     updated_entry,
                 )
 
-                # Apply original ACL format as ACI name if option is enabled
-                updated_entry = self._apply_original_acl_format_as_name(
-                    updated_entry,
-                    format_options,
-                )
-
                 # SRP: Apply marked attribute visibility based on format_options
-                # If write_removed_attributes_as_comments=False, apply removals
+                # Uses FlextLdifEntries service via DI (Entry + Metadata pattern via service)
+                # Service handles metadata checking internally - no direct metadata access needed
                 if (
                     updated_entry.metadata
                     and not format_options.write_removed_attributes_as_comments
                 ):
-                    marked_attrs = updated_entry.metadata.extensions.get(
-                        "marked_attributes",
-                        {},
+                    # Use service for applying removals (SRP - service handles metadata access)
+                    updated_entry = FlextLdifEntries.apply_marked_removals(
+                        updated_entry,
                     )
-                    marked_ocs = updated_entry.metadata.extensions.get(
-                        "marked_objectclasses",
-                        {},
-                    )
-                    if marked_attrs or marked_ocs:
-                        updated_entry = FlextLdifEntry.apply_marked_removals(
-                            updated_entry,
-                        )
 
                 # Write entry using quirk
                 if entry_quirk is None:
@@ -762,12 +560,7 @@ class FlextLdifWriter(LdifServiceBase):
             format_options: FlextLdifModels.WriteFormatOptions,
             header_content: str,
             target_server_type: str,
-        ) -> FlextResult[
-            str
-            | FlextLdifModels.WriteResponse
-            | list[tuple[str, dict[str, list[str]]]]
-            | list[FlextLdifModels.Entry]
-        ]:
+        ) -> FlextResult[WriterResult]:
             """Route output to appropriate target."""
             # Python 3.13: DRY with match statement
             match output_target:
@@ -779,20 +572,10 @@ class FlextLdifWriter(LdifServiceBase):
                         header_content,
                     )
                     if string_result.is_failure:
-                        return FlextResult[
-                            str
-                            | FlextLdifModels.WriteResponse
-                            | list[tuple[str, dict[str, list[str]]]]
-                            | list[FlextLdifModels.Entry]
-                        ].fail(
+                        return FlextResult[WriterResult].fail(
                             string_result.error or "Unknown error",
                         )
-                    return FlextResult[
-                        str
-                        | FlextLdifModels.WriteResponse
-                        | list[tuple[str, dict[str, list[str]]]]
-                        | list[FlextLdifModels.Entry]
-                    ].ok(string_result.unwrap())
+                    return FlextResult[WriterResult].ok(string_result.unwrap())
                 case "file":
                     file_result = self._to_file(
                         entries,
@@ -802,56 +585,26 @@ class FlextLdifWriter(LdifServiceBase):
                         header_content,
                     )
                     if file_result.is_failure:
-                        return FlextResult[
-                            str
-                            | FlextLdifModels.WriteResponse
-                            | list[tuple[str, dict[str, list[str]]]]
-                            | list[FlextLdifModels.Entry]
-                        ].fail(
+                        return FlextResult[WriterResult].fail(
                             file_result.error or "Unknown error",
                         )
-                    return FlextResult[
-                        str
-                        | FlextLdifModels.WriteResponse
-                        | list[tuple[str, dict[str, list[str]]]]
-                        | list[FlextLdifModels.Entry]
-                    ].ok(file_result.unwrap())
+                    return FlextResult[WriterResult].ok(file_result.unwrap())
                 case "ldap3":
                     ldap3_result = self.serializer.to_ldap3_format(entries)
                     if ldap3_result.is_failure:
-                        return FlextResult[
-                            str
-                            | FlextLdifModels.WriteResponse
-                            | list[tuple[str, dict[str, list[str]]]]
-                            | list[FlextLdifModels.Entry]
-                        ].fail(
+                        return FlextResult[WriterResult].fail(
                             ldap3_result.error or "Unknown error",
                         )
-                    return FlextResult[
-                        str
-                        | FlextLdifModels.WriteResponse
-                        | list[tuple[str, dict[str, list[str]]]]
-                        | list[FlextLdifModels.Entry]
-                    ].ok(ldap3_result.unwrap())
+                    return FlextResult[WriterResult].ok(ldap3_result.unwrap())
                 case "model":
-                    return FlextResult[
-                        str
-                        | FlextLdifModels.WriteResponse
-                        | list[tuple[str, dict[str, list[str]]]]
-                        | list[FlextLdifModels.Entry]
-                    ].ok(list(entries))
+                    return FlextResult[WriterResult].ok(list(entries))
                 case _:
                     self.logger.error(
                         "Unsupported output target",
                         output_target=output_target,
                         supported_targets=["string", "file", "ldap3", "model"],
                     )
-                    return FlextResult[
-                        str
-                        | FlextLdifModels.WriteResponse
-                        | list[tuple[str, dict[str, list[str]]]]
-                        | list[FlextLdifModels.Entry]
-                    ].fail(
+                    return FlextResult[WriterResult].fail(
                         f"Unsupported output target: {output_target}",
                     )
 
@@ -914,10 +667,16 @@ class FlextLdifWriter(LdifServiceBase):
                 ldif_content = ldif_result.unwrap()
                 final_content = header + ldif_content if header else ldif_content
 
-                # Create parent directories if they don't exist
-                path.parent.mkdir(parents=True, exist_ok=True)
-
-                path.write_text(final_content, encoding="utf-8")
+                # Use FlextLdifUtilitiesWriter.write_file() for consistency
+                write_result = FlextLdifUtilities.Writer.write_file(
+                    final_content,
+                    path,
+                    encoding="utf-8",
+                )
+                if write_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to write file {path}: {write_result.error}",
+                    )
 
                 response = FlextLdifModels.WriteResponse(
                     content=final_content,  # File mode returns the content that was written
@@ -1037,11 +796,91 @@ class FlextLdifWriter(LdifServiceBase):
                     data.setdefault("processed_percentage", 0.0)
                     data.setdefault("rejected_percentage", 0.0)
 
-                header = template.format(**data)
+                # Use FlextLdifUtilitiesWriter.render_template for Jinja2 support
+                # Falls back to str.format for simple templates
+                if "{{" in template or "{%" in template:
+                    render_result = FlextLdifUtilities.Writer.render_template(
+                        template,
+                        data,
+                    )
+                    if render_result.is_failure:
+                        return FlextResult.fail(
+                            f"Template rendering failed: {render_result.error}",
+                        )
+                    header = render_result.unwrap()
+                else:
+                    header = template.format(**data)
                 return FlextResult.ok(header + "\n" if header else "")
 
             except Exception as e:
                 return FlextResult.fail(f"Header generation failed: {e}")
+
+    def _validate_write_params(
+        self,
+        output_target: str,
+        output_path: Path | None,
+    ) -> FlextResult[bool]:
+        """Validate write parameters."""
+        if output_target == "file" and not output_path:
+            return FlextResult.fail("output_path required for file target")
+        if output_target not in {"string", "file", "ldap3", "model"}:
+            return FlextResult.fail(f"Invalid output_target: {output_target}")
+        return FlextResult.ok(True)
+
+    def _format_entries_for_write(
+        self,
+        entries: Sequence[FlextLdifModels.Entry],
+        target_server_type: str,
+        output_target: str,
+        format_options: FlextLdifModels.WriteFormatOptions,
+    ) -> Sequence[FlextLdifModels.Entry]:
+        """Format entries for writing using quirk if needed."""
+        # Only apply formatting for LDIF string/file outputs, not ldap3/model
+        if output_target not in {"string", "file"}:
+            return entries
+
+        quirk_result = self._registry.quirk(target_server_type)
+        if quirk_result.is_failure:
+            return entries
+
+        quirk = quirk_result.unwrap()
+        entry_quirk = quirk.entry_quirk
+        format_method = getattr(entry_quirk, "format_entry_for_write", None)
+        if format_method:
+            return [format_method(entry, format_options) for entry in entries]
+
+        return entries
+
+    def _add_write_event(
+        self,
+        result: FlextResult[WriterResult],
+        start_time: float,
+        entries_count: int,
+        output_path: Path | None,
+    ) -> FlextResult[WriterResult]:
+        """Add write event to response statistics if applicable."""
+        if not result.is_success:
+            return result
+
+        response = result.unwrap()
+        if not isinstance(response, FlextLdifModels.WriteResponse):
+            return result
+
+        write_duration_ms = (time.perf_counter() - start_time) * 1000.0
+        write_event = FlextLdifModels.WriteEvent(
+            write_operation="write_file",
+            target_type="file",
+            entries_written=entries_count,
+            write_duration_ms=write_duration_ms,
+            event_type="ldif.write",
+            aggregate_id=str(output_path)
+            if output_path
+            else f"write_{FlextUtilities.Generators.generate_short_id(8)}",
+        )
+
+        updated_stats = response.statistics.add_event(write_event)
+        updated_response = response.model_copy(update={"statistics": updated_stats})
+        return FlextResult.ok(updated_response)
 
     def write(
         self,
@@ -1049,15 +888,11 @@ class FlextLdifWriter(LdifServiceBase):
         target_server_type: str,
         output_target: str,  # Literal["string", "file", "ldap3", "model"]
         output_path: Path | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
+        format_options: FlextLdifProtocols.Models.WriteFormatOptionsProtocol
+        | None = None,
         header_template: str | None = None,
         template_data: dict[str, object] | None = None,
-    ) -> FlextResult[
-        str
-        | FlextLdifModels.WriteResponse
-        | list[tuple[str, dict[str, list[str]]]]
-        | list[FlextLdifModels.Entry]
-    ]:
+    ) -> FlextResult[WriterResult]:
         """Write LDIF entries using nested helper classes.
 
         Refactored to use composable nested classes instead of private methods.
@@ -1065,23 +900,12 @@ class FlextLdifWriter(LdifServiceBase):
         start_time = time.perf_counter()
         entries_count = len(entries)
 
-        # DEBUG: Trace entry into FlextLdifWriter.write()
-        self.logger.debug(
-            "DEBUG: FlextLdifWriter.write() ENTRY",
-            entries_count=entries_count,
-            target_server_type=target_server_type,
-            output_target=output_target,
-            output_path=str(output_path) if output_path else None,
-            registry_type=type(self._registry).__name__,
-            has_quirk=self._registry.quirk(target_server_type) is not None,
-        )
-
         # Validation
-        if output_target == "file" and not output_path:
-            return FlextResult.fail("output_path required for file target")
-
-        if output_target not in {"string", "file", "ldap3", "model"}:
-            return FlextResult.fail(f"Invalid output_target: {output_target}")
+        validation_result = self._validate_write_params(output_target, output_path)
+        if validation_result.is_failure:
+            return FlextResult[WriterResult].fail(
+                validation_result.error or "Validation failed"
+            )
 
         try:
             # Initialize nested helpers
@@ -1090,68 +914,17 @@ class FlextLdifWriter(LdifServiceBase):
             header_builder = self.HeaderBuilder()
 
             # Setup format options
-            # Architecture: Config is source of truth, CLI can override via format_options
-            if format_options is None:
-                # Create WriteFormatOptions with default values
-                options = FlextLdifModels.WriteFormatOptions(
-                    line_width=78,  # RFC default
-                    respect_attribute_order=True,
-                    sort_attributes=False,
-                    write_hidden_attributes_as_comments=False,
-                    write_metadata_as_comments=False,
-                    include_version_header=True,
-                    include_timestamps=False,
-                    base64_encode_binary=False,
-                    fold_long_lines=True,
-                    restore_original_format=False,
-                    write_empty_values=True,
-                    normalize_attribute_names=False,
-                    include_dn_comments=False,
-                    write_removed_attributes_as_comments=False,
-                    write_migration_header=False,
-                    migration_header_template=None,
-                    write_rejection_reasons=False,
-                    write_transformation_comments=False,
-                    include_removal_statistics=False,
-                    ldif_changetype=None,
-                    ldif_modify_operation="add",
-                    write_original_entry_as_comment=False,
-                    entry_category=None,
-                    acl_attribute_names=frozenset(),
-                    comment_acl_in_non_acl_phases=True,
-                    use_rfc_attribute_order=False,
-                    rfc_order_priority_attributes=["objectClass"],
-                )
-            else:
-                # Explicit format_options: respect user settings (CLI override)
-                options = format_options
+            options = format_options or FlextLdifModels.WriteFormatOptions()
 
-            # Pipeline: Format → Generate Header → Route Output
-            # Only apply formatting for LDIF string/file outputs, not ldap3/model
-            # All formatting delegated to quirks via DI (Python 3.13: inline comprehension)
-            formatted_entries: Sequence[FlextLdifModels.Entry]
-            if output_target in {"string", "file"}:
-                quirk = self._registry.quirk(target_server_type)
-                # Type narrowing: quirk can be FlextLdifServersBase | bool | None
-                # Only proceed if it's not None or bool
-                if (
-                    quirk is not None
-                    and not isinstance(quirk, bool)
-                    and hasattr(
-                        (entry_quirk := quirk.entry_quirk),
-                        "format_entry_for_write",
-                    )
-                ):
-                    format_method = getattr(entry_quirk, "format_entry_for_write", None)
-                    formatted_entries = [
-                        format_method(entry, options) if format_method else entry
-                        for entry in entries
-                    ]
-                else:
-                    formatted_entries = entries
-            else:
-                formatted_entries = entries
+            # Format entries if needed (Entry Model + Metadata based formatting)
+            formatted_entries = self._format_entries_for_write(
+                entries,
+                target_server_type,
+                output_target,
+                options,
+            )
 
+            # Generate header
             header_result = header_builder.build(
                 formatted_entries,
                 header_template,
@@ -1159,17 +932,12 @@ class FlextLdifWriter(LdifServiceBase):
                 options,
             )
             if header_result.is_failure:
-                # Convert FlextResult[str] to writer_result_union
-                return FlextResult[
-                    FlextLdifModels.WriteResponse
-                    | list[FlextLdifModels.Entry]
-                    | list[tuple[str, dict[str, list[str]]]]
-                    | str
-                ].fail(header_result.error or "Unknown error")
-            header_content_str = header_result.unwrap()
-            # Type narrowing: header_result.unwrap() returns str per HeaderBuilder.build()
-            header_content: str = header_content_str
+                return FlextResult[WriterResult].fail(
+                    header_result.error or "Unknown error",
+                )
+            header_content = header_result.unwrap()
 
+            # Route output
             result = router.route_to_target(
                 formatted_entries,
                 output_target,
@@ -1179,62 +947,52 @@ class FlextLdifWriter(LdifServiceBase):
                 target_server_type,
             )
 
-            # Add write event if successful
+            # Add write event to statistics if applicable
+            result = self._add_write_event(
+                result,
+                start_time,
+                entries_count,
+                output_path,
+            )
+
+            # Log completion
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
             if result.is_success:
-                write_duration_ms = (time.perf_counter() - start_time) * 1000.0
-
-                write_event = FlextLdifModels.WriteEvent(
-                    write_operation="write_file",
-                    target_type="file",
-                    entries_written=entries_count,
-                    write_duration_ms=write_duration_ms,
-                    event_type="ldif.write",
-                    aggregate_id=str(output_path)
-                    if output_path
-                    else f"write_{FlextUtilities.Generators.generate_short_id(8)}",
-                )
-
-                response = result.unwrap()
-                if isinstance(response, FlextLdifModels.WriteResponse):
-                    updated_stats = response.statistics.add_event(write_event)
-                    response = response.model_copy(update={"statistics": updated_stats})
-                    result = FlextResult.ok(response)
-
                 self.logger.info(
                     "Write operation completed",
                     entries_count=entries_count,
                     target_server_type=target_server_type,
                     output_target=output_target,
-                    duration_ms=write_duration_ms,
+                    duration_ms=duration_ms,
                 )
             else:
-                write_duration_at_error = (time.perf_counter() - start_time) * 1000.0
                 self.logger.error(
                     "Write operation failed",
                     entries_count=entries_count,
                     target_server_type=target_server_type,
                     output_target=output_target,
                     error=str(result.error),
-                    duration_ms=write_duration_at_error,
+                    duration_ms=duration_ms,
                 )
 
             return result
 
         except Exception as e:
-            write_duration_at_error = (time.perf_counter() - start_time) * 1000.0
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
             self.logger.exception(
                 "Write operation failed",
                 entries_count=entries_count,
                 target_server_type=target_server_type,
                 output_target=output_target,
                 error=str(e),
-                duration_ms=write_duration_at_error,
+                duration_ms=duration_ms,
             )
             return FlextResult.fail(f"Write operation failed: {e}")
 
-    def execute(self, **_kwargs: object) -> FlextResult[FlextLdifModels.WriteResponse]:
+    @override
+    def execute(self) -> FlextResult[FlextLdifModels.WriteResponse]:
         """Execute service health check."""
-        return FlextResult.ok(
+        return FlextResult[FlextLdifModels.WriteResponse].ok(
             FlextLdifModels.WriteResponse(
                 content=None,
                 statistics=FlextLdifModels.Statistics(),

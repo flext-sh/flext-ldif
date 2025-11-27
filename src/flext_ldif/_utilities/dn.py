@@ -256,14 +256,18 @@ class FlextLdifUtilitiesDN:
 
         # Check lead character - not LUTF1 and not escaped (pair)
         is_escaped_lead = value[0] == "\\" and len(value) > 1
-        is_bad_lead = not FlextLdifUtilitiesDN.is_lutf1_char(value[0]) and not is_escaped_lead
+        is_bad_lead = (
+            not FlextLdifUtilitiesDN.is_lutf1_char(value[0]) and not is_escaped_lead
+        )
         if is_bad_lead and strict:
             errors.append(f"Invalid lead character: {value[0]!r}")
 
         # Check trail character - not TUTF1 and not escaped
         min_len_for_escape = FlextLdifUtilitiesDN.MIN_DN_LENGTH
         is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
-        is_bad_trail = not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and not is_escaped_trail
+        is_bad_trail = (
+            not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and not is_escaped_trail
+        )
         if is_bad_trail and strict:
             errors.append(f"Invalid trail character: {value[-1]!r}")
 
@@ -1619,7 +1623,9 @@ class FlextLdifUtilitiesDN:
                                     target_basedn,
                                 )
                             )
-                            transformed_lines.append(f"{attr_name}: {transformed_value}")
+                            transformed_lines.append(
+                                f"{attr_name}: {transformed_value}"
+                            )
                         else:
                             transformed_lines.append(line)
 
@@ -1661,8 +1667,7 @@ class FlextLdifUtilitiesDN:
 
         Example:
             >>> entry = FlextLdifModels.Entry(
-            ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc",
-            ...     attributes={"member": ["cn=user,dc=ctbc"]}
+            ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc", attributes={"member": ["cn=user,dc=ctbc"]}
             ... )
             >>> transformed = FlextLdifUtilitiesDN.transform_dn_with_metadata(
             ...     entry, "dc=ctbc", "dc=example,dc=com"
@@ -1673,8 +1678,6 @@ class FlextLdifUtilitiesDN:
         """
         if not source_dn or not target_dn:
             return entry
-
-        from flext_ldif import FlextLdifConstants
 
         # DN-syntax attribute names
         dn_attributes = {
@@ -1750,12 +1753,12 @@ class FlextLdifUtilitiesDN:
         )
 
         # Store transformation context in extensions
-        metadata.extensions[
-            FlextLdifConstants.MetadataKeys.ENTRY_SOURCE_DN_CASE
-        ] = original_dn_str
-        metadata.extensions[
-            FlextLdifConstants.MetadataKeys.ENTRY_TARGET_DN_CASE
-        ] = transformed_dn
+        metadata.extensions[FlextLdifConstants.MetadataKeys.ENTRY_SOURCE_DN_CASE] = (
+            original_dn_str
+        )
+        metadata.extensions[FlextLdifConstants.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
+            transformed_dn
+        )
 
         # Create new entry with transformed data and metadata
         return entry.model_copy(

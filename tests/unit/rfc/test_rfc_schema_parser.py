@@ -45,7 +45,9 @@ cn: test
 """
 
         result = parser.parse(
-            content=test_ldif, input_source="string", server_type="rfc",
+            content=test_ldif,
+            input_source="string",
+            server_type="rfc",
         )
         assert result.is_success
         entries = result.unwrap().entries

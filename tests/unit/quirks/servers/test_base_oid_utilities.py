@@ -124,7 +124,8 @@ class TestFlextLdifUtilitiesOid:
         dict[
             str,
             tuple[
-                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str,
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+                str,
             ],
         ]
     ] = {
