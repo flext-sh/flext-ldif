@@ -109,7 +109,9 @@ class TestFlextLdifAdQuirks:
         assert isinstance(attr, FlextLdifModels.SchemaAttribute)
         assert attr.oid == "1.2.840.113556.1.4.221", f"OID mismatch: {attr.oid}"
         assert attr.name == "sAMAccountName", f"NAME mismatch: {attr.name}"
-        assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15", f"SYNTAX mismatch: {attr.syntax}"
+        assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15", (
+            f"SYNTAX mismatch: {attr.syntax}"
+        )
 
     def test_parse_attribute_with_ad_name(self) -> None:
         """Test attribute parsing with AD-specific attribute name - validates parsed output."""
@@ -117,14 +119,18 @@ class TestFlextLdifAdQuirks:
         schema = server.schema_quirk
         attr_def = "( 1.2.3.4 NAME 'objectGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         result = schema.parse_attribute(attr_def)
-        assert result.is_success, f"Failed to parse AD attribute with name: {result.error}"
+        assert result.is_success, (
+            f"Failed to parse AD attribute with name: {result.error}"
+        )
 
         # Validate the parsed attribute output
         attr = result.unwrap()
         assert isinstance(attr, FlextLdifModels.SchemaAttribute)
         assert attr.oid == "1.2.3.4", f"OID mismatch: {attr.oid}"
         assert attr.name == "objectGUID", f"NAME mismatch: {attr.name}"
-        assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.40", f"SYNTAX mismatch: {attr.syntax}"
+        assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.40", (
+            f"SYNTAX mismatch: {attr.syntax}"
+        )
 
     def test_parse_attribute_with_microsoft_marker(self) -> None:
         """Test attribute parsing with Microsoft marker in description - validates can_handle returns correct type."""
@@ -133,7 +139,9 @@ class TestFlextLdifAdQuirks:
         attr_def = "( 1.2.3.4 NAME 'test' DESC 'Microsoft Active Directory attribute' )"
         result = schema.can_handle_attribute(attr_def)
         assert result is True, "AD schema should handle Microsoft-marked attribute"
-        assert isinstance(result, bool), f"can_handle_attribute must return bool, got {type(result)}"
+        assert isinstance(result, bool), (
+            f"can_handle_attribute must return bool, got {type(result)}"
+        )
 
     def test_parse_attribute_success(self) -> None:
         """Test successful attribute parsing."""
@@ -382,11 +390,7 @@ class TestFlextLdifAdQuirks:
         server = FlextLdifServersAd()
         entry = cast("object", server.entry_quirk)
         dn = "cn=test,dc=example,dc=com"
-        ldif = (
-            f"dn: {dn}\n"
-            "objectClass: user\n"
-            "objectClass: person\n"
-        )
+        ldif = f"dn: {dn}\nobjectClass: user\nobjectClass: person\n"
         result = entry.parse(ldif)
         assert result.is_success or result.is_failure
 
@@ -395,9 +399,6 @@ class TestFlextLdifAdQuirks:
         server = FlextLdifServersAd()
         entry = cast("object", server.entry_quirk)
         dn = "cn=test,ou=people,dc=example,dc=com"
-        ldif = (
-            f"dn: {dn}\n"
-            "objectClass: inetOrgPerson\n"
-        )
+        ldif = f"dn: {dn}\nobjectClass: inetOrgPerson\n"
         result = entry.parse(ldif)
         assert hasattr(result, "is_success")

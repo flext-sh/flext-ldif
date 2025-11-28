@@ -1498,12 +1498,12 @@ class InitializationScenario(StrEnum):
 
 class TestConversionMatrixInitialization:
     """Consolidated initialization tests (2 original tests)."""
-    
+
     SCENARIOS: ClassVar[dict[str, tuple[str, ...]]] = {
         InitializationScenario.INSTANTIATION: ("instantiation",),
         InitializationScenario.METHODS_EXIST: ("methods_exist",),
     }
-    
+
     @pytest.mark.parametrize(
         "scenario",
         SCENARIOS.values(),
@@ -1525,8 +1525,10 @@ class TestConversionMatrixInitialization:
 
 class TestGetSupportedConversions:
     """Consolidated support check tests (2 original tests)."""
-    
-    @pytest.mark.parametrize("quirk_type", ["oud_quirk", "oid_quirk"], ids=["oud", "oid"])
+
+    @pytest.mark.parametrize(
+        "quirk_type", ["oud_quirk", "oid_quirk"], ids=["oud", "oid"]
+    )
     def test_supported_conversions(
         self,
         quirk_type: str,
@@ -1545,10 +1547,13 @@ class TestGetSupportedConversions:
 
 class TestAttributeConversion:
     """Consolidated attribute conversion tests."""
-    
+
     @pytest.mark.parametrize(
         ("source", "target", "test_data"),
-        [("oud_quirk", "oid_quirk", "OUD_ATTRIBUTE_ORCLGUID"), ("oid_quirk", "oud_quirk", "OID_ATTRIBUTE_ORCLGUID")],
+        [
+            ("oud_quirk", "oid_quirk", "OUD_ATTRIBUTE_ORCLGUID"),
+            ("oid_quirk", "oud_quirk", "OID_ATTRIBUTE_ORCLGUID"),
+        ],
         ids=["oud_to_oid", "oid_to_oud"],
     )
     def test_attribute_conversion(
@@ -1565,17 +1570,25 @@ class TestAttributeConversion:
         target_quirk = request.getfixturevalue(target)
         data = getattr(conversion_constants, test_data)
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
-            conversion_matrix, source_quirk, target_quirk, "attribute", data,
-            must_contain=["2.16.840.1.113894"], expected_type=str,
+            conversion_matrix,
+            source_quirk,
+            target_quirk,
+            "attribute",
+            data,
+            must_contain=["2.16.840.1.113894"],
+            expected_type=str,
         )
 
 
 class TestObjectClassConversion:
     """Consolidated objectclass conversion tests."""
-    
+
     @pytest.mark.parametrize(
         ("source", "target", "test_data"),
-        [("oud_quirk", "oid_quirk", "OUD_OBJECTCLASS_ORCLCONTEXT"), ("oid_quirk", "oud_quirk", "OID_OBJECTCLASS_ORCLCONTEXT")],
+        [
+            ("oud_quirk", "oid_quirk", "OUD_OBJECTCLASS_ORCLCONTEXT"),
+            ("oid_quirk", "oud_quirk", "OID_OBJECTCLASS_ORCLCONTEXT"),
+        ],
         ids=["oud_to_oid", "oid_to_oud"],
     )
     def test_objectclass_conversion(
@@ -1592,15 +1605,22 @@ class TestObjectClassConversion:
         target_quirk = request.getfixturevalue(target)
         data = getattr(conversion_constants, test_data)
         TestDeduplicationHelpers.helper_convert_and_assert_strings(
-            conversion_matrix, source_quirk, target_quirk, "objectClass", data,
-            must_contain=["2.16.840.1.113894"], expected_type=str,
+            conversion_matrix,
+            source_quirk,
+            target_quirk,
+            "objectClass",
+            data,
+            must_contain=["2.16.840.1.113894"],
+            expected_type=str,
         )
 
 
 class TestBatchConversion:
     """Consolidated batch tests (original: 2 classes)."""
-    
-    @pytest.mark.parametrize("model_type", ["attribute", "objectclass"], ids=["attribute", "objectclass"])
+
+    @pytest.mark.parametrize(
+        "model_type", ["attribute", "objectclass"], ids=["attribute", "objectclass"]
+    )
     def test_batch_conversion(
         self,
         model_type: str,
@@ -1611,21 +1631,41 @@ class TestBatchConversion:
     ) -> None:
         """Test batch conversions."""
         if model_type == "attribute":
-            items = [conversion_constants.OID_ATTRIBUTE_ORCLGUID, conversion_constants.OID_ATTRIBUTE_ORCLDBNAME]
+            items = [
+                conversion_constants.OID_ATTRIBUTE_ORCLGUID,
+                conversion_constants.OID_ATTRIBUTE_ORCLDBNAME,
+            ]
             TestDeduplicationHelpers.helper_batch_convert_and_assert(
-                conversion_matrix, oid_quirk, oud_quirk, "attribute", items, expected_count=len(items),
+                conversion_matrix,
+                oid_quirk,
+                oud_quirk,
+                "attribute",
+                items,
+                expected_count=len(items),
             )
         else:
-            items = [conversion_constants.OID_OBJECTCLASS_ORCLCONTEXT, conversion_constants.OID_OBJECTCLASS_ORCLCONTAINER]
+            items = [
+                conversion_constants.OID_OBJECTCLASS_ORCLCONTEXT,
+                conversion_constants.OID_OBJECTCLASS_ORCLCONTAINER,
+            ]
             TestDeduplicationHelpers.helper_batch_convert_and_assert(
-                conversion_matrix, oid_quirk, oud_quirk, "objectClass", items, expected_count=len(items),
+                conversion_matrix,
+                oid_quirk,
+                oud_quirk,
+                "objectClass",
+                items,
+                expected_count=len(items),
             )
 
 
 class TestErrorHandling:
     """Consolidated error handling tests (original: 5+ classes)."""
-    
-    @pytest.mark.parametrize("error_type", ["invalid_source", "invalid_target"], ids=["invalid_source", "invalid_target"])
+
+    @pytest.mark.parametrize(
+        "error_type",
+        ["invalid_source", "invalid_target"],
+        ids=["invalid_source", "invalid_target"],
+    )
     def test_error_handling(
         self,
         error_type: str,
@@ -1646,7 +1686,7 @@ class TestErrorHandling:
 
 class TestConversionMatrixConstants:
     """Test conversion matrix constants."""
-    
+
     def test_constants_exist(self) -> None:
         """Test that constants are properly defined."""
         assert CONVERSION_TEST_CONSTANTS is not None

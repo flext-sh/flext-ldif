@@ -129,7 +129,9 @@ class TestOudDeviationMetadata:
             # Verify original_format_details is populated
             assert entry.metadata is not None
             assert len(entry.metadata.original_format_details) > 0
-            assert entry.metadata.original_format_details.get("_transform_source") == "oud"
+            assert (
+                entry.metadata.original_format_details.get("_transform_source") == "oud"
+            )
             assert "_dn_original" in entry.metadata.original_format_details
 
         elif test_type == OudMetadataTestType.DN_PRESERVED:

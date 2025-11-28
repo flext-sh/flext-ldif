@@ -22,30 +22,42 @@ Usage:
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from functools import wraps
-from typing import TypeVar
+from typing import ParamSpec, TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 
 logger = FlextLogger(__name__)
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class FlextLdifUtilitiesDecorators:
     """Decorators for LDIF server quirk metadata assignment."""
 
     @staticmethod
-    def _get_server_type_from_class(obj: object) -> str | None:
+    def _get_server_type_from_class(
+        obj: (
+            FlextLdifModels.Entry
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+            | str
+            | float
+        ),
+    ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal.
 
         Internal helper to reduce complexity in attach_parse_metadata.
 
         Args:
-            obj: Object instance to extract server type from
+            obj: Object instance to extract server type from (any type with __class__)
 
         Returns:
             Server type string or None if not found
@@ -62,7 +74,15 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: object,
+        result_value: (
+            FlextLdifModels.Entry
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+            | str
+            | float
+            | None
+        ),
         quirk_type: str,
         server_type: str | None,
     ) -> None:
@@ -85,12 +105,15 @@ class FlextLdifUtilitiesDecorators:
             return
 
         # Create metadata with extensions
+        extensions_dict = {
+            "server_type": server_type,
+            "parsed_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+        }
         metadata = FlextLdifModels.QuirkMetadata.create_for(
-            quirk_type=quirk_type,
-            extensions={
-                "server_type": server_type,
-                "parsed_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-            },
+            quirk_type=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None", quirk_type
+            ),
+            extensions=FlextLdifModels.DynamicMetadata(**extensions_dict),
         )
 
         # Attach metadata using type narrowing with isinstance check
@@ -137,9 +160,11 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object,
-                *args: object,
-                **kwargs: object,
+                self: FlextLdifProtocols.Quirks.SchemaProtocol
+                | FlextLdifProtocols.Quirks.AclProtocol
+                | FlextLdifProtocols.Quirks.EntryProtocol,
+                *args: str | float | bool | None,
+                **kwargs: str | float | bool | list[str] | None,
             ) -> FlextResult[T]:
                 """Call original function and attach metadata to result."""
                 result = func(self, *args, **kwargs)
@@ -193,9 +218,18 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object,
-                *args: object,
-                **kwargs: object,
+                self: FlextLdifProtocols.Quirks.SchemaProtocol
+                | FlextLdifProtocols.Quirks.AclProtocol
+                | FlextLdifProtocols.Quirks.EntryProtocol,
+                *args: (
+                    FlextLdifProtocols.Models.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Models.SchemaObjectClassProtocol
+                    | FlextLdifProtocols.Models.AclProtocol
+                    | FlextLdifProtocols.Models.EntryProtocol
+                    | Sequence[FlextLdifProtocols.Models.EntryProtocol]
+                    | str
+                ),
+                **kwargs: str | float | bool | list[str] | None,
             ) -> FlextResult[T]:
                 """Call original function - write methods don't modify inputs."""
                 # Write methods typically return strings, not models
@@ -231,9 +265,11 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object,
-                *args: object,
-                **kwargs: object,
+                self: FlextLdifProtocols.Quirks.SchemaProtocol
+                | FlextLdifProtocols.Quirks.AclProtocol
+                | FlextLdifProtocols.Quirks.EntryProtocol,
+                *args: str | float | bool | None,
+                **kwargs: str | float | bool | list[str] | None,
             ) -> FlextResult[T]:
                 """Execute function with automatic error handling."""
                 try:

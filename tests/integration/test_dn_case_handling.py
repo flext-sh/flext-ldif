@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdifModels
+from tests.fixtures.typing import GenericFieldsDict
 
 
 class TestDnCaseRegistry:
@@ -130,7 +131,7 @@ class TestDnCaseRegistry:
         """Test normalizing single DN field."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
-        data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
+        data: GenericFieldsDict = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -146,7 +147,7 @@ class TestDnCaseRegistry:
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("cn=user2,dc=com")
 
-        data: dict[str, object] = {
+        data: GenericFieldsDict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
@@ -161,7 +162,7 @@ class TestDnCaseRegistry:
         registry: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
+        data: GenericFieldsDict = {"dn": "cn=unknown,dc=com"}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success

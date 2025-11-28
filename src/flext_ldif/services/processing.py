@@ -218,7 +218,11 @@ class FlextLdifProcessing(
         def _transform_func(entry: FlextLdifModels.Entry) -> ProcessingResult:
             # Transform Entry to ProcessingResult with all metadata preserved
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
-            attrs_dict = dict(entry.attributes) if not isinstance(entry.attributes, dict) else entry.attributes
+            attrs_dict = (
+                dict(entry.attributes)
+                if not isinstance(entry.attributes, dict)
+                else entry.attributes
+            )
             return ProcessingResult(
                 dn=dn_str,
                 attributes=attrs_dict,
@@ -242,7 +246,11 @@ class FlextLdifProcessing(
             # Basic validation: entry has DN and attributes - required fields must be present
             # Return complete entry data for validation results
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
-            attrs_dict = dict(entry.attributes) if not isinstance(entry.attributes, dict) else entry.attributes
+            attrs_dict = (
+                dict(entry.attributes)
+                if not isinstance(entry.attributes, dict)
+                else entry.attributes
+            )
             return ProcessingResult(
                 dn=dn_str,
                 attributes=attrs_dict,

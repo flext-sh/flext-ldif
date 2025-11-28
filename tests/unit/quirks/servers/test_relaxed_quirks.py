@@ -72,7 +72,10 @@ class TestFlextLdifRelaxedQuirks:
             True,
         ),
         ParseScenario.UNICODE: ("( 1.2.3.4 NAME 'тест' 😀 )", True),
-        ParseScenario.LONG_DEFINITION: ("( 1.2.3.4 " + "NAME 'test' " * 100 + ")", True),
+        ParseScenario.LONG_DEFINITION: (
+            "( 1.2.3.4 " + "NAME 'test' " * 100 + ")",
+            True,
+        ),
     }
 
     OBJECTCLASS_DEFINITIONS: ClassVar[dict[ParseScenario, tuple[str, bool]]] = {
@@ -330,9 +333,10 @@ class TestFlextLdifRelaxedQuirks:
         assert result.is_success
         parsed = result.unwrap()
         assert parsed.metadata
-        assert (
-            parsed.metadata.extensions.get("original_format") is not None
-            or meta_keys.SCHEMA_SOURCE_SERVER in (parsed.metadata.extensions or {})
+        assert parsed.metadata.extensions.get(
+            "original_format"
+        ) is not None or meta_keys.SCHEMA_SOURCE_SERVER in (
+            parsed.metadata.extensions or {}
         )
 
     @pytest.mark.parametrize(

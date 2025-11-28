@@ -18,6 +18,7 @@ import pytest
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.novell import FlextLdifServersNovell
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
@@ -81,7 +82,7 @@ class EntryTestCase:
 
     scenario: EntryScenario
     entry_dn: str
-    attributes: dict[str, object]
+    attributes: GenericFieldsDict
     expected_can_handle: bool
 
 

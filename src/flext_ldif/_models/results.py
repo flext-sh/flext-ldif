@@ -9,16 +9,351 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import Union, overload
 
 from flext_core import FlextModels
 from flext_core.models import FlextModelsCollections
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.typings import FlextLdifTypes
+
+# Type alias for schema elements that can be stored in _SchemaElementMap
+# Uses only imported names to avoid circular imports with models.py
+type SchemaElement = (
+    FlextLdifModelsDomains.SchemaAttribute
+    | FlextLdifModelsDomains.SchemaObjectClass
+    | str
+    | int
+    | float
+    | bool
+    | None
+)
+
+# =============================================================================
+# MODULE-LEVEL MODELS (defined before container for forward reference support)
+# =============================================================================
+
+
+class _DynamicCounts(BaseModel):
+    """Dynamic counts model (replaces dict[str, int]).
+
+    Supports int counts for DistributionCounts, RejectionReasons, etc.
+    Consolidated base model to reduce code duplication.
+    Defined at module level to avoid forward reference issues in default_factory.
+
+    Example:
+        counts = _DynamicCounts()
+        counts.set_count("users", 10)
+        counts.increment("users", 5)
+        assert counts.get_count("users") == 15
+
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    def get_count(self, key: str, default: int = 0) -> int:
+        """Get count for a key."""
+        value = getattr(self, key, default)
+        return int(value) if isinstance(value, (int, float)) else default
+
+    def set_count(self, key: str, value: int) -> None:
+        """Set count for a key."""
+        setattr(self, key, value)
+
+    def increment(self, key: str, amount: int = 1) -> None:
+        """Increment count for a key."""
+        current = self.get_count(key)
+        setattr(self, key, current + amount)
+
+    def __len__(self) -> int:
+        """Return number of entries."""
+        extra = self.__pydantic_extra__
+        return len(extra) if extra is not None else 0
+
+    def keys(self) -> list[str]:
+        """Return all keys."""
+        extra = self.__pydantic_extra__
+        return list(extra.keys()) if extra is not None else []
+
+    def values(self) -> list[int]:
+        """Return all values."""
+        extra = self.__pydantic_extra__
+        if extra is None:
+            return []
+        return [int(v) if isinstance(v, (int, float)) else 0 for v in extra.values()]
+
+    def items(self) -> list[tuple[str, int]]:
+        """Return all key-value pairs."""
+        extra = self.__pydantic_extra__
+        if extra is None:
+            return []
+        return [
+            (k, int(v) if isinstance(v, (int, float)) else 0) for k, v in extra.items()
+        ]
+
+    def get(self, key: str, default: int = 0) -> int:
+        """Get count for a key with default."""
+        extra = self.__pydantic_extra__
+        if extra is not None and key in extra:
+            value = extra[key]
+            return int(value) if isinstance(value, (int, float)) else default
+        return default
+
+    def max_key(self) -> str | None:
+        """Get key with maximum value."""
+        extra = self.__pydantic_extra__
+        if extra is None or len(extra) == 0:
+            return None
+        return max(
+            extra,
+            key=lambda k: int(extra.get(k, 0))
+            if isinstance(extra.get(k, 0), (int, float))
+            else 0,
+        )
+
+    def to_items(self) -> list[tuple[str, int]]:
+        """Get all key-value pairs (alias for items() for compatibility)."""
+        return self.items()
+
+
+class _SchemaElementMap(FlextLdifModelsMetadata.DynamicMetadata):
+    """Base schema element mapping model (replaces dict[str, object]).
+
+    Consolidated base model for schema element mappings.
+    Uses DynamicMetadata to reduce code duplication.
+    Defined at module level to avoid forward reference issues.
+    """
+
+    def __iter__(self) -> Iterator[str]:
+        """Iterate over keys (dict-like behavior)."""
+        extra = self.__pydantic_extra__
+        if extra is not None:
+            yield from extra.keys()
+
+    def get_element(self, name: str, element_type: type) -> SchemaElement | None:
+        """Get element by name with type check.
+
+        Returns element if it matches the specified type, None otherwise.
+        """
+        value = self.get(name)
+        if isinstance(value, element_type):
+            return value
+        return None
+
+    def set_element(self, name: str, element: FlextLdifTypes.MetadataValue) -> None:
+        """Set element by name.
+
+        Accepts schema elements (SchemaAttribute, SchemaObjectClass) or
+        primitive types (str, int, float, bool, None).
+        Uses FlextLdifTypes.MetadataValue to avoid circular import with models.py.
+        """
+        setattr(self, name, element)
+
+
+class _SchemaAttributeMap(_SchemaElementMap):
+    """Schema attribute mapping model (replaces dict[str, object]).
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    def get_attribute(self, name: str) -> FlextLdifModelsDomains.SchemaAttribute | None:
+        """Get attribute by name."""
+        value = self.get(name)
+        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
+            return value
+        return None
+
+    def set_attribute(
+        self, name: str, attr: FlextLdifModelsDomains.SchemaAttribute
+    ) -> None:
+        """Set attribute by name."""
+        setattr(self, name, attr)
+
+    def get_all_attributes(self) -> list[FlextLdifModelsDomains.SchemaAttribute]:
+        """Return all attributes as list."""
+        attrs: list[FlextLdifModelsDomains.SchemaAttribute] = []
+        for key in self.keys():
+            attr = self.get_attribute(key)
+            if attr is not None:
+                attrs.append(attr)
+        return attrs
+
+
+class _SchemaObjectClassMap(_SchemaElementMap):
+    """Schema object class mapping model (replaces dict[str, object]).
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    def get_object_class(
+        self, name: str
+    ) -> FlextLdifModelsDomains.SchemaObjectClass | None:
+        """Get object class by name."""
+        value = self.get(name)
+        if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass):
+            return value
+        return None
+
+    def set_object_class(
+        self, name: str, obj_class: FlextLdifModelsDomains.SchemaObjectClass
+    ) -> None:
+        """Set object class by name."""
+        setattr(self, name, obj_class)
+
+    def get_all_object_classes(self) -> list[FlextLdifModelsDomains.SchemaObjectClass]:
+        """Return all object classes as list."""
+        ocs: list[FlextLdifModelsDomains.SchemaObjectClass] = []
+        for key in self.keys():
+            oc = self.get_object_class(key)
+            if oc is not None:
+                ocs.append(oc)
+        return ocs
+
+
+class _SchemaContent(BaseModel):
+    """Schema content model (replaces dict returns).
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    attributes: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
+        default_factory=list
+    )
+    object_classes: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
+        default_factory=list
+    )
+
+
+class _CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
+    """Category to file path mapping model (replaces dict[str, str]).
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    def get_path(self, category: str) -> str | None:
+        """Get path for a category."""
+        value = self.get(category)
+        return str(value) if value is not None else None
+
+    def set_path(self, category: str, path: str) -> None:
+        """Set path for a category."""
+        self[category] = path
+
+    def get_paths(self) -> list[str]:
+        """Return all paths as list."""
+        return [str(v) for v in self.values()]
+
+    def get_path_items(self) -> list[tuple[str, str]]:
+        """Return all category-path pairs as list."""
+        return [(k, str(v)) for k, v in self.items()]
+
+
+class _ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
+    """Configuration settings model (replaces dict[str, str | int | bool]).
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    def get_setting(self, key: str) -> str | int | bool | None:
+        """Get a setting value."""
+        value = self.get(key)
+        if isinstance(value, (str, int, bool)):
+            return value
+        return None
+
+    def set_setting(self, key: str, value: str | int | bool) -> None:
+        """Set a setting value."""
+        self[key] = value
+
+    def get_setting_items(self) -> list[tuple[str, str | int | bool]]:
+        """Return all setting pairs as list."""
+        return [(k, v) for k, v in self.items() if isinstance(v, (str, int, bool))]
+
+
+class _BooleanFlags(BaseModel):
+    """Boolean flags model (replaces dict[str, bool]).
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    def get_flag(self, key: str, *, default: bool = False) -> bool:
+        """Get flag value for a key."""
+        value = getattr(self, key, default)
+        return bool(value) if isinstance(value, (bool, int)) else default
+
+    def set_flag(self, key: str, value: bool) -> None:
+        """Set flag value for a key."""
+        setattr(self, key, value)
+
+    def __len__(self) -> int:
+        """Return number of flags."""
+        extra = self.__pydantic_extra__
+        return len(extra) if extra is not None else 0
+
+    def keys(self) -> list[str]:
+        """Return all keys."""
+        extra = self.__pydantic_extra__
+        return list(extra.keys()) if extra is not None else []
+
+    def items(self) -> list[tuple[str, bool]]:
+        """Return all key-value pairs."""
+        extra = self.__pydantic_extra__
+        if extra is None:
+            return []
+        return [(k, bool(v)) for k, v in extra.items()]
+
+
+class _FlexibleCategories(
+    FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
+):
+    """Flexible entry categorization with dynamic categories.
+
+    Replaces dict[str, list[Entry]] pattern with type-safe model.
+    Supports arbitrary category names (schema, hierarchy, users, groups, acl, rejected, etc.)
+
+    Defined at module level to avoid forward reference issues in default_factory.
+    """
+
+    model_config = ConfigDict(extra="allow", frozen=False)
+
+    __hash__ = None  # Unhashable: mutable with frozen=False
+
+    def __eq__(
+        self,
+        other: _FlexibleCategories | dict[str, bool] | None,
+    ) -> bool:
+        """Compare with dict or other Categories instance."""
+        if isinstance(other, _FlexibleCategories):
+            return self.categories == other.categories
+        if isinstance(other, FlextModelsCollections.Categories):
+            return self.categories == other.categories
+        # Allow comparison with dict for backward compatibility
+        if isinstance(other, dict):
+            return self.categories == other
+        return NotImplemented
+
+
+# Type alias for dict input to _FlexibleCategories validator
+type _DynCategoriesInput = dict[str, list[FlextLdifModelsDomains.Entry]]
+
+
+def _statistics_factory() -> FlextLdifModelsResults.Statistics:
+    """Factory function for default Statistics (avoids PLW0108 lambda warning)."""
+    return globals()["FlextLdifModelsResults"].Statistics()
+
+
+# =============================================================================
+# CONTAINER CLASS
+# =============================================================================
 
 
 class FlextLdifModelsResults:
@@ -64,18 +399,6 @@ class FlextLdifModelsResults:
         parse_errors: int = Field(default=0)
         entries_written: int = Field(default=0)
 
-    class SchemaContent(BaseModel):
-        """Schema content model (replaces dict returns)."""
-
-        model_config = ConfigDict(frozen=True)
-
-        attributes: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
-            default_factory=list
-        )
-        object_classes: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
-            default_factory=list
-        )
-
     class MigrationSummary(BaseModel):
         """Migration summary model (replaces dict returns)."""
 
@@ -88,132 +411,6 @@ class FlextLdifModelsResults:
         output_files: int = Field(default=0)
         is_empty: bool = Field(default=True)
 
-    class RejectionReasons(BaseModel):
-        """Rejection reasons model (replaces dict[str, int])."""
-
-        model_config = ConfigDict(extra="allow")
-
-        def get_count(self, reason: str) -> int:
-            """Get count for a rejection reason."""
-            return int(getattr(self, reason, 0))
-
-        def increment(self, reason: str) -> None:
-            """Increment count for a rejection reason."""
-            current = self.get_count(reason)
-            setattr(self, reason, current + 1)
-
-        def to_items(self) -> list[tuple[str, int]]:
-            """Get all reason-count pairs."""
-            extra = self.__pydantic_extra__
-            if extra is None:
-                return []
-            return [(k, int(v)) for k, v in extra.items() if isinstance(v, int)]
-
-    class DistributionCounts(BaseModel):
-        """Dynamic distribution counts model (replaces dict[str, int]).
-
-        Used for objectClass distributions, category counts, etc.
-        """
-
-        model_config = ConfigDict(extra="allow")
-
-        def get_count(self, key: str) -> int:
-            """Get count for a key."""
-            return int(getattr(self, key, 0))
-
-        def set_count(self, key: str, value: int) -> None:
-            """Set count for a key."""
-            setattr(self, key, value)
-
-        def increment(self, key: str, amount: int = 1) -> None:
-            """Increment count for a key."""
-            current = self.get_count(key)
-            setattr(self, key, current + amount)
-
-        def __len__(self) -> int:
-            """Return number of entries."""
-            extra = self.__pydantic_extra__
-            return len(extra) if extra is not None else 0
-
-        def keys(self) -> list[str]:
-            """Return all keys."""
-            extra = self.__pydantic_extra__
-            return list(extra.keys()) if extra is not None else []
-
-        def values(self) -> list[int]:
-            """Return all values."""
-            extra = self.__pydantic_extra__
-            return (
-                [int(v) for v in extra.values()]
-                if extra is not None
-                else []
-            )
-
-        def items(self) -> list[tuple[str, int]]:
-            """Return all key-value pairs."""
-            extra = self.__pydantic_extra__
-            return (
-                [(k, int(v)) for k, v in extra.items()]
-                if extra is not None
-                else []
-            )
-
-        def get(self, key: str, default: int = 0) -> int:
-            """Get count for a key with default."""
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                return int(extra[key])
-            return default
-
-        def max_key(self) -> str | None:
-            """Get key with maximum value."""
-            extra = self.__pydantic_extra__
-            if extra is None or len(extra) == 0:
-                return None
-            return max(extra, key=lambda k: int(extra.get(k, 0)))
-
-    class CategoryPaths(BaseModel):
-        """Category to file path mapping model (replaces dict[str, str])."""
-
-        model_config = ConfigDict(extra="allow")
-
-        def get_path(self, category: str) -> str | None:
-            """Get path for a category."""
-            value = getattr(self, category, None)
-            return str(value) if value is not None else None
-
-        def set_path(self, category: str, path: str) -> None:
-            """Set path for a category."""
-            setattr(self, category, path)
-
-        def __len__(self) -> int:
-            """Return number of entries."""
-            extra = self.__pydantic_extra__
-            return len(extra) if extra is not None else 0
-
-        def keys(self) -> list[str]:
-            """Return all category keys."""
-            extra = self.__pydantic_extra__
-            return list(extra.keys()) if extra is not None else []
-
-        def values(self) -> list[str]:
-            """Return all paths."""
-            extra = self.__pydantic_extra__
-            return (
-                [str(v) for v in extra.values()]
-                if extra is not None
-                else []
-            )
-
-        def items(self) -> list[tuple[str, str]]:
-            """Return all category-path pairs."""
-            extra = self.__pydantic_extra__
-            return (
-                [(k, str(v)) for k, v in extra.items()]
-                if extra is not None
-                else []
-            )
-
     class CategorizedEntries(BaseModel):
         """Categorized entries model (replaces dict[str, list[Entry]]).
 
@@ -222,24 +419,14 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        schema_entries: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list
-        )
+        schema_entries: list[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
         hierarchy_entries: list[FlextLdifModelsDomains.Entry] = Field(
             default_factory=list
         )
-        user_entries: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list
-        )
-        group_entries: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list
-        )
-        acl_entries: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list
-        )
-        data_entries: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list
-        )
+        user_entries: list[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
+        group_entries: list[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
+        acl_entries: list[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
+        data_entries: list[FlextLdifModelsDomains.Entry] = Field(default_factory=list)
         rejected_entries: list[FlextLdifModelsDomains.Entry] = Field(
             default_factory=list
         )
@@ -269,9 +456,9 @@ class FlextLdifModelsResults:
             all_entries.extend(self.rejected_entries)
             return all_entries
 
-        def category_counts(self) -> FlextLdifModelsResults.DistributionCounts:
+        def category_counts(self) -> _DynamicCounts:
             """Get counts per category."""
-            counts = FlextLdifModelsResults.DistributionCounts()
+            counts = _DynamicCounts()
             counts.set_count("schema", len(self.schema_entries))
             counts.set_count("hierarchy", len(self.hierarchy_entries))
             counts.set_count("users", len(self.user_entries))
@@ -281,34 +468,6 @@ class FlextLdifModelsResults:
             counts.set_count("rejected", len(self.rejected_entries))
             return counts
 
-    class ConfigSettings(BaseModel):
-        """Configuration settings model (replaces dict[str, str | int | bool])."""
-
-        model_config = ConfigDict(extra="allow")
-
-        def get_setting(self, key: str) -> str | int | bool | None:
-            """Get a setting value."""
-            return getattr(self, key, None)
-
-        def set_setting(self, key: str, value: str | int | bool) -> None:
-            """Set a setting value."""
-            setattr(self, key, value)
-
-        def __len__(self) -> int:
-            """Return number of settings."""
-            extra = self.__pydantic_extra__
-            return len(extra) if extra is not None else 0
-
-        def keys(self) -> list[str]:
-            """Return all setting keys."""
-            extra = self.__pydantic_extra__
-            return list(extra.keys()) if extra is not None else []
-
-        def items(self) -> list[tuple[str, str | int | bool]]:
-            """Return all setting pairs."""
-            extra = self.__pydantic_extra__
-            return list(extra.items()) if extra is not None else []
-
     class SchemaSummary(BaseModel):
         """Schema summary model (replaces dict returns in schema methods)."""
 
@@ -316,74 +475,10 @@ class FlextLdifModelsResults:
 
         attributes_count: int = Field(default=0)
         object_classes_count: int = Field(default=0)
-        server_type: str = Field(default="generic")
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            default="generic"
+        )
         entry_count: int = Field(default=0)
-
-    class SchemaAttributeMap(BaseModel):
-        """Schema attribute mapping model (replaces dict[str, object]).
-
-        Stores schema attributes keyed by name.
-        """
-
-        model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
-
-        def get_attribute(
-            self, name: str
-        ) -> FlextLdifModelsDomains.SchemaAttribute | None:
-            """Get attribute by name."""
-            value = getattr(self, name, None)
-            if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
-                return value
-            return None
-
-        def set_attribute(
-            self, name: str, attr: FlextLdifModelsDomains.SchemaAttribute
-        ) -> None:
-            """Set attribute by name."""
-            setattr(self, name, attr)
-
-        def __len__(self) -> int:
-            """Return number of attributes."""
-            extra = self.__pydantic_extra__
-            return len(extra) if extra is not None else 0
-
-        def keys(self) -> list[str]:
-            """Return all attribute names."""
-            extra = self.__pydantic_extra__
-            return list(extra.keys()) if extra is not None else []
-
-    class SchemaObjectClassMap(BaseModel):
-        """Schema object class mapping model (replaces dict[str, object]).
-
-        Stores schema object classes keyed by name.
-        """
-
-        model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
-
-        def get_object_class(
-            self, name: str
-        ) -> FlextLdifModelsDomains.SchemaObjectClass | None:
-            """Get object class by name."""
-            value = getattr(self, name, None)
-            if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass):
-                return value
-            return None
-
-        def set_object_class(
-            self, name: str, obj_class: FlextLdifModelsDomains.SchemaObjectClass
-        ) -> None:
-            """Set object class by name."""
-            setattr(self, name, obj_class)
-
-        def __len__(self) -> int:
-            """Return number of object classes."""
-            extra = self.__pydantic_extra__
-            return len(extra) if extra is not None else 0
-
-        def keys(self) -> list[str]:
-            """Return all object class names."""
-            extra = self.__pydantic_extra__
-            return list(extra.keys()) if extra is not None else []
 
     class LdifValidationResult(FlextModels.ArbitraryTypesModel):
         """Result of LDIF validation operations."""
@@ -436,8 +531,8 @@ class FlextLdifModelsResults:
             default=0,
             description="Total number of entries analyzed",
         )
-        object_class_distribution: FlextLdifModelsResults.DistributionCounts = Field(
-            default_factory=lambda: FlextLdifModelsResults.DistributionCounts(),
+        object_class_distribution: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Distribution of object classes",
         )
         patterns_detected: list[str] = Field(
@@ -492,18 +587,43 @@ class FlextLdifModelsResults:
             validate_default=True,
         )
 
-        entries_by_category: dict[str, list[FlextLdifModelsDomains.Entry]] = Field(
-            default_factory=dict,
+        entries_by_category: _FlexibleCategories = Field(
+            default_factory=_FlexibleCategories,
             description="Entries organized by category",
         )
         statistics: FlextLdifModelsResults.Statistics | None = Field(
             default=None,
             description="Pipeline execution statistics",
         )
-        file_paths: dict[str, str] = Field(
-            default_factory=dict,
+        file_paths: _CategoryPaths = Field(
+            default_factory=_CategoryPaths,
             description="Output file paths for each category",
         )
+
+        @field_validator("entries_by_category", mode="before")
+        @classmethod
+        def _convert_dict_to_categories(
+            cls,
+            value: _FlexibleCategories
+            | FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry]
+            | _DynCategoriesInput,
+        ) -> _FlexibleCategories:
+            """Convert dict to _FlexibleCategories for backward compatibility."""
+            if isinstance(value, _FlexibleCategories):
+                return value
+            if isinstance(value, FlextModelsCollections.Categories):
+                # Convert from base Categories to _FlexibleCategories
+                result = _FlexibleCategories()
+                for cat, entries in value.items():
+                    result.add_entries(cat, list(entries))
+                return result
+            if isinstance(value, dict):
+                # Convert dict to _FlexibleCategories
+                result = _FlexibleCategories()
+                for cat, entries in value.items():
+                    result.add_entries(str(cat), list(entries))
+                return result
+            return value
 
         def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             """Flatten all categories into single list.
@@ -527,6 +647,16 @@ class FlextLdifModelsResults:
             """
             return self.get_all_entries()
 
+        @property
+        def entries(self) -> list[FlextLdifModelsDomains.Entry]:
+            """Property to satisfy HasEntriesProtocol.
+
+            Returns:
+                List of all entries from all categories combined.
+
+            """
+            return self.get_all_entries()
+
         def __len__(self) -> int:
             """Return the number of entries (makes EntryResult behave like a list)."""
             return len(self.get_all_entries())
@@ -541,10 +671,10 @@ class FlextLdifModelsResults:
             return iter(self.get_all_entries())
 
         @overload
-        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
+        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
 
         @overload
-        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
+        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
 
         def __getitem__(
             self,
@@ -580,16 +710,16 @@ class FlextLdifModelsResults:
         @classmethod
         def from_entries(
             cls,
-            entries: list[FlextLdifModelsDomains.Entry],
+            entries: Sequence[FlextLdifModelsDomains.Entry],
             category: str = "all",
             statistics: FlextLdifModelsResults.Statistics | None = None,
         ) -> FlextLdifModelsResults.EntryResult:
             """Create EntryResult from list of entries.
 
             Args:
-                entries: List of Entry objects (domain Entry type)
-                        Public Entry types ("FlextLdifModels.Entry") inherit from domain Entry
-                        and are compatible, but lists are invariant so caller must convert.
+                entries: Sequence of Entry objects (domain Entry type or subtypes)
+                        Uses Sequence for covariance, allowing FlextLdifModels.Entry
+                        which inherits from domain Entry.
                 category: Category name for the entries (default: "all")
                 statistics: Optional statistics object (creates default if None)
 
@@ -597,12 +727,13 @@ class FlextLdifModelsResults:
                 New EntryResult instance.
 
             """
-            # Use class reference to avoid type errors
+            # Convert Sequence to list for storage
+            entry_list = list(entries)
             stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
-                total=len(entries),
+                total=len(entry_list),
             )
             return cls(
-                entries_by_category={category: entries},
+                entries_by_category={category: entry_list},
                 statistics=stats,
             )
 
@@ -637,17 +768,14 @@ class FlextLdifModelsResults:
                 New EntryResult with merged data.
 
             """
-            # Merge categories - concatenate entries for duplicate categories
-            merged_categories: dict[str, list[FlextLdifModelsDomains.Entry]] = {
-                **self.entries_by_category,
-            }
+            # Merge categories - use _FlexibleCategories
+            merged_categories = _FlexibleCategories()
+            # Add entries from self
+            for cat, entries in self.entries_by_category.items():
+                merged_categories.add_entries(cat, list(entries))
+            # Add entries from other (appends to existing categories)
             for cat, entries in other.entries_by_category.items():
-                if cat in merged_categories:
-                    merged_categories[cat] = list(merged_categories[cat]) + list(
-                        entries,
-                    )
-                else:
-                    merged_categories[cat] = list(entries)
+                merged_categories.add_entries(cat, list(entries))
 
             # Merge statistics (sum counters)
             # Handle None statistics by creating defaults
@@ -665,8 +793,10 @@ class FlextLdifModelsResults:
                 },
             )
 
-            # Merge file paths
-            merged_paths = {**self.file_paths, **other.file_paths}
+            # Merge file paths - use _CategoryPaths
+            merged_paths = _CategoryPaths()
+            merged_paths.update(self.file_paths.to_dict())
+            merged_paths.update(other.file_paths.to_dict())
 
             return self.__class__(
                 entries_by_category=merged_categories,
@@ -681,17 +811,9 @@ class FlextLdifModelsResults:
         @property
         def events(
             self,
-        ) -> list[Union[
-            FlextLdifModelsEvents.ParseEvent,
-            FlextLdifModelsEvents.FilterEvent,
-            FlextLdifModelsEvents.CategoryEvent,
-            FlextLdifModelsEvents.WriteEvent,
-            FlextLdifModelsEvents.AclEvent,
-            FlextLdifModelsEvents.DnEvent,
-            FlextLdifModelsEvents.MigrationEvent,
-            FlextLdifModelsEvents.ConversionEvent,
-            FlextLdifModelsEvents.SchemaEvent,
-        ]]:
+        ) -> list[
+            FlextLdifModelsEvents.ParseEvent | FlextLdifModelsEvents.FilterEvent | FlextLdifModelsEvents.CategoryEvent | FlextLdifModelsEvents.WriteEvent | FlextLdifModelsEvents.AclEvent | FlextLdifModelsEvents.DnEvent | FlextLdifModelsEvents.MigrationEvent | FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.SchemaEvent
+        ]:
             """Access domain events from statistics.
 
             Returns empty list if statistics is None or has no events.
@@ -756,17 +878,9 @@ class FlextLdifModelsResults:
         def get_events_by_type(
             self,
             event_type: type,
-        ) -> list[Union[
-            FlextLdifModelsEvents.ParseEvent,
-            FlextLdifModelsEvents.FilterEvent,
-            FlextLdifModelsEvents.CategoryEvent,
-            FlextLdifModelsEvents.WriteEvent,
-            FlextLdifModelsEvents.AclEvent,
-            FlextLdifModelsEvents.DnEvent,
-            FlextLdifModelsEvents.MigrationEvent,
-            FlextLdifModelsEvents.ConversionEvent,
-            FlextLdifModelsEvents.SchemaEvent,
-        ]]:
+        ) -> list[
+            FlextLdifModelsEvents.ParseEvent | FlextLdifModelsEvents.FilterEvent | FlextLdifModelsEvents.CategoryEvent | FlextLdifModelsEvents.WriteEvent | FlextLdifModelsEvents.AclEvent | FlextLdifModelsEvents.DnEvent | FlextLdifModelsEvents.MigrationEvent | FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.SchemaEvent
+        ]:
             """Get events filtered by specific event type.
 
             Args:
@@ -895,7 +1009,9 @@ class FlextLdifModelsResults:
             ge=0,
             description="Parse errors encountered",
         )
-        detected_server_type: str | None = Field(
+        detected_server_type: (
+            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
+        ) = Field(
             default=None,
             description="Auto-detected LDAP server type",
         )
@@ -915,7 +1031,7 @@ class FlextLdifModelsResults:
             ge=0,
             description="Written file size",
         )
-        encoding: str = Field(
+        encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
             default="utf-8",
             description="File encoding used",
         )
@@ -926,13 +1042,13 @@ class FlextLdifModelsResults:
             ge=0.0,
             description="Processing time in seconds",
         )
-        rejection_reasons: dict[str, int] = Field(
-            default_factory=dict,
+        rejection_reasons: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Map of rejection reason to count",
         )
 
         # DOMAIN EVENTS
-        events: list[object] = Field(
+        events: list[FlextLdifModelsResults.EventType] = Field(
             default_factory=list,
             description="Domain events recorded during processing",
         )
@@ -959,29 +1075,43 @@ class FlextLdifModelsResults:
             return round((self.rejected_entries / self.total_entries) * 100, 2)
 
         @computed_field
-        def summary(self) -> dict[str, str | int]:
+        def summary(self) -> FlextLdifModelsResults.StatisticsSummary:
             """Get comprehensive processing summary."""
-            return {
-                "total_entries": self.total_entries,
-                "processed_entries": self.processed_entries,
-                "failed_entries": self.failed_entries,
-                "rejected_entries": self.rejected_entries,
-                "success_rate": self.success_rate,
-                "failure_rate": self.failure_rate,
-                "rejection_rate": self.rejection_rate,
-                "schema_entries": self.schema_entries,
-                "data_entries": self.data_entries,
-                "hierarchy_entries": self.hierarchy_entries,
-                "user_entries": self.user_entries,
-                "group_entries": self.group_entries,
-                "acl_entries": self.acl_entries,
-                "acls_extracted": self.acls_extracted,
-                "acls_failed": self.acls_failed,
-                "parse_errors": self.parse_errors,
-                "entries_written": self.entries_written,
-                "processing_duration": self.processing_duration,
-                "event_count": len(self.events),
-            }
+            # Calculate rates inline to avoid computed_field Callable typing issues
+            success_rate_value = (
+                round((self.processed_entries / self.total_entries) * 100, 2)
+                if self.total_entries > 0
+                else 0.0
+            )
+            failure_rate_value = (
+                round((self.failed_entries / self.total_entries) * 100, 2)
+                if self.total_entries > 0
+                else 0.0
+            )
+            rejection_rate_value = (
+                round((self.rejected_entries / self.total_entries) * 100, 2)
+                if self.total_entries > 0
+                else 0.0
+            )
+            return FlextLdifModelsResults.StatisticsSummary(
+                total_entries=self.total_entries,
+                processed_entries=self.processed_entries,
+                failed_entries=self.failed_entries,
+                rejected_entries=self.rejected_entries,
+                success_rate=success_rate_value,
+                failure_rate=failure_rate_value,
+                rejection_rate=rejection_rate_value,
+                schema_entries=self.schema_entries,
+                data_entries=self.data_entries,
+                hierarchy_entries=self.hierarchy_entries,
+                user_entries=self.user_entries,
+                group_entries=self.group_entries,
+                acl_entries=self.acl_entries,
+                acls_extracted=self.acls_extracted,
+                acls_failed=self.acls_failed,
+                parse_errors=self.parse_errors,
+                entries_written=self.entries_written,
+            )
 
         @classmethod
         def for_pipeline(
@@ -1002,7 +1132,7 @@ class FlextLdifModelsResults:
             schema_attributes: int = 0,
             schema_objectclasses: int = 0,
             processing_duration: float = 0.0,
-            rejection_reasons: dict[str, int] | None = None,
+            rejection_reasons: _DynamicCounts | None = None,
         ) -> FlextLdifModelsResults.Statistics:
             """Create statistics for pipeline operations."""
             return cls(
@@ -1023,7 +1153,9 @@ class FlextLdifModelsResults:
                 schema_objectclasses=schema_objectclasses,
                 processing_duration=processing_duration,
                 rejection_reasons=(
-                    rejection_reasons if rejection_reasons is not None else {}
+                    rejection_reasons
+                    if rejection_reasons is not None
+                    else _DynamicCounts()
                 ),
             )
 
@@ -1034,7 +1166,8 @@ class FlextLdifModelsResults:
             schema: int = 0,
             data: int = 0,
             errors: int = 0,
-            detected_type: str | None = None,
+            detected_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+            | None = None,
         ) -> FlextLdifModelsResults.Statistics:
             """Create statistics for parsing operations."""
             return cls(
@@ -1053,7 +1186,7 @@ class FlextLdifModelsResults:
             entries_written: int,
             output_file: str | None = None,
             file_size_bytes: int = 0,
-            encoding: str = "utf-8",
+            encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = "utf-8",
             processing_duration: float = 0.0,
         ) -> FlextLdifModelsResults.Statistics:
             """Create statistics for writing operations."""
@@ -1181,15 +1314,15 @@ class FlextLdifModelsResults:
             str_strip_whitespace=True,
         )
 
-        attributes: dict[str, object] = Field(
-            default_factory=dict,
+        attributes: _SchemaAttributeMap = Field(
+            default_factory=_SchemaAttributeMap,
             description="Attribute definitions keyed by attribute name",
         )
-        object_classes: dict[str, object] = Field(
-            default_factory=dict,
+        object_classes: _SchemaObjectClassMap = Field(
+            default_factory=_SchemaObjectClassMap,
             description="Object class definitions keyed by class name",
         )
-        server_type: str = Field(
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
             default="generic",
             min_length=1,
             description="Target LDAP server type (generic, oid, oud, openldap, etc.)",
@@ -1233,32 +1366,44 @@ class FlextLdifModelsResults:
             return attrs_count == 0 and obj_classes_count == 0
 
         @computed_field
-        def schema_dict(self) -> dict[str, dict[str, str | bool | list[str]]]:
+        def schema_content(self) -> _SchemaContent:
             """Complete schema containing both attributes and object classes.
 
             Returns:
-                Dict with 'attributes' and 'object_classes' keys
+                SchemaContent model with attributes and object_classes
 
             """
-            return {
-                "attributes": self.attributes,
-                "object_classes": self.object_classes,
-            }
+            attrs: list[FlextLdifModelsDomains.SchemaAttribute] = []
+            for name in self.attributes:
+                attr = self.attributes.get_attribute(name)
+                if attr is not None:
+                    attrs.append(attr)
+
+            ocs: list[FlextLdifModelsDomains.SchemaObjectClass] = []
+            for name in self.object_classes:
+                oc = self.object_classes.get_object_class(name)
+                if oc is not None:
+                    ocs.append(oc)
+
+            return _SchemaContent(
+                attributes=attrs,
+                object_classes=ocs,
+            )
 
         @computed_field
-        def schema_summary(self) -> dict[str, int | str]:
+        def schema_summary(self) -> FlextLdifModelsResults.SchemaSummary:
             """Summary of schema contents.
 
             Returns:
-                Dict with counts of attributes, object classes, server type, and entries
+                SchemaSummary model with counts and server type
 
             """
-            return {
-                "attributes": self.total_attributes(),
-                "object_classes": self.total_object_classes(),
-                "server_type": self.server_type,
-                "entry_count": self.entry_count,
-            }
+            return FlextLdifModelsResults.SchemaSummary(
+                attributes_count=len(self.attributes),
+                object_classes_count=len(self.object_classes),
+                server_type=self.server_type,
+                entry_count=self.entry_count,
+            )
 
     class MigrationPipelineResult(BaseModel):
         """Result of migration pipeline execution.
@@ -1280,17 +1425,17 @@ class FlextLdifModelsResults:
             validate_default=True,
         )
 
-        migrated_schema: dict[str, object] = Field(
-            default_factory=dict,
+        migrated_schema: _SchemaContent = Field(
+            default_factory=_SchemaContent,
             description="Migrated schema data",
         )
-        entries: list[object] = Field(
+        entries: list[FlextLdifModelsDomains.Entry] = Field(
             default_factory=list,
-            description="List of migrated directory entries (Entry objects or dicts)",
+            description="List of migrated directory entries",
         )
-        stats: dict[str, int] | FlextLdifModelsResults.Statistics = Field(
-            default_factory=dict,
-            description="Migration statistics and metrics (Statistics or dict)",
+        stats: FlextLdifModelsResults.Statistics = Field(
+            default_factory=_statistics_factory,
+            description="Migration statistics and metrics",
         )
         output_files: list[str] = Field(
             default_factory=list,
@@ -1305,35 +1450,10 @@ class FlextLdifModelsResults:
                 True if no schema and no entries were migrated
 
             """
-            # Compute directly instead of accessing computed field properties
-            # stats can be dict or MigrationStatistics object
-            if isinstance(self.stats, dict):
-                stats_dict = self.stats
-                total_schema_attrs = stats_dict.get("total_schema_attributes", 0)
-                total_schema_ocs = stats_dict.get("total_schema_objectclasses", 0)
-                total_entries_val = stats_dict.get("total_entries", 0)
-                # Ensure values are int for comparison
-                has_schema = (
-                    int(total_schema_attrs)
-                    if isinstance(total_schema_attrs, (int, str))
-                    else 0
-                ) > 0 or (
-                    int(total_schema_ocs)
-                    if isinstance(total_schema_ocs, (int, str))
-                    else 0
-                ) > 0
-                has_entries = (
-                    int(total_entries_val)
-                    if isinstance(total_entries_val, (int, str))
-                    else 0
-                ) > 0
-            else:
-                # Statistics object with attributes
-                has_schema = (
-                    getattr(self.stats, "schema_attributes", 0) > 0
-                    or getattr(self.stats, "schema_objectclasses", 0) > 0
-                )
-                has_entries = getattr(self.stats, "total_entries", 0) > 0
+            has_schema = (
+                self.stats.schema_attributes > 0 or self.stats.schema_objectclasses > 0
+            )
+            has_entries = self.stats.total_entries > 0
             return not has_schema and not has_entries
 
         @computed_field
@@ -1357,20 +1477,67 @@ class FlextLdifModelsResults:
             return len(self.output_files)
 
         @computed_field
-        def migration_summary(self) -> dict[str, str | int | bool]:
+        def migration_summary(self) -> FlextLdifModelsResults.MigrationSummary:
             """Comprehensive migration result summary.
 
             Returns:
-                Dict with statistics, entry count, and output file count
+                MigrationSummary with statistics, entry count, and output file count
 
             """
-            stats_summary = getattr(self.stats, "statistics_summary", self.stats)
-            return {
-                "statistics": stats_summary,
-                "entry_count": self.entry_count,
-                "output_files": self.output_file_count,
-                "is_empty": self.is_empty,
-            }
+            # Compute values directly to avoid computed_field Callable typing issues
+            entry_count_value = len(self.entries)
+            output_file_count_value = len(self.output_files)
+            is_empty_value = not (
+                self.stats.schema_attributes > 0
+                or self.stats.schema_objectclasses > 0
+                or self.stats.total_entries > 0
+            )
+            # Build StatisticsSummary directly instead of using computed property
+            stats_summary = FlextLdifModelsResults.StatisticsSummary(
+                total_entries=self.stats.total_entries,
+                processed_entries=self.stats.processed_entries,
+                failed_entries=self.stats.failed_entries,
+                rejected_entries=self.stats.rejected_entries,
+                success_rate=(
+                    round(
+                        (self.stats.processed_entries / self.stats.total_entries) * 100,
+                        2,
+                    )
+                    if self.stats.total_entries > 0
+                    else 0.0
+                ),
+                failure_rate=(
+                    round(
+                        (self.stats.failed_entries / self.stats.total_entries) * 100, 2
+                    )
+                    if self.stats.total_entries > 0
+                    else 0.0
+                ),
+                rejection_rate=(
+                    round(
+                        (self.stats.rejected_entries / self.stats.total_entries) * 100,
+                        2,
+                    )
+                    if self.stats.total_entries > 0
+                    else 0.0
+                ),
+                schema_entries=self.stats.schema_entries,
+                data_entries=self.stats.data_entries,
+                hierarchy_entries=self.stats.hierarchy_entries,
+                user_entries=self.stats.user_entries,
+                group_entries=self.stats.group_entries,
+                acl_entries=self.stats.acl_entries,
+                acls_extracted=self.stats.acls_extracted,
+                acls_failed=self.stats.acls_failed,
+                parse_errors=self.stats.parse_errors,
+                entries_written=self.stats.entries_written,
+            )
+            return FlextLdifModelsResults.MigrationSummary(
+                statistics=stats_summary,
+                entry_count=entry_count_value,
+                output_files=output_file_count_value,
+                is_empty=is_empty_value,
+            )
 
     class ClientStatus(FlextModels.Value):
         """Client status information."""
@@ -1385,8 +1552,8 @@ class FlextLdifModelsResults:
             default_factory=list,
             description="List of registered service names",
         )
-        config: dict[str, str | int | bool] = Field(
-            default_factory=dict,
+        config: _ConfigSettings = Field(
+            default_factory=_ConfigSettings,
             description="Active configuration settings",
         )
 
@@ -1430,8 +1597,12 @@ class FlextLdifModelsResults:
             ge=0,
             description="Number of successfully migrated entries",
         )
-        from_server: str = Field(description="Source server type")
-        to_server: str = Field(description="Target server type")
+        from_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            description="Source server type"
+        )
+        to_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            description="Target server type"
+        )
         success: bool = Field(description="Migration completion status")
 
         @computed_field
@@ -1450,8 +1621,8 @@ class FlextLdifModelsResults:
         )
 
         total_entries: int = Field(ge=0, description="Total number of entries analyzed")
-        objectclass_distribution: dict[str, int] = Field(
-            default_factory=dict,
+        objectclass_distribution: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Distribution of object classes",
         )
         patterns_detected: list[str] = Field(
@@ -1472,14 +1643,16 @@ class FlextLdifModelsResults:
             validate_default=True,
         )
 
-        detected_server_type: str = Field(description="Detected LDAP server type")
+        detected_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            description="Detected LDAP server type"
+        )
         confidence: float = Field(
             ge=0.0,
             le=1.0,
             description="Detection confidence score",
         )
-        scores: dict[str, int] = Field(
-            default_factory=dict,
+        scores: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Score for each server type",
         )
         patterns_found: list[str] = Field(
@@ -1516,7 +1689,8 @@ class FlextLdifModelsResults:
         total_entries: int = Field(
             description="Total number of entries processed",
         )
-        categorized: dict[str, int] = Field(
+        categorized: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Count of entries per category",
         )
         rejection_rate: float = Field(
@@ -1528,10 +1702,12 @@ class FlextLdifModelsResults:
         rejection_reasons: list[str] = Field(
             description="List of unique rejection reasons",
         )
-        written_counts: dict[str, int] = Field(
+        written_counts: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Count of entries written per category",
         )
-        output_files: dict[str, str] = Field(
+        output_files: _CategoryPaths = Field(
+            default_factory=_CategoryPaths,
             description="Mapping of categories to output file paths",
         )
 
@@ -1551,17 +1727,19 @@ class FlextLdifModelsResults:
         total_entries: int = Field(
             description="Total number of entries analyzed",
         )
-        object_class_distribution: dict[str, int] = Field(
+        object_class_distribution: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Count of entries per objectClass",
         )
-        server_type_distribution: dict[str, int] = Field(
+        server_type_distribution: _DynamicCounts = Field(
+            default_factory=_DynamicCounts,
             description="Count of entries per server type",
         )
 
     class DictAccessibleValue(FlextModels.Value):
         """Base value model providing dict-style access (backwards compatibility)."""
 
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str) -> str | int | float | bool | None:
             """Get attribute value by key (dict-style access)."""
             if hasattr(self, key):
                 return getattr(self, key)
@@ -1571,7 +1749,9 @@ class FlextLdifModelsResults:
             """Check if attribute exists (dict-style membership test)."""
             return hasattr(self, key)
 
-        def get(self, key: str, default: object | None = None) -> object | None:
+        def get(
+            self, key: str, default: str | float | bool | None = None
+        ) -> str | int | float | bool | None:
             """Get attribute value with optional default (dict-style access)."""
             return getattr(self, key, default)
 
@@ -1626,7 +1806,7 @@ class FlextLdifModelsResults:
         service: str = Field(
             description="Service name identifier",
         )
-        server_type: str = Field(
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type configuration",
         )
         status: str = Field(
@@ -1756,7 +1936,8 @@ class FlextLdifModelsResults:
 
         """
 
-        results: dict[str, bool] = Field(
+        results: _BooleanFlags = Field(
+            default_factory=_BooleanFlags,
             description="Mapping of validated items to validation status",
         )
 
@@ -1776,7 +1957,9 @@ class FlextLdifModelsResults:
         statistics: FlextLdifModelsResults.Statistics = Field(
             description="Parse operation statistics",
         )
-        detected_server_type: str | None = Field(None)
+        detected_server_type: (
+            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
+        ) = Field(None)
 
         def get_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             """Get parsed entries.
@@ -1840,79 +2023,15 @@ class FlextLdifModelsResults:
             """
             return self.content or ""
 
-    class CategorizedEntries(FlextModels.ArbitraryTypesModel):
-        """Result of entry categorization by objectClass.
-
-        Categorizes LDIF entries into users, groups, containers, and uncategorized
-        based on configurable objectClass sets.
-
-        Example:
-            categorized = CategorizedEntries(
-                users=[user_entry1, user_entry2],
-                groups=[group_entry1],
-                containers=[ou_entry1, ou_entry2],
-                uncategorized=[],
-                summary={"users": 2, "groups": 1, "containers": 2, "uncategorized": 0}
-            )
-
-        """
-
-        users: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list,
-            description="Entries categorized as users (inetOrgPerson, person, etc.)",
-        )
-        groups: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list,
-            description=f"Entries categorized as groups ({FlextLdifConstants.ObjectClasses.GROUP_OF_NAMES}, etc.)",
-        )
-        containers: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list,
-            description="Entries categorized as containers (organizationalUnit, etc.)",
-        )
-        uncategorized: list[FlextLdifModelsDomains.Entry] = Field(
-            default_factory=list,
-            description="Entries that don't match any category",
-        )
-
-        @computed_field
-        def summary(self) -> dict[str, int]:
-            """Get summary of entry counts by category."""
-            return {
-                "users": len(self.users),
-                "groups": len(self.groups),
-                "containers": len(self.containers),
-                "uncategorized": len(self.uncategorized),
-            }
-
-        @computed_field
-        def total_entries(self) -> int:
-            """Total number of categorized entries."""
-            return (
-                len(self.users)
-                + len(self.groups)
-                + len(self.containers)
-                + len(self.uncategorized)
-            )
-
-        @classmethod
-        def create_empty(cls) -> FlextLdifModelsResults.CategorizedEntries:
-            """Create an empty CategorizedEntries instance."""
-            return cls(
-                users=[],
-                groups=[],
-                containers=[],
-                uncategorized=[],
-            )
-
     class SchemaDiscoveryResult(FlextModels.ArbitraryTypesModel):
         """Result of schema discovery operations."""
 
-        attributes: dict[str, object] = Field(
-            default_factory=dict,
+        attributes: _SchemaAttributeMap = Field(
+            default_factory=_SchemaAttributeMap,
             description="Discovered attributes with their metadata",
         )
-        objectclasses: dict[str, object] = Field(
-            default_factory=dict,
+        objectclasses: _SchemaObjectClassMap = Field(
+            default_factory=_SchemaObjectClassMap,
             description="Discovered object classes with their metadata",
         )
         total_attributes: int = Field(
@@ -1923,7 +2042,7 @@ class FlextLdifModelsResults:
             default=0,
             description="Total number of discovered object classes",
         )
-        server_type: str = Field(
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
             default="generic",
             description="Server type for which schema was discovered",
         )
@@ -1931,11 +2050,19 @@ class FlextLdifModelsResults:
             default=0,
             description="Number of entries used for schema discovery",
         )
-        server_info: object = Field(  # Use object instead of Any
+        server_info: (
+            dict[str, str | int | float | bool | None]
+            | FlextLdifModelsMetadata.DynamicMetadata
+            | None
+        ) = Field(
             default=None,
             description="LDAP server information from Root DSE",
         )
-        servers: object = Field(  # Use object instead of Any
+        servers: (
+            dict[str, str | int | float | bool | None]
+            | FlextLdifModelsMetadata.DynamicMetadata
+            | None
+        ) = Field(
             default=None,
             description="Server-specific quirks and behaviors",
         )
@@ -1991,11 +2118,10 @@ class FlextLdifModelsResults:
                 f"{self.entry_count} entries ({self.server_type})"
             )
 
-    class FlexibleCategories(
-        FlextModelsCollections.Categories[FlextLdifModelsDomains.Entry],
-    ):
-        """Flexible entry categorization with dynamic categories.
+    # Alias to module-level _FlexibleCategories (for backward compatibility)
+    FlexibleCategories = _FlexibleCategories
+    """Flexible entry categorization with dynamic categories.
 
-        Replaces dict[str, list[Entry]] pattern with type-safe model.
-        Supports arbitrary category names (schema, hierarchy, users, groups, acl, rejected, etc.)
-        """
+    Replaces dict[str, list[Entry]] pattern with type-safe model.
+    Supports arbitrary category names (schema, hierarchy, users, groups, acl, rejected, etc.)
+    """

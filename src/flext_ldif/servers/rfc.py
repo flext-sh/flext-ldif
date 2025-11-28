@@ -20,7 +20,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Literal, Self, Union, overload
+from typing import ClassVar, Self, Union, cast, overload
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -128,7 +128,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Constants:
         """RFC baseline constants (RFC 4512 compliant). Inherited by all servers."""
 
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            FlextLdifConstants.ServerTypes.RFC
+        )
         PRIORITY: ClassVar[int] = 100
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -136,12 +138,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
         DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
 
-        CANONICAL_NAME: ClassVar[str] = "rfc"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
+        CANONICAL_NAME: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC.value
+        ALIASES: ClassVar[frozenset[str]] = frozenset([
+            FlextLdifConstants.ServerTypes.RFC.value,
+            FlextLdifConstants.ServerTypes.GENERIC.value,
+        ])
 
         # Conversion capabilities
-        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset([
+            FlextLdifConstants.ServerTypes.RFC.value,
+        ])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
+            FlextLdifConstants.ServerTypes.RFC.value,
+        ])
 
         # ACL configuration
         ACL_FORMAT: ClassVar[str] = "rfc_generic"
@@ -301,7 +310,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     def _handle_parse_operation(
         self,
         ldif_text: str,
-    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+    ) -> FlextResult[FlextLdifModels.Entry | str]:
         """Handle parse operation for main quirk.
 
         Delegates to base class implementation.
@@ -311,7 +320,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     def _handle_write_operation(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+    ) -> FlextResult[FlextLdifModels.Entry | str]:
         """Handle write operation for main quirk.
 
         Delegates to base class implementation.
@@ -319,7 +328,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         return super()._handle_write_operation(entries)
 
     def _route_model_to_write(
-        self, model: FlextLdifTypes.ConvertibleModel
+        self,
+        model: FlextLdifTypes.ConvertibleModel,
     ) -> FlextResult[str]:
         """Route a single model to appropriate write method.
 
@@ -390,21 +400,30 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def __init__(
             self,
-            schema_service: object | None = None,
-            **kwargs: object,
+            schema_service: FlextLdifTypes.Services.SchemaService | None = None,
+            parent_quirk: FlextLdifServersBase | None = None,
+            **kwargs: str | float | bool | None,
         ) -> None:
             """Initialize RFC schema quirk service.
 
             Args:
                 schema_service: Injected FlextLdifSchema service (optional)
+                parent_quirk: Reference to parent FlextLdifServersBase (optional)
                 **kwargs: Passed to parent class
 
             """
-            super().__init__(schema_service=schema_service, **kwargs)
+            # Store schema_service as instance variable
+            self.schema_service = schema_service
+            # Pass schema_service and parent_quirk to parent explicitly
+            super().__init__(
+                schema_service=schema_service,
+                parent_quirk=parent_quirk,
+                **kwargs,
+            )
 
         def can_handle_attribute(
             self,
-            attr_definition: Union[str, FlextLdifModels.SchemaAttribute],
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if RFC quirk can handle attribute definitions (abstract impl).
 
@@ -415,7 +434,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def can_handle_objectclass(
             self,
-            oc_definition: Union[str, FlextLdifModels.SchemaObjectClass],
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if RFC quirk can handle objectClass definitions (abstract impl).
 
@@ -457,7 +476,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # ===== HELPER METHODS FOR RFC SCHEMA PARSING =====
 
         @staticmethod
-        def build_attribute_metadata(
+        def _build_attribute_metadata(
             attr_definition: str,
             syntax: str | None,
             syntax_validation_error: str | None,
@@ -466,10 +485,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ordering_oid: str | None = None,
             substr_oid: str | None = None,
             sup_oid: str | None = None,
+            _server_type: str | None = None,
         ) -> FlextLdifModels.QuirkMetadata | None:
             """Build metadata for attribute including extensions and OID validation.
 
-            Delegates to base implementation with RFC server type (always uses RFC).
+            Delegates to base implementation with RFC server type.
 
             Args:
                 attr_definition: Original attribute definition
@@ -480,6 +500,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 ordering_oid: Ordering matching rule OID (optional)
                 substr_oid: Substring matching rule OID (optional)
                 sup_oid: SUP OID (optional)
+                _server_type: Server type identifier (unused, always RFC)
 
             Returns:
                 QuirkMetadata or None
@@ -576,43 +597,173 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 syntax_validation = parsed.get("syntax_validation")
                 if syntax_validation and isinstance(syntax_validation, dict):
                     error_value = syntax_validation.get(
-                        FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                        FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR,
                     )
                     if isinstance(error_value, str):
                         syntax_validation_error = error_value
 
-                # Build metadata using helper (with comprehensive OID validation tracking)
+                # Type-safe extraction with narrowing for _build_attribute_metadata call
                 # Track all OIDs: attribute, syntax, matching rules (equality, ordering, substr), and SUP
-                metadata = self.build_attribute_metadata(
+                syntax_val = parsed.get("syntax")
+                syntax_for_meta: str | None = (
+                    syntax_val if isinstance(syntax_val, str | type(None)) else None
+                )
+
+                oid_val = parsed.get("oid")
+                oid_for_meta: str | None = (
+                    oid_val if isinstance(oid_val, str | type(None)) else None
+                )
+
+                eq_val = parsed.get("equality")
+                eq_for_meta: str | None = (
+                    eq_val if isinstance(eq_val, str | type(None)) else None
+                )
+
+                ord_val = parsed.get("ordering")
+                ord_for_meta: str | None = (
+                    ord_val if isinstance(ord_val, str | type(None)) else None
+                )
+
+                sub_val = parsed.get("substr")
+                sub_for_meta: str | None = (
+                    sub_val if isinstance(sub_val, str | type(None)) else None
+                )
+
+                sup_val = parsed.get("sup")
+                sup_for_meta: str | None = (
+                    sup_val if isinstance(sup_val, str | type(None)) else None
+                )
+
+                metadata = self._build_attribute_metadata(
                     attr_definition,
-                    parsed.get("syntax"),
+                    syntax_for_meta,
                     syntax_validation_error,
-                    attribute_oid=parsed.get("oid"),  # Track attribute OID validation
-                    equality_oid=parsed.get(
-                        "equality"
-                    ),  # Track equality matching rule OID
-                    ordering_oid=parsed.get(
-                        "ordering"
-                    ),  # Track ordering matching rule OID
-                    substr_oid=parsed.get(
-                        "substr"
-                    ),  # Track substring matching rule OID
-                    sup_oid=parsed.get("sup"),  # Track SUP OID validation
+                    attribute_oid=oid_for_meta,
+                    equality_oid=eq_for_meta,
+                    ordering_oid=ord_for_meta,
+                    substr_oid=sub_for_meta,
+                    sup_oid=sup_for_meta,
+                )
+
+                # Type-safe extraction with narrowing
+                oid_value = parsed["oid"]
+                oid: str = (
+                    oid_value if isinstance(oid_value, str) else str(oid_value or "")
+                )
+
+                name_value = parsed["name"]
+                name: str = (
+                    name_value
+                    if isinstance(name_value, str)
+                    else (str(name_value) if name_value else "")
+                )
+
+                desc_value = parsed["desc"]
+                desc: str | None = (
+                    desc_value
+                    if isinstance(desc_value, str)
+                    else (
+                        str(desc_value)
+                        if desc_value and desc_value is not True
+                        else None
+                    )
+                )
+
+                syntax_value = parsed["syntax"]
+                syntax: str | None = (
+                    syntax_value
+                    if isinstance(syntax_value, str)
+                    else (
+                        str(syntax_value)
+                        if syntax_value and syntax_value is not True
+                        else None
+                    )
+                )
+
+                length_value = parsed["length"]
+                if isinstance(length_value, int):
+                    length: int | None = length_value
+                elif isinstance(length_value, str) and length_value:
+                    length = int(length_value)
+                else:
+                    length = None
+
+                equality_value = parsed["equality"]
+                equality: str | None = (
+                    equality_value
+                    if isinstance(equality_value, str)
+                    else (
+                        str(equality_value)
+                        if equality_value and equality_value is not True
+                        else None
+                    )
+                )
+
+                ordering_value = parsed["ordering"]
+                ordering: str | None = (
+                    ordering_value
+                    if isinstance(ordering_value, str)
+                    else (
+                        str(ordering_value)
+                        if ordering_value and ordering_value is not True
+                        else None
+                    )
+                )
+
+                substr_value = parsed["substr"]
+                substr: str | None = (
+                    substr_value
+                    if isinstance(substr_value, str)
+                    else (
+                        str(substr_value)
+                        if substr_value and substr_value is not True
+                        else None
+                    )
+                )
+
+                single_value_value = parsed["single_value"]
+                single_value: bool = (
+                    isinstance(single_value_value, bool) and single_value_value
+                )
+
+                no_user_mod_value = parsed["no_user_modification"]
+                no_user_modification: bool = (
+                    isinstance(no_user_mod_value, bool) and no_user_mod_value
+                )
+
+                sup_value = parsed["sup"]
+                sup: str | None = (
+                    sup_value
+                    if isinstance(sup_value, str)
+                    else (
+                        str(sup_value) if sup_value and sup_value is not True else None
+                    )
+                )
+
+                usage_value = parsed["usage"]
+                usage: str | None = (
+                    usage_value
+                    if isinstance(usage_value, str)
+                    else (
+                        str(usage_value)
+                        if usage_value and usage_value is not True
+                        else None
+                    )
                 )
 
                 attribute = FlextLdifModels.SchemaAttribute(
-                    oid=parsed["oid"],
-                    name=parsed["name"] or "",
-                    desc=parsed["desc"],
-                    syntax=parsed["syntax"],
-                    length=parsed["length"],
-                    equality=parsed["equality"],
-                    ordering=parsed["ordering"],
-                    substr=parsed["substr"],
-                    single_value=parsed["single_value"],
-                    no_user_modification=parsed["no_user_modification"],
-                    sup=parsed["sup"],
-                    usage=parsed["usage"],
+                    oid=oid,
+                    name=name,
+                    desc=desc,
+                    syntax=syntax,
+                    length=length,
+                    equality=equality,
+                    ordering=ordering,
+                    substr=substr,
+                    single_value=single_value,
+                    no_user_modification=no_user_modification,
+                    sup=sup,
+                    usage=usage,
                     metadata=metadata,
                     x_origin=None,
                     x_file_ref=None,
@@ -663,119 +814,163 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return self._hook_post_parse_objectclass(parse_result.unwrap())
 
+        def _validate_oid_list(
+            self,
+            oids: list[str] | None,
+            oid_type: str,
+            metadata_extensions: dict[str, list[str] | str | bool | None],
+        ) -> None:
+            """Validate OID list and track in metadata."""
+            if not oids or not FlextRuntime.is_list_like(oids):
+                return
+            for idx, oid in enumerate(oids):
+                if oid and isinstance(oid, str):
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        oid,
+                        f"objectClass {oid_type}[{idx}]",
+                    )
+
+        def _build_objectclass_metadata(
+            self,
+            oc_definition: str,
+            metadata_extensions: dict[str, list[str] | str | bool | None],
+        ) -> FlextLdifModels.QuirkMetadata:
+            """Build objectClass metadata with extensions."""
+            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = (
+                FlextLdifConstants.ServerTypes.RFC.value
+            )
+            metadata = FlextLdifModels.QuirkMetadata(
+                quirk_type=server_type,
+                extensions=FlextLdifModels.DynamicMetadata(**metadata_extensions)
+                if metadata_extensions
+                else FlextLdifModels.DynamicMetadata(),
+            )
+            FlextLdifUtilities.Metadata.preserve_schema_formatting(
+                metadata,
+                oc_definition,
+            )
+            return metadata
+
         def _parse_objectclass_core(
             self,
             oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
             """Core RFC 4512 objectClass parsing per Section 4.1.1.
 
-            RFC 4512 ABNF (ObjectClassDescription):
-            =======================================
-            ObjectClassDescription = LPAREN WSP
-                numericoid                 ; object identifier
-                [ SP "NAME" SP qdescrs ]   ; short names
-                [ SP "DESC" SP qdstring ]  ; description
-                [ SP "OBSOLETE" ]          ; not active
-                [ SP "SUP" SP oids ]       ; superior classes
-                [ SP kind ]                ; ABSTRACT / STRUCTURAL / AUXILIARY
-                [ SP "MUST" SP oids ]      ; required attributes
-                [ SP "MAY" SP oids ]       ; allowed attributes
-                extensions WSP RPAREN
-
-            kind = "ABSTRACT" / "STRUCTURAL" / "AUXILIARY"
-
             Delegates parsing to FlextLdifUtilitiesSchema.parse_objectclass()
             for SRP compliance and code reuse.
 
-            Args:
-                oc_definition: RFC 4512 objectClass definition string
-
-            Returns:
-                FlextResult with parsed SchemaObjectClass model
-
             """
             try:
-                # Delegate parsing to centralized utility (SRP)
                 parsed = FlextLdifUtilities.Schema.parse_objectclass(oc_definition)
 
-                # Build metadata with original format and OID validation tracking
-                metadata_extensions = parsed["metadata_extensions"]
+                metadata_extensions_raw = parsed["metadata_extensions"]
+                metadata_extensions: dict[str, list[str] | str | bool | None] = (
+                    metadata_extensions_raw
+                    if isinstance(metadata_extensions_raw, dict)
+                    else {}
+                )
                 metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
                     oc_definition.strip()
                 )
                 metadata_extensions[
                     FlextLdifConstants.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE
-                ] = oc_definition  # Complete with all formatting
+                ] = oc_definition
 
-                # Track objectClass OID validation (critical for OID handling)
-                # Use helper method for DRY OID validation
                 objectclass_oid = parsed.get("oid")
-                FlextLdifServersBase.Schema.validate_and_track_oid(
-                    metadata_extensions,
-                    objectclass_oid,
-                    "objectClass",
-                )
+                if objectclass_oid is None or isinstance(objectclass_oid, str):
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        objectclass_oid,
+                        "objectClass",
+                    )
 
-                # Track SUP OID validation for objectClass (superior class OID)
                 objectclass_sup_oid = parsed.get("sup")
-                FlextLdifServersBase.Schema.validate_and_track_oid(
-                    metadata_extensions,
-                    objectclass_sup_oid,
-                    "objectClass SUP",
-                )
-
-                # Track MUST/MAY OID validation (lists of attribute OIDs)
-                # Each OID in must/may lists should be validated per RFC 4517
-                # Use FlextRuntime.is_list_like for consistency with codebase patterns
-                must_oids = parsed.get("must")
-                if must_oids and FlextRuntime.is_list_like(must_oids):
-                    for idx, must_oid in enumerate(must_oids):
-                        # Validate OID format - must be string per RFC 4517
-                        if must_oid and isinstance(must_oid, str):
-                            FlextLdifServersBase.Schema.validate_and_track_oid(
-                                metadata_extensions,
-                                must_oid,
-                                f"objectClass MUST[{idx}]",
-                            )
-
-                may_oids = parsed.get("may")
-                if may_oids and FlextRuntime.is_list_like(may_oids):
-                    for idx, may_oid in enumerate(may_oids):
-                        # Validate OID format - must be string per RFC 4517
-                        if may_oid and isinstance(may_oid, str):
-                            FlextLdifServersBase.Schema.validate_and_track_oid(
-                                metadata_extensions,
-                                may_oid,
-                                f"objectClass MAY[{idx}]",
-                            )
-
-                # Use server type from Constants for consistency (RFC baseline)
-                server_type = FlextLdifConstants.ServerTypes.RFC
-                metadata = (
-                    FlextLdifModels.QuirkMetadata(
-                        quirk_type=server_type,
-                        extensions=metadata_extensions,
+                if objectclass_sup_oid is None or isinstance(objectclass_sup_oid, str):
+                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                        metadata_extensions,
+                        objectclass_sup_oid,
+                        "objectClass SUP",
                     )
-                    if metadata_extensions
-                    else FlextLdifModels.QuirkMetadata(
-                        quirk_type=server_type, extensions={}
-                    )
-                )
 
-                # Preserve ALL schema formatting details for zero data loss
-                FlextLdifUtilities.Metadata.preserve_schema_formatting(
-                    metadata,
+                # Narrow must and may lists before passing to _validate_oid_list
+                must_val = parsed.get("must")
+                must_list: list[str] | None = (
+                    must_val if isinstance(must_val, list) else None
+                )
+                self._validate_oid_list(must_list, "MUST", metadata_extensions)
+
+                may_val = parsed.get("may")
+                may_list: list[str] | None = (
+                    may_val if isinstance(may_val, list) else None
+                )
+                self._validate_oid_list(may_list, "MAY", metadata_extensions)
+
+                metadata = self._build_objectclass_metadata(
                     oc_definition,
+                    metadata_extensions,
+                )
+
+                # Type-safe extraction with narrowing for SchemaObjectClass
+                oc_oid_value = parsed["oid"]
+                oc_oid: str = (
+                    oc_oid_value
+                    if isinstance(oc_oid_value, str)
+                    else str(oc_oid_value or "")
+                )
+
+                oc_name_value = parsed["name"]
+                oc_name: str = (
+                    oc_name_value
+                    if isinstance(oc_name_value, str)
+                    else (str(oc_name_value) if oc_name_value else "")
+                )
+
+                oc_desc_value = parsed["desc"]
+                oc_desc: str | None = (
+                    oc_desc_value
+                    if isinstance(oc_desc_value, str)
+                    else (
+                        str(oc_desc_value)
+                        if oc_desc_value and oc_desc_value is not True
+                        else None
+                    )
+                )
+
+                oc_sup_value = parsed["sup"]
+                if isinstance(oc_sup_value, str):
+                    oc_sup: str | list[str] | None = oc_sup_value
+                elif isinstance(oc_sup_value, list):
+                    oc_sup = oc_sup_value
+                else:
+                    oc_sup = None
+
+                oc_kind_value = parsed["kind"]
+                oc_kind: str = (
+                    oc_kind_value
+                    if isinstance(oc_kind_value, str)
+                    else str(oc_kind_value or "STRUCTURAL")
+                )
+
+                oc_must_value = parsed["must"]
+                oc_must: list[str] | None = (
+                    oc_must_value if isinstance(oc_must_value, list) else None
+                )
+
+                oc_may_value = parsed["may"]
+                oc_may: list[str] | None = (
+                    oc_may_value if isinstance(oc_may_value, list) else None
                 )
 
                 objectclass = FlextLdifModels.SchemaObjectClass(
-                    oid=parsed["oid"],
-                    name=parsed["name"] or "",
-                    desc=parsed["desc"],
-                    sup=parsed["sup"],
-                    kind=parsed["kind"],
-                    must=parsed["must"],
-                    may=parsed["may"],
+                    oid=oc_oid,
+                    name=oc_name,
+                    desc=oc_desc,
+                    sup=oc_sup,
+                    kind=oc_kind,
+                    must=oc_must,
+                    may=oc_may,
                     metadata=metadata,
                 )
 
@@ -858,9 +1053,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _ensure_x_origin(
             self,
             output_str: str,
-            metadata: FlextLdifModelsDomains.Optional[
-                FlextLdifModelsDomains.QuirkMetadata
-            ],
+            metadata: FlextLdifModelsDomains.QuirkMetadata | None,
         ) -> str:
             """Ensure X-ORIGIN extension is present if in metadata.
 
@@ -870,7 +1063,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not metadata or not metadata.extensions:
                 return output_str
             x_origin_raw = metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.X_ORIGIN
+                FlextLdifConstants.MetadataKeys.X_ORIGIN,
             )
             if not isinstance(x_origin_raw, str):
                 return output_str
@@ -881,9 +1074,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _write_schema_item(
             self,
-            data: Union[
-                FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass
-            ],
+            data: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         ) -> FlextResult[str]:
             """Write schema item (attribute or objectClass) to RFC-compliant format.
 
@@ -902,50 +1093,50 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     attr_transformed = self._transform_attribute_for_write(data)
                     if not attr_transformed.oid:
                         return FlextResult[str].fail(
-                            "RFC attribute writing failed: missing OID"
+                            "RFC attribute writing failed: missing OID",
                         )
                     parts = self._build_attribute_parts(attr_transformed)
                     written_str = " ".join(parts)
                     transformed_str = self._post_write_attribute(written_str)
 
                     # Restore original case from metadata (attribute only)
-                    if attr_transformed.metadata and attr_transformed.metadata.schema_format_details:
+                    if attr_transformed.metadata:
                         fmt = attr_transformed.metadata.schema_format_details
-                        # Access attribute case from extensions (DynamicMetadata dict-like storage)
-                        attr_case: str = FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES
-                        if fmt.extensions:
-                            attr_case = (
-                                fmt.extensions.get("attribute_case") or
-                                FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES
+                        if fmt:
+                            attr_case = getattr(
+                                fmt,
+                                "attribute_case",
+                                FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES,
                             )
-                        attr_types_lower = (
-                            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES.lower()
-                        )
-                        if attr_types_lower in transformed_str.lower():
-                            transformed_str = re.sub(
-                                rf"{attr_types_lower}:",
-                                f"{attr_case}:",
-                                transformed_str,
-                                flags=re.IGNORECASE,
+                            attr_types_lower = (
+                                FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES.lower()
                             )
+                            if attr_types_lower in transformed_str.lower():
+                                transformed_str = re.sub(
+                                    rf"{attr_types_lower}:",
+                                    f"{attr_case}:",
+                                    transformed_str,
+                                    flags=re.IGNORECASE,
+                                )
                     return FlextResult[str].ok(
                         self._ensure_x_origin(
-                            transformed_str, attr_transformed.metadata
-                        )
+                            transformed_str,
+                            attr_transformed.metadata,
+                        ),
                     )
 
                 # data is SchemaObjectClass
                 oc_transformed = self._transform_objectclass_for_write(data)
                 if not oc_transformed.oid:
                     return FlextResult[str].fail(
-                        "RFC objectclass writing failed: missing OID"
+                        "RFC objectclass writing failed: missing OID",
                     )
                 parts = self._build_objectclass_parts(oc_transformed)
                 written_str = " ".join(parts)
                 transformed_str = self._post_write_objectclass(written_str)
 
                 return FlextResult[str].ok(
-                    self._ensure_x_origin(transformed_str, oc_transformed.metadata)
+                    self._ensure_x_origin(transformed_str, oc_transformed.metadata),
                 )
 
             except (ValueError, TypeError, AttributeError) as e:
@@ -954,7 +1145,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     if isinstance(data, FlextLdifModels.SchemaAttribute)
                     else "objectclass"
                 )
-                logger.exception(f"RFC {item_type} writing exception", exception=e)
+                logger.exception("RFC %s writing exception", item_type, exception=e)
                 return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
 
         def _write_attribute(
@@ -965,7 +1156,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
                 return FlextResult[str].fail(
                     f"Invalid attribute type: expected SchemaAttribute, "
-                    f"got {type(attr_data).__name__}"
+                    f"got {type(attr_data).__name__}",
                 )
             return self._write_schema_item(attr_data)
 
@@ -977,7 +1168,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if not isinstance(oc_data, FlextLdifModels.SchemaObjectClass):
                 return FlextResult[str].fail(
                     f"Invalid objectClass type: expected SchemaObjectClass, "
-                    f"got {type(oc_data).__name__}"
+                    f"got {type(oc_data).__name__}",
                 )
             return self._write_schema_item(oc_data)
 
@@ -995,7 +1186,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_definition: None = None,
             attr_model: None = None,
             oc_model: None = None,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseOperationLiteral
+            | None = None,
         ) -> FlextLdifTypes.SchemaModel: ...
 
         @overload
@@ -1006,7 +1198,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_definition: str,
             attr_model: None = None,
             oc_model: None = None,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseOperationLiteral
+            | None = None,
         ) -> FlextLdifTypes.SchemaModel: ...
 
         @overload
@@ -1017,7 +1210,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_definition: None = None,
             attr_model: FlextLdifModels.SchemaAttribute,
             oc_model: None = None,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.WriteOperationLiteral
+            | None = None,
         ) -> str: ...
 
         @overload
@@ -1028,7 +1222,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_definition: None = None,
             attr_model: None = None,
             oc_model: FlextLdifModels.SchemaObjectClass,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.WriteOperationLiteral
+            | None = None,
         ) -> str: ...
 
         @overload
@@ -1038,7 +1233,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_definition: str | None = None,
             attr_model: FlextLdifModels.SchemaAttribute | None = None,
             oc_model: FlextLdifModels.SchemaObjectClass | None = None,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None = None,
         ) -> FlextLdifTypes.SchemaModelOrString: ...
 
         def __call__(
@@ -1047,24 +1243,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_definition: str | None = None,
             attr_model: FlextLdifModels.SchemaAttribute | None = None,
             oc_model: FlextLdifModels.SchemaObjectClass | None = None,
-            operation: Literal["parse", "write"] | None = None,
-        ) -> FlextLdifTypes.SchemaModelOrString:
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None = None,
+        ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str:
             """Callable interface - automatic polymorphic processor.
 
             Pass definition string for parsing or model for writing.
+            Returns concrete model instances (SchemaAttribute/SchemaObjectClass)
+            or strings, which satisfy the Protocol contracts.
             """
             # Schema.execute() expects a single 'data' parameter, not separate parameters
             # For __call__, we need to handle multiple parameters differently
             # If attr_definition is provided, use it; otherwise use oc_definition
             # If attr_model is provided, use it; otherwise use oc_model
             data: (
-                Union[
-                    str,
-                    Union[
-                        FlextLdifModels.SchemaAttribute,
-                        FlextLdifModels.SchemaObjectClass,
-                    ],
-                ]
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
                 | None
             ) = None
             if attr_definition is not None:
@@ -1081,8 +1276,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def __new__(
             cls,
-            schema_service: object | None = None,
-            **kwargs: object,
+            schema_service: FlextLdifTypes.Services.SchemaService | None = None,
+            **kwargs: FlextLdifTypes.FlexibleKwargsMutable,
         ) -> Self:
             """Override __new__ to support auto-execute and processor instantiation."""
             # Use object.__new__ to avoid calling parent's __new__ which also checks auto_execute
@@ -1112,10 +1307,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if schema_service is not None:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
                     schema_service=schema_service,
+                    parent_quirk=None,
                     **init_kwargs,
                 )
             else:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
+                    parent_quirk=None,
                     **init_kwargs,
                 )
 
@@ -1140,16 +1337,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else None
                 )
                 op_raw = kwargs.get("operation")
-                op: Literal["parse"] | None = "parse" if op_raw == "parse" else None
+                op: FlextLdifConstants.LiteralTypes.ParseOperationLiteral | None = (
+                    "parse" if op_raw == "parse" else None
+                )
                 # Schema.execute() expects a single 'data' parameter
                 data: (
-                    Union[
-                        str,
-                        Union[
-                            FlextLdifModels.SchemaAttribute,
-                            FlextLdifModels.SchemaObjectClass,
-                        ],
-                    ]
+                    str
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
                     | None
                 ) = None
                 if attr_def is not None:
@@ -1197,23 +1392,27 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             # Find parent server class that has Constants
             # Iterate through MRO to find the server class (not nested Schema/Acl/Entry)
-            server_type = FlextLdifConstants.ServerTypes.GENERIC
+            server_type_value: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = (
+                "generic"
+            )
             for cls in type(self).__mro__:
                 # Check if this class has a Constants nested class
                 if hasattr(cls, "Constants") and hasattr(cls.Constants, "SERVER_TYPE"):
-                    server_type = cls.Constants.SERVER_TYPE
+                    server_type_value = cls.Constants.SERVER_TYPE.value
                     break
 
             # Build extensions with original_format
             all_extensions: dict[str, object] = {
-                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format
+                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format,
             }
             if extensions:
                 all_extensions.update(extensions)
 
             return FlextLdifModels.QuirkMetadata(
-                quirk_type=server_type,
-                extensions=all_extensions,
+                quirk_type=server_type_value,
+                extensions=FlextLdifModels.DynamicMetadata(**all_extensions)
+                if all_extensions
+                else FlextLdifModels.DynamicMetadata(),
             )
 
         def extract_schemas_from_ldif(
@@ -1430,9 +1629,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 server_type=server_type_value,
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type=server_type_value,
-                    extensions={
-                        FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line
-                    },
+                    extensions=FlextLdifModels.DynamicMetadata(**{
+                        FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line,
+                    }),
                 ),
             )
             return FlextResult.ok(acl_model)
@@ -1510,7 +1709,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             data: str,
             *,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseOperationLiteral
+            | None = None,
         ) -> FlextLdifModels.Acl: ...
 
         @overload
@@ -1518,23 +1718,26 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             data: FlextLdifModels.Acl,
             *,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.WriteOperationLiteral
+            | None = None,
         ) -> str: ...
 
         @overload
         def __call__(
             self,
-            data: Union[str, FlextLdifModels.Acl] | None = None,
+            data: str | FlextLdifModels.Acl | None = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
-        ) -> Union[FlextLdifModels.Acl, str]: ...
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None = None,
+        ) -> FlextLdifModels.Acl | str: ...
 
         def __call__(
             self,
-            data: Union[str, FlextLdifModels.Acl] | None = None,
+            data: str | FlextLdifModels.Acl | None = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
-        ) -> Union[FlextLdifModels.Acl, str]:
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None = None,
+        ) -> FlextLdifModels.Acl | str:
             """Callable interface - automatic polymorphic processor.
 
             Pass ACL line string for parsing or Acl model for writing.
@@ -1543,7 +1746,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             result = self.execute(data=data, operation=operation)
             return result.unwrap()
 
-        def __new__(cls, acl_service: object | None = None, **kwargs: object) -> Self:
+        def __new__(
+            cls,
+            acl_service: FlextLdifTypes.Services.AclService | None = None,
+            **kwargs: FlextLdifTypes.FlexibleKwargsMutable,
+        ) -> Self:
             """Override __new__ to support auto-execute and processor instantiation."""
             instance = super().__new__(cls)
             # Remove auto-execute kwargs before passing to __init__
@@ -1555,22 +1762,26 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # with dynamic class instantiation
             instance_type = type(instance)
             if hasattr(instance_type, "__init__"):
-                instance_type.__init__(instance, acl_service=acl_service, **init_kwargs)
+                instance_type.__init__(
+                    instance, acl_service=acl_service, parent_quirk=None, **init_kwargs
+                )
 
             if cls.auto_execute:
                 # Type-safe extraction of kwargs
                 data_raw = kwargs.get("data")
-                data: Union[str, FlextLdifModels.Acl] | None = None
+                data: str | FlextLdifModels.Acl | None = None
                 if isinstance(data_raw, (str, FlextLdifModels.Acl)):
                     data = data_raw
                 op_raw = kwargs.get("operation")
-                op: Literal["parse", "write"] | None = None
+                op: (
+                    FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
+                ) = None
                 if op_raw == "parse":
                     op = "parse"
                 elif op_raw == "write":
                     op = "write"
                 result = instance.execute(data=data, operation=op)
-                unwrapped: Union[FlextLdifModels.Acl, str] = result.unwrap()
+                unwrapped: FlextLdifModels.Acl | str = result.unwrap()
                 if isinstance(unwrapped, cls):
                     return unwrapped
                 return instance
@@ -1642,7 +1853,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Check if this quirk can handle the entry.
 
@@ -1774,8 +1985,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _hook_transform_entry_raw(
             self,
             dn: str,
-            attrs: dict[str, object],
-        ) -> FlextResult[tuple[str, dict[str, object]]]:
+            attrs: dict[str, list[str | bytes]],
+        ) -> FlextResult[tuple[str, dict[str, list[str | bytes]]]]:
             """Hook to transform raw entry before parsing.
 
             RFC Implementation: Returns DN and attributes unchanged (no transformation).
@@ -1930,7 +2141,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Validate objectClass if strict
             if strict and not entry.has_attribute(
-                FlextLdifConstants.DictKeys.OBJECTCLASS
+                FlextLdifConstants.DictKeys.OBJECTCLASS,
             ):
                 violations.append("LDAP: Every entry must have objectClass attribute")
 
@@ -1941,7 +2152,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         str_value = str(value) if value is not None else ""
                         # Check if value is valid SAFE-STRING (doesn't need base64)
                         if not FlextLdifUtilities.Writer.is_valid_safe_string(
-                            str_value
+                            str_value,
                         ):
                             # Not a violation if we can base64 encode it
                             # Only a violation if strict and contains control chars
@@ -1960,7 +2171,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             ):
                                 violations.append(
                                     f"RFC 2849: Attribute {attr_name} contains "
-                                    f"invalid control characters"
+                                    f"invalid control characters",
                                 )
 
             return len(violations) == 0, violations
@@ -2002,8 +2213,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry
 
             # Extract ACL metadata from entry metadata
+            # Convert DynamicMetadata to dict for from_extensions
+            extensions_dict: dict[str, object] | None = None
+            if entry.metadata and entry.metadata.extensions:
+                extensions_dict = entry.metadata.extensions.model_dump()
             acl_metadata = FlextLdifModels.AclWriteMetadata.from_extensions(
-                entry.metadata.extensions if entry.metadata else None
+                extensions_dict,
             )
 
             # Early return if no original format available
@@ -2011,7 +2226,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry
 
             # Create ACL quirk instance for formatting
-            acl_quirk = FlextLdifServersRfc.Acl(parent_quirk=self)
+            # Cast self to FlextLdifServersBase for parent_quirk parameter
+            acl_quirk = FlextLdifServersRfc.Acl(
+                parent_quirk=cast("FlextLdifServersBase", self),
+            )
 
             # Format all ACI values
             aci_values = entry.attributes.attributes[aci_attr_name]
@@ -2054,14 +2272,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             if not entry_data.metadata or not entry_data.metadata.write_options:
                 return None
-            if (
-                FlextLdifConstants.MetadataKeys.WRITE_OPTIONS
-                not in entry_data.metadata.write_options
-            ):
+            # Access dynamic fields - handle both dict and Pydantic model
+            write_opts = entry_data.metadata.write_options
+            key = FlextLdifConstants.MetadataKeys.WRITE_OPTIONS
+            # Check if write_opts is a Pydantic model or a plain dict
+            if hasattr(write_opts, "model_extra"):
+                extras = write_opts.model_extra or {}
+            elif isinstance(write_opts, dict):
+                extras = write_opts
+            else:
                 return None
-            opt = entry_data.metadata.write_options.get(
-                FlextLdifConstants.MetadataKeys.WRITE_OPTIONS
-            )
+            if key not in extras:
+                return None
+            opt = extras.get(key)
             if isinstance(opt, FlextLdifModels.WriteFormatOptions):
                 return opt
             return None
@@ -2136,7 +2359,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ):
                 return attrs_dict
             priority_attrs = write_options.rfc_order_priority_attributes or [
-                "objectClass"
+                "objectClass",
             ]
             # Use utility for ordering, then build ordered dict
             ordered_names = FlextLdifUtilities.Writer.order_attribute_names(
@@ -2191,54 +2414,54 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             result[oc_key] = sorted_values
             return result
 
-        def _write_entry(  # noqa: C901
+        def _prepare_entry_for_write(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Validate and prepare entry for writing."""
+            if not entry_data:
+                return FlextResult[FlextLdifModels.Entry].fail("Entry is None")
+            if not entry_data.dn or not entry_data.dn.value:
+                return FlextResult[FlextLdifModels.Entry].fail("Entry DN is empty")
+
+            pre_result = self._apply_pre_write_hook(entry_data)
+            if pre_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    pre_result.error or "Pre-write failed",
+                )
+            entry_data = self._denormalize_entry(pre_result.unwrap())
+            return FlextResult[FlextLdifModels.Entry].ok(entry_data)
+
+        def _add_server_comments(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> None:
+            """Add server-specific comments after DN line."""
+            generate_comments = getattr(self, "generate_entry_comments", None)
+            if not generate_comments:
+                return
+            server_comments_str = generate_comments(entry_data, write_options)
+            if server_comments_str:
+                ldif_lines.extend(server_comments_str.strip().split("\n"))
+
+        def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
         ) -> FlextResult[str]:
-            r"""Write Entry model to RFC 2849 compliant LDIF string.
+            r"""Write Entry model to RFC 2849 compliant LDIF string."""
+            prep_result = self._prepare_entry_for_write(entry_data)
+            if prep_result.is_failure:
+                return FlextResult[str].fail(prep_result.error or "Preparation failed")
+            entry_data = prep_result.unwrap()
 
-            Converts Entry model back to LDIF text format following RFC 2849:
-            - Start with "dn: <distinguished-name>"
-            - Follow with "attribute: value" pairs
-            - Use "attribute:: <base64>" for binary/non-ASCII values
-            - Blank line after last attribute
-
-            Checks metadata.write_options for format type and delegates to
-            appropriate format method (modify or add).
-
-            Args:
-                entry_data: Entry model to write
-
-            Returns:
-                FlextResult with LDIF string or fail(message)
-
-            """
-            # Validate entry
-            if not entry_data:
-                return FlextResult[str].fail("Entry is None")
-            if not entry_data.dn or not entry_data.dn.value:
-                return FlextResult[str].fail("Entry DN is None or empty")
-
-            # Pre-write processing via hook (uses extracted helper)
-            pre_result = self._apply_pre_write_hook(entry_data)
-            if pre_result.is_failure:
-                return FlextResult[str].fail(pre_result.error or "Pre-write failed")
-            entry_data = pre_result.unwrap()
-
-            # Denormalize entry for target server format
-            entry_data = self._denormalize_entry(entry_data)
-
-            # Extract write options from metadata (uses extracted helper)
             write_options = self._extract_write_options(entry_data)
 
-            # Delegate to modify format if requested
             if write_options and write_options.ldif_changetype == "modify":
                 return self._write_entry_modify_format(entry_data, write_options)
 
-            # Apply ACL formatting (uses extracted helper)
             entry_data = self._apply_acl_formatting(entry_data, write_options)
-
-            # Restore and extract data for LDIF output
             restored_entry = self._restore_entry_from_metadata(entry_data)
             dn_value = restored_entry.dn.value if restored_entry.dn else ""
             attrs_dict: dict[str, list[str]] = (
@@ -2248,16 +2471,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
             hidden_attrs = self._get_hidden_attributes(entry_data, write_options)
 
-            # Apply RFC 2849 attribute ordering (uses extracted helper)
             attrs_dict = self._apply_rfc_attribute_ordering(attrs_dict, write_options)
-
-            # Apply objectClass value sorting (top first) if enabled
             attrs_dict = self._apply_objectclass_value_sorting(
-                attrs_dict, write_options
+                attrs_dict,
+                write_options,
             )
 
-            # Update restored_entry with sorted objectClass values
-            # This ensures _write_entry_process_attributes uses the sorted values
             if (
                 write_options
                 and write_options.sort_objectclass_values
@@ -2268,21 +2487,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         restored_entry.attributes.attributes[key] = attrs_dict[key]
                         break
 
-            # Build entry lines using process_attributes to handle hidden attributes
-            # This ensures consistent formatting and RFC 2849 compliance
             ldif_lines: list[str] = []
-
-            # Add DN comments if requested (before DN line)
             if write_options:
-                self._write_entry_comments_dn(
-                    ldif_lines,
-                    restored_entry,
-                    write_options,
-                )
+                self._write_entry_comments_dn(ldif_lines, restored_entry, write_options)
 
             ldif_lines.append(f"dn: {dn_value}")
 
-            # Add metadata comments if requested (after DN line)
             if write_options:
                 self._write_entry_comments_metadata(
                     ldif_lines,
@@ -2290,18 +2500,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     write_options,
                 )
 
-            # Generate server-specific comments if method exists
-            # Comments should appear AFTER DN but BEFORE attributes (within DN ordering)
-            generate_comments = getattr(self, "generate_entry_comments", None)
-            if generate_comments:
-                server_comments_str = generate_comments(entry_data, write_options)
-                if server_comments_str:
-                    # Comments are already formatted as string (with newlines), split into lines
-                    comment_lines = server_comments_str.strip().split("\n")
-                    # Insert comments after DN line but before attributes
-                    ldif_lines.extend(comment_lines)
+            self._add_server_comments(ldif_lines, entry_data, write_options)
 
-            # Process attributes with hidden attribute handling
             if attrs_dict:
                 self._write_entry_process_attributes(
                     ldif_lines,
@@ -2310,10 +2510,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     write_options,
                 )
             else:
-                # Empty entry - just DN line
                 ldif_lines.append("")
 
-            # Finalize LDIF text with proper trailing newline per RFC 2849
             ldif_str = FlextLdifUtilities.Writer.finalize_ldif_text(ldif_lines)
             return FlextResult[str].ok(ldif_str)
 
@@ -2345,7 +2543,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Build LDIF lines using generalized utility
             include_changetype = bool(
-                write_options and getattr(write_options, "include_changetype", False)
+                write_options and getattr(write_options, "include_changetype", False),
             )
             changetype_value = (
                 write_options.ldif_changetype
@@ -2391,7 +2589,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _convert_raw_attributes(
             self,
-            entry_attrs: Mapping[str, object],
+            entry_attrs: dict[str, list[str | bytes]],
         ) -> dict[str, list[str]]:
             """Convert raw LDIF attributes to dict[str, list[str]] format.
 
@@ -2446,7 +2644,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _analyze_entry_differences(
             self,
-            entry_attrs: Mapping[str, object],
+            entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
             converted_attrs: dict[str, list[str]],
             original_entry_dn: str,
             cleaned_dn: str,
@@ -2470,27 +2668,81 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             context: FlextLdifTypes.ModelMetadata.EntryParsingContext,
         ) -> FlextLdifModels.QuirkMetadata:
             """Build QuirkMetadata with format details AND track differences (DRY wrapper)."""
+            # Type narrowing for context.get() calls
+            original_entry_dn_val = context.get("original_entry_dn", "")
+            original_entry_dn: str = (
+                original_entry_dn_val if isinstance(original_entry_dn_val, str) else ""
+            )
+
+            cleaned_dn_raw = context.get(
+                "cleaned_dn",
+                context.get("original_entry_dn", ""),
+            )
+            cleaned_dn: str = cleaned_dn_raw if isinstance(cleaned_dn_raw, str) else ""
+
+            original_dn_line_val = context.get("original_dn_line")
+            original_dn_line: str | None = (
+                original_dn_line_val if isinstance(original_dn_line_val, str) else None
+            )
+
+            original_attr_lines_val = context.get("original_attr_lines", [])
+            original_attr_lines: list[str] | None = (
+                original_attr_lines_val
+                if isinstance(original_attr_lines_val, list)
+                else None
+            )
+
+            dn_was_base64_val = context.get("dn_was_base64", False)
+            dn_was_base64: bool = (
+                isinstance(dn_was_base64_val, bool) and dn_was_base64_val
+            )
+
+            original_attribute_case_val = context.get("original_attribute_case", {})
+            original_attribute_case: dict[str, str] | None = (
+                original_attribute_case_val
+                if isinstance(original_attribute_case_val, dict)
+                else None
+            )
+
+            dn_differences_val = context.get("dn_differences", {})
+            dn_differences: dict[str, object] | None = (
+                dn_differences_val if isinstance(dn_differences_val, dict) else None
+            )
+
+            attribute_differences_val = context.get("attribute_differences", {})
+            attribute_differences: dict[str, object] | None = (
+                attribute_differences_val
+                if isinstance(attribute_differences_val, dict)
+                else None
+            )
+
+            original_attributes_complete_val = context.get(
+                "original_attributes_complete",
+                {},
+            )
+            original_attributes_complete: dict[str, object] | None = (
+                original_attributes_complete_val
+                if isinstance(original_attributes_complete_val, dict)
+                else None
+            )
+
             return FlextLdifUtilities.Metadata.build_entry_parse_metadata(
                 quirk_type=self._get_server_type(),
-                original_entry_dn=context.get("original_entry_dn", ""),
-                cleaned_dn=context.get(
-                    "cleaned_dn", context.get("original_entry_dn", "")
-                ),
-                original_dn_line=context.get("original_dn_line"),
-                original_attr_lines=context.get("original_attr_lines", []),
-                dn_was_base64=context.get("dn_was_base64", False),
-                original_attribute_case=context.get("original_attribute_case", {}),
-                dn_differences=context.get("dn_differences", {}),
-                attribute_differences=context.get("attribute_differences", {}),
-                original_attributes_complete=context.get(
-                    "original_attributes_complete", {}
-                ),
+                original_entry_dn=original_entry_dn,
+                cleaned_dn=cleaned_dn,
+                original_dn_line=original_dn_line,
+                original_attr_lines=original_attr_lines,
+                dn_was_base64=dn_was_base64,
+                original_attribute_case=original_attribute_case,
+                dn_differences=dn_differences,
+                attribute_differences=attribute_differences,
+                original_attributes_complete=original_attributes_complete,
             )
 
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Mapping[str, object],
+            entry_attrs: dict[str, list[str | bytes]],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse raw LDIF entry data into Entry model per RFC 2849 §4.
 
@@ -2539,7 +2791,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # HOOK: Validate raw entry before parsing
                 validation_result = self._hook_validate_entry_raw(
                     entry_dn,
-                    dict(entry_attrs),
+                    entry_attrs,
                 )
                 if validation_result.is_failure:
                     return FlextResult[FlextLdifModels.Entry].fail(
@@ -2550,7 +2802,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # This enables OID to normalize "cn=subschemasubentry" → "cn=schema"
                 transform_result = self._hook_transform_entry_raw(
                     entry_dn,
-                    dict(entry_attrs),
+                    entry_attrs,
                 )
                 if transform_result.is_failure:
                     return FlextResult[FlextLdifModels.Entry].fail(
@@ -2584,7 +2836,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Create DistinguishedName with metadata if it was base64-encoded
                 # Entry.create accepts Union[str, DistinguishedName]
-                dn_value: Union[str, FlextLdifModels].DistinguishedName
+                dn_value: str | FlextLdifModels.DistinguishedName
                 if dn_was_base64:
                     # Preserve RFC 2849 base64 indicator for round-trip
                     metadata_dict: dict[str, object] = {
@@ -2649,7 +2901,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     current_extensions = dict(entry_model.metadata.extensions or {})
                     current_extensions.update(server_metadata)
                     entry_model.metadata = entry_model.metadata.model_copy(
-                        update={"extensions": current_extensions}
+                        update={"extensions": current_extensions},
                     )
 
                 # HOOK: Normalize entry (server-specific normalization)
@@ -2744,14 +2996,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Build entries dict with conditional values
             entries = {
                 "Server Type": entry_data.metadata.extensions.get(
-                    FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE
+                    FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE,
                 ),
                 "Parsed": entry_data.metadata.extensions.get(
-                    FlextLdifConstants.MetadataKeys.PARSED_TIMESTAMP
+                    FlextLdifConstants.MetadataKeys.PARSED_TIMESTAMP,
                 ),
                 "Source File": (
                     entry_data.metadata.extensions.get(
-                        FlextLdifConstants.MetadataKeys.SOURCE_FILE
+                        FlextLdifConstants.MetadataKeys.SOURCE_FILE,
                     )
                     if entry_data.metadata.extensions
                     else None
@@ -2759,14 +3011,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 "Quirk Type": entry_data.metadata.quirk_type,
             }
             self._add_conditional_comments(
-                ldif_lines, entries, header="# Entry Metadata:"
+                ldif_lines,
+                entries,
+                header="# Entry Metadata:",
             )
 
         def _write_entry_hidden_attrs(
             self,
             ldif_lines: list[str],
             attr_name: str,
-            attr_values: Union[list[str], str],
+            attr_values: list[str] | str,
             hidden_attrs: set[str],
         ) -> bool:
             """Write hidden attributes as comments if in hidden set. Returns True if written."""
@@ -2796,7 +3050,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Note: "hidden_attributes" is a display/processing flag, not a standard metadata key
             # It's used to mark attributes that should be written as comments
             hidden_list = entry_data.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.HIDDEN_ATTRIBUTES
+                FlextLdifConstants.MetadataKeys.HIDDEN_ATTRIBUTES,
             )
             if FlextRuntime.is_list_like(hidden_list):
                 return {str(item) for item in hidden_list}
@@ -2970,7 +3224,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return FlextLdifUtilities.Writer.order_attribute_names(
                 attr_names,
                 use_rfc_order=bool(
-                    write_options and write_options.use_rfc_attribute_order
+                    write_options and write_options.use_rfc_attribute_order,
                 ),
                 sort_alphabetical=bool(write_options and write_options.sort_attributes),
                 priority_attrs=(
@@ -2997,18 +3251,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # DRY: Check minimal differences and restore original if needed
             if FlextLdifUtilities.Writer.check_minimal_differences_restore(
-                ldif_lines, attr_name, minimal_differences_attrs
+                ldif_lines,
+                attr_name,
+                minimal_differences_attrs,
             ):
                 return
 
             # DRY: Type-safe extraction of attr_values
             typed_attr_values = FlextLdifUtilities.Writer.extract_typed_attr_values(
-                attr_values
+                attr_values,
             )
 
             # Write hidden attributes as comments if requested
             if self._write_entry_hidden_attrs(
-                ldif_lines, attr_name, typed_attr_values, hidden_attrs
+                ldif_lines,
+                attr_name,
+                typed_attr_values,
+                hidden_attrs,
             ):
                 return
 
@@ -3016,11 +3275,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if isinstance(typed_attr_values, list):
                 for value in typed_attr_values:
                     self._write_entry_attribute_value(
-                        ldif_lines, attr_name, value, write_options
+                        ldif_lines,
+                        attr_name,
+                        value,
+                        write_options,
                     )
             elif typed_attr_values:
                 self._write_entry_attribute_value(
-                    ldif_lines, attr_name, typed_attr_values, write_options
+                    ldif_lines,
+                    attr_name,
+                    typed_attr_values,
+                    write_options,
                 )
 
         def _write_fallback_attr_lines(
@@ -3048,7 +3313,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Note: servers convert EVERYTHING - writer.py decides what to show/hide/comment
             attr_names = list(entry_data.attributes.attributes.keys())
             ordered_attr_names = self._determine_attribute_order(
-                attr_names, write_options
+                attr_names,
+                write_options,
             )
 
             # Write attributes in determined order
@@ -3085,7 +3351,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry_data
 
             original_dn = entry_data.metadata.extensions.get(
-                FlextLdifConstants.MetadataKeys.ORIGINAL_DN_COMPLETE
+                FlextLdifConstants.MetadataKeys.ORIGINAL_DN_COMPLETE,
             )
             if not (original_dn and isinstance(original_dn, str)):
                 return entry_data
@@ -3150,9 +3416,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             restored_attrs: dict[str, list[str]] = {}
             for attr_name, attr_values in entry_data.attributes.attributes.items():
-                original_case = entry_data.metadata.original_attribute_case.get(
-                    attr_name.lower(),
-                    attr_name,
+                original_case = cast(
+                    "str",
+                    entry_data.metadata.original_attribute_case.get(
+                        attr_name.lower(),
+                        attr_name,
+                    ),
                 )
                 if original_case in original_attrs:
                     original_val = original_attrs[original_case]
@@ -3279,7 +3548,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
 
             converted_attrs: set[str] = set()
-            boolean_conversions: Union[dict[str, dict[str, list[str], str]]] = {}
+            boolean_conversions: dict[str, dict[str, str | list[str]]] = {}
 
             if entry.metadata and entry.metadata.extensions:
                 converted_attrs_obj = entry.metadata.extensions.get(
@@ -3468,7 +3737,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         else transformation_type
                     )
                     self._add_attribute_transformation_comments(
-                        comment_lines, attr_name, transformation, comment_type
+                        comment_lines,
+                        attr_name,
+                        transformation,
+                        comment_type,
                     )
                     processed_attrs.add(attr_name.lower())
 
@@ -3498,7 +3770,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         )
                     else:
                         comment_lines.append(
-                            f"# [REMOVED] {attr_name}: {removed_values}"
+                            f"# [REMOVED] {attr_name}: {removed_values}",
                         )
 
             if comment_lines:
@@ -3566,7 +3838,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             """
             lines = self._format_transformation_comment(
-                transformation_type, attr_name, transformation
+                transformation_type,
+                attr_name,
+                transformation,
             )
             comment_lines.extend(lines)
 
@@ -3670,20 +3944,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 },
             )
 
-        def route_parse(
+        def _route_parse(
             self,
             ldif_text: str,
         ) -> FlextResult[
-            Union[
-                FlextLdifModels.Entry,
-                Union[
-                    FlextLdifModels.SchemaAttribute,
-                    Union[
-                        FlextLdifModels.SchemaObjectClass,
-                        Union[FlextLdifModels.Acl, list[FlextLdifModels.Entry]],
-                    ],
-                ],
-            ]
+            FlextLdifModels.Entry
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+            | list[FlextLdifModels.Entry]
         ]:
             """Route LDIF parsing to appropriate handler.
 
@@ -3711,15 +3980,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Detect ACL (parentheses-based syntax)
             if text_lower.startswith("(") and "target=" in text_lower:
                 # Access Acl via parent's class (RFC is the parent class containing Acl)
-                acl_quirk = FlextLdifServersRfc.Acl(parent_quirk=self)
+                acl_quirk = FlextLdifServersRfc.Acl(
+                    parent_quirk=cast("FlextLdifServersBase", self),
+                )
                 return acl_quirk.parse(ldif_text)
 
             # Default to Entry parsing
-            return self.parse(ldif_text)  # type: ignore[return-value]
+            return self.parse(ldif_text)
 
         def _route_write(
             self,
-            model: object,
+            model: (
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | FlextLdifModels.Acl
+                | FlextLdifModels.Entry
+                | str
+            ),
         ) -> FlextResult[str]:
             """Route model writing to appropriate handler.
 
@@ -3746,11 +4023,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return schema_quirk.write(model)
 
             if isinstance(model, FlextLdifModels.Acl):
-                acl_quirk = FlextLdifServersRfc.Acl(parent_quirk=self)
+                acl_quirk = FlextLdifServersRfc.Acl(
+                    parent_quirk=cast("FlextLdifServersBase", self),
+                )
                 return acl_quirk.write(model)
 
             return FlextResult[str].fail(
-                f"Unknown model type for writing: {type(model).__name__}"
+                f"Unknown model type for writing: {type(model).__name__}",
             )
 
         def _route_write_many(
@@ -3782,7 +4061,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _handle_parse_entry(
             self,
             ldif_text: str,
-        ) -> FlextResult[Union[FlextLdifModels.Entry, str]]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle parse operation for entry quirk."""
             parse_result = self.parse(ldif_text)
             if parse_result.is_success:
@@ -3796,7 +4075,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     return FlextResult[Union[FlextLdifModels.Entry, str]].ok("")
                 # Multiple entries: return first one
                 return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
-                    parsed_entries[0]
+                    parsed_entries[0],
                 )
             error_msg: str = parse_result.error or "Parse failed"
             return FlextResult[Union[FlextLdifModels.Entry, str]].fail(error_msg)
@@ -3804,7 +4083,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _handle_write_entry(
             self,
             entries_to_write: list[FlextLdifModels.Entry],
-        ) -> FlextResult[Union[FlextLdifModels.Entry, str]]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle write operation for entry quirk."""
             write_result = self._route_write_many(list(entries_to_write))
             if write_result.is_success:
@@ -3815,9 +4094,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _auto_detect_entry_operation(
             self,
-            data: Union[str, list[FlextLdifModels.Entry]],
-            operation: Literal["parse", "write"] | None,
-        ) -> Literal["parse", "write"]:
+            data: str | list[FlextLdifModels.Entry],
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None,
+        ) -> FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral:
             """Auto-detect entry operation from data type.
 
             If operation is forced (not None), uses it. Otherwise detects from type:
@@ -3844,79 +4124,74 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return "write"
 
-        def _route_entry_operation(  # noqa: C901
+        def _route_parse_operation(
             self,
-            data: Union[str, list[FlextLdifModels.Entry]],
-            operation: Literal["parse", "write"],
-        ) -> FlextResult[Union[FlextLdifModels.Entry, str]]:
-            """Route entry data to appropriate parse or write handler.
-
-            Validates data type matches operation, then delegates to handler.
-
-            """
-            if operation == "parse":
-                if not isinstance(data, str):
-                    return FlextResult[Union[FlextLdifModels.Entry, str]].fail(
-                        f"parse operation requires str, got {type(data).__name__}",
-                    )
-                parse_result = self._handle_parse_entry(data)
-                # Convert to base return type
-                if parse_result.is_success:
-                    parse_value = parse_result.unwrap()
-                    if FlextRuntime.is_list_like(parse_value):
-                        # Return first entry or empty string
-                        first_item = parse_value[0] if parse_value else ""
-                        if isinstance(first_item, FlextLdifModels.Entry):
-                            return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
-                                first_item,
-                            )
-                        return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
-                            str(first_item) if first_item else "",
-                        )
-                    if isinstance(parse_value, FlextLdifModels.Entry):
-                        return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
-                            parse_value
-                        )
-                    if isinstance(parse_value, str):
-                        return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
-                            parse_value
-                        )
-                    return FlextResult[Union[FlextLdifModels.Entry, str]].ok("")
+            data: str,
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
+            """Route to parse handler and convert result."""
+            parse_result = self._handle_parse_entry(data)
+            if parse_result.is_failure:
                 return FlextResult[Union[FlextLdifModels.Entry, str]].fail(
                     parse_result.error or "Unknown error",
                 )
 
-            if operation == "write":
-                if not FlextRuntime.is_list_like(data):
-                    return FlextResult[Union[FlextLdifModels.Entry, str]].fail(
-                        f"write operation requires list[Entry], got {type(data).__name__}",
-                    )
-                # Type-safe extraction of entries list
-                entries_list: list[FlextLdifModels.Entry] = [
-                    item for item in data if isinstance(item, FlextLdifModels.Entry)
-                ]
-                write_result = self._handle_write_entry(entries_list)
-                # Convert to base return type
-                if write_result.is_success:
-                    write_value = write_result.unwrap()
-                    if isinstance(write_value, str):
-                        return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
-                            write_value
-                        )
-                    # Should not happen for write operations
-                    return FlextResult[Union[FlextLdifModels.Entry, str]].ok("")
+            parse_value = parse_result.unwrap()
+            if FlextRuntime.is_list_like(parse_value):
+                first_item = parse_value[0] if parse_value else ""
+                if isinstance(first_item, FlextLdifModels.Entry):
+                    return FlextResult[Union[FlextLdifModels.Entry, str]].ok(first_item)
+                return FlextResult[Union[FlextLdifModels.Entry, str]].ok(
+                    str(first_item) if first_item else "",
+                )
+            if isinstance(parse_value, FlextLdifModels.Entry | str):
+                return FlextResult[Union[FlextLdifModels.Entry, str]].ok(parse_value)
+            return FlextResult[Union[FlextLdifModels.Entry, str]].ok("")
+
+        def _route_write_operation(
+            self,
+            data: list[FlextLdifModels.Entry],
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
+            """Route to write handler and convert result."""
+            entries_list: list[FlextLdifModels.Entry] = [
+                item for item in data if isinstance(item, FlextLdifModels.Entry)
+            ]
+            write_result = self._handle_write_entry(entries_list)
+            if write_result.is_failure:
                 return FlextResult[Union[FlextLdifModels.Entry, str]].fail(
                     write_result.error or "Unknown error",
                 )
+            write_value = write_result.unwrap()
+            if isinstance(write_value, str):
+                return FlextResult[Union[FlextLdifModels.Entry, str]].ok(write_value)
+            return FlextResult[Union[FlextLdifModels.Entry, str]].ok("")
 
-            # Should not reach here (Literal type ensures only parse or write)
+        def _route_entry_operation(
+            self,
+            data: str | list[FlextLdifModels.Entry],
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral,
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
+            """Route entry data to appropriate parse or write handler."""
+            if operation == "parse":
+                if not isinstance(data, str):
+                    return FlextResult[Union[FlextLdifModels.Entry, str]].fail(
+                        f"parse requires str, got {type(data).__name__}",
+                    )
+                return self._route_parse_operation(data)
+
+            if operation == "write":
+                if not FlextRuntime.is_list_like(data):
+                    return FlextResult[Union[FlextLdifModels.Entry, str]].fail(
+                        f"write requires list[Entry], got {type(data).__name__}",
+                    )
+                return self._route_write_operation(data)
+
             msg = f"Unknown operation: {operation}"
             raise AssertionError(msg)
 
         def _handle_explicit_parse_operation(
             self,
-            typed_data: Union[str, list[FlextLdifModels.Entry]],
-        ) -> FlextResult[Union[FlextLdifModels.Entry, str]]:
+            typed_data: str | list[FlextLdifModels.Entry],
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle explicit parse operation with result conversion.
 
             Args:
@@ -3938,9 +4213,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _convert_route_result_to_output(
             self,
-            route_result: FlextResult[Union[FlextLdifModels.Entry, str]],
-            _detected_operation: Literal["parse", "write"],
-        ) -> FlextResult[Union[FlextLdifModels.Entry, str]]:
+            route_result: FlextResult[FlextLdifModels.Entry | str],
+            _detected_operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral,
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Convert/validate route operation result.
 
             Pass-through helper that ensures type safety. _route_entry_operation
@@ -3960,7 +4235,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _validate_execute_params(
             self,
-            data: Union[str, list[object]] | object | None,
+            data: str | list[object] | object | None,
             operation: str | None,
         ) -> FlextResult[object]:
             """Validate parameters for execute method."""
@@ -3968,7 +4243,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if data is not None:
                 if not isinstance(data, (str, list)) and data is not None:
                     return FlextResult.fail(
-                        f"data must be str, list, or None, got {type(data)}"
+                        f"data must be str, list, or None, got {type(data)}",
                     )
                 if isinstance(data, list) and not all(
                     isinstance(item, FlextLdifModels.Entry) for item in data
@@ -3978,15 +4253,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Type check operation parameter
             if operation is not None and operation not in {"parse", "write"}:
                 return FlextResult.fail(
-                    f"operation must be 'parse', 'write', or None, got {operation}"
+                    f"operation must be 'parse', 'write', or None, got {operation}",
                 )
 
             return FlextResult.ok(True)
 
         def execute(
             self,
-            **kwargs: object,
-        ) -> FlextResult[Union[FlextLdifModels.Entry, str]]:
+            **kwargs: str | float | bool | None,
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             r"""Execute entry quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -4032,12 +4307,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return FlextResult[Union[FlextLdifModels.Entry, str]].fail(error_msg)
 
             # Type-safe data extraction using isinstance
-            typed_data: Union[str, list[FlextLdifModels.Entry] | None] = None
+            typed_data: str | (list[FlextLdifModels.Entry] | None) = None
             if isinstance(data, (str, list)):
                 typed_data = data
 
             # Type-safe operation extraction with explicit Literal check
-            typed_operation: Literal["parse", "write"] | None = None
+            typed_operation: (
+                FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
+            ) = None
             if operation == "parse":
                 typed_operation = "parse"
             elif operation == "write":
@@ -4049,7 +4326,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Auto-detect operation from data type
             detected_operation = self._auto_detect_entry_operation(
-                typed_data, typed_operation
+                typed_data,
+                typed_operation,
             )
 
             # Handle explicit parse operation with dedicated helper
@@ -4059,7 +4337,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Route to appropriate handler and convert result to output type
             route_result = self._route_entry_operation(typed_data, detected_operation)
             return self._convert_route_result_to_output(
-                route_result, detected_operation
+                route_result,
+                detected_operation,
             )
 
         @overload
@@ -4067,7 +4346,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             data: str,
             *,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseOperationLiteral
+            | None = None,
         ) -> FlextLdifTypes.EntryOrString: ...
 
         @overload
@@ -4075,22 +4355,25 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             data: list[FlextLdifModels.Entry],
             *,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.WriteOperationLiteral
+            | None = None,
         ) -> str: ...
 
         @overload
         def __call__(
             self,
-            data: Union[str, list[FlextLdifModels.Entry] | None] = None,
+            data: str | (list[FlextLdifModels.Entry] | None) = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None = None,
         ) -> FlextLdifTypes.EntryOrString: ...
 
         def __call__(
             self,
-            data: Union[str, list[FlextLdifModels.Entry] | None] = None,
+            data: str | (list[FlextLdifModels.Entry] | None) = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
+            | None = None,
         ) -> FlextLdifTypes.EntryOrString:
             """Callable interface - automatic polymorphic processor.
 
@@ -4100,7 +4383,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             result = self.execute(data=data, operation=operation)
             return result.unwrap()  # Already correct type
 
-        def __new__(cls, entry_service: object | None = None, **kwargs: object) -> Self:
+        def __new__(
+            cls,
+            entry_service: FlextLdifTypes.Services.EntryService | None = None,
+            **kwargs: str | float | bool | None,
+        ) -> Self:
             """Override __new__ to support auto-execute and processor instantiation."""
             instance = super().__new__(cls)
             # Remove auto-execute kwargs before passing to __init__
@@ -4115,6 +4402,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 instance_type.__init__(
                     instance,
                     entry_service=entry_service,
+                    parent_quirk=None,
                     **init_kwargs,
                 )
 
@@ -4126,7 +4414,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Union[Mapping[str, object], object],
+            entry_attrs: (
+                Mapping[str, list[str] | str] | dict[str, list[str] | str] | str
+            ),
         ) -> FlextResult[FlextLdifModels.Entry]:
             """🔴 REQUIRED: Parse individual LDIF entry into Entry model (internal).
 
@@ -4165,7 +4455,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Type check: entry_attrs should be a mapping
             if not isinstance(entry_attrs, Mapping):
                 return FlextResult.fail(
-                    f"entry_attrs must be a Mapping, got {type(entry_attrs)}"
+                    f"entry_attrs must be a Mapping, got {type(entry_attrs)}",
                 )
 
             # Convert attributes to FlextLdifModels.LdifAttributes
@@ -4177,7 +4467,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             converted_attrs = attrs_result.unwrap()
 
             # Create DistinguishedName object from DN string
-            dn_value: Union[str, FlextLdifModels].DistinguishedName = (
+            dn_value: str | FlextLdifModels.DistinguishedName = (
                 FlextLdifModels.DistinguishedName(value=entry_dn)
             )
 
@@ -4210,7 +4500,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Try original_strings with prefix
                 if entry_data.metadata.original_strings:
                     dn_orig = entry_data.metadata.original_strings.get(
-                        FlextLdifConstants.Rfc.META_DN_ORIGINAL
+                        FlextLdifConstants.Rfc.META_DN_ORIGINAL,
                     )
                     if isinstance(dn_orig, str):
                         return f"dn: {dn_orig}"

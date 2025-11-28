@@ -17,6 +17,7 @@ from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifModelsEvents:
@@ -616,5 +617,10 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        server_type: str = Field(description="Server type")
-        schema_type: str = Field(default="generic", description="Schema type")
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            description="Server type"
+        )
+        schema_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.GENERIC.value,
+            description="Schema type",
+        )

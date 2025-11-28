@@ -20,6 +20,7 @@ from typing import override
 
 from flext_core import FlextDecorators, FlextResult
 
+from flext_ldif._models.results import _CategoryPaths, _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -86,9 +87,11 @@ class FlextLdifStatistics(
 
         """
         total_entries = sum(len(entries) for entries in categorized.values())
-        categorized_counts = {
-            category: len(entries) for category, entries in categorized.items()
-        }
+
+        # Build categorized counts as _DynamicCounts model
+        categorized_counts_model = _DynamicCounts()
+        for category, entries in categorized.items():
+            categorized_counts_model.set_count(category, len(entries))
 
         rejected_entries = categorized.get(FlextLdifConstants.Categories.REJECTED, [])
         rejection_count = len(rejected_entries)
@@ -96,20 +99,26 @@ class FlextLdifStatistics(
 
         rejection_rate = rejection_count / total_entries if total_entries > 0 else 0.0
 
-        output_files_info = {
-            category: str(output_dir / output_files.get(category, f"{category}.ldif"))
-            for category in written_counts
-        }
+        # Build written counts as _DynamicCounts model
+        written_counts_model = _DynamicCounts()
+        for category, count in written_counts.items():
+            written_counts_model.set_count(category, count)
+
+        # Build output files paths as _CategoryPaths model
+        output_files_model = _CategoryPaths()
+        for category in written_counts:
+            path_str = str(output_dir / output_files.get(category, f"{category}.ldif"))
+            setattr(output_files_model, category, path_str)
 
         return FlextResult[FlextLdifModels.StatisticsResult].ok(
             FlextLdifModels.StatisticsResult(
                 total_entries=total_entries,
-                categorized=categorized_counts,
+                categorized=categorized_counts_model,
                 rejection_rate=rejection_rate,
                 rejection_count=rejection_count,
                 rejection_reasons=rejection_reasons,
-                written_counts=written_counts,
-                output_files=output_files_info,
+                written_counts=written_counts_model,
+                output_files=output_files_model,
             ),
         )
 
@@ -137,11 +146,21 @@ class FlextLdifStatistics(
             ):
                 server_type_distribution[st_value] += 1
 
+        # Build object_class_distribution as _DynamicCounts model
+        obj_class_model = _DynamicCounts()
+        for class_name, count in object_class_distribution.items():
+            obj_class_model.set_count(class_name, count)
+
+        # Build server_type_distribution as _DynamicCounts model
+        server_type_model = _DynamicCounts()
+        for server_type, count in server_type_distribution.items():
+            server_type_model.set_count(server_type, count)
+
         return FlextResult[FlextLdifModels.EntriesStatistics].ok(
             FlextLdifModels.EntriesStatistics(
                 total_entries=len(entries),
-                object_class_distribution=dict(object_class_distribution),
-                server_type_distribution=dict(server_type_distribution),
+                object_class_distribution=obj_class_model,
+                server_type_distribution=server_type_model,
             ),
         )
 

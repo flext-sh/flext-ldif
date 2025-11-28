@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
@@ -48,7 +47,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """Standardized constants for Relaxed (lenient) quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "relaxed"
+        )
         PRIORITY: ClassVar[int] = 200  # Lowest priority - fallback for broken LDIF
 
         # Auto-discovery constants
@@ -93,37 +94,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         LDIF_NEWLINE: ClassVar[str] = "\n"
         LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """Relaxed mode-specific ACL permissions (lenient parsing)."""
-
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            SEARCH = "search"
-            COMPARE = "compare"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """Relaxed mode ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """Relaxed mode-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            UTF_32 = "utf-32"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
-            CP1252 = "cp1252"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -250,14 +224,16 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if not attribute.metadata:
                     attribute.metadata = FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        extensions={
-                            "original_format": attr_definition.strip(),
-                            meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
-                        },
+                        extensions=FlextLdifModels.DynamicMetadata(
+                            original_format=attr_definition.strip(),
+                            **{meta_keys.SCHEMA_SOURCE_SERVER: "relaxed"},
+                        ),
                     )
                 else:
                     if not attribute.metadata.extensions:
-                        attribute.metadata.extensions = {}
+                        attribute.metadata.extensions = (
+                            FlextLdifModels.DynamicMetadata()
+                        )
                     attribute.metadata.quirk_type = self._get_server_type()
                     # Ensure original_format and source_server are set
                     if not attribute.metadata.extensions.get("original_format"):
@@ -292,10 +268,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 # Return minimal attribute with relaxed metadata
                 metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type=self._get_server_type(),
-                    extensions={
-                        "original_format": attr_definition.strip(),
-                        meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
-                    },
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format=attr_definition.strip(),
+                        **{meta_keys.SCHEMA_SOURCE_SERVER: "relaxed"},
+                    ),
                 )
 
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -366,14 +342,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not objectclass.metadata:
                 objectclass.metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type=self._get_server_type(),
-                    extensions={
-                        "original_format": original_definition.strip(),
-                        meta_keys.SCHEMA_SOURCE_SERVER: "relaxed",
-                    },
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format=original_definition.strip(),
+                        **{meta_keys.SCHEMA_SOURCE_SERVER: "relaxed"},
+                    ),
                 )
             else:
                 if not objectclass.metadata.extensions:
-                    objectclass.metadata.extensions = {}
+                    objectclass.metadata.extensions = FlextLdifModels.DynamicMetadata()
                 objectclass.metadata.quirk_type = self._get_server_type()
                 # Ensure original_format and source_server are set
                 if not objectclass.metadata.extensions.get("original_format"):
@@ -680,7 +656,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             ):
                 # Data came from relaxed → use original_format as fallback
                 original_format_raw = attr_data.metadata.extensions.get(
-                    "original_format", ""
+                    "original_format",
+                    "",
                 )
                 if not isinstance(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
@@ -733,7 +710,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             ):
                 # Data came from relaxed → use original_format as fallback
                 original_format_raw = oc_data.metadata.extensions.get(
-                    "original_format", ""
+                    "original_format",
+                    "",
                 )
                 if not isinstance(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
@@ -812,11 +790,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     if not acl.metadata:
                         acl.metadata = FlextLdifModels.QuirkMetadata(
                             quirk_type=self._get_server_type(),
-                            extensions={"original_format": acl_line.strip()},
+                            extensions=FlextLdifModels.DynamicMetadata(
+                                original_format=acl_line.strip(),
+                            ),
                         )
                     else:
                         if not acl.metadata.extensions:
-                            acl.metadata.extensions = {}
+                            acl.metadata.extensions = FlextLdifModels.DynamicMetadata()
                         acl.metadata.quirk_type = self._get_server_type()
                     return FlextResult[FlextLdifModels.Acl].ok(acl)
                 # Create minimal Acl model with relaxed parsing
@@ -834,7 +814,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     raw_acl=acl_line,
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        extensions={"original_format": acl_line.strip()},
+                        extensions=FlextLdifModels.DynamicMetadata(
+                            original_format=acl_line.strip(),
+                        ),
                     ),
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
@@ -941,7 +923,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Accept any entry in relaxed mode.
 

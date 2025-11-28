@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import base64
-import enum
 import re
-from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
@@ -25,7 +23,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "ibm_tivoli"
+        )
         PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
@@ -151,34 +151,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         # ACL separator for Tivoli format (migrated from _write_acl method)
         ACL_SEPARATOR: ClassVar[str] = "#"
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(enum.StrEnum):
-            """IBM Tivoli Directory Server-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            SEARCH = "search"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(enum.StrEnum):
-            """IBM Tivoli Directory Server ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(enum.StrEnum):
-            """IBM Tivoli Directory Server-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -473,7 +449,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Detect Tivoli DS-specific entries."""
             if not entry_dn:

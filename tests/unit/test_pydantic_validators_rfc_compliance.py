@@ -33,6 +33,7 @@ import pytest
 
 from flext_ldif import FlextLdifModels
 from tests.fixtures.constants import RFC, DNs, Names, OIDs, Values
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers import FlextLdifTestFactories, TestAssertions
 
 
@@ -285,7 +286,7 @@ class TestPydanticValidatorsRfcCompliance:
             "ds-cfg-enabled",
             "_internal_id",
         ]
-        test_extensions: dict[str, object] = {
+        test_extensions: GenericFieldsDict = {
             "rfc_violations": rfc_violations_list,
             "attribute_name_violations": attr_violations_list,
         }

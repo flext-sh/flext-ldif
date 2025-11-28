@@ -93,7 +93,10 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        server_type: str = Field(..., description="Server type for metadata")
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            ...,
+            description="Server type for metadata",
+        )
         aci_prefix: str = Field(
             default="aci:",
             description="ACI attribute prefix",
@@ -338,7 +341,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Structured migration config with 6-file output and tracking",
         )
-        write_options: BaseModel | None = Field(
+        write_options: FlextLdifModelsConfig.WriteFormatOptions | None = Field(
             default=None,
             description=(
                 "Write format options (line folding, removed attrs as comments)"
@@ -354,7 +357,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Ordered list of LDIF files to process (categorized mode)",
         )
-        output_files: dict[str, str] | None = Field(
+        output_files: dict[FlextLdifConstants.Categories, str] | None = Field(
             default=None,
             description="Category to filename mapping (categorized mode)",
         )
@@ -482,7 +485,9 @@ class FlextLdifModelsConfig:
         """Generic encoding rules - server classes provide values."""
 
         default_encoding: str
-        allowed_encodings: list[str] = Field(default_factory=list)
+        allowed_encodings: list[FlextLdifConstants.LiteralTypes.EncodingLiteral] = (
+            Field(default_factory=list)
+        )
 
     class DnCaseRules(FlextModels.Value):
         """Generic DN case rules - server classes provide values."""
@@ -1051,8 +1056,8 @@ class FlextLdifModelsConfig:
         file_path: str = Field(
             description="Path to LDIF file to parse",
         )
-        server_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.RFC,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            default="rfc",
             description="LDAP server type to use for parsing quirks",
         )
         enable_auto_detection: bool = Field(
@@ -1090,12 +1095,12 @@ class FlextLdifModelsConfig:
         output_path: str = Field(
             description="Path where LDIF file will be written",
         )
-        server_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.RFC,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            default="rfc",
             description="LDAP server type to use for writing quirks",
         )
-        encoding: str = Field(
-            default=FlextLdifConstants.Encoding.UTF8,
+        encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
+            default="utf-8",
             description="Character encoding for output file",
         )
         max_line_length: int = Field(
@@ -1125,7 +1130,7 @@ class FlextLdifModelsConfig:
 
         model_config = ConfigDict(frozen=True)
 
-        ldif_encoding: str = Field(
+        ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
             description="LDIF encoding setting",
         )
         strict_rfc_compliance: bool = Field(
@@ -1146,9 +1151,11 @@ class FlextLdifModelsConfig:
         quirks_detection_mode: str = Field(
             description="Server quirks detection mode (auto/manual/disabled)",
         )
-        quirks_server_type: str | None = Field(
-            default=None,
-            description="Configured server type for quirks (None if auto-detect)",
+        quirks_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = (
+            Field(
+                default=None,
+                description="Configured server type for quirks (None if auto-detect)",
+            )
         )
         enable_relaxed_parsing: bool = Field(
             description="Whether relaxed parsing mode is enabled",

@@ -41,6 +41,7 @@ import pytest
 
 from flext_ldif import FlextLdif
 from tests.fixtures.constants import Fixtures
+from tests.fixtures.typing import GenericFieldsDict
 from tests.fixtures.validator import FlextLdifFixtureDiscovery
 from tests.helpers import TestAssertions
 
@@ -58,7 +59,7 @@ class TestFixtureDiscoveryValidation:
     """
 
     # Fixture configuration mappings using enums for type safety and DRY
-    FIXTURE_MAPPINGS: ClassVar[dict[str, dict[str, object]]] = {
+    FIXTURE_MAPPINGS: ClassVar[dict[str, GenericFieldsDict]] = {
         "rfc": {
             "simple_entry": {"expected_count": 1, "fixture_type": Fixtures.ENTRY},
             "multivalue_long": {"expected_count": 1, "fixture_type": Fixtures.ENTRY},
@@ -89,7 +90,7 @@ class TestFixtureDiscoveryValidation:
     }
 
     # Edge case specialized validations using mapping-driven approach
-    EDGE_CASE_VALIDATIONS: ClassVar[dict[str, dict[str, object]]] = {
+    EDGE_CASE_VALIDATIONS: ClassVar[dict[str, GenericFieldsDict]] = {
         "deep_dn": {"count": 1},
         "unicode": {"count": 3},
         "large_multivalue": {"count": 1},
@@ -119,7 +120,7 @@ class TestFixtureDiscoveryValidation:
             yield from TestFixtureDiscoveryValidation.CATEGORY_MIN_COUNTS.items()
 
         @staticmethod
-        def parametrized_fixtures() -> Iterator[tuple[str, str, dict[str, object]]]:
+        def parametrized_fixtures() -> Iterator[tuple[str, str, GenericFieldsDict]]:
             """Generate parametrized test cases for all fixtures using mappings."""
             for (
                 category,
@@ -186,7 +187,7 @@ class TestFixtureDiscoveryValidation:
         discovery: FlextLdifFixtureDiscovery,
         category: str,
         fixture_name: str,
-        fixture_config: dict[str, object],
+        fixture_config: GenericFieldsDict,
     ) -> None:
         """Test fixture metadata extraction and validation using parametrized mapping."""
         full_name = self.Helpers.get_fixture_full_name(fixture_name, category)
@@ -208,7 +209,7 @@ class TestFixtureDiscoveryValidation:
         discovery: FlextLdifFixtureDiscovery,
         category: str,
         fixture_name: str,
-        fixture_config: dict[str, object],
+        fixture_config: GenericFieldsDict,
     ) -> None:
         """Test loading expected results from JSON fixtures with mapping validation."""
         full_name = self.Helpers.get_fixture_full_name(fixture_name, category)

@@ -20,7 +20,13 @@ from typing import TypedDict, TypeVar, cast
 from flext_core import FlextResult
 from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifWriter
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifConstants,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -29,6 +35,11 @@ from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
+from tests.fixtures.typing import (
+    GenericCallableParameterDict,
+    GenericFieldsDict,
+    GenericTestCaseDict,
+)
 
 from .test_assertions import TestAssertions
 from .test_rfc_helpers import HasParseMethod, RfcTestHelpers
@@ -57,15 +68,18 @@ class ParseTestCaseDict(TypedDict, total=False):
     should_succeed: bool
 
 
-# Use protocols from src
-ServiceWithExecute = FlextLdifProtocols.Services.ServiceWithExecuteProtocol
-ObjectWithMetadata = FlextLdifProtocols.Services.ObjectWithMetadataProtocol
+# Protocol type aliases - using available protocols from src
+# Note: Some protocols may need to be defined if they don't exist yet
+ServiceWithExecute = FlextLdifProtocols.Services.HasParseMethodProtocol
+ObjectWithMetadata = FlextLdifProtocols.Models.EntryProtocol
 
-# Test-specific protocols - moved to src/protocols.py
-ConstantsClass = FlextLdifProtocols.Services.ConstantsClassProtocol
-FixtureLoaderProtocol = FlextLdifProtocols.Services.FixtureLoaderProtocol
-QuirkInstance = FlextLdifProtocols.Services.QuirkInstanceProtocol
-ServiceInstance = FlextLdifProtocols.Services.ServiceInstanceProtocol
+# Test-specific protocols - using available protocols or defining as needed
+# ConstantsClass and FixtureLoaderProtocol need to be defined if used
+# For now, using object as fallback for test compatibility
+type ConstantsClass = object
+type FixtureLoaderProtocol = object
+type QuirkInstance = object
+type ServiceInstance = object
 
 # Union type for quirk instances - moved to src/types.py
 QuirkInstanceType = FlextLdifTypes.QuirkInstanceType
@@ -169,7 +183,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         writer: FlextLdifWriter,
         entries: list[FlextLdifModels.Entry],
         *,
-        target_server_type: str = "rfc",
+        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
         output_target: str = "string",
         output_path: Path | None = None,
         must_contain: list[str] | None = None,
@@ -226,7 +240,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         writer: FlextLdifWriter,
         ldif_content: str,
         *,
-        target_server_type: str = "rfc",
+        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
         validate_identical: bool = True,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Complete roundtrip test - replaces 30-50 lines.
@@ -524,8 +538,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_operations(
-        test_cases: list[dict[str, object]],
-        operation_func: Callable[[dict[str, object]], object],
+        test_cases: list[GenericTestCaseDict],
+        operation_func: Callable[[GenericCallableParameterDict], object],
         *,
         validate_results: bool = True,
     ) -> list[object]:
@@ -687,7 +701,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         ldif_content: str | Path,
         *,
         expected_count: int | None = None,
-        target_server_type: str = "rfc",
+        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
         validate_entries: bool = True,
     ) -> tuple[list[FlextLdifModels.Entry], str, list[FlextLdifModels.Entry]]:
         """Complete API parse-write-roundtrip test - replaces 30-50 lines.
@@ -928,7 +942,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         | FlextLdifTypes.EntryQuirk
         | FlextLdifTypes.AclQuirk,
         method_name: str,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         validate_results: bool = True,
     ) -> list[TResult]:
@@ -1308,13 +1322,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(entries, list):
             result = writer.write(
                 entries,
-                target_server_type="rfc",
+                target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
                 output_target="string",
             )
         else:
             result = writer.write(
                 [entries],
-                target_server_type="rfc",
+                target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
                 output_target="string",
             )
 
@@ -2153,9 +2167,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def service_execute_and_assert_fields(
         service: ServiceWithExecute[object],
         *,
-        expected_fields: dict[str, object] | None = None,
+        expected_fields: GenericFieldsDict | None = None,
         expected_type: type | None = None,
-        must_contain_in_fields: dict[str, object] | None = None,
+        must_contain_in_fields: GenericFieldsDict | None = None,
     ) -> object:
         """Test service execute and assert fields - replaces 8-12 lines.
 
@@ -2766,7 +2780,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_key_isinstance(
-        dictionary: dict[str, object],
+        dictionary: GenericFieldsDict,
         key: str,
         expected_type: type,
         error_msg: str | None = None,
@@ -2794,7 +2808,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_key_is_not_none(
-        dictionary: dict[str, object],
+        dictionary: GenericFieldsDict,
         key: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3531,8 +3545,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_equals(
-        actual: dict[str, object],
-        expected: dict[str, object],
+        actual: GenericFieldsDict,
+        expected: GenericFieldsDict,
         error_msg: str | None = None,
     ) -> None:
         """Assert dict equals expected - replaces 1 line per use.
@@ -3554,7 +3568,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_has_key(
-        dictionary: dict[str, object],
+        dictionary: GenericFieldsDict,
         key: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3577,7 +3591,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dict_has_value(
-        dictionary: dict[str, object],
+        dictionary: GenericFieldsDict,
         value: object,
         error_msg: str | None = None,
     ) -> None:
@@ -3817,7 +3831,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         method_name: str,
         *args: object,
         expected_result_type: type[object] | None = None,
-        expected_attributes: dict[str, object] | None = None,
+        expected_attributes: GenericFieldsDict | None = None,
         should_succeed: bool = True,
         **kwargs: object,
     ) -> object:
@@ -3884,7 +3898,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_test_parse_operations(
         parser: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
     ) -> list[list[FlextLdifModels.Entry]]:
         """Test multiple parse operations in batch - replaces 50-200+ lines.
 
@@ -4410,7 +4424,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         parse_method: str | None = None,
         write_method: str | None = None,
         must_contain: list[str] | None = None,
-        validate_fields: dict[str, object] | None = None,
+        validate_fields: GenericFieldsDict | None = None,
     ) -> tuple[object, str]:
         """Simple schema roundtrip test - replaces 20-35 lines.
 
@@ -4547,7 +4561,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def error_handling_batch(
         quirk: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         parse_method: str = "parse",
     ) -> list[object]:
@@ -4594,7 +4608,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_schema_roundtrip(
         schema_quirk: FlextLdifTypes.SchemaQuirk,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         validate_all: bool = True,
     ) -> list[tuple[object, str]]:
@@ -4607,7 +4621,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 - parse_method: str | None
                 - write_method: str | None
                 - must_contain: list[str] | None
-                - validate_fields: dict[str, object] | None
+                - validate_fields: GenericFieldsDict | None
             validate_all: Whether to validate all results (default: True)
 
         Returns:
@@ -4628,7 +4642,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 write_method=cast("str | None", test_case.get("write_method")),
                 must_contain=cast("list[str] | None", test_case.get("must_contain")),
                 validate_fields=cast(
-                    "dict[str, object] | None",
+                    "GenericFieldsDict | None",
                     test_case.get("validate_fields"),
                 )
                 if validate_all
@@ -4648,7 +4662,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_entry_roundtrip(
         entry_quirk: FlextLdifTypes.EntryQuirk,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         validate_all: bool = True,
     ) -> list[tuple[FlextLdifModels.Entry, str]]:
@@ -4697,7 +4711,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         content: str,
         *,
         parse_method: str = "parse",
-        expected_fields: dict[str, object] | None = None,
+        expected_fields: GenericFieldsDict | None = None,
         must_contain_in_output: list[str] | None = None,
     ) -> object:
         """Parse and validate specific fields - replaces 15-25 lines.
@@ -4989,7 +5003,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def batch_assert_list_lengths(
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         list_key: str = "items",
         length_key: str = "expected_length",
@@ -5056,7 +5070,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         schema_quirk: FlextLdifTypes.SchemaQuirk,
         attr_def: str,
         *,
-        expected_fields: dict[str, object],
+        expected_fields: GenericFieldsDict,
         parse_method: str = "parse_attribute",
     ) -> object:
         """Parse attribute and validate all expected fields - replaces 20-40+ lines.
@@ -5093,7 +5107,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         schema_quirk: FlextLdifTypes.SchemaQuirk,
         oc_def: str,
         *,
-        expected_fields: dict[str, object],
+        expected_fields: GenericFieldsDict,
         parse_method: str = "parse_objectclass",
     ) -> object:
         """Parse objectClass and validate all expected fields - replaces 20-40+ lines.
@@ -5190,7 +5204,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_parse_and_validate_fields(
         quirk: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         parse_method: str = "parse",
         validate_all: bool = True,
@@ -5201,7 +5215,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             quirk: Quirk instance
             test_cases: List of test case dicts with keys:
                 - content: str (required)
-                - expected_fields: dict[str, object] (required)
+                - expected_fields: GenericFieldsDict (required)
                 - parse_method: str | None (optional override)
             parse_method: Default method name for parsing
             validate_all: Whether to validate all results (default: True)
@@ -5286,7 +5300,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 entries_data = cast("list[FlextLdifModels.Entry]", data)
                 result = writer_with_write.write(
                     entries=entries_data,
-                    target_server_type="rfc",
+                    target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
                     output_target="file",
                     output_path=output_path,
                 )
@@ -5294,7 +5308,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 # For other data types, use the generic write method
                 result = writer_with_write.write(
                     entries=[cast("FlextLdifModels.Entry", data)],
-                    target_server_type="rfc",
+                    target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
                     output_target="file",
                     output_path=output_path,
                 )
@@ -5337,7 +5351,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         filename: str = "roundtrip.ldif",
         expected_count: int | None = None,
         validate_identical: bool = True,
-        target_server_type: str = "rfc",
+        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
     ) -> tuple[list[FlextLdifModels.Entry], Path, list[FlextLdifModels.Entry]]:
         """Complete roundtrip: parse -> write -> parse - replaces 20-35 lines per use.
 
@@ -5488,7 +5502,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         expected_oid: str,
         expected_name: str,
-        expected_fields: dict[str, object] | None = None,
+        expected_fields: GenericFieldsDict | None = None,
     ) -> FlextLdifModels.SchemaAttribute:
         """Complete attribute parse test with all validations - replaces 8-15 lines.
 
@@ -5539,7 +5553,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         expected_oid: str,
         expected_name: str,
-        expected_fields: dict[str, object] | None = None,
+        expected_fields: GenericFieldsDict | None = None,
     ) -> FlextLdifModels.SchemaObjectClass:
         """Complete objectClass parse test with all validations - replaces 8-15 lines.
 
@@ -6428,7 +6442,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_batch_can_handle_operations(
         quirk: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         can_handle_method: str = "can_handle",
     ) -> list[bool]:
@@ -6469,7 +6483,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_batch_write_and_assert_content(
         writer: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         write_method: str = "write",
     ) -> list[str]:
@@ -6762,7 +6776,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_parse_entries_with_validation(
         entry_quirk: FlextLdifTypes.EntryQuirk,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         parse_method: str = "parse",
     ) -> list[FlextLdifModels.Entry]:
@@ -6894,7 +6908,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def batch_parse_schema_with_constants(
         schema_quirk: FlextLdifTypes.SchemaQuirk,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         parse_method: str = "parse",
     ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
@@ -6958,7 +6972,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_write_failure_assertions(
         writer: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         write_method: str = "write",
     ) -> list[FlextResult[object]]:
@@ -7190,7 +7204,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_batch_parse_and_assert_counts(
         parser: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
     ) -> list[list[FlextLdifModels.Entry]]:
         """Test multiple parse operations with count assertions - replaces 30-100+ lines.
 
@@ -7875,13 +7889,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         source: FlextLdifServersBase | str,
         target: FlextLdifServersBase | str,
         data_type: str,
-        data: str | dict[str, object] | FlextLdifModels.Entry,
+        data: str | GenericFieldsDict | FlextLdifModels.Entry,
         *,
         must_contain: str | list[str] | None = None,
         must_not_contain: str | list[str] | None = None,
         expected_type: type | None = None,
         should_succeed: bool = True,
-    ) -> str | dict[str, object]:
+    ) -> str | GenericFieldsDict:
         """Complete conversion test with string assertions - uses model-based conversion.
 
         Refactored to use model-based conversion API:
@@ -8027,7 +8041,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             )
         unwrapped = write_result.unwrap()
         # Type narrowing: unwrapped can be str or dict[str, object]
-        converted: str | dict[str, object]
+        converted: str | GenericFieldsDict
         if isinstance(unwrapped, (str, dict)):
             converted = unwrapped
         else:
@@ -8067,7 +8081,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         source: FlextLdifServersBase | str,
         target: FlextLdifServersBase | str,
         data_type: str,
-        items: list[str | dict[str, object] | FlextLdifModels.Entry],
+        items: list[str | GenericFieldsDict | FlextLdifModels.Entry],
         *,
         expected_count: int | None = None,
         should_succeed: bool = True,
@@ -8409,7 +8423,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         parse_method: str = "parse",
         expected_keys: list[str],
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Parse and assert dict has expected keys - replaces 6-10 lines per use.
 
         Common pattern (appears 15+ times):
@@ -8449,8 +8463,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         content: str | Path,
         *,
         parse_method: str = "parse",
-        expected_key_value_pairs: dict[str, object],
-    ) -> dict[str, object]:
+        expected_key_value_pairs: GenericFieldsDict,
+    ) -> GenericFieldsDict:
         """Parse and assert dict has expected key-value pairs - replaces 8-15 lines per use.
 
         Common pattern (appears 20+ times):
@@ -8538,11 +8552,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         source: FlextLdifServersBase | str,
         target: FlextLdifServersBase | str,
         data_type: str,
-        original_data: str | dict[str, object],
+        original_data: str | GenericFieldsDict,
         *,
         must_contain_in_roundtrip: str | list[str] | None = None,
         validate_equivalence: bool = True,
-    ) -> str | dict[str, object]:
+    ) -> str | GenericFieldsDict:
         """Complete roundtrip conversion test - uses NEW model-based API.
 
         NEW API: Uses parse→convert→write pipeline for roundtrip testing.
@@ -8699,7 +8713,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     f"Roundtrip result must contain '{text}' for semantic equivalence"
                 )
 
-        return cast("str | dict[str, object]", roundtrip)
+        return cast("str | GenericFieldsDict", roundtrip)
 
     @staticmethod
     def helper_get_supported_conversions_and_assert(
@@ -8752,7 +8766,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def helper_result_and_assert_fields(
         result: FlextResult[object],
         *,
-        expected_fields: dict[str, object] | None = None,
+        expected_fields: GenericFieldsDict | None = None,
         must_have_attributes: list[str] | None = None,
         should_succeed: bool = True,
         expected_value: object | None = None,
@@ -9229,7 +9243,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def helper_assert_constants_in_collection(
-        collection: list[object] | dict[str, object],
+        collection: list[object] | GenericFieldsDict,
         constants: ConstantsClass,
         *,
         constant_attrs: list[str],
@@ -9404,7 +9418,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # SchemaObjectClass doesn't have create(), use constructor directly
         # Only pass fields that are not None (except for optional fields)
-        oc_kwargs: dict[str, object] = {}
+        oc_kwargs: GenericFieldsDict = {}
         if oid_value is not None:
             oc_kwargs["oid"] = cast("str", oid_value)
         if name_value is not None:
@@ -9548,8 +9562,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         transform_method: str,
         input_data: object,
         *,
-        expected_fields: dict[str, object] | None = None,
-        must_not_equal: dict[str, object] | None = None,
+        expected_fields: GenericFieldsDict | None = None,
+        must_not_equal: GenericFieldsDict | None = None,
     ) -> object:
         """Test transform_*_for_write methods with field assertions - replaces 8-15 lines.
 
@@ -9852,7 +9866,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def api_parse_with_server_type(
         api: FlextLdif,
         ldif_content: str | Path,
-        server_type: str,
+        server_type: FlextLdifConstants.ServerTypeLiteral,
         *,
         expected_count: int | None = None,
         expected_dn: str | None = None,
@@ -9922,7 +9936,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         entries: Sequence[FlextLdifModels.Entry],
         output_path: Path,
         *,
-        target_server_type: str = "rfc",
+        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
     ) -> Path:
@@ -9973,7 +9987,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         api: FlextLdif,
         entries: Sequence[FlextLdifModels.Entry],
         *,
-        target_server_type: str = "rfc",
+        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
     ) -> str:
@@ -10047,7 +10061,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def api_parse_fixture_and_assert(
         api: FlextLdif,
         fixture_loader: FixtureLoaderProtocol,
-        server_type: str,
+        server_type: FlextLdifConstants.ServerTypeLiteral,
         fixture_name: str,
         *,
         expected_count: int | None = None,
@@ -10360,7 +10374,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def quirk_parse_test_cases(
         quirk: object,
-        test_cases: list[dict[str, object]],
+        test_cases: list[GenericTestCaseDict],
         *,
         parse_method: str = "parse",
         expected_type: type[object] | None = None,

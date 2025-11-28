@@ -10,13 +10,15 @@ import re
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
 
-# Type for parsed ACL components
-AclComponent = dict[str, str | object]
+# Type for parsed ACL components (using MetadataValue for nested structures)
+AclComponent = dict[str, str | FlextLdifTypes.MetadataValue]
 
 
 class FlextLdifUtilitiesACL:
@@ -162,7 +164,7 @@ class FlextLdifUtilitiesACL:
         allow_permissions: list[str],
         permission_map: dict[str, str] | None = None,
         deny_permissions: list[str] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, bool]:
         """Build permissions dictionary from allow/deny lists.
 
         Args:
@@ -175,7 +177,7 @@ class FlextLdifUtilitiesACL:
             Dictionary mapping permission names to True (allow) or False (deny)
 
         """
-        permissions: dict[str, object] = {}
+        permissions: dict[str, bool] = {}
 
         def normalize(perm: str) -> str:
             """Normalize permission name using map if available."""
@@ -265,7 +267,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModels.AclMetadataConfig,
-    ) -> dict[str, object]:
+    ) -> dict[str, FlextLdifTypes.MetadataValue]:
         """Build QuirkMetadata extensions for ACL.
 
         Args:
@@ -275,7 +277,7 @@ class FlextLdifUtilitiesACL:
             Metadata extensions dictionary
 
         """
-        extensions: dict[str, object] = {}
+        extensions: dict[str, FlextLdifTypes.MetadataValue] = {}
 
         if config.line_breaks:
             extensions["line_breaks"] = config.line_breaks
@@ -357,7 +359,7 @@ class FlextLdifUtilitiesACL:
         aci_content: str,
         patterns: dict[str, tuple[str, int]],
         defaults: dict[str, str | None] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, str | None]:
         """Extract all ACI components using configurable patterns.
 
         Args:
@@ -369,7 +371,7 @@ class FlextLdifUtilitiesACL:
             Context dict with extracted components
 
         """
-        context: dict[str, object] = dict(defaults or {})
+        context: dict[str, str | None] = dict(defaults or {})
         context["aci_content"] = aci_content
 
         for name, (pattern, group) in patterns.items():
@@ -586,7 +588,7 @@ class FlextLdifUtilitiesACL:
 
         Example:
             config = FlextLdifModels.AciParserConfig(
-                server_type="oud",
+                server_type=FlextLdifConstants.ServerTypes.OUD,
                 version_acl_pattern=OudConstants.ACL_VERSION_ACL_PATTERN,
                 targetattr_pattern=OudConstants.ACL_TARGETATTR_PATTERN,
                 allow_deny_pattern=OudConstants.ACL_ALLOW_DENY_PATTERN,
@@ -682,7 +684,9 @@ class FlextLdifUtilitiesACL:
             raw_acl=acl_line,
             metadata=FlextLdifModels.QuirkMetadata.create_for(
                 config.server_type,
-                extensions=extensions,
+                extensions=FlextLdifModels.DynamicMetadata(**extensions)
+                if extensions
+                else None,
             ),
         )
         return FlextResult[FlextLdifModels.Acl].ok(acl)
@@ -768,7 +772,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: dict[str, object] | None,
+        extensions: dict[str, FlextLdifTypes.MetadataValue] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -809,9 +813,9 @@ class FlextLdifUtilitiesACL:
                 continue
 
             # Handle tuple values (operator, value)
+            operator_placeholder = "{" + "operator" + "}"
             if isinstance(value, tuple) and len(value) == tuple_length:
                 operator, val = value
-                operator_placeholder = "{" + "operator" + "}"
                 if operator_placeholder in format_template:
                     bind_rules.append(
                         format_template.format(operator=operator, value=val)
@@ -830,7 +834,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_target_extensions(
-        extensions: dict[str, object] | None,
+        extensions: FlextLdifModelsMetadata.DynamicMetadata
+        | dict[str, FlextLdifTypes.MetadataValue]
+        | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
         """Extract and format target extensions from metadata extensions.
@@ -870,7 +876,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_conversion_comments(
-        extensions: dict[str, object] | None,
+        extensions: FlextLdifModelsMetadata.DynamicMetadata
+        | dict[str, FlextLdifTypes.MetadataValue]
+        | None,
         converted_from_key: str,
         comments_key: str,
     ) -> list[str]:

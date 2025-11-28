@@ -1723,7 +1723,10 @@ class FlextLdifUtilitiesDN:
                 transformed_attrs[attr_name] = attr_values
 
         # Create updated metadata with transformation tracking
-        metadata = entry.metadata.model_copy(deep=True)
+        if entry.metadata is None:
+            metadata = FlextLdifModels.QuirkMetadata.create_for()
+        else:
+            metadata = entry.metadata.model_copy(deep=True)
 
         # Track DN transformation
         if transformed_dn != original_dn_str:

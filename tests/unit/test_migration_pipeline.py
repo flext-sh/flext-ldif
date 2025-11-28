@@ -28,8 +28,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifMigrationPipeline
+from flext_ldif import FlextLdifConstants, FlextLdifMigrationPipeline
 from tests.fixtures.constants import DNs, Names
+from tests.fixtures.typing import GenericFieldsDict
 
 
 class TestMigrationPipelineInitialization:
@@ -45,8 +46,8 @@ class TestMigrationPipelineInitialization:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server="oid",
-            target_server="oud",
+            source_server=FlextLdifConstants.ServerTypes.OID,
+            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
 
         assert pipeline is not None
@@ -63,8 +64,8 @@ class TestMigrationPipelineInitialization:
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server="oid",
-            target_server="oud",
+            source_server=FlextLdifConstants.ServerTypes.OID,
+            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
 
         assert pipeline is not None
@@ -76,7 +77,7 @@ class TestMigrationPipelineInitialization:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules: dict[str, object] = {
+        categorization_rules: GenericFieldsDict = {
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": [Names.INET_ORG_PERSON],
             "group_objectclasses": ["groupOfNames"],
@@ -86,10 +87,10 @@ class TestMigrationPipelineInitialization:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="categorized",
+            mode=FlextLdifConstants.LiteralTypes.MigrationModeLiteral("categorized"),
             categorization_rules=categorization_rules,
-            source_server="oid",
-            target_server="oud",
+            source_server=FlextLdifConstants.ServerTypes.OID,
+            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
 
         assert pipeline is not None
@@ -97,18 +98,30 @@ class TestMigrationPipelineInitialization:
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            ("oid", "oud"),
-            ("oid", "openldap"),
-            ("oud", "openldap"),
-            ("openldap", "oid"),
-            ("openldap", "oud"),
-            ("rfc", "rfc"),
+            (FlextLdifConstants.ServerTypes.OID, FlextLdifConstants.ServerTypes.OUD),
+            (
+                FlextLdifConstants.ServerTypes.OID,
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+            ),
+            (
+                FlextLdifConstants.ServerTypes.OUD,
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+            ),
+            (
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+                FlextLdifConstants.ServerTypes.OID,
+            ),
+            (
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+                FlextLdifConstants.ServerTypes.OUD,
+            ),
+            (FlextLdifConstants.ServerTypes.RFC, FlextLdifConstants.ServerTypes.RFC),
         ],
     )
     def test_initialization_with_different_server_types(
         self,
-        source: str,
-        target: str,
+        source: FlextLdifConstants.ServerTypeLiteral,
+        target: FlextLdifConstants.ServerTypeLiteral,
         tmp_path: Path,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
@@ -142,8 +155,8 @@ class TestMigrationPipelineValidation:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=nonexistent_input,
             output_dir=output_dir,
-            source_server="oid",
-            target_server="oud",
+            source_server=FlextLdifConstants.ServerTypes.OID,
+            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
 
         result = pipeline.execute()
@@ -169,8 +182,8 @@ class TestMigrationPipelineSimpleMode:
             input_dir=input_dir,
             output_dir=output_dir,
             mode="simple",
-            source_server="rfc",
-            target_server="rfc",
+            source_server=FlextLdifConstants.ServerTypes.RFC,
+            target_server=FlextLdifConstants.ServerTypes.RFC,
         )
 
         result = pipeline.execute()
@@ -199,8 +212,8 @@ class TestMigrationPipelineSimpleMode:
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server="rfc",
-            target_server="rfc",
+            source_server=FlextLdifConstants.ServerTypes.RFC,
+            target_server=FlextLdifConstants.ServerTypes.RFC,
         )
 
         result = pipeline.execute()
@@ -214,16 +227,16 @@ class TestMigrationPipelineServerConversions:
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            ("oid", "oud"),
-            ("oud", "oid"),
-            ("rfc", "oid"),
-            ("rfc", "oud"),
+            (FlextLdifConstants.ServerTypes.OID, FlextLdifConstants.ServerTypes.OUD),
+            (FlextLdifConstants.ServerTypes.OUD, FlextLdifConstants.ServerTypes.OID),
+            (FlextLdifConstants.ServerTypes.RFC, FlextLdifConstants.ServerTypes.OID),
+            (FlextLdifConstants.ServerTypes.RFC, FlextLdifConstants.ServerTypes.OUD),
         ],
     )
     def test_server_conversion_modes(
         self,
-        source: str,
-        target: str,
+        source: FlextLdifConstants.ServerTypeLiteral,
+        target: FlextLdifConstants.ServerTypeLiteral,
         tmp_path: Path,
     ) -> None:
         """Test server-specific conversion modes."""

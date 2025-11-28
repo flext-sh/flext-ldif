@@ -28,6 +28,7 @@ from flext_ldif import (
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.schema import FlextLdifSchema
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_assertions import TestAssertions
 from tests.helpers.test_deduplication_helpers import (
     DeduplicationHelpers,
@@ -533,33 +534,33 @@ class TestFlextLdifDeduplicationHelpers:
 
     def test_assert_dict_equals(self) -> None:
         """Test assert_dict_equals."""
-        d1: dict[str, object] = {"key": "value"}
-        d2: dict[str, object] = {"key": "value"}
+        d1: GenericFieldsDict = {"key": "value"}
+        d2: GenericFieldsDict = {"key": "value"}
         DeduplicationHelpers.assert_dict_equals(d1, d2)
 
     def test_assert_dict_has_key(self) -> None:
         """Test assert_dict_has_key."""
-        d: dict[str, object] = {"key": "value"}
+        d: GenericFieldsDict = {"key": "value"}
         DeduplicationHelpers.assert_dict_has_key(d, "key")
 
     def test_assert_dict_has_value(self) -> None:
         """Test assert_dict_has_value."""
-        d: dict[str, object] = {"key": "value"}
+        d: GenericFieldsDict = {"key": "value"}
         DeduplicationHelpers.assert_dict_has_value(d, "value")
 
     def test_assert_dict_key_equals(self) -> None:
         """Test assert_dict_key_equals."""
-        d: dict[str, object] = {"key": "value"}
+        d: GenericFieldsDict = {"key": "value"}
         DeduplicationHelpers.assert_dict_key_equals(d, "key", "value")
 
     def test_assert_dict_key_isinstance(self) -> None:
         """Test assert_dict_key_isinstance."""
-        d: dict[str, object] = {"key": ["value"]}
+        d: GenericFieldsDict = {"key": ["value"]}
         DeduplicationHelpers.assert_dict_key_isinstance(d, "key", list)
 
     def test_assert_dict_key_is_not_none(self) -> None:
         """Test assert_dict_key_is_not_none."""
-        d: dict[str, object] = {"key": "value"}
+        d: GenericFieldsDict = {"key": "value"}
         DeduplicationHelpers.assert_dict_key_is_not_none(d, "key")
 
     # ════════════════════════════════════════════════════════════════════════

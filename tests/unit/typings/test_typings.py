@@ -20,6 +20,7 @@ from typing import ClassVar, cast
 
 import pytest
 from tests.fixtures.constants import DNs, Names, OIDs
+from tests.fixtures.typing import GenericFieldsDict, GenericTestCaseDict
 
 import flext_ldif.typings
 from flext_ldif.typings import FlextLdifTypes
@@ -156,7 +157,7 @@ class TestModelsNamespace:
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
-        attrs: dict[str, object] = {
+        attrs: GenericFieldsDict = {
             Names.CN: ["John Doe"],
             Names.OBJECTCLASS: [Names.INET_ORG_PERSON, Names.PERSON, Names.TOP],
             Names.SN: "Doe",
@@ -168,7 +169,7 @@ class TestModelsNamespace:
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
-        data: dict[str, dict[str, object]] = {
+        data: dict[str, GenericFieldsDict] = {
             Names.CN: {
                 "oid": OIDs.CN,
                 "syntax": "Directory String",
@@ -186,7 +187,7 @@ class TestModelsNamespace:
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
-        data: dict[str, dict[str, object]] = {
+        data: dict[str, GenericFieldsDict] = {
             Names.INET_ORG_PERSON: {
                 "oid": "2.16.840.1.113730.3.2.2",
                 "kind": "STRUCTURAL",
@@ -201,7 +202,7 @@ class TestModelsNamespace:
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        extensions: dict[str, object] = {
+        extensions: GenericFieldsDict = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "server_type": "oud",
@@ -293,7 +294,7 @@ class TestIntegrationWithLdifFixtures:
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
-        schema_attrs: dict[str, dict[str, object]] = {
+        schema_attrs: dict[str, GenericFieldsDict] = {
             Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         assert schema_attrs[Names.CN]["oid"] == OIDs.CN

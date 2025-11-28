@@ -19,8 +19,6 @@ when 389 Directory Server-specific LDIF format requirements are identified.
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
@@ -40,7 +38,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         """Standardized constants for 389 Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "389ds"
+        )
         PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "389ds"
@@ -191,34 +191,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "389 Directory Server entry processing failed: {exc}"
         )
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """389 Directory Server-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            SEARCH = "search"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """389 Directory Server ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """389 Directory Server-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
@@ -524,7 +500,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 # Type narrowing: ensure correct types for ACL methods
                 permissions_raw = acl_data.permissions
                 if not isinstance(
-                    permissions_raw, (FlextLdifModels.AclPermissions, type(None))
+                    permissions_raw,
+                    (FlextLdifModels.AclPermissions, type(None)),
                 ):
                     msg = f"Expected AclPermissions | None, got {type(permissions_raw)}"
                     raise TypeError(msg)
@@ -538,7 +515,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 subject_raw = acl_data.subject
                 if not isinstance(
-                    subject_raw, (FlextLdifModels.AclSubject, type(None))
+                    subject_raw,
+                    (FlextLdifModels.AclSubject, type(None)),
                 ):
                     msg = f"Expected AclSubject | None, got {type(subject_raw)}"
                     raise TypeError(msg)
@@ -637,7 +615,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Detect 389 DS-specific entries."""
             if not entry_dn:

@@ -26,13 +26,14 @@ from flext_core import (
 )
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.acl import FlextLdifAcl
-from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.entries import FlextLdifEntries
+from flext_ldif.services.registry import FlextLdifServiceRegistry
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
@@ -82,7 +83,7 @@ class FlextLdifFilters(
     def _get_or_create_metadata(
         entry: FlextLdifModels.Entry,
         quirk_type: str,
-    ) -> FlextLdifModels.QuirkMetadata:
+    ) -> FlextLdifModels.QuirkMetadata | FlextLdifModelsDomains.QuirkMetadata:
         """Get or create metadata for entry using FlextLdifUtilities pattern.
 
         Reduces code duplication across metadata operations.
@@ -101,7 +102,7 @@ class FlextLdifFilters(
         return FlextLdifModels.QuirkMetadata(quirk_type=quirk_type)
 
     @staticmethod
-    def _ensure_str_list(value: object) -> list[str]:
+    def _ensure_str_list(value: str | list[str] | None) -> list[str]:
         """Ensure configuration values are normalized to list[str]."""
         if value is None:
             return []
@@ -113,7 +114,7 @@ class FlextLdifFilters(
 
     @staticmethod
     def _normalize_category_rules(
-        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+        rules: FlextLdifModels.CategoryRules | Mapping[str, list[str] | str] | None,
     ) -> FlextResult[FlextLdifModels.CategoryRules]:
         """Coerce dict inputs into CategoryRules models (backwards compatibility)."""
         if isinstance(rules, FlextLdifModels.CategoryRules):
@@ -122,13 +123,13 @@ class FlextLdifFilters(
         if rules is None:
             return FlextResult.ok(FlextLdifModels.CategoryRules())
 
-        # Type narrowing: at this point rules must be Mapping[str, object]
+        # Type narrowing: at this point rules must be Mapping[str, list[str] | str]
         # Validate for runtime safety
         if not isinstance(rules, Mapping):
             return FlextResult[FlextLdifModels.CategoryRules].fail(
                 "Category rules must be a mapping or CategoryRules model",
             )
-        # Type narrowing: rules is now guaranteed to be Mapping[str, object]
+        # Type narrowing: rules is now guaranteed to be Mapping[str, list[str] | str]
 
         normalized: dict[str, list[str]] = {}
 
@@ -161,7 +162,7 @@ class FlextLdifFilters(
 
     @staticmethod
     def _normalize_whitelist_rules(
-        rules: FlextLdifModels.WhitelistRules | Mapping[str, object] | None,
+        rules: FlextLdifModels.WhitelistRules | Mapping[str, list[str] | str] | None,
     ) -> FlextResult[FlextLdifModels.WhitelistRules]:
         """Coerce dict inputs into WhitelistRules models (backwards compatibility)."""
         if isinstance(rules, FlextLdifModels.WhitelistRules):
@@ -170,13 +171,13 @@ class FlextLdifFilters(
         if rules is None:
             return FlextResult.ok(FlextLdifModels.WhitelistRules())
 
-        # Type narrowing: at this point rules must be Mapping[str, object]
+        # Type narrowing: at this point rules must be Mapping[str, list[str] | str]
         # Validate for runtime safety
         if not isinstance(rules, Mapping):
             return FlextResult[FlextLdifModels.WhitelistRules].fail(
                 "Whitelist rules must be a mapping or WhitelistRules model",
             )
-        # Type narrowing: rules is now guaranteed to be Mapping[str, object]
+        # Type narrowing: rules is now guaranteed to be Mapping[str, list[str] | str]
 
         normalized = {
             "blocked_objectclasses": FlextLdifFilters._ensure_str_list(
@@ -461,7 +462,7 @@ class FlextLdifFilters(
         def check_blocked_objectclasses(
             entry: FlextLdifModels.Entry,
             whitelist_rules: FlextLdifModels.WhitelistRules
-            | Mapping[str, object]
+            | Mapping[str, list[str] | str]
             | None,
         ) -> tuple[bool, str | None]:
             """Check if entry has blocked objectClasses.
@@ -492,8 +493,8 @@ class FlextLdifFilters(
         @staticmethod
         def validate_category_dn_pattern(
             entry: FlextLdifModels.Entry,
-            category: str,
-            rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+            category: FlextLdifConstants.LiteralTypes.CategoryLiteral | str,
+            rules: FlextLdifModels.CategoryRules | Mapping[str, list[str] | str] | None,
         ) -> tuple[bool, str | None]:
             """Validate DN pattern for specific category.
 
@@ -504,15 +505,19 @@ class FlextLdifFilters(
                 return (True, rules_result.error)
             normalized_rules = rules_result.unwrap()
 
-            # Map category to pattern attribute
-            pattern_map = {
+            # Map category to pattern attribute (supports both enum and string)
+            pattern_map: dict[str, list[str]] = {
                 "users": normalized_rules.user_dn_patterns,
                 "groups": normalized_rules.group_dn_patterns,
                 "hierarchy": normalized_rules.hierarchy_dn_patterns,
                 "schema": normalized_rules.schema_dn_patterns,
             }
 
-            dn_patterns = pattern_map.get(category, [])
+            # Normalize category to string for lookup
+            category_str = (
+                str(category.value) if hasattr(category, "value") else str(category)
+            )
+            dn_patterns = pattern_map.get(category_str, [])
             if not dn_patterns:
                 return (False, None)
 
@@ -582,16 +587,17 @@ class FlextLdifFilters(
                 attrs_lower = {attr.lower() for attr in attributes_to_mark}
                 marked_attributes: dict[str, list[str]] = {}
                 marked_for_tracking: dict[str, list[str]] = {}
-                marked_with_status: dict[str, dict[str, object]] = {}
+                marked_with_status: dict[str, dict[str, str]] = {}
 
                 for attr_name, attr_values in entry.attributes.items():
                     if attr_name.lower() in attrs_lower:
-                        # Store original values for recovery
-                        values_list = (
-                            list(attr_values)
-                            if isinstance(attr_values, (list, tuple))
-                            else [str(attr_values)]
-                        )
+                        # Store original values for recovery with explicit str conversion
+                        # Normalize to list[str] regardless of input type
+                        values_list: list[str]
+                        if isinstance(attr_values, (list, tuple)):
+                            values_list = [str(v) for v in attr_values]
+                        else:
+                            values_list = [str(attr_values)]
                         marked_attributes[attr_name] = values_list
                         marked_for_tracking[attr_name] = values_list
                         # Build status dict for extensions
@@ -601,11 +607,12 @@ class FlextLdifFilters(
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
                 # Update removed_attributes in metadata (standard field)
-                updated_removed = {**current_metadata.removed_attributes}
+                # Use model_dump() for DynamicMetadata → dict conversion
+                updated_removed = current_metadata.removed_attributes.model_dump()
                 updated_removed.update(marked_attributes)
 
                 # Update extensions with marked_attributes
-                updated_extensions = {**current_metadata.extensions}
+                updated_extensions = current_metadata.extensions.model_dump()
                 updated_extensions["marked_attributes"] = marked_with_status
 
                 # Track transformation for each marked attribute using FlextLdifUtilities.Metadata
@@ -694,7 +701,7 @@ class FlextLdifFilters(
                 )
 
                 # Store marked objectClasses in removed_attributes using objectClass key
-                updated_removed = {**current_metadata.removed_attributes}
+                updated_removed = current_metadata.removed_attributes.model_dump()
                 objectclass_key = FlextLdifConstants.DictKeys.OBJECTCLASS
                 existing_ocs = updated_removed.get(objectclass_key, [])
                 if not isinstance(existing_ocs, list):
@@ -704,12 +711,12 @@ class FlextLdifFilters(
                 updated_removed[objectclass_key] = merged_ocs
 
                 # Build marked_with_status for extensions (like attributes)
-                marked_with_status: dict[str, dict[str, object]] = {}
+                marked_with_status: dict[str, dict[str, str]] = {}
                 for oc_name in marked_ocs:
                     marked_with_status[oc_name] = {"status": status}
 
                 # Update extensions with marked_objectclasses
-                updated_extensions = {**current_metadata.extensions}
+                updated_extensions = current_metadata.extensions.model_dump()
                 updated_extensions["marked_objectclasses"] = marked_with_status
 
                 # Update metadata with both removed_attributes and extensions
@@ -853,8 +860,8 @@ class FlextLdifFilters(
             if not entry.attributes:
                 return False
 
-            # Type annotation to help pyrefly understand attr is str
-            attrs_keys: list[str] = entry.attributes.keys()
+            # Convert keys to list for type compatibility
+            attrs_keys: list[str] = list(entry.attributes.keys())
             entry_attrs_lower = {attr.lower() for attr in attrs_keys}
             return any(attr.lower() in entry_attrs_lower for attr in attributes)
 
@@ -929,7 +936,7 @@ class FlextLdifFilters(
                 )
 
             # Update extensions with exclusion info
-            updated_extensions = {**current_metadata.extensions}
+            updated_extensions = current_metadata.extensions.model_dump()
             updated_extensions["exclusion_info"] = exclusion_info
 
             updated_metadata = current_metadata.model_copy(
@@ -981,7 +988,12 @@ class FlextLdifFilters(
             return None
 
         @staticmethod
-        def matches_dn_pattern(dn: str | object, patterns: list[str]) -> bool:
+        def matches_dn_pattern(
+            dn: str
+            | FlextLdifModels.DistinguishedName
+            | FlextLdifModelsDomains.DistinguishedName,
+            patterns: list[str],
+        ) -> bool:
             """Check if DN matches any of the regex patterns.
 
             Args:
@@ -1078,7 +1090,7 @@ class FlextLdifFilters(
                             )
 
                         # Update extensions with virtual delete markers
-                        updated_extensions = {**current_metadata.extensions}
+                        updated_extensions = current_metadata.extensions.model_dump()
                         updated_extensions["virtual_deleted"] = True
                         updated_extensions["deletion_timestamp"] = (
                             FlextUtilities.Generators.generate_iso_timestamp()
@@ -1128,7 +1140,7 @@ class FlextLdifFilters(
                         restored_entries.append(entry)
                         continue
 
-                    new_extensions = {**entry.metadata.extensions}
+                    new_extensions = entry.metadata.extensions.model_dump()
                     new_extensions.pop("virtual_deleted", None)
                     new_extensions.pop("deletion_timestamp", None)
 
@@ -1938,11 +1950,15 @@ class FlextLdifFilters(
     def categorize(
         cls,
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
-        server_type: str | None = None,
+        rules: FlextLdifModels.CategoryRules | Mapping[str, list[str]] | None,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        | str
+        | None = None,
         *,
         server_registry: FlextLdifServer | None = None,
-    ) -> tuple[str, str | None]:
+        categorization_service: FlextLdifProtocols.Services.CategorizationServiceProtocol
+        | None = None,
+    ) -> tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize entry using SERVER-SPECIFIC rules.
 
         DELEGATED TO: FlextLdifCategorization.categorize_entry()
@@ -1964,7 +1980,7 @@ class FlextLdifFilters(
         Args:
             entry: LDIF entry to categorize
             rules: Category rules (can override server defaults)
-            server_type: Server type ("oid", "oud", "rfc") - if None, uses entry.metadata.quirk_type
+            server_type: Server type (FlextLdifConstants.ServerTypes.*) - if None, uses entry.metadata.quirk_type
             server_registry: FlextLdifServer instance for DI (defaults to global instance)
 
         Returns:
@@ -1980,17 +1996,22 @@ class FlextLdifFilters(
         ):
             effective_server_type = entry.metadata.quirk_type
         if effective_server_type is None:
-            # Fallback to global registry default (first registered server or "rfc")
+            # Fallback to global registry default (first registered server or RFC)
             registry = server_registry or FlextLdifServer.get_global_instance()
             registered = registry.list_registered_servers()
-            effective_server_type = registered[0] if registered else "rfc"
-
-        categorization_service: FlextLdifProtocols.Services.CategorizationServiceProtocol = (
-            FlextLdifCategorization(
-                server_type=effective_server_type,
-                server_registry=server_registry,
+            effective_server_type = (
+                registered[0] if registered else FlextLdifConstants.ServerTypes.RFC
             )
-        )
+
+        # Use categorization service via protocol (dependency injection via registry)
+        if categorization_service is None:
+            # Get categorization service from registry (breaks circular dependency)
+            categorization_service = (
+                FlextLdifServiceRegistry.get_categorization_service(
+                    effective_server_type,
+                )
+            )
+
         return categorization_service.categorize_entry(
             entry, rules, effective_server_type
         )
@@ -2314,13 +2335,13 @@ class FlextLdifFilters(
         Accepts WhitelistRules model or dict for backward compatibility.
         """
         # Convert dict to model if needed
-        if FlextRuntime.is_dict_like(whitelist_rules):
-            # Type narrowing: ensure dict has correct types
-            rules_dict: dict[str, object] = dict(whitelist_rules)
-            # Extract list fields with type guards
-            blocked_objectclasses = rules_dict.get("blocked_objectclasses")
+        if FlextRuntime.is_dict_like(whitelist_rules) and isinstance(
+            whitelist_rules, dict
+        ):
+            # Type narrowing: use Mapping protocol for safe access
+            blocked_objectclasses = whitelist_rules.get("blocked_objectclasses")
             rules_model = FlextLdifModels.WhitelistRules(
-                blocked_objectclasses=list(blocked_objectclasses)
+                blocked_objectclasses=[str(v) for v in blocked_objectclasses]
                 if isinstance(blocked_objectclasses, list)
                 else [],
             )
@@ -2340,7 +2361,7 @@ class FlextLdifFilters(
     @staticmethod
     def validate_category_dn_pattern(
         entry: FlextLdifModels.Entry,
-        category: str,
+        category: FlextLdifConstants.LiteralTypes.CategoryLiteral | str,
         rules: FlextLdifModels.CategoryRules | dict[str, list[str]],
     ) -> tuple[bool, str | None]:
         """Validate DN pattern for specific category.
@@ -2348,26 +2369,24 @@ class FlextLdifFilters(
         Accepts CategoryRules model or dict for backward compatibility.
         """
         # Convert dict to model if needed
-        if FlextRuntime.is_dict_like(rules):
-            # Type narrowing: ensure dict has correct types
-            rules_dict: dict[str, object] = dict(rules)
-            # Extract list fields with type guards - CategoryRules uses different field names
-            user_dn_patterns = rules_dict.get("user_dn_patterns") or rules_dict.get(
+        if FlextRuntime.is_dict_like(rules) and isinstance(rules, dict):
+            # Type narrowing with isinstance for safe access
+            user_dn_patterns = rules.get("user_dn_patterns") or rules.get(
                 "users",
             )
-            group_dn_patterns = rules_dict.get("group_dn_patterns") or rules_dict.get(
+            group_dn_patterns = rules.get("group_dn_patterns") or rules.get(
                 "groups",
             )
-            hierarchy_dn_patterns = rules_dict.get(
+            hierarchy_dn_patterns = rules.get(
                 "hierarchy_dn_patterns",
-            ) or rules_dict.get("hierarchy")
-            schema_dn_patterns = rules_dict.get("schema_dn_patterns") or rules_dict.get(
+            ) or rules.get("hierarchy")
+            schema_dn_patterns = rules.get("schema_dn_patterns") or rules.get(
                 "schema",
             )
-            user_objectclasses = rules_dict.get("user_objectclasses", [])
-            group_objectclasses = rules_dict.get("group_objectclasses", [])
-            hierarchy_objectclasses = rules_dict.get("hierarchy_objectclasses", [])
-            acl_attributes = rules_dict.get("acl_attributes") or rules_dict.get("acl")
+            user_objectclasses = rules.get("user_objectclasses", [])
+            group_objectclasses = rules.get("group_objectclasses", [])
+            hierarchy_objectclasses = rules.get("hierarchy_objectclasses", [])
+            acl_attributes = rules.get("acl_attributes") or rules.get("acl")
             rules_model = FlextLdifModels.CategoryRules(
                 user_dn_patterns=list(user_dn_patterns)
                 if isinstance(user_dn_patterns, list)
@@ -2409,14 +2428,18 @@ class FlextLdifFilters(
     @staticmethod
     def categorize_entry(
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+        rules: FlextLdifModels.CategoryRules | Mapping[str, list[str] | str] | None,
         whitelist_rules: FlextLdifModels.WhitelistRules
-        | Mapping[str, object]
+        | Mapping[str, list[str] | str]
         | None = None,
-        server_type: str | None = None,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        | str
+        | None = None,
         *,
         server_registry: FlextLdifServer | None = None,
-    ) -> tuple[str, str | None]:
+        categorization_service: FlextLdifProtocols.Services.CategorizationServiceProtocol
+        | None = None,
+    ) -> tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize entry into 6 categories.
 
         Uses type-safe Pydantic models instead of dict[str, Any].
@@ -2460,18 +2483,22 @@ class FlextLdifFilters(
         ):
             effective_server_type = entry.metadata.quirk_type
         if effective_server_type is None:
-            # Fallback to global registry default (first registered server or "rfc")
+            # Fallback to global registry default (first registered server or RFC)
             registry = server_registry or FlextLdifServer.get_global_instance()
             registered = registry.list_registered_servers()
-            effective_server_type = registered[0] if registered else "rfc"
-
-        # Delegate to categorizer service for main categorization with server_type via DI
-        categorization_service: FlextLdifProtocols.Services.CategorizationServiceProtocol = (
-            FlextLdifCategorization(
-                server_type=effective_server_type,
-                server_registry=server_registry,
+            effective_server_type = (
+                registered[0] if registered else FlextLdifConstants.ServerTypes.RFC
             )
-        )
+
+        # Use categorization service via protocol (dependency injection via registry)
+        if categorization_service is None:
+            # Get categorization service from registry (breaks circular dependency)
+            categorization_service = (
+                FlextLdifServiceRegistry.get_categorization_service(
+                    effective_server_type,
+                )
+            )
+
         category, reason = categorization_service.categorize_entry(
             entry,
             normalized_rules,
@@ -2479,7 +2506,10 @@ class FlextLdifFilters(
         )
 
         # Validate DN patterns for category-specific matching using helper
-        if category in {"users", "groups"}:
+        if category in {
+            FlextLdifConstants.Categories.USERS,
+            FlextLdifConstants.Categories.GROUPS,
+        }:
             is_rejected, reject_reason = (
                 FlextLdifFilters.Categorizer.validate_category_dn_pattern(
                     entry,

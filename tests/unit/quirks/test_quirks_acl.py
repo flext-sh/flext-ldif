@@ -84,7 +84,9 @@ class TestFlextLdifQuirksAcl:
         """OID advanced ACL features conversion test scenarios."""
 
         FILTER_CONVERSION = "oid_filter_conversion_to_oud"
-        ORCLENTRYLEVELACI_WITH_CONSTRAINT = "oid_orclentrylevelaci_with_constraint_to_oud"
+        ORCLENTRYLEVELACI_WITH_CONSTRAINT = (
+            "oid_orclentrylevelaci_with_constraint_to_oud"
+        )
         MULTIPLE_BY_CLAUSES = "oid_multiple_by_clauses_to_oud"
         ATTRIBUTE_TARGET = "oid_attribute_target_to_oud"
 

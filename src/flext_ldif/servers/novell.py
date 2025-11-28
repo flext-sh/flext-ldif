@@ -23,8 +23,6 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Mapping
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
@@ -44,7 +42,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Standardized constants for Novell eDirectory quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "novell_edirectory"
+        )
         PRIORITY: ClassVar[int] = 20
 
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
@@ -175,35 +175,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "entry"  # Novell-specific permission name
         )
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """Novell eDirectory-specific ACL permissions."""
-
-            OBJECT_RIGHTS = "object_rights"
-            ATTR_RIGHTS = "attr_rights"
-            COMPARE = "compare"
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """Novell eDirectory ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """Novell eDirectory-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
+        # Note: Novell-specific permissions (object_rights, attr_rights) should be
+        # added to FlextLdifConstants.AclPermission if needed across the codebase
 
     # =========================================================================
     # Server identification (defined in Constants nested class above)
@@ -482,7 +459,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     ),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         self._get_server_type(),
-                        extensions={"original_format": acl_line},
+                        extensions=FlextLdifModels.DynamicMetadata(
+                            original_format=acl_line,
+                        ),
                     ),
                     raw_acl=acl_line,
                 )
@@ -570,7 +549,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:

@@ -77,9 +77,7 @@ class TestFlextLdifOidSyntaxTransformations:
     # TEST DATA MAPPINGS
     # ═════════════════════════════════════════════════════════════════════════════
 
-    SYNTAX_TRANSFORMATION_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str]]
-    ] = {
+    SYNTAX_TRANSFORMATION_TEST_DATA: ClassVar[dict[str, tuple[str, str]]] = {
         SyntaxTransformationScenario.DIRECTORY_STRING: (
             "1.3.6.1.4.1.1466.115.121.1.15",
             "DirectoryString",
@@ -98,9 +96,7 @@ class TestFlextLdifOidSyntaxTransformations:
         ),
     }
 
-    MATCHING_RULE_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str]]
-    ] = {
+    MATCHING_RULE_TEST_DATA: ClassVar[dict[str, tuple[str, str]]] = {
         MatchingRuleScenario.CASE_IGNORE_MATCH: (
             "caseIgnoreMatch",
             "caseIgnoreMatch",
@@ -192,7 +188,7 @@ class TestFlextLdifOidSyntaxTransformations:
         syntax_cases = [
             "1.3.6.1.4.1.1466.115.121.1.15",  # DirectoryString
             "1.3.6.1.4.1.1466.115.121.1.27",  # Integer
-            "1.3.6.1.4.1.1466.115.121.1.7",   # Boolean
+            "1.3.6.1.4.1.1466.115.121.1.7",  # Boolean
         ]
 
         for syntax in syntax_cases:
@@ -258,14 +254,10 @@ class TestFlextLdifOidSyntaxTransformations:
         attr = parsed_result
         # caseIgnoreSubstringsMatch is moved to SUBSTR field by OID quirk
         if "Substrings" in rule_name:
-            assert (
-                attr.substr == rule_expected
-                or rule_expected in (attr.substr or "")
-            )
+            assert attr.substr == rule_expected or rule_expected in (attr.substr or "")
         else:
-            assert (
-                attr.equality == rule_expected
-                or rule_expected in (attr.equality or "")
+            assert attr.equality == rule_expected or rule_expected in (
+                attr.equality or ""
             )
 
     def test_multiple_matching_rules(
@@ -319,8 +311,16 @@ class TestFlextLdifOidSyntaxTransformations:
     @pytest.mark.parametrize(
         ("scenario", "oid", "name"),
         [
-            (OudCompatibilityScenario.ORACLE_TO_OUD, "2.16.840.1.113894.1.1.401", "orclAttr1"),
-            (OudCompatibilityScenario.OUD_SPECIFIC_SYNTAX, "2.16.840.1.113894.1.1.402", "orclAttr2"),
+            (
+                OudCompatibilityScenario.ORACLE_TO_OUD,
+                "2.16.840.1.113894.1.1.401",
+                "orclAttr1",
+            ),
+            (
+                OudCompatibilityScenario.OUD_SPECIFIC_SYNTAX,
+                "2.16.840.1.113894.1.1.402",
+                "orclAttr2",
+            ),
         ],
     )
     def test_oud_compatibility_scenarios(
@@ -331,10 +331,7 @@ class TestFlextLdifOidSyntaxTransformations:
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test OUD compatibility in various scenarios."""
-        attr_def = (
-            f"( {oid} NAME '{name}' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
+        attr_def = f"( {oid} NAME '{name}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
         result = oid_schema.parse_attribute(attr_def)
         assert result.is_success
@@ -372,10 +369,7 @@ class TestFlextLdifOidSyntaxTransformations:
     ) -> None:
         """Test various attribute transformation scenarios."""
         if scenario == "with_syntax":
-            attr_def = (
-                f"( {oid} NAME '{name}' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-            )
+            attr_def = f"( {oid} NAME '{name}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         elif scenario == "with_matching_rules":
             attr_def = (
                 f"( {oid} NAME '{name}' "
@@ -435,9 +429,9 @@ class TestFlextLdifOidSyntaxTransformations:
         syntax_oids = [
             "1.3.6.1.4.1.1466.115.121.1.15",  # DirectoryString
             "1.3.6.1.4.1.1466.115.121.1.27",  # Integer
-            "1.3.6.1.4.1.1466.115.121.1.7",   # Boolean
+            "1.3.6.1.4.1.1466.115.121.1.7",  # Boolean
             "1.3.6.1.4.1.1466.115.121.1.38",  # OID
-            "1.3.6.1.4.1.1466.115.121.1.5",   # Binary
+            "1.3.6.1.4.1.1466.115.121.1.5",  # Binary
         ]
 
         for idx, syntax_oid in enumerate(syntax_oids):

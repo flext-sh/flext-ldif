@@ -30,6 +30,7 @@ from flext_tests import FlextTestsMatchers
 from flext_ldif import FlextLdifModels, FlextLdifProtocols
 from flext_ldif.services.entries import FlextLdifEntries
 from tests.fixtures.constants import DNs, Names, Values
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_factories import FlextLdifTestFactories
 
 
@@ -453,13 +454,13 @@ class TestFlextLdifEntries:
         )
         def test_get_entry_attributes_from_dict_like(
             self,
-            attributes: dict[str, object],
+            attributes: GenericFieldsDict,
             expected_attrs: list[str],
         ) -> None:
             """Test get_entry_attributes with dict-like attributes."""
 
             class EntryWithDictAttributes(FlextLdifProtocols.Entry.EntryWithDnProtocol):
-                def __init__(self, attrs: dict[str, object]) -> None:
+                def __init__(self, attrs: GenericFieldsDict) -> None:
                     self.dn: object = DNs.TEST_USER
                     self.attributes: object = attrs
 

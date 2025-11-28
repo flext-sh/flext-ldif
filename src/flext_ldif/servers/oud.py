@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Mapping
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -120,7 +120,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         """
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "oud"
         PRIORITY: ClassVar[int] = 10  # High priority (OUD is well-known server)
 
         # LDAP Connection Defaults (RFC 4511 §4.1)
@@ -134,14 +134,23 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # =====================================================================
         # CORE IDENTITY - Server identification and metadata
         # =====================================================================
-        CANONICAL_NAME: ClassVar[str] = "oud"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["oud", "oracle_oud"])
+        CANONICAL_NAME: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD.value
+        ALIASES: ClassVar[frozenset[str]] = frozenset([
+            FlextLdifConstants.ServerTypes.OUD.value,
+            "oracle_oud",  # Backward compatibility alias
+        ])
 
         # =====================================================================
         # CONVERSION CAPABILITIES
         # =====================================================================
-        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset([
+            FlextLdifConstants.ServerTypes.OUD.value,
+            FlextLdifConstants.ServerTypes.RFC.value,
+        ])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
+            FlextLdifConstants.ServerTypes.OUD.value,
+            FlextLdifConstants.ServerTypes.RFC.value,
+        ])
 
         # =====================================================================
         # ACL CONFIGURATION
@@ -393,7 +402,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # lowercase source → proper OUD camelCase
         # NOTE: OUD has ZERO knowledge of OID formats (orclaci, orclentrylevelaci)
         # OID→OUD conversion goes through RFC Entry Model metadata
-        ATTRIBUTE_CASE_MAP: ClassVar[Mapping[str, str]] = {
+        ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {
             "uniquemember": "uniqueMember",
             "displayname": "displayName",
             "distinguishedname": "distinguishedName",
@@ -600,33 +609,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # === NESTED STRENUM DEFINITIONS ===
         # StrEnum definitions for type-safe permission, action, and encoding handling
 
-        class AclPermission(StrEnum):
-            """OUD-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            SEARCH = "search"
-            COMPARE = "compare"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """OUD ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """OUD-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
-            ISO_8859_1 = "iso-8859-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
         # === PARSER CONFIG FACTORY ===
         @staticmethod
@@ -639,7 +625,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             constants = FlextLdifServersOud.Constants
             return FlextLdifModels.AciParserConfig(
-                server_type="oud",
+                server_type=FlextLdifConstants.ServerTypes.OUD,
                 aci_prefix="aci:",
                 version_acl_pattern=constants.ACL_VERSION_ACL_PATTERN,
                 targetattr_pattern=constants.ACL_TARGETATTR_PATTERN,
@@ -758,8 +744,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         def __init__(
             self,
-            schema_service: object | None = None,
-            **kwargs: object,
+            schema_service: FlextLdifTypes.Services.SchemaService | None = None,
+            **kwargs: str | float | bool | None,
         ) -> None:
             """Initialize OUD schema quirk.
 
@@ -911,7 +897,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             oid_validation = self._validate_attribute_oid(oid)
             if oid_validation.is_failure:
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    oid_validation.error or "OID validation failed"
+                    oid_validation.error or "OID validation failed",
                 )
 
             is_valid_oud_oid = oid_validation.unwrap()
@@ -1013,7 +999,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 existing_oc_metadata = oc.metadata
                 if not existing_oc_metadata:
                     existing_oc_metadata = FlextLdifModels.QuirkMetadata.create_for(
-                        "oud"
+                        "oud",
                     )
 
                 oc_extensions = (
@@ -1130,14 +1116,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             sup_validation = self._validate_objectclass_sup(oc)
             if sup_validation.is_failure:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    sup_validation.error or "SUP validation failed"
+                    sup_validation.error or "SUP validation failed",
                 )
 
             # Validate ObjectClass OID and SUP OID formats
             oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
             if oid_and_sup_validation.is_failure:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    oid_and_sup_validation.error or "OID validation failed"
+                    oid_and_sup_validation.error or "OID validation failed",
                 )
 
             oc = oid_and_sup_validation.unwrap()
@@ -1542,8 +1528,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         def __init__(
             self,
-            acl_service: object | None = None,
-            **kwargs: object,
+            acl_service: FlextLdifTypes.Services.AclService | None = None,
+            **kwargs: str | float | bool | None,
         ) -> None:
             """Initialize OUD ACL quirk.
 
@@ -1618,7 +1604,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     bool(acl_line.name)
                     and (
                         FlextLdifUtilities.Schema.normalize_attribute_name(
-                            acl_line.name
+                            acl_line.name,
                         )
                         == FlextLdifUtilities.Schema.normalize_attribute_name(
                             FlextLdifServersOud.Constants.ACL_ATTRIBUTE_NAME,
@@ -1628,8 +1614,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     else False
                 )
 
-            # Handle string: empty string check
-            if not acl_line or not (normalized := acl_line.strip()):
+            # Handle string: empty string check (type narrowed after Acl check above)
+            if not isinstance(acl_line, str) or not (normalized := acl_line.strip()):
                 return False
 
             # Check for OUD ACL patterns using constants
@@ -1974,13 +1960,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     validation_violations=[],  # No validation issues
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=FlextLdifServersOud.Constants.SERVER_TYPE,  # OUD quirk type from Constants
-                        extensions={
+                        extensions=FlextLdifModels.DynamicMetadata(**{
                             # Use Constants for metadata keys instead of hardcoded strings
                             FlextLdifServersOud.Constants.DS_PRIVILEGE_NAME_KEY: privilege_name,
                             FlextLdifServersOud.Constants.FORMAT_TYPE_KEY: (
                                 FlextLdifServersOud.Constants.FORMAT_TYPE_DS_PRIVILEGE
                             ),
-                        },
+                        }),
                     ),
                 )
 
@@ -2482,8 +2468,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             try:
                 c = FlextLdifServersOud.Constants
-                extensions = (
-                    acl_data.metadata.extensions
+                extensions: dict[str, FlextLdifTypes.MetadataValue] | None = (
+                    acl_data.metadata.extensions.model_dump()
                     if acl_data.metadata and acl_data.metadata.extensions
                     else None
                 )
@@ -2549,7 +2535,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     "Failed to write ACL to OUD ACI format",
                 )
                 return FlextResult[str].fail(
-                    f"Failed to write ACL to OUD ACI format: {e}"
+                    f"Failed to write ACL to OUD ACI format: {e}",
                 )
 
         @staticmethod
@@ -2714,8 +2700,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         def __init__(
             self,
-            entry_service: object | None = None,
-            **kwargs: object,
+            entry_service: FlextLdifTypes.Services.EntryService | None = None,
+            **kwargs: str | float | bool | None,
         ) -> None:
             """Initialize OUD entry quirk.
 
@@ -2735,7 +2721,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Check if OUD should handle this entry using pattern matching.
 
@@ -2822,7 +2808,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Mapping[str, object] | object,
+            entry_attrs: (
+                FlextLdifTypes.CommonDict.AttributeDictGeneric | FlextLdifModels.Entry
+            ),
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse entry with OUD-specific metadata population.
 
@@ -2962,10 +2950,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return []
 
             # RFC Compliance: Check metadata.write_options
-            if not entry_data.metadata.write_options:
+            if not (entry_data.metadata and entry_data.metadata.write_options):
                 return []
 
-            original_entry_obj = entry_data.metadata.write_options.get(
+            # WriteOptions is a Pydantic model with extra="allow", access via model_dump()
+            write_opts_dict = entry_data.metadata.write_options.model_dump()
+            original_entry_obj = write_opts_dict.get(
                 FlextLdifConstants.MetadataKeys.ORIGINAL_ENTRY,
             )
             if not (
@@ -3072,10 +3062,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return self._comment_acl_attributes(entry_data, acl_attrs_list)
 
         @staticmethod
-        def _extract_and_remove_acl_attributes(
-            attributes_dict: dict[str, object],
+        def extract_and_remove_acl_attributes(
+            attributes_dict: dict[str, list[str]],
             acl_attribute_names: list[str],
-        ) -> tuple[dict[str, object], dict[str, list[str]], set[str]]:
+        ) -> tuple[dict[str, list[str]], dict[str, list[str]], set[str]]:
             """Extract ACL attributes and remove from active dict.
 
             Args:
@@ -3086,7 +3076,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Tuple of (new_attributes_dict, commented_acl_values, hidden_attrs)
 
             """
-            new_attrs = dict(attributes_dict)
+            new_attrs: dict[str, list[str]] = dict(attributes_dict)
             commented_vals: dict[str, list[str]] = {}
             hidden_attrs = set()
 
@@ -3104,13 +3094,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return new_attrs, commented_vals, hidden_attrs
 
         @staticmethod
-        def _update_metadata_with_commented_acls(
-            metadata: FlextLdifModels.QuirkMetadata,
+        def update_metadata_with_commented_acls(
+            metadata: FlextLdifModels.QuirkMetadata
+            | FlextLdifModelsDomains.QuirkMetadata,
             acl_attribute_names: list[str],
             commented_acl_values: dict[str, list[str]],
             hidden_attrs: set[str],
-            entry_attributes_dict: dict[str, object],
-        ) -> FlextLdifModels.QuirkMetadata:
+            entry_attributes_dict: dict[str, list[str]],
+        ) -> FlextLdifModels.QuirkMetadata | FlextLdifModelsDomains.QuirkMetadata:
             """Update metadata with commented ACL information.
 
             Args:
@@ -3124,45 +3115,52 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Updated metadata with ACL information
 
             """
-            current_extensions = (
+            current_extensions: dict[str, FlextLdifTypes.MetadataValue] = (
                 dict(metadata.extensions) if metadata.extensions else {}
             )
 
             if not metadata.write_options:
-                metadata.write_options = {}
+                metadata.write_options = FlextLdifModelsDomains.WriteOptions()
 
             # Update hidden attributes
-            hidden_attrs_raw = metadata.write_options.get("hidden_attrs", [])
+            hidden_attrs_raw = getattr(metadata.write_options, "hidden_attrs", [])
             hidden_attrs_set = (
                 set(hidden_attrs_raw)
                 if isinstance(hidden_attrs_raw, (list, tuple, frozenset, set))
                 else set()
             )
             hidden_attrs_set.update(hidden_attrs)
-            metadata.write_options["hidden_attrs"] = list(hidden_attrs_set)
+            metadata.write_options = metadata.write_options.model_copy(
+                update={"hidden_attrs": list(hidden_attrs_set)},
+            )
 
             # Store commented ACL values
             if commented_acl_values:
+                converted_attrs: list[str] = list(commented_acl_values.keys())
                 current_extensions[
                     FlextLdifConstants.MetadataKeys.CONVERTED_ATTRIBUTES
-                ] = list(commented_acl_values.keys())
+                ] = converted_attrs
                 current_extensions["commented_attribute_values"] = commented_acl_values
 
-            # Track in extensions
-            commented_attrs = current_extensions.get("acl_commented_attributes", [])
-            if not isinstance(commented_attrs, list):
-                commented_attrs = []
+            # Track in extensions - type narrow for list[str] using comprehension
+            commented_attrs_raw = current_extensions.get("acl_commented_attributes", [])
+            commented_attrs: list[str] = (
+                [str(x) for x in commented_attrs_raw]
+                if isinstance(commented_attrs_raw, list)
+                else []
+            )
 
             for acl_attr in acl_attribute_names:
-                if acl_attr in entry_attributes_dict and acl_attr not in commented_attrs:
+                if (
+                    acl_attr in entry_attributes_dict
+                    and acl_attr not in commented_attrs
+                ):
                     commented_attrs.append(acl_attr)
 
             if commented_attrs:
                 current_extensions["acl_commented_attributes"] = commented_attrs
 
-            return metadata.model_copy(
-                update={"extensions": current_extensions}
-            )
+            return metadata.model_copy(update={"extensions": current_extensions})
 
         @staticmethod
         def _comment_acl_attributes(
@@ -3192,20 +3190,23 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 existing_metadata = FlextLdifModels.QuirkMetadata.create_for("oud")
 
             # Extract and remove ACL attributes from active dict
+            # Note: Using class-based call for staticmethod
             new_attributes_dict, commented_acl_values, hidden_attrs = (
-                FlextLdifServersOud._extract_and_remove_acl_attributes(
+                FlextLdifServersOud.Entry.extract_and_remove_acl_attributes(
                     entry_data.attributes.attributes,
                     acl_attribute_names,
                 )
             )
 
             # Update metadata with commented ACL information
-            updated_metadata = FlextLdifServersOud._update_metadata_with_commented_acls(
-                existing_metadata,
-                acl_attribute_names,
-                commented_acl_values,
-                hidden_attrs,
-                entry_data.attributes.attributes,
+            updated_metadata = (
+                FlextLdifServersOud.Entry.update_metadata_with_commented_acls(
+                    existing_metadata,
+                    acl_attribute_names,
+                    commented_acl_values,
+                    hidden_attrs,
+                    entry_data.attributes.attributes,
+                )
             )
 
             # Return updated entry with new attributes dict (without ACLs)
@@ -3246,19 +3247,31 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             base_dn: str | None = None
             dn_registry: FlextLdifModels.DnRegistry | None = None
 
-            if entry_data.metadata.write_options:
+            if entry_data.metadata and entry_data.metadata.write_options:
                 # Try write_options first
-                base_dn_value = entry_data.metadata.write_options.get("base_dn")
+                base_dn_value = getattr(
+                    entry_data.metadata.write_options,
+                    "base_dn",
+                    None,
+                )
                 if isinstance(base_dn_value, str):
                     base_dn = base_dn_value
 
                 # Get dn_registry from write_options
-                dn_registry_value = entry_data.metadata.write_options.get("dn_registry")
+                dn_registry_value = getattr(
+                    entry_data.metadata.write_options,
+                    "dn_registry",
+                    None,
+                )
                 if isinstance(dn_registry_value, FlextLdifModels.DnRegistry):
                     dn_registry = dn_registry_value
 
             # Try extensions if write_options doesn't have base_dn
-            if base_dn is None and entry_data.metadata.extensions:
+            if (
+                base_dn is None
+                and entry_data.metadata
+                and entry_data.metadata.extensions
+            ):
                 extensions = entry_data.metadata.extensions
                 if FlextRuntime.is_dict_like(extensions):
                     base_dn_ext = extensions.get("base_dn")
@@ -3415,24 +3428,30 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ):
                 dn_diff = ext.get(mk.MINIMAL_DIFFERENCES_DN, {})
                 if FlextRuntime.is_dict_like(dn_diff) and dn_diff.get(
-                    mk.HAS_DIFFERENCES
+                    mk.HAS_DIFFERENCES,
                 ):
                     entry_data = entry_data.model_copy(
                         update={
-                            "dn": FlextLdifModels.DistinguishedName(value=original_dn)
+                            "dn": FlextLdifModels.DistinguishedName(value=original_dn),
                         },
                     )
 
             # Restore attributes if case mapping available
+            original_case_map = (
+                entry_data.metadata.original_attribute_case
+                if entry_data.metadata
+                else None
+            )
             if (
                 entry_data.attributes
-                and entry_data.metadata.original_attribute_case
+                and original_case_map
+                and isinstance(original_case_map, dict)
                 and (orig_attrs := ext.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE))
                 and FlextRuntime.is_dict_like(orig_attrs)
             ):
                 restored: dict[str, list[str]] = {}
                 for attr_name, attr_values in entry_data.attributes.attributes.items():
-                    orig_case = entry_data.metadata.original_attribute_case.get(
+                    orig_case = original_case_map.get(
                         attr_name.lower(),
                         attr_name,
                     )
@@ -3550,7 +3569,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Extract write options (uses utility)
             write_options = FlextLdifUtilities.Metadata.extract_write_options(
-                entry_to_write
+                entry_to_write,
             )
 
             # Build LDIF output
@@ -3627,7 +3646,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Handle OUD-specific ACL comments for phases 01-03
             # Pass format_options to ensure ACL comments are sorted correctly
             acl_attr_names_to_skip = self._add_oud_acl_comments(
-                comment_lines, entry, format_options
+                comment_lines,
+                entry,
+                format_options,
             )
 
             # Process attribute_transformations (primary source)
@@ -3655,7 +3676,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         else transformation_type
                     )
                     self._add_attribute_transformation_comments(
-                        comment_lines, attr_name, transformation, comment_type
+                        comment_lines,
+                        attr_name,
+                        transformation,
+                        comment_type,
                     )
                     processed_attrs.add(attr_name.lower())
 
@@ -3666,10 +3690,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 and format_options.write_removed_attributes_as_comments
                 and entry.metadata.removed_attributes
             ):
-                removed_attr_names = [
-                    attr_name
-                    for attr_name in entry.metadata.removed_attributes
-                    if attr_name.lower() not in acl_attr_names_to_skip
+                # removed_attributes is a DynamicMetadata, iterate over model_dump keys
+                removed_attrs_dict = entry.metadata.removed_attributes.model_dump()
+                removed_attr_names: list[str] = [
+                    str(attr_name)
+                    for attr_name in removed_attrs_dict
+                    if isinstance(attr_name, str)
+                    and attr_name.lower() not in acl_attr_names_to_skip
                 ]
                 ordered_removed_attrs = self._determine_attribute_order(
                     removed_attr_names,
@@ -3689,13 +3716,94 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         )
                     else:
                         comment_lines.append(
-                            f"# [REMOVED] {attr_name}: {removed_values}"
+                            f"# [REMOVED] {attr_name}: {removed_values}",
                         )
 
             if comment_lines:
                 comment_lines.append("")  # Separator
 
-        def _add_oud_acl_comments(  # noqa: C901
+        def _collect_acl_from_transformations(
+            self,
+            entry: FlextLdifModels.Entry,
+            acl_comments_dict: dict[str, list[str]],
+            acl_attr_names_to_skip: set[str],
+        ) -> None:
+            """Collect ACL comments from attribute_transformations with SKIP_TO_04."""
+            if not entry.metadata or not entry.metadata.attribute_transformations:
+                return
+
+            acl_attr_set = {"aci", "orclaci", "orclentrylevelaci"}
+            for (
+                attr_name,
+                transformation,
+            ) in entry.metadata.attribute_transformations.items():
+                is_skip_to_04 = (
+                    transformation.reason
+                    and "SKIP_TO_04" in transformation.reason.upper()
+                )
+                if is_skip_to_04 and attr_name.lower() in acl_attr_set:
+                    acl_attr_names_to_skip.add(attr_name.lower())
+                    if attr_name not in acl_comments_dict:
+                        acl_comments_dict[attr_name] = []
+                    for acl_value in transformation.original_values:
+                        acl_comments_dict[attr_name].extend([
+                            f"# [REMOVED] {attr_name}: {acl_value}",
+                            f"# [SKIP_TO_04] {attr_name}: {acl_value}",
+                        ])
+
+        def _collect_acl_from_extensions(
+            self,
+            entry: FlextLdifModels.Entry,
+            acl_comments_dict: dict[str, list[str]],
+            acl_attr_names_to_skip: set[str],
+        ) -> None:
+            """Collect ACL comments from extensions.commented_attribute_values."""
+            if not entry.metadata or not entry.metadata.extensions:
+                return
+
+            commented_acl_values = entry.metadata.extensions.get(
+                "commented_attribute_values",
+            )
+            if not isinstance(commented_acl_values, dict):
+                return
+
+            original_acl_attr = self._get_original_acl_attr(entry)
+            for acl_attr_name, acl_values in commented_acl_values.items():
+                if acl_attr_name.lower() in acl_attr_names_to_skip:
+                    continue
+                acl_attr_names_to_skip.add(acl_attr_name.lower())
+                sort_key = original_acl_attr or acl_attr_name
+                if sort_key not in acl_comments_dict:
+                    acl_comments_dict[sort_key] = []
+                self._add_acl_value_comments(
+                    acl_comments_dict[sort_key],
+                    original_acl_attr,
+                    acl_attr_name,
+                    acl_values,
+                )
+
+        def _add_acl_value_comments(
+            self,
+            comments: list[str],
+            original_attr: str,
+            attr_name: str,
+            acl_values: list[str] | str | FlextLdifModels.Acl,
+        ) -> None:
+            """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
+            if isinstance(acl_values, list):
+                for acl_value in acl_values:
+                    comments.extend([
+                        f"# [TRANSFORMED] {original_attr}: {acl_value}",
+                        f"# [SKIP_TO_04] {attr_name}: {acl_value}",
+                    ])
+            else:
+                acl_val_str = str(acl_values)
+                comments.extend([
+                    f"# [TRANSFORMED] {original_attr}: {acl_val_str}",
+                    f"# [SKIP_TO_04] {attr_name}: {acl_val_str}",
+                ])
+
+        def _add_oud_acl_comments(
             self,
             comment_lines: list[str],
             entry: FlextLdifModels.Entry,
@@ -3703,82 +3811,33 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> set[str]:
             """Add OUD-specific ACL comments for phases 01-03.
 
-            Checks both attribute_transformations (for SKIP_TO_04 tracking) and
-            extensions.commented_attribute_values (for legacy format).
-
-            ACL comments are sorted using the same attribute ordering logic as normal attributes
-            to ensure they appear in the correct position within DN ordering.
-
-            Returns set of ACL attribute names to skip in regular transformation processing.
+            Checks both attribute_transformations and extensions.commented_attribute_values.
+            Returns set of ACL attribute names to skip in regular processing.
 
             """
             acl_attr_names_to_skip: set[str] = set()
             if not entry.metadata:
                 return acl_attr_names_to_skip
 
-            # Store ACL comments with their attribute names for sorting
             acl_comments_dict: dict[str, list[str]] = {}
 
-            # First, check attribute_transformations for ACL attributes with SKIP_TO_04 reason
-            if entry.metadata.attribute_transformations:
-                for (
-                    attr_name,
-                    transformation,
-                ) in entry.metadata.attribute_transformations.items():
-                    # Check if this is an ACL attribute with SKIP_TO_04 reason
-                    if (
-                        transformation.reason
-                        and "SKIP_TO_04" in transformation.reason.upper()
-                        and attr_name.lower() in {"aci", "orclaci", "orclentrylevelaci"}
-                    ):
-                        acl_attr_names_to_skip.add(attr_name.lower())
-                        # Generate both REMOVED and SKIP_TO_04 comments for each ACL value
-                        if attr_name not in acl_comments_dict:
-                            acl_comments_dict[attr_name] = []
-                        for acl_value in transformation.original_values:
-                            acl_comments_dict[attr_name].extend([
-                                f"# [REMOVED] {attr_name}: {acl_value}",
-                                f"# [SKIP_TO_04] {attr_name}: {acl_value}",
-                            ])
+            self._collect_acl_from_transformations(
+                entry,
+                acl_comments_dict,
+                acl_attr_names_to_skip,
+            )
+            self._collect_acl_from_extensions(
+                entry,
+                acl_comments_dict,
+                acl_attr_names_to_skip,
+            )
 
-            # Also check extensions.commented_attribute_values for legacy format
-            if entry.metadata.extensions:
-                commented_acl_values = entry.metadata.extensions.get(
-                    "commented_attribute_values"
-                )
-                if isinstance(commented_acl_values, dict):
-                    # Get original ACL attribute name (orclaci) from transformations
-                    original_acl_attr = self._get_original_acl_attr(entry)
-
-                    # Generate comments for each ACL value
-                    for acl_attr_name, acl_values in commented_acl_values.items():
-                        if acl_attr_name.lower() not in acl_attr_names_to_skip:
-                            acl_attr_names_to_skip.add(acl_attr_name.lower())
-                            # Use original_acl_attr for sorting position
-                            sort_key = original_acl_attr or acl_attr_name
-                            if sort_key not in acl_comments_dict:
-                                acl_comments_dict[sort_key] = []
-                            if isinstance(acl_values, list):
-                                for acl_value in acl_values:
-                                    acl_comments_dict[sort_key].extend([
-                                        f"# [TRANSFORMED] {original_acl_attr}: {acl_value}",
-                                        f"# [SKIP_TO_04] {acl_attr_name}: {acl_value}",
-                                    ])
-                            else:
-                                acl_val_str = str(acl_values)
-                                acl_comments_dict[sort_key].extend([
-                                    f"# [TRANSFORMED] {original_acl_attr}: {acl_val_str}",
-                                    f"# [SKIP_TO_04] {acl_attr_name}: {acl_val_str}",
-                                ])
-
-            # Sort ACL comments using the same attribute ordering logic
             if acl_comments_dict:
                 acl_attr_names = list(acl_comments_dict.keys())
                 ordered_acl_attrs = self._determine_attribute_order(
                     acl_attr_names,
                     format_options,
                 )
-                # Add comments in sorted order
                 for attr_name in ordered_acl_attrs:
                     if attr_name in acl_comments_dict:
                         comment_lines.extend(acl_comments_dict[attr_name])
@@ -3802,7 +3861,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Try to find original ACL attribute name from metadata
             if entry.metadata and entry.metadata.extensions:
                 acl_original_format = entry.metadata.extensions.get(
-                    FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT
+                    FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT,
                 )
                 if acl_original_format and "orclaci:" in str(acl_original_format):
                     return "orclaci"
@@ -3992,21 +4051,23 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # INLINED: _extract_attributes_dict (only used once)
             attrs_dict_raw = entry.attributes.attributes if entry.attributes else {}
             attrs_dict: dict[str, object] = dict(attrs_dict_raw.items())
-            aci_validation_error = FlextLdifServersOud._validate_aci_macros_in_entry(
-                attrs_dict,
-                validate_aci_macros,
+            aci_validation_error = (
+                FlextLdifServersOud.Entry.validate_aci_macros_in_entry(
+                    attrs_dict,
+                    validate_aci_macros,
+                )
             )
             if aci_validation_error:
                 return FlextResult[FlextLdifModels.Entry].fail(aci_validation_error)
 
-            return FlextLdifServersOud._correct_syntax_and_return_entry(
+            return FlextLdifServersOud.Entry.correct_syntax_and_return_entry(
                 entry,
                 attrs_dict,
                 correct_rfc_syntax_in_attributes,
             )
 
         @staticmethod
-        def _validate_aci_macros_in_entry(
+        def validate_aci_macros_in_entry(
             attrs_dict: dict[str, object],
             validate_aci_macros: Callable[[str], FlextResult[bool]],
         ) -> str | None:
@@ -4021,7 +4082,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return None
 
         @staticmethod
-        def _correct_syntax_and_return_entry(
+        def correct_syntax_and_return_entry(
             entry: FlextLdifModels.Entry,
             attrs_dict: dict[str, object],
             correct_rfc_syntax_in_attributes: Callable[
@@ -4043,7 +4104,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 and FlextRuntime.is_list_like(syntax_corrections)
                 and len(syntax_corrections) > 0
             ):
-                return FlextLdifServersOud._apply_syntax_corrections(
+                return FlextLdifServersOud.Entry.apply_syntax_corrections(
                     entry,
                     corrected_data,
                     syntax_corrections,
@@ -4052,10 +4113,19 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         @staticmethod
-        def _apply_syntax_corrections(
+        def apply_syntax_corrections(
             entry: FlextLdifModels.Entry,
-            corrected_data: dict[str, object],
-            syntax_corrections: object,
+            corrected_data: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | list[str]
+                | dict[str, str | list[str]]
+                | None,
+            ],
+            syntax_corrections: list[str] | dict[str, str] | None,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Apply syntax corrections to entry."""
             corrected_attrs = corrected_data.get("corrected_attributes")
@@ -4129,7 +4199,20 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             dn = str(entry_dict.pop(FlextLdifConstants.DictKeys.DN))
             original_entry_dict = dict(entry_dict)
 
-            result = self._parse_entry(dn, entry_dict)
+            # Convert entry_dict to proper type for _parse_entry
+            entry_attrs: dict[str, list[str | bytes]] = {}
+            for k, v in entry_dict.items():
+                if isinstance(v, list):
+                    entry_attrs[str(k)] = [
+                        item if isinstance(item, str | bytes) else str(item)
+                        for item in v
+                    ]
+                elif isinstance(v, str | bytes):
+                    entry_attrs[str(k)] = [v]
+                else:
+                    entry_attrs[str(k)] = [str(v)]
+
+            result = self._parse_entry(dn, entry_attrs)
             if result.is_success:
                 entry = result.unwrap()
                 original_dn = dn
@@ -4154,7 +4237,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 if not entry.metadata:
                     entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
                         "oud",
-                        extensions={},
+                        extensions=FlextLdifModels.DynamicMetadata(),
                     )
 
                 # CONSOLIDATED: Store via utility (DRY)

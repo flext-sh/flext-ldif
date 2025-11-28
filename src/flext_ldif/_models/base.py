@@ -15,6 +15,8 @@ from __future__ import annotations
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
 
+from flext_ldif.constants import FlextLdifConstants
+
 
 class SchemaElement(FlextModels.ArbitraryTypesModel):
     """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes).
@@ -47,7 +49,7 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
         return metadata is not None
 
     @computed_field
-    def server_type(self) -> str:
+    def server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
         """Get server type from metadata, default to RFC.
 
         Returns:
@@ -56,7 +58,7 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
         """
         metadata = getattr(self, "metadata", None)
         if metadata is not None and hasattr(metadata, "quirk_type"):
-            return str(metadata.quirk_type)
+            return metadata.quirk_type
         return "rfc"
 
     @computed_field
@@ -98,7 +100,7 @@ class AclElement(FlextModels.ArbitraryTypesModel):
         validate_assignment=True,
     )
 
-    server_type: str = Field(
+    server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
         default="rfc",
         description="LDAP server type (oid, oud, openldap, rfc, etc.)",
     )
@@ -129,4 +131,4 @@ class AclElement(FlextModels.ArbitraryTypesModel):
             True if server_type is not RFC (uses vendor-specific features)
 
         """
-        return self.server_type != "rfc"
+        return self.server_type != FlextLdifConstants.ServerTypes.RFC.value

@@ -23,6 +23,7 @@ import pytest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
+from tests.fixtures.typing import GenericFieldsDict
 
 
 def build_ldif_text(dn: str, attrs: Mapping[str, object]) -> str:
@@ -95,9 +96,7 @@ class TestFlextLdifOidMetadata:
     # TEST DATA
     # ═════════════════════════════════════════════════════════════════════════════
 
-    BOOLEAN_CONVERSION_TEST_DATA: ClassVar[
-        dict[str, tuple[str, object, str, str]]
-    ] = {
+    BOOLEAN_CONVERSION_TEST_DATA: ClassVar[dict[str, tuple[str, object, str, str]]] = {
         BooleanConversionMetadataScenario.TRUE_CONVERSION: (
             "cn=test,dc=example,dc=com",
             {"cn": "test", "orclEnabled": "1", "objectClass": "person"},
@@ -112,9 +111,7 @@ class TestFlextLdifOidMetadata:
         ),
     }
 
-    SCHEMA_QUIRK_METADATA_TEST_DATA: ClassVar[
-        dict[str, tuple[str, object]]
-    ] = {
+    SCHEMA_QUIRK_METADATA_TEST_DATA: ClassVar[dict[str, tuple[str, object]]] = {
         SchemaQuirkMetadataScenario.METADATA_ATTACHED: (
             "cn=meta1,dc=example,dc=com",
             {
@@ -323,7 +320,10 @@ class TestFlextLdifOidMetadata:
         # Entry should preserve original data
         if entry.metadata and hasattr(entry.metadata, "extensions"):
             # Extensions dict might contain original format
-            assert isinstance(entry.metadata.extensions, dict) or entry.metadata.extensions is None
+            assert (
+                isinstance(entry.metadata.extensions, dict)
+                or entry.metadata.extensions is None
+            )
 
     # ═════════════════════════════════════════════════════════════════════════════
     # ROUNDTRIP METADATA TESTS
@@ -437,7 +437,7 @@ class TestFlextLdifOidMetadata:
         self,
         scenario: str,
         quirk_type: str,
-        extensions_dict: dict[str, object],
+        extensions_dict: GenericFieldsDict,
     ) -> None:
         """Test creating metadata with various configurations."""
         metadata = FlextLdifModels.QuirkMetadata(

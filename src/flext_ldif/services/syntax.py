@@ -158,7 +158,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
         oid: str,
         name: str | None = None,
         desc: str | None = None,
-        server_type: str = FlextLdifConstants.ServerTypes.RFC,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> FlextResult[FlextLdifModels.Syntax]:
         """Resolve OID to complete Syntax model with validation.
 
@@ -204,7 +204,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
         self,
         value: str,
         syntax_oid: str,
-        _server_type: str = FlextLdifConstants.ServerTypes.RFC,
+        _server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> FlextResult[bool]:
         """Validate a value against its syntax type.
 

@@ -724,7 +724,11 @@ class TestFilterService:
                 )
                 rules = {"user_objectclasses": [Filters.OC_PERSON]}
 
-                for server_type in [Filters.SERVER_RFC, Filters.SERVER_OUD, Filters.SERVER_OID]:
+                for server_type in [
+                    Filters.SERVER_RFC,
+                    Filters.SERVER_OUD,
+                    Filters.SERVER_OID,
+                ]:
                     category, _reason = FlextLdifFilters.categorize(
                         entry,
                         rules,
@@ -923,11 +927,7 @@ class TestFilterService:
 
             elif scenario == EdgeCaseScenario.EXECUTE_EDGE_CASES:
                 # Test execute with edge cases
-                result = (
-                    FlextLdifFilters.builder()
-                    .with_entries([])
-                    .build()
-                )
+                result = FlextLdifFilters.builder().with_entries([]).build()
                 assert len(result) == 0
 
             elif scenario == EdgeCaseScenario.NORMALIZATION_HELPERS:

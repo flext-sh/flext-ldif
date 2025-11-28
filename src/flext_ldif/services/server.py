@@ -14,7 +14,6 @@ and registered automatically.
 from __future__ import annotations
 
 import inspect
-from typing import Union
 
 from flext_core import (
     FlextLogger,
@@ -27,6 +26,15 @@ from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
+
+# Local type alias for quirks dict including concrete types from FlextLdifServersBase
+type _QuirksDict = dict[
+    str,
+    FlextLdifServersBase.Schema
+    | FlextLdifServersBase.Acl
+    | FlextLdifServersBase.Entry
+    | None,
+]
 
 
 class FlextLdifServer:
@@ -45,9 +53,9 @@ class FlextLdifServer:
 
     Example:
         registry = FlextLdifServer()
-        schema = registry.schema("oid")     # Get OID schema quirk
-        acl = registry.acl("oud")            # Get OUD ACL quirk
-        entry = registry.entry("openldap")   # Get OpenLDAP entry quirk
+        schema = registry.schema(FlextLdifConstants.ServerTypes.OID)     # Get OID schema quirk
+        acl = registry.acl(FlextLdifConstants.ServerTypes.OUD)            # Get OUD ACL quirk
+        entry = registry.entry(FlextLdifConstants.ServerTypes.OPENLDAP)   # Get OpenLDAP entry quirk
 
     Note:
         All quirks are auto-discovered and registered during __init__.
@@ -64,11 +72,11 @@ class FlextLdifServer:
         """Initialize quirk registry with auto-discovery (idempotent)."""
         # Use class-level cache if already initialized
         if FlextLdifServer._quirks_cache is not None:
-            self._bases = FlextLdifServer._quirks_cache
+            self._bases: dict[str, FlextLdifServersBase] = FlextLdifServer._quirks_cache
             # Quirks already cached - no logging needed (reduces verbosity)
         else:
             # First initialization - perform auto-discovery and cache results
-            self._bases = {}
+            self._bases: dict[str, FlextLdifServersBase] = {}
             self._auto_discover_and_register()
             # Cache at class level for all future instances
             FlextLdifServer._quirks_cache = self._bases
@@ -118,7 +126,7 @@ class FlextLdifServer:
                         if not isinstance(priority_value, int):
                             msg = f"priority must be int, got {type(priority_value)}"
                             raise TypeError(msg)
-                        server_type: str = server_type_value
+                        server_type = server_type_value
                         priority: int = priority_value
                     except AttributeError as e:
                         logger.warning(
@@ -252,20 +260,24 @@ class FlextLdifServer:
         except Exception as e:
             return FlextResult[bool].fail(f"Protocol validation error: {e}")
 
-    def _normalize_server_type(self, server_type: str) -> str:
-        """Normalize server type to canonical short form."""
-        return FlextLdifConstants.ServerTypes.FROM_LONG.get(server_type, server_type)
+    def _normalize_server_type(
+        self, server_type: str
+    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+        """Normalize server type to canonical short form.
+
+        Delegates to FlextLdifConstants.normalize_server_type() for proper
+        normalization and validation with fast-fail on invalid types.
+        """
+        return FlextLdifConstants.normalize_server_type(server_type)
 
     def _get_attr(
         self,
         server_type: str,
         attr_name: str,
     ) -> FlextResult[
-        Union[
-            FlextLdifTypes.SchemaQuirkInstance,
-            FlextLdifTypes.AclQuirkInstance,
-            FlextLdifTypes.EntryQuirkInstance,
-        ]
+        FlextLdifTypes.SchemaQuirkInstance
+        | FlextLdifTypes.AclQuirkInstance
+        | FlextLdifTypes.EntryQuirkInstance
         | None
     ]:
         """Generic method to get quirk attribute (schema, acl, entry).
@@ -275,23 +287,26 @@ class FlextLdifServer:
         """
         base = self._bases.get(self._normalize_server_type(server_type))
         if not base:
-            return FlextResult["QuirkInstanceType | None"].fail(
+            return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(
                 f"No base found for server type: {server_type}"
             )
         # Quirk attributes are named with _quirk suffix: schema_quirk, acl_quirk, entry_quirk
         quirk_attr_name = f"{attr_name}_quirk"
         quirk = getattr(base, quirk_attr_name, None)
-        return FlextResult["QuirkInstanceType | None"].ok(quirk)
+        return FlextResult[FlextLdifTypes.QuirkInstanceType | None].ok(quirk)
 
     # =========================================================================
     # THIN INTERFACE - Server-agnostic quirk access (no duplication)
     # =========================================================================
 
-    def quirk(self, server_type: str) -> FlextResult[FlextLdifServersBase]:
+    def quirk(
+        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str
+    ) -> FlextResult[FlextLdifServersBase]:
         """Get base quirk for a server type.
 
         Args:
             server_type: Server type (e.g., 'oid', 'oud', 'openldap')
+                Accepts ServerTypeLiteral or str for backward compatibility
 
         Returns:
             FlextResult with base quirk instance or error message
@@ -304,9 +319,7 @@ class FlextLdifServer:
             )
         return FlextResult[FlextLdifServersBase].ok(base)
 
-    def get_all_quirks(
-        self, server_type: str
-    ) -> FlextResult[FlextLdifTypes.Registry.QuirksDict]:
+    def get_all_quirks(self, server_type: str) -> FlextResult[_QuirksDict]:
         """Get all quirk types for a server.
 
         Args:
@@ -318,15 +331,15 @@ class FlextLdifServer:
         """
         base = self._bases.get(self._normalize_server_type(server_type))
         if not base:
-            return FlextResult[FlextLdifTypes.Registry.QuirksDict].fail(
+            return FlextResult[_QuirksDict].fail(
                 f"No base found for server type: {server_type}"
             )
-        quirks_dict: FlextLdifTypes.Registry.QuirksDict = {
+        quirks_dict: _QuirksDict = {
             "schema": base.schema_quirk,
             "acl": base.acl_quirk,
             "entry": base.entry_quirk,
         }
-        return FlextResult[FlextLdifTypes.Registry.QuirksDict].ok(quirks_dict)
+        return FlextResult[_QuirksDict].ok(quirks_dict)
 
     def schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
         """Get schema quirk for a server type.
@@ -400,7 +413,9 @@ class FlextLdifServer:
         """
         return sorted(self._bases.keys())
 
-    def get_registry_stats(self) -> dict[str, object]:
+    def get_registry_stats(
+        self,
+    ) -> FlextLdifTypes.Registry.RegistryStatsDict:
         """Get comprehensive registry statistics.
 
         Returns:
@@ -410,30 +425,32 @@ class FlextLdifServer:
             - server_priorities: Dict mapping server types to their priorities
 
         """
-        quirks_by_server = {}
-        server_priorities = {}
+        quirks_by_server: dict[str, FlextLdifTypes.Registry.QuirksByServerDict] = {}
+        server_priorities: dict[str, int] = {}
 
         for server_type, base_quirk in self._bases.items():
-            quirks_by_server[server_type] = {
-                "schema": base_quirk.schema_quirk.__class__.__name__
+            quirks_by_server[server_type] = FlextLdifTypes.Registry.QuirksByServerDict(
+                schema=base_quirk.schema_quirk.__class__.__name__
                 if base_quirk.schema_quirk
                 else None,
-                "acl": base_quirk.acl_quirk.__class__.__name__
+                acl=base_quirk.acl_quirk.__class__.__name__
                 if base_quirk.acl_quirk
                 else None,
-                "entry": base_quirk.entry_quirk.__class__.__name__
+                entry=base_quirk.entry_quirk.__class__.__name__
                 if base_quirk.entry_quirk
                 else None,
-            }
+            )
             server_priorities[server_type] = base_quirk.priority
 
-        return {
-            "total_servers": len(self._bases),
-            "quirks_by_server": quirks_by_server,
-            "server_priorities": server_priorities,
-        }
+        return FlextLdifTypes.Registry.RegistryStatsDict(
+            total_servers=len(self._bases),
+            quirks_by_server=quirks_by_server,
+            server_priorities=server_priorities,
+        )
 
-    def get_constants(self, server_type: str) -> FlextResult[type]:
+    def get_constants(
+        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+    ) -> FlextResult[type]:
         """Get Constants class from server quirk.
 
         Centralizes access to server-specific constants (CATEGORIZATION_PRIORITY,
@@ -469,7 +486,9 @@ class FlextLdifServer:
 
         return FlextResult[type].ok(constants)
 
-    def get_detection_constants(self, server_type: str) -> FlextResult[type]:
+    def get_detection_constants(
+        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+    ) -> FlextResult[type]:
         """Get Constants class with detection attributes from server quirk.
 
         Used by FlextLdifDetector for server type auto-detection.
