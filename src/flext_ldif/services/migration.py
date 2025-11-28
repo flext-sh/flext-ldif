@@ -15,6 +15,9 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
 
+from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.results import _CategoryPaths, _FlexibleCategories
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -23,6 +26,7 @@ from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.sorting import FlextLdifSorting
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger: Final = FlextLogger(__name__)
@@ -52,8 +56,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 "group_objectclasses": ["groupOfNames"],
                 "acl_attributes": ["aci"],
             },
-            source_server="oid",
-            target_server="oud",
+            source_server=FlextLdifConstants.ServerTypes.OID,
+            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
         result = pipeline.execute()
 
@@ -61,7 +65,11 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
     @staticmethod
     def normalize_migration_config(
-        migration_config: FlextLdifModels.MigrationConfig | dict[str, object] | None,
+        migration_config: (
+            FlextLdifModels.MigrationConfig
+            | FlextLdifTypes.Migration.MigrationConfigDict
+            | None
+        ),
     ) -> FlextResult[FlextLdifModels.MigrationConfig]:
         """Convert dict to MigrationConfig model using FlextResult.
 
@@ -96,8 +104,13 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
     def detect_migration_mode(
         config_model: FlextLdifModels.MigrationConfig | None,
         categorization_rules: FlextLdifModels.CategoryRules | None,
-    ) -> str:
-        """Auto-detect migration mode based on parameters."""
+    ) -> FlextLdifConstants.LiteralTypes.MigrationModeLiteral:
+        """Auto-detect migration mode based on parameters.
+
+        Returns:
+            MigrationModeLiteral: One of "simple", "categorized", or "structured"
+
+        """
         if config_model is not None:
             return "structured"
         if categorization_rules is not None:
@@ -137,10 +150,20 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
     @staticmethod
     def get_write_options_for_mode(
-        mode: str,
-        write_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None,
+        mode: FlextLdifConstants.LiteralTypes.MigrationModeLiteral,
+        write_options: (
+            FlextLdifModels.WriteFormatOptions
+            | FlextLdifModelsConfig.WriteFormatOptions
+            | FlextLdifTypes.Migration.WriteFormatOptionsDict
+            | None
+        ),
         config_model: FlextLdifModels.MigrationConfig | None,
-        **format_kwargs: object,
+        **format_kwargs: (
+            FlextLdifTypes.ScalarValue
+            | list[str]
+            | frozenset[str]
+            | dict[str, FlextLdifTypes.ScalarValue | list[str]]
+        ),
     ) -> FlextResult[FlextLdifModels.WriteFormatOptions]:
         """Set default write options for structured and categorized modes using FlextResult.
 
@@ -165,7 +188,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         """
         # Use FlextUtilities.Configuration.build_options_from_kwargs for automatic conversion
         default_factory = FlextLdifMigrationPipeline._get_default_write_options
-        mode_overrides: dict[str, object] = {}
+        mode_overrides: FlextLdifTypes.Migration.WriteFormatOptionsDict = {}
 
         # Apply mode-specific overrides
         match mode:
@@ -188,7 +211,18 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 )
 
         # Merge all overrides: mode_overrides < format_kwargs < explicit write_options
-        all_kwargs = {**mode_overrides, **format_kwargs}
+        # Convert frozenset to list for GeneralValueType compatibility
+        all_kwargs: dict[
+            str,
+            FlextLdifTypes.ScalarValue
+            | list[str]
+            | dict[str, FlextLdifTypes.ScalarValue | list[str]],
+        ] = {}
+        for k, v in {**mode_overrides, **format_kwargs}.items():
+            if isinstance(v, frozenset):
+                all_kwargs[k] = list(v)
+            else:
+                all_kwargs[k] = v
 
         # Type narrowing: convert dict to WriteFormatOptions if needed
         explicit_options_typed: FlextLdifModels.WriteFormatOptions | None = None
@@ -226,7 +260,11 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
     @staticmethod
     def normalize_category_rules(
-        categorization_rules: FlextLdifModels.CategoryRules | object | None,
+        categorization_rules: (
+            FlextLdifModels.CategoryRules
+            | FlextLdifTypes.Migration.CategoryRulesDict
+            | None
+        ),
     ) -> FlextResult[FlextLdifModels.CategoryRules | None]:
         """Normalize categorization rules to CategoryRules model.
 
@@ -270,7 +308,11 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
     @staticmethod
     def normalize_whitelist_rules(
-        schema_whitelist_rules: FlextLdifModels.WhitelistRules | object | None,
+        schema_whitelist_rules: (
+            FlextLdifModels.WhitelistRules
+            | FlextLdifTypes.Migration.WhitelistRulesDict
+            | None
+        ),
     ) -> FlextResult[FlextLdifModels.WhitelistRules | None]:
         """Normalize whitelist rules to WhitelistRules model.
 
@@ -335,8 +377,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 "group_objectclasses": ["groupOfNames"],
                 "acl_attributes": ["aci"],
             },
-            source_server="oid",
-            target_server="oud",
+            source_server=FlextLdifConstants.ServerTypes.OID,
+            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
         result = pipeline.execute()
 
@@ -346,17 +388,19 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         input_dir: str | Path,
         output_dir: str | Path,
-        mode: FlextLdifConstants.LiteralTypes.MigrationMode = "simple",
+        mode: FlextLdifConstants.LiteralTypes.MigrationModeLiteral = "simple",
         input_filename: str | None = None,
         output_filename: str = "migrated.ldif",
-        categorization_rules: FlextLdifModels.CategoryRules
-        | dict[str, object]
-        | None = None,
+        categorization_rules: (
+            FlextLdifModels.CategoryRules
+            | FlextLdifTypes.Migration.CategoryRulesDict
+            | None
+        ) = None,
         input_files: list[str] | None = None,
-        output_files: dict[str, str] | None = None,
+        output_files: dict[FlextLdifConstants.Categories, str] | None = None,
         schema_whitelist_rules: FlextLdifModels.WhitelistRules | None = None,
-        source_server: str = FlextLdifConstants.ServerTypes.RFC,
-        target_server: str = FlextLdifConstants.ServerTypes.RFC,
+        source_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
+        target_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
         base_dn: str | None = None,
@@ -459,9 +503,13 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 )
                 continue
 
+            # Normalize server type to ServerTypeLiteral
+            normalized_source = FlextLdifConstants.normalize_server_type(
+                str(self._source_server)
+            )
             parse_result = self._parser.parse_ldif_file(
                 file_path,
-                server_type=self._source_server,
+                server_type=normalized_source,
             )
             if parse_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -692,10 +740,14 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             entry for entries in categories.values() for entry in entries
         ]
 
+        # Normalize server type to ServerTypeLiteral
+        normalized_target = FlextLdifConstants.normalize_server_type(
+            str(self._target_server)
+        )
         # all_output_entries is already list[FlextLdifModels.Entry] from categories.values()
         write_result = self._writer.write(
             entries=all_output_entries,
-            target_server_type=self._target_server,
+            target_server_type=normalized_target,
             output_target="file",
             output_path=output_path,
             format_options=self._write_opts,
@@ -720,10 +772,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
     def _build_template_data(
         self,
-        category: str,
+        category: FlextLdifConstants.Categories,
         phase_num: int,
         entries: list[FlextLdifModels.Entry],
-    ) -> dict[str, object]:
+    ) -> dict[str, bool | float | int | list[str] | str | None]:
         """Build template data for migration headers."""
         # Validate base_dn - use empty string if None
         base_dn_value = self._categorization.base_dn
@@ -758,15 +810,23 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         base_dn = self._categorization.base_dn
         entries_with_metadata = []
         for entry in entries:
-            # RFC Compliance: extensions is processing metadata
-            extensions = dict(entry.metadata.extensions)
+            # Type narrowing: metadata is always initialized via model_validator
+            if entry.metadata is None:
+                entries_with_metadata.append(entry)
+                continue
+            # Build new extensions with base_dn
+            extension_updates: dict[str, str | list[str] | None] = {}
             if base_dn:
-                extensions["base_dn"] = base_dn
-            # Add dn_registry for case normalization
-            extensions["dn_registry"] = self._dn_registry
+                extension_updates["base_dn"] = base_dn
+            # Store dn_registry reference as string key (retrieve from self at ACL time)
+            extension_updates["dn_registry_enabled"] = "true"
+            # Create new extensions via model_copy
+            new_extensions = entry.metadata.extensions.model_copy(
+                update=extension_updates,
+            )
             # Update entry with new extensions
             new_metadata = entry.metadata.model_copy(
-                update={"extensions": extensions},
+                update={"extensions": new_extensions},
             )
             updated_entry = entry.model_copy(
                 update={"metadata": new_metadata},
@@ -796,6 +856,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             if not entries:
                 continue
 
+            # Type narrowing: ensure category is Categories enum
+            if not isinstance(category, FlextLdifConstants.Categories):
+                continue
+
             output_filename = self._output_files.get(category)
             if not output_filename:
                 continue
@@ -820,10 +884,14 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             if category == FlextLdifConstants.Categories.ACL:
                 processed_entries = self._prepare_acl_entries(processed_entries)
 
+            # Normalize server type to ServerTypeLiteral
+            normalized_target = FlextLdifConstants.normalize_server_type(
+                self._target_server
+            )
             # Type narrowing: processed_entries may be mixed type, cast to public for writer
             write_result = self._writer.write(
                 entries=processed_entries,
-                target_server_type=self._target_server,
+                target_server_type=normalized_target,
                 output_target="file",
                 output_path=output_path,
                 format_options=category_write_opts,
@@ -909,14 +977,17 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             0,
         )
 
-        error_details = [
-            FlextLdifModels.ErrorDetail(
-                item=f"rejected_{reason}",
-                error=f"Rejected {len(entries)} entries: {reason}",
-                context={"reason": reason, "count": len(entries)},
+        error_details = []
+        for reason, entries in self._categorization.rejection_tracker.items():
+            context = FlextLdifModelsMetadata.DynamicMetadata()
+            context.update({"reason": reason, "count": len(entries)})
+            error_details.append(
+                FlextLdifModels.ErrorDetail(
+                    item=f"rejected_{reason}",
+                    error=f"Rejected {len(entries)} entries: {reason}",
+                    context=context,
+                ),
             )
-            for reason, entries in self._categorization.rejection_tracker.items()
-        ]
         # Create migration event config
         migration_config = FlextLdifModels.MigrationEventConfig(
             migration_operation=f"pipeline_{self._mode}",
@@ -936,11 +1007,16 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         # Create statistics model
         statistics = FlextLdifModels.Statistics(events=[event])
 
-        # Return EntryResult
+        # Convert file_paths dict to _CategoryPaths model
+        category_paths = _CategoryPaths()
+        for category, path in file_paths.items():
+            category_paths.set_path(str(category), str(path))
+
+        # Return EntryResult with proper types
         return FlextResult[FlextLdifModels.EntryResult].ok(
             FlextLdifModels.EntryResult(
-                entries_by_category={},  # Empty - data in files
+                entries_by_category=_FlexibleCategories(),  # Empty - data in files
                 statistics=statistics,
-                file_paths=file_paths,
+                file_paths=category_paths,
             ),
         )

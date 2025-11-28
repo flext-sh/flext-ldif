@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -40,7 +39,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """Standardized constants for OpenLDAP 2.x quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "openldap"
+        )
         PRIORITY: ClassVar[int] = 20
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -215,34 +216,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "Invalid OpenLDAP ACL format: missing 'to' clause"
         )
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """OpenLDAP-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            SEARCH = "search"
-            COMPARE = "compare"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """OpenLDAP ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """OpenLDAP-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
-            ISO_8859_1 = "iso-8859-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -414,7 +391,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """
 
         # OVERRIDE: OpenLDAP 2.x uses "olcAccess" for ACL attribute names
-        def __init__(self, **kwargs: object) -> None:
+        def __init__(self, **kwargs: str | float | bool | None) -> None:
             """Initialize OpenLDAP 2.x ACL quirk with RFC format.
 
             Args:
@@ -649,7 +626,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     attributes=attributes,
                 ),
                 subject=FlextLdifModels.AclSubject(
-                    subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
+                    subject_type=cast(
+                        "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+                        FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
+                    ),
                     subject_value=subject_value,
                 ),
                 permissions=FlextLdifModels.AclPermissions(
@@ -662,7 +642,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ),
                 metadata=FlextLdifModels.QuirkMetadata.create_for(
                     self._get_server_type(),
-                    extensions={"original_format": acl_line},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format=acl_line,
+                    ),
                 ),
                 raw_acl=acl_line,
             )
@@ -740,7 +722,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         """
 
-        def __init__(self, **kwargs: object) -> None:
+        def __init__(self, **kwargs: str | float | bool | None) -> None:
             """Initialize OpenLDAP 2.x entry quirk with RFC format.
 
             Args:
@@ -757,7 +739,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE).
 
@@ -831,7 +813,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             # Build validation rules dictionary by reading frozensets
             # ZERO hard-coded values - all from Constants!
-            validation_rules: dict[str, object] = {
+            validation_rules: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | dict[str, str | int | float | bool | None]
+                | list[str]
+                | None,
+            ] = {
                 # OBJECTCLASS requirement (OpenLDAP is flexible - check frozenset)
                 "requires_objectclass": (
                     server_type
@@ -881,7 +872,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     update={
                         "metadata": FlextLdifModels.QuirkMetadata.create_for(
                             FlextLdifConstants.ServerTypes.OPENLDAP,
-                            extensions={},
+                            extensions=FlextLdifModels.DynamicMetadata(),
                         ),
                     },
                 )

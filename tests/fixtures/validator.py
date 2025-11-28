@@ -15,6 +15,8 @@ from typing import Final
 
 from flext_core import FlextResult
 
+from tests.fixtures.typing import GenericFieldsDict, GenericTestCaseDict
+
 from . import helpers
 
 
@@ -22,7 +24,7 @@ class FixtureValidator:
     """Validates LDIF fixture files for correctness and completeness."""
 
     @staticmethod
-    def validate_schema_fixture(content: str) -> FlextResult[dict[str, object]]:
+    def validate_schema_fixture(content: str) -> FlextResult[GenericFieldsDict]:
         """Validate schema fixture has proper LDIF format and structure.
 
         Args:
@@ -55,7 +57,7 @@ class FixtureValidator:
                 if not oid:
                     invalid_ocs.append(oc[:50])
 
-            stats: dict[str, object] = {
+            stats: GenericFieldsDict = {
                 "attribute_count": len(attributes),
                 "objectclass_count": len(objectclasses),
                 "total_definitions": len(attributes) + len(objectclasses),
@@ -77,7 +79,7 @@ class FixtureValidator:
             return FlextResult.fail(f"Schema validation error: {e!s}")
 
     @staticmethod
-    def validate_entry_fixture(content: str) -> FlextResult[dict[str, object]]:
+    def validate_entry_fixture(content: str) -> FlextResult[GenericFieldsDict]:
         """Validate entry fixture completeness and structure.
 
         Args:
@@ -112,7 +114,7 @@ class FixtureValidator:
                 dn for dn in dns if isinstance(dn, str) and (not dn or "=" not in dn)
             ]
 
-            stats: dict[str, object] = {
+            stats: GenericFieldsDict = {
                 "entry_count": len(entries),
                 "entries_with_dn": len(entries) - invalid_entries,
                 "invalid_dns": len(invalid_dns),
@@ -165,7 +167,7 @@ class FixtureValidator:
     def validate_roundtrip(
         original: str,
         backward: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[GenericFieldsDict]:
         """Validate roundtrip conversion preserves key information.
 
         Args:
@@ -195,7 +197,7 @@ class FixtureValidator:
                     f"NAME not preserved in roundtrip: {orig_name} → {back_name}",
                 )
 
-            stats: dict[str, object] = {
+            stats: GenericFieldsDict = {
                 "oid_preserved": orig_oid == back_oid,
                 "name_preserved": orig_name == back_name,
                 "roundtrip_valid": orig_oid == back_oid and orig_name == back_name,
@@ -213,7 +215,7 @@ class FixtureCoverageReport:
     @staticmethod
     def generate_summary(
         fixtures_by_server: dict[str, dict[object, str]],
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Generate summary of fixture coverage across servers.
 
         Args:
@@ -224,7 +226,7 @@ class FixtureCoverageReport:
             Coverage summary statistics
 
         """
-        coverage: dict[str, object] = {}
+        coverage: GenericFieldsDict = {}
 
         for server_name, fixtures in fixtures_by_server.items():
             # Convert enum keys to strings for comparison
@@ -275,7 +277,7 @@ class FixtureCoverageReport:
         return coverage
 
     @staticmethod
-    def print_coverage_report(coverage: dict[str, object]) -> None:
+    def print_coverage_report(coverage: GenericFieldsDict) -> None:
         """Print formatted coverage report.
 
         Args:
@@ -400,7 +402,7 @@ class FlextLdifFixtureDiscovery:
     def load_expected_results(
         self,
         metadata: FixtureMetadata,
-    ) -> dict[str, object] | None:
+    ) -> GenericFieldsDict | None:
         """Load expected results for a fixture.
 
         Args:
@@ -430,9 +432,9 @@ class FlextLdifFixtureDiscovery:
 
     def compare_results(
         self,
-        actual: dict[str, object],
-        expected: dict[str, object],
-    ) -> dict[str, object]:
+        actual: GenericFieldsDict,
+        expected: GenericFieldsDict,
+    ) -> GenericFieldsDict:
         """Compare actual parsing results with expected results.
 
         Args:
@@ -443,7 +445,7 @@ class FlextLdifFixtureDiscovery:
             dict: Comparison results with matches, differences, etc.
 
         """
-        result: dict[str, object] = {
+        result: GenericFieldsDict = {
             "matches": True,
             "differences": [],
             "entry_count_matches": False,
@@ -604,9 +606,9 @@ class RoundTripValidator:
 
     @staticmethod
     def validate_entries_deep(
-        original_entries: list[dict[str, object]],
-        roundtrip_entries: list[dict[str, object]],
-    ) -> FlextResult[dict[str, object]]:
+        original_entries: list[GenericTestCaseDict],
+        roundtrip_entries: list[GenericTestCaseDict],
+    ) -> FlextResult[GenericFieldsDict]:
         """Deeply validate entry preservation across round-trip.
 
         Args:
@@ -623,7 +625,7 @@ class RoundTripValidator:
             )
 
         total_matches = 0
-        mismatches: list[dict[str, object]] = []
+        mismatches: list[GenericTestCaseDict] = []
 
         for i, (original, roundtrip) in enumerate(
             zip(original_entries, roundtrip_entries, strict=False),
@@ -641,7 +643,7 @@ class RoundTripValidator:
                     },
                 )
 
-        report: dict[str, object] = {
+        report: GenericFieldsDict = {
             "total_entries": len(original_entries),
             "matching_entries": total_matches,
             "mismatched_entries": len(mismatches),
@@ -657,10 +659,10 @@ class RoundTripValidator:
 
     @staticmethod
     def validate_attribute_values(
-        original_entries: list[dict[str, object]],
-        roundtrip_entries: list[dict[str, object]],
+        original_entries: list[GenericTestCaseDict],
+        roundtrip_entries: list[GenericTestCaseDict],
         attribute_names: list[str] | None = None,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[GenericFieldsDict]:
         """Validate specific attribute values across round-trip.
 
         Args:
@@ -675,7 +677,7 @@ class RoundTripValidator:
         if len(original_entries) != len(roundtrip_entries):
             return FlextResult.fail("Entry count mismatch")
 
-        attr_reports: dict[str, dict[str, object]] = {}
+        attr_reports: dict[str, GenericFieldsDict] = {}
 
         for _i, (original, roundtrip) in enumerate(
             zip(original_entries, roundtrip_entries, strict=False),
@@ -716,7 +718,7 @@ class RoundTripValidator:
                         if isinstance(missing, int):
                             attr_reports[attr_lower]["missing_roundtrip"] = missing + 1
 
-        report: dict[str, object] = {
+        report: GenericFieldsDict = {
             "attribute_count": len(attr_reports),
             "perfectly_preserved": sum(
                 1
@@ -749,7 +751,7 @@ class RfcComplianceValidator:
     """
 
     @staticmethod
-    def validate_ldif_format(content: str) -> FlextResult[dict[str, object]]:
+    def validate_ldif_format(content: str) -> FlextResult[GenericFieldsDict]:
         """Validate LDIF conforms to RFC 2849 format.
 
         Args:
@@ -780,8 +782,8 @@ class RfcComplianceValidator:
 
     @staticmethod
     def validate_schema_format(
-        entry: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        entry: GenericFieldsDict,
+    ) -> FlextResult[GenericFieldsDict]:
         """Validate schema entry conforms to RFC 4512.
 
         Args:
@@ -791,7 +793,7 @@ class RfcComplianceValidator:
             FlextResult with RFC 4512 compliance report
 
         """
-        report: dict[str, object] = {
+        report: GenericFieldsDict = {
             "has_attributetypes": False,
             "has_objectclasses": False,
             "attribute_count": 0,
@@ -834,7 +836,7 @@ class RfcComplianceValidator:
         return FlextResult.ok(report)
 
     @staticmethod
-    def validate_dn_format(dn: str) -> FlextResult[dict[str, object]]:
+    def validate_dn_format(dn: str) -> FlextResult[GenericFieldsDict]:
         """Validate DN conforms to RFC 4514.
 
         Args:

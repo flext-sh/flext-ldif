@@ -10,9 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif import FlextLdifModels
+from tests.fixtures.typing import DirectoryEntryDataDict
 
 
 class TestFlextLdifDnCaseRegistry:
@@ -71,7 +74,9 @@ class TestFlextLdifDnCaseRegistry:
     # TEST DN NORMALIZATION
     # ════════════════════════════════════════════════════════════════════════
 
-    def test_normalize_removes_spaces(self, registry: FlextLdifModels.DnRegistry) -> None:
+    def test_normalize_removes_spaces(
+        self, registry: FlextLdifModels.DnRegistry
+    ) -> None:
         """Test that DN normalization removes all spaces."""
         dn_with_spaces = "CN=Test, DC=Example, DC=Com"
         normalized = registry._normalize_dn(dn_with_spaces)
@@ -232,9 +237,7 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_dns: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test getting canonical DN with spaces."""
-        canonical = registry_with_dns.get_canonical_dn(
-            "cn=admin, dc=example, dc=com"
-        )
+        canonical = registry_with_dns.get_canonical_dn("cn=admin, dc=example, dc=com")
         assert canonical == "cn=admin,dc=example,dc=com"
 
     def test_get_canonical_unregistered_returns_none(
@@ -452,8 +455,10 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing single DN field."""
-        data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
-        result = registry_with_references.normalize_dn_references(data, ["dn"])
+        data: DirectoryEntryDataDict = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
+        result = registry_with_references.normalize_dn_references(
+            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn"]
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -465,12 +470,12 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing list of DNs (e.g., group members)."""
-        data: dict[str, object] = {
+        data: DirectoryEntryDataDict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
         result = registry_with_references.normalize_dn_references(
-            data, ["dn", "member"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn", "member"]
         )
 
         assert result.is_success
@@ -482,13 +487,14 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing multiple DN fields."""
-        data: dict[str, object] = {
+        data: DirectoryEntryDataDict = {
             "dn": "CN=Admin,DC=Com",
             "manager": "cn=USER1,dc=com",
             "secretary": "cn=USER2,dc=com",
         }
         result = registry_with_references.normalize_dn_references(
-            data, ["dn", "manager", "secretary"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn", "manager", "secretary"],
         )
 
         assert result.is_success
@@ -502,8 +508,10 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
-        result = registry_with_references.normalize_dn_references(data, ["dn"])
+        data: DirectoryEntryDataDict = {"dn": "cn=unknown,dc=com"}
+        result = registry_with_references.normalize_dn_references(
+            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn"]
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -514,12 +522,14 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that None dn_fields uses default DN fields."""
-        data: dict[str, object] = {
+        data: DirectoryEntryDataDict = {
             "dn": "CN=Admin,DC=Com",
             "member": ["cn=USER1,dc=com"],
             "owner": "cn=USER2,dc=com",
         }
-        result = registry_with_references.normalize_dn_references(data)
+        result = registry_with_references.normalize_dn_references(
+            cast("dict[str, str | list[str] | dict[str, str]]", data)
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -532,8 +542,10 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that missing fields don't cause errors."""
-        data: dict[str, object] = {"cn": ["admin"]}
-        result = registry_with_references.normalize_dn_references(data, ["dn", "member"])
+        data: DirectoryEntryDataDict = {"cn": ["admin"]}
+        result = registry_with_references.normalize_dn_references(
+            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn", "member"]
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -544,14 +556,16 @@ class TestFlextLdifDnCaseRegistry:
         registry_with_references: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test normalizing mix of registered and unregistered DNs."""
-        data: dict[str, object] = {
+        data: DirectoryEntryDataDict = {
             "dn": "cn=group,dc=com",
             "member": [
                 "CN=User1,DC=Com",
                 "cn=unknown,dc=com",
             ],
         }
-        result = registry_with_references.normalize_dn_references(data, ["dn", "member"])
+        result = registry_with_references.normalize_dn_references(
+            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn", "member"]
+        )
 
         assert result.is_success
         normalized = result.unwrap()
@@ -727,8 +741,11 @@ class TestFlextLdifDnCaseRegistry:
     ) -> None:
         """Test normalization handles non-string, non-list values."""
         registry.register_dn("cn=admin,dc=com")
-        data: dict[str, object] = {"dn": "cn=admin,dc=com", "someField": 123}
-        result = registry.normalize_dn_references(data, ["dn", "someField"])
+        data: DirectoryEntryDataDict = {"dn": "cn=admin,dc=com", "someField": 123}
+        result = registry.normalize_dn_references(
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn", "someField"],
+        )
 
         assert result.is_success
         normalized = result.unwrap()

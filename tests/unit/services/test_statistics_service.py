@@ -38,6 +38,7 @@ from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
+from tests.fixtures.typing import GenericFieldsDict
 
 
 class TestFlextLdifStatistics:
@@ -57,7 +58,7 @@ class TestFlextLdifStatistics:
 
         @staticmethod
         def create_entry_from_dict(
-            entry_dict: dict[str, object],
+            entry_dict: GenericFieldsDict,
         ) -> FlextLdifModels.Entry:
             """Create Entry model from dictionary for testing.
 
@@ -125,7 +126,7 @@ class TestFlextLdifStatistics:
                 entries: list[FlextLdifModels.Entry] = []
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
-                        entry_obj: dict[str, object] = dict(entry_value)
+                        entry_obj: GenericFieldsDict = dict(entry_value)
                         entries.append(
                             TestFlextLdifStatistics.Factories.create_entry_from_dict(
                                 entry_obj
@@ -204,9 +205,9 @@ class TestFlextLdifStatistics:
         )
         def test_generate_statistics(
             self,
-            categorized: dict[str, list[dict[str, object]]],
+            categorized: dict[str, list[GenericFieldsDict]],
             written_counts: dict[str, int],
-            output_files: dict[str, object],
+            output_files: GenericFieldsDict,
             expected_total: int,
             expected_counts: dict[str, int],
         ) -> None:
@@ -313,7 +314,7 @@ class TestFlextLdifStatistics:
         )
         def test_generate_statistics_with_rejections(
             self,
-            categorized: dict[str, list[dict[str, object]]],
+            categorized: dict[str, list[GenericFieldsDict]],
             written_counts: dict[str, int],
             expected_total: int,
             expected_rejected: int,
@@ -399,7 +400,7 @@ class TestFlextLdifStatistics:
         )
         def test_rejection_reasons(
             self,
-            categorized: dict[str, list[dict[str, object]]],
+            categorized: dict[str, list[GenericFieldsDict]],
             expected_count: int,
             expected_reasons: list[str],
         ) -> None:
@@ -438,12 +439,12 @@ class TestFlextLdifStatistics:
         )
         def test_output_files(
             self,
-            output_files: dict[str, object],
+            output_files: GenericFieldsDict,
             output_dir: Path,
             expected_paths: dict[str, str],
         ) -> None:
             """Test output file handling with parametrized test cases."""
-            categorized_dict: dict[str, list[dict[str, object]]] = {
+            categorized_dict: dict[str, list[GenericFieldsDict]] = {
                 cat: [{"dn": "cn=test,dc=example,dc=com", "attributes": {}}]
                 for cat in expected_paths
             }

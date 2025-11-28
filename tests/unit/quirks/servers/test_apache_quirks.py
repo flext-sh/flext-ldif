@@ -17,6 +17,7 @@ import pytest
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.apache import FlextLdifServersApache
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
@@ -89,7 +90,7 @@ class EntryTestCase:
 
     scenario: EntryScenario
     entry_dn: str
-    attributes: dict[str, object]
+    attributes: GenericFieldsDict
     expected_can_handle: bool
 
 
@@ -589,7 +590,7 @@ class TestFlextLdifApacheQuirks:
         assert result is test_case.expected_can_handle
 
     @staticmethod
-    def _build_ldif(entry_dn: str, attributes: dict[str, object]) -> str:
+    def _build_ldif(entry_dn: str, attributes: GenericFieldsDict) -> str:
         """Build LDIF string from DN and attributes."""
         ldif = f"dn: {entry_dn}\n"
         for attr, values in attributes.items():

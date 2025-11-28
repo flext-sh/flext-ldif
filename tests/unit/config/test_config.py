@@ -14,6 +14,7 @@ from enum import StrEnum
 
 import pytest
 from pydantic import ValidationError
+from tests.fixtures.typing import GenericFieldsDict
 
 from flext_ldif import FlextLdifConfig, FlextLdifConstants
 
@@ -159,7 +160,7 @@ class TestFlextLdifConfig:
         @staticmethod
         def create_config_with_field(field_name: str, value: object) -> FlextLdifConfig:
             """Create config with single field override."""
-            kwargs: dict[str, object] = {field_name: value}
+            kwargs: GenericFieldsDict = {field_name: value}
             return FlextLdifConfig(**kwargs)
 
         @staticmethod

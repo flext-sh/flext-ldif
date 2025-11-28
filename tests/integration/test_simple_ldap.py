@@ -8,6 +8,7 @@ from collections.abc import Callable
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
+from tests.fixtures.typing import GenericFieldsDict
 
 # Note: ldap_connection fixture is provided by conftest.py
 # It uses unique_dn_suffix for isolation and indepotency in parallel execution
@@ -22,7 +23,7 @@ def test_ldap_connection(ldap_connection: Connection) -> None:
 
 def test_simple_ldap_search(
     ldap_connection: Connection,
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
 ) -> None:
     """Test simple LDAP search."""
     base_dn = str(ldap_container["base_dn"])
@@ -40,7 +41,7 @@ def test_simple_ldap_search(
 
 def test_create_and_export_entry(
     ldap_connection: Connection,
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
     make_test_username: Callable[[str], str],
 ) -> None:
     """Create LDAP entry and export to LDIF."""

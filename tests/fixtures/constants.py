@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from tests.fixtures.typing import GenericFieldsDict
+
 
 class FixturePaths:
     """Paths to test fixture files organized by server type."""
@@ -183,20 +185,27 @@ objectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTUR
 
 
 class Fixtures:
-    """Fixture-related constants."""
+    """Fixture-related constants.
+
+    Uses production server types from FlextLdifConstants.ServerTypes for consistency.
+    """
 
     # Fixture categories
+    # RFC is a fixture category, not a server type - keep as string constant
     RFC = "rfc"
     SERVERS = "servers"
     EDGE_CASES = "edge_cases"
     BROKEN = "broken"
 
-    # Server types
-    OID = "oid"
-    OUD = "oud"
-    OPENLDAP = "openldap"
-    AD = "ad"
-    DS389 = "ds389"
+    # Server types - reuse from production constants (no duplication)
+    # Import here to avoid circular dependency
+    from flext_ldif.constants import FlextLdifConstants  # noqa: PLC0415
+
+    OID = FlextLdifConstants.ServerTypes.OID
+    OUD = FlextLdifConstants.ServerTypes.OUD
+    OPENLDAP = FlextLdifConstants.ServerTypes.OPENLDAP
+    AD = FlextLdifConstants.ServerTypes.AD
+    DS389 = FlextLdifConstants.ServerTypes.DS_389
 
     # Fixture types
     ENTRY = "entry"
@@ -300,10 +309,12 @@ class Filters:
     ATTR_SN = Names.SN
     ATTR_UID = Names.UID
 
-    # Server types
-    SERVER_RFC = "rfc"
-    SERVER_OID = "oid"
-    SERVER_OUD = "oud"
+    # Server types - reuse from production constants (no duplication)
+    from flext_ldif.constants import FlextLdifConstants  # noqa: PLC0415
+
+    SERVER_RFC = FlextLdifConstants.ServerTypes.RFC
+    SERVER_OID = FlextLdifConstants.ServerTypes.OID
+    SERVER_OUD = FlextLdifConstants.ServerTypes.OUD
 
     # Categories
     CATEGORY_USERS = "users"
@@ -512,9 +523,9 @@ class TestData:
         dn: str,
         category: str = Statistics.CATEGORY_USERS,
         rejection_reason: str | None = None,
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Create categorized entry for statistics testing."""
-        entry: dict[str, object] = {"dn": dn, "attributes": {}}
+        entry: GenericFieldsDict = {"dn": dn, "attributes": {}}
         if rejection_reason:
             entry["attributes"] = {"rejectionReason": rejection_reason}
         return entry
@@ -526,7 +537,7 @@ class TestData:
         base_dn: str = DNs.EXAMPLE,
         prefix: str = "user",
         rejection_reason: str | None = None,
-    ) -> list[dict[str, object]]:
+    ) -> list[GenericFieldsDict]:
         """Create batch of categorized entries."""
         return [
             TestData.categorized_entry(

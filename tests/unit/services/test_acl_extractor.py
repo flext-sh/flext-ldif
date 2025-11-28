@@ -79,9 +79,13 @@ class TestFlextLdifAcl:
             response = result.unwrap()
             # Verify response has expected attributes (AclResponse model)
             assert hasattr(response, "acls"), "AclResponse should have 'acls' attribute"
-            assert hasattr(response, "statistics"), "AclResponse should have 'statistics' attribute"
+            assert hasattr(response, "statistics"), (
+                "AclResponse should have 'statistics' attribute"
+            )
             assert isinstance(response.acls, list), "acls should be a list"
-            assert response.statistics.acls_extracted >= 0, "statistics should have acls_extracted"
+            assert response.statistics.acls_extracted >= 0, (
+                "statistics should have acls_extracted"
+            )
 
     class TestExtractAclEntries:
         """Test extract_acl_entries method for ACL entry extraction."""

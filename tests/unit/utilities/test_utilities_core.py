@@ -80,8 +80,8 @@ class TestDnOperationsPure:
             "ou=Users,dc=example,dc=com",
             "cn=admin,o=example",
             r"cn=Test\, User,dc=example,dc=com",  # Escaped comma
-            r"cn=Test\5CUser,dc=example,dc=com",   # Escaped backslash
-            r"cn=Test#User,dc=example,dc=com",   # Hash character
+            r"cn=Test\5CUser,dc=example,dc=com",  # Escaped backslash
+            r"cn=Test#User,dc=example,dc=com",  # Hash character
             r"cn=Test\2BUser,dc=example,dc=com",  # Valid hex escape (+)
             r"cn=Test\3DUser,dc=example,dc=com",  # Valid hex escape (=)
         ]

@@ -24,6 +24,7 @@ import pytest
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
+from tests.fixtures.typing import GenericFieldsDict
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -52,7 +53,7 @@ class TestRealLdapRoundtrip:
         # Create original LDAP entry with isolated username
         unique_username = make_test_username("RoundtripTest")
         original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: dict[str, object] = {
+        original_attrs: GenericFieldsDict = {
             "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",

@@ -15,10 +15,12 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from flext_ldif import FlextLdifMigrationPipeline, FlextLdifModels
+from tests.fixtures.typing import CategorizationRulesDict
 
 
 class TestFlextLdifMigrationPipeline:
@@ -115,12 +117,15 @@ class TestFlextLdifMigrationPipeline:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules: dict[str, object] = {
-            "hierarchy_objectclasses": ["organization"],
-            "user_objectclasses": ["inetOrgPerson"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules: CategorizationRulesDict = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["organization"],
+                "user_objectclasses": ["inetOrgPerson"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -239,7 +244,9 @@ class TestFlextLdifMigrationPipeline:
 
         # Pipeline should handle gracefully (no entries to process)
         # Should either succeed with 0 entries migrated or fail with informative message
-        assert result.is_success, f"Pipeline should succeed or fail gracefully, got error: {result.error}"
+        assert result.is_success, (
+            f"Pipeline should succeed or fail gracefully, got error: {result.error}"
+        )
 
         if result.is_success:
             entry_result = result.unwrap()
@@ -250,8 +257,12 @@ class TestFlextLdifMigrationPipeline:
             assert len(events) > 0, "Should have at least one migration event"
             migration_event = events[0]
             # Validate that either 0 entries processed or explicit handling documented
-            assert migration_event.entries_migrated == 0 or migration_event.entries_processed == 0, \
+            assert (
+                migration_event.entries_migrated == 0
+                or migration_event.entries_processed == 0
+            ), (
                 f"Empty input should migrate 0 entries, got migrated={migration_event.entries_migrated}, processed={migration_event.entries_processed}"
+            )
 
     def test_categorized_mode_with_empty_input(self, tmp_path: Path) -> None:
         """Test categorized mode handles empty input directory gracefully."""
@@ -260,12 +271,15 @@ class TestFlextLdifMigrationPipeline:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules: dict[str, object] = {
-            "hierarchy_objectclasses": ["organization"],
-            "user_objectclasses": ["inetOrgPerson"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules: CategorizationRulesDict = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["organization"],
+                "user_objectclasses": ["inetOrgPerson"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -279,7 +293,9 @@ class TestFlextLdifMigrationPipeline:
         result = pipeline.execute()
 
         # Pipeline should handle gracefully with no input files
-        assert result.is_success, f"Pipeline should succeed with empty input, got error: {result.error}"
+        assert result.is_success, (
+            f"Pipeline should succeed with empty input, got error: {result.error}"
+        )
 
         if result.is_success:
             entry_result = result.unwrap()
@@ -290,8 +306,12 @@ class TestFlextLdifMigrationPipeline:
             assert len(events) > 0, "Should have at least one migration event"
             migration_event = events[0]
             # Validate categorized mode also handles empty input gracefully
-            assert migration_event.entries_migrated == 0 or migration_event.entries_processed == 0, \
+            assert (
+                migration_event.entries_migrated == 0
+                or migration_event.entries_processed == 0
+            ), (
                 f"Empty input in categorized mode should migrate 0 entries, got migrated={migration_event.entries_migrated}, processed={migration_event.entries_processed}"
+            )
 
     # ════════════════════════════════════════════════════════════════════════
     # SIMPLE MODE TESTS (2 tests)
@@ -325,7 +345,9 @@ sn: test
         result = pipeline.execute()
 
         # Validate migration succeeded with proper output
-        assert result.is_success, f"Simple mode migration should succeed, got error: {result.error}"
+        assert result.is_success, (
+            f"Simple mode migration should succeed, got error: {result.error}"
+        )
 
         entry_result = result.unwrap()
         assert isinstance(entry_result, FlextLdifModels.EntryResult)
@@ -337,17 +359,22 @@ sn: test
         migration_event = events[0]
 
         # Validate entry was processed
-        assert migration_event.entries_processed >= 1, \
+        assert migration_event.entries_processed >= 1, (
             f"Should process at least 1 entry, processed={migration_event.entries_processed}"
-        assert migration_event.entries_migrated >= 1, \
+        )
+        assert migration_event.entries_migrated >= 1, (
             f"Should migrate at least 1 entry, migrated={migration_event.entries_migrated}"
+        )
 
         # Validate output file was created
-        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
-            "Should create output files"
+        assert (
+            entry_result.file_paths is not None and len(entry_result.file_paths) > 0
+        ), "Should create output files"
         output_file = Path(entry_result.file_paths[0])
         assert output_file.exists(), f"Output file should exist: {output_file}"
-        assert output_file.stat().st_size > 0, f"Output file should not be empty: {output_file}"
+        assert output_file.stat().st_size > 0, (
+            f"Output file should not be empty: {output_file}"
+        )
 
     def test_simple_mode_with_filtering(self, tmp_path: Path) -> None:
         """Test simple mode with attribute filtering."""
@@ -375,7 +402,9 @@ mail: test@example.com
         result = pipeline.execute()
 
         # Validate filtering succeeded
-        assert result.is_success, f"Simple mode with filtering should succeed, got error: {result.error}"
+        assert result.is_success, (
+            f"Simple mode with filtering should succeed, got error: {result.error}"
+        )
 
         entry_result = result.unwrap()
         assert isinstance(entry_result, FlextLdifModels.EntryResult)
@@ -387,21 +416,28 @@ mail: test@example.com
         migration_event = events[0]
 
         # Validate entry was processed
-        assert migration_event.entries_processed >= 1, \
+        assert migration_event.entries_processed >= 1, (
             f"Should process at least 1 entry, processed={migration_event.entries_processed}"
-        assert migration_event.entries_migrated >= 1, \
+        )
+        assert migration_event.entries_migrated >= 1, (
             f"Should migrate at least 1 entry, migrated={migration_event.entries_migrated}"
+        )
 
         # Validate output file was created
-        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
-            "Should create output files"
+        assert (
+            entry_result.file_paths is not None and len(entry_result.file_paths) > 0
+        ), "Should create output files"
         output_file = Path(entry_result.file_paths[0])
         assert output_file.exists(), f"Output file should exist: {output_file}"
 
         # Validate that forbidden attribute is filtered out
         output_content = output_file.read_text(encoding="utf-8")
-        assert "mail:" not in output_content, "Forbidden attribute 'mail' should be filtered out"
-        assert "test@example.com" not in output_content, "Forbidden attribute value should be filtered out"
+        assert "mail:" not in output_content, (
+            "Forbidden attribute 'mail' should be filtered out"
+        )
+        assert "test@example.com" not in output_content, (
+            "Forbidden attribute value should be filtered out"
+        )
         # But other attributes should remain
         assert "cn: test" in output_content, "Non-forbidden attributes should remain"
 
@@ -426,12 +462,15 @@ cn: admin
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules: dict[str, object] = {
-            "hierarchy_objectclasses": ["top"],
-            "user_objectclasses": ["person"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules: CategorizationRulesDict = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["top"],
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -445,7 +484,9 @@ cn: admin
         result = pipeline.execute()
 
         # Validate categorized mode execution succeeded
-        assert result.is_success, f"Categorized mode should succeed, got error: {result.error}"
+        assert result.is_success, (
+            f"Categorized mode should succeed, got error: {result.error}"
+        )
 
         entry_result = result.unwrap()
         assert isinstance(entry_result, FlextLdifModels.EntryResult)
@@ -457,14 +498,17 @@ cn: admin
         migration_event = events[0]
 
         # Validate entries were processed
-        assert migration_event.entries_processed >= 2, \
+        assert migration_event.entries_processed >= 2, (
             f"Should process at least 2 entries (hierarchy+user), processed={migration_event.entries_processed}"
-        assert migration_event.entries_migrated >= 2, \
+        )
+        assert migration_event.entries_migrated >= 2, (
             f"Should migrate at least 2 entries, migrated={migration_event.entries_migrated}"
+        )
 
         # Validate output files were created for each category
-        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
-            "Should create output files for categories"
+        assert (
+            entry_result.file_paths is not None and len(entry_result.file_paths) > 0
+        ), "Should create output files for categories"
 
     def test_categorized_mode_with_base_dn_filtering(self, tmp_path: Path) -> None:
         """Test categorized mode with base DN filtering."""
@@ -483,12 +527,15 @@ cn: user
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules: dict[str, object] = {
-            "hierarchy_objectclasses": ["top"],
-            "user_objectclasses": ["person"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules: CategorizationRulesDict = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["top"],
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -503,7 +550,9 @@ cn: user
         result = pipeline.execute()
 
         # Validate base DN filtering succeeded
-        assert result.is_success, f"Categorized mode with base DN filtering should succeed, got error: {result.error}"
+        assert result.is_success, (
+            f"Categorized mode with base DN filtering should succeed, got error: {result.error}"
+        )
 
         entry_result = result.unwrap()
         assert isinstance(entry_result, FlextLdifModels.EntryResult)
@@ -515,14 +564,17 @@ cn: user
         migration_event = events[0]
 
         # Only 1 entry should match the base DN (dc=example,dc=com)
-        assert migration_event.entries_processed == 1, \
+        assert migration_event.entries_processed == 1, (
             f"Should only process entry matching base DN, processed={migration_event.entries_processed}"
-        assert migration_event.entries_migrated == 1, \
+        )
+        assert migration_event.entries_migrated == 1, (
             f"Should only migrate entry matching base DN, migrated={migration_event.entries_migrated}"
+        )
 
         # Validate output shows only the matching entry
-        assert entry_result.file_paths is not None and len(entry_result.file_paths) > 0, \
-            "Should create output files"
+        assert (
+            entry_result.file_paths is not None and len(entry_result.file_paths) > 0
+        ), "Should create output files"
         for file_path in entry_result.file_paths:
             output_file = Path(file_path)
             if output_file.exists() and output_file.stat().st_size > 0:
@@ -531,8 +583,9 @@ cn: user
                 if "admin" in output_content:
                     assert "dc=example,dc=com" in output_content
                 # Should NOT contain the non-matching entry
-                assert "dc=other,dc=com" not in output_content, \
+                assert "dc=other,dc=com" not in output_content, (
                     "Should filter out entries outside the base DN"
+                )
 
     def test_categorized_mode_with_forbidden_attributes(self, tmp_path: Path) -> None:
         """Test categorized mode filtering forbidden attributes."""
@@ -549,12 +602,15 @@ userPassword: secret
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules: dict[str, object] = {
-            "hierarchy_objectclasses": ["top"],
-            "user_objectclasses": ["person"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules: CategorizationRulesDict = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["top"],
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -613,12 +669,15 @@ userPassword: secret
             "dn: cn=admin,dc=example,dc=com\nobjectClass: person\ncn: admin\n",
         )
 
-        categorization_rules: dict[str, object] = {
-            "hierarchy_objectclasses": ["top"],
-            "user_objectclasses": ["person"],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
+        categorization_rules: CategorizationRulesDict = cast(
+            "dict[str, object]",
+            {
+                "hierarchy_objectclasses": ["top"],
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "acl_attributes": [],
+            },
+        )
 
         output_files = {
             "schema": "00_schema.ldif",

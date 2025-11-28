@@ -17,6 +17,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar, Final, cast
 
+from tests.fixtures.typing import GenericFieldsDict
+
 
 class FlextLdifFixtures:
     """FLEXT LDIF fixture loading infrastructure.
@@ -39,7 +41,7 @@ class FlextLdifFixtures:
     """
 
     # Singleton instances for server-specific loaders
-    _instances: ClassVar[dict[str, object]] = {}
+    _instances: ClassVar[GenericFieldsDict] = {}
 
     @classmethod
     def get_oid(cls) -> FlextLdifFixtures.OID:

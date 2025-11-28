@@ -10,8 +10,7 @@ Usage:
     # Service inheritance:
     class MyService(FlextLdifServiceBase[MyResult]):
         def execute(self) -> FlextResult[MyResult]:
-            ldif_config = self.config.get_namespace("ldif", FlextLdifConfig)
-            encoding = ldif_config.ldif_encoding
+            encoding = self.ldif_config.ldif_encoding
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,6 +21,8 @@ from __future__ import annotations
 from flext_core import FlextService
 from flext_core.typings import T
 
+from flext_ldif.config import FlextLdifConfig
+
 
 class FlextLdifServiceBase(FlextService[T]):
     """Base class for LDIF services.
@@ -29,10 +30,15 @@ class FlextLdifServiceBase(FlextService[T]):
     Inherits all functionality from FlextService:
     - self.logger: Configured logger instance
     - self.config: FlextConfig singleton with namespace support
+    - self.ldif_config: Properly typed FlextLdifConfig access
     - execute() pattern: Subclasses implement execute() -> FlextResult[T]
     - with_config(): Dependency injection of config
 
     Access configuration:
-        ldif_config = self.config.get_namespace("ldif", FlextLdifConfig)
-        encoding = ldif_config.ldif_encoding
+        encoding = self.ldif_config.ldif_encoding
     """
+
+    @property
+    def ldif_config(self) -> FlextLdifConfig:
+        """Access FlextLdifConfig with proper typing."""
+        return self.config.get_namespace("ldif", FlextLdifConfig)

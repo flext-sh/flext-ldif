@@ -17,6 +17,7 @@ from flext_core import FlextResult, FlextUtilities
 from flext_tests import FlextTestsMatchers, FlextTestsUtilities
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
+from tests.fixtures.typing import GenericFieldsDict
 
 T = TypeVar("T")
 
@@ -103,7 +104,7 @@ class TestValidators:
         ).is_success
 
     @staticmethod
-    def validate_ldif_content(content: str) -> dict[str, object]:
+    def validate_ldif_content(content: str) -> GenericFieldsDict:
         """Validate raw LDIF content format."""
         if not content:
             return {"is_valid": False, "reason": "Empty or non-string content"}
@@ -167,7 +168,7 @@ class TestValidators:
         cls,
         result: FlextResult[list[FlextLdifModels.Entry]],
         expected_count: int,
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Validate parsing result comprehensively."""
         if not result.is_success:
             return {
@@ -238,7 +239,7 @@ class TestValidators:
             assert not chain["is_valid_chain"], "Expected failures but all succeeded"
 
     @staticmethod
-    def validate_result_success(result: FlextResult[T]) -> dict[str, object]:
+    def validate_result_success(result: FlextResult[T]) -> GenericFieldsDict:
         """Validate FlextResult success characteristics."""
         has_value = False
         value_type_name = None
@@ -263,7 +264,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_failure(result: FlextResult[T]) -> dict[str, object]:
+    def validate_result_failure(result: FlextResult[T]) -> GenericFieldsDict:
         """Validate FlextResult failure characteristics."""
         return {
             "is_failure": result.is_failure,

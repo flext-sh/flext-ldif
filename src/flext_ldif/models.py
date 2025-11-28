@@ -34,6 +34,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifModels(FlextModels):
@@ -79,7 +80,9 @@ class FlextLdifModels(FlextModels):
         @field_validator("extensions", mode="before")
         @classmethod
         def coerce_dict_to_dynamic_metadata_extensions(
-            cls, value: FlextLdifModelsMetadata.DynamicMetadata | dict[str, object]
+            cls,
+            value: FlextLdifModelsMetadata.DynamicMetadata
+            | dict[str, FlextLdifTypes.MetadataValue],
         ) -> FlextLdifModelsMetadata.DynamicMetadata:
             """Convert dict to DynamicMetadata if needed (Pydantic v2 validation)."""
             if isinstance(value, dict):
@@ -217,8 +220,8 @@ class FlextLdifModels(FlextModels):
     class AnalysisResult(FlextLdifModelsResults.AnalysisResult):
         """Result of LDIF analytics operations."""
 
-    # SearchConfig deleted (0 usages) - use dict[str, object] for LDAP search config
-    # DiffItem and DiffResult deleted (0 usages) - use dict[str, list[dict]] for diff operations
+    # SearchConfig deleted (0 usages) - use proper typed models for LDAP search config
+    # DiffItem and DiffResult deleted (0 usages) - use typed models for diff operations
 
     class FilterCriteria(FlextLdifModelsConfig.FilterCriteria):
         """Criteria for filtering LDIF entries.
@@ -243,14 +246,14 @@ class FlextLdifModels(FlextModels):
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, Any] with type-safe Pydantic model.
+        Replaces dict[str, str | list[str] | None] with type-safe Pydantic model.
         """
 
     class WhitelistRules(FlextLdifModelsConfig.WhitelistRules):
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
-        Replaces dict[str, Any] with type-safe Pydantic model.
+        Replaces dict[str, str | list[str] | bool | None] with type-safe Pydantic model.
         """
 
     class EncodingRules(FlextLdifModelsConfig.EncodingRules):
@@ -323,36 +326,37 @@ class FlextLdifModels(FlextModels):
         def syntax_definition(self) -> FlextLdifModels.Syntax | None:
             """Resolve syntax OID to complete public Syntax model.
 
-            Override parent to return public Syntax type instead of
-            internal FlextLdifModelsDomains.Syntax type. This maintains proper type
-            separation between domain layer and public API layer.
+            Returns public Syntax type instead of internal domain type.
+            Uses direct resolution to avoid pyrefly super() inference issues.
 
             Returns:
                 Public Syntax model or None if syntax cannot be resolved.
 
             """
-            # Get internal syntax from parent implementation
-            parent_result = super().syntax_definition
-            if parent_result is None:
+            if not self.syntax:
                 return None
 
-            # Convert internal domain model to public API model
-            internal_syntax = parent_result
-
-            # Extract core fields for public model (exclude internal computed fields)
-            data = internal_syntax.model_dump(
-                mode="python",
-                exclude={"is_rfc4517_standard", "syntax_oid_suffix"},
+            # Resolve syntax OID directly (same logic as parent)
+            internal_syntax = FlextLdifModelsDomains.Syntax.resolve_syntax_oid(
+                self.syntax,
+                server_type="rfc",
             )
+            if internal_syntax is None:
+                return None
 
-            # Remove server-specific fields that should not be in public model
-            # These fields are internal implementation details from schema parsing
-            data.pop("has_metadata", None)
-            data.pop("server_type", None)
-            data.pop("has_server_extensions", None)
-
-            # Validate as public Syntax model
-            return FlextLdifModels.Syntax.model_validate(data)
+            # Convert to public model (exclude internal computed fields)
+            return FlextLdifModels.Syntax.model_validate(
+                internal_syntax.model_dump(
+                    mode="python",
+                    exclude={
+                        "is_rfc4517_standard",
+                        "syntax_oid_suffix",
+                        "has_metadata",
+                        "server_type",
+                        "has_server_extensions",
+                    },
+                )
+            )
 
     class Syntax(FlextLdifModelsDomains.Syntax):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
@@ -662,6 +666,17 @@ class FlextLdifModels(FlextModels):
             results: Mapping of validated item names to validation status (True=valid, False=invalid)
 
         """
+
+    # =========================================================================
+    # TYPE ALIASES - For API compatibility
+    # =========================================================================
+    # These aliases maintain compatibility with api.py expectations while
+    # avoiding duplication of model definitions.
+
+    # Aliases removed per user requirements - use direct types:
+    # - MigrateConfig → MigrateOptions
+    # - CategorizationRules → CategoryRules
+    # - SchemaWhitelistRules → WhitelistRules
 
 
 __all__ = ["FlextLdifModels"]

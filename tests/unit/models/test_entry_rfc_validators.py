@@ -13,6 +13,7 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
+from tests.fixtures.typing import GenericFieldsDict
 
 from flext_ldif import FlextLdifModels
 
@@ -208,7 +209,7 @@ class TestEntryRfcCompliance:
     @staticmethod
     def get_validation_metadata(
         entry: object,
-    ) -> dict[str, object] | None:
+    ) -> GenericFieldsDict | None:
         """Extract validation_metadata from entry.metadata.validation_results."""
         if not hasattr(entry, "metadata"):
             return None

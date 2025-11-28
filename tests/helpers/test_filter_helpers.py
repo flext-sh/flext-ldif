@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
+from tests.fixtures.typing import GenericFieldsDict
 
 from .test_assertions import TestAssertions
 
@@ -134,7 +135,7 @@ class FilterTestHelpers:
     @staticmethod
     def test_categorize_entry_complete(
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules | dict[str, object],
+        rules: FlextLdifModels.CategoryRules | GenericFieldsDict,
         *,
         expected_category: str | None = None,
         expected_reason_contains: str | None = None,

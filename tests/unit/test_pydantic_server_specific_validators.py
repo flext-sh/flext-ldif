@@ -28,9 +28,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import FlextLdifModels
+from tests.fixtures.typing import GenericFieldsDict
 
 
-def get_validation_metadata(entry: object) -> dict[str, object] | None:
+def get_validation_metadata(entry: object) -> GenericFieldsDict | None:
     """Helper to get validation_metadata from entry.metadata.validation_results."""
     if not hasattr(entry, "metadata"):
         return None
@@ -45,7 +46,7 @@ def get_validation_metadata(entry: object) -> dict[str, object] | None:
 # =============================================================================
 
 
-def inject_oud_validation_rules() -> dict[str, object]:
+def inject_oud_validation_rules() -> GenericFieldsDict:
     """Create OUD validation rules dict for injection into metadata.extensions."""
     return {
         "requires_objectclass": True,
@@ -55,7 +56,7 @@ def inject_oud_validation_rules() -> dict[str, object]:
     }
 
 
-def inject_oid_validation_rules() -> dict[str, object]:
+def inject_oid_validation_rules() -> GenericFieldsDict:
     """Create OID validation rules dict for injection into metadata.extensions."""
     return {
         "requires_objectclass": False,  # OID is lenient
@@ -65,7 +66,7 @@ def inject_oid_validation_rules() -> dict[str, object]:
     }
 
 
-def inject_openldap_validation_rules() -> dict[str, object]:
+def inject_openldap_validation_rules() -> GenericFieldsDict:
     """Create OpenLDAP validation rules dict for injection into metadata.extensions."""
     return {
         "requires_objectclass": False,  # OpenLDAP flexible schema
@@ -76,7 +77,7 @@ def inject_openldap_validation_rules() -> dict[str, object]:
     }
 
 
-def inject_ad_validation_rules() -> dict[str, object]:
+def inject_ad_validation_rules() -> GenericFieldsDict:
     """Create Active Directory validation rules dict for injection into metadata.extensions."""
     return {
         "requires_objectclass": True,  # AD is STRICT on objectClass

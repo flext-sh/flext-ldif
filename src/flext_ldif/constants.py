@@ -3,6 +3,13 @@
 This module defines constant values and enumerations used throughout the
 LDIF library. Types, protocols, and models are defined in separate modules.
 
+Python 3.13+ strict features:
+- PEP 695 type aliases (type keyword) - no TypeAlias
+- collections.abc for type hints (preferred over typing)
+- StrEnum for type-safe string enums
+- Literal types derived from StrEnum values
+- No backward compatibility with Python < 3.13
+
 ACL Attribute Detection Strategy
 ================================
 Uses HIERARCHY pattern with RFC foundation + server quirks
@@ -22,9 +29,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final, Literal
+from typing import ClassVar, Final, Literal, TypeGuard
 
 from flext_core import FlextConstants
 
@@ -33,7 +41,24 @@ class FlextLdifConstants(FlextConstants):
     """LDIF domain constants extending flext-core FlextConstants.
 
     Contains ONLY constant values, no implementations.
+    DRY Pattern: Base string constants defined first, then reused in StrEnum.
     """
+
+    # =========================================================================
+    # BASE STRING CONSTANTS (Single Source of Truth - DRY)
+    # =========================================================================
+    # Define strings once as class attributes, reuse everywhere to avoid duplication
+    # Must be defined BEFORE StrEnum classes that use them
+
+    # Operation values (reused across multiple enums)
+    _OP_ADD: Final[str] = "add"
+    _OP_DELETE: Final[str] = "delete"
+    _OP_MODIFY: Final[str] = "modify"
+    _OP_REPLACE: Final[str] = "replace"
+
+    # Attribute names
+    _ATTR_DN: Final[str] = "dn"
+    _ATTR_CHANGETYPE: Final[str] = "changetype"
 
     # FORMAT CONSTANTS
     # =============================================================================
@@ -88,6 +113,45 @@ class FlextLdifConstants(FlextConstants):
         ALL = "all"
         NONE = "none"
 
+    # ===== COMPREHENSIVE ACL PERMISSION ENUMS (Type-Safe) =====
+    class AclPermission(StrEnum):
+        """Comprehensive ACL permissions covering all server types (type-safe enum).
+
+        This enum consolidates all ACL permissions from RFC and
+        server-specific implementations. Use this for type-safe ACL
+        permission handling across all server types.
+
+        Python 3.13+ StrEnum with Pydantic 2 compatibility.
+        """
+
+        # RFC 4876 base permissions
+        READ = "read"
+        WRITE = "write"
+        ADD = "add"
+        DELETE = "delete"
+        SEARCH = "search"
+        COMPARE = "compare"
+        ALL = "all"
+        NONE = "none"
+
+        # Server-specific extensions
+        AUTH = "auth"
+        CREATE = "create"
+        CONTROL_ACCESS = "control_access"
+
+    # ===== ACL ACTION ENUMS (Type-Safe) =====
+    class AclAction(StrEnum):
+        """ACL action types for all server implementations (type-safe enum).
+
+        This enum consolidates all ACL action types from server implementations.
+        Use this for type-safe ACL action handling across all server types.
+
+        Python 3.13+ StrEnum with Pydantic 2 compatibility.
+        """
+
+        ALLOW = "allow"
+        DENY = "deny"
+
     # ===== CHARACTER ENCODING ENUMS (Type-Safe) =====
     class Encoding(StrEnum):
         """Standard character encodings used in LDIF processing.
@@ -126,7 +190,8 @@ class FlextLdifConstants(FlextConstants):
         """RFC 2849 LDIF format indicators for attribute value encoding.
 
         - REGULAR: Single colon (:) for regular text values
-        - BASE64: Double colon (::) for base64-encoded values (UTF-8, binary, special chars)
+        - BASE64: Double colon (::) for base64-encoded values
+          (UTF-8, binary, special chars)
         - URL: Less than and colon (:<) for URL-referenced values
 
         Per RFC 2849 Section 2:
@@ -167,8 +232,9 @@ class FlextLdifConstants(FlextConstants):
         ANONYMOUS = "anonymous"
         AUTHENTICATED = "authenticated"
         DN = "dn"
+        SDDL = "sddl"  # Active Directory SDDL format
 
-    class DictKeys:
+    class DictKeys(StrEnum):
         """Dictionary keys for LDIF entry data access - CORE KEYS ONLY per SRP.
 
         IMPORTANT: This class contains ONLY core LDIF/entry keys.
@@ -177,11 +243,11 @@ class FlextLdifConstants(FlextConstants):
         """
 
         # Core entry and LDIF keys (63+ usages)
-        DN: Final[str] = "dn"
-        ATTRIBUTES: Final[str] = "attributes"
-        OBJECTCLASS: Final[str] = "objectClass"
-        CN: Final[str] = "cn"
-        OID: Final[str] = "oid"
+        DN = "dn"
+        ATTRIBUTES = "attributes"
+        OBJECTCLASS = "objectClass"
+        CN = "cn"
+        OID = "oid"
 
         # NOTE: Removed server-specific keys (use QuirkMetadataKeys instead):
         # SERVER_TYPE, IS_CONFIG_ENTRY, IS_TRADITIONAL_DIT
@@ -192,7 +258,7 @@ class FlextLdifConstants(FlextConstants):
         # NOTE: Removed service keys (use local constants in respective modules):
         # SERVICE_NAMES, INITIALIZED, DATA
 
-    class QuirkMetadataKeys:
+    class QuirkMetadataKeys(StrEnum):
         """Dictionary keys for quirk metadata and server-specific entry properties.
 
         Used in Entry.metadata.extensions for server-specific attributes.
@@ -200,11 +266,11 @@ class FlextLdifConstants(FlextConstants):
         """
 
         # Quirk metadata keys (20 usages across server quirks)
-        SERVER_TYPE: Final[str] = "server_type"
-        IS_CONFIG_ENTRY: Final[str] = "is_config_entry"
-        IS_TRADITIONAL_DIT: Final[str] = "is_traditional_dit"
+        SERVER_TYPE = "server_type"
+        IS_CONFIG_ENTRY = "is_config_entry"
+        IS_TRADITIONAL_DIT = "is_traditional_dit"
 
-    class AclKeys:
+    class AclKeys(StrEnum):
         """Dictionary keys for ACL-related attributes and operations.
 
         Used in ACL parsing, writing, and entry processing across server quirks.
@@ -212,9 +278,9 @@ class FlextLdifConstants(FlextConstants):
         """
 
         # ACL attribute keys (11 usages across server ACL quirks)
-        ACL_ATTRIBUTE: Final[str] = "acl"
-        ACI: Final[str] = "aci"
-        ACCESS: Final[str] = "access"
+        ACL_ATTRIBUTE = "acl"
+        ACI = "aci"
+        ACCESS = "access"
         # NOTE: Server-specific ACL attributes moved to their Constants:
         # - OLCACCESS → FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME
         # - NTSECURITYDESCRIPTOR → FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
@@ -236,6 +302,7 @@ class FlextLdifConstants(FlextConstants):
 
         MIN_BUFFER_SIZE: Final[int] = 1024
         CONTENT_PREVIEW_LENGTH: Final[int] = 100
+        MINIMAL_DIFF_PREVIEW_LENGTH: Final[int] = 50
         MAX_ATTRIBUTES_DISPLAY: Final[int] = 10
 
         # Filesystem constraints
@@ -311,7 +378,7 @@ class FlextLdifConstants(FlextConstants):
         # BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
         # Characters: + / 0-9 = A-Z a-z
         BASE64_CHARS: Final[frozenset[str]] = frozenset(
-            "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
         )
 
         # RFC 2849 §3 - Line folding constants
@@ -674,17 +741,17 @@ class FlextLdifConstants(FlextConstants):
                 ...
             })
 
-            # Local permission name → feature ID mapping
-            LOCAL_TO_FEATURE: dict[str, str] = {
+            # Local permission name → feature ID mapping (immutable)
+            LOCAL_TO_FEATURE: ClassVar[Mapping[str, str]] = MappingProxyType({
                 "selfwrite": FeatureCapabilities.ACL_SELF_WRITE,
                 "proxy": FeatureCapabilities.ACL_PROXY_AUTH,
-            }
+            })
 
-            # Feature ID → local permission name mapping
-            FEATURE_TO_LOCAL: dict[str, str] = {
+            # Feature ID → local permission name mapping (immutable)
+            FEATURE_TO_LOCAL: ClassVar[Mapping[str, str]] = MappingProxyType({
                 FeatureCapabilities.ACL_SELF_WRITE: "selfwrite",
                 FeatureCapabilities.ACL_PROXY_AUTH: "proxy",
-            }
+            })
 
         Hook Methods (in rfc.py base, servers override):
         =================================================
@@ -1209,20 +1276,22 @@ class FlextLdifConstants(FlextConstants):
         # SCHEMA ENTRY DETECTION PATTERNS
         # =============================================================================
 
-        # Schema entry DN patterns per server (case-insensitive)
-        SCHEMA_ENTRY_PATTERNS: Final[dict[str, list[str]]] = {
-            "rfc": ["cn=schema"],  # RFC 4512 standard
-            "oid": ["cn=schema", "cn=subschema"],  # OID uses both
-            "oud": ["cn=schema"],  # OUD follows RFC
-            "openldap": ["cn=schema", "cn=subschema"],  # OpenLDAP flexible
-            "openldap1": ["cn=schema"],  # OpenLDAP 1.x
-            "ad": ["cn=schema", "cn=aggregate"],  # AD schema container
-            "389ds": ["cn=schema"],  # 389 DS
-            "apache_directory": ["ou=schema"],  # Apache DS uses ou=schema
-            "novell_edirectory": ["cn=schema"],  # Novell
-            "ibm_tivoli": ["cn=schema"],  # IBM Tivoli
-            "relaxed": ["cn=schema", "cn=subschema", "ou=schema"],  # Accept all
-        }
+        # Schema entry DN patterns per server (case-insensitive, immutable)
+        SCHEMA_ENTRY_PATTERNS: ClassVar[Mapping[str, Sequence[str]]] = (
+            MappingProxyType({
+                "rfc": ("cn=schema",),  # RFC 4512 standard
+                "oid": ("cn=schema", "cn=subschema"),  # OID uses both
+                "oud": ("cn=schema",),  # OUD follows RFC
+                "openldap": ("cn=schema", "cn=subschema"),  # OpenLDAP flexible
+                "openldap1": ("cn=schema",),  # OpenLDAP 1.x
+                "ad": ("cn=schema", "cn=aggregate"),  # AD schema container
+                "389ds": ("cn=schema",),  # 389 DS
+                "apache_directory": ("ou=schema",),  # Apache DS uses ou=schema
+                "novell_edirectory": ("cn=schema",),  # Novell
+                "ibm_tivoli": ("cn=schema",),  # IBM Tivoli
+                "relaxed": ("cn=schema", "cn=subschema", "ou=schema"),  # Accept all
+            })
+        )
 
         # =============================================================================
         # NAMING ATTRIBUTE (RDN) REQUIREMENTS
@@ -1268,80 +1337,85 @@ class FlextLdifConstants(FlextConstants):
             ],
         )
 
-        # Server-specific binary attributes (in addition to RFC standard)
-        SERVER_BINARY_ATTRIBUTES: Final[dict[str, frozenset[str]]] = {
-            "oid": frozenset(
-                [
-                    "orclguid",  # Oracle GUID
-                    "userpassword",  # OID may store binary passwords
-                ],
-            ),
-            "oud": frozenset(
-                [
-                    "ds-sync-hist",  # OUD synchronization history
-                    "ds-sync-state",  # OUD sync state
-                ],
-            ),
-            "ad": frozenset(
-                [
-                    "objectguid",  # AD GUID (already in RFC list but emphasizing)
-                    "objectsid",  # AD Security ID
-                    "msexchmailboxguid",  # Exchange mailbox GUID
-                    "msexchmailboxsecuritydescriptor",  # Exchange security
-                ],
-            ),
-            "openldap": frozenset(
-                [
-                    "entryuuid",  # OpenLDAP entry UUID (binary format)
-                ],
-            ),
-        }
+        # Server-specific binary attributes (in addition to RFC standard, immutable)
+        SERVER_BINARY_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
+            MappingProxyType({
+                "oid": frozenset(
+                    [
+                        "orclguid",  # Oracle GUID
+                        "userpassword",  # OID may store binary passwords
+                    ],
+                ),
+                "oud": frozenset(
+                    [
+                        "ds-sync-hist",  # OUD synchronization history
+                        "ds-sync-state",  # OUD sync state
+                    ],
+                ),
+                "ad": frozenset(
+                    [
+                        "objectguid",  # AD GUID (already in RFC list but emphasizing)
+                        "objectsid",  # AD Security ID
+                        "msexchmailboxguid",  # Exchange mailbox GUID
+                        "msexchmailboxsecuritydescriptor",  # Exchange security
+                    ],
+                ),
+                "openldap": frozenset(
+                    [
+                        "entryuuid",  # OpenLDAP entry UUID (binary format)
+                    ],
+                ),
+            })
+        )
 
         # =============================================================================
         # SPECIAL ATTRIBUTES PER SERVER
         # =============================================================================
 
-        # Operational attributes that may be missing and should not trigger warnings
-        OPERATIONAL_ATTRIBUTES: Final[dict[str, frozenset[str]]] = {
-            "oid": frozenset(
-                [
-                    "orclguid",
-                    "createtimestamp",
-                    "modifytimestamp",
-                    "creatorsname",
-                    "modifiersname",
-                ],
-            ),
-            "oud": frozenset(
-                [
-                    "entryuuid",
-                    "ds-sync-generation-id",
-                    "ds-sync-state",
-                    "createtimestamp",
-                    "modifytimestamp",
-                ],
-            ),
-            "ad": frozenset(
-                [
-                    "objectguid",
-                    "objectsid",
-                    "whencreated",
-                    "whenchanged",
-                    "usnchanged",
-                    "usncreated",
-                ],
-            ),
-            "openldap": frozenset(
-                [
-                    "entryuuid",
-                    "entrycsn",
-                    "createtimestamp",
-                    "modifytimestamp",
-                    "creatorsname",
-                    "modifiersname",
-                ],
-            ),
-        }
+        # Operational attributes that may be missing and should not trigger
+        # warnings (immutable)
+        OPERATIONAL_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
+            MappingProxyType({
+                "oid": frozenset(
+                    [
+                        "orclguid",
+                        "createtimestamp",
+                        "modifytimestamp",
+                        "creatorsname",
+                        "modifiersname",
+                    ],
+                ),
+                "oud": frozenset(
+                    [
+                        "entryuuid",
+                        "ds-sync-generation-id",
+                        "ds-sync-state",
+                        "createtimestamp",
+                        "modifytimestamp",
+                    ],
+                ),
+                "ad": frozenset(
+                    [
+                        "objectguid",
+                        "objectsid",
+                        "whencreated",
+                        "whenchanged",
+                        "usnchanged",
+                        "usncreated",
+                    ],
+                ),
+                "openldap": frozenset(
+                    [
+                        "entryuuid",
+                        "entrycsn",
+                        "createtimestamp",
+                        "modifytimestamp",
+                        "creatorsname",
+                        "modifiersname",
+                    ],
+                ),
+            })
+        )
 
     # NOTE: ErrorMessages class removed (removed unused error message constants)
     # Error messages are now defined in appropriate validation modules
@@ -1409,6 +1483,7 @@ class FlextLdifConstants(FlextConstants):
         ATTRIBUTE_REMOVED = "attribute_removed"
         ATTRIBUTE_ADDED = "attribute_added"
         ATTRIBUTE_RENAMED = "attribute_renamed"
+        MODIFIED = "modified"
 
         # Schema transformations
         MATCHING_RULE_REPLACED = "matching_rule_replaced"
@@ -1506,11 +1581,28 @@ class FlextLdifConstants(FlextConstants):
     # =============================================================================
     # LITERAL TYPE CONSTANTS - All Literal types MUST be declared here
     # =============================================================================
+    # NOTE: extract_enum_values() is inherited from FlextConstants
+    # Use FlextLdifConstants.extract_enum_values() to extract values from
+    # StrEnum classes
 
     class LiteralTypes:
-        """Literal type constants for type annotations."""
+        """Literal type constants for type annotations.
 
-        # Processing stages
+        Python 3.13+ best practices:
+        - All tuple constants must match their corresponding StrEnum values
+        - Literal types are manually defined (Python type system requirement)
+        - Uses PEP 695 type aliases (type keyword) for better type checking
+        - Runtime validation via validate_literal_matches_enum() ensures Literal types
+          stay in sync with StrEnum classes
+
+        Note: Tuple constants are manually defined to match StrEnum values,
+        then validated at module initialization. This ensures type safety
+        while working within Python's type system limitations (cannot
+        dynamically create Literal types).
+        """
+
+        # Processing stages (must match ProcessingStage StrEnum values)
+        # Validated at module initialization via validate_literal_matches_enum()
         PROCESSING_STAGES: Final[tuple[str, ...]] = (
             "parsing",
             "validation",
@@ -1518,10 +1610,12 @@ class FlextLdifConstants(FlextConstants):
             "writing",
         )
 
-        # Health status
+        # Health status (must match LdifHealthStatus StrEnum values)
+        # Validated at module initialization via validate_literal_matches_enum()
         HEALTH_STATUS: Final[tuple[str, ...]] = ("healthy", "degraded", "unhealthy")
 
-        # Entry types
+        # Entry types (must match EntryType StrEnum values)
+        # Validated at module initialization via validate_literal_matches_enum()
         ENTRY_TYPES: Final[tuple[str, ...]] = (
             "person",
             "group",
@@ -1530,7 +1624,8 @@ class FlextLdifConstants(FlextConstants):
             "other",
         )
 
-        # Modification types
+        # Modification types (must match EntryModification StrEnum values)
+        # Validated at module initialization via validate_literal_matches_enum()
         MODIFICATION_TYPES: Final[tuple[str, ...]] = (
             "add",
             "modify",
@@ -1541,13 +1636,15 @@ class FlextLdifConstants(FlextConstants):
         # NOTE: SERVER_TYPES removed - use ServerTypes class for identifiers
         # All server types (short forms: oid, oud, openldap, etc.) in ServerTypes
 
-        # Encoding types
+        # Encoding types (must match Encoding StrEnum values)
+        # Validated at module initialization via validate_literal_matches_enum()
         ENCODING_TYPES: Final[tuple[str, ...]] = (
             "utf-8",
-            "latin-1",
-            "ascii",
+            "utf-16-le",
             "utf-16",
             "utf-32",
+            "ascii",
+            "latin-1",
             "cp1252",
             "iso-8859-1",
         )
@@ -1639,17 +1736,33 @@ class FlextLdifConstants(FlextConstants):
         )
 
         # Literal type definitions for type annotations
-        type ProcessingStage = Literal["parsing", "validation", "analytics", "writing"]
-        type HealthStatus = Literal["healthy", "degraded", "unhealthy"]
-        type EntryType = Literal[
+        # (Python 3.13+ PEP 695 best practices)
+        # Using PEP 695 type statement for better type checking and IDE support
+        # These Literal types match their corresponding StrEnum classes above
+        # (ProcessingStage, LdifHealthStatus, etc.) for consistency and type safety
+        type ProcessingStageLiteral = Literal[
+            "parsing",
+            "validation",
+            "analytics",
+            "writing",
+        ]
+        """Literal type matching ProcessingStage StrEnum for type annotations."""
+
+        type HealthStatusLiteral = Literal["healthy", "degraded", "unhealthy"]
+        """Literal type matching LdifHealthStatus StrEnum for type annotations."""
+
+        type EntryTypeLiteral = Literal[
             "person",
             "group",
             "organizationalunit",
             "domain",
             "other",
         ]
-        type ModificationType = Literal["add", "modify", "delete", "modrdn"]
-        type ServerType = Literal[
+        """Literal type matching EntryType StrEnum for type annotations."""
+
+        type ModificationTypeLiteral = Literal["add", "modify", "delete", "modrdn"]
+        """Literal type matching EntryModification StrEnum for type annotations."""
+        type ServerTypeLiteral = Literal[
             # Short forms (primary - used in code)
             "oid",
             "oud",
@@ -1668,30 +1781,41 @@ class FlextLdifConstants(FlextConstants):
             "oracle_oid",
             "oracle_oud",
         ]
-        type EncodingType = Literal[
+
+        type EncodingTypeLiteral = Literal[
             "utf-8",
-            "latin-1",
-            "ascii",
+            "utf-16-le",
             "utf-16",
             "utf-32",
+            "ascii",
+            "latin-1",
             "cp1252",
             "iso-8859-1",
         ]
-        type ValidationLevel = Literal["strict", "moderate", "lenient"]
-        type AnalyticsDetailLevel = Literal["low", "medium", "high"]
-        type DetectionMode = Literal["auto", "manual", "disabled"]
-        type ErrorRecoveryMode = Literal["continue", "stop", "skip"]
-        type MigrationMode = Literal["simple", "categorized", "structured"]
-        type ParserInputSource = Literal["string", "file", "ldap3"]
-        type WriterOutputTarget = Literal["string", "file", "ldap3", "model"]
-        type AttributeOutputMode = Literal["show", "hide", "comment"]
+        """Encoding type literals derived from Encoding StrEnum."""
+
+        type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
+
+        type AnalyticsDetailLevelLiteral = Literal["low", "medium", "high"]
+
+        type DetectionModeLiteral = Literal["auto", "manual", "disabled"]
+
+        type ErrorRecoveryModeLiteral = Literal["continue", "stop", "skip"]
+
+        type MigrationModeLiteral = Literal["simple", "categorized", "structured"]
+
+        type ParserInputSourceLiteral = Literal["string", "file", "ldap3"]
+
+        type WriterOutputTargetLiteral = Literal["string", "file", "ldap3", "model"]
+
+        type AttributeOutputModeLiteral = Literal["show", "hide", "comment"]
         """Output mode for attribute visibility in LDIF output.
 
         - show: Write attribute normally
         - hide: Don't write attribute at all
         - comment: Write attribute as a comment (# attr: value)
         """
-        type AttributeMarkerStatus = Literal[
+        type AttributeMarkerStatusLiteral = Literal[
             "normal",
             "marked_for_removal",
             "filtered",
@@ -1700,7 +1824,8 @@ class FlextLdifConstants(FlextConstants):
             "renamed",
         ]
         """Marker status for attribute processing metadata."""
-        type ProjectType = Literal[
+
+        type ProjectTypeLiteral = Literal[
             "library",
             "application",
             "service",
@@ -1724,6 +1849,298 @@ class FlextLdifConstants(FlextConstants):
             "ldif-normalizer",
             "ldap-directory-tool",
         ]
+
+        # Additional Literal types consolidated from outside the class
+        # These complement the ones above and are derived from Enums/StrEnums
+        type CategoryLiteral = Literal[
+            "all",
+            "users",
+            "groups",
+            "hierarchy",
+            "schema",
+            "acl",
+            "rejected",
+        ]
+        """Category literals derived from Categories StrEnum."""
+
+        type ChangeTypeLiteral = Literal["add", "delete", "modify", "modrdn", "moddn"]
+        """Change type literals derived from RFC constants."""
+
+        type ModifyOperationLiteral = Literal["add", "delete", "replace"]
+        """Modify operation literals derived from RFC constants."""
+
+        type SortStrategyLiteral = Literal[
+            "hierarchy",
+            "dn",
+            "alphabetical",
+            "schema",
+            "custom",
+        ]
+        """Sort strategy literals derived from SortStrategy StrEnum."""
+
+        type SortTargetLiteral = Literal[
+            "entries",
+            "attributes",
+            "acl",
+            "schema",
+            "combined",
+        ]
+        """Sort target literals derived from SortTarget StrEnum."""
+
+        type EncodingLiteral = Literal[
+            "utf-8",
+            "utf-16-le",
+            "utf-16",
+            "utf-32",
+            "ascii",
+            "latin-1",
+            "cp1252",
+            "iso-8859-1",
+        ]
+        """Encoding literals derived from Encoding StrEnum."""
+
+        type LdifFormatLiteral = Literal[":", "::", ":<"]
+        """LDIF format literals derived from LdifFormat StrEnum."""
+
+        type QuirkOperationLiteral = Literal["parse", "write"]
+        """Quirk operation literals for parse/write operations."""
+
+        type SchemaParseOperationLiteral = Literal["parse"]
+        """Schema parse operation literal."""
+
+        type AclWriteOperationLiteral = Literal["write"]
+        """ACL write operation literal."""
+
+        type ParseOperationLiteral = Literal["parse"]
+        """Parse operation literal."""
+
+        type WriteOperationLiteral = Literal["write"]
+        """Write operation literal."""
+
+        type ParseWriteOperationLiteral = Literal["parse", "write"]
+        """Parse/write operation literal."""
+
+        # =====================================================================
+        # ENUM-DERIVED LITERAL TYPES (Python 3.13+ PEP 695 best practices)
+        # =====================================================================
+        # These Literal types are derived from StrEnum classes above
+        # Use these for type annotations in Pydantic models and function signatures
+        # Using PEP 695 type statement for better type checking and IDE support
+
+        type RfcAclPermissionLiteral = Literal[
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
+            "none",
+        ]
+        """RFC ACL permission literals derived from RfcAclPermission StrEnum."""
+
+        type AclPermissionLiteral = Literal[
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
+            "none",
+            "auth",
+            "create",
+            "control_access",
+        ]
+        """Comprehensive ACL permission literals derived from AclPermission StrEnum.
+
+        Includes RFC 4876 base permissions plus server-specific extensions.
+        Use this for type-safe ACL permission handling across all server types.
+        """
+
+        type AclActionLiteral = Literal["allow", "deny"]
+        """ACL action literals derived from AclAction StrEnum.
+
+        Use this for type-safe ACL action handling across all server types.
+        """
+
+        type AclSubjectTypeLiteral = Literal[
+            "user",
+            "group",
+            "role",
+            "self",
+            "all",
+            "public",
+            "anonymous",
+            "authenticated",
+            "dn",
+            "sddl",
+        ]
+        """ACL subject type literals derived from AclSubjectType StrEnum.
+
+        Includes server-specific extensions like "sddl" for Active Directory.
+        """
+
+        type TransformationTypeLiteral = Literal[
+            "dn_cleaned",
+            "dn_normalized",
+            "tab_normalized",
+            "space_cleaned",
+            "utf8_decoded",
+            "base64_decoded",
+            "trailing_space_removed",
+            "escape_normalized",
+            "boolean_converted",
+            "acl_converted",
+            "attribute_removed",
+            "attribute_added",
+            "attribute_renamed",
+            "modified",
+            "matching_rule_replaced",
+            "syntax_oid_replaced",
+            "objectclass_filtered",
+        ]
+        """Transformation type literals derived from TransformationType StrEnum."""
+
+        type FilterTypeLiteral = Literal[
+            "base_dn_filter",
+            "schema_whitelist",
+            "forbidden_attributes",
+            "forbidden_objectclasses",
+            "operational_attributes",
+            "acl_extraction",
+            "schema_entry",
+        ]
+        """Filter type literals derived from FilterType StrEnum."""
+
+        type ValidationStatusLiteral = Literal[
+            "valid",
+            "warning",
+            "error",
+            "rejected",
+        ]
+        """Validation status literals derived from ValidationStatus StrEnum."""
+
+        type RejectionCategoryLiteral = Literal[
+            "invalid_dn",
+            "base_dn_filter",
+            "schema_violation",
+            "forbidden_attribute",
+            "forbidden_objectclass",
+            "categorization_failed",
+            "no_category_match",
+            "parsing_error",
+            "conversion_error",
+        ]
+        """Rejection category literals derived from RejectionCategory StrEnum."""
+
+        type ErrorCategoryLiteral = Literal[
+            "parsing",
+            "validation",
+            "conversion",
+            "sync",
+            "schema",
+            "acl",
+            "modrdn",
+        ]
+        """Error category literals derived from ErrorCategory StrEnum."""
+
+        type SortingStrategyTypeLiteral = Literal[
+            "alphabetical_case_sensitive",
+            "alphabetical_case_insensitive",
+            "custom_order",
+        ]
+        """Sorting strategy type literals derived from SortingStrategyType StrEnum."""
+
+        # DictKeys StrEnum → Literal
+        type DictKeyLiteral = Literal[
+            "dn",
+            "attributes",
+            "objectClass",
+            "cn",
+            "oid",
+        ]
+        """Dictionary key literals derived from DictKeys StrEnum."""
+
+        # QuirkMetadataKeys StrEnum → Literal
+        type QuirkMetadataKeyLiteral = Literal[
+            "server_type",
+            "is_config_entry",
+            "is_traditional_dit",
+        ]
+        """Quirk metadata key literals derived from QuirkMetadataKeys StrEnum."""
+
+        # AclKeys StrEnum → Literal
+        type AclKeyLiteral = Literal[
+            "acl",
+            "aci",
+            "access",
+        ]
+        """ACL key literals derived from AclKeys StrEnum."""
+
+        # FilterTypes StrEnum → Literal
+        type FilterTypeEnumLiteral = Literal[
+            "objectclass",
+            "dn_pattern",
+            "attributes",
+            "schema_oid",
+            "oid_pattern",
+            "attribute",
+        ]
+        """Filter type enum literals derived from FilterTypes StrEnum."""
+
+        # Modes StrEnum → Literal
+        type ModeLiteral = Literal[
+            "include",
+            "exclude",
+            "auto",
+            "manual",
+            "disabled",
+        ]
+        """Mode literals derived from Modes StrEnum."""
+
+        # Categories StrEnum → Literal (already defined above, skipping duplicate)
+
+        # DataTypes StrEnum → Literal
+        type DataTypeLiteral = Literal[
+            "attribute",
+            "objectclass",
+            "acl",
+            "entry",
+            "schema",
+        ]
+        """Data type literals derived from DataTypes StrEnum."""
+
+        # ChangeType StrEnum → Literal
+        type ChangeTypeEnumLiteral = Literal[
+            "add",
+            "delete",
+            "modify",
+            "modrdn",
+        ]
+        """Change type enum literals derived from ChangeType StrEnum."""
+
+        # ServiceType StrEnum → Literal (complete list matching ServiceType StrEnum)
+        type ServiceTypeEnumLiteral = Literal[
+            "parser",
+            "acl",
+            "writer",
+            "entries",
+            "analysis",
+            "processing",
+            "detector",
+            "filters",
+            "categorization",
+            "conversion",
+            "validation",
+            "syntax",
+        ]
+        """Service type enum literals derived from ServiceType StrEnum.
+
+        Complete list matching all ServiceType StrEnum values for
+        type-safe annotations. Use this in function signatures and
+        Pydantic models instead of direct StrEnum references.
+        """
 
     # =============================================================================
     # ENCODING CONSTANTS
@@ -1939,16 +2356,24 @@ class FlextLdifConstants(FlextConstants):
             ],
         )
 
-        # NOTE: Server-specific operational attributes have been migrated to their respective server Constants classes:
+        # NOTE: Server-specific operational attributes migrated to server Constants:
         # - OID_SPECIFIC → FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES
-        # - OID_BOOLEAN_ATTRIBUTES → FlextLdifServersOid.Constants.BOOLEAN_ATTRIBUTES
-        # - OUD_SPECIFIC → FlextLdifServersOud.Constants.OPERATIONAL_ATTRIBUTES
-        # - OPENLDAP_SPECIFIC → FlextLdifServersOpenldap.Constants.OPERATIONAL_ATTRIBUTES
-        # - DS_389_SPECIFIC → FlextLdifServersDs389.Constants.OPERATIONAL_ATTRIBUTES / DS_389_SPECIFIC
-        # - AD_SPECIFIC → FlextLdifServersAd.Constants.OPERATIONAL_ATTRIBUTES
-        # - NOVELL_SPECIFIC → FlextLdifServersNovell.Constants.OPERATIONAL_ATTRIBUTES / NOVELL_SPECIFIC
-        # - IBM_TIVOLI_SPECIFIC → FlextLdifServersTivoli.Constants.OPERATIONAL_ATTRIBUTES / IBM_TIVOLI_SPECIFIC
-        # All server-specific constants should be defined in their respective server Constants classes
+        # - OID_BOOLEAN_ATTRIBUTES →
+        #   FlextLdifServersOid.Constants.BOOLEAN_ATTRIBUTES
+        # - OUD_SPECIFIC →
+        #   FlextLdifServersOud.Constants.OPERATIONAL_ATTRIBUTES
+        # - OPENLDAP_SPECIFIC →
+        #   FlextLdifServersOpenldap.Constants.OPERATIONAL_ATTRIBUTES
+        # - DS_389_SPECIFIC →
+        #   FlextLdifServersDs389.Constants.OPERATIONAL_ATTRIBUTES
+        # - AD_SPECIFIC →
+        #   FlextLdifServersAd.Constants.OPERATIONAL_ATTRIBUTES
+        # - NOVELL_SPECIFIC →
+        #   FlextLdifServersNovell.Constants.OPERATIONAL_ATTRIBUTES
+        # - IBM_TIVOLI_SPECIFIC →
+        #   FlextLdifServersTivoli.Constants.OPERATIONAL_ATTRIBUTES
+        # All server-specific constants defined in their respective server
+        # Constants
 
         # Common operational attributes to filter from ALL entries
         # These are always filtered regardless of entry type
@@ -2055,9 +2480,10 @@ class FlextLdifConstants(FlextConstants):
             "olcAccess",  # OpenLDAP ACL attribute
         ]
 
-        # Set of RFC baseline ACL attributes for quick membership testing
-        # NOTE: Server-specific attributes (e.g., orclaci, nTSecurityDescriptor, ads-aci)
-        # are defined in their respective server Constants classes
+        # Set of RFC baseline ACL attributes for quick membership testing.
+        # NOTE: Server-specific attributes (e.g., orclaci,
+        # nTSecurityDescriptor, ads-aci) are defined in their respective
+        # server Constants classes
         ALL_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
             [
                 ACI,  # RFC 4876 standard (OUD, 389 DS)
@@ -2086,9 +2512,11 @@ class FlextLdifConstants(FlextConstants):
 
         # NOTE: Server-specific ACL attribute sets should be defined in
         # their respective server Constants classes:
-        # - OID: FlextLdifServersOid.Constants.ORCLACI, ORCL_ENTRY_LEVEL_ACI
+        # - OID: FlextLdifServersOid.Constants.ORCLACI,
+        #   ORCL_ENTRY_LEVEL_ACI
         # - OUD: FlextLdifServersOud.Constants.ACL_ATTRIBUTE_NAME ("aci")
-        # - OpenLDAP: FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME ("olcAccess")
+        # - OpenLDAP:
+        #   FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME ("olcAccess")
 
     # =============================================================================
     # DN-VALUED ATTRIBUTES - Attributes that contain DN values
@@ -2158,7 +2586,8 @@ class FlextLdifConstants(FlextConstants):
     class PermissionNames:
         """RFC 4876 ACL permission type identifiers (magic strings).
 
-        DEPRECATED: Use FlextLdifConstants.RfcAclPermission (StrEnum) instead for type safety.
+        DEPRECATED: Use FlextLdifConstants.RfcAclPermission (StrEnum) instead
+        for type safety.
         This class maintained for backward compatibility only.
 
         Standard LDAP ACL permissions (RFC baseline).
@@ -2242,10 +2671,12 @@ class FlextLdifConstants(FlextConstants):
     class MetadataKeys:
         """Metadata extension keys used in quirk processing and entry transformations.
 
-        Used in _metadata dictionaries and extension fields within Entry/ACL/Schema models.
+        Used in _metadata dictionaries and extension fields within
+        Entry/ACL/Schema models.
 
         Zero Tolerance: All metadata key strings MUST be defined here.
-        DO NOT use hard-coded keys like metadata["proxy_permissions"] in servers/*.py
+        DO NOT use hard-coded keys like metadata["proxy_permissions"] in
+        servers/*.py
         """
 
         # =========================
@@ -2255,45 +2686,61 @@ class FlextLdifConstants(FlextConstants):
         PROXY_PERMISSIONS: Final[str] = "proxy_permissions"
         SELF_WRITE_TO_WRITE: Final[str] = "self_write_to_write"
         # NOTE: OID metadata keys moved to FlextLdifServersOid.Constants:
-        # - ORIGINAL_OID_PERMS → FlextLdifServersOid.Constants.ORIGINAL_OID_PERMS
-        # - OID_SPECIFIC_RIGHTS → FlextLdifServersOid.Constants.OID_SPECIFIC_RIGHTS
-        # - RFC_NORMALIZED → FlextLdifServersOid.Constants.RFC_NORMALIZED (generic RFC transformation tracking)
-        # Server-specific metadata keys should be defined in their respective server Constants classes
+        # - ORIGINAL_OID_PERMS →
+        #   FlextLdifServersOid.Constants.ORIGINAL_OID_PERMS
+        # - OID_SPECIFIC_RIGHTS →
+        #   FlextLdifServersOid.Constants.OID_SPECIFIC_RIGHTS
+        # - RFC_NORMALIZED →
+        #   FlextLdifServersOid.Constants.RFC_NORMALIZED (generic RFC
+        #   transformation tracking)
+        # Server-specific metadata keys should be defined in their respective
+        # server Constants classes
 
         # =========================
-        # Schema Conversion Metadata (GENERIC for ANY LDAP server bidirectional conversion)
+        # Schema Conversion Metadata (GENERIC for ANY LDAP server
+        # bidirectional conversion)
         # =========================
-        # Servers MUST NOT know about each other - only communicate via these GENERIC standardized keys
-        # All Schema conversion metadata MUST use these keys for 100% bidirectional conversion between ANY servers
+        # Servers MUST NOT know about each other - only communicate via these
+        # GENERIC standardized keys
+        # All Schema conversion metadata MUST use these keys for 100%
+        # bidirectional conversion between ANY servers
 
         # === CORE SCHEMA METADATA (required for ALL servers) ===
         SCHEMA_ORIGINAL_FORMAT: Final[str] = (
-            "schema_original_format"  # Original schema string format (always preserve)
+            "schema_original_format"  # Original schema string format
+            # (always preserve)
         )
         SCHEMA_ORIGINAL_STRING_COMPLETE: Final[str] = (
-            "schema_original_string_complete"  # Complete original string with ALL formatting preserved
+            "schema_original_string_complete"  # Complete original string
+            # with ALL formatting preserved
         )
         SCHEMA_SOURCE_SERVER: Final[str] = (
-            "schema_source_server"  # Server that parsed this schema (oid, oud, openldap, etc.)
+            "schema_source_server"  # Server that parsed this schema
+            # (oid, oud, openldap, etc.)
         )
         # === SCHEMA FORMATTING DETAILS (Zero Data Loss) ===
         SCHEMA_SYNTAX_QUOTES: Final[str] = (
-            "schema_syntax_quotes"  # Whether SYNTAX had quotes (OID: True, OUD/RFC: False)
+            "schema_syntax_quotes"  # Whether SYNTAX had quotes
+            # (OID: True, OUD/RFC: False)
         )
         SCHEMA_SYNTAX_SPACING: Final[str] = (
-            "schema_syntax_spacing"  # Spaces after SYNTAX keyword (OID: '  ', OUD: '', RFC: ' ')
+            "schema_syntax_spacing"  # Spaces after SYNTAX keyword
+            # (OID: '  ', OUD: '', RFC: ' ')
         )
         SCHEMA_SYNTAX_SPACING_BEFORE: Final[str] = (
             "schema_syntax_spacing_before"  # Spaces before SYNTAX keyword
         )
         SCHEMA_ATTRIBUTE_CASE: Final[str] = (
-            "schema_attribute_case"  # Case of attributeTypes keyword (attributetypes vs attributeTypes)
+            "schema_attribute_case"  # Case of attributeTypes keyword
+            # (attributetypes vs attributeTypes)
         )
         SCHEMA_OBJECTCLASS_CASE: Final[str] = (
-            "schema_objectclass_case"  # Case of objectClasses keyword (objectclasses vs objectClasses)
+            "schema_objectclass_case"  # Case of objectClasses keyword
+            # (objectclasses vs objectClasses)
         )
         SCHEMA_NAME_FORMAT: Final[str] = (
-            "schema_name_format"  # Format: 'single' (NAME 'uid') vs 'multiple' (NAME ( 'uid' 'userid' ))
+            "schema_name_format"  # Format: 'single' (NAME 'uid') vs
+            # 'multiple' (NAME ( 'uid' 'userid' ))
         )
         SCHEMA_NAME_VALUES: Final[str] = (
             "schema_name_values"  # Original name values if multiple (['uid', 'userid'])
@@ -2308,13 +2755,15 @@ class FlextLdifConstants(FlextConstants):
             "schema_obsolete_presence"  # Whether OBSOLETE was present
         )
         SCHEMA_OBSOLETE_POSITION: Final[str] = (
-            "schema_obsolete_position"  # Position of OBSOLETE in definition (for order preservation)
+            "schema_obsolete_position"  # Position of OBSOLETE in definition
+            # (for order preservation)
         )
         SCHEMA_FIELD_ORDER: Final[str] = (
             "schema_field_order"  # Original field order in definition
         )
         SCHEMA_SPACING_BETWEEN_FIELDS: Final[str] = (
-            "schema_spacing_between_fields"  # Spaces between fields (dict of field pairs)
+            "schema_spacing_between_fields"  # Spaces between fields
+            # (dict of field pairs)
         )
         SCHEMA_TRAILING_SPACES: Final[str] = (
             "schema_trailing_spaces"  # Trailing spaces after closing paren
@@ -2326,7 +2775,8 @@ class FlextLdifConstants(FlextConstants):
             "schema_target_syntax_oid"  # Normalized syntax OID for RFC/target
         )
         SCHEMA_SOURCE_MATCHING_RULES: Final[str] = (
-            "schema_source_matching_rules"  # Original matching rules (EQUALITY, SUBSTR, ORDERING)
+            "schema_source_matching_rules"  # Original matching rules
+            # (EQUALITY, SUBSTR, ORDERING)
         )
         SCHEMA_TARGET_MATCHING_RULES: Final[str] = (
             "schema_target_matching_rules"  # Normalized matching rules for RFC/target
@@ -2346,17 +2796,21 @@ class FlextLdifConstants(FlextConstants):
         COLLECTIVE: Final[str] = "collective"  # RFC 2876 COLLECTIVE flag
 
         # =========================
-        # Entry Conversion Metadata (GENERIC for ANY LDAP server bidirectional conversion)
+        # Entry Conversion Metadata (GENERIC for ANY LDAP server
+        # bidirectional conversion)
         # =========================
-        # Servers MUST NOT know about each other - only communicate via these GENERIC standardized keys
-        # All Entry conversion metadata MUST use these keys for 100% bidirectional conversion between ANY servers
+        # Servers MUST NOT know about each other - only communicate via
+        # these GENERIC standardized keys
+        # All Entry conversion metadata MUST use these keys for 100%
+        # bidirectional conversion between ANY servers
 
         # === CORE ENTRY METADATA (required for ALL servers) ===
         ENTRY_ORIGINAL_FORMAT: Final[str] = (
             "entry_original_format"  # Original entry format (always preserve)
         )
         ENTRY_SOURCE_SERVER: Final[str] = (
-            "entry_source_server"  # Server that parsed this entry (oid, oud, openldap, etc.)
+            "entry_source_server"  # Server that parsed this entry
+            # (oid, oud, openldap, etc.)
         )
         ENTRY_SOURCE_ATTRIBUTES: Final[str] = (
             "entry_source_attributes"  # Original attribute names from source server
@@ -2399,10 +2853,13 @@ class FlextLdifConstants(FlextConstants):
         )
 
         # =========================
-        # ACL Conversion Metadata (GENERIC for ANY LDAP server bidirectional conversion)
+        # ACL Conversion Metadata (GENERIC for ANY LDAP server
+        # bidirectional conversion)
         # =========================
-        # Servers MUST NOT know about each other - only communicate via these GENERIC standardized keys
-        # All ACL conversion metadata MUST use these keys for 100% bidirectional conversion between ANY servers
+        # Servers MUST NOT know about each other - only communicate via
+        # these GENERIC standardized keys
+        # All ACL conversion metadata MUST use these keys for 100%
+        # bidirectional conversion between ANY servers
 
         # === CORE ACL METADATA (required for ALL servers) ===
         ACL_ORIGINAL_FORMAT: Final[str] = (
@@ -2421,7 +2878,8 @@ class FlextLdifConstants(FlextConstants):
             "original_subject_value"  # Original subject value before normalization
         )
         ACL_SOURCE_PERMISSIONS: Final[str] = (
-            "source_permissions"  # Original permissions list from source (before normalization)
+            "source_permissions"  # Original permissions list from source
+            # (before normalization)
         )
         ACL_TARGET_PERMISSIONS: Final[str] = (
             "target_permissions"  # Normalized permissions for RFC/target
@@ -2430,7 +2888,8 @@ class FlextLdifConstants(FlextConstants):
             "action_type"  # ACL action type (allow or deny) - for OUD deny rules
         )
         ACL_NEGATIVE_PERMISSIONS: Final[str] = (
-            "negative_permissions"  # Negative permissions list (nowrite, noadd, etc.) - for OID
+            "negative_permissions"  # Negative permissions list
+            # (nowrite, noadd, etc.) - for OID
         )
 
         # === SERVER-SPECIFIC EXTENSIONS (optional, per-server features) ===
@@ -2453,15 +2912,18 @@ class FlextLdifConstants(FlextConstants):
             "constrain_to_added_object"  # OID constraintonaddedobject filter
         )
 
-        # Generic subject attribute metadata (works for ANY LDAP server - not OID-specific)
+        # Generic subject attribute metadata (works for ANY LDAP server -
+        # not OID-specific)
         ACL_DN_ATTR: Final[str] = (
             "dn_attr"  # DN attribute name (e.g., "manager" from "by dnattr=(manager)")
         )
         ACL_GUID_ATTR: Final[str] = (
-            "guid_attr"  # GUID attribute name (e.g., "orclguid" from "by guidattr=(orclguid)")
+            "guid_attr"  # GUID attribute name
+            # (e.g., "orclguid" from "by guidattr=(orclguid)")
         )
         ACL_GROUP_ATTR: Final[str] = (
-            "group_attr"  # Group attribute name (e.g., "groupattr" from "by groupattr=(uniqueMember)")
+            "group_attr"  # Group attribute name
+            # (e.g., "groupattr" from "by groupattr=(uniqueMember)")
         )
 
         # Generic permission metadata (works for ANY LDAP server - not OID-specific)
@@ -2535,7 +2997,8 @@ class FlextLdifConstants(FlextConstants):
             "converted_from_server"  # Source server type that generated this ACL
         )
         CONVERSION_COMMENTS: Final[str] = (
-            "conversion_comments"  # List of conversion comment lines added during transformation
+            "conversion_comments"  # List of conversion comment lines
+            # added during transformation
         )
 
         # =========================
@@ -2573,7 +3036,8 @@ class FlextLdifConstants(FlextConstants):
             "sorting_new_attribute_order"  # New attribute order after sorting
         )
         SORTING_STRATEGY: Final[str] = (
-            "sorting_strategy"  # Sorting strategy used (alphabetical, custom_order, etc.)
+            "sorting_strategy"  # Sorting strategy used
+            # (alphabetical, custom_order, etc.)
         )
         SORTING_CUSTOM_ORDER: Final[str] = (
             "sorting_custom_order"  # Custom attribute order list used for sorting
@@ -2582,7 +3046,7 @@ class FlextLdifConstants(FlextConstants):
             "sorting_ordered_attributes"  # Attributes that were ordered by custom order
         )
         SORTING_REMAINING_ATTRIBUTES: Final[str] = (
-            "sorting_remaining_attributes"  # Attributes that remained after custom order
+            "sorting_remaining_attributes"  # Remaining attributes after custom order
         )
         SORTING_ACL_ATTRIBUTES: Final[str] = (
             "sorting_acl_attributes"  # ACL attribute names that were sorted
@@ -2622,10 +3086,12 @@ class FlextLdifConstants(FlextConstants):
         # =========================
         # Conversion/Migration Metadata
         # =========================
-        # NOTE: CONVERTED_FROM_SERVER and CONVERSION_COMMENTS are defined in ACL Conversion Metadata section above
-        # (lines ~1526-1527) - no duplication needed here
+        # NOTE: CONVERTED_FROM_SERVER and CONVERSION_COMMENTS are defined
+        # in ACL Conversion Metadata section above (lines ~1526-1527) -
+        # no duplication needed here
 
-        # ===== COMPATIBILITY ALIASES (Deprecated - use ACL_* prefixed versions above) =====
+        # ===== COMPATIBILITY ALIASES (Deprecated - use ACL_* prefixed
+        # versions above) =====
         # Legacy aliases for backward compatibility with existing code
         # NEW CODE MUST USE: ACL_OID_SUBJECT_TYPE, ACL_OUD_SUBJECT_TYPE, ACL_RFC_SUBJECT_TYPE, ACL_ORIGINAL_SUBJECT_VALUE
         OID_SUBJECT_TYPE: Final[str] = (
@@ -2678,8 +3144,10 @@ class FlextLdifConstants(FlextConstants):
             "_write_options"  # Write format options for LDIF output
         )
 
-        # ===== NESTED CONVERSION METADATA KEYS (Keys within CONVERTED_ATTRIBUTES structure) =====
-        # These keys are used within the nested structure stored under CONVERTED_ATTRIBUTES
+        # ===== NESTED CONVERSION METADATA KEYS (Keys within
+        # CONVERTED_ATTRIBUTES structure) =====
+        # These keys are used within the nested structure stored under
+        # CONVERTED_ATTRIBUTES
         # Structure: CONVERTED_ATTRIBUTES = {
         #   "boolean_conversions": {...},
         #   "attribute_name_conversions": {...},
@@ -2867,50 +3335,59 @@ class FlextLdifConstants(FlextConstants):
     # SERVER TYPE SHORTCUTS - Short server type identifiers
     # =============================================================================
 
-    class ServerTypes:
+    class ServerTypes(StrEnum):
         """Server type identifiers - Single source of truth for all server types.
 
         Zero Tolerance: All server type identifier strings MUST be defined here.
         Uses SHORT identifiers for code usage. Use LONG_NAMES mapping to get full names.
         Internal note: LdapServers class provides server-specific detection patterns,
         but all server type strings MUST be defined here first.
+
+        Usage:
+            >>> server_type = FlextLdifConstants.ServerTypes.OID
+            >>> str(server_type)  # "oid"
+            >>> server_type == "oid"  # True (StrEnum supports string comparison)
         """
 
         # Short identifiers (used in code, configuration, and processing)
         # PRIMARY SOURCE: Use these in all code
-        OID: Final[str] = "oid"
-        OUD: Final[str] = "oud"
-        OPENLDAP: Final[str] = "openldap"
-        OPENLDAP1: Final[str] = "openldap1"
-        OPENLDAP2: Final[str] = "openldap2"
-        AD: Final[str] = "active_directory"
-        APACHE: Final[str] = "apache_directory"
-        GENERIC: Final[str] = "generic"
-        RFC: Final[str] = "rfc"
-        DS_389: Final[str] = "389ds"
-        RELAXED: Final[str] = "relaxed"
-        NOVELL: Final[str] = "novell_edirectory"
-        IBM_TIVOLI: Final[str] = "ibm_tivoli"
+        OID = "oid"
+        OUD = "oud"
+        OPENLDAP = "openldap"
+        OPENLDAP1 = "openldap1"
+        OPENLDAP2 = "openldap2"
+        AD = "active_directory"
+        APACHE = "apache_directory"
+        GENERIC = "generic"
+        RFC = "rfc"
+        DS_389 = "389ds"
+        RELAXED = "relaxed"
+        NOVELL = "novell_edirectory"
+        IBM_TIVOLI = "ibm_tivoli"
 
         # Backward compatibility aliases (deprecated, use OID/OUD instead)
-        ORACLE_OID: Final[str] = OID  # Alias for backward compatibility
-        ORACLE_OUD: Final[str] = OUD  # Alias for backward compatibility
+        ORACLE_OID = OID  # Alias for backward compatibility
+        ORACLE_OUD = OUD  # Alias for backward compatibility
+
+    class ServerTypesMappings:
+        """Server type mappings and aliases (separate from enum to avoid conflicts)."""
 
         # Mapping from short forms to long forms (for backward compatibility)
+        # Using string values directly (matching ServerTypes enum values)
         LONG_NAMES: Final[dict[str, str]] = {
-            OID: "oracle_oid",
-            OUD: "oracle_oud",
-            OPENLDAP: "openldap",
-            OPENLDAP1: "openldap1",
-            OPENLDAP2: "openldap2",
-            AD: "active_directory",
-            APACHE: "apache_directory",
-            GENERIC: "generic",
-            RFC: "rfc",
-            DS_389: "389ds",
-            RELAXED: "relaxed",
-            NOVELL: "novell_edirectory",
-            IBM_TIVOLI: "ibm_tivoli",
+            "oid": "oracle_oid",
+            "oud": "oracle_oud",
+            "openldap": "openldap",
+            "openldap1": "openldap1",
+            "openldap2": "openldap2",
+            "active_directory": "active_directory",
+            "apache_directory": "apache_directory",
+            "generic": "generic",
+            "rfc": "rfc",
+            "389ds": "389ds",
+            "relaxed": "relaxed",
+            "novell_edirectory": "novell_edirectory",
+            "ibm_tivoli": "ibm_tivoli",
         }
 
         # Reverse mapping from long forms to short forms
@@ -2918,14 +3395,14 @@ class FlextLdifConstants(FlextConstants):
 
         # Common short aliases (used in tests and user input)
         ALIASES: Final[dict[str, str]] = {
-            "ad": AD,  # active_directory
-            "ds389": DS_389,  # 389ds
-            "389": DS_389,  # 389ds
-            "apache": APACHE,  # apache_directory
-            "novell": NOVELL,  # novell_edirectory
-            "tivoli": IBM_TIVOLI,  # ibm_tivoli
-            "oracle_oid": OID,  # backward compat
-            "oracle_oud": OUD,  # backward compat
+            "ad": "active_directory",
+            "ds389": "389ds",
+            "389": "389ds",
+            "apache": "apache_directory",
+            "novell": "novell_edirectory",
+            "tivoli": "ibm_tivoli",
+            "oracle_oid": "oid",  # backward compat
+            "oracle_oud": "oud",  # backward compat
         }
 
         # Server type variants (for compatibility checks)
@@ -2939,131 +3416,368 @@ class FlextLdifConstants(FlextConstants):
             ],
         )
 
-        @staticmethod
-        def normalize(server_type: str) -> str:
-            """Normalize server type aliases to canonical form.
+    @staticmethod
+    def _is_valid_server_type_literal(
+        value: str,
+    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.ServerTypeLiteral]:
+        """Type guard for ServerTypeLiteral validation.
 
-            Converts aliases like 'oracle_oid' → 'oid', 'ad' → 'active_directory'.
+        Validates that a string value is a valid ServerTypeLiteral.
+        Enables proper type narrowing without casts.
 
-            Handles:
-            - Short aliases (ad → active_directory, ds389 → 389ds)
-            - Long to short (oracle_oid → oid)
-            - Already canonical forms (returns as-is)
+        Args:
+            value: String to validate
 
-            Args:
-                server_type: Server type string (may be alias)
+        Returns:
+            TypeGuard indicating if value is valid ServerTypeLiteral
 
-            Returns:
-                Canonical server type
+        """
+        valid_values: frozenset[str] = frozenset(
+            {
+                str(FlextLdifConstants.ServerTypes.OID),
+                str(FlextLdifConstants.ServerTypes.OUD),
+                str(FlextLdifConstants.ServerTypes.OPENLDAP),
+                str(FlextLdifConstants.ServerTypes.OPENLDAP1),
+                str(FlextLdifConstants.ServerTypes.OPENLDAP2),
+                str(FlextLdifConstants.ServerTypes.AD),
+                str(FlextLdifConstants.ServerTypes.APACHE),
+                str(FlextLdifConstants.ServerTypes.GENERIC),
+                str(FlextLdifConstants.ServerTypes.RFC),
+                str(FlextLdifConstants.ServerTypes.DS_389),
+                str(FlextLdifConstants.ServerTypes.RELAXED),
+                str(FlextLdifConstants.ServerTypes.NOVELL),
+                str(FlextLdifConstants.ServerTypes.IBM_TIVOLI),
+                # Backward compatibility values
+                "oracle_oid",
+                "oracle_oud",
+            },
+        )
+        return value in valid_values
 
-            Example:
-                >>> ServerTypes.normalize("ad")
-                'active_directory'
-                >>> ServerTypes.normalize("oracle_oid")
-                'oid'
-                >>> ServerTypes.normalize("oid")
-                'oid'
+    @staticmethod
+    def is_valid_category_literal(
+        value: str,
+    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.CategoryLiteral]:
+        """Type guard for CategoryLiteral validation.
 
-            """
-            # First try short aliases (ad → active_directory)
-            if server_type in FlextLdifConstants.ServerTypes.ALIASES:
-                return FlextLdifConstants.ServerTypes.ALIASES[server_type]
-            # Then try long to short (oracle_oid → oid)
-            return FlextLdifConstants.ServerTypes.FROM_LONG.get(
-                server_type,
-                server_type,
-            )
+        Validates that a string value is a valid CategoryLiteral.
+        Enables proper type narrowing without casts.
 
-        @staticmethod
-        def matches(server_type: str, *canonical_types: str) -> bool:
-            """Check if server_type matches any of the canonical types (handles aliases).
+        Args:
+            value: String to validate
 
-            Args:
-                server_type: Server type to check
-                *canonical_types: Canonical type(s) to match against
+        Returns:
+            TypeGuard indicating if value is valid CategoryLiteral
 
-            Returns:
-                True if server_type (or its canonical form) matches any canonical_type
+        """
+        valid_values: frozenset[str] = frozenset(
+            {
+                str(FlextLdifConstants.Categories.ALL),
+                str(FlextLdifConstants.Categories.USERS),
+                str(FlextLdifConstants.Categories.GROUPS),
+                str(FlextLdifConstants.Categories.HIERARCHY),
+                str(FlextLdifConstants.Categories.SCHEMA),
+                str(FlextLdifConstants.Categories.ACL),
+                str(FlextLdifConstants.Categories.REJECTED),
+            },
+        )
+        return value in valid_values
 
-            Example:
-                >>> ServerTypes.matches("oracle_oid", "oid", "oud")
-                True
-                >>> ServerTypes.matches("rfc", "oid", "oud")
-                False
+    @staticmethod
+    def is_valid_sort_target_literal(
+        value: str,
+    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.SortTargetLiteral]:
+        """Type guard for SortTargetLiteral validation.
 
-            """
-            normalized = FlextLdifConstants.ServerTypes.normalize(server_type)
-            return normalized in canonical_types or server_type in canonical_types
+        Args:
+            value: String to validate
+
+        Returns:
+            TypeGuard indicating if value is valid SortTargetLiteral
+
+        """
+        valid_values: frozenset[str] = frozenset({
+            str(st.value) for st in FlextLdifConstants.SortTarget.__members__.values()
+        })
+        return value in valid_values
+
+    @staticmethod
+    def is_valid_sort_strategy_literal(
+        value: str,
+    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.SortStrategyLiteral]:
+        """Type guard for SortStrategyLiteral validation.
+
+        Args:
+            value: String to validate
+
+        Returns:
+            TypeGuard indicating if value is valid SortStrategyLiteral
+
+        """
+        valid_values: frozenset[str] = frozenset({
+            str(ss.value) for ss in FlextLdifConstants.SortStrategy.__members__.values()
+        })
+        return value in valid_values
+
+    @staticmethod
+    def normalize_server_type(
+        server_type: str,
+    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+        """Normalize server type aliases to canonical form.
+
+        Converts aliases like 'oracle_oid' → 'oid', 'ad' → 'active_directory'.
+
+        Handles:
+        - Short aliases (ad → active_directory, ds389 → 389ds)
+        - Long to short (oracle_oid → oid)
+        - Already canonical forms (returns as-is)
+
+        Args:
+            server_type: Server type string (may be alias)
+
+        Returns:
+            Canonical server type (LiteralTypes.ServerTypeLiteral)
+
+        Raises:
+            ValueError: If server_type cannot be normalized to a valid ServerTypeLiteral
+
+        Example:
+            >>> FlextLdifConstants.normalize_server_type("ad")
+            'active_directory'
+            >>> FlextLdifConstants.normalize_server_type("oracle_oid")
+            'oid'
+            >>> FlextLdifConstants.normalize_server_type("oid")
+            'oid'
+
+        """
+        # First try short aliases (ad → active_directory)
+        if server_type in FlextLdifConstants.ServerTypesMappings.ALIASES:
+            normalized = FlextLdifConstants.ServerTypesMappings.ALIASES[server_type]
+            # Type narrowing: TypeGuard validates and narrows type
+            if FlextLdifConstants._is_valid_server_type_literal(normalized):
+                return normalized
+
+        # Then try long to short (oracle_oid → oid)
+        normalized = FlextLdifConstants.ServerTypesMappings.FROM_LONG.get(
+            server_type,
+            server_type,
+        )
+        # Type narrowing: TypeGuard validates and narrows type
+        if FlextLdifConstants._is_valid_server_type_literal(normalized):
+            return normalized
+
+        # If not found in mappings, check if it's already a valid server type
+        if FlextLdifConstants._is_valid_server_type_literal(server_type):
+            return server_type
+
+        # At this point, we've exhausted all normalization attempts
+        # Fast fail: raise ValueError instead of returning invalid value
+        valid_types = [str(st.value) for st in FlextLdifConstants.ServerTypes] + [
+            "oracle_oid",
+            "oracle_oud",
+        ]
+        msg = f"Invalid server type '{server_type}'. Must be one of: {', '.join(sorted(valid_types))}"
+        raise ValueError(msg)
+
+    @staticmethod
+    def server_type_matches(server_type: str, *canonical_types: str) -> bool:
+        """Check if server_type matches any of the canonical types (handles aliases).
+
+        Args:
+            server_type: Server type to check
+            *canonical_types: Canonical type(s) to match against
+
+        Returns:
+            True if server_type (or its canonical form) matches any canonical_type
+
+        Example:
+            >>> FlextLdifConstants.server_type_matches("oracle_oid", "oid", "oud")
+            True
+            >>> FlextLdifConstants.server_type_matches("rfc", "oid", "oud")
+            False
+
+        """
+        normalized = FlextLdifConstants.normalize_server_type(server_type)
+        return normalized in canonical_types or server_type in canonical_types
+
+    # =============================================================================
+    # ADVANCED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
+    # =============================================================================
+
+    class ValidationMappings:
+        """Immutable validation mappings using collections.abc.Mapping.
+
+        Python 3.13+ best practice for read-only validation data.
+        All mappings are Final and use collections.abc for type safety.
+        Derived directly from StrEnum classes to avoid duplication (DRY).
+        """
+
+        # LDIF format validation mapping - using hardcoded values
+        # Note: No FormatType enum exists, using direct values
+        LDIF_FORMAT_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
+            "RFC2849": "RFC2849",
+            "EXTENDED": "EXTENDED",
+            "CUSTOM": "CUSTOM",
+        })
+
+        # LDIF format validation set - using hardcoded values
+        LDIF_FORMAT_VALIDATION_SET: Final[frozenset[str]] = frozenset({
+            "RFC2849",
+            "EXTENDED",
+            "CUSTOM",
+        })
+
+        # Server types validation mapping - hardcoded to avoid forward reference
+        # Canonical types only (excludes ORACLE_* aliases)
+        SERVER_TYPE_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
+            "oid": "oid",
+            "oud": "oud",
+            "openldap": "openldap",
+            "openldap1": "openldap1",
+            "openldap2": "openldap2",
+            "active_directory": "active_directory",
+            "apache_directory": "apache_directory",
+            "generic": "generic",
+            "rfc": "rfc",
+            "389ds": "389ds",
+            "relaxed": "relaxed",
+            "novell_edirectory": "novell_edirectory",
+            "ibm_tivoli": "ibm_tivoli",
+        })
+
+        # Server types validation set - hardcoded to avoid forward reference
+        # Canonical types only (excludes ORACLE_* aliases)
+        SERVER_TYPE_VALIDATION_SET: Final[frozenset[str]] = frozenset({
+            "oid",
+            "oud",
+            "openldap",
+            "openldap1",
+            "openldap2",
+            "active_directory",
+            "apache_directory",
+            "generic",
+            "rfc",
+            "389ds",
+            "relaxed",
+            "novell_edirectory",
+            "ibm_tivoli",
+        })
+
+    @classmethod
+    def validate_ldif_format(cls, value: str) -> str | None:
+        """Validate LDIF format string using advanced patterns.
+
+        Uses inherited generic validation from FlextConstants.
+        Delegates to FlextConstants.validate_enum_value for DRY compliance.
+
+        Args:
+            value: LDIF format string to validate
+
+        Returns:
+            Valid LDIF format string or None if invalid
+
+        """
+        return cls.validate_enum_value(
+            value,
+            cls.ValidationMappings.LDIF_FORMAT_VALIDATION_SET,
+            cls.ValidationMappings.LDIF_FORMAT_VALIDATION_MAP,
+        )
+
+    @classmethod
+    def validate_server_type(cls, value: str) -> str | None:
+        """Validate server type string using discriminated union pattern.
+
+        Uses inherited generic validation from FlextConstants.
+        Composes with ServerTypes StrEnum for comprehensive validation.
+
+        Args:
+            value: Server type string to validate
+
+        Returns:
+            Valid server type string or None if invalid
+
+        """
+        return cls.validate_enum_value(
+            value,
+            cls.ValidationMappings.SERVER_TYPE_VALIDATION_SET,
+            cls.ValidationMappings.SERVER_TYPE_VALIDATION_MAP,
+        )
+
+    @classmethod
+    def get_valid_ldif_formats(cls) -> Sequence[str]:
+        """Get immutable sequence of valid LDIF formats.
+
+        Uses inherited generic method from FlextConstants.
+        Returns collections.abc.Sequence for read-only iteration.
+
+        Returns:
+            Immutable sequence of valid LDIF format strings
+
+        """
+        return cls.get_valid_enum_values(
+            cls.ValidationMappings.LDIF_FORMAT_VALIDATION_SET
+        )
+
+    @classmethod
+    def get_valid_server_types(cls) -> Sequence[str]:
+        """Get immutable sequence of valid server types.
+
+        Uses inherited generic method from FlextConstants.
+        Returns collections.abc.Sequence for safe iteration.
+
+        Returns:
+            Immutable sequence of valid server type strings
+
+        """
+        return cls.get_valid_enum_values(
+            cls.ValidationMappings.SERVER_TYPE_VALIDATION_SET
+        )
 
     # =============================================================================
     # OPERATION CONSTANTS - Filter types, modes, categories, data types
     # =============================================================================
 
-    class FilterTypes:
+    class FilterTypes(StrEnum):
         """Filter type identifier constants.
 
         Zero Tolerance: All filter type strings MUST be defined here.
         Used throughout filtering operations to avoid hardcoded strings.
         """
 
-        OBJECTCLASS: Final[str] = "objectclass"
-        DN_PATTERN: Final[str] = "dn_pattern"
-        ATTRIBUTES: Final[str] = "attributes"
-        SCHEMA_OID: Final[str] = "schema_oid"
-        OID_PATTERN: Final[str] = "oid_pattern"
-        ATTRIBUTE: Final[str] = "attribute"
+        OBJECTCLASS = "objectclass"
+        DN_PATTERN = "dn_pattern"
+        ATTRIBUTES = "attributes"
+        SCHEMA_OID = "schema_oid"
+        OID_PATTERN = "oid_pattern"
+        ATTRIBUTE = "attribute"
 
-        # Python 3.13 type alias from constants
-        type Type = Literal[
-            "objectclass",
-            "dn_pattern",
-            "attributes",
-            "schema_oid",
-            "oid_pattern",
-            "attribute",
-        ]
-
-    class Modes:
+    class Modes(StrEnum):
         """Operation mode constants.
 
         Zero Tolerance: All mode strings MUST be defined here.
         Used for filter modes, detection modes, and operation modes.
         """
 
-        INCLUDE: Final[str] = "include"
-        EXCLUDE: Final[str] = "exclude"
-        AUTO: Final[str] = "auto"
-        MANUAL: Final[str] = "manual"
-        DISABLED: Final[str] = "disabled"
+        INCLUDE = "include"
+        EXCLUDE = "exclude"
+        AUTO = "auto"
+        MANUAL = "manual"
+        DISABLED = "disabled"
 
-        # Python 3.13 type alias from constants
-        type Mode = Literal["include", "exclude", "auto", "manual", "disabled"]
-
-    class Categories:
+    class Categories(StrEnum):
         """Entry category constants.
 
         Zero Tolerance: All category strings MUST be defined here.
         Used for LDIF entry categorization in pipelines.
         """
 
-        ALL: Final[str] = "all"
-        USERS: Final[str] = "users"
-        GROUPS: Final[str] = "groups"
-        HIERARCHY: Final[str] = "hierarchy"
-        SCHEMA: Final[str] = "schema"
-        ACL: Final[str] = "acl"
-        REJECTED: Final[str] = "rejected"
-
-        # Python 3.13 type alias from constants
-        type Category = Literal[
-            "all",
-            "users",
-            "groups",
-            "hierarchy",
-            "schema",
-            "acl",
-            "rejected",
-        ]
+        ALL = "all"
+        USERS = "users"
+        GROUPS = "groups"
+        HIERARCHY = "hierarchy"
+        SCHEMA = "schema"
+        ACL = "acl"
+        REJECTED = "rejected"
 
     class Categorization:
         """Attribute categorization constants for server-specific filtering.
@@ -3075,34 +3789,24 @@ class FlextLdifConstants(FlextConstants):
         # NOTE: OID_SPECIFIC_ATTRIBUTES moved to FlextLdifServersOid.Constants.OID_SPECIFIC_ATTRIBUTES
         # Server-specific attribute categorizations should be defined in their respective server Constants classes
 
-    class DataTypes:
+    class DataTypes(StrEnum):
         """Data type identifier constants.
 
         Zero Tolerance: All data type strings MUST be defined here.
         Used in quirks conversion matrix and data processing.
         """
 
-        ATTRIBUTE: Final[str] = "attribute"
-        OBJECTCLASS: Final[str] = "objectclass"
-        ACL: Final[str] = "acl"
-        ENTRY: Final[str] = "entry"
-        SCHEMA: Final[str] = "schema"
+        ATTRIBUTE = "attribute"
+        OBJECTCLASS = "objectclass"
+        ACL = "acl"
+        ENTRY = "entry"
+        SCHEMA = "schema"
 
-        # Python 3.13 type alias from constants
-        type DataType = Literal["attribute", "objectclass", "acl", "entry", "schema"]
-
-        # =====================================================================
-        # QUIRK OPERATION TYPES
-        # =====================================================================
-        type QuirkOperation = Literal["parse", "write"]
-        type SchemaParseOperation = Literal["parse"]
-        type AclWriteOperation = Literal["write"]
-
-        # =====================================================================
-        # SERVICE OPERATION TYPES
-        # =====================================================================
-        type ParserInputSource = Literal["string", "file", "ldap3"]
-        type WriterOutputTarget = Literal["string", "file", "ldap3", "model"]
+    # =============================================================================
+    # TYPE ALIASES - Root-level access to LiteralTypes
+    # =============================================================================
+    # NOTE: Convenience aliases removed per FLEXT architecture rules.
+    # Always use full path: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
 
     class RuleTypes:
         """ACL rule type constants.
@@ -3117,9 +3821,6 @@ class FlextLdifConstants(FlextConstants):
         SUBJECT: Final[str] = "subject"
         TARGET: Final[str] = "target"
 
-        # Python 3.13 type alias from constants
-        type RuleType = Literal["base", "composite", "permission", "subject", "target"]
-
     class EntryTypes:
         """Entry type identifier constants.
 
@@ -3132,15 +3833,6 @@ class FlextLdifConstants(FlextConstants):
         OU: Final[str] = "ou"
         ORGANIZATIONAL_UNIT: Final[str] = "organizationalunit"
         CUSTOM: Final[str] = "custom"
-
-        # Python 3.13 type alias from constants
-        type EntryType = Literal[
-            "person",
-            "group",
-            "ou",
-            "organizationalunit",
-            "custom",
-        ]
 
     class ConversionTypes:
         """Conversion type identifier constants.
@@ -3155,8 +3847,8 @@ class FlextLdifConstants(FlextConstants):
         ENTRIES_TO_JSON: Final[str] = "entries_to_json"
         JSON_TO_ENTRIES: Final[str] = "json_to_entries"
 
-        # Python 3.13 type alias from constants
-        type ConversionType = Literal[
+        # Python 3.13+ PEP 695 type alias for better type checking
+        type ConversionTypeLiteral = Literal[
             "entry_to_dict",
             "entries_to_dicts",
             "dicts_to_entries",
@@ -3174,9 +3866,6 @@ class FlextLdifConstants(FlextConstants):
         TRANSFORM: Final[str] = "transform"
         VALIDATE: Final[str] = "validate"
 
-        # Python 3.13 type alias from constants
-        type ProcessorType = Literal["transform", "validate"]
-
     class MatchTypes:
         """Match type constants for filtering.
 
@@ -3186,8 +3875,8 @@ class FlextLdifConstants(FlextConstants):
         ALL: Final[str] = "all"
         ANY: Final[str] = "any"
 
-        # Python 3.13 type alias from constants
-        type MatchType = Literal["all", "any"]
+        # Python 3.13+ PEP 695 type alias for better type checking
+        type MatchTypeLiteral = Literal["all", "any"]
 
     class Scopes:
         """LDAP search scope constants.
@@ -3202,8 +3891,15 @@ class FlextLdifConstants(FlextConstants):
         SUBTREE: Final[str] = "subtree"
         SUBORDINATE: Final[str] = "subordinate"
 
-        # Python 3.13 type alias from constants
-        type Scope = Literal["base", "one", "onelevel", "sub", "subtree", "subordinate"]
+        # Python 3.13+ PEP 695 type alias for better type checking
+        type ScopeLiteral = Literal[
+            "base",
+            "one",
+            "onelevel",
+            "sub",
+            "subtree",
+            "subordinate",
+        ]
 
     class Parameters:
         """Parameter name constants.
@@ -3218,8 +3914,8 @@ class FlextLdifConstants(FlextConstants):
         PARSE_ATTRIBUTES: Final[str] = "parse_attributes"
         PARSE_OBJECTCLASSES: Final[str] = "parse_objectclasses"
 
-        # Python 3.13 type alias from constants
-        type Parameter = Literal[
+        # Python 3.13+ PEP 695 type alias for better type checking
+        type ParameterLiteral = Literal[
             "file_path",
             "content",
             "parse_changes",
@@ -3633,8 +4329,8 @@ class FlextLdifConstants(FlextConstants):
             "1.3.6.1.4.1.1466.115.121.1.57"  # UUI (User-defined attribute)
         )
 
-        # Mapping of OID to human-readable name
-        OID_TO_NAME: Final[dict[str, str]] = {
+        # Mapping of OID to human-readable name (immutable)
+        OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
             "2.5.5.5": "integer",  # INTEGER (RFC 2252/4517 standard)
             "1.3.6.1.4.1.1466.115.121.1.1": "aci",
             "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
@@ -3689,7 +4385,7 @@ class FlextLdifConstants(FlextConstants):
             "1.3.6.1.4.1.1466.115.121.1.56": "unicode_string",
             "1.3.6.1.4.1.1466.115.121.1.57": "uui",
             "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
-        }
+        })
 
         # Mapping of human-readable name to OID
         NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
@@ -3706,8 +4402,8 @@ class FlextLdifConstants(FlextConstants):
             ],
         )
 
-        # Mapping of syntax names to type categories
-        NAME_TO_TYPE_CATEGORY: Final[dict[str, str]] = {
+        # Mapping of syntax names to type categories (immutable)
+        NAME_TO_TYPE_CATEGORY: ClassVar[Mapping[str, str]] = MappingProxyType({
             "boolean": "boolean",
             "integer": "integer",
             "dn": "dn",
@@ -3764,7 +4460,7 @@ class FlextLdifConstants(FlextConstants):
             "dit_structure_rule_description": "string",
             "modify_increment": "integer",
             "bit_string": "string",
-        }
+        })
 
         # Service and initialization keys
         SERVICE_NAMES: Final[str] = "service_names"
@@ -4044,7 +4740,7 @@ class FlextLdifConstants(FlextConstants):
         }
 
         @classmethod
-        def get_acl_attributes(cls, server_type: str | None = None) -> list[str]:
+        def get_acl_attributes(cls, server_type: str | None = None) -> Sequence[str]:
             """Get ACL attributes with RFC foundation + server quirks.
 
             Args:
@@ -4052,10 +4748,10 @@ class FlextLdifConstants(FlextConstants):
                     (defaults to generic)
 
             Returns:
-                List of ACL attribute names (RFC + server-specific)
+                Sequence of ACL attribute names (RFC + server-specific)
 
             """
-            base = cls.RFC_FOUNDATION.copy()
+            base = list(cls.RFC_FOUNDATION)
 
             # Add server-specific quirks if provided
             if server_type and server_type in cls.SERVER_QUIRKS:
@@ -4071,7 +4767,8 @@ class FlextLdifConstants(FlextConstants):
         ) -> bool:
             """Check if attribute is an ACL attribute for given server."""
             acl_attrs = cls.get_acl_attributes(server_type)
-            return attribute_name.lower() in [a.lower() for a in acl_attrs]
+            attr_lower = attribute_name.lower()
+            return any(a.lower() == attr_lower for a in acl_attrs)
 
     class ServiceType(StrEnum):
         """Service types for internal management."""
@@ -4088,6 +4785,59 @@ class FlextLdifConstants(FlextConstants):
         CONVERSION = "conversion"
         VALIDATION = "validation"
         SYNTAX = "syntax"
+
+    # =============================================================================
+    # ADVANCED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
+    # =============================================================================
+
+    # =============================================================================
+    # LITERAL VALIDATION HELPERS (Python 3.13+ runtime validation)
+    # =============================================================================
+
+    @staticmethod
+    def validate_literal_matches_enum(
+        enum_class: type[StrEnum],
+        literal_values: tuple[str, ...],
+    ) -> None:
+        """Validate that Literal type values match StrEnum values at runtime.
+
+        This helper ensures that Literal types derived from StrEnums are kept
+        in sync. Should be called during module initialization for validation.
+
+        Args:
+            enum_class: The StrEnum class to validate against
+            literal_values: Tuple of literal string values
+
+        Raises:
+            ValueError: If literal values don't match enum values
+
+        Example:
+            >>> FlextLdifConstants.validate_literal_matches_enum(
+            ...     FlextLdifConstants.ProcessingStage,
+            ...     FlextLdifConstants.LiteralTypes.PROCESSING_STAGES,
+            ... )
+
+        """
+        enum_values = frozenset(item.value for item in enum_class.__members__.values())
+        literal_set = frozenset(literal_values)
+
+        if enum_values != literal_set:
+            missing_in_literal = enum_values - literal_set
+            extra_in_literal = literal_set - enum_values
+            msg_parts = []
+            if missing_in_literal:
+                msg_parts.append(
+                    f"Missing in Literal (present in Enum): {sorted(missing_in_literal)}",
+                )
+            if extra_in_literal:
+                msg_parts.append(
+                    f"Extra in Literal (not in Enum): {sorted(extra_in_literal)}",
+                )
+            msg = (
+                f"Literal values for {enum_class.__name__} don't match Enum values. "
+                + "; ".join(msg_parts)
+            )
+            raise ValueError(msg)
 
 
 __all__ = [

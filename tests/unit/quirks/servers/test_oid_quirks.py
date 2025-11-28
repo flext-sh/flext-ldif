@@ -168,9 +168,7 @@ class TestFlextLdifOidQuirks:
         ),
     }
 
-    ATTRIBUTE_DETECTION_TEST_DATA: ClassVar[
-        dict[str, tuple[str, bool, str | None]]
-    ] = {
+    ATTRIBUTE_DETECTION_TEST_DATA: ClassVar[dict[str, tuple[str, bool, str | None]]] = {
         AttributeDetectionScenario.ORACLE_ATTRIBUTE_OID: (
             "2.16.840.1.113894.1.1.1",
             True,
@@ -188,9 +186,7 @@ class TestFlextLdifOidQuirks:
         ),
     }
 
-    ATTRIBUTE_PARSING_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str]]
-    ] = {
+    ATTRIBUTE_PARSING_TEST_DATA: ClassVar[dict[str, tuple[str, str]]] = {
         AttributeParsingScenario.BASIC_ORACLE_ATTRIBUTE: (
             "2.16.840.1.113894.1.1.1",
             "orclguid",
@@ -205,9 +201,7 @@ class TestFlextLdifOidQuirks:
         ),
     }
 
-    OBJECTCLASS_DETECTION_TEST_DATA: ClassVar[
-        dict[str, tuple[str, bool]]
-    ] = {
+    OBJECTCLASS_DETECTION_TEST_DATA: ClassVar[dict[str, tuple[str, bool]]] = {
         ObjectClassDetectionScenario.ORACLE_OBJECTCLASS_OID: (
             "2.16.840.1.113894.2.1.1",
             True,
@@ -218,9 +212,7 @@ class TestFlextLdifOidQuirks:
         ),
     }
 
-    OBJECTCLASS_PARSING_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str]]
-    ] = {
+    OBJECTCLASS_PARSING_TEST_DATA: ClassVar[dict[str, tuple[str, str]]] = {
         ObjectClassParsingScenario.BASIC_ORACLE_OBJECTCLASS: (
             "2.16.840.1.113894.2.1.1",
             "orclContext",
@@ -231,9 +223,7 @@ class TestFlextLdifOidQuirks:
         ),
     }
 
-    BOOLEAN_CONVERSION_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str, str]]
-    ] = {
+    BOOLEAN_CONVERSION_TEST_DATA: ClassVar[dict[str, tuple[str, str, str]]] = {
         BooleanConversionScenario.OID_TRUE_TO_RFC: ("1", "TRUE", "oid_to_rfc"),
         BooleanConversionScenario.OID_FALSE_TO_RFC: ("0", "FALSE", "oid_to_rfc"),
         BooleanConversionScenario.RFC_TRUE_TO_OID: ("TRUE", "1", "rfc_to_oid"),
@@ -373,7 +363,9 @@ class TestFlextLdifOidQuirks:
         schema_quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
     ) -> None:
         """Test can_handle with invalid input types."""
-        result = schema_quirk.parse(str(invalid_input) if not isinstance(invalid_input, str) else invalid_input)
+        result = schema_quirk.parse(
+            str(invalid_input) if not isinstance(invalid_input, str) else invalid_input
+        )
         TestAssertions.assert_failure(result)
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -680,9 +672,7 @@ class TestFlextLdifOidQuirks:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": (
-                        "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' )"
-                    ),
+                    "original_format": ("( 2.16.840.1.113894.1.1.1 NAME 'orclguid' )"),
                 },
             ),
         )
@@ -734,9 +724,7 @@ class TestFlextLdifOidQuirks:
         for invalid_oid in invalid_oids:
             result = FlextLdifUtilities.OID.validate_format(invalid_oid)
             assert result.is_success
-            assert not result.unwrap(), (
-                f"OID {invalid_oid} should be invalid"
-            )
+            assert not result.unwrap(), f"OID {invalid_oid} should be invalid"
 
     def test_missing_required_attributes(
         self,
@@ -744,7 +732,9 @@ class TestFlextLdifOidQuirks:
     ) -> None:
         """Test handling of missing required attributes."""
         # Attribute without NAME
-        incomplete_attr = "( 2.16.840.1.113894.1.1.1 SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        incomplete_attr = (
+            "( 2.16.840.1.113894.1.1.1 SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
 
         result = schema_quirk.parse_attribute(incomplete_attr)
         # This may or may not succeed depending on RFC parsing
@@ -908,7 +898,9 @@ class TestFlextLdifOidQuirks:
             name=original_name,
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
-                extensions={"original_format": f"( {original_oid} NAME '{original_name}' )"},
+                extensions={
+                    "original_format": f"( {original_oid} NAME '{original_name}' )"
+                },
             ),
         )
 

@@ -116,18 +116,31 @@ class FlextLdifUtilitiesDetection:
         """
 
         @staticmethod
-        def can_handle_pattern(data: object, pattern: str) -> bool:
+        def can_handle_pattern(
+            pattern: str,
+            *,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | FlextLdifModels.Entry
+                | FlextLdifModels.Acl
+                | float
+                | bool
+                | None
+            ),
+        ) -> bool:
             """Check if data matches regex pattern.
 
             Handles:
             - str: Direct pattern match
             - obj with .oid: Match against oid field
             - obj with .name: Match against name field
-            - Any other type: Convert to string and match
+            - Other types: Convert to string and match
 
             Args:
-                data: Data to check (str, model, or any type)
                 pattern: Regex pattern to match
+                data: Data to check (str, model, or primitive type)
 
             Returns:
                 True if data matches pattern
@@ -268,7 +281,7 @@ class FlextLdifUtilitiesDetection:
             pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
             if not pattern:
                 return True  # No pattern = match all
-            return self.can_handle_pattern(schema_item, pattern)
+            return self.can_handle_pattern(pattern, data=schema_item)
 
         def can_handle_attribute(
             self,

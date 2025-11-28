@@ -39,11 +39,15 @@ class FlextLdifSorting(
         return cls()
 
     entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
-    sort_target: str = Field(default=FlextLdifConstants.SortTarget.ENTRIES.value)
-    sort_by: str = Field(default=FlextLdifConstants.SortStrategy.HIERARCHY.value)
-    custom_predicate: (
-        Callable[[FlextLdifModels.Entry], str | int | float] | None
-    ) = Field(default=None)
+    sort_target: FlextLdifConstants.LiteralTypes.SortTargetLiteral = Field(
+        default="entries"
+    )
+    sort_by: FlextLdifConstants.LiteralTypes.SortStrategyLiteral = Field(
+        default="hierarchy"
+    )
+    custom_predicate: Callable[[FlextLdifModels.Entry], str | int | float] | None = (
+        Field(default=None)
+    )
     sort_attributes: bool = Field(default=False)
     attribute_order: list[str] | None = Field(default=None)
     sort_acl: bool = Field(default=False)
@@ -54,14 +58,15 @@ class FlextLdifSorting(
     )
     traversal: str = Field(default="depth-first")
 
-    def with_entries(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> Self:
+    def with_entries(self, entries: list[FlextLdifModels.Entry]) -> Self:
         """Set entries to sort."""
         self.entries = entries
         return self
 
-    def with_strategy(self, strategy: str) -> Self:
+    def with_strategy(
+        self,
+        strategy: FlextLdifConstants.LiteralTypes.SortStrategyLiteral,
+    ) -> Self:
         """Set sorting strategy."""
         self.sort_by = strategy
         return self
@@ -84,14 +89,20 @@ class FlextLdifSorting(
             self.sort_attributes = False
         return self
 
-    def with_target(self, target: str) -> Self:
+    def with_target(
+        self,
+        target: FlextLdifConstants.LiteralTypes.SortTargetLiteral,
+    ) -> Self:
         """Set sorting target (entries, attributes, acl, schema, combined)."""
         self.sort_target = target
         return self
 
     @field_validator("sort_target")
     @classmethod
-    def validate_sort_target(cls, v: str) -> str:
+    def validate_sort_target(
+        cls,
+        v: FlextLdifConstants.LiteralTypes.SortTargetLiteral | str,
+    ) -> FlextLdifConstants.LiteralTypes.SortTargetLiteral:
         """Validate sort_target parameter.
 
         Args:
@@ -104,17 +115,19 @@ class FlextLdifSorting(
             ValueError: If the sort target is not valid
 
         """
+        # Use TypeGuard for proper type narrowing
+        if FlextLdifConstants.is_valid_sort_target_literal(v):
+            return v
         valid = {t.value for t in FlextLdifConstants.SortTarget.__members__.values()}
-        if v not in valid:
-            msg = "Invalid sort_target: {!r}. Valid: {}".format(
-                v, ", ".join(sorted(valid))
-            )
-            raise ValueError(msg)
-        return v
+        msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid))}"
+        raise ValueError(msg)
 
     @field_validator("sort_by")
     @classmethod
-    def validate_sort_strategy(cls, v: str) -> str:
+    def validate_sort_strategy(
+        cls,
+        v: FlextLdifConstants.LiteralTypes.SortStrategyLiteral | str,
+    ) -> FlextLdifConstants.LiteralTypes.SortStrategyLiteral:
         """Validate sort_by parameter.
 
         Args:
@@ -127,11 +140,12 @@ class FlextLdifSorting(
             ValueError: If the sort strategy is not valid
 
         """
+        # Use TypeGuard for proper type narrowing
+        if FlextLdifConstants.is_valid_sort_strategy_literal(v):
+            return v
         valid = {s.value for s in FlextLdifConstants.SortStrategy.__members__.values()}
-        if v not in valid:
-            msg = "Invalid sort_by: {!r}. Valid: {}".format(v, ", ".join(sorted(valid)))
-            raise ValueError(msg)
-        return v
+        msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid))}"
+        raise ValueError(msg)
 
     @field_validator("traversal")
     @classmethod
@@ -165,9 +179,7 @@ class FlextLdifSorting(
         return self
 
     @override
-    def execute(
-        self
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute sorting based on sort_target."""
         if not self.entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
@@ -479,9 +491,17 @@ class FlextLdifSorting(
         entry: FlextLdifModels.Entry,
     ) -> FlextLdifModels.Entry:
         """Ensure entry metadata has extensions initialized using Entry Model + Metadata pattern."""
-        # Use FlextLdifUtilities.Metadata for consistent metadata handling
-        if not entry.metadata.extensions:
-            entry.metadata.extensions = {}
+        # Use QuirkMetadata.create_for() factory method which handles defaults
+        if entry.metadata is None:
+            return entry.model_copy(
+                update={"metadata": FlextLdifModels.QuirkMetadata.create_for()}
+            )
+        if entry.metadata.extensions is None:
+            # Initialize with empty DynamicMetadata via immutable model_copy
+            new_metadata = entry.metadata.model_copy(
+                update={"extensions": FlextLdifModels.DynamicMetadata()}
+            )
+            return entry.model_copy(update={"metadata": new_metadata})
         return entry
 
     def _track_acl_sorting_metadata(
@@ -491,8 +511,12 @@ class FlextLdifSorting(
         """Track ACL sorting transformation in metadata using Entry Model + Metadata pattern."""
         new_entry = FlextLdifSorting._ensure_metadata_extensions(entry)
         mk = FlextLdifConstants.MetadataKeys
-        new_entry.metadata.extensions[mk.SORTING_ACL_ATTRIBUTES] = self.acl_attributes
-        new_entry.metadata.extensions[mk.SORTING_ACL_SORTED] = True
+        # After _ensure_metadata_extensions, metadata is guaranteed non-None
+        if new_entry.metadata is not None:
+            extensions = new_entry.metadata.extensions
+            # DynamicMetadata supports __setitem__ for extra fields
+            extensions[mk.SORTING_ACL_ATTRIBUTES] = self.acl_attributes
+            extensions[mk.SORTING_ACL_SORTED] = True
         return new_entry
 
     def _sort_acl_in_entries(
@@ -893,25 +917,26 @@ class FlextLdifSorting(
         if original_attr_order != new_attr_order:
             # Ensure metadata extensions are initialized
             new_entry = FlextLdifSorting._ensure_metadata_extensions(new_entry)
+            # After _ensure_metadata_extensions, metadata is guaranteed non-None
+            if new_entry.metadata is not None:
+                extensions = new_entry.metadata.extensions
+                # Track attribute order transformation in metadata extensions using constants
+                mk = FlextLdifConstants.MetadataKeys
+                strategy_type = (
+                    FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_SENSITIVE
+                    if case_sensitive
+                    else FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_INSENSITIVE
+                )
+                # DynamicMetadata supports __setitem__ for extra fields
+                extensions[mk.ATTRIBUTE_ORDER] = original_attr_order
+                extensions[mk.SORTING_NEW_ATTRIBUTE_ORDER] = new_attr_order
+                extensions[mk.SORTING_STRATEGY] = strategy_type.value
 
-            # Track attribute order transformation in metadata extensions using constants
-            mk = FlextLdifConstants.MetadataKeys
-            strategy_type = (
-                FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_SENSITIVE
-                if case_sensitive
-                else FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_INSENSITIVE
-            )
-            new_entry.metadata.extensions[mk.ATTRIBUTE_ORDER] = original_attr_order
-            new_entry.metadata.extensions[mk.SORTING_NEW_ATTRIBUTE_ORDER] = (
-                new_attr_order
-            )
-            new_entry.metadata.extensions[mk.SORTING_STRATEGY] = strategy_type.value
-
-            self.logger.debug(
-                "Sorted entry attributes",
-                entry_dn=str(entry.dn) if entry.dn else None,
-                attributes_count=len(original_attr_order),
-            )
+                self.logger.debug(
+                    "Sorted entry attributes",
+                    entry_dn=str(entry.dn) if entry.dn else None,
+                    attributes_count=len(original_attr_order),
+                )
 
         return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
@@ -943,30 +968,29 @@ class FlextLdifSorting(
         if original_attr_order != new_attr_order:
             # Ensure metadata extensions are initialized
             new_entry = FlextLdifSorting._ensure_metadata_extensions(new_entry)
+            # After _ensure_metadata_extensions, metadata is guaranteed non-None
+            if new_entry.metadata is not None:
+                extensions = new_entry.metadata.extensions
+                # Track custom order transformation in metadata extensions using constants
+                mk = FlextLdifConstants.MetadataKeys
+                ordered_attrs = [k for k, _ in ordered]
+                remaining_attrs = [k for k, _ in remaining]
+                # DynamicMetadata supports __setitem__ for extra fields
+                extensions[mk.ATTRIBUTE_ORDER] = original_attr_order
+                extensions[mk.SORTING_NEW_ATTRIBUTE_ORDER] = new_attr_order
+                extensions[mk.SORTING_STRATEGY] = (
+                    FlextLdifConstants.SortingStrategyType.CUSTOM_ORDER.value
+                )
+                extensions[mk.SORTING_CUSTOM_ORDER] = order
+                extensions[mk.SORTING_ORDERED_ATTRIBUTES] = ordered_attrs
+                extensions[mk.SORTING_REMAINING_ATTRIBUTES] = remaining_attrs
 
-            # Track custom order transformation in metadata extensions using constants
-            mk = FlextLdifConstants.MetadataKeys
-            ordered_attrs = [k for k, _ in ordered]
-            remaining_attrs = [k for k, _ in remaining]
-            new_entry.metadata.extensions[mk.ATTRIBUTE_ORDER] = original_attr_order
-            new_entry.metadata.extensions[mk.SORTING_NEW_ATTRIBUTE_ORDER] = (
-                new_attr_order
-            )
-            new_entry.metadata.extensions[mk.SORTING_STRATEGY] = (
-                FlextLdifConstants.SortingStrategyType.CUSTOM_ORDER.value
-            )
-            new_entry.metadata.extensions[mk.SORTING_CUSTOM_ORDER] = order
-            new_entry.metadata.extensions[mk.SORTING_ORDERED_ATTRIBUTES] = ordered_attrs
-            new_entry.metadata.extensions[mk.SORTING_REMAINING_ATTRIBUTES] = (
-                remaining_attrs
-            )
-
-            self.logger.debug(
-                "Sorted entry attributes by custom order",
-                entry_dn=str(entry.dn) if entry.dn else None,
-                attributes_count=len(original_attr_order),
-                ordered_count=len(ordered_attrs),
-                remaining_count=len(remaining_attrs),
-            )
+                self.logger.debug(
+                    "Sorted entry attributes by custom order",
+                    entry_dn=str(entry.dn) if entry.dn else None,
+                    attributes_count=len(original_attr_order),
+                    ordered_count=len(ordered_attrs),
+                    remaining_count=len(remaining_attrs),
+                )
 
         return FlextResult[FlextLdifModels.Entry].ok(new_entry)

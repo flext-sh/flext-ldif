@@ -97,13 +97,13 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     # ════════════════════════════════════════════════════════════════════════
 
     _registry: FlextLdifServer
-    _server_type: str
+    _server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
 
     def __init__(
         self,
         *,
         registry: FlextLdifServer | None = None,
-        server_type: str = "rfc",
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> None:
         """Initialize schema service with dependency injection.
 
@@ -126,7 +126,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     # ════════════════════════════════════════════════════════════════════════
 
     @property
-    def server_type(self) -> str:
+    def server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
         """Get configured server type."""
         return self._server_type
 
@@ -151,7 +151,9 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         """
         return cls()
 
-    def with_server_type(self, server_type: str) -> Self:
+    def with_server_type(
+        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+    ) -> Self:
         """Set server type for schema operations (fluent builder).
 
         Args:
@@ -213,7 +215,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         self,
         attr_definition: str,
         *,
-        server_type: str | None = None,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse attribute type definition.
 
@@ -269,7 +271,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         self,
         oc_definition: str,
         *,
-        server_type: str | None = None,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse objectClass definition.
 

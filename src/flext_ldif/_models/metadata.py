@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import ItemsView, Iterator, KeysView, ValuesView
+from collections.abc import Generator, ItemsView, KeysView, ValuesView
 from typing import overload
 
 from flext_core import FlextModels
@@ -82,9 +82,7 @@ class FlextLdifModelsMetadata:
                 return str(value) if value is not None else None
             raise KeyError(key)
 
-        def __setitem__(
-            self, key: str, value: FlextLdifTypes.MetadataValue
-        ) -> None:
+        def __setitem__(self, key: str, value: FlextLdifTypes.MetadataValue) -> None:
             """Set value by key using Pydantic's extra field handling."""
             setattr(self, key, value)
 
@@ -98,11 +96,15 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             return len(extra) if extra is not None else 0
 
-        def __iter__(self) -> Iterator[str]:
-            """Iterate over keys from extra fields."""
+        def __iter__(self) -> Generator[tuple[str, FlextLdifTypes.MetadataValue]]:
+            """Iterate over key-value pairs from extra fields."""
             extra = self.__pydantic_extra__
             if extra is not None:
-                yield from extra.keys()
+                for key, value in extra.items():
+                    if isinstance(value, str | float | bool | list):
+                        yield (key, value)
+                    else:
+                        yield (key, str(value) if value is not None else None)
 
         def keys(self) -> KeysView[str]:
             """Return keys from extra fields."""
@@ -137,14 +139,12 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def update(
-            self, other: dict[str, FlextLdifTypes.MetadataValue]
-        ) -> None:
+        def update(self, other: dict[str, FlextLdifTypes.MetadataValue]) -> None:
             """Update with values from another dict."""
             for key, value in other.items():
                 setattr(self, key, value)
 
-        __hash__ = None  # Not hashable due to extra="allow"
+        __hash__ = None  # Unhashable: mutable with extra="allow"
 
         def __eq__(self, other: object) -> bool:
             """Compare with dict or another DynamicMetadata."""

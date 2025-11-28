@@ -14,6 +14,7 @@ from jinja2 import Environment
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
@@ -189,7 +190,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def render_template(
         template_str: str,
-        context: dict[str, object],
+        context: dict[str, FlextLdifTypes.TemplateValue],
     ) -> FlextResult[str]:
         """Render Jinja2 template with context.
 

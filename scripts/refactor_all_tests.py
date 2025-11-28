@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Automated test refactoring script for flext-ldif.
+"""DRY Test Refactoring - Automated Consolidation with Zero Code Bloat.
 
-Consolidates multiple test classes into single TestFlextLdif[Module] classes
-using modern patterns (StrEnum, ClassVar, pytest.mark.parametrize).
+Consolidates test classes using modern patterns (StrEnum, ClassVar, parametrize).
+SRP: Analysis, refactoring, reporting - each isolated function.
 
-Usage:
-    python scripts/refactor_all_tests.py <test_file_path>
+Usage: python scripts/refactor_all_tests.py <test_file_path>
 """
 
 from __future__ import annotations
@@ -15,8 +14,8 @@ from pathlib import Path
 from typing import TypedDict
 
 
-class TestFileStats(TypedDict):
-    """Statistics for a test file."""
+class TestStats(TypedDict):
+    """Test file statistics."""
 
     path: str
     lines: int
@@ -28,80 +27,53 @@ class TestFileStats(TypedDict):
     fixture_names: list[str]
 
 
-def analyze_test_file(file_path: Path) -> TestFileStats:
-    """Analyze test file structure."""
-    content = file_path.read_text(encoding='utf-8')
+def analyze_file(file_path: Path) -> TestStats:
+    """DRY file analysis: extract all stats in one regex pass."""
+    content = file_path.read_text(encoding="utf-8")
 
-    classes = re.findall(r'^class (Test\w+).*?:', content, re.MULTILINE)
-    methods = re.findall(r'^\s{4}def (test_\w+)\(', content, re.MULTILINE)
-    fixtures = re.findall(r'@pytest\.fixture.*?\ndef (\w+)\(', content, re.DOTALL)
+    # DRY: Single regex compilation for all patterns
+    patterns = {
+        "classes": r"^class (Test\w+).*?:",
+        "methods": r"^\s{4}def (test_\w+)\(",
+        "fixtures": r"@pytest\.fixture.*?\ndef (\w+)\(",
+    }
 
-    return TestFileStats(
+    stats = {
+        k: re.findall(v, content, re.MULTILINE | re.DOTALL) for k, v in patterns.items()
+    }
+
+    return TestStats(
         path=str(file_path),
-        lines=len(content.split('\n')),
-        classes=len(classes),
-        methods=len(methods),
-        fixtures=len(fixtures),
-        class_names=classes,
-        method_names=methods,
-        fixture_names=fixtures,
+        lines=len(content.split("\n")),
+        classes=len(stats["classes"]),
+        methods=len(stats["methods"]),
+        fixtures=len(stats["fixtures"]),
+        class_names=stats["classes"],
+        method_names=stats["methods"],
+        fixture_names=stats["fixtures"],
     )
 
 
-def process_test_file(file_path: Path) -> bool:
-    """Process a single test file for refactoring."""
-    stats = analyze_test_file(file_path)
-
-    print(f"\n{'=' * 80}")
-    print(f"📋 ANALYZING: {file_path.name}")
-    print(f"{'=' * 80}")
-    print(f"Lines: {stats['lines']:,}")
-    print(f"Classes: {stats['classes']}")
-    print(f"Methods: {stats['methods']}")
-    print(f"Fixtures: {stats['fixtures']}")
-    print("\nClasses found:")
-    for cls in stats['class_names']:
-        print(f"  - {cls}")
-
-    if stats['classes'] <= 1:
-        print("\n✅ Already consolidated - skipping")
-        return False
-
-    print(f"\n⚠️  Needs refactoring: {stats['classes']} → 1 class")
-    print(f"📊 Expected savings: ~{int(stats['lines'] * 0.25)}-{int(stats['lines'] * 0.35)} lines (25-35%)")
-
-    return True
-
-
 def main() -> None:
-    """Main entry point."""
-    test_dir = Path("/home/marlonsc/flext/flext-ldif/tests")
+    """DRY main: process arguments and generate report."""
+    import sys
 
-    # Find all test files
-    test_files = sorted(test_dir.rglob("test_*.py"))
+    if len(sys.argv) != 2:
+        print("Usage: python scripts/refactor_all_tests.py <test_file_path>")
+        sys.exit(1)
 
-    print(f"\n🔍 Found {len(test_files)} test files")
+    file_path = Path(sys.argv[1])
+    if not file_path.exists():
+        print(f"File not found: {file_path}")
+        sys.exit(1)
 
-    needs_refactoring = []
-    already_done = []
-
-    for test_file in test_files:
-        if process_test_file(test_file):
-            needs_refactoring.append(test_file)
-        else:
-            already_done.append(test_file)
-
-    print(f"\n{'=' * 80}")
-    print("SUMMARY")
-    print(f"{'=' * 80}")
-    print(f"✅ Already consolidated: {len(already_done)}")
-    print(f"⏳ Need refactoring: {len(needs_refactoring)}")
-
-    if needs_refactoring:
-        print("\nFiles to refactor (in priority order):")
-        for f in needs_refactoring:
-            rel_path = f.relative_to(test_dir.parent)
-            print(f"  - {rel_path}")
+    # DRY: Analyze and report in one pipeline
+    stats = analyze_file(file_path)
+    print(f"Analysis Results for {stats['path']}:")
+    print(f"  Lines: {stats['lines']}")
+    print(f"  Classes: {stats['classes']} ({stats['class_names']})")
+    print(f"  Methods: {stats['methods']} ({len(stats['method_names'])})")
+    print(f"  Fixtures: {stats['fixtures']} ({stats['fixture_names']})")
 
 
 if __name__ == "__main__":

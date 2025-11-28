@@ -18,9 +18,7 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from collections.abc import Mapping
 from contextlib import suppress
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
@@ -46,7 +44,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         """Standardized constants for Active Directory quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "active_directory"
+        )
         PRIORITY: ClassVar[int] = 10
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -106,7 +106,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
-        ACL_SUBJECT_TYPE_SDDL: ClassVar[str] = "sddl"
+        # ACL_SUBJECT_TYPE_SDDL removed - use FlextLdifConstants.AclSubjectType.SDDL
 
         # Active Directory required object classes
         AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset(
@@ -223,35 +223,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         )
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """Active Directory-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            DELETE = "delete"
-            CREATE = "create"
-            CONTROL_ACCESS = "control_access"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """Active Directory ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """Active Directory-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16_LE = "utf-16-le"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
-            CP1252 = "cp1252"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -460,16 +435,18 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         attributes=[],
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type=FlextLdifServersAd.Constants.ACL_SUBJECT_TYPE_SDDL,
+                        subject_type="sddl",
                         subject_value=(decoded_sddl or (raw_value or "")),
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         self._get_server_type(),
-                        extensions={"original_format": acl_line},
                     ),
                     raw_acl=acl_line,
                 )
+                # Set original_format in extensions after creation
+                if acl_model.metadata and acl_model.metadata.extensions is not None:
+                    acl_model.metadata.extensions["original_format"] = acl_line
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl_model)
 
@@ -527,7 +504,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             if not entry_dn:

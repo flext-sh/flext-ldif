@@ -16,8 +16,6 @@ This implementation handles:
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
@@ -36,7 +34,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         """Standardized constants for OpenLDAP 1.x quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "openldap1"
+        )
         PRIORITY: ClassVar[int] = 10
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -135,30 +135,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         # ACL target parsing constants (migrated from _parse_acl method)
         ACL_OPS_SEPARATOR: ClassVar[str] = ","
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """OpenLDAP 1.x-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            COMPARE = "compare"
-            AUTH = "auth"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """OpenLDAP 1.x ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """OpenLDAP 1.x-supported encodings."""
-
-            UTF_8 = "utf-8"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -581,7 +561,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     permissions=permissions,
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         quirk_type=self._get_server_type(),
-                        extensions={"original_format": acl_line},
+                        extensions=FlextLdifModels.DynamicMetadata(
+                            original_format=acl_line,
+                        ),
                     ),
                     raw_acl=acl_line,
                 )
@@ -659,7 +641,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, object],
+            attributes: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Check if this quirk should handle the entry.
 

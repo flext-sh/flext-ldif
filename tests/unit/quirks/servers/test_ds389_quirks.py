@@ -16,6 +16,7 @@ import pytest
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 
@@ -98,7 +99,7 @@ class EntryTestCase:
 
     scenario: EntryScenario
     entry_dn: str
-    attributes: dict[str, object]
+    attributes: GenericFieldsDict
     expected_can_handle: bool
 
 
@@ -247,9 +248,7 @@ class TestFlextLdifDs389Quirks:
     """Test FlextLdif DS389 server quirks."""
 
     ATTRIBUTE_DATA: ClassVar[tuple[AttributeTestCase, ...]] = ATTRIBUTE_TEST_CASES
-    OBJECTCLASS_DATA: ClassVar[
-        tuple[ObjectClassTestCase, ...]
-    ] = OBJECTCLASS_TEST_CASES
+    OBJECTCLASS_DATA: ClassVar[tuple[ObjectClassTestCase, ...]] = OBJECTCLASS_TEST_CASES
     ACL_DATA: ClassVar[tuple[AclTestCase, ...]] = ACL_TEST_CASES
     ENTRY_DATA: ClassVar[tuple[EntryTestCase, ...]] = ENTRY_TEST_CASES
 

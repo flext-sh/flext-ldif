@@ -19,6 +19,7 @@ from typing import Final
 
 import pytest
 from tests.fixtures.constants import DNs, Filters, Values
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_assertions import TestAssertions
 from tests.helpers.test_filter_helpers import FilterTestHelpers
 
@@ -34,7 +35,7 @@ class ExclusionMetadataTestCase:
     """Test case for exclusion metadata type guards."""
 
     name: str
-    metadata_extensions: dict[str, object]
+    metadata_extensions: GenericFieldsDict
     expected_excluded: bool
     expected_reason: str | None = None
 
@@ -55,7 +56,7 @@ class ExclusionMarkingTestCase:
 
     name: str
     filter_method: str
-    filter_args: dict[str, object]
+    filter_args: GenericFieldsDict
     expected_excluded_index: int
     expected_reason_contains: str
 

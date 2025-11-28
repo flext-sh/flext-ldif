@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
@@ -29,7 +30,9 @@ class FlextLdifUtilitiesServer:
     """
 
     @staticmethod
-    def get_parent_server_type(nested_class_instance: object) -> str:
+    def get_parent_server_type(
+        nested_class_instance: object,
+    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__.
 
         For nested classes like FlextLdifServersAd.Schema, extracts parent
@@ -42,7 +45,7 @@ class FlextLdifUtilitiesServer:
             nested_class_instance: Instance of a nested class (Schema, Acl, Entry)
 
         Returns:
-            Server type string from parent Constants.SERVER_TYPE
+            Server type literal from parent Constants.SERVER_TYPE
 
         Raises:
             AttributeError: If parent server class or SERVER_TYPE not found
@@ -50,14 +53,18 @@ class FlextLdifUtilitiesServer:
         Example:
             >>> class MyServer:
             ...     class Constants:
-            ...         SERVER_TYPE = "myserver"
+            ...         SERVER_TYPE: ClassVar[
+            ...             FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+            ...         ] = "oid"
             ...
             ...     class Schema:
-            ...         def get_type(self) -> str:
+            ...         def get_type(
+            ...             self,
+            ...         ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
             ...             return FlextLdifUtilitiesServer.get_parent_server_type(self)
             >>> schema = MyServer.Schema()
             >>> schema.get_type()
-            'myserver'
+            'oid'
 
         """
         cls = type(nested_class_instance)
@@ -79,10 +86,7 @@ class FlextLdifUtilitiesServer:
                         parent_server_cls.Constants,
                         "SERVER_TYPE",
                     ):
-                        server_type_value = parent_server_cls.Constants.SERVER_TYPE
-                        if not isinstance(server_type_value, str):
-                            msg = f"Expected str, got {type(server_type_value)}"
-                            raise TypeError(msg)
+                        server_type_value: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = parent_server_cls.Constants.SERVER_TYPE
                         return server_type_value
             except AttributeError:
                 pass

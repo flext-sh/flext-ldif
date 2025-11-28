@@ -25,7 +25,7 @@ class ProcessingResult(BaseModel):
     Example:
         >>> result = ProcessingResult(
         ...     dn="cn=test,dc=example,dc=com",
-        ...     attributes={"cn": ["test"], "objectClass": ["person"]}
+        ...     attributes={"cn": ["test"], "objectClass": ["person"]},
         ... )
         >>> result.dn
         'cn=test,dc=example,dc=com'

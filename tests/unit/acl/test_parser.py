@@ -25,6 +25,7 @@ from flext_tests import FlextTestsMatchers
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
 from tests.fixtures.constants import RFC, DNs, Fixtures
+from tests.fixtures.typing import GenericFieldsDict
 
 
 class AclParserTestType(StrEnum):
@@ -160,7 +161,7 @@ class AclParserTestFactory:
         read: bool = False,
         write: bool = False,
         delete: bool = False,
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Create test context."""
         permissions: dict[str, bool] = {}
         if read:
@@ -215,7 +216,9 @@ class TestFlextLdifAclParser:
                 )
                 assert isinstance(parse_result_openldap, FlextResult)
                 # Validate successful parsing
-                assert parse_result_openldap.is_success, f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
+                assert parse_result_openldap.is_success, (
+                    f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
+                )
                 parsed_acl = parse_result_openldap.unwrap()
                 assert isinstance(parsed_acl, FlextLdifModels.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
@@ -229,7 +232,9 @@ class TestFlextLdifAclParser:
                 )
                 assert isinstance(parse_result_oid, FlextResult)
                 # Validate successful parsing
-                assert parse_result_oid.is_success, f"OID ACL parsing should succeed: {test_case.acl_line}"
+                assert parse_result_oid.is_success, (
+                    f"OID ACL parsing should succeed: {test_case.acl_line}"
+                )
                 parsed_acl = parse_result_oid.unwrap()
                 assert isinstance(parsed_acl, FlextLdifModels.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
@@ -243,7 +248,9 @@ class TestFlextLdifAclParser:
                 )
                 assert isinstance(parse_result_oud, FlextResult)
                 # Validate successful parsing
-                assert parse_result_oud.is_success, f"OUD ACI parsing should succeed: {test_case.acl_line}"
+                assert parse_result_oud.is_success, (
+                    f"OUD ACI parsing should succeed: {test_case.acl_line}"
+                )
                 parsed_acl = parse_result_oud.unwrap()
                 assert isinstance(parsed_acl, FlextLdifModels.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
@@ -251,9 +258,11 @@ class TestFlextLdifAclParser:
 
             case AclParserTestType.PARSE_REAL_OID_EXAMPLE:
                 # Test parsing real OID ACL example
-                parse_result_real_oid: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
-                    test_case.acl_line,
-                    test_case.server_type,
+                parse_result_real_oid: FlextResult[FlextLdifModels.Acl] = (
+                    acl_service.parse(
+                        test_case.acl_line,
+                        test_case.server_type,
+                    )
                 )
                 assert isinstance(parse_result_real_oid, FlextResult)
                 # Test parsing real OID ACL example - may succeed or fail based on quirk availability
@@ -269,9 +278,11 @@ class TestFlextLdifAclParser:
 
             case AclParserTestType.PARSE_REAL_OUD_EXAMPLE:
                 # Test parsing real OUD ACI example
-                parse_result_real_oud: FlextResult[FlextLdifModels.Acl] = acl_service.parse(
-                    test_case.acl_line,
-                    test_case.server_type,
+                parse_result_real_oud: FlextResult[FlextLdifModels.Acl] = (
+                    acl_service.parse(
+                        test_case.acl_line,
+                        test_case.server_type,
+                    )
                 )
                 assert isinstance(parse_result_real_oud, FlextResult)
                 # Test parsing real OUD ACI example - may succeed or fail based on quirk availability
@@ -292,7 +303,9 @@ class TestFlextLdifAclParser:
                 )
                 assert isinstance(parse_result_unsupported, FlextResult)
                 # Should fail for unsupported server type
-                assert parse_result_unsupported.is_failure, f"Unsupported server type should fail: {test_case.server_type}"
+                assert parse_result_unsupported.is_failure, (
+                    f"Unsupported server type should fail: {test_case.server_type}"
+                )
 
             case AclParserTestType.EVALUATE_EMPTY:
                 # Test evaluating empty ACL list

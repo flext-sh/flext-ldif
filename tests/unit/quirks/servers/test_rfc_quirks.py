@@ -18,6 +18,11 @@ import pytest
 
 from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests.fixtures.typing import (
+    EntryDataDict,
+    ObjectClassDict,
+    SchemaAttributeDict,
+)
 
 from .fixtures.general_constants import TestGeneralConstants
 from .fixtures.rfc_constants import TestsRfcConstants
@@ -76,11 +81,14 @@ class TestRfcQuirks:
     }
 
     # Schema attribute test data for write operations
-    SCHEMA_WRITE_SCENARIOS: ClassVar[dict[str, dict[str, object]]] = {
+    SCHEMA_WRITE_SCENARIOS: ClassVar[dict[str, SchemaAttributeDict]] = {
         "basic": {
             "oid": TestsRfcConstants.ATTR_OID_CN,
             "name": TestsRfcConstants.ATTR_NAME_CN,
-            "must_contain": [TestsRfcConstants.ATTR_OID_CN, TestsRfcConstants.ATTR_NAME_CN],
+            "must_contain": [
+                TestsRfcConstants.ATTR_OID_CN,
+                TestsRfcConstants.ATTR_NAME_CN,
+            ],
         },
         "with_flags": {
             "oid": TestsRfcConstants.ATTR_OID_CN,
@@ -91,11 +99,14 @@ class TestRfcQuirks:
     }
 
     # ObjectClass write test data
-    OBJECTCLASS_WRITE_SCENARIOS: ClassVar[dict[str, dict[str, object]]] = {
+    OBJECTCLASS_WRITE_SCENARIOS: ClassVar[dict[str, ObjectClassDict]] = {
         "basic": {
             "oid": TestsRfcConstants.OC_OID_PERSON,
             "name": TestsRfcConstants.OC_NAME_PERSON,
-            "must_contain": [TestsRfcConstants.OC_OID_PERSON, TestsRfcConstants.OC_NAME_PERSON],
+            "must_contain": [
+                TestsRfcConstants.OC_OID_PERSON,
+                TestsRfcConstants.OC_NAME_PERSON,
+            ],
         },
     }
 
@@ -106,7 +117,7 @@ class TestRfcQuirks:
     }
 
     # Entry write validation scenarios
-    ENTRY_WRITE_SCENARIOS: ClassVar[dict[str, dict[str, object]]] = {
+    ENTRY_WRITE_SCENARIOS: ClassVar[dict[str, EntryDataDict]] = {
         "basic_person": {
             "dn": "cn=test,dc=example,dc=com",
             "objectClass": ["person"],
@@ -145,18 +156,14 @@ class TestRfcQuirks:
         return quirk
 
     @pytest.fixture
-    def acl_quirk(
-        self, rfc_quirk: FlextLdifServersRfc
-    ) -> FlextLdifServersRfc.Acl:
+    def acl_quirk(self, rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
         """Provides RFC ACL quirk - concrete type for internal method testing."""
         quirk = rfc_quirk.acl_quirk
         assert isinstance(quirk, FlextLdifServersRfc.Acl)
         return quirk
 
     @pytest.fixture
-    def entry_quirk(
-        self, rfc_quirk: FlextLdifServersRfc
-    ) -> FlextLdifServersRfc.Entry:
+    def entry_quirk(self, rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Entry:
         """Provides RFC Entry quirk - concrete type for internal method testing."""
         quirk = rfc_quirk.entry_quirk
         assert isinstance(quirk, FlextLdifServersRfc.Entry)
@@ -314,7 +321,9 @@ class TestRfcQuirks:
         schema_quirk: FlextLdifServersRfc.Schema,
     ) -> None:
         """Test Schema.can_handle_objectclass with string."""
-        assert schema_quirk.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON) is True
+        assert (
+            schema_quirk.can_handle_objectclass(TestsRfcConstants.OC_DEF_PERSON) is True
+        )
 
     def test_schema_can_handle_objectclass_model(
         self,
@@ -363,7 +372,7 @@ class TestRfcQuirks:
         self,
         schema_quirk: FlextLdifServersRfc.Schema,
         scenario: str,
-        data: dict[str, object],
+        data: SchemaAttributeDict,
     ) -> None:
         """Parametrized test for Schema._write_attribute."""
         attr = FlextLdifModels.SchemaAttribute(
@@ -389,7 +398,7 @@ class TestRfcQuirks:
         self,
         schema_quirk: FlextLdifServersRfc.Schema,
         scenario: str,
-        data: dict[str, object],
+        data: ObjectClassDict,
     ) -> None:
         """Parametrized test for Schema._write_objectclass."""
         oc = FlextLdifModels.SchemaObjectClass(
@@ -512,10 +521,17 @@ class TestRfcQuirks:
         entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry.can_handle."""
-        assert entry_quirk.can_handle(
-            TestGeneralConstants.SAMPLE_DN,
-            {TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST]},
-        ) is True
+        assert (
+            entry_quirk.can_handle(
+                TestGeneralConstants.SAMPLE_DN,
+                {
+                    TestGeneralConstants.ATTR_NAME_CN: [
+                        TestGeneralConstants.ATTR_VALUE_TEST
+                    ]
+                },
+            )
+            is True
+        )
 
     def test_entry_can_handle_entry(
         self,
@@ -538,7 +554,7 @@ class TestRfcQuirks:
         self,
         entry_quirk: FlextLdifServersRfc.Entry,
         scenario: str,
-        data: dict[str, object],
+        data: EntryDataDict,
     ) -> None:
         """Parametrized test for Entry write operations."""
         dn = str(data["dn"])
@@ -560,7 +576,7 @@ class TestRfcQuirks:
     ) -> None:
         """Test Entry._parse_entry."""
         dn = "cn=test,dc=example,dc=com"
-        attrs: dict[str, object] = {"cn": ["test"], "objectClass": ["person"]}
+        attrs: dict[str, list[str]] = {"cn": ["test"], "objectClass": ["person"]}
         result = entry_quirk._parse_entry(dn, attrs)
         assert result.is_success
         entry = result.unwrap()

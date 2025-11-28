@@ -14,6 +14,7 @@ from typing import TypedDict
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -27,16 +28,12 @@ logger = FlextLogger(__name__)
 
 
 # Type definitions for parser utilities
-class ExtensionsDict(TypedDict, total=False):
-    """Type-safe dictionary for schema extensions.
+type ExtensionsDict = dict[str, str | list[str] | bool | None]
+"""Type alias for schema extensions dictionary.
 
-    Contains X- custom extensions, DESC descriptions, and other
-    schema definition extensions.
-    """
-
-    DESC: str | None
-    # X- extensions (custom properties)
-    # Any other schema extensions
+Contains X- custom extensions, DESC descriptions, validation flags,
+and other schema definition extensions with dynamic keys.
+"""
 
 
 class MetadataDict(TypedDict, total=False):
@@ -46,18 +43,13 @@ class MetadataDict(TypedDict, total=False):
     # Other metadata fields
 
 
-class EntryAttributesDict(TypedDict, total=False):
-    """Type-safe dictionary for LDIF entry attributes.
+type EntryAttributesDict = dict[str, list[str]]
+"""Type alias for LDIF entry attributes.
 
-    Maps attribute names to lists of values (RFC 2849 format).
-    """
-
-    objectClass: list[str] | None
-    # Other attributes
-    # Internal metadata fields
-    _original_dn_line: list[str] | None
-    _original_lines: list[str] | None
-    _base64_dn: list[str] | None
+Maps attribute names to lists of values (RFC 2849 format).
+Includes dynamic LDAP attribute names (cn, sn, mail, etc.) and
+internal metadata fields (_original_dn_line, _original_lines, _base64_dn).
+"""
 
 
 # Type aliases for backwards compatibility
@@ -76,8 +68,11 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def ext(metadata: MetadataDict) -> ExtensionsDict:
         """Extract extension information from parsed metadata."""
-        result = metadata.get("extensions", {})
-        return result if FlextRuntime.is_dict_like(result) else {}
+        result = metadata.get("extensions")
+        if result is None or not isinstance(result, dict):
+            empty: ExtensionsDict = {}
+            return empty
+        return result
 
     @staticmethod
     def extract_oid(definition: str) -> str | None:
@@ -935,7 +930,9 @@ class FlextLdifUtilitiesParser:
             metadata = (
                 FlextLdifModels.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=metadata_extensions,
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                        **metadata_extensions
+                    ),
                 )
                 if metadata_extensions
                 else None

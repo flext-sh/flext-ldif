@@ -20,6 +20,10 @@ from flext_tests.docker import FlextTestDocker
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.services.server import FlextLdifServer
+from tests.fixtures.typing import (
+    GenericFieldsDict,
+    GenericTestCaseDict,
+)
 from tests.support.conftest_factory import FlextLdifTestConftest
 from tests.support.ldif_data import LdifTestData
 from tests.support.test_files import FileManager
@@ -66,7 +70,7 @@ def unique_dn_suffix(
 @pytest.fixture
 def make_user_dn(
     unique_dn_suffix: str,
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
 ) -> Callable[[str], str]:
     """Factory for unique user DNs."""
     return conftest_instance.make_user_dn(unique_dn_suffix, ldap_container)
@@ -75,7 +79,7 @@ def make_user_dn(
 @pytest.fixture
 def make_group_dn(
     unique_dn_suffix: str,
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
 ) -> Callable[[str], str]:
     """Factory for unique group DNs."""
     return conftest_instance.make_group_dn(unique_dn_suffix, ldap_container)
@@ -84,7 +88,7 @@ def make_group_dn(
 @pytest.fixture
 def make_test_base_dn(
     unique_dn_suffix: str,
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
 ) -> Callable[[str], str]:
     """Factory for unique base DNs."""
     return conftest_instance.make_test_base_dn(unique_dn_suffix, ldap_container)
@@ -123,13 +127,13 @@ def cleanup_state() -> Generator[None]:
 def ldap_container(
     docker_control: FlextTestDocker,
     worker_id: str,
-) -> dict[str, object]:
+) -> GenericFieldsDict:
     """Session-scoped LDAP container configuration."""
     return conftest_instance.ldap_container(docker_control, worker_id)
 
 
 @pytest.fixture
-def ldap_container_shared(ldap_container: dict[str, object]) -> str:
+def ldap_container_shared(ldap_container: GenericFieldsDict) -> str:
     """Provide LDAP connection string.
 
     Uses function scope to ensure fresh connection per test (no state pollution).
@@ -138,7 +142,7 @@ def ldap_container_shared(ldap_container: dict[str, object]) -> str:
 
 
 @pytest.fixture
-def ldap_connection(ldap_container: dict[str, object]) -> Generator[object]:
+def ldap_connection(ldap_container: GenericFieldsDict) -> Generator[object]:
     """Create LDAP connection.
 
     Uses function scope to ensure fresh connection per test (no state pollution).
@@ -268,7 +272,7 @@ def real_writer_service(quirk_registry: FlextLdifServer) -> FlextLdifWriter:
 
 
 @pytest.fixture
-def integration_services() -> dict[str, object]:
+def integration_services() -> GenericFieldsDict:
     """Integration services."""
     return conftest_instance.integration_services()
 
@@ -311,25 +315,25 @@ def flext_result_composition_helper() -> Callable[
 
 
 @pytest.fixture
-def ldap_schema_config() -> dict[str, object]:
+def ldap_schema_config() -> GenericFieldsDict:
     """LDAP schema config."""
     return conftest_instance.ldap_schema_config()
 
 
 @pytest.fixture
-def transformation_rules() -> dict[str, object]:
+def transformation_rules() -> GenericFieldsDict:
     """Transformation rules."""
     return conftest_instance.transformation_rules()
 
 
 @pytest.fixture
-def ldif_filters() -> dict[str, object]:
+def ldif_filters() -> GenericFieldsDict:
     """LDIF filters."""
     return conftest_instance.ldif_filters()
 
 
 @pytest.fixture
-def expected_ldif_stats() -> dict[str, object]:
+def expected_ldif_stats() -> GenericFieldsDict:
     """Expected LDIF stats."""
     return conftest_instance.expected_ldif_stats()
 
@@ -341,7 +345,7 @@ def invalid_ldif_data() -> str:
 
 
 @pytest.fixture
-def large_ldif_config() -> dict[str, object]:
+def large_ldif_config() -> GenericFieldsDict:
     """Large LDIF config."""
     return conftest_instance.large_ldif_config()
 
@@ -365,7 +369,7 @@ def ldif_test_entries() -> list[dict[str, dict[str, list[str]] | str]]:
 
 
 @pytest.fixture
-def ldif_test_content(ldif_test_entries: list[dict[str, object]]) -> str:
+def ldif_test_content(ldif_test_entries: list[GenericTestCaseDict]) -> str:
     """Generate LDIF content."""
     return conftest_instance.ldif_test_content(ldif_test_entries)
 
@@ -377,7 +381,7 @@ def ldif_error_scenarios() -> dict[str, str]:
 
 
 @pytest.fixture
-def ldif_performance_config(flext_domains: object) -> dict[str, object]:
+def ldif_performance_config(flext_domains: object) -> GenericFieldsDict:
     """Performance config."""
     return conftest_instance.ldif_performance_config(flext_domains)
 

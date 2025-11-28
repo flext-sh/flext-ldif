@@ -962,7 +962,9 @@ class TestAPIProcessing:
         tmp_path: Path,
     ) -> None:
         """Test processing operations with parametrized scenarios."""
-        entries = [sample_entry] * test_case.entry_count if test_case.entry_count > 0 else []
+        entries = (
+            [sample_entry] * test_case.entry_count if test_case.entry_count > 0 else []
+        )
 
         if scenario == ProcessingScenario.TRANSFORM_BATCH:
             result = api.process("transform", entries, parallel=False, batch_size=10)

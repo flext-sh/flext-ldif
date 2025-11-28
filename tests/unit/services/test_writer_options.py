@@ -32,7 +32,6 @@ from __future__ import annotations
 import re
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
 
 import pytest
 from flext_core import FlextConfig
@@ -233,7 +232,12 @@ class TestWriterFormatOptions:
         metadata: FlextLdifModels.QuirkMetadata | None = None,
     ) -> FlextLdifModels.Entry:
         """Factory method to create Entry with reduced boilerplate."""
-        entry_kwargs: dict[str, Any] = {
+        entry_kwargs: dict[
+            str,
+            FlextLdifModels.DistinguishedName
+            | FlextLdifModels.LdifAttributes
+            | FlextLdifModels.QuirkMetadata,
+        ] = {
             "dn": FlextLdifModels.DistinguishedName(value=dn),
             "attributes": FlextLdifModels.LdifAttributes(attributes=attributes),
         }
@@ -245,14 +249,14 @@ class TestWriterFormatOptions:
         self,
         writer: FlextLdifWriter,
         entries: list[FlextLdifModels.Entry],
-        config_overrides: dict[str, Any],
+        config_overrides: dict[str, str | int | float | bool | list[str] | None],
         target_server: str = "rfc",
         output_target: str = "string",
         output_path: Path | None = None,
     ) -> str:
         """Helper to write entries with config overrides and return output string."""
         # Convert config field overrides to WriteFormatOptions parameters
-        model_kwargs: dict[str, Any] = {}
+        model_kwargs: dict[str, str | int | float | bool | list[str] | None] = {}
         for config_field, value in config_overrides.items():
             if config_field in CONFIG_TO_MODEL_FIELD_MAP:
                 model_field = CONFIG_TO_MODEL_FIELD_MAP[config_field]

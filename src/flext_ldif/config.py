@@ -93,7 +93,7 @@ class FlextLdifConfigModule:
         # LDIF Format Configuration using FlextLdifConstants for defaults
         # Note: Fields like max_workers, debug, trace, log_verbosity come from root FlextConfig
         # when used in nested pattern (config.ldif references root config.max_workers)
-        ldif_encoding: str = Field(
+        ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
             default="utf-8",
             description="Character encoding for LDIF files",
         )
@@ -159,11 +159,9 @@ class FlextLdifConfigModule:
             description="Cache size for LDIF analytics",
         )
 
-        analytics_detail_level: FlextLdifConstants.LiteralTypes.AnalyticsDetailLevel = (
-            Field(
-                default="medium",
-                description="Analytics detail level (low, medium, high)",
-            )
+        analytics_detail_level: FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral = Field(
+            default="medium",
+            description="Analytics detail level (low, medium, high)",
         )
 
         # Additional LDIF processing configuration
@@ -214,7 +212,7 @@ class FlextLdifConfigModule:
         )
 
         # Quirks Detection and Mode Configuration
-        quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionMode = Field(
+        quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionModeLiteral = Field(
             default="auto",
             description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
         )
@@ -230,9 +228,11 @@ class FlextLdifConfigModule:
         )
 
         # Validation Configuration using FlextLdifConstants for defaults
-        validation_level: FlextLdifConstants.LiteralTypes.ValidationLevel = Field(
-            default="strict",
-            description="Validation strictness level",
+        validation_level: FlextLdifConstants.LiteralTypes.ValidationLevelLiteral = (
+            Field(
+                default="strict",
+                description="Validation strictness level",
+            )
         )
 
         strict_rfc_compliance: bool = Field(
@@ -247,7 +247,7 @@ class FlextLdifConfigModule:
         )
 
         # Error Handling Configuration
-        error_recovery_mode: FlextLdifConstants.LiteralTypes.ErrorRecoveryMode = Field(
+        error_recovery_mode: FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral = Field(
             default="continue",
             description="Error recovery mode (continue, stop, skip)",
         )
@@ -474,7 +474,7 @@ class FlextLdifConfigModule:
 
             """
             try:
-                codecs.lookup(v)
+                _ = codecs.lookup(v)
             except LookupError as e:
                 # Suggest RFC-recommended encoding
                 suggestion = "utf-8 (RFC 2849 recommended)"
@@ -507,7 +507,7 @@ class FlextLdifConfigModule:
 
             """
             # Normalize aliases to canonical form (ad → active_directory, etc)
-            normalized = FlextLdifConstants.ServerTypes.normalize(v)
+            normalized = FlextLdifConstants.normalize_server_type(v)
 
             valid_servers = [
                 FlextLdifConstants.ServerTypes.RFC,
@@ -651,7 +651,7 @@ class FlextLdifConfigModule:
                 return v
 
             # Normalize aliases to canonical form (ad → active_directory, etc)
-            normalized = FlextLdifConstants.ServerTypes.normalize(v)
+            normalized = FlextLdifConstants.normalize_server_type(v)
 
             # Use same validation logic as server_type field
             valid_servers = [

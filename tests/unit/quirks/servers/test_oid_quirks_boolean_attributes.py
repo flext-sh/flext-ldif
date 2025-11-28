@@ -258,8 +258,7 @@ class TestFlextLdifOidBooleanAttributes:
         """Test recognition of known boolean attributes."""
         oid_val = f"2.16.840.1.113894.1.1.{1300 + hash(attr_name) % 100}"
         attr_def = (
-            f"( {oid_val} NAME '{attr_name}' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
+            f"( {oid_val} NAME '{attr_name}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         )
 
         parsed_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
@@ -284,8 +283,7 @@ class TestFlextLdifOidBooleanAttributes:
 
         for attr_name, oid in known_attrs:
             attr_def = (
-                f"( {oid} NAME '{attr_name}' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
+                f"( {oid} NAME '{attr_name}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
             )
 
             result = oid_schema.parse_attribute(attr_def)
@@ -445,7 +443,11 @@ class TestFlextLdifOidBooleanAttributes:
     ) -> None:
         """Test boolean attributes mixed with other types."""
         attrs = [
-            ("2.16.840.1.113894.1.1.3000", "orclString", "1.3.6.1.4.1.1466.115.121.1.15"),
+            (
+                "2.16.840.1.113894.1.1.3000",
+                "orclString",
+                "1.3.6.1.4.1.1466.115.121.1.15",
+            ),
             ("2.16.840.1.113894.1.1.3001", "orclBool", "1.3.6.1.4.1.1466.115.121.1.7"),
             ("2.16.840.1.113894.1.1.3002", "orclInt", "1.3.6.1.4.1.1466.115.121.1.27"),
         ]
@@ -485,9 +487,15 @@ orclIsEnabled: 1
 
         # Check that boolean values were converted to RFC format
         attrs = entry.attributes.attributes
-        assert attrs["orclEnabled"] == ["TRUE"], f"Expected TRUE, got {attrs['orclEnabled']}"
-        assert attrs["orclComputerSecurity"] == ["FALSE"], f"Expected FALSE, got {attrs['orclComputerSecurity']}"
-        assert attrs["orclIsEnabled"] == ["TRUE"], f"Expected TRUE, got {attrs['orclIsEnabled']}"
+        assert attrs["orclEnabled"] == ["TRUE"], (
+            f"Expected TRUE, got {attrs['orclEnabled']}"
+        )
+        assert attrs["orclComputerSecurity"] == ["FALSE"], (
+            f"Expected FALSE, got {attrs['orclComputerSecurity']}"
+        )
+        assert attrs["orclIsEnabled"] == ["TRUE"], (
+            f"Expected TRUE, got {attrs['orclIsEnabled']}"
+        )
 
         # Write back to LDIF
         write_result = oid_server.write(entries)

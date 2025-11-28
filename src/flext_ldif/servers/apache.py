@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -30,7 +29,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Standardized constants for Apache Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "apache_directory"
+        )
         PRIORITY: ClassVar[int] = 15
 
         # Server identification
@@ -112,34 +113,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         # Entry detection constants (migrated from Entry class)
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=config"
 
-        # === NESTED STRENUM DEFINITIONS ===
-        # StrEnum definitions for type-safe permission, action, and encoding handling
-
-        class AclPermission(StrEnum):
-            """Apache Directory Server-specific ACL permissions."""
-
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            SEARCH = "search"
-            AUTH = "auth"
-            ALL = "all"
-            NONE = "none"
-
-        class AclAction(StrEnum):
-            """Apache Directory Server ACL action types."""
-
-            ALLOW = "allow"
-            DENY = "deny"
-
-        class Encoding(StrEnum):
-            """Apache Directory Server-supported encodings."""
-
-            UTF_8 = "utf-8"
-            UTF_16 = "utf-16"
-            ASCII = "ascii"
-            LATIN_1 = "latin-1"
+        # === ACL AND ENCODING CONSTANTS (Centralized) ===
+        # Use centralized StrEnums from FlextLdifConstants directly
+        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
+        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -399,7 +376,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
-                    metadata.extensions = {}
+                    metadata.extensions = FlextLdifModels.DynamicMetadata()
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY
                 ] = FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower

@@ -80,13 +80,19 @@ class TestOpenldapQuirks:
     # =========================================================================
     FIXTURE_SCENARIOS: ClassVar[dict[FixtureType, tuple[str, str, bool]]] = {
         FixtureType.SCHEMA: ("openldap", "openldap_schema_fixtures.ldif", True),
-        FixtureType.INTEGRATION: ("openldap", "openldap_integration_fixtures.ldif", True),
+        FixtureType.INTEGRATION: (
+            "openldap",
+            "openldap_integration_fixtures.ldif",
+            True,
+        ),
     }
 
     # =========================================================================
     # ATTRIBUTE TEST SCENARIOS
     # =========================================================================
-    ATTRIBUTE_SCENARIOS: ClassVar[dict[AttributeTestType, tuple[str, bool, str | None]]] = {
+    ATTRIBUTE_SCENARIOS: ClassVar[
+        dict[AttributeTestType, tuple[str, bool, str | None]]
+    ] = {
         AttributeTestType.OLC_PREFIX: (
             "olcAttributeTypes: ( 1.2.3.4 NAME 'test' DESC 'Test attribute' "
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
@@ -172,7 +178,10 @@ class TestOpenldapQuirks:
         ),
         AclTestType.INDEXED: ("{0}to * by * read", True),
         AclTestType.OLC_ACCESS: ("olcAccess: to * by * read", True),
-        AclTestType.NON_ACL: ("random text", True),  # Parser accepts any non-empty string
+        AclTestType.NON_ACL: (
+            "random text",
+            True,
+        ),  # Parser accepts any non-empty string
     }
 
     # =========================================================================
@@ -306,10 +315,22 @@ class TestOpenldapQuirks:
     @pytest.mark.parametrize(
         ("test_type", "config"),
         [
-            (AttributeTestType.OLC_PREFIX, ATTRIBUTE_SCENARIOS[AttributeTestType.OLC_PREFIX]),
-            (AttributeTestType.STANDARD, ATTRIBUTE_SCENARIOS[AttributeTestType.STANDARD]),
-            (AttributeTestType.WITH_SYNTAX, ATTRIBUTE_SCENARIOS[AttributeTestType.WITH_SYNTAX]),
-            (AttributeTestType.SINGLE_VALUE, ATTRIBUTE_SCENARIOS[AttributeTestType.SINGLE_VALUE]),
+            (
+                AttributeTestType.OLC_PREFIX,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.OLC_PREFIX],
+            ),
+            (
+                AttributeTestType.STANDARD,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.STANDARD],
+            ),
+            (
+                AttributeTestType.WITH_SYNTAX,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.WITH_SYNTAX],
+            ),
+            (
+                AttributeTestType.SINGLE_VALUE,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.SINGLE_VALUE],
+            ),
         ],
         ids=["olc_prefix", "standard", "with_syntax", "single_value"],
     )
@@ -327,10 +348,22 @@ class TestOpenldapQuirks:
     @pytest.mark.parametrize(
         ("test_type", "config"),
         [
-            (AttributeTestType.OLC_PREFIX, ATTRIBUTE_SCENARIOS[AttributeTestType.OLC_PREFIX]),
-            (AttributeTestType.STANDARD, ATTRIBUTE_SCENARIOS[AttributeTestType.STANDARD]),
-            (AttributeTestType.WITH_SYNTAX, ATTRIBUTE_SCENARIOS[AttributeTestType.WITH_SYNTAX]),
-            (AttributeTestType.SINGLE_VALUE, ATTRIBUTE_SCENARIOS[AttributeTestType.SINGLE_VALUE]),
+            (
+                AttributeTestType.OLC_PREFIX,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.OLC_PREFIX],
+            ),
+            (
+                AttributeTestType.STANDARD,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.STANDARD],
+            ),
+            (
+                AttributeTestType.WITH_SYNTAX,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.WITH_SYNTAX],
+            ),
+            (
+                AttributeTestType.SINGLE_VALUE,
+                ATTRIBUTE_SCENARIOS[AttributeTestType.SINGLE_VALUE],
+            ),
         ],
         ids=["olc_prefix", "standard", "with_syntax", "single_value"],
     )
@@ -357,7 +390,9 @@ class TestOpenldapQuirks:
         schema_quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test attribute parsing fails without OID."""
-        attr_def, should_succeed, _ = self.ATTRIBUTE_SCENARIOS[AttributeTestType.MISSING_OID]
+        attr_def, should_succeed, _ = self.ATTRIBUTE_SCENARIOS[
+            AttributeTestType.MISSING_OID
+        ]
         result = schema_quirk.parse_attribute(attr_def)
         assert result.is_failure == (not should_succeed)
 
@@ -374,11 +409,26 @@ class TestOpenldapQuirks:
     @pytest.mark.parametrize(
         ("test_type", "config"),
         [
-            (ObjectClassTestType.OLC_PREFIX, OBJECTCLASS_SCENARIOS[ObjectClassTestType.OLC_PREFIX]),
-            (ObjectClassTestType.STANDARD, OBJECTCLASS_SCENARIOS[ObjectClassTestType.STANDARD]),
-            (ObjectClassTestType.STRUCTURAL, OBJECTCLASS_SCENARIOS[ObjectClassTestType.STRUCTURAL]),
-            (ObjectClassTestType.AUXILIARY, OBJECTCLASS_SCENARIOS[ObjectClassTestType.AUXILIARY]),
-            (ObjectClassTestType.ABSTRACT, OBJECTCLASS_SCENARIOS[ObjectClassTestType.ABSTRACT]),
+            (
+                ObjectClassTestType.OLC_PREFIX,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.OLC_PREFIX],
+            ),
+            (
+                ObjectClassTestType.STANDARD,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.STANDARD],
+            ),
+            (
+                ObjectClassTestType.STRUCTURAL,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.STRUCTURAL],
+            ),
+            (
+                ObjectClassTestType.AUXILIARY,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.AUXILIARY],
+            ),
+            (
+                ObjectClassTestType.ABSTRACT,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.ABSTRACT],
+            ),
         ],
         ids=["olc_prefix", "standard", "structural", "auxiliary", "abstract"],
     )
@@ -396,11 +446,26 @@ class TestOpenldapQuirks:
     @pytest.mark.parametrize(
         ("test_type", "config"),
         [
-            (ObjectClassTestType.OLC_PREFIX, OBJECTCLASS_SCENARIOS[ObjectClassTestType.OLC_PREFIX]),
-            (ObjectClassTestType.STANDARD, OBJECTCLASS_SCENARIOS[ObjectClassTestType.STANDARD]),
-            (ObjectClassTestType.STRUCTURAL, OBJECTCLASS_SCENARIOS[ObjectClassTestType.STRUCTURAL]),
-            (ObjectClassTestType.AUXILIARY, OBJECTCLASS_SCENARIOS[ObjectClassTestType.AUXILIARY]),
-            (ObjectClassTestType.ABSTRACT, OBJECTCLASS_SCENARIOS[ObjectClassTestType.ABSTRACT]),
+            (
+                ObjectClassTestType.OLC_PREFIX,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.OLC_PREFIX],
+            ),
+            (
+                ObjectClassTestType.STANDARD,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.STANDARD],
+            ),
+            (
+                ObjectClassTestType.STRUCTURAL,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.STRUCTURAL],
+            ),
+            (
+                ObjectClassTestType.AUXILIARY,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.AUXILIARY],
+            ),
+            (
+                ObjectClassTestType.ABSTRACT,
+                OBJECTCLASS_SCENARIOS[ObjectClassTestType.ABSTRACT],
+            ),
         ],
         ids=["olc_prefix", "standard", "structural", "auxiliary", "abstract"],
     )
@@ -515,7 +580,10 @@ class TestOpenldapQuirks:
         [
             (EntryTestType.CONFIG, ENTRY_SCENARIOS[EntryTestType.CONFIG]),
             (EntryTestType.OLC_ATTRIBUTE, ENTRY_SCENARIOS[EntryTestType.OLC_ATTRIBUTE]),
-            (EntryTestType.OLC_OBJECTCLASS, ENTRY_SCENARIOS[EntryTestType.OLC_OBJECTCLASS]),
+            (
+                EntryTestType.OLC_OBJECTCLASS,
+                ENTRY_SCENARIOS[EntryTestType.OLC_OBJECTCLASS],
+            ),
             (EntryTestType.STANDARD, ENTRY_SCENARIOS[EntryTestType.STANDARD]),
         ],
         ids=["config", "olc_attribute", "olc_objectclass", "standard"],

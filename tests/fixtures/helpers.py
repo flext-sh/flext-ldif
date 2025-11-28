@@ -11,6 +11,11 @@ from __future__ import annotations
 import re
 from typing import cast
 
+from tests.fixtures.typing import (
+    GenericFieldsDict,
+    GenericTestCaseDict,
+)
+
 
 def extract_attributes(ldif_content: str) -> list[str]:
     """Extract attribute type definitions from LDIF content.
@@ -42,7 +47,7 @@ def extract_objectclasses(ldif_content: str) -> list[str]:
     return [match.replace("objectclasses: ", "").strip() for match in matches]
 
 
-def extract_entries(ldif_content: str) -> list[dict[str, object]]:
+def extract_entries(ldif_content: str) -> list[GenericTestCaseDict]:
     """Extract LDAP entries from LDIF content.
 
     Args:
@@ -52,8 +57,8 @@ def extract_entries(ldif_content: str) -> list[dict[str, object]]:
         List of parsed LDAP entries as dictionaries
 
     """
-    entries: list[dict[str, object]] = []
-    current_entry: dict[str, object] = {}
+    entries: list[GenericTestCaseDict] = []
+    current_entry: GenericFieldsDict = {}
     lines = ldif_content.split("\n")
 
     i = 0
@@ -282,7 +287,7 @@ def count_entries(ldif_content: str) -> int:
 
 
 def get_entry_attribute_values(
-    entry: dict[str, object],
+    entry: GenericFieldsDict,
     attr_name: str,
 ) -> list[str]:
     """Extract all values for a given attribute from an entry.
@@ -306,9 +311,9 @@ def get_entry_attribute_values(
 
 
 def compare_entries_deep(
-    original: dict[str, object],
-    roundtrip: dict[str, object],
-) -> dict[str, object]:
+    original: GenericFieldsDict,
+    roundtrip: GenericFieldsDict,
+) -> GenericFieldsDict:
     """Deep comparison of two entries, returning detailed difference report.
 
     Validates:
@@ -346,7 +351,7 @@ def compare_entries_deep(
     missing = original_attrs - roundtrip_attrs
     extra = roundtrip_attrs - original_attrs
 
-    value_mismatches: dict[str, dict[str, object]] = {}
+    value_mismatches: dict[str, GenericFieldsDict] = {}
     for attr in original_attrs & roundtrip_attrs:
         orig_values = get_entry_attribute_values(original, attr)
         round_values = get_entry_attribute_values(roundtrip, attr)
@@ -394,7 +399,7 @@ def compare_entries_deep(
 # ============================================================================
 
 
-def validate_ldif_rfc2849_format(content: str) -> dict[str, object]:
+def validate_ldif_rfc2849_format(content: str) -> GenericFieldsDict:
     """Validate LDIF content conforms to RFC 2849 format rules.
 
     Validates:
@@ -456,7 +461,7 @@ def validate_ldif_rfc2849_format(content: str) -> dict[str, object]:
     }
 
 
-def validate_dn_rfc4514_format(dn: str) -> dict[str, object]:
+def validate_dn_rfc4514_format(dn: str) -> GenericFieldsDict:
     """Validate DN conforms to RFC 4514 Distinguished Name format.
 
     Validates:

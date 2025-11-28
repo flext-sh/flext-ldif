@@ -19,9 +19,11 @@ from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests.fixtures.typing import GenericFieldsDict
 from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
+from .constants import FlextLdifTestConstants
 from .test_assertions import TestAssertions
 
 T = TypeVar("T")
@@ -52,7 +54,9 @@ class RfcTestHelpers:
         parser: FlextLdifParser,
         ldif_content: str,
         expected_count: int | None = None,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
     ) -> list[FlextLdifModels.Entry]:
         r"""Complete LDIF parse test - replaces entire test function.
 
@@ -108,7 +112,9 @@ class RfcTestHelpers:
         expected_dn: str | None = None,
         expected_attributes: list[str] | None = None,
         expected_count: int | None = None,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
     ) -> list[FlextLdifModels.Entry]:
         r"""Parse LDIF and assert entry structure - replaces 15-25 lines.
 
@@ -158,7 +164,9 @@ class RfcTestHelpers:
         *,
         expected_dns: list[str] | None = None,
         expected_count: int | None = None,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
     ) -> list[FlextLdifModels.Entry]:
         """Parse multiple entries and assert DN presence - replaces 10-15 lines.
 
@@ -227,7 +235,9 @@ class RfcTestHelpers:
     def test_write_entries_to_string(
         writer: FlextLdifWriter,
         entries: list[FlextLdifModels.Entry],
-        target_server_type: str = "rfc",
+        target_server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str
+        ) = "rfc",
         expected_content: list[str] | None = None,
     ) -> str:
         """Complete entry write to string test - replaces entire test function.
@@ -260,7 +270,9 @@ class RfcTestHelpers:
         writer: FlextLdifWriter,
         entries: list[FlextLdifModels.Entry],
         output_file: Path,
-        target_server_type: str = "rfc",
+        target_server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str
+        ) = "rfc",
     ) -> Path:
         """Complete entry write to file test - replaces entire test function.
 
@@ -593,7 +605,9 @@ class RfcTestHelpers:
         writer: FlextLdifWriter,
         entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
         *,
-        target_server_type: str = "rfc",
+        target_server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str
+        ) = "rfc",
     ) -> None:
         """Test writing multiple entry variations using mappings.
 
@@ -1384,7 +1398,9 @@ class RfcTestHelpers:
         *,
         expected_count: int | None = None,
         expected_dns: list[str] | None = None,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
     ) -> list[FlextLdifModels.Entry]:
         """API parse with automatic validation - replaces 10-20 lines.
 
@@ -1428,7 +1444,9 @@ class RfcTestHelpers:
         *,
         must_contain: list[str] | None = None,
         output_path: Path | None = None,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
     ) -> str:
         """API write with automatic validation - replaces 10-15 lines.
 
@@ -1445,7 +1463,7 @@ class RfcTestHelpers:
         """
         if isinstance(entries, FlextLdifModels.Entry):
             entries = [entries]
-        kwargs: dict[str, object] = {}
+        kwargs: GenericFieldsDict = {}
         if output_path:
             kwargs["output_path"] = output_path
         if server_type:
@@ -1475,7 +1493,9 @@ class RfcTestHelpers:
         ldif_input: str | Path,
         *,
         expected_count: int | None = None,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
         tmp_path: Path | None = None,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry], str]:
         """API roundtrip test - replaces 20-30 lines.
@@ -2568,7 +2588,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_attribute_from_dict(
-        attr_dict: dict[str, object],
+        attr_dict: GenericFieldsDict,
         *,
         default_oid: str = "1.2.3.4",
         default_name: str = "testAttr",
@@ -2605,7 +2625,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_objectclass_from_dict(
-        oc_dict: dict[str, object],
+        oc_dict: GenericFieldsDict,
         *,
         default_oid: str = "1.2.3.4",
         default_name: str = "testClass",
@@ -2801,12 +2821,12 @@ class RfcTestHelpers:
             else None
         )
         entry_metadata = (
-            cast("dict[str, object] | None", kwargs.get("entry_metadata"))
+            cast("GenericFieldsDict | None", kwargs.get("entry_metadata"))
             if "entry_metadata" in kwargs
             else None
         )
         validation_metadata = (
-            cast("dict[str, object] | None", kwargs.get("validation_metadata"))
+            cast("GenericFieldsDict | None", kwargs.get("validation_metadata"))
             if "validation_metadata" in kwargs
             else None
         )
@@ -2821,7 +2841,7 @@ class RfcTestHelpers:
             else None
         )
         unconverted_attributes = (
-            cast("dict[str, object] | None", kwargs.get("unconverted_attributes"))
+            cast("GenericFieldsDict | None", kwargs.get("unconverted_attributes"))
             if "unconverted_attributes" in kwargs
             else None
         )
@@ -2886,20 +2906,46 @@ class RfcTestHelpers:
         return FlextLdifModels.SchemaAttribute(
             oid=oid,
             name=name,
-            desc=kwargs.get("desc") if isinstance(kwargs.get("desc"), (str, type(None))) else None,
-            sup=kwargs.get("sup") if isinstance(kwargs.get("sup"), (str, type(None))) else None,
-            equality=kwargs.get("equality") if isinstance(kwargs.get("equality"), (str, type(None))) else None,
-            ordering=kwargs.get("ordering") if isinstance(kwargs.get("ordering"), (str, type(None))) else None,
-            substr=kwargs.get("substr") if isinstance(kwargs.get("substr"), (str, type(None))) else None,
-            syntax=kwargs.get("syntax") if isinstance(kwargs.get("syntax"), (str, type(None))) else None,
-            length=kwargs.get("length") if isinstance(kwargs.get("length"), (int, type(None))) else None,
+            desc=kwargs.get("desc")
+            if isinstance(kwargs.get("desc"), (str, type(None)))
+            else None,
+            sup=kwargs.get("sup")
+            if isinstance(kwargs.get("sup"), (str, type(None)))
+            else None,
+            equality=kwargs.get("equality")
+            if isinstance(kwargs.get("equality"), (str, type(None)))
+            else None,
+            ordering=kwargs.get("ordering")
+            if isinstance(kwargs.get("ordering"), (str, type(None)))
+            else None,
+            substr=kwargs.get("substr")
+            if isinstance(kwargs.get("substr"), (str, type(None)))
+            else None,
+            syntax=kwargs.get("syntax")
+            if isinstance(kwargs.get("syntax"), (str, type(None)))
+            else None,
+            length=kwargs.get("length")
+            if isinstance(kwargs.get("length"), (int, type(None)))
+            else None,
             single_value=bool(kwargs.get("single_value")),
-            usage=kwargs.get("usage") if isinstance(kwargs.get("usage"), (str, type(None))) else None,
-            x_origin=kwargs.get("x_origin") if isinstance(kwargs.get("x_origin"), (str, type(None))) else None,
-            x_file_ref=kwargs.get("x_file_ref") if isinstance(kwargs.get("x_file_ref"), (str, type(None))) else None,
-            x_name=kwargs.get("x_name") if isinstance(kwargs.get("x_name"), (str, type(None))) else None,
-            x_alias=kwargs.get("x_alias") if isinstance(kwargs.get("x_alias"), (str, type(None))) else None,
-            x_oid=kwargs.get("x_oid") if isinstance(kwargs.get("x_oid"), (str, type(None))) else None,
+            usage=kwargs.get("usage")
+            if isinstance(kwargs.get("usage"), (str, type(None)))
+            else None,
+            x_origin=kwargs.get("x_origin")
+            if isinstance(kwargs.get("x_origin"), (str, type(None)))
+            else None,
+            x_file_ref=kwargs.get("x_file_ref")
+            if isinstance(kwargs.get("x_file_ref"), (str, type(None)))
+            else None,
+            x_name=kwargs.get("x_name")
+            if isinstance(kwargs.get("x_name"), (str, type(None)))
+            else None,
+            x_alias=kwargs.get("x_alias")
+            if isinstance(kwargs.get("x_alias"), (str, type(None)))
+            else None,
+            x_oid=kwargs.get("x_oid")
+            if isinstance(kwargs.get("x_oid"), (str, type(None)))
+            else None,
         )
 
     @staticmethod
@@ -2929,12 +2975,26 @@ class RfcTestHelpers:
         return FlextLdifModels.SchemaObjectClass(
             oid=oid,
             name=name,
-            desc=kwargs.get("desc") if isinstance(kwargs.get("desc"), (str, type(None))) else None,
-            sup=kwargs.get("sup") if isinstance(kwargs.get("sup"), (str, list, type(None))) else None,
-            kind=kwargs.get("kind", "STRUCTURAL") if isinstance(kwargs.get("kind", "STRUCTURAL"), str) else "STRUCTURAL",
-            must=kwargs.get("must") if isinstance(kwargs.get("must"), (list, type(None))) else None,
-            may=kwargs.get("may") if isinstance(kwargs.get("may"), (list, type(None))) else None,
-            metadata=kwargs.get("metadata") if isinstance(kwargs.get("metadata"), (FlextLdifModels.QuirkMetadata, type(None))) else None,
+            desc=kwargs.get("desc")
+            if isinstance(kwargs.get("desc"), (str, type(None)))
+            else None,
+            sup=kwargs.get("sup")
+            if isinstance(kwargs.get("sup"), (str, list, type(None)))
+            else None,
+            kind=kwargs.get("kind", "STRUCTURAL")
+            if isinstance(kwargs.get("kind", "STRUCTURAL"), str)
+            else "STRUCTURAL",
+            must=kwargs.get("must")
+            if isinstance(kwargs.get("must"), (list, type(None)))
+            else None,
+            may=kwargs.get("may")
+            if isinstance(kwargs.get("may"), (list, type(None)))
+            else None,
+            metadata=kwargs.get("metadata")
+            if isinstance(
+                kwargs.get("metadata"), (FlextLdifModels.QuirkMetadata, type(None))
+            )
+            else None,
         )
 
     @staticmethod
@@ -2942,7 +3002,9 @@ class RfcTestHelpers:
         api: HasParseMethod,
         fixture_path: Path | str,
         *,
-        server_type: str | None = None,
+        server_type: (
+            FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None
+        ) = None,
         expected_min_count: int | None = None,
     ) -> list[FlextLdifModels.Entry]:
         """Parse fixture file using API and validate entries - replaces 10-15 lines.

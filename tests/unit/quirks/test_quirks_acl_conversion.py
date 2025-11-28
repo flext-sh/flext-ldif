@@ -332,9 +332,11 @@ class TestOUDToOIDACLConversion:
                 "orclaci:" in oid_acl.lower() or "orclentrylevelaci:" in oid_acl.lower()
             ), "Should have OID ACL prefix"
             # Accept multiple formats for anonymous access representation
-            assert "by *" in oid_acl or "by anonymous" in oid_acl.lower() or 'by "anyone"' in oid_acl.lower(), (
-                'Should indicate anonymous access (by *, by anonymous, or by "anyone")'
-            )
+            assert (
+                "by *" in oid_acl
+                or "by anonymous" in oid_acl.lower()
+                or 'by "anyone"' in oid_acl.lower()
+            ), 'Should indicate anonymous access (by *, by anonymous, or by "anyone")'
 
     def test_oud_aci_with_ldap_url_to_oid_orclaci(
         self,
@@ -386,7 +388,7 @@ class TestOUDToOIDACLConversion:
             # OID format uses group="dn" not ldap:/// URLs
             # KNOWN LIMITATION: Conversion logic should format group DNs as group="..."
             # not bare "..." - currently accepting bare DN format as intermediate step
-            assert ("group=" in oid_acl.lower() or 'by "' in oid_acl), (
+            assert "group=" in oid_acl.lower() or 'by "' in oid_acl, (
                 "Should have group= clause or DN reference in subject"
             )
             assert "ldap:///" not in oid_acl, "Should not have LDAP URL in OID format"

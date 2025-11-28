@@ -650,8 +650,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: dict[str, object] | None = None,
-    ) -> dict[str, object]:
+        additional_extensions: dict[str, bool | list[str] | str | None] | None = None,
+    ) -> dict[str, bool | list[str] | str | None]:
         """Build metadata extensions dictionary for schema definitions.
 
         Generic method to build metadata from schema definition string.
@@ -745,8 +745,8 @@ class FlextLdifUtilitiesSchema:
         )
 
         # Validate syntax OID (if requested)
-        syntax_extensions: dict[str, object] = {}
-        syntax_validation: dict[str, object] | None = None
+        syntax_extensions: dict[str, bool | list[str] | str | None] = {}
+        syntax_validation: dict[str, bool | list[str] | str | None] | None = None
         if validate_syntax and syntax and syntax.strip():
             validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
             if validate_result.is_failure:
@@ -951,12 +951,18 @@ class FlextLdifUtilitiesSchema:
         if not (
             attr_data.metadata
             and attr_data.metadata.schema_format_details
-            and attr_data.metadata.schema_format_details.get("original_string_complete")
+            and getattr(
+                attr_data.metadata.schema_format_details,
+                "original_string_complete",
+                None,
+            )
         ):
             return None
 
         original = str(
-            attr_data.metadata.schema_format_details.get("original_string_complete", "")
+            getattr(
+                attr_data.metadata.schema_format_details, "original_string_complete", ""
+            )
         )
         if not original:
             return None
@@ -967,7 +973,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_name_part(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -987,9 +993,11 @@ class FlextLdifUtilitiesSchema:
         if not restore_format or not attr_data.metadata:
             return f"NAME '{attr_data.name}'"
 
-        schema_details = attr_data.metadata.schema_format_details or {}
-        name_format = schema_details.get("name_format", "single")
-        name_values_ = schema_details.get("name_values", [])
+        schema_details = attr_data.metadata.schema_format_details
+        if not schema_details:
+            return f"NAME '{attr_data.name}'"
+        name_format = getattr(schema_details, "name_format", "single")
+        name_values_ = getattr(schema_details, "name_values", [])
         name_values: list[str] = (
             [str(v) for v in name_values_] if isinstance(name_values_, list) else []
         )
@@ -1002,7 +1010,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_obsolete_part(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         parts: list[str],
         field_order: list[str] | None,
         *,
@@ -1019,8 +1027,12 @@ class FlextLdifUtilitiesSchema:
         """
         has_obsolete = False
         if attr_data.metadata:
-            schema_details = attr_data.metadata.schema_format_details or {}
-            has_obsolete = bool(schema_details.get("obsolete_presence", False))
+            schema_details = attr_data.metadata.schema_format_details
+            has_obsolete = bool(
+                getattr(schema_details, "obsolete_presence", False)
+                if schema_details
+                else False
+            )
             if not has_obsolete:
                 has_obsolete = bool(
                     attr_data.metadata.extensions.get(
@@ -1039,7 +1051,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_x_origin_part(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -1056,15 +1068,16 @@ class FlextLdifUtilitiesSchema:
         if not attr_data.metadata:
             return None
 
-        schema_details = attr_data.metadata.schema_format_details or {}
+        schema_details = attr_data.metadata.schema_format_details
         x_origin_value = None
 
         if (
             restore_format
-            and schema_details.get("x_origin_presence")
-            and schema_details.get("x_origin_value")
+            and schema_details
+            and getattr(schema_details, "x_origin_presence", None)
+            and getattr(schema_details, "x_origin_value", None)
         ):
-            x_origin_value = schema_details.get("x_origin_value")
+            x_origin_value = getattr(schema_details, "x_origin_value", None)
 
         if not x_origin_value:
             x_origin_value = attr_data.metadata.extensions.get("x_origin")
@@ -1087,14 +1100,16 @@ class FlextLdifUtilitiesSchema:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
 
-        field_order_ = attr_data.metadata.schema_format_details.get("field_order")
+        field_order_ = getattr(
+            attr_data.metadata.schema_format_details, "field_order", None
+        )
         if field_order_ and isinstance(field_order_, list):
             return [str(item) for item in field_order_]
         return None
 
     @staticmethod
     def _apply_trailing_spaces(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         parts: list[str],
     ) -> None:
         """Apply trailing spaces from metadata if available.
@@ -1107,7 +1122,9 @@ class FlextLdifUtilitiesSchema:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return
 
-        trailing = attr_data.metadata.schema_format_details.get("trailing_spaces", "")
+        trailing = getattr(
+            attr_data.metadata.schema_format_details, "trailing_spaces", ""
+        )
         if trailing and parts:
             parts[-1] += str(trailing)
 
@@ -1288,7 +1305,7 @@ class FlextLdifUtilitiesSchema:
         if not schema_details:
             return None
 
-        original = str(schema_details.get("original_string_complete", ""))
+        original = str(getattr(schema_details, "original_string_complete", ""))
         if not original:
             return None
 
@@ -1345,7 +1362,9 @@ class FlextLdifUtilitiesSchema:
         # OBSOLETE with position restoration
         field_order = None
         if oc_data.metadata and oc_data.metadata.schema_format_details:
-            field_order_ = oc_data.metadata.schema_format_details.get("field_order")
+            field_order_ = getattr(
+                oc_data.metadata.schema_format_details, "field_order", None
+            )
             if field_order_ and isinstance(field_order_, list):
                 field_order = [str(item) for item in field_order_]
 

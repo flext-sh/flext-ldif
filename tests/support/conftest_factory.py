@@ -26,6 +26,10 @@ from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 from tests.fixtures import FlextLdifFixtures
+from tests.fixtures.typing import (
+    GenericFieldsDict,
+    GenericTestCaseDict,
+)
 from tests.helpers.test_assertions import TestAssertions
 
 from .ldif_data import LdifTestData
@@ -117,7 +121,7 @@ class FlextLdifTestConftest:
     def make_user_dn(
         self,
         unique_dn_suffix: str,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Callable[[str], str]:
         """Factory for unique user DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -130,7 +134,7 @@ class FlextLdifTestConftest:
     def make_group_dn(
         self,
         unique_dn_suffix: str,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Callable[[str], str]:
         """Factory for unique group DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -143,7 +147,7 @@ class FlextLdifTestConftest:
     def make_test_base_dn(
         self,
         unique_dn_suffix: str,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Callable[[str], str]:
         """Factory for unique base DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -177,7 +181,7 @@ class FlextLdifTestConftest:
         self,
         docker_control: FlextTestDocker,
         worker_id: str,
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Session-scoped LDAP container configuration.
 
         Uses FlextTestDocker.SHARED_CONTAINERS for container config.
@@ -260,13 +264,13 @@ class FlextLdifTestConftest:
             "worker_id": worker_id,
         }
 
-    def ldap_container_shared(self, ldap_container: dict[str, object]) -> str:
+    def ldap_container_shared(self, ldap_container: GenericFieldsDict) -> str:
         """Provide LDAP connection string."""
         return str(ldap_container["server_url"])
 
     def ldap_connection(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container["host"])
@@ -341,7 +345,7 @@ class FlextLdifTestConftest:
             pass
 
     # LDIF processing fixtures
-    def ldif_processor_config(self) -> dict[str, object]:
+    def ldif_processor_config(self) -> GenericFieldsDict:
         """LDIF processor configuration."""
         return {
             "encoding": FlextConstants.Mixins.DEFAULT_ENCODING,
@@ -351,15 +355,15 @@ class FlextLdifTestConftest:
             "normalize_attributes": True,
         }
 
-    def real_ldif_api(self) -> dict[str, object]:
+    def real_ldif_api(self) -> GenericFieldsDict:
         """Real LDIF API services."""
         return RealServiceFactory.create_api()
 
-    def strict_ldif_api(self) -> dict[str, object]:
+    def strict_ldif_api(self) -> GenericFieldsDict:
         """Strict LDIF API services."""
         return RealServiceFactory.create_strict_api()
 
-    def lenient_ldif_api(self) -> dict[str, object]:
+    def lenient_ldif_api(self) -> GenericFieldsDict:
         """Lenient LDIF API services."""
         return RealServiceFactory.create_lenient_api()
 
@@ -437,7 +441,7 @@ class FlextLdifTestConftest:
         """Real writer service."""
         return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
-    def integration_services(self) -> dict[str, object]:
+    def integration_services(self) -> GenericFieldsDict:
         """Integration services."""
         return RealServiceFactory.services_for_integration_test()
 
@@ -489,10 +493,10 @@ class FlextLdifTestConftest:
 
     def flext_result_composition_helper(
         self,
-    ) -> Callable[[list[FlextResult[object]]], dict[str, object]]:
+    ) -> Callable[[list[FlextResult[object]]], GenericFieldsDict]:
         """Result composition helper."""
 
-        def helper(results: list[FlextResult[object]]) -> dict[str, object]:
+        def helper(results: list[FlextResult[object]]) -> GenericFieldsDict:
             successes = [r for r in results if r.is_success]
             failures = [r for r in results if r.is_failure]
             return {
@@ -508,7 +512,7 @@ class FlextLdifTestConftest:
         return helper
 
     # Schema and other fixtures
-    def ldap_schema_config(self) -> dict[str, object]:
+    def ldap_schema_config(self) -> GenericFieldsDict:
         """LDAP schema config."""
         return {
             "validate_object_classes": True,
@@ -530,7 +534,7 @@ class FlextLdifTestConftest:
             },
         }
 
-    def transformation_rules(self) -> dict[str, object]:
+    def transformation_rules(self) -> GenericFieldsDict:
         """Transformation rules."""
 
         def _transform_mail(x: str | float | None) -> str:
@@ -555,7 +559,7 @@ class FlextLdifTestConftest:
             },
         }
 
-    def ldif_filters(self) -> dict[str, object]:
+    def ldif_filters(self) -> GenericFieldsDict:
         """LDIF filters."""
         return {
             "include_object_classes": ["inetOrgPerson", "groupOfNames"],
@@ -567,7 +571,7 @@ class FlextLdifTestConftest:
             },
         }
 
-    def expected_ldif_stats(self) -> dict[str, object]:
+    def expected_ldif_stats(self) -> GenericFieldsDict:
         """Expected LDIF stats."""
         return {
             "total_entries": 4,
@@ -599,7 +603,7 @@ dn: uid=test,ou=people,dc=example,dc=com
 objectClass: person
 # Missing required attributes for person class"""
 
-    def large_ldif_config(self) -> dict[str, object]:
+    def large_ldif_config(self) -> GenericFieldsDict:
         """Large LDIF config."""
         return {
             "batch_size": 1000,
@@ -626,7 +630,7 @@ objectClass: person
     class LocalTestDomains:
         """Local test domains."""
 
-        def create_configuration(self, **kwargs: object) -> dict[str, object]:
+        def create_configuration(self, **kwargs: object) -> GenericFieldsDict:
             """Create config."""
             return kwargs
 
@@ -642,7 +646,7 @@ objectClass: person
         """LDIF test entries."""
         return copy.deepcopy(self._LDIF_TEST_ENTRIES)
 
-    def ldif_test_content(self, ldif_test_entries: list[dict[str, object]]) -> str:
+    def ldif_test_content(self, ldif_test_entries: list[GenericTestCaseDict]) -> str:
         """Generate LDIF content."""
         content_lines: list[str] = []
 
@@ -678,7 +682,7 @@ objectClass: person
     def ldif_performance_config(
         self,
         flext_domains: LocalTestDomains,
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Performance config."""
         config = flext_domains.create_configuration(
             batch_size=1000,

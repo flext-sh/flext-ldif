@@ -95,9 +95,7 @@ class TestFlextLdifOidSchemaWriting:
     # TEST DATA MAPPINGS
     # ═════════════════════════════════════════════════════════════════════════════
 
-    ATTRIBUTE_WRITING_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str, str]]
-    ] = {
+    ATTRIBUTE_WRITING_TEST_DATA: ClassVar[dict[str, tuple[str, str, str]]] = {
         AttributeWritingScenario.MINIMAL_ATTRIBUTE: (
             "2.16.840.1.113894.1.1.1",
             "orclguid",
@@ -121,9 +119,7 @@ class TestFlextLdifOidSchemaWriting:
         ),
     }
 
-    OBJECTCLASS_WRITING_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str, str, str]]
-    ] = {
+    OBJECTCLASS_WRITING_TEST_DATA: ClassVar[dict[str, tuple[str, str, str, str]]] = {
         ObjectClassWritingScenario.MINIMAL_OBJECTCLASS: (
             "2.16.840.1.113894.2.1.1",
             "orclContext",
@@ -150,9 +146,7 @@ class TestFlextLdifOidSchemaWriting:
         ),
     }
 
-    SYNTAX_TRANSFORMATION_TEST_DATA: ClassVar[
-        dict[str, tuple[str, str]]
-    ] = {
+    SYNTAX_TRANSFORMATION_TEST_DATA: ClassVar[dict[str, tuple[str, str]]] = {
         SyntaxTransformationScenario.SYNTAX_PRESERVATION: (
             "1.3.6.1.4.1.1466.115.121.1.15",
             "DirectoryString",
@@ -607,8 +601,7 @@ class TestFlextLdifOidSchemaWriting:
     ) -> None:
         """Test objectClass roundtrip: parse → write → parse."""
         original = (
-            "( 2.16.840.1.113894.2.1.50 NAME 'orclRoundTripOc' "
-            "SUP top STRUCTURAL )"
+            "( 2.16.840.1.113894.2.1.50 NAME 'orclRoundTripOc' SUP top STRUCTURAL )"
         )
 
         # First parse
@@ -659,9 +652,7 @@ class TestFlextLdifOidSchemaWriting:
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test objectClass kind is preserved correctly."""
-        oc_def = (
-            f"( 2.16.840.1.113894.2.1.100 NAME 'orclKindTest' SUP top {kind} )"
-        )
+        oc_def = f"( 2.16.840.1.113894.2.1.100 NAME 'orclKindTest' SUP top {kind} )"
 
         parsed_oc_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             oid_schema,
