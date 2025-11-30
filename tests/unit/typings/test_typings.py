@@ -20,7 +20,7 @@ from typing import ClassVar, cast
 
 import pytest
 from tests.fixtures.constants import DNs, Names, OIDs
-from tests.fixtures.typing import GenericFieldsDict, GenericTestCaseDict
+from tests.fixtures.typing import GenericFieldsDict
 
 import flext_ldif.typings
 from flext_ldif.typings import FlextLdifTypes

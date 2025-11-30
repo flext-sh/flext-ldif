@@ -18,8 +18,8 @@ from re import Pattern
 from typing import TypedDict, TypeVar, cast
 
 from flext_core import FlextResult
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import (
     FlextLdif,
     FlextLdifConstants,
@@ -3673,11 +3673,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             f"Metadata {type(metadata)} does not have extensions attribute"
         )
         assert metadata.extensions is not None, "Object must have extensions"
-        extensions_dict = getattr(metadata, "extensions", {})
-        if isinstance(extensions_dict, dict):
-            actual_value = extensions_dict.get(key)
-        else:
-            actual_value = getattr(extensions_dict, "get", lambda k: None)(key)
+        # DynamicMetadata has get() method - no need for dict check
+        actual_value = metadata.extensions.get(key)
         assert actual_value == expected_value, (
             error_msg
             or f"Expected metadata.extensions['{key}'] == {expected_value!r}, got {actual_value!r}"

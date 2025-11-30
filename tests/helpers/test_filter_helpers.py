@@ -36,7 +36,7 @@ class FilterTestHelpers:
 
         if should_succeed:
             filtered: list[FlextLdifModels.Entry] = TestAssertions.assert_success(
-                result
+                result,
             )
             if expected_count is not None:
                 assert len(filtered) == expected_count

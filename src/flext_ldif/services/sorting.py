@@ -40,10 +40,10 @@ class FlextLdifSorting(
 
     entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
     sort_target: FlextLdifConstants.LiteralTypes.SortTargetLiteral = Field(
-        default="entries"
+        default="entries",
     )
     sort_by: FlextLdifConstants.LiteralTypes.SortStrategyLiteral = Field(
-        default="hierarchy"
+        default="hierarchy",
     )
     custom_predicate: Callable[[FlextLdifModels.Entry], str | int | float] | None = (
         Field(default=None)
@@ -53,8 +53,8 @@ class FlextLdifSorting(
     sort_acl: bool = Field(default=False)
     acl_attributes: list[str] = Field(
         default_factory=lambda: list(
-            FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES
-        )
+            FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES,
+        ),
     )
     traversal: str = Field(default="depth-first")
 
@@ -72,7 +72,10 @@ class FlextLdifSorting(
         return self
 
     def with_attribute_sorting(
-        self, *, alphabetical: bool | None = None, order: list[str] | None = None
+        self,
+        *,
+        alphabetical: bool | None = None,
+        order: list[str] | None = None,
     ) -> Self:
         """Configure attribute sorting.
 
@@ -196,7 +199,7 @@ class FlextLdifSorting(
             method()
             if method
             else FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Unknown sort_target: {self.sort_target}"
+                f"Unknown sort_target: {self.sort_target}",
             )
         )
 
@@ -218,7 +221,7 @@ class FlextLdifSorting(
         """Sort entries with FlextResult for composable operations."""
         strategy = by.value if isinstance(by, FlextLdifConstants.SortStrategy) else by
         default_acl_attrs = list(
-            FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES
+            FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES,
         )
         return cls(
             entries=entries,
@@ -410,7 +413,7 @@ class FlextLdifSorting(
         method = strategies.get(self.sort_by)
         if not method:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Unknown strategy: {self.sort_by}"
+                f"Unknown strategy: {self.sort_by}",
             )
         return method()
 
@@ -494,12 +497,12 @@ class FlextLdifSorting(
         # Use QuirkMetadata.create_for() factory method which handles defaults
         if entry.metadata is None:
             return entry.model_copy(
-                update={"metadata": FlextLdifModels.QuirkMetadata.create_for()}
+                update={"metadata": FlextLdifModels.QuirkMetadata.create_for()},
             )
         if entry.metadata.extensions is None:
             # Initialize with empty DynamicMetadata via immutable model_copy
             new_metadata = entry.metadata.model_copy(
-                update={"extensions": FlextLdifModels.DynamicMetadata()}
+                update={"extensions": FlextLdifModels.DynamicMetadata()},
             )
             return entry.model_copy(update={"metadata": new_metadata})
         return entry

@@ -211,7 +211,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 )
 
         # Merge all overrides: mode_overrides < format_kwargs < explicit write_options
-        # Convert frozenset to list for GeneralValueType compatibility
+        # Convert frozenset to list for FlextTypes.GeneralValueType compatibility
         all_kwargs: dict[
             str,
             FlextLdifTypes.ScalarValue
@@ -505,7 +505,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
             # Normalize server type to ServerTypeLiteral
             normalized_source = FlextLdifConstants.normalize_server_type(
-                str(self._source_server)
+                str(self._source_server),
             )
             parse_result = self._parser.parse_ldif_file(
                 file_path,
@@ -742,7 +742,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
         # Normalize server type to ServerTypeLiteral
         normalized_target = FlextLdifConstants.normalize_server_type(
-            str(self._target_server)
+            str(self._target_server),
         )
         # all_output_entries is already list[FlextLdifModels.Entry] from categories.values()
         write_result = self._writer.write(
@@ -886,7 +886,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
             # Normalize server type to ServerTypeLiteral
             normalized_target = FlextLdifConstants.normalize_server_type(
-                self._target_server
+                self._target_server,
             )
             # Type narrowing: processed_entries may be mixed type, cast to public for writer
             write_result = self._writer.write(

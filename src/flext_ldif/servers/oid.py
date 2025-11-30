@@ -19,7 +19,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import reduce
-from typing import ClassVar, Union
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
 
@@ -1651,7 +1651,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 }
                 oid_metadata = attr_copy.metadata.model_copy(
                     update={
-                        "extensions": FlextLdifModels.DynamicMetadata(**new_extensions)
+                        "extensions": FlextLdifModels.DynamicMetadata(**new_extensions),
                     },
                 )
 
@@ -3091,7 +3091,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # via build_acl_metadata_complete(permissions=config.perms_dict) above
                 rfc_compliant_perms = (
                     FlextLdifModels.AclPermissions.get_rfc_compliant_permissions(
-                        perms_dict
+                        perms_dict,
                     )
                 )
 
@@ -3138,7 +3138,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         def convert_rfc_acl_to_aci(
             self,
             rfc_acl_attrs: dict[str, list[str]],
-            target_server: str = "oid",  # noqa: ARG002 - required by parent class signature
+            _target_server: str = "oid",
         ) -> FlextResult[dict[str, list[str]]]:
             """Convert RFC ACL format to Oracle OID orclaci format.
 
@@ -3654,9 +3654,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             boolean_attr_names = {attr.lower() for attr in boolean_attributes}
 
             # Use utilities.py for conversion (OID→RFC: "0/1" → "TRUE/FALSE")
-            # Type: dict[str, list[str]] is compatible with utility function
+
             converted_attrs_for_util: dict[str, list[str]] = dict(
-                entry_attributes.items()
+                entry_attributes.items(),
             )
             # Use constants for boolean format strings (DRY: avoid hardcoding)
             source_format = f"{FlextLdifServersOid.Constants.ZERO_OID}/{FlextLdifServersOid.Constants.ONE_OID}"
@@ -4263,14 +4263,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Build extensions dict using dict constructor + update for PERF403 compliance
             # Type annotation ensures MetadataValue compatibility
             extensions_data: dict[str, FlextLdifTypes.MetadataValue] = dict(
-                conversion_metadata
+                conversion_metadata,
             )
             extensions_data.update(dn_metadata)
             extensions_data.update(rfc_compliance_metadata)
             extensions_data.update(generic_metadata)
             extensions_data.update(original_extensions)
             extensions_data[FlextLdifConstants.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
-                original_entry.dn
+                original_entry.dn,
             )
 
             # Create metadata using domain class (create_for returns validated instance)

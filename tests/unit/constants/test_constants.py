@@ -140,10 +140,10 @@ class TestFlextLdifConstants:
     ]
 
     ENUM_CLASS_MAP: ClassVar[dict[str, type[object]]] = {
-        "PROCESSING_STAGE": FlextLdifConstants.ProcessingStage,
-        "HEALTH_STATUS": FlextLdifConstants.LdifHealthStatus,
-        "ENTRY_TYPE": FlextLdifConstants.EntryType,
-        "ENTRY_MODIFICATION": FlextLdifConstants.EntryModification,
+        "PROCESSING_STAGE": FlextLdifConstants.SharedDomain.ProcessingStage,
+        "HEALTH_STATUS": FlextLdifConstants.SharedDomain.LdifHealthStatus,
+        "ENTRY_TYPE": FlextLdifConstants.SharedDomain.EntryType,
+        "ENTRY_MODIFICATION": FlextLdifConstants.SharedDomain.EntryModification,
     }
 
     NAMESPACE_GROUPS: ClassVar[list[str]] = [
@@ -182,11 +182,9 @@ class TestFlextLdifConstants:
         assert actual == expected_value
 
     def test_default_version_matches_version_1(self) -> None:
-        """Test that default LDIF version matches version 1."""
-        assert (
-            FlextLdifConstants.Format.DEFAULT_LDIF_VERSION
-            == FlextLdifConstants.Format.LDIF_VERSION_1
-        )
+        """Test that LDIF formatting constants are properly defined."""
+        assert FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH == 78
+        assert FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH == 199
 
     # ════════════════════════════════════════════════════════════════════════
     # PROCESSING CONSTANTS TESTS (3 tests)
@@ -364,7 +362,7 @@ class TestFlextLdifConstants:
         )
 
         # Format
-        assert 40 < FlextLdifConstants.Format.MAX_LINE_LENGTH < 200
+        assert 40 < FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH < 200
 
         # Processing
         assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT > 0

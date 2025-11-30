@@ -24,8 +24,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
 from tests.fixtures.constants import DNs, Filters, Names, OIDs, Values

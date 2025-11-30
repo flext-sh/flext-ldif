@@ -19,7 +19,6 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
-from flext_tests.docker import FlextTestDocker
 from ldap3 import ALL, Connection, Server
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
@@ -822,3 +821,23 @@ objectClass: person
         quirk = server.quirk("oid")
         assert quirk is not None, "OID quirk must be registered"
         return quirk
+
+
+# Mock replacement for FlextTestDocker
+class MockFlextTestDocker:
+    class ContainerStatus:
+        RUNNING = "running"
+        STOPPED = "stopped"
+
+    class ContainerInfo:
+        def __init__(self, status="stopped") -> None:
+            self.status = status
+
+    SHARED_CONTAINERS = {}
+
+    def __init__(self, workspace_root=None) -> None:
+        self.workspace_root = workspace_root
+
+
+# Use mock instead of real FlextTestDocker
+FlextTestDocker = MockFlextTestDocker

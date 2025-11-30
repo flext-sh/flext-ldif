@@ -27,8 +27,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsUtilities
-
+# from flext_tests import FlextTestsUtilities  # Mocked in conftest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.processing import FlextLdifProcessing

@@ -961,8 +961,10 @@ class FlextLdifUtilitiesSchema:
 
         original = str(
             getattr(
-                attr_data.metadata.schema_format_details, "original_string_complete", ""
-            )
+                attr_data.metadata.schema_format_details,
+                "original_string_complete",
+                "",
+            ),
         )
         if not original:
             return None
@@ -1031,13 +1033,13 @@ class FlextLdifUtilitiesSchema:
             has_obsolete = bool(
                 getattr(schema_details, "obsolete_presence", False)
                 if schema_details
-                else False
+                else False,
             )
             if not has_obsolete:
                 has_obsolete = bool(
                     attr_data.metadata.extensions.get(
-                        FlextLdifConstants.MetadataKeys.OBSOLETE
-                    )
+                        FlextLdifConstants.MetadataKeys.OBSOLETE,
+                    ),
                 )
 
         if not has_obsolete:
@@ -1101,7 +1103,9 @@ class FlextLdifUtilitiesSchema:
             return None
 
         field_order_ = getattr(
-            attr_data.metadata.schema_format_details, "field_order", None
+            attr_data.metadata.schema_format_details,
+            "field_order",
+            None,
         )
         if field_order_ and isinstance(field_order_, list):
             return [str(item) for item in field_order_]
@@ -1123,7 +1127,9 @@ class FlextLdifUtilitiesSchema:
             return
 
         trailing = getattr(
-            attr_data.metadata.schema_format_details, "trailing_spaces", ""
+            attr_data.metadata.schema_format_details,
+            "trailing_spaces",
+            "",
         )
         if trailing and parts:
             parts[-1] += str(trailing)
@@ -1186,7 +1192,7 @@ class FlextLdifUtilitiesSchema:
         # Try original format restoration first (perfect round-trip)
         if restore_original:
             original_parts = FlextLdifUtilitiesSchema._try_restore_original_format(
-                attr_data
+                attr_data,
             )
             if original_parts:
                 return original_parts
@@ -1197,7 +1203,8 @@ class FlextLdifUtilitiesSchema:
 
         # NAME with format restoration
         name_part = FlextLdifUtilitiesSchema._build_name_part(
-            attr_data, restore_format=True
+            attr_data,
+            restore_format=True,
         )
         if name_part:
             parts.append(name_part)
@@ -1212,7 +1219,10 @@ class FlextLdifUtilitiesSchema:
 
         # OBSOLETE with position restoration
         FlextLdifUtilitiesSchema._build_obsolete_part(
-            attr_data, parts, field_order, restore_position=True
+            attr_data,
+            parts,
+            field_order,
+            restore_position=True,
         )
 
         # Matching rules, syntax, flags
@@ -1222,7 +1232,8 @@ class FlextLdifUtilitiesSchema:
 
         # X-ORIGIN with restoration
         x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
-            attr_data, restore_format=True
+            attr_data,
+            restore_format=True,
         )
         if x_origin_part:
             parts.append(x_origin_part)
@@ -1338,7 +1349,8 @@ class FlextLdifUtilitiesSchema:
         # Try original format restoration first (perfect round-trip)
         original_parts = (
             FlextLdifUtilitiesSchema._try_restore_objectclass_original_format(
-                oc_data, restore_original=restore_original
+                oc_data,
+                restore_original=restore_original,
             )
         )
         if original_parts:
@@ -1363,7 +1375,9 @@ class FlextLdifUtilitiesSchema:
         field_order = None
         if oc_data.metadata and oc_data.metadata.schema_format_details:
             field_order_ = getattr(
-                oc_data.metadata.schema_format_details, "field_order", None
+                oc_data.metadata.schema_format_details,
+                "field_order",
+                None,
             )
             if field_order_ and isinstance(field_order_, list):
                 field_order = [str(item) for item in field_order_]
@@ -1386,7 +1400,8 @@ class FlextLdifUtilitiesSchema:
 
         # MUST and MAY attributes (using helper)
         must_part = FlextLdifUtilitiesSchema._format_attribute_list(
-            oc_data.must, "MUST"
+            oc_data.must,
+            "MUST",
         )
         if must_part:
             parts.append(must_part)
@@ -1737,7 +1752,8 @@ class FlextLdifUtilitiesSchema:
             a
             for a in attrs
             if not FlextLdifUtilitiesSchema.is_attribute_in_list(
-                a, available_attributes
+                a,
+                available_attributes,
             )
         ]
 
@@ -1770,13 +1786,15 @@ class FlextLdifUtilitiesSchema:
         missing: list[str] = []
         missing.extend(
             FlextLdifUtilitiesSchema.find_missing_attributes(
-                must_attrs, available_attributes
-            )
+                must_attrs,
+                available_attributes,
+            ),
         )
         missing.extend(
             FlextLdifUtilitiesSchema.find_missing_attributes(
-                may_attrs, available_attributes
-            )
+                may_attrs,
+                available_attributes,
+            ),
         )
         return len(missing) == 0, missing
 

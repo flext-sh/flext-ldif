@@ -36,7 +36,7 @@ from typing import Final
 
 import pytest
 from flext_core import FlextConfig
-from flext_tests import FlextTestsMatchers
+from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
@@ -236,7 +236,7 @@ class TestServerDetector:
         @pytest.mark.parametrize(
             ("server_key", "expected_type"),
             [
-                ("389ds", FlextLdifConstants.ServerTypes.DS_389),
+                ("389ds", FlextLdifConstants.ServerTypes.DS389),
                 ("apache", FlextLdifConstants.ServerTypes.APACHE),
             ],
         )
@@ -464,7 +464,7 @@ class TestServerDetector:
             """Test resolve_from_config with relaxed parsing enabled."""
             ldif_config = _get_ldif_config()
             ldif_config = ldif_config.model_copy(
-                update={"enable_relaxed_parsing": True}
+                update={"enable_relaxed_parsing": True},
             )
             result = FlextLdifDetector.resolve_from_config(ldif_config)
             assert result == DetectorTestData.SERVER_RELAXED
@@ -497,7 +497,7 @@ class TestServerDetector:
             """Test resolve_from_config with disabled mode."""
             ldif_config = _get_ldif_config()
             ldif_config = ldif_config.model_copy(
-                update={"quirks_detection_mode": "disabled"}
+                update={"quirks_detection_mode": "disabled"},
             )
             result = FlextLdifDetector.resolve_from_config(ldif_config)
             assert result == DetectorTestData.SERVER_RFC

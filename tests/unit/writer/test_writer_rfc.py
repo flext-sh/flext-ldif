@@ -28,7 +28,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_tests import FlextTestsMatchers
+
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_factories import FlextLdifTestFactories
 

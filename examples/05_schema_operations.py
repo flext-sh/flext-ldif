@@ -1,5 +1,8 @@
 """Example 5: Advanced Schema Operations - Parallel Processing and Validation.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 Demonstrates flext-ldif advanced schema operations capabilities with minimal code bloat:
 - Parallel schema validation processing with ThreadPoolExecutor
 - Intelligent schema building with automatic type detection
@@ -343,7 +346,8 @@ mail: modern@example.com
         # Transform legacy attributes to modern schema
         attrs_dict: dict[str, str | list[str]] = {}
         if hasattr(ldif_entry, "attributes") and hasattr(
-            ldif_entry.attributes, "attributes"
+            ldif_entry.attributes,
+            "attributes",
         ):
             for attr_name, attr_values in ldif_entry.attributes.attributes.items():
                 if attr_name == "emailAddress":
@@ -504,7 +508,7 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
     schema_build_result = intelligent_schema_building()
     if schema_build_result.is_failure:
         return FlextResult[dict[str, object]].fail(
-            f"Schema building failed: {schema_build_result.error}"
+            f"Schema building failed: {schema_build_result.error}",
         )
 
     schema_entries = schema_build_result.unwrap()
@@ -561,11 +565,14 @@ def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
 
     # Railway Step 5: Parallel processing of validated entries
     process_result = api.process(
-        "transform", test_entries, parallel=True, max_workers=4
+        "transform",
+        test_entries,
+        parallel=True,
+        max_workers=4,
     )
     if process_result.is_failure:
         return FlextResult[dict[str, object]].fail(
-            f"Processing failed: {process_result.error}"
+            f"Processing failed: {process_result.error}",
         )
 
     transformed_count = len(process_result.unwrap())

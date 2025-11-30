@@ -23,10 +23,13 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextConfig
-from flext_ldap.config import FlextLdapConfig
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
+
+# Skip if flext_ldap not available (integration dependency)
+flext_ldap_config = pytest.importorskip("flext_ldap.config")
+FlextLdapConfig = flext_ldap_config.FlextLdapConfig
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution

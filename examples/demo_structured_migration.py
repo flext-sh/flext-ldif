@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Demo: Structured Migration with 6-File Output.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 This example demonstrates the new structured migration feature that produces
 6 organized LDIF files (00-schema through 06-rejected) with:
 - Automatic categorization (schema, hierarchy, users, groups, ACLs, data)

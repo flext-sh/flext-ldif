@@ -1,5 +1,8 @@
 """Example 4: Advanced Server Migration - Parallel Processing and Auto-Detection.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 Demonstrates flext-ldif advanced server migration capabilities with minimal code bloat:
 - Parallel migration processing with ThreadPoolExecutor
 - Automatic server type detection from LDIF content
@@ -99,7 +102,8 @@ member: cn=OUD User,ou=People,dc=example,dc=com
             sum(len(entries) for entries in result.entries_by_category.values())
         else:
             len(result.entries_by_category) if hasattr(
-                result, "entries_by_category"
+                result,
+                "entries_by_category",
             ) else 0
 
         return FlextResult.ok(result)
@@ -159,7 +163,7 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
 
         if migration_result.is_failure:
             return FlextResult.fail(
-                f"Migration to RFC failed: {migration_result.error}"
+                f"Migration to RFC failed: {migration_result.error}",
             )
 
         return FlextResult.ok({
@@ -320,7 +324,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             workflow_results["intermediate_migration"] = "success"
         else:
             return FlextResult.fail(
-                f"Intermediate migration failed: {intermediate_migration.error}"
+                f"Intermediate migration failed: {intermediate_migration.error}",
             )
 
         # Step 3: Final migration to RFC standard

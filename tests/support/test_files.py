@@ -1,6 +1,6 @@
 """Test file utilities for flext-ldif tests.
 
-Extends FlextTestsFileManager with LDIF-specific file operations.
+Extends object with LDIF-specific file operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,17 +13,15 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
-from flext_tests import FlextTestsFileManager
-
 from .ldif_data import LdifSample, LdifTestData
 
 
-class FileManager(FlextTestsFileManager):
+class FileManager:
     """Manages test files for LDIF testing.
 
-    Extends FlextTestsFileManager with LDIF-specific file operations.
+    Extends object with LDIF-specific file operations.
     Generic file operations (create_text_file, create_binary_file, etc.)
-    are inherited from FlextTestsFileManager.
+    are inherited from object.
 
     """
 
@@ -160,3 +158,44 @@ class FileManager(FlextTestsFileManager):
         with cls() as manager:
             created_files = manager.create_file_set(files, extension=".ldif")
             yield created_files
+
+    def __init__(self) -> None:
+        self._temp_dir = None
+
+    def __enter__(self):
+        from tempfile import TemporaryDirectory
+
+        self._temp_dir = TemporaryDirectory()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._temp_dir:
+            self._temp_dir.cleanup()
+
+    def _resolve_directory(self, directory: Path | None) -> Path:
+        """Resolve directory for file creation."""
+        if directory is not None:
+            return directory
+        if self._temp_dir:
+            return Path(self._temp_dir.name)
+        msg = "No directory specified and not in context manager"
+        raise RuntimeError(msg)
+
+    def create_text_file(
+        self, content: str, filename: str, directory: Path | None = None
+    ) -> Path:
+        """Create text file with given content."""
+        target_dir = self._resolve_directory(directory)
+        file_path = target_dir / filename
+        file_path.write_text(content, encoding="utf-8")
+        return file_path
+
+    def create_file_set(
+        self, files: dict[str, str], extension: str = ""
+    ) -> dict[str, Path]:
+        """Create set of files."""
+        created = {}
+        for name, content in files.items():
+            filename = f"{name}{extension}"
+            created[name] = self.create_text_file(content, filename)
+        return created

@@ -1,5 +1,8 @@
 """Example 7: Advanced Processing with Processors and Utilities.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 ⚠️ DEPRECATED: This example uses the old utilities.py API which has been removed.
 This file needs updating to use the new service-based architecture:
 - Use services.DnService for DN operations

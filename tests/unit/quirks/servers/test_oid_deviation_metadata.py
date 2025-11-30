@@ -22,6 +22,7 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.servers.oid import FlextLdifServersOid
 from tests.fixtures.typing import GenericFieldsDict
 
@@ -319,9 +320,12 @@ class TestFlextLdifOidMetadata:
         entry = entries[0]
         # Entry should preserve original data
         if entry.metadata and hasattr(entry.metadata, "extensions"):
-            # Extensions dict might contain original format
+            # Extensions must be DynamicMetadata, not dict
             assert (
-                isinstance(entry.metadata.extensions, dict)
+                isinstance(
+                    entry.metadata.extensions,
+                    FlextLdifModelsMetadata.DynamicMetadata,
+                )
                 or entry.metadata.extensions is None
             )
 
@@ -403,7 +407,10 @@ class TestFlextLdifOidMetadata:
         )
 
         assert metadata.quirk_type == "oid"
-        assert isinstance(metadata.extensions, dict)
+        assert isinstance(
+            metadata.extensions,
+            FlextLdifModelsMetadata.DynamicMetadata,
+        )
         assert "key1" in metadata.extensions
         assert "key2" in metadata.extensions
 
@@ -415,7 +422,10 @@ class TestFlextLdifOidMetadata:
         )
 
         assert metadata.quirk_type == "oid"
-        assert isinstance(metadata.extensions, dict)
+        assert isinstance(
+            metadata.extensions,
+            FlextLdifModelsMetadata.DynamicMetadata,
+        )
         assert len(metadata.extensions) == 0
 
     @pytest.mark.parametrize(

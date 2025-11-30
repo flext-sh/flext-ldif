@@ -33,7 +33,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation

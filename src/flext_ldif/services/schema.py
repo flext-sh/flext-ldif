@@ -152,7 +152,8 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         return cls()
 
     def with_server_type(
-        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        self,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
     ) -> Self:
         """Set server type for schema operations (fluent builder).
 
@@ -238,7 +239,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
             # Use utilities for RFC parsing
             parse_result = FlextLdifUtilities.Parser.parse_rfc_attribute(
-                attr_definition
+                attr_definition,
             )
             if parse_result.is_failure:
                 return parse_result
@@ -294,7 +295,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
             # Use utilities for RFC parsing
             parse_result = FlextLdifUtilities.Parser.parse_rfc_objectclass(
-                oc_definition
+                oc_definition,
             )
             if parse_result.is_failure:
                 return parse_result

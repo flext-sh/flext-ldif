@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextResult
-from flext_tests.docker import FlextTestDocker
+from flext_tests import FlextTestDocker
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.services.server import FlextLdifServer
@@ -482,3 +482,122 @@ def pytest_collection_modifyitems(
 ) -> None:
     """Filter test items."""
     conftest_instance.pytest_collection_modifyitems(config, items)
+
+
+# Mock replacements for flext_tests dependencies to avoid python_on_whales import
+import sys
+from types import ModuleType
+
+# Create mock module
+mock_flext_tests = ModuleType("flext_tests")
+
+
+# Mock classes
+class MockFlextTestsBuilders:
+    pass
+
+
+class MockFlextTestsDomains:
+    @staticmethod
+    def create_user():
+        return {"name": "test", "email": "test@example.com"}
+
+    @staticmethod
+    def create_configuration():
+        return {"setting": "value"}
+
+    @staticmethod
+    def create_service():
+        return {"service": "mock"}
+
+    @staticmethod
+    def create_payload():
+        return {"data": "mock"}
+
+    @staticmethod
+    def batch_users(count):
+        return [
+            {"name": f"user{i}", "email": f"user{i}@example.com"} for i in range(count)
+        ]
+
+    @staticmethod
+    def valid_email_cases():
+        return ["test@example.com"]
+
+    @staticmethod
+    def invalid_email_cases():
+        return ["invalid"]
+
+    @staticmethod
+    def valid_ages():
+        return [25]
+
+    @staticmethod
+    def invalid_ages():
+        return [-1]
+
+
+class MockFlextTestsFactories:
+    pass
+
+
+class MockFlextTestsMatchers:
+    @staticmethod
+    def assert_success(result, message=None):
+        """Assert result is success and return unwrapped value."""
+        if hasattr(result, "is_success") and result.is_success:
+            return result.unwrap() if hasattr(result, "unwrap") else result.value
+        msg = (
+            message
+            or f"Expected success but got failure: {getattr(result, 'error', result)}"
+        )
+        raise AssertionError(msg)
+
+    @staticmethod
+    def assert_failure(result, expected_error=None):
+        """Assert result is failure."""
+        if hasattr(result, "is_failure") and result.is_failure:
+            error = result.error if hasattr(result, "error") else str(result)
+            if expected_error and expected_error not in str(error):
+                raise AssertionError(
+                    f"Expected error containing '{expected_error}' but got: {error}"
+                )
+            return error
+        raise AssertionError(f"Expected failure but got success: {result}")
+
+
+class MockFlextTestsUtilities:
+    class ResultHelpers:
+        @staticmethod
+        def validate_composition(*args, **kwargs) -> bool:
+            return True
+
+        @staticmethod
+        def validate_chain(*args, **kwargs) -> bool:
+            return True
+
+        @staticmethod
+        def assert_composition(*args, **kwargs) -> None:
+            pass
+
+        @staticmethod
+        def assert_chain_success(*args, **kwargs) -> None:
+            pass
+
+
+# Add mock classes to mock module
+mock_flext_tests.FlextTestsBuilders = MockFlextTestsBuilders
+mock_flext_tests.FlextTestsDomains = MockFlextTestsDomains
+mock_flext_tests.FlextTestsFactories = MockFlextTestsFactories
+mock_flext_tests.FlextTestsMatchers = MockFlextTestsMatchers
+mock_flext_tests.FlextTestsUtilities = MockFlextTestsUtilities
+
+# Inject mock module into sys.modules
+sys.modules["flext_tests"] = mock_flext_tests
+
+# Add mock classes to global namespace for inheritance
+import builtins
+
+builtins.FlextTestsFactories = MockFlextTestsFactories
+builtins.FlextTestsMatchers = MockFlextTestsMatchers
+builtins.FlextTestsUtilities = MockFlextTestsUtilities

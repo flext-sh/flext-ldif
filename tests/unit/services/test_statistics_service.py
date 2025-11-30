@@ -32,7 +32,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
-from flext_tests import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities  # Mocked in conftest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
@@ -129,8 +129,8 @@ class TestFlextLdifStatistics:
                         entry_obj: GenericFieldsDict = dict(entry_value)
                         entries.append(
                             TestFlextLdifStatistics.Factories.create_entry_from_dict(
-                                entry_obj
-                            )
+                                entry_obj,
+                            ),
                         )
                 categories[category] = entries
             return categories
@@ -213,7 +213,7 @@ class TestFlextLdifStatistics:
         ) -> None:
             """Test statistics generation with parametrized test cases."""
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized
+                categorized,
             )
             output_files_str = {
                 k: str(v) if isinstance(v, str) else f"{k}.ldif"
@@ -323,7 +323,7 @@ class TestFlextLdifStatistics:
         ) -> None:
             """Test statistics with rejected entries using parametrized test cases."""
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized
+                categorized,
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -406,7 +406,7 @@ class TestFlextLdifStatistics:
         ) -> None:
             """Test rejection reason extraction with parametrized test cases."""
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized
+                categorized,
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -449,7 +449,7 @@ class TestFlextLdifStatistics:
                 for cat in expected_paths
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict
+                categorized_dict,
             )
             output_files_str = {
                 k: str(v) if isinstance(v, str) else f"{k}.ldif"
@@ -492,7 +492,7 @@ class TestFlextLdifStatistics:
                 ],
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict
+                categorized_dict,
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -524,7 +524,7 @@ class TestFlextLdifStatistics:
                 ],
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict
+                categorized_dict,
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -549,7 +549,7 @@ class TestFlextLdifStatistics:
                 "users": [{"dn": "cn=user1,dc=example,dc=com", "attributes": {}}],
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict
+                categorized_dict,
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -560,7 +560,7 @@ class TestFlextLdifStatistics:
             FlextTestsUtilities.TestUtilities.assert_result_success(result)
             stats = result.unwrap()
             assert stats.output_files["users"] == str(
-                output_dir / "exported_users.ldif"
+                output_dir / "exported_users.ldif",
             )
 
         def test_statistics_all_rejected_entries(self) -> None:
@@ -575,7 +575,7 @@ class TestFlextLdifStatistics:
                 ],
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict
+                categorized_dict,
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,

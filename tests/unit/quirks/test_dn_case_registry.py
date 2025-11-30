@@ -75,7 +75,8 @@ class TestFlextLdifDnCaseRegistry:
     # ════════════════════════════════════════════════════════════════════════
 
     def test_normalize_removes_spaces(
-        self, registry: FlextLdifModels.DnRegistry
+        self,
+        registry: FlextLdifModels.DnRegistry,
     ) -> None:
         """Test that DN normalization removes all spaces."""
         dn_with_spaces = "CN=Test, DC=Example, DC=Com"
@@ -457,7 +458,8 @@ class TestFlextLdifDnCaseRegistry:
         """Test normalizing single DN field."""
         data: DirectoryEntryDataDict = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
         result = registry_with_references.normalize_dn_references(
-            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn"],
         )
 
         assert result.is_success
@@ -475,7 +477,8 @@ class TestFlextLdifDnCaseRegistry:
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
         result = registry_with_references.normalize_dn_references(
-            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn", "member"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn", "member"],
         )
 
         assert result.is_success
@@ -510,7 +513,8 @@ class TestFlextLdifDnCaseRegistry:
         """Test that unregistered DNs are left unchanged."""
         data: DirectoryEntryDataDict = {"dn": "cn=unknown,dc=com"}
         result = registry_with_references.normalize_dn_references(
-            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn"],
         )
 
         assert result.is_success
@@ -528,7 +532,7 @@ class TestFlextLdifDnCaseRegistry:
             "owner": "cn=USER2,dc=com",
         }
         result = registry_with_references.normalize_dn_references(
-            cast("dict[str, str | list[str] | dict[str, str]]", data)
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
         )
 
         assert result.is_success
@@ -544,7 +548,8 @@ class TestFlextLdifDnCaseRegistry:
         """Test that missing fields don't cause errors."""
         data: DirectoryEntryDataDict = {"cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
         result = registry_with_references.normalize_dn_references(
-            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn", "member"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn", "member"],
         )
 
         assert result.is_success
@@ -564,7 +569,8 @@ class TestFlextLdifDnCaseRegistry:
             ],
         }
         result = registry_with_references.normalize_dn_references(
-            cast("dict[str, str | list[str] | dict[str, str]]", data), ["dn", "member"]
+            cast("dict[str, str | list[str] | dict[str, str]]", data),
+            ["dn", "member"],
         )
 
         assert result.is_success

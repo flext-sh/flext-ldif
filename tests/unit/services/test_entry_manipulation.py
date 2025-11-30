@@ -97,7 +97,8 @@ class TestEntryManipulationServices:
             """Test getting attribute from entry with no attributes."""
             service = TestEntryManipulationServices.Factories.create_service()
             entry = TestEntryManipulationServices.Factories.create_entry(
-                "cn=test,dc=example,dc=com", {}
+                "cn=test,dc=example,dc=com",
+                {},
             )
             result = service.get_entry_attribute(entry, "cn")
             assert result.is_failure

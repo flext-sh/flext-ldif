@@ -10,6 +10,7 @@ Usage: python scripts/refactor_all_tests.py <test_file_path>
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 from typing import TypedDict
 
@@ -56,8 +57,6 @@ def analyze_file(file_path: Path) -> TestStats:
 
 def main() -> None:
     """DRY main: process arguments and generate report."""
-    import sys
-
     if len(sys.argv) != 2:
         print("Usage: python scripts/refactor_all_tests.py <test_file_path>")
         sys.exit(1)

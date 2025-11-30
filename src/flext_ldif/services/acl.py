@@ -55,7 +55,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         # Get ACL quirk for server type
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
-            return FlextResult.fail(f"No ACL quirk found for server type: {server_type}")
+            return FlextResult.fail(
+                f"No ACL quirk found for server type: {server_type}"
+            )
 
         # Direct call to ACL quirk parse method
         parse_result = acl_quirk.parse(acl_string)
@@ -84,7 +86,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         # Get ACL quirk for server type
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
-            return FlextResult.fail(f"No ACL quirk found for server type: {server_type}")
+            return FlextResult.fail(
+                f"No ACL quirk found for server type: {server_type}"
+            )
 
         # Direct call to ACL quirk write method
         write_result = acl_quirk.write(acl)
@@ -110,30 +114,38 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
 
         """
         # Get ACL attribute name for server type
-        acl_attr_name = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(server_type)
+        acl_attr_name = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+            server_type
+        )
 
         if not acl_attr_name:
             # Server has no ACL attributes
-            return FlextResult.ok(FlextLdifModels.AclResponse(
-                acls=[],
-                statistics=FlextLdifModels.Statistics(
-                    processed_entries=1,
-                    acls_extracted=0,
-                ),
-            ))
+            return FlextResult.ok(
+                FlextLdifModels.AclResponse(
+                    acls=[],
+                    statistics=FlextLdifModels.Statistics(
+                        processed_entries=1,
+                        acls_extracted=0,
+                    ),
+                )
+            )
 
         # Extract ACL values from entry
-        acl_values = entry.get_attribute_values(next(iter(acl_attr_name)))  # Get first attribute name
+        acl_values = entry.get_attribute_values(
+            next(iter(acl_attr_name))
+        )  # Get first attribute name
 
         if not acl_values:
             # No ACL values found
-            return FlextResult.ok(FlextLdifModels.AclResponse(
-                acls=[],
-                statistics=FlextLdifModels.Statistics(
-                    processed_entries=1,
-                    acls_extracted=0,
-                ),
-            ))
+            return FlextResult.ok(
+                FlextLdifModels.AclResponse(
+                    acls=[],
+                    statistics=FlextLdifModels.Statistics(
+                        processed_entries=1,
+                        acls_extracted=0,
+                    ),
+                )
+            )
 
         # Parse each ACL value
         acls = []
@@ -153,7 +165,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
 
         # Create response
         response = FlextLdifModels.AclResponse(
-            acls=acls,  # type: ignore[arg-type]
+            acls=acls,
             statistics=FlextLdifModels.Statistics(
                 processed_entries=1,
                 acls_extracted=len(acls),
@@ -162,6 +174,21 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         )
 
         return FlextResult.ok(response)
+
+    def execute(self) -> FlextResult[FlextLdifModels.AclResponse]:
+        """Execute ACL service.
+
+        This service requires input data to process ACLs. Use parse_acl_string(),
+        parse_acl_attribute(), or parse_acl_attributes() methods instead.
+
+        Returns:
+            FlextResult.fail: Always fails as input is required
+
+        """
+        return FlextResult.fail(
+            "FlextLdifAcl requires input data to process ACLs. "
+            "Use parse_acl_string(), parse_acl_attribute(), or parse_acl_attributes() methods."
+        )
 
 
 __all__ = ["FlextLdifAcl"]

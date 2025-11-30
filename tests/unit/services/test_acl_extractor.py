@@ -18,8 +18,8 @@ import dataclasses
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsUtilities
 
+# from flext_tests import FlextTestsUtilities  # Mocked in conftest
 from flext_ldif.services.acl import FlextLdifAcl
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_assertions import TestAssertions

@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Import from flext-core (already available)
+from typing import cast
+
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
 
@@ -35,8 +36,11 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
 
     model_config = ConfigDict(
         strict=True,
-        validate_default=True,
         validate_assignment=True,
+        extra="forbid",
+        validate_default=True,
+        use_enum_values=True,
+        str_strip_whitespace=True,
     )
 
     # NOTE: metadata field is defined in subclasses with proper type
@@ -58,7 +62,11 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
         """
         metadata = getattr(self, "metadata", None)
         if metadata is not None and hasattr(metadata, "quirk_type"):
-            return metadata.quirk_type
+            quirk_type = getattr(metadata, "quirk_type", None)
+            if isinstance(quirk_type, str):
+                return cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", quirk_type
+                )
         return "rfc"
 
     @computed_field
@@ -96,8 +104,11 @@ class AclElement(FlextModels.ArbitraryTypesModel):
 
     model_config = ConfigDict(
         strict=True,
+        frozen=True,
+        extra="forbid",
         validate_default=True,
-        validate_assignment=True,
+        use_enum_values=True,
+        str_strip_whitespace=True,
     )
 
     server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
@@ -131,4 +142,5 @@ class AclElement(FlextModels.ArbitraryTypesModel):
             True if server_type is not RFC (uses vendor-specific features)
 
         """
-        return self.server_type != FlextLdifConstants.ServerTypes.RFC.value
+        # Compare with string literal "rfc" to match ServerTypeLiteral type
+        return self.server_type != "rfc"

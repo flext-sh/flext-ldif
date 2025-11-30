@@ -210,7 +210,7 @@ def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:
 
     # Special handling for server/*.py files - they use DI
     server_files = list(
-        (FLEXT_LDIF_ROOT / "src" / "flext_ldif" / "servers").glob("*.py")
+        (FLEXT_LDIF_ROOT / "src" / "flext_ldif" / "servers").glob("*.py"),
     )
     server_classes: set[str] = set()
     for server_file in server_files:
@@ -264,7 +264,8 @@ def main() -> None:
         if items:
             print(f"\n{def_type.upper()}S ({len(items)}):")
             for name, file_path, lineno in sorted(
-                items, key=lambda x: (str(x[1]), x[2])
+                items,
+                key=lambda x: (str(x[1]), x[2]),
             ):
                 try:
                     rel_path = file_path.relative_to(FLEXT_LDIF_ROOT)

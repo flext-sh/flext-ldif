@@ -28,8 +28,8 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.syntax import FlextLdifSyntax
@@ -168,8 +168,8 @@ class TestFlextLdifEntrys:
                         **(
                             {
                                 EntryTestConstants.OPERATIONAL_ATTRS[i % 3]: [
-                                    "20250104120000Z"
-                                ]
+                                    "20250104120000Z",
+                                ],
                             }
                             if i < 3
                             else {}
@@ -422,12 +422,13 @@ class TestFlextLdifEntrys:
 
             # Batch pipeline
             batch_result = FlextTestsMatchers.assert_success(
-                FlextLdifEntries.remove_operational_attributes_batch(entries_batch)
+                FlextLdifEntries.remove_operational_attributes_batch(entries_batch),
             )
             final_batch = FlextTestsMatchers.assert_success(
                 FlextLdifEntries.remove_attributes_batch(
-                    batch_result, attributes=[Names.CN]
-                )
+                    batch_result,
+                    attributes=[Names.CN],
+                ),
             )
             assert len(final_batch) == len(entries_batch)
             for entry in final_batch:
@@ -456,7 +457,8 @@ class TestFlextLdifEntrys:
             """Parametrized test for edge cases."""
             if test_type == "no_attributes":
                 entry = FlextLdifTestFactories.create_entry(
-                    "cn=empty,dc=example,dc=com", {Names.CN: ["empty"]}
+                    "cn=empty,dc=example,dc=com",
+                    {Names.CN: ["empty"]},
                 )
                 EntryTestHelpers.test_remove_operational_attributes_complete(
                     entry,
@@ -479,11 +481,12 @@ class TestFlextLdifEntrys:
                 ]
                 if non_operational:
                     entry_result = FlextLdifEntries.remove_attributes(
-                        entry, attributes=non_operational
+                        entry,
+                        attributes=non_operational,
                     )
                     entry = FlextTestsMatchers.assert_success(entry_result)
                 cleaned = EntryTestHelpers.test_remove_operational_attributes_complete(
-                    entry
+                    entry,
                 )
                 assert cleaned is not None
                 assert (
@@ -521,7 +524,8 @@ class TestFlextLdifEntrys:
                 }
                 attrs[Names.CN] = [Values.TEST]
                 entry = FlextLdifTestFactories.create_entry(
-                    "cn=test,dc=example,dc=com", attrs
+                    "cn=test,dc=example,dc=com",
+                    attrs,
                 )
                 cleaned = EntryTestHelpers.test_remove_attributes_complete(
                     entry,
@@ -641,14 +645,14 @@ class TestFlextLdifEntrys:
 
             elif test_type == "is_rfc4517_standard":
                 assert syntax.is_rfc4517_standard(
-                    EntryTestConstants.BOOLEAN_OID
+                    EntryTestConstants.BOOLEAN_OID,
                 ).is_success
 
             elif test_type == "lookup_name":
                 result = syntax.lookup_name(EntryTestConstants.BOOLEAN_NAME)
                 if not result.is_success:
                     result = syntax.lookup_name(
-                        EntryTestConstants.BOOLEAN_NAME.capitalize()
+                        EntryTestConstants.BOOLEAN_NAME.capitalize(),
                     )
                 assert result.unwrap() == EntryTestConstants.BOOLEAN_OID
 
@@ -666,7 +670,8 @@ class TestFlextLdifEntrys:
 
             elif test_type == "validate_value":
                 assert syntax.validate_value(
-                    "TRUE", EntryTestConstants.BOOLEAN_OID
+                    "TRUE",
+                    EntryTestConstants.BOOLEAN_OID,
                 ).is_success
 
             elif test_type == "get_category":

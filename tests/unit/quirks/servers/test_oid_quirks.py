@@ -364,7 +364,7 @@ class TestFlextLdifOidQuirks:
     ) -> None:
         """Test can_handle with invalid input types."""
         result = schema_quirk.parse(
-            str(invalid_input) if not isinstance(invalid_input, str) else invalid_input
+            str(invalid_input) if not isinstance(invalid_input, str) else invalid_input,
         )
         TestAssertions.assert_failure(result)
 
@@ -899,7 +899,7 @@ class TestFlextLdifOidQuirks:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": f"( {original_oid} NAME '{original_name}' )"
+                    "original_format": f"( {original_oid} NAME '{original_name}' )",
                 },
             ),
         )
@@ -925,7 +925,7 @@ class TestFlextLdifOidQuirks:
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
                 extensions={
-                    "original_format": f"( {original_oid} NAME '{original_name}' SUP top )"
+                    "original_format": f"( {original_oid} NAME '{original_name}' SUP top )",
                 },
             ),
         )

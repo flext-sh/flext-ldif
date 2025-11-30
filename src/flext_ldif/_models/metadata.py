@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Generator, ItemsView, KeysView, ValuesView
 from typing import overload
 
-from flext_core import FlextModels
+from flext_core import FlextModels, FlextTypes
 from pydantic import ConfigDict
 
 from flext_ldif.typings import FlextLdifTypes
@@ -50,11 +50,13 @@ class FlextLdifModelsMetadata:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
         @overload
-        def get(self, key: str) -> FlextLdifTypes.MetadataValue: ...
+        def get(self, key: str) -> FlextTypes.MetadataValue: ...
 
         @overload
         def get(
-            self, key: str, default: FlextLdifTypes.MetadataValue
+            self,
+            key: str,
+            default: FlextLdifTypes.MetadataValue,
         ) -> FlextLdifTypes.MetadataValue: ...
 
         def get(
@@ -96,7 +98,9 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             return len(extra) if extra is not None else 0
 
-        def __iter__(self) -> Generator[tuple[str, FlextLdifTypes.MetadataValue]]:
+        def __iter__(
+            self,
+        ) -> Generator[tuple[str, FlextLdifTypes.MetadataValue]]:
             """Iterate over key-value pairs from extra fields."""
             extra = self.__pydantic_extra__
             if extra is not None:
@@ -122,7 +126,9 @@ class FlextLdifModelsMetadata:
             return (extra or {}).items()
 
         def pop(
-            self, key: str, default: FlextLdifTypes.MetadataValue = None
+            self,
+            key: str,
+            default: FlextLdifTypes.MetadataValue = None,
         ) -> FlextLdifTypes.MetadataValue:
             """Pop value by key."""
             extra = self.__pydantic_extra__
@@ -144,7 +150,11 @@ class FlextLdifModelsMetadata:
             for key, value in other.items():
                 setattr(self, key, value)
 
-        __hash__ = None  # Unhashable: mutable with extra="allow"
+        def __hash__(self) -> int:  # type: ignore[override]
+            """Make unhashable - mutable with extra="allow"."""
+            class_name = self.__class__.__name__
+            msg = f"{class_name} is unhashable"
+            raise TypeError(msg)
 
         def __eq__(self, other: object) -> bool:
             """Compare with dict or another DynamicMetadata."""
@@ -170,7 +180,12 @@ class FlextLdifModelsMetadata:
 
         """
 
-        model_config = ConfigDict(extra="allow")
+        model_config = ConfigDict(
+            frozen=True,
+            extra="allow",
+            use_enum_values=True,
+            str_strip_whitespace=True,
+        )
 
         def __getitem__(self, key: str) -> FlextLdifTypes.MetadataValue:
             """Get value by key, raising KeyError if not found."""

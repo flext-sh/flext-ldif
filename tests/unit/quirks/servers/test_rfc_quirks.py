@@ -147,7 +147,8 @@ class TestRfcQuirks:
 
     @pytest.fixture
     def schema_quirk(
-        self, rfc_quirk: FlextLdifServersRfc
+        self,
+        rfc_quirk: FlextLdifServersRfc,
     ) -> FlextLdifServersRfc.Schema:
         """Provides RFC Schema quirk - concrete type for internal method testing."""
         quirk = rfc_quirk.schema_quirk
@@ -526,8 +527,8 @@ class TestRfcQuirks:
                 TestGeneralConstants.SAMPLE_DN,
                 {
                     TestGeneralConstants.ATTR_NAME_CN: [
-                        TestGeneralConstants.ATTR_VALUE_TEST
-                    ]
+                        TestGeneralConstants.ATTR_VALUE_TEST,
+                    ],
                 },
             )
             is True

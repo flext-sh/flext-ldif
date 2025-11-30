@@ -27,7 +27,7 @@ from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus]
+    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus],
 ):
     """Statistics service for LDIF processing pipeline.
 
@@ -142,7 +142,8 @@ class FlextLdifStatistics(
             object_class_distribution.update(entry.get_objectclass_names())
 
             if entry.metadata and isinstance(
-                st_value := entry.metadata.extensions.get("server_type"), str
+                st_value := entry.metadata.extensions.get("server_type"),
+                str,
             ):
                 server_type_distribution[st_value] += 1
 

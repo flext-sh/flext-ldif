@@ -175,7 +175,7 @@ class TestFlextLdifConfig:
     def test_default_initialization(self) -> None:
         """Test basic configuration initialization with LDIF-specific fields."""
         config = FlextLdifConfig()
-        assert config.ldif_max_line_length == 78
+        assert config.ldif_max_line_length == 199
         assert config.ldif_max_entries == 1000000
         assert config.ldif_chunk_size == 1000
         assert config.ldif_encoding == "utf-8"
@@ -280,7 +280,8 @@ class TestFlextLdifConfig:
             config = FlextLdifConfig()
             assert config.ldif_encoding == "utf-8"
             assert (
-                config.ldif_max_line_length == FlextLdifConstants.Format.MAX_LINE_LENGTH
+                config.ldif_max_line_length
+                == FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH
             )
             assert config.ldif_chunk_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
             assert config.server_type == "generic"

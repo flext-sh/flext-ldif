@@ -931,7 +931,7 @@ class FlextLdifUtilitiesParser:
                 FlextLdifModels.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                        **metadata_extensions
+                        **metadata_extensions,
                     ),
                 )
                 if metadata_extensions

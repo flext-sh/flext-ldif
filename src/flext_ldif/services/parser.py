@@ -16,9 +16,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from collections.abc import Sequence
-from typing import cast
-
 from flext_core import FlextResult
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -62,7 +59,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
 
         entry_quirk = self._server.entry(effective_server_type)
         if entry_quirk is None:
-            return FlextResult.fail(f"No entry quirk found for server type: {effective_server_type}")
+            return FlextResult.fail(
+                f"No entry quirk found for server type: {effective_server_type}"
+            )
 
         # Direct call to entry quirk parse method
         parse_result = entry_quirk.parse(content)
@@ -78,7 +77,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
 
         # Create response with minimal metadata
         response = FlextLdifModels.ParseResponse(
-            entries=entries,  # type: ignore[arg-type]
+            entries=entries,
             statistics=FlextLdifModels.Statistics(
                 total_entries=len(entries),
                 parse_errors=0,
@@ -164,6 +163,21 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         if isinstance(source, str):
             return self.parse_string(source, server_type)
         return FlextResult.fail(f"Unsupported source type: {type(source)}")
+
+    def execute(self) -> FlextResult[FlextLdifModels.ParseResponse]:
+        """Execute parsing service.
+
+        This service requires input data to parse. Use parse(), parse_string(),
+        parse_ldif_file(), or parse_ldap3_results() methods instead.
+
+        Returns:
+            FlextResult.fail: Always fails as input is required
+
+        """
+        return FlextResult.fail(
+            "FlextLdifParser requires input data to parse. "
+            "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods."
+        )
 
 
 __all__ = ["FlextLdifParser"]

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
@@ -626,10 +626,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     attributes=attributes,
                 ),
                 subject=FlextLdifModels.AclSubject(
-                    subject_type=cast(
-                        "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
-                        FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
-                    ),
+                    subject_type="anyone",  # Default fallback for "who"
                     subject_value=subject_value,
                 ),
                 permissions=FlextLdifModels.AclPermissions(

@@ -20,8 +20,8 @@ from typing import Final
 
 import pytest
 from flext_core import FlextResult
-from flext_tests import FlextTestsFactories
 
+# from flext_tests import FlextTestsFactories  # Mocked in conftest
 from flext_ldif import FlextLdifConstants, FlextLdifModels
 
 

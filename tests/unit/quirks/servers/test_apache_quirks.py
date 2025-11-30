@@ -301,7 +301,8 @@ class TestFlextLdifApacheQuirks:
     # Schema objectClass tests
     @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
-        self, test_case: ObjectClassTestCase
+        self,
+        test_case: ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()

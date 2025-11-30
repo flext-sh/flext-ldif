@@ -25,8 +25,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsUtilities
-
+# from flext_tests import FlextTestsUtilities  # Mocked in conftest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.entries import FlextLdifEntries
@@ -224,7 +223,7 @@ class TestFlextLdifAnalysis:
             # Validation service may accept objectClass names that are RFC-compliant format
             # even if they don't exist in schema. Check if validation actually fails.
             validation_result = validation_service.validate_objectclass_name(
-                "invalid-objectclass-with-dashes"
+                "invalid-objectclass-with-dashes",
             )
             if validation_result.is_failure or not validation_result.unwrap():
                 assert report.is_valid is False

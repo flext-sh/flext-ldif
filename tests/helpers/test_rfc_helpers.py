@@ -13,10 +13,9 @@ from pathlib import Path
 from typing import Literal, TypeVar, cast
 
 from flext_core import FlextResult
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests.fixtures.typing import GenericFieldsDict
@@ -2853,15 +2852,15 @@ class RfcTestHelpers:
 
         # Entry.create expects domain types - facade types inherit from domain types
         # Type narrowing: convert list[FacadeType] to list[DomainType] for type checker
-        acls_domain: list[FlextLdifModelsDomains.Acl] | None = (
+        acls_domain: list[FlextLdifModels.Acl] | None = (
             list(acls) if acls is not None else None
         )
-        objectclasses_domain: list[FlextLdifModelsDomains.SchemaObjectClass] | None = (
+        objectclasses_domain: list[FlextLdifModels.SchemaObjectClass] | None = (
             list(objectclasses) if objectclasses is not None else None
         )
-        attributes_schema_domain: (
-            list[FlextLdifModelsDomains.SchemaAttribute] | None
-        ) = list(attributes_schema) if attributes_schema is not None else None
+        attributes_schema_domain: list[FlextLdifModels.SchemaAttribute] | None = (
+            list(attributes_schema) if attributes_schema is not None else None
+        )
         result = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=attributes_typed,
@@ -2992,7 +2991,8 @@ class RfcTestHelpers:
             else None,
             metadata=kwargs.get("metadata")
             if isinstance(
-                kwargs.get("metadata"), (FlextLdifModels.QuirkMetadata, type(None))
+                kwargs.get("metadata"),
+                (FlextLdifModels.QuirkMetadata, type(None)),
             )
             else None,
         )

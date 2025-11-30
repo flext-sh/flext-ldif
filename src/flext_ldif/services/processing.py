@@ -140,14 +140,15 @@ class FlextLdifProcessing(
 
         """
         processor_map: dict[
-            str, Callable[[], Callable[[FlextLdifModels.Entry], ProcessingResult]]
+            str,
+            Callable[[], Callable[[FlextLdifModels.Entry], ProcessingResult]],
         ] = {
             FlextLdifConstants.ProcessorTypes.TRANSFORM: self._create_transform_processor,
             FlextLdifConstants.ProcessorTypes.VALIDATE: self._create_validate_processor,
         }
         if processor_name in processor_map:
             return FlextResult[Callable[[FlextLdifModels.Entry], ProcessingResult]].ok(
-                processor_map[processor_name]()
+                processor_map[processor_name](),
             )
         supported = "'transform', 'validate'"
         return FlextResult[Callable[[FlextLdifModels.Entry], ProcessingResult]].fail(
@@ -215,7 +216,9 @@ class FlextLdifProcessing(
 
         """
 
-        def _transform_func(entry: FlextLdifModels.Entry) -> ProcessingResult:
+        def _transform_func(
+            entry: FlextLdifModels.Entry,
+        ) -> ProcessingResult:
             # Transform Entry to ProcessingResult with all metadata preserved
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
             attrs_dict = (
@@ -242,7 +245,9 @@ class FlextLdifProcessing(
 
         """
 
-        def _validate_func(entry: FlextLdifModels.Entry) -> ProcessingResult:
+        def _validate_func(
+            entry: FlextLdifModels.Entry,
+        ) -> ProcessingResult:
             # Basic validation: entry has DN and attributes - required fields must be present
             # Return complete entry data for validation results
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)

@@ -915,7 +915,8 @@ class FlextLdifUtilitiesWriter:
 
         # Handle based on status - extracted to reduce complexity
         status = attr_info.get(
-            "status", FlextLdifConstants.AttributeMarkerStatus.NORMAL
+            "status",
+            FlextLdifConstants.AttributeMarkerStatus.NORMAL,
         )
         return FlextLdifUtilitiesWriter._handle_attribute_status(
             attr_name,
@@ -1073,7 +1074,7 @@ class FlextLdifUtilitiesWriter:
             in FlextLdifConstants.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
         )
         needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
-            str_value
+            str_value,
         )
 
         if needs_base64:

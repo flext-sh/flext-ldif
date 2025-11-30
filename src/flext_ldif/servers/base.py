@@ -38,8 +38,6 @@ from typing import (
     ClassVar,
     Protocol,
     Self,
-    Union,
-    cast,
     overload,
 )
 
@@ -136,7 +134,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         self._entry_quirk.parent_quirk = parent_ref
 
     def __getattr__(
-        self, name: str
+        self,
+        name: str,
     ) -> (
         FlextResult[
             FlextLdifModels.SchemaAttribute
@@ -540,7 +539,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         schema_instance = self._schema_quirk
         # Verify protocol compliance via structural typing
         if not hasattr(schema_instance, "parse") or not hasattr(
-            schema_instance, "write"
+            schema_instance,
+            "write",
         ):
             msg = "Schema instance does not implement SchemaProtocol"
             raise TypeError(msg)
@@ -673,7 +673,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         return FlextResult[str].ok(ldif)
 
     def _route_model_to_write(
-        self, model: FlextLdifTypes.ConvertibleModel
+        self,
+        model: FlextLdifTypes.ConvertibleModel,
     ) -> FlextResult[str]:
         """Route a single model to appropriate write method.
 
@@ -780,7 +781,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @classmethod
     def _get_server_type_from_mro(
-        cls, quirk_class: type[object]
+        cls,
+        quirk_class: type[object],
     ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent class Constants via MRO traversal.
 
@@ -947,10 +949,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                     FlextLdifProtocols.Quirks.EntryProtocol,
                 ),
             ):
-                # Cast to SchemaProtocol for register_quirk signature
-                schema_quirk = cast(
-                    "FlextLdifProtocols.Quirks.SchemaProtocol", instance
-                )
+                # Use isinstance with @runtime_checkable protocol for type narrowing
+                if isinstance(instance, FlextLdifProtocols.Quirks.SchemaProtocol):
+                    schema_quirk = instance
+                else:
+                    schema_quirk = None
                 register_func("auto", schema_quirk)
 
         # Compose validation and registration
@@ -1644,17 +1647,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if server_type and isinstance(server_type, str):
                 valid_types = set(FlextLdifConstants.ServerTypes)
                 if server_type in valid_types:
-                    quirk_type = cast(
-                        "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type
-                    )
+                    quirk_type = FlextLdifConstants.normalize_server_type(server_type)
                 else:
-                    quirk_type = cast(
-                        "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
-                    )
+                    quirk_type = FlextLdifConstants.normalize_server_type("rfc")
             else:
-                quirk_type = cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
-                )
+                quirk_type = FlextLdifConstants.normalize_server_type("rfc")
             metadata = (
                 FlextLdifModels.QuirkMetadata(
                     quirk_type=quirk_type,
@@ -1662,7 +1659,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 )
                 if metadata_extensions
                 else FlextLdifModels.QuirkMetadata(
-                    quirk_type=quirk_type, extensions=FlextLdifModels.DynamicMetadata()
+                    quirk_type=quirk_type,
+                    extensions=FlextLdifModels.DynamicMetadata(),
                 )
             )
 
@@ -1869,10 +1867,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 return operation
 
             if isinstance(data, str):
-                return cast(
-                    "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
-                    "parse",
-                )
+                # "parse" is a valid ParseWriteOperationLiteral
+                return "parse"
             if isinstance(
                 data,
                 (
@@ -1921,7 +1917,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             if operation == "parse":
                 if not isinstance(data, str):
-                       return FlextResult[
+                    return FlextResult[
                         (
                             FlextLdifModels.SchemaAttribute
                             | FlextLdifModels.SchemaObjectClass
@@ -1948,10 +1944,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 if isinstance(data, FlextLdifModels.SchemaObjectClass):
                     return self._handle_write_operation(attr_model=None, oc_model=data)
                 return FlextResult[
-                    Union[
-                        FlextLdifModels.SchemaAttribute,
-                        FlextLdifModels.SchemaObjectClass | str,
-                    ]
+                    (
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    )
                 ].fail(
                     f"write operation requires SchemaAttribute or "
                     f"SchemaObjectClass, got {type(data).__name__}",
@@ -2005,15 +2002,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 # Type narrowing: check if operation_raw is a valid Literal value
                 if isinstance(operation_raw, str):
                     if operation_raw == "parse":
-                        operation = cast(
-                            "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
-                            "parse",
-                        )
+                        operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral = "parse"
                     elif operation_raw == "write":
-                        operation = cast(
-                            "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
-                            "write",
-                        )
+                        operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral = "write"
+                    else:
+                        operation = None
 
             # Health check: no data provided
             if data is None:
@@ -2028,13 +2021,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             # Auto-detect or validate operation
             # Type narrowing: ensure operation is ParseWriteOperationLiteral | None
+            # Type narrowing: ParseWriteOperationLiteral is Literal["parse", "write"]
             operation_typed: (
                 FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
             ) = (
-                cast(
-                    "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
-                    operation,
-                )
+                operation
                 if isinstance(operation, str) and operation in {"parse", "write"}
                 else None
             )
@@ -2502,10 +2493,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
             ) = None
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation = cast(
-                    "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
-                    operation_raw,
-                )
+                operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral = operation_raw
 
             return data, operation
 
@@ -2524,11 +2512,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             parse_result = self.parse(data)
             if parse_result.is_success:
-                return FlextResult[FlextLdifModels.Acl | str].ok(
-                    parse_result.unwrap()
-                )
+                return FlextResult[FlextLdifModels.Acl | str].ok(parse_result.unwrap())
             return FlextResult[FlextLdifModels.Acl | str].fail(
-                parse_result.error or "Parse failed"
+                parse_result.error or "Parse failed",
             )
 
         def _execute_acl_write(
@@ -2546,11 +2532,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             write_result = self.write(data)
             if write_result.is_success:
-                return FlextResult[FlextLdifModels.Acl | str].ok(
-                    write_result.unwrap()
-                )
+                return FlextResult[FlextLdifModels.Acl | str].ok(write_result.unwrap())
             return FlextResult[FlextLdifModels.Acl | str].fail(
-                write_result.error or "Write failed"
+                write_result.error or "Write failed",
             )
 
         def execute(
@@ -2592,18 +2576,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 return FlextResult[FlextLdifModels.Acl | str].ok(empty_acl)
 
             # Auto-detect operation from data type, unless overridden
+            # Type narrowing: ParseWriteOperationLiteral is Literal["parse", "write"]
             detected_operation: (
                 FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
-            ) = (
-                cast(
-                    "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
-                    operation,
-                )
-                if operation is not None
-                else None
-            )
+            ) = operation
             if detected_operation is None:
-                detected_operation = "parse" if isinstance(data, str) else "write"  # type: ignore[assignment]
+                detected_operation = "parse" if isinstance(data, str) else "write"
 
             # Execute based on detected/forced operation
             if detected_operation == "parse":
@@ -2639,7 +2617,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             """
             all_extensions: FlextLdifTypes.MetadataDictMutable = {
-                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format
+                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format,
             }
             if extensions:
                 all_extensions.update(extensions)
@@ -3206,7 +3184,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 elif isinstance(write_options, dict):
                     write_options_typed = (
                         FlextLdifModelsDomains.WriteOptions.model_validate(
-                            write_options
+                            write_options,
                         )
                     )
                 else:
@@ -3218,13 +3196,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 entry = entry.model_copy(
                     update={
                         "metadata": entry.metadata.model_copy(
-                            update={"write_options": new_write_opts}
+                            update={"write_options": new_write_opts},
                         )
                         if entry.metadata
                         else FlextLdifModels.QuirkMetadata(
-                            quirk_type="rfc", write_options=write_options_typed
-                        )
-                    }
+                            quirk_type="rfc",
+                            write_options=write_options_typed,
+                        ),
+                    },
                 )
 
             return self._write_entry(entry)
@@ -3287,7 +3266,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             return entry
 
         def execute(
-            self, **kwargs: FlextLdifTypes.FlexibleKwargsMutable
+            self,
+            **kwargs: FlextLdifTypes.FlexibleKwargsMutable,
         ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Execute entry operation (parse/write)."""
             ldif_content = kwargs.get("ldif_content")
@@ -3404,7 +3384,9 @@ class _DescriptorProtocol(Protocol):
     """Protocol for descriptors that behave like their return type."""
 
     def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
+        self,
+        obj: FlextLdifServersBase | None,
+        _objtype: type | None = None,
     ) -> str | int: ...
 
 
@@ -3415,7 +3397,9 @@ class _ServerTypeDescriptor:
         self.value = value
 
     def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
+        self,
+        obj: FlextLdifServersBase | None,
+        _objtype: type | None = None,
     ) -> str:
         """Return the stored SERVER_TYPE value."""
         return self.value
@@ -3428,7 +3412,9 @@ class _PriorityDescriptor:
         self.value = value
 
     def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
+        self,
+        obj: FlextLdifServersBase | None,
+        _objtype: type | None = None,
     ) -> int:
         """Return the stored PRIORITY value."""
         return self.value

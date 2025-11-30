@@ -17,11 +17,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# Runtime imports needed for Protocol type hints (Protocols are runtime_checkable)
+# These cannot be in TYPE_CHECKING because Protocols use isinstance checks at runtime
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Literal, Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult
+from flext_core import FlextProtocols, FlextResult, FlextTypes
 
 # =========================================================================
 # INLINE TYPE DEFINITIONS - Metadata structures for protocols
@@ -32,29 +34,7 @@ from flext_core import FlextProtocols, FlextResult
 # Uses ONLY structural types (Mapping, Sequence) from collections.abc.
 # Uses Literal types inline (not imported from constants) to maintain independence.
 
-type FlextLdifMetadataValue = (
-    str
-    | int
-    | float
-    | bool
-    | Sequence[str | int | Mapping[str, str | Sequence[str]]]
-    | Mapping[str, str | int | Sequence[str] | Mapping[str, str | Sequence[str]]]
-    | None
-)
-"""Structural type for metadata values (supports nested structures).
-
-Represents:
-- Primitives: str, int, float, bool, None
-- Lists: Sequence[str], Sequence[int], Sequence[Mapping[...]]
-- Dicts: Mapping[str, primitives | sequences | nested mappings]
-"""
-
-type FlextLdifMetadata = Mapping[str, FlextLdifMetadataValue]
-"""Structural type for metadata dictionaries using Mapping (read-only interface).
-
-Represents flexible metadata containers without importing typings.py.
-Used in protocol definitions where metadata must be stored or passed.
-"""
+# Type aliases moved to FlextLdifProtocols class for proper namespace access
 
 # =========================================================================
 # INLINE LITERAL TYPE DEFINITIONS - For protocol method signatures
@@ -142,7 +122,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             dn: str
             attributes: Mapping[str, Sequence[str]]
-            metadata: FlextLdifMetadata | None
+            metadata: FlextTypes.Metadata | None
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values."""
@@ -152,10 +132,30 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 deep: bool = False,
-                update: FlextLdifMetadata | None = None,
+                update: FlextTypes.Metadata | None = None,
             ) -> Self:
                 """Create a copy of the entry."""
                 ...
+
+        @runtime_checkable
+        class EntryWithDnProtocol(Protocol):
+            """Protocol for objects that have a DN attribute.
+
+            Minimal protocol for objects that contain a DN.
+            Used for type-safe DN extraction from various sources.
+            """
+
+            dn: str | object  # Can be str or object with .value attribute
+
+        @runtime_checkable
+        class AttributeValueProtocol(Protocol):
+            """Protocol for objects that have attribute values.
+
+            Minimal protocol for objects that contain attribute values.
+            Used for type-safe attribute value extraction.
+            """
+
+            values: list[str] | str
 
         @runtime_checkable
         class AclProtocol(Protocol):
@@ -168,7 +168,7 @@ class FlextLdifProtocols(FlextProtocols):
             target: Mapping[str, str]
             subject: Mapping[str, str]
             permissions: Mapping[str, bool]
-            metadata: FlextLdifMetadata | None
+            metadata: FlextTypes.Metadata | None
 
         @runtime_checkable
         class SchemaAttributeProtocol(Protocol):
@@ -355,7 +355,8 @@ class FlextLdifProtocols(FlextProtocols):
             """
 
             def __getitem__(
-                self, key: str
+                self,
+                key: str,
             ) -> Sequence[FlextLdifProtocols.Models.EntryProtocol]:
                 """Get entries for a category by key."""
                 ...

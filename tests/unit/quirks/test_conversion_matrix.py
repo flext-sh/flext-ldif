@@ -1527,7 +1527,9 @@ class TestGetSupportedConversions:
     """Consolidated support check tests (2 original tests)."""
 
     @pytest.mark.parametrize(
-        "quirk_type", ["oud_quirk", "oid_quirk"], ids=["oud", "oid"]
+        "quirk_type",
+        ["oud_quirk", "oid_quirk"],
+        ids=["oud", "oid"],
     )
     def test_supported_conversions(
         self,
@@ -1619,7 +1621,9 @@ class TestBatchConversion:
     """Consolidated batch tests (original: 2 classes)."""
 
     @pytest.mark.parametrize(
-        "model_type", ["attribute", "objectclass"], ids=["attribute", "objectclass"]
+        "model_type",
+        ["attribute", "objectclass"],
+        ids=["attribute", "objectclass"],
     )
     def test_batch_conversion(
         self,

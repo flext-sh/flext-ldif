@@ -1733,7 +1733,7 @@ class FlextLdifFilters(
         current_metadata = entry.metadata
         if current_metadata is None:
             current_metadata = FlextLdifModels.QuirkMetadata(
-                quirk_type="filter_tracking"
+                quirk_type="filter_tracking",
             )
 
         updated_entry = entry
@@ -1776,7 +1776,7 @@ class FlextLdifFilters(
         # Ensure final entry has updated metadata
         if current_metadata and updated_entry.metadata != current_metadata:
             updated_entry = updated_entry.model_copy(
-                update={"metadata": current_metadata}
+                update={"metadata": current_metadata},
             )
 
         return FlextResult[FlextLdifModels.Entry].ok(updated_entry)
@@ -2013,7 +2013,9 @@ class FlextLdifFilters(
             )
 
         return categorization_service.categorize_entry(
-            entry, rules, effective_server_type
+            entry,
+            rules,
+            effective_server_type,
         )
 
     @staticmethod
@@ -2336,7 +2338,8 @@ class FlextLdifFilters(
         """
         # Convert dict to model if needed
         if FlextRuntime.is_dict_like(whitelist_rules) and isinstance(
-            whitelist_rules, dict
+            whitelist_rules,
+            dict,
         ):
             # Type narrowing: use Mapping protocol for safe access
             blocked_objectclasses = whitelist_rules.get("blocked_objectclasses")

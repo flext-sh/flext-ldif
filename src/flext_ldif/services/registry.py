@@ -36,7 +36,8 @@ class FlextLdifServiceRegistry:
 
     # Factory function types
     type FilterFactoryType = Callable[
-        [], FlextLdifProtocols.Services.FilterServiceProtocol
+        [],
+        FlextLdifProtocols.Services.FilterServiceProtocol,
     ]
     type CategorizationFactoryType = Callable[
         [FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str],

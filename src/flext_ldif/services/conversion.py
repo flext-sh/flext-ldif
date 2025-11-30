@@ -20,7 +20,7 @@ from __future__ import annotations
 import time
 import traceback
 from collections.abc import Sequence
-from typing import ClassVar, Self, Union, cast, override
+from typing import ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 from pydantic import Field
@@ -36,16 +36,16 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 # Type alias for source/target - can be server quirk instance or server type string
-ServerQuirkOrType = Union["FlextLdifServersBase", str]
+type ServerQuirkOrType = "FlextLdifServersBase" | str
 
 # Type alias for ConvertibleModel Union (used in return types)
 # Use string literals for forward references to avoid import issues
-ConvertibleModelUnion = Union[
-    "FlextLdifModels.Entry",
-    "FlextLdifModels.SchemaAttribute",
-    "FlextLdifModels.SchemaObjectClass",
-    "FlextLdifModels.Acl",
-]
+type ConvertibleModelUnion = (
+    "FlextLdifModels.Entry"
+    | "FlextLdifModels.SchemaAttribute"
+    | "FlextLdifModels.SchemaObjectClass"
+    | "FlextLdifModels.Acl"
+)
 
 # Module-level logger
 logger = FlextLogger(__name__)
@@ -104,12 +104,12 @@ def _get_schema_from_attribute(
 
 class FlextLdifConversion(
     FlextService[
-        Union[
-            FlextLdifModels.Entry,
-            FlextLdifModels.SchemaAttribute,
-            FlextLdifModels.SchemaObjectClass,
-            FlextLdifModels.Acl,
-        ]
+        (
+            FlextLdifModels.Entry
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+        )
     ],
 ):
     """Facade for universal, model-driven quirk-to-quirk conversion.
@@ -200,21 +200,21 @@ class FlextLdifConversion(
                 attributes=FlextLdifModels.LdifAttributes(attributes={}),
             )
             return FlextResult[
-                Union[
-                    FlextLdifModels.Entry,
-                    FlextLdifModels.SchemaAttribute,
-                    FlextLdifModels.SchemaObjectClass,
-                    FlextLdifModels.Acl,
-                ]
+                (
+                    FlextLdifModels.Entry
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | FlextLdifModels.Acl
+                )
             ].ok(empty_entry)
         except Exception as e:
             return FlextResult[
-                Union[
-                    FlextLdifModels.Entry,
-                    FlextLdifModels.SchemaAttribute,
-                    FlextLdifModels.SchemaObjectClass,
-                    FlextLdifModels.Acl,
-                ]
+                (
+                    FlextLdifModels.Entry
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | FlextLdifModels.Acl
+                )
             ].fail(
                 f"Conversion service health check failed: {e}",
             )
@@ -369,7 +369,8 @@ class FlextLdifConversion(
 
         """
         conversion_analysis: dict[
-            str, str | dict[str, str | FlextLdifTypes.MetadataValue]
+            str,
+            str | dict[str, str | FlextLdifTypes.MetadataValue],
         ] = {}
 
         if not source_metadata:
@@ -461,12 +462,12 @@ class FlextLdifConversion(
             )
             if not FlextLdifUtilities.DN.validate(entry_dn):
                 return FlextResult[
-                    Union[
-                        FlextLdifModels.Entry,
-                        FlextLdifModels.SchemaAttribute,
-                        FlextLdifModels.SchemaObjectClass,
-                        FlextLdifModels.Acl,
-                    ]
+                    (
+                        FlextLdifModels.Entry
+                        | FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | FlextLdifModels.Acl
+                    )
                 ].fail(
                     f"Entry DN failed RFC 4514 validation: {entry_dn}",
                 )
@@ -479,7 +480,9 @@ class FlextLdifConversion(
 
             # Get target server type and validate against valid server types
             target_server_type_raw: str = getattr(
-                target_quirk, "server_name", "unknown"
+                target_quirk,
+                "server_name",
+                "unknown",
             )
 
             # Normalize server type using constants (handles aliases and canonicalization)
@@ -490,7 +493,7 @@ class FlextLdifConversion(
             )
             # normalize_server_type returns canonical ServerTypeLiteral value (validated at runtime)
             validated_quirk_type = FlextLdifConstants.normalize_server_type(
-                target_server_type_str
+                target_server_type_str,
             )
 
             # Use validated_quirk_type for analysis
@@ -512,7 +515,7 @@ class FlextLdifConversion(
                     )
                 # Store conversion analysis as string representation
                 converted_entry.metadata.extensions["conversion_analysis"] = str(
-                    conversion_analysis
+                    conversion_analysis,
                 )
 
             # Add conversion tracking in metadata extensions
@@ -528,12 +531,12 @@ class FlextLdifConversion(
 
             # Return RFC model - consumer will call target.write() to serialize
             return FlextResult[
-                Union[
-                    FlextLdifModels.Entry,
-                    FlextLdifModels.SchemaAttribute,
-                    FlextLdifModels.SchemaObjectClass,
-                    FlextLdifModels.Acl,
-                ]
+                (
+                    FlextLdifModels.Entry
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | FlextLdifModels.Acl
+                )
             ].ok(converted_entry)
 
         except Exception as e:
@@ -595,12 +598,12 @@ class FlextLdifConversion(
 
             # Return as Union type to satisfy type checker
             return FlextResult[
-                Union[
-                    FlextLdifModels.Entry,
-                    FlextLdifModels.SchemaAttribute,
-                    FlextLdifModels.SchemaObjectClass,
-                    FlextLdifModels.Acl,
-                ]
+                (
+                    FlextLdifModels.Entry
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | FlextLdifModels.Acl
+                )
             ].ok(converted_attribute)
 
         except Exception as e:
@@ -660,12 +663,12 @@ class FlextLdifConversion(
 
             # Return as Union type to satisfy type checker
             return FlextResult[
-                Union[
-                    FlextLdifModels.Entry,
-                    FlextLdifModels.SchemaAttribute,
-                    FlextLdifModels.SchemaObjectClass,
-                    FlextLdifModels.Acl,
-                ]
+                (
+                    FlextLdifModels.Entry
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | FlextLdifModels.Acl
+                )
             ].ok(converted_objectclass)
 
         except Exception as e:
@@ -722,14 +725,9 @@ class FlextLdifConversion(
         source_acl: FlextLdifProtocols.Quirks.AclProtocol,
     ) -> FlextResult[str]:
         """Write ACL to LDIF string."""
-        # Convert Acl model to AclProtocol-compliant dict structure for write method
-        # The write method expects FlextLdifProtocols.Models.AclProtocol which is a Protocol
-        # We need to convert our Acl model to match the protocol interface
-        acl_protocol_data: FlextLdifProtocols.Models.AclProtocol = cast(
-            "FlextLdifProtocols.Models.AclProtocol",
-            acl,
-        )
-        write_result = source_acl.write(acl_protocol_data)
+        # Acl model satisfies AclProtocol structurally - no cast needed
+        # The write method accepts AclProtocol, and Acl model implements all required attributes
+        write_result = source_acl.write(acl)
         if write_result.is_failure:
             return FlextResult.fail(
                 f"Failed to write ACL in source format: {write_result.error}",
@@ -842,7 +840,7 @@ class FlextLdifConversion(
         if needs_oid_to_oud_mapping:
             # OID → OUD: Map OID-specific permissions to OUD equivalents
             mapped_perms = FlextLdifUtilities.ACL.map_oid_to_oud_permissions(
-                orig_perms_dict
+                orig_perms_dict,
             )
             oid_to_oud_perms: dict[str, bool | None] = {
                 "read": mapped_perms.get("read"),
@@ -861,7 +859,7 @@ class FlextLdifConversion(
         elif needs_oud_to_oid_mapping:
             # OUD → OID: Map OUD permissions to OID equivalents
             mapped_perms = FlextLdifUtilities.ACL.map_oud_to_oid_permissions(
-                orig_perms_dict
+                orig_perms_dict,
             )
             oud_to_oid_perms: dict[str, bool | None] = {
                 "read": mapped_perms.get("read"),
@@ -921,7 +919,7 @@ class FlextLdifConversion(
                     "auth",
                     "all",
                 )
-            )
+            ),
         )
 
         if original_acl.permissions:
@@ -1021,13 +1019,11 @@ class FlextLdifConversion(
             if isinstance(server_type_attr, str):
                 # Check if it's one of the valid server types
                 valid_types: tuple[str, ...] = tuple(
-                    FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE
+                    FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE,
                 )
                 if server_type_attr in valid_types:
-                    # server_type_attr is one of the valid server types
-                    # Cast to ServerTypeLiteral after validation
-                    source_server_type = cast(
-                        "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                    # Use normalize_server_type for proper type narrowing
+                    source_server_type = FlextLdifConstants.normalize_server_type(
                         server_type_attr,
                     )
 
@@ -1067,7 +1063,7 @@ class FlextLdifConversion(
             # Convert domain Acl to public Acl model
             if not isinstance(domain_acl, FlextLdifModels.Acl):
                 converted_acl = FlextLdifModels.Acl.model_validate(
-                    domain_acl.model_dump()
+                    domain_acl.model_dump(),
                 )
             else:
                 converted_acl = domain_acl
@@ -1765,31 +1761,23 @@ class FlextLdifConversion(
         """
         # Check if quirk is already a Schema quirk (has parse_attribute directly)
         if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
-            # Type narrowing: quirks with schema methods satisfy SchemaProtocol structurally
-            if isinstance(quirk, FlextLdifServersBase.Schema):
-                # Schema instances satisfy SchemaProtocol structurally - cast to protocol
-                return cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk)
+            # Use isinstance with @runtime_checkable protocol for type narrowing
+            if isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol):
+                return quirk
             # Check structural compliance: has required SchemaProtocol methods
-            if hasattr(quirk, "parse") and hasattr(quirk, "write"):
-                # Structurally compliant with SchemaProtocol - cast to protocol
-                return cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk)
+            if (
+                hasattr(quirk, "parse")
+                and hasattr(quirk, "write")
+                and isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
+            ):
+                return quirk
             return None
         # Check if quirk is a base quirk with schema_quirk attribute
         schema_quirk_raw = getattr(quirk, "schema_quirk", None)
         if schema_quirk_raw is not None:
-            # Validate structural compliance: has required SchemaProtocol methods
-            if isinstance(schema_quirk_raw, FlextLdifServersBase.Schema):
-                # Schema instances satisfy SchemaProtocol structurally - cast to protocol
-                return cast(
-                    "FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk_raw
-                )
-            if hasattr(schema_quirk_raw, "parse") and hasattr(
-                schema_quirk_raw, "write"
-            ):
-                # Structurally compliant with SchemaProtocol - cast to protocol
-                return cast(
-                    "FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk_raw
-                )
+            # Use isinstance with @runtime_checkable protocol for type narrowing
+            if isinstance(schema_quirk_raw, FlextLdifProtocols.Quirks.SchemaProtocol):
+                return schema_quirk_raw
             return None
         return None
 

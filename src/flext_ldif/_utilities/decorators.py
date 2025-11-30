@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from functools import wraps
-from typing import ParamSpec, TypeVar, cast
+from typing import ParamSpec, TypeVar
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
 
@@ -109,10 +109,12 @@ class FlextLdifUtilitiesDecorators:
             "server_type": server_type,
             "parsed_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
         }
+        # Normalize quirk_type if provided, otherwise None
+        normalized_quirk_type: (
+            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
+        ) = FlextLdifConstants.normalize_server_type(quirk_type) if quirk_type else None
         metadata = FlextLdifModels.QuirkMetadata.create_for(
-            quirk_type=cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None", quirk_type
-            ),
+            quirk_type=normalized_quirk_type,
             extensions=FlextLdifModels.DynamicMetadata(**extensions_dict),
         )
 
