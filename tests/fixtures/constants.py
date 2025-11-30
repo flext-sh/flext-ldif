@@ -199,13 +199,13 @@ class Fixtures:
 
     # Server types - reuse from production constants (no duplication)
     # Import here to avoid circular dependency
-    from flext_ldif.constants import FlextLdifConstants  # noqa: PLC0415
+    from flext_ldif.constants import FlextLdifConstants
 
     OID = FlextLdifConstants.ServerTypes.OID
     OUD = FlextLdifConstants.ServerTypes.OUD
     OPENLDAP = FlextLdifConstants.ServerTypes.OPENLDAP
     AD = FlextLdifConstants.ServerTypes.AD
-    DS389 = FlextLdifConstants.ServerTypes.DS_389
+    DS389 = FlextLdifConstants.ServerTypes.DS389
 
     # Fixture types
     ENTRY = "entry"
@@ -310,7 +310,7 @@ class Filters:
     ATTR_UID = Names.UID
 
     # Server types - reuse from production constants (no duplication)
-    from flext_ldif.constants import FlextLdifConstants  # noqa: PLC0415
+    from flext_ldif.constants import FlextLdifConstants
 
     SERVER_RFC = FlextLdifConstants.ServerTypes.RFC
     SERVER_OID = FlextLdifConstants.ServerTypes.OID

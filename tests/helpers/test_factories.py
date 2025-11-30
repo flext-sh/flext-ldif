@@ -6,7 +6,7 @@ Provides comprehensive factory methods and utilities for creating LDIF test obje
 - Batch creation utilities
 - Advanced Python 3.13 features integration
 
-Extends FlextTestsFactories with LDIF domain-specific factories and utilities.
+Extends object with LDIF domain-specific factories and utilities.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,8 +17,7 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Iterator
 
-from flext_tests import FlextTestsFactories
-
+# from flext_tests import object  # Mocked in conftest
 from flext_ldif import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests.fixtures.constants import DNs, Names, TestData, Values
@@ -51,8 +50,8 @@ class EntryTemplate:
         return {"dn": self.dn_template, **attrs}
 
 
-class FlextLdifTestFactories(FlextTestsFactories):
-    """LDIF-specific test factories extending FlextTestsFactories.
+class FlextLdifTestFactories:
+    """LDIF-specific test factories extending object.
 
     Provides advanced factory patterns using Python 3.13 features:
     - Template-based entry creation

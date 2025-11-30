@@ -277,7 +277,7 @@ class FlextLdifCategorization(
 
             normalized_dn = norm_result.unwrap()
             validated_entry = entry.model_copy(
-                update={"dn": FlextLdifModels.DistinguishedName(value=normalized_dn)}
+                update={"dn": FlextLdifModels.DistinguishedName(value=normalized_dn)},
             )
             validated.append(validated_entry)
 
@@ -377,7 +377,8 @@ class FlextLdifCategorization(
         constants: type,
         priority_order: list[FlextLdifConstants.LiteralTypes.CategoryLiteral],
         category_map: dict[
-            FlextLdifConstants.LiteralTypes.CategoryLiteral, frozenset[str]
+            FlextLdifConstants.LiteralTypes.CategoryLiteral,
+            frozenset[str],
         ],
     ) -> tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize entry by iterating through priority order.
@@ -583,7 +584,8 @@ class FlextLdifCategorization(
             for k, v in category_map.items()
         }
         category_map_dict: dict[
-            FlextLdifConstants.LiteralTypes.CategoryLiteral, frozenset[str]
+            FlextLdifConstants.LiteralTypes.CategoryLiteral,
+            frozenset[str],
         ] = {
             k: v
             for k, v in validated_category_map.items()
@@ -710,14 +712,16 @@ class FlextLdifCategorization(
                 for entry in model_entries:
                     dn_str = entry.dn.value if entry.dn else None
                     if dn_str and FlextLdifUtilities.DN.is_under_base(
-                        dn_str, self._base_dn
+                        dn_str,
+                        self._base_dn,
                     ):
                         included.append(entry)
                     else:
                         excluded.append(entry)
                 # Track filter results in metadata
                 included = self._update_metadata_for_filtered_entries(
-                    included, passed=True
+                    included,
+                    passed=True,
                 )
                 excluded = self._update_metadata_for_filtered_entries(
                     excluded,
@@ -824,7 +828,8 @@ class FlextLdifCategorization(
 
             if category in filterable_categories:
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    entries, base_dn
+                    entries,
+                    base_dn,
                 )
                 filtered[category] = included
 

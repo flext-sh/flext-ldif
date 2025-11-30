@@ -209,11 +209,13 @@ class TestFlextLdifFilters:
             if test_case.should_raise:
                 with pytest.raises(ValueError, match="Invalid regex patterns"):
                     FlextLdifFilters.matches_dn_pattern(
-                        DNs.TEST_USER, test_case.patterns
+                        DNs.TEST_USER,
+                        test_case.patterns,
                     )
             else:
                 result = FlextLdifFilters.matches_dn_pattern(
-                    DNs.TEST_USER, test_case.patterns
+                    DNs.TEST_USER,
+                    test_case.patterns,
                 )
                 assert result == test_case.expected_match, (
                     f"Expected match={test_case.expected_match} for {test_case.name}"
@@ -247,7 +249,7 @@ class TestFlextLdifFilters:
         ) -> None:
             """Test filter methods mark excluded entries using helper."""
             entries = FilterTestHelpers.create_exclusion_test_entries(
-                test_case.filter_method
+                test_case.filter_method,
             )
 
             # Extract filter args explicitly to avoid type issues with **kwargs
@@ -285,7 +287,9 @@ class TestFlextLdifFilters:
             else:
                 filter_method = getattr(FlextLdifFilters, test_case.filter_method)
                 result = filter_method(
-                    entries, mark_excluded=True, **test_case.filter_args
+                    entries,
+                    mark_excluded=True,
+                    **test_case.filter_args,
                 )
 
             assert result.is_success
@@ -535,7 +539,7 @@ class TestFlextLdifFilters:
                 user_objectclasses=[Filters.OC_PERSON],
             )
             whitelist_rules = FlextLdifModels.WhitelistRules(
-                blocked_objectclasses=["blockedClass"]
+                blocked_objectclasses=["blockedClass"],
             )
             FilterTestHelpers.test_categorize_entry_complete(
                 entry,

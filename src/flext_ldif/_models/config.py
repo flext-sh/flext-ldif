@@ -1104,7 +1104,7 @@ class FlextLdifModelsConfig:
             description="Character encoding for output file",
         )
         max_line_length: int = Field(
-            default=FlextLdifConstants.Format.MAX_LINE_LENGTH,
+            default=FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH,
             description="Maximum line length for LDIF output",
             ge=50,
             le=1000,

@@ -18,7 +18,6 @@ from flext_core import FlextResult
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
 @dataclasses.dataclass
@@ -38,7 +37,7 @@ class _TransformationFlags:
 
 
 # Type alias from FlextLdifTypes
-DnInput = FlextLdifTypes.DnInput
+DnInput = str  # DN input is a string
 
 
 class FlextLdifUtilitiesDN:
@@ -672,10 +671,11 @@ class FlextLdifUtilitiesDN:
         )
         # Convert domain DNStatistics to public DNStatistics
         if isinstance(
-            stats_domain, FlextLdifModelsDomains.DNStatistics
+            stats_domain,
+            FlextLdifModelsDomains.DNStatistics,
         ) and not isinstance(stats_domain, FlextLdifModels.DNStatistics):
             stats = FlextLdifModels.DNStatistics.model_validate(
-                stats_domain.model_dump()
+                stats_domain.model_dump(),
             )
         else:
             stats = stats_domain
@@ -774,7 +774,7 @@ class FlextLdifUtilitiesDN:
         if not original_dn:
             stats_domain = FlextLdifModels.DNStatistics.create_minimal(original_dn)
             stats = FlextLdifModels.DNStatistics.model_validate(
-                stats_domain.model_dump()
+                stats_domain.model_dump(),
             )
             return original_dn, stats
 
@@ -802,10 +802,11 @@ class FlextLdifUtilitiesDN:
         )
         # Convert domain DNStatistics to public DNStatistics
         if isinstance(
-            stats_domain, FlextLdifModelsDomains.DNStatistics
+            stats_domain,
+            FlextLdifModelsDomains.DNStatistics,
         ) and not isinstance(stats_domain, FlextLdifModels.DNStatistics):
             stats = FlextLdifModels.DNStatistics.model_validate(
-                stats_domain.model_dump()
+                stats_domain.model_dump(),
             )
         else:
             stats = stats_domain
@@ -1540,13 +1541,13 @@ class FlextLdifUtilitiesDN:
             # Create new entry with transformed DN and attributes
             # Use model_copy to preserve all other properties
             new_attributes = FlextLdifModels.LdifAttributes(
-                attributes=transformed_attrs
+                attributes=transformed_attrs,
             )
             transformed_entry = entry.model_copy(
                 update={
                     "dn": transformed_dn,
                     "attributes": new_attributes,
-                }
+                },
             )
             transformed_entries.append(transformed_entry)
 
@@ -1624,7 +1625,7 @@ class FlextLdifUtilitiesDN:
                                 )
                             )
                             transformed_lines.append(
-                                f"{attr_name}: {transformed_value}"
+                                f"{attr_name}: {transformed_value}",
                             )
                         else:
                             transformed_lines.append(line)
@@ -1769,7 +1770,7 @@ class FlextLdifUtilitiesDN:
                 "dn": transformed_dn,
                 "attributes": transformed_attrs,
                 "metadata": metadata,
-            }
+            },
         )
 
     @staticmethod

@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsFactories
 
+# from flext_tests import FlextTestsFactories  # Mocked in conftest
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
 from tests.fixtures.constants import Filters
@@ -111,7 +111,9 @@ OBJECTCLASS_TESTS: Final[list[ObjectClassTestCase]] = [
 
 ATTRIBUTE_FILTER_TESTS: Final[list[AttributeFilterTestCase]] = [
     AttributeFilterTestCase(
-        "mail_only", [Filters.ATTR_MAIL], expected_attr=Filters.ATTR_MAIL
+        "mail_only",
+        [Filters.ATTR_MAIL],
+        expected_attr=Filters.ATTR_MAIL,
     ),
     AttributeFilterTestCase(
         "multiple_any",
@@ -310,7 +312,8 @@ class TestFlextLdifFilterService(FlextTestsFactories):
     ) -> None:
         """Test base DN filtering for hierarchy levels."""
         included, _excluded = FlextLdifFilters.by_base_dn(
-            oid_entries, test_case.base_dn
+            oid_entries,
+            test_case.base_dn,
         )
         if test_case.expected_contains:
             assert len(included) > 0, f"No entries under base DN {test_case.base_dn}"
@@ -457,10 +460,12 @@ class TestFlextLdifFilterService(FlextTestsFactories):
             "Pipeline should reduce or maintain entry count"
         )
         TestDeduplicationHelpers.assert_entries_dn_contains(
-            list(final_entries), "ou=users"
+            list(final_entries),
+            "ou=users",
         )
         TestDeduplicationHelpers.assert_entries_have_attribute(
-            list(final_entries), Filters.ATTR_MAIL
+            list(final_entries),
+            Filters.ATTR_MAIL,
         )
 
     def test_error_handling_edge_cases(self) -> None:

@@ -575,7 +575,8 @@ class TestFlextLdifSyntax:
             service = FlextLdifSyntax()
             # Use correct OID for GeneralizedTime: 1.3.6.1.4.1.1466.115.121.1.25
             result = service.validate_value(
-                "invalid-time", "1.3.6.1.4.1.1466.115.121.1.25"
+                "invalid-time",
+                "1.3.6.1.4.1.1466.115.121.1.25",
             )
             assert result.is_success
             assert result.unwrap() is False
@@ -584,7 +585,8 @@ class TestFlextLdifSyntax:
             """Test validating binary syntax (always passes)."""
             service = FlextLdifSyntax()
             result = service.validate_value(
-                "base64data", "1.3.6.1.4.1.1466.115.121.1.5"
+                "base64data",
+                "1.3.6.1.4.1.1466.115.121.1.5",
             )
             assert result.is_success
             assert result.unwrap() is True
@@ -593,7 +595,8 @@ class TestFlextLdifSyntax:
             """Test validating string syntax (always passes)."""
             service = FlextLdifSyntax()
             result = service.validate_value(
-                "any string", "1.3.6.1.4.1.1466.115.121.1.15"
+                "any string",
+                "1.3.6.1.4.1.1466.115.121.1.15",
             )
             assert result.is_success
             assert result.unwrap() is True

@@ -33,8 +33,8 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifWriter
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_factories import FlextLdifTestFactories

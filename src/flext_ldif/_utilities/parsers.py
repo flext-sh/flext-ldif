@@ -272,7 +272,8 @@ class FlextLdifUtilitiesParsers:
                         elif entry.metadata:
                             # Type narrowing: convert internal QuirkMetadata to public QuirkMetadata
                             if not isinstance(
-                                entry.metadata, FlextLdifModels.QuirkMetadata
+                                entry.metadata,
+                                FlextLdifModels.QuirkMetadata,
                             ):
                                 metadata_public = (
                                     FlextLdifModels.QuirkMetadata.model_validate(

@@ -25,16 +25,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels
-from flext_core.models import FlextModelsCollections
-from pydantic import computed_field, field_validator
+from flext_core import FlextModels, FlextModelsCollections
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.processing import ProcessingResult as ProcessingResultModel
 from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifModels(FlextModels):
@@ -61,8 +59,6 @@ class FlextLdifModels(FlextModels):
     # =========================================================================
 
     # Nested classes inheriting from _models classes (following flext-core pattern)
-    class DistinguishedName(FlextLdifModelsDomains.DistinguishedName):
-        """Distinguished Name value object."""
 
     class AttributeTransformation(FlextLdifModelsDomains.AttributeTransformation):
         """Detailed tracking of attribute transformation operations.
@@ -70,83 +66,19 @@ class FlextLdifModels(FlextModels):
         Records complete transformation history for LDIF attribute conversions.
         """
 
-    class QuirkMetadata(FlextLdifModelsDomains.QuirkMetadata):
-        """Universal metadata container for quirk-specific data preservation.
-
-        Supports automatic dict-to-DynamicMetadata conversion via Pydantic v2
-        field validators for seamless integration with dict-based code.
-        """
-
-        @field_validator("extensions", mode="before")
-        @classmethod
-        def coerce_dict_to_dynamic_metadata_extensions(
-            cls,
-            value: FlextLdifModelsMetadata.DynamicMetadata
-            | dict[str, FlextLdifTypes.MetadataValue],
-        ) -> FlextLdifModelsMetadata.DynamicMetadata:
-            """Convert dict to DynamicMetadata if needed (Pydantic v2 validation)."""
-            if isinstance(value, dict):
-                return FlextLdifModelsMetadata.DynamicMetadata(**value)
-            return value
-
     # Public metadata types - direct access
     DynamicMetadata = FlextLdifModelsMetadata.DynamicMetadata
     EntryMetadata = FlextLdifModelsMetadata.EntryMetadata
 
-    class DNStatistics(FlextLdifModelsDomains.DNStatistics):
-        """Statistics tracking for DN transformations and validation."""
-
-    class EntryStatistics(FlextLdifModelsDomains.EntryStatistics):
-        """Statistics tracking for entry-level transformations and validation."""
-
-    class ErrorDetail(FlextLdifModelsDomains.ErrorDetail):
-        """Error detail information for failed operations."""
-
-    class AclPermissions(FlextLdifModelsDomains.AclPermissions):
-        """ACL permissions for LDAP operations."""
-
-    class AclTarget(FlextLdifModelsDomains.AclTarget):
-        """ACL target specification."""
-
-    class AclSubject(FlextLdifModelsDomains.AclSubject):
-        """ACL subject specification."""
-
-    class DnRegistry(FlextLdifModelsDomains.DnRegistry):
-        """Registry for DN normalization and canonical forms."""
-
     # AclMetadataConfig moved to _models/config.py
-
-    class AclMetadataConfig(FlextLdifModelsConfig.AclMetadataConfig):
-        """Configuration for ACL metadata extensions."""
-
-    class AclWriteMetadata(FlextLdifModelsDomains.AclWriteMetadata):
-        """Metadata for ACL write formatting operations."""
-
-    class AciParserConfig(FlextLdifModelsConfig.AciParserConfig):
-        """Configuration for ACI parsing using server Constants."""
-
-    class AciWriterConfig(FlextLdifModelsConfig.AciWriterConfig):
-        """Configuration for ACI writing using server Constants."""
 
     # LogContextExtras moved to _models/config.py
 
-    class LogContextExtras(FlextLdifModelsConfig.LogContextExtras):
-        """Additional context fields for logging events."""
-
     # DnEventConfig moved to _models/events.py
-
-    class DnEventConfig(FlextLdifModelsEvents.DnEventConfig):
-        """Configuration for DN event creation."""
 
     # MigrationEventConfig moved to _models/events.py
 
-    class MigrationEventConfig(FlextLdifModelsEvents.MigrationEventConfig):
-        """Configuration for migration event creation."""
-
     # ConversionEventConfig moved to _models/events.py
-
-    class ConversionEventConfig(FlextLdifModelsEvents.ConversionEventConfig):
-        """Configuration for conversion event creation."""
 
     class SchemaEventConfig(FlextLdifModelsEvents.SchemaEventConfig):
         """Configuration for schema event creation.
@@ -171,54 +103,34 @@ class FlextLdifModels(FlextModels):
     # DOMAIN EVENTS - Processing events
     # =========================================================================
 
-    class FilterEvent(FlextLdifModelsEvents.FilterEvent):
-        """Event emitted when LDIF entries are filtered."""
-
-    class ParseEvent(FlextLdifModelsEvents.ParseEvent):
-        """Event emitted when LDIF content is parsed."""
-
-    class WriteEvent(FlextLdifModelsEvents.WriteEvent):
-        """Event emitted when LDIF content is written."""
-
-    class CategoryEvent(FlextLdifModelsEvents.CategoryEvent):
-        """Event emitted when entries are categorized."""
-
-    class AclEvent(FlextLdifModelsEvents.AclEvent):
-        """Event emitted when ACLs are processed."""
-
-    class DnEvent(FlextLdifModelsEvents.DnEvent):
-        """Event emitted when DNs are processed."""
-
-    class MigrationEvent(FlextLdifModelsEvents.MigrationEvent):
-        """Event emitted during migration operations."""
-
-    class ConversionEvent(FlextLdifModelsEvents.ConversionEvent):
-        """Event emitted during conversion operations."""
-
-    class SchemaEvent(FlextLdifModelsEvents.SchemaEvent):
-        """Event emitted during schema processing."""
-
     # =========================================================================
     # CONFIGURATION AND OPTIONS
     # =========================================================================
 
-    class MigrateOptions(FlextLdifModelsConfig.MigrateOptions):
-        """Options for FlextLdif.migrate() operation."""
+    # ACL configuration models
+    AclMetadataConfig = FlextLdifModelsConfig.AclMetadataConfig
+    AciParserConfig = FlextLdifModelsConfig.AciParserConfig
+    AciWriterConfig = FlextLdifModelsConfig.AciWriterConfig
 
-    class Acl(FlextLdifModelsDomains.Acl):
-        """Universal ACL model for all LDAP server types."""
+    # Metadata models
+    QuirkMetadata = FlextLdifModelsDomains.QuirkMetadata
+
+    # DN and statistics models
+    DistinguishedName = FlextLdifModelsDomains.DistinguishedName
+    DNStatistics = FlextLdifModelsDomains.DNStatistics
+
+    # Processing and writer models
+    ProcessingResult = ProcessingResultModel
+    ParseResponse = FlextLdifModelsResults.ParseResponse
+    WriteResponse = FlextLdifModelsResults.WriteResponse
+    WriteOptions = FlextLdifModelsDomains.WriteOptions
+    Syntax = FlextLdifModelsDomains.Syntax
 
     # =========================================================================
     # DTO MODELS - Data transfer objects
     # =========================================================================
     # Note: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
     # exported from flext_ldif.__init__.py to avoid circular imports.
-
-    class LdifValidationResult(FlextLdifModelsResults.LdifValidationResult):
-        """Result of LDIF validation operations."""
-
-    class AnalysisResult(FlextLdifModelsResults.AnalysisResult):
-        """Result of LDIF analytics operations."""
 
     # SearchConfig deleted (0 usages) - use proper typed models for LDAP search config
     # DiffItem and DiffResult deleted (0 usages) - use typed models for diff operations
@@ -256,18 +168,6 @@ class FlextLdifModels(FlextModels):
         Replaces dict[str, str | list[str] | bool | None] with type-safe Pydantic model.
         """
 
-    class EncodingRules(FlextLdifModelsConfig.EncodingRules):
-        """Generic encoding rules - server classes provide values."""
-
-    class DnCaseRules(FlextLdifModelsConfig.DnCaseRules):
-        """Generic DN case rules - server classes provide values."""
-
-    class AclFormatRules(FlextLdifModelsConfig.AclFormatRules):
-        """Generic ACL format rules - server classes provide values."""
-
-    class ServerValidationRules(FlextLdifModelsConfig.ServerValidationRules):
-        """Generic server validation rules - server classes provide values."""
-
     class ExclusionInfo(FlextLdifModelsDomains.ExclusionInfo):
         """Metadata for excluded entries/schema items.
 
@@ -304,379 +204,505 @@ class FlextLdifModels(FlextModels):
 
         """
 
-    class SchemaDiscoveryResult(FlextLdifModelsResults.SchemaDiscoveryResult):
-        """Result of schema discovery operations."""
-
-    class FlexibleCategories(
-        FlextModelsCollections.Categories["FlextLdifModels.Entry"],
-    ):
-        """Flexible entry categorization with dynamic categories.
-
-        Replaces dict[str, list[Entry]] pattern with type-safe model.
-        Uses public FlextLdifModels.Entry facade for type safety.
-        """
-
-    class SchemaAttribute(FlextLdifModelsDomains.SchemaAttribute):
-        """LDAP schema attribute definition model (RFC 4512 compliant).
-
-        Represents an LDAP attribute type definition from schema with full RFC 4512 support.
-        """
-
-        @computed_field
-        def syntax_definition(self) -> FlextLdifModels.Syntax | None:
-            """Resolve syntax OID to complete public Syntax model.
-
-            Returns public Syntax type instead of internal domain type.
-            Uses direct resolution to avoid pyrefly super() inference issues.
-
-            Returns:
-                Public Syntax model or None if syntax cannot be resolved.
-
-            """
-            if not self.syntax:
-                return None
-
-            # Resolve syntax OID directly (same logic as parent)
-            internal_syntax = FlextLdifModelsDomains.Syntax.resolve_syntax_oid(
-                self.syntax,
-                server_type="rfc",
-            )
-            if internal_syntax is None:
-                return None
-
-            # Convert to public model (exclude internal computed fields)
-            return FlextLdifModels.Syntax.model_validate(
-                internal_syntax.model_dump(
-                    mode="python",
-                    exclude={
-                        "is_rfc4517_standard",
-                        "syntax_oid_suffix",
-                        "has_metadata",
-                        "server_type",
-                        "has_server_extensions",
-                    },
-                )
-            )
-
-    class Syntax(FlextLdifModelsDomains.Syntax):
-        """LDAP attribute syntax definition model (RFC 4517 compliant).
-
-        Represents an LDAP attribute syntax OID and its validation rules per RFC 4517.
-        """
-
-    class SchemaObjectClass(FlextLdifModelsDomains.SchemaObjectClass):
-        """LDAP schema object class definition model (RFC 4512 compliant).
-
-        Represents an LDAP object class definition from schema with full RFC 4512 support.
-        """
-
-    class Entry(FlextLdifModelsDomains.Entry):
-        """LDIF entry domain model (RFC 2849 compliant).
-
-        Provides helper methods for metadata tracking during transformations.
-        """
-
-    class LdifAttributes(FlextLdifModelsDomains.LdifAttributes):
-        """LDIF attributes container - simplified dict-like interface.
-
-        Directly inherits from FlextLdifModelsDomains.LdifAttributes.
-        Fields:
-        - attributes: dict[str, list[str]] - LDAP attribute name to values
-        - attribute_metadata: AttributeMetadataMap - Per-attribute metadata
-        - metadata: EntryMetadata | None - Entry-level metadata
-        """
-
-    class EntryResult(FlextLdifModelsResults.EntryResult):
-        """Result of LDIF processing containing categorized entries and statistics."""
-
-    class SchemaBuilderResult(FlextLdifModelsResults.SchemaBuilderResult):
-        """Result of schema builder build() operation.
-
-        Contains attributes, object classes, server type, and metadata about the schema.
-
-        Note: Uses builder-friendly field names (description, required_attributes)
-        rather than RFC 4512 names (desc, must, may) for better API usability.
-
-        Attributes:
-            attributes: Dict of attribute name to attribute definition
-            object_classes: Dict of object class name to object class definition
-            server_type: Target LDAP server type identifier
-            entry_count: Number of entries in the schema
-
-        """
-
-    # =========================================================================
-    # RESPONSE MODELS - Composed from domain models and statistics
-    # =========================================================================
-
-    class ParseResponse(FlextLdifModelsResults.ParseResponse):
-        """Composed response from parsing operation.
-
-        Combines Entry models with statistics from parse operation.
-        Uses model composition instead of dict intermediaries.
-        """
-
-    class WriteResponse(FlextLdifModelsResults.WriteResponse):
-        """Composed response from write operation.
-
-        Contains written LDIF content and statistics using model composition.
-        """
-
-    class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
-        """Formatting options for LDIF serialization.
-
-        Provides detailed control over the output format, including line width
-        for folding, and whether to respect attribute ordering from metadata.
-        """
-
-    class WriteOutputOptions(FlextLdifModelsConfig.WriteOutputOptions):
-        """Output visibility options for attributes based on marker status.
-
-        Controls how attributes are rendered in LDIF output based on their
-        status (show/hide/comment). Works with AttributeMarkerStatus for SRP.
-        """
-
-    class AclResponse(FlextLdifModelsResults.AclResponse):
-        """Composed response from ACL extraction.
-
-        Combines extracted Acl models with extraction statistics.
-        """
-
-    class MigrationPipelineResult(FlextLdifModelsResults.MigrationPipelineResult):
-        """Result of migration pipeline execution.
-
-        Contains migrated schema, entries, statistics, and output file paths
-        from a complete LDIF migration operation. Immutable value object following
-        DDD patterns.
-
-        Attributes:
-            migrated_schema: Migrated schema data (attributes and object classes)
-            entries: List of migrated directory entries as dicts
-            stats: Migration statistics with computed metrics (always present)
-            output_files: List of generated output file paths
-
-        """
-
-    # =========================================================================
-    # CLIENT AND SERVICE RESULT MODELS
-    # =========================================================================
-
-    class ClientStatus(FlextLdifModelsResults.ClientStatus):
-        """Client status information."""
-
-    class ValidationResult(FlextLdifModelsResults.ValidationResult):
-        """Entry validation result."""
-
-    class MigrationEntriesResult(FlextLdifModelsResults.MigrationEntriesResult):
-        """Result from migrating entries between servers."""
-
-    class EntryAnalysisResult(FlextLdifModelsResults.EntryAnalysisResult):
-        """Result from entry analysis operations."""
-
-    class ServerDetectionResult(FlextLdifModelsResults.ServerDetectionResult):
-        """Result from LDAP server type detection."""
-
-    class QuirkCollection(FlextLdifModelsDomains.QuirkCollection):
-        """Collection of all quirks (Schema, ACL, Entry) for a single server type.
-
-        Stores all three quirk types together for unified access and management.
-        """
-
-    class MigrationConfig(FlextLdifModelsConfig.MigrationConfig):
-        """Configuration for migration pipeline from YAML or dict.
-
-        Supports structured 6-file output (00-06) with flexible categorization,
-        filtering, and removed attribute tracking.
-        """
-
-    class ParseFormatOptions(FlextLdifModelsConfig.ParseFormatOptions):
-        """Formatting options for LDIF parsing."""
-
-    # =========================================================================
-    # SERVICE PARAMETER MODELS - Typed parameters for service factories
-    # =========================================================================
-    class MigrationPipelineParams(FlextLdifModelsConfig.MigrationPipelineParams):
-        """Typed parameters for migration pipeline factory.
-
-        Replaces dict-based parameter passing with type-safe Pydantic model.
-        """
-
-    class ParserParams(FlextLdifModelsConfig.ParserParams):
-        """Typed parameters for parser service factory.
-
-        Provides type-safe configuration for LDIF parsing operations.
-        """
-
-    class WriterParams(FlextLdifModelsConfig.WriterParams):
-        """Typed parameters for writer service factory.
-
-        Provides type-safe configuration for LDIF writing operations.
-        """
-
-    class ConfigInfo(FlextLdifModelsConfig.ConfigInfo):
-        """Configuration information for logging and introspection.
-
-        Structured representation of FlextLdifConfig for reporting and diagnostics.
-        """
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # STATISTICS MODELS
-    # ═══════════════════════════════════════════════════════════════════════
-
     class Statistics(FlextLdifModelsResults.Statistics):
-        """LDIF processing statistics.
+        """Comprehensive LDIF processing statistics.
 
-        Unified statistics model for all LDIF operations, tracking entry counts,
-        processing metrics, and server type detection with error handling.
+        Tracks detailed metrics for entries, attributes, DNs, and processing performance.
+        Provides insights into LDIF content characteristics and processing efficiency.
 
-        Attributes:
-            total_entries: Total entries encountered/processed
-            processed_entries: Successfully processed entries
-            failed_entries: Entries that failed processing
-            parse_errors: Parse errors encountered
-            detected_server_type: Auto-detected LDAP server type
+        Example:
+            stats = Statistics(
+                total_entries=1500,
+                entries_processed=1450,
+                entries_excluded=50,
+                total_attributes=4500,
+                dn_statistics=DNStatistics(...),
+                entry_statistics=EntryStatistics(...),
+                processing_time_seconds=2.34,
+                memory_peak_mb=45.6
+            )
 
         """
 
     class StatisticsResult(FlextLdifModelsResults.StatisticsResult):
-        """Statistics result from LDIF processing pipeline.
+        """Result of statistics operations.
 
-        Contains comprehensive statistics about categorized entries, rejections,
-        and output files generated during migration.
+        Contains computed statistics with optional metadata and processing details.
+        Provides structured access to statistical data with error handling.
 
-        Attributes:
-            total_entries: Total number of entries processed
-            categorized: Count of entries per category
-            rejection_rate: Percentage of entries rejected (0.0-1.0)
-            rejection_count: Number of rejected entries
-            rejection_reasons: List of unique rejection reasons
-            written_counts: Count of entries written per category
-            output_files: Mapping of categories to output file paths
+        Example:
+            result = StatisticsResult(
+                statistics=Statistics(...),
+                metadata={"processing_version": "1.0.0", "source": "algar.ldif"},
+                errors=[]
+            )
 
         """
 
     class EntriesStatistics(FlextLdifModelsResults.EntriesStatistics):
-        """Statistics calculated from a list of Entry models.
+        """Statistics for LDIF entries.
 
-        Provides distribution analysis of objectClasses and server types
-        across a collection of LDIF entries.
+        Detailed breakdown of entry processing metrics including counts, types,
+        and processing status. Helps identify patterns and issues in LDIF data.
 
-        Attributes:
-            total_entries: Total number of entries analyzed
-            object_class_distribution: Count of entries per objectClass
-            server_type_distribution: Count of entries per server type
+        Example:
+            entries_stats = EntriesStatistics(
+                total_entries=1500,
+                processed_entries=1450,
+                failed_entries=50,
+                entries_by_objectclass={"person": 800, "group": 200, "ou": 450},
+                large_entries={"dn1": 50000, "dn2": 45000},
+                empty_entries=10
+            )
 
         """
 
     class DictAccessibleValue(FlextLdifModelsResults.DictAccessibleValue):
-        """Base value model providing dict-style access (backwards compatibility)."""
+        """Value accessible as dictionary.
 
-    class ServiceStatus(FlextLdifModelsResults.ServiceStatus):
-        """Generic service status model for execute() health checks.
-
-        Base model for all service health check responses providing
-        standard status information across all FLEXT LDIF services.
-
-        Attributes:
-            service: Service name identifier
-            status: Operational status (e.g., FlextLdifConstants.Status.OPERATIONAL, FlextLdifConstants.Status.DEGRADED)
-            rfc_compliance: RFC standards implemented (e.g., "RFC 2849", "RFC 4512")
+        Provides dictionary-like access to values with additional type safety.
+        Useful for accessing nested data structures in results.
 
         """
 
     class SchemaServiceStatus(FlextLdifModelsResults.SchemaServiceStatus):
-        """Schema service status with server-specific metadata.
+        """Status information for schema service operations.
 
-        Extended status model for FlextLdifSchema service including
-        server type configuration and available operations.
+        Tracks schema processing state with detailed metadata about
+        attributes, objectClasses, and syntax processing.
 
-        Attributes:
-            service: Service name identifier
-            server_type: Server type configuration (e.g., FlextLdifConstants.ServerType.OUD, FlextLdifConstants.ServerType.OID, FlextLdifConstants.ServerType.RFC)
-            status: Operational status
-            rfc_compliance: RFC 4512 compliance
-            operations: List of available schema operations
+        Example:
+            schema_status = SchemaServiceStatus(
+                status="completed",
+                attributes_processed=45,
+                objectclasses_processed=12,
+                syntaxes_processed=8,
+                errors=[],
+                processing_time_seconds=1.23
+            )
 
         """
 
     class SyntaxServiceStatus(FlextLdifModelsResults.SyntaxServiceStatus):
-        """Syntax service status with lookup table metadata.
+        """Status information for syntax service operations.
 
-        Extended status model for FlextLdifSyntax service including
-        counts of registered syntax OIDs and common syntaxes.
+        Tracks syntax validation and processing state with detailed
+        information about syntax checks and conversions.
 
-        Attributes:
-            service: Service name identifier
-            status: Operational status
-            rfc_compliance: RFC 4517 compliance
-            total_syntaxes: Total number of registered syntax OIDs
-            common_syntaxes: Number of commonly used syntax OIDs
+        Example:
+            syntax_status = SyntaxServiceStatus(
+                status="completed",
+                total_attributes=1500,
+                syntax_validated=1480,
+                syntax_errors=20,
+                conversions_performed=15,
+                processing_time_seconds=0.89
+            )
 
         """
 
     class StatisticsServiceStatus(FlextLdifModelsResults.StatisticsServiceStatus):
-        """Statistics service status with capability metadata.
+        """Status information for statistics service operations.
 
-        Extended status model for FlextLdifStatistics service including
-        operational status and available capabilities.
+        Tracks statistics computation state with performance metrics
+        and processing details.
 
-        Attributes:
-            service: Service name identifier
-            status: Operational status (e.g., FlextLdifConstants.Status.OPERATIONAL, FlextLdifConstants.Status.DEGRADED)
-            capabilities: List of available statistical operations
-            version: Service version
-
-        """
-
-    class SyntaxLookupResult(FlextLdifModelsResults.SyntaxLookupResult):
-        """Result of syntax OID/name lookup operations.
-
-        Contains results from bidirectional OID ↔ name lookups
-        performed by FlextLdifSyntax builder pattern.
-
-        Attributes:
-            oid_lookup: Resolved name for OID lookup (None if not found or not requested)
-            name_lookup: Resolved OID for name lookup (None if not found or not requested)
+        Example:
+            stats_status = StatisticsServiceStatus(
+                status="completed",
+                entries_analyzed=1500,
+                statistics_computed=1450,
+                computation_time_seconds=2.34,
+                memory_used_mb=45.6,
+                errors=[]
+            )
 
         """
 
     class ValidationServiceStatus(FlextLdifModelsResults.ValidationServiceStatus):
-        """Validation service status with validation type metadata.
+        """Status information for validation service operations.
 
-        Status model for FlextLdifValidation service including
-        list of supported validation types.
+        Tracks validation processing with detailed error reporting
+        and performance metrics.
 
-        Attributes:
-            service: Service name identifier
-            status: Operational status
-            rfc_compliance: RFC 2849/4512 compliance
-            validation_types: List of supported validation types
+        Example:
+            validation_status = ValidationServiceStatus(
+                status="completed_with_errors",
+                total_entries=1500,
+                valid_entries=1400,
+                invalid_entries=100,
+                errors=[ErrorDetail(...)],
+                processing_time_seconds=3.45
+            )
 
         """
-
-    type ParseResult = list[Entry] | tuple[list[Entry], int, list[str]]
 
     class ValidationBatchResult(FlextLdifModelsResults.ValidationBatchResult):
         """Result of batch validation operations.
 
-        Contains validation results for multiple attribute names
-        and objectClass names validated in a single operation.
+        Contains aggregated validation results for multiple entries
+        with summary statistics and detailed error information.
 
-        Attributes:
-            results: Mapping of validated item names to validation status (True=valid, False=invalid)
+        Example:
+            batch_result = ValidationBatchResult(
+                batch_id="batch_001",
+                total_entries=100,
+                valid_entries=90,
+                invalid_entries=10,
+                errors=[ErrorDetail(...)],
+                summary={"validation_time": 1.23, "error_rate": 0.1}
+            )
 
         """
 
-    # =========================================================================
-    # TYPE ALIASES - For API compatibility
-    # =========================================================================
-    # These aliases maintain compatibility with api.py expectations while
-    # avoiding duplication of model definitions.
+    class FlexibleCategories(
+        FlextModelsCollections.Categories["FlextLdifModels.Entry"]
+    ):
+        """Flexible categorization of LDIF entries."""
 
-    # Aliases removed per user requirements - use direct types:
-    # - MigrateConfig → MigrateOptions
-    # - CategorizationRules → CategoryRules
-    # - SchemaWhitelistRules → WhitelistRules
+    # Schema models
+    SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute
+    SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass
+
+    # ACL models
+    Acl = FlextLdifModelsDomains.Acl
+    AclTarget = FlextLdifModelsDomains.AclTarget
+    AclSubject = FlextLdifModelsDomains.AclSubject
+    AclPermissions = FlextLdifModelsDomains.AclPermissions
+    DnRegistry = FlextLdifModelsDomains.DnRegistry
+
+    class Entry(FlextLdifModelsDomains.Entry):
+        """LDIF entry with DN and attributes.
+
+        Represents a complete LDAP directory entry with distinguished name
+        and associated attributes. Provides type-safe access to entry data
+        with validation and normalization capabilities.
+
+        Example:
+            entry = Entry(
+                dn="cn=john.doe,ou=users,dc=example,dc=com",
+                attributes={
+                    "cn": ["john.doe"],
+                    "sn": ["Doe"],
+                    "givenName": ["John"],
+                    "objectClass": ["person", "organizationalPerson", "user"],
+                    "userPassword": ["{SSHA}hashedpassword"]
+                }
+            )
+
+        """
+
+    class ValidationMetadata(FlextLdifModelsDomains.ValidationMetadata):
+        """Metadata for validation operations.
+
+        Contains information about validation processing including
+        timestamps, processing details, and validation state.
+
+        Example:
+            metadata = ValidationMetadata(
+                validated_at="2025-10-09T12:34:56Z",
+                validation_version="1.0.0",
+                processing_details={"schema_check": True, "syntax_check": True},
+                validation_errors=[]
+            )
+
+        """
+
+    class FormatDetails(FlextLdifModelsDomains.FormatDetails):
+        r"""Original formatting details for round-trip preservation.
+
+        Preserves original LDIF formatting information to maintain
+        exact representation during parsing and rewriting operations.
+
+        Example:
+            details = FormatDetails(
+                line_width=78,
+                include_version_header=True,
+                include_timestamps=False,
+                encoding="utf-8",
+                line_ending="\n"
+            )
+
+        """
+
+    class SchemaFormatDetails(FlextLdifModelsDomains.SchemaFormatDetails):
+        """Original schema formatting details.
+
+        Preserves schema-specific formatting for accurate round-trip
+        processing of LDAP schema definitions.
+
+        """
+
+    class LdifAttributes(FlextLdifModelsDomains.LdifAttributes):
+        """LDIF attribute collection.
+
+        Manages collections of LDAP attributes with type safety and
+        validation. Provides convenient access to attribute values
+        with support for single and multi-valued attributes.
+
+        Example:
+            attributes = LdifAttributes({
+                "cn": ["john.doe"],
+                "member": ["cn=user1,ou=users,dc=example,dc=com", "cn=user2,ou=users,dc=example,dc=com"],
+                "description": ["User account for John Doe"]
+            })
+
+        """
+
+    class EntryAnalysisResult(FlextLdifModelsResults.EntryAnalysisResult):
+        """Result of entry analysis operations.
+
+        Contains detailed analysis of a single LDIF entry including
+        validation results, statistics, and processing metadata.
+
+        Example:
+            analysis = EntryAnalysisResult(
+                entry=Entry(...),
+                validation_result=ValidationResult(...),
+                statistics={"attributes": 5, "values": 12},
+                processing_time_seconds=0.012,
+                errors=[]
+            )
+
+        """
+
+    class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
+        r"""Options for controlling LDIF write formatting.
+
+        Configures how LDIF content is formatted during writing operations.
+        Controls line width, encoding, headers, and other formatting aspects.
+
+        Example:
+            options = WriteFormatOptions(
+                line_width=78,
+                include_version_header=True,
+                include_timestamps=False,
+                encoding="utf-8",
+                line_ending="\n",
+                normalize_attribute_names=True,
+                base64_encode_binary=True,
+                respect_attribute_order=False
+            )
+
+        """
+
+    class WriteOutputOptions(FlextLdifModelsConfig.WriteOutputOptions):
+        """Options for controlling LDIF write output behavior.
+
+        Configures output destinations and processing behavior for
+        LDIF writing operations.
+
+        Example:
+            output_options = WriteOutputOptions(
+                output_target="file",
+                output_path=Path("/tmp/output.ldif"),
+                template_data={},
+                use_original_acl_format=False,
+                include_dn_comments=False
+            )
+
+        """
+
+    class MigrationPipelineResult(FlextLdifModelsResults.MigrationPipelineResult):
+        """Result of migration pipeline operations.
+
+        Contains comprehensive results from migration processing including
+        success/failure status, processed entries, and detailed statistics.
+
+        Example:
+            pipeline_result = MigrationPipelineResult(
+                success=True,
+                total_entries=1500,
+                processed_entries=1450,
+                failed_entries=50,
+                statistics=Statistics(...),
+                errors=[ErrorDetail(...)],
+                processing_time_seconds=45.6
+            )
+
+        """
+
+    class ClientStatus(FlextLdifModelsResults.ClientStatus):
+        """Status information for LDAP client connections.
+
+        Tracks connection state and health for LDAP client operations.
+
+        Example:
+            status = ClientStatus(
+                connected=True,
+                server_type="openldap",
+                last_operation="search",
+                connection_time_seconds=10.5,
+                operations_count=42
+            )
+
+        """
+
+    class ValidationResult(FlextLdifModelsResults.ValidationResult):
+        """Result of validation operations.
+
+        Contains validation outcome with detailed error information
+        and processing metadata.
+
+        Example:
+            result = ValidationResult(
+                valid=True,
+                errors=[],
+                warnings=[],
+                processing_time_seconds=1.23,
+                validated_at="2025-10-09T12:34:56Z"
+            )
+
+        """
+
+    class MigrationEntriesResult(FlextLdifModelsResults.MigrationEntriesResult):
+        """Result of migration entry processing.
+
+        Contains results from processing individual entries during
+        migration operations.
+
+        Example:
+            entries_result = MigrationEntriesResult(
+                total_entries=100,
+                migrated_entries=95,
+                failed_entries=5,
+                entries=[Entry(...)],
+                errors=[ErrorDetail(...)]
+            )
+
+        """
+
+    class ServerDetectionResult(FlextLdifModelsResults.ServerDetectionResult):
+        """Result of LDAP server detection operations.
+
+        Contains detected server type and confidence information
+        from LDIF content analysis.
+
+        Example:
+            detection = ServerDetectionResult(
+                detected_server="openldap",
+                confidence=0.95,
+                detection_method="pattern_matching",
+                matched_patterns=["olcOverlay", "olcModuleLoad"],
+                processing_time_seconds=0.034
+            )
+
+        """
+
+    class QuirkCollection(FlextLdifModelsDomains.QuirkCollection):
+        """Collection of server-specific quirks.
+
+        Contains all server-specific modifications and extensions
+        for processing LDIF content from different LDAP servers.
+
+        Example:
+            quirks = QuirkCollection(
+                server_type="openldap",
+                dn_quirks=DnQuirks(...),
+                acl_quirks=AclQuirks(...),
+                entry_quirks=EntryQuirks(...),
+                schema_quirks=SchemaQuirks(...)
+            )
+
+        """
+
+    class MigrationConfig(FlextLdifModelsConfig.MigrationConfig):
+        """Configuration for migration operations.
+
+        Defines parameters for migrating LDIF content between different
+        LDAP server types.
+
+        Example:
+            config = MigrationConfig(
+                source_server="oid",
+                target_server="oud",
+                preserve_original_format=True,
+                validate_after_migration=True,
+                migration_options=MigrateOptions(...)
+            )
+
+        """
+
+    class ParseFormatOptions(FlextLdifModelsConfig.ParseFormatOptions):
+        """Options for controlling LDIF parsing behavior.
+
+        Configures how LDIF content is parsed from different sources
+        and server types.
+
+        Example:
+            options = ParseFormatOptions(
+                server_type="openldap",
+                strict_mode=False,
+                ignore_comments=True,
+                encoding="utf-8",
+                validate_syntax=True
+            )
+
+        """
+
+    class MigrationPipelineParams(FlextLdifModelsConfig.MigrationPipelineParams):
+        """Parameters for migration pipeline operations.
+
+        Defines the complete set of parameters for running migration
+        pipelines between LDAP servers.
+
+        Example:
+            params = MigrationPipelineParams(
+                input_files=[Path("source.ldif")],
+                output_dir=Path("/tmp/migrated"),
+                source_server="oid",
+                target_server="oud",
+                config=MigrationConfig(...),
+                options=MigrateOptions(...)
+            )
+
+        """
+
+    class ParserParams(FlextLdifModelsConfig.ParserParams):
+        """Parameters for LDIF parsing operations.
+
+        Defines all parameters needed for parsing LDIF content.
+
+        Example:
+            params = ParserParams(
+                file_path=Path("input.ldif"),
+                server_type="openldap",
+                parse_options=ParseFormatOptions(...),
+                validation_options=ValidationOptions(...)
+            )
+
+        """
+
+    class WriterParams(FlextLdifModelsConfig.WriterParams):
+        """Parameters for LDIF writing operations.
+
+        Defines all parameters needed for writing LDIF content.
+
+        Example:
+            params = WriterParams(
+                entries=[Entry(...)],
+                output_path=Path("output.ldif"),
+                server_type="openldap",
+                write_options=WriteFormatOptions(...),
+                output_options=WriteOutputOptions(...)
+            )
+
+        """
+
+    class ConfigInfo(FlextLdifModelsConfig.ConfigInfo):
+        """Information about configuration state.
+
+        Contains current configuration details and metadata.
+
+        Example:
+            info = ConfigInfo(
+                ldif_max_line_length=199,
+                supported_servers=["oid", "oud", "openldap"],
+                default_encoding="utf-8",
+                config_source="environment"
+            )
+
+        """
 
 
 __all__ = ["FlextLdifModels"]

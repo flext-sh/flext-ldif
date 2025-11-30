@@ -261,7 +261,8 @@ class FlextLdifServer:
             return FlextResult[bool].fail(f"Protocol validation error: {e}")
 
     def _normalize_server_type(
-        self, server_type: str
+        self,
+        server_type: str,
     ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
         """Normalize server type to canonical short form.
 
@@ -288,7 +289,7 @@ class FlextLdifServer:
         base = self._bases.get(self._normalize_server_type(server_type))
         if not base:
             return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(
-                f"No base found for server type: {server_type}"
+                f"No base found for server type: {server_type}",
             )
         # Quirk attributes are named with _quirk suffix: schema_quirk, acl_quirk, entry_quirk
         quirk_attr_name = f"{attr_name}_quirk"
@@ -300,7 +301,8 @@ class FlextLdifServer:
     # =========================================================================
 
     def quirk(
-        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str
+        self,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
     ) -> FlextResult[FlextLdifServersBase]:
         """Get base quirk for a server type.
 
@@ -315,7 +317,7 @@ class FlextLdifServer:
         base = self._bases.get(self._normalize_server_type(server_type))
         if base is None:
             return FlextResult[FlextLdifServersBase].fail(
-                f"No base found for server type: {server_type}"
+                f"No base found for server type: {server_type}",
             )
         return FlextResult[FlextLdifServersBase].ok(base)
 
@@ -332,7 +334,7 @@ class FlextLdifServer:
         base = self._bases.get(self._normalize_server_type(server_type))
         if not base:
             return FlextResult[_QuirksDict].fail(
-                f"No base found for server type: {server_type}"
+                f"No base found for server type: {server_type}",
             )
         quirks_dict: _QuirksDict = {
             "schema": base.schema_quirk,
@@ -449,7 +451,8 @@ class FlextLdifServer:
         )
 
     def get_constants(
-        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        self,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
     ) -> FlextResult[type]:
         """Get Constants class from server quirk.
 
@@ -487,7 +490,8 @@ class FlextLdifServer:
         return FlextResult[type].ok(constants)
 
     def get_detection_constants(
-        self, server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        self,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
     ) -> FlextResult[type]:
         """Get Constants class with detection attributes from server quirk.
 
@@ -503,7 +507,7 @@ class FlextLdifServer:
         server_quirk_result = self.quirk(server_type)
         if server_quirk_result.is_failure:
             return FlextResult[type].fail(
-                f"Failed to get server quirk for {server_type}: {server_quirk_result.error}"
+                f"Failed to get server quirk for {server_type}: {server_quirk_result.error}",
             )
 
         server_quirk = server_quirk_result.unwrap()
@@ -511,7 +515,7 @@ class FlextLdifServer:
         constants = getattr(quirk_class, "Constants", None)
         if constants is None:
             return FlextResult[type].fail(
-                f"Server type {server_type} missing Constants class"
+                f"Server type {server_type} missing Constants class",
             )
 
         # Validate detection-specific attributes
@@ -522,7 +526,7 @@ class FlextLdifServer:
             and hasattr(constants, "DETECTION_ATTRIBUTES")
         ):
             return FlextResult[type].fail(
-                f"Server type {server_type} Constants class missing required DETECTION_* attributes"
+                f"Server type {server_type} Constants class missing required DETECTION_* attributes",
             )
 
         return FlextResult[type].ok(constants)

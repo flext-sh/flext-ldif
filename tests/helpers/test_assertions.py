@@ -17,8 +17,8 @@ from collections.abc import Sequence
 from typing import cast
 
 from flext_core import FlextResult, T
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifProtocols, FlextLdifTypes
 
 from .test_factories import FlextLdifTestFactories

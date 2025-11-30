@@ -26,7 +26,6 @@ from typing import Protocol, TypeVar
 
 from flext_core import FlextLogger, FlextModels, FlextRuntime
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -228,7 +227,7 @@ class FlextLdifUtilitiesMetadata:
             source_metadata = source_metadata_attr
         else:
             source_metadata = FlextLdifModelsMetadata.DynamicMetadata(
-                **source_metadata_attr
+                **source_metadata_attr,
             )
 
         # Get or initialize target metadata
@@ -241,7 +240,7 @@ class FlextLdifUtilitiesMetadata:
             target_metadata = target_metadata_attr
         else:
             target_metadata = FlextLdifModelsMetadata.DynamicMetadata(
-                **target_metadata_attr
+                **target_metadata_attr,
             )
 
         # Copy violations from source to target
@@ -356,7 +355,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_transformation(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         original_name: str,
         target_name: str | None,
         original_values: list[str],
@@ -413,7 +412,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_original_format(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         format_key: str,
         *,
         original_value: bool | str | list[str] | int | None,
@@ -444,15 +443,15 @@ class FlextLdifUtilitiesMetadata:
         # Pydantic v2: Use model_copy() to update extra fields
         if metadata.original_format_details is None:
             # Create new FormatDetails with the key
-            metadata.original_format_details = FlextLdifModelsDomains.FormatDetails(**{
-                format_key: original_value
+            metadata.original_format_details = FlextLdifModels.FormatDetails(**{
+                format_key: original_value,
             })
         else:
             # Update existing FormatDetails via model_copy
             existing = metadata.original_format_details.model_dump()
             existing[format_key] = original_value
-            metadata.original_format_details = FlextLdifModelsDomains.FormatDetails(
-                **existing
+            metadata.original_format_details = FlextLdifModels.FormatDetails(
+                **existing,
             )
 
     @staticmethod
@@ -792,7 +791,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def analyze_schema_formatting(
         definition: str,
-    ) -> FlextLdifModelsDomains.SchemaFormatDetails:
+    ) -> FlextLdifModels.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details.
 
         Captures EVERY minimal difference for perfect round-trip:
@@ -886,12 +885,12 @@ class FlextLdifUtilitiesMetadata:
         combined.update(sup_details)
 
         single_value_details = FlextLdifUtilitiesMetadata._extract_single_value_details(
-            definition
+            definition,
         )
         combined.update(single_value_details)
 
         # Log all captured deviations at DEBUG level
-        preview_len = FlextLdifConstants.Format.CONTENT_PREVIEW_LENGTH
+        preview_len = FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
             definition_preview=(
@@ -902,11 +901,27 @@ class FlextLdifUtilitiesMetadata:
             fields_captured=len(combined),
         )
 
-        return FlextLdifModelsDomains.SchemaFormatDetails(**combined)
+        # Separate known fields from dynamic extensions
+        # SchemaFormatDetails defines: quotes, spacing, field_order, x_origin, x_ordered
+        known_fields = {"quotes", "spacing", "field_order", "x_origin", "x_ordered"}
+        model_kwargs: dict[str, object] = {}
+        extension_kwargs: dict[str, object] = {}
+
+        for key, value in combined.items():
+            if key in known_fields:
+                model_kwargs[key] = value
+            else:
+                extension_kwargs[key] = value
+
+        # Create extensions with all dynamic fields
+        extensions = FlextLdifModelsMetadata.DynamicMetadata(**extension_kwargs)
+        model_kwargs["extensions"] = extensions
+
+        return FlextLdifModels.SchemaFormatDetails(**model_kwargs)
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip.
@@ -939,7 +954,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,
@@ -1021,35 +1036,35 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _apply_category_update(
-        stats: FlextLdifModelsDomains.EntryStatistics,
+        stats: FlextLdifModels.EntryStatistics,
         category: FlextLdifConstants.LiteralTypes.CategoryLiteral,
-    ) -> FlextLdifModelsDomains.EntryStatistics:
+    ) -> FlextLdifModels.EntryStatistics:
         """Apply category update to stats using model_copy."""
         return stats.model_copy(update={"category_assigned": category})
 
     @staticmethod
     def _apply_filter_update(
-        stats: FlextLdifModelsDomains.EntryStatistics,
+        stats: FlextLdifModels.EntryStatistics,
         filter_type: str,
         *,
         passed: bool,
-    ) -> FlextLdifModelsDomains.EntryStatistics:
+    ) -> FlextLdifModels.EntryStatistics:
         """Apply filter marking to stats."""
         return stats.mark_filtered(filter_type, passed=passed)
 
     @staticmethod
     def _apply_rejection_update(
-        stats: FlextLdifModelsDomains.EntryStatistics,
+        stats: FlextLdifModels.EntryStatistics,
         rejection_category: str,
         reason: str,
-    ) -> FlextLdifModelsDomains.EntryStatistics:
+    ) -> FlextLdifModels.EntryStatistics:
         """Apply rejection marking to stats."""
         return stats.mark_rejected(rejection_category, reason)
 
     @staticmethod
     def _update_entry_with_stats(
         entry: FlextLdifModels.Entry,
-        updated_stats: FlextLdifModelsDomains.EntryStatistics,
+        updated_stats: FlextLdifModels.EntryStatistics,
     ) -> FlextLdifModels.Entry:
         """Update entry with new processing stats using model_copy."""
         updated_metadata = entry.metadata.model_copy(
@@ -1115,7 +1130,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def get_original_attr_lines_from_metadata(
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+        metadata: FlextLdifModels.QuirkMetadata | None,
     ) -> list[str]:
         """Extract original attribute lines from entry metadata.
 
@@ -1141,7 +1156,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def get_minimal_differences_from_metadata(
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+        metadata: FlextLdifModels.QuirkMetadata | None,
     ) -> dict[str, list[str]]:
         """Extract minimal differences (changed attributes) from entry metadata.
 
@@ -1210,8 +1225,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_original_ldif_content(
-        metadata: FlextLdifModelsDomains.QuirkMetadata
-        | FlextLdifModelsMetadata.EntryMetadata,
+        metadata: FlextLdifModels.QuirkMetadata | FlextLdifModelsMetadata.EntryMetadata,
         ldif_content: str,
         **_extra: object,
     ) -> None:
@@ -1291,7 +1305,7 @@ class FlextLdifUtilitiesMetadata:
     def build_original_format_details(
         quirk_type: str,
         **_extra: object,
-    ) -> FlextLdifModelsDomains.FormatDetails:
+    ) -> FlextLdifModels.FormatDetails:
         """Build original format details for round-trip preservation.
 
         Args:
@@ -1306,7 +1320,7 @@ class FlextLdifUtilitiesMetadata:
         original_dn_line = _extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
 
-        return FlextLdifModelsDomains.FormatDetails(
+        return FlextLdifModels.FormatDetails(
             dn_line=dn_line,
             trailing_info=f"server={quirk_type}",
         )
@@ -1345,7 +1359,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         **_extra: object,
     ) -> None:
         """Store minimal differences in metadata (stub).
@@ -1358,7 +1372,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_minimal_differences_in_metadata(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModels.QuirkMetadata,
         **_extra: object,
     ) -> None:
         """Track minimal differences in metadata (stub).

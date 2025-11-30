@@ -22,6 +22,7 @@ from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
@@ -43,14 +44,14 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         self,
         entries: list[FlextLdifModels.Entry],
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
+        format_options: FlextLdifModels.WriteOptions | None = None,
     ) -> FlextResult[str]:
         """Write entries to LDIF string format.
 
         Args:
             entries: Entries to write
             server_type: Server type for quirk selection
-            format_options: Write format options
+            format_options: Write options
 
         Returns:
             FlextResult containing LDIF string
@@ -61,7 +62,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
 
         entry_quirk = self._server.entry(effective_server_type)
         if entry_quirk is None:
-            return FlextResult.fail(f"No entry quirk found for server type: {effective_server_type}")
+            return FlextResult.fail(
+                f"No entry quirk found for server type: {effective_server_type}"
+            )
 
         # Use default format options if none provided
         options = format_options or FlextLdifModels.WriteFormatOptions()
@@ -79,7 +82,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         entries: list[FlextLdifModels.Entry],
         path: Path,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
+        format_options: FlextLdifModels.WriteOptions | None = None,
     ) -> FlextResult[FlextLdifModels.WriteResponse]:
         """Write entries to LDIF file.
 
@@ -87,7 +90,7 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
             entries: Entries to write
             path: Output file path
             server_type: Server type for quirk selection
-            format_options: Write format options
+            format_options: Write options
 
         Returns:
             FlextResult containing write response
@@ -96,7 +99,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         # First get the LDIF string
         string_result = self.write_to_string(entries, server_type, format_options)
         if string_result.is_failure:
-            return FlextResult.fail(string_result.error or "Failed to generate LDIF content")
+            return FlextResult.fail(
+                string_result.error or "Failed to generate LDIF content"
+            )
 
         ldif_content = string_result.unwrap()
 
@@ -120,17 +125,21 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
     def write(
         self,
         entries: list[FlextLdifModels.Entry],
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        | None = None,
+        _output_target: str | None = None,
         output_path: Path | None = None,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
+        format_options: FlextLdifModels.WriteOptions | None = None,
+        _template_data: dict[str, FlextLdifTypes.TemplateValue] | None = None,
     ) -> FlextResult[str | FlextLdifModels.WriteResponse]:
         """Write entries to LDIF format (string or file).
 
         Args:
             entries: Entries to write
+            target_server_type: Server type for quirk selection
+            _output_target: Output target type ("string" or "file") - for compatibility
             output_path: If provided, write to file; otherwise return string
-            server_type: Server type for quirk selection
-            format_options: Write format options
+            format_options: Write options
 
         Returns:
             FlextResult containing LDIF string (if no output_path) or WriteResponse (if output_path)
@@ -138,15 +147,36 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModels.WriteResponse]):
         """
         if output_path is not None:
             # Write to file
-            file_result = self.write_to_file(entries, output_path, server_type, format_options)
+            file_result = self.write_to_file(
+                entries, output_path, target_server_type, format_options
+            )
             if file_result.is_failure:
                 return FlextResult.fail(file_result.error or "File write failed")
             return FlextResult.ok(file_result.unwrap())
         # Return string
-        string_result = self.write_to_string(entries, server_type, format_options)
+        string_result = self.write_to_string(
+            entries, target_server_type, format_options
+        )
         if string_result.is_failure:
             return FlextResult.fail(string_result.error or "String write failed")
         return FlextResult.ok(string_result.unwrap())
+
+    def execute(self, params: dict) -> FlextResult[FlextLdifModels.WriteResponse]:
+        """Execute write operation with parameters.
+
+        This is the main entry point for the service.
+        """
+        entries = params.get("entries", [])
+        target_server_type = params.get("target_server_type", "rfc")
+        output_path = params.get("output_path")
+        format_options = params.get("format_options")
+
+        return self.write(
+            entries=entries,
+            target_server_type=target_server_type,
+            output_path=output_path,
+            format_options=format_options,
+        )
 
 
 __all__ = ["FlextLdifWriter"]

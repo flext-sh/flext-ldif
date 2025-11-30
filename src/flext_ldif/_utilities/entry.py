@@ -349,7 +349,8 @@ class FlextLdifUtilitiesEntry:
         # Entry.create returns Entry - convert domain to public if needed
         entry_unwrapped = result.unwrap()
         if isinstance(entry_unwrapped, FlextLdifModelsDomains.Entry) and not isinstance(
-            entry_unwrapped, FlextLdifModels.Entry
+            entry_unwrapped,
+            FlextLdifModels.Entry,
         ):
             return FlextLdifModels.Entry.model_validate(entry_unwrapped.model_dump())
         if isinstance(entry_unwrapped, FlextLdifModels.Entry):

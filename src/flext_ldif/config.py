@@ -77,10 +77,10 @@ class FlextLdifConfigModule:
 
         # Model configuration (disable str_strip_whitespace for LDIF fields that need whitespace)
         # env_prefix enables automatic loading from FLEXT_LDIF_* environment variables
-        # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
+        # Use standard .env file resolution
         model_config = SettingsConfigDict(
             env_prefix="FLEXT_LDIF_",
-            env_file=FlextConfig.resolve_env_file(),
+            env_file=".env",
             env_file_encoding="utf-8",
             str_strip_whitespace=False,
             validate_assignment=True,
@@ -93,15 +93,15 @@ class FlextLdifConfigModule:
         # LDIF Format Configuration using FlextLdifConstants for defaults
         # Note: Fields like max_workers, debug, trace, log_verbosity come from root FlextConfig
         # when used in nested pattern (config.ldif references root config.max_workers)
-        ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
-            default="utf-8",
+        ldif_encoding: str = Field(
+            default=FlextLdifConstants.ConfigDefaults.LDIF_DEFAULT_ENCODING,
             description="Character encoding for LDIF files",
         )
 
         ldif_max_line_length: int = Field(
-            default=FlextLdifConstants.Format.MAX_LINE_LENGTH,
-            ge=FlextLdifConstants.Format.MIN_LINE_LENGTH,
-            le=FlextLdifConstants.Format.MAX_LINE_LENGTH_EXTENDED,
+            default=FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH,
+            ge=FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH,
+            le=FlextLdifConstants.LdifFormatting.MAX_LINE_WIDTH,
             description="Maximum LDIF line length (RFC 2849 compliance)",
         )
 
@@ -130,8 +130,8 @@ class FlextLdifConfigModule:
 
         ldif_chunk_size: int = Field(
             default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
-            ge=FlextLdifConstants.LdifProcessing.MIN_CHUNK_SIZE,
-            le=FlextLdifConstants.LdifProcessing.MAX_CHUNK_SIZE,
+            ge=FlextLdifConstants.MIN_BATCH_SIZE,
+            le=FlextLdifConstants.MAX_BATCH_SIZE,
             description="Chunk size for LDIF processing",
         )
 
@@ -159,7 +159,7 @@ class FlextLdifConfigModule:
             description="Cache size for LDIF analytics",
         )
 
-        analytics_detail_level: FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral = Field(
+        analytics_detail_level: str = Field(
             default="medium",
             description="Analytics detail level (low, medium, high)",
         )
@@ -196,7 +196,7 @@ class FlextLdifConfigModule:
 
         ldif_analytics_max_entries: int = Field(
             default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
-            ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
+            ge=1,
             le=FlextLdifConstants.MAX_ANALYTICS_ENTRIES_ABSOLUTE,
             description="Maximum entries for analytics processing",
         )
@@ -212,7 +212,7 @@ class FlextLdifConfigModule:
         )
 
         # Quirks Detection and Mode Configuration
-        quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionModeLiteral = Field(
+        quirks_detection_mode: str = Field(
             default="auto",
             description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
         )
@@ -228,11 +228,9 @@ class FlextLdifConfigModule:
         )
 
         # Validation Configuration using FlextLdifConstants for defaults
-        validation_level: FlextLdifConstants.LiteralTypes.ValidationLevelLiteral = (
-            Field(
-                default="strict",
-                description="Validation strictness level",
-            )
+        validation_level: str = Field(
+            default="strict",
+            description="Validation strictness level",
         )
 
         strict_rfc_compliance: bool = Field(
@@ -247,7 +245,7 @@ class FlextLdifConfigModule:
         )
 
         # Error Handling Configuration
-        error_recovery_mode: FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral = Field(
+        error_recovery_mode: str = Field(
             default="continue",
             description="Error recovery mode (continue, stop, skip)",
         )
@@ -455,7 +453,9 @@ class FlextLdifConfigModule:
         @field_validator("ldif_encoding", mode="after")
         @classmethod
         def validate_ldif_encoding(
-            cls, v: str, info: FlextProtocols.ValidationInfo
+            cls,
+            v: str,
+            info: FlextProtocols.ValidationInfo,
         ) -> str:
             """Validate ldif_encoding is a valid Python codec.
 
@@ -488,7 +488,9 @@ class FlextLdifConfigModule:
         @field_validator("server_type", mode="before")
         @classmethod
         def validate_server_type(
-            cls, v: str, info: FlextProtocols.ValidationInfo
+            cls,
+            v: str,
+            info: FlextProtocols.ValidationInfo,
         ) -> str:
             """Validate server_type is a recognized LDAP server.
 
@@ -517,7 +519,7 @@ class FlextLdifConfigModule:
                 FlextLdifConstants.ServerTypes.OPENLDAP1,
                 FlextLdifConstants.ServerTypes.OPENLDAP2,
                 FlextLdifConstants.ServerTypes.AD,
-                FlextLdifConstants.ServerTypes.DS_389,  # Fixed: DS_389 not DS389
+                FlextLdifConstants.ServerTypes.DS389,
                 FlextLdifConstants.ServerTypes.APACHE,
                 FlextLdifConstants.ServerTypes.NOVELL,
                 FlextLdifConstants.ServerTypes.IBM_TIVOLI,  # Fixed: IBM_TIVOLI not TIVOLI
@@ -543,7 +545,9 @@ class FlextLdifConfigModule:
         @field_validator("ldif_line_separator", mode="after")
         @classmethod
         def validate_ldif_line_separator(
-            cls, v: str, info: FlextProtocols.ValidationInfo
+            cls,
+            v: str,
+            info: FlextProtocols.ValidationInfo,
         ) -> str:
             """Validate ldif_line_separator is RFC 2849 compliant.
 
@@ -575,7 +579,9 @@ class FlextLdifConfigModule:
         @field_validator("ldif_version_string", mode="after")
         @classmethod
         def validate_ldif_version_string(
-            cls, v: str, info: FlextProtocols.ValidationInfo
+            cls,
+            v: str,
+            info: FlextProtocols.ValidationInfo,
         ) -> str:
             """Validate ldif_version_string is RFC 2849 compliant.
 
@@ -662,7 +668,7 @@ class FlextLdifConfigModule:
                 FlextLdifConstants.ServerTypes.OPENLDAP1,
                 FlextLdifConstants.ServerTypes.OPENLDAP2,
                 FlextLdifConstants.ServerTypes.AD,
-                FlextLdifConstants.ServerTypes.DS_389,
+                FlextLdifConstants.ServerTypes.DS389,
                 FlextLdifConstants.ServerTypes.APACHE,
                 FlextLdifConstants.ServerTypes.NOVELL,
                 FlextLdifConstants.ServerTypes.IBM_TIVOLI,
@@ -715,7 +721,7 @@ class FlextLdifConfigModule:
                 FlextLdifConstants.ServerTypes.OPENLDAP1,
                 FlextLdifConstants.ServerTypes.OPENLDAP2,
                 FlextLdifConstants.ServerTypes.AD,
-                FlextLdifConstants.ServerTypes.DS_389,
+                FlextLdifConstants.ServerTypes.DS389,
                 FlextLdifConstants.ServerTypes.APACHE,
                 FlextLdifConstants.ServerTypes.NOVELL,
                 FlextLdifConstants.ServerTypes.IBM_TIVOLI,

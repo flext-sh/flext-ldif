@@ -21,8 +21,8 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif.services.dn import FlextLdifDn
 from tests.fixtures.constants import DNs
 

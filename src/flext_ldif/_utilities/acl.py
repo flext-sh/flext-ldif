@@ -7,15 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
-
 
 # Type for parsed ACL components (using MetadataValue for nested structures)
 AclComponent = dict[str, str | FlextLdifTypes.MetadataValue]
@@ -280,9 +281,11 @@ class FlextLdifUtilitiesACL:
         extensions: dict[str, FlextLdifTypes.MetadataValue] = {}
 
         if config.line_breaks:
-            extensions["line_breaks"] = config.line_breaks
+            extensions["line_breaks"] = cast(
+                "FlextTypes.MetadataValue", config.line_breaks
+            )
         if config.dn_spaces:
-            extensions["dn_spaces"] = config.dn_spaces
+            extensions["dn_spaces"] = cast("FlextTypes.MetadataValue", config.dn_spaces)
         if config.targetscope:
             extensions["targetscope"] = config.targetscope
         if config.version:
@@ -504,7 +507,8 @@ class FlextLdifUtilitiesACL:
         filtered = permissions
         if supported_permissions:
             filtered = FlextLdifUtilitiesACL.filter_supported_permissions(
-                permissions, supported_permissions
+                permissions,
+                supported_permissions,
             )
         if not filtered:
             return None
@@ -599,11 +603,12 @@ class FlextLdifUtilitiesACL:
         """
         # Validate and extract ACI content
         is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
-            acl_line, config.aci_prefix
+            acl_line,
+            config.aci_prefix,
         )
         if not is_valid:
             return FlextResult[FlextLdifModels.Acl].fail(
-                f"Not a valid ACI format: {config.aci_prefix}"
+                f"Not a valid ACI format: {config.aci_prefix}",
             )
 
         # Extract version and name
@@ -617,12 +622,14 @@ class FlextLdifUtilitiesACL:
         # Extract targetattr
         targetattr = config.default_targetattr
         targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
-            aci_content, config.targetattr_pattern, group=2
+            aci_content,
+            config.targetattr_pattern,
+            group=2,
         )
         if targetattr_extracted:
             targetattr = targetattr_extracted
         target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(
-            targetattr
+            targetattr,
         )
 
         # Extract permissions
@@ -635,18 +642,22 @@ class FlextLdifUtilitiesACL:
 
         # Extract bind rules
         bind_rules_data = FlextLdifUtilitiesACL.extract_bind_rules(
-            aci_content, config.bind_patterns
+            aci_content,
+            config.bind_patterns,
         )
 
         # Build subject using config's special_subjects
         subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
         subject_type, subject_value = FlextLdifUtilitiesACL.build_aci_subject(
-            bind_rules_data, subject_type_map, config.special_subjects
+            bind_rules_data,
+            subject_type_map,
+            config.special_subjects,
         )
 
         # Build permissions dict using config's permission_map
         permissions_dict_raw = FlextLdifUtilitiesACL.build_permissions_dict(
-            permissions_list, config.permission_map
+            permissions_list,
+            config.permission_map,
         )
 
         # Convert to typed permissions dict for AclPermissions model
@@ -663,7 +674,9 @@ class FlextLdifUtilitiesACL:
         }
         for pattern_name, pattern in config.extra_patterns.items():
             extracted = FlextLdifUtilitiesACL.extract_component(
-                aci_content, pattern, group=1
+                aci_content,
+                pattern,
+                group=1,
             )
             if extracted:
                 extensions[pattern_name] = extracted
@@ -676,7 +689,10 @@ class FlextLdifUtilitiesACL:
                 attributes=target_attributes,
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type=subject_type,
+                subject_type=cast(
+                    "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+                    subject_type,
+                ),
                 subject_value=subject_value,
             ),
             permissions=FlextLdifModels.AclPermissions(**permissions_dict),
@@ -718,7 +734,9 @@ class FlextLdifUtilitiesACL:
         target_attributes = acl_data.target.attributes if acl_data.target else None
         target_dn = acl_data.target.target_dn if acl_data.target else None
         target_clause = FlextLdifUtilitiesACL.build_aci_target_clause(
-            target_attributes, target_dn, config.attr_separator
+            target_attributes,
+            target_dn,
+            config.attr_separator,
         )
 
         # Build permissions clause
@@ -740,7 +758,9 @@ class FlextLdifUtilitiesACL:
             if getattr(acl_data.permissions, name, False)
         ]
         permissions_clause = FlextLdifUtilitiesACL.build_aci_permissions_clause(
-            perm_names, f"({config.allow_prefix}", config.supported_permissions
+            perm_names,
+            f"({config.allow_prefix}",
+            config.supported_permissions,
         )
         if not permissions_clause:
             return FlextResult[str].fail("No supported permissions")
@@ -808,27 +828,33 @@ class FlextLdifUtilitiesACL:
         bind_rules: list[str] = []
 
         for ext_key, format_template, operator_default in rule_config:
-            value = extensions.get(ext_key)
-            if not value:
+            # Get value as object to allow tuple checking (MetadataValue doesn't include tuples)
+            value_raw: object = extensions.get(ext_key) if extensions else None
+            if not value_raw:
                 continue
 
             # Handle tuple values (operator, value)
+            # Type narrowing: check if value is tuple before accessing
             operator_placeholder = "{" + "operator" + "}"
-            if isinstance(value, tuple) and len(value) == tuple_length:
-                operator, val = value
+            if isinstance(value_raw, tuple) and len(value_raw) == tuple_length:
+                operator, val = value_raw
                 if operator_placeholder in format_template:
                     bind_rules.append(
-                        format_template.format(operator=operator, value=val)
+                        format_template.format(operator=str(operator), value=str(val)),
                     )
                 else:
-                    bind_rules.append(format_template.format(value=val))
+                    bind_rules.append(format_template.format(value=str(val)))
             # Handle simple string values
             elif operator_placeholder in format_template and operator_default:
+                # Type narrowing: value is not tuple here, safe to use as string
+                value_str = str(value_raw)
                 bind_rules.append(
-                    format_template.format(operator=operator_default, value=value)
+                    format_template.format(operator=operator_default, value=value_str),
                 )
             else:
-                bind_rules.append(format_template.format(value=value))
+                # Type narrowing: value is not tuple here, safe to use as string
+                value_str = str(value_raw)
+                bind_rules.append(format_template.format(value=value_str))
 
         return bind_rules
 

@@ -1,5 +1,8 @@
 """Example 8: Complete LDIF Processing Workflow.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 Demonstrates comprehensive FlextLdif integration with direct methods:
 
 NOTE: This example uses proper error handling instead of assert statements.
@@ -412,7 +415,7 @@ def access_all_namespace_classes() -> None:
     entry = entry_result.unwrap()
 
     # Access Constants
-    max_line_length = api.constants.Format.MAX_LINE_LENGTH
+    max_line_length = api.constants.LdifFormatting.MAX_LINE_WIDTH
     utf8_encoding = api.constants.Encoding.UTF8
 
     # Access Types (for type hints)

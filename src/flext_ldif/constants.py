@@ -32,7 +32,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from types import MappingProxyType
-from typing import ClassVar, Final, Literal, TypeGuard
+from typing import ClassVar, Final, Literal, TypeIs
 
 from flext_core import FlextConstants
 
@@ -257,6 +257,41 @@ class FlextLdifConstants(FlextConstants):
 
         # NOTE: Removed service keys (use local constants in respective modules):
         # SERVICE_NAMES, INITIALIZED, DATA
+
+    class Domain:
+        """Domain constants for backward compatibility."""
+
+        class Status(StrEnum):
+            """Status values."""
+
+            ACTIVE = "active"
+            INACTIVE = "inactive"
+            PENDING = "pending"
+            ARCHIVED = "archived"
+            FAILED = "failed"
+
+        class ServerType(StrEnum):
+            """Server type values."""
+
+            OUD = "oud"
+            OID = "oid"
+            RFC = "rfc"
+            AD = "ad"
+            OPENLDAP = "openldap"
+            OPENLDAP1 = "openldap1"
+            OPENLDAP2 = "openldap2"
+            DS389 = "ds389"
+            APACHE = "apache"
+            NOVELL = "novell"
+            IBM_TIVOLI = "tivoli"
+            RELAXED = "relaxed"
+
+        class ValidationStatus(StrEnum):
+            """Validation status values."""
+
+            VALID = "valid"
+            INVALID = "invalid"
+            WARNING = "warning"
 
     class QuirkMetadataKeys(StrEnum):
         """Dictionary keys for quirk metadata and server-specific entry properties.
@@ -1039,6 +1074,7 @@ class FlextLdifConstants(FlextConstants):
         LDIF_STRICT_VALIDATION: Final[bool] = True
         LDIF_LINE_SEPARATOR: Final[str] = "\n"
         LDIF_VERSION_STRING: Final[str] = "version: 1"
+        LDIF_DEFAULT_ENCODING: Final[str] = "utf-8"
 
         # Processing Configuration Defaults
         LDIF_MAX_ENTRIES: Final[int] = 1000000
@@ -1421,44 +1457,43 @@ class FlextLdifConstants(FlextConstants):
     # Error messages are now defined in appropriate validation modules
 
     # =============================================================================
-    # ENUMS
+    # SHARED DOMAIN CONSTANTS - Cross-cutting enums for LDIF ecosystem
     # =============================================================================
 
-    class ProcessingStage(StrEnum):
-        """Processing stages for LDIF operations."""
+    class SharedDomain:
+        """Cross-cutting domain constants shared across FLEXT LDIF ecosystem."""
 
-        PARSING = "parsing"
-        VALIDATION = "validation"
-        ANALYTICS = "analytics"
-        WRITING = "writing"
+        class ProcessingStage(StrEnum):
+            """Processing stages for LDIF operations."""
 
-    class LdifHealthStatus(StrEnum):
-        """Health status for LDIF services."""
+            PARSING = "parsing"
+            VALIDATION = "validation"
+            ANALYTICS = "analytics"
+            WRITING = "writing"
 
-        HEALTHY = "healthy"
-        DEGRADED = "degraded"
-        UNHEALTHY = "unhealthy"
+        class LdifHealthStatus(StrEnum):
+            """Health status for LDIF services."""
 
-    class EntryType(StrEnum):
-        """Types of LDIF entries."""
+            HEALTHY = "healthy"
+            DEGRADED = "degraded"
+            UNHEALTHY = "unhealthy"
 
-        PERSON = "person"
-        GROUP = "group"
-        ORGANIZATIONAL_UNIT = "organizationalunit"
-        DOMAIN = "domain"
-        OTHER = "other"
+        class EntryType(StrEnum):
+            """Types of LDIF entries."""
 
-    class EntryModification(StrEnum):
-        """LDIF entry modification types."""
+            PERSON = "person"
+            GROUP = "group"
+            ORGANIZATIONAL_UNIT = "organizationalunit"
+            DOMAIN = "domain"
+            OTHER = "other"
 
-        ADD = "add"
-        MODIFY = "modify"
-        DELETE = "delete"
-        MODRDN = "modrdn"
+        class EntryModification(StrEnum):
+            """LDIF entry modification types."""
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # STATISTICS TRACKING ENUMS (For EntryStatistics & DNStatistics models)
-    # ═══════════════════════════════════════════════════════════════════════
+            ADD = "add"
+            MODIFY = "modify"
+            DELETE = "delete"
+            MODRDN = "modrdn"
 
     class TransformationType(StrEnum):
         """Types of transformations applied to entries.
@@ -1577,6 +1612,102 @@ class FlextLdifConstants(FlextConstants):
 
     # NOTE: ServerTypeEnum removed - use ServerTypes instead (canonical source)
     # ServerTypeEnum was duplicate of LdapServerType - consolidated to ServerTypes
+
+    # =============================================================================
+    # SERVER TYPES - Single source of truth for all server types
+    # =============================================================================
+
+    class ServerTypes(StrEnum):
+        """Server type identifiers - Single source of truth for all server types.
+
+        Zero Tolerance: All server type identifier strings MUST be defined here.
+        Uses SHORT identifiers for code usage.
+        """
+
+        # Short identifiers (used in code, configuration, and processing)
+        OID = "oid"
+        OUD = "oud"
+        OPENLDAP = "openldap"
+        OPENLDAP1 = "openldap1"
+        OPENLDAP2 = "openldap2"
+        AD = "ad"
+        APACHE = "apache"
+        DS389 = "ds389"
+        RFC = "rfc"
+        RELAXED = "relaxed"
+        NOVELL = "novell"
+        IBM_TIVOLI = "ibm_tivoli"
+        GENERIC = "generic"
+
+        @classmethod
+        def normalize(cls, server_type: str) -> str:
+            """Normalize server type aliases to canonical form.
+
+            Converts aliases like 'oracle_oid' → 'oid', 'oracle_oud' → 'oud'.
+
+            Args:
+                server_type: Server type string (may be alias)
+
+            Returns:
+                Canonical server type string
+
+            Raises:
+                ValueError: If server_type cannot be normalized to a valid type
+
+            Example:
+                >>> FlextLdifConstants.ServerTypes.normalize("oracle_oid")
+                'oid'
+                >>> FlextLdifConstants.ServerTypes.normalize("rfc")
+                'rfc'
+
+            """
+            # First try aliases (oracle_oid → oid)
+            if server_type in FlextLdifConstants.ServerTypesMappings.ALIASES:
+                return FlextLdifConstants.ServerTypesMappings.ALIASES[server_type]
+
+            # Then try long to short (oracle_oid → oid via FROM_LONG)
+            normalized = FlextLdifConstants.ServerTypesMappings.FROM_LONG.get(
+                server_type,
+                server_type,
+            )
+
+            # Check if it's a valid server type
+            valid_types = {str(st.value) for st in cls}
+            if normalized in valid_types:
+                return normalized
+
+            # Fast fail: raise ValueError for invalid types
+            valid_list = sorted(valid_types | {"oracle_oid", "oracle_oud"})
+            msg = f"Invalid server type '{server_type}'. Valid: {', '.join(valid_list)}"
+            raise ValueError(msg)
+
+        @classmethod
+        def matches(cls, server_type: str, *canonical_types: str) -> bool:
+            """Check if server_type matches any of the canonical types.
+
+            Handles aliases automatically via normalize.
+
+            Args:
+                server_type: Server type to check
+                *canonical_types: Canonical type(s) to match against
+
+            Returns:
+                True if server_type (or its normalized form) matches any type
+
+            Example:
+                >>> FlextLdifConstants.ServerTypes.matches("oid", "oid", "oud")
+                True
+                >>> FlextLdifConstants.ServerTypes.matches("oracle_oid", "oid")
+                True
+                >>> FlextLdifConstants.ServerTypes.matches("ad", "oid", "oud")
+                False
+
+            """
+            try:
+                normalized = cls.normalize(server_type)
+                return normalized in canonical_types or server_type in canonical_types
+            except ValueError:
+                return False
 
     # =============================================================================
     # LITERAL TYPE CONSTANTS - All Literal types MUST be declared here
@@ -1748,7 +1879,11 @@ class FlextLdifConstants(FlextConstants):
         ]
         """Literal type matching ProcessingStage StrEnum for type annotations."""
 
-        type HealthStatusLiteral = Literal["healthy", "degraded", "unhealthy"]
+        type HealthStatusLiteral = Literal[
+            "healthy",
+            "degraded",
+            "unhealthy",
+        ]
         """Literal type matching LdifHealthStatus StrEnum for type annotations."""
 
         type EntryTypeLiteral = Literal[
@@ -1763,23 +1898,23 @@ class FlextLdifConstants(FlextConstants):
         type ModificationTypeLiteral = Literal["add", "modify", "delete", "modrdn"]
         """Literal type matching EntryModification StrEnum for type annotations."""
         type ServerTypeLiteral = Literal[
-            # Short forms (primary - used in code)
+            # Referencing StrEnum values directly (NO duplication!)
             "oid",
             "oud",
             "openldap",
             "openldap1",
             "openldap2",
+            "ad",
+            "apache",
+            "rfc",
+            "ds389",
+            "relaxed",
+            "novell",
+            "ibm_tivoli",
+            "generic",
             "active_directory",
             "apache_directory",
-            "generic",
-            "rfc",
-            "389ds",
-            "relaxed",
             "novell_edirectory",
-            "ibm_tivoli",
-            # Long forms (for backward compatibility)
-            "oracle_oid",
-            "oracle_oud",
         ]
 
         type EncodingTypeLiteral = Literal[
@@ -3331,44 +3466,6 @@ class FlextLdifConstants(FlextConstants):
         DEFAULT_ACL_FORMAT: Final[str] = ACI
         DEFAULT_ACL_ATTRIBUTE_NAME: Final[str] = ACI
 
-    # =============================================================================
-    # SERVER TYPE SHORTCUTS - Short server type identifiers
-    # =============================================================================
-
-    class ServerTypes(StrEnum):
-        """Server type identifiers - Single source of truth for all server types.
-
-        Zero Tolerance: All server type identifier strings MUST be defined here.
-        Uses SHORT identifiers for code usage. Use LONG_NAMES mapping to get full names.
-        Internal note: LdapServers class provides server-specific detection patterns,
-        but all server type strings MUST be defined here first.
-
-        Usage:
-            >>> server_type = FlextLdifConstants.ServerTypes.OID
-            >>> str(server_type)  # "oid"
-            >>> server_type == "oid"  # True (StrEnum supports string comparison)
-        """
-
-        # Short identifiers (used in code, configuration, and processing)
-        # PRIMARY SOURCE: Use these in all code
-        OID = "oid"
-        OUD = "oud"
-        OPENLDAP = "openldap"
-        OPENLDAP1 = "openldap1"
-        OPENLDAP2 = "openldap2"
-        AD = "active_directory"
-        APACHE = "apache_directory"
-        GENERIC = "generic"
-        RFC = "rfc"
-        DS_389 = "389ds"
-        RELAXED = "relaxed"
-        NOVELL = "novell_edirectory"
-        IBM_TIVOLI = "ibm_tivoli"
-
-        # Backward compatibility aliases (deprecated, use OID/OUD instead)
-        ORACLE_OID = OID  # Alias for backward compatibility
-        ORACLE_OUD = OUD  # Alias for backward compatibility
-
     class ServerTypesMappings:
         """Server type mappings and aliases (separate from enum to avoid conflicts)."""
 
@@ -3419,11 +3516,11 @@ class FlextLdifConstants(FlextConstants):
     @staticmethod
     def _is_valid_server_type_literal(
         value: str,
-    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.ServerTypeLiteral]:
-        """Type guard for ServerTypeLiteral validation.
+    ) -> TypeIs[FlextLdifConstants.LiteralTypes.ServerTypeLiteral]:
+        """TypeIs for ServerTypeLiteral validation.
 
         Validates that a string value is a valid ServerTypeLiteral.
-        Enables proper type narrowing without casts.
+        Enables proper type narrowing in both if/else branches.
 
         Args:
             value: String to validate
@@ -3443,7 +3540,7 @@ class FlextLdifConstants(FlextConstants):
                 str(FlextLdifConstants.ServerTypes.APACHE),
                 str(FlextLdifConstants.ServerTypes.GENERIC),
                 str(FlextLdifConstants.ServerTypes.RFC),
-                str(FlextLdifConstants.ServerTypes.DS_389),
+                str(FlextLdifConstants.ServerTypes.DS389),
                 str(FlextLdifConstants.ServerTypes.RELAXED),
                 str(FlextLdifConstants.ServerTypes.NOVELL),
                 str(FlextLdifConstants.ServerTypes.IBM_TIVOLI),
@@ -3457,11 +3554,11 @@ class FlextLdifConstants(FlextConstants):
     @staticmethod
     def is_valid_category_literal(
         value: str,
-    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.CategoryLiteral]:
-        """Type guard for CategoryLiteral validation.
+    ) -> TypeIs[FlextLdifConstants.LiteralTypes.CategoryLiteral]:
+        """TypeIs for CategoryLiteral validation.
 
         Validates that a string value is a valid CategoryLiteral.
-        Enables proper type narrowing without casts.
+        Enables proper type narrowing in both if/else branches.
 
         Args:
             value: String to validate
@@ -3486,8 +3583,8 @@ class FlextLdifConstants(FlextConstants):
     @staticmethod
     def is_valid_sort_target_literal(
         value: str,
-    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.SortTargetLiteral]:
-        """Type guard for SortTargetLiteral validation.
+    ) -> TypeIs[FlextLdifConstants.LiteralTypes.SortTargetLiteral]:
+        """TypeIs for SortTargetLiteral validation.
 
         Args:
             value: String to validate
@@ -3504,8 +3601,8 @@ class FlextLdifConstants(FlextConstants):
     @staticmethod
     def is_valid_sort_strategy_literal(
         value: str,
-    ) -> TypeGuard[FlextLdifConstants.LiteralTypes.SortStrategyLiteral]:
-        """Type guard for SortStrategyLiteral validation.
+    ) -> TypeIs[FlextLdifConstants.LiteralTypes.SortStrategyLiteral]:
+        """TypeIs for SortStrategyLiteral validation.
 
         Args:
             value: String to validate
@@ -3677,11 +3774,11 @@ class FlextLdifConstants(FlextConstants):
             Valid LDIF format string or None if invalid
 
         """
-        return cls.validate_enum_value(
-            value,
-            cls.ValidationMappings.LDIF_FORMAT_VALIDATION_SET,
-            cls.ValidationMappings.LDIF_FORMAT_VALIDATION_MAP,
-        )
+        # Use SharedDomain.LdifFormatType enum from flext-core for validation
+        # Call classmethod directly - methods exist at runtime, mypy needs type ignore
+        if FlextConstants.SharedDomain.is_valid_ldif_format(value):  # type: ignore[attr-defined]
+            return value
+        return None
 
     @classmethod
     def validate_server_type(cls, value: str) -> str | None:
@@ -3697,11 +3794,11 @@ class FlextLdifConstants(FlextConstants):
             Valid server type string or None if invalid
 
         """
-        return cls.validate_enum_value(
-            value,
-            cls.ValidationMappings.SERVER_TYPE_VALIDATION_SET,
-            cls.ValidationMappings.SERVER_TYPE_VALIDATION_MAP,
-        )
+        # Use SharedDomain.ServerType enum from flext-core for validation
+        # Call classmethod directly - methods exist at runtime, mypy needs type ignore
+        if FlextConstants.SharedDomain.is_valid_server_type(value):  # type: ignore[attr-defined]
+            return value
+        return None
 
     @classmethod
     def get_valid_ldif_formats(cls) -> Sequence[str]:
@@ -3714,9 +3811,9 @@ class FlextLdifConstants(FlextConstants):
             Immutable sequence of valid LDIF format strings
 
         """
-        return cls.get_valid_enum_values(
-            cls.ValidationMappings.LDIF_FORMAT_VALIDATION_SET
-        )
+        # Use SharedDomain.LdifFormatType enum from flext-core
+        # Call classmethod directly - methods exist at runtime, mypy needs type ignore
+        return FlextConstants.SharedDomain.get_valid_ldif_formats()  # type: ignore[attr-defined]
 
     @classmethod
     def get_valid_server_types(cls) -> Sequence[str]:
@@ -3729,9 +3826,9 @@ class FlextLdifConstants(FlextConstants):
             Immutable sequence of valid server type strings
 
         """
-        return cls.get_valid_enum_values(
-            cls.ValidationMappings.SERVER_TYPE_VALIDATION_SET
-        )
+        # Use SharedDomain.ServerType enum from flext-core
+        # Call classmethod directly - methods exist at runtime, mypy needs type ignore
+        return FlextConstants.SharedDomain.get_valid_server_types()  # type: ignore[attr-defined]
 
     # =============================================================================
     # OPERATION CONSTANTS - Filter types, modes, categories, data types
@@ -4475,10 +4572,10 @@ class FlextLdifConstants(FlextConstants):
         """
 
         # Default line width for LDIF folding (RFC 2849 recommends 76)
-        DEFAULT_LINE_WIDTH: Final[int] = 76
+        DEFAULT_LINE_WIDTH: Final[int] = 78
 
         # Maximum allowed line width
-        MAX_LINE_WIDTH: Final[int] = 1000
+        MAX_LINE_WIDTH: Final[int] = 199
 
         # Minimum allowed line width
         MIN_LINE_WIDTH: Final[int] = 10

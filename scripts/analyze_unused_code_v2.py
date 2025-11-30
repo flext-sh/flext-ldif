@@ -67,7 +67,7 @@ class CodeAnalyzer(ast.NodeVisitor):
         self.references: set[str] = set()
         self.imports: dict[str, str] = {}  # name -> module
         self.import_froms: dict[str, set[str]] = defaultdict(
-            set
+            set,
         )  # module -> set of names
         self.current_class: str | None = None
         self.class_stack: list[str | None] = []
@@ -154,7 +154,10 @@ class CodeAnalyzer(ast.NodeVisitor):
 def analyze_file(
     file_path: Path,
 ) -> tuple[
-    dict[str, list[tuple[str, int, str]]], set[str], dict[str, str], dict[str, set[str]]
+    dict[str, list[tuple[str, int, str]]],
+    set[str],
+    dict[str, str],
+    dict[str, set[str]],
 ]:
     """Analyze a Python file and return definitions, references, imports, and import_froms."""
     try:
@@ -216,7 +219,8 @@ def collect_all_references_and_imports() -> tuple[set[str], dict[str, set[str]]]
 
 
 def check_server_class_usage(
-    class_name: str, all_import_froms: dict[str, set[str]]
+    class_name: str,
+    all_import_froms: dict[str, set[str]],
 ) -> bool:
     """Check if a server class is used via DI or API."""
     # Check if it's imported from flext_ldif.servers
@@ -239,7 +243,9 @@ def check_server_class_usage(
 
 
 def check_api_usage(
-    def_name: str, all_refs: set[str], all_import_froms: dict[str, set[str]]
+    def_name: str,
+    all_refs: set[str],
+    all_import_froms: dict[str, set[str]],
 ) -> bool:
     """Check if a definition is used via API imports or direct references."""
     # Check direct reference
@@ -348,7 +354,8 @@ def main() -> None:
         if items:
             print(f"\n{def_type.upper()}S ({len(items)}):")
             for name, file_path, lineno in sorted(
-                items, key=lambda x: (str(x[1]), x[2])
+                items,
+                key=lambda x: (str(x[1]), x[2]),
             ):
                 try:
                     rel_path = file_path.relative_to(FLEXT_LDIF_ROOT)

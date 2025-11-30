@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Protocol, cast, override
+from typing import Protocol, override
 
 from flext_core import FlextResult
 
@@ -326,18 +326,14 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         content_lower = content.lower()
 
         # Server processing configuration mapping
-        oid_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.OID.value,
-            )
+        # Use normalize_server_type for proper type narrowing
+        oid_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.OID.value,
         )
+        oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
             self._process_server_with_oid_pattern(
-                cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                    FlextLdifConstants.ServerTypes.OID.value,
-                ),
+                oid_server_type,
                 oid_constants,
                 content,
                 content_lower,
@@ -345,18 +341,13 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 case_sensitive=True,
             )
 
-        oud_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.OUD.value,
-            )
+        oud_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.OUD.value,
         )
+        oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
             self._process_server_with_oid_pattern(
-                cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                    FlextLdifConstants.ServerTypes.OUD.value,
-                ),
+                oud_server_type,
                 oud_constants,
                 content,
                 content_lower,
@@ -415,13 +406,17 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             constants = self._get_server_constants(server_literal)
             if constants:
                 self._process_server_with_pattern(
-                    server_literal, constants, content_lower, scores
+                    server_literal,
+                    constants,
+                    content_lower,
+                    scores,
                 )
 
         return scores
 
     def _determine_server_type(
-        self, scores: dict[str, int]
+        self,
+        scores: dict[str, int],
     ) -> tuple[FlextLdifConstants.LiteralTypes.ServerTypeLiteral, float]:
         """Determine the most likely server type from scores.
 
@@ -459,7 +454,8 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
 
         # Map string key to ServerTypeLiteral - validated server types only
         server_type_map: dict[
-            str, FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+            str,
+            FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         ] = {
             "oid": "oid",
             "oud": "oud",
@@ -567,12 +563,10 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         content_lower = content.lower()
 
         # Oracle OID
-        oid_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.OID.value,
-            )
+        oid_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.OID.value,
         )
+        oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
             oid_pattern = getattr(oid_constants, "DETECTION_OID_PATTERN", None)
             self._extract_oid_patterns(
@@ -587,12 +581,10 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             self._extract_oid_specific_patterns(oid_constants, content_lower, patterns)
 
         # Oracle OUD
-        oud_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.OUD.value,
-            )
+        oud_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.OUD.value,
         )
+        oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
             oud_pattern = getattr(oud_constants, "DETECTION_OID_PATTERN", None)
             self._extract_oid_patterns(
@@ -605,12 +597,10 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             )
 
         # OpenLDAP
-        openldap_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.OPENLDAP.value,
-            ),
+        openldap_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.OPENLDAP.value,
         )
+        openldap_constants = self._get_server_constants(openldap_server_type)
         if openldap_constants:
             openldap_pattern = getattr(
                 openldap_constants,
@@ -627,12 +617,10 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             )
 
         # Active Directory
-        ad_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.AD.value,
-            )
+        ad_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.AD.value,
         )
+        ad_constants = self._get_server_constants(ad_server_type)
         if ad_constants:
             ad_pattern = getattr(ad_constants, "DETECTION_OID_PATTERN", None)
             self._extract_oid_patterns(
@@ -657,7 +645,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 "Novell eDirectory attributes (GUID, Modifiers, etc.)",
             ),
             (
-                FlextLdifConstants.ServerTypes.DS_389,
+                FlextLdifConstants.ServerTypes.DS389,
                 "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
             ),
             (
@@ -665,8 +653,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 "Apache DS attributes (apacheDS, apache-*)",
             ),
         ]:
-            server_type = cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+            server_type = FlextLdifConstants.normalize_server_type(
                 server_type_enum.value,
             )
             self._extract_pattern_with_attr(
@@ -678,12 +665,10 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             )
 
         # Special handling for IBM Tivoli (compiled pattern)
-        tivoli_constants = self._get_server_constants(
-            cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.IBM_TIVOLI.value,
-            ),
+        tivoli_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI.value,
         )
+        tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
             if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(

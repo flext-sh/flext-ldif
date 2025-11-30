@@ -18,6 +18,7 @@ from typing import Protocol
 import structlog
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 
 logger = structlog.get_logger(__name__)
@@ -183,7 +184,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                attribute: FlextLdifModels.SchemaAttribute,
+                attribute: FlextLdifModelsDomains.SchemaAttribute,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
@@ -191,8 +192,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                attribute: FlextLdifModels.SchemaAttribute,
-            ) -> FlextLdifModels.SchemaAttribute: ...
+                attribute: FlextLdifModelsDomains.SchemaAttribute,
+            ) -> FlextLdifModelsDomains.SchemaAttribute: ...
 
         class FormatOidHook(Protocol):
             """Protocol for OID formatting."""
@@ -203,7 +204,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write(
-            attribute: FlextLdifModels.SchemaAttribute,
+            attribute: FlextLdifModelsDomains.SchemaAttribute,
             server_type: str,
             build_parts_hook: BuildPartsHook,
             *,
@@ -257,7 +258,7 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                objectclass: FlextLdifModels.SchemaObjectClass,
+                objectclass: FlextLdifModelsDomains.SchemaObjectClass,
             ) -> list[str]: ...
 
         class TransformHook(Protocol):
@@ -265,8 +266,8 @@ class FlextLdifUtilitiesWriters:
 
             def __call__(
                 self,
-                objectclass: FlextLdifModels.SchemaObjectClass,
-            ) -> FlextLdifModels.SchemaObjectClass: ...
+                objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+            ) -> FlextLdifModelsDomains.SchemaObjectClass: ...
 
         class TransformSupHook(Protocol):
             """Protocol for SUP clause transformation."""
@@ -277,7 +278,7 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write(
-            objectclass: FlextLdifModels.SchemaObjectClass,
+            objectclass: FlextLdifModelsDomains.SchemaObjectClass,
             server_type: str,
             build_parts_hook: BuildPartsHook,
             *,

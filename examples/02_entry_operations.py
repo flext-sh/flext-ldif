@@ -1,5 +1,8 @@
 """Example 2: DRY Entry Operations - Zero Code Bloat, Maximum Intelligence.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 flext-ldif enables intelligent operations with ZERO manual work:
 - Auto-detect entry types from attributes (mail → inetOrgPerson, member → groupOfNames)
 - Railway composition: build → filter → process → validate in ONE pipeline
@@ -67,13 +70,15 @@ class DRYEntryOperations:
             FlextResult.ok(entries)
             .bind(
                 lambda e: api.filter_entries(
-                    e, lambda x: "IT" in x.attributes.get("departmentNumber", [])
-                )
+                    e,
+                    lambda x: "IT" in x.attributes.get("departmentNumber", []),
+                ),
             )
             .bind(
                 lambda e: api.filter_entries(
-                    e, lambda x: "@example.com" in x.attributes.get("mail", [""])[0]
-                )
+                    e,
+                    lambda x: "@example.com" in x.attributes.get("mail", [""])[0],
+                ),
             )
         )
 
@@ -83,5 +88,5 @@ class DRYEntryOperations:
 
         # Build → filter → parallel transform in one composition
         return self.advanced_filtering().bind(
-            lambda e: api.process("transform", e, parallel=True, max_workers=4)
+            lambda e: api.process("transform", e, parallel=True, max_workers=4),
         )

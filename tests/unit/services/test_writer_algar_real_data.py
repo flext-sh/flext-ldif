@@ -23,8 +23,8 @@ from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants

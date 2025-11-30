@@ -75,7 +75,7 @@ def print_analysis(analysis: FileAnalysis) -> None:
     print(f"   Classes: {analysis.class_count}")
     print(f"   Methods: {analysis.method_count}")
     print(
-        f"   Estimated reduction (30%): {analysis.file_path.name} → {int(analysis.line_count * 0.7)} lines"
+        f"   Estimated reduction (30%): {analysis.file_path.name} → {int(analysis.line_count * 0.7)} lines",
     )
     print("\n   Classes and test counts:")
     for class_name, method_count in analysis.method_counts.items():
@@ -88,7 +88,7 @@ def main() -> None:
         print("Usage: python refactor_test_consolidation.py <test_file_path>")
         print("\nExample:")
         print(
-            "  python refactor_test_consolidation.py tests/unit/quirks/servers/test_apache_quirks.py"
+            "  python refactor_test_consolidation.py tests/unit/quirks/servers/test_apache_quirks.py",
         )
         sys.exit(1)
 

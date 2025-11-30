@@ -1,5 +1,8 @@
 """Example 3: DRY Validation Analysis - Zero Manual Work, Maximum Intelligence.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 flext-ldif enables validation analysis with ZERO code bloat:
 - Auto-generate test datasets with configurable error injection
 - Railway composition: generate → validate → analyze → report in ONE pipeline
@@ -31,7 +34,9 @@ class DRYValidationAnalysis:
         return api.validate_entries(entries).bind(self._analyze_validation_results)
 
     def _generate_test_dataset(
-        self, count: int, error_rate: float = 0.0
+        self,
+        count: int,
+        error_rate: float = 0.0,
     ) -> list[FlextLdifModels.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
@@ -46,7 +51,7 @@ class DRYValidationAnalysis:
                     "mail": [
                         f"user{i}@example.com"
                         if i % int(1 / error_rate) != 0
-                        else "invalid"
+                        else "invalid",
                     ],
                     # Inject errors: missing required attributes, invalid DNs, etc.
                     **(
@@ -64,7 +69,7 @@ class DRYValidationAnalysis:
                     "mail": [
                         f"user{i}@example.com"
                         if i % int(1 / error_rate) != 0
-                        else "invalid"
+                        else "invalid",
                     ],
                     **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
                 },
@@ -72,7 +77,8 @@ class DRYValidationAnalysis:
         ]
 
     def _analyze_validation_results(
-        self, validation_result: FlextLdifModels.ValidationResult
+        self,
+        validation_result: FlextLdifModels.ValidationResult,
     ) -> FlextResult[FlextLdifModels.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
@@ -104,6 +110,6 @@ class DRYValidationAnalysis:
                     "error_rate": len(vr.errors) / len(vr.entries)
                     if hasattr(vr, "entries") and vr.entries
                     else 0,
-                })
+                }),
             )
         )

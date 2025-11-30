@@ -25,8 +25,8 @@ from __future__ import annotations
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifProtocols
 from flext_ldif.services.entries import FlextLdifEntries
 from tests.fixtures.constants import DNs, Names, Values
@@ -97,10 +97,10 @@ class TestFlextLdifEntries:
         def create_mock_entry_with_dn(
             dn_value: str,
             attributes: object = None,
-        ) -> FlextLdifProtocols.Entry.EntryWithDnProtocol:
+        ) -> FlextLdifProtocols.Models.EntryWithDnProtocol:
             """Create mock entry implementing EntryWithDnProtocol."""
 
-            class MockEntry(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class MockEntry(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self, dn_val: str, attrs: object) -> None:
                     self.dn: object = dn_val
                     self.attributes: object = attrs or {}
@@ -111,7 +111,7 @@ class TestFlextLdifEntries:
         def create_mock_entry_with_dn_value(
             dn_value: str,
             attributes: object = None,
-        ) -> FlextLdifProtocols.Entry.EntryWithDnProtocol:
+        ) -> FlextLdifProtocols.Models.EntryWithDnProtocol:
             """Create mock entry with DN that has .value attribute."""
 
             class DnWithValue:
@@ -121,7 +121,7 @@ class TestFlextLdifEntries:
                 def __str__(self) -> str:
                     return self.value
 
-            class MockEntry(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class MockEntry(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self, dn_val: str, attrs: object) -> None:
                     self.dn: object = DnWithValue(dn_val)
                     self.attributes: object = attrs or {}
@@ -131,10 +131,10 @@ class TestFlextLdifEntries:
         @staticmethod
         def create_mock_attribute_value(
             values: list[str] | str,
-        ) -> FlextLdifProtocols.AttributeValueProtocol:
+        ) -> FlextLdifProtocols.Models.AttributeValueProtocol:
             """Create mock attribute value implementing AttributeValueProtocol."""
 
-            class MockAttributeValue(FlextLdifProtocols.AttributeValueProtocol):
+            class MockAttributeValue(FlextLdifProtocols.Models.AttributeValueProtocol):
                 def __init__(self, vals: list[str] | str) -> None:
                     self.values = vals
 
@@ -148,13 +148,13 @@ class TestFlextLdifEntries:
             service = FlextLdifEntries()
             assert service is not None
 
-        def test_execute_returns_not_implemented(self) -> None:
-            """Test execute returns not implemented error when operation is not set."""
+        def test_execute_returns_unknown_operation_error(self) -> None:
+            """Test execute returns error for unknown operations."""
             service = FlextLdifEntries(entries=[], operation="invalid_operation")
             result = service.execute()
             assert result.is_failure
             assert result.error is not None
-            assert "does not support generic execute" in result.error
+            assert "Unknown operation: invalid_operation" in result.error
 
     class TestGetEntryDn:
         """Test get_entry_dn method for DN extraction from various entry types."""
@@ -232,7 +232,7 @@ class TestFlextLdifEntries:
                 def __str__(self) -> str:
                     raise ValueError(exception_msg)
 
-            class MockEntry(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class MockEntry(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self) -> None:
                     self.dn: object = ExceptionDn()
                     self.attributes: object = {}
@@ -478,7 +478,7 @@ class TestFlextLdifEntries:
             """Test get_entry_attributes with unknown attributes container type."""
 
             class EntryWithUnknownAttributes(
-                FlextLdifProtocols.Entry.EntryWithDnProtocol
+                FlextLdifProtocols.Models.EntryWithDnProtocol,
             ):
                 def __init__(self) -> None:
                     self.dn = "cn=test,dc=example,dc=com"
@@ -555,7 +555,7 @@ class TestFlextLdifEntries:
             """Test get_entry_objectclasses with lowercase objectclass key."""
 
             class EntryWithLowercaseObjectclass(
-                FlextLdifProtocols.Entry.EntryWithDnProtocol
+                FlextLdifProtocols.Entry.EntryWithDnProtocol,
             ):
                 def __init__(self) -> None:
                     self.dn = "cn=test,dc=example,dc=com"
@@ -589,7 +589,7 @@ class TestFlextLdifEntries:
             """Test get_entry_objectclasses when get_entry_attributes fails."""
 
             class EntryWithoutAttributesAttr(
-                FlextLdifProtocols.Entry.EntryWithDnProtocol
+                FlextLdifProtocols.Entry.EntryWithDnProtocol,
             ):
                 def __init__(self) -> None:
                     self.dn: object = TestFlextLdifEntries.Constants.DN_TEST_USER

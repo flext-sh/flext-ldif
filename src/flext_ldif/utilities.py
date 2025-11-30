@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextUtilities
+
 from flext_ldif._utilities import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
@@ -25,12 +27,11 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesParsers,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
-    FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
 
 
-class FlextLdifUtilities:
+class FlextLdifUtilities(FlextUtilities):
     """Pure LDIF Utilities - RFC 4514 DN operations, string manipulation."""
 
     ACL = FlextLdifUtilitiesACL
@@ -48,7 +49,6 @@ class FlextLdifUtilities:
     Parsers = FlextLdifUtilitiesParsers
     Schema = FlextLdifUtilitiesSchema
     Server = FlextLdifUtilitiesServer
-    Validation = FlextLdifUtilitiesValidation
     Writer = FlextLdifUtilitiesWriter
 
 

@@ -618,9 +618,9 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
-            description="Server type"
+            description="Server type",
         )
         schema_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.GENERIC.value,
+            default=FlextLdifConstants.ServerTypes.RFC,
             description="Schema type",
         )

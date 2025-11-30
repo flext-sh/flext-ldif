@@ -1,5 +1,8 @@
 """Example 6: ACL (Access Control List) Processing.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 Demonstrates FlextLdif ACL-related functionality:
 - Extracting ACLs from LDIF entries
 - Parsing ACL attributes

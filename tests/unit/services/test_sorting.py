@@ -571,10 +571,12 @@ class TestFlextLdifSorting:
         """Test _by_dn method via execute."""
         entries = [
             FlextLdifTestFactories.create_entry(
-                "cn=zzz,dc=example,dc=com", {"cn": ["zzz"]}
+                "cn=zzz,dc=example,dc=com",
+                {"cn": ["zzz"]},
             ),
             FlextLdifTestFactories.create_entry(
-                "cn=aaa,dc=example,dc=com", {"cn": ["aaa"]}
+                "cn=aaa,dc=example,dc=com",
+                {"cn": ["aaa"]},
             ),
         ]
         result = FlextLdifSorting(

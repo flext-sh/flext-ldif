@@ -20,8 +20,8 @@ from typing import Final, cast
 
 import pytest
 from flext_core import FlextResult
-from flext_tests import FlextTestsMatchers
 
+# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
 from tests.fixtures.constants import RFC, DNs, Fixtures

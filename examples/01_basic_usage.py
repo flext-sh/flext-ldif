@@ -1,5 +1,8 @@
 """Example 1: DRY Railway Pattern - Minimal Code, Maximum Power.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 flext-ldif enables advanced capabilities with ZERO code bloat:
 - Auto-detection, validation, parallel processing in ONE LINE each
 - Railway pattern with early failure detection
@@ -38,7 +41,12 @@ mail: jane.smith@example.com
 """
 
     def process_pipeline(self) -> FlextResult:
-        """DRY railway: detect → parse → validate → parallel process."""
+        """DRY railway: detect → parse → validate → parallel process.
+
+        Returns:
+            FlextResult with parsed and validated entries or error.
+
+        """
         api = FlextLdif.get_instance()
 
         # Railway pattern with proper error handling
@@ -64,7 +72,12 @@ mail: jane.smith@example.com
         return (process_result.is_success and FlextResult.ok(entries)) or process_result
 
     def file_pipeline(self) -> FlextResult:
-        """DRY file processing: detect → parse → validate → write."""
+        """DRY file processing: detect → parse → validate → write.
+
+        Returns:
+            FlextResult with processing result or error.
+
+        """
         api = FlextLdif.get_instance()
         sample_file = Path("examples/sample_basic.ldif")
 
@@ -87,7 +100,8 @@ mail: jane.smith@example.com
             return validate_result
 
         write_result = api.write(
-            parse_result.unwrap(), Path("examples/output_dry.ldif")
+            parse_result.unwrap(),
+            Path("examples/output_dry.ldif"),
         )
         if write_result.is_failure:
             return write_result
@@ -95,18 +109,24 @@ mail: jane.smith@example.com
         return FlextResult.ok("File processing complete")
 
     def context_pipeline(self) -> FlextResult:
-        """Context-aware processing with correlation tracking."""
+        """Context-aware processing with correlation tracking.
+
+        Returns:
+            FlextResult with processing result or error.
+
+        """
         api = FlextLdif.get_instance()
 
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
                 return FlextResult.fail(
-                    server_result.error or "Server detection failed"
+                    server_result.error or "Server detection failed",
                 )
 
             parse_result = api.parse(
-                self.SAMPLE_LDIF[:100], server_type=server_result.unwrap()
+                self.SAMPLE_LDIF[:100],
+                server_type=server_result.unwrap(),
             )
             if parse_result.is_failure:
                 return parse_result
@@ -141,7 +161,10 @@ mail: jane.smith@example.com
 
         # Transform and return entries (not processing results)
         transform_result = api.process(
-            "transform", entries, parallel=True, max_workers=6
+            "transform",
+            entries,
+            parallel=True,
+            max_workers=6,
         )
         if transform_result.is_failure:
             return transform_result

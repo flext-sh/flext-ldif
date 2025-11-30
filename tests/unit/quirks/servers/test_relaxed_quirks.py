@@ -334,7 +334,7 @@ class TestFlextLdifRelaxedQuirks:
         parsed = result.unwrap()
         assert parsed.metadata
         assert parsed.metadata.extensions.get(
-            "original_format"
+            "original_format",
         ) is not None or meta_keys.SCHEMA_SOURCE_SERVER in (
             parsed.metadata.extensions or {}
         )

@@ -31,7 +31,6 @@ from flext_ldif import (
     FlextLdifConstants,
     FlextLdifModels,
 )
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
@@ -675,7 +674,7 @@ class TestAPIValidationAndFiltering:
     @pytest.fixture
     def validation_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for validation testing."""
-        entries: list[FlextLdifModels.Entry | FlextLdifModelsDomains.Entry] = []
+        entries: list[FlextLdifModels.Entry] = []
         for _i, name in enumerate(["Valid User", "Test User"]):
             entry_result = FlextLdifModels.Entry.create(
                 dn=f"cn={name},ou=People,dc=example,dc=com",
