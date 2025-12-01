@@ -13,9 +13,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from flext_core import FlextModels
-from pydantic import BaseModel, ConfigDict, Field
+from flext_core._models.entity import FlextModelsEntity
+from pydantic import ConfigDict, Field
 
+from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.constants import FlextLdifConstants
 
@@ -29,7 +30,7 @@ class FlextLdifModelsEvents:
 
     # Event configuration classes would go here
 
-    class DnEventConfig(BaseModel):
+    class DnEventConfig(FlextLdifModelsBase):
         """Configuration for DN event creation.
 
         Consolidates parameters for create_dn_event utility function.
@@ -71,7 +72,7 @@ class FlextLdifModelsEvents:
             description="Parsed DN components",
         )
 
-    class MigrationEventConfig(BaseModel):
+    class MigrationEventConfig(FlextLdifModelsBase):
         """Configuration for migration event creation.
 
         Consolidates parameters for create_migration_event utility function.
@@ -131,7 +132,7 @@ class FlextLdifModelsEvents:
             )
         )
 
-    class ConversionEventConfig(BaseModel):
+    class ConversionEventConfig(FlextLdifModelsBase):
         """Configuration for conversion event creation.
 
         Consolidates parameters for create_conversion_event utility function.
@@ -195,7 +196,7 @@ class FlextLdifModelsEvents:
     # DOMAIN EVENTS - Processing events
     # =========================================================================
 
-    class FilterEvent(FlextModels.DomainEvent):
+    class FilterEvent(FlextModelsEntity.DomainEvent):
         """Event emitted when LDIF entries are filtered.
 
         Tracks filtering operations including criteria applied and results.
@@ -227,7 +228,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class ParseEvent(FlextModels.DomainEvent):
+    class ParseEvent(FlextModelsEntity.DomainEvent):
         """Event emitted when LDIF content is parsed.
 
         Tracks parsing operations including source type and results.
@@ -326,7 +327,7 @@ class FlextLdifModelsEvents:
                 error_details=error_details,
             )
 
-    class WriteEvent(FlextModels.DomainEvent):
+    class WriteEvent(FlextModelsEntity.DomainEvent):
         """Event emitted when LDIF content is written.
 
         Tracks writing operations including target and results.
@@ -362,7 +363,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed entries",
         )
 
-    class CategoryEvent(FlextModels.DomainEvent):
+    class CategoryEvent(FlextModelsEntity.DomainEvent):
         """Event emitted when entries are categorized.
 
         Tracks categorization operations including rules applied and results.
@@ -390,7 +391,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class AclEvent(FlextModels.DomainEvent):
+    class AclEvent(FlextModelsEntity.DomainEvent):
         """Event emitted when ACLs are processed.
 
         Tracks ACL parsing, transformation, and validation operations.
@@ -426,7 +427,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed ACLs",
         )
 
-    class DnEvent(FlextModels.DomainEvent):
+    class DnEvent(FlextModelsEntity.DomainEvent):
         """Event emitted when DNs are processed.
 
         Tracks DN parsing, normalization, and validation operations.
@@ -466,7 +467,7 @@ class FlextLdifModelsEvents:
             description="Number of DN components parsed",
         )
 
-    class MigrationEvent(FlextModels.DomainEvent):
+    class MigrationEvent(FlextModelsEntity.DomainEvent):
         """Event emitted during migration operations.
 
         Tracks server-to-server migration progress and results.
@@ -514,7 +515,7 @@ class FlextLdifModelsEvents:
             description="Migration throughput in entries per second",
         )
 
-    class ConversionEvent(FlextModels.DomainEvent):
+    class ConversionEvent(FlextModelsEntity.DomainEvent):
         """Event emitted during conversion operations.
 
         Tracks format conversion progress and results.
@@ -562,7 +563,7 @@ class FlextLdifModelsEvents:
             description="Conversion throughput in items per second",
         )
 
-    class SchemaEvent(FlextModels.DomainEvent):
+    class SchemaEvent(FlextModelsEntity.DomainEvent):
         """Event emitted during schema processing.
 
         Tracks schema parsing, validation, and transformation operations.
@@ -606,7 +607,7 @@ class FlextLdifModelsEvents:
             description="Schema processing throughput in items per second",
         )
 
-    class SchemaEventConfig(BaseModel):
+    class SchemaEventConfig(FlextLdifModelsBase):
         """Configuration for schema event creation."""
 
         schema_operation: str = Field(description="Schema operation name")

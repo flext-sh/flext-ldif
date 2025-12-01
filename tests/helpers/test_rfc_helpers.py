@@ -1822,8 +1822,8 @@ class RfcTestHelpers:
                 "rfc": "rfc",
                 "oid": "oid",
                 "oud": "oud",
-                "openldap": "openldap",
-                "openldap2": "openldap",  # OpenLDAP2 uses "openldap" server type
+                "openldap": "openldap2",  # OpenLDAP uses "openldap2" server type
+                "openldap2": "openldap2",  # OpenLDAP2 uses "openldap2" server type
                 "ad": "ad",
                 "389ds": "389ds",
             }

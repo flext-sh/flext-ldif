@@ -39,9 +39,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """Standardized constants for OpenLDAP 2.x quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
-            "openldap"
-        )
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "openldap2"
         PRIORITY: ClassVar[int] = 20
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)

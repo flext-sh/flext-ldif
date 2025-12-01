@@ -60,7 +60,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         entry_quirk = self._server.entry(effective_server_type)
         if entry_quirk is None:
             return FlextResult.fail(
-                f"No entry quirk found for server type: {effective_server_type}"
+                f"No entry quirk found for server type: {effective_server_type}",
             )
 
         # Direct call to entry quirk parse method
@@ -176,7 +176,7 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         """
         return FlextResult.fail(
             "FlextLdifParser requires input data to parse. "
-            "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods."
+            "Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
         )
 
 

@@ -248,7 +248,7 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
     ) -> None:
         """Test resolving invalid server type."""
-        with pytest.raises(ValueError, match="Unknown server type"):
+        with pytest.raises(ValueError, match="Invalid server type"):
             FlextLdifConversion._resolve_quirk("invalid_server_type")
 
     # ────────────────────────────────────────────────────────────────────────

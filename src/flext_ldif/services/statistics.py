@@ -89,20 +89,26 @@ class FlextLdifStatistics(
         total_entries = sum(len(entries) for entries in categorized.values())
 
         # Build categorized counts as _DynamicCounts model
-        categorized_counts_model = _DynamicCounts()
-        for category, entries in categorized.items():
-            categorized_counts_model.set_count(category, len(entries))
+        # Create model with values using model_construct to avoid frozen model issues
+        categorized_counts_dict = {
+            category: len(entries) for category, entries in categorized.items()
+        }
+        categorized_counts_model = _DynamicCounts.model_construct(**categorized_counts_dict)
 
-        rejected_entries = categorized.get(FlextLdifConstants.Categories.REJECTED, [])
+        rejected_entries_raw = categorized.get(FlextLdifConstants.Categories.REJECTED, [])
+        # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
+        rejected_entries: list[FlextLdifModels.Entry] = [
+            entry for entry in rejected_entries_raw
+            if isinstance(entry, FlextLdifModels.Entry)
+        ]
         rejection_count = len(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
         rejection_rate = rejection_count / total_entries if total_entries > 0 else 0.0
 
         # Build written counts as _DynamicCounts model
-        written_counts_model = _DynamicCounts()
-        for category, count in written_counts.items():
-            written_counts_model.set_count(category, count)
+        # Create model with values using model_construct to avoid frozen model issues
+        written_counts_model = _DynamicCounts.model_construct(**written_counts)
 
         # Build output files paths as _CategoryPaths model
         output_files_model = _CategoryPaths()

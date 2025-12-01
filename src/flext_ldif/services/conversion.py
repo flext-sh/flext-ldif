@@ -353,7 +353,7 @@ class FlextLdifConversion(
             | None
         ),
         target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
-    ) -> dict[str, str | dict[str, str | FlextLdifTypes.MetadataValue]]:
+    ) -> dict[str, str | dict[str, str | FlextTypes.MetadataAttributeValue]]:
         """Analyze source metadata for intelligent conversion to target server.
 
         This method analyzes metadata to guide conversion decisions.
@@ -370,7 +370,7 @@ class FlextLdifConversion(
         """
         conversion_analysis: dict[
             str,
-            str | dict[str, str | FlextLdifTypes.MetadataValue],
+            str | dict[str, str | FlextTypes.MetadataAttributeValue],
         ] = {}
 
         if not source_metadata:
@@ -401,7 +401,7 @@ class FlextLdifConversion(
         if original_attribute_case:
             # Convert original_attribute_case to proper MetadataValue type
             # Explicit type narrowing from object to MetadataValue
-            case_data: FlextLdifTypes.MetadataValue
+            case_data: FlextTypes.MetadataAttributeValue
             if isinstance(original_attribute_case, (dict, list, str, int, float, bool)):
                 case_data = original_attribute_case
             else:
@@ -423,7 +423,7 @@ class FlextLdifConversion(
             if dn_spacing:
                 # Convert dn_spacing to proper MetadataValue type
                 # Explicit type narrowing from object to MetadataValue
-                spacing_data: FlextLdifTypes.MetadataValue
+                spacing_data: FlextTypes.MetadataAttributeValue
                 if isinstance(dn_spacing, (dict, list, str, int, float, bool)):
                     spacing_data = dn_spacing
                 else:
@@ -977,7 +977,7 @@ class FlextLdifConversion(
                     original_extensions = original_metadata.extensions
                     for key, value in original_extensions.items():
                         # Type narrowing: value is MetadataValue
-                        typed_value: FlextLdifTypes.MetadataValue = value
+                        typed_value: FlextTypes.MetadataAttributeValue = value
                         converted_extensions[key] = typed_value
 
     def _convert_acl(
@@ -1164,10 +1164,10 @@ class FlextLdifConversion(
         self,
         source: ServerQuirkOrType,
         source_attr: FlextLdifModels.SchemaAttribute
-        | FlextLdifTypes.MetadataValue
+        | FlextTypes.MetadataAttributeValue
         | str,
     ) -> FlextResult[
-        str | FlextLdifModels.SchemaAttribute | FlextLdifTypes.MetadataValue
+        str | FlextLdifModels.SchemaAttribute | FlextTypes.MetadataAttributeValue
     ]:
         """Write attribute to RFC string representation."""
         # If already a string, return as-is
@@ -1195,9 +1195,9 @@ class FlextLdifConversion(
         self,
         source: ServerQuirkOrType,
         target: ServerQuirkOrType,
-        data: str | FlextLdifTypes.MetadataValue,
+        data: str | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute | str | FlextLdifTypes.MetadataValue
+        FlextLdifModels.SchemaAttribute | str | FlextTypes.MetadataAttributeValue
     ]:
         """Convert attribute from source to target quirk via write→parse pipeline.
 
@@ -1213,7 +1213,7 @@ class FlextLdifConversion(
             if parse_result.is_failure:
                 error_msg = parse_result.error or "Failed to parse source attribute"
                 return FlextResult[
-                    FlextLdifModels.SchemaAttribute | FlextLdifTypes.MetadataValue | str
+                    FlextLdifModels.SchemaAttribute | FlextTypes.MetadataAttributeValue | str
                 ].fail(error_msg)
             source_attr = parse_result.unwrap()
 
@@ -1234,7 +1234,7 @@ class FlextLdifConversion(
                     target_parse_result.error or "Failed to parse target attribute"
                 )
                 return FlextResult[
-                    FlextLdifModels.SchemaAttribute | FlextLdifTypes.MetadataValue | str
+                    FlextLdifModels.SchemaAttribute | FlextTypes.MetadataAttributeValue | str
                 ].fail(error_msg)
             parsed_attr = target_parse_result.unwrap()
 
@@ -1247,7 +1247,7 @@ class FlextLdifConversion(
     def _parse_source_attribute(
         self,
         source: ServerQuirkOrType,
-        data: str | FlextLdifTypes.MetadataValue,
+        data: str | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse source attribute."""
         source_quirk = self._resolve_quirk(source)
@@ -1285,9 +1285,9 @@ class FlextLdifConversion(
         self,
         parsed_attr: FlextLdifModels.SchemaAttribute
         | str
-        | FlextLdifTypes.MetadataValue,
+        | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute | str | FlextLdifTypes.MetadataValue
+        FlextLdifModels.SchemaAttribute | str | FlextTypes.MetadataAttributeValue
     ]:
         """Write target attribute to final format."""
         # Type narrowing: write_attribute requires SchemaAttribute
@@ -1295,11 +1295,11 @@ class FlextLdifConversion(
             # Return as-is if not SchemaAttribute - type narrowing for union type
             if isinstance(parsed_attr, dict):
                 return FlextResult[
-                    FlextLdifModels.SchemaAttribute | FlextLdifTypes.MetadataValue | str
+                    FlextLdifModels.SchemaAttribute | FlextTypes.MetadataAttributeValue | str
                 ].ok(parsed_attr)
             if isinstance(parsed_attr, str):
                 return FlextResult[
-                    FlextLdifModels.SchemaAttribute | FlextLdifTypes.MetadataValue | str
+                    FlextLdifModels.SchemaAttribute | FlextTypes.MetadataAttributeValue | str
                 ].ok(parsed_attr)
             msg = f"Expected SchemaAttribute | dict | str, got {type(parsed_attr)}"
             raise TypeError(msg)
@@ -1307,23 +1307,23 @@ class FlextLdifConversion(
         # Model-based conversion - return parsed attribute as-is
         # Schema quirks write via model conversion, not string-based
         return FlextResult[
-            FlextLdifModels.SchemaAttribute | FlextLdifTypes.MetadataValue | str
+            FlextLdifModels.SchemaAttribute | FlextTypes.MetadataAttributeValue | str
         ].ok(parsed_attr)
 
     def _write_objectclass_to_rfc(
         self,
         source: ServerQuirkOrType,
         source_oc: FlextLdifModels.SchemaObjectClass
-        | FlextLdifTypes.MetadataValue
+        | FlextTypes.MetadataAttributeValue
         | str,
     ) -> FlextResult[
-        str | FlextLdifModels.SchemaObjectClass | FlextLdifTypes.MetadataValue
+        str | FlextLdifModels.SchemaObjectClass | FlextTypes.MetadataAttributeValue
     ]:
         """Write objectClass to RFC string representation."""
         # If already a string, return as-is
         if isinstance(source_oc, str):
             return FlextResult[
-                str | FlextLdifModels.SchemaObjectClass | FlextLdifTypes.MetadataValue
+                str | FlextLdifModels.SchemaObjectClass | FlextTypes.MetadataAttributeValue
             ].ok(source_oc)
 
         # Check if source is already a Schema object (direct usage)
@@ -1334,13 +1334,13 @@ class FlextLdifConversion(
                 return FlextResult[
                     str
                     | FlextLdifModels.SchemaObjectClass
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].ok(source_oc)
             if isinstance(source_oc, dict):
                 return FlextResult[
                     str
                     | FlextLdifModels.SchemaObjectClass
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].ok(source_oc)
             msg = f"Expected SchemaObjectClass | str | dict, got {type(source_oc)}"
             raise TypeError(msg)
@@ -1356,7 +1356,7 @@ class FlextLdifConversion(
                 return FlextResult[
                     str
                     | FlextLdifModels.SchemaObjectClass
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].ok(source_oc)
             write_unwrapped = write_result.unwrap()
             # Type narrowing: write_objectclass returns str
@@ -1366,20 +1366,20 @@ class FlextLdifConversion(
                 )
                 raise TypeError(msg)
             return FlextResult[
-                str | FlextLdifModels.SchemaObjectClass | FlextLdifTypes.MetadataValue
+                str | FlextLdifModels.SchemaObjectClass | FlextTypes.MetadataAttributeValue
             ].ok(write_unwrapped)
         except TypeError:
             return FlextResult[
-                str | FlextLdifModels.SchemaObjectClass | FlextLdifTypes.MetadataValue
+                str | FlextLdifModels.SchemaObjectClass | FlextTypes.MetadataAttributeValue
             ].ok(source_oc)
 
     def _convert_objectclass(
         self,
         source: ServerQuirkOrType,
         target: ServerQuirkOrType,
-        data: str | FlextLdifTypes.MetadataValue,
+        data: str | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[
-        FlextLdifModels.SchemaObjectClass | str | FlextLdifTypes.MetadataValue
+        FlextLdifModels.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
     ]:
         """Convert objectClass from source to target quirk via write→parse pipeline.
 
@@ -1397,7 +1397,7 @@ class FlextLdifConversion(
                 return FlextResult[
                     FlextLdifModels.SchemaObjectClass
                     | str
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].fail(error_msg)
             source_oc = parse_result.unwrap()
 
@@ -1414,13 +1414,13 @@ class FlextLdifConversion(
                     return FlextResult[
                         FlextLdifModels.SchemaObjectClass
                         | str
-                        | FlextLdifTypes.MetadataValue
+                        | FlextTypes.MetadataAttributeValue
                     ].ok(rfc_value)
                 if isinstance(rfc_value, dict):
                     return FlextResult[
                         FlextLdifModels.SchemaObjectClass
                         | str
-                        | FlextLdifTypes.MetadataValue
+                        | FlextTypes.MetadataAttributeValue
                     ].ok(rfc_value)
                 msg = f"Expected SchemaObjectClass | str | dict, got {type(rfc_value)}"
                 raise TypeError(msg)
@@ -1432,7 +1432,7 @@ class FlextLdifConversion(
                 return FlextResult[
                     FlextLdifModels.SchemaObjectClass
                     | str
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].fail(error_msg)
             parsed_oc = target_result.unwrap()
 
@@ -1445,7 +1445,7 @@ class FlextLdifConversion(
     def _parse_source_objectclass(
         self,
         source: ServerQuirkOrType,
-        data: str | FlextLdifTypes.MetadataValue,
+        data: str | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse source objectClass."""
         source_quirk = self._resolve_quirk(source)
@@ -1484,9 +1484,9 @@ class FlextLdifConversion(
         target: ServerQuirkOrType,
         parsed_oc: FlextLdifModels.SchemaObjectClass
         | str
-        | FlextLdifTypes.MetadataValue,
+        | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[
-        FlextLdifModels.SchemaObjectClass | str | FlextLdifTypes.MetadataValue
+        FlextLdifModels.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
     ]:
         """Write target objectClass to final format."""
         # Type narrowing: write_objectclass requires SchemaObjectClass
@@ -1496,13 +1496,13 @@ class FlextLdifConversion(
                 return FlextResult[
                     FlextLdifModels.SchemaObjectClass
                     | str
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].ok(parsed_oc)
             if isinstance(parsed_oc, dict):
                 return FlextResult[
                     FlextLdifModels.SchemaObjectClass
                     | str
-                    | FlextLdifTypes.MetadataValue
+                    | FlextTypes.MetadataAttributeValue
                 ].ok(parsed_oc)
             msg = f"Expected SchemaObjectClass | str | dict, got {type(parsed_oc)}"
             raise TypeError(msg)
@@ -1515,7 +1515,7 @@ class FlextLdifConversion(
         except TypeError:
             # Return as-is if no writer available
             return FlextResult[
-                FlextLdifModels.SchemaObjectClass | str | FlextLdifTypes.MetadataValue
+                FlextLdifModels.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
             ].ok(parsed_oc)
 
         # schema_quirk is already properly typed from _get_schema_quirk
@@ -1528,11 +1528,11 @@ class FlextLdifConversion(
                 msg = f"Expected str from write_objectclass, got {type(written_str)}"
                 raise TypeError(msg)
             return FlextResult[
-                FlextLdifModels.SchemaObjectClass | str | FlextLdifTypes.MetadataValue
+                FlextLdifModels.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
             ].ok(written_str)
         error_msg = write_result.error or "Failed to write objectClass"
         return FlextResult[
-            FlextLdifModels.SchemaObjectClass | str | FlextLdifTypes.MetadataValue
+            FlextLdifModels.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
         ].fail(error_msg)
 
     def batch_convert(
@@ -1713,7 +1713,9 @@ class FlextLdifConversion(
         """
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: FlextLdifServersBase) -> dict[str, bool]:
+    def get_supported_conversions(
+        self, quirk: FlextLdifServersBase
+    ) -> FlextLdifTypes.CommonDict.DistributionDict:
         """Check which data types a quirk supports for conversion.
 
         Args:
@@ -1730,11 +1732,11 @@ class FlextLdifConversion(
             {'attribute': True, 'objectclass': True, 'acl': True, 'entry': True}
 
         """
-        support = {
-            "attribute": False,
-            FlextLdifConstants.DictKeys.OBJECTCLASS: False,
-            "acl": False,
-            "entry": False,
+        support: FlextLdifTypes.CommonDict.DistributionDict = {
+            "attribute": 0,
+            FlextLdifConstants.DictKeys.OBJECTCLASS: 0,
+            "acl": 0,
+            "entry": 0,
         }
 
         # Check schema support
@@ -1785,8 +1787,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: FlextLdifProtocols.Quirks.SchemaProtocol,
         test_attr_def: str,
-        support: dict[str, bool],
-    ) -> dict[str, bool]:
+        support: FlextLdifTypes.CommonDict.DistributionDict,
+    ) -> FlextLdifTypes.CommonDict.DistributionDict:
         """Check attribute support for schema quirk.
 
         Args:
@@ -1815,7 +1817,7 @@ class FlextLdifConversion(
 
         attr_result = parse_attr(test_attr_def)
         if isinstance(attr_result, FlextResult) and attr_result.is_success:
-            support["attribute"] = True
+            support["attribute"] = 1
 
         return support
 
@@ -1823,8 +1825,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: FlextLdifProtocols.Quirks.SchemaProtocol,
         test_oc_def: str,
-        support: dict[str, bool],
-    ) -> dict[str, bool]:
+        support: FlextLdifTypes.CommonDict.DistributionDict,
+    ) -> FlextLdifTypes.CommonDict.DistributionDict:
         """Check objectClass support for schema quirk.
 
         Args:
@@ -1853,15 +1855,15 @@ class FlextLdifConversion(
 
         oc_result = parse_oc(test_oc_def)
         if isinstance(oc_result, FlextResult) and oc_result.is_success:
-            support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
+            support[FlextLdifConstants.DictKeys.OBJECTCLASS] = 1
 
         return support
 
     def _check_schema_support(
         self,
         quirk: FlextLdifServersBase,
-        support: dict[str, bool],
-    ) -> dict[str, bool]:
+        support: FlextLdifTypes.CommonDict.DistributionDict,
+    ) -> FlextLdifTypes.CommonDict.DistributionDict:
         """Check schema (attribute and objectClass) support."""
         quirk_schema = self._get_schema_quirk_for_support_check(quirk)
         if quirk_schema is None:
@@ -1882,8 +1884,8 @@ class FlextLdifConversion(
     def _check_acl_support(
         self,
         quirk: FlextLdifServersBase,
-        support: dict[str, bool],
-    ) -> dict[str, bool]:
+        support: FlextLdifTypes.CommonDict.DistributionDict,
+    ) -> FlextLdifTypes.CommonDict.DistributionDict:
         """Check ACL support."""
         # No fallback - check both attributes explicitly
         acl = getattr(quirk, "acl_quirk", None)
@@ -1893,14 +1895,14 @@ class FlextLdifConversion(
         if acl and callable(getattr(acl, "parse", None)):
             acl_result = acl.parse(test_acl_def)
             if acl_result.is_success:
-                support["acl"] = True
+                support["acl"] = 1
         return support
 
     def _check_entry_support(
         self,
         quirk: FlextLdifServersBase,
-        support: dict[str, bool],
-    ) -> dict[str, bool]:
+        support: FlextLdifTypes.CommonDict.DistributionDict,
+    ) -> FlextLdifTypes.CommonDict.DistributionDict:
         """Check Entry support."""
         # No fallback - check both attributes explicitly
         entry = getattr(quirk, "entry_quirk", None)
@@ -1913,7 +1915,7 @@ class FlextLdifConversion(
         ):
             entry = quirk
         if entry is not None and callable(getattr(entry, "parse", None)):
-            support["entry"] = True
+            support["entry"] = 1
         return support
 
 

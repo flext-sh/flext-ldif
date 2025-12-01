@@ -258,20 +258,14 @@ class FlextLdifConstants(FlextConstants):
         # NOTE: Removed service keys (use local constants in respective modules):
         # SERVICE_NAMES, INITIALIZED, DATA
 
-    class Domain:
-        """Domain constants for backward compatibility."""
+    class Domain(FlextConstants.Domain):
+        """Domain constants extending FlextConstants.Domain.
 
-        class Status(StrEnum):
-            """Status values."""
-
-            ACTIVE = "active"
-            INACTIVE = "inactive"
-            PENDING = "pending"
-            ARCHIVED = "archived"
-            FAILED = "failed"
+        Extends base domain with LDIF-specific enums.
+        """
 
         class ServerType(StrEnum):
-            """Server type values."""
+            """Server type values for LDIF processing."""
 
             OUD = "oud"
             OID = "oid"
@@ -287,7 +281,7 @@ class FlextLdifConstants(FlextConstants):
             RELAXED = "relaxed"
 
         class ValidationStatus(StrEnum):
-            """Validation status values."""
+            """Validation status values for LDIF entries."""
 
             VALID = "valid"
             INVALID = "invalid"
@@ -687,6 +681,18 @@ class FlextLdifConstants(FlextConstants):
         DN_RDN_SEPARATOR_ALT: Final[str] = ";"
         DN_MULTIVALUE_SEPARATOR: Final[str] = "+"  # Multi-valued RDN separator
         DN_ATTR_VALUE_SEPARATOR: Final[str] = "="  # Attribute=Value separator
+
+        # RFC 4514 - Minimum DN length for validation
+        MIN_DN_LENGTH: Final[int] = (
+            2  # Minimum length for valid DN strings (to check trailing escape)
+        )
+
+        # ASCII control character boundaries for sanitization
+        ASCII_PRINTABLE_MIN: Final[int] = 0x20  # Space (first printable character)
+        ASCII_PRINTABLE_MAX: Final[int] = 0x7E  # Tilde (last printable character)
+
+        # Base64 pattern matching
+        MIN_BASE64_LENGTH: Final[int] = 8  # Minimum length for base64 pattern matching
 
         # =================================================================
         # RFC 4517: LDAP Syntaxes and Matching Rules (common OIDs)
@@ -1460,8 +1466,8 @@ class FlextLdifConstants(FlextConstants):
     # SHARED DOMAIN CONSTANTS - Cross-cutting enums for LDIF ecosystem
     # =============================================================================
 
-    class SharedDomain:
-        """Cross-cutting domain constants shared across FLEXT LDIF ecosystem."""
+    class SharedDomain(FlextConstants.SharedDomain):
+        """Cross-cutting domain constants extending FlextConstants.SharedDomain."""
 
         class ProcessingStage(StrEnum):
             """Processing stages for LDIF operations."""
@@ -1672,7 +1678,7 @@ class FlextLdifConstants(FlextConstants):
             )
 
             # Check if it's a valid server type
-            valid_types = {str(st.value) for st in cls}
+            valid_types = {str(st.value) for st in cls.__members__.values()}
             if normalized in valid_types:
                 return normalized
 
@@ -1912,22 +1918,13 @@ class FlextLdifConstants(FlextConstants):
             "novell",
             "ibm_tivoli",
             "generic",
+            # Backward compatibility aliases
             "active_directory",
             "apache_directory",
             "novell_edirectory",
+            "oracle_oid",
+            "oracle_oud",
         ]
-
-        type EncodingTypeLiteral = Literal[
-            "utf-8",
-            "utf-16-le",
-            "utf-16",
-            "utf-32",
-            "ascii",
-            "latin-1",
-            "cp1252",
-            "iso-8859-1",
-        ]
-        """Encoding type literals derived from Encoding StrEnum."""
 
         type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
 
@@ -2109,11 +2106,13 @@ class FlextLdifConstants(FlextConstants):
             "anonymous",
             "authenticated",
             "dn",
+            "user_dn",
             "sddl",
         ]
         """ACL subject type literals derived from AclSubjectType StrEnum.
 
-        Includes server-specific extensions like "sddl" for Active Directory.
+        Includes server-specific extensions like "sddl" for Active Directory
+        and "user_dn" for OID/OUD user DN subjects.
         """
 
         type TransformationTypeLiteral = Literal[
@@ -2134,6 +2133,9 @@ class FlextLdifConstants(FlextConstants):
             "matching_rule_replaced",
             "syntax_oid_replaced",
             "objectclass_filtered",
+            "removed",
+            "renamed",
+            "basedn_transform",
         ]
         """Transformation type literals derived from TransformationType StrEnum."""
 
@@ -2285,19 +2287,19 @@ class FlextLdifConstants(FlextConstants):
         """LDAP server implementation constants."""
 
         # Server types - using Literal types for ACL compatibility
-        ACTIVE_DIRECTORY: Final = "active_directory"
+        ACTIVE_DIRECTORY: Final = "ad"
         OPENLDAP: Final = "openldap"  # Legacy catch-all
         OPENLDAP_2: Final = "openldap2"  # Modern cn=config based
         OPENLDAP_1: Final = "openldap1"  # Legacy slapd.conf based
-        APACHE_DIRECTORY: Final = "apache_directory"
-        NOVELL_EDIRECTORY: Final = "novell_edirectory"
+        APACHE_DIRECTORY: Final = "apache"
+        NOVELL_EDIRECTORY: Final = "novell"
         IBM_TIVOLI: Final = "ibm_tivoli"
         GENERIC: Final = "generic"
         # Oracle server types
-        ORACLE_OID: Final = "oracle_oid"
-        ORACLE_OUD: Final = "oracle_oud"
+        ORACLE_OID: Final = "oid"
+        ORACLE_OUD: Final = "oud"
         # Additional server types
-        DS_389: Final = "389ds"
+        DS_389: Final = "ds389"
 
         # Supported server types list
         SUPPORTED_TYPES: Final[frozenset[str]] = frozenset(
@@ -2313,11 +2315,6 @@ class FlextLdifConstants(FlextConstants):
                 ORACLE_OID,
                 ORACLE_OUD,
                 DS_389,
-                # Short forms for compatibility
-                "novell_edirectory",
-                "ibm_tivoli",
-                "apache_directory",
-                "389ds",
             ],
         )
 
@@ -3471,36 +3468,48 @@ class FlextLdifConstants(FlextConstants):
 
         # Mapping from short forms to long forms (for backward compatibility)
         # Using string values directly (matching ServerTypes enum values)
-        LONG_NAMES: Final[dict[str, str]] = {
-            "oid": "oracle_oid",
-            "oud": "oracle_oud",
+        # Using MappingProxyType for immutability (read-only semantics)
+        _LONG_NAMES_DICT: ClassVar[dict[str, str]] = {
+            "oid": "oid",
+            "oud": "oud",
             "openldap": "openldap",
             "openldap1": "openldap1",
             "openldap2": "openldap2",
-            "active_directory": "active_directory",
-            "apache_directory": "apache_directory",
+            "ad": "ad",
+            "apache": "apache",
             "generic": "generic",
             "rfc": "rfc",
-            "389ds": "389ds",
+            "ds389": "ds389",
             "relaxed": "relaxed",
-            "novell_edirectory": "novell_edirectory",
+            "novell": "novell",
             "ibm_tivoli": "ibm_tivoli",
         }
+        LONG_NAMES: Final[Mapping[str, str]] = MappingProxyType(_LONG_NAMES_DICT)
 
-        # Reverse mapping from long forms to short forms
-        FROM_LONG: Final[dict[str, str]] = {v: k for k, v in LONG_NAMES.items()}
-
-        # Common short aliases (used in tests and user input)
-        ALIASES: Final[dict[str, str]] = {
-            "ad": "active_directory",
-            "ds389": "389ds",
-            "389": "389ds",
-            "apache": "apache_directory",
-            "novell": "novell_edirectory",
-            "tivoli": "ibm_tivoli",
-            "oracle_oid": "oid",  # backward compat
-            "oracle_oud": "oud",  # backward compat
+        # Reverse mapping from long forms to short forms (read-only)
+        _FROM_LONG_DICT: ClassVar[dict[str, str]] = {
+            v: k for k, v in _LONG_NAMES_DICT.items()
         }
+        FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
+
+        # Common short aliases (used in tests and user input) (read-only)
+        _ALIASES_DICT: ClassVar[dict[str, str]] = {
+            # Short forms
+            "ad": "ad",
+            "389": "ds389",
+            "389ds": "ds389",
+            "apache": "apache",
+            "novell": "novell",
+            "tivoli": "ibm_tivoli",
+            # Long forms (backward compatibility)
+            "active_directory": "ad",
+            "apache_directory": "apache",
+            "novell_edirectory": "novell",
+            "ibm_tivoli": "ibm_tivoli",
+            "oracle_oid": "oid",
+            "oracle_oud": "oud",
+        }
+        ALIASES: Final[Mapping[str, str]] = MappingProxyType(_ALIASES_DICT)
 
         # Server type variants (for compatibility checks)
         ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
@@ -3669,7 +3678,9 @@ class FlextLdifConstants(FlextConstants):
 
         # At this point, we've exhausted all normalization attempts
         # Fast fail: raise ValueError instead of returning invalid value
-        valid_types = [str(st.value) for st in FlextLdifConstants.ServerTypes] + [
+        valid_types = [
+            str(st.value) for st in FlextLdifConstants.ServerTypes.__members__.values()
+        ] + [
             "oracle_oid",
             "oracle_oud",
         ]
@@ -3776,7 +3787,7 @@ class FlextLdifConstants(FlextConstants):
         """
         # Use SharedDomain.LdifFormatType enum from flext-core for validation
         # Call classmethod directly - methods exist at runtime, mypy needs type ignore
-        if FlextConstants.SharedDomain.is_valid_ldif_format(value):  # type: ignore[attr-defined]
+        if FlextConstants.SharedDomain.is_valid_ldif_format(value):
             return value
         return None
 
@@ -3796,7 +3807,7 @@ class FlextLdifConstants(FlextConstants):
         """
         # Use SharedDomain.ServerType enum from flext-core for validation
         # Call classmethod directly - methods exist at runtime, mypy needs type ignore
-        if FlextConstants.SharedDomain.is_valid_server_type(value):  # type: ignore[attr-defined]
+        if FlextConstants.SharedDomain.is_valid_server_type(value):
             return value
         return None
 
@@ -3813,7 +3824,7 @@ class FlextLdifConstants(FlextConstants):
         """
         # Use SharedDomain.LdifFormatType enum from flext-core
         # Call classmethod directly - methods exist at runtime, mypy needs type ignore
-        return FlextConstants.SharedDomain.get_valid_ldif_formats()  # type: ignore[attr-defined]
+        return FlextConstants.SharedDomain.get_valid_ldif_formats()
 
     @classmethod
     def get_valid_server_types(cls) -> Sequence[str]:
@@ -3828,7 +3839,7 @@ class FlextLdifConstants(FlextConstants):
         """
         # Use SharedDomain.ServerType enum from flext-core
         # Call classmethod directly - methods exist at runtime, mypy needs type ignore
-        return FlextConstants.SharedDomain.get_valid_server_types()  # type: ignore[attr-defined]
+        return FlextConstants.SharedDomain.get_valid_server_types()
 
     # =============================================================================
     # OPERATION CONSTANTS - Filter types, modes, categories, data types

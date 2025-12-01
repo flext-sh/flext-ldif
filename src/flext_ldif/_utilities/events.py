@@ -10,7 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextLogger
+from flext_core._models.entity import FlextModelsEntity
+from flext_core.typings import FlextTypes
 
+from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif.models import FlextLdifModels
 
 
@@ -23,8 +27,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_dn_event(
-        config: FlextLdifModels.DnEventConfig,
-    ) -> FlextLdifModels.DnEvent:
+        config: FlextLdifModelsEvents.DnEventConfig,
+    ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent with standardized fields from config Model.
 
         Args:
@@ -43,7 +47,7 @@ class FlextLdifUtilitiesEvents:
             event = FlextLdifUtilities.Events.create_dn_event(config)
 
         """
-        return FlextLdifModels.DnEvent(
+        return FlextLdifModelsEvents.DnEvent(
             event_type="ldif.dn",
             aggregate_id=config.input_dn,  # Use input DN as aggregate identifier
             dn_operation=config.dn_operation,
@@ -55,8 +59,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_migration_event(
-        config: FlextLdifModels.MigrationEventConfig,
-    ) -> FlextLdifModels.MigrationEvent:
+        config: FlextLdifModelsEvents.MigrationEventConfig,
+    ) -> FlextLdifModelsEvents.MigrationEvent:
         """Create MigrationEvent with standardized fields from config Model.
 
         Args:
@@ -80,9 +84,9 @@ class FlextLdifUtilitiesEvents:
         """
         aggregate_id = f"{config.source_server}_to_{config.target_server}_{config.migration_operation}"
         # Fast fail if error_details is None when list is required
-        error_details_list: list[object] = []
+        error_details_list: list[str] = []
         if config.error_details is not None:
-            error_details_list = list(config.error_details)
+            error_details_list = [str(detail) for detail in config.error_details]
         return FlextLdifModels.MigrationEvent(
             event_type="ldif.migration",
             aggregate_id=aggregate_id,  # Unique identifier for this migration
@@ -97,8 +101,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_conversion_event(
-        config: FlextLdifModels.ConversionEventConfig,
-    ) -> FlextLdifModels.ConversionEvent:
+        config: FlextLdifModelsEvents.ConversionEventConfig,
+    ) -> FlextLdifModelsEvents.ConversionEvent:
         """Create ConversionEvent with standardized fields from config Model.
 
         Args:
@@ -122,10 +126,10 @@ class FlextLdifUtilitiesEvents:
         """
         aggregate_id = f"{config.source_format}_to_{config.target_format}_{config.conversion_operation}"
         # Fast fail if error_details is None when list is required
-        error_details_list: list[object] = []
+        error_details_list: list[str] = []
         if config.error_details is not None:
-            error_details_list = list(config.error_details)
-        return FlextLdifModels.ConversionEvent(
+            error_details_list = [str(detail) for detail in config.error_details]
+        return FlextLdifModelsEvents.ConversionEvent(
             event_type="ldif.conversion",
             aggregate_id=aggregate_id,  # Unique identifier for this conversion
             conversion_operation=config.conversion_operation,
@@ -139,8 +143,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_schema_event(
-        config: FlextLdifModels.SchemaEventConfig,
-    ) -> FlextLdifModels.SchemaEvent:
+        config: FlextLdifModelsEvents.SchemaEventConfig,
+    ) -> FlextLdifModelsEvents.SchemaEvent:
         """Create SchemaEvent with standardized fields from config Model.
 
         Args:
@@ -162,7 +166,7 @@ class FlextLdifUtilitiesEvents:
 
         """
         aggregate_id = f"{config.server_type}_schema_{config.schema_operation}"
-        return FlextLdifModels.SchemaEvent(
+        return FlextLdifModelsEvents.SchemaEvent(
             event_type="ldif.schema",
             aggregate_id=aggregate_id,
             schema_operation=config.schema_operation,
@@ -178,8 +182,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def store_event_in_instance(
-        instance: object,
-        event: FlextLdifModels.DomainEvent,
+        instance: FlextTypes.GeneralValueType,
+        event: FlextModelsEntity.DomainEvent,
         attr_name: str = "_last_event",
     ) -> None:
         """Store event in Pydantic instance using object.__setattr__.
@@ -266,8 +270,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _process_extras(
-        extras: FlextLdifModels.LogContextExtras | None = None,
-    ) -> dict[str, object]:
+        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+    ) -> dict[str, FlextTypes.ScalarValue]:
         """Extract and filter extras into a dict of loggable context.
 
         Handles all known fields + dynamic extra fields from LogContextExtras.
@@ -279,7 +283,7 @@ class FlextLdifUtilitiesEvents:
             Filtered dict with string/int/float/bool values only
 
         """
-        filtered_extras: dict[str, object] = {}
+        filtered_extras: dict[str, FlextTypes.ScalarValue] = {}
         if not extras:
             return filtered_extras
 
@@ -307,10 +311,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_dn_event(
         logger: FlextLogger,
-        config: FlextLdifModels.DnEventConfig,
+        config: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModels.LogContextExtras | None = None,
-    ) -> FlextLdifModels.DnEvent:
+        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+    ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent, log with context, and attach to logger context.
 
         This is the ONE-STEP API for DN operations with automatic logging integration.
@@ -343,7 +347,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
 
         # Build log context with event data (explicit type annotation for compatibility)
-        log_context: dict[str, object] = {
+        log_context: dict[str, FlextTypes.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,
@@ -368,10 +372,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _log_and_emit_generic_event(
         logger: FlextLogger,
-        log_context: dict[str, object],
+        log_context: dict[str, FlextTypes.ScalarValue],
         log_message: str,
         log_level: str = "info",
-        extras: FlextLdifModels.LogContextExtras | None = None,
+        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
     ) -> None:
         """Generic helper for logging events with context and extras.
 
@@ -403,10 +407,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_migration_event(
         logger: FlextLogger,
-        config: FlextLdifModels.MigrationEventConfig,
+        config: FlextLdifModelsEvents.MigrationEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModels.LogContextExtras | None = None,
-    ) -> FlextLdifModels.MigrationEvent:
+        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+    ) -> FlextLdifModelsEvents.MigrationEvent:
         """Create MigrationEvent, log with context, and attach to logger context.
 
         This is the ONE-STEP API for migration operations with automatic logging integration.
@@ -440,7 +444,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_migration_event(config)
 
         # Build log context with event data + computed metrics
-        log_context: dict[str, object] = {
+        log_context: dict[str, FlextTypes.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "migration_operation": config.migration_operation,
             "source_server": config.source_server,
@@ -470,10 +474,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_conversion_event(
         logger: FlextLogger,
-        config: FlextLdifModels.ConversionEventConfig,
+        config: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModels.LogContextExtras | None = None,
-    ) -> FlextLdifModels.ConversionEvent:
+        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+    ) -> FlextLdifModelsEvents.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context.
 
         This is the ONE-STEP API for conversion operations with automatic logging integration.
@@ -507,7 +511,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_conversion_event(config)
 
         # Build log context with event data + computed metrics
-        log_context: dict[str, object] = {
+        log_context: dict[str, FlextTypes.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "conversion_operation": config.conversion_operation,
             "source_format": config.source_format,
@@ -537,10 +541,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_schema_event(
         logger: FlextLogger,
-        config: FlextLdifModels.SchemaEventConfig,
+        config: FlextLdifModelsEvents.SchemaEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModels.LogContextExtras | None = None,
-    ) -> FlextLdifModels.SchemaEvent:
+        extras: FlextLdifModelsConfig.LogContextExtras | None = None,
+    ) -> FlextLdifModelsEvents.SchemaEvent:
         """Create SchemaEvent, log with context, and attach to logger context.
 
         This is the ONE-STEP API for schema operations with automatic logging integration.
@@ -573,7 +577,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_schema_event(config)
 
         # Build log context with event data + computed metrics (explicit type annotation)
-        log_context: dict[str, object] = {
+        log_context: dict[str, FlextTypes.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "schema_operation": config.schema_operation,
             "items_processed": config.items_processed,

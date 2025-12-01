@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import dataclasses
 import re
 import string
 from collections.abc import Generator
@@ -14,30 +13,12 @@ from pathlib import Path
 from typing import overload
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-
-@dataclasses.dataclass
-class _TransformationFlags:
-    """Type-safe container for DN transformation flags."""
-
-    had_tab_chars: bool = False
-    had_trailing_spaces: bool = False
-    had_leading_spaces: bool = False
-    had_extra_spaces: bool = False
-    was_base64_encoded: bool = False
-    had_utf8_chars: bool = False
-    had_escape_sequences: bool = False
-    validation_status: str = ""
-    validation_warnings: list[str] = dataclasses.field(default_factory=list)
-    validation_errors: list[str] = dataclasses.field(default_factory=list)
-
-
-# Type alias from FlextLdifTypes
-DnInput = str  # DN input is a string
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifUtilitiesDN:
@@ -101,13 +82,14 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - FlextLdifModels.DistinguishedName (DN model)
+    - FlextLdifModelsDomains.DistinguishedName (DN model)
     - str (DN string value)
 
     """
 
     # Minimum length for valid DN strings (to check trailing escape)
-    MIN_DN_LENGTH: int = 2
+    # Use constant from FlextLdifConstants.Rfc
+    MIN_DN_LENGTH: int = FlextLdifConstants.Rfc.MIN_DN_LENGTH
 
     # ==========================================================================
     # RFC 4514 Character Class Validation (ABNF-based)
@@ -288,7 +270,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def get_dn_value(
-        dn: FlextLdifModels.DistinguishedName | str | object,
+        dn: FlextLdifModelsDomains.DistinguishedName | str | object,
     ) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
@@ -301,7 +283,7 @@ class FlextLdifUtilitiesDN:
         """
         # Check if it's a DistinguishedName model (local import to avoid circular dependency)
 
-        if isinstance(dn, FlextLdifModels.DistinguishedName):
+        if isinstance(dn, FlextLdifModelsDomains.DistinguishedName):
             return dn.value
         if isinstance(dn, str):
             return dn
@@ -313,7 +295,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: FlextLdifModels.DistinguishedName) -> list[str]: ...
+    def split(dn: FlextLdifModelsDomains.DistinguishedName) -> list[str]: ...
 
     @staticmethod
     def split(dn: str | object) -> list[str]:
@@ -374,7 +356,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: FlextLdifModels.DistinguishedName) -> str: ...
+    def norm_string(dn: FlextLdifModelsDomains.DistinguishedName) -> str: ...
 
     @staticmethod
     def norm_string(dn: str | object) -> str:
@@ -404,7 +386,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def validate(dn: FlextLdifModels.DistinguishedName) -> bool: ...
+    def validate(dn: FlextLdifModelsDomains.DistinguishedName) -> bool: ...
 
     @staticmethod
     def validate(dn: str | object) -> bool:
@@ -532,12 +514,12 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def parse(
-        dn: FlextLdifModels.DistinguishedName,
+        dn: FlextLdifModelsDomains.DistinguishedName,
     ) -> FlextResult[list[tuple[str, str]]]: ...
 
     @staticmethod
     def parse(
-        dn: str | FlextLdifModels.DistinguishedName | None,
+        dn: str | FlextLdifModelsDomains.DistinguishedName | None,
     ) -> FlextResult[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
@@ -586,10 +568,12 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: FlextLdifModels.DistinguishedName) -> FlextResult[str]: ...
+    def norm(dn: FlextLdifModelsDomains.DistinguishedName) -> FlextResult[str]: ...
 
     @staticmethod
-    def norm(dn: str | FlextLdifModels.DistinguishedName | None) -> FlextResult[str]:
+    def norm(
+        dn: str | FlextLdifModelsDomains.DistinguishedName | None,
+    ) -> FlextResult[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Pure implementation without external dependencies.
@@ -629,9 +613,9 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def norm_with_statistics(
-        dn: DnInput,
+        dn: FlextLdifTypes.DN.DnInput,
         original_dn: str | None = None,
-    ) -> FlextResult[tuple[str, FlextLdifModels.DNStatistics]]:
+    ) -> FlextResult[tuple[str, FlextLdifModelsDomains.DNStatistics]]:
         """Normalize DN with statistics tracking.
 
         Args:
@@ -644,7 +628,7 @@ class FlextLdifUtilitiesDN:
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
-            return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].fail(
+            return FlextResult[tuple[str, FlextLdifModelsDomains.DNStatistics]].fail(
                 "DN string is empty or invalid",
             )
         # Use original_dn if provided, otherwise use dn_str
@@ -652,7 +636,7 @@ class FlextLdifUtilitiesDN:
 
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         if not norm_result.is_success:
-            return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].fail(
+            return FlextResult[tuple[str, FlextLdifModelsDomains.DNStatistics]].fail(
                 norm_result.error or "DN normalization failed",
             )
         normalized = norm_result.unwrap()
@@ -663,7 +647,7 @@ class FlextLdifUtilitiesDN:
             transformations.append(FlextLdifConstants.TransformationType.DN_NORMALIZED)
 
         # Create statistics - use model_copy() for safety
-        stats_domain = FlextLdifModels.DNStatistics.create_with_transformation(
+        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
             original_dn=orig,
             cleaned_dn=dn_str,
             normalized_dn=normalized,
@@ -673,14 +657,14 @@ class FlextLdifUtilitiesDN:
         if isinstance(
             stats_domain,
             FlextLdifModelsDomains.DNStatistics,
-        ) and not isinstance(stats_domain, FlextLdifModels.DNStatistics):
-            stats = FlextLdifModels.DNStatistics.model_validate(
+        ) and not isinstance(stats_domain, FlextLdifModelsDomains.DNStatistics):
+            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
         else:
             stats = stats_domain
 
-        return FlextResult[tuple[str, FlextLdifModels.DNStatistics]].ok(
+        return FlextResult[tuple[str, FlextLdifModelsDomains.DNStatistics]].ok(
             (
                 normalized,
                 stats,
@@ -693,10 +677,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: FlextLdifModels.DistinguishedName) -> str: ...
+    def clean_dn(dn: FlextLdifModelsDomains.DistinguishedName) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | FlextLdifModels.DistinguishedName) -> str:
+    def clean_dn(dn: str | FlextLdifModelsDomains.DistinguishedName) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,
@@ -747,8 +731,8 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def clean_dn_with_statistics(
-        dn: DnInput,
-    ) -> tuple[str, FlextLdifModels.DNStatistics]:
+        dn: FlextLdifTypes.DN.DnInput,
+    ) -> tuple[str, FlextLdifModelsDomains.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -772,8 +756,10 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = FlextLdifModels.DNStatistics.create_minimal(original_dn)
-            stats = FlextLdifModels.DNStatistics.model_validate(
+            stats_domain = FlextLdifModelsDomains.DNStatistics.create_minimal(
+                original_dn,
+            )
+            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
             return original_dn, stats
@@ -783,29 +769,29 @@ class FlextLdifUtilitiesDN:
             original_dn,
         )
 
-        # Create statistics using type-safe flags from dataclass
-        stats_domain = FlextLdifModels.DNStatistics.create_with_transformation(
+        # Create statistics using type-safe flags from dict
+        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
             transformations=transformations,
-            had_tab_chars=flags.had_tab_chars,
-            had_trailing_spaces=flags.had_trailing_spaces,
-            had_leading_spaces=flags.had_leading_spaces,
-            had_extra_spaces=flags.had_extra_spaces,
-            was_base64_encoded=flags.was_base64_encoded,
-            had_utf8_chars=flags.had_utf8_chars,
-            had_escape_sequences=flags.had_escape_sequences,
-            validation_status=flags.validation_status,
-            validation_warnings=flags.validation_warnings,
-            validation_errors=flags.validation_errors,
+            had_tab_chars=flags.get("had_tab_chars", False) is True,
+            had_trailing_spaces=flags.get("had_trailing_spaces", False) is True,
+            had_leading_spaces=flags.get("had_leading_spaces", False) is True,
+            had_extra_spaces=flags.get("had_extra_spaces", False) is True,
+            was_base64_encoded=flags.get("was_base64_encoded", False) is True,
+            had_utf8_chars=flags.get("had_utf8_chars", False) is True,
+            had_escape_sequences=flags.get("had_escape_sequences", False) is True,
+            validation_status=flags.get("validation_status", "") or "",
+            validation_warnings=flags.get("validation_warnings", []) or [],
+            validation_errors=flags.get("validation_errors", []) or [],
         )
         # Convert domain DNStatistics to public DNStatistics
         if isinstance(
             stats_domain,
             FlextLdifModelsDomains.DNStatistics,
-        ) and not isinstance(stats_domain, FlextLdifModels.DNStatistics):
-            stats = FlextLdifModels.DNStatistics.model_validate(
+        ) and not isinstance(stats_domain, FlextLdifModelsDomains.DNStatistics):
+            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
         else:
@@ -815,13 +801,29 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _apply_dn_transformations(
         original_dn: str,
-    ) -> tuple[str, list[str], _TransformationFlags]:
+    ) -> tuple[str, list[str], dict[str, bool | str | list[str]]]:
         """Apply DN transformations and collect flags.
 
         Extracted to reduce complexity of clean_dn_with_statistics.
+
+        Returns:
+            Tuple of (transformed_dn, transformations_list, flags_dict)
+            flags_dict follows FlextLdifModels.TransformationFlags structure
+
         """
         transformations: list[str] = []
-        flags = _TransformationFlags()
+        flags: dict[str, bool | str | list[str]] = {
+            "had_tab_chars": False,
+            "had_trailing_spaces": False,
+            "had_leading_spaces": False,
+            "had_extra_spaces": False,
+            "was_base64_encoded": False,
+            "had_utf8_chars": False,
+            "had_escape_sequences": False,
+            "validation_status": "",
+            "validation_warnings": [],
+            "validation_errors": [],
+        }
         result = original_dn
 
         # Define transformation rules: (detect_pattern, replace_pattern, replacement, transform_type, flag_name)
@@ -896,7 +898,7 @@ class FlextLdifUtilitiesDN:
                 result = re.sub(replace_pattern, replacement, result)
                 transformations.append(transform_type)
                 if flag_name:
-                    setattr(flags, flag_name, True)
+                    flags[flag_name] = True
 
         return result, transformations, flags
 
@@ -1382,14 +1384,6 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: FlextLdifModels.DistinguishedName,
-        source_dn: str,
-        target_dn: str,
-    ) -> str: ...
-
-    @overload
-    @staticmethod
-    def transform_dn_attribute(
         value: FlextLdifModelsDomains.DistinguishedName,
         source_dn: str,
         target_dn: str,
@@ -1397,10 +1391,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_dn_attribute(
-        value: str
-        | FlextLdifModels.DistinguishedName
-        | FlextLdifModelsDomains.DistinguishedName
-        | object,
+        value: str | FlextLdifModelsDomains.DistinguishedName | object,
         source_dn: str,
         target_dn: str,
     ) -> str:
@@ -1558,7 +1549,7 @@ class FlextLdifUtilitiesDN:
         ldif_dir: Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Transform BaseDN in all LDIF files in directory.
 
         Reads all *.ldif files from directory, transforms BaseDN in entries,

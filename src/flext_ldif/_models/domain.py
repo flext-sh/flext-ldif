@@ -15,17 +15,17 @@ from __future__ import annotations
 import re
 import sys
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
-from typing import ClassVar, Self, TypedDict, Unpack, cast
+from typing import ClassVar, Self, TypedDict, Unpack
 
 from flext_core import (
     FlextLogger,
-    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
 )
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.entity import FlextModelsEntity
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     computed_field,
@@ -35,6 +35,7 @@ from pydantic import (
 
 from flext_ldif._models.base import (
     AclElement,
+    FlextLdifModelsBase,
     SchemaElement,
 )
 from flext_ldif._models.config import FlextLdifModelsConfig
@@ -56,7 +57,7 @@ class FlextLdifModelsDomains:
     # DOMAIN MODELS - Core LDIF entities
     # =========================================================================
 
-    class DistinguishedName(FlextModels.Value):
+    class DistinguishedName(FlextModelsEntity.Value):
         """Distinguished Name value object."""
 
         model_config = ConfigDict(
@@ -128,7 +129,7 @@ class FlextLdifModelsDomains:
             original_dn: str | None = None,
             cleaned_dn: str | None = None,
             transformations: list[str] | None = None,
-            **transformation_flags: Unpack[FlextLdifModelsDomains._DNStatisticsFlags],
+            **transformation_flags: Unpack[FlextLdifModelsDomains.DNStatisticsFlags],
         ) -> FlextLdifModelsDomains.DNStatistics:
             """Create DNStatistics for this DN with transformation history.
 
@@ -210,7 +211,7 @@ class FlextLdifModelsDomains:
             """Return DN value as string for str() conversion."""
             return self.value
 
-    class ExclusionInfo(FlextModels.ArbitraryTypesModel):
+    class ExclusionInfo(FlextModelsBase.ArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
 
         Stored in QuirkMetadata.extensions['exclusion_info'] to track why
@@ -592,7 +593,7 @@ class FlextLdifModelsDomains:
                 "total": must_count + may_count,
             }
 
-    class LdifAttributes(FlextModels.ArbitraryTypesModel):
+    class LdifAttributes(FlextModelsBase.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
         model_config = ConfigDict(
@@ -879,7 +880,7 @@ class FlextLdifModelsDomains:
                 if meta.get("status") == "deleted"
             }
 
-    class ErrorDetail(FlextModels.Value):
+    class ErrorDetail(FlextModelsEntity.Value):
         """Error detail information for failed operations."""
 
         model_config = ConfigDict(
@@ -899,7 +900,7 @@ class FlextLdifModelsDomains:
             description="Context",
         )
 
-    class NormalizedEntryData(BaseModel):
+    class NormalizedEntryData(FlextLdifModelsBase):
         """BaseModel for entry data with normalized DN references.
 
         Represents entry attributes and fields after DN normalization.
@@ -916,7 +917,7 @@ class FlextLdifModelsDomains:
 
         # No required fields - all fields are dynamically set
 
-    class DnRegistry(BaseModel):
+    class DnRegistry(FlextLdifModelsBase):
         """Registry for tracking canonical DN case during conversions.
 
         This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -1163,7 +1164,7 @@ class FlextLdifModelsDomains:
                 "dns_with_multiple_variants": multiple_variants,
             }
 
-    class QuirkCollection(FlextModels.Value):
+    class QuirkCollection(FlextModelsEntity.Value):
         """Collection of all quirks (Schema, ACL, Entry) for a single server type.
 
         Stores all three quirk types together for unified access and management.
@@ -1195,7 +1196,7 @@ class FlextLdifModelsDomains:
     # ACL MODELS - Must be defined before Entry since Entry references Acl
     # =========================================================================
 
-    class AclPermissions(FlextModels.ArbitraryTypesModel):
+    class AclPermissions(FlextModelsBase.ArbitraryTypesModel):
         """ACL permissions for LDAP operations.
 
         Supports:
@@ -1299,7 +1300,7 @@ class FlextLdifModelsDomains:
                 if key in rfc_compliant_keys
             }
 
-    class AclTarget(FlextModels.ArbitraryTypesModel):
+    class AclTarget(FlextModelsBase.ArbitraryTypesModel):
         """ACL target specification."""
 
         target_dn: str = Field(..., description="Target DN pattern")
@@ -1308,7 +1309,7 @@ class FlextLdifModelsDomains:
             description="Target attributes",
         )
 
-    class AclSubject(FlextModels.ArbitraryTypesModel):
+    class AclSubject(FlextModelsBase.ArbitraryTypesModel):
         """ACL subject specification."""
 
         subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = Field(
@@ -1394,9 +1395,8 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Set validation_violations directly - inherited from AclElement as a Field
-                # Using direct assignment is safe here as we're in model_validator mode="after"
-                self.validation_violations = violations
+                # Use object.__setattr__ for frozen models - Pydantic 2 pattern
+                object.__setattr__(self, "validation_violations", violations)
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
@@ -1418,7 +1418,7 @@ class FlextLdifModelsDomains:
             )
             return f"{short_server_type}_acl"
 
-    class AclWriteMetadata(BaseModel):
+    class AclWriteMetadata(FlextLdifModelsBase):
         """Metadata for ACL write formatting operations.
 
         This frozen model encapsulates ACL metadata extracted from QuirkMetadata.extensions
@@ -1468,7 +1468,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def from_extensions(
             cls,
-            extensions: Mapping[str, FlextTypes.MetadataValue] | None,
+            extensions: Mapping[str, FlextTypes.MetadataAttributeValue] | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 
@@ -1511,7 +1511,7 @@ class FlextLdifModelsDomains:
             """Check if original ACL format is available for name replacement."""
             return self.original_format is not None and len(self.original_format) > 0
 
-    class Entry(FlextModels.Entity):
+    class Entry(FlextModelsBase.ArbitraryTypesModel):
         """LDIF entry domain model.
 
         Implements FlextLdifProtocols.Models.EntryProtocol through structural typing.
@@ -1611,8 +1611,8 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: dict[str, FlextTypes.MetadataValue],
-        ) -> dict[str, FlextTypes.MetadataValue]:
+            data: dict[str, FlextTypes.MetadataAttributeValue],
+        ) -> dict[str, FlextTypes.MetadataAttributeValue]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Pydantic v2 Context Pattern: Using model_validator with mode='before'
@@ -2088,12 +2088,13 @@ class FlextLdifModelsDomains:
                         update={
                             "server_specific_violations": server_violations,
                             "validation_server_type": self.metadata.quirk_type or None,
-                        }
+                        },
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                self.metadata.extensions["server_specific_violations"] = cast(
-                    "FlextTypes.MetadataValue", server_violations
+                # server_violations is list[str], compatible with MetadataAttributeValue
+                self.metadata.extensions["server_specific_violations"] = (
+                    server_violations
                 )
 
             return self
@@ -2753,7 +2754,7 @@ class FlextLdifModelsDomains:
                 ),
             ]
 
-    class AttributeTransformation(BaseModel):
+    class AttributeTransformation(FlextLdifModelsBase):
         """Detailed tracking of attribute transformation operations.
 
         Records complete transformation history for LDIF attribute conversions,
@@ -2809,8 +2810,12 @@ class FlextLdifModelsDomains:
             description="Human-readable reason for transformation",
         )
 
-    class _DNStatisticsFlags(TypedDict, total=False):
-        """Optional flags for DNStatistics.create_with_transformation()."""
+    class DNStatisticsFlags(TypedDict, total=False):
+        """Optional flags for DNStatistics.create_with_transformation().
+
+        Public TypedDict for type-safe DN transformation flags.
+        Used by DNStatistics.create_with_transformation() and FlextLdifUtilitiesDN.
+        """
 
         had_tab_chars: bool
         had_trailing_spaces: bool
@@ -2823,7 +2828,10 @@ class FlextLdifModelsDomains:
         validation_warnings: list[str]
         validation_errors: list[str]
 
-    class DNStatistics(BaseModel):
+    # Backward compatibility alias (deprecated, use DNStatisticsFlags)
+    _DNStatisticsFlags = DNStatisticsFlags
+
+    class DNStatistics(FlextLdifModelsBase):
         """Statistics tracking for DN transformations and validation.
 
         Immutable value object capturing complete DN transformation history
@@ -2957,7 +2965,7 @@ class FlextLdifModelsDomains:
             cleaned_dn: str,
             normalized_dn: str,
             transformations: list[str] | None = None,
-            **flags: Unpack[FlextLdifModelsDomains._DNStatisticsFlags],
+            **flags: Unpack[FlextLdifModelsDomains.DNStatisticsFlags],
         ) -> Self:
             """Create statistics with transformation details.
 
@@ -2966,7 +2974,7 @@ class FlextLdifModelsDomains:
                 cleaned_dn: Cleaned DN string
                 normalized_dn: Normalized DN string
                 transformations: List of transformation types applied
-                **flags: Optional DNStatistics fields (type-safe via _DNStatisticsFlags)
+                **flags: Optional DNStatistics fields (type-safe via DNStatisticsFlags)
 
             """
             return cls(
@@ -2977,7 +2985,7 @@ class FlextLdifModelsDomains:
                 **flags,
             )
 
-    class EntryStatistics(BaseModel):
+    class EntryStatistics(FlextLdifModelsBase):
         """Statistics tracking for entry-level transformations and validation.
 
         Tracks complete entry lifecycle from parsing through validation,
@@ -3285,7 +3293,7 @@ class FlextLdifModelsDomains:
                 },
             )
 
-    class ValidationMetadata(BaseModel):
+    class ValidationMetadata(FlextLdifModelsBase):
         """Validation results and error tracking metadata.
 
         Composed model for QuirkMetadata.validation_results field.
@@ -3325,7 +3333,7 @@ class FlextLdifModelsDomains:
             description="Server type used for validation",
         )
 
-    class WriteOptions(BaseModel):
+    class WriteOptions(FlextLdifModelsBase):
         """LDIF writing configuration options.
 
         Composed model for QuirkMetadata.write_options field.
@@ -3363,7 +3371,7 @@ class FlextLdifModelsDomains:
             description="Whether to base64 encode binary attributes",
         )
 
-    class FormatDetails(BaseModel):
+    class FormatDetails(FlextLdifModelsBase):
         """Original formatting details for round-trip preservation.
 
         Composed model for QuirkMetadata.original_format_details field.
@@ -3397,7 +3405,7 @@ class FlextLdifModelsDomains:
             description="Trailing comments or metadata",
         )
 
-    class SchemaFormatDetails(BaseModel):
+    class SchemaFormatDetails(FlextLdifModelsBase):
         """Schema formatting details for perfect round-trip conversion.
 
         Composed model for QuirkMetadata.schema_format_details field.
@@ -3435,7 +3443,7 @@ class FlextLdifModelsDomains:
             description="Non-standard schema extensions",
         )
 
-    class QuirkMetadata(BaseModel):
+    class QuirkMetadata(FlextLdifModelsBase):
         """Universal metadata container for quirk-specific data preservation.
 
         Used to store server-specific quirks, transformations, and metadata
@@ -3673,7 +3681,7 @@ class FlextLdifModelsDomains:
             quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
-                | dict[str, FlextTypes.MetadataValue]
+                | dict[str, FlextTypes.MetadataAttributeValue]
                 | None
             ) = None,
         ) -> Self:
@@ -3785,9 +3793,8 @@ class FlextLdifModelsDomains:
                 ... )
 
             """
-            self.removed_attributes[attribute_name] = cast(
-                "FlextTypes.MetadataValue", values
-            )
+            # values is list[str], compatible with MetadataAttributeValue
+            self.removed_attributes[attribute_name] = values
             return self.track_attribute_transformation(
                 original_name=attribute_name,
                 new_name=None,
@@ -3833,8 +3840,9 @@ class FlextLdifModelsDomains:
             self.original_strings[FlextLdifConstants.Rfc.META_DN_ORIGINAL] = original_dn
             self.extensions[FlextLdifConstants.Rfc.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
-                self.extensions[FlextLdifConstants.Rfc.META_DN_ESCAPES_APPLIED] = cast(
-                    "FlextTypes.MetadataValue", escapes_applied
+                # escapes_applied is Sequence[str] | None, compatible with MetadataAttributeValue
+                self.extensions[FlextLdifConstants.Rfc.META_DN_ESCAPES_APPLIED] = (
+                    escapes_applied
                 )
 
             # Add to conversion notes

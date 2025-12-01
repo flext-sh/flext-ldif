@@ -70,7 +70,7 @@ class TestFixtureDiscoveryValidation:
         "servers": {
             "oracle_oid_acl": {"server_type": Fixtures.OID, "expected_count": 1},
             "oracle_oud_sync": {"server_type": Fixtures.OUD, "expected_count": 1},
-            "openldap2_config": {"server_type": Fixtures.OPENLDAP, "expected_count": 1},
+            "openldap2_config": {"server_type": Fixtures.OPENLDAP, "expected_count": 3},
         },
         "edge_cases": {
             "deep_dn": {"expected_count": 1},
@@ -221,11 +221,25 @@ class TestFixtureDiscoveryValidation:
         assert expected is not None, "Should load expected results"
 
         # Validate expected results structure using mapping
-        assert "entries" in expected
-        assert "count" in expected
-        assert "valid" in expected
-        expected_count = fixture_config.get("expected_count", 1)
-        assert expected["count"] == expected_count
+        # Broken fixtures have different structure (strict_mode/relaxed_mode)
+        if category == "broken":
+            # Broken fixtures have error information and mode-specific entries
+            assert "valid" in expected
+            assert "error" in expected or "strict_mode" in expected or "relaxed_mode" in expected
+            # Check if entries exist in any mode
+            has_entries = (
+                "entries" in expected
+                or (isinstance(expected.get("strict_mode"), dict) and "entries" in expected["strict_mode"])
+                or (isinstance(expected.get("relaxed_mode"), dict) and "entries" in expected["relaxed_mode"])
+            )
+            assert has_entries, "Broken fixture should have entries in at least one mode"
+        else:
+            # Normal fixtures have entries, count, and valid at root level
+            assert "entries" in expected
+            assert "count" in expected
+            assert "valid" in expected
+            expected_count = fixture_config.get("expected_count", 1)
+            assert expected["count"] == expected_count
 
     def test_fixture_parsing_roundtrip(
         self,

@@ -9,9 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels
-from pydantic import BaseModel, ConfigDict, Field
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.entity import FlextModelsEntity
+from pydantic import ConfigDict, Field
 
+from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -24,7 +27,7 @@ class FlextLdifModelsConfig:
 
     # Configuration classes will be added here
 
-    class AclMetadataConfig(FlextModels.Value):
+    class AclMetadataConfig(FlextModelsEntity.Value):
         """Configuration for ACL metadata extensions.
 
         Consolidates parameters for build_metadata_extensions utility function.
@@ -71,7 +74,7 @@ class FlextLdifModelsConfig:
             description="ACL action type (allow or deny) - for OUD deny rules support",
         )
 
-    class AciParserConfig(FlextModels.Value):
+    class AciParserConfig(FlextModelsEntity.Value):
         """Configuration for ACI parsing.
 
         Consolidates all parser parameters to enable generic utility methods.
@@ -165,7 +168,7 @@ class FlextLdifModelsConfig:
             description="Special subject DN to (type, value) mapping",
         )
 
-    class AciWriterConfig(FlextModels.Value):
+    class AciWriterConfig(FlextModelsEntity.Value):
         """Configuration for ACI writing.
 
         Consolidates all writer parameters to enable generic utility methods.
@@ -225,7 +228,7 @@ class FlextLdifModelsConfig:
             description="Mapping of subject type to bind operator",
         )
 
-    class LogContextExtras(FlextModels.Value):
+    class LogContextExtras(FlextModelsEntity.Value):
         """Additional context fields for logging events.
 
         Replaces **extra_context: object pattern with typed Model.
@@ -279,7 +282,7 @@ class FlextLdifModelsConfig:
         )
         # Note: extra="allow" permits additional custom fields without declaring them
 
-    class CategoryRules(FlextModels.Rules):
+    class CategoryRules(FlextModelsCollections.Rules):
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
@@ -319,7 +322,7 @@ class FlextLdifModelsConfig:
             description="Attribute names containing ACL information",
         )
 
-    class MigrateOptions(FlextModels.Value):
+    class MigrateOptions(FlextModelsEntity.Value):
         """Options for FlextLdif.migrate() operation.
 
         Consolidates 12+ optional parameters into single typed Model.
@@ -394,7 +397,7 @@ class FlextLdifModelsConfig:
             description="Sort entries by DN hierarchy depth then alphabetically",
         )
 
-    class FilterCriteria(FlextModels.ArbitraryTypesModel):
+    class FilterCriteria(FlextModelsBase.ArbitraryTypesModel):
         """Criteria for filtering LDIF entries.
 
         Supports multiple filter types:
@@ -437,7 +440,7 @@ class FlextLdifModelsConfig:
             description="Mode: 'include' keep, 'exclude' remove",
         )
 
-    class WhitelistRules(FlextModels.Rules):
+    class WhitelistRules(FlextModelsCollections.Rules):
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
@@ -481,7 +484,7 @@ class FlextLdifModelsConfig:
             description="OID patterns for allowed ldapSyntaxes definitions",
         )
 
-    class EncodingRules(FlextModels.Value):
+    class EncodingRules(FlextModelsEntity.Value):
         """Generic encoding rules - server classes provide values."""
 
         default_encoding: str
@@ -489,13 +492,13 @@ class FlextLdifModelsConfig:
             Field(default_factory=list)
         )
 
-    class DnCaseRules(FlextModels.Value):
+    class DnCaseRules(FlextModelsEntity.Value):
         """Generic DN case rules - server classes provide values."""
 
         preserve_case: bool
         normalize_to: str | None = Field(default=None)
 
-    class AclFormatRules(FlextModels.Value):
+    class AclFormatRules(FlextModelsEntity.Value):
         """Generic ACL format rules - server classes provide values."""
 
         format: str
@@ -503,7 +506,7 @@ class FlextLdifModelsConfig:
         requires_target: bool
         requires_subject: bool
 
-    class ServerValidationRules(FlextModels.Value):
+    class ServerValidationRules(FlextModelsEntity.Value):
         """Generic server validation rules - server classes provide values.
 
         No defaults - each server class must provide all values via Constants.
@@ -519,7 +522,7 @@ class FlextLdifModelsConfig:
         track_modifications: bool
         track_conversions: bool
 
-    class WriteFormatOptions(BaseModel):
+    class WriteFormatOptions(FlextLdifModelsBase):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
@@ -783,7 +786,7 @@ class FlextLdifModelsConfig:
             ),
         )
 
-    class WriteOutputOptions(BaseModel):
+    class WriteOutputOptions(FlextLdifModelsBase):
         """Output visibility options for attributes based on their marker status.
 
         This class controls how attributes are rendered in LDIF output based on
@@ -851,7 +854,7 @@ class FlextLdifModelsConfig:
             ),
         )
 
-    class MigrationConfig(FlextModels.Value):
+    class MigrationConfig(FlextModelsEntity.Value):
         """Configuration for migration pipeline from YAML or dict.
 
         Supports structured 6-file output (00-06) with flexible categorization,
@@ -926,7 +929,7 @@ class FlextLdifModelsConfig:
             description="Data to pass to header template",
         )
 
-    class ParseFormatOptions(BaseModel):
+    class ParseFormatOptions(FlextLdifModelsBase):
         """Formatting options for LDIF parsing (VIEW MODEL).
 
         **Architecture**: This is a Pydantic VIEW MODEL that represents
@@ -1002,7 +1005,7 @@ class FlextLdifModelsConfig:
             description="If True, applies strict schema validation and fails on violations.",
         )
 
-    class MigrationPipelineParams(FlextModels.Value):
+    class MigrationPipelineParams(FlextModelsEntity.Value):
         """Typed parameters for migration pipeline factory.
 
         Replaces dict-based parameter passing with type-safe Pydantic model.
@@ -1042,7 +1045,7 @@ class FlextLdifModelsConfig:
             description="If True, use lenient parsing for broken/non-compliant LDIF",
         )
 
-    class ParserParams(FlextModels.Value):
+    class ParserParams(FlextModelsEntity.Value):
         """Typed parameters for parser service factory.
 
         Provides type-safe configuration for LDIF parsing operations.
@@ -1081,7 +1084,7 @@ class FlextLdifModelsConfig:
             description="If True, validates entries against schema rules",
         )
 
-    class WriterParams(FlextModels.Value):
+    class WriterParams(FlextModelsEntity.Value):
         """Typed parameters for writer service factory.
 
         Provides type-safe configuration for LDIF writing operations.
@@ -1122,7 +1125,7 @@ class FlextLdifModelsConfig:
             description="If True, enforces strict RFC 2849 compliance",
         )
 
-    class ConfigInfo(FlextModels.Value):
+    class ConfigInfo(FlextModelsEntity.Value):
         """Configuration information for logging and introspection.
 
         Structured representation of FlextLdifConfig for reporting and diagnostics.

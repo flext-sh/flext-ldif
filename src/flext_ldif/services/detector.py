@@ -21,6 +21,7 @@ from typing import Protocol, override
 
 from flext_core import FlextResult
 
+from flext_ldif._models.results import _ConfigSettings, _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -139,14 +140,17 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         lines = ldif_content.split("\n")
         content_sample = "\n".join(lines[:max_lines])
 
-        scores = self._calculate_scores(content_sample)
-        detected_type, confidence = self._determine_server_type(scores)
+        scores_dict = self._calculate_scores(content_sample)
+        detected_type, confidence = self._determine_server_type(scores_dict)
         patterns_found = self._extract_patterns(content_sample)
+
+        # Convert dict to _DynamicCounts model (supports extra fields via Pydantic)
+        scores_model = _DynamicCounts(**scores_dict)
 
         detection_result = FlextLdifModels.ServerDetectionResult(
             detected_server_type=detected_type,
             confidence=confidence,
-            scores=scores,
+            scores=scores_model,
             patterns_found=patterns_found,
             is_confident=confidence
             >= FlextLdifConstants.ServerDetection.CONFIDENCE_THRESHOLD,
@@ -166,7 +170,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         status_result = FlextLdifModels.ClientStatus(
             status="initialized",
             services=["detect_server_type"],
-            config={"service": "FlextLdifDetector"},
+            config=_ConfigSettings(service="FlextLdifDetector"),
         )
         return FlextResult[FlextLdifModels.ClientStatus].ok(status_result)
 
@@ -203,7 +207,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             return FlextLdifConstants.ServerTypes.RFC.value
 
         # Default: Use the configured default server type
-        return config.ldif_default_server_type
+        return config.ldif_default_server_type  # noqa: PLR0911
 
     def get_effective_server_type(
         self,
@@ -238,7 +242,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
 
         return FlextResult.ok("rfc")
 
-    def _update_server_scores(
+    def _update_server_scores(  # noqa: PLR0913, PLR0917, PLR6301
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         pattern: str,
@@ -354,12 +358,15 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 scores,
             )
 
-        openldap_constants = self._get_server_constants("openldap")
+        openldap_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.OPENLDAP.value,
+        )
+        openldap_constants = self._get_server_constants(openldap_server_type)
         if openldap_constants and hasattr(openldap_constants, "DETECTION_PATTERN"):
             openldap_pattern = getattr(openldap_constants, "DETECTION_PATTERN", None)
             if openldap_pattern and isinstance(openldap_pattern, str):
                 self._update_server_scores(
-                    "openldap",
+                    openldap_server_type,
                     openldap_pattern,
                     getattr(openldap_constants, "DETECTION_WEIGHT", 8),
                     getattr(openldap_constants, "DETECTION_ATTRIBUTES", []),
@@ -373,12 +380,15 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                     ),
                 )
 
-        ad_constants = self._get_server_constants("active_directory")
+        ad_server_type = FlextLdifConstants.normalize_server_type(
+            FlextLdifConstants.ServerTypes.AD.value,
+        )
+        ad_constants = self._get_server_constants(ad_server_type)
         if ad_constants and hasattr(ad_constants, "DETECTION_PATTERN"):
             ad_pattern = getattr(ad_constants, "DETECTION_PATTERN", None)
             if ad_pattern and isinstance(ad_pattern, str):
                 self._update_server_scores(
-                    "active_directory",
+                    ad_server_type,
                     ad_pattern,
                     getattr(ad_constants, "DETECTION_WEIGHT", 8),
                     getattr(ad_constants, "DETECTION_ATTRIBUTES", frozenset()),
@@ -394,15 +404,13 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 )
 
         # Process additional server types using literal strings
-        for server_type in (
+        for server_type_str in (
             "novell_edirectory",
             "ibm_tivoli",
             "389ds",
             "apache_directory",
         ):
-            server_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = (
-                server_type
-            )
+            server_literal = FlextLdifConstants.normalize_server_type(server_type_str)
             constants = self._get_server_constants(server_literal)
             if constants:
                 self._process_server_with_pattern(
@@ -466,7 +474,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             "apache_directory": "apache_directory",
             "novell_edirectory": "novell_edirectory",
             "ibm_tivoli": "ibm_tivoli",
-            "389ds": "389ds",
+            "389ds": "ds389",  # Normalized to canonical form
             "relaxed": "relaxed",
             "rfc": "rfc",
             "generic": "rfc",

@@ -65,7 +65,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         return FlextResult.fail(f"Unknown operation: {self._operation}")
 
     def remove_operational_attributes_batch(
-        self, entries: list[FlextLdifModels.Entry]
+        self, entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Remove operational attributes from all entries."""
         result = []
@@ -77,7 +77,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         return FlextResult.ok(result)
 
     def remove_attributes_batch(
-        self, entries: list[FlextLdifModels.Entry], attributes: list[str]
+        self, entries: list[FlextLdifModels.Entry], attributes: list[str],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Remove specified attributes from all entries."""
         result = []
@@ -111,14 +111,27 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
 
         # Check if it's an EntryWithDnProtocol (has dn attribute)
         if hasattr(entry, "dn"):
-            dn_val = entry.dn
-            if hasattr(dn_val, "value"):  # DN object with .value attribute
-                return FlextResult.ok(str(dn_val.value))
+            dn_val_raw = entry.dn
+            # Check if dn_val has .value attribute (DN model with value field)
+            if hasattr(dn_val_raw, "value"):
+                # dn_val_raw.value can be str | list[str] | None
+                dn_value_raw = dn_val_raw.value
+                if dn_value_raw is None:
+                    return FlextResult.fail("DN value is None")
+                # Convert to string for return
+                if isinstance(dn_value_raw, str):
+                    return FlextResult.ok(dn_value_raw)
+                if isinstance(dn_value_raw, list):
+                    # For list, join or use first element (depends on DN structure)
+                    return FlextResult.ok(str(dn_value_raw[0]) if dn_value_raw else "")
+                return FlextResult.fail("DN value has unexpected type")
             # Direct string DN
-            return FlextResult.ok(str(dn_val))
+            if isinstance(dn_val_raw, str):
+                return FlextResult.ok(dn_val_raw)
+            return FlextResult.ok(str(dn_val_raw))
 
         return FlextResult.fail(
-            "Entry does not implement EntryWithDnProtocol or Entry protocol"
+            "Entry does not implement EntryWithDnProtocol or Entry protocol",
         )
 
     def get_entry_attributes(
@@ -322,7 +335,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         return self.normalize_attribute_value(values)
 
     def remove_operational_attributes(
-        self, entry: FlextLdifModels.Entry
+        self, entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Remove operational attributes from entry.
 

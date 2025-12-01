@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -20,11 +19,12 @@ from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 logger = structlog.get_logger(__name__)
 
-# Type aliases
-EntryAttrs = Mapping[str, list[str]]
+# Use types directly from FlextLdifTypes (no local aliases)
+EntryAttrs = FlextLdifTypes.Entry.EntryAttrs
 
 
 class FlextLdifUtilitiesWriters:

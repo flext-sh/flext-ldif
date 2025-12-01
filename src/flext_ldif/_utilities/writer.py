@@ -10,8 +10,10 @@ import base64
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core.typings import FlextTypes
 from jinja2 import Environment
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -190,7 +192,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def render_template(
         template_str: str,
-        context: dict[str, FlextLdifTypes.TemplateValue],
+        context: FlextLdifTypes.MetadataDictMutable,
     ) -> FlextResult[str]:
         """Render Jinja2 template with context.
 
@@ -225,7 +227,7 @@ class FlextLdifUtilitiesWriter:
         content: str,
         file_path: Path,
         encoding: str = "utf-8",
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.MetadataDictMutable]:
         """Write content to file (pure I/O operation).
 
         Args:
@@ -247,22 +249,24 @@ class FlextLdifUtilitiesWriter:
             # Create parent directories if they don't exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding=encoding)
-            stats: dict[str, object] = {
+            stats: FlextLdifTypes.MetadataDictMutable = {
                 "bytes_written": len(content.encode(encoding)),
                 "path": str(file_path),
                 "encoding": encoding,
             }
-            return FlextResult[dict[str, object]].ok(stats)
+            return FlextResult[FlextLdifTypes.MetadataDictMutable].ok(stats)
         except Exception as e:
             logger.exception(
                 "File write failed",
                 file_path=str(file_path),
             )
-            return FlextResult[dict[str, object]].fail(f"File write failed: {e}")
+            return FlextResult[FlextLdifTypes.MetadataDictMutable].fail(
+                f"File write failed: {e}",
+            )
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
@@ -275,7 +279,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add syntax and length to attribute parts list.
@@ -294,7 +298,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add flags to attribute parts list."""
@@ -309,7 +313,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_attribute_parts(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> list[str]:
         """Build RFC attribute definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -343,7 +347,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_attribute(
-        attr_data: FlextLdifModels.SchemaAttribute,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> FlextResult[str]:
         """Write attribute data to RFC 4512 format."""
         try:
@@ -386,7 +390,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_objectclass_parts(
-        oc_data: FlextLdifModels.SchemaObjectClass,
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> list[str]:
         """Build RFC objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -431,7 +435,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_objectclass(
-        objectclass: FlextLdifModels.SchemaObjectClass,
+        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC 4512 format."""
         try:
@@ -483,8 +487,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: dict[str, object],
-    ) -> list[tuple[str, object]] | None:
+        entry_data: dict[str, FlextTypes.GeneralValueType],
+    ) -> list[tuple[str, FlextTypes.GeneralValueType]] | None:
         """Determine attribute processing order from entry metadata.
 
         Args:
@@ -513,7 +517,9 @@ class FlextLdifUtilitiesWriter:
             if not isinstance(extensions_raw, dict):
                 attr_order = None
             else:
-                extensions_dict: dict[str, object] = extensions_raw
+                extensions_dict: dict[str, FlextTypes.MetadataAttributeValue] = (
+                    extensions_raw
+                )
                 if FlextRuntime.is_dict_like(extensions_dict):
                     attr_order = extensions_dict.get("attribute_order")
                 else:
@@ -530,8 +536,8 @@ class FlextLdifUtilitiesWriter:
             "_acl_attributes",
         }
 
-        # Type narrowing: ensure tuple elements are (str, object) for return type
-        result: list[tuple[str, object]] = []
+        # Type narrowing: ensure tuple elements are (str, GeneralValueType) for return type
+        result: list[tuple[str, FlextTypes.GeneralValueType]] = []
         for key in attr_order:
             if key in entry_data and key not in skip_keys:
                 if not isinstance(key, str):
@@ -541,7 +547,9 @@ class FlextLdifUtilitiesWriter:
         return result
 
     @staticmethod
-    def extract_base64_attrs(entry_data: dict[str, object]) -> set[str]:
+    def extract_base64_attrs(
+        entry_data: dict[str, FlextTypes.GeneralValueType],
+    ) -> set[str]:
         """Extract set of attribute names that require base64 encoding.
 
         Args:
@@ -587,7 +595,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def format_attribute_line(
         attr_name: str,
-        attr_value: object,
+        attr_value: FlextTypes.ScalarValue | list[str],
         *,
         is_base64: bool,
         attribute_case_map: dict[str, str] | None = None,
@@ -792,7 +800,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_modify_operations(
-        entry_data: dict[str, object],
+        entry_data: dict[str, FlextTypes.GeneralValueType],
     ) -> list[str]:
         """Write LDIF modify operations for schema additions.
 
@@ -859,7 +867,7 @@ class FlextLdifUtilitiesWriter:
     def _apply_output_options(
         attr_name: str,
         attr_values: list[str],
-        entry_metadata: FlextLdifModels.QuirkMetadata,
+        entry_metadata: FlextLdifModelsDomains.QuirkMetadata,
         output_options: FlextLdifModels.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Apply output visibility options based on attribute status.
@@ -897,7 +905,9 @@ class FlextLdifUtilitiesWriter:
         if not isinstance(marked_attrs_raw, dict):
             return (attr_name, attr_values)
 
-        marked_attrs: dict[str, dict[str, object]] = marked_attrs_raw
+        marked_attrs: dict[str, dict[str, FlextTypes.MetadataAttributeValue]] = (
+            marked_attrs_raw
+        )
         attr_info = marked_attrs.get(attr_name)
 
         # If attribute not marked, write normally
@@ -914,10 +924,28 @@ class FlextLdifUtilitiesWriter:
             )
 
         # Handle based on status - extracted to reduce complexity
-        status = attr_info.get(
+        status_raw = attr_info.get(
             "status",
-            FlextLdifConstants.AttributeMarkerStatus.NORMAL,
+            FlextLdifConstants.AttributeMarkerStatus.NORMAL.value,
         )
+        # Validate status is AttributeMarkerStatusLiteral
+        valid_statuses = {
+            "normal",
+            "marked_for_removal",
+            "filtered",
+            "operational",
+            "hidden",
+            "renamed",
+        }
+        if isinstance(status_raw, str) and status_raw in valid_statuses:
+            from typing import cast
+
+            status: FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral = cast(
+                "FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral",
+                status_raw,
+            )
+        else:
+            status = FlextLdifConstants.AttributeMarkerStatus.NORMAL.value
         return FlextLdifUtilitiesWriter._handle_attribute_status(
             attr_name,
             attr_values,
@@ -940,7 +968,7 @@ class FlextLdifUtilitiesWriter:
     def _handle_attribute_status(
         attr_name: str,
         attr_values: list[str],
-        status: object,
+        status: FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral,
         output_options: FlextLdifModels.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
@@ -969,7 +997,7 @@ class FlextLdifUtilitiesWriter:
     def check_minimal_differences_restore(
         ldif_lines: list[str],
         attr_name: str,
-        minimal_differences_attrs: dict[str, object],
+        minimal_differences_attrs: dict[str, FlextTypes.MetadataAttributeValue],
     ) -> bool:
         """Check minimal differences and restore original attribute line if needed.
 
@@ -1005,7 +1033,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def extract_typed_attr_values(
-        attr_values: object,
+        attr_values: FlextTypes.GeneralValueType,
     ) -> list[str] | str:
         """Type-safe extraction of attribute values.
 
@@ -1085,7 +1113,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def build_entry_lines(
         dn_value: str,
-        attributes: dict[str, list[str]],
+        attributes: FlextLdifTypes.CommonDict.AttributeDict,
         *,
         format_type: str = "add",
         modify_operation: str = "add",

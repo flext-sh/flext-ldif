@@ -19,7 +19,6 @@ from flext_core import FlextConfig, FlextConstants, FlextProtocols
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -93,8 +92,8 @@ class FlextLdifConfigModule:
         # LDIF Format Configuration using FlextLdifConstants for defaults
         # Note: Fields like max_workers, debug, trace, log_verbosity come from root FlextConfig
         # when used in nested pattern (config.ldif references root config.max_workers)
-        ldif_encoding: str = Field(
-            default=FlextLdifConstants.ConfigDefaults.LDIF_DEFAULT_ENCODING,
+        ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
+            default="utf-8",  # Use literal value instead of constant for type compatibility
             description="Character encoding for LDIF files",
         )
 
@@ -159,7 +158,7 @@ class FlextLdifConfigModule:
             description="Cache size for LDIF analytics",
         )
 
-        analytics_detail_level: str = Field(
+        analytics_detail_level: FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral = Field(
             default="medium",
             description="Analytics detail level (low, medium, high)",
         )
@@ -201,8 +200,8 @@ class FlextLdifConfigModule:
             description="Maximum entries for analytics processing",
         )
 
-        ldif_default_server_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.RFC,
+        ldif_default_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            default="rfc",  # Use literal value instead of enum for type compatibility
             description="Default server type for LDIF processing",
         )
 
@@ -212,12 +211,12 @@ class FlextLdifConfigModule:
         )
 
         # Quirks Detection and Mode Configuration
-        quirks_detection_mode: str = Field(
+        quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionModeLiteral = Field(
             default="auto",
             description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
         )
 
-        quirks_server_type: str | None = Field(
+        quirks_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = Field(
             default=None,
             description="Override server type for quirks when detection_mode is 'manual'",
         )
@@ -228,7 +227,7 @@ class FlextLdifConfigModule:
         )
 
         # Validation Configuration using FlextLdifConstants for defaults
-        validation_level: str = Field(
+        validation_level: FlextLdifConstants.LiteralTypes.ValidationLevelLiteral = Field(
             default="strict",
             description="Validation strictness level",
         )
@@ -239,13 +238,13 @@ class FlextLdifConfigModule:
         )
 
         # Server Configuration using FlextLdifConstants for defaults
-        server_type: str = Field(
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
             default="generic",
             description="Target LDAP server type",
         )
 
         # Error Handling Configuration
-        error_recovery_mode: str = Field(
+        error_recovery_mode: FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral = Field(
             default="continue",
             description="Error recovery mode (continue, stop, skip)",
         )
@@ -356,12 +355,12 @@ class FlextLdifConfigModule:
             description="If True, includes statistics about removed attributes in headers.",
         )
 
-        ldif_write_changetype: str | None = Field(
+        ldif_write_changetype: FlextLdifConstants.LiteralTypes.ChangeTypeLiteral | None = Field(
             default=None,
             description="If set to 'modify', writes entries in LDIF modify format (changetype: modify). Otherwise uses add format.",
         )
 
-        ldif_write_modify_operation: str = Field(
+        ldif_write_modify_operation: FlextLdifConstants.LiteralTypes.ModifyOperationLiteral = Field(
             default="add",
             description="LDIF modify operation: 'add' or 'replace'. Used when ldif_changetype='modify'. Default 'add' for schema/ACL phases.",
         )
@@ -371,7 +370,7 @@ class FlextLdifConfigModule:
             description="If True, writes original source entry as commented LDIF block before converted entry.",
         )
 
-        ldif_write_entry_category: str | None = Field(
+        ldif_write_entry_category: FlextLdifConstants.LiteralTypes.CategoryLiteral | None = Field(
             default=None,
             description="Migration category (e.g., 'hierarchy', 'users', 'groups', 'acl'). Used for phase-specific formatting.",
         )
@@ -784,17 +783,10 @@ class FlextLdifConfigModule:
             return self.ldif_encoding
 
         # =========================================================================
-        # PUBLIC API - Type Aliases for External Access
+        # PUBLIC API - Direct access to models (no wrappers)
         # =========================================================================
-
-        class WriteFormatOptions(FlextLdifModelsConfig.WriteFormatOptions):
-            """Formatting options for LDIF serialization.
-
-            Provides complete control over LDIF output format including line width,
-            attribute ordering, and RFC compliance.
-
-            Public API: Accessible as FlextLdifConfig.WriteFormatOptions
-            """
+        # WriteFormatOptions is deprecated - use FlextLdifConfig fields (ldif_write_*)
+        # Direct access via FlextLdifModelsConfig.WriteFormatOptions when needed
 
 
 # Global instances for backward compatibility

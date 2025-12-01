@@ -7,27 +7,27 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
+
+# Lazy import to avoid circular dependency
+# FlextLdifConstants imported when needed in methods
 
 logger = FlextLogger(__name__)
 
 # Type for parsed ACL components (using MetadataValue for nested structures)
-AclComponent = dict[str, str | FlextLdifTypes.MetadataValue]
+AclComponent = dict[str, str | FlextTypes.MetadataAttributeValue]
 
 
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
-    # ASCII control character boundaries for sanitization
-    ASCII_PRINTABLE_MIN: int = 0x20  # Space (first printable character)
-    ASCII_PRINTABLE_MAX: int = 0x7E  # Tilde (last printable character)
+    # ASCII control character boundaries for sanitization (use constants from FlextLdifConstants.Rfc)
+    # Note: Cannot use class attribute assignment with constants due to import order
+    # Use constants directly in methods instead
 
     @staticmethod
     def split_acl_line(acl_line: str) -> tuple[str, str]:
@@ -267,8 +267,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        config: FlextLdifModels.AclMetadataConfig,
-    ) -> dict[str, FlextLdifTypes.MetadataValue]:
+        config: FlextLdifModels.Config.AclMetadataConfig,
+    ) -> dict[str, FlextTypes.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL.
 
         Args:
@@ -278,14 +278,14 @@ class FlextLdifUtilitiesACL:
             Metadata extensions dictionary
 
         """
-        extensions: dict[str, FlextLdifTypes.MetadataValue] = {}
+        extensions: dict[str, FlextTypes.MetadataAttributeValue] = {}
 
         if config.line_breaks:
-            extensions["line_breaks"] = cast(
-                "FlextTypes.MetadataValue", config.line_breaks
-            )
+            # config.line_breaks is list[int] | None, compatible with MetadataAttributeValue
+            extensions["line_breaks"] = config.line_breaks
         if config.dn_spaces:
-            extensions["dn_spaces"] = cast("FlextTypes.MetadataValue", config.dn_spaces)
+            # config.dn_spaces is bool, compatible with MetadataAttributeValue
+            extensions["dn_spaces"] = config.dn_spaces
         if config.targetscope:
             extensions["targetscope"] = config.targetscope
         if config.version:
@@ -307,8 +307,8 @@ class FlextLdifUtilitiesACL:
         for char in raw_name:
             char_ord = ord(char)
             if (
-                char_ord < FlextLdifUtilitiesACL.ASCII_PRINTABLE_MIN
-                or char_ord > FlextLdifUtilitiesACL.ASCII_PRINTABLE_MAX
+                char_ord < FlextLdifConstants.Rfc.ASCII_PRINTABLE_MIN
+                or char_ord > FlextLdifConstants.Rfc.ASCII_PRINTABLE_MAX
                 or char == '"'
             ):
                 was_sanitized = True
@@ -579,8 +579,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        config: FlextLdifModels.AciParserConfig,
-    ) -> FlextResult[FlextLdifModels.Acl]:
+        config: FlextLdifModels.Config.AciParserConfig,  # type: ignore[name-defined]
+    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse ACI line using server-specific config Model.
 
         Args:
@@ -591,7 +591,7 @@ class FlextLdifUtilitiesACL:
             FlextResult with parsed Acl model
 
         Example:
-            config = FlextLdifModels.AciParserConfig(
+            config = FlextLdifModels.Config.AciParserConfig(
                 server_type=FlextLdifConstants.ServerTypes.OUD,
                 version_acl_pattern=OudConstants.ACL_VERSION_ACL_PATTERN,
                 targetattr_pattern=OudConstants.ACL_TARGETATTR_PATTERN,
@@ -668,7 +668,7 @@ class FlextLdifUtilitiesACL:
         }
 
         # Extract extra fields via extra_patterns and build extensions
-        extensions: dict[str, str | object] = {
+        extensions: dict[str, FlextTypes.MetadataAttributeValue] = {
             "version": version,
             "original_format": acl_line,
         }
@@ -688,13 +688,10 @@ class FlextLdifUtilitiesACL:
                 target_dn=target_dn,
                 attributes=target_attributes,
             ),
-            subject=FlextLdifModels.AclSubject(
-                subject_type=cast(
-                    "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
-                    subject_type,
-                ),
-                subject_value=subject_value,
-            ),
+            subject=FlextLdifModels.AclSubject.model_validate({
+                "subject_type": subject_type,  # Pydantic validates against AclSubjectTypeLiteral
+                "subject_value": subject_value,
+            }),
             permissions=FlextLdifModels.AclPermissions(**permissions_dict),
             server_type=config.server_type,
             raw_acl=acl_line,
@@ -705,12 +702,12 @@ class FlextLdifUtilitiesACL:
                 else None,
             ),
         )
-        return FlextResult[FlextLdifModels.Acl].ok(acl)
+        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl)
 
     @staticmethod
     def write_aci(
-        acl_data: FlextLdifModels.Acl,
-        config: FlextLdifModels.AciWriterConfig,
+        acl_data: FlextLdifModelsDomains.Acl,
+        config: FlextLdifModels.Config.AciWriterConfig,  # type: ignore[name-defined]
     ) -> FlextResult[str]:
         """Write Acl model to ACI string using server-specific config Model.
 
@@ -722,7 +719,9 @@ class FlextLdifUtilitiesACL:
             FlextResult with formatted ACI string
 
         Example:
-            config = FlextLdifModels.AciWriterConfig(
+            from flext_ldif.models import FlextLdifModels
+
+            config = FlextLdifModels.Config.AciWriterConfig(
                 aci_prefix="aci: ",
                 version="3.0",
                 supported_permissions=OudConstants.SUPPORTED_PERMISSIONS,
@@ -792,7 +791,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: dict[str, FlextLdifTypes.MetadataValue] | None,
+        extensions: dict[str, FlextTypes.MetadataAttributeValue] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -828,8 +827,11 @@ class FlextLdifUtilitiesACL:
         bind_rules: list[str] = []
 
         for ext_key, format_template, operator_default in rule_config:
-            # Get value as object to allow tuple checking (MetadataValue doesn't include tuples)
-            value_raw: object = extensions.get(ext_key) if extensions else None
+            # Get value - can be ScalarValue or tuple (operator, value)
+            # Use FlextTypes.MetadataAttributeValue to include tuples
+            value_raw: FlextTypes.MetadataAttributeValue | None = (
+                extensions.get(ext_key) if extensions else None
+            )
             if not value_raw:
                 continue
 
@@ -861,7 +863,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, FlextLdifTypes.MetadataValue]
+        | dict[str, FlextTypes.MetadataAttributeValue]
         | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
@@ -903,7 +905,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, FlextLdifTypes.MetadataValue]
+        | dict[str, FlextTypes.MetadataAttributeValue]
         | None,
         converted_from_key: str,
         comments_key: str,

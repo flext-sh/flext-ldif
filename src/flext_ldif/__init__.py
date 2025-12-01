@@ -67,6 +67,5 @@ __all__ = [
     "FlextLdifWriter",  # ✅ Writer service (public API)
 ]
 
-# Forward references are resolved automatically by Pydantic when using string literals
-# Build models to resolve all forward references
-FlextLdifModels.Entry.model_rebuild()
+# Pydantic v2 with `from __future__ import annotations` resolves forward references
+# automatically - no model_rebuild() needed when using root namespace imports

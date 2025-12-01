@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import re
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifUtilitiesServer:
@@ -31,7 +31,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def get_parent_server_type(
-        nested_class_instance: object,
+        nested_class_instance_or_type: type[object] | object,
     ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__.
 
@@ -42,7 +42,7 @@ class FlextLdifUtilitiesServer:
         Acl, and Entry nested classes in base.py.
 
         Args:
-            nested_class_instance: Instance of a nested class (Schema, Acl, Entry)
+            nested_class_instance_or_type: Instance or type of a nested class (Schema, Acl, Entry)
 
         Returns:
             Server type literal from parent Constants.SERVER_TYPE
@@ -67,7 +67,11 @@ class FlextLdifUtilitiesServer:
             'oid'
 
         """
-        cls = type(nested_class_instance)
+        # Handle both instance and type - if it's already a type, use it directly
+        if isinstance(nested_class_instance_or_type, type):
+            cls = nested_class_instance_or_type
+        else:
+            cls = type(nested_class_instance_or_type)
 
         # For nested classes, extract parent server class from __qualname__
         # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
@@ -123,8 +127,8 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def matches_server_patterns(
         value: str
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         oid_pattern: str,
         detection_names: frozenset[str],
         detection_string: str | None = None,
@@ -167,7 +171,7 @@ class FlextLdifUtilitiesServer:
                 use_prefix_match=use_prefix_match,
             )
 
-        if isinstance(value, FlextLdifModels.SchemaAttribute):
+        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
             if re.search(oid_pattern, value.oid):
                 return True
             return FlextLdifUtilitiesServer._check_name_patterns(
@@ -177,7 +181,7 @@ class FlextLdifUtilitiesServer:
                 use_prefix_match=use_prefix_match,
             )
 
-        if isinstance(value, FlextLdifModels.SchemaObjectClass):
+        if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass):
             if re.search(oid_pattern, value.oid):
                 return True
             return FlextLdifUtilitiesServer._check_name_patterns(

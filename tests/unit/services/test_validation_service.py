@@ -305,8 +305,10 @@ class TestFlextLdifValidation:
             """Test with_max_attr_value_length fluent method."""
             builder = FlextLdifValidation.builder()
             result = builder.with_max_attr_value_length(1024)
-            assert result is builder
-            assert builder.max_attr_value_length == 1024
+            # Builder pattern with frozen Pydantic models returns new instance
+            assert result is not builder  # New instance returned
+            assert result.max_attr_value_length == 1024
+            assert builder.max_attr_value_length != 1024  # Original unchanged (frozen model)
 
         def test_build_with_attribute_names(self) -> None:
             """Test build() validates attribute names."""

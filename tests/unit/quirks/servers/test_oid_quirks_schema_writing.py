@@ -492,7 +492,7 @@ class TestFlextLdifOidSchemaWriting:
         if equality:
             assert equality in written or parsed_attr.equality
         if substring:
-            assert substring in written or parsed_attr.substring
+            assert substring in written or parsed_attr.substr
         if ordering:
             assert ordering in written or parsed_attr.ordering
 

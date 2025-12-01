@@ -22,8 +22,6 @@ from typing import Final
 
 import pytest
 from flext_core import FlextModels
-
-# from flext_tests import FlextTestsFactories  # Mocked in conftest
 from tests.fixtures.constants import DNs, Names, OIDs, Values
 from tests.helpers.test_factories import FlextLdifTestFactories
 
@@ -304,7 +302,7 @@ def get_acl_tests() -> list[AclTestCase]:
     return ACL_TESTS
 
 
-class TestFlextLdifModels(FlextTestsFactories):
+class TestFlextLdifModels(FlextLdifTestFactories):
     """Comprehensive FlextLdifModels test suite.
 
     Tests all model types (Entry, DN, Attributes, Schema, ACL) with parametrized

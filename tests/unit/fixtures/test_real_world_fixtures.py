@@ -446,7 +446,7 @@ class TestCrossServerFixtures:
                 "RFC": "rfc",
                 "OID": "oid",
                 "OUD": "oud",
-                "OpenLDAP2": "openldap",
+                "OpenLDAP2": "openldap2",
             }
             server_type = server_type_map.get(server_name, "rfc")
             result = self.ldif.parse(

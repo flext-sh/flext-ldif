@@ -159,10 +159,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         ),
         config_model: FlextLdifModels.MigrationConfig | None,
         **format_kwargs: (
-            FlextLdifTypes.ScalarValue
+            FlextTypes.ScalarValue
             | list[str]
             | frozenset[str]
-            | dict[str, FlextLdifTypes.ScalarValue | list[str]]
+            | dict[str, FlextTypes.ScalarValue | list[str]]
         ),
     ) -> FlextResult[FlextLdifModels.WriteFormatOptions]:
         """Set default write options for structured and categorized modes using FlextResult.
@@ -214,9 +214,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         # Convert frozenset to list for FlextTypes.GeneralValueType compatibility
         all_kwargs: dict[
             str,
-            FlextLdifTypes.ScalarValue
+            FlextTypes.ScalarValue
             | list[str]
-            | dict[str, FlextLdifTypes.ScalarValue | list[str]],
+            | dict[str, FlextTypes.ScalarValue | list[str]],
         ] = {}
         for k, v in {**mode_overrides, **format_kwargs}.items():
             if isinstance(v, frozenset):

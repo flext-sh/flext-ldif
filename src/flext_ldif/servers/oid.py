@@ -22,6 +22,7 @@ from functools import reduce
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
+from flext_core.typings import FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
@@ -840,7 +841,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     def extract_schemas_from_ldif(
         self,
         ldif_content: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[
+        dict[
+            str,
+            list[FlextLdifModelsDomains.SchemaAttribute]
+            | list[FlextLdifModelsDomains.SchemaObjectClass]
+            | int,
+        ]
+    ]:
         """Extract and parse all schema definitions from LDIF content.
 
         Delegates to the Schema nested class implementation.
@@ -852,24 +860,50 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # Instantiate Schema nested class
         schema_class = getattr(type(self), "Schema", None)
         if not schema_class:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[
+                dict[
+                    str,
+                    list[FlextLdifModelsDomains.SchemaAttribute]
+                    | list[FlextLdifModelsDomains.SchemaObjectClass]
+                    | int,
+                ]
+            ].fail(
                 "Schema nested class not available",
             )
 
         schema_quirk = schema_class()
         result = schema_quirk.extract_schemas_from_ldif(ldif_content)
-        # Type narrowing: convert Union[dict[str, list[str], str]] to dict[str, object]
+        # Type narrowing: convert Union[dict[str, list[str], str]] to specific types
         if result.is_success:
             data = result.unwrap()
             # Return schema extraction result with metadata
-            converted_data: dict[str, object] = {
-                "attributes": data.get("attributes", {}),
-                "objectclasses": data.get("objectclasses", {}),
-                "total_attributes": len(data.get("attributes", {})),
-                "total_objectclasses": len(data.get("objectclasses", {})),
+            converted_data: dict[
+                str,
+                list[FlextLdifModelsDomains.SchemaAttribute]
+                | list[FlextLdifModelsDomains.SchemaObjectClass]
+                | int,
+            ] = {
+                "attributes": data.get("attributes", []),
+                "objectclasses": data.get("objectclasses", []),
+                "total_attributes": len(data.get("attributes", [])),
+                "total_objectclasses": len(data.get("objectclasses", [])),
             }
-            return FlextResult[dict[str, object]].ok(converted_data)
-        return FlextResult[dict[str, object]].fail(
+            return FlextResult[
+                dict[
+                    str,
+                    list[FlextLdifModelsDomains.SchemaAttribute]
+                    | list[FlextLdifModelsDomains.SchemaObjectClass]
+                    | int,
+                ]
+            ].ok(converted_data)
+        return FlextResult[
+            dict[
+                str,
+                list[FlextLdifModelsDomains.SchemaAttribute]
+                | list[FlextLdifModelsDomains.SchemaObjectClass]
+                | int,
+            ]
+        ].fail(
             result.error or "Failed to extract schemas",
         )
 
@@ -1971,7 +2005,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ldif_content: str,
             *,  # keyword-only parameter
             validate_dependencies: bool = False,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[
+            dict[
+                str,
+                list[FlextLdifModelsDomains.SchemaAttribute]
+                | list[FlextLdifModelsDomains.SchemaObjectClass],
+            ]
+        ]:
             """Extract and parse all schema definitions from LDIF content.
 
             OID-specific implementation: Uses base template method without dependency
@@ -2594,7 +2634,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     return f'"{clean_value}"' if clean_value else "*"
 
         @staticmethod
-        def _format_oid_permissions(permissions: dict[str, object]) -> str:
+        def _format_oid_permissions(permissions: FlextLdifTypes.MetadataDictMutable) -> str:
             """Format OID ACL permissions clause.
 
             OID uses simple comma-separated format: (write,compare,browse)
@@ -3704,7 +3744,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         def _detect_entry_acl_transformations(
             self,
-            entry_attrs: Mapping[str, object],
+            entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
             converted_attributes: dict[str, list[str]],
         ) -> dict[str, FlextLdifModels.AttributeTransformation]:
             """Detect ACL attribute transformations (orclaci→aci).
@@ -4262,7 +4302,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             # Build extensions dict using dict constructor + update for PERF403 compliance
             # Type annotation ensures MetadataValue compatibility
-            extensions_data: dict[str, FlextLdifTypes.MetadataValue] = dict(
+            extensions_data: dict[str, FlextTypes.MetadataAttributeValue] = dict(
                 conversion_metadata,
             )
             extensions_data.update(dn_metadata)
@@ -4456,7 +4496,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             self,
             entry: FlextLdifModels.Entry,
             original_dn: str,
-            original_attrs: Mapping[str, object],
+            original_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Finalize OID entry with ACL and RFC violation metadata.
 
@@ -4505,7 +4545,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 acl_transformations or rfc_violations or attribute_conflicts
             ):
                 # Build extensions dict with proper typing
-                extensions: dict[str, FlextLdifTypes.MetadataValue] = {}
+                extensions: dict[str, FlextTypes.MetadataAttributeValue] = {}
                 if entry.metadata.extensions:
                     extensions.update(entry.metadata.extensions)
 
