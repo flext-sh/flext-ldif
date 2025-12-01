@@ -66,8 +66,7 @@ class TestFlextLdifProtocols:
         SCHEMA = "SchemaProtocol"
         ACL = "AclProtocol"
         ENTRY = "EntryProtocol"
-        CONVERSION = "ConversionMatrixProtocol"
-        REGISTRY = "QuirkRegistryProtocol"
+        QUIRKS_PORT = "QuirksPort"
 
     class ServerTypes(StrEnum):
         """Server types implementing schema protocol organized as nested enum."""
@@ -146,17 +145,24 @@ class TestFlextLdifProtocols:
 
         @staticmethod
         def verify_server_attributes(server: object) -> None:
-            """Verify server has protocol attributes."""
-            assert hasattr(server, TestFlextLdifProtocols.Constants.ATTR_SERVER_TYPE)
-            assert isinstance(
-                getattr(server, TestFlextLdifProtocols.Constants.ATTR_SERVER_TYPE),
-                str,
-            )
-            assert hasattr(server, TestFlextLdifProtocols.Constants.ATTR_PRIORITY)
-            assert isinstance(
-                getattr(server, TestFlextLdifProtocols.Constants.ATTR_PRIORITY),
-                int,
-            )
+            """Verify server has protocol attributes via Constants class.
+
+            Server implementations store SERVER_TYPE and PRIORITY in nested Constants class,
+            not as direct instance attributes.
+            """
+            # Check for Constants class
+            assert hasattr(server, "Constants")
+            constants_cls = server.Constants
+
+            # SERVER_TYPE in Constants
+            assert hasattr(constants_cls, "SERVER_TYPE")
+            server_type = constants_cls.SERVER_TYPE
+            assert isinstance(server_type, str) or hasattr(server_type, "value")
+
+            # PRIORITY in Constants
+            assert hasattr(constants_cls, "PRIORITY")
+            priority = constants_cls.PRIORITY
+            assert isinstance(priority, int)
 
         @staticmethod
         def verify_registry_methods(registry: object) -> None:
@@ -225,24 +231,20 @@ class TestFlextLdifProtocols:
         self.Helpers.verify_protocol_methods(schema)
 
     def test_server_has_protocol_attributes_oid(self) -> None:
-        """Test that OID server implements protocol attributes."""
-        server: object = FlextLdifServersOid()
-        self.Helpers.verify_server_attributes(server)
+        """Test that OID server class has protocol attributes in Constants."""
+        self.Helpers.verify_server_attributes(FlextLdifServersOid)
 
     def test_server_has_protocol_attributes_oud(self) -> None:
-        """Test that OUD server implements protocol attributes."""
-        server: object = FlextLdifServersOud()
-        self.Helpers.verify_server_attributes(server)
+        """Test that OUD server class has protocol attributes in Constants."""
+        self.Helpers.verify_server_attributes(FlextLdifServersOud)
 
     def test_server_has_protocol_attributes_openldap(self) -> None:
-        """Test that OpenLDAP server implements protocol attributes."""
-        server: object = FlextLdifServersOpenldap()
-        self.Helpers.verify_server_attributes(server)
+        """Test that OpenLDAP server class has protocol attributes in Constants."""
+        self.Helpers.verify_server_attributes(FlextLdifServersOpenldap)
 
     def test_server_has_protocol_attributes_relaxed(self) -> None:
-        """Test that Relaxed server implements protocol attributes."""
-        server: object = FlextLdifServersRelaxed()
-        self.Helpers.verify_server_attributes(server)
+        """Test that Relaxed server class has protocol attributes in Constants."""
+        self.Helpers.verify_server_attributes(FlextLdifServersRelaxed)
 
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:

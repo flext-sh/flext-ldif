@@ -13,33 +13,25 @@ from collections.abc import Callable
 from typing import TypedDict
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core.typings import FlextTypes
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-
-# RFC 2849 LDIF format constants for inline use
-_BASE64_INDICATOR = FlextLdifConstants.LDIF_BASE64_INDICATOR
-_REGULAR_INDICATOR = FlextLdifConstants.LDIF_REGULAR_INDICATOR
-_DEFAULT_ENCODING = FlextLdifConstants.LDIF_DEFAULT_ENCODING
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
 
-# Type definitions for parser utilities
-type ExtensionsDict = dict[str, str | list[str] | bool | None]
-"""Type alias for schema extensions dictionary.
-
-Contains X- custom extensions, DESC descriptions, validation flags,
-and other schema definition extensions with dynamic keys.
-"""
+# RFC 2849 LDIF format constants - use directly from FlextLdifConstants (no local aliases)
+# Use FlextLdifConstants.LDIF_BASE64_INDICATOR, LDIF_REGULAR_INDICATOR, LDIF_DEFAULT_ENCODING directly
 
 
 class MetadataDict(TypedDict, total=False):
     """Type-safe dictionary for parsed metadata structures."""
 
-    extensions: ExtensionsDict | None
+    extensions: FlextLdifTypes.Extensions.ExtensionsDict | None
     # Other metadata fields
 
 
@@ -51,10 +43,16 @@ Includes dynamic LDAP attribute names (cn, sn, mail, etc.) and
 internal metadata fields (_original_dn_line, _original_lines, _base64_dn).
 """
 
+# Type for raw entry dictionaries during parsing (before model conversion)
+type RawEntryDict = dict[str, str | list[str] | set[str]]
+"""Type alias for raw entry dictionaries during LDIF parsing.
 
-# Type aliases for backwards compatibility
-Extensions = ExtensionsDict
-Metadata = MetadataDict
+Used internally during parsing before conversion to Entry models.
+Values can be strings (single-valued), lists (multi-valued), or sets (base64 tracking).
+"""
+
+
+# Type aliases removed - use types directly from FlextLdifTypes
 
 
 class FlextLdifUtilitiesParser:
@@ -66,11 +64,13 @@ class FlextLdifUtilitiesParser:
     """
 
     @staticmethod
-    def ext(metadata: MetadataDict) -> ExtensionsDict:
+    def ext(
+        metadata: MetadataDict,
+    ) -> FlextLdifTypes.Extensions.ExtensionsDict:
         """Extract extension information from parsed metadata."""
         result = metadata.get("extensions")
         if result is None or not isinstance(result, dict):
-            empty: ExtensionsDict = {}
+            empty: FlextLdifTypes.Extensions.ExtensionsDict = {}
             return empty
         return result
 
@@ -150,7 +150,9 @@ class FlextLdifUtilitiesParser:
         return re.search(pattern, definition) is not None
 
     @staticmethod
-    def extract_extensions(definition: str) -> ExtensionsDict:
+    def extract_extensions(
+        definition: str,
+    ) -> FlextLdifTypes.Extensions.ExtensionsDict:
         """Extract extension information from schema definition string.
 
         Simple helper to extract X- extensions, DESC, ORDERING, SUBSTR from
@@ -161,7 +163,7 @@ class FlextLdifUtilitiesParser:
         if not definition or not isinstance(definition, str):
             return {}
 
-        extensions: ExtensionsDict = {}
+        extensions: FlextLdifTypes.Extensions.ExtensionsDict = {}
 
         # Extract X- extensions (custom properties)
         x_pattern = re.compile(
@@ -278,7 +280,7 @@ class FlextLdifUtilitiesParser:
         if line.startswith("#"):
             return current_dn, current_attrs
 
-        if _REGULAR_INDICATOR not in line:
+        if FlextLdifConstants.LDIF_REGULAR_INDICATOR not in line:
             return current_dn, current_attrs
 
         # ZERO DATA LOSS: Store original line string for metadata preservation
@@ -286,20 +288,22 @@ class FlextLdifUtilitiesParser:
 
         # RFC 2849: Detect base64 (::) vs regular (:) indicator
         is_base64 = False
-        if _BASE64_INDICATOR in line:
+        if FlextLdifConstants.LDIF_BASE64_INDICATOR in line:
             # Base64-encoded value (RFC 2849 Section 2)
             # Split on :: to get key and base64 value
-            key, value = line.split(_BASE64_INDICATOR, 1)
+            key, value = line.split(FlextLdifConstants.LDIF_BASE64_INDICATOR, 1)
             key = key.strip()
             value = value.strip()
             is_base64 = True
 
             # Decode base64 to UTF-8 string
             with contextlib.suppress(ValueError, UnicodeDecodeError):
-                value = base64.b64decode(value).decode(_DEFAULT_ENCODING)
+                value = base64.b64decode(value).decode(
+                    FlextLdifConstants.LDIF_DEFAULT_ENCODING,
+                )
         else:
             # Regular text value (RFC 2849 Section 2)
-            key, _, value = line.partition(_REGULAR_INDICATOR)
+            key, _, value = line.partition(FlextLdifConstants.LDIF_REGULAR_INDICATOR)
             key = key.strip()
             value = value.lstrip()  # Preserve trailing spaces per RFC 2849
 
@@ -394,7 +398,7 @@ class FlextLdifUtilitiesParser:
     def finalize_pending_attribute(
         current_attr: str | None,
         current_values: list[str],
-        entry_dict: dict[str, object],
+        entry_dict: RawEntryDict,
     ) -> None:
         """Finalize and save pending attribute to entry dictionary.
 
@@ -420,7 +424,7 @@ class FlextLdifUtilitiesParser:
     def handle_multivalued_attribute(
         attr_name: str,
         attr_value: str,
-        entry_dict: dict[str, object],
+        entry_dict: RawEntryDict,
     ) -> bool:
         """Handle multi-valued attribute accumulation.
 
@@ -439,16 +443,27 @@ class FlextLdifUtilitiesParser:
         # Convert to list if needed
         existing = entry_dict[attr_name]
         if not FlextRuntime.is_list_like(existing):
-            entry_dict[attr_name] = [existing, attr_value]
+            # Type narrowing: existing is str | set[str], convert to list
+            if isinstance(existing, str):
+                entry_dict[attr_name] = [existing, attr_value]
+            elif isinstance(existing, set):
+                entry_dict[attr_name] = [*existing, attr_value]
+            else:
+                entry_dict[attr_name] = [str(existing), attr_value]
         else:
-            existing.append(attr_value)
+            # Ensure existing is a mutable list before appending
+            existing_list = (
+                list(existing) if not isinstance(existing, list) else existing
+            )
+            existing_list.append(attr_value)
+            entry_dict[attr_name] = existing_list
 
         return True
 
     @staticmethod
     def track_base64_attribute(
         attr_name: str,
-        entry_dict: dict[str, object],
+        entry_dict: RawEntryDict,
     ) -> None:
         """Track attribute that uses base64 encoding.
 
@@ -468,7 +483,7 @@ class FlextLdifUtilitiesParser:
         line: str,
         current_attr: str | None,
         current_values: list[str],
-        entry_dict: dict[str, object],
+        entry_dict: RawEntryDict,
     ) -> tuple[str | None, list[str]]:
         """Process LDIF attribute line and update entry state.
 
@@ -522,14 +537,14 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse(
         ldif_lines: list[str],
-    ) -> list[dict[str, object]]:
+    ) -> list[RawEntryDict]:
         """Parse list of LDIF lines into entries (simple version).
 
         # LEGACY: Original simple parser (kept for backward compat if needed)
         # Use: FlextLdifParser for full parsing with quirks
         """
-        entries: list[dict[str, object]] = []
-        current_entry: dict[str, object] = {}
+        entries: list[RawEntryDict] = []
+        current_entry: RawEntryDict = {}
 
         for line in ldif_lines:
             if not line.strip():
@@ -551,8 +566,8 @@ class FlextLdifUtilitiesParser:
     def extract_schema_definitions(
         ldif_content: str,
         definition_type: str = "attributeTypes",
-        parse_callback: Callable[[str], object] | None = None,
-    ) -> list[object]:
+        parse_callback: Callable[[str], FlextTypes.GeneralValueType] | None = None,
+    ) -> list[FlextTypes.GeneralValueType]:
         """Extract and parse schema definitions from LDIF content.
 
         Generic line-by-line parser that:
@@ -570,7 +585,7 @@ class FlextLdifUtilitiesParser:
             List of successfully parsed schema objects
 
         """
-        definitions: list[object] = []
+        definitions: list[FlextTypes.GeneralValueType] = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
@@ -678,42 +693,29 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         syntax: str | None,
         syntax_validation_error: str | None,
-    ) -> FlextLdifModels.QuirkMetadata | None:
+        server_type: str | None = None,
+    ) -> FlextLdifModelsDomains.QuirkMetadata | None:
         """Build metadata for attribute including extensions.
 
         Args:
             attr_definition: Original attribute definition
             syntax: Syntax OID
             syntax_validation_error: Validation error if any
+            server_type: Server type identifier (e.g., "oid", "oud", "rfc")
 
         Returns:
             QuirkMetadata or None
 
         """
-        metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
-            attr_definition,
-        )
+        # Use build_attribute_metadata from base.py which handles server_type correctly
+        # Import here to avoid circular import (base.py imports parser.py)
+        from flext_ldif.servers.base import FlextLdifServersBase
 
-        if syntax:
-            metadata_extensions[FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID] = (
-                syntax_validation_error is None
-            )
-            if syntax_validation_error:
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
-                ] = syntax_validation_error
-
-        metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
-            attr_definition.strip()
-        )
-
-        return (
-            FlextLdifModels.QuirkMetadata(
-                quirk_type="rfc",
-                extensions=metadata_extensions,
-            )
-            if metadata_extensions
-            else None
+        return FlextLdifServersBase.Schema.build_attribute_metadata(
+            attr_definition=attr_definition,
+            syntax=syntax,
+            syntax_validation_error=syntax_validation_error,
+            server_type=server_type,
         )
 
     @staticmethod
@@ -721,7 +723,7 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         *,
         case_insensitive: bool = False,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+    ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
         """Parse RFC 4512 attribute definition.
 
         Args:
@@ -798,14 +800,16 @@ class FlextLdifUtilitiesParser:
                     is not None
                 )
 
-            # Build metadata using helper
+            # Build metadata using helper (server_type not available in parse_rfc_attribute)
+            # Default to "rfc" for RFC parser, actual server_type set by server-specific parsers
             metadata = FlextLdifUtilitiesParser._build_attribute_metadata(
                 attr_definition,
                 syntax,
                 syntax_validation_error,
+                server_type="rfc",
             )
 
-            attribute = FlextLdifModels.SchemaAttribute(
+            attribute = FlextLdifModelsDomains.SchemaAttribute(
                 oid=oid,
                 name=name or oid,
                 desc=desc,
@@ -840,7 +844,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_rfc_objectclass(
         oc_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+    ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition.
 
         Args:
@@ -928,7 +932,7 @@ class FlextLdifUtilitiesParser:
             )
 
             metadata = (
-                FlextLdifModels.QuirkMetadata(
+                FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(
                         **metadata_extensions,
@@ -938,7 +942,7 @@ class FlextLdifUtilitiesParser:
                 else None
             )
 
-            objectclass = FlextLdifModels.SchemaObjectClass(
+            objectclass = FlextLdifModelsDomains.SchemaObjectClass(
                 oid=oid,
                 name=name,
                 desc=desc,

@@ -21,8 +21,8 @@ from typing import override
 from flext_core import FlextResult
 from pydantic import Field, PrivateAttr, field_validator
 
+from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 # Semantic type for Distinguished Name operations
@@ -82,7 +82,8 @@ class FlextLdifDn(
     )
 
     # Private attributes (Pydantic v2 PrivateAttr for internal state)
-    _last_event: FlextLdifModels.DnEvent | None = PrivateAttr(default=None)
+    # Note: Using object.__setattr__ for frozen models
+    _last_event: FlextLdifModelsEvents.DnEvent | None = PrivateAttr(default=None)
 
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
@@ -179,7 +180,7 @@ class FlextLdifDn(
                     parse_components = parse_result.unwrap()
 
             # Create DN event config
-            dn_config = FlextLdifModels.DnEventConfig(
+            dn_config = FlextLdifModelsEvents.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
                 output_dn=result.unwrap() if result.is_success else None,
@@ -200,7 +201,7 @@ class FlextLdifDn(
 
         return result
 
-    def get_last_event(self) -> FlextLdifModels.DnEvent | None:
+    def get_last_event(self) -> FlextLdifModelsEvents.DnEvent | None:
         """Retrieve last emitted DnEvent.
 
         Returns:
@@ -430,18 +431,15 @@ class FlextLdifDn(
 
     def with_dn(self, dn: str) -> FlextLdifDn:
         """Set DN to operate on (fluent builder)."""
-        self.dn = dn
-        return self
+        return self.model_copy(update={"dn": dn})
 
     def with_operation(self, operation: str) -> FlextLdifDn:
         """Set operation to execute (fluent builder)."""
-        self.operation = operation
-        return self
+        return self.model_copy(update={"operation": operation})
 
     def with_escape_mode(self, mode: str) -> FlextLdifDn:
         """Set escape mode (fluent builder)."""
-        self.escape_mode = mode
-        return self
+        return self.model_copy(update={"escape_mode": mode})
 
     def build(self) -> str:
         """Execute and return unwrapped result (fluent terminal)."""

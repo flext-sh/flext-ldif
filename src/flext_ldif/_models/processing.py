@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
+
+from flext_ldif._models.base import FlextLdifModelsBase
 
 
-class ProcessingResult(BaseModel):
+class ProcessingResult(FlextLdifModelsBase):
     """Result of entry processing (transform or validate operation).
 
     Replaces dict[str, object] returns from processing service to provide

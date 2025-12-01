@@ -112,7 +112,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextDecorators, FlextResult
+from flext_core import FlextDecorators, FlextResult, FlextTypes
 from pydantic import Field
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -218,10 +218,9 @@ class FlextLdifValidation(
         self.objectclass_names = names
         return self
 
-    def with_max_attr_value_length(self, length: int) -> Self:
+    def with_max_attr_value_length(self, length: int) -> FlextLdifValidation:
         """Set maximum attribute value length (fluent builder)."""
-        self.max_attr_value_length = length
-        return self
+        return self.model_copy(update={"max_attr_value_length": length})
 
     @FlextDecorators.track_performance()
     def build(self) -> FlextLdifModels.ValidationBatchResult:
@@ -249,7 +248,10 @@ class FlextLdifValidation(
             if obj_result.is_success:
                 result[name] = obj_result.unwrap()
 
-        return FlextLdifModels.ValidationBatchResult(results=result)
+        # Convert dict[str, bool] to _BooleanFlags for ValidationBatchResult
+        from flext_ldif._models.results import _BooleanFlags
+        boolean_flags = _BooleanFlags(**result)
+        return FlextLdifModels.ValidationBatchResult(results=boolean_flags)
 
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
@@ -359,7 +361,7 @@ class FlextLdifValidation(
     def validate_dn_component(
         self,
         attr: str,
-        value: object,
+        value: FlextTypes.ScalarValue,
     ) -> FlextResult[bool]:
         """Validate DN component (attribute=value pair).
 
@@ -385,7 +387,8 @@ class FlextLdifValidation(
             if attr_result.is_failure or not attr_result.unwrap():
                 return FlextResult[bool].ok(False)
 
-            # Validate value - must be a string
+            # Validate value - must be a string for DN component
+            # ScalarValue includes str, but DN components require str specifically
             if not isinstance(value, str):
                 return FlextResult[bool].ok(False)
 

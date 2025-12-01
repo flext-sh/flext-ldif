@@ -56,7 +56,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
             return FlextResult.fail(
-                f"No ACL quirk found for server type: {server_type}"
+                f"No ACL quirk found for server type: {server_type}",
             )
 
         # Direct call to ACL quirk parse method
@@ -87,7 +87,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
             return FlextResult.fail(
-                f"No ACL quirk found for server type: {server_type}"
+                f"No ACL quirk found for server type: {server_type}",
             )
 
         # Direct call to ACL quirk write method
@@ -115,7 +115,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         """
         # Get ACL attribute name for server type
         acl_attr_name = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
-            server_type
+            server_type,
         )
 
         if not acl_attr_name:
@@ -127,12 +127,12 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                         processed_entries=1,
                         acls_extracted=0,
                     ),
-                )
+                ),
             )
 
         # Extract ACL values from entry
         acl_values = entry.get_attribute_values(
-            next(iter(acl_attr_name))
+            next(iter(acl_attr_name)),
         )  # Get first attribute name
 
         if not acl_values:
@@ -144,7 +144,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                         processed_entries=1,
                         acls_extracted=0,
                     ),
-                )
+                ),
             )
 
         # Parse each ACL value
@@ -187,7 +187,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         """
         return FlextResult.fail(
             "FlextLdifAcl requires input data to process ACLs. "
-            "Use parse_acl_string(), parse_acl_attribute(), or parse_acl_attributes() methods."
+            "Use parse_acl_string(), parse_acl_attribute(), or parse_acl_attributes() methods.",
         )
 
 

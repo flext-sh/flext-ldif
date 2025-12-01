@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core.typings import FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
@@ -1343,7 +1344,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ldif_content: str,
             *,
             validate_dependencies: bool = True,  # OUD defaults to True (needs validation)
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[
+            dict[
+                str,
+                list[FlextLdifModelsDomains.SchemaAttribute]
+                | list[FlextLdifModelsDomains.SchemaObjectClass],
+            ]
+        ]:
             """Extract and parse all schema definitions from LDIF content.
 
             OUD-specific implementation: Uses base template method with dependency
@@ -2040,7 +2047,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if not target and acl_data.metadata:
                 target_dict = acl_data.metadata.extensions.get("acl_target_target")
                 if FlextRuntime.is_dict_like(target_dict):
-                    target_data: dict[str, object] = dict(target_dict)
+                    target_data: FlextLdifTypes.MetadataDictMutable = dict(
+                        target_dict.items()
+                    ) if isinstance(target_dict, dict) else {}
                     attrs = target_data.get("attributes")
                     dn = target_data.get("target_dn")
                     target = FlextLdifModels.AclTarget(
@@ -2121,7 +2130,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
                 if FlextRuntime.is_dict_like(target_perms_dict):
                     # Type narrowing: ensure dict has correct types
-                    perms_data: dict[str, object] = dict(target_perms_dict)
+                    perms_data: FlextLdifTypes.MetadataDictMutable = dict(
+                        target_perms_dict.items()
+                    ) if isinstance(target_perms_dict, dict) else {}
                     # Extract boolean fields with type guards - only use fields that exist in AclPermissions
                     perms = FlextLdifModels.AclPermissions(
                         read=bool(perms_data.get("read")),
@@ -2468,7 +2479,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             try:
                 c = FlextLdifServersOud.Constants
-                extensions: dict[str, FlextLdifTypes.MetadataValue] | None = (
+                extensions: dict[str, FlextTypes.MetadataAttributeValue] | None = (
                     acl_data.metadata.extensions.model_dump()
                     if acl_data.metadata and acl_data.metadata.extensions
                     else None
@@ -3115,7 +3126,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Updated metadata with ACL information
 
             """
-            current_extensions: dict[str, FlextLdifTypes.MetadataValue] = (
+            current_extensions: dict[str, FlextTypes.MetadataAttributeValue] = (
                 dict(metadata.extensions) if metadata.extensions else {}
             )
 
@@ -4029,8 +4040,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             entry: FlextLdifModels.Entry,
             validate_aci_macros: Callable[[str], FlextResult[bool]],
             correct_rfc_syntax_in_attributes: Callable[
-                [dict[str, object]],
-                FlextResult[dict[str, object]],
+                [FlextLdifTypes.CommonDict.AttributeDict],
+                FlextResult[FlextLdifTypes.CommonDict.AttributeDict],
             ],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper.
@@ -4050,7 +4061,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             # INLINED: _extract_attributes_dict (only used once)
             attrs_dict_raw = entry.attributes.attributes if entry.attributes else {}
-            attrs_dict: dict[str, object] = dict(attrs_dict_raw.items())
+            attrs_dict: FlextLdifTypes.CommonDict.AttributeDict = dict(
+                attrs_dict_raw.items()
+            )
             aci_validation_error = (
                 FlextLdifServersOud.Entry.validate_aci_macros_in_entry(
                     attrs_dict,
@@ -4068,7 +4081,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         @staticmethod
         def validate_aci_macros_in_entry(
-            attrs_dict: dict[str, object],
+            attrs_dict: FlextLdifTypes.CommonDict.AttributeDict,
             validate_aci_macros: Callable[[str], FlextResult[bool]],
         ) -> str | None:
             """Validate ACI macros if present. Returns error message or None if valid."""
@@ -4084,10 +4097,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         @staticmethod
         def correct_syntax_and_return_entry(
             entry: FlextLdifModels.Entry,
-            attrs_dict: dict[str, object],
+            attrs_dict: FlextLdifTypes.CommonDict.AttributeDict,
             correct_rfc_syntax_in_attributes: Callable[
-                [dict[str, object]],
-                FlextResult[dict[str, object]],
+                [FlextLdifTypes.CommonDict.AttributeDict],
+                FlextResult[FlextLdifTypes.CommonDict.AttributeDict],
             ],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Correct RFC syntax issues and return entry."""
@@ -4183,7 +4196,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         def _finalize_and_parse_entry(
             self,
-            entry_dict: dict[str, object],
+            entry_dict: dict[str, FlextTypes.GeneralValueType],
             entries_list: list[FlextLdifModels.Entry],
         ) -> None:
             """Finalize entry dict and parse into entries list.

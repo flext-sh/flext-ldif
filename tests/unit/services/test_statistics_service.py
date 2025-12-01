@@ -119,7 +119,10 @@ class TestFlextLdifStatistics:
                 FlextLdifModels.FlexibleCategories instance
 
             """
-            categories = FlextLdifModels.FlexibleCategories()
+            # FlexibleCategories is a type alias, use _FlexibleCategories class instead
+            from flext_ldif._models.results import _FlexibleCategories
+
+            categories = _FlexibleCategories()
             for category, entries_value in categorized_dict.items():
                 if not isinstance(entries_value, list):
                     continue

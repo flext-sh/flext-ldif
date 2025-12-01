@@ -9,10 +9,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, FlextRuntime
+from flext_core.typings import FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
@@ -24,8 +26,8 @@ class FlextLdifUtilitiesEntry:
     Servers can use these for consistent attribute handling.
     """
 
-    # Minimum length for base64 pattern matching
-    _MIN_BASE64_LENGTH: int = 8
+    # Minimum length for base64 pattern matching (use constant from FlextLdifConstants.Rfc directly in methods)
+    # Note: Cannot use class attribute assignment with constants due to import order
 
     @staticmethod
     def _convert_single_boolean_value(
@@ -83,7 +85,7 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> dict[str, list[str]]:
+    ) -> FlextLdifTypes.CommonDict.AttributeDict:
         """Convert boolean attribute values between formats.
 
         Args:
@@ -100,7 +102,7 @@ class FlextLdifUtilitiesEntry:
             # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
                 return {}
-            normalized_result: dict[str, list[str]] = {}
+            normalized_result: FlextLdifTypes.CommonDict.AttributeDict = {}
             for attr_name, values in attributes.items():
                 # Normalize to list[str] - handle all input types
                 if FlextRuntime.is_list_like(values):
@@ -118,7 +120,7 @@ class FlextLdifUtilitiesEntry:
                     normalized_result[attr_name] = [str(values)]
             return normalized_result
 
-        result: dict[str, list[str]] = {}
+        result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
         for attr_name, values in attributes.items():
             # Normalize values to list[str] first - convert bytes to str immediately
@@ -152,9 +154,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attribute_names(
-        attributes: dict[str, list[str]],
+        attributes: FlextLdifTypes.CommonDict.AttributeDict,
         case_map: dict[str, str],
-    ) -> dict[str, list[str]]:
+    ) -> FlextLdifTypes.CommonDict.AttributeDict:
         """Normalize attribute names using case mapping.
 
         Args:
@@ -168,7 +170,7 @@ class FlextLdifUtilitiesEntry:
         if not attributes or not case_map:
             return attributes
 
-        result: dict[str, list[str]] = {}
+        result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
         for attr_name, values in attributes.items():
             # Check if this attribute needs case normalization
@@ -360,15 +362,15 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: Mapping[str, object],
-        converted_attrs: dict[str, list[str]],
+        entry_attrs: Mapping[str, FlextTypes.GeneralValueType],
+        converted_attrs: FlextLdifTypes.CommonDict.AttributeDict,
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        dict[str, object],
-        dict[str, dict[str, object]],
-        dict[str, object],
+        dict[str, FlextTypes.MetadataAttributeValue],
+        dict[str, dict[str, FlextTypes.MetadataAttributeValue]],
+        dict[str, FlextTypes.MetadataAttributeValue],
         dict[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility).
@@ -405,8 +407,10 @@ class FlextLdifUtilitiesEntry:
                 original_attribute_case[canonical] = attr_str
 
         # Analyze attribute differences
-        attribute_differences: dict[str, dict[str, object]] = {}
-        original_attributes_complete: dict[str, object] = {}
+        attribute_differences: dict[
+            str, dict[str, FlextTypes.MetadataAttributeValue],
+        ] = {}
+        original_attributes_complete: dict[str, FlextTypes.MetadataAttributeValue] = {}
 
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
@@ -452,7 +456,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_server_patterns(
         entry_dn: str,
-        attributes: Mapping[str, object],
+        attributes: Mapping[str, FlextTypes.GeneralValueType],
         *,
         dn_patterns: tuple[tuple[str, ...], ...] = (),
         attr_prefixes: tuple[str, ...] | frozenset[str] = (),
@@ -513,13 +517,13 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def denormalize_attributes_batch(
-        attributes: dict[str, list[str]],
+        attributes: FlextLdifTypes.CommonDict.AttributeDict,
         *,
         case_mappings: dict[str, str] | None = None,
         boolean_mappings: dict[str, str] | None = None,
         attr_name_mappings: dict[str, str] | None = None,
         value_transformations: dict[str, dict[str, str]] | None = None,
-    ) -> dict[str, list[str]]:
+    ) -> FlextLdifTypes.CommonDict.AttributeDict:
         """Batch denormalize attributes for output.
 
         Inverse of normalization - converts RFC-normalized attributes back to
@@ -563,7 +567,7 @@ class FlextLdifUtilitiesEntry:
             {"objectClass": ["person"], "orclisvisible": ["1"]}
 
         """
-        result: dict[str, list[str]] = {}
+        result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
         for attr_name, values in attributes.items():
             # Step 1: Restore case
@@ -597,14 +601,14 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attributes_batch(
-        attributes: dict[str, list[str]],
+        attributes: FlextLdifTypes.CommonDict.AttributeDict,
         *,
         case_mappings: dict[str, str] | None = None,
         boolean_mappings: dict[str, str] | None = None,
         attr_name_mappings: dict[str, str] | None = None,
         strip_operational: bool = False,
         operational_attrs: set[str] | None = None,
-    ) -> dict[str, list[str]]:
+    ) -> FlextLdifTypes.CommonDict.AttributeDict:
         """Batch normalize attributes from server format to RFC format.
 
         Consolidates normalization patterns from OID and OUD servers into
@@ -638,7 +642,7 @@ class FlextLdifUtilitiesEntry:
             Normalized attributes dictionary in RFC format
 
         """
-        result: dict[str, list[str]] = {}
+        result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
         operational_lower = (
             {a.lower() for a in operational_attrs} if operational_attrs else set()

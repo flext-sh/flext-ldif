@@ -477,7 +477,7 @@ class FlextLdifCategorization(
         entry: FlextLdifModels.Entry,
         _rules: (
             FlextLdifModels.CategoryRules
-            | Mapping[str, FlextLdifTypes.MetadataValue]
+            | Mapping[str, FlextTypes.MetadataAttributeValue]
             | None
         ) = None,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,

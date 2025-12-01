@@ -19,6 +19,7 @@ from typing import Protocol, TypeVar
 import structlog
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif.models import FlextLdifModels
@@ -273,10 +274,10 @@ class FlextLdifUtilitiesParsers:
                             # Type narrowing: convert internal QuirkMetadata to public QuirkMetadata
                             if not isinstance(
                                 entry.metadata,
-                                FlextLdifModels.QuirkMetadata,
+                                FlextLdifModelsDomains.QuirkMetadata,
                             ):
                                 metadata_public = (
-                                    FlextLdifModels.QuirkMetadata.model_validate(
+                                    FlextLdifModelsDomains.QuirkMetadata.model_validate(
                                         entry.metadata.model_dump(),
                                     )
                                 )
@@ -316,7 +317,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 definition: str,
-            ) -> FlextResult[FlextLdifModels.SchemaAttribute]: ...
+            ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]: ...
 
         class ValidateSyntaxHook(Protocol):
             """Protocol for syntax validation."""
@@ -328,9 +329,9 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(
                 self,
-                attribute: FlextLdifModels.SchemaAttribute,
+                attribute: FlextLdifModelsDomains.SchemaAttribute,
                 definition: str,
-            ) -> FlextLdifModels.SchemaAttribute: ...
+            ) -> FlextLdifModelsDomains.SchemaAttribute: ...
 
         # ===== STATIC METHODS =====
 
@@ -342,7 +343,7 @@ class FlextLdifUtilitiesParsers:
             *,
             validate_syntax_hook: ValidateSyntaxHook | None = None,
             enrich_metadata_hook: EnrichMetadataHook | None = None,
-        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
             """Parse attribute definition using hooks.
 
             Args:
@@ -372,11 +373,11 @@ class FlextLdifUtilitiesParsers:
                 if enrich_metadata_hook:
                     attribute = enrich_metadata_hook(attribute, definition)
 
-                return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
+                return FlextResult[FlextLdifModelsDomains.SchemaAttribute].ok(attribute)
 
             except Exception as e:
                 logger.exception("Failed to parse attribute", server_type=server_type)
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                return FlextResult[FlextLdifModelsDomains.SchemaAttribute].fail(
                     f"Failed to parse attribute: {e}",
                 )
 
@@ -395,7 +396,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 definition: str,
-            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]: ...
+            ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]: ...
 
         class ValidateStructuralHook(Protocol):
             """Protocol for structural validation."""
@@ -412,9 +413,9 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(
                 self,
-                objectclass: FlextLdifModels.SchemaObjectClass,
+                objectclass: FlextLdifModelsDomains.SchemaObjectClass,
                 definition: str,
-            ) -> FlextLdifModels.SchemaObjectClass: ...
+            ) -> FlextLdifModelsDomains.SchemaObjectClass: ...
 
         # ===== STATIC METHODS =====
 
@@ -427,7 +428,7 @@ class FlextLdifUtilitiesParsers:
             validate_structural_hook: ValidateStructuralHook | None = None,
             transform_sup_hook: TransformSupHook | None = None,
             enrich_metadata_hook: EnrichMetadataHook | None = None,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
             """Parse objectClass definition using hooks.
 
             Args:
@@ -497,11 +498,13 @@ class FlextLdifUtilitiesParsers:
                 if enrich_metadata_hook:
                     objectclass = enrich_metadata_hook(objectclass, definition)
 
-                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(objectclass)
+                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(
+                    objectclass,
+                )
 
             except Exception as e:
                 logger.exception("Failed to parse objectClass", server_type=server_type)
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
+                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].fail(
                     f"Failed to parse objectClass: {e}",
                 )
 
@@ -530,7 +533,7 @@ class FlextLdifUtilitiesParsers:
                 self,
                 dn: str,
                 attrs: EntryAttrs,
-            ) -> FlextLdifModels.QuirkMetadata | None: ...
+            ) -> FlextLdifModelsDomains.QuirkMetadata | None: ...
 
         class NormalizeDnHook(Protocol):
             """Protocol for DN normalization."""

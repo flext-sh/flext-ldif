@@ -24,18 +24,18 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from functools import wraps
-from typing import ParamSpec, TypeVar
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
+from flext_core.typings import T
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 
 logger = FlextLogger(__name__)
 
-T = TypeVar("T")
-P = ParamSpec("P")
+# Use TypeVars from flext-core (no local aliases)
 
 
 class FlextLdifUtilitiesDecorators:
@@ -45,9 +45,9 @@ class FlextLdifUtilitiesDecorators:
     def _get_server_type_from_class(
         obj: (
             FlextLdifModels.Entry
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | FlextLdifModels.Acl
+            | FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass
+            | FlextLdifModelsDomains.Acl
             | str
             | float
         ),
@@ -76,9 +76,9 @@ class FlextLdifUtilitiesDecorators:
     def _attach_metadata_if_present(
         result_value: (
             FlextLdifModels.Entry
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | FlextLdifModels.Acl
+            | FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass
+            | FlextLdifModelsDomains.Acl
             | str
             | float
             | None
@@ -124,8 +124,8 @@ class FlextLdifUtilitiesDecorators:
             result_value,
             (
                 FlextLdifModels.Entry,
-                FlextLdifModels.SchemaAttribute,
-                FlextLdifModels.SchemaObjectClass,
+                FlextLdifModelsDomains.SchemaAttribute,
+                FlextLdifModelsDomains.SchemaObjectClass,
             ),
         ):
             result_value.metadata = metadata

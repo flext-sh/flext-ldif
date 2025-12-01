@@ -25,9 +25,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
-            "ibm_tivoli"
-        )
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "ibm_tivoli"
         PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"

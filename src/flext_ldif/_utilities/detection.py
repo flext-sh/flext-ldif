@@ -45,23 +45,12 @@ Usage in Entry:
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
-from typing import Protocol
+from collections.abc import Mapping, Sequence
 
 from flext_core import FlextRuntime
 
-from flext_ldif.models import FlextLdifModels
-
-
-class ServerConstantsProtocol(Protocol):
-    """Protocol for server Constants classes used in detection mixins."""
-
-    # Optional detection attributes used by mixins
-    DETECTION_OID_PATTERN: str | None
-    DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
-    DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
-    DETECTION_DN_MARKERS: frozenset[str] | None
-    ACL_ATTRIBUTE_NAME: str | None
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifUtilitiesDetection:
@@ -76,7 +65,7 @@ class FlextLdifUtilitiesDetection:
         def _get_constants(
             self,
             required_attr: str | None = None,
-        ) -> type[ServerConstantsProtocol] | None:
+        ) -> type[FlextLdifProtocols.Constants.ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal.
 
             Args:
@@ -94,15 +83,25 @@ class FlextLdifUtilitiesDetection:
                     and hasattr(cls, "Constants")
                     and not FlextRuntime.is_dict_like(getattr(cls, "Constants", None))
                 ):
-                    constants = cls.Constants
-                    # If no required attribute specified, return any Constants class
+                    constants_class: type = cls.Constants
+                    # Verify protocol compliance at runtime using runtime_checkable
+                    # Protocol compliance is structural - verified via hasattr checks
                     if required_attr is None:
-                        # Constants class satisfies ServerConstantsProtocol contract
-                        return constants
-                    # Otherwise check if it has the required attribute
-                    if constants and hasattr(constants, required_attr):
-                        # Constants class satisfies ServerConstantsProtocol contract
-                        return constants
+                        # Check all protocol attributes exist (structural compliance)
+                        if all(
+                            hasattr(constants_class, attr)
+                            for attr in (
+                                "DETECTION_OID_PATTERN",
+                                "DETECTION_ATTRIBUTE_PREFIXES",
+                                "DETECTION_OBJECTCLASS_NAMES",
+                                "DETECTION_DN_MARKERS",
+                                "ACL_ATTRIBUTE_NAME",
+                            )
+                        ):
+                            return constants_class
+                    elif hasattr(constants_class, required_attr):
+                        # Required attribute exists - return Constants class
+                        return constants_class
             return None
 
     class PatternDetectionMixin(BaseDetectionMixin):
@@ -121,12 +120,10 @@ class FlextLdifUtilitiesDetection:
             *,
             data: (
                 str
-                | FlextLdifModels.SchemaAttribute
-                | FlextLdifModels.SchemaObjectClass
-                | FlextLdifModels.Entry
-                | FlextLdifModels.Acl
-                | float
-                | bool
+                | FlextLdifProtocols.Models.SchemaAttributeProtocol
+                | FlextLdifProtocols.Models.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Models.EntryProtocol
+                | FlextLdifProtocols.Models.AclProtocol
                 | None
             ),
         ) -> bool:
@@ -170,7 +167,17 @@ class FlextLdifUtilitiesDetection:
                 return False
 
         @staticmethod
-        def can_handle_prefix(data: object, prefixes: frozenset[str]) -> bool:
+        def can_handle_prefix(
+            data: (
+                str
+                | FlextLdifProtocols.Models.SchemaAttributeProtocol
+                | FlextLdifProtocols.Models.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Models.EntryProtocol
+                | FlextLdifProtocols.Models.AclProtocol
+                | None
+            ),
+            prefixes: frozenset[str],
+        ) -> bool:
             """Check if data starts with any prefix (case-insensitive).
 
             Handles:
@@ -209,7 +216,15 @@ class FlextLdifUtilitiesDetection:
             return False
 
         @staticmethod
-        def can_handle_in_set(data: object, items: frozenset[str]) -> bool:
+        def can_handle_in_set(
+            data: (
+                str
+                | FlextLdifTypes.Models.SchemaAttribute
+                | FlextLdifTypes.Models.SchemaObjectClass
+                | None
+            ),
+            items: frozenset[str],
+        ) -> bool:
             """Check if data is in set (case-insensitive).
 
             Handles:
@@ -260,7 +275,11 @@ class FlextLdifUtilitiesDetection:
 
         def _can_handle_schema_item_by_pattern(
             self,
-            schema_item: str | object,
+            schema_item: (
+                str
+                | FlextLdifProtocols.Models.SchemaAttributeProtocol
+                | FlextLdifProtocols.Models.SchemaObjectClassProtocol
+            ),
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern.
 
@@ -281,11 +300,12 @@ class FlextLdifUtilitiesDetection:
             pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
             if not pattern:
                 return True  # No pattern = match all
+            # can_handle_pattern accepts object and handles conversion internally
             return self.can_handle_pattern(pattern, data=schema_item)
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifModels.SchemaAttribute,
+            attr_definition: str | FlextLdifProtocols.Models.SchemaAttributeProtocol,
         ) -> bool:
             """Check if attribute matches OID detection pattern.
 
@@ -302,7 +322,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            oc_definition: str | FlextLdifProtocols.Models.SchemaObjectClassProtocol,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
@@ -331,7 +351,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifModels.SchemaAttribute,
+            attr_definition: str | FlextLdifTypes.Models.SchemaAttribute,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
@@ -368,7 +388,11 @@ class FlextLdifUtilitiesDetection:
         def can_handle(
             self,
             _entry_dn: str,
-            attributes: Mapping[str, object] | dict[str, object] | object,
+            attributes: (
+                Mapping[str, Sequence[str] | str]
+                | dict[str, Sequence[str] | str]
+                | FlextLdifTypes.Models.Entry
+            ),
         ) -> bool:
             """Check if entry objectClasses match detection list.
 
@@ -394,18 +418,17 @@ class FlextLdifUtilitiesDetection:
                 return True  # No detection classes = match all
 
             # Get objectClass from attributes
-            objectclasses = None
-            if isinstance(attributes, (dict, Mapping)):
-                objectclasses = attributes.get("objectClass") or attributes.get(
+            objectclasses: Sequence[str] | str | None = None
+            # Check for EntryProtocol first (has get_objectclass_names method)
+            if isinstance(attributes, FlextLdifProtocols.Models.EntryProtocol):
+                # Entry protocol has get_objectclass_names method
+                objectclasses = list(attributes.get_objectclass_names())
+            elif isinstance(attributes, Mapping):
+                obj_class = attributes.get("objectClass") or attributes.get(
                     "objectclass",
                 )
-            elif hasattr(attributes, "get"):
-                # Duck-typed dict-like object
-                get_method = getattr(attributes, "get", None)
-                if get_method and callable(get_method):
-                    objectclasses = get_method("objectClass") or get_method(
-                        "objectclass",
-                    )
+                if obj_class is not None:
+                    objectclasses = obj_class
 
             if not objectclasses:
                 return False
@@ -413,7 +436,7 @@ class FlextLdifUtilitiesDetection:
             # Handle list/set/tuple of objectClasses
             if isinstance(objectclasses, (list, tuple, set)):
                 detection_set = {oc.lower() for oc in detection_classes}
-                oc_set = {oc.lower() for oc in objectclasses if isinstance(oc, str)}
+                oc_set = {str(oc).lower() for oc in objectclasses}
                 return bool(oc_set & detection_set)
 
             # Handle single objectClass string
@@ -436,7 +459,12 @@ class FlextLdifUtilitiesDetection:
         def can_handle(
             self,
             entry_dn: str,
-            _attributes: Mapping[str, object] | dict[str, object] | object,
+            _attributes: (
+                Mapping[str, Sequence[str] | str]
+                | dict[str, Sequence[str] | str]
+                | FlextLdifTypes.Models.Entry
+                | None
+            ),
         ) -> bool:
             """Check if entry DN matches detection markers.
 
@@ -478,7 +506,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_acl(
             self,
-            acl_line: str | object,  # Acl | object,
+            acl_line: str | FlextLdifProtocols.Models.AclProtocol,
         ) -> bool:
             """Check if ACL uses the expected ACL attribute.
 
@@ -503,13 +531,10 @@ class FlextLdifUtilitiesDetection:
             if isinstance(acl_line, str):
                 return acl_line.lower().startswith(acl_attr_name.lower() + ":")
 
-            # Model with attribute field
-            attr_value = getattr(acl_line, "attribute", None)
-            if attr_value is not None:
-                attr_set = frozenset([acl_attr_name])
-                return self.can_handle_in_set(attr_value, attr_set)
-
-            return False
+            # Model with name field (AclProtocol has name attribute)
+            # Type narrowed: must be AclProtocol at this point
+            attr_set = frozenset([acl_attr_name])
+            return self.can_handle_in_set(acl_line.name, attr_set)
 
     # ════════════════════════════════════════════════════════════════════════
     # Base Mixin - DRY Helper (reduces 95 lines of duplication)

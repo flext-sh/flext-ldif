@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -31,9 +30,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Standardized constants for Apache Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
-            "apache_directory"
-        )
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "apache"
         PRIORITY: ClassVar[int] = 15
 
         # Server identification
@@ -346,7 +343,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Mapping[str, object],
+            entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse raw LDIF entry data into Entry model.
 

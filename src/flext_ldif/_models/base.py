@@ -11,15 +11,41 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
-from flext_core import FlextModels
+from flext_core._models.base import FlextModelsBase
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_ldif.constants import FlextLdifConstants
 
 
-class SchemaElement(FlextModels.ArbitraryTypesModel):
+class FlextLdifModelsBase(FlextModelsBase.ArbitraryTypesModel):
+    """Base class for all FLEXT-LDIF models (events, configs, processing results).
+
+    Extends FlextModelsBase.ArbitraryTypesModel to provide a consistent base for LDIF-specific
+    models, ensuring:
+    - Proper Pydantic v2 configuration inheritance
+    - Consistency with flext-core architecture
+    - Type safety without using BaseModel directly
+    - Support for advanced Pydantic v2 features
+
+    Usage:
+        class MyLdifModel(FlextLdifModelsBase):
+            '''My LDIF domain model.'''
+            field1: str
+            field2: int = Field(default=0)
+
+    """
+
+    model_config = ConfigDict(
+        strict=True,
+        validate_assignment=True,
+        extra="forbid",
+        validate_default=True,
+        use_enum_values=True,
+        str_strip_whitespace=True,
+    )
+
+
+class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
     """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes).
 
     Provides common metadata handling, server type tracking, and validation patterns
@@ -64,9 +90,15 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
         if metadata is not None and hasattr(metadata, "quirk_type"):
             quirk_type = getattr(metadata, "quirk_type", None)
             if isinstance(quirk_type, str):
-                return cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", quirk_type
-                )
+                # Type narrowing: quirk_type is str, validate against ServerTypeLiteral
+                # normalize_server_type validates and returns ServerTypeLiteral when valid
+                # or raises ValueError for invalid values
+                try:
+                    # normalize_server_type returns ServerTypeLiteral (validated by TypeGuard)
+                    return FlextLdifConstants.normalize_server_type(quirk_type)
+                except ValueError:
+                    # Invalid server type, default to RFC
+                    pass
         return "rfc"
 
     @computed_field
@@ -86,7 +118,7 @@ class SchemaElement(FlextModels.ArbitraryTypesModel):
         return False
 
 
-class AclElement(FlextModels.ArbitraryTypesModel):
+class AclElement(FlextModelsBase.ArbitraryTypesModel):
     """Base class for all ACL-related models.
 
     Provides common validation, server type handling, and metadata

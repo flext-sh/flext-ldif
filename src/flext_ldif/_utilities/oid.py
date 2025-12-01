@@ -11,7 +11,7 @@ import re
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif._models.domain import FlextLdifModelsDomains
 
 logger = FlextLogger(__name__)
 
@@ -66,7 +66,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def extract_from_schema_object(
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
     ) -> str | None:
         """Extract OID from schema object metadata or model.
 

@@ -14,10 +14,9 @@ from __future__ import annotations
 from collections.abc import Generator, ItemsView, KeysView, ValuesView
 from typing import overload
 
-from flext_core import FlextModels, FlextTypes
+from flext_core import FlextTypes
+from flext_core._models.base import FlextModelsBase
 from pydantic import ConfigDict
-
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifModelsMetadata:
@@ -31,7 +30,7 @@ class FlextLdifModelsMetadata:
 
     """
 
-    class DynamicMetadata(FlextModels.ArbitraryTypesModel):
+    class DynamicMetadata(FlextModelsBase.ArbitraryTypesModel):
         """Model with extra="allow" for dynamic field storage.
 
         Replaces ALL dict[str, ...] patterns with proper Pydantic model.
@@ -50,20 +49,20 @@ class FlextLdifModelsMetadata:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
         @overload
-        def get(self, key: str) -> FlextTypes.MetadataValue: ...
+        def get(self, key: str) -> FlextTypes.MetadataAttributeValue: ...
 
         @overload
         def get(
             self,
             key: str,
-            default: FlextLdifTypes.MetadataValue,
-        ) -> FlextLdifTypes.MetadataValue: ...
+            default: FlextTypes.MetadataAttributeValue,
+        ) -> FlextTypes.MetadataAttributeValue: ...
 
         def get(
             self,
             key: str,
-            default: FlextLdifTypes.MetadataValue = None,
-        ) -> FlextLdifTypes.MetadataValue:
+            default: FlextTypes.MetadataAttributeValue = None,
+        ) -> FlextTypes.MetadataAttributeValue:
             """Get value by key, returning default if not found."""
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
@@ -74,7 +73,7 @@ class FlextLdifModelsMetadata:
                 return str(value) if value is not None else None
             return default
 
-        def __getitem__(self, key: str) -> FlextLdifTypes.MetadataValue:
+        def __getitem__(self, key: str) -> FlextTypes.MetadataAttributeValue:
             """Get value by key, raising KeyError if not found."""
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
@@ -84,7 +83,7 @@ class FlextLdifModelsMetadata:
                 return str(value) if value is not None else None
             raise KeyError(key)
 
-        def __setitem__(self, key: str, value: FlextLdifTypes.MetadataValue) -> None:
+        def __setitem__(self, key: str, value: FlextTypes.MetadataAttributeValue) -> None:
             """Set value by key using Pydantic's extra field handling."""
             setattr(self, key, value)
 
@@ -100,7 +99,7 @@ class FlextLdifModelsMetadata:
 
         def __iter__(
             self,
-        ) -> Generator[tuple[str, FlextLdifTypes.MetadataValue]]:
+        ) -> Generator[tuple[str, FlextTypes.MetadataAttributeValue]]:
             """Iterate over key-value pairs from extra fields."""
             extra = self.__pydantic_extra__
             if extra is not None:
@@ -115,12 +114,12 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             return (extra or {}).keys()
 
-        def values(self) -> ValuesView[FlextLdifTypes.MetadataValue]:
+        def values(self) -> ValuesView[FlextTypes.MetadataAttributeValue]:
             """Return values from extra fields."""
             extra = self.__pydantic_extra__
             return (extra or {}).values()
 
-        def items(self) -> ItemsView[str, FlextLdifTypes.MetadataValue]:
+        def items(self) -> ItemsView[str, FlextTypes.MetadataAttributeValue]:
             """Return items from extra fields."""
             extra = self.__pydantic_extra__
             return (extra or {}).items()
@@ -128,8 +127,8 @@ class FlextLdifModelsMetadata:
         def pop(
             self,
             key: str,
-            default: FlextLdifTypes.MetadataValue = None,
-        ) -> FlextLdifTypes.MetadataValue:
+            default: FlextTypes.MetadataAttributeValue = None,
+        ) -> FlextTypes.MetadataAttributeValue:
             """Pop value by key."""
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
@@ -145,12 +144,12 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def update(self, other: dict[str, FlextLdifTypes.MetadataValue]) -> None:
+        def update(self, other: dict[str, FlextTypes.MetadataAttributeValue]) -> None:
             """Update with values from another dict."""
             for key, value in other.items():
                 setattr(self, key, value)
 
-        def __hash__(self) -> int:  # type: ignore[override]
+        def __hash__(self) -> int:
             """Make unhashable - mutable with extra="allow"."""
             class_name = self.__class__.__name__
             msg = f"{class_name} is unhashable"
@@ -164,11 +163,11 @@ class FlextLdifModelsMetadata:
                 return dict(self.items()) == dict(other.items())
             return NotImplemented
 
-        def to_dict(self) -> dict[str, FlextLdifTypes.MetadataValue]:
+        def to_dict(self) -> dict[str, FlextTypes.MetadataAttributeValue]:
             """Convert to dict for serialization."""
             return dict(self.items())
 
-    class EntryMetadata(FlextModels.ArbitraryTypesModel):
+    class EntryMetadata(FlextModelsBase.ArbitraryTypesModel):
         """Entry metadata for tracking processing details.
 
         Stores additional metadata about entries processed.
@@ -187,7 +186,7 @@ class FlextLdifModelsMetadata:
             str_strip_whitespace=True,
         )
 
-        def __getitem__(self, key: str) -> FlextLdifTypes.MetadataValue:
+        def __getitem__(self, key: str) -> FlextTypes.MetadataAttributeValue:
             """Get value by key, raising KeyError if not found."""
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
@@ -205,8 +204,8 @@ class FlextLdifModelsMetadata:
         def get(
             self,
             key: str,
-            default: FlextLdifTypes.MetadataValue = None,
-        ) -> FlextLdifTypes.MetadataValue:
+            default: FlextTypes.MetadataAttributeValue = None,
+        ) -> FlextTypes.MetadataAttributeValue:
             """Get value by key, returning default if not found."""
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:

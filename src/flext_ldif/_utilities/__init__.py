@@ -26,7 +26,41 @@ from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 
+
+class FlextLdifUtilities:
+    """Unified LDIF utilities namespace combining all domain-specific utility classes.
+
+    Organizes LDIF-specific utilities into logical nested classes for better API
+    organization and discoverability.
+
+    Usage:
+        from flext_ldif._utilities import FlextLdifUtilities
+        FlextLdifUtilities.DN.parse("cn=test,dc=example,dc=com")
+        FlextLdifUtilities.Entry.has_objectclass(entry, "person")
+    """
+
+    ACL = FlextLdifUtilitiesACL
+    Attribute = FlextLdifUtilitiesAttribute
+    Constants = FlextLdifUtilitiesConstants
+    Decorators = FlextLdifUtilitiesDecorators
+    Detection = FlextLdifUtilitiesDetection
+    DN = FlextLdifUtilitiesDN
+    Entry = FlextLdifUtilitiesEntry
+    Events = FlextLdifUtilitiesEvents
+    Metadata = FlextLdifUtilitiesMetadata
+    ObjectClass = FlextLdifUtilitiesObjectClass
+    OID = FlextLdifUtilitiesOID
+    Parser = FlextLdifUtilitiesParser
+    Parsers = FlextLdifUtilitiesParsers
+    Schema = FlextLdifUtilitiesSchema
+    Server = FlextLdifUtilitiesServer
+    Validation = FlextLdifUtilitiesValidation
+    Writer = FlextLdifUtilitiesWriter
+    Writers = FlextLdifUtilitiesWriters
+
+
 __all__ = [
+    "FlextLdifUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesConstants",

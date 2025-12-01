@@ -170,7 +170,7 @@ UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
         AclTestType.UNIFIED_INVALID_SERVER_TYPE,
         "invalid_server_type",
         target_dn="*",
-        subject_type="*",
+        subject_type="all",
         subject_value="*",
         acl_name="",
         raw_acl="(access to *)",
@@ -210,8 +210,10 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
             target = FlextLdifModels.AclTarget(
                 target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
             )
+            # Use "all" for wildcard subject type (valid AclSubjectTypeLiteral)
+            # "*" is not a valid subject_type, use "all" instead
             subject = FlextLdifModels.AclSubject(
-                subject_type=FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
+                subject_type="all",
                 subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
             )
             permissions = FlextLdifModels.AclPermissions(read=True)
@@ -296,7 +298,8 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
                 assert target.target_dn == "*"
 
             case AclTestType.COMPONENTS_SUBJECT:
-                assert subject.subject_type == "*"
+                # Wildcard subject type is represented as "all" (not "*")
+                assert subject.subject_type == "all"
                 assert subject.subject_value == "*"
 
             case AclTestType.COMPONENTS_PERMISSIONS:

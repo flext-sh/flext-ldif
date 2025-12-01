@@ -586,11 +586,12 @@ class TestFlextLdifOidQuirks:
         )
 
         assert entry.dn.value == "cn=test,dc=example,dc=com"
-        assert hasattr(entry.attributes, "cn")
-        cn_values: list[str] = entry.attributes.cn
+        # Access attributes via dict-like interface
+        assert "cn" in entry.attributes.attributes
+        cn_values: list[str] = entry.attributes["cn"]
         assert cn_values == ["test"]
-        assert hasattr(entry.attributes, "objectClass")
-        oc_values: list[str] = entry.attributes.objectClass
+        assert "objectClass" in entry.attributes.attributes
+        oc_values: list[str] = entry.attributes["objectClass"]
         assert oc_values == ["person"]
 
     def test_entry_with_oracle_attributes(

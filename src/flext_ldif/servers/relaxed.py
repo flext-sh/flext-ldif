@@ -47,9 +47,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """Standardized constants for Relaxed (lenient) quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
-            "relaxed"
-        )
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "relaxed"
         PRIORITY: ClassVar[int] = 200  # Lowest priority - fallback for broken LDIF
 
         # Auto-discovery constants
@@ -942,7 +940,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Mapping[str, object],
+            entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse entry with best-effort approach.
 
@@ -1072,16 +1070,18 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
             # Use generalized parser with relaxed configuration
-            # Cast to match protocol signature - _parse_entry accepts Mapping[str, object]
-            # but protocol expects Mapping[str, list[str]], so we need to adapt
+            # Adapt _parse_entry signature to match Content.parse expectations
 
             def adapted_parse_entry(
                 dn: str,
                 attrs: Mapping[str, list[str]],
             ) -> FlextResult[FlextLdifModels.Entry]:
-                # Convert Mapping[str, list[str]] to Mapping[str, object] for _parse_entry
-                attrs_obj: Mapping[str, object] = attrs
-                return self._parse_entry(dn, attrs_obj)
+                # Convert Mapping[str, list[str]] to dict[str, list[str | bytes]] for _parse_entry
+                attrs_dict: dict[str, list[str | bytes]] = {
+                    key: [str(v) if isinstance(v, bytes) else v for v in values]
+                    for key, values in attrs.items()
+                }
+                return self._parse_entry(dn, attrs_dict)
 
             return FlextLdifUtilities.Parsers.Content.parse(
                 ldif_content,

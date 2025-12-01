@@ -223,10 +223,11 @@ class FlextLdifSorting(
         default_acl_attrs = list(
             FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES,
         )
+        from typing import cast
         return cls(
             entries=entries,
-            sort_target=target,
-            sort_by=strategy,
+            sort_target=cast("FlextLdifConstants.LiteralTypes.SortTargetLiteral", target),
+            sort_by=cast("FlextLdifConstants.LiteralTypes.SortStrategyLiteral", strategy),
             traversal=traversal,
             custom_predicate=predicate,
             sort_attributes=sort_attributes,

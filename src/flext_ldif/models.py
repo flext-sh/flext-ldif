@@ -16,7 +16,7 @@ Architecture:
 - Extends flext-core FlextModels for consistency
 - Uses Pydantic v2 with computed fields and validators
 - All models are immutable by default (frozen=True where applicable)
-- Server-specific quirk data preserved in extensions (object type)
+- Server-specific quirk data preserved in extensions (FlextTypes.MetadataAttributeValue)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,7 +25,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels, FlextModelsCollections
+from flext_core import FlextModels
+from flext_core._models.collections import FlextModelsCollections
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -73,12 +74,19 @@ class FlextLdifModels(FlextModels):
     # AclMetadataConfig moved to _models/config.py
 
     # LogContextExtras moved to _models/config.py
+    LogContextExtras = FlextLdifModelsConfig.LogContextExtras
 
     # DnEventConfig moved to _models/events.py
+    DnEventConfig = FlextLdifModelsEvents.DnEventConfig
+    DnEvent = FlextLdifModelsEvents.DnEvent
 
     # MigrationEventConfig moved to _models/events.py
+    MigrationEventConfig = FlextLdifModelsEvents.MigrationEventConfig
+    MigrationEvent = FlextLdifModelsEvents.MigrationEvent
 
     # ConversionEventConfig moved to _models/events.py
+    ConversionEventConfig = FlextLdifModelsEvents.ConversionEventConfig
+    ConversionEvent = FlextLdifModelsEvents.ConversionEvent
 
     class SchemaEventConfig(FlextLdifModelsEvents.SchemaEventConfig):
         """Configuration for schema event creation.
@@ -99,6 +107,11 @@ class FlextLdifModels(FlextModels):
 
         """
 
+    SchemaEvent = FlextLdifModelsEvents.SchemaEvent
+
+    # EntryStatistics from domain models
+    EntryStatistics = FlextLdifModelsDomains.EntryStatistics
+
     # =========================================================================
     # DOMAIN EVENTS - Processing events
     # =========================================================================
@@ -118,6 +131,14 @@ class FlextLdifModels(FlextModels):
     # DN and statistics models
     DistinguishedName = FlextLdifModelsDomains.DistinguishedName
     DNStatistics = FlextLdifModelsDomains.DNStatistics
+
+    # Transformation flags type alias
+    TransformationFlags = FlextLdifModelsDomains.DNStatisticsFlags
+    """Type alias for DN transformation flags.
+
+    Public type for tracking DN transformation state during cleaning operations.
+    Used internally by FlextLdifUtilitiesDN for collecting transformation metadata.
+    """
 
     # Processing and writer models
     ProcessingResult = ProcessingResultModel
@@ -355,10 +376,9 @@ class FlextLdifModels(FlextModels):
 
         """
 
-    class FlexibleCategories(
-        FlextModelsCollections.Categories["FlextLdifModels.Entry"]
-    ):
-        """Flexible categorization of LDIF entries."""
+    # Type alias for flexible categorization of LDIF entries (PEP 695)
+    # Use FlextModelsCollections.Categories directly since FlextModels.Categories is a type alias
+    type FlexibleCategories = FlextModelsCollections.Categories[FlextLdifModels.Entry]
 
     # Schema models
     SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute
@@ -572,6 +592,24 @@ class FlextLdifModels(FlextModels):
 
         """
 
+    class EntryResult(FlextLdifModelsResults.EntryResult):
+        """Result of LDIF processing containing categorized entries and statistics.
+
+        This is the UNIFIED result model for all LDIF operations. Contains entries
+        categorized by type and comprehensive processing statistics.
+
+        Example:
+            result = EntryResult(
+                entries=[Entry(...)],
+                users=[Entry(...)],
+                groups=[Entry(...)],
+                containers=[Entry(...)],
+                statistics=Statistics(...),
+                processing_time_seconds=2.34
+            )
+
+        """
+
     class ServerDetectionResult(FlextLdifModelsResults.ServerDetectionResult):
         """Result of LDAP server detection operations.
 
@@ -700,6 +738,22 @@ class FlextLdifModels(FlextModels):
                 supported_servers=["oid", "oud", "openldap"],
                 default_encoding="utf-8",
                 config_source="environment"
+            )
+
+        """
+
+    class SchemaDiscoveryResult(FlextLdifModelsResults.SchemaDiscoveryResult):
+        """Result of schema discovery operations.
+
+        Contains discovered schema attributes and objectClasses with
+        comprehensive metadata about the schema processing.
+
+        Example:
+            result = SchemaDiscoveryResult(
+                objectclasses={"person": {"oid": "2.5.4.0", ...}},
+                attributes={"cn": {"oid": "2.5.4.3", ...}},
+                total_attributes=45,
+                total_objectclasses=12
             )
 
         """

@@ -10,36 +10,29 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import cast, overload
+from typing import overload
 
-from flext_core import FlextModels, FlextTypes
-from flext_core.models import FlextModelsCollections
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from flext_core import FlextTypes
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.entity import FlextModelsEntity
+from pydantic import ConfigDict, Field, computed_field, field_validator
 
+from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.typings import FlextLdifTypes
 
-# Type alias for schema elements that can be stored in _SchemaElementMap
-# Uses only imported names to avoid circular imports with models.py
-type SchemaElement = (
-    FlextLdifModelsDomains.SchemaAttribute
-    | FlextLdifModelsDomains.SchemaObjectClass
-    | str
-    | int
-    | float
-    | bool
-    | None
-)
+# Use type directly from FlextLdifTypes.Schema.SchemaElement (no local alias)
+# Import will be done where needed to avoid circular imports
 
 # =============================================================================
 # MODULE-LEVEL MODELS (defined before container for forward reference support)
 # =============================================================================
 
 
-class _DynamicCounts(BaseModel):
+class _DynamicCounts(FlextLdifModelsBase):
     """Dynamic counts model (replaces dict[str, int]).
 
     Supports int counts for DistributionCounts, RejectionReasons, etc.
@@ -56,7 +49,7 @@ class _DynamicCounts(BaseModel):
 
     model_config = ConfigDict(
         frozen=True,
-        extra="forbid",
+        extra="allow",  # Allow dynamic fields for server type scores
         use_enum_values=True,
         str_strip_whitespace=True,
     )
@@ -135,23 +128,37 @@ class _SchemaElementMap(FlextLdifModelsMetadata.DynamicMetadata):
     """
 
     def get_element(
-        self, name: str, element_type: type
-    ) -> FlextTypes.MetadataValue | None:
+        self,
+        name: str,
+        element_type: type[FlextTypes.MetadataAttributeValue],
+    ) -> FlextTypes.MetadataAttributeValue | None:
         """Get element by name with type check.
 
         Returns element if it matches the specified type, None otherwise.
         """
-        value = self.get(name)
-        if isinstance(value, element_type):
-            return cast("FlextTypes.MetadataValue", value)
+        # Check if key exists first to avoid KeyError
+        if name not in self:
+            return None
+        # Use __getitem__ which returns MetadataValue (from DynamicMetadata)
+        # Then check type and narrow explicitly
+        value_raw = self[name]
+        # Use isinstance check for type narrowing
+        if isinstance(value_raw, element_type):
+            # Type narrowing: value_raw is element_type after isinstance check
+            # element_type is constrained to MetadataAttributeValue subtypes
+            # After isinstance check, value_raw is narrowed to element_type
+            # Since element_type is type[MetadataAttributeValue], instances are MetadataAttributeValue
+            return value_raw
         return None
 
-    def set_element(self, name: str, element: FlextLdifTypes.MetadataValue) -> None:
+    def set_element(
+        self, name: str, element: FlextTypes.MetadataAttributeValue
+    ) -> None:
         """Set element by name.
 
         Accepts schema elements (SchemaAttribute, SchemaObjectClass) or
         primitive types (str, int, float, bool, None).
-        Uses FlextLdifTypes.MetadataValue to avoid circular import with models.py.
+        Uses FlextTypes.MetadataAttributeValue to avoid circular import with models.py.
         """
         setattr(self, name, element)
 
@@ -221,7 +228,7 @@ class _SchemaObjectClassMap(_SchemaElementMap):
         return ocs
 
 
-class _SchemaContent(BaseModel):
+class _SchemaContent(FlextLdifModelsBase):
     """Schema content model (replaces dict returns).
 
     Defined at module level to avoid forward reference issues in default_factory.
@@ -283,7 +290,7 @@ class _ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
         return [(k, v) for k, v in self.items() if isinstance(v, (str, int, bool))]
 
 
-class _BooleanFlags(BaseModel):
+class _BooleanFlags(FlextLdifModelsBase):
     """Boolean flags model (replaces dict[str, bool]).
 
     Defined at module level to avoid forward reference issues in default_factory.
@@ -368,7 +375,7 @@ class _FlexibleCategories(
 
     model_config = ConfigDict(extra="allow", frozen=False)
 
-    def __hash__(self) -> int:  # type: ignore[override]
+    def __hash__(self) -> int:
         """Make unhashable - mutable with frozen=False."""
         class_name = self.__class__.__name__
         msg = f"{class_name} is unhashable"
@@ -431,7 +438,7 @@ class FlextLdifModelsResults:
     ConfigSettings = _ConfigSettings
     BooleanFlags = _BooleanFlags
 
-    class StatisticsSummary(BaseModel):
+    class StatisticsSummary(FlextLdifModelsBase):
         """Statistics summary model (replaces dict returns)."""
 
         model_config = ConfigDict(frozen=True)
@@ -454,7 +461,7 @@ class FlextLdifModelsResults:
         parse_errors: int = Field(default=0)
         entries_written: int = Field(default=0)
 
-    class MigrationSummary(BaseModel):
+    class MigrationSummary(FlextLdifModelsBase):
         """Migration summary model (replaces dict returns)."""
 
         model_config = ConfigDict(frozen=True)
@@ -466,7 +473,7 @@ class FlextLdifModelsResults:
         output_files: int = Field(default=0)
         is_empty: bool = Field(default=True)
 
-    class CategorizedEntries(BaseModel):
+    class CategorizedEntries(FlextLdifModelsBase):
         """Categorized entries model (replaces dict[str, list[Entry]]).
 
         Categories: schema, hierarchy, users, groups, acl, data, rejected
@@ -523,7 +530,7 @@ class FlextLdifModelsResults:
             counts.set_count("rejected", len(self.rejected_entries))
             return counts
 
-    class SchemaSummary(BaseModel):
+    class SchemaSummary(FlextLdifModelsBase):
         """Schema summary model (replaces dict returns in schema methods)."""
 
         model_config = ConfigDict(frozen=True)
@@ -535,7 +542,7 @@ class FlextLdifModelsResults:
         )
         entry_count: int = Field(default=0)
 
-    class LdifValidationResult(FlextModels.ArbitraryTypesModel):
+    class LdifValidationResult(FlextModelsBase.ArbitraryTypesModel):
         """Result of LDIF validation operations."""
 
         model_config = ConfigDict(
@@ -579,7 +586,7 @@ class FlextLdifModelsResults:
                 return f"Valid ({self.warning_count} warnings)"
             return f"Invalid ({self.error_count} errors, {self.warning_count} warnings)"
 
-    class AnalysisResult(FlextModels.ArbitraryTypesModel):
+    class AnalysisResult(FlextModelsBase.ArbitraryTypesModel):
         """Result of LDIF analytics operations."""
 
         total_entries: int = Field(
@@ -621,7 +628,7 @@ class FlextLdifModelsResults:
                 f"{self.pattern_count} patterns detected"
             )
 
-    class EntryResult(BaseModel):
+    class EntryResult(FlextLdifModelsBase):
         """Result of LDIF processing containing categorized entries and statistics.
 
         This is the UNIFIED result model for all LDIF operations. Contains entries
@@ -985,7 +992,7 @@ class FlextLdifModelsResults:
             """
             return list({type(e).__name__ for e in self.events})
 
-    class Statistics(FlextModels.Statistics):
+    class Statistics(FlextModelsCollections.Statistics):
         """Unified statistics model for all LDIF operations."""
 
         model_config = ConfigDict(
@@ -1365,7 +1372,7 @@ class FlextLdifModelsResults:
                 events=list(self.events) + [event],
             )
 
-    class SchemaBuilderResult(BaseModel):
+    class SchemaBuilderResult(FlextLdifModelsBase):
         """Result of schema builder build() operation.
 
         Contains attributes, object classes, server type, and metadata about the schema.
@@ -1446,16 +1453,25 @@ class FlextLdifModelsResults:
                 SchemaContent model with attributes and object_classes
 
             """
-            attrs = [
-                cast("FlextLdifModelsDomains.SchemaAttribute", attr)
-                for attr in self.attributes.values()
-                if isinstance(attr, FlextLdifModelsDomains.SchemaAttribute)
-            ]
-            ocs = [
-                cast("FlextLdifModelsDomains.SchemaObjectClass", oc)
-                for oc in self.object_classes.values()
-                if isinstance(oc, FlextLdifModelsDomains.SchemaObjectClass)
-            ]
+            # Type narrowing: use specific get methods for proper type narrowing
+            # _SchemaAttributeMap.get_attribute() and _SchemaObjectClassMap.get_object_class()
+            # already handle type narrowing correctly
+            attrs: list[FlextLdifModelsDomains.SchemaAttribute] = []
+            # Use keys() method for proper type narrowing - returns list[str]
+            attribute_names: list[str] = list(self.attributes.keys())
+            for name in attribute_names:
+                # name is already str from keys() method
+                attr = self.attributes.get_attribute(name)
+                if attr is not None:
+                    attrs.append(attr)
+            ocs: list[FlextLdifModelsDomains.SchemaObjectClass] = []
+            # Use keys() method for proper type narrowing - returns list[str]
+            object_class_names: list[str] = list(self.object_classes.keys())
+            for name in object_class_names:
+                # name is already str from keys() method
+                oc = self.object_classes.get_object_class(name)
+                if oc is not None:
+                    ocs.append(oc)
 
             return _SchemaContent(
                 attributes=attrs,
@@ -1477,7 +1493,7 @@ class FlextLdifModelsResults:
                 entry_count=self.entry_count,
             )
 
-    class MigrationPipelineResult(BaseModel):
+    class MigrationPipelineResult(FlextLdifModelsBase):
         """Result of migration pipeline execution.
 
         Contains migrated schema, entries, statistics, and output file paths
@@ -1612,7 +1628,7 @@ class FlextLdifModelsResults:
                 is_empty=is_empty_value,
             )
 
-    class ClientStatus(FlextModels.Value):
+    class ClientStatus(FlextModelsEntity.Value):
         """Client status information."""
 
         model_config = ConfigDict(
@@ -1630,7 +1646,7 @@ class FlextLdifModelsResults:
             description="Active configuration settings",
         )
 
-    class ValidationResult(BaseModel):
+    class ValidationResult(FlextLdifModelsBase):
         """Entry validation result."""
 
         model_config = ConfigDict(
@@ -1657,7 +1673,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return (self.valid_entries / self.total_entries) * 100.0
 
-    class MigrationEntriesResult(BaseModel):
+    class MigrationEntriesResult(FlextLdifModelsBase):
         """Result from migrating entries between servers."""
 
         model_config = ConfigDict(
@@ -1685,7 +1701,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return (self.migrated_entries / self.total_entries) * 100.0
 
-    class EntryAnalysisResult(BaseModel):
+    class EntryAnalysisResult(FlextLdifModelsBase):
         """Result from entry analysis operations."""
 
         model_config = ConfigDict(
@@ -1708,7 +1724,7 @@ class FlextLdifModelsResults:
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(BaseModel):
+    class ServerDetectionResult(FlextLdifModelsBase):
         """Result from LDAP server type detection."""
 
         model_config = ConfigDict(
@@ -1742,7 +1758,7 @@ class FlextLdifModelsResults:
             description="Reason for fallback to RFC mode",
         )
 
-    class StatisticsResult(BaseModel):
+    class StatisticsResult(FlextLdifModelsBase):
         """Statistics result from LDIF processing pipeline.
 
         Contains comprehensive statistics about categorized entries, rejections,
@@ -1784,7 +1800,7 @@ class FlextLdifModelsResults:
             description="Mapping of categories to output file paths",
         )
 
-    class EntriesStatistics(FlextModels.Value):
+    class EntriesStatistics(FlextModelsEntity.Value):
         """Statistics calculated from a list of Entry models.
 
         Provides distribution analysis of objectClasses and server types
@@ -1809,7 +1825,7 @@ class FlextLdifModelsResults:
             description="Count of entries per server type",
         )
 
-    class DictAccessibleValue(FlextModels.Value):
+    class DictAccessibleValue(FlextModelsEntity.Value):
         """Base value model providing dict-style access (backwards compatibility)."""
 
         def __getitem__(self, key: str) -> str | int | float | bool | None:
@@ -1835,9 +1851,10 @@ class FlextLdifModelsResults:
             # Use model_fields_set for Pydantic v2 compatibility
             return list(self.model_fields_set)
 
-        def items(self) -> list[tuple[str, object]]:
+        def items(self) -> list[tuple[str, FlextTypes.ScalarValue]]:
             """Return list of (key, value) tuples (dict-style access)."""
             # Use model_fields_set for Pydantic v2 compatibility
+            # Values are ScalarValue (str | int | float | bool | None)
             return [(key, getattr(self, key)) for key in self.model_fields_set]
 
     class ServiceStatus(DictAccessibleValue):
@@ -1952,7 +1969,7 @@ class FlextLdifModelsResults:
             description="Service version",
         )
 
-    class SyntaxLookupResult(BaseModel):
+    class SyntaxLookupResult(FlextLdifModelsBase):
         """Result of syntax OID/name lookup operations.
 
         Contains results from bidirectional OID ↔ name lookups
@@ -2000,7 +2017,7 @@ class FlextLdifModelsResults:
             description="List of supported validation types",
         )
 
-    class ValidationBatchResult(BaseModel):
+    class ValidationBatchResult(FlextLdifModelsBase):
         """Result of batch validation operations.
 
         Contains validation results for multiple attribute names
@@ -2016,7 +2033,7 @@ class FlextLdifModelsResults:
             description="Mapping of validated items to validation status",
         )
 
-    class ParseResponse(FlextModels.Value):
+    class ParseResponse(FlextModelsEntity.Value):
         """Composed response from parsing operation.
 
         Combines Entry models with statistics from parse operation.
@@ -2060,7 +2077,7 @@ class FlextLdifModelsResults:
                 for entry in self.entries
             ]
 
-    class AclResponse(FlextModels.Value):
+    class AclResponse(FlextModelsEntity.Value):
         """Composed response from ACL extraction.
 
         Combines extracted Acl models with extraction statistics.
@@ -2076,7 +2093,7 @@ class FlextLdifModelsResults:
             description="ACL extraction statistics",
         )
 
-    class WriteResponse(FlextModels.Value):
+    class WriteResponse(FlextModelsEntity.Value):
         """Composed response from write operation.
 
         Contains written LDIF content and statistics using model composition.
@@ -2098,7 +2115,7 @@ class FlextLdifModelsResults:
             """
             return self.content or ""
 
-    class SchemaDiscoveryResult(FlextModels.ArbitraryTypesModel):
+    class SchemaDiscoveryResult(FlextModelsBase.ArbitraryTypesModel):
         """Result of schema discovery operations."""
 
         attributes: _SchemaAttributeMap = Field(

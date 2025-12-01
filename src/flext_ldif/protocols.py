@@ -21,63 +21,17 @@ from __future__ import annotations
 # These cannot be in TYPE_CHECKING because Protocols use isinstance checks at runtime
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Literal, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult, FlextTypes
 
 # =========================================================================
-# INLINE TYPE DEFINITIONS - Metadata structures for protocols
+# PROTOCOL DESIGN NOTES
 # =========================================================================
-# These types are defined here (not imported) to allow protocols to remain
-# independent of typings.py and constants.py, following FLEXT protocol-models
-# separation rule. Protocols can only import other Protocols.
-# Uses ONLY structural types (Mapping, Sequence) from collections.abc.
-# Uses Literal types inline (not imported from constants) to maintain independence.
-
-# Type aliases moved to FlextLdifProtocols class for proper namespace access
-
-# =========================================================================
-# INLINE LITERAL TYPE DEFINITIONS - For protocol method signatures
-# =========================================================================
-# These Literal types are defined inline to maintain protocol independence
-# per FLEXT architecture rules (Protocols cannot import Constants).
-# They MUST match exactly the Literal types in constants.py.LiteralTypes
-# to ensure consistency across the codebase.
-#
-# IMPORTANT: When updating these, also update constants.py.LiteralTypes
-# to keep them synchronized.
-
-type CategoryLiteral = Literal[
-    "all",
-    "users",
-    "groups",
-    "hierarchy",
-    "schema",
-    "acl",
-    "rejected",
-]
-"""Category literals for entry categorization.
-Must match FlextLdifConstants.LiteralTypes.CategoryLiteral exactly."""
-
-type ServerTypeLiteral = Literal[
-    "oid",
-    "oud",
-    "openldap",
-    "openldap1",
-    "openldap2",
-    "active_directory",
-    "apache_directory",
-    "generic",
-    "rfc",
-    "389ds",
-    "relaxed",
-    "novell_edirectory",
-    "ibm_tivoli",
-    "oracle_oid",
-    "oracle_oud",
-]
-"""Server type literals for server identification.
-Must match FlextLdifConstants.LiteralTypes.ServerTypeLiteral exactly."""
+# Protocols define structural typing interfaces - they use `str` for
+# server_type and category parameters since validation happens at
+# implementation level via FlextLdifConstants.LiteralTypes.
+# This avoids duplicating Literal types and maintains protocol independence.
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -143,9 +97,11 @@ class FlextLdifProtocols(FlextProtocols):
 
             Minimal protocol for objects that contain a DN.
             Used for type-safe DN extraction from various sources.
+            Supports both string DNs and DistinguishedName models with .value attribute.
             """
 
-            dn: str | object  # Can be str or object with .value attribute
+            dn: str
+            """DN value as string. For DistinguishedName models, use .value to get string."""
 
         @runtime_checkable
         class AttributeValueProtocol(Protocol):
@@ -404,7 +360,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @classmethod
-            def filter(
+            def filter(  # noqa: PLR0913 - Protocol signature with many optional parameters
                 cls,
                 entries: Sequence[FlextLdifProtocols.Models.EntryProtocol],
                 *,
@@ -465,10 +421,7 @@ class FlextLdifProtocols(FlextProtocols):
                     | None
                 ) = None,
                 server_type: str | None = None,
-            ) -> tuple[
-                CategoryLiteral,
-                str | None,
-            ]:
+            ) -> tuple[str, str | None]:
                 """Categorize single entry, return (category, reason)."""
                 ...
 
@@ -585,15 +538,40 @@ class FlextLdifProtocols(FlextProtocols):
 
             def get_quirk(
                 self,
-                server_type: ServerTypeLiteral | str,
+                server_type: str,
             ) -> FlextLdifProtocols.Quirks.SchemaProtocol | None:
                 """Get quirk for server type."""
                 ...
 
             def register_quirk(
                 self,
-                server_type: ServerTypeLiteral | str,
+                server_type: str,
                 quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
             ) -> None:
                 """Register a quirk for server type."""
                 ...
+
+    class Constants:
+        """Protocol definitions for server Constants classes."""
+
+        @runtime_checkable
+        class ServerConstantsProtocol(Protocol):
+            """Protocol for server Constants classes used in detection mixins.
+
+            Defines structural interface for server-specific Constants classes
+            that provide detection patterns and ACL attribute names.
+            All attributes are optional to support different server implementations.
+            """
+
+            # Optional detection attributes used by mixins
+            DETECTION_OID_PATTERN: str | None
+            DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
+            DETECTION_DN_MARKERS: frozenset[str] | None
+            ACL_ATTRIBUTE_NAME: str | None
+
+        @runtime_checkable
+        class ModelWithValidationMetadata(Protocol):
+            """Protocol for models that have validation_metadata attribute."""
+
+            validation_metadata: FlextTypes.Metadata | None
