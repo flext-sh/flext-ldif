@@ -1,19 +1,4 @@
-"""FLEXT-LDIF API - Unified Facade for LDIF Operations.
-
-Provides the primary entry point for all LDIF processing operations using advanced
-Python 3.13 patterns with SOLID principles, DRY methods, and extensive use of
-generic helpers from *Constants, *Protocols, *Types, *Config, *Models, *Utilities.
-
-Module functionality:
-- Unified facade consolidating all LDIF operations
-- Railway-oriented programming with FlextResult[T]
-- Advanced service coordination and dependency injection
-- Extensive use of mappings, enums, and type-safe operations
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Public facade that wires LDIF services and quirk discovery."""
 
 from __future__ import annotations
 
@@ -70,26 +55,15 @@ U = TypeVar("U")
 _instance: FlextLdif | None = None
 
 
-# Register service factories for dependency injection
-# This breaks circular dependencies between categorization and filter services
-# Register service factories for dependency injection
-# This breaks circular dependencies between categorization and filter services
-# Services implement protocols via structural typing, no casts needed
-# Register factory functions (not classes) that return protocol-compliant instances
-# Services implement protocols via structural typing (duck typing), compatible at runtime
 def _create_filter_service() -> FlextLdifProtocols.Services.FilterServiceProtocol:
-    """Factory function for filter service."""
-    # Structural typing: FlextLdifFilters implements FilterServiceProtocol
-    # Use cast for type compatibility (structural typing is runtime-compatible)
+    """Return a filter service instance that satisfies the filter protocol."""
     return cast("FlextLdifProtocols.Services.FilterServiceProtocol", FlextLdifFilters())
 
 
 def _create_categorization_service(
     server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
 ) -> FlextLdifProtocols.Services.CategorizationServiceProtocol:
-    """Factory function for categorization service."""
-    # Structural typing: FlextLdifCategorization implements CategorizationServiceProtocol
-    # Use cast for type compatibility (structural typing is runtime-compatible)
+    """Return a categorization service configured for the server type."""
     return cast(
         "FlextLdifProtocols.Services.CategorizationServiceProtocol",
         FlextLdifCategorization(
@@ -103,75 +77,11 @@ FlextLdifServiceRegistry.register_categorization_factory(_create_categorization_
 
 
 class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
-    r"""Main API facade for LDIF processing operations.
+    """Coordinate LDIF services and quirks behind a single facade.
 
-    This is the sole entry point for all LDIF operations, consolidating all
-    business logic and service coordination into a single facade class. It
-    inherits from FlextService to leverage dependency injection, logging, and
-    event publishing capabilities.
-
-    Capabilities:
-        - Parse and write LDIF files according to RFC 2849 and RFC 4512
-        - Handle server-specific quirks (OID, OUD, OpenLDAP, AD, 389 DS)
-        - Migrate data between different LDAP server types
-        - Validate LDIF entries against LDAP schemas
-        - Process ACL (Access Control List) entries
-        - Batch and parallel processing for large datasets
-        - Service initialization and dependency injection via FlextContainer
-        - Default quirk registration for all supported LDAP servers
-        - Context management with correlation tracking
-
-    Implementation:
-        This class consolidates all LDIF operations into a single facade,
-        eliminating the need for separate client classes. It manages all
-        service coordination, DI container operations, and business logic.
-
-    Example:
-        # Recommended: Use singleton instance
-        ldif = FlextLdif.get_instance()
-
-        # Alternative: Create new instance
-        ldif = FlextLdif()
-
-        # Parse LDIF content with context tracking
-        with ldif.context.set_correlation_id("req-123"):
-            result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
-            if result.is_success:
-                entries = result.unwrap()
-
-        # Write LDIF entries with structured error handling
-        write_result = ldif.write(entries)
-
-        # Generic migration between servers
-        migration_result = ldif.migrate(
-            input_dir=Path("data/oid"),
-            output_dir=Path("data/oud"),
-            from_server=FlextLdifConstants.ServerTypes.OID,
-            to_server=FlextLdifConstants.ServerTypes.OUD,
-        )
-
-        # Categorized migration with structured output
-        categorized_result = ldif.categorize_and_migrate(
-            input_dir=Path("data/source"),
-            output_dir=Path("data/categorized"),
-            categorization_rules={
-                "users": [FlextLdifConstants.ObjectClasses.PERSON],
-                "groups": [FlextLdifConstants.ObjectClasses.GROUP_OF_NAMES],
-            },
-            from_server=FlextLdifConstants.ServerTypes.OID,
-            to_server=FlextLdifConstants.ServerTypes.OUD,
-        )
-
-        # Batch processing for large datasets
-        batch_processor = ldif.create_batch_processor(batch_size=100)
-        processing_result = batch_processor.process_entries(entries, validate_entry)
-
-        # Access complete infrastructure
-        config = ldif.config
-        models = ldif.models
-        entry = ldif.models.Entry(dn="cn=test", attributes={})
-        events = ldif.events  # Domain events
-
+    The facade owns the service registry, initializes services lazily based on
+    :attr:`SERVICE_MAPPING`, and exposes builder helpers that reuse those
+    services for parse/filter/write flows without re-instantiation.
     """
 
     # Service mapping for DRY initialization and access
@@ -240,27 +150,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     @classmethod
     def get_instance(cls, config: FlextLdifConfig | None = None) -> FlextLdif:
-        """Get singleton instance of FlextLdif facade.
-
-        Args:
-            config: Optional configuration (only used on first call)
-
-        Returns:
-            Singleton FlextLdif instance
-
-        Example:
-            # Recommended usage
-            ldif = FlextLdif.get_instance()
-
-            # All calls return same instance
-            ldif2 = FlextLdif.get_instance()
-            # Singleton pattern: same instance returned
-            if ldif is not ldif2:
-                raise RuntimeError(
-                    "Singleton pattern violation: different instances returned"
-                )
-
-        """
+        """Return the process-wide singleton, creating it on first use."""
         global _instance  # noqa: PLW0603
         if _instance is None:
             # Create instance with config if provided
@@ -279,21 +169,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     @classmethod
     def _reset_instance(cls) -> None:
-        """Reset singleton instance (for testing only).
-
-        WARNING: This method is intended for testing purposes only.
-        Do not use in production code as it breaks the singleton pattern.
-
-        Clears the singleton instance and initialization flag, allowing a fresh
-        instance to be created on the next call to get_instance(). This ensures
-        test isolation and idempotency by preventing state leakage between tests.
-
-        Example:
-            # In test fixture
-            FlextLdif._reset_instance()
-            ldif = FlextLdif.get_instance()  # Fresh instance
-
-        """
+        """Reset the cached singleton (testing helper)."""
         global _instance  # noqa: PLW0603
         _instance = None
         # ClassVar can be set directly even in frozen models
@@ -301,21 +177,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         setattr(cls, "_class_initialized", False)
 
     def __init__(self, **kwargs: FlextTypes.GeneralValueType) -> None:
-        """Initialize LDIF facade - the sole entry point for all LDIF operations.
-
-        Integrates Flext components for infrastructure support:
-            - FlextContainer: Dependency injection
-            - FlextLogger: Structured logging
-            - FlextContext: Request context management
-            - FlextConfig: Configuration with validation
-            - FlextBus: Event publishing
-            - FlextDispatcher: Message dispatching
-            - FlextRegistry: Component registration
-
-        Args:
-            **kwargs: Configuration parameters. Supports 'config' for FlextLdifConfig.
-
-        """
+        """Initialize the facade and capture optional LDIF configuration."""
         # Extract 'config' from kwargs to avoid Pydantic extra='forbid' error
         # Store it in _init_config_value for use in model_post_init
         config_value = kwargs.pop("config", None)
@@ -345,15 +207,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         _context: FlextTypes.Metadata | None,
         /,
     ) -> None:
-        """Initialize private attributes after Pydantic initialization.
-
-        Uses DRY mapping to initialize all services dynamically, eliminating
-        repetitive initialization code while maintaining SOLID principles.
-
-        Args:
-            _context: Pydantic's validation context dictionary or None (unused).
-
-        """
+        """Populate service instances after Pydantic initialization."""
         # Initialize context (inherited from FlextService)
         # Context is already initialized by FlextService.__init__()
 
@@ -507,38 +361,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         format_options: FlextLdifModels.ParseFormatOptions | None = None,
         **format_kwargs: str | float | bool | None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        r"""Parse LDIF content string or file.
-
-        Delegates to FlextLdifParser service with correct quirks.
-
-        Args:
-            source: LDIF content as string or Path to LDIF file
-            server_type: Server type for quirk selection (use FlextLdifConstants.ServerTypes)
-            format_options: Parse options as ParseFormatOptions model
-            **format_kwargs: Individual format option overrides (e.g., validate_entries=True)
-
-        Returns:
-            FlextResult containing list of Entry models
-
-        Example:
-            # Parse LDIF content
-            result = ldif.parse("dn: cn=test\ncn: test\n")
-            if result.is_success:
-                entries = result.unwrap()  # list[Entry]
-
-            # Parse file
-            result = ldif.parse(Path("file.ldif"))
-            if result.is_success:
-                entries = result.unwrap()
-
-            # Parse with options model (old pattern - still works)
-            options = FlextLdifModels.ParseFormatOptions(validate_entries=True)
-            result = ldif.parse("dn: cn=test\ncn: test\n", format_options=options)
-
-            # Parse with kwargs (new pattern - more convenient)
-            result = ldif.parse("dn: cn=test\ncn: test\n", validate_entries=True)
-
-        """
+        """Parse LDIF content from text or file using the parser service."""
         parser_service = self._get_service(FlextLdifConstants.ServiceType.PARSER)
 
         # Architecture: Options+kwargs pattern

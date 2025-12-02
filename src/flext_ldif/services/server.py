@@ -1,15 +1,4 @@
-"""Quirk Registry for LDIF/LDAP Server Extension Discovery.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides centralized registry for discovering, registering, and accessing
-server-specific quirks with RFC-compliant base parsers.
-
-Registration is handled automatically during FlextLdifServer initialization.
-All quirk classes are auto-discovered from the flext_ldif.servers package
-and registered automatically.
-"""
+"""Quirk registry for discovering and serving server-specific behaviour."""
 
 from __future__ import annotations
 
@@ -38,38 +27,14 @@ type _QuirksDict = dict[
 
 
 class FlextLdifServer:
-    """Centralized registry for LDIF/LDAP server quirks.
-
-    Thin, DRY wrapper around auto-discovered server-specific quirks.
-    Manages discovery, registration, and access to quirks for all LDAP servers.
-
-    Features:
-    - Automatic discovery from flext_ldif.servers package
-    - Dynamic access to Schema/Acl/Entry quirks
-    - Singleton pattern for global registry
-    - Server-agnostic API for quirk operations
-    - Supports RFC 4514 DN operations via quirks
-    - Idempotent registration: quirks registered only once per process
-
-    Example:
-        registry = FlextLdifServer()
-        schema = registry.schema(FlextLdifConstants.ServerTypes.OID)     # Get OID schema quirk
-        acl = registry.acl(FlextLdifConstants.ServerTypes.OUD)            # Get OUD ACL quirk
-        entry = registry.entry(FlextLdifConstants.ServerTypes.OPENLDAP)   # Get OpenLDAP entry quirk
-
-    Note:
-        All quirks are auto-discovered and registered during __init__.
-        No manual registration required. Quirks are cached at class level
-        for efficient reuse across multiple instances.
-
-    """
+    """Discover and cache server-specific quirks for schema, ACL, and entries."""
 
     # Class-level cache for idempotent registration (shared across all instances)
     _quirks_cache: dict[str, FlextLdifServersBase] | None = None
     _registration_complete: bool = False
 
     def __init__(self) -> None:
-        """Initialize quirk registry with auto-discovery (idempotent)."""
+        """Initialize the registry and auto-discover quirks once per process."""
         # Use class-level cache if already initialized
         if FlextLdifServer._quirks_cache is not None:
             self._bases: dict[str, FlextLdifServersBase] = FlextLdifServer._quirks_cache
@@ -87,18 +52,7 @@ class FlextLdifServer:
             )
 
     def _auto_discover_and_register(self) -> None:
-        """Discover and register all base quirk classes.
-
-        Scans the flext_ldif.servers package for concrete quirk implementations
-        extending FlextLdifServersBase and automatically registers them.
-
-        Process:
-        1. Find all classes extending FlextLdifServersBase (except base itself)
-        2. Instantiate each concrete class
-        3. Register base instance in _bases dict by server_type
-        4. Log all registrations at debug level
-
-        """
+        """Discover and register concrete quirk classes from ``flext_ldif.servers``."""
         try:
             # Get all members from the servers package
             for name, obj in inspect.getmembers(servers_package):
@@ -176,18 +130,7 @@ class FlextLdifServer:
             raise
 
     def register(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
-        """Register a base quirk instance.
-
-        Validates that all nested quirks (schema, acl, entry) satisfy their
-        protocols before registration.
-
-        Args:
-            quirk: A FlextLdifServersBase instance to register
-
-        Returns:
-            FlextResult[bool] with True on success, fail() on failure
-
-        """
+        """Register a quirk after protocol validation."""
         try:
             # Validate it has required properties by accessing server_type
             try:
@@ -222,15 +165,7 @@ class FlextLdifServer:
             return FlextResult[bool].fail(f"Failed to register quirk: {e}")
 
     def _validate_protocols(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
-        """Validate that quirk has all required nested quirks (schema, acl, entry).
-
-        Args:
-            quirk: Quirk instance to validate
-
-        Returns:
-            FlextResult[bool] with True on success, fail() on failure
-
-        """
+        """Ensure a quirk exposes Schema, Acl, and Entry classes with valid protocols."""
         try:
             # Check that nested quirk classes exist (capitalized class names)
             quirk_class = type(quirk)
@@ -281,7 +216,7 @@ class FlextLdifServer:
         | FlextLdifTypes.EntryQuirkInstance
         | None
     ]:
-        """Generic method to get quirk attribute (schema, acl, entry).
+        """Retrieve a quirk attribute (schema, ACL, or entry) for a server.
 
         Eliminates ~100 lines of DRY violations from separate get_* methods.
         Returns FlextResult to avoid None returns and provide proper error handling.
