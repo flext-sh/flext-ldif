@@ -51,6 +51,7 @@ from __future__ import annotations
 from typing import Self, override
 
 from flext_core import FlextResult
+from pydantic import PrivateAttr
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
@@ -62,11 +63,19 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service.
 
+    Business Rule: Schema service centralizes all schema-related operations using
+    dependency injection via FlextLdifServer. Service provides server-agnostic
+    interface for schema parsing, validation, transformation, and detection.
+    Schema entries are identified by specific objectClasses (attributeSchema,
+    objectClassSchema, etc.). All operations use FlextResult for error handling.
+
+    Implication: Schema service enables schema-aware LDIF processing without
+    direct server knowledge. Schema entries can be filtered, validated, and
+    manipulated separately from regular entries. This enables schema migration
+    and validation workflows.
+
     Centralizes all schema-related operations that were previously scattered
     across server-specific nested Schema classes and separate detector service.
-
-    Provides a clean, server-agnostic interface for schema parsing, validation,
-    transformation, and detection using dependency injection via FlextLdifServer.
 
     Key Principles:
         - SRP: Each method has a single, well-defined responsibility
@@ -74,12 +83,6 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         - Utilities: Leverages FlextLdifUtilities extensively for metadata operations
         - Metadata: Uses Entry + Metadata patterns conforming to FlextLdifConstants
         - No Server Knowledge: Never imports or references server types directly
-
-    FlextService V2 Integration:
-        - Pydantic fields for service configuration
-        - Builder pattern for complex workflows
-        - execute() method returns service status
-        - Direct methods for immediate operations
 
     Methods:
         - parse_attribute(): Parse attribute definition
@@ -93,11 +96,13 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     """
 
     # ════════════════════════════════════════════════════════════════════════
-    # DEPENDENCY INJECTION FIELDS
+    # DEPENDENCY INJECTION FIELDS (PrivateAttr for frozen model compatibility)
     # ════════════════════════════════════════════════════════════════════════
 
-    _registry: FlextLdifServer
-    _server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+    _registry: FlextLdifServer = PrivateAttr(default_factory=FlextLdifServer)
+    _server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = PrivateAttr(
+        default="rfc",
+    )
 
     def __init__(
         self,
@@ -118,8 +123,13 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
         """
         super().__init__()
-        self._registry = registry if registry is not None else FlextLdifServer()
-        self._server_type = server_type
+        # Business Rule: Private attributes use object.__setattr__ for frozen model compatibility
+        object.__setattr__(
+            self,
+            "_registry",
+            registry if registry is not None else FlextLdifServer(),
+        )
+        object.__setattr__(self, "_server_type", server_type)
 
     # ════════════════════════════════════════════════════════════════════════
     # PROPERTIES
@@ -164,7 +174,8 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             Self for method chaining
 
         """
-        self._server_type = server_type
+        # Business Rule: Private attributes use object.__setattr__ for frozen model compatibility
+        object.__setattr__(self, "_server_type", server_type)
         return self
 
     def build(self) -> Self:
@@ -530,6 +541,9 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             "ldapsyntaxes",
             "matchingrules",
         }
+        # Type narrowing: ensure entry.attributes is not None
+        if entry.attributes is None:
+            return False
         entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
         return bool(schema_attrs & entry_attrs)
 

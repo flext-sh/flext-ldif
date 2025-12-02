@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 def extract_acls_from_entry() -> None:
@@ -100,7 +101,8 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
 
     # Cast acls to FlextLdifModels.Acl for API compatibility
     acls_typed = [cast("FlextLdifModels.Acl", acl) for acl in acls]
-    evaluation_result = acl_service.evaluate_acl_context(acls_typed, eval_context)
+    eval_context_typed = cast("FlextLdifTypes.Acl.EvaluationContextDict", eval_context)
+    evaluation_result = api.evaluate_acl_rules(acls_typed, eval_context_typed)
 
     if evaluation_result.is_success:
         allowed = evaluation_result.unwrap()
@@ -226,7 +228,8 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
 
     # Cast acls to FlextLdifModels.Acl for API compatibility
     acls_typed = [cast("FlextLdifModels.Acl", acl) for acl in acls]
-    eval_result = acl_service.evaluate_acl_context(acls_typed, eval_context)
+    eval_context_typed = cast("FlextLdifTypes.Acl.EvaluationContextDict", eval_context)
+    eval_result = api.evaluate_acl_rules(acls_typed, eval_context_typed)
 
     if eval_result.is_success:
         # Validate entry

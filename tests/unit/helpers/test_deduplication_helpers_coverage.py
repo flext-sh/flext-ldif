@@ -686,13 +686,17 @@ class TestFlextLdifDeduplicationHelpers:
                 update={
                     "metadata": FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(test_key="test_value"),
+                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                            test_key="test_value"
+                        ),
                     )
                 }
             )
         else:
             # Update extensions via model_copy
-            current_extensions = entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
+            current_extensions = (
+                entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
+            )
             # Get existing extensions as dict
             existing_dict = (
                 current_extensions.model_dump()
@@ -706,7 +710,9 @@ class TestFlextLdifDeduplicationHelpers:
             )
             entry = entry.model_copy(
                 update={
-                    "metadata": entry.metadata.model_copy(update={"extensions": updated_extensions})
+                    "metadata": entry.metadata.model_copy(
+                        update={"extensions": updated_extensions}
+                    )
                 }
             )
         DeduplicationHelpers.assert_metadata_extensions_get_equals(
@@ -727,20 +733,28 @@ class TestFlextLdifDeduplicationHelpers:
                 update={
                     "metadata": FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(test_key="test_value"),
+                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                            test_key="test_value"
+                        ),
                     )
                 }
             )
         else:
             # Update extensions via model_copy to ensure type safety
-            current_extensions = entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
+            current_extensions = (
+                entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
+            )
             updated_extensions = FlextLdifModelsMetadata.DynamicMetadata(
-                **current_extensions.model_dump() if hasattr(current_extensions, "model_dump") else {},
+                **current_extensions.model_dump()
+                if hasattr(current_extensions, "model_dump")
+                else {},
                 test_key="test_value",
             )
             entry = entry.model_copy(
                 update={
-                    "metadata": entry.metadata.model_copy(update={"extensions": updated_extensions})
+                    "metadata": entry.metadata.model_copy(
+                        update={"extensions": updated_extensions}
+                    )
                 }
             )
         DeduplicationHelpers.assert_metadata_extension_equals(
@@ -761,20 +775,28 @@ class TestFlextLdifDeduplicationHelpers:
                 update={
                     "metadata": FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(test_key={"nested": "value"}),
+                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                            test_key={"nested": "value"}
+                        ),
                     )
                 }
             )
         else:
             # Update extensions via model_copy to ensure type safety
-            current_extensions = entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
+            current_extensions = (
+                entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
+            )
             updated_extensions = FlextLdifModelsMetadata.DynamicMetadata(
-                **current_extensions.model_dump() if hasattr(current_extensions, "model_dump") else {},
+                **current_extensions.model_dump()
+                if hasattr(current_extensions, "model_dump")
+                else {},
                 test_key={"nested": "value"},
             )
             entry = entry.model_copy(
                 update={
-                    "metadata": entry.metadata.model_copy(update={"extensions": updated_extensions})
+                    "metadata": entry.metadata.model_copy(
+                        update={"extensions": updated_extensions}
+                    )
                 }
             )
         DeduplicationHelpers.assert_metadata_extension_get_isinstance(

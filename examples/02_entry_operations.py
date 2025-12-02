@@ -23,7 +23,8 @@ from flext_ldif import FlextLdif, FlextLdifModels
 class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
-    def intelligent_builders(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    @staticmethod
+    def intelligent_builders() -> FlextResult[list[FlextLdifModels.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
 
@@ -54,39 +55,49 @@ class DRYEntryOperations:
             ).is_success
         ])
 
-    def advanced_filtering(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    @staticmethod
+    def advanced_filtering() -> FlextResult[list[FlextLdifModels.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
 
         # Build entries first
-        entries_result = self.intelligent_builders()
+        entries_result = DRYEntryOperations.intelligent_builders()
         if entries_result.is_failure:
             return entries_result
 
         entries = entries_result.unwrap()
 
         # DRY filtering: department IT + valid email in one pipeline
-        return (
-            FlextResult.ok(entries)
-            .bind(
-                lambda e: api.filter_entries(
-                    e,
-                    lambda x: "IT" in x.attributes.get("departmentNumber", []),
-                ),
-            )
-            .bind(
-                lambda e: api.filter_entries(
-                    e,
-                    lambda x: "@example.com" in x.attributes.get("mail", [""])[0],
-                ),
-            )
+        filtered_it = api.filter(
+            entries,
+            custom_filter=lambda x: (
+                x.attributes is not None
+                and "IT" in x.attributes.get("departmentNumber", [])
+            ),
+        )
+        if filtered_it.is_failure:
+            return filtered_it
+        return api.filter(
+            filtered_it.value,
+            custom_filter=lambda x: (
+                x.attributes is not None
+                and "@example.com"
+                in (
+                    x.attributes.get("mail", [""])[0]
+                    if x.attributes.get("mail")
+                    else ""
+                )
+            ),
         )
 
-    def batch_processing(self) -> FlextResult[list[dict[str, object]]]:
+    @staticmethod
+    def batch_processing() -> FlextResult[list[dict[str, object]]]:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
 
         # Build → filter → parallel transform in one composition
-        return self.advanced_filtering().bind(
-            lambda e: api.process("transform", e, parallel=True, max_workers=4),
+        return DRYEntryOperations.advanced_filtering().flat_map(
+            lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
+                lambda results: [r.model_dump() for r in results]
+            ),
         )

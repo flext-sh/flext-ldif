@@ -16,7 +16,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, override
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core._models.collections import FlextModelsCollections
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
@@ -113,45 +114,61 @@ class FlextLdifCategorization(
         self._rejection_tracker: dict[str, list[FlextLdifModels.Entry]]
         self._server_registry: FlextLdifServer
 
-        # Initialize server registry via DI
+        # Initialize server registry via DI (use object.__setattr__ for frozen model)
         if server_registry is not None:
-            self._server_registry = server_registry
+            object.__setattr__(self, "_server_registry", server_registry)
         else:
-            self._server_registry = FlextLdifServer.get_global_instance()
+            object.__setattr__(
+                self, "_server_registry", FlextLdifServer.get_global_instance()
+            )
 
         # Normalize categorization rules
         if isinstance(categorization_rules, FlextLdifModels.CategoryRules):
-            self._categorization_rules = categorization_rules
-        elif FlextRuntime.is_dict_like(categorization_rules):
-            self._categorization_rules = FlextLdifModels.CategoryRules.model_validate(
-                categorization_rules,
+            object.__setattr__(self, "_categorization_rules", categorization_rules)
+        elif isinstance(categorization_rules, dict):
+            object.__setattr__(
+                self,
+                "_categorization_rules",
+                FlextLdifModels.CategoryRules.model_validate(categorization_rules),
             )
         else:
-            self._categorization_rules = FlextLdifModels.CategoryRules()
+            object.__setattr__(
+                self, "_categorization_rules", FlextLdifModels.CategoryRules()
+            )
 
         # Normalize schema whitelist rules
         if isinstance(schema_whitelist_rules, FlextLdifModels.WhitelistRules):
-            self._schema_whitelist_rules = schema_whitelist_rules
-        elif FlextRuntime.is_dict_like(schema_whitelist_rules):
-            self._schema_whitelist_rules = (
-                FlextLdifModels.WhitelistRules.model_validate(schema_whitelist_rules)
+            object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
+        elif isinstance(schema_whitelist_rules, dict):
+            object.__setattr__(
+                self,
+                "_schema_whitelist_rules",
+                FlextLdifModels.WhitelistRules.model_validate(schema_whitelist_rules),
             )
         else:
-            self._schema_whitelist_rules = None
+            object.__setattr__(self, "_schema_whitelist_rules", None)
 
-        self._forbidden_attributes = (
-            forbidden_attributes if forbidden_attributes is not None else []
+        object.__setattr__(
+            self,
+            "_forbidden_attributes",
+            forbidden_attributes if forbidden_attributes is not None else [],
         )
-        self._forbidden_objectclasses = (
-            forbidden_objectclasses if forbidden_objectclasses is not None else []
+        object.__setattr__(
+            self,
+            "_forbidden_objectclasses",
+            forbidden_objectclasses if forbidden_objectclasses is not None else [],
         )
-        self._base_dn = base_dn
-        self._server_type = server_type
-        self._rejection_tracker = {
-            "invalid_dn_rfc4514": [],
-            "base_dn_filter": [],
-            "categorization_rejected": [],
-        }
+        object.__setattr__(self, "_base_dn", base_dn)
+        object.__setattr__(self, "_server_type", server_type)
+        object.__setattr__(
+            self,
+            "_rejection_tracker",
+            {
+                "invalid_dn_rfc4514": [],
+                "base_dn_filter": [],
+                "categorization_rejected": [],
+            },
+        )
 
     @override
     def execute(
@@ -167,8 +184,6 @@ class FlextLdifCategorization(
 
         """
         # Create FlexibleCategories (Categories[FlextLdifModels.Entry])
-        from flext_core._models.collections import FlextModelsCollections
-
         categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
         categories[FlextLdifConstants.Categories.SCHEMA] = []
         categories[FlextLdifConstants.Categories.HIERARCHY] = []
@@ -234,6 +249,14 @@ class FlextLdifCategorization(
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 
+        Business Rule: DN validation follows RFC 4514 specification. Invalid DNs are
+        rejected and tracked in rejection tracker with metadata updates. Normalized DNs
+        replace original DNs in entry models. Validation failures don't stop processing -
+        entries are filtered out but processing continues.
+
+        Implication: DN validation ensures RFC compliance before categorization and processing.
+        Rejected entries maintain metadata for audit trail and potential recovery.
+
         Public method for DN validation using FlextLdifUtilities.DN.
         Updates entry metadata with validation results.
 
@@ -241,7 +264,7 @@ class FlextLdifCategorization(
             entries: Raw entries from parser
 
         Returns:
-            FlextResult with validated entries or failure
+            FlextResult with validated entries (invalid DNs filtered out)
 
         """
         validated: list[FlextLdifModels.Entry] = []
@@ -328,7 +351,19 @@ class FlextLdifCategorization(
             "matchingrules",
         }
 
-        entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
+        # Business Rule: Schema detection requires non-None attributes.
+        # None attributes indicate invalid entry state - cannot be schema entry.
+        if entry.attributes is None:
+            return False
+        # Type narrowing: entry.attributes is not None
+        attrs_dict = (
+            entry.attributes.attributes
+            if hasattr(entry.attributes, "attributes")
+            else {}
+        )
+        if not isinstance(attrs_dict, dict):
+            return False
+        entry_attrs = {attr.lower() for attr in attrs_dict}
         return bool(schema_attrs & entry_attrs)
 
     def _get_server_constants(
@@ -406,12 +441,11 @@ class FlextLdifCategorization(
                     ):
                         acl_value = FlextLdifConstants.Categories.ACL.value
                         if FlextLdifConstants.is_valid_category_literal(acl_value):
+                            # Business Rule: Return type must be CategoryLiteral, not str
+                            # Implication: Explicit cast required for pyrefly type checking
                             return (acl_value, None)
                         # Fallback if validation fails (should never happen)
-                        return (
-                            FlextLdifConstants.Categories.ACL.value,
-                            None,
-                        )
+                        return (FlextLdifConstants.Categories.ACL.value, None)
                 continue
 
             category_objectclasses = category_map.get(category)
@@ -423,19 +457,16 @@ class FlextLdifCategorization(
                 tuple(category_objectclasses),
             ):
                 # Category from priority_order is validated to be a CategoryLiteral
-                return (
-                    category,
-                    None,
-                )
+                # priority_order is list[CategoryLiteral] - no cast needed
+                return (category, None)
 
         rejected_value = FlextLdifConstants.Categories.REJECTED.value
         if FlextLdifConstants.is_valid_category_literal(rejected_value):
+            # Business Rule: Return type must be CategoryLiteral, not str
+            # StrEnum.value already satisfies CategoryLiteral - no cast needed
             return (rejected_value, "No category match")
         # Fallback if validation fails (should never happen)
-        return (
-            FlextLdifConstants.Categories.REJECTED.value,
-            "No category match",
-        )
+        return (FlextLdifConstants.Categories.REJECTED.value, "No category match")
 
     def _update_metadata_for_filtered_entries(
         self,
@@ -487,6 +518,14 @@ class FlextLdifCategorization(
     ) -> tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize single entry using provided or instance categorization rules.
 
+        Business Rule: Entry categorization follows priority order: schema → hierarchy →
+        users/groups → acl → rejected. Server-specific rules override defaults via dependency
+        injection. Invalid rules or server types result in rejected category with error reason.
+
+        Implication: Categorization enables entry organization for migration, filtering, and
+        analysis. Server-specific rules ensure accurate categorization per LDAP server type.
+        Schema entries are always detected first (universal across servers).
+
         Uses provided rules to override server constants if available.
         Merges rules with server constants where rules define custom categorization.
 
@@ -503,16 +542,18 @@ class FlextLdifCategorization(
         """
         # Use provided rules, fall back to instance rules
         effective_rules = rules if rules is not None else self._categorization_rules
-        
+
         # Normalize rules if needed
         if isinstance(effective_rules, FlextLdifModels.CategoryRules):
             normalized_rules = effective_rules
-        elif FlextRuntime.is_dict_like(effective_rules):
+        elif isinstance(effective_rules, dict):
             try:
                 normalized_rules = FlextLdifModels.CategoryRules.model_validate(
                     effective_rules,
                 )
             except Exception as e:
+                # Business Rule: Invalid rules result in rejected category with error reason
+                # StrEnum.value already satisfies CategoryLiteral - no cast needed
                 return (
                     FlextLdifConstants.Categories.REJECTED.value,
                     f"Invalid category rules: {e}",
@@ -523,29 +564,28 @@ class FlextLdifCategorization(
         effective_server_type_raw = (
             server_type if server_type is not None else self._server_type
         )
-        
+
         # Normalize server_type to canonical form and validate
         try:
             effective_server_type = FlextLdifConstants.normalize_server_type(
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
-            # Invalid server type - reject entry
+            # Business Rule: Invalid server types result in rejected category
+            # StrEnum.value already satisfies CategoryLiteral - no cast needed
             return (
                 FlextLdifConstants.Categories.REJECTED.value,
                 f"Unknown server type: {effective_server_type_raw} - {e}",
             )
 
         # Check schema first (universal across all servers)
+        # Business Rule: Schema entries are detected first (highest priority) as they
+        # are universal across all LDAP servers. Schema detection uses attributeTypes,
+        # objectClasses, ldapsyntaxes, matchingrules attributes.
         if self.is_schema_entry(entry):
-            schema_value = FlextLdifConstants.Categories.SCHEMA.value
-            if FlextLdifConstants.is_valid_category_literal(schema_value):
-                return (schema_value, None)
-            # Fallback if validation fails (should never happen)
-            return (
-                FlextLdifConstants.Categories.SCHEMA.value,
-                None,
-            )
+            # Business Rule: Return type must be CategoryLiteral, not str
+            # StrEnum.value already satisfies CategoryLiteral - no cast needed
+            return (FlextLdifConstants.Categories.SCHEMA.value, None)
 
         # Build merged category map from rules
         # Priority: explicit rules > server constants (server constants as fallback)
@@ -553,71 +593,208 @@ class FlextLdifCategorization(
             FlextLdifConstants.LiteralTypes.CategoryLiteral,
             frozenset[str],
         ] = {}
-        
+
         # Add rules-based categories if provided
+        # Business Rule: merged_category_map keys must be CategoryLiteral
+        # StrEnum.value already satisfies CategoryLiteral - no cast needed
         if normalized_rules.hierarchy_objectclasses:
-            merged_category_map["hierarchy"] = frozenset([
-                oc.lower() for oc in normalized_rules.hierarchy_objectclasses
-            ])
+            merged_category_map[FlextLdifConstants.Categories.HIERARCHY.value] = (
+                frozenset([
+                    oc.lower() for oc in normalized_rules.hierarchy_objectclasses
+                ])
+            )
         if normalized_rules.user_objectclasses:
-            merged_category_map["users"] = frozenset([
+            merged_category_map[FlextLdifConstants.Categories.USERS.value] = frozenset([
                 oc.lower() for oc in normalized_rules.user_objectclasses
             ])
         if normalized_rules.group_objectclasses:
-            merged_category_map["groups"] = frozenset([
-                oc.lower() for oc in normalized_rules.group_objectclasses
-            ])
+            merged_category_map[FlextLdifConstants.Categories.GROUPS.value] = (
+                frozenset([oc.lower() for oc in normalized_rules.group_objectclasses])
+            )
         if normalized_rules.acl_attributes:
             # ACL is attribute-based, store as special marker
-            merged_category_map["acl"] = frozenset([
+            merged_category_map[FlextLdifConstants.Categories.ACL.value] = frozenset([
                 f"attr:{attr.lower()}" for attr in normalized_rules.acl_attributes
             ])
 
         # Get server constants as fallback if no rules provided
         priority_order: list[FlextLdifConstants.LiteralTypes.CategoryLiteral] = []
+        constants: type | None = None
         if not merged_category_map:
             # Fallback to server constants
             constants_result = self._get_server_constants(effective_server_type)
             if constants_result.is_failure:
-                return (FlextLdifConstants.Categories.REJECTED.value, constants_result.error)
+                # Business Rule: Server constants retrieval failure results in rejected category
+                # StrEnum.value already satisfies CategoryLiteral - no cast needed
+                return (
+                    FlextLdifConstants.Categories.REJECTED.value,
+                    constants_result.error,
+                )
 
             constants = constants_result.unwrap()
             if hasattr(constants, "CATEGORIZATION_PRIORITY"):
+                # Business Rule: priority_order must be list[CategoryLiteral]
+                # is_valid_category_literal validates items are CategoryLiteral
                 priority_order = [
-                    item for item in constants.CATEGORIZATION_PRIORITY
+                    item
+                    for item in constants.CATEGORIZATION_PRIORITY
                     if FlextLdifConstants.is_valid_category_literal(item)
+                ]
+            # Business Rule: If server doesn't provide CATEGORIZATION_PRIORITY, use default
+            # Implication: Ensure priority_order is always populated for correct categorization
+            if not priority_order:
+                priority_order = [
+                    cat
+                    for cat in [
+                        FlextLdifConstants.Categories.USERS.value,
+                        FlextLdifConstants.Categories.HIERARCHY.value,
+                        FlextLdifConstants.Categories.GROUPS.value,
+                        FlextLdifConstants.Categories.ACL.value,
+                    ]
+                    if FlextLdifConstants.is_valid_category_literal(cat)
                 ]
             if hasattr(constants, "CATEGORY_OBJECTCLASSES"):
                 server_map = constants.CATEGORY_OBJECTCLASSES
                 for k, v in server_map.items():
                     if FlextLdifConstants.is_valid_category_literal(k):
+                        # Business Rule: k is validated as CategoryLiteral via TypeIs
+                        # TypeIs narrows type - no cast needed
                         merged_category_map[k] = (
                             v if isinstance(v, frozenset) else frozenset([str(v)])
                         )
+            if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
+                acl_attrs = constants.CATEGORIZATION_ACL_ATTRIBUTES
+                if acl_attrs:
+                    # Business Rule: merged_category_map keys must be CategoryLiteral
+                    # StrEnum.value already satisfies CategoryLiteral - no cast needed
+                    merged_category_map[FlextLdifConstants.Categories.ACL.value] = (
+                        frozenset([f"attr:{attr.lower()}" for attr in acl_attrs])
+                    )
         else:
-            # Use rules priority
+            # Use rules, but still get constants for priority_order, hierarchy priority check,
+            # and to complement rules with server constants for categories not specified in rules
+            # Business Rule: Rules can be partial - complement with server constants for missing categories
+            # Implication: Server constants fill gaps in rules, ensuring all categories are covered
+            constants_result = self._get_server_constants(effective_server_type)
+            if constants_result.is_success:
+                constants = constants_result.unwrap()
+                # Business Rule: Use server CATEGORIZATION_PRIORITY for correct order
+                # Implication: Server knows best priority order (schema first, then acl, etc.)
+                if hasattr(constants, "CATEGORIZATION_PRIORITY"):
+                    priority_order = [
+                        item
+                        for item in constants.CATEGORIZATION_PRIORITY
+                        if FlextLdifConstants.is_valid_category_literal(item)
+                    ]
+                else:
+                    # Fallback: Use default priority order if server doesn't provide it
+                    priority_order = [
+                        cat
+                        for cat in [
+                            FlextLdifConstants.Categories.USERS.value,
+                            FlextLdifConstants.Categories.HIERARCHY.value,
+                            FlextLdifConstants.Categories.GROUPS.value,
+                            FlextLdifConstants.Categories.ACL.value,
+                        ]
+                        if FlextLdifConstants.is_valid_category_literal(cat)
+                    ]
+
+                # Complement rules with server constants for categories not specified in rules
+                # Business Rule: Rules override server constants, but server constants fill gaps
+                # Implication: If rules don't specify a category, use server constants for it
+                if hasattr(constants, "CATEGORY_OBJECTCLASSES"):
+                    server_map = constants.CATEGORY_OBJECTCLASSES
+                    for k, v in server_map.items():
+                        if FlextLdifConstants.is_valid_category_literal(k):
+                            # TypeIs narrows k to CategoryLiteral - no cast needed
+                            # Only add if not already in merged_category_map (rules take precedence)
+                            if k not in merged_category_map:
+                                merged_category_map[k] = (
+                                    v
+                                    if isinstance(v, frozenset)
+                                    else frozenset([str(v)])
+                                )
+
+                # Always use ACL attributes from constants when available, overriding rules
+                # Business Rule: ACL attributes from server constants override rules
+                # Implication: Server knows best ACL attributes for its type
+                if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
+                    acl_attrs = constants.CATEGORIZATION_ACL_ATTRIBUTES
+                    if acl_attrs:
+                        # Business Rule: merged_category_map keys must be CategoryLiteral
+                        # StrEnum.value already satisfies CategoryLiteral - no cast needed
+                        merged_category_map[FlextLdifConstants.Categories.ACL.value] = (
+                            frozenset([f"attr:{attr.lower()}" for attr in acl_attrs])
+                        )
+            else:
+                # Fallback: Use default priority order if server constants unavailable
+                # Business Rule: priority_order must be list[CategoryLiteral]
+                # StrEnum values satisfy Literal type - no cast needed
+                priority_order = [
+                    cat
+                    for cat in [
+                        FlextLdifConstants.Categories.USERS.value,
+                        FlextLdifConstants.Categories.HIERARCHY.value,
+                        FlextLdifConstants.Categories.GROUPS.value,
+                        FlextLdifConstants.Categories.ACL.value,
+                    ]
+                    if FlextLdifConstants.is_valid_category_literal(cat)
+                ]
+                constants = None
+
+        # Check hierarchy priority first (if constants available)
+        # Business Rule: Hierarchy entries have priority over users/groups when detected
+        # via server-specific priority rules. This ensures containers are categorized
+        # correctly before user/group entries.
+        if constants is not None and self._check_hierarchy_priority(entry, constants):
+            # Business Rule: Return type must be CategoryLiteral, not str
+            # StrEnum.value already satisfies CategoryLiteral - no cast needed
+            return (FlextLdifConstants.Categories.HIERARCHY.value, None)
+
+        # Business Rule: If priority_order is empty, all entries will be rejected
+        # Implication: Ensure priority_order is populated from server constants or default
+        if not priority_order:
+            # Fallback: Use default priority order if server didn't provide one
+            # Business Rule: Default order ensures basic categorization works
+            # Implication: Even without server constants, categorization should work
             priority_order = [
-                "users", "hierarchy", "groups", "acl"
+                cat
+                for cat in [
+                    FlextLdifConstants.Categories.USERS.value,
+                    FlextLdifConstants.Categories.HIERARCHY.value,
+                    FlextLdifConstants.Categories.GROUPS.value,
+                    FlextLdifConstants.Categories.ACL.value,
+                ]
+                if FlextLdifConstants.is_valid_category_literal(cat)
             ]
 
         # Check entry objectClasses against merged category map
         entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
-        
+
         for category in priority_order:
             if category in merged_category_map:
                 category_ocs = merged_category_map[category]
                 # Check for attribute-based categories (ACL)
-                if category == "acl":
+                if category == FlextLdifConstants.Categories.ACL.value:
                     for attr_marker in category_ocs:
                         if attr_marker.startswith("attr:"):
                             attr_name = attr_marker[5:]
                             if entry.has_attribute(attr_name):
-                                return (FlextLdifConstants.Categories.ACL.value, None)
+                                # Business Rule: Return type must be CategoryLiteral, not str
+                                # StrEnum.value already satisfies CategoryLiteral - no cast needed
+                                return (
+                                    FlextLdifConstants.Categories.ACL.value,
+                                    None,
+                                )
                 # Check for objectClass-based categories
                 elif any(oc in category_ocs for oc in entry_ocs):
-                    if FlextLdifConstants.is_valid_category_literal(category):
-                        return (category, None)
+                    # Business Rule: category is CategoryLiteral from priority_order
+                    # category comes from priority_order which is list[CategoryLiteral]
+                    return (category, None)
 
+        # Business Rule: Entries that don't match any category are rejected.
+        # Rejection reason provides diagnostic information for troubleshooting.
+        # StrEnum.value already satisfies CategoryLiteral - no cast needed
         return (FlextLdifConstants.Categories.REJECTED.value, "No category match")
 
     def categorize_entries(
@@ -626,6 +803,14 @@ class FlextLdifCategorization(
     ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
         """Categorize entries into 6 categories.
 
+        Business Rule: Batch categorization processes all entries and organizes them into
+        categories (schema, hierarchy, users, groups, acl, rejected). Each entry's metadata
+        is updated with category assignment and rejection tracking. Rejected entries are
+        tracked separately for analysis.
+
+        Implication: Categorization enables entry organization for migration, filtering, and
+        analysis. Category assignments are stored in entry metadata for downstream processing.
+
         Uses internal categorize_entry() method for each entry.
         Updates entry metadata with category assignment and rejection tracking.
 
@@ -633,12 +818,10 @@ class FlextLdifCategorization(
             entries: Validated entries with normalized DNs
 
         Returns:
-            FlextResult with FlexibleCategories
+            FlextResult with FlexibleCategories containing categorized entries
 
         """
         # Create FlexibleCategories (Categories[FlextLdifModels.Entry])
-        from flext_core._models.collections import FlextModelsCollections
-
         categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
         categories[FlextLdifConstants.Categories.SCHEMA] = []
         categories[FlextLdifConstants.Categories.HIERARCHY] = []
@@ -710,8 +893,6 @@ class FlextLdifCategorization(
             return categories
 
         # Create FlexibleCategories (Categories[FlextLdifModels.Entry])
-        from flext_core._models.collections import FlextModelsCollections
-
         filtered = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
         # Initialize all categories to ensure they exist even if empty
         filtered[FlextLdifConstants.Categories.SCHEMA] = []
@@ -720,6 +901,9 @@ class FlextLdifCategorization(
         filtered[FlextLdifConstants.Categories.GROUPS] = []
         filtered[FlextLdifConstants.Categories.ACL] = []
         filtered[FlextLdifConstants.Categories.REJECTED] = []
+
+        # Collect all excluded entries from all categories
+        all_excluded_entries: list[FlextLdifModels.Entry] = []
 
         for category, entries in categories.items():
             if not entries:
@@ -748,6 +932,8 @@ class FlextLdifCategorization(
                     rejection_reason=f"DN not under base DN: {self._base_dn}",
                 )
                 filtered[category] = included_updated
+                # Collect excluded entries to add to REJECTED category
+                all_excluded_entries.extend(excluded_updated)
                 # Rejection tracker uses FlextLdifModels.Entry
                 self._rejection_tracker["base_dn_filter"].extend(excluded_updated)
 
@@ -761,6 +947,17 @@ class FlextLdifCategorization(
                     )
             else:
                 filtered[category] = entries
+
+        # Add all excluded entries to the rejected category
+        # Business Rule: Entries filtered out by base DN must be added to REJECTED category
+        # Implication: Preserves audit trail and allows downstream processing to see rejected entries
+        if all_excluded_entries:
+            existing_rejected = (
+                filtered.get(FlextLdifConstants.Categories.REJECTED, []) or []
+            )
+            filtered[FlextLdifConstants.Categories.REJECTED] = (
+                existing_rejected + all_excluded_entries
+            )
 
         return filtered
 
@@ -832,8 +1029,6 @@ class FlextLdifCategorization(
             return categories
 
         # Create FlexibleCategories (Categories[FlextLdifModels.Entry])
-        from flext_core._models.collections import FlextModelsCollections
-
         filtered = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
         excluded_entries: list[FlextLdifModels.Entry] = []
 

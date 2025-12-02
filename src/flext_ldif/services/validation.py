@@ -115,6 +115,7 @@ from typing import Self, override
 from flext_core import FlextDecorators, FlextResult, FlextTypes
 from pydantic import Field
 
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -122,9 +123,18 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase,
+    FlextLdifServiceBase[FlextLdifModels.ValidationServiceStatus],
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
+
+    Business Rule: Validation service enforces RFC 2849/4512 compliance for LDAP
+    attribute names, objectClass names, attribute values, and DN components.
+    All validation follows RFC specifications: attribute names must start with letter,
+    can contain letters/digits/hyphens, case-insensitive, length limits apply.
+
+    Implication: RFC-compliant validation ensures interoperability across LDAP
+    servers. Validation failures result in fail-fast error responses via FlextResult.
+    Batch validation enables efficient processing of multiple attributes.
 
     Provides comprehensive validation for LDAP attribute names, object class names,
     attribute values, and DN components following RFC 2849 (LDIF) and RFC 4512 (Schema).
@@ -166,13 +176,15 @@ class FlextLdifValidation(
     ) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
         """Execute validation service self-check.
 
-        FlextDecorators automatically:
-        - Log operation start/completion/failure
-        - Track performance metrics
-        - Handle context propagation (correlation_id, operation_name)
+        Business Rule: Execute method provides service health check for protocol compliance.
+        Returns ValidationServiceStatus indicating service is operational and ready for
+        validation operations.
+
+        Implication: This method enables service-based execution patterns while maintaining
+        type safety. Used internally by service orchestration layers for health monitoring.
 
         Returns:
-        FlextResult containing service status
+            FlextResult with ValidationServiceStatus containing service metadata
 
         """
         return FlextResult[FlextLdifModels.ValidationServiceStatus].ok(
@@ -246,14 +258,19 @@ class FlextLdifValidation(
             if obj_result.is_success:
                 result[name] = obj_result.unwrap()
 
-        # Convert dict[str, bool] to _BooleanFlags for ValidationBatchResult
-        from flext_ldif._models.results import _BooleanFlags
-
-        boolean_flags = _BooleanFlags(**result)
+        # Convert dict[str, bool] to BooleanFlags for ValidationBatchResult
+        boolean_flags = FlextLdifModelsResults.BooleanFlags(**result)
         return FlextLdifModels.ValidationBatchResult(results=boolean_flags)
 
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
+
+        Business Rule: Attribute name validation follows RFC 4512 Section 2.5 rules.
+        Names must start with letter, can contain letters/digits/hyphens, case-insensitive,
+        length typically limited to 127 characters. Invalid names result in False result.
+
+        Implication: RFC-compliant validation ensures interoperability across LDAP servers.
+        Validation uses FlextLdifUtilities.Constants for core logic, ensuring consistency.
 
         Uses FlextLdifUtilities.Constants.validate_attribute_name() for core validation logic.
 
@@ -290,6 +307,13 @@ class FlextLdifValidation(
     def validate_objectclass_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP object class name against RFC 4512 rules.
 
+        Business Rule: ObjectClass name validation follows RFC 4512 Section 2.4 rules.
+        Same rules as attribute names: must start with letter, can contain letters/digits/hyphens,
+        case-insensitive. Must match structural, auxiliary, or abstract class definitions.
+
+        Implication: RFC-compliant validation ensures interoperability across LDAP servers.
+        Validation uses FlextLdifUtilities.Constants for core logic, ensuring consistency.
+
         RFC 4512 Section 2.4: Object Class Definitions
         - ObjectClass names follow same rules as attribute names
         - Must start with a letter
@@ -325,7 +349,7 @@ class FlextLdifValidation(
 
         Args:
             value: Attribute value to validate
-            max_length: Optional maximum length (default: 1MB)
+            max_length: Optional maximum length in bytes (default: 1048576, approximately 1MB)
 
         Returns:
             FlextResult containing True if valid, False otherwise

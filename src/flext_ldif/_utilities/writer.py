@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from flext_core.typings import FlextTypes
@@ -517,8 +518,14 @@ class FlextLdifUtilitiesWriter:
             if not isinstance(extensions_raw, dict):
                 attr_order = None
             else:
-                extensions_dict: dict[str, FlextTypes.MetadataAttributeValue] = (
-                    extensions_raw
+                # Business Rule: extensions_raw is dict[str, GeneralValueType] from metadata
+                # but we need dict[str, MetadataAttributeValue] for type safety.
+                # GeneralValueType includes recursive types, but metadata extensions
+                # in practice only contain ScalarValue or Sequence[ScalarValue].
+                # Implication: We use cast for type conversion since runtime values
+                # are compatible with MetadataAttributeValue.
+                extensions_dict = cast(
+                    "dict[str, FlextTypes.MetadataAttributeValue]", extensions_raw
                 )
                 if FlextRuntime.is_dict_like(extensions_dict):
                     attr_order = extensions_dict.get("attribute_order")
@@ -906,8 +913,6 @@ class FlextLdifUtilitiesWriter:
             return (attr_name, attr_values)
 
         # Type narrowing: ensure marked_attrs_raw is the correct nested dict type
-        from typing import cast
-
         marked_attrs: dict[str, dict[str, FlextTypes.MetadataAttributeValue]] = cast(
             "dict[str, dict[str, FlextTypes.MetadataAttributeValue]]",
             marked_attrs_raw,
@@ -942,17 +947,14 @@ class FlextLdifUtilitiesWriter:
             "renamed",
         }
         if isinstance(status_raw, str) and status_raw in valid_statuses:
-            from typing import cast
-
             status: FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral = cast(
                 "FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral",
                 status_raw,
             )
         else:
-            status = cast(
-                "FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral",
-                FlextLdifConstants.AttributeMarkerStatus.NORMAL.value,
-            )
+            # Business Rule: NORMAL.value is "normal" which satisfies AttributeMarkerStatusLiteral
+            # StrEnum.value already satisfies Literal type - no cast needed
+            status = FlextLdifConstants.AttributeMarkerStatus.NORMAL.value
         return FlextLdifUtilitiesWriter._handle_attribute_status(
             attr_name,
             attr_values,

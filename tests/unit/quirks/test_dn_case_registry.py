@@ -15,6 +15,7 @@ from typing import cast
 import pytest
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from tests.fixtures.typing import DirectoryEntryDataDict
 
 
@@ -51,7 +52,9 @@ class TestFlextLdifDnCaseRegistry:
     # TEST INITIALIZATION
     # ════════════════════════════════════════════════════════════════════════
 
-    def test_registry_starts_empty(self, registry: FlextLdifModelsDomains.DnRegistry) -> None:
+    def test_registry_starts_empty(
+        self, registry: FlextLdifModelsDomains.DnRegistry
+    ) -> None:
         """Test that new registry has no DNs registered."""
         stats = registry.get_stats()
         assert stats["total_dns"] == 0
@@ -65,7 +68,6 @@ class TestFlextLdifDnCaseRegistry:
         """Test internal structures are initialized correctly."""
         assert hasattr(registry, "_registry")
         assert hasattr(registry, "_case_variants")
-        from flext_ldif._models.metadata import FlextLdifModelsMetadata
         assert isinstance(registry._registry, FlextLdifModelsMetadata.DynamicMetadata)
         assert isinstance(registry._case_variants, dict)
         assert len(registry._registry.model_dump()) == 0
@@ -117,7 +119,9 @@ class TestFlextLdifDnCaseRegistry:
         assert "  " not in normalized
         assert " " not in normalized
 
-    def test_normalize_idempotent(self, registry: FlextLdifModelsDomains.DnRegistry) -> None:
+    def test_normalize_idempotent(
+        self, registry: FlextLdifModelsDomains.DnRegistry
+    ) -> None:
         """Test that normalizing twice gives same result."""
         dn = "CN=Test, DC=Example, DC=Com"
         first_normalized = registry._normalize_dn(dn)
@@ -295,7 +299,9 @@ class TestFlextLdifDnCaseRegistry:
         assert not registry_with_dns.has_dn("cn=unknown,dc=com")
         assert not registry_with_dns.has_dn("cn=other,dc=org")
 
-    def test_has_dn_empty_registry(self, registry: FlextLdifModelsDomains.DnRegistry) -> None:
+    def test_has_dn_empty_registry(
+        self, registry: FlextLdifModelsDomains.DnRegistry
+    ) -> None:
         """Test has_dn on empty registry returns False."""
         assert not registry.has_dn("cn=test,dc=com")
 

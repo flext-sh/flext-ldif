@@ -164,7 +164,7 @@ class TestFlextLdifProtocols:
             assert hasattr(server, "Constants")
             # Type narrowing: server has Constants attribute
             # Use getattr for type safety
-            constants_cls = getattr(server, "Constants")
+            constants_cls = server.Constants
 
             # SERVER_TYPE in Constants
             assert hasattr(constants_cls, "SERVER_TYPE")

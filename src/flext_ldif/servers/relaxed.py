@@ -78,7 +78,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # ACL-specific constants (migrated from Acl class)
         ACL_DEFAULT_NAME: ClassVar[str] = "relaxed_acl"
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = "*"
-        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "*"
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[
+            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
+        ] = "all"  # Relaxed mode wildcard "*" maps to "all" subject type
         ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = "*"
         ACL_WRITE_PREFIX: ClassVar[str] = "acl: "
 
@@ -562,7 +564,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             metadata = FlextLdifModels.QuirkMetadata(
                 quirk_type=self._get_server_type(),
-                extensions=extensions,
+                extensions=FlextLdifModels.DynamicMetadata(**extensions),
             )
 
             # Use name if available, otherwise use OID
@@ -787,18 +789,35 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if parent_result.is_success:
                     acl = parent_result.unwrap()
                     # Enhance metadata to indicate relaxed mode
+                    # Business Rule: Acl model is frozen, so we cannot modify metadata directly.
+                    # We need to use model_copy to create a new instance with updated metadata.
+                    # Implication: Frozen Pydantic models require model_copy for updates.
                     if not acl.metadata:
-                        acl.metadata = FlextLdifModels.QuirkMetadata(
-                            quirk_type=self._get_server_type(),
-                            extensions=FlextLdifModels.DynamicMetadata(
-                                original_format=acl_line.strip(),
-                            ),
+                        updated_acl = acl.model_copy(
+                            update={
+                                "metadata": FlextLdifModels.QuirkMetadata(
+                                    quirk_type=self._get_server_type(),
+                                    extensions=FlextLdifModels.DynamicMetadata(
+                                        original_format=acl_line.strip(),
+                                    ),
+                                )
+                            }
                         )
                     else:
-                        if not acl.metadata.extensions:
-                            acl.metadata.extensions = FlextLdifModels.DynamicMetadata()
-                        acl.metadata.quirk_type = self._get_server_type()
-                    return FlextResult[FlextLdifModels.Acl].ok(acl)
+                        # Update existing metadata using model_copy
+                        updated_extensions = (
+                            acl.metadata.extensions or FlextLdifModels.DynamicMetadata()
+                        )
+                        updated_metadata = acl.metadata.model_copy(
+                            update={
+                                "quirk_type": self._get_server_type(),
+                                "extensions": updated_extensions,
+                            }
+                        )
+                        updated_acl = acl.model_copy(
+                            update={"metadata": updated_metadata}
+                        )
+                    return FlextResult[FlextLdifModels.Acl].ok(updated_acl)
                 # Create minimal Acl model with relaxed parsing
                 acl = FlextLdifModels.Acl(
                     name=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
@@ -942,7 +961,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
+            entry_attrs: dict[str, list[str | bytes]],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse entry with best-effort approach.
 
@@ -954,6 +973,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 FlextResult with parsed Entry object
 
             """
+            # Business Rule: _parse_entry signature matches parent (dict[str, list[str | bytes]])
+            # Implication: entry_attrs is already in correct format, pass directly to parent
             # Try parent's _parse_entry first
             parent_result = super()._parse_entry(entry_dn, entry_attrs)
             if parent_result.is_success:
@@ -978,9 +999,15 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     ldif_attrs = entry_attrs
                 else:
                     # Create LdifAttributes from dict - convert values to lists if needed
+                    # Business Rule: entry_attrs may contain various types (Sequence, bytes, etc.)
+                    # but we need dict[str, list[str]] for LdifAttributes. We validate and convert.
+                    # Implication: LDIF attribute values are always list[str | bytes] in practice,
+                    # but we handle edge cases for type safety.
                     attr_dict: dict[str, list[str]] = {}
                     for key, value in entry_attrs.items():
-                        if FlextRuntime.is_list_like(value):
+                        if isinstance(value, list):
+                            # Type narrowing: value is list[str | bytes]
+                            # Convert to list[str] ensuring type safety
                             attr_dict[str(key)] = [
                                 (
                                     v.decode(
@@ -992,6 +1019,33 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                                 )
                                 for v in value
                             ]
+                        elif FlextRuntime.is_list_like(value):
+                            # Handle Sequence types (tuple, etc.) - convert to list[str]
+                            # Type narrowing: ensure value is Sequence, then convert to list[str]
+                            from collections.abc import Sequence
+
+                            if isinstance(value, Sequence) and not isinstance(
+                                value, str
+                            ):
+                                # Convert Sequence to list[str], handling bytes
+                                # Type narrowing: cast Sequence to list for iteration
+                                from typing import cast
+
+                                value_list = cast("list[bytes | str]", list(value))
+                                attr_dict[str(key)] = [
+                                    (
+                                        v.decode(
+                                            FlextLdifServersRelaxed.Constants.ENCODING_UTF8,
+                                            errors=FlextLdifServersRelaxed.Constants.ENCODING_ERROR_HANDLING,
+                                        )
+                                        if isinstance(v, bytes)
+                                        else str(v)
+                                    )
+                                    for v in value_list
+                                ]
+                            else:
+                                # Fallback: convert to list[str]
+                                attr_dict[str(key)] = [str(value)]
                         elif isinstance(value, bytes):
                             attr_dict[str(key)] = [
                                 value.decode(
@@ -1013,17 +1067,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         original_attribute_case["objectClass"] = attr_str
 
                 # Create QuirkMetadata for relaxed fallback
+                # Use FormatDetails for standard format fields, extensions for extra data
+                format_details = FlextLdifModels.FormatDetails(
+                    dn_line=entry_dn,
+                    spacing=entry_dn,  # Store original DN spacing
+                )
                 metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="relaxed",
-                    original_format_details={
-                        "server_type": "relaxed",
-                        "dn_spacing": entry_dn,
-                        "rfc_parse_failed": True,
-                        "rfc_error": str(parent_result.error)
+                    original_format_details=format_details,
+                    original_attribute_case=FlextLdifModels.DynamicMetadata(
+                        **original_attribute_case
+                    ),
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        server_type="relaxed",
+                        rfc_parse_failed=True,
+                        rfc_error=str(parent_result.error)
                         if parent_result.error
                         else None,
-                    },
-                    original_attribute_case=original_attribute_case,
+                    ),
                 )
 
                 entry = FlextLdifModels.Entry(
@@ -1083,6 +1144,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     key: [str(v) if isinstance(v, bytes) else v for v in values]
                     for key, values in attrs.items()
                 }
+                # Business Rule: _parse_entry expects dict[str, list[str | bytes]]
+                # Implication: attrs_dict is already in correct format
                 return self._parse_entry(dn, attrs_dict)
 
             return FlextLdifUtilities.Parsers.Content.parse(

@@ -5,10 +5,11 @@
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -213,7 +214,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for(
+                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
                     "apache_directory",
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -246,7 +247,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     oc_data,
                     _server_type=self._get_server_type(),
                 )
-                metadata = FlextLdifModels.QuirkMetadata.create_for(
+                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
@@ -342,10 +343,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Inherits entry handling from RFC base - no override needed.
         """
 
+        @override
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
+            entry_attrs: dict[str, list[str | bytes]],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse raw LDIF entry data into Entry model.
 
@@ -359,7 +361,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 FlextResult with parsed Entry model with Apache-specific metadata
 
             """
-            # Always try parent's _parse_entry first (RFC format)
+            # Business Rule: Apache Entry quirks extend RFC base parsing with server-specific
+            # transformations. All entry parsing follows RFC 2849 foundation, with Apache-specific
+            # enhancements applied after successful RFC parsing.
+            # Implication: Apache quirks maintain RFC compliance while adding server-specific
+            # metadata and transformations. This ensures compatibility with standard LDIF tools
+            # while enabling Apache-specific optimizations.
             base_result = super()._parse_entry(entry_dn, entry_attrs)
             if base_result.is_failure:
                 return base_result
@@ -372,7 +379,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
                 # Store metadata in extensions
-                metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
+                metadata = entry.metadata or FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=self._get_server_type(),
                 )
                 dn_lower = entry.dn.value.lower()

@@ -58,7 +58,7 @@ def extract_entries(ldif_content: str) -> list[GenericTestCaseDict]:
 
     """
     entries: list[GenericTestCaseDict] = []
-    current_entry: GenericFieldsDict = {}
+    current_entry: dict[str, object] = {}
     lines = ldif_content.split("\n")
 
     i = 0
@@ -78,7 +78,7 @@ def extract_entries(ldif_content: str) -> list[GenericTestCaseDict]:
         # DN line starts new entry
         if line.lower().startswith("dn:"):
             if current_entry:
-                entries.append(current_entry)
+                entries.append(cast("GenericTestCaseDict", current_entry))
             current_entry = {"dn": line[3:].strip()}
 
         # Attribute line
@@ -99,7 +99,7 @@ def extract_entries(ldif_content: str) -> list[GenericTestCaseDict]:
         i += 1
 
     if current_entry:
-        entries.append(current_entry)
+        entries.append(cast("GenericTestCaseDict", current_entry))
 
     return entries
 
@@ -301,9 +301,10 @@ def get_entry_attribute_values(
 
     """
     # Try exact match first
-    for key in entry:
+    entry_dict = cast("dict[str, object]", entry)
+    for key in entry_dict:
         if isinstance(key, str) and key.lower() == attr_name.lower():
-            value = entry[key]
+            value = entry_dict[key]
             if isinstance(value, list):
                 return [str(v) for v in value]
             return [str(value)]
@@ -313,7 +314,7 @@ def get_entry_attribute_values(
 def compare_entries_deep(
     original: GenericFieldsDict,
     roundtrip: GenericFieldsDict,
-) -> GenericFieldsDict:
+) -> dict[str, object]:
     """Deep comparison of two entries, returning detailed difference report.
 
     Validates:
@@ -342,16 +343,18 @@ def compare_entries_deep(
         }
 
     """
-    dn_original = str(original.get("dn", "")).lower()
-    dn_roundtrip = str(roundtrip.get("dn", "")).lower()
+    original_dict = cast("dict[str, object]", original)
+    roundtrip_dict = cast("dict[str, object]", roundtrip)
+    dn_original = str(original_dict.get("dn", "")).lower()
+    dn_roundtrip = str(roundtrip_dict.get("dn", "")).lower()
 
-    original_attrs = {k.lower() for k in original if k.lower() != "dn"}
-    roundtrip_attrs = {k.lower() for k in roundtrip if k.lower() != "dn"}
+    original_attrs = {k.lower() for k in original_dict if k.lower() != "dn"}
+    roundtrip_attrs = {k.lower() for k in roundtrip_dict if k.lower() != "dn"}
 
     missing = original_attrs - roundtrip_attrs
     extra = roundtrip_attrs - original_attrs
 
-    value_mismatches: dict[str, GenericFieldsDict] = {}
+    value_mismatches: dict[str, dict[str, object]] = {}
     for attr in original_attrs & roundtrip_attrs:
         orig_values = get_entry_attribute_values(original, attr)
         round_values = get_entry_attribute_values(roundtrip, attr)
@@ -399,7 +402,7 @@ def compare_entries_deep(
 # ============================================================================
 
 
-def validate_ldif_rfc2849_format(content: str) -> GenericFieldsDict:
+def validate_ldif_rfc2849_format(content: str) -> dict[str, object]:
     """Validate LDIF content conforms to RFC 2849 format rules.
 
     Validates:
@@ -461,7 +464,7 @@ def validate_ldif_rfc2849_format(content: str) -> GenericFieldsDict:
     }
 
 
-def validate_dn_rfc4514_format(dn: str) -> GenericFieldsDict:
+def validate_dn_rfc4514_format(dn: str) -> dict[str, object]:
     """Validate DN conforms to RFC 4514 Distinguished Name format.
 
     Validates:

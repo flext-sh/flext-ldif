@@ -10,6 +10,8 @@ from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -144,7 +146,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         # ACL default values (migrated from _parse_acl method)
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
-        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = ""
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[
+            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
+        ] = "all"  # Default to "all" for generic ACL access
         ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = ""
 
         # ACL attribute name constants (migrated from _write_acl method)
@@ -240,7 +244,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for("ibm_tivoli")
+                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for("ibm_tivoli")
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
@@ -262,7 +266,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for("ibm_tivoli")
+                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for("ibm_tivoli")
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
@@ -314,7 +318,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
-                attr_name, content = self._splitacl_line(acl_line)
+                attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
                 _ = attr_name  # Unused but required for tuple unpacking
 
                 # Extract access type from brace content
@@ -389,21 +393,24 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 if acl_data.subject and acl_data.subject.subject_value:
                     parts.append(acl_data.subject.subject_value)
 
-                # Add rights using DRY utility
-                active_perms = FlextLdifUtilities.ACL.collect_active_permissions(
-                    acl_data.permissions,
-                    [
-                        ("read", FlextLdifServersTivoli.Constants.PERMISSION_READ),
-                        ("write", FlextLdifServersTivoli.Constants.PERMISSION_WRITE),
-                        ("add", FlextLdifServersTivoli.Constants.PERMISSION_ADD),
-                        ("delete", FlextLdifServersTivoli.Constants.PERMISSION_DELETE),
-                        ("search", FlextLdifServersTivoli.Constants.PERMISSION_SEARCH),
-                        (
-                            "compare",
-                            FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
-                        ),
-                    ],
-                )
+                # Add rights - collect active permissions from permissions dict
+                # Map canonical permission names to Tivoli format
+                permission_map = {
+                    "read": FlextLdifServersTivoli.Constants.PERMISSION_READ,
+                    "write": FlextLdifServersTivoli.Constants.PERMISSION_WRITE,
+                    "add": FlextLdifServersTivoli.Constants.PERMISSION_ADD,
+                    "delete": FlextLdifServersTivoli.Constants.PERMISSION_DELETE,
+                    "search": FlextLdifServersTivoli.Constants.PERMISSION_SEARCH,
+                    "compare": FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
+                }
+                active_perms: list[str] = []
+                if acl_data.permissions:
+                    # AclPermissions is a Pydantic model, convert to dict for iteration
+                    perms_dict = acl_data.permissions.model_dump()
+                    for perm_name, perm_value in perms_dict.items():
+                        # Only include permissions that are True (allowed)
+                        if perm_value is True and perm_name in permission_map:
+                            active_perms.append(permission_map[perm_name])
                 parts.extend(active_perms)
 
                 # Build ACL string

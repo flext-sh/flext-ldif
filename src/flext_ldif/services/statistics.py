@@ -35,8 +35,14 @@ class FlextLdifStatistics(
 ):
     """Statistics service for LDIF processing pipeline.
 
-    Provides methods for generating comprehensive statistics about
-    categorized and migrated LDIF entries.
+    Business Rule: Statistics service generates comprehensive metrics for LDIF
+    processing pipelines. Service provides categorization counts, rejection
+    analysis, and output file tracking. All statistics are computed from
+    categorized entries and written file counts.
+
+    Implication: Statistics enable monitoring and analysis of migration pipelines.
+    Service provides detailed metrics for each category (schema, hierarchy,
+    users, groups, ACL, rejected) with file tracking and rejection reasons.
 
     Single Responsibility: Statistics generation and analysis only.
     Uses FlextUtilities for data processing and FlextResult for error handling.
@@ -53,6 +59,14 @@ class FlextLdifStatistics(
         self,
     ) -> FlextResult[FlextLdifModels.StatisticsServiceStatus]:
         """Execute statistics service self-check.
+
+        Business Rule: Service health check validates statistics generation
+        capabilities. Returns service status with available operations and
+        version information for monitoring and diagnostics.
+
+        Implication: Health check enables service discovery and monitoring.
+        Status includes available capabilities (generate_statistics, count_entries,
+        analyze_rejections) for dynamic feature detection.
 
         Returns:
             FlextResult containing service status (health check)
@@ -80,9 +94,18 @@ class FlextLdifStatistics(
     ) -> FlextResult[FlextLdifModels.StatisticsResult]:
         """Generate complete statistics for categorized migration.
 
+        Business Rule: Statistics generation computes comprehensive metrics from
+        categorized entries and written file counts. Service aggregates counts
+        by category, analyzes rejections, and tracks output files. Statistics
+        include total entries, categorized counts, rejection analysis, and
+        file metadata.
+
+        Implication: Statistics enable monitoring and analysis of migration
+        pipelines. Detailed metrics support troubleshooting and performance
+        optimization. File tracking enables audit trails for migration operations.
+
         Args:
-            categorized: FlexibleCategories model with categorized
-                entries
+            categorized: FlexibleCategories model with categorized entries
             written_counts: Dictionary mapping category to count written
             output_dir: Output directory path
             output_files: Dictionary mapping category to output filename

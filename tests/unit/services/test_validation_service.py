@@ -393,12 +393,12 @@ class TestFlextLdifValidation:
             unwrapped = FlextTestsMatchers.assert_success(result)
             assert unwrapped is False
 
-        def test_validate_dn_component_with_list_value(self) -> None:
-            """Test validate_dn_component with list value."""
+        def test_validate_dn_component_with_string_value(self) -> None:
+            """Test validate_dn_component with string value."""
             service = FlextLdifValidation()
-            result = service.validate_dn_component("cn", ["test"])
+            result = service.validate_dn_component("cn", "test")
             unwrapped = FlextTestsMatchers.assert_success(result)
-            assert unwrapped is False
+            assert unwrapped is True  # String value should succeed
 
 
 __all__ = ["TestFlextLdifValidation"]

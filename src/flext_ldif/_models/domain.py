@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 import sys
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
-from typing import ClassVar, Self, TypedDict, Unpack
+from typing import ClassVar, Self, TypedDict, Unpack, cast
 
 from flext_core import (
     FlextLogger,
@@ -85,7 +85,8 @@ class FlextLdifModelsDomains:
         )
 
         # NOTE: DN validation moved to Entry.validate_entry_rfc_compliance()
-        # DistinguishedName is a frozen Value Object and cannot be modified after construction
+        # DistinguishedName is a frozen Value Object and cannot be modified
+        # after construction
 
         @computed_field
         def components(self) -> list[str]:
@@ -249,7 +250,8 @@ class FlextLdifModelsDomains:
     class SchemaAttribute(SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant).
 
-        Represents an LDAP attribute type definition from schema with full RFC 4512 support.
+        Represents an LDAP attribute type definition from schema with full
+        RFC 4512 support.
 
         Inherits from SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
@@ -302,7 +304,10 @@ class FlextLdifModelsDomains:
         )
         no_user_modification: bool = Field(
             default=False,
-            description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
+            description=(
+                "Whether users can modify this attribute "
+                "(RFC 4512 NO-USER-MODIFICATION)"
+            ),
         )
         # OUD and server-specific fields
         immutable: bool = Field(
@@ -319,19 +324,28 @@ class FlextLdifModelsDomains:
         )
         x_origin: str | None = Field(
             default=None,
-            description="Origin of attribute definition (server-specific X-ORIGIN extension)",
+            description=(
+                "Origin of attribute definition (server-specific X-ORIGIN extension)"
+            ),
         )
         x_file_ref: str | None = Field(
             default=None,
-            description="File reference for attribute definition (server-specific X-FILE-REF extension)",
+            description=(
+                "File reference for attribute definition "
+                "(server-specific X-FILE-REF extension)"
+            ),
         )
         x_name: str | None = Field(
             default=None,
-            description="Extended name for attribute (server-specific X-NAME extension)",
+            description=(
+                "Extended name for attribute (server-specific X-NAME extension)"
+            ),
         )
         x_alias: str | None = Field(
             default=None,
-            description="Extended alias for attribute (server-specific X-ALIAS extension)",
+            description=(
+                "Extended alias for attribute (server-specific X-ALIAS extension)"
+            ),
         )
         x_oid: str | None = Field(
             default=None,
@@ -457,7 +471,8 @@ class FlextLdifModelsDomains:
         ) -> Self | None:
             """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
 
-            This method is used by both models and the syntax service to avoid circular dependencies.
+            This method is used by both models and the syntax service to avoid
+            circular dependencies.
 
             Args:
                 oid: Syntax OID to resolve
@@ -524,7 +539,8 @@ class FlextLdifModelsDomains:
     class SchemaObjectClass(SchemaElement):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
-        Represents an LDAP object class definition from schema with full RFC 4512 support.
+        Represents an LDAP object class definition from schema with full
+        RFC 4512 support.
 
         Inherits from SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
@@ -661,7 +677,8 @@ class FlextLdifModelsDomains:
 
             Args:
                 key: Attribute name
-                default: Default list if not found (defaults to empty list if not provided)
+                default: Default list if not found
+                (defaults to empty list if not provided)
 
             Returns:
                 List of values or default (empty list if not found and no default)
@@ -777,7 +794,8 @@ class FlextLdifModelsDomains:
             """Create an LdifAttributes instance from data.
 
             Args:
-                attrs_data: Mapping of attribute names to values (str, list[str], bytes, list[bytes], int, float, bool, or None)
+                attrs_data: Mapping of attribute names to values
+                (str, list[str], bytes, list[bytes], int, float, bool, or None)
 
             Returns:
                 FlextResult with LdifAttributes instance or error
@@ -941,13 +959,17 @@ class FlextLdifModelsDomains:
             )
             self._case_variants: dict[str, set[str]] = {}
 
-        def _normalize_dn(self, dn: str) -> str:
+        @staticmethod
+        def _normalize_dn(dn: str) -> str:
             """Convert DN to lowercase for case-insensitive dict lookup.
 
             NOTE: DnRegistry receives DNs already normalized to RFC 4514 format.
             This method is ONLY for dict key generation (case-insensitive lookup).
             It does NOT validate or normalize the DN - that must be done BEFORE
             calling register_dn().
+
+            Business Rule: This is a pure function that doesn't use instance state.
+            Implication: Can be a static method for better clarity and performance.
 
             Returns:
                 Lowercase DN string for use as dictionary key only.
@@ -1395,14 +1417,25 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Use object.__setattr__ for frozen models - Pydantic 2 pattern
-                object.__setattr__(self, "validation_violations", violations)
+                # Business Rule: AclElement is frozen=True, so we must use object.__setattr__ for mutation
+                # Implication: Direct assignment doesn't work for frozen models, must use object.__setattr__
+                # This is the correct Pydantic 2 pattern for frozen models in validators
+                object.__setattr__(self, "validation_violations", violations)  # noqa: PLC2801  # noqa: PLC2801
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
 
-        def get_acl_format(self) -> str:
-            """Get ACL format for this server type."""
+        @classmethod
+        def get_acl_format(cls) -> str:
+            """Get ACL format for this server type.
+
+            Business Rule: This method doesn't use instance state, only class constants.
+            Implication: Can be a class method for better clarity and allows override in subclasses.
+
+            Returns:
+                Default ACL format string from constants.
+
+            """
             return FlextLdifConstants.AclFormats.DEFAULT_ACL_FORMAT
 
         def get_acl_type(self) -> str:
@@ -1511,7 +1544,7 @@ class FlextLdifModelsDomains:
             """Check if original ACL format is available for name replacement."""
             return self.original_format is not None and len(self.original_format) > 0
 
-    class Entry(FlextModelsBase.ArbitraryTypesModel):
+    class Entry(FlextModelsBase.ArbitraryTypesModel):  # noqa: PLR0904
         """LDIF entry domain model.
 
         Implements FlextLdifProtocols.Models.EntryProtocol through structural typing.
@@ -1583,12 +1616,10 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: dict[str, list[str]]
-            | FlextLdifModelsDomains.LdifAttributes
-            | None,
+            value: dict[str, list[str]] | FlextLdifModelsDomains.LdifAttributes | None,
         ) -> FlextLdifModelsDomains.LdifAttributes | None:
             """Convert dict to LdifAttributes instance.
-            
+
             Allows None to pass through for violation capture in model_validator.
             RFC 2849 § 2 violations (attributes required) are captured in validate_entry_rfc_compliance.
             """
@@ -1713,10 +1744,21 @@ class FlextLdifModelsDomains:
             # - Optional transformation or filtering based on application rules
             return self
 
-        def _validate_dn(self, dn_value: str) -> list[str]:
+        @staticmethod
+        def _validate_dn(dn_value: str) -> list[str]:
             """Validate DN format per RFC 4514 § 2.3, 2.4.
 
+            Business Rule: This is a pure function that doesn't use instance state.
+            Implication: Can be a static method for better clarity and performance.
+
             Note: dn_value is guaranteed to be non-None since dn field is required.
+
+            Args:
+                dn_value: DN string to validate
+
+            Returns:
+                List of validation violation messages (empty if valid)
+
             """
             violations: list[str] = []
             if not dn_value or not dn_value.strip():
@@ -2065,12 +2107,20 @@ class FlextLdifModelsDomains:
 
             # Reconstruct ServerValidationRules from dict if needed
             # (DynamicMetadata may serialize Pydantic models to dict)
+            # Business Rule: Server validation rules are injected by server quirks
+            # and stored in metadata.extensions. They may be serialized as dicts
+            # when metadata is converted to/from JSON. We need to reconstruct the
+            # Pydantic model with proper type validation.
             if isinstance(validation_rules, dict):
                 try:
-                    rules = FlextLdifModelsConfig.ServerValidationRules(
-                        **validation_rules
+                    # Use model_validate for proper type conversion and validation
+                    # This handles ScalarValue -> specific types conversion automatically
+                    rules = FlextLdifModelsConfig.ServerValidationRules.model_validate(
+                        validation_rules
                     )
                 except Exception:
+                    # If validation fails, skip server-specific validation
+                    # This is safe - Entry will still be RFC-compliant
                     return self
             elif isinstance(
                 validation_rules, FlextLdifModelsConfig.ServerValidationRules
@@ -2407,8 +2457,6 @@ class FlextLdifModelsDomains:
                     unconverted_attributes,
                 )
                 # Type narrowing: convert values to MetadataAttributeValue compatible types
-                from typing import cast
-
                 ext_kwargs_typed: dict[str, FlextTypes.MetadataAttributeValue] = {
                     k: cast("FlextTypes.MetadataAttributeValue", v)
                     for k, v in ext_kwargs.items()
@@ -2602,10 +2650,27 @@ class FlextLdifModelsDomains:
             # Case-insensitive attribute lookup (LDAP standard)
             if self.attributes is None:
                 return []
+
+            # Access the actual attributes dict (LdifAttributes.attributes property)
+            attrs_dict = (
+                self.attributes.attributes
+                if hasattr(self.attributes, "attributes")
+                else self.attributes
+            )
+            if not attrs_dict:
+                return []
+
             attr_name_lower = attribute_name.lower()
-            for stored_name, attr_values in self.attributes.items():
-                if stored_name.lower() == attr_name_lower:
-                    return attr_values
+            # Handle both dict and LdifAttributes objects
+            if isinstance(attrs_dict, dict):
+                for stored_name, attr_values in attrs_dict.items():
+                    if stored_name.lower() == attr_name_lower:
+                        return attr_values
+            elif hasattr(attrs_dict, "items"):
+                # LdifAttributes object with items() method
+                for stored_name, attr_values in attrs_dict.items():
+                    if stored_name.lower() == attr_name_lower:
+                        return attr_values
             return []
 
         def has_attribute(self, attribute_name: str) -> bool:
@@ -2774,11 +2839,14 @@ class FlextLdifModelsDomains:
                     dn=FlextLdifModelsDomains.DistinguishedName(
                         value=self.dn.value
                         if self.dn is not None and hasattr(self.dn, "value")
-                        else str(self.dn) if self.dn is not None
+                        else str(self.dn)
+                        if self.dn is not None
                         else "",
                     ),
                     attributes=FlextLdifModelsDomains.LdifAttributes(
-                        attributes=dict(self.attributes) if self.attributes is not None else {},
+                        attributes=dict(self.attributes)
+                        if self.attributes is not None
+                        else {},
                     ),
                 ),
             ]

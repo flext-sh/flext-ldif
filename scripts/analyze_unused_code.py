@@ -193,7 +193,7 @@ def check_api_usage(def_name: str, all_refs: set[str], imports: dict[str, str]) 
     return False
 
 
-def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:
+def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:  # noqa: C901
     """Find unused code across all projects."""
     print("Collecting definitions...")
     all_defs = collect_all_definitions()

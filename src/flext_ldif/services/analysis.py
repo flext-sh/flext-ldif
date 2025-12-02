@@ -28,6 +28,15 @@ class FlextLdifAnalysis(
 ):
     """Service for entry analysis and validation.
 
+    Business Rule: Analysis service provides comprehensive entry collection analysis
+    including statistics generation, object class distribution, and pattern detection.
+    Validation delegates to FlextLdifValidation service for RFC 2849/4512 compliance
+    checks. Analysis results enable data quality assessment and migration planning.
+
+    Implication: Analysis enables understanding of LDIF data structure before processing.
+    Pattern detection identifies common organizational patterns (users, groups) for
+    categorization. Statistics support migration planning and data quality assessment.
+
     Provides methods for:
     - Analyzing entry collections and generating statistics
     - Validating entries against RFC 2849/4512 standards
@@ -56,11 +65,16 @@ class FlextLdifAnalysis(
     ) -> FlextResult[FlextLdifModels.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class.
 
-        This service provides specific methods (analyze, validate_entries)
-        rather than a generic execute operation.
+        Business Rule: Analysis service does not support generic execute() operation.
+        Use specific methods (analyze(), validate_entries()) for analysis operations.
+        This ensures type safety and clear API boundaries.
+
+        Implication: This method returns fail-fast error directing to correct usage.
+        Service-based execution patterns should use analyze() or validate_entries()
+        directly.
 
         Returns:
-            FlextResult with not implemented error
+            FlextResult.fail() with error message directing to correct usage
 
         """
         return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(
@@ -72,6 +86,15 @@ class FlextLdifAnalysis(
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[FlextLdifModels.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
+
+        Business Rule: Entry analysis generates comprehensive statistics including
+        total entry count, object class distribution (Counter), and pattern detection
+        in DNs (users, groups patterns). Analysis enables data quality assessment
+        and migration planning.
+
+        Implication: Object class distribution uses Counter for efficient counting.
+        Pattern detection identifies common organizational patterns for categorization.
+        Results support migration planning and data quality assessment.
 
         Performs comprehensive analysis of entry collection including:
         - Total entry count
@@ -122,6 +145,15 @@ class FlextLdifAnalysis(
     ) -> FlextResult[FlextLdifModels.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
 
+        Business Rule: Entry validation delegates to FlextLdifValidation service
+        for RFC 2849/4512 compliance checks. Validation includes DN format, attribute
+        names, objectClass names, attribute value lengths, and entry structure.
+        Validation results aggregate errors and provide validation status.
+
+        Implication: Validation enables data quality assessment before processing.
+        Errors are collected and reported in ValidationResult for comprehensive
+        validation reporting. Invalid entries are identified for correction.
+
         Performs comprehensive validation including:
         - DN format validation
         - Attribute name validation (RFC 4512)
@@ -134,7 +166,7 @@ class FlextLdifAnalysis(
             validation_service: Validation service instance for RFC compliance checks
 
         Returns:
-            FlextResult containing ValidationResult with validation status
+            FlextResult containing ValidationResult with validation status and errors
 
         Example:
             validation_service = FlextLdifValidation()
@@ -177,11 +209,18 @@ class FlextLdifAnalysis(
     ) -> tuple[bool, list[str]]:
         """Validate a single LDIF entry.
 
+        Business Rule: Single entry validation checks DN format, attribute names,
+        objectClass names, and attribute value lengths. Validation errors are
+        collected and returned as tuple (is_valid, errors) for aggregation.
+
+        Implication: This method enables batch validation with error aggregation.
+        Each entry is validated independently, with errors collected for reporting.
+
         Internal helper method to reduce complexity in validate_entries() method.
 
         Args:
             entry: Entry to validate
-            validation_service: Validation service instance
+            validation_service: Validation service instance for RFC compliance checks
 
         Returns:
             Tuple of (is_valid, errors) where is_valid is True if entry is valid,
@@ -192,12 +231,22 @@ class FlextLdifAnalysis(
         is_entry_valid = True
 
         # Validate DN (dn is required, cannot be None)
-        dn_str = entry.dn.value
+        # Business Rule: DN validation handles None DNs gracefully - None DNs are invalid
+        if entry.dn is None:
+            errors.append("Entry has None DN")
+            is_entry_valid = False
+            return (is_entry_valid, errors)
+        # Type narrowing: entry.dn is not None
+        dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
         if not dn_str:
             errors.append(f"Entry has invalid DN: {entry.dn}")
             is_entry_valid = False
 
         # Validate each attribute name (attributes is required, cannot be None)
+        if entry.attributes is None:
+            errors.append(f"Entry {dn_str}: Attributes cannot be None")
+            is_entry_valid = False
+            return (is_entry_valid, errors)
 
         for attr_name in entry.attributes.attributes:
             attr_result = validation_service.validate_attribute_name(attr_name)

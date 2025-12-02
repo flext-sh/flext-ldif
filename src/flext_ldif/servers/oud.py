@@ -8,16 +8,19 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Callable, Mapping
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from flext_core.typings import FlextTypes
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
@@ -161,8 +164,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # === ACL METADATA KEYS (Standardized for cross-server conversion) ===
         # Use centralized constants from FlextLdifConstants.MetadataKeys
-        # Servers MUST NOT know about each other - only communicate via standardized metadata
-        # All metadata keys are defined in FlextLdifConstants.MetadataKeys for consistency
+        # Servers MUST NOT know about each other - only communicate via
+        # standardized metadata
+        # All metadata keys are defined in FlextLdifConstants.MetadataKeys
+        # for consistency
 
         # === ACL PERMISSIONS (OUD extends RFC) ===
         PERMISSION_SELFWRITE: ClassVar[str] = "selfwrite"
@@ -229,7 +234,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ACL_BY_GROUP_PATTERN: ClassVar[str] = r"by\s+group=\"[^\"]+\""
         ACL_BY_STAR_PATTERN: ClassVar[str] = r"by\s+\*"
 
-        # === ACL ADVANCED PATTERNS (RFC 4876 extensions validated against Oracle OUD documentation) ===
+        # === ACL ADVANCED PATTERNS ===
+        # (RFC 4876 extensions validated against Oracle OUD documentation)
         ACL_TARGATTRFILTERS_PATTERN: ClassVar[str] = (
             r'\(targattrfilters\s*=\s*"([^"]+)"\)'
         )
@@ -267,8 +273,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ("extop", '(extop="{value}")'),
         ]
 
-        # NOTE: Alternative ACL format patterns (ACL_FILTER_PATTERN, ACL_CONSTRAINT_PATTERN) REMOVED
-        # OUD only handles RFC 4876 ACI format - Alternative format data comes pre-converted via RFC Entry Model
+        # NOTE: Alternative ACL format patterns
+        # (ACL_FILTER_PATTERN, ACL_CONSTRAINT_PATTERN) REMOVED
+        # OUD only handles RFC 4876 ACI format - Alternative format data comes
+        # pre-converted via RFC Entry Model
 
         # === ACL BIND PATTERNS MAPPING (Python 3.13) ===
         ACL_BIND_PATTERNS: ClassVar[Mapping[str, str]] = {
@@ -617,7 +625,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # === PARSER CONFIG FACTORY ===
         @staticmethod
-        def get_parser_config() -> FlextLdifModels.AciParserConfig:
+        def get_parser_config() -> FlextLdifModelsConfig.AciParserConfig:
             """Create AciParserConfig for OUD ACL parsing.
 
             Returns:
@@ -626,7 +634,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             constants = FlextLdifServersOud.Constants
             return FlextLdifModels.AciParserConfig(
-                server_type=FlextLdifConstants.ServerTypes.OUD,
+                server_type="oud",  # Use literal string for ServerTypeLiteral compatibility
                 aci_prefix="aci:",
                 version_acl_pattern=constants.ACL_VERSION_ACL_PATTERN,
                 targetattr_pattern=constants.ACL_TARGETATTR_PATTERN,
@@ -757,7 +765,32 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 **kwargs: Additional arguments passed to parent
 
             """
-            super().__init__(schema_service=schema_service, **kwargs)
+            # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
+            # Implication: _parent_quirk is handled separately, not via Pydantic fields
+            # Business Rule: _schema_service is NOT a GeneralValueType, so it cannot be
+            # passed to FlextService.__init__ which expects only GeneralValueType kwargs.
+            # Implication: _schema_service must be passed explicitly to Schema.__init__
+            # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
+            # Implication: Filter kwargs to ensure type safety (int is not GeneralValueType, only str/float/bool/None)
+            filtered_kwargs: dict[str, str | float | bool | None] = {
+                k: v
+                for k, v in kwargs.items()
+                if k not in ("_parent_quirk", "_schema_service")
+                and isinstance(v, (str, float, bool, type(None)))
+            }
+            # Business Rule: _schema_service is NOT a GeneralValueType, so it cannot be
+            # passed to FlextService.__init__ which expects only GeneralValueType kwargs.
+            # Implication: _schema_service must be stored directly on the instance after
+            # super().__init__() using object.__setattr__.
+            # Call parent RFC.Schema.__init__ without _schema_service (it's not GeneralValueType)
+            # Use explicit FlextService.__init__ call to avoid type checker confusion
+            from flext_core.service import FlextService
+
+            FlextService.__init__(self, **filtered_kwargs)
+            # Store _schema_service after initialization (not a Pydantic field)
+            if schema_service is not None:
+                object.__setattr__(self, "_schema_service", schema_service)
+            # Note: _parent_quirk is handled separately if needed
 
         def _validate_attribute_oid(
             self,
@@ -1536,16 +1569,34 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def __init__(
             self,
             acl_service: FlextLdifTypes.Services.AclService | None = None,
+            _parent_quirk: FlextLdifServersBase | None = None,
             **kwargs: str | float | bool | None,
         ) -> None:
             """Initialize OUD ACL quirk.
 
             Args:
                 acl_service: Injected FlextLdifAcl service (optional)
+                _parent_quirk: Reference to parent FlextLdifServersBase (optional)
                 **kwargs: Additional arguments passed to parent
 
             """
-            super().__init__(acl_service=acl_service, **kwargs)
+            # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
+            # Implication: _parent_quirk is handled separately, not via Pydantic fields
+            # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
+            # Implication: Filter kwargs to ensure type safety (int is not GeneralValueType, only str/float/bool/None)
+            filtered_kwargs: dict[str, str | float | bool | None] = {
+                k: v
+                for k, v in kwargs.items()
+                if k != "_parent_quirk"
+                and isinstance(v, (str, float, bool, type(None)))
+            }
+            # Business Rule: Acl.__init__ accepts acl_service and _parent_quirk
+            # Implication: Call parent __init__ directly, parent handles FlextService call
+            super().__init__(
+                acl_service=acl_service,
+                _parent_quirk=_parent_quirk,
+                **filtered_kwargs,
+            )
             # NOTE: Hook registration was removed - AclConverter was moved to services/acl.py
             # Use FlextLdifAcl instead for ACL conversion operations
 
@@ -1829,7 +1880,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             acl = result.unwrap()
             aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
             # Preserve all extensions from parse_aci (including targattrfilters, targetcontrol, etc.)
-            extensions = dict(acl.metadata.extensions) if acl.metadata and acl.metadata.extensions else {}
+            extensions = (
+                dict(acl.metadata.extensions)
+                if acl.metadata and acl.metadata.extensions
+                else {}
+            )
 
             # Handle bind_timeofday (captures operator + value)
             # Uses FlextLdifConstants.MetadataKeys.ACL_BIND_TIMEOFDAY for consistency
@@ -1855,8 +1910,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Always update metadata to ensure extensions are preserved
             # (even if timeofday/ssf weren't found, we need to preserve parse_aci extensions)
+            # Business Rule: config.server_type must be valid ServerTypeLiteral
+            # Implication: Type narrowing required - config is AciParserConfig with server_type field
+            server_type_value = config.server_type if config else "oud"
             new_metadata = FlextLdifModels.QuirkMetadata.create_for(
-                config.server_type,
+                server_type_value,
                 extensions=extensions,
             )
             acl = acl.model_copy(update={"metadata": new_metadata})
@@ -2047,17 +2105,49 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             target = acl_data.target
             if not target and acl_data.metadata:
                 target_dict = acl_data.metadata.extensions.get("acl_target_target")
+                # Business Rule: target_dict may be GeneralValueType or MetadataAttributeValue.
+                # We need MetadataDictMutable (dict[str, MetadataAttributeValue]) for type safety.
+                # Implication: Convert and validate types explicitly.
                 if FlextRuntime.is_dict_like(target_dict):
-                    target_data: FlextLdifTypes.MetadataDictMutable = (
-                        dict(target_dict.items())
-                        if isinstance(target_dict, dict)
-                        else {}
+                    # Type narrowing: target_dict is dict-like, convert to dict
+                    if isinstance(target_dict, dict):
+                        # Business Rule: Filter values to ensure MetadataAttributeValue compatibility.
+                        # GeneralValueType may include nested Mappings, but MetadataDictMutable doesn't.
+                        # Implication: Convert values to MetadataAttributeValue-compatible types.
+                        # Type narrowing: Filter to only ScalarValue or Sequence[ScalarValue] types.
+                        from typing import cast
+
+                        target_data = cast(
+                            "FlextLdifTypes.MetadataDictMutable",
+                            {
+                                k: v
+                                for k, v in target_dict.items()
+                                if not isinstance(v, Mapping)  # Exclude nested mappings
+                                and isinstance(
+                                    v, (str, int, float, bool, type(None), list)
+                                )
+                            },
+                        )
+                    else:
+                        target_data = {}
+                else:
+                    target_data = {}
+                    # Business Rule: Extract attributes and target_dn from target_data.
+                    # Values are MetadataAttributeValue, so we need type narrowing for list[str].
+                    # Implication: Validate types before using in AclTarget constructor.
+                    attrs_raw = target_data.get("attributes")
+                    dn_raw = target_data.get("target_dn")
+                    # Type narrowing: Convert to expected types for AclTarget
+                    attrs: list[str] = (
+                        list(attrs_raw)
+                        if isinstance(attrs_raw, list)
+                        and all(isinstance(item, str) for item in attrs_raw)
+                        else []
                     )
-                    attrs = target_data.get("attributes")
-                    dn = target_data.get("target_dn")
+                    dn: str = str(dn_raw) if isinstance(dn_raw, str) else "*"
                     target = FlextLdifModels.AclTarget(
-                        target_dn=str(dn) if isinstance(dn, str) else "*",
-                        attributes=list(attrs) if isinstance(attrs, list) else [],
+                        target_dn=dn,
+                        attributes=attrs,
                     )
 
             # CONSOLIDATED: Use utility for formatting
@@ -2131,13 +2221,29 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 target_perms_dict = acl_data.metadata.extensions.get(
                     FlextLdifConstants.MetadataKeys.ACL_TARGET_PERMISSIONS,
                 )
+                # Business Rule: target_perms_dict may be GeneralValueType or MetadataAttributeValue.
+                # We need MetadataDictMutable (dict[str, MetadataAttributeValue]) for type safety.
+                # Implication: Convert and validate types explicitly.
                 if FlextRuntime.is_dict_like(target_perms_dict):
                     # Type narrowing: ensure dict has correct types
-                    perms_data: FlextLdifTypes.MetadataDictMutable = (
-                        dict(target_perms_dict.items())
-                        if isinstance(target_perms_dict, dict)
-                        else {}
+                    # Filter to only MetadataAttributeValue-compatible types
+                    from typing import cast
+
+                    perms_data = cast(
+                        "FlextLdifTypes.MetadataDictMutable",
+                        {
+                            k: v
+                            for k, v in (
+                                target_perms_dict.items()
+                                if isinstance(target_perms_dict, dict)
+                                else []
+                            )
+                            if not isinstance(v, Mapping)  # Exclude nested mappings
+                            and isinstance(v, (str, int, float, bool, type(None), list))
+                        },
                     )
+                else:
+                    perms_data = {}
                     # Extract boolean fields with type guards - only use fields that exist in AclPermissions
                     perms = FlextLdifModels.AclPermissions(
                         read=bool(perms_data.get("read")),
@@ -2722,16 +2828,34 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def __init__(
             self,
             entry_service: FlextLdifTypes.Services.EntryService | None = None,
+            _parent_quirk: FlextLdifServersBase | None = None,
             **kwargs: str | float | bool | None,
         ) -> None:
             """Initialize OUD entry quirk.
 
             Args:
                 entry_service: Injected FlextLdifEntry service (optional)
+                _parent_quirk: Reference to parent FlextLdifServersBase (optional)
                 **kwargs: Additional arguments passed to parent
 
             """
-            super().__init__(entry_service=entry_service, **kwargs)
+            # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
+            # Implication: _parent_quirk is handled separately, not via Pydantic fields
+            # Business Rule: Only pass GeneralValueType (str | float | bool | None) to super().__init__
+            # Implication: Filter kwargs to ensure type safety (int is not GeneralValueType, only str/float/bool/None)
+            filtered_kwargs: dict[str, str | float | bool | None] = {
+                k: v
+                for k, v in kwargs.items()
+                if k != "_parent_quirk"
+                and isinstance(v, (str, float, bool, type(None)))
+            }
+            # Business Rule: Entry.__init__ accepts entry_service and _parent_quirk
+            # Implication: Call parent __init__ directly, parent handles FlextService call
+            super().__init__(
+                entry_service=entry_service,
+                _parent_quirk=_parent_quirk,
+                **filtered_kwargs,
+            )
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Oracle OUD-specific logic:
@@ -2879,8 +3003,27 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
 
             """
+            # Business Rule: parse_entry expects dict[str, list[str]]
+            # Implication: Convert entry_attrs to expected format
+            # Type narrowing: convert Mapping to dict[str, list[str]]
+            entry_attrs_dict: dict[str, list[str]] = {}
+            if isinstance(entry_attrs, dict):
+                for key, values in entry_attrs.items():
+                    if isinstance(values, list):
+                        entry_attrs_dict[key] = [str(v) for v in values]
+                    elif isinstance(values, (str, bytes)):
+                        entry_attrs_dict[key] = [str(values)]
+                    else:
+                        entry_attrs_dict[key] = [str(values)]
+            elif isinstance(entry_attrs, FlextLdifModels.Entry):
+                # If Entry model passed, extract attributes
+                if entry_attrs.attributes and entry_attrs.attributes.attributes:
+                    entry_attrs_dict = {
+                        k: [str(v) for v in (vs if isinstance(vs, list) else [vs])]
+                        for k, vs in entry_attrs.attributes.attributes.items()
+                    }
             # Call RFC base parse_entry for Entry creation
-            result = super().parse_entry(entry_dn, entry_attrs)
+            result = super().parse_entry(entry_dn, entry_attrs_dict)
             if result.is_failure:
                 return result
 
@@ -3146,61 +3289,66 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 dict(metadata.extensions) if metadata.extensions else {}
             )
 
-            if not metadata.write_options:
-                metadata.write_options = FlextLdifModelsDomains.WriteOptions()
-
-            # Update hidden attributes
-            hidden_attrs_raw = getattr(metadata.write_options, "hidden_attrs", [])
-            hidden_attrs_set = (
-                set(hidden_attrs_raw)
-                if isinstance(hidden_attrs_raw, (list, tuple, frozenset, set))
-                else set()
-            )
-            hidden_attrs_set.update(hidden_attrs)
-            # Handle both Pydantic model and dict
+            # Business Rule: metadata is frozen, must use model_copy to update
+            # Implication: Create new metadata instance with updated write_options
             write_opts = metadata.write_options
-            if hasattr(write_opts, "model_copy"):
-                metadata.write_options = write_opts.model_copy(
-                    update={"hidden_attrs": list(hidden_attrs_set)},
-                )
-            elif isinstance(write_opts, dict):
-                # If it's a dict, extract only WriteOptions fields
-                from flext_ldif._models.domain import FlextLdifModelsDomains
+            new_write_options: FlextLdifModelsDomains.WriteOptions
 
-                # Extract only valid WriteOptions fields
-                write_opts_dict = {
-                    "hidden_attrs": list(hidden_attrs_set),
-                }
-                # Copy other valid WriteOptions fields if present
-                for field in ["line_width", "indent", "sort_attributes"]:
-                    if field in write_opts:
-                        write_opts_dict[field] = write_opts[field]
-                metadata.write_options = (
-                    FlextLdifModelsDomains.WriteOptions.model_validate(write_opts_dict)
-                )
-            elif hasattr(write_opts, "model_dump"):
-                # If it's a Pydantic model (WriteFormatOptions), extract only WriteOptions fields
-                from flext_ldif._models.domain import FlextLdifModelsDomains
-
-                write_opts_dict = write_opts.model_dump()
-                # Extract only valid WriteOptions fields
-                filtered_dict = {
-                    "hidden_attrs": list(hidden_attrs_set),
-                }
-                # Copy other valid WriteOptions fields if present
-                for field in ["line_width", "indent", "sort_attributes"]:
-                    if field in write_opts_dict:
-                        filtered_dict[field] = write_opts_dict[field]
-                metadata.write_options = (
-                    FlextLdifModelsDomains.WriteOptions.model_validate(filtered_dict)
-                )
+            if not write_opts:
+                new_write_options = FlextLdifModelsDomains.WriteOptions()
             else:
-                # Create new WriteOptions if write_options is None or invalid
-                from flext_ldif._models.domain import FlextLdifModelsDomains
-
-                metadata.write_options = FlextLdifModelsDomains.WriteOptions(
-                    hidden_attrs=list(hidden_attrs_set),
+                # Update hidden attributes
+                hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
+                hidden_attrs_set = (
+                    set(hidden_attrs_raw)
+                    if isinstance(hidden_attrs_raw, (list, tuple, frozenset, set))
+                    else set()
                 )
+                hidden_attrs_set.update(hidden_attrs)
+                # Handle both Pydantic model and dict
+                if hasattr(write_opts, "model_copy"):
+                    new_write_options = write_opts.model_copy(
+                        update={"hidden_attrs": list(hidden_attrs_set)},
+                    )
+                elif isinstance(write_opts, dict):
+                    # If it's a dict, extract only WriteOptions fields
+                    # Extract only valid WriteOptions fields
+                    write_opts_dict = {
+                        "hidden_attrs": list(hidden_attrs_set),
+                    }
+                    # Copy other valid WriteOptions fields if present
+                    for field in ["line_width", "indent", "sort_attributes"]:
+                        if field in write_opts:
+                            write_opts_dict[field] = write_opts[field]
+                    new_write_options = (
+                        FlextLdifModelsDomains.WriteOptions.model_validate(
+                            write_opts_dict
+                        )
+                    )
+                elif hasattr(write_opts, "model_dump"):
+                    # If it's a Pydantic model (WriteFormatOptions), extract only WriteOptions fields
+                    write_opts_dict = write_opts.model_dump()
+                    # Extract only valid WriteOptions fields
+                    filtered_dict = {
+                        "hidden_attrs": list(hidden_attrs_set),
+                    }
+                    # Copy other valid WriteOptions fields if present
+                    for field in ["line_width", "indent", "sort_attributes"]:
+                        if field in write_opts_dict:
+                            filtered_dict[field] = write_opts_dict[field]
+                    new_write_options = (
+                        FlextLdifModelsDomains.WriteOptions.model_validate(
+                            filtered_dict
+                        )
+                    )
+                else:
+                    # Create new WriteOptions if write_options is None or invalid
+                    new_write_options = FlextLdifModelsDomains.WriteOptions(
+                        hidden_attrs=list(hidden_attrs_set),
+                    )
+
+            # Create new metadata instance with updated write_options
+            metadata = metadata.model_copy(update={"write_options": new_write_options})
 
             # Store commented ACL values
             if commented_acl_values:
@@ -3208,7 +3356,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 current_extensions[
                     FlextLdifConstants.MetadataKeys.CONVERTED_ATTRIBUTES
                 ] = converted_attrs
-                current_extensions["commented_attribute_values"] = commented_acl_values
+                # Business Rule: extensions expects MetadataAttributeValue (ScalarValue)
+                # Implication: Convert dict to JSON string for storage
+                current_extensions["commented_attribute_values"] = json.dumps(
+                    commented_acl_values
+                )
 
             # Track in extensions - type narrow for list[str] using comprehension
             commented_attrs_raw = current_extensions.get("acl_commented_attributes", [])
@@ -3228,7 +3380,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if commented_attrs:
                 current_extensions["acl_commented_attributes"] = commented_attrs
 
-            return metadata.model_copy(update={"extensions": current_extensions})
+            # Business Rule: metadata is frozen, must use model_copy to update both extensions and write_options
+            # Implication: Combine both updates in a single model_copy call
+            return metadata.model_copy(
+                update={
+                    "extensions": current_extensions,
+                    "write_options": new_write_options,
+                },
+            )
 
         @staticmethod
         def _comment_acl_attributes(
@@ -3341,13 +3500,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 and entry_data.metadata.extensions
             ):
                 extensions = entry_data.metadata.extensions
-                if FlextRuntime.is_dict_like(extensions):
-                    base_dn_ext = extensions.get("base_dn")
-                    if isinstance(base_dn_ext, str):
-                        base_dn = base_dn_ext
-                    dn_registry_ext = extensions.get("dn_registry")
-                    if isinstance(dn_registry_ext, FlextLdifModels.DnRegistry):
-                        dn_registry = dn_registry_ext
+                # DynamicMetadata has .get() method for extra field access
+                base_dn_ext = extensions.get("base_dn")
+                if isinstance(base_dn_ext, str):
+                    base_dn = base_dn_ext
+                dn_registry_ext = extensions.get("dn_registry")
+                if isinstance(dn_registry_ext, FlextLdifModels.DnRegistry):
+                    dn_registry = dn_registry_ext
 
             return base_dn, dn_registry
 
@@ -3517,12 +3676,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 and (orig_attrs := ext.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE))
                 and FlextRuntime.is_dict_like(orig_attrs)
             ):
+                # Business Rule: Restore original attribute case from metadata.
+                # orig_case is str (from original_case_map.get()), but pyright may infer
+                # it as MetadataAttributeValue. We use explicit type narrowing.
+                # Implication: Ensure orig_case is always str for dict key access.
                 restored: dict[str, list[str]] = {}
                 for attr_name, attr_values in entry_data.attributes.attributes.items():
-                    orig_case = original_case_map.get(
+                    # Business Rule: original_case_map.get() returns str (the original case).
+                    # Type narrowing: Ensure orig_case is str for type safety.
+                    orig_case_raw = original_case_map.get(
                         attr_name.lower(),
                         attr_name,
                     )
+                    orig_case: str = str(orig_case_raw) if orig_case_raw else attr_name
+                    # Business Rule: orig_attrs is dict-like (DynamicMetadata), accessed via str keys.
+                    # Implication: Use str(orig_case) for type safety even though runtime is correct.
                     if orig_case in orig_attrs:
                         val = orig_attrs[orig_case]
                         restored[orig_case] = (
@@ -3829,20 +3997,42 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if not entry.metadata or not entry.metadata.extensions:
                 return
 
-            commented_acl_values = entry.metadata.extensions.get(
+            commented_acl_values_raw = entry.metadata.extensions.get(
                 "commented_attribute_values",
             )
-            if not isinstance(commented_acl_values, dict):
+            if not commented_acl_values_raw:
+                return
+            # Parse JSON string if needed (stored as json.dumps)
+            if isinstance(commented_acl_values_raw, str):
+                import json
+
+                commented_acl_values = json.loads(commented_acl_values_raw)
+            elif isinstance(commented_acl_values_raw, dict):
+                commented_acl_values = commented_acl_values_raw
+            else:
                 return
 
             original_acl_attr = self._get_original_acl_attr(entry)
-            for acl_attr_name, acl_values in commented_acl_values.items():
+            for acl_attr_name, acl_values_raw in commented_acl_values.items():
                 if acl_attr_name.lower() in acl_attr_names_to_skip:
                     continue
                 acl_attr_names_to_skip.add(acl_attr_name.lower())
                 sort_key = original_acl_attr or acl_attr_name
                 if sort_key not in acl_comments_dict:
                     acl_comments_dict[sort_key] = []
+                # Business Rule: acl_values_raw is MetadataAttributeValue (ScalarValue)
+                # Implication: Convert to expected type (list[str] | str | Acl) for _add_acl_value_comments
+                # Type narrowing: Convert ScalarValue to expected type
+                if isinstance(acl_values_raw, str):
+                    acl_values: list[str] | str | FlextLdifModels.Acl = acl_values_raw
+                elif isinstance(acl_values_raw, list):
+                    # Convert list[ScalarValue] to list[str]
+                    acl_values = [str(v) for v in acl_values_raw]
+                elif isinstance(acl_values_raw, FlextLdifModels.Acl):
+                    acl_values = acl_values_raw
+                else:
+                    # Fallback: convert to string
+                    acl_values = str(acl_values_raw)
                 self._add_acl_value_comments(
                     acl_comments_dict[sort_key],
                     original_acl_attr,
@@ -4168,16 +4358,55 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
 
             corrected_data = corrected_result.unwrap()
-            syntax_corrections = corrected_data.get("syntax_corrections")
-            if (
-                syntax_corrections
-                and FlextRuntime.is_list_like(syntax_corrections)
-                and len(syntax_corrections) > 0
-            ):
+            # Business Rule: apply_syntax_corrections expects specific types
+            # Implication: Convert corrected_data and syntax_corrections to expected formats
+            # Type narrowing: convert to expected types
+            corrected_data_typed: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | list[str]
+                | dict[str, str | list[str]]
+                | None,
+            ] = cast(
+                "dict[str, str | int | float | bool | list[str] | dict[str, str | list[str]] | None]",
+                corrected_data,
+            )
+            # Business Rule: apply_syntax_corrections expects list[str] or dict[str, str], not None.
+            # Implication: Type narrowing ensures syntax_corrections_typed is not None before calling.
+            # Type narrowing: Convert to expected types for apply_syntax_corrections.
+            # Business Rule: syntax_corrections_raw may be None, list, dict, or other types.
+            # Implication: Explicit type narrowing with isinstance checks ensures type safety.
+            # Extract syntax_corrections with explicit type narrowing
+            syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
+            syntax_corrections_typed: list[str] | dict[str, str] | None = None
+            if isinstance(syntax_corrections_raw, list):
+                # Type narrowing: syntax_corrections_raw is list, convert to list[str]
+                syntax_corrections_typed = [str(v) for v in syntax_corrections_raw]
+            elif isinstance(syntax_corrections_raw, dict):
+                # Type narrowing: syntax_corrections_raw is dict, convert to dict[str, str]
+                # Business Rule: Use explicit iteration to help type checker understand types.
+                # Implication: Type checker may infer Never for dict.items() in some contexts.
+                # Additional type narrowing: ensure dict type before iteration
+                syntax_corrections_dict: dict[str, str] = {}
+                # Business Rule: syntax_corrections_raw is dict[str, ...] from corrected_data_typed.
+                # Implication: Values may be str | int | float | bool | list[str] | dict[str, str | list[str]] | None.
+                # We convert all values to str for dict[str, str] compatibility.
+                if isinstance(syntax_corrections_raw, dict):
+                    for k, v in syntax_corrections_raw.items():
+                        syntax_corrections_dict[str(k)] = (
+                            str(v) if v is not None else ""
+                        )
+                syntax_corrections_typed = syntax_corrections_dict
+            # Business Rule: Only call apply_syntax_corrections if syntax_corrections_typed is not None.
+            # Type narrowing: Check for None before calling to ensure type safety.
+            if syntax_corrections_typed is not None:
                 return FlextLdifServersOud.Entry.apply_syntax_corrections(
                     entry,
-                    corrected_data,
-                    syntax_corrections,
+                    corrected_data_typed,
+                    syntax_corrections_typed,
                 )
 
             return FlextResult[FlextLdifModels.Entry].ok(entry)
@@ -4264,11 +4493,28 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Check if entry has ACL attributes in original_attrs
             aci_values = original_attrs.get("aci")
             if not aci_values:
-                # Debug: Check if aci is in entry.attributes instead
+                # Fallback: Check if aci is in entry.attributes instead
+                # This handles cases where original_attrs may not have aci
+                # (e.g., during second parsing after write)
                 if entry.attributes and entry.attributes.attributes:
                     aci_values = entry.attributes.attributes.get("aci")
                 if not aci_values:
-                    return FlextResult.ok(entry)
+                    # Also check case-insensitive variants
+                    for key, value in original_attrs.items() if original_attrs else []:
+                        if key.lower() == "aci":
+                            aci_values = value
+                            break
+                    if (
+                        not aci_values
+                        and entry.attributes
+                        and entry.attributes.attributes
+                    ):
+                        for key, value in entry.attributes.attributes.items():
+                            if key.lower() == "aci":
+                                aci_values = value
+                                break
+                    if not aci_values:
+                        return FlextResult.ok(entry)
 
             # Ensure metadata exists
             if not entry.metadata:
@@ -4326,7 +4572,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             # Use standardized MetadataKeys for consistency
                             for key, value in acl_extensions.items():
                                 # Map pattern names to MetadataKeys
+                                # Also check for MetadataKeys directly (for round-trip preservation)
                                 if key == "targattrfilters":
+                                    current_extensions[
+                                        FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+                                    ] = value
+                                elif (
+                                    key
+                                    == FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+                                ):
+                                    # Preserve if already in MetadataKeys format
+                                    current_extensions[
+                                        FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
+                                    ] = value
+                                # Also check for lowercase key variant
+                                elif key.lower() == "targattrfilters":
                                     current_extensions[
                                         FlextLdifConstants.MetadataKeys.ACL_TARGETATTR_FILTERS
                                     ] = value
@@ -4364,12 +4624,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                                     ] = value
 
             # Update entry metadata with ACL extensions
-            if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
+            # Always merge extensions if we have any ACL extensions to add
+            if current_extensions:
+                # Merge with existing extensions if metadata exists
+                existing_extensions = (
+                    dict(entry.metadata.extensions)
+                    if entry.metadata and entry.metadata.extensions
+                    else {}
+                )
+                # Merge current_extensions into existing_extensions (current takes precedence)
+                merged_extensions = {**existing_extensions, **current_extensions}
                 entry.metadata = entry.metadata.model_copy(
                     update={
-                        "extensions": FlextLdifModels.DynamicMetadata(**current_extensions)
-                        if current_extensions
-                        else FlextLdifModels.DynamicMetadata(),
+                        "extensions": FlextLdifModels.DynamicMetadata(
+                            **merged_extensions
+                        ),
                     },
                 )
 
@@ -4453,13 +4722,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     )
 
                 # CONSOLIDATED: Store via utility (DRY)
+                # Business Rule: store_minimal_differences expects ScalarValue for _extra
+                # Implication: Convert complex dicts to JSON strings for storage
                 FlextLdifUtilities.Metadata.store_minimal_differences(
                     metadata=entry.metadata,
-                    dn_differences=dn_differences,
-                    attribute_differences=attribute_differences,
-                    original_dn=original_dn,
-                    parsed_dn=parsed_dn,
-                    original_attributes_complete=original_attrs_complete,
+                    dn_differences=json.dumps(dn_differences),
+                    attribute_differences=json.dumps(attribute_differences),
+                    original_dn=original_dn or "",
+                    parsed_dn=parsed_dn or "",
+                    original_attributes_complete=json.dumps(original_attrs_complete),
                 )
 
                 logger.debug(

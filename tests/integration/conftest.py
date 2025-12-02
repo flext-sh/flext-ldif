@@ -17,7 +17,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif import (
     FlextLdif,
@@ -29,6 +28,7 @@ from flext_ldif import (
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
+from tests.fixtures.loader import FlextLdifFixtures
 
 # ============================================================================
 # API FIXTURES

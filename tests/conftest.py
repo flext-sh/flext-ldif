@@ -12,16 +12,23 @@ from __future__ import annotations
 
 import builtins
 import sys
+import warnings
 from collections.abc import Callable, Generator
 from pathlib import Path
 from types import ModuleType
+from typing import cast
 
 import pytest
 from flext_core import FlextResult
 from flext_tests import FlextTestDocker
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifWriter,
+)
 from flext_ldif.services.server import FlextLdifServer
 from tests.fixtures import FlextLdifFixtures
 from tests.fixtures.typing import (
@@ -29,6 +36,7 @@ from tests.fixtures.typing import (
     GenericTestCaseDict,
 )
 from tests.helpers.test_assertions import TestAssertions
+from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
 from tests.support.conftest_factory import FlextLdifTestConftest
 from tests.support.ldif_data import LdifTestData
 from tests.support.test_files import FileManager
@@ -67,14 +75,18 @@ class MockFlextTestsMatchers:
     """Mock FlextTestsMatchers."""
 
     @staticmethod
-    def assert_success(result: FlextResult[object], error_msg: str | None = None) -> object:
+    def assert_success(
+        result: FlextResult[object], error_msg: str | None = None
+    ) -> object:
         """Assert success."""
         if result.is_success:
             return result.unwrap()
         raise AssertionError(error_msg or f"Expected success: {result.error}")
 
     @staticmethod
-    def assert_failure(result: FlextResult[object], expected_error: str | None = None) -> str:
+    def assert_failure(
+        result: FlextResult[object], expected_error: str | None = None
+    ) -> str:
         """Assert failure."""
         if result.is_failure:
             error_str = str(result.error) if result.error else str(result)
@@ -187,14 +199,14 @@ def reset_flextldif_singleton() -> Generator[None]:
 
 
 @pytest.fixture(autouse=True)
-def cleanup_state() -> Generator[None, None, None]:
+def cleanup_state() -> None:
     """Autouse fixture to clean shared state between tests.
 
     Runs after each test to prevent state pollution to subsequent tests.
     Ensures test isolation even when fixtures have shared state.
     """
-    yield
     # Post-test cleanup - ensures each test has clean state
+    yield
 
 
 @pytest.fixture(scope="session")
@@ -554,22 +566,39 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "slow: Slow tests")
 
 
-# Helper class for assertions
+# Helper class for assertions - DEPRECATED: Use TestAssertions from test_assertions.py
 class AssertionHelpers:
-    """Helper methods for test assertions."""
+    """Helper methods for test assertions.
+
+    DEPRECATED: This class is deprecated. Use TestAssertions from test_assertions.py instead.
+    This class will be removed in a future version.
+    """
 
     @staticmethod
     def assert_success(
         result: FlextResult[object] | object, message: str | None = None
     ) -> object:
-        """Assert result is success and return unwrapped value."""
+        """Assert result is success and return unwrapped value.
+
+        DEPRECATED: Use TestAssertions.assert_success() instead.
+        """
+        warnings.warn(
+            "AssertionHelpers.assert_success is deprecated. "
+            "Use TestAssertions.assert_success() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if isinstance(result, FlextResult) and result.is_success:
             unwrapped = result.unwrap()
             return unwrapped if unwrapped is not None else ""
         if hasattr(result, "is_success") and getattr(result, "is_success", False):
             if hasattr(result, "unwrap"):
                 unwrap_method = result.unwrap
-                unwrapped = unwrap_method() if callable(unwrap_method) else getattr(result, "value", "")
+                unwrapped = (
+                    unwrap_method()
+                    if callable(unwrap_method)
+                    else getattr(result, "value", "")
+                )
                 return unwrapped if unwrapped is not None else ""
             return getattr(result, "value", "")
         msg = (
@@ -582,7 +611,16 @@ class AssertionHelpers:
     def assert_failure(
         result: FlextResult[object] | object, expected_error: str | None = None
     ) -> str:
-        """Assert result is failure."""
+        """Assert result is failure.
+
+        DEPRECATED: Use TestAssertions.assert_failure() instead.
+        """
+        warnings.warn(
+            "AssertionHelpers.assert_failure is deprecated. "
+            "Use TestAssertions.assert_failure() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if isinstance(result, FlextResult) and result.is_failure:
             error_str = str(result.error) if result.error else str(result)
             if expected_error and expected_error not in error_str:
@@ -592,7 +630,9 @@ class AssertionHelpers:
             return error_str
         if hasattr(result, "is_failure") and getattr(result, "is_failure", False):
             error_str = (
-                str(getattr(result, "error", "")) if hasattr(result, "error") and getattr(result, "error", None) else str(result)
+                str(getattr(result, "error", ""))
+                if hasattr(result, "error") and getattr(result, "error", None)
+                else str(result)
             )
             if expected_error and expected_error not in error_str:
                 raise AssertionError(
@@ -600,3 +640,92 @@ class AssertionHelpers:
                 )
             return error_str
         raise AssertionError(f"Expected failure: {result}")
+
+
+# =============================================================================
+# FIXTURES FOR COMMON TEST OPERATIONS
+# =============================================================================
+# These fixtures provide reusable operations that reduce duplication in tests.
+# Use these fixtures instead of duplicating parse/write/roundtrip logic.
+
+
+@pytest.fixture
+def parse_ldif_content(
+    ldif_api: FlextLdif,
+) -> Callable[[str | Path], FlextResult[object]]:
+    """Fixture for parsing LDIF content.
+
+    Returns a callable that parses LDIF content and returns FlextResult.
+    Use this fixture to avoid duplicating parse logic in tests.
+
+    Example:
+        def test_something(parse_ldif_content):
+            result = parse_ldif_content("dn: cn=test")
+            assert result.is_success
+
+    """
+
+    def _parse(content: str | Path) -> FlextResult[object]:
+        parse_result = ldif_api.parse(content)
+        # Cast to FlextResult[object] for type compatibility
+        return cast("FlextResult[object]", parse_result)
+
+    return _parse
+
+
+@pytest.fixture
+def write_ldif_entries(
+    ldif_api: FlextLdif,
+) -> Callable[[list[FlextLdifModels.Entry], Path], FlextResult[object]]:
+    """Fixture for writing LDIF entries to file.
+
+    Returns a callable that writes entries to a file and returns FlextResult.
+    Use this fixture to avoid duplicating write logic in tests.
+
+    Example:
+        def test_something(write_ldif_entries, tmp_path):
+            result = write_ldif_entries(entries, tmp_path / "test.ldif")
+            assert result.is_success
+
+    """
+
+    def _write(entries: list[FlextLdifModels.Entry], path: Path) -> FlextResult[object]:
+        write_result = ldif_api.write(entries, output_path=path)
+        # Cast to FlextResult[object] for type compatibility
+        return cast("FlextResult[object]", write_result)
+
+    return _write
+
+
+@pytest.fixture
+def roundtrip_ldif(
+    ldif_api: FlextLdif,
+    tmp_path: Path,
+) -> Callable[
+    [str | Path], tuple[list[FlextLdifModels.Entry], Path, list[FlextLdifModels.Entry]]
+]:
+    """Fixture for roundtrip operations (parse -> write -> parse).
+
+    Returns a callable that performs a complete roundtrip and returns
+    (original_entries, output_file, roundtripped_entries).
+    Use this fixture to avoid duplicating roundtrip logic in tests.
+
+    Example:
+        def test_something(roundtrip_ldif):
+            orig, output, rt = roundtrip_ldif("dn: cn=test")
+            assert len(orig) == len(rt)
+
+    """
+
+    def _roundtrip(
+        content: str | Path,
+    ) -> tuple[list[FlextLdifModels.Entry], Path, list[FlextLdifModels.Entry]]:
+        # Use complete_roundtrip_parse_write_parse which accepts tmp_path
+        # Returns tuple[list[Entry], Path, list[Entry]]
+        return DeduplicationHelpers.complete_roundtrip_parse_write_parse(
+            ldif_api,
+            content,
+            tmp_path,
+        )
+
+    return _roundtrip

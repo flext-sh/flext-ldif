@@ -16,11 +16,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.oid import FlextLdifServersOid
 from tests.fixtures.loader import FlextLdifFixtures
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
@@ -249,7 +250,7 @@ class TestFlextLdifOidSchemaWriting:
             expected_type=FlextLdifModels.SchemaAttribute,
         )
         assert isinstance(parsed_attr_result, FlextLdifModels.SchemaAttribute)
-        parsed_attr = parsed_attr_result
+        parsed_attr = cast("FlextLdifModelsDomains.SchemaAttribute", parsed_attr_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -282,7 +283,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_attribute",
             expected_type=FlextLdifModels.SchemaAttribute,
         )
-        parsed_attr = parsed_attr_result
+        parsed_attr = cast("FlextLdifModelsDomains.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -353,7 +354,7 @@ class TestFlextLdifOidSchemaWriting:
             expected_type=FlextLdifModels.SchemaObjectClass,
         )
         assert isinstance(parsed_oc_result, FlextLdifModels.SchemaObjectClass)
-        parsed_oc = parsed_oc_result
+        parsed_oc = cast("FlextLdifModelsDomains.SchemaObjectClass", parsed_oc_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -385,7 +386,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_objectclass",
             expected_type=FlextLdifModels.SchemaObjectClass,
         )
-        parsed_oc = parsed_oc_result
+        parsed_oc = cast("FlextLdifModelsDomains.SchemaObjectClass", parsed_oc_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -416,7 +417,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_attribute",
             expected_type=FlextLdifModels.SchemaAttribute,
         )
-        parsed_attr = parsed_attr_result
+        parsed_attr = cast("FlextLdifModelsDomains.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -480,7 +481,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_attribute",
             expected_type=FlextLdifModels.SchemaAttribute,
         )
-        parsed_attr = parsed_attr_result
+        parsed_attr = cast("FlextLdifModelsDomains.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -541,7 +542,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_attribute",
             expected_type=FlextLdifModels.SchemaAttribute,
         )
-        parsed_attr = parsed_attr_result
+        parsed_attr = cast("FlextLdifModelsDomains.SchemaAttribute", parsed_attr_result)
 
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
             oid_schema,
@@ -573,7 +574,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_attribute",
             expected_type=FlextLdifModels.SchemaAttribute,
         )
-        parsed1 = parsed1_result
+        parsed1 = cast("FlextLdifModelsDomains.SchemaAttribute", parsed1_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -589,7 +590,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_attribute",
             expected_type=FlextLdifModels.SchemaAttribute,
         )
-        parsed2 = parsed2_result
+        parsed2 = cast("FlextLdifModelsDomains.SchemaAttribute", parsed2_result)
 
         # Verify integrity
         assert parsed1.oid == parsed2.oid
@@ -611,7 +612,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_objectclass",
             expected_type=FlextLdifModels.SchemaObjectClass,
         )
-        parsed1 = parsed1_result
+        parsed1 = cast("FlextLdifModelsDomains.SchemaObjectClass", parsed1_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -627,7 +628,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_objectclass",
             expected_type=FlextLdifModels.SchemaObjectClass,
         )
-        parsed2 = parsed2_result
+        parsed2 = cast("FlextLdifModelsDomains.SchemaObjectClass", parsed2_result)
 
         # Verify integrity
         assert parsed1.oid == parsed2.oid
@@ -660,7 +661,7 @@ class TestFlextLdifOidSchemaWriting:
             parse_method="parse_objectclass",
             expected_type=FlextLdifModels.SchemaObjectClass,
         )
-        parsed_oc = parsed_oc_result
+        parsed_oc = cast("FlextLdifModelsDomains.SchemaObjectClass", parsed_oc_result)
 
         assert parsed_oc.kind == kind
 

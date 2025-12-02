@@ -15,6 +15,7 @@ This implementation handles:
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Mapping
 from typing import ClassVar
@@ -199,7 +200,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_INDEX_PATTERN: ClassVar[str] = r"^\{(\d+)\}\s*(.+)"
         ACL_TO_BY_PATTERN: ClassVar[str] = r"^to\s+(.+?)\s+by\s+"
         ACL_ATTRS_PATTERN: ClassVar[str] = r"attrs?\s*=\s*([^,\s]+(?:\s*,\s*[^,\s]+)*)"
-        ACL_SUBJECT_TYPE_WHO: ClassVar[str] = "who"
+        ACL_SUBJECT_TYPE_WHO: ClassVar[
+            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
+        ] = "all"  # OpenLDAP "who" maps to "all" in normalized model
 
         # ACL detection patterns (migrated from can_handle_acl method)
         ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = r"^(\{\d+\})?\s*to\s+"
@@ -390,15 +393,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         """
 
-        # OVERRIDE: OpenLDAP 2.x uses "olcAccess" for ACL attribute names
-        def __init__(self, **kwargs: str | float | bool | None) -> None:
-            """Initialize OpenLDAP 2.x ACL quirk with RFC format.
-
-            Args:
-                **kwargs: Passed to parent FlextService for initialization
-
-            """
-            super().__init__(**kwargs)
+        # No __init__ override needed - parent class FlextLdifServersRfc.Acl.__new__
+        # handles all initialization via Dependency Injection pattern
 
         def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
@@ -719,14 +715,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         """
 
-        def __init__(self, **kwargs: str | float | bool | None) -> None:
-            """Initialize OpenLDAP 2.x entry quirk with RFC format.
-
-            Args:
-                **kwargs: Passed to parent FlextService for initialization
-
-            """
-            super().__init__(**kwargs)
+        # No __init__ override needed - parent class FlextLdifServersRfc.Entry.__new__
+        # handles all initialization via Dependency Injection pattern
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with OpenLDAP 2.x-specific logic:
@@ -762,13 +752,27 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
 
             # Check for OpenLDAP 2.x object classes
-            object_classes = attributes.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
-            if not FlextRuntime.is_list_like(object_classes):
-                object_classes = [object_classes] if object_classes else []
+            object_classes_raw = attributes.get(
+                FlextLdifConstants.DictKeys.OBJECTCLASS, []
+            )
+            # Type narrowing: convert to list[str] for consistent iteration
+            object_classes_list: list[str] = []
+            if FlextRuntime.is_list_like(object_classes_raw):
+                # Already list-like - convert each element to string
+                for item in object_classes_raw:
+                    if isinstance(item, str):
+                        object_classes_list.append(item)
+                    elif item is not None:
+                        object_classes_list.append(str(item))
+            elif isinstance(object_classes_raw, str):
+                object_classes_list = [object_classes_raw]
+            elif object_classes_raw is not None:
+                # Fallback for any other type
+                object_classes_list = [str(object_classes_raw)]
 
             has_olc_classes = any(
                 oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
-                for oc in object_classes
+                for oc in object_classes_list
             )
 
             return is_config_dn or has_olc_attrs or has_olc_classes
@@ -816,7 +820,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 | int
                 | float
                 | bool
-                | dict[str, str | int | float | bool | None]
+                | dict[str, str | int | float | bool | list[str] | None]
                 | list[str]
                 | None,
             ] = {
@@ -868,7 +872,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 entry = entry.model_copy(
                     update={
                         "metadata": FlextLdifModels.QuirkMetadata.create_for(
-                            FlextLdifConstants.ServerTypes.OPENLDAP,
+                            "openldap",  # Literal string for ServerTypeLiteral
                             extensions=FlextLdifModels.DynamicMetadata(),
                         ),
                     },
@@ -884,7 +888,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 # Return entry as-is (caller should handle this case)
                 return entry
             # Inject validation rules via metadata.extensions (DI pattern)
-            entry.metadata.extensions["validation_rules"] = validation_rules
+            # Serialize to JSON string to satisfy MetadataAttributeValue type constraint
+            # (nested dicts with lists don't fit Mapping[str, ScalarValue])
+
+            entry.metadata.extensions["validation_rules"] = json.dumps(validation_rules)
 
             logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",

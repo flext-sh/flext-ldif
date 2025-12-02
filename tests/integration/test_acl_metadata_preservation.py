@@ -59,7 +59,9 @@ cn: test
             assert entry.metadata.extensions is not None, "Extensions should exist"
             # For now, just verify extensions exist (BINDMODE preservation may need implementation)
             # This test verifies that ACL parsing works, even if BINDMODE isn't preserved yet
-            assert True, "ACL parsing succeeded (BINDMODE preservation may need implementation)"
+            assert True, (
+                "ACL parsing succeeded (BINDMODE preservation may need implementation)"
+            )
         else:
             assert bindmode == "Simple", f"BINDMODE not preserved: got {bindmode}"
 

@@ -25,8 +25,8 @@ from __future__ import annotations
 from typing import Final
 
 import pytest
+from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifProtocols
 from flext_ldif.services.entries import FlextLdifEntries
 from tests.fixtures.constants import DNs, Names, Values
@@ -98,21 +98,29 @@ class TestFlextLdifEntries:
             dn_value: str,
             attributes: object = None,
         ) -> FlextLdifProtocols.Models.EntryWithDnProtocol:
-            """Create mock entry implementing EntryWithDnProtocol."""
+            """Create mock entry implementing EntryWithDnProtocol.
 
-            class MockEntry(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            Note: We don't inherit from the protocol because it defines dn as @property.
+            Protocols use structural subtyping (duck typing), so inheritance is not needed.
+            """
+
+            class MockEntry:
                 def __init__(self, dn_val: str, attrs: object) -> None:
                     self.dn: object = dn_val
                     self.attributes: object = attrs or {}
 
-            return MockEntry(dn_value, attributes)
+            return MockEntry(dn_value, attributes)  # type: ignore[return-value]
 
         @staticmethod
         def create_mock_entry_with_dn_value(
             dn_value: str,
             attributes: object = None,
         ) -> FlextLdifProtocols.Models.EntryWithDnProtocol:
-            """Create mock entry with DN that has .value attribute."""
+            """Create mock entry with DN that has .value attribute.
+
+            Note: We don't inherit from the protocol because it defines dn as @property.
+            Protocols use structural subtyping (duck typing), so inheritance is not needed.
+            """
 
             class DnWithValue:
                 def __init__(self, value: str) -> None:
@@ -121,12 +129,12 @@ class TestFlextLdifEntries:
                 def __str__(self) -> str:
                     return self.value
 
-            class MockEntry(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            class MockEntry:
                 def __init__(self, dn_val: str, attrs: object) -> None:
                     self.dn: object = DnWithValue(dn_val)
                     self.attributes: object = attrs or {}
 
-            return MockEntry(dn_value, attributes)
+            return MockEntry(dn_value, attributes)  # type: ignore[return-value]
 
         @staticmethod
         def create_mock_attribute_value(
@@ -232,7 +240,8 @@ class TestFlextLdifEntries:
                 def __str__(self) -> str:
                     raise ValueError(exception_msg)
 
-            class MockEntry(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            # Don't inherit from protocol - it defines dn as @property
+            class MockEntry:
                 def __init__(self) -> None:
                     self.dn: object = ExceptionDn()
                     self.attributes: object = {}
@@ -422,7 +431,8 @@ class TestFlextLdifEntries:
         def test_get_entry_attributes_with_none_entry(self) -> None:
             """Test get_entry_attributes with entry that has None attributes."""
 
-            class EntryWithNoneAttributes(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryWithNoneAttributes:
                 def __init__(self) -> None:
                     self.dn: object = TestFlextLdifEntries.Constants.DN_TEST_USER
                     self.attributes: object = None
@@ -459,7 +469,8 @@ class TestFlextLdifEntries:
         ) -> None:
             """Test get_entry_attributes with dict-like attributes."""
 
-            class EntryWithDictAttributes(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryWithDictAttributes:
                 def __init__(self, attrs: GenericFieldsDict) -> None:
                     self.dn: object = DNs.TEST_USER
                     self.attributes: object = attrs
@@ -477,9 +488,8 @@ class TestFlextLdifEntries:
         ) -> None:
             """Test get_entry_attributes with unknown attributes container type."""
 
-            class EntryWithUnknownAttributes(
-                FlextLdifProtocols.Models.EntryWithDnProtocol,
-            ):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryWithUnknownAttributes:
                 def __init__(self) -> None:
                     self.dn = "cn=test,dc=example,dc=com"
                     self.attributes = 123
@@ -504,7 +514,8 @@ class TestFlextLdifEntries:
                         return super().__getattribute__(name)
                     raise ValueError(self.msg)
 
-            class EntryThatRaises(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryThatRaises:
                 def __init__(self) -> None:
                     self.dn: object = "cn=test,dc=example,dc=com"
                     self.attributes: object = ExceptionAttribute(exception_msg)
@@ -554,9 +565,8 @@ class TestFlextLdifEntries:
         def test_get_entry_objectclasses_with_lowercase_key(self) -> None:
             """Test get_entry_objectclasses with lowercase objectclass key."""
 
-            class EntryWithLowercaseObjectclass(
-                FlextLdifProtocols.Models.EntryWithDnProtocol,
-            ):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryWithLowercaseObjectclass:
                 def __init__(self) -> None:
                     self.dn = "cn=test,dc=example,dc=com"
                     self.attributes = {"objectclass": ["person", "top"]}
@@ -588,9 +598,8 @@ class TestFlextLdifEntries:
         ) -> None:
             """Test get_entry_objectclasses when get_entry_attributes fails."""
 
-            class EntryWithoutAttributesAttr(
-                FlextLdifProtocols.Models.EntryWithDnProtocol,
-            ):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryWithoutAttributesAttr:
                 def __init__(self) -> None:
                     self.dn: object = TestFlextLdifEntries.Constants.DN_TEST_USER
                     self.attributes: object = None
@@ -615,7 +624,8 @@ class TestFlextLdifEntries:
                         return super().__getattribute__(name)
                     raise ValueError(self.msg)
 
-            class EntryThatRaises(FlextLdifProtocols.Models.EntryWithDnProtocol):
+            # Don't inherit from protocol - it defines dn as @property
+            class EntryThatRaises:
                 def __init__(self) -> None:
                     self.dn: object = "cn=test,dc=example,dc=com"
                     self.attributes: object = ExceptionAttribute(exception_msg)

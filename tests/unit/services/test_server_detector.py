@@ -453,10 +453,15 @@ class TestServerDetector:
             expected: str,
         ) -> None:
             """Test resolve_from_config with target_server_type override."""
+            from typing import cast
+
             ldif_config = _get_ldif_config()
             result = FlextLdifDetector.resolve_from_config(
                 ldif_config,
-                target_server_type=target_server_type,
+                target_server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None",
+                    target_server_type,
+                ),
             )
             assert result == expected
 

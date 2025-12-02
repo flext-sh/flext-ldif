@@ -17,10 +17,12 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 
 
 class ExampleServerMigration:
@@ -33,7 +35,8 @@ class ExampleServerMigration:
     - Comprehensive migration workflows with validation
     """
 
-    def parallel_server_migration(self) -> FlextResult[FlextLdifModels.EntryResult]:
+    @staticmethod
+    def parallel_server_migration() -> FlextResult[FlextLdifModels.EntryResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = FlextLdif.get_instance()
 
@@ -88,7 +91,7 @@ member: cn=OUD User,ou=People,dc=example,dc=com
                 write_options=FlextLdifModels.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
-                ).model_dump(),
+                ),
             ),
         )
 
@@ -108,7 +111,8 @@ member: cn=OUD User,ou=People,dc=example,dc=com
 
         return FlextResult.ok(result)
 
-    def auto_detection_migration_pipeline(self) -> FlextResult[dict[str, object]]:
+    @staticmethod
+    def auto_detection_migration_pipeline() -> FlextResult[dict[str, object]]:
         """Migration pipeline with automatic server detection."""
         api = FlextLdif.get_instance()
 
@@ -174,7 +178,8 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
             "migration_success": True,
         })
 
-    def batch_server_comparison(self) -> FlextResult[dict[str, object]]:
+    @staticmethod
+    def batch_server_comparison() -> FlextResult[dict[str, object]]:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = FlextLdif.get_instance()
 
@@ -195,12 +200,16 @@ entryUUID: 12345678-1234-1234-1234-123456789012
 entryCSN: 20240101000000.000000Z#000000#000#000000
 """
 
-        servers = ["rfc", "oid", "oud", "openldap"]
-        comparison_results = {}
+        servers: list[str] = ["rfc", "oid", "oud", "openldap"]
+        comparison_results: dict[str, object] = {}
 
         # Parallel parsing comparison
         for server in servers:
-            parse_result = api.parse(test_ldif, server_type=server)
+            # Cast to Literal type for server_type parameter
+            server_type = cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server
+            )
+            parse_result = api.parse(test_ldif, server_type=server_type)
             if parse_result.is_success:
                 entries = parse_result.unwrap()
                 comparison_results[server] = {
@@ -214,12 +223,14 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
                     validate_result = api.validate_entries(entries)
                     if validate_result.is_success:
                         report = validate_result.unwrap()
-                        comparison_results[server]["validation"] = {
-                            "is_valid": report.is_valid,
-                            "valid_entries": report.valid_entries,
-                            "invalid_entries": report.invalid_entries,
-                            "error_count": len(report.errors),
-                        }
+                        server_result = comparison_results[server]
+                        if isinstance(server_result, dict):
+                            server_result["validation"] = {
+                                "is_valid": report.is_valid,
+                                "valid_entries": report.valid_entries,
+                                "invalid_entries": report.invalid_entries,
+                                "error_count": len(report.errors),
+                            }
             else:
                 comparison_results[server] = {
                     "parsed_successfully": False,
@@ -231,7 +242,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         successful_parses = sum(
             1
             for r in comparison_results.values()
-            if r.get("parsed_successfully", False)
+            if isinstance(r, dict) and r.get("parsed_successfully", False)
         )
         total_servers = len(servers)
 
@@ -244,7 +255,8 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
             "server_results": comparison_results,
         })
 
-    def comprehensive_migration_workflow(self) -> FlextResult[dict[str, object]]:
+    @staticmethod
+    def comprehensive_migration_workflow() -> FlextResult[dict[str, object]]:  # noqa: PLR0912
         """Comprehensive migration workflow with parallel processing and validation."""
         api = FlextLdif.get_instance()
 
@@ -316,7 +328,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
                 write_options=FlextLdifModels.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
-                ).model_dump(),
+                ),
             ),
         )
 

@@ -399,7 +399,7 @@ sn:"""
         expected_errors: str,
     ) -> None:
         """Test validate_entries with strict/non-strict mode.
-        
+
         Note: Current parser implementation does not support format_options.
         This test verifies basic parsing behavior with invalid LDIF content.
         """
@@ -429,7 +429,7 @@ sn:"""
         expected_count: str,
     ) -> None:
         """Test max_parse_errors functionality.
-        
+
         Note: Current parser implementation does not support format_options.
         This test verifies basic parsing behavior with LDIF containing errors.
         """
@@ -450,7 +450,7 @@ sn:"""
         parser_service: FlextLdifParser,
     ) -> None:
         """Test combination of multiple options.
-        
+
         Note: Current parser implementation does not support format_options.
         This test verifies that entries are parsed successfully.
         Statistics categorization (schema_entries, data_entries) is not

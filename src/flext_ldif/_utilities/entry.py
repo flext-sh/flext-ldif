@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+import re
+from collections.abc import Callable, Mapping, Sequence
+from typing import Literal
 
-from flext_core import FlextLogger, FlextRuntime
+from flext_core import FlextLogger, FlextResult, FlextRuntime
 from flext_core.typings import FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -103,41 +105,49 @@ class FlextLdifUtilitiesEntry:
             if not attributes:
                 return {}
             normalized_result: FlextLdifTypes.CommonDict.AttributeDict = {}
-            for attr_name, values in attributes.items():
+            for attr_name in attributes:
+                # Type-safe access - get values with explicit type
+                raw_values: list[str] | list[bytes] | bytes | str = attributes[
+                    attr_name
+                ]
                 # Normalize to list[str] - handle all input types
-                if FlextRuntime.is_list_like(values):
+                if FlextRuntime.is_list_like(raw_values):
                     normalized_result[attr_name] = [
                         v.decode("utf-8", errors="replace")
                         if isinstance(v, bytes)
                         else str(v)
-                        for v in values
+                        for v in raw_values
                     ]
-                elif isinstance(values, bytes):
+                elif isinstance(raw_values, bytes):
                     normalized_result[attr_name] = [
-                        values.decode("utf-8", errors="replace"),
+                        raw_values.decode("utf-8", errors="replace"),
                     ]
                 else:
-                    normalized_result[attr_name] = [str(values)]
+                    normalized_result[attr_name] = [str(raw_values)]
             return normalized_result
 
         result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
-        for attr_name, values in attributes.items():
+        for attr_name in attributes:
+            # Type-safe access - get values with explicit type
+            attr_raw_values: list[str] | list[bytes] | bytes | str = attributes[
+                attr_name
+            ]
             # Normalize values to list[str] first - convert bytes to str immediately
             str_values: list[str]
-            if FlextRuntime.is_list_like(values):
+            if FlextRuntime.is_list_like(attr_raw_values):
                 # Convert bytes to str if needed
                 str_values = [
                     v.decode("utf-8", errors="replace")
                     if isinstance(v, bytes)
                     else str(v)
-                    for v in values
+                    for v in attr_raw_values
                 ]
             # Single value - convert bytes to str if needed, then wrap in list
-            elif isinstance(values, bytes):
-                str_values = [values.decode("utf-8", errors="replace")]
+            elif isinstance(attr_raw_values, bytes):
+                str_values = [attr_raw_values.decode("utf-8", errors="replace")]
             else:
-                str_values = [str(values)]
+                str_values = [str(attr_raw_values)]
 
             if attr_name.lower() in boolean_attr_names:
                 # Convert boolean values
@@ -180,7 +190,9 @@ class FlextLdifUtilitiesEntry:
         return result
 
     @staticmethod
-    def is_schema_entry(entry: FlextLdifModels.Entry, *, strict: bool = True) -> bool:
+    def is_schema_entry(
+        entry: FlextLdifModelsDomains.Entry, *, strict: bool = True
+    ) -> bool:
         """Check if entry is a REAL schema entry with schema definitions.
 
         CRITICAL: This method detects ONLY real LDAP schema entries that
@@ -231,7 +243,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_objectclass(
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModelsDomains.Entry,
         objectclasses: str | tuple[str, ...],
     ) -> bool:
         """Check if entry has any of the specified objectClasses.
@@ -260,7 +272,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_all_attributes(
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModelsDomains.Entry,
         attributes: list[str],
     ) -> bool:
         """Check if entry has ALL specified attributes.
@@ -285,7 +297,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_any_attributes(
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModelsDomains.Entry,
         attributes: list[str],
     ) -> bool:
         """Check if entry has ANY of the specified attributes.
@@ -310,9 +322,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def remove_attributes(
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModelsDomains.Entry,
         attributes: list[str],
-    ) -> FlextLdifModels.Entry:
+    ) -> FlextLdifModelsDomains.Entry:
         """Remove specified attributes from entry.
 
         Args:
@@ -418,21 +430,33 @@ class FlextLdifUtilitiesEntry:
             canonical_name = normalize(original_attr_name)
 
             # Preserve original values
-            original_values = (
-                list(attr_values)
-                if isinstance(attr_values, (list, tuple))
-                else [attr_values]
-                if attr_values is not None
-                else []
-            )
+            # Business Rule: LDIF attribute values are always ScalarValue or Sequence[ScalarValue]
+            # (never recursive GeneralValueType with nested Mappings).
+            # This method receives GeneralValueType from entry_attrs but converts to
+            # MetadataAttributeValue for metadata storage (which only accepts ScalarValue).
+            # Implication: Attribute values in LDIF are always primitive types, never nested structures.
+            # Type conversion: GeneralValueType -> MetadataAttributeValue is safe because
+            # LDIF attributes never contain nested Mappings in practice.
+            # Business Rule: original_values must be list[str] for iteration in string building
+            # Implication: Convert all values to list[str] format for consistent processing
+            original_values_list: list[str] = []
+            if isinstance(attr_values, (list, tuple)):
+                # Sequence of values - convert to list[str]
+                # Business Rule: LDIF attribute sequences are always Sequence[ScalarValue], never recursive
+                original_values_list = [str(v) for v in attr_values if v is not None]
+            elif attr_values is not None:
+                # Single value - wrap in list for consistency with metadata format
+                # Business Rule: Metadata stores attributes as sequences for consistency
+                original_values_list = [str(attr_values)]
+            # Store as MetadataAttributeValue (list[str] is compatible with Sequence[ScalarValue])
+            original_values: FlextTypes.MetadataAttributeValue = original_values_list
             original_attributes_complete[original_attr_name] = original_values
 
             converted_values = converted_attrs.get(canonical_name, [])
 
             # Build string representations
-            original_str = (
-                f"{original_attr_name}: {', '.join(str(v) for v in original_values)}"
-            )
+            # Business Rule: original_values_list is always list[str], safe for iteration
+            original_str = f"{original_attr_name}: {', '.join(original_values_list)}"
             converted_str = (
                 f"{canonical_name}: {', '.join(str(v) for v in converted_values)}"
                 if converted_values
@@ -676,6 +700,294 @@ class FlextLdifUtilitiesEntry:
             result[output_name] = output_values
 
         return result
+
+    # =========================================================================
+    # BATCH METHODS - Power Method Support
+    # =========================================================================
+
+    @staticmethod
+    def matches_criteria(
+        entry: FlextLdifModelsDomains.Entry,
+        *,
+        objectclasses: Sequence[str] | None = None,
+        objectclass_mode: Literal["any", "all"] = "any",
+        required_attrs: Sequence[str] | None = None,
+        any_attrs: Sequence[str] | None = None,
+        dn_pattern: str | None = None,
+        is_schema: bool | None = None,
+    ) -> bool:
+        """Check multiple entry criteria in one call.
+
+        Replaces multiple conditional checks:
+            if is_schema_entry(entry) and has_objectclass(entry, 'person'):
+                if has_all_attributes(entry, ['cn', 'sn']):
+                    ...
+
+        With single call:
+            if matches_criteria(
+                entry,
+                is_schema=True,
+                objectclasses=['person'],
+                required_attrs=['cn', 'sn']
+            ):
+
+        Args:
+            entry: Entry to check
+            objectclasses: Required objectClasses
+            objectclass_mode: "any" (has any) or "all" (has all)
+            required_attrs: All of these attributes must exist
+            any_attrs: At least one of these attributes must exist
+            dn_pattern: Regex pattern that DN must match
+            is_schema: If set, entry must (True) or must not (False) be schema
+
+        Returns:
+            True if all specified criteria are met
+
+        Examples:
+            >>> FlextLdifUtilitiesEntry.matches_criteria(
+            ...     entry,
+            ...     is_schema=False,
+            ...     objectclasses=["inetOrgPerson", "person"],
+            ...     objectclass_mode="any",
+            ...     required_attrs=["cn", "sn"],
+            ... )
+            True
+
+        """
+        # Check is_schema constraint
+        if is_schema is not None:
+            entry_is_schema = FlextLdifUtilitiesEntry.is_schema_entry(entry)
+            if entry_is_schema != is_schema:
+                return False
+
+        # Check objectClasses
+        if objectclasses:
+            if objectclass_mode == "any":
+                has_any = any(
+                    FlextLdifUtilitiesEntry.has_objectclass(entry, oc)
+                    for oc in objectclasses
+                )
+                if not has_any:
+                    return False
+            else:  # "all"
+                has_all = all(
+                    FlextLdifUtilitiesEntry.has_objectclass(entry, oc)
+                    for oc in objectclasses
+                )
+                if not has_all:
+                    return False
+
+        # Check required attributes
+        if required_attrs and not FlextLdifUtilitiesEntry.has_all_attributes(
+            entry, list(required_attrs)
+        ):
+            return False
+
+        # Check any attributes
+        if any_attrs:
+            if not FlextLdifUtilitiesEntry.has_any_attributes(entry, list(any_attrs)):
+                return False
+
+        # Check DN pattern
+        if dn_pattern:
+            dn_value = ""
+            if entry.dn is not None:
+                dn_value = (
+                    entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+                )
+            if not re.search(dn_pattern, dn_value, re.IGNORECASE):
+                return False
+
+        return True
+
+    @staticmethod
+    def transform_batch(
+        entries: Sequence[FlextLdifModelsDomains.Entry],
+        *,
+        normalize_dns: bool = False,
+        normalize_attrs: bool = False,
+        attr_case: Literal["lower", "upper", "preserve"] = "lower",
+        convert_booleans: tuple[str, str] | None = None,
+        remove_attrs: Sequence[str] | None = None,
+        fail_fast: bool = False,
+    ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+        """Transform multiple entries with common operations.
+
+        Applies transformations in order:
+        1. Normalize DNs
+        2. Normalize attribute names
+        3. Convert boolean values
+        4. Remove specified attributes
+
+        Args:
+            entries: Entries to transform
+            normalize_dns: Normalize DN format
+            normalize_attrs: Normalize attribute names to specified case
+            attr_case: Case for attribute normalization
+            convert_booleans: Tuple of (source_format, target_format)
+                              e.g., ("true/false", "TRUE/FALSE")
+            remove_attrs: List of attributes to remove
+            fail_fast: Stop on first error
+
+        Returns:
+            FlextResult containing list of transformed entries
+
+        Examples:
+            >>> result = FlextLdifUtilitiesEntry.transform_batch(
+            ...     entries,
+            ...     normalize_attrs=True,
+            ...     attr_case="lower",
+            ...     remove_attrs=["userPassword", "pwdHistory"],
+            ... )
+
+        """
+        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+
+        results: list[FlextLdifModelsDomains.Entry] = []
+        errors: list[str] = []
+
+        for i, entry in enumerate(entries):
+            try:
+                current_entry = entry
+
+                # Step 1: Normalize DN
+                if normalize_dns and current_entry.dn is not None:
+                    dn_value = (
+                        current_entry.dn.value
+                        if hasattr(current_entry.dn, "value")
+                        else str(current_entry.dn)
+                    )
+                    norm_result = FlextLdifUtilitiesDN.norm(dn_value)
+                    if norm_result.is_success:
+                        normalized_dn = norm_result.unwrap()
+                        # Create new DN object
+                        # Business Rule: DistinguishedName is the correct type for DN objects per RFC 4514
+                        new_dn = FlextLdifModelsDomains.DistinguishedName(
+                            value=normalized_dn
+                        )
+                        current_entry = current_entry.model_copy(update={"dn": new_dn})
+
+                # Step 2: Normalize attribute names
+                if normalize_attrs and current_entry.attributes is not None:
+                    attrs = current_entry.attributes.attributes
+                    if attr_case == "lower":
+                        new_attrs = {k.lower(): v for k, v in attrs.items()}
+                    elif attr_case == "upper":
+                        new_attrs = {k.upper(): v for k, v in attrs.items()}
+                    else:
+                        new_attrs = attrs
+                    new_attributes = FlextLdifModelsDomains.LdifAttributes(
+                        attributes=new_attrs
+                    )
+                    current_entry = current_entry.model_copy(
+                        update={"attributes": new_attributes}
+                    )
+
+                # Step 3: Convert booleans
+                # Business Rule: convert_boolean_attributes expects Mapping and set[str], not Entry
+                # Extract attributes dict and boolean attribute names set for conversion
+                # Common LDAP boolean attributes that may need format conversion
+                if convert_booleans:
+                    source_format, target_format = convert_booleans
+                    if current_entry.attributes is not None:
+                        attrs_dict = current_entry.attributes.attributes
+                        # Common boolean attribute names in LDAP (case-insensitive matching)
+                        # TODO: Should come from config or constants for server-specific boolean attrs
+                        boolean_attrs = {
+                            "userpassword",
+                            "pwdaccountlocked",
+                            "pwdlocked",
+                            "accountlocked",
+                            "passwordexpired",
+                            "passwordneverexpires",
+                        }
+                        converted_attrs = (
+                            FlextLdifUtilitiesEntry.convert_boolean_attributes(
+                                attrs_dict,
+                                boolean_attrs,
+                                source_format=source_format,
+                                target_format=target_format,
+                            )
+                        )
+                        new_attributes_boolean = FlextLdifModelsDomains.LdifAttributes(
+                            attributes=converted_attrs
+                        )
+                        current_entry = current_entry.model_copy(
+                            update={"attributes": new_attributes_boolean}
+                        )
+
+                # Step 4: Remove attributes
+                # Business Rule: remove_attributes accepts 'attributes' as positional arg, not 'attributes_to_remove'
+                if remove_attrs:
+                    current_entry = FlextLdifUtilitiesEntry.remove_attributes(
+                        current_entry,
+                        list(remove_attrs),
+                    )
+
+                results.append(current_entry)
+
+            except Exception as e:
+                if fail_fast:
+                    return FlextResult.fail(f"Entry {i} transform failed: {e}")
+                errors.append(f"Entry {i}: {e}")
+
+        if errors:
+            return FlextResult.fail(f"Transform errors: {'; '.join(errors)}")
+
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def filter_batch(
+        entries: Sequence[FlextLdifModelsDomains.Entry],
+        *,
+        objectclasses: Sequence[str] | None = None,
+        objectclass_mode: Literal["any", "all"] = "any",
+        required_attrs: Sequence[str] | None = None,
+        dn_pattern: str | None = None,
+        is_schema: bool | None = None,
+        exclude_schema: bool = False,
+    ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+        """Filter entries based on criteria.
+
+        Args:
+            entries: Entries to filter
+            objectclasses: Filter by objectClass
+            objectclass_mode: "any" or "all"
+            required_attrs: Only include entries with all these attrs
+            dn_pattern: Only include entries matching DN pattern
+            is_schema: Only include schema (True) or non-schema (False) entries
+            exclude_schema: Convenience flag to exclude schema entries
+
+        Returns:
+            FlextResult containing filtered entries
+
+        Examples:
+            >>> result = FlextLdifUtilitiesEntry.filter_batch(
+            ...     entries,
+            ...     objectclasses=["inetOrgPerson"],
+            ...     exclude_schema=True,
+            ... )
+
+        """
+        # Handle exclude_schema as is_schema=False
+        effective_is_schema = is_schema
+        if exclude_schema and is_schema is None:
+            effective_is_schema = False
+
+        results: list[FlextLdifModelsDomains.Entry] = [
+            entry
+            for entry in entries
+            if FlextLdifUtilitiesEntry.matches_criteria(
+                entry,
+                objectclasses=objectclasses,
+                objectclass_mode=objectclass_mode,
+                required_attrs=required_attrs,
+                dn_pattern=dn_pattern,
+                is_schema=effective_is_schema,
+            )
+        ]
+
+        return FlextResult.ok(results)
 
 
 __all__ = [

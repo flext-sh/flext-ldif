@@ -141,12 +141,12 @@ class AclParserTestFactory:
     ) -> FlextLdifModelsDomains.Acl:
         """Create test ACL model."""
         # Type narrowing: cast subject_type and server_type to Literal types
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", subject_type)
-        server_type_literal: (
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type)
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", subject_type)
+        )
+        server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type
+        )
 
         return FlextLdifModelsDomains.Acl(
             name=name,
@@ -223,7 +223,9 @@ class TestFlextLdifAclParser:
             case AclParserTestType.PARSE_OPENLDAP:
                 # Test parsing OpenLDAP ACL format
                 parse_result_openldap: FlextResult[FlextLdifModelsDomains.Acl] = (
-                    acl_service.parse_acl_string(test_case.acl_line, test_case.server_type)
+                    acl_service.parse_acl_string(
+                        test_case.acl_line, test_case.server_type
+                    )
                 )
                 assert isinstance(parse_result_openldap, FlextResult)
                 # Validate successful parsing
@@ -237,9 +239,11 @@ class TestFlextLdifAclParser:
 
             case AclParserTestType.PARSE_OID:
                 # Test parsing Oracle OID ACL format
-                parse_result_oid: FlextResult[FlextLdifModelsDomains.Acl] = acl_service.parse_acl_string(
-                    test_case.acl_line,
-                    test_case.server_type,
+                parse_result_oid: FlextResult[FlextLdifModelsDomains.Acl] = (
+                    acl_service.parse_acl_string(
+                        test_case.acl_line,
+                        test_case.server_type,
+                    )
                 )
                 assert isinstance(parse_result_oid, FlextResult)
                 # Validate successful parsing
@@ -253,9 +257,11 @@ class TestFlextLdifAclParser:
 
             case AclParserTestType.PARSE_OUD:
                 # Test parsing Oracle OUD ACI format
-                parse_result_oud: FlextResult[FlextLdifModelsDomains.Acl] = acl_service.parse_acl_string(
-                    test_case.acl_line,
-                    test_case.server_type,
+                parse_result_oud: FlextResult[FlextLdifModelsDomains.Acl] = (
+                    acl_service.parse_acl_string(
+                        test_case.acl_line,
+                        test_case.server_type,
+                    )
                 )
                 assert isinstance(parse_result_oud, FlextResult)
                 # Validate successful parsing
@@ -324,10 +330,11 @@ class TestFlextLdifAclParser:
                     f"Invalid/unsupported server type should fail: {test_case.server_type}"
                 )
                 # Error message should indicate invalid server type or no quirk available
-                assert (
-                    "Invalid server type" in str(parse_result_unsupported.error)
-                    or "No ACL quirk available" in str(parse_result_unsupported.error)
-                ), f"Unexpected error: {parse_result_unsupported.error}"
+                assert "Invalid server type" in str(
+                    parse_result_unsupported.error
+                ) or "No ACL quirk available" in str(parse_result_unsupported.error), (
+                    f"Unexpected error: {parse_result_unsupported.error}"
+                )
 
             case AclParserTestType.EVALUATE_EMPTY:
                 # NOTE: evaluate_acl_context is not currently implemented

@@ -17,8 +17,8 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
+from flext_tests import FlextTestsFactories  # Mocked in conftest
 
-# from flext_tests import FlextTestsFactories  # Mocked in conftest
 from flext_ldif import FlextLdif, FlextLdifModels
 from tests.fixtures.constants import RFC, DNs, Names, Values
 

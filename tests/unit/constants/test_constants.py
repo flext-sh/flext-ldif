@@ -18,7 +18,7 @@ import pytest
 from flext_ldif import FlextLdifConstants
 
 
-class TestFlextLdifConstants:  # noqa: PLR0904
+class TestFlextLdifConstants:
     """Consolidated test suite for FlextLdifConstants.
 
     Tests all constant groups: Format, Processing, Encoding, Validation,

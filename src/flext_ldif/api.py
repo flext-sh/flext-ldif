@@ -20,6 +20,7 @@ from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.config import FlextLdifConfigModule
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -169,12 +170,25 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     @classmethod
     def _reset_instance(cls) -> None:
-        """Reset the cached singleton (testing helper)."""
+        """Reset the cached singleton (testing helper).
+
+        Business Rule: Test isolation requires singleton cleanup between test cases.
+        This method resets the global instance and class-level initialization flag
+        to ensure each test starts with a fresh state.
+
+        Implication: Used ONLY by test fixtures. Production code should never call
+        this method as it breaks singleton contract. The ClassVar reset uses
+        cls.__dict__ direct assignment as Pydantic's ModelMetaclass prevents
+        object.__setattr__ on class-level attributes.
+
+        """
         global _instance  # noqa: PLW0603
         _instance = None
-        # ClassVar can be set directly even in frozen models
-        # Use setattr to avoid pyrefly false positive
-        setattr(cls, "_class_initialized", False)
+        # Business Rule: ClassVar in Pydantic 2 ModelMetaclass cannot be modified directly.
+        # Implication: Use type.__setattr__() for ClassVar[bool] as Pydantic's
+        # ModelMetaclass prevents object.__setattr__() on class-level attributes.
+        # This is safe for ClassVar[bool] as it's not part of the model fields.
+        type.__setattr__(cls, "_class_initialized", False)
 
     def __init__(self, **kwargs: FlextTypes.GeneralValueType) -> None:
         """Initialize the facade and capture optional LDIF configuration."""
@@ -1195,7 +1209,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         self,
         entry: FlextLdifModels.Entry,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
-    ) -> FlextResult[FlextLdifModels.AclResponse]:
+    ) -> FlextResult[FlextLdifModelsResults.AclResponse]:
         """Extract ACL rules from entry.
 
         Args:
@@ -1295,8 +1309,6 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         for entry in entries:
             # Entry is ConvertibleModel (Entry is in the union type)
             # Use cast to satisfy type checker - Entry is part of ConvertibleModel union
-            from typing import cast
-
             entry_as_convertible: FlextLdifTypes.ConvertibleModel = cast(
                 "FlextLdifTypes.ConvertibleModel", entry
             )
@@ -1394,8 +1406,28 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
             if not extracted_acl_data:
                 # No ACL attributes found, keep entry unchanged
-                modified_entries.append(original_entry)
-                continue
+                # This can happen if:
+                # 1. Attributes were normalized during parsing (orclaci → aci)
+                # 2. Attributes were removed during conversion
+                # Try to find ACL attributes by checking entry attributes directly
+                if original_entry.attributes and original_entry.attributes.attributes:
+                    entry_attrs = original_entry.attributes.attributes
+                    # Check for common ACL attribute names (case-insensitive)
+                    for attr_key, attr_values in entry_attrs.items():
+                        attr_key_lower = attr_key.lower()
+                        # Check if this attribute matches any ACL attribute pattern
+                        if any(
+                            acl_attr.lower() == attr_key_lower
+                            for acl_attr in source_acl_attributes
+                        ):
+                            # Found ACL attribute, extract it
+                            extracted_acl_data = {attr_key: attr_values}
+                            break
+
+                if not extracted_acl_data:
+                    # Still no ACL attributes found, keep entry unchanged
+                    modified_entries.append(original_entry)
+                    continue
 
             # Remove ACL attributes from original entry and track in metadata
             modified_entry_result = self._remove_acl_attributes_and_track(
@@ -1428,6 +1460,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                     modified_entry,
                     transformed_acl_values,
                     extracted_acl_data,
+                    target_server,
                 )
 
                 if acl_entry_result.is_success:
@@ -1457,10 +1490,26 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         """Extract ACL data from a single entry."""
         extracted_acl_attrs: FlextLdifTypes.CommonDict.AttributeDict = {}
 
+        # Also check entry.attributes.attributes directly for case-insensitive matching
+        # This handles cases where attribute names were normalized during parsing
+        entry_attrs = entry.attributes.attributes if entry.attributes else {}
+        entry_attr_keys_lower = {k.lower(): k for k in entry_attrs}
+
         for acl_attr in acl_attributes:
+            # Try get_attribute_values first (standard method)
             values = entry.get_attribute_values(acl_attr)
             if values:
                 extracted_acl_attrs[acl_attr] = values
+            else:
+                # Fallback: check entry.attributes.attributes directly with case-insensitive matching
+                # This handles normalization cases (e.g., orclaci → aci during OID parsing)
+                acl_attr_lower = acl_attr.lower()
+                if acl_attr_lower in entry_attr_keys_lower:
+                    actual_key = entry_attr_keys_lower[acl_attr_lower]
+                    fallback_values = entry_attrs[actual_key]
+                    if fallback_values:
+                        # Use the original ACL attribute name, not the normalized one
+                        extracted_acl_attrs[acl_attr] = fallback_values
 
         return extracted_acl_attrs
 
@@ -1513,10 +1562,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         # Use ACL service to transform values
         # Create temporary entry with ACL values for transformation
+        # Use the first ACL attribute name from source server to preserve ACL semantics
+        source_acl_attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+            source_server,
+        )
+        # Use first ACL attribute name (typically "aci" or "orclaci")
+        temp_acl_attr = source_acl_attrs[0] if source_acl_attrs else "aci"
+
         temp_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=temp"),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={"temp": all_acl_values},
+                attributes={temp_acl_attr: all_acl_values},
             ),
         )
         transform_result = self.transform_acl_entries(
@@ -1545,9 +1601,31 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         target_acl_attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
             target_server,
         )
+
+        # Check for target ACL attributes (case-insensitive)
+        entry_attrs = entry.attributes.attributes if entry.attributes else {}
+        entry_attr_keys_lower = {k.lower(): k for k in entry_attrs}
+
         for attr_name in target_acl_attrs:
-            if attr_name in entry.attributes.attributes:
-                return entry.attributes.attributes[attr_name]
+            attr_name_lower = attr_name.lower()
+            # Try exact match first
+            if attr_name in entry_attrs:
+                return entry_attrs[attr_name]
+            # Try case-insensitive match
+            if attr_name_lower in entry_attr_keys_lower:
+                actual_key = entry_attr_keys_lower[attr_name_lower]
+                return entry_attrs[actual_key]
+
+        # If no target ACL attribute found, check if original ACL values are still present
+        # This can happen if conversion didn't transform the attribute name
+        # For OID → OUD: aci should become orclaci, but if it stays as aci, use it
+        # Check for common ACL attribute names
+        common_acl_names = ["aci", "orclaci", "orclentrylevelaci"]
+        for acl_name in common_acl_names:
+            acl_name_lower = acl_name.lower()
+            if acl_name_lower in entry_attr_keys_lower:
+                actual_key = entry_attr_keys_lower[acl_name_lower]
+                return entry_attrs[actual_key]
 
         return []
 
@@ -1556,10 +1634,15 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         original_entry: FlextLdifModels.Entry,
         acl_values: list[str],
         original_acl_data: FlextLdifTypes.CommonDict.AttributeDict,
+        target_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Create a new ACL-only entry with transformed ACL values."""
-        # Get target ACL attribute name
-        target_acl_attr = "aci"  # Default for most servers, could be parameterized
+        # Get target ACL attribute name from registry
+        target_acl_attrs = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+            target_server,
+        )
+        # Use first ACL attribute for target server (typically "aci" for OUD)
+        target_acl_attr = target_acl_attrs[0] if target_acl_attrs else "aci"
 
         create_result = self.create_entry(
             dn=original_entry.dn.value if original_entry.dn else "",
@@ -2100,10 +2183,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         if acl_quirk is None:
             return None
         # Type narrowing: acl_quirk satisfies AclProtocol by implementation
-        # Cast to protocol type for type checker
-        from typing import cast
-
-        return cast("FlextLdifProtocols.Quirks.AclProtocol", acl_quirk)
+        return acl_quirk
 
     # INTERNAL: bus property is hidden from public API
     # Use models, config, constants for public access instead

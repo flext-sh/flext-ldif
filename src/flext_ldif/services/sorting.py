@@ -29,7 +29,18 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifSorting(
     FlextLdifServiceBase[list[FlextLdifModels.Entry]],
 ):
-    """LDIF Sorting Service - Universal Sorting Engine."""
+    """LDIF Sorting Service - Universal Sorting Engine.
+
+    Business Rule: Sorting service provides comprehensive entry and attribute sorting
+    capabilities including hierarchical DN sorting (depth-first, level-order), attribute
+    sorting (alphabetical, custom order), ACL sorting, and schema sorting. Sorting strategies
+    enable data organization for migration, export, and analysis.
+
+    Implication: Sorting maintains RFC compliance while enabling server-specific ordering
+    requirements. Builder pattern enables fluent API for complex sorting configurations.
+    All sorting operations are immutable - return new sorted entry lists.
+
+    """
 
     auto_execute: ClassVar[bool] = False
 
@@ -185,7 +196,20 @@ class FlextLdifSorting(
 
     @override
     def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Execute sorting based on sort_target."""
+        """Execute sorting based on sort_target.
+
+        Business Rule: Sorting execution routes to appropriate sorting method based on
+        sort_target configuration (entries, attributes, acl, schema, combined). Empty
+        entry lists return empty results (valid per RFC 2849). Sorting operations are
+        immutable - return new sorted entry lists.
+
+        Implication: Builder pattern enables fluent API for complex sorting configurations.
+        Multiple sorting strategies can be combined for comprehensive data organization.
+
+        Returns:
+            FlextResult containing sorted entries (immutable - new list instances)
+
+        """
         if not self.entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 

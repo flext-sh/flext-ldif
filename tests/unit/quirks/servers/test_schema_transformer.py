@@ -164,7 +164,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
             syntax="'1.3.6.1.4.1.1466.115.121.1.1'",
         )
 
-        def transform_name(n: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def transform_name(
+            n: FlextTypes.GeneralValueType,
+        ) -> FlextTypes.GeneralValueType:
             n_str: str | None = (
                 str(n) if isinstance(n, str) else (n if n is None else str(n))
             )
@@ -174,7 +176,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 char_replacements={"_": "-"},
             )
 
-        def transform_equality(eq: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def transform_equality(
+            eq: FlextTypes.GeneralValueType,
+        ) -> FlextTypes.GeneralValueType:
             eq_str: str | None = (
                 str(eq) if isinstance(eq, str) else (eq if eq is None else str(eq))
             )
@@ -186,7 +190,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 },
             )[0]
 
-        def transform_substr(sub: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def transform_substr(
+            sub: FlextTypes.GeneralValueType,
+        ) -> FlextTypes.GeneralValueType:
             sub_str: str | None = (
                 str(sub) if isinstance(sub, str) else (sub if sub is None else str(sub))
             )
@@ -198,7 +204,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 },
             )[1]
 
-        def transform_syntax(syn: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def transform_syntax(
+            syn: FlextTypes.GeneralValueType,
+        ) -> FlextTypes.GeneralValueType:
             syn_str: str | None = (
                 str(syn) if isinstance(syn, str) else (syn if syn is None else str(syn))
             )
@@ -213,8 +221,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
             str,
             Callable[
                 [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType
-                | FlextResult[FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
             ]
             | str
             | list[str]
@@ -246,7 +253,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
             equality="caseIgnoreMatch",
         )
 
-        def transform_name(n: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def transform_name(
+            n: FlextTypes.GeneralValueType,
+        ) -> FlextTypes.GeneralValueType:
             n_str: str | None = (
                 str(n) if isinstance(n, str) else (n if n is None else str(n))
             )
@@ -260,8 +269,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
             str,
             Callable[
                 [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType
-                | FlextResult[FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
             ]
             | str
             | list[str]

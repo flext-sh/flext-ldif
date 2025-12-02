@@ -228,7 +228,7 @@ class TestFlextLdifAclComponents(FlextLdifTestFactories):
             ].ok((target, subject, permissions))
 
         @staticmethod
-        def create_unified_acl(  # noqa: PLR0913, PLR0917
+        def create_unified_acl(
             name: str,
             target: FlextLdifModelsDomains.AclTarget,
             subject: FlextLdifModelsDomains.AclSubject,
@@ -267,9 +267,7 @@ class TestFlextLdifAclComponents(FlextLdifTestFactories):
                 )
 
                 # Type narrowing: cast server_type to ServerTypeLiteral
-                server_type_literal: (
-                    FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-                ) = cast(
+                server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
                     "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
                     effective_server_type,
                 )
@@ -319,11 +317,11 @@ class TestFlextLdifAclComponents(FlextLdifTestFactories):
         """Test unified ACL creation with various server types and configurations."""
         target = FlextLdifModelsDomains.AclTarget(target_dn=test_case.target_dn)
         # Type narrowing: cast subject_type to AclSubjectTypeLiteral
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast(
-            "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
-            test_case.subject_type,
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast(
+                "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+                test_case.subject_type,
+            )
         )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal,

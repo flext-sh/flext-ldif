@@ -51,43 +51,43 @@ class FlextLdifTestConftest:
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
 
-    _LDIF_TEST_ENTRIES: ClassVar[
-        list[dict[str, dict[str, Collection[str]] | str]]
-    ] = cast(
-        "list[dict[str, dict[str, Collection[str]] | str]]",
-        [
-            {
-                "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
-                "attributes": {
-                    "objectclass": ["inetOrgPerson", "person"],
-                    "cn": [user.get("name", "Test User")],
-                    "sn": [
-                        (
-                            user.get("name", "User").split()[-1]
-                            if " " in user.get("name", "")
-                            else "User"
-                        ),
-                    ],
-                    "mail": [user.get("email", f"test{i}@example.com")],
-                    "uid": [f"testuser{i}"],
+    _LDIF_TEST_ENTRIES: ClassVar[list[dict[str, dict[str, Collection[str]] | str]]] = (
+        cast(
+            "list[dict[str, dict[str, Collection[str]] | str]]",
+            [
+                {
+                    "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectclass": ["inetOrgPerson", "person"],
+                        "cn": [user.get("name", "Test User")],
+                        "sn": [
+                            (
+                                user.get("name", "User").split()[-1]
+                                if " " in user.get("name", "")
+                                else "User"
+                            ),
+                        ],
+                        "mail": [user.get("email", f"test{i}@example.com")],
+                        "uid": [f"testuser{i}"],
+                    },
+                }
+                for i, user in enumerate(_TEST_USERS)
+            ]
+            + [
+                {
+                    "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
+                    "attributes": {
+                        "objectclass": ["groupOfNames"],
+                        "cn": ["Test Group"],
+                        "description": ["Test group for LDIF processing"],
+                        "member": [
+                            f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
+                            for i, user in enumerate(_TEST_USERS)
+                        ],
+                    },
                 },
-            }
-            for i, user in enumerate(_TEST_USERS)
-        ]
-        + [
-            {
-                "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-                "attributes": {
-                    "objectclass": ["groupOfNames"],
-                    "cn": ["Test Group"],
-                    "description": ["Test group for LDIF processing"],
-                    "member": [
-                        f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
-                        for i, user in enumerate(_TEST_USERS)
-                    ],
-                },
-            },
-        ],
+            ],
+        )
     )
 
     def docker_control(self) -> FlextTestDocker:  # type: ignore[return-value]
@@ -868,13 +868,9 @@ class MockFlextTestDocker:
         """Cleanup dirty containers."""
         return FlextResult.ok(True)
 
-    def get_container_status(
-        self, container_name: str
-    ) -> FlextResult[ContainerInfo]:
+    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
         """Get container status."""
-        return FlextResult.ok(
-            self.ContainerInfo(status=self.ContainerStatus.RUNNING)
-        )
+        return FlextResult.ok(self.ContainerInfo(status=self.ContainerStatus.RUNNING))
 
     def start_compose_stack(self, compose_file: str) -> FlextResult[bool]:
         """Start compose stack."""

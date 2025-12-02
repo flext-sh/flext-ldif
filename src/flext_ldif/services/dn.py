@@ -34,6 +34,17 @@ class FlextLdifDn(
 ):
     r"""RFC 4514 Compliant DN Operations Service with Nested Classes.
 
+    Business Rule: DN service provides RFC 4514 compliant operations for
+    Distinguished Names. Service handles parsing, validation, normalization,
+    cleaning, escaping/unescaping, comparison, and RDN parsing. All pure DN
+    operations delegate to FlextLdifUtilities.DN to avoid code duplication.
+    Service uses nested classes (Parser, Normalizer, Registry) for SRP compliance.
+
+    Implication: DN service enables consistent DN handling across the codebase.
+    RFC 4514 compliance ensures interoperability with LDAP servers. Nested
+    classes provide clear separation of concerns while maintaining single
+    service interface.
+
     Handles Distinguished Name parsing, validation, normalization, and escaping
     using a hierarchical organization of nested classes for proper SRP compliance.
 
@@ -41,9 +52,6 @@ class FlextLdifDn(
         - Parser: Parsing and validation operations
         - Normalizer: Normalization and escaping operations
         - Registry: DN case tracking for conversions
-
-    All pure DN operations are delegated to FlextLdifUtilities.DN
-    to avoid code duplication.
 
     Pydantic Fields:
         dn: Primary DN to operate on

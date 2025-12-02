@@ -29,6 +29,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from types import MappingProxyType
@@ -3199,7 +3200,8 @@ class FlextLdifConstants(FlextConstants):
             "source_file"  # Source file path where entry was parsed from
         )
         HIDDEN_ATTRIBUTES: Final[str] = (
-            "hidden_attributes"  # List of attributes to write as comments (display/processing flag)
+            "hidden_attributes"  # List of attributes to write as comments
+            # (display/processing flag)
         )
 
         METADATA: Final[str] = "_metadata"  # Root metadata container
@@ -3226,7 +3228,8 @@ class FlextLdifConstants(FlextConstants):
         # ===== COMPATIBILITY ALIASES (Deprecated - use ACL_* prefixed
         # versions above) =====
         # Legacy aliases for backward compatibility with existing code
-        # NEW CODE MUST USE: ACL_OID_SUBJECT_TYPE, ACL_OUD_SUBJECT_TYPE, ACL_RFC_SUBJECT_TYPE, ACL_ORIGINAL_SUBJECT_VALUE
+        # NEW CODE MUST USE: ACL_OID_SUBJECT_TYPE, ACL_OUD_SUBJECT_TYPE,
+        # ACL_RFC_SUBJECT_TYPE, ACL_ORIGINAL_SUBJECT_VALUE
         OID_SUBJECT_TYPE: Final[str] = (
             "oid_subject_type"  # DEPRECATED: Use ACL_OID_SUBJECT_TYPE
         )
@@ -3301,9 +3304,11 @@ class FlextLdifConstants(FlextConstants):
         CONVERSION_CONVERTED_VALUE: Final[str] = (
             "converted"  # Nested key: converted value(s) in conversion dict
         )
-        # Legacy OID-specific key for backward compatibility (deprecated, use nested structure)
+        # Legacy OID-specific key for backward compatibility
+        # (deprecated, use nested structure)
         LEGACY_OID_BOOLEAN_CONVERSIONS_KEY: Final[str] = (
-            "oid_boolean_conversions"  # Legacy top-level key for boolean conversions (OID-specific, deprecated)
+            "oid_boolean_conversions"  # Legacy top-level key for boolean
+            # conversions (OID-specific, deprecated)
         )
 
         # =========================
@@ -3425,7 +3430,8 @@ class FlextLdifConstants(FlextConstants):
             ],
         )
 
-        # NOTE: ORACLE_DN_PATTERNS moved to FlextLdifServersOid.Constants.ORACLE_DN_PATTERNS
+        # NOTE: ORACLE_DN_PATTERNS moved to
+        # FlextLdifServersOid.Constants.ORACLE_DN_PATTERNS
 
     # =============================================================================
     # ACL FORMATS - ACL format identifiers
@@ -3434,7 +3440,8 @@ class FlextLdifConstants(FlextConstants):
     class AclFormats:
         """ACL format identifier constants.
 
-        NOTE: Server-specific ACL formats are now defined in their respective server Constants classes.
+        NOTE: Server-specific ACL formats are now defined in their respective
+        server Constants classes.
         This class retains only generic/RFC ACL format constants.
 
         Server-specific constants location:
@@ -3450,7 +3457,8 @@ class FlextLdifConstants(FlextConstants):
         - RFC: FlextLdifServersRfc.Constants.ACL_FORMAT ("rfc_generic")
         - Relaxed: FlextLdifServersRelaxed.Constants.ACL_FORMAT ("rfc_generic")
 
-        Use FlextLdifModels.Acl.get_acl_format() to get the correct ACL format for a server type.
+        Use FlextLdifModels.Acl.get_acl_format() to get the correct ACL format
+        for a server type.
         It automatically queries the server Constants via registry.
         """
 
@@ -3687,7 +3695,10 @@ class FlextLdifConstants(FlextConstants):
             "oracle_oid",
             "oracle_oud",
         ]
-        msg = f"Invalid server type '{server_type}'. Must be one of: {', '.join(sorted(valid_types))}"
+        msg = (
+            f"Invalid server type '{server_type}'. "
+            f"Must be one of: {', '.join(sorted(valid_types))}"
+        )
         raise ValueError(msg)
 
     @staticmethod
@@ -3897,8 +3908,10 @@ class FlextLdifConstants(FlextConstants):
         Used for filtering attributes during server migration and quirks handling.
         """
 
-        # NOTE: OID_SPECIFIC_ATTRIBUTES moved to FlextLdifServersOid.Constants.OID_SPECIFIC_ATTRIBUTES
-        # Server-specific attribute categorizations should be defined in their respective server Constants classes
+        # NOTE: OID_SPECIFIC_ATTRIBUTES moved to
+        # FlextLdifServersOid.Constants.OID_SPECIFIC_ATTRIBUTES
+        # Server-specific attribute categorizations should be defined in their
+        # respective server Constants classes
 
     class DataTypes(StrEnum):
         """Data type identifier constants.
@@ -4950,7 +4963,275 @@ class FlextLdifConstants(FlextConstants):
             )
             raise ValueError(msg)
 
+    # =============================================================================
+    # UTILITIES CONSTANTS - Validation helpers consolidated from _utilities/constants.py
+    # =============================================================================
+
+    class UtilitiesConstants:
+        """Utilities for accessing and validating standardized constants.
+
+        All validation is done via parameterized methods that accept a category.
+        This eliminates duplication across is_valid_*, get_*, and validate_* methods.
+
+        Consolidated from _utilities/constants.py to centralize all constants.
+        """
+
+        class Category(StrEnum):
+            """Categories of values that can be validated."""
+
+            SERVER_TYPE = "server_type"
+            PERMISSION = "permission"
+            ACL_ACTION = "acl_action"
+            ENCODING = "encoding"
+
+        # Registry of valid values per category
+        VALID_VALUES: ClassVar[dict[str, set[str]]] = {
+            "server_type": {
+                "rfc",
+                "oid",
+                "oud",
+                "openldap",
+                "openldap1",
+                "ad",
+                "apache",
+                "389ds",
+                "novell",
+                "tivoli",
+                "relaxed",
+            },
+            "permission": {
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "auth",
+                "all",
+                "none",
+            },
+            "acl_action": {"allow", "deny"},
+            "encoding": {
+                "utf-8",
+                "utf-16",
+                "utf-16-le",
+                "utf-32",
+                "ascii",
+                "latin-1",
+                "cp1252",
+                "iso-8859-1",
+            },
+        }
+
+        @staticmethod
+        def get_valid_values(category: str | Category) -> set[str]:
+            """Get all valid values for a category.
+
+            Args:
+                category: Category name or Category enum value
+
+            Returns:
+                Set of valid values for the category
+
+            Raises:
+                KeyError: If category is not recognized
+
+            Example:
+                >>> FlextLdifConstants.UtilitiesConstants.get_valid_values(
+                ...     "server_type"
+                ... )
+                {'rfc', 'oid', 'oud', ...}
+                >>> FlextLdifConstants.UtilitiesConstants.get_valid_values(
+                ...     FlextLdifConstants.UtilitiesConstants.Category.PERMISSION
+                ... )
+                {'read', 'write', 'add', ...}
+
+            """
+            key = str(category).lower()
+            if key not in FlextLdifConstants.UtilitiesConstants.VALID_VALUES:
+                msg = f"Unknown category: {category}"
+                raise KeyError(msg)
+            return FlextLdifConstants.UtilitiesConstants.VALID_VALUES[key].copy()
+
+        @staticmethod
+        def is_valid(value: str, category: str | Category) -> bool:
+            """Check if a value is valid for the given category.
+
+            Args:
+                value: Value to validate
+                category: Category to validate against
+
+            Returns:
+                True if value is valid, False otherwise
+
+            Example:
+                >>> FlextLdifConstants.UtilitiesConstants.is_valid("oid", "server_type")
+                True
+                >>> FlextLdifConstants.UtilitiesConstants.is_valid(
+                ...     "read",
+                ...     FlextLdifConstants.UtilitiesConstants.Category.PERMISSION,
+                ... )
+                True
+                >>> FlextLdifConstants.UtilitiesConstants.is_valid(
+                ...     "invalid", "encoding"
+                ... )
+                False
+
+            """
+            try:
+                valid_values = FlextLdifConstants.UtilitiesConstants.get_valid_values(
+                    category,
+                )
+                return value.lower() in valid_values
+            except KeyError:
+                return False
+
+        @staticmethod
+        def validate_many(
+            values: set[str],
+            category: str | Category,
+        ) -> tuple[bool, list[str]]:
+            """Validate multiple values against a category.
+
+            Args:
+                values: Set of values to validate
+                category: Category to validate against
+
+            Returns:
+                Tuple of (all_valid, list_of_invalid_values)
+
+            Example:
+                >>> is_valid, invalid = (
+                ...     FlextLdifConstants.UtilitiesConstants.validate_many(
+                ...         {"read", "write", "invalid"}, "permission"
+                ...     )
+                ... )
+                >>> is_valid
+                False
+                >>> invalid
+                ['invalid']
+
+            """
+            valid_values = FlextLdifConstants.UtilitiesConstants.get_valid_values(
+                category,
+            )
+            invalid = [v for v in values if v.lower() not in valid_values]
+            return len(invalid) == 0, invalid
+
+        @staticmethod
+        def is_valid_server_type(server_type: str) -> bool:
+            """Check if server type is recognized."""
+            return FlextLdifConstants.UtilitiesConstants.is_valid(
+                server_type,
+                "server_type",
+            )
+
+        @staticmethod
+        def get_all_server_types() -> set[str]:
+            """Get all recognized server types."""
+            return FlextLdifConstants.UtilitiesConstants.get_valid_values("server_type")
+
+        @staticmethod
+        def get_server_permissions() -> set[str]:
+            """Get all valid ACL permissions (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.get_valid_values("permission")
+
+        @staticmethod
+        def is_valid_permission(permission: str) -> bool:
+            """Check if a permission is valid (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.is_valid(
+                permission,
+                "permission",
+            )
+
+        @staticmethod
+        def get_server_acl_actions() -> set[str]:
+            """Get valid ACL actions (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.get_valid_values("acl_action")
+
+        @staticmethod
+        def is_valid_acl_action(action: str) -> bool:
+            """Check if an ACL action is valid (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.is_valid(action, "acl_action")
+
+        @staticmethod
+        def get_server_encodings() -> set[str]:
+            """Get supported encodings (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.get_valid_values("encoding")
+
+        @staticmethod
+        def is_valid_encoding(encoding: str) -> bool:
+            """Check if an encoding is valid (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.is_valid(encoding, "encoding")
+
+        @staticmethod
+        def validate_permissions(permissions: set[str]) -> tuple[bool, list[str]]:
+            """Validate a set of permissions (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.validate_many(
+                permissions,
+                "permission",
+            )
+
+        @staticmethod
+        def validate_acl_actions(actions: set[str]) -> tuple[bool, list[str]]:
+            """Validate a set of ACL actions (RFC baseline)."""
+            return FlextLdifConstants.UtilitiesConstants.validate_many(
+                actions,
+                "acl_action",
+            )
+
+        @staticmethod
+        def get_permission_mapping() -> Mapping[str, str]:
+            """Get permission mapping (RFC baseline identity)."""
+            rfc_perms = FlextLdifConstants.UtilitiesConstants.get_valid_values(
+                "permission",
+            )
+            return {perm: perm for perm in rfc_perms}
+
+        @staticmethod
+        def validate_attribute_name(name: str) -> bool:
+            """Validate LDAP attribute name against RFC 4512 rules.
+
+            RFC 4512 Section 2.5: Attribute Type Definitions
+            - AttributeType names must start with a letter
+            - Can contain letters, digits, and hyphens
+            - Case-insensitive comparison
+            - Limited to reasonable length (1-255 chars)
+
+            Args:
+                name: Attribute name to validate
+
+            Returns:
+                True if valid, False otherwise
+
+            Example:
+                >>> FlextLdifConstants.UtilitiesConstants.validate_attribute_name("cn")
+                True
+                >>> FlextLdifConstants.UtilitiesConstants.validate_attribute_name(
+                ...     "2invalid"
+                ... )
+                False
+
+            """
+            # Check empty or too long
+            if (
+                not name
+                or len(name)
+                > FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH
+            ):
+                return False
+
+            # Check pattern
+            return bool(
+                re.match(FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME, name),
+            )
+
+
+# Backward compatibility alias (consolidated from _utilities/constants.py)
+FlextLdifUtilitiesConstants = FlextLdifConstants.UtilitiesConstants
+
 
 __all__ = [
     "FlextLdifConstants",
+    "FlextLdifUtilitiesConstants",
 ]

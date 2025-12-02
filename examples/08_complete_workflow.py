@@ -229,8 +229,9 @@ mail: migration@example.com
     # file_paths is dict[str, str] mapping category to file path
     migrated_files = list(migration_stats.file_paths.values())
     for file_path in migrated_files:
-        # file_path is already str from dict values
-        verify_result = api.parse(Path(file_path), server_type="oud")
+        # file_path is already str from dict values, cast to ensure type safety
+        file_path_str = cast("str", file_path)
+        verify_result = api.parse(Path(file_path_str), server_type="oud")
 
         if verify_result.is_success:
             migrated_entries = verify_result.unwrap()

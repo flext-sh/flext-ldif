@@ -702,8 +702,16 @@ class TestSchemaServiceIntegration:
         self,
     ) -> None:
         """Test service works with different server types."""
+        from typing import cast
+
+        from flext_ldif.constants import FlextLdifConstants
+
         for server_type in ["rfc", "oud", "oid", "openldap"]:
-            service = FlextLdifSchema(server_type=server_type)
+            service = FlextLdifSchema(
+                server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type
+                )
+            )
             result = service.execute()
             assert result.is_success
             status = result.unwrap()

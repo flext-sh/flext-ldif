@@ -142,7 +142,7 @@ def intelligent_schema_building() -> FlextResult[list[FlextLdifModels.Entry]]:
     return FlextResult.ok(schema_entries)
 
 
-def parallel_schema_validation() -> FlextResult[dict[str, object]]:
+def parallel_schema_validation() -> FlextResult[dict[str, object]]:  # noqa: PLR0912
     """Parallel schema validation with comprehensive error analysis."""
     api = FlextLdif.get_instance()
 
@@ -275,7 +275,7 @@ def parallel_schema_validation() -> FlextResult[dict[str, object]]:
     return FlextResult.ok(analysis)
 
 
-def schema_migration_pipeline() -> FlextResult[dict[str, object]]:
+def schema_migration_pipeline() -> FlextResult[dict[str, object]]:  # noqa: PLR0912, PLR0914
     """Schema-aware migration pipeline with validation."""
     api = FlextLdif.get_instance()
 
@@ -345,9 +345,10 @@ mail: modern@example.com
     for ldif_entry in all_entries:
         # Transform legacy attributes to modern schema
         attrs_dict: dict[str, str | list[str]] = {}
-        if hasattr(ldif_entry, "attributes") and hasattr(
-            ldif_entry.attributes,
-            "attributes",
+        if (
+            hasattr(ldif_entry, "attributes")
+            and ldif_entry.attributes is not None
+            and hasattr(ldif_entry.attributes, "attributes")
         ):
             for attr_name, attr_values in ldif_entry.attributes.attributes.items():
                 if attr_name == "emailAddress":
@@ -359,8 +360,10 @@ mail: modern@example.com
         # Create migrated entry
         entry_dn: str = (
             ldif_entry.dn.value
-            if hasattr(ldif_entry.dn, "value")
+            if ldif_entry.dn is not None and hasattr(ldif_entry.dn, "value")
             else str(ldif_entry.dn)
+            if ldif_entry.dn is not None
+            else ""
         )
         migrate_result = api.create_entry(
             dn=entry_dn,
@@ -500,7 +503,7 @@ def batch_schema_operations() -> FlextResult[dict[str, object]]:
     return FlextResult.ok(batch_results)
 
 
-def railway_schema_pipeline() -> FlextResult[dict[str, object]]:
+def railway_schema_pipeline() -> FlextResult[dict[str, object]]:  # noqa: PLR0911, PLR0914
     """Railway-oriented schema pipeline with integrated validation."""
     api = FlextLdif.get_instance()
 

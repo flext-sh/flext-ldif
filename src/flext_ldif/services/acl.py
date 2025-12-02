@@ -28,6 +28,14 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     """Direct ACL processing service using flext-core APIs.
 
+    Business Rule: ACL service delegates directly to server-specific ACL quirks for
+    parsing and writing. All server-specific ACL formats (Oracle ACI, OpenLDAP olcAccess,
+    etc.) are handled by quirks, ensuring RFC compliance with server enhancements.
+
+    Implication: ACL processing uses the same quirk system as entry/schema processing,
+    ensuring consistency. Server type normalization ensures correct quirk selection.
+    OpenLDAP generic requests route to openldap1 (legacy) first, then openldap2.
+
     This service provides minimal, direct ACL processing by delegating
     to FlextLdifServer ACL quirks which handle all server-specific parsing.
     No unnecessary abstraction layers or model conversions.
@@ -36,7 +44,15 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     _server: FlextLdifServer
 
     def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize ACL service with optional server instance."""
+        """Initialize ACL service with optional server instance.
+
+        Business Rule: Server registry is optional - defaults to global instance if not provided.
+        This enables dependency injection for testing while maintaining convenience defaults.
+
+        Args:
+            server: Optional FlextLdifServer instance (defaults to global instance)
+
+        """
         super().__init__()
         # Use object.__setattr__ for PrivateAttr in frozen models
         object.__setattr__(
@@ -52,12 +68,21 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     ) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse ACL string using server-specific quirks.
 
+        Business Rule: ACL parsing normalizes server type to canonical form before
+        quirk resolution. OpenLDAP generic requests ("openldap") route to openldap1
+        (legacy format) first, then fallback to openldap2. Invalid server types result
+        in fail-fast error responses.
+
+        Implication: Server type normalization ensures consistent quirk selection.
+        OpenLDAP fallback logic handles legacy ACL formats while supporting modern
+        olcAccess format. All parsing maintains RFC compliance with server enhancements.
+
         Args:
-            acl_string: Raw ACL string to parse
+            acl_string: Raw ACL string to parse (server-specific format)
             server_type: Server type for quirk selection (will be normalized)
 
         Returns:
-            FlextResult containing parsed ACL model
+            FlextResult containing parsed ACL model (RFC-compliant with server metadata)
 
         """
         # Normalize server type to canonical form
@@ -108,12 +133,21 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     ) -> FlextResult[str]:
         """Write ACL model to string format.
 
+        Business Rule: ACL writing uses server-specific quirks for formatting.
+        ACL model is converted to server-specific string format (Oracle ACI, OpenLDAP
+        olcAccess, etc.) based on server type. Invalid server types result in fail-fast
+        error responses.
+
+        Implication: Writing uses the same quirk system as parsing, ensuring round-trip
+        compatibility. Server-specific formatting preserves ACL semantics while adapting
+        to server requirements.
+
         Args:
-            acl: ACL model to write
-            server_type: Server type for quirk selection
+            acl: ACL model to write (RFC-compliant with server metadata)
+            server_type: Server type for quirk selection (determines output format)
 
         Returns:
-            FlextResult containing ACL string
+            FlextResult containing ACL string (server-specific format)
 
         """
         # Get ACL quirk for server type
@@ -138,12 +172,21 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     ) -> FlextResult[FlextLdifModelsResults.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names.
 
+        Business Rule: ACL extraction uses server-specific attribute detection via
+        FlextLdifUtilities.ACL.get_acl_attributes(). Multiple ACL attributes per server
+        are supported (e.g., Oracle: orclaci, orclentrylevelaci). Each ACL attribute
+        value is parsed separately and aggregated into response.
+
+        Implication: Server type determines which attributes are scanned for ACLs.
+        Extraction maintains RFC compliance while handling server-specific ACL formats.
+        Response includes statistics for extracted ACLs and processing metadata.
+
         Args:
-            entry: Entry to extract ACLs from
-            server_type: Server type for ACL attribute detection
+            entry: Entry to extract ACLs from (may contain multiple ACL attributes)
+            server_type: Server type for ACL attribute detection (determines attributes scanned)
 
         Returns:
-            FlextResult containing ACL response with extracted ACLs
+            FlextResult containing AclResponse with extracted ACLs and statistics
 
         """
         # Get ACL attribute name for server type
@@ -153,10 +196,11 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         if not acl_attr_name:
             # Server has no ACL attributes
+            # Statistics is a PEP 695 type alias - use the underlying class directly
             return FlextResult.ok(
                 FlextLdifModelsResults.AclResponse(
                     acls=[],
-                    statistics=FlextLdifModels.Statistics(
+                    statistics=FlextLdifModelsResults.Statistics(
                         processed_entries=1,
                         acls_extracted=0,
                     ),
@@ -170,10 +214,11 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         if not acl_values:
             # No ACL values found
+            # Statistics is a PEP 695 type alias - use the underlying class directly
             return FlextResult.ok(
                 FlextLdifModelsResults.AclResponse(
                     acls=[],
-                    statistics=FlextLdifModels.Statistics(
+                    statistics=FlextLdifModelsResults.Statistics(
                         processed_entries=1,
                         acls_extracted=0,
                     ),
@@ -198,9 +243,10 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
                 )
 
         # Create response
+        # Statistics is a PEP 695 type alias - use the underlying class directly
         response = FlextLdifModelsResults.AclResponse(
             acls=acls,
-            statistics=FlextLdifModels.Statistics(
+            statistics=FlextLdifModelsResults.Statistics(
                 processed_entries=1,
                 acls_extracted=len(acls),
                 failed_entries=failed_count,
@@ -209,6 +255,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         return FlextResult.ok(response)
 
+    @staticmethod
     @staticmethod
     def extract_acl_entries(
         entries: list[FlextLdifModels.Entry],
@@ -270,6 +317,12 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
     def execute(self) -> FlextResult[FlextLdifModelsResults.AclResponse]:  # noqa: PLR6301
         """Execute ACL service health check.
+
+        Business Rule: Execute method provides service health check for protocol compliance.
+        Returns empty ACL response with initialized statistics, indicating service is operational.
+
+        Implication: This method enables service-based execution patterns while maintaining
+        type safety. Used internally by service orchestration layers for health monitoring.
 
         Returns:
             FlextResult containing service status

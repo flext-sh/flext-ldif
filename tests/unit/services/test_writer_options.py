@@ -47,8 +47,39 @@ from tests.fixtures.constants import Writer
 
 def config_to_write_options(
     config: FlextLdifConfig,
-) -> FlextLdifModelsDomains.WriteOptions:
-    """Convert FlextLdifConfig to WriteOptions."""
+) -> FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions:
+    """Convert FlextLdifConfig to WriteOptions or WriteFormatOptions."""
+    # Check if WriteFormatOptions fields are present
+    has_format_options = any(
+        hasattr(config, key) and getattr(config, key, None) is not None
+        for key in (
+            "ldif_max_line_length",
+            "ldif_write_fold_long_lines",
+            "ldif_write_respect_attribute_order",
+            "ldif_write_hidden_attributes_as_comments",
+            "ldif_write_metadata_as_comments",
+            "ldif_write_include_version_header",
+            "ldif_write_include_timestamps",
+            "ldif_write_empty_values",
+            "ldif_write_normalize_attribute_names",
+            "ldif_write_include_dn_comments",
+            "ldif_write_use_original_acl_format_as_name",
+        )
+    )
+
+    if has_format_options:
+        # Create WriteFormatOptions from config
+        format_opts_dict: dict[str, object] = {}
+        for config_key, model_key in CONFIG_TO_MODEL_FIELD_MAP.items():
+            if hasattr(config, config_key):
+                value = getattr(config, config_key, None)
+                if value is not None and isinstance(
+                    value, (bool, int, str, list, frozenset, dict)
+                ):
+                    format_opts_dict[model_key] = value
+        return FlextLdifModels.WriteFormatOptions.model_validate(format_opts_dict)
+
+    # Create basic WriteOptions
     return FlextLdifModelsDomains.WriteOptions(
         format="rfc2849",
         base_dn=None,
@@ -238,7 +269,7 @@ class TestWriterFormatOptions:
         output_target: str = "string",
         output_path: Path | None = None,
     ) -> str:
-        """Helper to write entries with basic config overrides and return output string."""
+        """Helper to write entries with config overrides and return output string."""
         # Check if WriteFormatOptions fields are present
         has_format_options = any(
             key in config_overrides
@@ -252,11 +283,14 @@ class TestWriterFormatOptions:
                 "ldif_write_include_timestamps",
                 "ldif_write_empty_values",
                 "ldif_write_normalize_attribute_names",
+                "ldif_write_include_dn_comments",
                 "ldif_write_use_original_acl_format_as_name",
             )
         )
 
-        options: FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
+        options: (
+            FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
+        )
         if has_format_options:
             # Create WriteFormatOptions from config_overrides
             format_opts_dict: dict[str, object] = {}
@@ -265,15 +299,33 @@ class TestWriterFormatOptions:
                     value = config_overrides[config_key]
                     if isinstance(value, (bool, int, str, list, frozenset, dict)):
                         format_opts_dict[model_key] = value
-            options = FlextLdifModels.WriteFormatOptions.model_validate(format_opts_dict)
+            options = FlextLdifModels.WriteFormatOptions.model_validate(
+                format_opts_dict
+            )
         else:
             # Create basic WriteOptions
             sort_entries_raw = config_overrides.get("ldif_write_sort_attributes", False)
-            sort_entries: bool = bool(sort_entries_raw) if isinstance(sort_entries_raw, (bool, int)) else False
-            include_comments_raw = config_overrides.get("ldif_write_include_dn_comments", False)
-            include_comments: bool = bool(include_comments_raw) if isinstance(include_comments_raw, (bool, int)) else False
-            base64_encode_binary_raw = config_overrides.get("ldif_write_base64_encode_binary", False)
-            base64_encode_binary: bool = bool(base64_encode_binary_raw) if isinstance(base64_encode_binary_raw, (bool, int)) else False
+            sort_entries: bool = (
+                bool(sort_entries_raw)
+                if isinstance(sort_entries_raw, (bool, int))
+                else False
+            )
+            include_comments_raw = config_overrides.get(
+                "ldif_write_include_dn_comments", False
+            )
+            include_comments: bool = (
+                bool(include_comments_raw)
+                if isinstance(include_comments_raw, (bool, int))
+                else False
+            )
+            base64_encode_binary_raw = config_overrides.get(
+                "ldif_write_base64_encode_binary", False
+            )
+            base64_encode_binary: bool = (
+                bool(base64_encode_binary_raw)
+                if isinstance(base64_encode_binary_raw, (bool, int))
+                else False
+            )
             options = FlextLdifModelsDomains.WriteOptions(
                 format="rfc2849",
                 sort_entries=sort_entries,
@@ -634,7 +686,7 @@ class TestWriterFormatOptions:
         )
         config.ldif_write_include_version_header = True
         config.ldif_write_include_timestamps = True
-        config.ldif_max_line_length = 50
+        config.ldif_max_line_length = 78
         options = config_to_write_options(config)
 
         result = writer_service.write(
@@ -652,21 +704,17 @@ class TestWriterFormatOptions:
         assert "version: 1" in content
         assert "# Generated on:" in content
 
-    @pytest.mark.parametrize(
-        ("output_target", "expected_type"),
-        [
-            ("ldap3", list),
-            ("model", list),
-        ],
-    )
-    def test_non_string_output_targets(
+    def test_non_string_output_targets_ignored(
         self,
         writer_service: FlextLdifWriter,
         sample_entry: FlextLdifModels.Entry,
-        output_target: str,
-        expected_type: type,
     ) -> None:
-        """Test ldap3 and model output formats."""
+        """Test that _output_target parameter is ignored (for compatibility only).
+
+        The _output_target parameter is for backward compatibility but does not
+        change the return type. When no output_path is provided, write() always
+        returns a string, regardless of _output_target value.
+        """
         FlextConfig.reset_global_instance()
         config = FlextConfig.get_global_instance().get_namespace(
             "ldif",
@@ -675,19 +723,21 @@ class TestWriterFormatOptions:
         config.ldif_write_normalize_attribute_names = True
         options = config_to_write_options(config)
 
-        result = writer_service.write(
-            entries=[sample_entry],
-            target_server_type="rfc",
-            _output_target=output_target,
-            format_options=options,
-        )
+        # Test that _output_target is ignored and string is returned
+        for output_target in ["ldap3", "model", "string"]:
+            result = writer_service.write(
+                entries=[sample_entry],
+                target_server_type="rfc",
+                _output_target=output_target,
+                format_options=options,
+            )
 
-        assert result.is_success
-        output_data = result.unwrap()
-        assert isinstance(output_data, expected_type)
-        # Type narrow for len() call
-        if isinstance(output_data, list):
-            assert len(output_data) == 1
+            assert result.is_success
+            output_data = result.unwrap()
+            # Always returns string when no output_path is provided
+            assert isinstance(output_data, str)
+            assert "version: 1" in output_data
+            assert "dn: cn=John Doe" in output_data
 
     # =========================================================================
     # Edge Cases and Validation
@@ -759,7 +809,10 @@ class TestWriterFormatOptions:
 
         assert result.is_failure
         error_msg = result.error or ""
-        assert "server type" in error_msg.lower() or "no entry quirk found" in error_msg.lower()
+        assert (
+            "server type" in error_msg.lower()
+            or "no entry quirk found" in error_msg.lower()
+        )
 
     def test_default_options_behavior(
         self,

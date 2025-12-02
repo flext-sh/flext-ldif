@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from .ldif_data import LdifSample, LdifTestData
 
@@ -163,8 +164,6 @@ class FileManager:
         self._temp_dir = None
 
     def __enter__(self):
-        from tempfile import TemporaryDirectory
-
         self._temp_dir = TemporaryDirectory()
         return self
 

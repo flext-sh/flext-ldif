@@ -14,6 +14,7 @@ This example demonstrates the new structured migration feature that produces
 
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from flext_ldif import FlextLdif, FlextLdifModels
 
@@ -90,7 +91,7 @@ description: Application data entry
         # Create migration options combining config and write options
         migrate_options = FlextLdifModels.MigrateOptions(
             migration_config=write_options.model_dump(),
-            write_options=write_options.model_dump(),
+            write_options=write_options,
         )
 
         # Execute migration
@@ -109,7 +110,9 @@ description: Application data entry
         pipeline_result = result.unwrap()
 
         for _category, path in sorted(pipeline_result.file_paths.items()):
-            file_path = Path(path)
+            # Cast path to str for Path constructor
+            path_str = cast("str", path)
+            file_path = Path(path_str)
             if file_path.exists():
                 _size = file_path.stat().st_size
                 _lines = len(file_path.read_text(encoding="utf-8").splitlines())

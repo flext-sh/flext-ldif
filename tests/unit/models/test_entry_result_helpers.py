@@ -58,7 +58,7 @@ class TestEntryResultHelpers:
         categories.add_entries("groups", [entry2])
         result = FlextLdifModels.EntryResult(
             entries_by_category=categories,
-            statistics=FlextLdifModels.Statistics(total_entries=2),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=2),
         )
 
         all_entries = result.get_all_entries()
@@ -83,7 +83,7 @@ class TestEntryResultHelpers:
         categories.add_entries("groups", [entry2])
         result = FlextLdifModels.EntryResult(
             entries_by_category=categories,
-            statistics=FlextLdifModels.Statistics(total_entries=2),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=2),
         )
 
         users = result.get_category("users")
@@ -120,14 +120,14 @@ class TestEntryResultHelpers:
         categories1.add_entries("users", [entry1])
         result1 = FlextLdifModels.EntryResult(
             entries_by_category=categories1,
-            statistics=FlextLdifModels.Statistics(total_entries=1),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
         )
 
         categories2 = FlextLdifModelsResults.FlexibleCategories()
         categories2.add_entries("users", [entry2])
         result2 = FlextLdifModels.EntryResult(
             entries_by_category=categories2,
-            statistics=FlextLdifModels.Statistics(total_entries=1),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -157,14 +157,14 @@ class TestEntryResultHelpers:
         categories1.add_entries("users", [entry1])
         result1 = FlextLdifModels.EntryResult(
             entries_by_category=categories1,
-            statistics=FlextLdifModels.Statistics(total_entries=1),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
         )
 
         categories2 = FlextLdifModelsResults.FlexibleCategories()
         categories2.add_entries("groups", [entry2])
         result2 = FlextLdifModels.EntryResult(
             entries_by_category=categories2,
-            statistics=FlextLdifModels.Statistics(total_entries=1),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -186,7 +186,7 @@ class TestEntryResultHelpers:
         categories1.add_entries("users", [entry1])
         result1 = FlextLdifModels.EntryResult(
             entries_by_category=categories1,
-            statistics=FlextLdifModels.Statistics(total_entries=1),
+            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
         )
 
         result2 = FlextLdifModels.EntryResult.empty()

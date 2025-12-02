@@ -16,14 +16,19 @@ from typing import Final
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextRuntime,
     FlextTypes,
     FlextUtilities,
 )
+from pydantic import PrivateAttr
 
 from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.results import _CategoryPaths, _FlexibleCategories
+from flext_ldif._models.results import (
+    FlextLdifModelsResults,
+    _CategoryPaths,
+    _FlexibleCategories,
+)
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -38,8 +43,17 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger: Final = FlextLogger(__name__)
 
 
-class FlextLdifMigrationPipeline(FlextLdifServiceBase):
+class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResult]):
     """LDIF Migration Pipeline - Direct Implementation.
+
+    Business Rule: Migration pipeline orchestrates complete LDIF migration workflow:
+    parse → validate → categorize → filter → sort → write. All operations use public
+    service APIs via dependency injection. Pipeline supports categorized output mode
+    (separate files per category) and unified mode (single output file).
+
+    Implication: Pipeline enables end-to-end migration with comprehensive error handling.
+    All operations maintain RFC compliance while adapting to server-specific requirements.
+    Events are emitted for audit trail and monitoring.
 
     Zero private methods - pure service orchestration.
     All logic delegated to public service methods.
@@ -69,6 +83,43 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
 
     """
 
+    # Private attributes for frozen model compatibility
+    # Business Rule: PrivateAttr requires default values for Pydantic v2 compatibility.
+    # All values are set via object.__setattr__() in __init__ for frozen model support.
+    # Defaults here are placeholders that get overwritten during initialization.
+    _mode: FlextLdifConstants.LiteralTypes.MigrationModeLiteral = PrivateAttr(
+        default="simple",
+    )
+    _input_dir: Path = PrivateAttr(default_factory=Path)
+    _output_dir: Path = PrivateAttr(default_factory=Path)
+    _input_filename: str | None = PrivateAttr(default=None)
+    _output_filename: str = PrivateAttr(default="migrated.ldif")
+    _input_files: list[str] = PrivateAttr(default_factory=list)
+    _output_files: dict[FlextLdifConstants.Categories, str] = PrivateAttr(
+        default_factory=dict,
+    )
+    _source_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = PrivateAttr(
+        default="rfc",
+    )
+    _target_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = PrivateAttr(
+        default="rfc",
+    )
+    _sort_hierarchically: bool = PrivateAttr(default=False)
+    _write_opts: FlextLdifModels.WriteFormatOptions = PrivateAttr(
+        default_factory=FlextLdifModels.WriteFormatOptions,
+    )
+    # Service instances - initialized in __init__ via object.__setattr__
+    # Using default_factory with lambda to create valid instances for type safety
+    # __init__ overwrites these with properly configured instances
+    _categorization: FlextLdifCategorization = PrivateAttr(
+        default_factory=FlextLdifCategorization,
+    )
+    _parser: FlextLdifParser = PrivateAttr(default_factory=FlextLdifParser)
+    _writer: FlextLdifWriter = PrivateAttr(default_factory=FlextLdifWriter)
+    _dn_registry: FlextLdifModels.DnRegistry = PrivateAttr(
+        default_factory=FlextLdifModels.DnRegistry,
+    )
+
     @staticmethod
     def normalize_migration_config(
         migration_config: (
@@ -92,7 +143,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             return FlextResult[FlextLdifModels.MigrationConfig].fail(
                 "MigrationConfig cannot be None",
             )
-        if FlextRuntime.is_dict_like(migration_config):
+        if isinstance(migration_config, FlextLdifModels.MigrationConfig):
+            return FlextResult[FlextLdifModels.MigrationConfig].ok(migration_config)
+        if isinstance(migration_config, dict):
             try:
                 model = FlextLdifModels.MigrationConfig.model_validate(migration_config)
                 return FlextResult[FlextLdifModels.MigrationConfig].ok(model)
@@ -100,8 +153,6 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 return FlextResult[FlextLdifModels.MigrationConfig].fail(
                     f"Failed to validate MigrationConfig from dict: {e}",
                 )
-        if isinstance(migration_config, FlextLdifModels.MigrationConfig):
-            return FlextResult[FlextLdifModels.MigrationConfig].ok(migration_config)
         return FlextResult[FlextLdifModels.MigrationConfig].fail(
             f"Invalid MigrationConfig type: {type(migration_config).__name__}",
         )
@@ -287,7 +338,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             return FlextResult[FlextLdifModels.CategoryRules | None].ok(
                 categorization_rules,
             )
-        if FlextRuntime.is_dict_like(categorization_rules):
+        if isinstance(categorization_rules, dict):
             try:
                 model = FlextLdifModels.CategoryRules.model_validate(
                     categorization_rules,
@@ -297,8 +348,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 return FlextResult[FlextLdifModels.CategoryRules | None].fail(
                     f"Failed to validate CategoryRules: {e}",
                 )
-        # Try model_dump if it's a Pydantic model
-        if hasattr(categorization_rules, "model_dump"):
+        # Try model_dump if it's a Pydantic model (not a dict)
+        if not isinstance(categorization_rules, dict) and hasattr(
+            categorization_rules, "model_dump"
+        ):
             try:
                 model = FlextLdifModels.CategoryRules.model_validate(
                     categorization_rules.model_dump(),
@@ -335,7 +388,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             return FlextResult[FlextLdifModels.WhitelistRules | None].ok(
                 schema_whitelist_rules,
             )
-        if FlextRuntime.is_dict_like(schema_whitelist_rules):
+        if isinstance(schema_whitelist_rules, dict):
             try:
                 model = FlextLdifModels.WhitelistRules.model_validate(
                     schema_whitelist_rules,
@@ -345,8 +398,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
                 return FlextResult[FlextLdifModels.WhitelistRules | None].fail(
                     f"Failed to validate WhitelistRules: {e}",
                 )
-        # Try model_dump if it's a Pydantic model
-        if hasattr(schema_whitelist_rules, "model_dump"):
+        # Try model_dump if it's a Pydantic model (not a dict)
+        if not isinstance(schema_whitelist_rules, dict) and hasattr(
+            schema_whitelist_rules, "model_dump"
+        ):
             try:
                 model = FlextLdifModels.WhitelistRules.model_validate(
                     schema_whitelist_rules.model_dump(),
@@ -359,36 +414,6 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         return FlextResult[FlextLdifModels.WhitelistRules | None].fail(
             f"Invalid WhitelistRules type: {type(schema_whitelist_rules).__name__}",
         )
-
-    """LDIF Migration Pipeline - Direct Implementation.
-
-    Zero private methods - pure service orchestration.
-    All logic delegated to public service methods.
-
-    Design:
-    - FlextLdifParser: parse files
-    - FlextLdifCategorization: validate, categorize, filter
-    - FlextLdifSorting: sort entries
-    - FlextLdifWriter: write outputs
-    - FlextLdifUtilities: events
-
-    Example:
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=Path("source"),
-            output_dir=Path("target"),
-            mode="categorized",
-            categorization_rules={
-                "hierarchy_objectclasses": ["organizationalUnit"],
-                "user_objectclasses": ["inetOrgPerson"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": ["aci"],
-            },
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.OUD,
-        )
-        result = pipeline.execute()
-
-    """
 
     def __init__(
         self,
@@ -414,7 +439,35 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         sort_entries_hierarchically: bool = False,
         write_options: FlextLdifModels.WriteFormatOptions | None = None,
     ) -> None:
-        """Initialize pipeline."""
+        """Initialize pipeline.
+
+        Business Rule: Pipeline initialization validates mode and required parameters.
+        Categorized mode requires categorization_rules. All private attributes use
+        object.__setattr__ for frozen model compatibility. Service instances are
+        created via dependency injection for testability.
+
+        Implication: Pipeline configuration enables flexible migration workflows.
+        Service instances are created once and reused throughout migration execution.
+
+        Args:
+            input_dir: Input directory containing LDIF files
+            output_dir: Output directory for migrated files
+            mode: Migration mode ("simple" or "categorized")
+            input_filename: Optional single input file (simple mode)
+            output_filename: Output filename (simple mode, default: "migrated.ldif")
+            categorization_rules: Category rules for categorized mode
+            input_files: Optional list of input files to process
+            output_files: Optional dict mapping categories to output filenames
+            schema_whitelist_rules: Optional schema whitelist rules
+            source_server: Source server type (default: "rfc")
+            target_server: Target server type (default: "rfc")
+            forbidden_attributes: Optional list of forbidden attributes
+            forbidden_objectclasses: Optional list of forbidden objectClasses
+            base_dn: Optional base DN for filtering
+            sort_entries_hierarchically: Whether to sort entries hierarchically
+            write_options: Optional write format options
+
+        """
         super().__init__()
 
         # Validate
@@ -426,54 +479,81 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             raise ValueError(msg)
 
         # Store parameters as private instance attributes
-        self._mode = mode
-        self._input_dir = Path(input_dir)
-        self._output_dir = Path(output_dir)
-        self._input_filename = input_filename
-        self._output_filename = output_filename
+        # Business Rule: Private attributes use object.__setattr__ for frozen model compatibility
+        object.__setattr__(self, "_mode", mode)
+        object.__setattr__(self, "_input_dir", Path(input_dir))
+        object.__setattr__(self, "_output_dir", Path(output_dir))
+        object.__setattr__(self, "_input_filename", input_filename)
+        object.__setattr__(self, "_output_filename", output_filename)
         # Validate input_files - use empty list if None, but preserve actual list
+        # Business Rule: Input files list uses PrivateAttr for frozen model compatibility
+        # Use object.__setattr__ for PrivateAttr in frozen models
         if input_files is None:
-            self._input_files: list[str] = []
+            object.__setattr__(self, "_input_files", [])
         else:
-            self._input_files = input_files
+            object.__setattr__(self, "_input_files", input_files)
         # Validate output_files - use defaults if None
+        # Business Rule: Output files dict uses object.__setattr__ for frozen model compatibility
         if output_files is None:
-            self._output_files = {
-                FlextLdifConstants.Categories.SCHEMA: "00-schema.ldif",
-                FlextLdifConstants.Categories.HIERARCHY: "01-hierarchy.ldif",
-                FlextLdifConstants.Categories.USERS: "02-users.ldif",
-                FlextLdifConstants.Categories.GROUPS: "03-groups.ldif",
-                FlextLdifConstants.Categories.ACL: "04-acl.ldif",
-                FlextLdifConstants.Categories.REJECTED: "05-rejected.ldif",
-            }
+            object.__setattr__(
+                self,
+                "_output_files",
+                {
+                    FlextLdifConstants.Categories.SCHEMA: "00-schema.ldif",
+                    FlextLdifConstants.Categories.HIERARCHY: "01-hierarchy.ldif",
+                    FlextLdifConstants.Categories.USERS: "02-users.ldif",
+                    FlextLdifConstants.Categories.GROUPS: "03-groups.ldif",
+                    FlextLdifConstants.Categories.ACL: "04-acl.ldif",
+                    FlextLdifConstants.Categories.REJECTED: "05-rejected.ldif",
+                },
+            )
         else:
-            self._output_files = output_files
-        self._source_server = source_server
-        self._target_server = target_server
-        self._sort_hierarchically = sort_entries_hierarchically
+            object.__setattr__(self, "_output_files", output_files)
+        object.__setattr__(self, "_source_server", source_server)
+        object.__setattr__(self, "_target_server", target_server)
+        object.__setattr__(self, "_sort_hierarchically", sort_entries_hierarchically)
         # Architecture: Model defaults are used, CLI can override via write_options
         if write_options is not None:
-            self._write_opts = write_options
+            object.__setattr__(self, "_write_opts", write_options)
         else:
             # Use model defaults (Field(default=...) definitions)
-            self._write_opts = FlextLdifModels.WriteFormatOptions()
+            object.__setattr__(
+                self, "_write_opts", FlextLdifModels.WriteFormatOptions()
+            )
 
         # Create service instances (all public APIs)
-        self._categorization = FlextLdifCategorization(
-            categorization_rules=categorization_rules,
-            schema_whitelist_rules=schema_whitelist_rules,
-            forbidden_attributes=forbidden_attributes,
-            forbidden_objectclasses=forbidden_objectclasses,
-            base_dn=base_dn,
-            server_type=self._source_server,
+        # Business Rule: Service instances use object.__setattr__ for frozen model compatibility
+        object.__setattr__(
+            self,
+            "_categorization",
+            FlextLdifCategorization(
+                categorization_rules=categorization_rules,
+                schema_whitelist_rules=schema_whitelist_rules,
+                forbidden_attributes=forbidden_attributes,
+                forbidden_objectclasses=forbidden_objectclasses,
+                base_dn=base_dn,
+                server_type=source_server,
+            ),
         )
-        self._parser = FlextLdifParser()
-        self._writer = FlextLdifWriter()
+        object.__setattr__(self, "_parser", FlextLdifParser())
+        object.__setattr__(self, "_writer", FlextLdifWriter())
         # Create DN registry for case normalization during migration
-        self._dn_registry = FlextLdifModels.DnRegistry()
+        object.__setattr__(self, "_dn_registry", FlextLdifModels.DnRegistry())
 
     def _create_output_directory(self) -> FlextResult[bool]:
-        """Create output directory with proper error handling."""
+        """Create output directory with proper error handling.
+
+        Business Rule: Output directory creation uses Path.mkdir with parents=True and
+        exist_ok=True to ensure directory exists. Errors are captured and returned as
+        FlextResult failures.
+
+        Implication: Safe directory creation that handles existing directories gracefully.
+        Parent directories are created automatically if needed.
+
+        Returns:
+            FlextResult with True on success, error message on failure
+
+        """
         try:
             self._output_dir.mkdir(parents=True, exist_ok=True)
             return FlextResult[bool].ok(True)
@@ -481,7 +561,20 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             return FlextResult[bool].fail(f"Failed to create output dir: {e}")
 
     def _determine_files(self) -> list[str]:
-        """Determine which LDIF files to parse based on mode."""
+        """Determine which LDIF files to parse based on mode.
+
+        Business Rule: File determination follows mode-specific logic. Simple mode uses
+        input_filename if provided, otherwise globs all .ldif files in input_dir. Categorized
+        mode uses input_files list if provided, otherwise globs all .ldif files. Files are
+        sorted alphabetically for deterministic processing.
+
+        Implication: Flexible file selection supports both explicit file lists and automatic
+        discovery. Sorting ensures consistent processing order across runs.
+
+        Returns:
+            List of LDIF filenames to process
+
+        """
         if self._mode == "simple":
             return (
                 [self._input_filename]
@@ -496,7 +589,23 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         files: list[str],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse all input LDIF files using parser service."""
+        """Parse all input LDIF files using parser service.
+
+        Business Rule: File parsing iterates through input files, validates existence,
+        and delegates to FlextLdifParser.parse_ldif_file() with normalized server type.
+        All entries from multiple files are aggregated into a single list. Missing files
+        are logged as warnings but do not fail the entire operation.
+
+        Implication: Robust parsing that handles missing files gracefully. Server type
+        normalization ensures consistent parsing behavior across different server types.
+
+        Args:
+            files: List of LDIF filenames to parse
+
+        Returns:
+            FlextResult with aggregated list of entries from all files
+
+        """
         all_entries: list[FlextLdifModels.Entry] = []
 
         for filename in files:
@@ -561,6 +670,22 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
+        """Categorize entries using categorization service.
+
+        Business Rule: Entry categorization delegates to FlextLdifCategorization.categorize_entries()
+        with configured rules. Categories include schema, hierarchy, users, groups, acl, and rejected.
+        Categorization uses objectClass and attribute matching rules defined during initialization.
+
+        Implication: Consistent categorization across migration pipeline. Categories enable
+        separate processing and output files for different entry types.
+
+        Args:
+            entries: List of entries to categorize
+
+        Returns:
+            FlextResult with FlexibleCategories mapping categories to entry lists
+
+        """
         """Apply categorization chain using railway pattern."""
         # Apply categorization chain: validate -> categorize -> filter
         validate_result = self._categorization.validate_dns(entries)
@@ -740,6 +865,23 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         categories: FlextLdifModels.FlexibleCategories,
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
+        """Write all entries to a single output file (simple mode).
+
+        Business Rule: Simple mode aggregates all categorized entries into a single list
+        and writes to output_filename. Entries are sorted hierarchically if configured.
+        Write operation delegates to FlextLdifWriter.write() with target server type
+        and format options.
+
+        Implication: Single-file output simplifies migration for simple use cases.
+        Hierarchical sorting ensures parent entries precede children for LDAP import.
+
+        Args:
+            categories: Categorized entries by category
+
+        Returns:
+            FlextResult with tuple of (file_paths dict, entry_counts dict)
+
+        """
         """Write all entries to a single file in simple mode."""
         output_path = self._output_dir / self._output_filename
         all_output_entries = [
@@ -782,8 +924,26 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         category: FlextLdifConstants.Categories,
         phase_num: int,
         entries: list[FlextLdifModels.Entry],
-    ) -> dict[str, bool | float | int | list[str] | str | None]:
-        """Build template data for migration headers."""
+    ) -> dict[str, FlextLdifTypes.TemplateValue]:
+        """Build template data for migration headers.
+
+        Business Rule: Template data provides migration metadata for header generation.
+        Values include phase numbers, timestamps, server types, entry counts, and
+        configuration flags. All values conform to TemplateValue type (ScalarValue | list[str]).
+
+        Implication: Template data enables dynamic header generation with migration context.
+        Timestamps use ISO 8601 format for consistency. Server types and categories are
+        included for audit trail.
+
+        Args:
+            category: Entry category (schema, hierarchy, users, groups, acl, rejected)
+            phase_num: Migration phase number (0-5)
+            entries: List of entries for this category
+
+        Returns:
+            Dictionary mapping template variable names to values
+
+        """
         # Validate base_dn - use empty string if None
         base_dn_value = self._categorization.base_dn
         if base_dn_value is None:
@@ -813,7 +973,23 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
-        """Prepare ACL entries with metadata for DN normalization."""
+        """Prepare ACL entries with metadata for DN normalization.
+
+        Business Rule: ACL entries require special metadata preparation for DN normalization.
+        Base DN and DN registry flags are added to entry metadata extensions. This enables
+        DN case normalization during ACL processing while maintaining entry immutability.
+
+        Implication: ACL entries are prepared with migration context for proper DN handling.
+        Metadata extensions preserve original entry structure while adding migration-specific
+        information.
+
+        Args:
+            entries: List of ACL entries to prepare
+
+        Returns:
+            List of entries with updated metadata extensions
+
+        """
         base_dn = self._categorization.base_dn
         entries_with_metadata = []
         for entry in entries:
@@ -845,7 +1021,24 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         categories: FlextLdifModels.FlexibleCategories,
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
-        """Write categorized entries to multiple files in structured mode."""
+        """Write categorized entries to multiple files in structured mode.
+
+        Business Rule: Structured mode writes each category to a separate output file
+        with category-specific filenames. Template data is generated for each category
+        with phase numbers, timestamps, and migration context. ACL entries receive
+        special preparation with DN normalization metadata.
+
+        Implication: Multi-file output enables phased migration with separate files for
+        schema, hierarchy, users, groups, ACL, and rejected entries. Template data
+        provides migration context in file headers.
+
+        Args:
+            categories: Categorized entries by category
+
+        Returns:
+            FlextResult with tuple of (file_paths dict, entry_counts dict)
+
+        """
         file_paths: dict[str, str] = {}
         entry_counts: dict[str, int] = {}
 
@@ -926,13 +1119,43 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         self,
         categories: FlextLdifModels.FlexibleCategories,
     ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
-        """Write categorized entries to output files."""
+        """Write categorized entries to output files.
+
+        Business Rule: Write operation routes to simple or structured mode based on
+        pipeline mode configuration. Simple mode writes to single file, structured mode
+        writes to multiple category-specific files.
+
+        Implication: Unified write interface that adapts to migration mode. File paths
+        and entry counts are tracked for audit and monitoring.
+
+        Args:
+            categories: Categorized entries by category
+
+        Returns:
+            FlextResult with tuple of (file_paths dict, entry_counts dict)
+
+        """
         if self._mode == "simple":
             return self._write_simple_mode(categories)
         return self._write_structured_mode(categories)
 
     def execute(self) -> FlextResult[FlextLdifModels.EntryResult]:
-        """Execute migration - pure railway pattern with public services."""
+        """Execute migration - pure railway pattern with public services.
+
+        Business Rule: Migration execution follows strict workflow: create output directory,
+        determine input files, parse entries, categorize/filter, sort (if enabled), and write
+        to output files. All steps use Railway-Oriented Programming with FlextResult for
+        error handling. Pipeline supports simple mode (single file) and categorized mode
+        (multiple files by category).
+
+        Implication: Complete migration workflow with comprehensive error handling and
+        event emission. All operations maintain RFC compliance while adapting to server-specific
+        requirements. Statistics and file paths are tracked for audit and monitoring.
+
+        Returns:
+            FlextResult with EntryResult containing migration statistics and file paths
+
+        """
         start_time = time.time()
 
         # Step 1: Create output directory
@@ -989,8 +1212,6 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             context = FlextLdifModelsMetadata.DynamicMetadata()
             context.update({"reason": reason, "count": len(entries)})
             # ErrorDetail is in FlextLdifModelsDomains, not FlextLdifModels
-            from flext_ldif._models.domain import FlextLdifModelsDomains
-
             error_details.append(
                 FlextLdifModelsDomains.ErrorDetail(
                     item=f"rejected_{reason}",
@@ -1015,7 +1236,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         )
 
         # Create statistics model
-        statistics = FlextLdifModels.Statistics(events=[event])
+        # Statistics is a PEP 695 type alias - use the underlying class directly
+        statistics = FlextLdifModelsResults.Statistics(events=[event])
 
         # Convert file_paths dict to _CategoryPaths model
         category_paths = _CategoryPaths()

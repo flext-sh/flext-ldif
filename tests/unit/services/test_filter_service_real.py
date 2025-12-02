@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+from flext_tests import FlextTestsFactories  # Mocked in conftest
 
-# from flext_tests import FlextTestsFactories  # Mocked in conftest
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
 from tests.fixtures.constants import Filters

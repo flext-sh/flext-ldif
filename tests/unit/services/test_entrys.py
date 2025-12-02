@@ -28,8 +28,8 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
+from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.syntax import FlextLdifSyntax
@@ -421,11 +421,12 @@ class TestFlextLdifEntrys:
             assert "createTimestamp" not in final.attributes.attributes
 
             # Batch pipeline
+            entries_service = FlextLdifEntries()
             batch_result = FlextTestsMatchers.assert_success(
-                FlextLdifEntries.remove_operational_attributes_batch(entries_batch),
+                entries_service.remove_operational_attributes_batch(entries_batch),
             )
             final_batch = FlextTestsMatchers.assert_success(
-                FlextLdifEntries.remove_attributes_batch(
+                entries_service.remove_attributes_batch(
                     batch_result,
                     attributes=[Names.CN],
                 ),

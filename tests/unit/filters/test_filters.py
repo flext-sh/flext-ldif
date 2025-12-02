@@ -18,6 +18,7 @@ import dataclasses
 from typing import Final, cast
 
 import pytest
+from flext_core import FlextTypes
 from tests.fixtures.constants import DNs, Filters, Values
 from tests.helpers.test_assertions import TestAssertions
 from tests.helpers.test_filter_helpers import FilterTestHelpers
@@ -161,7 +162,6 @@ class TestFlextLdifFilters:
             )
             if test_case.metadata_extensions:
                 # Cast dict[str, object] to dict[str, MetadataAttributeValue] for DynamicMetadata
-                from flext_core import FlextTypes
 
                 extensions_typed: dict[str, FlextTypes.MetadataAttributeValue] = cast(
                     "dict[str, FlextTypes.MetadataAttributeValue]",
@@ -169,7 +169,9 @@ class TestFlextLdifFilters:
                 )
                 metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions_typed),
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                        **extensions_typed
+                    ),
                 )
                 entry = entry.model_copy(update={"metadata": metadata})
             result = FlextLdifFilters.is_entry_excluded(entry)
@@ -192,7 +194,6 @@ class TestFlextLdifFilters:
             )
             if test_case.metadata_extensions:
                 # Cast dict[str, object] to dict[str, MetadataAttributeValue] for DynamicMetadata
-                from flext_core import FlextTypes
 
                 extensions_typed: dict[str, FlextTypes.MetadataAttributeValue] = cast(
                     "dict[str, FlextTypes.MetadataAttributeValue]",
@@ -200,7 +201,9 @@ class TestFlextLdifFilters:
                 )
                 metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="rfc",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions_typed),
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                        **extensions_typed
+                    ),
                 )
                 entry = entry.model_copy(update={"metadata": metadata})
             reason = FlextLdifFilters.get_exclusion_reason(entry)
@@ -366,7 +369,7 @@ class TestFlextLdifFilters:
                 ),
             ],
         )
-        def test_filter_success(  # noqa: PLR0913, PLR0917
+        def test_filter_success(
             self,
             filter_method: str,
             dn_pattern: str | None,

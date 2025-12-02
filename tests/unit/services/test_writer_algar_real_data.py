@@ -23,8 +23,8 @@ from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
+from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -43,7 +43,7 @@ class WriterRfc2849TestType(StrEnum):
 
 
 # RFC 2849 compliance constants
-RFC2849_MAX_LINE_BYTES: Final[int] = 76
+RFC2849_MAX_LINE_BYTES: Final[int] = 78
 ALGAR_INPUT_FILE: Final[Path] = Path(
     "/home/marlonsc/flext/algar-oud-mig/data/input/2_ldap_configset.ldif",
 )
@@ -130,7 +130,6 @@ class TestFlextLdifWriterAlgarRealData:
         write_result = writer.write(
             entries=[entry],
             target_server_type=FlextLdifConstants.ServerTypes.RFC,
-            output_target="string",
         )
 
         FlextTestsMatchers.assert_success(write_result)

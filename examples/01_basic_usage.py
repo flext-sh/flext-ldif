@@ -71,7 +71,8 @@ mail: jane.smith@example.com
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
         return (process_result.is_success and FlextResult.ok(entries)) or process_result
 
-    def file_pipeline(self) -> FlextResult:
+    @staticmethod
+    def file_pipeline() -> FlextResult:
         """DRY file processing: detect → parse → validate → write.
 
         Returns:
@@ -137,7 +138,8 @@ mail: jane.smith@example.com
 
             return FlextResult.ok(parse_result.unwrap())
 
-    def batch_transform(self) -> FlextResult:
+    @staticmethod
+    def batch_transform() -> FlextResult:
         """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
 
