@@ -528,7 +528,10 @@ class TestFlextLdifModels(FlextLdifTestFactories):
             case ModelTestType.ACL_SUBJECT:
                 # Type narrowing: cast str to AclSubjectTypeLiteral
                 subject_type_str = test_case.subject_type or "user"
-                subject_type_literal = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", subject_type_str)
+                subject_type_literal = cast(
+                    "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+                    subject_type_str,
+                )
                 subject = FlextLdifModels.AclSubject(
                     subject_type=subject_type_literal,
                     subject_value=test_case.subject_value or "",
@@ -554,7 +557,10 @@ class TestFlextLdifModels(FlextLdifTestFactories):
                 )
                 # Type narrowing: cast str to AclSubjectTypeLiteral
                 subject_type_str = test_case.subject_type or "user"
-                subject_type_literal = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", subject_type_str)
+                subject_type_literal = cast(
+                    "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+                    subject_type_str,
+                )
                 subject = FlextLdifModels.AclSubject(
                     subject_type=subject_type_literal,
                     subject_value=test_case.subject_value or "",
@@ -565,7 +571,9 @@ class TestFlextLdifModels(FlextLdifTestFactories):
                 )
                 # Normalize and cast server_type to ServerTypeLiteral
                 server_type_str = test_case.acl_server_type or "oracle_oud"
-                normalized_server_type = FlextLdifConstants.normalize_server_type(server_type_str)
+                normalized_server_type = FlextLdifConstants.normalize_server_type(
+                    server_type_str
+                )
                 server_type_literal = normalized_server_type
                 acl = FlextLdifModels.Acl(
                     name=test_case.acl_name or "",

@@ -11,18 +11,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.typings import FlextLdifTypes
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 from .servers.conftest import ConversionTestConstants
@@ -50,7 +52,20 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         **kwargs: object,
     ) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         object.__setattr__(self, "error_msg", error_msg)
         # schema_quirk is already set by parent __init__
 
@@ -65,7 +80,11 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -73,17 +92,40 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -132,10 +174,9 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> (
-        FlextResult[FlextLdifModels.SchemaAttribute]
-        | FlextResult[FlextLdifModels.SchemaObjectClass]
-    ):
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Parse schema definition - always fails for testing."""
         # Try to detect if it's attribute or objectclass
         if "NAME" in definition and (
@@ -143,8 +184,20 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
             or "STRUCTURAL" in definition
             or "AUXILIARY" in definition
         ):
-            return self._parse_objectclass(definition)
-        return self._parse_attribute(definition)
+            # _parse_objectclass returns FlextResult[SchemaObjectClass]
+            # Cast to match expected union return type
+            parse_oc_result = self._parse_objectclass(definition)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                parse_oc_result,
+            )
+        # _parse_attribute returns FlextResult[SchemaAttribute]
+        # Cast to match expected union return type
+        parse_attr_result = self._parse_attribute(definition)
+        return cast(
+            "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+            parse_attr_result,
+        )
 
 
 class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
@@ -158,7 +211,20 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
 
     def execute(
         self,
@@ -171,7 +237,11 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -179,17 +249,40 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -267,10 +360,9 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> (
-        FlextResult[FlextLdifModels.SchemaAttribute]
-        | FlextResult[FlextLdifModels.SchemaObjectClass]
-    ):
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Parse schema definition."""
         # Try to detect if it's attribute or objectclass
         if "NAME" in definition and (
@@ -278,8 +370,18 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
             or "STRUCTURAL" in definition
             or "AUXILIARY" in definition
         ):
-            return self._parse_objectclass(definition)
-        return self._parse_attribute(definition)
+            # Cast union return type to match expected type
+            parse_oc_result = self._parse_objectclass(definition)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                parse_oc_result,
+            )
+        # Cast union return type to match expected type
+        parse_attr_result = self._parse_attribute(definition)
+        return cast(
+            "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+            parse_attr_result,
+        )
 
 
 class ConversionFailingQuirk(FlextLdifServersBase.Schema):
@@ -300,7 +402,19 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         **kwargs: object,
     ) -> None:
         """Initialize quirk with failure mode."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type and filter kwargs
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         object.__setattr__(self, "fail_on", fail_on)
         # schema_quirk is already set by parent __init__
 
@@ -315,7 +429,11 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -323,17 +441,40 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -413,10 +554,9 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> (
-        FlextResult[FlextLdifModels.SchemaAttribute]
-        | FlextResult[FlextLdifModels.SchemaObjectClass]
-    ):
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Parse schema definition."""
         # Try to detect if it's attribute or objectclass
         if "NAME" in definition and (
@@ -424,8 +564,18 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
             or "STRUCTURAL" in definition
             or "AUXILIARY" in definition
         ):
-            return self._parse_objectclass(definition)
-        return self._parse_attribute(definition)
+            # Cast union return type to match expected type
+            parse_oc_result = self._parse_objectclass(definition)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+                parse_oc_result,
+            )
+        # Cast union return type to match expected type
+        parse_attr_result = self._parse_attribute(definition)
+        return cast(
+            "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]",
+            parse_attr_result,
+        )
 
 
 class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
@@ -439,7 +589,20 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         # schema_quirk is already set by parent __init__
 
     def execute(
@@ -501,10 +664,9 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
     def parse(
         self,
         definition: str,
-    ) -> (
-        FlextResult[FlextLdifModels.SchemaAttribute]
-        | FlextResult[FlextLdifModels.SchemaObjectClass]
-    ):
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Parse schema definition - always throws exception for testing."""
         msg = "unexpected error"
         raise RuntimeError(msg)
@@ -521,7 +683,20 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
 
     def execute(
         self,
@@ -534,7 +709,11 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -542,17 +721,40 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -614,7 +816,20 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
 
     def execute(
         self,
@@ -627,7 +842,11 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -635,17 +854,40 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -727,7 +969,20 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
 
     def execute(
         self,
@@ -740,7 +995,11 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -748,17 +1007,40 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -816,7 +1098,20 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
 
     def execute(
         self,
@@ -829,7 +1124,11 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -837,17 +1136,40 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -905,7 +1227,20 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         # Create a minimal entry quirk for testing
 
         class MinimalEntryQuirk:
@@ -925,7 +1260,11 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -933,17 +1272,40 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -1022,7 +1384,20 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         # schema_quirk is already set by parent __init__
 
     def execute(
@@ -1036,7 +1411,11 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -1044,17 +1423,40 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -1133,7 +1535,20 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         # schema_quirk is already set by parent __init__
 
     def execute(
@@ -1147,7 +1562,11 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -1155,17 +1574,40 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -1257,7 +1699,20 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         # schema_quirk is already set by parent __init__
         # Override acl_quirk for get_supported_conversions
         # Use object.__setattr__ to bypass Pydantic validation
@@ -1274,7 +1729,11 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -1282,17 +1741,40 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -1377,7 +1859,20 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
-        super().__init__(schema_service=schema_service, **kwargs)
+        # Cast schema_service to expected type for type checker
+        # Schema.__init__ expects _schema_service (with underscore) and **kwargs: str | float | bool | None
+        filtered_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if isinstance(v, (str, float, bool, type(None)))
+        }
+        super().__init__(
+            _schema_service=cast(
+                "FlextLdifProtocols.Services.HasParseMethodProtocol | None",
+                schema_service,
+            ),
+            **filtered_kwargs,  # type: ignore[arg-type]
+        )
         # schema_quirk is already set by parent __init__
         # Create a minimal entry quirk for testing
 
@@ -1398,7 +1893,11 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         operation = kwargs.get("operation")
 
         if data is None:
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -1406,17 +1905,40 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
 
         if operation == "parse":
             if isinstance(data, str):
-                return self.parse_attribute(data)
-            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                # Cast return type to match expected return type
+                result = self.parse_attribute(data)
+                return cast(
+                    "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                    result,
+                )
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
                 "parse requires str",
             )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
-            return self.write_attribute(data)
+            # write_attribute returns FlextResult[str]
+            # Cast to match expected union return type
+            write_result = self.write_attribute(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_result,
+            )
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
-            return self.write_objectclass(data)
-        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            # write_objectclass returns FlextResult[str]
+            # Cast to match expected union return type
+            write_oc_result = self.write_objectclass(data)
+            return cast(
+                "FlextResult[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]",
+                write_oc_result,
+            )
+        return FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ].fail(
             "write requires SchemaAttribute or SchemaObjectClass",
         )
 
@@ -1634,6 +2156,7 @@ class TestBatchConversion:
         oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test batch conversions."""
+        items: list[str | GenericFieldsDict | FlextLdifModels.Entry]
         if model_type == "attribute":
             items = [
                 conversion_constants.OID_ATTRIBUTE_ORCLGUID,
@@ -1681,10 +2204,12 @@ class TestErrorHandling:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={}),
         )
+        # Cast Entry to ConvertibleModel for type checker
+        convertible_entry = cast("FlextLdifTypes.ConvertibleModel", entry)
         if error_type == "invalid_source":
-            result = conversion_matrix.convert("invalid", oid_quirk, entry)
+            result = conversion_matrix.convert("invalid", oid_quirk, convertible_entry)
         else:
-            result = conversion_matrix.convert(oid_quirk, "invalid", entry)
+            result = conversion_matrix.convert(oid_quirk, "invalid", convertible_entry)
         assert result.is_failure
 
 

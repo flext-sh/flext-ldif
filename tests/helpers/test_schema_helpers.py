@@ -19,7 +19,7 @@ class SchemaTestHelpers:
     """High-level schema test helpers that replace entire test functions."""
 
     @staticmethod
-    def test_parse_attribute_complete(  # noqa: PLR0913, PLR0917
+    def test_parse_attribute_complete(
         schema_quirk: FlextLdifServersBase.Schema,
         attr_def: str,
         expected_oid: str,
@@ -89,7 +89,7 @@ class SchemaTestHelpers:
         return attr
 
     @staticmethod
-    def test_parse_objectclass_complete(  # noqa: PLR0913, PLR0917
+    def test_parse_objectclass_complete(
         schema_quirk: FlextLdifServersBase.Schema,
         oc_def: str,
         expected_oid: str,

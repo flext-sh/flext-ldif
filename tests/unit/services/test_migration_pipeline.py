@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import cast
@@ -20,6 +21,7 @@ from typing import cast
 import pytest
 
 from flext_ldif import FlextLdifMigrationPipeline, FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 from tests.fixtures.typing import CategorizationRulesDict
 
 
@@ -117,23 +119,27 @@ class TestFlextLdifMigrationPipeline:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules: CategorizationRulesDict = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["organization"],
-                "user_objectclasses": ["inetOrgPerson"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: CategorizationRulesDict = {
+            "hierarchy_objectclasses": ["organization"],
+            "user_objectclasses": ["inetOrgPerson"],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="categorized",
-            categorization_rules=categorization_rules,
-            source_server="oid",
-            target_server="oud",
+            categorization_rules=cast(
+                "FlextLdifModels.CategoryRules | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | None] | None] | None",
+                categorization_rules,
+            ),
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oid"
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"
+            ),
         )
 
         assert pipeline is not None
@@ -164,8 +170,12 @@ class TestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=source,
-            target_server=target,
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", source
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", target
+            ),
         )
 
         assert pipeline is not None
@@ -255,14 +265,17 @@ class TestFlextLdifMigrationPipeline:
             # With no input files, should have 0 entries migrated
             events = entry_result.statistics.events
             assert len(events) > 0, "Should have at least one migration event"
-            migration_event = events[0]
+            event = events[0]
             # Validate that either 0 entries processed or explicit handling documented
-            assert (
-                migration_event.entries_migrated == 0
-                or migration_event.entries_processed == 0
-            ), (
-                f"Empty input should migrate 0 entries, got migrated={migration_event.entries_migrated}, processed={migration_event.entries_processed}"
-            )
+            # Type narrowing: check if it's MigrationEvent or CategoryEvent
+            if isinstance(event, FlextLdifModels.MigrationEvent):
+                assert event.entries_migrated == 0, (
+                    f"Empty input should migrate 0 entries, got migrated={event.entries_migrated}"
+                )
+            elif isinstance(event, FlextLdifModels.CategoryEvent):
+                assert event.entries_categorized == 0, (
+                    f"Empty input should categorize 0 entries, got categorized={event.entries_categorized}"
+                )
 
     def test_categorized_mode_with_empty_input(self, tmp_path: Path) -> None:
         """Test categorized mode handles empty input directory gracefully."""
@@ -271,23 +284,27 @@ class TestFlextLdifMigrationPipeline:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        categorization_rules: CategorizationRulesDict = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["organization"],
-                "user_objectclasses": ["inetOrgPerson"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: CategorizationRulesDict = {
+            "hierarchy_objectclasses": ["organization"],
+            "user_objectclasses": ["inetOrgPerson"],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="categorized",
-            categorization_rules=categorization_rules,
-            source_server="oid",
-            target_server="oud",
+            categorization_rules=cast(
+                "FlextLdifModels.CategoryRules | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | None] | None] | None",
+                categorization_rules,
+            ),
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oid"
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"
+            ),
         )
 
         result = pipeline.execute()
@@ -304,14 +321,17 @@ class TestFlextLdifMigrationPipeline:
             # With no input files, should have 0 entries migrated
             events = entry_result.statistics.events
             assert len(events) > 0, "Should have at least one migration event"
-            migration_event = events[0]
+            event = events[0]
             # Validate categorized mode also handles empty input gracefully
-            assert (
-                migration_event.entries_migrated == 0
-                or migration_event.entries_processed == 0
-            ), (
-                f"Empty input in categorized mode should migrate 0 entries, got migrated={migration_event.entries_migrated}, processed={migration_event.entries_processed}"
-            )
+            # Type narrowing: check if it's MigrationEvent or CategoryEvent
+            if isinstance(event, FlextLdifModels.MigrationEvent):
+                assert event.entries_migrated == 0, (
+                    f"Empty input in categorized mode should migrate 0 entries, got migrated={event.entries_migrated}"
+                )
+            elif isinstance(event, FlextLdifModels.CategoryEvent):
+                assert event.entries_categorized == 0, (
+                    f"Empty input in categorized mode should categorize 0 entries, got categorized={event.entries_categorized}"
+                )
 
     # ════════════════════════════════════════════════════════════════════════
     # SIMPLE MODE TESTS (2 tests)
@@ -356,13 +376,14 @@ sn: test
         # Validate statistics contain migration event
         events = entry_result.statistics.events
         assert len(events) > 0, "Should have at least one migration event"
-        migration_event = events[0]
+        event = events[0]
 
         # Validate entry was processed
-        # MigrationEvent has entries_migrated but not entries_processed
-        assert migration_event.entries_migrated >= 1, (
-            f"Should migrate at least 1 entry, migrated={migration_event.entries_migrated}"
-        )
+        # Type narrowing: check if it's MigrationEvent
+        if isinstance(event, FlextLdifModels.MigrationEvent):
+            assert event.entries_migrated >= 1, (
+                f"Should migrate at least 1 entry, migrated={event.entries_migrated}"
+            )
 
         # Validate output file was created
         # EntryResult.file_paths is a dict, not a list
@@ -370,7 +391,9 @@ sn: test
             # Get first file path from dict values
             output_file_paths = list(entry_result.file_paths.values())
             if output_file_paths:
-                output_file = Path(output_file_paths[0])
+                from typing import cast
+
+                output_file = Path(cast("str", output_file_paths[0]))
                 assert output_file.exists(), f"Output file should exist: {output_file}"
                 assert output_file.stat().st_size > 0, (
                     f"Output file should not be empty: {output_file}"
@@ -378,7 +401,9 @@ sn: test
         else:
             # Fallback: check output_dir directly
             expected_output = output_dir / "migrated.ldif"
-            assert expected_output.exists(), f"Output file should exist: {expected_output}"
+            assert expected_output.exists(), (
+                f"Output file should exist: {expected_output}"
+            )
 
     def test_simple_mode_with_filtering(self, tmp_path: Path) -> None:
         """Test simple mode with attribute filtering."""
@@ -417,13 +442,14 @@ mail: test@example.com
         # Validate event shows entries were processed
         events = entry_result.statistics.events
         assert len(events) > 0, "Should have at least one migration event"
-        migration_event = events[0]
+        event = events[0]
 
         # Validate entry was processed
-        # MigrationEvent has entries_migrated but not entries_processed
-        assert migration_event.entries_migrated >= 1, (
-            f"Should migrate at least 1 entry, migrated={migration_event.entries_migrated}"
-        )
+        # Type narrowing: check if it's MigrationEvent
+        if isinstance(event, FlextLdifModels.MigrationEvent):
+            assert event.entries_migrated >= 1, (
+                f"Should migrate at least 1 entry, migrated={event.entries_migrated}"
+            )
 
         # Validate output file was created
         # EntryResult.file_paths is a dict, not a list
@@ -431,7 +457,9 @@ mail: test@example.com
             # Get first file path from dict values
             output_file_paths = list(entry_result.file_paths.values())
             if output_file_paths:
-                output_file = Path(output_file_paths[0])
+                from typing import cast
+
+                output_file = Path(cast("str", output_file_paths[0]))
             else:
                 output_file = output_dir / "migrated.ldif"
         else:
@@ -470,23 +498,27 @@ cn: REDACTED_LDAP_BIND_PASSWORD
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules: CategorizationRulesDict = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["top"],
-                "user_objectclasses": ["person"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: CategorizationRulesDict = {
+            "hierarchy_objectclasses": ["top"],
+            "user_objectclasses": ["person"],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="categorized",
-            categorization_rules=categorization_rules,
-            source_server="rfc",
-            target_server="rfc",
+            categorization_rules=cast(
+                "FlextLdifModels.CategoryRules | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | None] | None] | None",
+                categorization_rules,
+            ),
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
         )
 
         result = pipeline.execute()
@@ -503,17 +535,14 @@ cn: REDACTED_LDAP_BIND_PASSWORD
         # Validate event shows entries were processed
         events = entry_result.statistics.events
         assert len(events) > 0, "Should have at least one migration event"
-        migration_event = events[0]
+        event = events[0]
 
         # Validate entries were processed
-        # MigrationEvent has entries_migrated but not entries_processed
-        # Check that migration succeeded with expected entries
-        assert migration_event.entries_migrated >= 2, (
-            f"Should migrate at least 2 entries (hierarchy+user), migrated={migration_event.entries_migrated}"
-        )
-        assert migration_event.entries_migrated >= 2, (
-            f"Should migrate at least 2 entries, migrated={migration_event.entries_migrated}"
-        )
+        # Type narrowing: check if it's MigrationEvent
+        if isinstance(event, FlextLdifModels.MigrationEvent):
+            assert event.entries_migrated >= 2, (
+                f"Should migrate at least 2 entries (hierarchy+user), migrated={event.entries_migrated}"
+            )
 
         # Validate output files were created for each category
         assert (
@@ -537,24 +566,28 @@ cn: user
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules: CategorizationRulesDict = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["top"],
-                "user_objectclasses": ["person"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: CategorizationRulesDict = {
+            "hierarchy_objectclasses": ["top"],
+            "user_objectclasses": ["person"],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="categorized",
-            categorization_rules=categorization_rules,
+            categorization_rules=cast(
+                "FlextLdifModels.CategoryRules | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | None] | None] | None",
+                categorization_rules,
+            ),
             base_dn="dc=example,dc=com",
-            source_server="rfc",
-            target_server="rfc",
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
         )
 
         result = pipeline.execute()
@@ -571,20 +604,26 @@ cn: user
         # Validate event shows entries were processed
         events = entry_result.statistics.events
         assert len(events) > 0, "Should have at least one migration event"
-        migration_event = events[0]
+        event = events[0]
 
         # Only 1 entry should match the base DN (dc=example,dc=com)
-        # MigrationEvent has entries_migrated but not entries_processed
-        # Check that migration succeeded
-        assert migration_event.entries_migrated >= 1
-        assert migration_event.entries_migrated == 1, (
-            f"Should only migrate entry matching base DN, migrated={migration_event.entries_migrated}"
-        )
+        # Type narrowing: check if it's MigrationEvent
+        if isinstance(event, FlextLdifModels.MigrationEvent):
+            assert event.entries_migrated >= 1
+            assert event.entries_migrated == 1, (
+                f"Should only migrate entry matching base DN, migrated={event.entries_migrated}"
+            )
 
         # Validate output shows only the matching entry
         assert (
             entry_result.file_paths is not None and len(entry_result.file_paths) > 0
         ), "Should create output files"
+
+        # Business Rule: Entries outside base DN are moved to REJECTED category
+        # Implication: Entry should appear in rejected file, not in data category files
+        rejected_file_path = None
+        data_category_files: list[Path] = []
+
         # Iterate over dict values (file paths)
         for file_path_value in entry_result.file_paths.values():
             # Handle both string and tuple values
@@ -596,14 +635,29 @@ cn: user
                 continue
             output_file = Path(file_path)
             if output_file.exists() and output_file.stat().st_size > 0:
-                output_content = output_file.read_text(encoding="utf-8")
-                # Should contain the matching entry
-                if "REDACTED_LDAP_BIND_PASSWORD" in output_content:
-                    assert "dc=example,dc=com" in output_content
-                # Should NOT contain the non-matching entry
-                assert "dc=other,dc=com" not in output_content, (
-                    "Should filter out entries outside the base DN"
-                )
+                # Identify rejected file
+                if "rejected" in output_file.name.lower():
+                    rejected_file_path = output_file
+                else:
+                    data_category_files.append(output_file)
+
+        # Validate that entry outside base DN is NOT in data category files
+        for output_file in data_category_files:
+            output_content = output_file.read_text(encoding="utf-8")
+            # Should contain the matching entry
+            if "REDACTED_LDAP_BIND_PASSWORD" in output_content:
+                assert "dc=example,dc=com" in output_content
+            # Should NOT contain the non-matching entry in data categories
+            assert "dc=other,dc=com" not in output_content, (
+                f"Should filter out entries outside the base DN from {output_file.name}"
+            )
+
+        # Validate that entry outside base DN IS in rejected file (audit trail)
+        if rejected_file_path and rejected_file_path.exists():
+            rejected_content = rejected_file_path.read_text(encoding="utf-8")
+            assert "dc=other,dc=com" in rejected_content, (
+                "Entry outside base DN should be in rejected category for audit trail"
+            )
 
     def test_categorized_mode_with_forbidden_attributes(self, tmp_path: Path) -> None:
         """Test categorized mode filtering forbidden attributes."""
@@ -620,24 +674,28 @@ userPassword: secret
 """
         _ = (input_dir / "test.ldif").write_text(ldif_content)
 
-        categorization_rules: CategorizationRulesDict = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["top"],
-                "user_objectclasses": ["person"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: CategorizationRulesDict = {
+            "hierarchy_objectclasses": ["top"],
+            "user_objectclasses": ["person"],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="categorized",
-            categorization_rules=categorization_rules,
+            categorization_rules=cast(
+                "FlextLdifModels.CategoryRules | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | None] | None] | None",
+                categorization_rules,
+            ),
             forbidden_attributes=["userPassword"],
-            source_server="rfc",
-            target_server="rfc",
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
         )
 
         result = pipeline.execute()
@@ -687,17 +745,14 @@ userPassword: secret
             "dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\nobjectClass: person\ncn: REDACTED_LDAP_BIND_PASSWORD\n",
         )
 
-        categorization_rules: CategorizationRulesDict = cast(
-            "dict[str, object]",
-            {
-                "hierarchy_objectclasses": ["top"],
-                "user_objectclasses": ["person"],
-                "group_objectclasses": ["groupOfNames"],
-                "acl_attributes": [],
-            },
-        )
+        categorization_rules: CategorizationRulesDict = {
+            "hierarchy_objectclasses": ["top"],
+            "user_objectclasses": ["person"],
+            "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
+        }
 
-        output_files = {
+        output_files_dict = {
             "schema": "00_schema.ldif",
             "hierarchy": "01_hierarchy.ldif",
             "user": "02_user.ldif",
@@ -705,15 +760,25 @@ userPassword: secret
             "acl": "04_acl.ldif",
             "rejected": "99_rejected.ldif",
         }
+        output_files = cast(
+            "dict[FlextLdifConstants.Categories, str]", output_files_dict
+        )
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             mode="categorized",
-            categorization_rules=categorization_rules,
+            categorization_rules=cast(
+                "FlextLdifModels.CategoryRules | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | dict[str, str | int | float | bool | datetime | list[str] | frozenset[str] | None] | None] | None",
+                categorization_rules,
+            ),
             output_files=output_files,
-            source_server="rfc",
-            target_server="rfc",
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "rfc"
+            ),
         )
 
         result = pipeline.execute()
@@ -752,8 +817,12 @@ userPassword: secret
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=source,
-            target_server=target,
+            source_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", source
+            ),
+            target_server=cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", target
+            ),
         )
 
         result = pipeline.execute()

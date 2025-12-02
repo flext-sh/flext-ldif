@@ -32,6 +32,8 @@ from typing import TypedDict, TypeVar
 from flext_core import FlextResult
 from flext_core.typings import FlextTypes, T  # Reuse TypeVar from flext-core
 
+# Import models facade for concrete types (avoiding circular imports via facade)
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 
 # Model type aliases moved to nested classes to follow FLEXT standards
@@ -105,11 +107,26 @@ class FlextLdifTypes:
         type ServiceResponseTypes = (
             FlextLdifProtocols.Services.UnifiedParseResultProtocol
             | FlextLdifProtocols.Services.UnifiedWriteResultProtocol
+            | FlextLdifProtocols.Services.EntryResultProtocol
             | FlextLdifProtocols.Services.HasEntriesProtocol
             | list[FlextLdifProtocols.Models.EntryProtocol]
             | str
         )
-        """Type alias for service response types."""
+        """Type alias for service response types.
+
+        Business Rule: ServiceResponseTypes is a union type representing all valid
+        response types from LDIF services. It includes:
+        - UnifiedParseResultProtocol: Parse operations returning entries
+        - UnifiedWriteResultProtocol: Write operations returning content string
+        - EntryResultProtocol: Categorized entry results with statistics
+        - HasEntriesProtocol: Simple entry containers
+        - list[EntryProtocol]: Raw entry lists
+        - str: Simple string responses
+
+        Implication: Services should use this type for return values to ensure
+        type-safe composition. EntryResult satisfies EntryResultProtocol through
+        structural typing (duck typing).
+        """
 
     # =========================================================================
     # QUIRK INSTANCE TYPES - For official quirk implementations
@@ -197,10 +214,12 @@ class FlextLdifTypes:
     Composes with FlextTypes.StringValue pattern.
     """
 
-    type AclOrString = str | FlextLdifTypes.Models.Acl
+    type AclOrString = str | FlextLdifModels.Acl
     """Type alias for ACL inputs that can be string or Acl model.
 
     Business context: ACL processing (parse from string or use Acl model).
+    Uses concrete Acl model (FlextLdifModels.Acl) for type safety and compatibility
+    with base class method signatures.
     """
 
     type EntryOrString = FlextLdifTypes.Models.Entry | str
@@ -300,16 +319,22 @@ class FlextLdifTypes:
     # =========================================================================
 
     class ServiceTypes:
-        """Nested class for service-related type aliases."""
+        """Nested class for service-related type aliases.
+
+        Note: ServiceResponseTypes is also available in FlextLdifTypes.Models
+        for backward compatibility. Prefer using FlextLdifTypes.Models.ServiceResponseTypes
+        as the canonical location.
+        """
 
         type ServiceResponseTypes = (
             FlextLdifProtocols.Services.UnifiedParseResultProtocol
             | FlextLdifProtocols.Services.UnifiedWriteResultProtocol
-            | "FlextLdifProtocols.Services.HasEntriesProtocol"
+            | FlextLdifProtocols.Services.EntryResultProtocol
+            | FlextLdifProtocols.Services.HasEntriesProtocol
             | list[FlextLdifProtocols.Models.EntryProtocol]
             | str
         )
-        """Type alias for service response types."""
+        """Type alias for service response types (alias of Models.ServiceResponseTypes)."""
 
     # =========================================================================
     # ENTRY TYPES - For entry-related operations
@@ -631,25 +656,45 @@ class FlextLdifTypes:
     class ModelMetadata:
         """Nested class for model metadata type aliases used in parsing/writing."""
 
-        type EntryParsingContext = dict[
-            str,
-            FlextTypes.ScalarValue | list[str] | dict[str, str] | dict[str, list[str]],
-        ]
-        """Type alias for entry parsing context dictionaries.
+        class EntryParsingContext(TypedDict, total=False):
+            """TypedDict for entry parsing context with specific fields.
 
-        Composes with FlextTypes.ScalarValue for primitive values.
-        Extends with list[str] and nested dicts for parsing-specific structures.
-        """
+            Uses TypedDict for type safety while maintaining dict flexibility.
+            All fields are optional (total=False) to support incremental building.
+            """
 
-        type AttributeWriteContext = dict[
-            str,
-            FlextTypes.ScalarValue | list[str] | dict[str, str] | dict[str, list[str]],
-        ]
-        """Type alias for attribute write context dictionaries.
+            original_entry_dn: str
+            cleaned_dn: str
+            original_dn_line: str | None
+            original_attr_lines: list[str] | None
+            dn_was_base64: bool
+            original_attribute_case: dict[str, str] | None
+            dn_differences: (
+                dict[str, FlextTypes.MetadataAttributeValue]
+                | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                | None
+            )
+            attribute_differences: (
+                dict[str, FlextTypes.MetadataAttributeValue]
+                | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                | None
+            )
+            original_attributes_complete: (
+                dict[str, FlextTypes.MetadataAttributeValue] | None
+            )
 
-        Composes with FlextTypes.ScalarValue for primitive values.
-        Extends with list[str] and nested dicts for write-specific structures.
-        """
+        class AttributeWriteContext(TypedDict, total=False):
+            """TypedDict for attribute write context with specific fields.
+
+            Uses TypedDict for type safety while maintaining dict flexibility.
+            All fields are optional (total=False) to support incremental building.
+            """
+
+            attr_name: str
+            attr_values: FlextTypes.GeneralValueType
+            minimal_differences_attrs: dict[str, FlextTypes.MetadataAttributeValue]
+            hidden_attrs: set[str]
+            write_options: object  # WriteFormatOptions - avoid circular import
 
         type AclParseContext = dict[str, FlextTypes.ScalarValue | list[str]]
         """Type alias for ACL parsing context dictionaries.

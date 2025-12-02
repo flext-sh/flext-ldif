@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
+from typing import Literal
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
@@ -15,7 +17,6 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
@@ -599,7 +600,7 @@ class FlextLdifUtilitiesACL:
     def parse_aci(
         acl_line: str,
         config: FlextLdifModelsConfig.AciParserConfig,
-    ) -> FlextResult[FlextLdifTypes.Models.Acl]:
+    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse ACI line using server-specific config Model.
 
         Args:
@@ -626,7 +627,7 @@ class FlextLdifUtilitiesACL:
             config.aci_prefix,
         )
         if not is_valid:
-            return FlextResult[FlextLdifTypes.Models.Acl].fail(
+            return FlextResult[FlextLdifModelsDomains.Acl].fail(
                 f"Not a valid ACI format: {config.aci_prefix}",
             )
 
@@ -721,8 +722,7 @@ class FlextLdifUtilitiesACL:
                 else extensions,
             ),
         )
-        # acl_model is FlextLdifModelsDomains.Acl which satisfies AclProtocol
-        return FlextResult[FlextLdifTypes.Models.Acl].ok(acl_model)  # type: ignore[arg-type]
+        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl_model)
 
     @staticmethod
     def write_aci(
@@ -1110,6 +1110,239 @@ class FlextLdifUtilitiesACL:
                 oid_permissions[perm_name] = oud_permissions[perm_name]
 
         return oid_permissions
+
+    # =========================================================================
+    # BATCH METHODS - Power Method Support
+    # =========================================================================
+
+    @staticmethod
+    def extract_components_batch(
+        content: str,
+        patterns: Mapping[str, str | tuple[str, int]],
+        *,
+        defaults: Mapping[str, object] | None = None,
+    ) -> dict[str, object]:
+        r"""Extract multiple ACL components in one call.
+
+        Replaces repetitive extract_component() calls with a single batch call.
+
+        Example - BEFORE (9 calls in oid.py):
+            bindmode = extract_component(acl, r'bindmode=([^,;]+)', None)
+            filter = extract_component(acl, r'filter="([^"]*)"', None)
+            constraint = extract_component(acl, r'constraint="([^"]*)"', None)
+            # ... 6 more calls
+
+        AFTER (1 call):
+            components = extract_components_batch(
+                acl_string,
+                {
+                    'bindmode': r'bindmode=([^,;]+)',
+                    'filter': r'filter="([^"]*)"',
+                    'constraint': r'constraint="([^"]*)"',
+                },
+                defaults={'bindmode': None, 'filter': None, 'constraint': None}
+            )
+
+        Args:
+            content: ACL content string to extract from
+            patterns: Mapping of component names to regex patterns.
+                      Pattern can be str or (pattern, group_index) tuple.
+            defaults: Default values for components not found
+
+        Returns:
+            Dictionary of extracted component values
+
+        Examples:
+            >>> components = FlextLdifUtilitiesACL.extract_components_batch(
+            ...     "target=ldap:///dc=example;bindmode=all;filter=(*)",
+            ...     {
+            ...         "target": r"target=([^;]+)",
+            ...         "bindmode": r"bindmode=([^;]+)",
+            ...         "filter": r"filter=\\(([^)]*)\\)",
+            ...     },
+            ...     defaults={"filter": "*"},
+            ... )
+            >>> components["target"]
+            'ldap:///dc=example'
+
+        """
+        results: dict[str, object] = {}
+        effective_defaults = defaults or {}
+
+        for name, pattern_spec in patterns.items():
+            # Handle (pattern, group_index) tuple or plain pattern string
+            if isinstance(pattern_spec, tuple):
+                pattern, group_idx = pattern_spec
+            else:
+                pattern = pattern_spec
+                group_idx = 1  # Default to first capture group
+
+            # Extract using existing method (group_idx is the third argument)
+            value = FlextLdifUtilitiesACL.extract_component(
+                content,
+                pattern,
+                group_idx,
+            )
+
+            # Apply default if value not found
+            if value is None:
+                default = effective_defaults.get(name)
+                results[name] = default
+            else:
+                results[name] = value
+
+        return results
+
+    @staticmethod
+    def parse_batch(
+        acl_lines: Sequence[str],
+        config: FlextLdifModelsConfig.AciParserConfig,
+        *,
+        fail_fast: bool = False,
+        skip_invalid: bool = True,
+    ) -> FlextResult[list[FlextLdifModelsDomains.Acl]]:
+        """Parse multiple ACL lines in one call.
+
+        Args:
+            acl_lines: Sequence of ACL line strings to parse
+            config: Parser configuration
+            fail_fast: If True, return error on first parse failure
+            skip_invalid: If True, skip invalid ACLs (when fail_fast=False)
+
+        Returns:
+            FlextResult containing list of parsed ACL objects
+
+        Examples:
+            >>> config = FlextLdifModelsConfig.AciParserConfig(
+            ...     strict_mode=False,
+            ...     preserve_comments=True,
+            ... )
+            >>> result = FlextLdifUtilitiesACL.parse_batch(
+            ...     acl_lines,
+            ...     config,
+            ...     fail_fast=False,
+            ... )
+            >>> if result.is_success:
+            ...     acls = result.unwrap()
+
+        """
+        results: list[FlextLdifModelsDomains.Acl] = []
+        errors: list[str] = []
+
+        for i, acl_line in enumerate(acl_lines):
+            try:
+                result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
+
+                if result.is_success:
+                    results.append(result.unwrap())
+                elif fail_fast:
+                    return FlextResult.fail(f"ACL {i} parse failed: {result.error}")
+                elif not skip_invalid:
+                    errors.append(f"ACL {i}: {result.error}")
+            except Exception as e:
+                if fail_fast:
+                    return FlextResult.fail(f"ACL {i} parse exception: {e}")
+                if not skip_invalid:
+                    errors.append(f"ACL {i} exception: {e}")
+
+        if errors:
+            return FlextResult.fail(f"Parse errors: {'; '.join(errors)}")
+
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def convert_permissions_batch(
+        permissions_list: Sequence[dict[str, bool]],
+        direction: Literal["oid_to_oud", "oud_to_oid"],
+    ) -> FlextResult[list[dict[str, bool]]]:
+        """Convert multiple permission sets between OID and OUD formats.
+
+        Args:
+            permissions_list: Sequence of permission dictionaries
+            direction: Conversion direction ("oid_to_oud" or "oud_to_oid")
+
+        Returns:
+            FlextResult containing list of converted permission dictionaries
+
+        Examples:
+            >>> oid_perms = [{"read": True, "search": True}, {"write": True}]
+            >>> result = FlextLdifUtilitiesACL.convert_permissions_batch(
+            ...     oid_perms,
+            ...     direction="oid_to_oud",
+            ... )
+
+        """
+        results: list[dict[str, bool]] = []
+
+        for i, permissions in enumerate(permissions_list):
+            try:
+                if direction == "oid_to_oud":
+                    converted = FlextLdifUtilitiesACL.map_oid_to_oud_permissions(
+                        permissions
+                    )
+                else:  # oud_to_oid
+                    converted = FlextLdifUtilitiesACL.map_oud_to_oid_permissions(
+                        permissions
+                    )
+                results.append(converted)
+            except Exception as e:
+                return FlextResult.fail(f"Permission set {i} conversion failed: {e}")
+
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def validate_batch(
+        acl_lines: Sequence[str],
+        *,
+        collect_errors: bool = True,
+    ) -> FlextResult[list[tuple[str, bool, str | None]]]:
+        """Validate multiple ACL lines.
+
+        Business Rule:
+        - Validates ACI format for each ACL line using RFC 2849/4512 standards
+        - Returns tuple (is_valid, aci_content) where is_valid indicates format correctness
+        - When collect_errors=False, stops at first invalid ACL (fail-fast pattern)
+        - Error messages are extracted from validation tuple for audit trail
+
+        Args:
+            acl_lines: Sequence of ACL line strings to validate
+            collect_errors: If True, continue after failures (default: True)
+
+        Returns:
+            FlextResult containing list of (acl_line, is_valid, error_message) tuples
+            - is_valid: True if ACL format is valid, False otherwise
+            - error_message: None if valid, error description if invalid
+
+        Examples:
+            >>> result = FlextLdifUtilitiesACL.validate_batch([
+            ...     "(target=ldap:///...)(version 3.0;acl...)",
+            ...     "invalid-acl",
+            ... ])
+            >>> if result.is_success:
+            ...     for line, is_valid, error in result.unwrap():
+            ...         print(f"Valid: {is_valid}")
+
+        """
+        results: list[tuple[str, bool, str | None]] = []
+
+        for acl_line in acl_lines:
+            # validate_aci_format returns tuple[bool, str] where:
+            # - bool: is_valid (True if format is valid)
+            # - str: aci_content (empty string if invalid)
+            is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(acl_line)
+
+            if is_valid:
+                # Valid ACL: no error message
+                results.append((acl_line, True, None))
+            else:
+                # Invalid ACL: extract error message from content or use default
+                error_msg = aci_content or "Invalid ACI format"
+                results.append((acl_line, False, error_msg))
+
+            if not collect_errors and results[-1][1] is False:
+                break
+
+        return FlextResult.ok(results)
 
 
 __all__ = [

@@ -105,6 +105,17 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
     ) -> FlextResult[FlextLdifModels.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content.
 
+        Business Rule: Server detection uses weighted pattern matching across multiple
+        server-specific features (OIDs, attributes, objectClasses). Detection confidence
+        is calculated based on pattern match strength and quantity. If confidence falls
+        below threshold (CONFIDENCE_THRESHOLD), detection defaults to "rfc" for safe
+        RFC-compliant processing.
+
+        Implication: Detection results influence quirk selection and server-specific
+        processing. Low confidence detections may result in generic RFC processing,
+        potentially missing server-specific optimizations. High confidence detections
+        enable full server-specific quirk capabilities.
+
         Args:
             ldif_path: Path to LDIF file (alternative to ldif_content)
             ldif_content: Raw LDIF content as string
@@ -182,7 +193,21 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
         | None = None,
     ) -> str:
-        """Determine effective server type based on a prioritized configuration hierarchy."""
+        """Determine effective server type based on a prioritized configuration hierarchy.
+
+        Business Rule: Server type resolution follows strict priority order:
+        1. Direct override parameter (highest priority)
+        2. Relaxed parsing mode (enables lenient RFC processing)
+        3. Manual mode with configured server type
+        4. Disabled mode (forces RFC-only processing)
+        5. Default server type from config (lowest priority)
+
+        Implication: This hierarchy ensures predictable server type selection across
+        different configuration scenarios. Manual mode requires explicit server type
+        configuration or defaults to RFC. Auto-detection is only used when not in
+        manual/disabled mode.
+
+        """
         # Priority 1: Direct override from a service-level parameter
         if target_server_type:
             return target_server_type
@@ -217,6 +242,16 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         ldif_content: str | None = None,
     ) -> FlextResult[FlextLdifConstants.LiteralTypes.ServerTypeLiteral]:
         """Resolve the effective LDAP server type to use for processing.
+
+        Business Rule: Effective server type combines configuration hierarchy with
+        optional auto-detection. If LDIF content is provided and auto-detection is
+        enabled, detection results override configuration defaults. Falls back to
+        "rfc" if detection fails or content is not provided.
+
+        Implication: This method bridges configuration-driven and content-driven
+        server type selection. Services should use this method to determine the
+        final server type for quirk selection, ensuring consistency across the
+        processing pipeline.
 
         Applies priority resolution based on config settings:
         1. Relaxed mode enabled → "relaxed"

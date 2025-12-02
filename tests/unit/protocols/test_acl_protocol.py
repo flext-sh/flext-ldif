@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
+from typing import cast
 
 import pytest
 
@@ -177,13 +178,17 @@ def get_case_insensitive_tests() -> list[CaseInsensitivityTestCase]:
 @pytest.fixture
 def oid_acl() -> FlextLdifServersOid.Acl:
     """Create OID ACL instance."""
-    return get_acl_instance(ServerType.OID)
+    instance = get_acl_instance(ServerType.OID)
+    # Type narrowing: ServerType.OID always returns FlextLdifServersOid.Acl
+    return cast("FlextLdifServersOid.Acl", instance)
 
 
 @pytest.fixture
 def oud_acl() -> FlextLdifServersOud.Acl:
     """Create OUD ACL instance."""
-    return get_acl_instance(ServerType.OUD)
+    instance = get_acl_instance(ServerType.OUD)
+    # Type narrowing: ServerType.OUD always returns FlextLdifServersOud.Acl
+    return cast("FlextLdifServersOud.Acl", instance)
 
 
 class TestAclProtocolCompliance:
@@ -237,7 +242,9 @@ class TestAclProtocolCompliance:
 
     def test_oid_class_constants(self) -> None:
         """Test OID ACL class variables are properly defined."""
-        oid_class = get_acl_class(ServerType.OID)
+        acl_class = get_acl_class(ServerType.OID)
+        # Type narrowing: ServerType.OID always returns FlextLdifServersOid.Acl class
+        oid_class = cast("type[FlextLdifServersOid.Acl]", acl_class)
 
         # RFC attributes
         assert hasattr(oid_class, "RFC_ACL_ATTRIBUTES")
@@ -251,7 +258,9 @@ class TestAclProtocolCompliance:
 
     def test_oud_class_constants(self) -> None:
         """Test OUD ACL class variables are properly defined."""
-        oud_class = get_acl_class(ServerType.OUD)
+        acl_class = get_acl_class(ServerType.OUD)
+        # Type narrowing: ServerType.OUD always returns FlextLdifServersOud.Acl class
+        oud_class = cast("type[FlextLdifServersOud.Acl]", acl_class)
 
         # RFC attributes
         assert hasattr(oud_class, "RFC_ACL_ATTRIBUTES")
@@ -277,8 +286,10 @@ class TestAclProtocolCompliance:
 
     def test_shared_rfc_foundation(self) -> None:
         """Test both OID and OUD share RFC foundation."""
-        oid_rfc = set(get_acl_class(ServerType.OID).RFC_ACL_ATTRIBUTES)
-        oud_rfc = set(get_acl_class(ServerType.OUD).RFC_ACL_ATTRIBUTES)
+        oid_class = cast("type[FlextLdifServersOid.Acl]", get_acl_class(ServerType.OID))
+        oud_class = cast("type[FlextLdifServersOud.Acl]", get_acl_class(ServerType.OUD))
+        oid_rfc = set(oid_class.RFC_ACL_ATTRIBUTES)
+        oud_rfc = set(oud_class.RFC_ACL_ATTRIBUTES)
 
         assert oid_rfc == oud_rfc
 

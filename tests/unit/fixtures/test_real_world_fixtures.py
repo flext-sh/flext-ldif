@@ -472,7 +472,9 @@ class TestCrossServerFixtures:
 
         for server_name, fixture_path in servers:
             # Extract server type from server name
-            server_type_map: dict[str, FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = {
+            server_type_map: dict[
+                str, FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+            ] = {
                 "RFC": "rfc",
                 "OID": "oid",
                 "OUD": "oud",
@@ -500,7 +502,9 @@ class TestCrossServerFixtures:
             # Verify entry structure
             for entry in entries:
                 assert entry.dn is not None, f"{server_name}: Entry missing DN"
-                assert entry.attributes is not None, f"{server_name}: Entry missing attributes"
+                assert entry.attributes is not None, (
+                    f"{server_name}: Entry missing attributes"
+                )
                 assert len(entry.dn.value) > 0, f"{server_name}: DN cannot be empty"
                 # Check for objectClass (case-insensitive, as different servers use different cases)
                 has_oc = any(
@@ -528,9 +532,7 @@ class TestCrossServerFixtures:
 
             # Analyze DN structures
             dn_depths = [
-                len(e.dn.value.split(","))
-                for e in entries
-                if e.dn is not None
+                len(e.dn.value.split(",")) for e in entries if e.dn is not None
             ]
             assert len(dn_depths) > 0, f"{server_name}: Should have DNs to analyze"
 
@@ -615,7 +617,8 @@ class TestFixtureEdgeCases:
             # attributes is a Pydantic model, use model_dump to get dict
             attrs_dict = (
                 entry.attributes.model_dump()
-                if entry.attributes is not None and hasattr(entry.attributes, "model_dump")
+                if entry.attributes is not None
+                and hasattr(entry.attributes, "model_dump")
                 else entry.attributes
             )
             if isinstance(attrs_dict, dict):

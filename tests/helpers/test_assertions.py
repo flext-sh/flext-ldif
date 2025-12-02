@@ -204,7 +204,9 @@ class TestAssertions:
         ) = unwrapped  # type: ignore[assignment]
 
         # Use unified extraction to handle all result types
-        entries_protocol = FlextLdifTypes.ResultExtractors.extract_entries(unwrapped_entries)
+        entries_protocol = FlextLdifTypes.ResultExtractors.extract_entries(
+            unwrapped_entries
+        )
 
         # Convert EntryProtocol to Entry (Entry implements EntryProtocol)
         entries: list[FlextLdifModels.Entry] = [

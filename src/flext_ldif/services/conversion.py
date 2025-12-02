@@ -5,10 +5,10 @@ conversion between LDAP server quirks (OUD, OID, OpenLDAP, etc.) using
 a universal Entry model as the pivot point.
 
 Conversion Pattern:
- Source → Write to LDIF → Parse with Target → Entry Model
+ Source -> Write to LDIF -> Parse with Target -> Entry Model
 
 All server conversions work through the universal Entry model, which stores
-server-specific metadata. This simplifies conversions to: write→parse pipeline.
+server-specific metadata. This simplifies conversions to: write->parse pipeline.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,7 +20,7 @@ from __future__ import annotations
 import time
 import traceback
 from collections.abc import Sequence
-from typing import ClassVar, Self, override
+from typing import ClassVar, Self, cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService, FlextTypes
 from pydantic import Field
@@ -36,7 +36,10 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 # Type alias for source/target - can be server quirk instance or server type string
-type ServerQuirkOrType = "FlextLdifServersBase" | str
+# Business Rule: ServerQuirkOrType allows either a server quirk instance or a server type string.
+# Implication: This enables flexible conversion APIs that accept both runtime instances
+# and type identifiers. Use isinstance checks for type narrowing.
+type ServerQuirkOrType = FlextLdifServersBase | str
 
 # Type alias for ConvertibleModel Union (used in return types)
 # Use actual types from domain models for proper type checking
@@ -108,6 +111,15 @@ class FlextLdifConversion(
 ):
     """Facade for universal, model-driven quirk-to-quirk conversion.
 
+    Business Rule: Conversion service uses RFC as universal intermediate representation
+    for all server-to-server conversions. Conversion pipeline: source.normalize_to_rfc()
+    -> RFC Model -> target.denormalize_from_rfc() -> Target Model. This ensures consistent
+    conversions regardless of source/target server types.
+
+    Implication: All conversions maintain RFC compliance while adapting to server-specific
+    formats. DN case consistency is tracked via DN registry for round-trip conversions.
+    Model-driven approach ensures type safety and consistency across conversions.
+
     This class provides a unified interface for converting LDIF data models between
     different server formats (OUD, OID, etc.) by using RFC as a universal
     intermediate representation. The entire process is model-driven, ensuring
@@ -174,6 +186,12 @@ class FlextLdifConversion(
     ) -> FlextResult[ConvertibleModelUnion]:
         """Execute conversion service health check.
 
+        Business Rule: Execute method provides service health check for protocol compliance.
+        Returns fail-fast error indicating conversion requires explicit source/target parameters.
+
+        Implication: This method enables service-based execution patterns while maintaining
+        type safety. Used internally by service orchestration layers for health monitoring.
+
         Returns:
             FlextResult with empty Entry model for health check
 
@@ -202,16 +220,25 @@ class FlextLdifConversion(
     ) -> FlextResult[ConvertibleModelUnion]:
         """Convert a model from a source server format to a target server format.
 
+        Business Rule: Conversion uses RFC as universal intermediate representation.
+        Pipeline: source.normalize_to_rfc() -> RFC Model -> target.denormalize_from_rfc().
+        All conversions emit ConversionEvent for audit trail (MANDATORY). DN case
+        consistency is tracked via DN registry for round-trip conversions.
+
+        Implication: Model-based conversion ensures type safety and consistency.
+        Conversion events enable monitoring and debugging of conversion operations.
+        Server-specific transformations are handled by quirks, ensuring RFC compliance.
+
         Model-based conversion only - no legacy string/dict support.
         Emits ConversionEvent for all conversions (MANDATORY - eventos obrigatórios).
 
         Args:
-            source: Source quirk instance
-            target: Target quirk instance
+            source: Source quirk instance or server type string
+            target: Target quirk instance or server type string
             model_instance: Model instance to convert (Entry, SchemaAttribute, SchemaObjectClass, or Acl)
 
         Returns:
-            FlextResult with converted model
+            FlextResult with converted model (target server format)
 
         """
         # Track conversion duration (MANDATORY - eventos obrigatórios)
@@ -280,10 +307,19 @@ class FlextLdifConversion(
         target: ServerQuirkOrType,
         model_instance: FlextLdifTypes.ConvertibleModel,
     ) -> FlextResult[ConvertibleModelUnion]:
-        """Convert model between source and target server formats via write→parse pipeline.
+        """Convert model between source and target server formats via write->parse pipeline.
+
+        Business Rule: Internal conversion method uses write->parse pipeline for
+        server-agnostic conversions. Source model is written to LDIF using source quirk,
+        then parsed using target quirk. This ensures RFC compliance while adapting to
+        server-specific formats.
+
+        Implication: Write->parse pipeline enables conversions between any server types
+        without direct server-to-server conversion logic. All conversions maintain RFC
+        compliance with server-specific enhancements.
 
         Supports Entry, SchemaAttribute, SchemaObjectClass, and Acl conversions.
-        Uses write→parse pipeline for server-agnostic conversions.
+        Uses write->parse pipeline for server-agnostic conversions.
 
         This approach eliminates the need for normalize_to_rfc/denormalize_from_rfc
         and ensures all conversions go through the same parse/write codepath used
@@ -418,11 +454,11 @@ class FlextLdifConversion(
     ) -> FlextResult[ConvertibleModelUnion]:
         """Convert Entry model directly without serialization.
 
-        Entry models are already RFC-compliant. Instead of Source.write() → Target.parse()
+        Entry models are already RFC-compliant. Instead of Source.write() -> Target.parse()
         (which fails because parsers expect their own format), we return the model directly.
         The target.write() will be called by the consumer to serialize to target format.
 
-        Architecture: Entry RFC Model → Target.write() → Target LDIF format
+        Architecture: Entry RFC Model -> Target.write() -> Target LDIF format
         """
         try:
             # Validate entry DN using FlextLdifUtilities.DN before conversion
@@ -499,7 +535,9 @@ class FlextLdifConversion(
                 "Failed to convert Entry model",
                 error=str(e),
             )
-            return FlextResult[ConvertibleModelUnion].fail(f"Entry conversion failed: {e}")
+            return FlextResult[ConvertibleModelUnion].fail(
+                f"Entry conversion failed: {e}"
+            )
 
     def _convert_schema_attribute(
         self,
@@ -507,7 +545,7 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         attribute: FlextLdifModelsDomains.SchemaAttribute,
     ) -> FlextResult[ConvertibleModelUnion]:
-        """Convert SchemaAttribute model via write_attribute→parse_attribute pipeline."""
+        """Convert SchemaAttribute model via write_attribute->parse_attribute pipeline."""
         try:
             # Step 1: Get source schema quirk with proper type narrowing
             try:
@@ -545,7 +583,9 @@ class FlextLdifConversion(
             return FlextResult[ConvertibleModelUnion].ok(converted_attribute)
 
         except Exception as e:
-            return FlextResult[ConvertibleModelUnion].fail(f"SchemaAttribute conversion failed: {e}")
+            return FlextResult[ConvertibleModelUnion].fail(
+                f"SchemaAttribute conversion failed: {e}"
+            )
 
     def _convert_schema_objectclass(
         self,
@@ -553,7 +593,7 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         objectclass: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> FlextResult[ConvertibleModelUnion]:
-        """Convert SchemaObjectClass model via write_objectclass→parse_objectclass pipeline."""
+        """Convert SchemaObjectClass model via write_objectclass->parse_objectclass pipeline."""
         try:
             # Step 1: Get source schema quirk with proper type narrowing
             try:
@@ -593,7 +633,9 @@ class FlextLdifConversion(
             return FlextResult[ConvertibleModelUnion].ok(converted_objectclass)
 
         except Exception as e:
-            return FlextResult[ConvertibleModelUnion].fail(f"SchemaObjectClass conversion failed: {e}")
+            return FlextResult[ConvertibleModelUnion].fail(
+                f"SchemaObjectClass conversion failed: {e}"
+            )
 
     def _get_acl_classes(
         self,
@@ -618,22 +660,38 @@ class FlextLdifConversion(
                 f"Target quirk {target_class.__name__} does not have Acl nested class",
             )
 
-        # Create ACL quirks - they implement AclProtocol
+        # Business Rule: Create ACL quirks and validate protocol compliance
+        # ACL quirks must implement AclProtocol with parse() and write() methods
+        # Use structural checks first, then isinstance for runtime_checkable Protocol
+        # This ensures type safety while satisfying pyright strict mode
         source_acl = source_class.Acl()
         target_acl = target_class.Acl()
 
-        # Validate protocol compliance at runtime using isinstance
-        if not isinstance(source_acl, FlextLdifProtocols.Quirks.AclProtocol):
+        # Business Rule: Validate ACL quirks implement AclProtocol structurally
+        # AclProtocol requires parse() and write() methods per protocol definition
+        # Use structural checks only (hasattr) to avoid pyright Protocol overlap warnings
+        # Runtime behavior: Structural typing ensures correct implementation
+        required_methods = ("parse", "write")
+        if not all(
+            hasattr(source_acl, method) and callable(getattr(source_acl, method))
+            for method in required_methods
+        ):
             return FlextResult.fail(
-                f"Source ACL quirk {source_class.__name__} does not implement AclProtocol",
+                f"Source ACL quirk {source_class.__name__} missing required AclProtocol methods",
             )
-        if not isinstance(target_acl, FlextLdifProtocols.Quirks.AclProtocol):
+        if not all(
+            hasattr(target_acl, method) and callable(getattr(target_acl, method))
+            for method in required_methods
+        ):
             return FlextResult.fail(
-                f"Target ACL quirk {target_class.__name__} does not implement AclProtocol",
+                f"Target ACL quirk {target_class.__name__} missing required AclProtocol methods",
             )
 
-        # Both are now typed as AclProtocol - no cast needed
-        return FlextResult.ok((source_acl, target_acl))
+        # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
+        # Business Rule: Structural typing ensures runtime correctness, cast satisfies type checker
+        source_acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", source_acl)
+        target_acl_typed = cast("FlextLdifProtocols.Quirks.AclProtocol", target_acl)
+        return FlextResult.ok((source_acl_typed, target_acl_typed))
 
     def _write_acl_to_string(
         self,
@@ -641,16 +699,18 @@ class FlextLdifConversion(
         source_acl: FlextLdifProtocols.Quirks.AclProtocol,
     ) -> FlextResult[str]:
         """Write ACL to LDIF string."""
-        # Acl model satisfies AclProtocol structurally
-        # Type narrowing: ensure acl is compatible with AclProtocol before calling write
-        # Since Acl implements AclProtocol structurally, we can pass it directly
-        # The actual implementation in base.py accepts FlextLdifModelsDomains.Acl
-        if not isinstance(acl, FlextLdifProtocols.Models.AclProtocol):
+        # Business Rule: Validate ACL model satisfies AclProtocol before writing
+        # Acl model satisfies AclProtocol structurally (has required properties/methods)
+        # Use structural checks only to avoid pyright Protocol overlap warnings
+        # Runtime behavior: Structural typing ensures correct implementation
+        # Check required AclProtocol attributes exist
+        if not hasattr(acl, "permissions") or not hasattr(acl, "target"):
             return FlextResult.fail(
-                f"ACL model does not satisfy AclProtocol: {type(acl).__name__}",
+                f"ACL model missing required AclProtocol attributes: {type(acl).__name__}",
             )
-        # Type narrowing: acl is now AclProtocol-compatible
-        acl_protocol: FlextLdifProtocols.Models.AclProtocol = acl
+        # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
+        # Business Rule: Structural typing ensures runtime correctness, cast satisfies type checker
+        acl_protocol = cast("FlextLdifProtocols.Models.AclProtocol", acl)
         write_result = source_acl.write(acl_protocol)
         if write_result.is_failure:
             return FlextResult.fail(
@@ -719,7 +779,7 @@ class FlextLdifConversion(
         | None,
         *,
         converted_has_permissions: bool = False,
-    ) -> None:
+    ) -> FlextLdifModelsDomains.Acl:
         """Apply permission mapping based on server types.
 
         Args:
@@ -744,13 +804,12 @@ class FlextLdifConversion(
         )
 
         # Determine if we need to apply mapping based on server types
+        # Compare with string values directly (ServerTypeLiteral is Literal strings)
         needs_oid_to_oud_mapping = (
-            normalized_source == FlextLdifConstants.ServerTypes.OID
-            and normalized_target == FlextLdifConstants.ServerTypes.OUD
+            normalized_source == "oid" and normalized_target == "oud"
         )
         needs_oud_to_oid_mapping = (
-            normalized_source == FlextLdifConstants.ServerTypes.OUD
-            and normalized_target == FlextLdifConstants.ServerTypes.OID
+            normalized_source == "oud" and normalized_target == "oid"
         )
 
         logger.debug(
@@ -762,9 +821,16 @@ class FlextLdifConversion(
         # For cross-server conversions, ALWAYS apply mapping regardless of converted_has_permissions
         # This ensures OID↔OUD permission mapping executes even if converted_acl already has permissions
         if needs_oid_to_oud_mapping:
-            # OID → OUD: Map OID-specific permissions to OUD equivalents
+            # OID -> OUD: Map OID-specific permissions to OUD equivalents
+            # Normalize self_write to selfwrite for mapping (map expects selfwrite)
+            normalized_orig_perms = {}
+            for k, v in orig_perms_dict.items():
+                if k == "self_write":
+                    normalized_orig_perms["selfwrite"] = v
+                else:
+                    normalized_orig_perms[k] = v
             mapped_perms = FlextLdifUtilities.ACL.map_oid_to_oud_permissions(
-                orig_perms_dict,
+                normalized_orig_perms,
             )
             oid_to_oud_perms: dict[str, bool | None] = {
                 "read": mapped_perms.get("read"),
@@ -779,9 +845,13 @@ class FlextLdifConversion(
                 "auth": mapped_perms.get("auth"),
                 "all": mapped_perms.get("all"),
             }
-            converted_acl.permissions = self._perms_dict_to_model(oid_to_oud_perms)
+            # Use model_copy to update permissions on frozen model
+            converted_acl = converted_acl.model_copy(
+                update={"permissions": self._perms_dict_to_model(oid_to_oud_perms)},
+                deep=True,
+            )
         elif needs_oud_to_oid_mapping:
-            # OUD → OID: Map OUD permissions to OID equivalents
+            # OUD -> OID: Map OUD permissions to OID equivalents
             mapped_perms = FlextLdifUtilities.ACL.map_oud_to_oid_permissions(
                 orig_perms_dict,
             )
@@ -798,10 +868,20 @@ class FlextLdifConversion(
                 "auth": mapped_perms.get("auth"),
                 "all": mapped_perms.get("all"),
             }
-            converted_acl.permissions = self._perms_dict_to_model(oud_to_oid_perms)
+            # Use model_copy to update permissions on frozen model
+            converted_acl = converted_acl.model_copy(
+                update={"permissions": self._perms_dict_to_model(oud_to_oid_perms)},
+                deep=True,
+            )
         elif not converted_has_permissions and original_acl.permissions is not None:
             # No mapping needed but converted is empty - preserve original as-is
-            converted_acl.permissions = original_acl.permissions.model_copy(deep=True)
+            # Use model_copy to update permissions on frozen model
+            converted_acl = converted_acl.model_copy(
+                update={"permissions": original_acl.permissions.model_copy(deep=True)},
+                deep=True,
+            )
+
+        return converted_acl
 
     def _preserve_acl_metadata(
         self,
@@ -813,7 +893,7 @@ class FlextLdifConversion(
         target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
         | str
         | None = None,
-    ) -> None:
+    ) -> FlextLdifModelsDomains.Acl:
         """Preserve permissions and metadata from original ACL.
 
         Args:
@@ -864,7 +944,7 @@ class FlextLdifConversion(
             )
 
             if orig_perms_dict:
-                self._apply_permission_mapping(
+                converted_acl = self._apply_permission_mapping(
                     original_acl,
                     converted_acl,
                     orig_perms_dict,
@@ -877,17 +957,15 @@ class FlextLdifConversion(
         # Metadata contains source_subject_type and other conversion hints needed by target writers
         if original_acl.metadata:
             if not converted_acl.metadata:
-                converted_acl.metadata = original_acl.metadata.model_copy(deep=True)
+                # Use model_copy to update metadata on frozen model
+                converted_acl = converted_acl.model_copy(
+                    update={"metadata": original_acl.metadata.model_copy(deep=True)},
+                    deep=True,
+                )
             elif (
                 original_acl.metadata.extensions and converted_acl.metadata is not None
             ):
                 # Merge extensions from original metadata into converted metadata
-                if not converted_acl.metadata.extensions:
-                    converted_acl.metadata.extensions = (
-                        FlextLdifModelsMetadata.DynamicMetadata()
-                    )
-                # Copy each key-value pair individually
-                # Both metadata and extensions must exist and be non-empty
                 converted_metadata = converted_acl.metadata
                 original_metadata = original_acl.metadata
                 if (
@@ -896,23 +974,42 @@ class FlextLdifConversion(
                     and original_metadata is not None
                     and original_metadata.extensions is not None
                 ):
-                    # Use local variables to maintain type narrowing
-                    converted_extensions = converted_metadata.extensions
-                    original_extensions = original_metadata.extensions
-                    for key, value in original_extensions.items():
-                        # Type narrowing: value is MetadataValue
-                        typed_value: FlextTypes.MetadataAttributeValue = value
-                        converted_extensions[key] = typed_value
+                    # Merge extensions: create new dict with both sets of extensions
+                    converted_extensions_dict = dict(
+                        converted_metadata.extensions.model_dump()
+                    )
+                    original_extensions_dict = dict(
+                        original_metadata.extensions.model_dump()
+                    )
+                    merged_extensions_dict = {
+                        **converted_extensions_dict,
+                        **original_extensions_dict,
+                    }
+                    # Use model_copy to update metadata with merged extensions on frozen model
+                    updated_metadata = converted_metadata.model_copy(
+                        update={
+                            "extensions": FlextLdifModelsMetadata.DynamicMetadata(
+                                **merged_extensions_dict
+                            )
+                        },
+                        deep=True,
+                    )
+                    converted_acl = converted_acl.model_copy(
+                        update={"metadata": updated_metadata},
+                        deep=True,
+                    )
+
+        return converted_acl
 
     def _convert_acl(
         self,
         source_quirk: FlextLdifServersBase,
         target_quirk: FlextLdifServersBase,
         acl: FlextLdifModelsDomains.Acl,
-        ) -> FlextResult[ConvertibleModelUnion]:
+    ) -> FlextResult[ConvertibleModelUnion]:
         """Convert Acl model via Entry RFC + Metadata pipeline.
 
-        Architecture: Source Acl → Entry RFC + Metadata → Target Acl
+        Architecture: Source Acl -> Entry RFC + Metadata -> Target Acl
         - Source writes Acl to Entry.metadata.acls (RFC format)
         - Target parses Entry.metadata.acls to extract Acl (preserves subject via metadata)
         """
@@ -934,17 +1031,15 @@ class FlextLdifConversion(
             ) = None
             server_type_attr = getattr(source_quirk, "server_type", None)
 
-            # Validate against VALID_SERVER_TYPES_RULE before using
+            # Use normalize_server_type directly - it handles aliases and validation
             if isinstance(server_type_attr, str):
-                # Check if it's one of the valid server types
-                valid_types: tuple[str, ...] = tuple(
-                    FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE,
-                )
-                if server_type_attr in valid_types:
-                    # Use normalize_server_type for proper type narrowing
+                try:
                     source_server_type = FlextLdifConstants.normalize_server_type(
                         server_type_attr,
                     )
+                except ValueError:
+                    # Invalid server type - leave as None
+                    pass
 
             metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
                 source_server_type,
@@ -988,11 +1083,26 @@ class FlextLdifConversion(
                 converted_acl = domain_acl
 
             # Get target server type for permission mapping
-            target_server_type = getattr(target_quirk, "server_type", "unknown")
+            target_server_type_raw = getattr(target_quirk, "server_type", "unknown")
+            target_server_type: (
+                FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
+            ) = None
+            # Use normalize_server_type directly - it handles aliases and validation
+            if (
+                isinstance(target_server_type_raw, str)
+                and target_server_type_raw != "unknown"
+            ):
+                try:
+                    target_server_type = FlextLdifConstants.normalize_server_type(
+                        target_server_type_raw,
+                    )
+                except ValueError:
+                    # Invalid server type - leave as None
+                    pass
 
             # Preserve permissions and metadata from original ACL
             # Pass server types so permission mapping can be applied during preservation
-            self._preserve_acl_metadata(
+            converted_acl = self._preserve_acl_metadata(
                 acl,
                 converted_acl,
                 source_server_type=source_server_type,
@@ -1015,7 +1125,9 @@ class FlextLdifConversion(
                 "Failed to convert ACL model",
                 error=str(e),
             )
-            return FlextResult[ConvertibleModelUnion].fail(f"Acl conversion failed: {e}")
+            return FlextResult[ConvertibleModelUnion].fail(
+                f"Acl conversion failed: {e}"
+            )
 
     def _extract_and_register_dns(
         self,
@@ -1113,9 +1225,9 @@ class FlextLdifConversion(
     ) -> FlextResult[
         FlextLdifModelsDomains.SchemaAttribute | str | FlextTypes.MetadataAttributeValue
     ]:
-        """Convert attribute from source to target quirk via write→parse pipeline.
+        """Convert attribute from source to target quirk via write->parse pipeline.
 
-        Pipeline: parse source → write as string → parse target
+        Pipeline: parse source -> write as string -> parse target
         """
         try:
             # Step 1: Parse source attribute
@@ -1229,7 +1341,9 @@ class FlextLdifConversion(
         # Model-based conversion - return parsed attribute as-is
         # Schema quirks write via model conversion, not string-based
         return FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute | FlextTypes.MetadataAttributeValue | str
+            FlextLdifModelsDomains.SchemaAttribute
+            | FlextTypes.MetadataAttributeValue
+            | str
         ].ok(parsed_attr)
 
     def _write_objectclass_to_rfc(
@@ -1239,7 +1353,9 @@ class FlextLdifConversion(
         | FlextTypes.MetadataAttributeValue
         | str,
     ) -> FlextResult[
-        str | FlextLdifModelsDomains.SchemaObjectClass | FlextTypes.MetadataAttributeValue
+        str
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextTypes.MetadataAttributeValue
     ]:
         """Write objectClass to RFC string representation."""
         # If already a string, return as-is
@@ -1307,11 +1423,13 @@ class FlextLdifConversion(
         target: ServerQuirkOrType,
         data: str | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
+        FlextLdifModelsDomains.SchemaObjectClass
+        | str
+        | FlextTypes.MetadataAttributeValue
     ]:
-        """Convert objectClass from source to target quirk via write→parse pipeline.
+        """Convert objectClass from source to target quirk via write->parse pipeline.
 
-        Pipeline: parse source → write as string → parse target
+        Pipeline: parse source -> write as string -> parse target
         """
         try:
             # Step 1: Parse source objectClass
@@ -1414,7 +1532,9 @@ class FlextLdifConversion(
         | str
         | FlextTypes.MetadataAttributeValue,
     ) -> FlextResult[
-        FlextLdifModelsDomains.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
+        FlextLdifModelsDomains.SchemaObjectClass
+        | str
+        | FlextTypes.MetadataAttributeValue
     ]:
         """Write target objectClass to final format."""
         # Type narrowing: write_objectclass requires SchemaObjectClass
@@ -1464,7 +1584,9 @@ class FlextLdifConversion(
             ].ok(written_str)
         error_msg = write_result.error or "Failed to write objectClass"
         return FlextResult[
-            FlextLdifModelsDomains.SchemaObjectClass | str | FlextTypes.MetadataAttributeValue
+            FlextLdifModelsDomains.SchemaObjectClass
+            | str
+            | FlextTypes.MetadataAttributeValue
         ].fail(error_msg)
 
     def batch_convert(
@@ -1703,25 +1825,39 @@ class FlextLdifConversion(
             Schema quirk instance or None if not available
 
         """
+        # Business Rule: Extract schema quirk from quirk instance
+        # Schema quirks implement SchemaProtocol with parse() and write() methods
+        # Use structural checks first, then isinstance for runtime_checkable Protocol
+        # This ensures type safety while satisfying pyright strict mode
+        # Business Rule: Extract schema quirk from quirk instance using structural checks
+        # Schema quirks implement SchemaProtocol with parse() and write() methods
+        # Use structural checks only to avoid pyright Protocol overlap warnings
+        # Runtime behavior: Structural typing ensures correct implementation
         # Check if quirk is already a Schema quirk (has parse_attribute directly)
         if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
-            # Use isinstance with @runtime_checkable protocol for type narrowing
-            if isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol):
-                return quirk
-            # Check structural compliance: has required SchemaProtocol methods
-            if (
-                hasattr(quirk, "parse")
-                and hasattr(quirk, "write")
-                and isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
+            # Validate structural compliance: has required SchemaProtocol methods
+            required_methods = ("parse", "write")
+            if all(
+                hasattr(quirk, method) and callable(getattr(quirk, method))
+                for method in required_methods
             ):
-                return quirk
+                # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
+                return cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk)
             return None
         # Check if quirk is a base quirk with schema_quirk attribute
         schema_quirk_raw = getattr(quirk, "schema_quirk", None)
         if schema_quirk_raw is not None:
-            # Use isinstance with @runtime_checkable protocol for type narrowing
-            if isinstance(schema_quirk_raw, FlextLdifProtocols.Quirks.SchemaProtocol):
-                return schema_quirk_raw
+            # Validate structural compliance: has required SchemaProtocol methods
+            required_methods = ("parse", "write")
+            if all(
+                hasattr(schema_quirk_raw, method)
+                and callable(getattr(schema_quirk_raw, method))
+                for method in required_methods
+            ):
+                # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
+                return cast(
+                    "FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk_raw
+                )
             return None
         return None
 

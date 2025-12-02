@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import re
 import string
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from pathlib import Path
-from typing import overload
+from typing import Literal, overload
 
 from flext_core import FlextResult
 from flext_core.typings import FlextTypes
@@ -1394,7 +1394,7 @@ class FlextLdifUtilitiesDN:
 
         Args:
             value: DN value to transform (str or DistinguishedName model)
-            source_dn: Source base DN to replace (e.g., "dc=ctbc")
+            source_dn: Source base DN to replace (e.g., "dc=example")
             target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
 
         Returns:
@@ -1402,8 +1402,8 @@ class FlextLdifUtilitiesDN:
 
         Example:
             transform_dn_attribute(
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc",
-                "dc=ctbc",
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
+                "dc=example",
                 "dc=example,dc=com"
             )
             # Returns: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
@@ -1419,12 +1419,12 @@ class FlextLdifUtilitiesDN:
 
         # Use regex to replace source base DN suffix with target base DN
         # Pattern: match either:
-        # 1. ",source_dn" at the END of DN (e.g., "ou=people,dc=ctbc")
-        # 2. "source_dn" alone at the END of DN (e.g., "dc=ctbc" as root DN)
+        # 1. ",source_dn" at the END of DN (e.g., "ou=people,dc=example")
+        # 2. "source_dn" alone at the END of DN (e.g., "dc=example" as root DN)
         # Both cases are case-insensitive
         source_escaped = re.escape(source_dn)
 
-        # Try replacing with comma first (non-root DN case: "ou=people,dc=ctbc")
+        # Try replacing with comma first (non-root DN case: "ou=people,dc=example")
         result = re.sub(
             f",{source_escaped}$",
             f",{target_dn}",
@@ -1432,7 +1432,7 @@ class FlextLdifUtilitiesDN:
             flags=re.IGNORECASE,
         )
 
-        # If no substitution happened, try without comma (root DN case: "dc=ctbc")
+        # If no substitution happened, try without comma (root DN case: "dc=example")
         if result == normalized_dn:
             result = re.sub(
                 f"^{source_escaped}$",
@@ -1460,7 +1460,7 @@ class FlextLdifUtilitiesDN:
 
         Args:
             entries: List of Entry models to transform
-            source_dn: Source base DN to replace (e.g., "dc=ctbc")
+            source_dn: Source base DN to replace (e.g., "dc=example")
             target_dn: Target base DN replacement (e.g., "dc=example,dc=com")
 
         Returns:
@@ -1469,12 +1469,12 @@ class FlextLdifUtilitiesDN:
         Example:
             entries = [
                 Entry(
-                    dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc",
-                    attributes={"member": ["cn=user,dc=ctbc"]}
+                    dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
+                    attributes={"member": ["cn=user,dc=example"]}
                 ),
                 ...
             ]
-            transformed = replace_base_dn(entries, "dc=ctbc", "dc=example,dc=com")
+            transformed = replace_base_dn(entries, "dc=example", "dc=example,dc=com")
             # transformed[0].dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
             # transformed[0].attributes["member"][0] == "cn=user,dc=example,dc=com"
 
@@ -1497,6 +1497,8 @@ class FlextLdifUtilitiesDN:
 
         for entry in entries:
             # Transform entry DN
+            if entry.dn is None:
+                continue  # Skip entries with None dn
             transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
                 entry.dn,
                 source_dn,
@@ -1504,6 +1506,8 @@ class FlextLdifUtilitiesDN:
             )
 
             # Transform DN-valued attributes
+            if entry.attributes is None:
+                continue  # Skip entries with None attributes
             transformed_attrs: dict[str, list[str]] = {}
             for attr_name, attr_values in entry.attributes.items():
                 attr_lower = attr_name.lower()
@@ -1651,10 +1655,11 @@ class FlextLdifUtilitiesDN:
 
         Example:
             >>> entry = FlextLdifModels.Entry(
-            ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=ctbc", attributes={"member": ["cn=user,dc=ctbc"]}
+            ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
+            ...     attributes={"member": ["cn=user,dc=example"]},
             ... )
             >>> transformed = FlextLdifUtilitiesDN.transform_dn_with_metadata(
-            ...     entry, "dc=ctbc", "dc=example,dc=com"
+            ...     entry, "dc=example", "dc=example,dc=com"
             ... )
             >>> # DN transformed: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
             >>> # metadata.conversion_notes tracks the transformation
@@ -1674,6 +1679,8 @@ class FlextLdifUtilitiesDN:
             "distinguishedname",
         }
 
+        if entry.dn is None:
+            return entry  # Cannot transform without DN
         original_dn_str = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
 
         # Transform entry DN
@@ -1684,6 +1691,8 @@ class FlextLdifUtilitiesDN:
         )
 
         # Transform DN-valued attributes and track changes
+        if entry.attributes is None:
+            return entry  # Cannot transform without attributes
         transformed_attrs: dict[str, list[str]] = {}
         transformed_attr_names: list[str] = []
 
@@ -1722,6 +1731,8 @@ class FlextLdifUtilitiesDN:
 
         # Track attribute transformations
         for attr_name in transformed_attr_names:
+            if entry.attributes is None:
+                continue
             original_values = list(entry.attributes.get(attr_name, []))
             new_values = transformed_attrs[attr_name]
             metadata.track_attribute_transformation(
@@ -1776,7 +1787,7 @@ class FlextLdifUtilitiesDN:
 
         Example:
             >>> entries = FlextLdifUtilitiesDN.replace_base_dn_with_metadata(
-            ...     entries, "dc=ctbc", "dc=example,dc=com"
+            ...     entries, "dc=example", "dc=example,dc=com"
             ... )
             >>> # Each entry.metadata.conversion_notes tracks transformation
 
@@ -1788,6 +1799,291 @@ class FlextLdifUtilitiesDN:
             FlextLdifUtilitiesDN.transform_dn_with_metadata(entry, source_dn, target_dn)
             for entry in entries
         ]
+
+    # =========================================================================
+    # BATCH METHODS - Power Method Support
+    # =========================================================================
+
+    @staticmethod
+    def norm_or_fallback(
+        dn: str | None,
+        *,
+        fallback: Literal["lower", "upper", "original"] = "lower",
+    ) -> str:
+        r"""Normalize DN or return fallback if normalization fails.
+
+        Replaces the common 3-line pattern:
+            norm_result = FlextLdifUtilities.DN.norm(dn)
+            normalized = norm_result.unwrap() if norm_result.is_success else dn.lower()
+
+        With a single call:
+            normalized = FlextLdifUtilities.DN.norm_or_fallback(dn)
+
+        Args:
+            dn: DN string to normalize (or None)
+            fallback: Fallback strategy if normalization fails:
+                - "lower": Return dn.lower()
+                - "upper": Return dn.upper()
+                - "original": Return dn unchanged
+
+        Returns:
+            Normalized DN string, or fallback if normalization fails
+
+        Examples:
+            >>> FlextLdifUtilitiesDN.norm_or_fallback("CN=Test,DC=Example")
+            'cn=test,dc=example'
+            >>> FlextLdifUtilitiesDN.norm_or_fallback(None)
+            ''
+            >>> FlextLdifUtilitiesDN.norm_or_fallback(
+            ...     "invalid\\\\dn", fallback="original"
+            ... )
+            'invalid\\\\dn'
+
+        """
+        if dn is None:
+            return ""
+
+        result = FlextLdifUtilitiesDN.norm(dn)
+        if result.is_success:
+            return result.unwrap()
+
+        # Apply fallback strategy
+        if fallback == "lower":
+            return dn.lower()
+        if fallback == "upper":
+            return dn.upper()
+        # "original"
+        return dn
+
+    @staticmethod
+    def norm_batch(
+        dns: Sequence[str],
+        *,
+        fallback: Literal["lower", "upper", "original", "skip"] = "lower",
+        fail_fast: bool = False,
+    ) -> FlextResult[list[str]]:
+        """Normalize multiple DNs in one call.
+
+        Args:
+            dns: Sequence of DN strings to normalize
+            fallback: Strategy for failed normalizations:
+                - "lower": Use dn.lower() as fallback
+                - "upper": Use dn.upper() as fallback
+                - "original": Keep original DN unchanged
+                - "skip": Exclude failed DNs from results
+            fail_fast: If True, return error on first failure (ignores fallback)
+
+        Returns:
+            FlextResult containing list of normalized DNs
+
+        Examples:
+            >>> result = FlextLdifUtilitiesDN.norm_batch([
+            ...     "CN=User1,DC=Example",
+            ...     "CN=User2,DC=Example",
+            ... ])
+            >>> result.unwrap()
+            ['cn=user1,dc=example', 'cn=user2,dc=example']
+
+            >>> # With skip fallback for invalid DNs
+            >>> result = FlextLdifUtilitiesDN.norm_batch(
+            ...     ["CN=Valid", "invalid"],
+            ...     fallback="skip",
+            ... )
+
+        """
+        results: list[str] = []
+        errors: list[str] = []
+
+        for i, dn in enumerate(dns):
+            result = FlextLdifUtilitiesDN.norm(dn)
+
+            if result.is_success:
+                results.append(result.unwrap())
+            elif fail_fast:
+                return FlextResult.fail(f"DN {i} normalization failed: {result.error}")
+            elif fallback == "skip":
+                errors.append(f"DN {i} skipped: {result.error}")
+            elif fallback == "lower":
+                results.append(dn.lower())
+            elif fallback == "upper":
+                results.append(dn.upper())
+            else:  # "original"
+                results.append(dn)
+
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def validate_batch(
+        dns: Sequence[str],
+        *,
+        strict: bool = True,
+        collect_errors: bool = True,
+    ) -> FlextResult[list[tuple[str, bool, list[str]]]]:
+        """Validate multiple DNs, returning validation status for each.
+
+        Args:
+            dns: Sequence of DN strings to validate
+            strict: Use strict RFC 4514 validation
+            collect_errors: Collect all errors (vs. fail on first)
+
+        Returns:
+            FlextResult containing list of (dn, is_valid, errors) tuples
+
+        Examples:
+            >>> result = FlextLdifUtilitiesDN.validate_batch([
+            ...     "CN=Valid,DC=Example",
+            ...     "invalid-dn",
+            ... ])
+            >>> for dn, is_valid, errors in result.unwrap():
+            ...     print(f"{dn}: {'valid' if is_valid else 'invalid'}")
+
+        """
+        results: list[tuple[str, bool, list[str]]] = []
+
+        for dn in dns:
+            is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(dn)
+            results.append((dn, is_valid, dn_errors))
+
+            if not collect_errors and not is_valid:
+                break
+
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def replace_base_batch(
+        dns: Sequence[str],
+        old_base: str,
+        new_base: str,
+        *,
+        fail_fast: bool = False,
+    ) -> FlextResult[list[str]]:
+        """Replace base DN in multiple DNs.
+
+        Args:
+            dns: Sequence of DN strings
+            old_base: Old base DN to replace
+            new_base: New base DN
+            fail_fast: Stop on first error
+
+        Returns:
+            FlextResult containing list of DNs with replaced bases
+
+        Examples:
+            >>> result = FlextLdifUtilitiesDN.replace_base_batch(
+            ...     ["cn=user1,dc=old,dc=com", "cn=user2,dc=old,dc=com"],
+            ...     "dc=old,dc=com",
+            ...     "dc=new,dc=com",
+            ... )
+            >>> result.unwrap()
+            ['cn=user1,dc=new,dc=com', 'cn=user2,dc=new,dc=com']
+
+        """
+        results: list[str] = []
+        errors: list[str] = []
+
+        # Normalize base DNs for case-insensitive matching
+        old_base_lower = old_base.lower()
+
+        for i, dn in enumerate(dns):
+            try:
+                dn_lower = dn.lower()
+                if dn_lower.endswith(old_base_lower):
+                    # Replace the suffix
+                    prefix = dn[: len(dn) - len(old_base)]
+                    new_dn = prefix + new_base
+                    results.append(new_dn)
+                else:
+                    # Keep original if doesn't match
+                    results.append(dn)
+            except Exception as e:
+                if fail_fast:
+                    return FlextResult.fail(f"DN {i} base replacement failed: {e}")
+                results.append(dn)
+                errors.append(f"DN {i}: {e}")
+
+        if errors:
+            return FlextResult.fail(f"Some replacements failed: {'; '.join(errors)}")
+
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def process_complete(
+        dn: str,
+        *,
+        clean: bool = True,
+        validate: bool = True,
+        normalize: bool = True,
+        parse: bool = False,
+    ) -> FlextResult[str | list[tuple[str, str]]]:
+        """Complete DN processing pipeline in one call.
+
+        Applies processing steps in order: clean → validate → normalize → parse.
+
+        Args:
+            dn: DN string to process
+            clean: Clean whitespace and normalize escapes
+            validate: Validate DN structure
+            normalize: Normalize DN format
+            parse: If True, return parsed components instead of string
+
+        Returns:
+            FlextResult containing:
+                - Processed DN string if parse=False
+                - List of (attribute, value) tuples if parse=True
+
+        Examples:
+            >>> # Full processing
+            >>> result = FlextLdifUtilitiesDN.process_complete(
+            ...     "  CN = Test , DC = Example ",
+            ...     clean=True,
+            ...     validate=True,
+            ...     normalize=True,
+            ... )
+            >>> result.unwrap()
+            'cn=test,dc=example'
+
+            >>> # Parse into components
+            >>> result = FlextLdifUtilitiesDN.process_complete(
+            ...     "CN=Test,DC=Example",
+            ...     parse=True,
+            ... )
+            >>> result.unwrap()
+            [('cn', 'test'), ('dc', 'example')]
+
+        """
+        current_dn = dn
+
+        # Step 1: Clean (clean_dn returns str directly)
+        if clean:
+            try:
+                current_dn = FlextLdifUtilitiesDN.clean_dn(current_dn)
+            except Exception as e:
+                return FlextResult.fail(f"Clean failed: {e}")
+
+        # Step 2: Validate
+        if validate:
+            is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
+            if not is_valid:
+                return FlextResult.fail(f"Validation failed: {', '.join(errors)}")
+
+        # Step 3: Normalize
+        if normalize:
+            norm_result = FlextLdifUtilitiesDN.norm(current_dn)
+            if norm_result.is_failure:
+                return FlextResult.fail(f"Normalization failed: {norm_result.error}")
+            current_dn = norm_result.unwrap()
+
+        # Step 4: Parse (optional)
+        # Business Rule: When parse=True, use parse() method which returns FlextResult[list[tuple[str, str]]]
+        # This provides RFC 4514 compliant parsing into (attribute, value) pairs for audit trail
+        # split() only returns list[str] and doesn't parse attribute/value pairs
+        if parse:
+            parse_result = FlextLdifUtilitiesDN.parse(current_dn)
+            if parse_result.is_failure:
+                return FlextResult.fail(f"Parse failed: {parse_result.error}")
+            return FlextResult.ok(parse_result.unwrap())
+
+        return FlextResult.ok(current_dn)
 
 
 __all__ = [

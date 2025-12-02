@@ -20,8 +20,8 @@ from flext_ldif.constants import FlextLdifConstants
 class FlextLdifModelsBase(FlextModelsBase.ArbitraryTypesModel):
     """Base class for all FLEXT-LDIF models (events, configs, processing results).
 
-    Extends FlextModelsBase.ArbitraryTypesModel to provide a consistent base for LDIF-specific
-    models, ensuring:
+    Extends FlextModelsBase.ArbitraryTypesModel to provide a consistent base
+    for LDIF-specific models, ensuring:
     - Proper Pydantic v2 configuration inheritance
     - Consistency with flext-core architecture
     - Type safety without using BaseModel directly
@@ -94,7 +94,8 @@ class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
                 # normalize_server_type validates and returns ServerTypeLiteral when valid
                 # or raises ValueError for invalid values
                 try:
-                    # normalize_server_type returns ServerTypeLiteral (validated by TypeGuard)
+                    # normalize_server_type returns ServerTypeLiteral
+                    # (validated by TypeGuard)
                     return FlextLdifConstants.normalize_server_type(quirk_type)
                 except ValueError:
                     # Invalid server type, default to RFC

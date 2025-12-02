@@ -29,6 +29,15 @@ from flext_ldif.models import FlextLdifModels
 class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
+    Business Rule: Syntax service validates and resolves LDAP attribute syntax OIDs
+    per RFC 4517 specification. OID format validation follows LDAP OID syntax rules.
+    Bidirectional OID/name lookup enables syntax resolution for attribute validation.
+    Type-specific value validation ensures attribute values match syntax requirements.
+
+    Implication: Syntax validation enables data quality assessment and migration planning.
+    OID resolution supports schema validation and attribute type checking. Common syntaxes
+    are cached for performance optimization.
+
     Provides comprehensive syntax OID validation, lookup, resolution, and
     type-specific value validation following RFC 4517 (LDAP Attribute Syntax).
 
@@ -68,8 +77,15 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
     ) -> FlextResult[FlextLdifModels.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 
+        Business Rule: Execute method provides service health check for protocol compliance.
+        Returns SyntaxServiceStatus indicating service is operational and ready for
+        syntax validation operations. Status includes RFC compliance and syntax counts.
+
+        Implication: This method enables service-based execution patterns while maintaining
+        type safety. Used internally by service orchestration layers for health monitoring.
+
         Returns:
-            FlextResult containing service status
+            FlextResult with SyntaxServiceStatus containing service metadata and syntax counts
 
         """
         return FlextResult[FlextLdifModels.SyntaxServiceStatus].ok(
@@ -85,8 +101,15 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
     def validate_oid(self, oid: str) -> FlextResult[bool]:
         """Validate OID format compliance with LDAP OID syntax.
 
+        Business Rule: OID validation follows LDAP OID syntax rules: must start with
+        0, 1, or 2, followed by dot-separated numeric components. Empty OIDs are
+        invalid. Validation uses regex pattern matching for format compliance.
+
+        Implication: OID format validation ensures RFC 4517 compliance before syntax
+        resolution. Invalid OIDs result in False result for fail-fast error handling.
+
         Args:
-            oid: OID string to validate
+            oid: OID string to validate (e.g., "1.3.6.1.4.1.1466.115.121.1.15")
 
         Returns:
             FlextResult containing True if valid OID format, False otherwise

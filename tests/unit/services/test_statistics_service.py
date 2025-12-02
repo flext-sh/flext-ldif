@@ -32,13 +32,13 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
-from flext_tests import FlextTestsUtilities  # Mocked in conftest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
+from tests.helpers.test_assertions import TestAssertions
 
 
 class TestFlextLdifStatistics:
@@ -127,8 +127,10 @@ class TestFlextLdifStatistics:
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
                         entry_obj: dict[str, object] = dict(entry_value)
-                        entry = TestFlextLdifStatistics.Factories.create_entry_from_dict(
-                            entry_obj,
+                        entry = (
+                            TestFlextLdifStatistics.Factories.create_entry_from_dict(
+                                entry_obj,
+                            )
                         )
                         entries.append(entry)
                 categories[category] = entries  # type: ignore[assignment]
@@ -144,11 +146,13 @@ class TestFlextLdifStatistics:
         def test_execute_returns_status(self) -> None:
             """Test execute returns service operational status."""
             result = FlextLdifStatistics().execute()
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             status = result.unwrap()
             assert status["service"] == "StatisticsService"
             assert status["status"] == "operational"
-            capabilities_raw: list[str] = status.capabilities if hasattr(status, "capabilities") else []
+            capabilities_raw: list[str] = (
+                status.capabilities if hasattr(status, "capabilities") else []
+            )
             assert isinstance(capabilities_raw, list)
             assert "generate_statistics" in capabilities_raw
 
@@ -224,7 +228,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp/ldif"),
                 output_files=output_files_str,
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert isinstance(stats, FlextLdifModels.StatisticsResult)
             assert stats.total_entries == expected_total
@@ -331,7 +335,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp/ldif"),
                 output_files={cat: f"{cat}.ldif" for cat in written_counts},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == expected_total
             assert stats.rejection_count == expected_rejected
@@ -414,7 +418,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={"rejected": "rejected.ldif"},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.rejection_count == expected_count
             assert all(reason in stats.rejection_reasons for reason in expected_reasons)
@@ -461,7 +465,7 @@ class TestFlextLdifStatistics:
                 output_dir=output_dir,
                 output_files=output_files_str,
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             for category, expected_path in expected_paths.items():
                 assert stats.output_files[category] == expected_path
@@ -478,7 +482,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 0
             assert stats.rejection_rate == 0.0
@@ -500,7 +504,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 2
             assert stats.rejection_count == 0
@@ -535,7 +539,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 1000
             assert stats.rejection_count == 900
@@ -557,7 +561,7 @@ class TestFlextLdifStatistics:
                 output_dir=output_dir,
                 output_files={"users": "exported_users.ldif"},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.output_files["users"] == str(
                 output_dir / "exported_users.ldif",
@@ -583,7 +587,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 10
             assert stats.rejection_count == 10
@@ -595,7 +599,7 @@ class TestFlextLdifStatistics:
         def test_calculate_for_entries_empty_list(self) -> None:
             """Test calculate_for_entries with empty entry list."""
             result = FlextLdifStatistics().calculate_for_entries([])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 0
             assert stats.object_class_distribution == {}
@@ -618,7 +622,7 @@ class TestFlextLdifStatistics:
                 }),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 3
             assert stats.object_class_distribution["person"] == 2
@@ -632,9 +636,13 @@ class TestFlextLdifStatistics:
                 "attributes": {"objectClass": ["top"]},
             })
             if entry1.metadata:
-                new_extensions = entry1.metadata.extensions.model_copy(
-                    update={"server_type": "oid"}
-                ) if entry1.metadata.extensions else FlextLdifModels.DynamicMetadata.model_validate({"server_type": "oid"})
+                new_extensions = (
+                    entry1.metadata.extensions.model_copy(update={"server_type": "oid"})
+                    if entry1.metadata.extensions
+                    else FlextLdifModels.DynamicMetadata.model_validate({
+                        "server_type": "oid"
+                    })
+                )
                 entry1 = entry1.model_copy(
                     update={
                         "metadata": entry1.metadata.model_copy(
@@ -647,9 +655,13 @@ class TestFlextLdifStatistics:
                 "attributes": {"objectClass": ["top"]},
             })
             if entry2.metadata:
-                new_extensions = entry2.metadata.extensions.model_copy(
-                    update={"server_type": "oud"}
-                ) if entry2.metadata.extensions else FlextLdifModels.DynamicMetadata.model_validate({"server_type": "oud"})
+                new_extensions = (
+                    entry2.metadata.extensions.model_copy(update={"server_type": "oud"})
+                    if entry2.metadata.extensions
+                    else FlextLdifModels.DynamicMetadata.model_validate({
+                        "server_type": "oud"
+                    })
+                )
                 entry2 = entry2.model_copy(
                     update={
                         "metadata": entry2.metadata.model_copy(
@@ -662,9 +674,13 @@ class TestFlextLdifStatistics:
                 "attributes": {"objectClass": ["top"]},
             })
             if entry3.metadata:
-                new_extensions = entry3.metadata.extensions.model_copy(
-                    update={"server_type": "oid"}
-                ) if entry3.metadata.extensions else FlextLdifModels.DynamicMetadata.model_validate({"server_type": "oid"})
+                new_extensions = (
+                    entry3.metadata.extensions.model_copy(update={"server_type": "oid"})
+                    if entry3.metadata.extensions
+                    else FlextLdifModels.DynamicMetadata.model_validate({
+                        "server_type": "oid"
+                    })
+                )
                 entry3 = entry3.model_copy(
                     update={
                         "metadata": entry3.metadata.model_copy(
@@ -678,7 +694,7 @@ class TestFlextLdifStatistics:
                 entry2,
                 entry3,
             ])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 3
             assert stats.server_type_distribution.get("oid") == 2
@@ -697,7 +713,7 @@ class TestFlextLdifStatistics:
                 }),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 2
             assert stats.server_type_distribution == {}

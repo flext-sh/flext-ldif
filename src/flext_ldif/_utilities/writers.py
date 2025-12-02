@@ -140,7 +140,9 @@ class FlextLdifUtilitiesWriters:
                     write_comments_hook(entry, lines)
 
                 # Write DN
-                if hasattr(entry.dn, "value"):
+                if entry.dn is None:
+                    dn_str = ""
+                elif hasattr(entry.dn, "value"):
                     dn_str = entry.dn.value or (str(entry.dn) if entry.dn else "")
                 else:
                     dn_str = str(entry.dn) if entry.dn else ""
@@ -157,12 +159,12 @@ class FlextLdifUtilitiesWriters:
                 return FlextResult[str].ok(ldif_str)
 
             except Exception as e:
-                if hasattr(entry.dn, "value") and entry.dn.value:
-                    dn_error: str | None = entry.dn.value[:50]
-                elif entry.dn:
-                    dn_error = str(entry.dn)[:50]
+                if entry.dn is None:
+                    dn_error: str | None = None
+                elif hasattr(entry.dn, "value") and entry.dn.value:
+                    dn_error = entry.dn.value[:50]
                 else:
-                    dn_error = None
+                    dn_error = str(entry.dn)[:50] if entry.dn else None
                 logger.exception(
                     "Failed to write entry",
                     server_type=server_type,
@@ -402,12 +404,12 @@ class FlextLdifUtilitiesWriters:
                         stats.successful += 1
                     else:
                         stats.failed += 1
-                        if hasattr(entry.dn, "value") and entry.dn.value:
-                            dn_str: str | None = entry.dn.value[:50]
-                        elif entry.dn:
-                            dn_str = str(entry.dn)[:50]
+                        if entry.dn is None:
+                            dn_str: str | None = None
+                        elif hasattr(entry.dn, "value") and entry.dn.value:
+                            dn_str = entry.dn.value[:50]
                         else:
-                            dn_str = None
+                            dn_str = str(entry.dn)[:50] if entry.dn else None
                         logger.error(
                             "Failed to write entry",
                             dn=dn_str,

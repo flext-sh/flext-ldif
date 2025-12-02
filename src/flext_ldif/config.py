@@ -1,9 +1,9 @@
 """Configuration management for LDIF operations using Pydantic models with validation.
 
-This module manages all configuration aspects for flext-ldif package including parsing,
-writing, server detection, and validation settings. Provides comprehensive LDIF processing
-configuration with server-specific quirks handling, format options for parsing and writing,
-and advanced validation rules.
+This module manages all configuration aspects for flext-ldif package including
+parsing, writing, server detection, and validation settings. Provides
+comprehensive LDIF processing configuration with server-specific quirks
+handling, format options for parsing and writing, and advanced validation rules.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -40,7 +40,10 @@ class FlextLdifConfigModule:
 
     **USAGE**:
         # Get configuration instance
-        config = FlextConfig.get_global_instance().get_namespace("ldif", FlextLdifConfig)
+        config = (
+            FlextConfig.get_global_instance()
+            .get_namespace("ldif", FlextLdifConfig)
+        )
 
         # Access settings
         encoding = config.ldif_encoding
@@ -71,10 +74,14 @@ class FlextLdifConfigModule:
 
         # Or via FlextConfig namespace
         from flext_core import FlextConfig
-        ldif_config = FlextConfig.get_global_instance().get_namespace("ldif", FlextLdifConfig)
+        ldif_config = (
+            FlextConfig.get_global_instance()
+            .get_namespace("ldif", FlextLdifConfig)
+        )
         """
 
-        # Model configuration (disable str_strip_whitespace for LDIF fields that need whitespace)
+        # Model configuration (disable str_strip_whitespace for LDIF fields
+        # that need whitespace)
         # env_prefix enables automatic loading from FLEXT_LDIF_* environment variables
         # Use standard .env file resolution
         model_config = SettingsConfigDict(
@@ -90,10 +97,12 @@ class FlextLdifConfigModule:
         )
 
         # LDIF Format Configuration using FlextLdifConstants for defaults
-        # Note: Fields like max_workers, debug, trace, log_verbosity come from root FlextConfig
+        # Note: Fields like max_workers, debug, trace, log_verbosity come from
+        # root FlextConfig
         # when used in nested pattern (config.ldif references root config.max_workers)
         ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
-            default="utf-8",  # Use literal value instead of constant for type compatibility
+            default="utf-8",  # Use literal value instead of constant for
+            # type compatibility
             description="Character encoding for LDIF files",
         )
 
@@ -211,15 +220,22 @@ class FlextLdifConfigModule:
         )
 
         # Quirks Detection and Mode Configuration
-        quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionModeLiteral = Field(
-            default="auto",
-            description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
+        quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionModeLiteral = (
+            Field(
+                default="auto",
+                description=(
+                    "Quirks detection mode: auto (detect server type), "
+                    "manual (use quirks_server_type), disabled (RFC only)"
+                ),
+            )
         )
 
         quirks_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = (
             Field(
                 default=None,
-                description="Override server type for quirks when detection_mode is 'manual'",
+                description=(
+                    "Override server type for quirks when detection_mode is 'manual'"
+                ),
             )
         )
 
@@ -255,7 +271,8 @@ class FlextLdifConfigModule:
 
         # Development and Debug Configuration
         # debug, trace inherited from FlextConfig (use self.debug, self.trace)
-        # log_verbosity inherited from FlextConfig (use self.log_verbosity for detailed logging)
+        # log_verbosity inherited from FlextConfig
+        # (use self.log_verbosity for detailed logging)
 
         # =========================================================================
         # WRITE FORMAT CONFIGURATION
@@ -264,22 +281,33 @@ class FlextLdifConfigModule:
 
         ldif_write_respect_attribute_order: bool = Field(
             default=True,
-            description="If True, writes attributes in the order specified in Entry.metadata.",
+            description=(
+                "If True, writes attributes in the order specified in Entry.metadata."
+            ),
         )
 
         ldif_write_sort_attributes: bool = Field(
             default=False,
-            description="If True, sorts attributes alphabetically. Overridden by respect_attribute_order.",
+            description=(
+                "If True, sorts attributes alphabetically. "
+                "Overridden by respect_attribute_order."
+            ),
         )
 
         ldif_write_hidden_attributes_as_comments: bool = Field(
             default=False,
-            description="If True, attributes marked as 'hidden' in metadata will be written as comments.",
+            description=(
+                "If True, attributes marked as 'hidden' in metadata will be "
+                "written as comments."
+            ),
         )
 
         ldif_write_metadata_as_comments: bool = Field(
             default=False,
-            description="If True, the entry's main metadata will be written as a commented block.",
+            description=(
+                "If True, the entry's main metadata will be written as a "
+                "commented block."
+            ),
         )
 
         ldif_write_include_version_header: bool = Field(
@@ -289,31 +317,42 @@ class FlextLdifConfigModule:
 
         ldif_write_include_timestamps: bool = Field(
             default=False,
-            description="If True, includes timestamp comments for when entries were written.",
+            description=(
+                "If True, includes timestamp comments for when entries were written."
+            ),
         )
 
         ldif_write_base64_encode_binary: bool = Field(
             default=False,
-            description="If True, automatically base64 encodes binary attribute values.",
+            description=(
+                "If True, automatically base64 encodes binary attribute values."
+            ),
         )
 
         ldif_write_fold_long_lines: bool = Field(
             default=True,
-            description="If True, folds lines longer than ldif_max_line_length according to RFC 2849.",
+            description=(
+                "If True, folds lines longer than ldif_max_line_length "
+                "according to RFC 2849."
+            ),
         )
 
         ldif_write_restore_original_format: bool = Field(
             default=False,
             description=(
-                "If True, restores original LDIF format from metadata for perfect round-trip. "
-                "Uses entry.metadata.original_strings['entry_original_ldif'] to preserve all "
-                "minimal differences (spacing, case, punctuation, quotes, etc.). CRITICAL for zero data loss."
+                "If True, restores original LDIF format from metadata for "
+                "perfect round-trip. Uses "
+                "entry.metadata.original_strings['entry_original_ldif'] to "
+                "preserve all minimal differences (spacing, case, punctuation, "
+                "quotes, etc.). CRITICAL for zero data loss."
             ),
         )
 
         ldif_write_empty_values: bool = Field(
             default=True,
-            description="If True, writes attributes with empty values. If False, omits them.",
+            description=(
+                "If True, writes attributes with empty values. If False, omits them."
+            ),
         )
 
         ldif_write_normalize_attribute_names: bool = Field(
@@ -323,87 +362,125 @@ class FlextLdifConfigModule:
 
         ldif_write_include_dn_comments: bool = Field(
             default=False,
-            description="If True, includes DN explanation comments for complex entries.",
+            description=(
+                "If True, includes DN explanation comments for complex entries."
+            ),
         )
 
         ldif_write_removed_attributes_as_comments: bool = Field(
             default=False,
-            description="If True, writes removed attributes as comments in LDIF output.",
+            description=(
+                "If True, writes removed attributes as comments in LDIF output."
+            ),
         )
 
         ldif_write_migration_header: bool = Field(
             default=False,
-            description="If True, writes migration metadata header at the start of LDIF file.",
+            description=(
+                "If True, writes migration metadata header at the start of LDIF file."
+            ),
         )
 
         ldif_write_migration_header_template: str | None = Field(
             default=None,
-            description="Jinja2 template string for migration header. If None, uses default template.",
+            description=(
+                "Jinja2 template string for migration header. "
+                "If None, uses default template."
+            ),
         )
 
         ldif_write_rejection_reasons: bool = Field(
             default=False,
-            description="If True, writes rejection reasons as comments for rejected entries.",
+            description=(
+                "If True, writes rejection reasons as comments for rejected entries."
+            ),
         )
 
         ldif_write_transformation_comments: bool = Field(
             default=False,
             description=(
-                "If True, writes transformation details as comments (e.g., objectClass changes). "
+                "If True, writes transformation details as comments "
+                "(e.g., objectClass changes). "
                 "Tags: [REMOVED], [RENAMED], [TRANSFORMED]."
             ),
         )
 
         ldif_write_include_removal_statistics: bool = Field(
             default=False,
-            description="If True, includes statistics about removed attributes in headers.",
+            description=(
+                "If True, includes statistics about removed attributes in headers."
+            ),
         )
 
         ldif_write_changetype: (
             FlextLdifConstants.LiteralTypes.ChangeTypeLiteral | None
         ) = Field(
             default=None,
-            description="If set to 'modify', writes entries in LDIF modify format (changetype: modify). Otherwise uses add format.",
+            description=(
+                "If set to 'modify', writes entries in LDIF modify format "
+                "(changetype: modify). Otherwise uses add format."
+            ),
         )
 
         ldif_write_modify_operation: FlextLdifConstants.LiteralTypes.ModifyOperationLiteral = Field(
             default="add",
-            description="LDIF modify operation: 'add' or 'replace'. Used when ldif_changetype='modify'. Default 'add' for schema/ACL phases.",
+            description=(
+                "LDIF modify operation: 'add' or 'replace'. "
+                "Used when ldif_changetype='modify'. "
+                "Default 'add' for schema/ACL phases."
+            ),
         )
 
         ldif_write_original_entry_as_comment: bool = Field(
             default=False,
-            description="If True, writes original source entry as commented LDIF block before converted entry.",
+            description=(
+                "If True, writes original source entry as commented LDIF block "
+                "before converted entry."
+            ),
         )
 
         ldif_write_entry_category: (
             FlextLdifConstants.LiteralTypes.CategoryLiteral | None
         ) = Field(
             default=None,
-            description="Migration category (e.g., 'hierarchy', 'users', 'groups', 'acl'). Used for phase-specific formatting.",
+            description=(
+                "Migration category (e.g., 'hierarchy', 'users', 'groups', "
+                "'acl'). Used for phase-specific formatting."
+            ),
         )
 
         ldif_write_acl_attribute_names: frozenset[str] = Field(
             default_factory=frozenset,
-            description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
+            description=(
+                "Set of ACL attribute names (e.g., {'orclaci', "
+                "'orclentrylevelaci'}). Used to identify ACL attributes."
+            ),
         )
 
         ldif_write_comment_acl_in_non_acl_phases: bool = Field(
             default=True,
-            description="If True, ACL attributes are written as comments when entry_category != 'acl'.",
+            description=(
+                "If True, ACL attributes are written as comments when "
+                "entry_category != 'acl'."
+            ),
         )
 
         ldif_write_use_rfc_attribute_order: bool = Field(
             default=False,
             description=(
-                "If True, writes attributes in RFC 2849 order: objectClass first after DN, "
-                "then remaining attributes alphabetically. DN is always first (handled automatically by writer)."
+                "If True, writes attributes in RFC 2849 order: objectClass "
+                "first after DN, then remaining attributes alphabetically. "
+                "DN is always first (handled automatically by writer)."
             ),
         )
 
         ldif_write_rfc_order_priority_attributes: list[str] = Field(
             default_factory=lambda: ["objectClass"],
-            description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
+            description=(
+                "Attributes to write first after DN, in order. "
+                "Default: ['objectClass']. "
+                "Remaining attributes sorted alphabetically."
+            ),
         )
 
         # =========================================================================
@@ -413,7 +490,9 @@ class FlextLdifConfigModule:
 
         ldif_parse_auto_parse_schema: bool = Field(
             default=True,
-            description="If True, automatically parses schema definitions from entries.",
+            description=(
+                "If True, automatically parses schema definitions from entries."
+            ),
         )
 
         ldif_parse_auto_extract_acls: bool = Field(
@@ -423,7 +502,10 @@ class FlextLdifConfigModule:
 
         ldif_parse_preserve_attribute_order: bool = Field(
             default=False,
-            description="If True, preserves the original attribute order from the LDIF file in Entry.metadata.",
+            description=(
+                "If True, preserves the original attribute order from the LDIF "
+                "file in Entry.metadata."
+            ),
         )
 
         ldif_parse_validate_entries: bool = Field(
@@ -440,7 +522,10 @@ class FlextLdifConfigModule:
             default=100,
             ge=0,
             le=10000,
-            description="Maximum number of parsing errors to collect before stopping. 0 means no limit.",
+            description=(
+                "Maximum number of parsing errors to collect before stopping. "
+                "0 means no limit."
+            ),
         )
 
         ldif_parse_include_operational_attrs: bool = Field(
@@ -450,7 +535,9 @@ class FlextLdifConfigModule:
 
         ldif_parse_strict_schema_validation: bool = Field(
             default=False,
-            description="If True, applies strict schema validation and fails on violations.",
+            description=(
+                "If True, applies strict schema validation and fails on violations."
+            ),
         )
 
         # =========================================================================
@@ -502,7 +589,8 @@ class FlextLdifConfigModule:
             """Validate server_type is a recognized LDAP server.
 
             Ensures server_type is one of the supported server types defined in
-            FlextLdifConstants.ServerTypes. Accepts both canonical forms and common aliases.
+            FlextLdifConstants.ServerTypes. Accepts both canonical forms and
+            common aliases.
 
             Args:
                 v: Server type string to validate (canonical or alias)
@@ -529,9 +617,11 @@ class FlextLdifConfigModule:
                 FlextLdifConstants.ServerTypes.DS389,
                 FlextLdifConstants.ServerTypes.APACHE,
                 FlextLdifConstants.ServerTypes.NOVELL,
-                FlextLdifConstants.ServerTypes.IBM_TIVOLI,  # Fixed: IBM_TIVOLI not TIVOLI
+                FlextLdifConstants.ServerTypes.IBM_TIVOLI,
+                # Fixed: IBM_TIVOLI not TIVOLI
                 FlextLdifConstants.ServerTypes.RELAXED,
-                FlextLdifConstants.ServerTypes.GENERIC,  # Use constant instead of hardcoded
+                FlextLdifConstants.ServerTypes.GENERIC,
+                # Use constant instead of hardcoded
             ]
             if normalized not in valid_servers:
                 # Suggest most common/useful server types
@@ -576,9 +666,12 @@ class FlextLdifConfigModule:
             if v not in valid_separators:
                 # Suggest most common separator
                 msg = (
-                    f"Invalid ldif_line_separator '{v!r}' in field '{info.field_name}'.\n"
-                    f"Must be one of: {', '.join(repr(s) for s in valid_separators)} (RFC 2849 § 2)\n"
-                    f"Suggestion: Use '\\n' (LF) for Unix/Linux or '\\r\\n' (CRLF) for Windows."
+                    f"Invalid ldif_line_separator '{v!r}' in field "
+                    f"'{info.field_name}'.\n"
+                    f"Must be one of: {', '.join(repr(s) for s in valid_separators)} "
+                    f"(RFC 2849 § 2)\n"
+                    f"Suggestion: Use '\\n' (LF) for Unix/Linux or "
+                    f"'\\r\\n' (CRLF) for Windows."
                 )
                 raise ValueError(msg)
             return v
@@ -609,7 +702,8 @@ class FlextLdifConfigModule:
             # RFC 2849 version format: "version: 1"
             if not v.startswith("version:"):
                 msg = (
-                    f"Invalid ldif_version_string '{v}' in field '{info.field_name}'. "
+                    f"Invalid ldif_version_string '{v}' in field "
+                    f"'{info.field_name}'. "
                     f"Must start with 'version:' (RFC 2849 § 2)\n"
                     f"Suggestion: Use 'version: 1' (RFC 2849 standard)"
                 )
@@ -621,14 +715,16 @@ class FlextLdifConfigModule:
                 version_num = int(version_part)
                 if version_num != 1:
                     msg = (
-                        f"Unsupported LDIF version {version_num} in field '{info.field_name}'. "
+                        f"Unsupported LDIF version {version_num} in field "
+                        f"'{info.field_name}'. "
                         f"Only version 1 is supported (RFC 2849)\n"
                         f"Suggestion: Use 'version: 1'"
                     )
                     raise ValueError(msg)
             except (IndexError, ValueError) as e:
                 msg = (
-                    f"Invalid ldif_version_string format '{v}' in field '{info.field_name}'. "
+                    f"Invalid ldif_version_string format '{v}' in field "
+                    f"'{info.field_name}'. "
                     f"Expected 'version: 1' (RFC 2849 § 2)\n"
                     f"Suggestion: Use exactly 'version: 1'"
                 )
@@ -737,9 +833,11 @@ class FlextLdifConfigModule:
             ]
             if v not in valid_servers:
                 msg = (
-                    f"Invalid ldif_default_server_type '{v}' in field '{info.field_name}'.\n"
+                    f"Invalid ldif_default_server_type '{v}' in field "
+                    f"'{info.field_name}'.\n"
                     f"Valid options: {', '.join(valid_servers)}\n"
-                    f"Suggestion: Use '{FlextLdifConstants.ServerTypes.RFC}' for RFC compliance"
+                    f"Suggestion: Use '{FlextLdifConstants.ServerTypes.RFC}' "
+                    f"for RFC compliance"
                 )
                 raise ValueError(msg)
             return v
@@ -752,7 +850,8 @@ class FlextLdifConfigModule:
         def validate_ldif_configuration_consistency(self) -> Self:
             """Validate LDIF configuration consistency.
 
-            Note: Validations that require root config fields (max_workers, debug, trace)
+             Note: Validations that require root config fields
+             (max_workers, debug, trace)
             should be performed at the root config level (e.g., client-aOudMigConfig).
             """
             # Validate analytics configuration
@@ -786,7 +885,7 @@ class FlextLdifConfigModule:
 
             """
             # Server-specific encoding preferences
-            if self.server_type == FlextLdifConstants.ServerTypes.AD:
+            if self.server_type == FlextLdifConstants.ServerTypes.AD.value:
                 return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
             return self.ldif_encoding
 

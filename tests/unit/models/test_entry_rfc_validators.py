@@ -234,7 +234,7 @@ class TestEntryRfcCompliance:
         dn_model: FlextLdifModelsDomains.DistinguishedName | None = None
         if dn is not None:
             dn_model = FlextLdifModelsDomains.DistinguishedName(value=dn)
-        
+
         attrs_model: FlextLdifModelsDomains.LdifAttributes | None = None
         if attributes is not None:
             # Normalize attributes: convert str values to list[str]
@@ -246,8 +246,10 @@ class TestEntryRfcCompliance:
                     normalized_attrs[key] = value
                 else:
                     normalized_attrs[key] = [str(value)]
-            attrs_model = FlextLdifModelsDomains.LdifAttributes(attributes=normalized_attrs)
-        
+            attrs_model = FlextLdifModelsDomains.LdifAttributes(
+                attributes=normalized_attrs
+            )
+
         # For None cases, directly instantiate Entry with Pydantic __init__
         # which triggers both field validators and model_validator
         return FlextLdifModels.Entry(
@@ -342,7 +344,9 @@ class TestEntryRfcCompliance:
 
         metadata = self.get_validation_metadata(entry)
         # ValidationMetadata is a Pydantic model, use attribute access
-        violations: list[str] = getattr(metadata, "rfc_violations", []) if metadata else []
+        violations: list[str] = (
+            getattr(metadata, "rfc_violations", []) if metadata else []
+        )
         has_violations = (
             metadata is not None
             and isinstance(violations, list)

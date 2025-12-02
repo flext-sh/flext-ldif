@@ -48,7 +48,8 @@ __email__ = "dev@flext.com"
 __all__ = [
     # ✅ Entry manipulation service (required by flext-ldap)
     "EntryManipulationServices",
-    "FlextLdif",  # ✅ Facade (single entry point) - supports monadic methods and builder
+    "FlextLdif",  # ✅ Facade (single entry point) - supports monadic methods
+    # and builder
     "FlextLdifCategorization",  # ✅ Categorization service (public API)
     "FlextLdifConfig",  # ✅ Configuration (namespace registered)
     "FlextLdifConstants",  # ✅ Constants
@@ -59,7 +60,8 @@ __all__ = [
     "FlextLdifModels",  # ✅ Domain models
     "FlextLdifParser",  # ✅ Parser service (required by flext-ldap)
     "FlextLdifProtocols",  # ✅ Protocols and type definitions
-    "FlextLdifServiceBase",  # ✅ Base class for services (alias for FlextLdifServiceBase)
+    "FlextLdifServiceBase",  # ✅ Base class for services
+    # (alias for FlextLdifServiceBase)
     "FlextLdifServiceBase",  # ✅ Base class for services with typed config
     "FlextLdifSorting",  # ✅ Sorting service (public API)
     "FlextLdifTypes",  # ✅ Type definitions

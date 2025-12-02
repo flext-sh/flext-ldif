@@ -19,8 +19,8 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+from flext_tests import FlextTestsFactories  # Mocked in conftest
 
-# from flext_tests import FlextTestsFactories  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from tests.fixtures.constants import DNs, Names, OIDs, Syntax
 

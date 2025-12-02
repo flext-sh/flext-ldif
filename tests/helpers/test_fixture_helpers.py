@@ -155,7 +155,7 @@ class FixtureTestHelpers:
         return entries
 
     @staticmethod
-    def load_fixture_and_validate_structure(  # noqa: PLR0913
+    def load_fixture_and_validate_structure(
         ldif_api: FlextLdif,
         server_type: str,
         fixture_filename: str,
@@ -215,9 +215,7 @@ class FixtureTestHelpers:
                 assert entry.attributes is not None, "Entry must have attributes"
                 # Type narrowing: entry.attributes is not None after assert
                 entry_attributes = entry.attributes
-                attr_names = {
-                    name.lower() for name in entry_attributes.attributes
-                }
+                attr_names = {name.lower() for name in entry_attributes.attributes}
                 has_objectclass = "objectclass" in attr_names
                 assert has_objectclass == expected_has_objectclass, (
                     f"Expected has_objectclass={expected_has_objectclass}, "

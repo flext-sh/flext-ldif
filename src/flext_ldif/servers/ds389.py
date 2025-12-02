@@ -23,6 +23,7 @@ from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -361,7 +362,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse 389 DS ACI definition."""
             try:
-                attr_name, content = self._splitacl_line(acl_line)
+                attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
                 _ = attr_name  # Unused but required for tuple unpacking
                 acl_name_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_NAME_PATTERN,

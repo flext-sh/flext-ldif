@@ -394,8 +394,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     > FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_RIGHTS
                     else ""
                 )
-                # Parse rights string using DRY utility
-                char_mapping = {
+                # Parse rights string - Novell uses character codes for permissions
+                # Business Rule: Novell eDirectory ACLs use single-character codes
+                # to represent permissions in rights segments (e.g., "RW" = read+write)
+                # Implication: Character-by-character parsing is required for remote
+                # auditing to track which permissions were granted/denied
+                char_mapping: dict[str, list[str]] = {
                     "B": [FlextLdifConstants.PermissionNames.SEARCH],
                     "C": [FlextLdifConstants.PermissionNames.COMPARE],
                     "D": [FlextLdifConstants.PermissionNames.DELETE],
@@ -405,10 +409,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     "S": ["supervisor"],  # Novell-specific
                     "E": ["entry"],  # Novell-specific
                 }
-                rights = FlextLdifUtilities.ACL.parse_novell_rights(
-                    rights_str,
-                    char_mapping,
-                )
+                # Parse rights string character by character
+                rights: list[str] = []
+                for char in rights_str:
+                    char_upper = char.upper()
+                    if char_upper in char_mapping:
+                        rights.extend(char_mapping[char_upper])
 
                 # Extract attributes from rights segments
                 # Novell eDirectory ACLs may specify attribute names in the rights segments
@@ -438,14 +444,17 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         attributes=attributes,  # Novell: extracted from rights segments
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type=FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_TYPE,
+                        # Business Rule: Novell eDirectory uses "trustee" concept which maps to "dn"
+                        # Trustee is a DN string, so use "dn" as subject_type for AclSubject
+                        # Implication: Remote auditing can track trustee DNs via subject_value
+                        subject_type="dn",
                         subject_value=(
                             trustee
                             or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN
                         ),
                     ),
                     permissions=FlextLdifModels.AclPermissions(
-                        **FlextLdifUtilities.ACL.build_novell_permissions(
+                        **self._build_novell_permissions_from_rights(
                             rights,
                             {
                                 "read": FlextLdifConstants.PermissionNames.READ,
@@ -471,6 +480,45 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"Novell eDirectory ACL parsing failed: {exc}",
                 )
+
+        def _build_novell_permissions_from_rights(
+            self,
+            rights: list[str],
+            permission_name_map: dict[str, str],
+        ) -> dict[str, bool]:
+            """Build AclPermissions dict from parsed rights list.
+
+            Business Rule: Novell eDirectory permissions are mapped from parsed
+            rights strings to boolean flags in AclPermissions model.
+            Implication: Remote auditing can track which specific permissions
+            were granted by examining the rights list and mapping.
+
+            Args:
+                rights: List of permission strings parsed from rights segment
+                permission_name_map: Mapping from canonical permission names to values
+
+            Returns:
+                Dictionary of permission flags for AclPermissions model
+
+            """
+            # Build reverse mapping: permission value -> canonical name
+            reverse_map: dict[str, str] = {v: k for k, v in permission_name_map.items()}
+            # Initialize all permissions to False
+            perms_dict: dict[str, bool] = {
+                "read": False,
+                "write": False,
+                "add": False,
+                "delete": False,
+                "search": False,
+                "compare": False,
+            }
+            # Set permissions to True if found in rights list
+            for right in rights:
+                if right in reverse_map:
+                    canonical_name = reverse_map[right]
+                    if canonical_name in perms_dict:
+                        perms_dict[canonical_name] = True
+            return perms_dict
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
@@ -499,18 +547,24 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 if acl_data.subject and acl_data.subject.subject_value:
                     parts.append(acl_data.subject.subject_value)
 
-                # Add rights using DRY utility
-                active_perms = FlextLdifUtilities.ACL.collect_active_permissions(
-                    acl_data.permissions,
-                    [
-                        ("read", FlextLdifConstants.PermissionNames.READ),
-                        ("write", FlextLdifConstants.PermissionNames.WRITE),
-                        ("add", FlextLdifConstants.PermissionNames.ADD),
-                        ("delete", FlextLdifConstants.PermissionNames.DELETE),
-                        ("search", FlextLdifConstants.PermissionNames.SEARCH),
-                        ("compare", FlextLdifConstants.PermissionNames.COMPARE),
-                    ],
-                )
+                # Add rights - collect active permissions from permissions dict
+                # Map canonical permission names to Novell format
+                permission_map = {
+                    "read": FlextLdifConstants.PermissionNames.READ,
+                    "write": FlextLdifConstants.PermissionNames.WRITE,
+                    "add": FlextLdifConstants.PermissionNames.ADD,
+                    "delete": FlextLdifConstants.PermissionNames.DELETE,
+                    "search": FlextLdifConstants.PermissionNames.SEARCH,
+                    "compare": FlextLdifConstants.PermissionNames.COMPARE,
+                }
+                active_perms: list[str] = []
+                if acl_data.permissions:
+                    # AclPermissions is a Pydantic model, convert to dict for iteration
+                    perms_dict = acl_data.permissions.model_dump()
+                    for perm_name, perm_value in perms_dict.items():
+                        # Only include permissions that are True (allowed)
+                        if perm_value is True and perm_name in permission_map:
+                            active_perms.append(permission_map[perm_name])
                 parts.extend(active_perms)
 
                 # Build ACL string

@@ -14,13 +14,17 @@ from __future__ import annotations
 import base64
 from enum import StrEnum
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from ...helpers.test_deduplication_helpers import (
+    ParseTestCaseDict,
+    TestDeduplicationHelpers,
+)
 from ...helpers.test_rfc_helpers import RfcTestHelpers
 from ..quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
@@ -394,7 +398,7 @@ cn: test2
         ]
         _ = TestDeduplicationHelpers.batch_parse_and_assert(
             real_parser_service,
-            test_cases,
+            cast("list[ParseTestCaseDict]", test_cases),
             validate_all=True,
         )
 
@@ -503,7 +507,7 @@ description::
         ]
         _ = TestDeduplicationHelpers.batch_parse_and_assert(
             real_parser_service,
-            test_cases,
+            cast("list[ParseTestCaseDict]", test_cases),
             validate_all=False,
         )
 
@@ -629,7 +633,7 @@ description: {large_value}
         )
         assert result.is_success
         content = result.unwrap()
-        assert content == "version: 1"
+        assert content == "version: 1\n"
 
     @pytest.mark.timeout(10)
     def test_write_entry_variations(

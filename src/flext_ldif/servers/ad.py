@@ -23,6 +23,7 @@ from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -275,7 +276,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for(
+                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -302,7 +303,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc_data)
-                metadata = FlextLdifModels.QuirkMetadata.create_for(
+                metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
@@ -333,7 +334,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
@@ -437,7 +438,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         subject_value=(decoded_sddl or (raw_value or "")),
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
-                    metadata=FlextLdifModels.QuirkMetadata.create_for(
+                    metadata=FlextLdifModelsDomains.QuirkMetadata.create_for(
                         self._get_server_type(),
                     ),
                     raw_acl=acl_line,

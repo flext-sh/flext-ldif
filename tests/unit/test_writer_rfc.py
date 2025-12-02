@@ -33,8 +33,8 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifWriter
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_factories import FlextLdifTestFactories
@@ -325,7 +325,7 @@ class TestWriterRfc:
                 # Should fail with clear error message
                 assert result.is_failure
                 assert result.error is not None
-                assert "no quirk found" in result.error.lower()
+                assert "no entry quirk found" in result.error.lower()
 
             case WriterTestType.INITIALIZATION:
                 # Test writer initialization

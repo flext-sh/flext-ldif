@@ -25,6 +25,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TypeAlias
+
 from flext_core import FlextModels
 from flext_core._models.collections import FlextModelsCollections
 
@@ -33,6 +35,8 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult as ProcessingResultModel
+
+# Import for type compatibility
 from flext_ldif._models.results import FlextLdifModelsResults
 
 
@@ -67,9 +71,9 @@ class FlextLdifModels(FlextModels):
         Records complete transformation history for LDIF attribute conversions.
         """
 
-    # Public metadata types - direct access
-    DynamicMetadata = FlextLdifModelsMetadata.DynamicMetadata
-    EntryMetadata = FlextLdifModelsMetadata.EntryMetadata
+    # Public metadata types - runtime assignments with TypeAlias for type checking
+    DynamicMetadata: TypeAlias = FlextLdifModelsMetadata.DynamicMetadata
+    EntryMetadata: TypeAlias = FlextLdifModelsMetadata.EntryMetadata
 
     # AclMetadataConfig moved to _models/config.py
 
@@ -83,6 +87,9 @@ class FlextLdifModels(FlextModels):
     # MigrationEventConfig moved to _models/events.py
     MigrationEventConfig = FlextLdifModelsEvents.MigrationEventConfig
     MigrationEvent = FlextLdifModelsEvents.MigrationEvent
+
+    # CategoryEvent moved to _models/events.py
+    CategoryEvent = FlextLdifModelsEvents.CategoryEvent
 
     # ConversionEventConfig moved to _models/events.py
     ConversionEventConfig = FlextLdifModelsEvents.ConversionEventConfig
@@ -125,11 +132,11 @@ class FlextLdifModels(FlextModels):
     AciParserConfig = FlextLdifModelsConfig.AciParserConfig
     AciWriterConfig = FlextLdifModelsConfig.AciWriterConfig
 
-    # Metadata models
-    QuirkMetadata = FlextLdifModelsDomains.QuirkMetadata
+    # Metadata models - runtime assignments with TypeAlias for type checking
+    QuirkMetadata: TypeAlias = FlextLdifModelsDomains.QuirkMetadata
 
-    # DN and statistics models
-    DistinguishedName = FlextLdifModelsDomains.DistinguishedName
+    # DN and statistics models - runtime assignments with TypeAlias for type checking
+    DistinguishedName: TypeAlias = FlextLdifModelsDomains.DistinguishedName
     DNStatistics = FlextLdifModelsDomains.DNStatistics
 
     # Transformation flags type alias
@@ -140,10 +147,10 @@ class FlextLdifModels(FlextModels):
     Used internally by FlextLdifUtilitiesDN for collecting transformation metadata.
     """
 
-    # Processing and writer models
-    ProcessingResult = ProcessingResultModel
-    ParseResponse = FlextLdifModelsResults.ParseResponse
-    WriteResponse = FlextLdifModelsResults.WriteResponse
+    # Processing and writer models - runtime assignments with TypeAlias for type checking
+    ProcessingResult: TypeAlias = ProcessingResultModel
+    ParseResponse: TypeAlias = FlextLdifModelsResults.ParseResponse
+    WriteResponse: TypeAlias = FlextLdifModelsResults.WriteResponse
     WriteOptions = FlextLdifModelsDomains.WriteOptions
     Syntax = FlextLdifModelsDomains.Syntax
 
@@ -169,7 +176,7 @@ class FlextLdifModels(FlextModels):
         Example:
             criteria = FilterCriteria(
                 filter_type=FlextLdifConstants.FilterType.DN_PATTERN,
-                pattern="*,ou=users,dc=ctbc,dc=com",
+                pattern="*,ou=users,dc=example,dc=com",
                 mode=FlextLdifConstants.FilterMode.INCLUDE
             )
 
@@ -225,25 +232,22 @@ class FlextLdifModels(FlextModels):
 
         """
 
-    class Statistics(FlextLdifModelsResults.Statistics):
-        """Comprehensive LDIF processing statistics.
-
-        Tracks detailed metrics for entries, attributes, DNs, and processing performance.
-        Provides insights into LDIF content characteristics and processing efficiency.
-
-        Example:
-            stats = Statistics(
-                total_entries=1500,
-                entries_processed=1450,
-                entries_excluded=50,
-                total_attributes=4500,
-                dn_statistics=DNStatistics(...),
-                entry_statistics=EntryStatistics(...),
-                processing_time_seconds=2.34,
-                memory_peak_mb=45.6
-            )
-
-        """
+    # Statistics type alias - extends FlextModels.Statistics with LDIF-specific fields
+    # FlextLdifModelsResults.Statistics inherits from FlextModelsCollections.Statistics,
+    # so it's compatible with FlextModels.Statistics while adding LDIF-specific metrics.
+    # Business Rule: Statistics model is frozen (immutable) to ensure data integrity
+    # during processing pipelines. All statistics operations return new instances
+    # rather than modifying existing ones, following functional programming principles.
+    # Both parent and child are frozen (FrozenValueModel), ensuring consistent mutability.
+    # Note: We cannot override Statistics with a type alias because parent Statistics
+    # is also a type alias to FlextModelsCollections.Statistics. Type aliases cannot
+    # be overridden with incompatible types. Instead, LDIF-specific statistics are
+    # available via FlextLdifModels.Results.Statistics which extends the base Statistics.
+    # Users should use:
+    # - FlextLdifModels.Statistics (from parent) for base statistics
+    # - FlextLdifModels.Results.Statistics for LDIF-specific statistics with additional fields
+    # This avoids type system conflicts while maintaining API clarity.
+    # Statistics type alias removed - use Results.Statistics for LDIF-specific stats
 
     class StatisticsResult(FlextLdifModelsResults.StatisticsResult):
         """Result of statistics operations.
@@ -380,16 +384,16 @@ class FlextLdifModels(FlextModels):
     # Use FlextModelsCollections.Categories directly since FlextModels.Categories is a type alias
     type FlexibleCategories = FlextModelsCollections.Categories[FlextLdifModels.Entry]
 
-    # Schema models
-    SchemaAttribute = FlextLdifModelsDomains.SchemaAttribute
-    SchemaObjectClass = FlextLdifModelsDomains.SchemaObjectClass
+    # Schema models - runtime assignments with TypeAlias for type checking
+    SchemaAttribute: TypeAlias = FlextLdifModelsDomains.SchemaAttribute
+    SchemaObjectClass: TypeAlias = FlextLdifModelsDomains.SchemaObjectClass
 
-    # ACL models
-    Acl = FlextLdifModelsDomains.Acl
-    AclTarget = FlextLdifModelsDomains.AclTarget
-    AclSubject = FlextLdifModelsDomains.AclSubject
-    AclPermissions = FlextLdifModelsDomains.AclPermissions
-    DnRegistry = FlextLdifModelsDomains.DnRegistry
+    # ACL models - runtime assignments with TypeAlias for type checking
+    Acl: TypeAlias = FlextLdifModelsDomains.Acl
+    AclTarget: TypeAlias = FlextLdifModelsDomains.AclTarget
+    AclSubject: TypeAlias = FlextLdifModelsDomains.AclSubject
+    AclPermissions: TypeAlias = FlextLdifModelsDomains.AclPermissions
+    DnRegistry: TypeAlias = FlextLdifModelsDomains.DnRegistry
 
     class Entry(FlextLdifModelsDomains.Entry):
         """LDIF entry with DN and attributes.
@@ -644,6 +648,13 @@ class FlextLdifModels(FlextModels):
 
         """
 
+    class MigrateOptions(FlextLdifModelsConfig.MigrateOptions):
+        """Options for FlextLdif.migrate() operation.
+
+        Consolidates 12+ optional parameters into single typed Model.
+        Reduces migrate() signature from 16 parameters to 5 parameters.
+        """
+
     class MigrationConfig(FlextLdifModelsConfig.MigrationConfig):
         """Configuration for migration operations.
 
@@ -758,21 +769,11 @@ class FlextLdifModels(FlextModels):
 
         """
 
-    class AclResponse(FlextLdifModelsResults.AclResponse):
-        """Composed response from ACL extraction.
-
-        Combines extracted Acl models with extraction statistics.
-
-        Example:
-            response = AclResponse(
-                acls=[Acl(...), Acl(...)],
-                statistics=Statistics(
-                    processed_entries=10,
-                    acls_extracted=5
-                )
-            )
-
-        """
+    # Note: AclResponse is NOT overridden here because FlextModels.AclResponse
+    # (FlextModelsService.AclResponse) is a generic ACL response model with different
+    # fields (resource, user, action) than FlextLdifModelsResults.AclResponse
+    # (acls, statistics) which is LDIF-specific. Use FlextLdifModelsResults.AclResponse
+    # directly for LDIF ACL extraction operations.
 
 
 __all__ = ["FlextLdifModels"]

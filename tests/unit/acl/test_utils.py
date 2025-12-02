@@ -48,9 +48,10 @@ def create_acl_components_helper() -> FlextResult[
         target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
     )
     # Type narrowing: cast subject_type to Literal type
-    subject_type_literal: (
-        FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-    ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE)
+    subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = cast(
+        "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+        FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
+    )
     subject = FlextLdifModelsDomains.AclSubject(
         subject_type=subject_type_literal,
         subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
@@ -108,7 +109,7 @@ def create_unified_acl_helper(
             if server_type in supported_servers
             else FlextLdifConstants.LdapServers.OPENLDAP
         )
-        
+
         # Normalize and cast server_type to Literal type
         try:
             effective_server_type = FlextLdifConstants.normalize_server_type(
@@ -133,7 +134,9 @@ def create_unified_acl_helper(
 
         return FlextResult[FlextLdifModelsDomains.Acl].ok(unified_acl)
     except (ValueError, TypeError, AttributeError) as e:
-        return FlextResult[FlextLdifModelsDomains.Acl].fail(f"Failed to create ACL: {e}")
+        return FlextResult[FlextLdifModelsDomains.Acl].fail(
+            f"Failed to create ACL: {e}"
+        )
 
 
 class TestComponentFactory:
@@ -178,9 +181,9 @@ class TestComponentFactory:
     def test_create_unified_acl_openldap(self) -> None:
         """Test creating unified ACL for OpenLDAP server."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -208,9 +211,9 @@ class TestComponentFactory:
     def test_create_unified_acl_openldap_2(self) -> None:
         """Test creating unified ACL for OpenLDAP 2.x server."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -232,9 +235,9 @@ class TestComponentFactory:
     def test_create_unified_acl_openldap_1(self) -> None:
         """Test creating unified ACL for OpenLDAP 1.x server."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -256,9 +259,9 @@ class TestComponentFactory:
     def test_create_unified_acl_oracle_oid(self) -> None:
         """Test creating unified ACL for Oracle OID server."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -280,9 +283,9 @@ class TestComponentFactory:
     def test_create_unified_acl_oracle_oud(self) -> None:
         """Test creating unified ACL for Oracle OUD server."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -304,9 +307,9 @@ class TestComponentFactory:
     def test_create_unified_acl_ds389(self) -> None:
         """Test creating unified ACL for 389 DS server."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -328,9 +331,9 @@ class TestComponentFactory:
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
         """Test that unsupported server types result in validation error."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -355,9 +358,9 @@ class TestComponentFactory:
     def test_create_unified_acl_preserves_properties(self) -> None:
         """Test that created ACL preserves all input properties."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=test,dc=example,dc=com")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "group")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "group")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal,
             subject_value="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
@@ -387,9 +390,9 @@ class TestComponentFactory:
     def test_create_unified_acl_returns_aclbase_instance(self) -> None:
         """Test that created ACL is an FlextLdifModelsDomains.Acl instance."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -410,9 +413,9 @@ class TestComponentFactory:
     def test_create_unified_acl_exception_handling_caught(self) -> None:
         """Test exception handling in create_unified_acl (line 140-143) via model validation error."""
         target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
         )
@@ -436,9 +439,9 @@ class TestComponentFactory:
         """Test create_acl_components with invalid server type defaults to OpenLDAP."""
         # Use invalid server type - function should default to OpenLDAP
         target = FlextLdifModelsDomains.AclTarget(target_dn="*")
-        subject_type_literal: (
-            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
-        ) = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "all")
+        subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
+            cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "all")
+        )
         subject = FlextLdifModelsDomains.AclSubject(
             subject_type=subject_type_literal, subject_value="*"
         )

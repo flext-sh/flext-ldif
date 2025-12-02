@@ -108,7 +108,9 @@ class TestFlextServiceV2Patterns:
         assert all(isinstance(e, FlextLdifModels.Entry) for e in sorted_entries)
 
         # Verify order
-        assert [e.dn.value for e in sorted_entries] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in sorted_entries
+        ] == expected
 
     def test_v2_auto_with_direct_instantiation(self) -> None:
         """Test V2 AUTO: Service() returns value directly (auto_execute=True)."""
@@ -131,7 +133,9 @@ class TestFlextServiceV2Patterns:
         assert all(isinstance(e, FlextLdifModels.Entry) for e in sorted_entries)
 
         # Verify hierarchy order (shallowest first)
-        assert [e.dn.value for e in sorted_entries] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in sorted_entries
+        ] == expected
 
     def test_v1_explicit_with_execute(self) -> None:
         """Test V1 EXPLICIT: Service with auto_execute=False, then .execute() returns FlextResult."""
@@ -154,7 +158,9 @@ class TestFlextServiceV2Patterns:
         assert len(sorted_entries) == 3
 
         # Verify hierarchy order
-        assert [e.dn.value for e in sorted_entries] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in sorted_entries
+        ] == expected
 
     def test_static_method_pattern(self) -> None:
         """Test static method pattern (most common)."""
@@ -171,7 +177,9 @@ class TestFlextServiceV2Patterns:
         # Unwrap and verify
         sorted_entries = result.unwrap()
         assert len(sorted_entries) == 3
-        assert [e.dn.value for e in sorted_entries] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in sorted_entries
+        ] == expected
 
     def test_v2_result_property_vs_execute(self) -> None:
         """Compare V2 .result vs V1 .execute()."""
@@ -193,7 +201,7 @@ class TestFlextServiceV2Patterns:
 
         # But unwrapped values should be equal
         assert v2_result == v1_result.unwrap()
-        assert [e.dn.value for e in v2_result] == expected
+        assert [e.dn.value if e.dn is not None else "" for e in v2_result] == expected
 
     def test_v2_error_handling_with_result_property(self) -> None:
         """Test V2 error handling when using .result property."""
@@ -202,7 +210,7 @@ class TestFlextServiceV2Patterns:
         with pytest.raises(ValidationError, match="sort_by"):
             FlextLdifSorting(
                 entries=self.create_test_entries(),
-                sort_by="invalid",
+                sort_by="invalid",  # type: ignore[arg-type]
             ).result
 
     def test_v1_error_handling_with_execute(self) -> None:
@@ -210,7 +218,7 @@ class TestFlextServiceV2Patterns:
         # Invalid sort_by raises ValidationError at initialization (V2 pattern)
         # Pydantic error message format: "1 validation error for FlextLdifSorting\nsort_by\n  Input should be ..."
         with pytest.raises(ValidationError, match="sort_by"):
-            FlextLdifSorting(entries=self.create_test_entries(), sort_by="invalid")
+            FlextLdifSorting(entries=self.create_test_entries(), sort_by="invalid")  # type: ignore[arg-type]
 
     def test_builder_pattern_returns_flextresult(self) -> None:
         """Test Fluent Builder returns FlextResult (for composition)."""
@@ -230,7 +238,9 @@ class TestFlextServiceV2Patterns:
 
         sorted_entries = result.unwrap()
         assert len(sorted_entries) == 3
-        assert [e.dn.value for e in sorted_entries] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in sorted_entries
+        ] == expected
 
     def test_builder_pattern_alphabetical(self) -> None:
         """Test builder with alphabetical sorting."""
@@ -248,7 +258,9 @@ class TestFlextServiceV2Patterns:
         sorted_entries = result.unwrap()
 
         # Alphabetical by DN (case-insensitive)
-        assert [e.dn.value for e in sorted_entries] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in sorted_entries
+        ] == expected
 
     def test_code_reduction_v2_vs_v1(self) -> None:
         """Demonstrate 68% code reduction with V2 .result pattern."""
@@ -274,7 +286,7 @@ class TestFlextServiceV2Patterns:
         # Both produce same result
         assert sorted_v1 == sorted_v2
         assert len(sorted_v2) == 3
-        assert [e.dn.value for e in sorted_v2] == expected
+        assert [e.dn.value if e.dn is not None else "" for e in sorted_v2] == expected
 
     def test_type_safety_v2_vs_v1(self) -> None:
         """V2 .result has better type inference than V1."""
@@ -297,5 +309,7 @@ class TestFlextServiceV2Patterns:
         # Both work, but V2 is more direct
         assert isinstance(sorted_v2, list)
         assert isinstance(result_v1, FlextResult)
-        assert [e.dn.value for e in sorted_v2] == expected
-        assert [e.dn.value for e in result_v1.unwrap()] == expected
+        assert [e.dn.value if e.dn is not None else "" for e in sorted_v2] == expected
+        assert [
+            e.dn.value if e.dn is not None else "" for e in result_v1.unwrap()
+        ] == expected

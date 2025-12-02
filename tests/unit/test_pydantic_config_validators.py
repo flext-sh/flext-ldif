@@ -188,15 +188,19 @@ class TestFlextLdifConfigValidators:
         should_succeed: bool,
     ) -> None:
         """Test ldif_encoding field_validator with parametrized scenarios."""
+        from typing import cast
+
         if should_succeed:
             config = FlextLdifConfig(
-                ldif_encoding=encoding,
+                ldif_encoding=cast(
+                    "FlextLdifConstants.LiteralTypes.EncodingLiteral", encoding
+                ),
             )
             assert config.ldif_encoding == encoding
         else:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
-                    ldif_encoding=encoding,
+                    ldif_encoding=encoding,  # type: ignore[arg-type]
                 )
             error_str = str(exc_info.value).lower()
             assert encoding.lower() in error_str or "invalid encoding" in error_str, (
@@ -214,9 +218,15 @@ class TestFlextLdifConfigValidators:
         should_succeed: bool,
     ) -> None:
         """Test server_type field_validator with parametrized scenarios."""
+        from typing import cast
+
+        from flext_ldif.constants import FlextLdifConstants
+
         if should_succeed:
             config = FlextLdifConfig(
-                server_type=server_type,
+                server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type
+                ),
             )
             # The validator normalizes aliases to canonical form
             # So we should expect the normalized value, not the original
@@ -225,7 +235,7 @@ class TestFlextLdifConfigValidators:
         else:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
-                    server_type=server_type,
+                    server_type=server_type,  # type: ignore[arg-type]
                 )
             error_str = str(exc_info.value).lower()
             assert server_type.lower() in error_str or "invalid server" in error_str, (
@@ -305,10 +315,15 @@ class TestFlextLdifConfigValidators:
         mode uses Literal type matching FlextLdifConstants.LiteralTypes.DetectionMode.
         Pydantic validates the value at runtime.
         """
+        from typing import cast
+
         if should_succeed:
             config = FlextLdifConfig(
                 quirks_detection_mode=mode,
-                quirks_server_type=server_type,
+                quirks_server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None",
+                    server_type,
+                ),
             )
             assert config.quirks_detection_mode == mode
             assert config.quirks_server_type == server_type
@@ -316,7 +331,7 @@ class TestFlextLdifConfigValidators:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
                     quirks_detection_mode=mode,
-                    quirks_server_type=server_type,
+                    quirks_server_type=server_type,  # type: ignore[arg-type]
                 )
             error_str = str(exc_info.value).lower()
             assert "quirks_server_type" in error_str and "manual" in error_str, (

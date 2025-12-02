@@ -63,12 +63,23 @@ class TestValidators:
             Dict with validation results.
 
         """
+        from flext_ldif import FlextLdifModels
+
+        dn_value = entry.dn.value if entry.dn is not None else ""
+        # entry.attributes is LdifAttributes, need to access .attributes dict
+        if entry.attributes is not None:
+            if isinstance(entry.attributes, FlextLdifModels.LdifAttributes):
+                attributes_dict: dict[str, list[str]] = entry.attributes.attributes
+            else:
+                attributes_dict = {}
+        else:
+            attributes_dict = {}
         return {
-            "dn_format_valid": bool(entry.dn and "=" in entry.dn),
-            "has_attributes": len(entry.attributes) > 0,
+            "dn_format_valid": bool(entry.dn is not None and "=" in dn_value),
+            "has_attributes": len(attributes_dict) > 0,
             "attributes_valid": all(
                 isinstance(k, str) and isinstance(v, list)
-                for k, v in entry.attributes.items()
+                for k, v in attributes_dict.items()
             ),
         }
 
@@ -94,8 +105,8 @@ class TestValidators:
         if expect_all_success:
             ResultHelpers.assert_chain_success(results)
         else:
-            chain = ResultHelpers.validate_chain(results)
-            assert not chain["is_valid_chain"], "Expected failures but all succeeded"
+            chain_valid = ResultHelpers.validate_chain(results)
+            assert not chain_valid, "Expected failures but all succeeded"
 
     @staticmethod
     def validate_result_success(result: FlextResult) -> GenericFieldsDict:

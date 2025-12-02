@@ -409,7 +409,7 @@ class FlextLdifModelsConfig:
         Example:
             criteria = FilterCriteria(
                 filter_type="dn_pattern",
-                pattern="*,ou=users,dc=ctbc,dc=com",
+                pattern="*,ou=users,dc=example,dc=com",
                 mode="include"
             )
 
@@ -631,7 +631,9 @@ class FlextLdifModelsConfig:
         )
         write_empty_values: bool = Field(
             default=True,
-            description="If True, writes attributes with empty values. If False, omits them.",
+            description=(
+                "If True, writes attributes with empty values. If False, omits them."
+            ),
         )
         normalize_attribute_names: bool = Field(
             default=False,
@@ -689,10 +691,14 @@ class FlextLdifModelsConfig:
                 "Default 'add' for schema/ACL phases."
             ),
         )
-        # NEW FIELDS FOR client-a OUD MIGRATION - Phase-aware ACL handling and original entry commenting
+        # NEW FIELDS FOR client-a OUD MIGRATION
+        # Phase-aware ACL handling and original entry commenting
         write_original_entry_as_comment: bool = Field(
             default=False,
-            description="If True, writes original source entry as commented LDIF block before converted entry.",
+            description=(
+                "If True, writes original source entry as commented LDIF block "
+                "before converted entry."
+            ),
         )
         entry_category: str | None = Field(
             default=None,
@@ -741,18 +747,21 @@ class FlextLdifModelsConfig:
         write_transformation_comments: bool = Field(
             default=False,
             description=(
-                "If True, writes transformation comments with tags before modified attributes. "
-                "Tags: [REMOVED], [RENAMED], [TRANSFORMED]. "
-                "Example: '# [REMOVED] oldattr: value' or '# [RENAMED] old -> new: value'."
+                "If True, writes transformation comments with tags before "
+                "modified attributes. Tags: [REMOVED], [RENAMED], [TRANSFORMED]. "
+                "Example: '# [REMOVED] oldattr: value' or "
+                "'# [RENAMED] old -> new: value'."
             ),
         )
         use_original_acl_format_as_name: bool = Field(
             default=False,
             description=(
-                "If True and entry_category='acl', uses the original ACL format from "
-                "metadata (ACL_ORIGINAL_FORMAT) as the ACI name instead of generated name. "
-                "Control characters are sanitized (ASCII < 0x20 or > 0x7E replaced with "
-                "spaces, double quotes removed). Useful for OID→OUD migration to preserve "
+                "If True and entry_category='acl', uses the original ACL format "
+                "from metadata (ACL_ORIGINAL_FORMAT) as the ACI name instead of "
+                "generated name. "
+                "Control characters are sanitized (ASCII < 0x20 or > 0x7E "
+                "replaced with spaces, double quotes removed). "
+                "Useful for OID→OUD migration to preserve "
                 "original ACL context as the new ACI name."
             ),
         )
@@ -972,7 +981,9 @@ class FlextLdifModelsConfig:
 
         auto_parse_schema: bool = Field(
             default=True,
-            description="If True, automatically parses schema definitions from entries.",
+            description=(
+                "If True, automatically parses schema definitions from entries."
+            ),
         )
         auto_extract_acls: bool = Field(
             default=True,
@@ -980,7 +991,10 @@ class FlextLdifModelsConfig:
         )
         preserve_attribute_order: bool = Field(
             default=False,
-            description="If True, preserves the original attribute order from the LDIF file in Entry.metadata.",
+            description=(
+                "If True, preserves the original attribute order from the LDIF "
+                "file in Entry.metadata."
+            ),
         )
         validate_entries: bool = Field(
             default=True,
@@ -994,15 +1008,20 @@ class FlextLdifModelsConfig:
             default=100,
             ge=0,
             le=10000,
-            description="Maximum number of parsing errors to collect before stopping. 0 means no limit.",
+            description=(
+                "Maximum number of parsing errors to collect before stopping. "
+                "0 means no limit."
+            ),
         )
         include_operational_attrs: bool = Field(
             default=False,
-            description="If True, includes operational attributes in parsed entries.",
+            description=("If True, includes operational attributes in parsed entries."),
         )
         strict_schema_validation: bool = Field(
             default=False,
-            description="If True, applies strict schema validation and fails on violations.",
+            description=(
+                "If True, applies strict schema validation and fails on violations."
+            ),
         )
 
     class MigrationPipelineParams(FlextModelsEntity.Value):
@@ -1034,7 +1053,9 @@ class FlextLdifModelsConfig:
         )
         migration_config: FlextLdifModelsConfig.MigrationConfig | None = Field(
             default=None,
-            description="Optional migration configuration for file organization and filtering",
+            description=(
+                "Optional migration configuration for file organization and filtering"
+            ),
         )
         enable_quirks_detection: bool = Field(
             default=True,

@@ -30,6 +30,14 @@ from flext_ldif.typings import FlextLdifTypes
 class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]):
     """Direct LDIF writing service using flext-core APIs.
 
+    Business Rule: Writer service delegates directly to server-specific entry quirks
+    for LDIF writing. All server-specific formatting and transformations are handled
+    by quirks, ensuring RFC 2849 compliance with server enhancements.
+
+    Implication: Writing uses the same quirk system as parsing, ensuring round-trip
+    compatibility. Format options control output formatting (changetype, encoding, etc.)
+    while quirks handle server-specific attribute transformations.
+
     This service provides minimal, direct LDIF writing by delegating
     to FlextLdifServer entry quirks which handle all server-specific quirks.
     No unnecessary abstraction layers or routing logic.
@@ -38,7 +46,15 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
     _server: FlextLdifServer
 
     def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize writer with optional server instance."""
+        """Initialize writer with optional server instance.
+
+        Business Rule: Server registry is optional - defaults to global instance if not provided.
+        This enables dependency injection for testing while maintaining convenience defaults.
+
+        Args:
+            server: Optional FlextLdifServer instance (defaults to global instance)
+
+        """
         super().__init__()
         # Use object.__setattr__ for frozen model
         object.__setattr__(
@@ -57,13 +73,22 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
     ) -> FlextResult[str]:
         """Write entries to LDIF string format.
 
+        Business Rule: String writing uses server-specific entry quirks for formatting.
+        Format options control output style (changetype, encoding, attribute ordering).
+        Invalid server types result in fail-fast error responses. Empty entry lists
+        result in empty LDIF strings (valid per RFC 2849).
+
+        Implication: Server type selection determines quirk used for formatting.
+        Format options can override default formatting behavior. WriteOptions can be
+        converted to WriteFormatOptions for compatibility.
+
         Args:
-            entries: Entries to write
-            server_type: Server type for quirk selection
+            entries: Entries to write (empty list results in empty LDIF)
+            server_type: Server type for quirk selection (defaults to "rfc")
             format_options: Write options (WriteFormatOptions or WriteOptions)
 
         Returns:
-            FlextResult containing LDIF string
+            FlextResult containing LDIF string (RFC 2849 format)
 
         """
         # Get entry quirk for writing
@@ -139,14 +164,21 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
     ) -> FlextResult[FlextLdifModelsResults.WriteResponse]:
         """Write entries to LDIF file.
 
+        Business Rule: File writing delegates to write_to_string() then writes content
+        to file using UTF-8 encoding per RFC 2849. File write errors (OSError, UnicodeEncodeError)
+        result in fail-fast error responses. Response includes statistics for processed entries.
+
+        Implication: File writing maintains RFC compliance with UTF-8 encoding. Directory
+        creation is not handled - parent directories must exist or write will fail.
+
         Args:
             entries: Entries to write
-            path: Output file path
-            server_type: Server type for quirk selection
-            format_options: Write options
+            path: Output file path (parent directory must exist)
+            server_type: Server type for quirk selection (defaults to "rfc")
+            format_options: Write options (WriteFormatOptions or WriteOptions)
 
         Returns:
-            FlextResult containing write response
+            FlextResult containing WriteResponse with content and statistics
 
         """
         # First get the LDIF string
@@ -165,9 +197,10 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
             return FlextResult.fail(f"Failed to write LDIF file {path}: {e}")
 
         # Create response with basic statistics
+        # Statistics is a PEP 695 type alias - use the underlying class directly
         response = FlextLdifModelsResults.WriteResponse(
             content=ldif_content,
-            statistics=FlextLdifModels.Statistics(
+            statistics=FlextLdifModelsResults.Statistics(
                 total_entries=len(entries),
                 processed_entries=len(entries),
             ),
@@ -191,12 +224,21 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
     ) -> FlextResult[str | FlextLdifModelsResults.WriteResponse]:
         """Write entries to LDIF format (string or file).
 
+        Business Rule: Unified write method routes to string or file writing based on
+        output_path parameter. If output_path is provided, delegates to write_to_file().
+        Otherwise delegates to write_to_string(). This provides convenient unified interface
+        for both output formats.
+
+        Implication: Return type varies based on output target - string for string output,
+        WriteResponse for file output. Callers must handle union type appropriately.
+
         Args:
             entries: Entries to write
-            target_server_type: Server type for quirk selection
-            _output_target: Output target type ("string" or "file") - for compatibility
+            target_server_type: Server type for quirk selection (defaults to "rfc")
+            _output_target: Output target type (deprecated, use output_path instead)
             output_path: If provided, write to file; otherwise return string
-            format_options: Write options
+            format_options: Write options (WriteFormatOptions or WriteOptions)
+            _template_data: Template data (unused, for compatibility)
 
         Returns:
             FlextResult containing LDIF string (if no output_path) or WriteResponse (if output_path)
@@ -228,7 +270,25 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
     ) -> FlextResult[FlextLdifModelsResults.WriteResponse]:
         """Execute write operation with parameters.
 
-        This is the main entry point for the service.
+        Business Rule: Execute method provides parameter-based write execution for
+        service protocol compliance. Parameters must include 'entries' key with list
+        of Entry models. Optional parameters include 'output_path', 'server_type', and
+        'format_options'. Missing required parameters result in fail-fast error responses.
+
+        Implication: This method enables service-based execution patterns while maintaining
+        type safety through parameter validation. Used internally by service orchestration
+        layers.
+
+        Args:
+            params: Execution parameters dict with 'entries' (required) and optional
+                   'output_path', 'server_type', 'format_options'
+
+        Returns:
+            FlextResult containing WriteResponse or error
+
+        Note:
+            This is the main entry point for the service.
+
         """
         if params is None:
             params = {}
@@ -283,10 +343,11 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
             return FlextResult.ok(result_value)
 
         # Convert string result to WriteResponse
+        # Statistics is a PEP 695 type alias - use the underlying class directly
         return FlextResult.ok(
             FlextLdifModelsResults.WriteResponse(
                 content=str(result_value),
-                statistics=FlextLdifModels.Statistics(
+                statistics=FlextLdifModelsResults.Statistics(
                     total_entries=len(entries),
                     processed_entries=len(entries),
                 ),

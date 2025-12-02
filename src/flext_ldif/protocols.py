@@ -70,16 +70,37 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryProtocol(Protocol):
             """Protocol for LDIF Entry models.
 
-            Defines structural interface that Entry models must satisfy.
-            Uses abstract types for all attributes.
+            Business Rule: Entry protocol defines the structural contract for LDIF entries
+            that all Entry implementations must satisfy. The protocol uses union types
+            to accept both primitive types and domain model wrappers:
+            - dn: Accepts str or DistinguishedName wrapper (has .value property)
+            - attributes: Accepts dict-like Mapping or LdifAttributes wrapper (has .attributes)
+
+            Implication: Code using EntryProtocol should handle both primitive and model types.
+            Use FlextLdifUtilities.DN.get_dn_value() for safe DN extraction.
+            Use FlextLdifUtilities.Attributes helpers for safe attribute access.
+
+            The protocol allows None for these fields to support RFC violation capture
+            during parsing (RFC 2849 § 2 violations are captured, not rejected).
             """
 
-            dn: str
-            attributes: Mapping[str, Sequence[str]]
-            metadata: FlextTypes.Metadata | None
+            @property
+            def dn(self) -> str | object | None:
+                """Distinguished Name - str, DistinguishedName model, or None for violations."""
+                ...
+
+            @property
+            def attributes(self) -> Mapping[str, Sequence[str]] | object | None:
+                """Entry attributes - Mapping, LdifAttributes model, or None for violations."""
+                ...
+
+            @property
+            def metadata(self) -> FlextTypes.Metadata | None:
+                """Optional metadata for processing context."""
+                ...
 
             def get_objectclass_names(self) -> Sequence[str]:
-                """Get list of objectClass values."""
+                """Get list of objectClass values from entry."""
                 ...
 
             def model_copy(
@@ -88,20 +109,25 @@ class FlextLdifProtocols(FlextProtocols):
                 deep: bool = False,
                 update: FlextTypes.Metadata | None = None,
             ) -> Self:
-                """Create a copy of the entry."""
+                """Create a copy of the entry with optional updates."""
                 ...
 
         @runtime_checkable
         class EntryWithDnProtocol(Protocol):
             """Protocol for objects that have a DN attribute.
 
-            Minimal protocol for objects that contain a DN.
-            Used for type-safe DN extraction from various sources.
-            Supports both string DNs and DistinguishedName models with .value attribute.
+            Business Rule: Minimal protocol for any object that contains a DN.
+            Accepts both primitive string DNs and DistinguishedName model instances.
+
+            Implication: Always use FlextLdifUtilities.DN.get_dn_value() to extract
+            the string value safely from objects implementing this protocol.
+            Direct access to .dn may return a DistinguishedName object instead of str.
             """
 
-            dn: str
-            """DN value as string. For DistinguishedName models, use .value to get string."""
+            @property
+            def dn(self) -> str | object | None:
+                """DN - str, DistinguishedName model, or None."""
+                ...
 
         @runtime_checkable
         class AttributeValueProtocol(Protocol):
@@ -194,17 +220,56 @@ class FlextLdifProtocols(FlextProtocols):
         class CategoryRulesProtocol(Protocol):
             """Protocol for category rules configuration.
 
-            Defines structural interface that CategoryRules models must satisfy.
+            Business Rule: CategoryRules define patterns to categorize LDIF entries
+            into semantic groups (users, groups, hierarchy, schema, ACLs).
+            Patterns are matched against entry DNs and objectClass values.
+
+            Implication: Pattern matching is case-insensitive. Empty patterns mean
+            no entries match that category. The dn_patterns use fnmatch-style wildcards.
+
+            Note: Properties return list[str] to be compatible with both list and Sequence
+            implementations in concrete classes.
             """
 
-            user_dn_patterns: Sequence[str]
-            group_dn_patterns: Sequence[str]
-            hierarchy_dn_patterns: Sequence[str]
-            schema_dn_patterns: Sequence[str]
-            user_objectclasses: Sequence[str]
-            group_objectclasses: Sequence[str]
-            hierarchy_objectclasses: Sequence[str]
-            acl_attributes: Sequence[str]
+            @property
+            def user_dn_patterns(self) -> list[str]:
+                """DN patterns to match user entries (fnmatch wildcards)."""
+                ...
+
+            @property
+            def group_dn_patterns(self) -> list[str]:
+                """DN patterns to match group entries."""
+                ...
+
+            @property
+            def hierarchy_dn_patterns(self) -> list[str]:
+                """DN patterns to match hierarchy/organizational entries."""
+                ...
+
+            @property
+            def schema_dn_patterns(self) -> list[str]:
+                """DN patterns to match schema entries."""
+                ...
+
+            @property
+            def user_objectclasses(self) -> list[str]:
+                """ObjectClass names that identify user entries."""
+                ...
+
+            @property
+            def group_objectclasses(self) -> list[str]:
+                """ObjectClass names that identify group entries."""
+                ...
+
+            @property
+            def hierarchy_objectclasses(self) -> list[str]:
+                """ObjectClass names that identify hierarchy entries."""
+                ...
+
+            @property
+            def acl_attributes(self) -> list[str]:
+                """Attribute names that identify ACL entries (e.g., 'aci', 'orclACI')."""
+                ...
 
     class Services:
         """Service interface protocols for LDIF operations."""
@@ -342,6 +407,48 @@ class FlextLdifProtocols(FlextProtocols):
                 tuple[str, Sequence[FlextLdifProtocols.Models.EntryProtocol]]
             ]:
                 """Get all category key-value pairs."""
+                ...
+
+        @runtime_checkable
+        class EntryResultProtocol(Protocol):
+            """Protocol for EntryResult model.
+
+            Business Rule: EntryResult is the unified result type for LDIF operations
+            returning categorized entries. This protocol enables type-safe service
+            return types without depending on concrete model implementations.
+
+            Implication: Services returning EntryResult can use this protocol in
+            their return type annotations, enabling proper type checking while
+            maintaining abstraction. The protocol uses Sequence for covariance
+            (list[Entry] is assignable to Sequence[EntryProtocol]).
+
+            Note: Uses Sequence[EntryProtocol] instead of list[Entry] to allow
+            covariant return types. Entry implements EntryProtocol via structural
+            typing, so list[Entry] satisfies Sequence[EntryProtocol].
+            """
+
+            @property
+            def entries(self) -> Sequence[FlextLdifProtocols.Models.EntryProtocol]:
+                """Get all entries from all categories combined.
+
+                Returns:
+                    Sequence of Entry objects implementing EntryProtocol.
+
+                """
+                ...
+
+            @property
+            def content(self) -> Sequence[FlextLdifProtocols.Models.EntryProtocol]:
+                """Alias for entries property for backward compatibility.
+
+                Returns:
+                    Sequence of Entry objects implementing EntryProtocol.
+
+                """
+                ...
+
+            def __len__(self) -> int:
+                """Return the number of entries."""
                 ...
 
         @runtime_checkable

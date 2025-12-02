@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import re
 from collections.abc import Callable, Mapping
+from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from flext_core.typings import FlextTypes
@@ -885,8 +886,6 @@ class FlextLdifUtilitiesSchema:
 
         # Build parsed attribute dict with correct types
         # Convert extensions and syntax_validation_result to match ParsedAttributeDict type
-        from typing import cast
-
         extensions_converted: dict[str, FlextTypes.ScalarValue | list[str]] = {
             k: cast("FlextTypes.ScalarValue | list[str]", v)
             for k, v in extensions_raw.items()
@@ -1017,8 +1016,6 @@ class FlextLdifUtilitiesSchema:
         )
 
         # Convert extensions to match ParsedObjectClassDict type
-        from typing import cast
-
         extensions_converted: dict[str, FlextTypes.ScalarValue | list[str]] = {
             k: cast("FlextTypes.ScalarValue | list[str]", v)
             for k, v in extensions_raw.items()

@@ -242,12 +242,17 @@ class TestSyntaxModel:
 
     def test_syntax_with_metadata(self) -> None:
         """Test creating Syntax with quirk metadata."""
+        from typing import cast
+
         metadata = FlextLdifModels.QuirkMetadata(
             quirk_type="oid",
-            extensions={
-                "priority": 50,
-                "description": "OID-specific syntax handling",
-            },
+            extensions=cast(
+                "FlextLdifModels.DynamicMetadata",
+                {
+                    "priority": 50,
+                    "description": "OID-specific syntax handling",
+                },
+            ),
         )
         syntax = FlextLdifModels.Syntax(
             oid="2.16.840.1.113894.1.1.1",

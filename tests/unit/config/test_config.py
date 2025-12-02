@@ -302,7 +302,12 @@ class TestFlextLdifConfig:
             """Test invalid ldif_encoding value."""
             with pytest.raises(ValidationError):
                 # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifConfig(ldif_encoding=cast("FlextLdifConstants.LiteralTypes.EncodingLiteral", "invalid-encoding"))
+                FlextLdifConfig(
+                    ldif_encoding=cast(
+                        "FlextLdifConstants.LiteralTypes.EncodingLiteral",
+                        "invalid-encoding",
+                    )
+                )
 
         @pytest.mark.parametrize(
             "level",
@@ -311,14 +316,23 @@ class TestFlextLdifConfig:
         def test_validation_level_valid(self, level: str) -> None:
             """Test valid validation_level values."""
             # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifConfig(validation_level=cast("FlextLdifConstants.LiteralTypes.ValidationLevelLiteral", level))
+            config = FlextLdifConfig(
+                validation_level=cast(
+                    "FlextLdifConstants.LiteralTypes.ValidationLevelLiteral", level
+                )
+            )
             assert config.validation_level == level
 
         def test_validation_level_invalid(self) -> None:
             """Test invalid validation_level value."""
             with pytest.raises(ValidationError):
                 # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifConfig(validation_level=cast("FlextLdifConstants.LiteralTypes.ValidationLevelLiteral", "invalid"))
+                FlextLdifConfig(
+                    validation_level=cast(
+                        "FlextLdifConstants.LiteralTypes.ValidationLevelLiteral",
+                        "invalid",
+                    )
+                )
 
         @pytest.mark.parametrize(
             "server_type",
@@ -335,7 +349,12 @@ class TestFlextLdifConfig:
             """Test invalid server_type value."""
             with pytest.raises(ValidationError):
                 # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifConfig(server_type=cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "invalid-server"))
+                FlextLdifConfig(
+                    server_type=cast(
+                        "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                        "invalid-server",
+                    )
+                )
 
         @pytest.mark.parametrize(
             "detail_level",
@@ -344,14 +363,24 @@ class TestFlextLdifConfig:
         def test_analytics_detail_level_valid(self, detail_level: str) -> None:
             """Test valid analytics_detail_level values."""
             # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifConfig(analytics_detail_level=cast("FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral", detail_level))
+            config = FlextLdifConfig(
+                analytics_detail_level=cast(
+                    "FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral",
+                    detail_level,
+                )
+            )
             assert config.analytics_detail_level == detail_level
 
         def test_analytics_detail_level_invalid(self) -> None:
             """Test invalid analytics_detail_level value."""
             with pytest.raises(ValidationError):
                 # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifConfig(analytics_detail_level=cast("FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral", "invalid"))
+                FlextLdifConfig(
+                    analytics_detail_level=cast(
+                        "FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral",
+                        "invalid",
+                    )
+                )
 
         @pytest.mark.parametrize(
             "mode",
@@ -360,14 +389,23 @@ class TestFlextLdifConfig:
         def test_error_recovery_mode_valid(self, mode: str) -> None:
             """Test valid error_recovery_mode values."""
             # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifConfig(error_recovery_mode=cast("FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral", mode))
+            config = FlextLdifConfig(
+                error_recovery_mode=cast(
+                    "FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral", mode
+                )
+            )
             assert config.error_recovery_mode == mode
 
         def test_error_recovery_mode_invalid(self) -> None:
             """Test invalid error_recovery_mode value."""
             with pytest.raises(ValidationError):
                 # Type narrowing: cast invalid value for runtime validation test
-                FlextLdifConfig(error_recovery_mode=cast("FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral", "invalid"))
+                FlextLdifConfig(
+                    error_recovery_mode=cast(
+                        "FlextLdifConstants.LiteralTypes.ErrorRecoveryModeLiteral",
+                        "invalid",
+                    )
+                )
 
     class Encoding:
         """Test encoding-related functionality."""
@@ -380,7 +418,12 @@ class TestFlextLdifConfig:
         def test_get_effective_encoding_active_directory(self) -> None:
             """Test get_effective_encoding returns utf-16 for AD server."""
             # Type narrowing: cast str to Literal for type checker
-            ad_config = FlextLdifConfig(server_type=cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "active_directory"))
+            ad_config = FlextLdifConfig(
+                server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                    "active_directory",
+                )
+            )
             assert ad_config.get_effective_encoding() == "utf-16"
 
     class QuirksDetection:
@@ -398,11 +441,15 @@ class TestFlextLdifConfig:
         def test_detection_mode_valid(self, mode: str) -> None:
             """Test valid detection modes can be configured."""
             # Type narrowing: cast str to Literal for type checker
-            mode_literal = cast("FlextLdifConstants.LiteralTypes.DetectionModeLiteral", mode)
+            mode_literal = cast(
+                "FlextLdifConstants.LiteralTypes.DetectionModeLiteral", mode
+            )
             if mode == "manual":
                 config = FlextLdifConfig(
                     quirks_detection_mode=mode_literal,
-                    quirks_server_type=cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"),
+                    quirks_server_type=cast(
+                        "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"
+                    ),
                 )
             else:
                 config = FlextLdifConfig(quirks_detection_mode=mode_literal)
@@ -430,11 +477,15 @@ class TestFlextLdifConfig:
         def test_relaxed_parsing_combinations(self, mode: str) -> None:
             """Test relaxed parsing with all detection mode combinations."""
             # Type narrowing: cast str to Literal for type checker
-            mode_literal = cast("FlextLdifConstants.LiteralTypes.DetectionModeLiteral", mode)
+            mode_literal = cast(
+                "FlextLdifConstants.LiteralTypes.DetectionModeLiteral", mode
+            )
             if mode == "manual":
                 config = FlextLdifConfig(
                     quirks_detection_mode=mode_literal,
-                    quirks_server_type=cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"),
+                    quirks_server_type=cast(
+                        "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"
+                    ),
                     enable_relaxed_parsing=True,
                 )
             else:
@@ -448,8 +499,12 @@ class TestFlextLdifConfig:
         def test_manual_mode_with_server_type(self) -> None:
             """Test manual mode with server type specified."""
             config = FlextLdifConfig(
-                quirks_detection_mode=cast("FlextLdifConstants.LiteralTypes.DetectionModeLiteral", "manual"),
-                quirks_server_type=cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"),
+                quirks_detection_mode=cast(
+                    "FlextLdifConstants.LiteralTypes.DetectionModeLiteral", "manual"
+                ),
+                quirks_server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"
+                ),
             )
             assert config.quirks_detection_mode == "manual"
             assert config.quirks_server_type == "oud"
@@ -457,8 +512,12 @@ class TestFlextLdifConfig:
         def test_disabled_mode_with_server_type(self) -> None:
             """Test disabled mode can have server type (ignored during parsing)."""
             config = FlextLdifConfig(
-                quirks_detection_mode=cast("FlextLdifConstants.LiteralTypes.DetectionModeLiteral", "disabled"),
-                quirks_server_type=cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"),
+                quirks_detection_mode=cast(
+                    "FlextLdifConstants.LiteralTypes.DetectionModeLiteral", "disabled"
+                ),
+                quirks_server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", "oud"
+                ),
             )
             assert config.quirks_detection_mode == "disabled"
             assert config.quirks_server_type == "oud"
@@ -491,7 +550,11 @@ class TestFlextLdifConfig:
         def test_analytics_detail_levels(self, level: str) -> None:
             """Test analytics detail level options."""
             # Type narrowing: cast str to Literal for type checker
-            config = FlextLdifConfig(analytics_detail_level=cast("FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral", level))
+            config = FlextLdifConfig(
+                analytics_detail_level=cast(
+                    "FlextLdifConstants.LiteralTypes.AnalyticsDetailLevelLiteral", level
+                )
+            )
             assert config.analytics_detail_level == level
 
     class Processing:

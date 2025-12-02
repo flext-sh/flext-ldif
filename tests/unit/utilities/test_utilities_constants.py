@@ -271,7 +271,7 @@ class TestFlextLdifUtilitiesConstants:
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        assert hasattr(FlextLdifUtilities.Constants, "_VALID_VALUES")
-        valid_values = FlextLdifUtilities.Constants._VALID_VALUES
+        assert hasattr(FlextLdifUtilities.Constants, "VALID_VALUES")
+        valid_values = FlextLdifUtilities.Constants.VALID_VALUES
         assert "server_type" in valid_values
         assert "encoding" in valid_values

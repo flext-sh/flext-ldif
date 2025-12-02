@@ -129,10 +129,14 @@ class TestOudDeviationMetadata:
             # Verify original_format_details is populated
             assert entry.metadata is not None
             # Type narrowing: ensure metadata is QuirkMetadata with original_format_details
-            if (isinstance(entry.metadata, FlextLdifModels.QuirkMetadata) and
-                entry.metadata.original_format_details is not None and
-                (hasattr(entry.metadata.original_format_details, 'dn_line') or
-                 hasattr(entry.metadata.original_format_details, 'trailing_info'))):
+            if (
+                isinstance(entry.metadata, FlextLdifModels.QuirkMetadata)
+                and entry.metadata.original_format_details is not None
+                and (
+                    hasattr(entry.metadata.original_format_details, "dn_line")
+                    or hasattr(entry.metadata.original_format_details, "trailing_info")
+                )
+            ):
                 # FormatDetails has these attributes
                 assert True  # Format details present
             # If original_format_details is None, format details may not be implemented yet
@@ -142,9 +146,11 @@ class TestOudDeviationMetadata:
             # Verify original DN is preserved
             assert entry.metadata is not None
             # Type narrowing: ensure metadata is QuirkMetadata with DN preservation
-            if (isinstance(entry.metadata, FlextLdifModels.QuirkMetadata) and
-                entry.metadata.original_format_details is not None and
-                hasattr(entry.metadata.original_format_details, 'dn_line')):
+            if (
+                isinstance(entry.metadata, FlextLdifModels.QuirkMetadata)
+                and entry.metadata.original_format_details is not None
+                and hasattr(entry.metadata.original_format_details, "dn_line")
+            ):
                 # DN line preserved in FormatDetails
                 assert True  # DN preservation tracked
             # If original_format_details is None, DN preservation may be tracked elsewhere
@@ -154,8 +160,10 @@ class TestOudDeviationMetadata:
             # Verify objectClass case is tracked
             assert entry.metadata is not None
             # Type narrowing: ensure metadata is QuirkMetadata with case preservation
-            if (isinstance(entry.metadata, FlextLdifModels.QuirkMetadata) and
-                "objectClass" in entry.metadata.original_attribute_case):
+            if (
+                isinstance(entry.metadata, FlextLdifModels.QuirkMetadata)
+                and "objectClass" in entry.metadata.original_attribute_case
+            ):
                 # objectClass case is preserved in original_attribute_case
                 assert True  # Case tracking present
 

@@ -54,6 +54,12 @@ class _DynamicCounts(FlextLdifModelsBase):
         str_strip_whitespace=True,
     )
 
+    def __hash__(self) -> int:
+        """Hash implementation for frozen model with __eq__."""
+        # Pydantic frozen models should have hash, but ruff requires explicit
+        # Since model is frozen, use id-based hash
+        return hash(id(self))
+
     def get_count(self, key: str, default: int = 0) -> int:
         """Get count for a key."""
         value = getattr(self, key, default)
@@ -115,11 +121,12 @@ class _DynamicCounts(FlextLdifModelsBase):
         """Compare with dict or another _DynamicCounts."""
         if isinstance(other, dict):
             # Convert self to dict for comparison
-            self_dict = {}
             # Check regular attributes (not starting with _) first
-            for key, value in self.__dict__.items():
-                if not key.startswith("_"):
-                    self_dict[key] = value
+            self_dict = {
+                key: value
+                for key, value in self.__dict__.items()
+                if not key.startswith("_")
+            }
             # Also check __pydantic_extra__
             extra = self.__pydantic_extra__
             if extra is not None:
@@ -424,7 +431,8 @@ type _DynCategoriesInput = dict[str, list[FlextLdifModelsDomains.Entry]]
 
 def _statistics_factory() -> FlextLdifModelsResults.Statistics:
     """Factory function for default Statistics (avoids PLW0108 lambda warning)."""
-    return globals()["FlextLdifModelsResults"].Statistics()
+    # Use direct reference to avoid Any return type
+    return FlextLdifModelsResults.Statistics()
 
 
 # =============================================================================
@@ -725,21 +733,29 @@ class FlextLdifModelsResults:
             return all_entries
 
         @property
-        def content(self) -> list[FlextLdifModelsDomains.Entry]:
+        def content(self) -> Sequence[FlextLdifModelsDomains.Entry]:
             """Alias for get_all_entries() for backward compatibility.
 
+            Business Rule: Returns Sequence instead of list to satisfy
+            EntryResultProtocol and enable covariance. The underlying
+            implementation returns list which satisfies Sequence[Entry].
+
             Returns:
-                List of all entries from all categories combined.
+                Sequence of all entries from all categories combined.
 
             """
             return self.get_all_entries()
 
         @property
-        def entries(self) -> list[FlextLdifModelsDomains.Entry]:
-            """Property to satisfy HasEntriesProtocol.
+        def entries(self) -> Sequence[FlextLdifModelsDomains.Entry]:
+            """Property to satisfy EntryResultProtocol and HasEntriesProtocol.
+
+            Business Rule: Returns Sequence instead of list to enable
+            covariant return types. This allows list[Entry] to be assigned
+            to Sequence[EntryProtocol] since Sequence is covariant.
 
             Returns:
-                List of all entries from all categories combined.
+                Sequence of all entries from all categories combined.
 
             """
             return self.get_all_entries()
@@ -799,7 +815,8 @@ class FlextLdifModelsResults:
             cls,
             entries: Sequence[FlextLdifModelsDomains.Entry],
             category: str = "all",
-            statistics: FlextLdifModelsResults.Statistics | None = None,  # Optional override
+            statistics: FlextLdifModelsResults.Statistics
+            | None = None,  # Optional override
         ) -> FlextLdifModelsResults.EntryResult:
             """Create EntryResult from list of entries.
 
@@ -1018,9 +1035,15 @@ class FlextLdifModelsResults:
             return list({type(e).__name__ for e in self.events})
 
     class Statistics(FlextModelsCollections.Statistics):
-        """Unified statistics model for all LDIF operations."""
+        """Unified statistics model for all LDIF operations.
+
+        Business Rule: Statistics model is frozen (immutable) to ensure data integrity
+        during processing pipelines. This follows the parent class pattern (FrozenValueModel)
+        and ensures consistency across the inheritance hierarchy.
+        """
 
         model_config = ConfigDict(
+            frozen=True,  # Consistent with parent FrozenValueModel
             extra="forbid",
             validate_default=True,
             str_strip_whitespace=True,
@@ -1856,7 +1879,12 @@ class FlextLdifModelsResults:
         def __getitem__(self, key: str) -> str | int | float | bool | None:
             """Get attribute value by key (dict-style access)."""
             if hasattr(self, key):
-                return getattr(self, key)
+                value = getattr(self, key)
+                # Type narrowing: ensure return type matches expected union
+                if isinstance(value, (str, int, float, bool, type(None))):
+                    return value
+                # Fallback: convert to string if not in expected types
+                return str(value) if value is not None else None
             raise KeyError(key)
 
         def __contains__(self, key: str) -> bool:
@@ -2067,7 +2095,7 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(frozen=True, validate_default=True)
 
-        entries: list[FlextLdifModelsDomains.Entry] = Field(
+        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(
             default_factory=list,
             description="Parsed LDIF entries",
         )
@@ -2078,29 +2106,40 @@ class FlextLdifModelsResults:
             FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
         ) = Field(None)
 
-        def get_entries(self) -> list[FlextLdifModelsDomains.Entry]:
+        def get_entries(self) -> Sequence[FlextLdifModelsDomains.Entry]:
             """Get parsed entries.
 
             Returns:
-                List of parsed entries
+                Sequence of parsed entries
 
             """
             # Convert domain entries to public facade entries
-            return [
-                FlextLdifModelsDomains.Entry(
-                    dn=FlextLdifModelsDomains.DistinguishedName(
-                        value=entry.dn.value
-                        if hasattr(entry.dn, "value")
-                        else str(entry.dn),
-                    ),
-                    attributes=FlextLdifModelsDomains.LdifAttributes(
-                        attributes=dict(entry.attributes.attributes)
-                        if hasattr(entry.attributes, "attributes")
-                        else dict(entry.attributes),
-                    ),
+            converted_entries: list[FlextLdifModelsDomains.Entry] = []
+            for entry in self.entries:
+                # Handle None dn and attributes
+                if entry.dn is None:
+                    continue  # Skip entries with None dn
+                if entry.attributes is None:
+                    continue  # Skip entries with None attributes
+
+                dn_value = (
+                    entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
                 )
-                for entry in self.entries
-            ]
+                attrs_dict = (
+                    dict(entry.attributes.attributes)
+                    if hasattr(entry.attributes, "attributes")
+                    else dict(entry.attributes)
+                )
+
+                converted_entries.append(
+                    FlextLdifModelsDomains.Entry(
+                        dn=FlextLdifModelsDomains.DistinguishedName(value=dn_value),
+                        attributes=FlextLdifModelsDomains.LdifAttributes(
+                            attributes=attrs_dict
+                        ),
+                    )
+                )
+            return converted_entries
 
     class AclResponse(FlextModelsEntity.Value):
         """Composed response from ACL extraction.

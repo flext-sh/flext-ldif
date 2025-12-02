@@ -10,7 +10,7 @@ import base64
 import contextlib
 import re
 from collections.abc import Callable
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from flext_core.typings import FlextTypes
@@ -19,6 +19,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
@@ -444,12 +445,19 @@ class FlextLdifUtilitiesParser:
 
         # Convert to list if needed
         existing = entry_dict[attr_name]
-        if not FlextRuntime.is_list_like(existing):
-            # Type narrowing: existing is str | set[str], convert to list
+        # Type narrowing: handle set[str] separately as it's not in GeneralValueType
+        if isinstance(existing, set):
+            # Convert set to list before appending
+            entry_dict[attr_name] = [*existing, attr_value]
+            return True
+        # For str and other types, check if list-like using FlextRuntime
+        # Cast to GeneralValueType for type checker (set[str] already handled above)
+        if not FlextRuntime.is_list_like(
+            cast("FlextTypes.GeneralValueType", existing),
+        ):
+            # Type narrowing: existing is str, convert to list
             if isinstance(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
-            elif isinstance(existing, set):
-                entry_dict[attr_name] = [*existing, attr_value]
             else:
                 entry_dict[attr_name] = [str(existing), attr_value]
         else:
@@ -717,9 +725,6 @@ class FlextLdifUtilitiesParser:
 
         """
         # Use build_attribute_metadata from base.py which handles server_type correctly
-        # Import here to avoid circular import (base.py imports parser.py)
-        from flext_ldif.servers.base import FlextLdifServersBase
-
         return FlextLdifServersBase.Schema.build_attribute_metadata(
             attr_definition=attr_definition,
             syntax=syntax,

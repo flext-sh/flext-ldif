@@ -17,6 +17,7 @@ import re
 import time
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
+from typing import cast
 
 from flext_core import (
     FlextLogger,
@@ -84,24 +85,33 @@ class FlextLdifFilters(
     @staticmethod
     def _get_or_create_metadata(
         entry: FlextLdifModels.Entry,
-        quirk_type: str,
+        operation: str = "filter",
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> FlextLdifModels.QuirkMetadata | FlextLdifModelsDomains.QuirkMetadata:
         """Get or create metadata for entry using FlextLdifUtilities pattern.
 
-        Reduces code duplication across metadata operations.
-        Uses Entry + Metadata pattern consistently.
+        Business Rule: QuirkMetadata.quirk_type must be a valid ServerTypeLiteral.
+        The filter operation name is stored in extensions.data["operation"] for tracking.
+        Default server_type is "rfc" for RFC-compliant filter operations.
 
         Args:
-            entry: Entry to get/create metadata for
-            quirk_type: Quirk type identifier for new metadata
+            entry: Entry to get/create metadata for.
+            operation: Filter operation identifier (stored in extensions.data).
+            server_type: Server type literal for quirk identification.
 
         Returns:
-            QuirkMetadata instance (existing or newly created)
+            QuirkMetadata instance (existing or newly created).
 
         """
         if entry.metadata is not None:
             return entry.metadata
-        return FlextLdifModels.QuirkMetadata(quirk_type=quirk_type)
+        # Business Rule: Create metadata with operation stored in extensions.
+        # DynamicMetadata uses __setitem__ for dict-like access (Pydantic v2 extra="allow").
+        metadata = FlextLdifModels.QuirkMetadata(quirk_type=server_type)
+        # Access extra fields via Pydantic's __pydantic_extra__ (dict-like interface)
+        if metadata.extensions.__pydantic_extra__ is not None:
+            metadata.extensions.__pydantic_extra__["operation"] = operation
+        return metadata
 
     @staticmethod
     def _ensure_str_list(value: str | list[str] | None) -> list[str]:
@@ -221,7 +231,26 @@ class FlextLdifFilters(
             *,
             mark_excluded: bool,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
-            """Filter entries by DN pattern."""
+            """Filter entries by DN pattern.
+
+            Business Rule: DN filtering uses fnmatch for wildcard pattern matching (*, ?, [seq]).
+            Mode determines inclusion (keep matches) or exclusion (remove matches). Case-insensitive
+            matching ensures consistent behavior. Entries can be marked as excluded in metadata
+            instead of being removed.
+
+            Implication: Pattern matching follows RFC 4514 DN format with wildcard extensions.
+            Excluded entries maintain metadata for audit trail and potential restoration.
+
+            Args:
+                entries: List of entries to filter
+                dn_pattern: DN pattern with wildcards (*, ?, [seq])
+                mode: Filter mode ("include" or "exclude")
+                mark_excluded: If True, mark excluded entries in metadata instead of removing
+
+            Returns:
+                FlextResult containing filtered entries (or entries with exclusion metadata)
+
+            """
             # Validate mode
             valid_modes = (
                 FlextLdifConstants.Modes.INCLUDE,
@@ -516,19 +545,24 @@ class FlextLdifFilters(
             }
 
             # Normalize category to string for lookup
-            category_str = (
-                str(category.value) if hasattr(category, "value") else str(category)
-            )
+            # CategoryLiteral is a Literal type, not an Enum, so just use str()
+            category_str = str(category)
             dn_patterns = pattern_map.get(category_str, [])
             if not dn_patterns:
                 return (False, None)
 
             try:
-                if not FlextLdifFilters.Exclusion.matches_dn_pattern(
-                    entry.dn,
-                    dn_patterns,
-                ):
-                    return (True, f"DN pattern does not match {category} rules")
+                # Business Rule: DN pattern matching handles None DNs gracefully
+                # None DNs cannot match patterns, so they are excluded from category
+                if entry.dn is not None:
+                    if not FlextLdifFilters.Exclusion.matches_dn_pattern(
+                        entry.dn,
+                        dn_patterns,
+                    ):
+                        return (True, f"DN pattern does not match {category} rules")
+                else:
+                    # None DN entries are excluded from categorization
+                    return (True, "Entry has no DN (cannot match patterns)")
             except ValueError:
                 # Invalid patterns - just let it through
                 pass
@@ -579,11 +613,12 @@ class FlextLdifFilters(
                     )
 
                 # Get or create metadata using FlextLdifUtilities pattern
-                current_metadata = entry.metadata
-                if current_metadata is None:
-                    current_metadata = FlextLdifModels.QuirkMetadata(
-                        quirk_type="filter_marked",
-                    )
+                # Business Rule: Use "rfc" as default server type for filter operations.
+                # The operation name "filter_marked" is stored in extensions.data.
+                current_metadata = FlextLdifFilters._get_or_create_metadata(
+                    entry,
+                    operation="filter_marked",
+                )
 
                 # Build marked attributes dict with original values
                 attrs_lower = {attr.lower() for attr in attributes_to_mark}
@@ -591,17 +626,26 @@ class FlextLdifFilters(
                 marked_for_tracking: dict[str, list[str]] = {}
                 marked_with_status: dict[str, dict[str, str]] = {}
 
-                for attr_name, attr_values in entry.attributes.items():
+                # Business Rule: Attribute iteration requires non-None attributes.
+                # None attributes indicate invalid entry state - return failure.
+                # Type narrowing: entry.attributes is not None (already checked above)
+                # Get attributes dict from LdifAttributes model
+                # LdifAttributes.attributes has type dict[str, list[str]]
+                attrs_dict: dict[str, list[str]] = (
+                    entry.attributes.attributes
+                    if hasattr(entry.attributes, "attributes")
+                    else {}
+                )
+                if not attrs_dict:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+                for attr_name, attr_values in attrs_dict.items():
                     if attr_name.lower() in attrs_lower:
-                        # Store original values for recovery with explicit str conversion
-                        # Normalize to list[str] regardless of input type
-                        values_list: list[str]
-                        if isinstance(attr_values, (list, tuple)):
-                            values_list = [str(v) for v in attr_values]
-                        else:
-                            values_list = [str(attr_values)]
-                        marked_attributes[attr_name] = values_list
-                        marked_for_tracking[attr_name] = values_list
+                        # Store original values for recovery
+                        # Business Rule: Attribute values from LdifAttributes are already
+                        # list[str], so we just copy them. No conversion needed.
+                        marked_attributes[attr_name] = list(attr_values)
+                        marked_for_tracking[attr_name] = list(attr_values)
                         # Build status dict for extensions
                         marked_with_status[attr_name] = {"status": status}
 
@@ -697,9 +741,10 @@ class FlextLdifFilters(
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
                 # Get or create metadata using FlextLdifUtilities pattern
+                # Business Rule: Use "rfc" as default server type for filter operations.
                 current_metadata = FlextLdifFilters._get_or_create_metadata(
                     entry,
-                    "filter_marked",
+                    operation="filter_marked",
                 )
 
                 # Store marked objectClasses in removed_attributes using objectClass key
@@ -931,11 +976,11 @@ class FlextLdifFilters(
             )
 
             # Get or create metadata using FlextLdifUtilities pattern
-            current_metadata = entry.metadata
-            if current_metadata is None:
-                current_metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type="filter_excluded",
-                )
+            # Business Rule: Use "rfc" as default server type for filter operations.
+            current_metadata = FlextLdifFilters._get_or_create_metadata(
+                entry,
+                operation="filter_excluded",
+            )
 
             # Update extensions with exclusion info
             updated_extensions = current_metadata.extensions.model_dump()
@@ -993,19 +1038,30 @@ class FlextLdifFilters(
         def matches_dn_pattern(
             dn: str
             | FlextLdifModels.DistinguishedName
-            | FlextLdifModelsDomains.DistinguishedName,
+            | FlextLdifModelsDomains.DistinguishedName
+            | None,
             patterns: list[str],
         ) -> bool:
             """Check if DN matches any of the regex patterns.
 
+            Business Rule: DN pattern matching supports None DN values - returns False
+            if DN is None (None DNs cannot match patterns). Pattern matching uses
+            fnmatch for wildcard support (*, ?, [seq]) with case-insensitive comparison.
+
+            Implication: This method enables flexible DN filtering for entries that may
+            have None DNs (invalid entries). Pattern matching follows RFC 4514 DN format
+            with wildcard extensions.
+
             Args:
-                dn: DN string or FlextLdifModels.DistinguishedName object
-                patterns: List of regex patterns to match against
+                dn: DN string, DistinguishedName object, or None
+                patterns: List of regex/fnmatch patterns to match against
 
             Returns:
-                True if DN matches any pattern, False otherwise
+                True if DN matches any pattern, False otherwise (or if DN is None)
 
             """
+            if dn is None:
+                return False
             if not patterns:
                 return False
 
@@ -1085,11 +1141,11 @@ class FlextLdifFilters(
 
                     if should_delete:
                         # Mark as virtually deleted using Entry + Metadata pattern
-                        current_metadata = entry.metadata
-                        if current_metadata is None:
-                            current_metadata = FlextLdifModels.QuirkMetadata(
-                                quirk_type="virtual_deleted",
-                            )
+                        # Business Rule: Use "rfc" as default server type for filter operations.
+                        current_metadata = FlextLdifFilters._get_or_create_metadata(
+                            entry,
+                            operation="virtual_deleted",
+                        )
 
                         # Update extensions with virtual delete markers
                         updated_extensions = current_metadata.extensions.model_dump()
@@ -1307,7 +1363,7 @@ class FlextLdifFilters(
         """Execute filtering based on filter_criteria and mode."""
         if not self.entries:
             return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].ok(
-                FlextLdifModels.EntryResult.empty(),
+                FlextLdifModels.EntryResult.empty(),  # type: ignore[arg-type]
             )
 
         # Track filtering metrics (MANDATORY - eventos obrigatórios)
@@ -1335,13 +1391,15 @@ class FlextLdifFilters(
                 filter_duration_ms = (time.perf_counter() - start_time) * 1000.0
                 entries_after = len(filtered_entries)
 
-                # Build filter criteria dict with only valid FilterCriteria fields
-                criteria_dict: dict[str, object] = {
-                    "filter_type": self.filter_criteria,
-                    "mode": self.mode,
-                }
-                if self.dn_pattern:
-                    criteria_dict["pattern"] = self.dn_pattern
+                # Build filter criteria model directly with typed parameters
+                # Business Rule: FilterCriteria captures filter configuration for audit
+                # events. We create it with explicit typed parameters to ensure type
+                # safety and avoid dict unpacking issues with object types.
+                filter_criteria_model = FlextLdifModelsConfig.FilterCriteria(
+                    filter_type=self.filter_criteria,
+                    pattern=self.dn_pattern,
+                    mode=self.mode,
+                )
                 # FilterCriteria doesn't have objectclass, attributes, or base_dn fields
                 # These are stored in the filter service itself, not in FilterCriteria
                 filter_event = FlextLdifModelsEvents.FilterEvent(
@@ -1352,20 +1410,20 @@ class FlextLdifFilters(
                     filter_operation=f"filter_by_{self.filter_criteria}",
                     entries_before=entries_before,
                     entries_after=entries_after,
-                    filter_criteria=[
-                        FlextLdifModelsConfig.FilterCriteria(**criteria_dict),
-                    ],
+                    filter_criteria=[filter_criteria_model],
                     filter_duration_ms=filter_duration_ms,
                 )
                 # Store event for retrieval via get_last_event()
-                self._last_event = filter_event
+                # Business Rule: Event storage uses object.__setattr__ for PrivateAttr
+                # in frozen models. Events enable audit trail and debugging capabilities.
+                object.__setattr__(self, "_last_event", filter_event)
 
                 # Wrap filtered entries in EntryResult for API consistency
                 entry_result = FlextLdifModels.EntryResult.from_entries(
                     filtered_entries,
                 )
                 return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].ok(
-                    entry_result,
+                    entry_result,  # type: ignore[arg-type]
                 )
 
             # If result is failure, propagate the error
@@ -1442,7 +1500,9 @@ class FlextLdifFilters(
         """Set objectClass filter (fluent builder)."""
         # Use tuple if classes provided, None if empty
         objectclass_value = tuple(classes) if classes else None
-        return self.model_copy(update={"filter_criteria": "objectclass", "objectclass": objectclass_value})
+        return self.model_copy(
+            update={"filter_criteria": "objectclass", "objectclass": objectclass_value}
+        )
 
     def with_required_attributes(self, attributes: list[str]) -> FlextLdifFilters:
         """Set required attributes (fluent builder)."""
@@ -1450,11 +1510,15 @@ class FlextLdifFilters(
 
     def with_attributes(self, attributes: list[str]) -> FlextLdifFilters:
         """Set attribute filter (fluent builder)."""
-        return self.model_copy(update={"filter_criteria": "attributes", "attributes": attributes})
+        return self.model_copy(
+            update={"filter_criteria": "attributes", "attributes": attributes}
+        )
 
     def with_base_dn(self, base_dn: str) -> FlextLdifFilters:
         """Set base DN filter (fluent builder)."""
-        return self.model_copy(update={"filter_criteria": "base_dn", "base_dn": base_dn})
+        return self.model_copy(
+            update={"filter_criteria": "base_dn", "base_dn": base_dn}
+        )
 
     def with_mode(self, mode: str) -> FlextLdifFilters:
         """Set filter mode: include|exclude (fluent builder)."""
@@ -1719,12 +1783,11 @@ class FlextLdifFilters(
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         # Track each attribute removal in metadata for transformation comments
-        # Ensure metadata exists before tracking
-        current_metadata = entry.metadata
-        if current_metadata is None:
-            current_metadata = FlextLdifModels.QuirkMetadata(
-                quirk_type="filter_tracking",
-            )
+        # Business Rule: Use "rfc" as default server type for filter operations.
+        current_metadata = FlextLdifFilters._get_or_create_metadata(
+            entry,
+            operation="filter_tracking",
+        )
 
         updated_entry = entry
         for attr_name in attributes:
@@ -1732,6 +1795,11 @@ class FlextLdifFilters(
             attr_lower = attr_name.lower()
             matching_attr = None
             original_values: list[str] = []
+
+            # Business Rule: Entry.attributes may be None for empty entries.
+            # Skip attribute removal if no attributes exist.
+            if updated_entry.attributes is None:
+                continue
 
             for key, values in updated_entry.attributes.items():
                 if key.lower() == attr_lower:
@@ -1951,6 +2019,15 @@ class FlextLdifFilters(
     ) -> tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize entry using SERVER-SPECIFIC rules.
 
+        Business Rule: Entry categorization uses server-specific rules via dependency injection.
+        Server type is determined from entry.metadata.quirk_type if not provided, ensuring
+        consistent categorization across processing pipeline. Categories follow priority order:
+        schema → users/groups/hierarchy → acl → rejected.
+
+        Implication: Categorization enables entry organization for migration, filtering, and
+        analysis. Server-specific rules ensure accurate categorization per LDAP server type.
+        Delegates to FlextLdifCategorization service for actual categorization logic.
+
         DELEGATED TO: FlextLdifCategorization.categorize_entry()
 
         Uses server-specific constants from FlextLdifServer registry via DI.
@@ -2002,10 +2079,20 @@ class FlextLdifFilters(
                 )
             )
 
-        return categorization_service.categorize_entry(
-            entry,
-            rules,
+        # Business Rule: Protocol compliance requires type casting for Entry and CategoryRules.
+        # Entry implements EntryProtocol (structural typing), rules can be protocol-compliant.
+        # The protocol returns tuple[str, str | None] but we know it's a valid CategoryLiteral.
+        result = categorization_service.categorize_entry(
+            cast("FlextLdifProtocols.Models.EntryProtocol", entry),
+            cast(
+                "FlextLdifProtocols.Models.CategoryRulesProtocol | Mapping[str, Sequence[str]] | None",
+                rules,
+            ),
             effective_server_type,
+        )
+        return cast(
+            "tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]",
+            result,
         )
 
     @staticmethod
@@ -2229,30 +2316,38 @@ class FlextLdifFilters(
         )
 
     def _apply_exclude_filter(self) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Apply invert/exclude filter logic."""
+        """Apply invert/exclude filter logic.
+
+        Business Rule: Exclude filter inverts the mode temporarily to get the
+        complement set of entries. Instead of mutating the frozen field, we
+        compute the inverted mode and pass it explicitly to filter methods.
+
+        Implication: This method is pure (no side effects) and respects the
+        frozen model constraint. The inverted mode is computed locally and
+        used in filter method calls.
+        """
         try:
-            # Store original mode and invert
-            original_mode = self.mode
-            self.mode = (
+            # Compute inverted mode without mutating frozen field
+            # Business Rule: Inversion toggles between include/exclude modes
+            inverted_mode = (
                 FlextLdifConstants.Modes.EXCLUDE
-                if original_mode == FlextLdifConstants.Modes.INCLUDE
+                if self.mode == FlextLdifConstants.Modes.INCLUDE
                 else FlextLdifConstants.Modes.INCLUDE
             )
 
-            # Apply the appropriate filter
+            # Apply the appropriate filter with inverted mode
             match self.filter_criteria:
                 case "dn":
                     if self.dn_pattern is None:
                         result = FlextResult[list[FlextLdifModels.Entry]].fail(
                             "dn_pattern is required",
                         )
-                    # Use static method if available (allows monkeypatch in tests), otherwise use Filter
                     else:
-                        # Use Filter directly
+                        # Use Filter directly with inverted mode
                         result = self.Filter.filter_by_dn(
                             self.entries,
                             self.dn_pattern,
-                            self.mode,
+                            inverted_mode,
                             mark_excluded=self.mark_excluded,
                         )
                 case "objectclass":
@@ -2261,12 +2356,12 @@ class FlextLdifFilters(
                             "objectclass is required",
                         )
                     else:
-                        # Use Filter directly - no intermediate helper
+                        # Use Filter directly with inverted mode
                         result = self.Filter.filter_by_objectclass(
                             self.entries,
                             self.objectclass,
                             self.required_attributes,
-                            self.mode,
+                            inverted_mode,
                             mark_excluded=self.mark_excluded,
                         )
                 case "attributes":
@@ -2275,12 +2370,12 @@ class FlextLdifFilters(
                             "attributes is required",
                         )
                     else:
-                        # Use Filter directly - no intermediate helper
+                        # Use Filter directly with inverted mode
                         result = self.Filter.filter_by_attributes(
                             self.entries,
                             self.attributes,
                             match_all=self.match_all,
-                            mode=self.mode,
+                            mode=inverted_mode,
                             mark_excluded=self.mark_excluded,
                         )
                 case _:
@@ -2288,8 +2383,6 @@ class FlextLdifFilters(
                         f"Cannot exclude with criteria: {self.filter_criteria}",
                     )
 
-            # Restore original mode
-            self.mode = original_mode
             return result
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(f"Exclude failed: {e}")
@@ -2324,14 +2417,13 @@ class FlextLdifFilters(
     ) -> tuple[bool, str | None]:
         """Check if entry has blocked objectClasses.
 
-        Accepts WhitelistRules model or dict for backward compatibility.
+        Business Rule: Accepts WhitelistRules model or dict for backward compatibility.
+        Dict input is converted to WhitelistRules model before processing.
+        None input delegates to Categorizer with None.
         """
-        # Convert dict to model if needed
-        if FlextRuntime.is_dict_like(whitelist_rules) and isinstance(
-            whitelist_rules,
-            dict,
-        ):
-            # Type narrowing: use Mapping protocol for safe access
+        # Convert dict to model if needed using isinstance for type safety
+        rules_model: FlextLdifModels.WhitelistRules | None
+        if isinstance(whitelist_rules, dict):
             blocked_objectclasses = whitelist_rules.get("blocked_objectclasses")
             rules_model = FlextLdifModels.WhitelistRules(
                 blocked_objectclasses=[str(v) for v in blocked_objectclasses]
@@ -2359,10 +2451,11 @@ class FlextLdifFilters(
     ) -> tuple[bool, str | None]:
         """Validate DN pattern for specific category.
 
-        Accepts CategoryRules model or dict for backward compatibility.
+        Business Rule: Accepts CategoryRules model or dict for backward compatibility.
+        Dict input is converted to CategoryRules model before validation.
         """
-        # Convert dict to model if needed
-        if FlextRuntime.is_dict_like(rules) and isinstance(rules, dict):
+        # Convert dict to model if needed using isinstance for type safety
+        if isinstance(rules, dict):
             # Type narrowing with isinstance for safe access
             user_dn_patterns = rules.get("user_dn_patterns") or rules.get(
                 "users",
@@ -2435,6 +2528,15 @@ class FlextLdifFilters(
     ) -> tuple[FlextLdifConstants.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize entry into 6 categories.
 
+        Business Rule: Entry categorization validates whitelist rules first (blocked objectClasses),
+        then delegates to categorization service for actual categorization. DN pattern validation
+        is applied for users/groups categories. Server type is determined from entry metadata
+        if not provided, ensuring consistent categorization.
+
+        Implication: Whitelist validation prevents blocked entries from being categorized.
+        DN pattern validation ensures users/groups match expected DN patterns. Categorization
+        uses server-specific rules via dependency injection.
+
         Uses type-safe Pydantic models instead of dict[str, Any].
         Delegates to FlextLdifFilters.categorize, with optional whitelist validation.
 
@@ -2455,7 +2557,12 @@ class FlextLdifFilters(
         """
         rules_result = FlextLdifFilters._normalize_category_rules(rules)
         if rules_result.is_failure:
-            return ("rejected", rules_result.error)
+            # Business Rule: Invalid rules result in rejected category with error reason
+            # StrEnum.value is "rejected" which satisfies CategoryLiteral directly
+            return (
+                FlextLdifConstants.Categories.REJECTED.value,
+                rules_result.error,
+            )
         normalized_rules = rules_result.unwrap()
 
         # Check for blocked objectClasses first using helper
@@ -2464,7 +2571,12 @@ class FlextLdifFilters(
             whitelist_rules,
         )
         if is_blocked:
-            return ("rejected", reason)
+            # Business Rule: Blocked objectClasses result in rejected category
+            # StrEnum.value is "rejected" which satisfies CategoryLiteral directly
+            return (
+                FlextLdifConstants.Categories.REJECTED.value,
+                reason,
+            )
 
         # Determine effective server_type using Entry + Metadata pattern
         # Priority: parameter > entry.metadata.quirk_type > registry default
@@ -2492,16 +2604,27 @@ class FlextLdifFilters(
                 )
             )
 
-        category, reason = categorization_service.categorize_entry(
-            entry,
-            normalized_rules,
+        # Business Rule: Protocol compliance requires type casting for Entry and CategoryRules.
+        # Entry implements EntryProtocol (structural typing), CategoryRules implements protocol.
+        # Type casts are safe because FlextLdifModels.Entry satisfies EntryProtocol.
+        # Protocol returns tuple[str, str|None] but we know category is valid CategoryLiteral.
+        category_str, reason = categorization_service.categorize_entry(
+            cast("FlextLdifProtocols.Models.EntryProtocol", entry),
+            cast(
+                "FlextLdifProtocols.Models.CategoryRulesProtocol | Mapping[str, Sequence[str]] | None",
+                normalized_rules,
+            ),
             effective_server_type,
+        )
+        category = cast(
+            "FlextLdifConstants.LiteralTypes.CategoryLiteral",
+            category_str,
         )
 
         # Validate DN patterns for category-specific matching using helper
         if category in {
-            FlextLdifConstants.Categories.USERS,
-            FlextLdifConstants.Categories.GROUPS,
+            FlextLdifConstants.Categories.USERS.value,
+            FlextLdifConstants.Categories.GROUPS.value,
         }:
             is_rejected, reject_reason = (
                 FlextLdifFilters.Categorizer.validate_category_dn_pattern(
@@ -2511,7 +2634,12 @@ class FlextLdifFilters(
                 )
             )
             if is_rejected:
-                return ("rejected", reject_reason)
+                # Business Rule: DN pattern validation failure results in rejected category
+                # StrEnum.value is "rejected" which satisfies CategoryLiteral directly
+                return (
+                    FlextLdifConstants.Categories.REJECTED.value,
+                    reject_reason,
+                )
 
         return (category, reason)
 

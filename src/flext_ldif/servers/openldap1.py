@@ -549,8 +549,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 # Map who clause to subject_type
                 # OpenLDAP 1.x uses "self", "*", "anonymous", etc. as who values
                 first_who_lower = first_who.lower().strip()
+                subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
                 if first_who_lower == "self":
-                    subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = "self"
+                    subject_type = "self"
                 elif first_who_lower in {"*", "all"}:
                     subject_type = "all"
                 elif first_who_lower == "anonymous":
@@ -559,7 +560,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     subject_type = "authenticated"
                 else:
                     # Default to userdn for DN-based subjects
-                    subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = "userdn"
+                    subject_type = "userdn"
 
                 # Build Acl model
                 # Note: ACL_ATTRIBUTE_NAME is OpenLDAP 1.x format from Constants

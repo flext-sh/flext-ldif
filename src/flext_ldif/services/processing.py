@@ -29,6 +29,17 @@ class FlextLdifProcessing(
 ):
     """Service for batch and parallel entry processing.
 
+    Business Rule: Processing service provides batch (sequential) and parallel
+    (concurrent) processing modes for LDIF entries. Batch mode processes entries
+    sequentially in configurable batch sizes. Parallel mode uses ThreadPoolExecutor
+    for concurrent processing with configurable worker pools. Both modes support
+    transform and validate operations via processor function names.
+
+    Implication: Flexible processing enables efficient handling of large entry sets.
+    Batch mode provides predictable memory usage, while parallel mode maximizes CPU
+    utilization for I/O-bound operations. ThreadPoolExecutor ensures thread-safe
+    concurrent processing with proper resource management.
+
     Provides methods for:
     - Processing entries in batches (sequential)
     - Processing entries in parallel (concurrent)
@@ -57,8 +68,12 @@ class FlextLdifProcessing(
     ) -> FlextResult[list[ProcessingResult]]:
         """Execute method required by FlextService abstract base class.
 
-        This service provides specific methods (process)
-        rather than a generic execute operation.
+        Business Rule: Processing service does not support generic execute() operation.
+        All processing must use the process() method with explicit processor name and
+        configuration. This ensures type safety and clear operation semantics.
+
+        Implication: Callers must use process() method with processor_name parameter.
+        Generic execute() returns fail result to prevent incorrect usage.
 
         Returns:
             FlextResult with not implemented error
@@ -78,6 +93,17 @@ class FlextLdifProcessing(
         max_workers: int = 4,
     ) -> FlextResult[list[ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes.
+
+        Business Rule: Processing method routes to batch or parallel execution based on
+        parallel flag. Batch mode processes entries sequentially in configurable batch
+        sizes for predictable memory usage. Parallel mode uses ThreadPoolExecutor with
+        configurable worker pools for concurrent processing. Processor function is
+        resolved by name from registry.
+
+        Implication: Flexible processing enables efficient handling of large entry sets.
+        Batch mode provides predictable memory usage, while parallel mode maximizes CPU
+        utilization for I/O-bound operations. ThreadPoolExecutor ensures thread-safe
+        concurrent processing with proper resource management.
 
         Consolidates process_batch() and process_parallel() into a single flexible
         method with an optional parallel execution mode.
@@ -220,7 +246,13 @@ class FlextLdifProcessing(
             entry: FlextLdifModels.Entry,
         ) -> ProcessingResult:
             # Transform Entry to ProcessingResult with all metadata preserved
+            if entry.dn is None:
+                msg = "Entry DN cannot be None"
+                raise ValueError(msg)
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+            if entry.attributes is None:
+                msg = "Entry attributes cannot be None"
+                raise ValueError(msg)
             attrs_dict = (
                 dict(entry.attributes)
                 if not isinstance(entry.attributes, dict)
@@ -250,7 +282,13 @@ class FlextLdifProcessing(
         ) -> ProcessingResult:
             # Basic validation: entry has DN and attributes - required fields must be present
             # Return complete entry data for validation results
+            if entry.dn is None:
+                msg = "Entry DN cannot be None"
+                raise ValueError(msg)
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+            if entry.attributes is None:
+                msg = "Entry attributes cannot be None"
+                raise ValueError(msg)
             attrs_dict = (
                 dict(entry.attributes)
                 if not isinstance(entry.attributes, dict)

@@ -112,12 +112,12 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
     ),
     OpAttrTestCase(
         OperationalAttrTestType.REAL_LDIF,
-        "cn=John Doe,ou=Users,dc=ctbc",
+        "cn=John Doe,ou=Users,dc=example",
         {
             "cn": ["John Doe"],
             "sn": ["Doe"],
             "givenName": ["John"],
-            "mail": ["john.doe@ctbc.com.br"],
+            "mail": ["john.doe@example.com"],
             "uid": ["jdoe"],
             "objectclass": ["top", "person", "organizationalPerson", "inetOrgPerson"],
             "orclGUID": ["F1234567890ABCDEF"],
@@ -180,7 +180,12 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
         # NOTE: Current implementation removes all operational attributes
         # Future: Server-specific preservation logic may be added
         expected_preserved=["cn", "objectclass"],
-        expected_stripped=["createTimestamp", "entryCSN", "structuralObjectClass", "contextCSN"],
+        expected_stripped=[
+            "createTimestamp",
+            "entryCSN",
+            "structuralObjectClass",
+            "contextCSN",
+        ],
         description="OpenLDAP operational attrs stripped (current behavior)",
     ),
     OpAttrTestCase(

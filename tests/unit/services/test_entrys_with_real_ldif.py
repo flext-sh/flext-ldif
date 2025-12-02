@@ -138,7 +138,9 @@ class TestPublicClassmethodsWithRealLdif:
         assert len(oid_entries) > 0, "OID fixture should have entries"
 
         # Clean DN from first OID entry
-        cleaned_dn = FlextLdifUtilities.DN.clean_dn(oid_entries[0].dn.value)
+        first_entry = oid_entries[0]
+        assert first_entry.dn is not None
+        cleaned_dn = FlextLdifUtilities.DN.clean_dn(first_entry.dn.value)
 
         # Verify DN is RFC 4514 compliant (no spaces around =)
         assert " = " not in cleaned_dn
@@ -152,14 +154,18 @@ class TestPublicClassmethodsWithRealLdif:
         assert len(oid_entries) > 0
 
         entry = oid_entries[0]
-        result = FlextLdifEntries.remove_operational_attributes(entry)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes(entry)
 
         assert result.is_success
         cleaned_entry = result.unwrap()
 
         # Verify entry still has basic attributes
+        assert cleaned_entry.attributes is not None
         assert len(cleaned_entry.attributes.attributes) > 0
         # Verify DN is unchanged
+        assert cleaned_entry.dn is not None
+        assert entry.dn is not None
         assert cleaned_entry.dn.value == entry.dn.value
 
     def test_remove_operational_attributes_batch_real_oid(
@@ -180,7 +186,9 @@ class TestPublicClassmethodsWithRealLdif:
 
         # All entries are still valid
         for entry in cleaned_entries:
+            assert entry.dn is not None
             assert len(entry.dn.value) > 0
+            assert entry.attributes is not None
             assert len(entry.attributes.attributes) > 0
 
     def test_remove_specific_attributes_from_real_entry(
@@ -191,18 +199,21 @@ class TestPublicClassmethodsWithRealLdif:
         assert len(oid_entries) > 0
 
         entry = oid_entries[0]
+        assert entry.attributes is not None
         original_attr_count = len(entry.attributes.attributes)
 
         # Remove common unnecessary attributes
-        result = FlextLdifEntries.remove_attributes(
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes(
             entry,
-            attributes=["description", "employeeNumber", "telephoneNumber"],
+            attributes_to_remove=["description", "employeeNumber", "telephoneNumber"],
         )
 
         assert result.is_success
         cleaned_entry = result.unwrap()
 
         # Should have fewer attributes than original
+        assert cleaned_entry.attributes is not None
         assert len(cleaned_entry.attributes.attributes) <= original_attr_count
 
     def test_remove_attributes_batch_real_oud(
@@ -335,7 +346,9 @@ class TestRealWorldScenarios:
         # All entries should be cleaned and valid
         assert len(cleaned_entries) == len(oid_entries)
         for entry in cleaned_entries:
+            assert entry.dn is not None
             assert len(entry.dn.value) > 0
+            assert entry.attributes is not None
             assert len(entry.attributes.attributes) > 0
 
     def test_multi_server_consolidation(
@@ -388,6 +401,7 @@ class TestRealWorldScenarios:
 
         # Verify unnecessary attributes were removed
         for entry in cleaned_entries:
+            assert entry.attributes is not None
             for attr in unnecessary_attrs:
                 assert attr.lower() not in [
                     k.lower() for k in entry.attributes.attributes
@@ -439,6 +453,7 @@ class TestEdgeCasesWithRealData:
         assert len(oid_entries) > 0
 
         entry = oid_entries[0]
+        assert entry.attributes is not None
         original_attrs = set(entry.attributes.attributes.keys())
 
         # Try removing all attributes except structural ones
@@ -446,13 +461,18 @@ class TestEdgeCasesWithRealData:
             attr for attr in original_attrs if attr.lower() not in {"dn", "objectclass"}
         ]
 
-        result = FlextLdifEntries.remove_attributes(entry, attributes=attrs_to_remove)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes(
+            entry, attributes_to_remove=attrs_to_remove
+        )
 
         assert result.is_success
         cleaned = result.unwrap()
 
         # Entry should still be valid
+        assert cleaned.dn is not None
         assert len(cleaned.dn.value) > 0
+        assert cleaned.attributes is not None
         assert len(cleaned.attributes.attributes) > 0
 
     def test_mixed_case_attribute_removal(
@@ -465,15 +485,17 @@ class TestEdgeCasesWithRealData:
         entry = oud_entries[0]
 
         # Remove with different case
-        result = FlextLdifEntries.remove_attributes(
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes(
             entry,
-            attributes=["DESCRIPTION", "TelephoneNumber", "mail"],
+            attributes_to_remove=["DESCRIPTION", "TelephoneNumber", "mail"],
         )
 
         assert result.is_success
         cleaned = result.unwrap()
 
         # Verify case-insensitive removal worked
+        assert cleaned.attributes is not None
         cleaned_keys = {k.lower() for k in cleaned.attributes.attributes}
         assert "description" not in cleaned_keys
         assert "mail" not in cleaned_keys
@@ -493,7 +515,9 @@ class TestEdgeCasesWithRealData:
 
         # All entries should survive unicode/special char handling
         for entry in cleaned:
+            assert entry.dn is not None
             assert len(entry.dn.value) > 0
+            assert entry.attributes is not None
             assert all(
                 len(attr_values) > 0
                 for attr_values in entry.attributes.attributes.values()
@@ -515,7 +539,9 @@ class TestEdgeCasesWithRealData:
 
         # All entries should have non-empty DN and attributes
         for entry in cleaned_entries:
+            assert entry.dn is not None
             assert len(entry.dn.value) > 0
+            assert entry.attributes is not None
             assert len(entry.attributes.attributes) > 0
             # All attribute values should be non-empty lists
             for values in entry.attributes.attributes.values():

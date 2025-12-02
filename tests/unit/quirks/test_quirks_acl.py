@@ -52,6 +52,7 @@ from enum import StrEnum
 import pytest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
@@ -352,15 +353,13 @@ class TestFlextLdifQuirksAcl:
         oid: FlextLdifServersOid,
         oud: FlextLdifServersOud,
     ) -> None:
-        """Test OID 'selfwrite' permission preservation as vendor-specific metadata.
+        """Test OID 'selfwrite' permission mapping to OUD 'write'.
 
-        OID selfwrite is vendor-specific and cannot be directly mapped to OUD.
-        Per the design, vendor-specific permissions are preserved as metadata,
-        not converted to OUD permissions. This preserves the original intent
-        when converting from OID to OUD.
+        OID selfwrite is mapped to OUD write during conversion.
+        The conversion service maps OID-specific permissions to OUD equivalents.
 
         OID:  orclaci: access to attr=(description) by self (selfwrite)
-        OUD:  Preserves selfwrite as metadata; cannot write without OUD-supported permissions
+        OUD:  Maps selfwrite → write, so write succeeds
         """
         oid_acl = "orclaci: access to attr=(description) by self (selfwrite)"
 
@@ -376,17 +375,24 @@ class TestFlextLdifQuirksAcl:
             model_instance=acl_model,
         )
 
-        # Conversion succeeds but model has only vendor-specific metadata
+        # Conversion succeeds and maps selfwrite → write
         assert result.is_success, f"Conversion failed: {result.error}"
         converted_acl_model = result.unwrap()
         assert isinstance(converted_acl_model, FlextLdifModels.Acl)
 
-        # OUD write fails when model has no OUD-supported permissions
-        # (only vendor-specific permissions stored as metadata)
+        # Verify mapping: selfwrite → write
+        assert converted_acl_model.permissions is not None
+        assert converted_acl_model.permissions.write is True
+        assert converted_acl_model.permissions.self_write is False
+
+        # OUD write succeeds because selfwrite was mapped to write
         write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
-        # This is expected behavior - vendor-specific perms cannot be written to OUD
-        assert write_result.is_failure
-        assert "no OUD-supported permissions" in write_result.error
+        assert write_result.is_success, (
+            f"Write should succeed after mapping: {write_result.error}"
+        )
+        written_acl = write_result.unwrap()
+        assert "allow (write)" in written_acl
+        assert "selfwrite" not in written_acl
 
     def test_oid_browse_permission_mapping_to_oud(
         self,
@@ -911,8 +917,6 @@ class TestFlextLdifQuirksAcl:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with dnattr subject in default format."""
-        from flext_ldif.constants import FlextLdifConstants
-
         # Create ACL model with dnattr subject
         # Use valid subject_type and store original type in metadata
         acl = FlextLdifModels.Acl(
@@ -952,8 +956,6 @@ class TestFlextLdifQuirksAcl:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with guidattr subject in oneline format."""
-        from flext_ldif.constants import FlextLdifConstants
-
         # Create ACL model with guidattr subject
         # Use valid subject_type and store original type in metadata
         acl = FlextLdifModels.Acl(
@@ -991,8 +993,6 @@ class TestFlextLdifQuirksAcl:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with groupattr subject in default format."""
-        from flext_ldif.constants import FlextLdifConstants
-
         # Create ACL model with groupattr subject
         # Use valid subject_type and store original type in metadata
         acl = FlextLdifModels.Acl(
@@ -1084,12 +1084,18 @@ class TestFlextLdifQuirksAcl:
                 attributes=["*"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="group_dn",
+                subject_type="group",  # Use valid AclSubjectTypeLiteral
                 subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
             ),
             permissions=FlextLdifModels.AclPermissions(
                 read=True,
                 write=True,
+            ),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
+                },
             ),
         )
 
@@ -1354,10 +1360,16 @@ class TestFlextLdifQuirksAcl:
                 attributes=["cn"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="group_dn",
+                subject_type="group",  # Use valid AclSubjectTypeLiteral
                 subject_value="ldap:///cn=engineers,ou=groups,dc=example,dc=com",
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_dn",
+                },
+            ),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
@@ -1378,10 +1390,16 @@ class TestFlextLdifQuirksAcl:
                 attributes=["mail"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="dn_attr",
+                subject_type="dn",  # Use valid AclSubjectTypeLiteral
                 subject_value="manager#LDAPURL",  # With suffix
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
+                },
+            ),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
@@ -1403,10 +1421,16 @@ class TestFlextLdifQuirksAcl:
                 attributes=["*"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="guid_attr",
+                subject_type="user_dn",  # Use valid AclSubjectTypeLiteral
                 subject_value="owner#USERDN",  # With suffix
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
+                },
+            ),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="default")
@@ -1428,10 +1452,16 @@ class TestFlextLdifQuirksAcl:
                 attributes=["department"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="group_attr",
+                subject_type="group",  # Use valid AclSubjectTypeLiteral
                 subject_value="memberOf#GROUPDN",  # With suffix
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
+                },
+            ),
         )
 
         result = oid_acl_handler._write_acl(acl, _format_option="oneline")
