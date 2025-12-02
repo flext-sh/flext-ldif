@@ -493,7 +493,8 @@ class EntryTestHelpers:
             )
 
         """
-        result = FlextLdifEntries.remove_attributes(entry, attributes_to_remove)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes(entry, attributes_to_remove)
 
         if should_succeed:
             cleaned = TestAssertions.assert_success(result)
@@ -531,7 +532,8 @@ class EntryTestHelpers:
             Entry with operational attributes removed if success, None if failure
 
         """
-        result = FlextLdifEntries.remove_operational_attributes(entry)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes(entry)
 
         if should_succeed:
             cleaned = TestAssertions.assert_success(result)
@@ -569,7 +571,8 @@ class EntryTestHelpers:
             List of entries with attributes removed if success, None if failure
 
         """
-        result = FlextLdifEntries.remove_attributes_batch(entries, attributes_to_remove)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes_batch(entries, attributes_to_remove)
 
         if should_succeed:
             cleaned_batch = TestAssertions.assert_success(result)
@@ -601,7 +604,8 @@ class EntryTestHelpers:
             List of entries with operational attributes removed if success, None if failure
 
         """
-        result = FlextLdifEntries.remove_operational_attributes_batch(entries)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes_batch(entries)
 
         if should_succeed:
             cleaned_batch = TestAssertions.assert_success(result)

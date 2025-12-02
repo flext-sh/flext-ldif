@@ -75,7 +75,8 @@ class TestFlextLdifAdQuirks:
     def test_server_initialization(self) -> None:
         """Test Active Directory quirk initialization."""
         server = FlextLdifServersAd()
-        assert server.server_type == "active_directory"
+        # AD server is registered as "ad" (not "active_directory")
+        assert server.server_type == "ad"
         assert server.priority == 10
 
     def test_schema_quirk_initialization(self) -> None:
@@ -99,7 +100,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_attribute_with_ad_oid(self) -> None:
         """Test attribute parsing with Microsoft AD OID - validates parsed output."""
         server = FlextLdifServersAd()
-        schema = server.schema_quirk
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         attr_def = "( 1.2.840.113556.1.4.221 NAME 'sAMAccountName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         result = schema.parse_attribute(attr_def)
         assert result.is_success, f"Failed to parse AD attribute: {result.error}"
@@ -116,7 +117,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_attribute_with_ad_name(self) -> None:
         """Test attribute parsing with AD-specific attribute name - validates parsed output."""
         server = FlextLdifServersAd()
-        schema = server.schema_quirk
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         attr_def = "( 1.2.3.4 NAME 'objectGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         result = schema.parse_attribute(attr_def)
         assert result.is_success, (
@@ -135,7 +136,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_attribute_with_microsoft_marker(self) -> None:
         """Test attribute parsing with Microsoft marker in description - validates can_handle returns correct type."""
         server = FlextLdifServersAd()
-        schema = server.schema_quirk
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         attr_def = "( 1.2.3.4 NAME 'test' DESC 'Microsoft Active Directory attribute' )"
         result = schema.can_handle_attribute(attr_def)
         assert result is True, "AD schema should handle Microsoft-marked attribute"
@@ -146,7 +147,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_attribute_success(self) -> None:
         """Test successful attribute parsing."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         attr_def = (
             "( 1.2.840.113556.1.4.221 NAME 'sAMAccountName' "
             "DESC 'SAM Account Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
@@ -165,7 +166,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_attribute_no_oid(self) -> None:
         """Test attribute parsing fails without OID."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         attr_def = "NAME 'testAttr'"
         result = schema.parse_attribute(attr_def)
         assert result.is_failure
@@ -175,7 +176,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_objectclass_with_ad_oid(self) -> None:
         """Test objectClass parsing with Microsoft AD OID."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         oc_def = "( 1.2.840.113556.1.5.9 NAME 'user' SUP top STRUCTURAL )"
         result = schema.parse_objectclass(oc_def)
         assert result.is_success
@@ -183,7 +184,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_objectclass_with_ad_name(self) -> None:
         """Test objectClass parsing with AD-specific class name."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         oc_def = "( 1.2.3.4 NAME 'computer' SUP top STRUCTURAL )"
         result = schema.parse_objectclass(oc_def)
         assert result.is_success
@@ -191,7 +192,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_objectclass_success(self) -> None:
         """Test successful objectClass parsing."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         oc_def = (
             "( 1.2.840.113556.1.5.9 NAME 'user' DESC 'User object' "
             "SUP top STRUCTURAL MUST ( cn $ objectGUID ) "
@@ -216,7 +217,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         oc_def = "( 1.2.840.113556.1.5.10 NAME 'adGroup' AUXILIARY )"
         oc_data = RfcTestHelpers.test_result_success_and_unwrap(
             schema.parse_objectclass(oc_def),
@@ -226,7 +227,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_objectclass_no_oid(self) -> None:
         """Test objectClass parsing fails without OID."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         oc_def = "NAME 'user'"
         result = schema.parse_objectclass(oc_def)
         assert result.is_failure
@@ -236,7 +237,7 @@ class TestFlextLdifAdQuirks:
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         attr_model = FlextLdifModels.SchemaAttribute(
             oid="1.2.840.113556.1.4.221",
             name="sAMAccountName",
@@ -255,7 +256,7 @@ class TestFlextLdifAdQuirks:
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
         server = FlextLdifServersAd()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersAd.Schema = cast("FlextLdifServersAd.Schema", server.schema_quirk)
         oc_model = FlextLdifModels.SchemaObjectClass(
             oid="1.2.840.113556.1.5.9",
             name="user",
@@ -285,7 +286,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_acl_with_ntsecuritydescriptor(self) -> None:
         """Test ACL parsing with nTSecurityDescriptor attribute."""
         server = FlextLdifServersAd()
-        acl = cast("object", server.acl_quirk)
+        acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "nTSecurityDescriptor:: AQAEgBQAAAAkAAAAAAAAADAAAAABABQABAAAAA=="
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
         assert isinstance(acl_model, FlextLdifModels.Acl)
@@ -293,7 +294,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_acl_with_sddl_prefix(self) -> None:
         """Test ACL parsing with SDDL prefix (O:, G:, D:, S:)."""
         server = FlextLdifServersAd()
-        acl = cast("object", server.acl_quirk)
+        acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "O:BAG:BAD:S:"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
         assert isinstance(acl_model, FlextLdifModels.Acl)
@@ -301,7 +302,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_acl_with_base64_value(self) -> None:
         """Test parsing ACL with base64-encoded nTSecurityDescriptor."""
         server = FlextLdifServersAd()
-        acl = cast("object", server.acl_quirk)
+        acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "nTSecurityDescriptor:: T0JBAQAABABABAgA=="
         result = acl.parse(acl_line)
         assert result.is_success
@@ -315,7 +316,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_acl_with_sddl_string(self) -> None:
         """Test parsing ACL with SDDL string value."""
         server = FlextLdifServersAd()
-        acl = cast("object", server.acl_quirk)
+        acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_line = "nTSecurityDescriptor: O:BAG:BAD:S:"
         result = acl.parse(acl_line)
         assert result.is_success
@@ -328,7 +329,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_acl_empty_line(self) -> None:
         """Test parsing empty ACL line fails."""
         server = FlextLdifServersAd()
-        acl = cast("object", server.acl_quirk)
+        acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         result = acl.parse("")
         assert result.is_failure
         assert result.error is not None
@@ -337,7 +338,7 @@ class TestFlextLdifAdQuirks:
     def test_write_acl_to_rfc(self) -> None:
         """Test writing ACL to RFC string format."""
         server = FlextLdifServersAd()
-        acl = cast("object", server.acl_quirk)
+        acl: FlextLdifServersAd.Acl = cast("FlextLdifServersAd.Acl", server.acl_quirk)
         acl_model = FlextLdifModels.Acl(
             name="nTSecurityDescriptor",
             target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
@@ -366,7 +367,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_entry_with_ad_dn_marker(self) -> None:
         """Test entry parsing with AD DN markers."""
         server = FlextLdifServersAd()
-        entry = cast("object", server.entry_quirk)
+        entry: FlextLdifServersAd.Entry = cast("FlextLdifServersAd.Entry", server.entry_quirk)
         dn = "cn=Administrator,cn=Users,dc=example,dc=com"
         ldif = f"dn: {dn}\n"
         result = entry.parse(ldif)
@@ -375,7 +376,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_entry_with_ad_attributes(self) -> None:
         """Test entry parsing with AD-specific attributes."""
         server = FlextLdifServersAd()
-        entry = cast("object", server.entry_quirk)
+        entry: FlextLdifServersAd.Entry = cast("FlextLdifServersAd.Entry", server.entry_quirk)
         dn = "cn=test,dc=example,dc=com"
         ldif = (
             f"dn: {dn}\n"
@@ -388,7 +389,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_entry_with_ad_objectclass(self) -> None:
         """Test entry parsing with AD objectClass."""
         server = FlextLdifServersAd()
-        entry = cast("object", server.entry_quirk)
+        entry: FlextLdifServersAd.Entry = cast("FlextLdifServersAd.Entry", server.entry_quirk)
         dn = "cn=test,dc=example,dc=com"
         ldif = f"dn: {dn}\nobjectClass: user\nobjectClass: person\n"
         result = entry.parse(ldif)
@@ -397,7 +398,7 @@ class TestFlextLdifAdQuirks:
     def test_parse_entry_negative(self) -> None:
         """Test entry parsing rejects non-AD entries."""
         server = FlextLdifServersAd()
-        entry = cast("object", server.entry_quirk)
+        entry: FlextLdifServersAd.Entry = cast("FlextLdifServersAd.Entry", server.entry_quirk)
         dn = "cn=test,ou=people,dc=example,dc=com"
         ldif = f"dn: {dn}\nobjectClass: inetOrgPerson\n"
         result = entry.parse(ldif)

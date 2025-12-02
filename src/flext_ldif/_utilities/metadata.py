@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 
-from flext_core import FlextLogger, FlextModels, FlextRuntime
+from flext_core import FlextLogger, FlextRuntime
 from flext_core.typings import FlextTypes
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -120,8 +120,13 @@ class FlextLdifUtilitiesMetadata:
                 # DynamicMetadata.model_dump() returns dict[str, object] which needs conversion
                 # FlextTypes.Metadata is Mapping[str, MetadataAttributeValue], but models use Metadata BaseModel
                 # So we create Metadata BaseModel and assign it (runtime compatible)
-                # FlextModels.Metadata is a type alias, but we can use it as a class reference
-                metadata_obj = FlextModels.Metadata(attributes=metadata_dict)  # type: ignore[assignment]  # Protocol allows Metadata | None, BaseModel is compatible
+                # FlextModels.Metadata is a type alias to FlextModelsBase.Metadata
+                # We need to import the base class to instantiate it
+                from flext_core._models.base import FlextModelsBase
+
+                metadata_obj = FlextModelsBase.Metadata(
+                    attributes=metadata_dict
+                )  # Protocol allows Metadata | None, BaseModel is compatible
                 # Always use setattr for safety, regardless of frozen status
                 model.validation_metadata = metadata_obj  # type: ignore[assignment]  # Protocol expects Mapping but BaseModel is runtime-compatible
         except (AttributeError, TypeError, ValueError):
@@ -159,7 +164,11 @@ class FlextLdifUtilitiesMetadata:
         # Get or initialize validation_metadata
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
-            metadata_obj = FlextModels.Metadata(attributes={})
+            # FlextModels.Metadata is a type alias to FlextModelsBase.Metadata
+            # We need to import the base class to instantiate it
+            from flext_core._models.base import FlextModelsBase
+
+            metadata_obj = FlextModelsBase.Metadata(attributes={})
 
         # Work with attributes as mutable metadata dict
         # DynamicMetadata accepts extra="allow", so we can use dict[str, object] for flexibility
@@ -223,7 +232,14 @@ class FlextLdifUtilitiesMetadata:
                     )
 
         # Set metadata back on model - convert dict to DynamicMetadata
-        dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata)
+        # Type narrowing: convert dict[str, object] to dict[str, MetadataAttributeValue]
+        from typing import cast
+        from flext_core import FlextTypes
+
+        metadata_typed: dict[str, FlextTypes.MetadataAttributeValue] = {
+            k: cast("FlextTypes.MetadataAttributeValue", v) for k, v in metadata.items()
+        }
+        dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata_typed)
         FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
         return model
 
@@ -278,6 +294,10 @@ class FlextLdifUtilitiesMetadata:
         # Get or initialize target metadata
         target_metadata_obj = getattr(target_model, "validation_metadata", None)
         if target_metadata_obj is None:
+            # FlextModels.Metadata is a type alias to FlextModelsBase.Metadata
+            # We need to import the base class to instantiate it
+            from flext_core._models.base import FlextModelsBase
+
             target_metadata_obj = FlextModelsBase.Metadata(attributes={})
 
         target_metadata_attr = target_metadata_obj.attributes
@@ -986,9 +1006,18 @@ class FlextLdifUtilitiesMetadata:
         )
 
         # Separate known fields from dynamic extensions
-        # SchemaFormatDetails defines: quotes, spacing, field_order, x_origin, x_ordered
-        known_fields = {"quotes", "spacing", "field_order", "x_origin", "x_ordered"}
-        model_kwargs: dict[str, FlextTypes.MetadataAttributeValue] = {}
+        # SchemaFormatDetails defines: original_string_complete, quotes, spacing, field_order, x_origin, x_ordered
+        known_fields = {
+            "original_string_complete",
+            "quotes",
+            "spacing",
+            "field_order",
+            "x_origin",
+            "x_ordered",
+        }
+        model_kwargs: dict[str, FlextTypes.MetadataAttributeValue] = {
+            "original_string_complete": definition,
+        }
         extension_kwargs: dict[str, FlextTypes.MetadataAttributeValue] = {}
 
         for key, value in combined.items():
@@ -1161,7 +1190,9 @@ class FlextLdifUtilitiesMetadata:
         if entry.metadata is None:
             # Create new metadata if None
             entry.metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
-                FlextLdifConstants.ServerTypes.RFC.value,
+                FlextLdifConstants.normalize_server_type(
+                    FlextLdifConstants.ServerTypes.RFC.value
+                ),
             )
         updated_metadata = entry.metadata.model_copy(
             update={"processing_stats": updated_stats},
@@ -1509,9 +1540,6 @@ class FlextLdifUtilitiesMetadata:
             original_attr_lines: Original attribute lines from LDIF
             dn_was_base64: Whether DN was base64 encoded
             original_attribute_case: Mapping of attribute names to original case
-            dn_differences: Differences identified between original and cleaned DN
-            attribute_differences: Differences identified between original and cleaned attributes
-            original_attributes_complete: Complete original attributes for preservation
 
         Returns:
             QuirkMetadata with all entry parsing details preserved
@@ -1539,11 +1567,25 @@ class FlextLdifUtilitiesMetadata:
             server_data_dict,
         )
 
-        # Create and return QuirkMetadata (use public facade)
-        return FlextLdifModelsDomains.QuirkMetadata(
+        # Build original LDIF string from components for round-trip preservation
+        original_ldif_parts: list[str] = []
+        if original_dn_line:
+            original_ldif_parts.append(original_dn_line)
+        if original_attr_lines:
+            original_ldif_parts.extend(original_attr_lines)
+        original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
+
+        # Create QuirkMetadata with original_strings populated
+        metadata = FlextLdifModelsDomains.QuirkMetadata(
             quirk_type=quirk_type,
             server_specific_data=server_data,
         )
+
+        # Preserve original LDIF content in original_strings
+        if original_ldif:
+            metadata.original_strings["entry_original_ldif"] = original_ldif
+
+        return metadata
 
 
 __all__ = ["FlextLdifUtilitiesMetadata"]

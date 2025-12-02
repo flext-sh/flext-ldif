@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.base import FlextLdifServersBase
 
 from .test_assertions import TestAssertions
@@ -19,7 +19,7 @@ class SchemaTestHelpers:
     """High-level schema test helpers that replace entire test functions."""
 
     @staticmethod
-    def test_parse_attribute_complete(
+    def test_parse_attribute_complete(  # noqa: PLR0913, PLR0917
         schema_quirk: FlextLdifServersBase.Schema,
         attr_def: str,
         expected_oid: str,
@@ -27,7 +27,7 @@ class SchemaTestHelpers:
         expected_desc: str | None = None,
         expected_syntax: str | None = None,
         expected_single_value: bool | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Complete attribute parse test - replaces entire test function.
 
         This method replaces 10-15 lines of duplicated test code:
@@ -62,7 +62,7 @@ class SchemaTestHelpers:
         """
         result = schema_quirk.parse_attribute(attr_def)
         attr = TestAssertions.assert_success(result, "Attribute parse should succeed")
-        assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
+        assert isinstance(attr, FlextLdifModelsDomains.SchemaAttribute), (
             "Parse should return SchemaAttribute"
         )
 
@@ -89,7 +89,7 @@ class SchemaTestHelpers:
         return attr
 
     @staticmethod
-    def test_parse_objectclass_complete(
+    def test_parse_objectclass_complete(  # noqa: PLR0913, PLR0917
         schema_quirk: FlextLdifServersBase.Schema,
         oc_def: str,
         expected_oid: str,
@@ -98,7 +98,7 @@ class SchemaTestHelpers:
         expected_kind: str | None = None,  # STRUCTURAL, AUXILIARY, ABSTRACT
         expected_must: list[str] | None = None,
         expected_may: list[str] | None = None,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Complete objectClass parse test - replaces entire test function.
 
         This method replaces 10-20 lines of duplicated test code:
@@ -135,7 +135,7 @@ class SchemaTestHelpers:
         """
         result = schema_quirk.parse_objectclass(oc_def)
         oc = TestAssertions.assert_success(result, "ObjectClass parse should succeed")
-        assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
+        assert isinstance(oc, FlextLdifModelsDomains.SchemaObjectClass), (
             "Parse should return SchemaObjectClass"
         )
 
@@ -173,7 +173,7 @@ class SchemaTestHelpers:
     @staticmethod
     def test_write_attribute_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: FlextLdifModelsDomains.SchemaAttribute,
         expected_content: list[str] | None = None,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
@@ -232,7 +232,7 @@ class SchemaTestHelpers:
     @staticmethod
     def test_write_objectclass_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: FlextLdifModelsDomains.SchemaObjectClass,
         expected_content: list[str] | None = None,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
@@ -291,12 +291,12 @@ class SchemaTestHelpers:
     @staticmethod
     def test_hook_post_parse_attribute_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: FlextLdifModelsDomains.SchemaAttribute,
         *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_result: bool = True,
-    ) -> FlextLdifModels.SchemaAttribute | None:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | None:
         """Complete hook_post_parse_attribute test - replaces entire test function.
 
         This method replaces 8-15 lines of duplicated test code:
@@ -336,7 +336,7 @@ class SchemaTestHelpers:
 
         if should_succeed:
             result_attr = TestAssertions.assert_success(result, "Hook should succeed")
-            assert isinstance(result_attr, FlextLdifModels.SchemaAttribute), (
+            assert isinstance(result_attr, FlextLdifModelsDomains.SchemaAttribute), (
                 "Hook should return SchemaAttribute"
             )
             if validate_result:
@@ -348,12 +348,12 @@ class SchemaTestHelpers:
     @staticmethod
     def test_hook_post_parse_objectclass_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: FlextLdifModelsDomains.SchemaObjectClass,
         *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_result: bool = True,
-    ) -> FlextLdifModels.SchemaObjectClass | None:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass | None:
         """Complete hook_post_parse_objectclass test - replaces entire test function.
 
         This method replaces 8-15 lines of duplicated test code:
@@ -385,7 +385,7 @@ class SchemaTestHelpers:
 
         if should_succeed:
             result_oc = TestAssertions.assert_success(result, "Hook should succeed")
-            assert isinstance(result_oc, FlextLdifModels.SchemaObjectClass), (
+            assert isinstance(result_oc, FlextLdifModelsDomains.SchemaObjectClass), (
                 "Hook should return SchemaObjectClass"
             )
             if validate_result:
@@ -400,7 +400,7 @@ class SchemaTestHelpers:
         attr_def: str,
         expected_oid: str,
         expected_name: str,
-    ) -> tuple[FlextLdifModels.SchemaAttribute, str]:
+    ) -> tuple[FlextLdifModelsDomains.SchemaAttribute, str]:
         """Complete parse-write roundtrip test for attribute - replaces entire test function.
 
         This method replaces 15-25 lines of duplicated test code:
@@ -451,7 +451,7 @@ class SchemaTestHelpers:
         oc_def: str,
         expected_oid: str,
         expected_name: str,
-    ) -> tuple[FlextLdifModels.SchemaObjectClass, str]:
+    ) -> tuple[FlextLdifModelsDomains.SchemaObjectClass, str]:
         """Complete parse-write roundtrip test for objectClass - replaces entire test function.
 
         This method replaces 15-25 lines of duplicated test code:

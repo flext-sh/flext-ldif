@@ -169,7 +169,8 @@ class TestPublicClassmethodsWithRealLdif:
         """Test batch operational attribute removal with real OID LDIF entries."""
         assert len(oid_entries) > 0
 
-        result = FlextLdifEntries.remove_operational_attributes_batch(oid_entries)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes_batch(oid_entries)
 
         assert result.is_success
         cleaned_entries = result.unwrap()
@@ -211,8 +212,9 @@ class TestPublicClassmethodsWithRealLdif:
         """Test batch attribute removal with real OUD LDIF entries."""
         assert len(oud_entries) > 0
 
-        result = FlextLdifEntries.remove_attributes_batch(
-            oud_entries,
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes_batch(
+            entries=oud_entries,
             attributes=["description"],
         )
 
@@ -324,7 +326,8 @@ class TestRealWorldScenarios:
         assert len(oid_entries) > 0
 
         # Remove operational attributes to make OID entries compatible with OUD
-        result = FlextLdifEntries.remove_operational_attributes_batch(oid_entries)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes_batch(oid_entries)
 
         assert result.is_success
         cleaned_entries = result.unwrap()
@@ -350,7 +353,8 @@ class TestRealWorldScenarios:
         assert len(all_entries) > 0
 
         # Remove operational attributes from all entries
-        result = FlextLdifEntries.remove_operational_attributes_batch(all_entries)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes_batch(all_entries)
 
         assert result.is_success
         cleaned_entries = result.unwrap()
@@ -373,8 +377,9 @@ class TestRealWorldScenarios:
             "telephoneNumber",
         ]
 
-        result = FlextLdifEntries.remove_attributes_batch(
-            oid_entries,
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_attributes_batch(
+            entries=oid_entries,
             attributes=unnecessary_attrs,
         )
 
@@ -396,19 +401,20 @@ class TestRealWorldScenarios:
         assert len(oid_entries) > 0
 
         # Pipeline: remove operational attrs → remove description → remove phone
-        result1 = FlextLdifEntries.remove_operational_attributes_batch(oid_entries)
+        entries_service = FlextLdifEntries()
+        result1 = entries_service.remove_operational_attributes_batch(oid_entries)
         assert result1.is_success
 
         cleaned1 = result1.unwrap()
-        result2 = FlextLdifEntries.remove_attributes_batch(
-            cleaned1,
+        result2 = entries_service.remove_attributes_batch(
+            entries=cleaned1,
             attributes=["description"],
         )
         assert result2.is_success
 
         cleaned2 = result2.unwrap()
-        result3 = FlextLdifEntries.remove_attributes_batch(
-            cleaned2,
+        result3 = entries_service.remove_attributes_batch(
+            entries=cleaned2,
             attributes=["telephoneNumber"],
         )
         assert result3.is_success
@@ -479,7 +485,8 @@ class TestEdgeCasesWithRealData:
         """Test operations on real entries with unicode and special characters."""
         assert len(openldap2_entries) > 0
 
-        result = FlextLdifEntries.remove_operational_attributes_batch(openldap2_entries)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes_batch(openldap2_entries)
 
         assert result.is_success
         cleaned = result.unwrap()
@@ -500,7 +507,8 @@ class TestEdgeCasesWithRealData:
         assert len(oid_entries) > 0
 
         # Process multiple entries and ensure robustness
-        result = FlextLdifEntries.remove_operational_attributes_batch(oid_entries)
+        entries_service = FlextLdifEntries()
+        result = entries_service.remove_operational_attributes_batch(oid_entries)
 
         assert result.is_success
         cleaned_entries = result.unwrap()
@@ -539,7 +547,8 @@ class TestServerCompatibility:
         for server_name, entries in servers_data:
             assert len(entries) > 0, f"{server_name} fixtures should have entries"
 
-            result = FlextLdifEntries.remove_operational_attributes_batch(entries)
+            entries_service = FlextLdifEntries()
+            result = entries_service.remove_operational_attributes_batch(entries)
 
             assert result.is_success, f"Cleaning {server_name} entries should succeed"
             cleaned = result.unwrap()
@@ -563,7 +572,8 @@ class TestServerCompatibility:
         for server_name, entries in servers_data:
             assert len(entries) > 0
 
-            result = FlextLdifEntries.remove_attributes_batch(
+            entries_service = FlextLdifEntries()
+            result = entries_service.remove_attributes_batch(
                 entries,
                 attributes=["description", "mail"],
             )

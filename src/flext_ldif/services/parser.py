@@ -55,9 +55,20 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
 
         """
         # Use FlextLdifServer directly - get entry quirk and parse
-        effective_server_type = server_type or "rfc"
+        # Normalize server_type to canonical form (e.g., "openldap" → "openldap2")
+        effective_server_type_raw = server_type or "rfc"
+        try:
+            effective_server_type = FlextLdifConstants.normalize_server_type(
+                effective_server_type_raw,
+            )
+        except (ValueError, TypeError) as e:
+            return FlextResult.fail(f"Invalid server type: {effective_server_type_raw} - {e}")
 
-        entry_quirk = self._server.entry(effective_server_type)
+        try:
+            entry_quirk = self._server.entry(effective_server_type)
+        except ValueError as e:
+            # Invalid server type validation error
+            return FlextResult.fail(str(e))
         if entry_quirk is None:
             return FlextResult.fail(
                 f"No entry quirk found for server type: {effective_server_type}",

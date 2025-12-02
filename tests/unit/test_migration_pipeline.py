@@ -87,7 +87,7 @@ class TestMigrationPipelineInitialization:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode=FlextLdifConstants.LiteralTypes.MigrationModeLiteral("categorized"),
+            mode="categorized",
             categorization_rules=categorization_rules,
             source_server=FlextLdifConstants.ServerTypes.OID,
             target_server=FlextLdifConstants.ServerTypes.OUD,

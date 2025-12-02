@@ -222,8 +222,8 @@ class TestFlextLdifAclAttributeRegistry:
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""
-        attrs1 = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid")
-        attrs2 = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid")
+        attrs1 = list(FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid"))
+        attrs2 = list(FlextLdifConstants.AclAttributeRegistry.get_acl_attributes("oid"))
         # Should be equal but not the same object
         assert attrs1 == attrs2
         assert attrs1 is not attrs2

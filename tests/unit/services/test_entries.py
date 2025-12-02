@@ -422,7 +422,7 @@ class TestFlextLdifEntries:
         def test_get_entry_attributes_with_none_entry(self) -> None:
             """Test get_entry_attributes with entry that has None attributes."""
 
-            class EntryWithNoneAttributes(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class EntryWithNoneAttributes(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self) -> None:
                     self.dn: object = TestFlextLdifEntries.Constants.DN_TEST_USER
                     self.attributes: object = None
@@ -459,7 +459,7 @@ class TestFlextLdifEntries:
         ) -> None:
             """Test get_entry_attributes with dict-like attributes."""
 
-            class EntryWithDictAttributes(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class EntryWithDictAttributes(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self, attrs: GenericFieldsDict) -> None:
                     self.dn: object = DNs.TEST_USER
                     self.attributes: object = attrs
@@ -504,7 +504,7 @@ class TestFlextLdifEntries:
                         return super().__getattribute__(name)
                     raise ValueError(self.msg)
 
-            class EntryThatRaises(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class EntryThatRaises(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self) -> None:
                     self.dn: object = "cn=test,dc=example,dc=com"
                     self.attributes: object = ExceptionAttribute(exception_msg)
@@ -555,7 +555,7 @@ class TestFlextLdifEntries:
             """Test get_entry_objectclasses with lowercase objectclass key."""
 
             class EntryWithLowercaseObjectclass(
-                FlextLdifProtocols.Entry.EntryWithDnProtocol,
+                FlextLdifProtocols.Models.EntryWithDnProtocol,
             ):
                 def __init__(self) -> None:
                     self.dn = "cn=test,dc=example,dc=com"
@@ -589,7 +589,7 @@ class TestFlextLdifEntries:
             """Test get_entry_objectclasses when get_entry_attributes fails."""
 
             class EntryWithoutAttributesAttr(
-                FlextLdifProtocols.Entry.EntryWithDnProtocol,
+                FlextLdifProtocols.Models.EntryWithDnProtocol,
             ):
                 def __init__(self) -> None:
                     self.dn: object = TestFlextLdifEntries.Constants.DN_TEST_USER
@@ -615,7 +615,7 @@ class TestFlextLdifEntries:
                         return super().__getattribute__(name)
                     raise ValueError(self.msg)
 
-            class EntryThatRaises(FlextLdifProtocols.Entry.EntryWithDnProtocol):
+            class EntryThatRaises(FlextLdifProtocols.Models.EntryWithDnProtocol):
                 def __init__(self) -> None:
                     self.dn: object = "cn=test,dc=example,dc=com"
                     self.attributes: object = ExceptionAttribute(exception_msg)

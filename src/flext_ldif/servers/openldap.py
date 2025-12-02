@@ -39,7 +39,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """Standardized constants for OpenLDAP 2.x quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "openldap2"
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "openldap2"
+        )
         PRIORITY: ClassVar[int] = 20
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -624,7 +626,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     attributes=attributes,
                 ),
                 subject=FlextLdifModels.AclSubject(
-                    subject_type="anyone",  # Default fallback for "who"
+                    subject_type="all",  # Map "anyone" to "all" (valid AclSubjectTypeLiteral)
                     subject_value=subject_value,
                 ),
                 permissions=FlextLdifModels.AclPermissions(

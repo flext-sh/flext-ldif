@@ -154,7 +154,6 @@ class TestWriterDnNormalization:
         write_result = writer.write(
             entries=[entry],
             target_server_type="rfc",
-            output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
         )
 

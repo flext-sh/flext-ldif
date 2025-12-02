@@ -35,10 +35,10 @@ import pytest
 from flext_tests import FlextTestsUtilities  # Mocked in conftest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
-from tests.fixtures.typing import GenericFieldsDict
 
 
 class TestFlextLdifStatistics:
@@ -58,7 +58,7 @@ class TestFlextLdifStatistics:
 
         @staticmethod
         def create_entry_from_dict(
-            entry_dict: GenericFieldsDict,
+            entry_dict: dict[str, object],
         ) -> FlextLdifModels.Entry:
             """Create Entry model from dictionary for testing.
 
@@ -119,9 +119,6 @@ class TestFlextLdifStatistics:
                 FlextLdifModels.FlexibleCategories instance
 
             """
-            # FlexibleCategories is a type alias, use _FlexibleCategories class instead
-            from flext_ldif._models.results import _FlexibleCategories
-
             categories = _FlexibleCategories()
             for category, entries_value in categorized_dict.items():
                 if not isinstance(entries_value, list):
@@ -129,14 +126,13 @@ class TestFlextLdifStatistics:
                 entries: list[FlextLdifModels.Entry] = []
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
-                        entry_obj: GenericFieldsDict = dict(entry_value)
-                        entries.append(
-                            TestFlextLdifStatistics.Factories.create_entry_from_dict(
-                                entry_obj,
-                            ),
+                        entry_obj: dict[str, object] = dict(entry_value)
+                        entry = TestFlextLdifStatistics.Factories.create_entry_from_dict(
+                            entry_obj,
                         )
-                categories[category] = entries
-            return categories
+                        entries.append(entry)
+                categories[category] = entries  # type: ignore[assignment]
+            return categories  # type: ignore[return-value]
 
     class TestServiceInitialization:
         """Test statistics service initialization and basic functionality."""
@@ -152,7 +148,7 @@ class TestFlextLdifStatistics:
             status = result.unwrap()
             assert status["service"] == "StatisticsService"
             assert status["status"] == "operational"
-            capabilities_raw = status.get("capabilities", [])
+            capabilities_raw: list[str] = status.capabilities if hasattr(status, "capabilities") else []
             assert isinstance(capabilities_raw, list)
             assert "generate_statistics" in capabilities_raw
 
@@ -208,9 +204,9 @@ class TestFlextLdifStatistics:
         )
         def test_generate_statistics(
             self,
-            categorized: dict[str, list[GenericFieldsDict]],
+            categorized: dict[str, list[dict[str, object]]],
             written_counts: dict[str, int],
-            output_files: GenericFieldsDict,
+            output_files: dict[str, object],
             expected_total: int,
             expected_counts: dict[str, int],
         ) -> None:
@@ -232,6 +228,7 @@ class TestFlextLdifStatistics:
             stats = result.unwrap()
             assert isinstance(stats, FlextLdifModels.StatisticsResult)
             assert stats.total_entries == expected_total
+            # _DynamicCounts comparison: __eq__ handles dict comparison
             assert stats.categorized == expected_counts
             assert stats.written_counts == written_counts
 
@@ -317,7 +314,7 @@ class TestFlextLdifStatistics:
         )
         def test_generate_statistics_with_rejections(
             self,
-            categorized: dict[str, list[GenericFieldsDict]],
+            categorized: dict[str, list[dict[str, object]]],
             written_counts: dict[str, int],
             expected_total: int,
             expected_rejected: int,
@@ -403,7 +400,7 @@ class TestFlextLdifStatistics:
         )
         def test_rejection_reasons(
             self,
-            categorized: dict[str, list[GenericFieldsDict]],
+            categorized: dict[str, list[dict[str, object]]],
             expected_count: int,
             expected_reasons: list[str],
         ) -> None:
@@ -442,12 +439,12 @@ class TestFlextLdifStatistics:
         )
         def test_output_files(
             self,
-            output_files: GenericFieldsDict,
+            output_files: dict[str, object],
             output_dir: Path,
             expected_paths: dict[str, str],
         ) -> None:
             """Test output file handling with parametrized test cases."""
-            categorized_dict: dict[str, list[GenericFieldsDict]] = {
+            categorized_dict: dict[str, list[dict[str, object]]] = {
                 cat: [{"dn": "cn=test,dc=example,dc=com", "attributes": {}}]
                 for cat in expected_paths
             }
@@ -474,7 +471,7 @@ class TestFlextLdifStatistics:
 
         def test_generate_statistics_handles_empty_data(self) -> None:
             """Test that statistics generation handles empty data gracefully."""
-            categories = FlextLdifModels.FlexibleCategories()
+            categories = _FlexibleCategories()
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
                 written_counts={},
@@ -568,8 +565,8 @@ class TestFlextLdifStatistics:
 
         def test_statistics_all_rejected_entries(self) -> None:
             """Test statistics when all entries are rejected."""
-            categorized_dict = {
-                FlextLdifConstants.Categories.REJECTED: [
+            categorized_dict: dict[str, list[dict[str, object]]] = {
+                FlextLdifConstants.Categories.REJECTED.value: [
                     {
                         "dn": f"cn=invalid{i},dc=example,dc=com",
                         "attributes": {"rejectionReason": "Invalid format"},
@@ -635,19 +632,46 @@ class TestFlextLdifStatistics:
                 "attributes": {"objectClass": ["top"]},
             })
             if entry1.metadata:
-                entry1.metadata.extensions = {"server_type": "oid"}
+                new_extensions = entry1.metadata.extensions.model_copy(
+                    update={"server_type": "oid"}
+                ) if entry1.metadata.extensions else FlextLdifModels.DynamicMetadata.model_validate({"server_type": "oid"})
+                entry1 = entry1.model_copy(
+                    update={
+                        "metadata": entry1.metadata.model_copy(
+                            update={"extensions": new_extensions}
+                        )
+                    }
+                )
             entry2 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry2,dc=example,dc=com",
                 "attributes": {"objectClass": ["top"]},
             })
             if entry2.metadata:
-                entry2.metadata.extensions = {"server_type": "oud"}
+                new_extensions = entry2.metadata.extensions.model_copy(
+                    update={"server_type": "oud"}
+                ) if entry2.metadata.extensions else FlextLdifModels.DynamicMetadata.model_validate({"server_type": "oud"})
+                entry2 = entry2.model_copy(
+                    update={
+                        "metadata": entry2.metadata.model_copy(
+                            update={"extensions": new_extensions}
+                        )
+                    }
+                )
             entry3 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry3,dc=example,dc=com",
                 "attributes": {"objectClass": ["top"]},
             })
             if entry3.metadata:
-                entry3.metadata.extensions = {"server_type": "oid"}
+                new_extensions = entry3.metadata.extensions.model_copy(
+                    update={"server_type": "oid"}
+                ) if entry3.metadata.extensions else FlextLdifModels.DynamicMetadata.model_validate({"server_type": "oid"})
+                entry3 = entry3.model_copy(
+                    update={
+                        "metadata": entry3.metadata.model_copy(
+                            update={"extensions": new_extensions}
+                        )
+                    }
+                )
 
             result = FlextLdifStatistics().calculate_for_entries([
                 entry1,

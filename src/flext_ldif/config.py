@@ -216,9 +216,11 @@ class FlextLdifConfigModule:
             description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
         )
 
-        quirks_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = Field(
-            default=None,
-            description="Override server type for quirks when detection_mode is 'manual'",
+        quirks_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = (
+            Field(
+                default=None,
+                description="Override server type for quirks when detection_mode is 'manual'",
+            )
         )
 
         enable_relaxed_parsing: bool = Field(
@@ -227,9 +229,11 @@ class FlextLdifConfigModule:
         )
 
         # Validation Configuration using FlextLdifConstants for defaults
-        validation_level: FlextLdifConstants.LiteralTypes.ValidationLevelLiteral = Field(
-            default="strict",
-            description="Validation strictness level",
+        validation_level: FlextLdifConstants.LiteralTypes.ValidationLevelLiteral = (
+            Field(
+                default="strict",
+                description="Validation strictness level",
+            )
         )
 
         strict_rfc_compliance: bool = Field(
@@ -355,7 +359,9 @@ class FlextLdifConfigModule:
             description="If True, includes statistics about removed attributes in headers.",
         )
 
-        ldif_write_changetype: FlextLdifConstants.LiteralTypes.ChangeTypeLiteral | None = Field(
+        ldif_write_changetype: (
+            FlextLdifConstants.LiteralTypes.ChangeTypeLiteral | None
+        ) = Field(
             default=None,
             description="If set to 'modify', writes entries in LDIF modify format (changetype: modify). Otherwise uses add format.",
         )
@@ -370,7 +376,9 @@ class FlextLdifConfigModule:
             description="If True, writes original source entry as commented LDIF block before converted entry.",
         )
 
-        ldif_write_entry_category: FlextLdifConstants.LiteralTypes.CategoryLiteral | None = Field(
+        ldif_write_entry_category: (
+            FlextLdifConstants.LiteralTypes.CategoryLiteral | None
+        ) = Field(
             default=None,
             description="Migration category (e.g., 'hierarchy', 'users', 'groups', 'acl'). Used for phase-specific formatting.",
         )

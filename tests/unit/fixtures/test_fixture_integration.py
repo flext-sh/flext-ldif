@@ -111,6 +111,7 @@ class TestFixturesStructure:
         assert isinstance(entries_raw, list)
         for entry in entries_raw:
             # DN should follow RFC 4514 format
+            assert entry.dn is not None, "Entry must have DN"
             dn_str = entry.dn.value
             assert len(dn_str) > 0
             # Should have at least one = for attribute=value
@@ -133,6 +134,8 @@ class TestFixturesStructure:
             assert isinstance(entries_raw, list)
             for entry in entries_raw:
                 # Check for objectClass (case-insensitive)
+                assert entry.attributes is not None, "Entry must have attributes"
+                assert entry.dn is not None, "Entry must have DN"
                 attrs = entry.attributes.attributes
                 has_oc = any(attr.lower() == "objectclass" for attr in attrs)
                 assert has_oc, f"Entry {entry.dn.value} missing objectClass"

@@ -167,15 +167,17 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             FlextResult with detector status
 
         """
+        config_settings = _ConfigSettings()
+        config_settings.set_setting("service", "FlextLdifDetector")
         status_result = FlextLdifModels.ClientStatus(
             status="initialized",
             services=["detect_server_type"],
-            config=_ConfigSettings(service="FlextLdifDetector"),
+            config=config_settings,
         )
         return FlextResult[FlextLdifModels.ClientStatus].ok(status_result)
 
     @staticmethod
-    def resolve_from_config(
+    def resolve_from_config(  # noqa: PLR0911
         config: FlextLdifConfig,
         target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
         | None = None,
@@ -207,7 +209,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             return FlextLdifConstants.ServerTypes.RFC.value
 
         # Default: Use the configured default server type
-        return config.ldif_default_server_type  # noqa: PLR0911
+        return config.ldif_default_server_type
 
     def get_effective_server_type(
         self,
@@ -265,7 +267,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             if item.lower() in content_lower:
                 scores[server_type] += score_attr_match
 
-    def _process_server_with_oid_pattern(
+    def _process_server_with_oid_pattern(  # noqa: PLR0913
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         constants: type[ServerDetectionConstants] | None,
@@ -294,7 +296,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             objectclasses=getattr(constants, "DETECTION_OBJECTCLASS_NAMES", None),
         )
 
-    def _process_server_with_pattern(
+    def _process_server_with_pattern(  # noqa: PLR6301
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         constants: type[ServerDetectionConstants] | None,
@@ -422,7 +424,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
 
         return scores
 
-    def _determine_server_type(
+    def _determine_server_type(  # noqa: PLR6301
         self,
         scores: dict[str, int],
     ) -> tuple[FlextLdifConstants.LiteralTypes.ServerTypeLiteral, float]:
@@ -493,7 +495,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         if condition:
             patterns.append(description)
 
-    def _extract_oid_patterns(
+    def _extract_oid_patterns(  # noqa: PLR0913
         self,
         _constants: type[ServerDetectionConstants] | None,
         pattern: str | None,
@@ -557,7 +559,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 patterns=patterns,
             )
 
-    def _extract_patterns(self, content: str) -> list[str]:
+    def _extract_patterns(self, content: str) -> list[str]:  # noqa: PLR0914
         """Extract detected patterns from content.
 
         Args:

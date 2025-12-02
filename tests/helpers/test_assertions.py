@@ -17,9 +17,10 @@ from collections.abc import Sequence
 from typing import cast
 
 from flext_core import FlextResult, T
+from flext_tests import FlextTestsMatchers
 
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import FlextLdifModels, FlextLdifProtocols, FlextLdifTypes
+from flext_ldif._models.domain import FlextLdifModelsDomains
 
 from .test_factories import FlextLdifTestFactories
 
@@ -112,7 +113,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_schema_attribute_valid(
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: FlextLdifModelsDomains.SchemaAttribute,
         expected_oid: str | None = None,
         expected_name: str | None = None,
     ) -> None:
@@ -139,7 +140,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_schema_objectclass_valid(
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: FlextLdifModelsDomains.SchemaObjectClass,
         expected_oid: str | None = None,
         expected_name: str | None = None,
     ) -> None:
@@ -192,8 +193,25 @@ class TestAssertions:
             msg = "Parse returned string instead of entries"
             raise AssertionError(msg)
 
+        # Type narrowing: unwrapped is not str after check
+        # extract_entries expects EntryProtocol, but Entry implements EntryProtocol
+        # So we can safely pass unwrapped directly
+        unwrapped_entries: (
+            FlextLdifTypes.Models.Entry
+            | list[FlextLdifTypes.Models.Entry]
+            | FlextLdifProtocols.Services.HasEntriesProtocol
+            | str
+        ) = unwrapped  # type: ignore[assignment]
+
         # Use unified extraction to handle all result types
-        entries = FlextLdifTypes.ResultExtractors.extract_entries(unwrapped)
+        entries_protocol = FlextLdifTypes.ResultExtractors.extract_entries(unwrapped_entries)
+
+        # Convert EntryProtocol to Entry (Entry implements EntryProtocol)
+        entries: list[FlextLdifModels.Entry] = [
+            entry  # type: ignore[misc]
+            for entry in entries_protocol
+            if isinstance(entry, FlextLdifModels.Entry)
+        ]
 
         if expected_count is not None:
             assert len(entries) == expected_count, (

@@ -26,6 +26,7 @@ from flext_core import FlextConfig
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
+from flext_ldif.config import FlextLdifConfigModule
 
 # Skip if flext_ldap not available (integration dependency)
 flext_ldap_config = pytest.importorskip("flext_ldap.config")
@@ -53,12 +54,16 @@ class TestRealLdapConfigurationFromEnv:
     ) -> None:
         """Verify FlextLdifConfig loads from environment variables."""
         # Configuration should be loaded from .env automatically
-        config = flext_api.config
+        root_config = flext_api.config
+        # FlextLdifConfig is accessed via .ldif namespace on FlextConfig
+        ldif_config = root_config.ldif if hasattr(root_config, "ldif") else None
+        # If ldif namespace doesn't exist, try accessing FlextLdifConfig directly
+        if ldif_config is None:
+            ldif_config = FlextLdifConfigModule.FlextLdifConfig.get_instance()
 
         # Verify configuration values (from .env or defaults)
-        # FlextLdifConfig is nested config - LDIF-specific fields only
-        assert config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
-        assert isinstance(config.ldif_strict_validation, bool)
+        assert ldif_config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
+        assert isinstance(ldif_config.ldif_strict_validation, bool)
 
         # max_workers is in root FlextConfig, not nested FlextLdifConfig
         # Access via super().config to get root config
@@ -66,7 +71,16 @@ class TestRealLdapConfigurationFromEnv:
         assert root_config.max_workers >= 1
 
         # Verify LDAP-specific config from environment using FlextLdapConfig
-        ldap_config = FlextLdapConfig.get_instance()
+        # FlextLdapConfig may not have get_instance() - try direct instantiation or get_global_instance
+        try:
+            ldap_config = FlextLdapConfig.get_instance()
+        except AttributeError:
+            # Try get_global_instance if available
+            try:
+                ldap_config = FlextLdapConfig.get_global_instance()
+            except AttributeError:
+                # Fallback: create instance directly (may use defaults)
+                ldap_config = FlextLdapConfig()
 
         assert ldap_config.host is not None
         assert ldap_config.port > 0

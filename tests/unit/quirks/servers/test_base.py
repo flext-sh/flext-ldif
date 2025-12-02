@@ -352,8 +352,8 @@ class TestFlextLdifServersBaseWrite:
     def test_write_entry_quirk_not_available(self) -> None:
         """Test write when entry_quirk is not available."""
         rfc = FlextLdifServersRfc()
-        # Remove entry_quirk
-        del rfc._entry_quirk
+        # Set entry_quirk to None (frozen model requires object.__setattr__)
+        object.__setattr__(rfc, "_entry_quirk", None)  # noqa: PLC2801
         entry_raw = RfcTestHelpers.test_create_entry_and_unwrap(
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"]},
@@ -878,7 +878,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             attributes={"cn": ["test"]},
         )
         # Remove entry_quirk
-        del rfc._entry_quirk
+        object.__setattr__(rfc, "_entry_quirk", None)
         result = rfc.write([entry])
         _ = TestAssertions.assert_failure(result)
         assert "Entry quirk not available" in (result.error or "")
@@ -1021,7 +1021,7 @@ class TestFlextLdifServersBaseAdditionalCoverage:
             attributes={"cn": ["test"]},
         )
         # Remove entry_quirk to test error path
-        del rfc._entry_quirk
+        object.__setattr__(rfc, "_entry_quirk", None)
         result = rfc.write([entry])
         _ = TestAssertions.assert_failure(result)
         assert "Entry quirk not available" in (result.error or "")

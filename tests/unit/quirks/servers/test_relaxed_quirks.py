@@ -13,12 +13,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, Union
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain import SchemaAttribute, SchemaObjectClass
 
 meta_keys = FlextLdifConstants.MetadataKeys
 
@@ -281,7 +285,7 @@ class TestFlextLdifRelaxedQuirks:
         acl_data = FlextLdifModels.Acl(
             name="test_acl",
             target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="*", subject_value="*"),
+            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value="*"),
             permissions=FlextLdifModels.AclPermissions(),
             raw_acl=raw_acl,
         )
@@ -324,6 +328,10 @@ class TestFlextLdifRelaxedQuirks:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
+        result: Union[
+            FlextResult[SchemaAttribute],
+            FlextResult[SchemaObjectClass],
+        ]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(bad_input)
         else:
@@ -354,6 +362,10 @@ class TestFlextLdifRelaxedQuirks:
         input_without_oid: str,
     ) -> None:
         """Test parsing fails without OID even in relaxed mode."""
+        result: Union[
+            FlextResult[SchemaAttribute],
+            FlextResult[SchemaObjectClass],
+        ]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_without_oid)
         else:
@@ -375,6 +387,10 @@ class TestFlextLdifRelaxedQuirks:
         input_with_oid: str,
     ) -> None:
         """Test parsing succeeds with OID even with binary data."""
+        result: Union[
+            FlextResult[SchemaAttribute],
+            FlextResult[SchemaObjectClass],
+        ]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_with_oid)
         else:

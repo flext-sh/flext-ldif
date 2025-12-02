@@ -25,11 +25,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# from flext_tests import FlextTestsUtilities  # Mocked in conftest
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.validation import FlextLdifValidation
+from tests.helpers.test_assertions import TestAssertions
 
 
 class TestFlextLdifAnalysis:
@@ -63,7 +63,7 @@ class TestFlextLdifAnalysis:
             """Test analyze with empty entry list."""
             service = FlextLdifAnalysis()
             result = service.analyze([])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 0
             assert stats.objectclass_distribution == {}
@@ -81,11 +81,12 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.analyze([entry])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 1
-            assert "person" in stats.objectclass_distribution
-            assert "inetOrgPerson" in stats.objectclass_distribution
+            oc_dist = stats.objectclass_distribution.model_dump()
+            assert "person" in oc_dist
+            assert "inetOrgPerson" in oc_dist
             assert "user pattern" in stats.patterns_detected
 
         def test_analyze_multiple_entries(self) -> None:
@@ -110,11 +111,12 @@ class TestFlextLdifAnalysis:
             entries.append(group_result.unwrap())
 
             result = service.analyze(entries)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 4
-            assert stats.objectclass_distribution["person"] == 3
-            assert stats.objectclass_distribution["groupOfNames"] == 1
+            oc_dist = stats.objectclass_distribution.model_dump()
+            assert oc_dist["person"] == 3
+            assert oc_dist["groupOfNames"] == 1
             assert "user pattern" in stats.patterns_detected
             assert "group pattern" in stats.patterns_detected
 
@@ -130,7 +132,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.analyze([entry])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 1
             assert stats.objectclass_distribution == {}
@@ -143,7 +145,7 @@ class TestFlextLdifAnalysis:
             service = FlextLdifAnalysis()
             validation_service = FlextLdifValidation()
             result = service.validate_entries([], validation_service)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is True
             assert report.total_entries == 0
@@ -167,7 +169,7 @@ class TestFlextLdifAnalysis:
                 entries.append(entry_result.unwrap())
 
             result = service.validate_entries(entries, validation_service)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is True
             assert report.total_entries == 2
@@ -192,7 +194,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.validate_entries([entry], validation_service)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is False
             assert report.total_entries == 1
@@ -218,7 +220,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.validate_entries([entry], validation_service)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             report = result.unwrap()
             # Validation service may accept objectClass names that are RFC-compliant format
             # even if they don't exist in schema. Check if validation actually fails.
@@ -262,7 +264,7 @@ class TestFlextLdifAnalysis:
                 [valid_entry_result.unwrap(), invalid_entry_result.unwrap()],
                 validation_service,
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is False
             assert report.total_entries == 2
@@ -289,7 +291,7 @@ class TestFlextLdifAnalysis:
                 entries.append(entry_result.unwrap())
 
             result = service.validate_entries(entries, validation_service)
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             report = result.unwrap()
             assert len(report.errors) <= 100
 

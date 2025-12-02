@@ -19,6 +19,7 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -124,7 +125,7 @@ class TestFlextLdifUtilitiesOid:
         dict[
             str,
             tuple[
-                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+                FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
                 str,
             ],
         ]
@@ -135,9 +136,9 @@ class TestFlextLdifUtilitiesOid:
                 name="orclGUID",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={
-                        "original_format": "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )",
-                    },
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format="( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )",
+                    ),
                 ),
             ),
             "2.16.840.1.113894.1.1.1",
@@ -155,9 +156,9 @@ class TestFlextLdifUtilitiesOid:
                 name="orcldASObject",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={
-                        "original_format": "( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )",
-                    },
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format="( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )",
+                    ),
                 ),
             ),
             "2.16.840.1.113894.1.1.5",
@@ -168,7 +169,9 @@ class TestFlextLdifUtilitiesOid:
                 name="top",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": "(   2.5.6.0   NAME 'top' ... )"},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format="(   2.5.6.0   NAME 'top' ... )",
+                    ),
                 ),
             ),
             "2.5.6.0",
@@ -179,7 +182,9 @@ class TestFlextLdifUtilitiesOid:
                 name="cn",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": 12345},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format=12345,
+                    ),
                 ),
             ),
             "2.5.4.3",
@@ -190,7 +195,9 @@ class TestFlextLdifUtilitiesOid:
                 name="cn",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": {"key": "value"}},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format={"key": "value"},
+                    ),
                 ),
             ),
             "2.5.4.3",
@@ -201,7 +208,9 @@ class TestFlextLdifUtilitiesOid:
                 name="cn",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": None},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format=None,
+                    ),
                 ),
             ),
             "2.5.4.3",
@@ -212,7 +221,9 @@ class TestFlextLdifUtilitiesOid:
                 name="cn",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": ""},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format="",
+                    ),
                 ),
             ),
             "2.5.4.3",
@@ -221,7 +232,10 @@ class TestFlextLdifUtilitiesOid:
             FlextLdifModels.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModels.QuirkMetadata(quirk_type="oid", extensions={}),
+                metadata=FlextLdifModels.QuirkMetadata(
+                    quirk_type="oid",
+                    extensions=FlextLdifModels.DynamicMetadata(),
+                ),
             ),
             "2.5.4.3",
         ),
@@ -231,7 +245,9 @@ class TestFlextLdifUtilitiesOid:
                 name="top",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": []},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format=[],
+                    ),
                 ),
             ),
             "2.5.6.0",
@@ -242,7 +258,9 @@ class TestFlextLdifUtilitiesOid:
                 name="cn",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={"original_format": "NAME 'cn' DESC 'test'"},
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format="NAME 'cn' DESC 'test'",
+                    ),
                 ),
             ),
             "2.5.4.3",
@@ -253,9 +271,9 @@ class TestFlextLdifUtilitiesOid:
                 name="cn",
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type="oid",
-                    extensions={
-                        "original_format": "( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-                    },
+                    extensions=FlextLdifModels.DynamicMetadata(
+                        original_format="( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                    ),
                 ),
             ),
             "2.5.4.3",
@@ -414,7 +432,7 @@ class TestFlextLdifUtilitiesOid:
     def test_extract_oid_from_schema_object(
         self,
         scenario: str,
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         expected_oid: str,
     ) -> None:
         """Test extracting OID from schema objects with parametrized scenarios."""

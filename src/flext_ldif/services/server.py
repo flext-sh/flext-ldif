@@ -286,7 +286,12 @@ class FlextLdifServer:
         Eliminates ~100 lines of DRY violations from separate get_* methods.
         Returns FlextResult to avoid None returns and provide proper error handling.
         """
-        base = self._bases.get(self._normalize_server_type(server_type))
+        try:
+            normalized_type = self._normalize_server_type(server_type)
+        except ValueError as e:
+            # Invalid server type - return failure instead of raising
+            return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(str(e))
+        base = self._bases.get(normalized_type)
         if not base:
             return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(
                 f"No base found for server type: {server_type}",
@@ -331,7 +336,12 @@ class FlextLdifServer:
             FlextResult with dict containing 'schema', 'acl', 'entry' keys with quirk instances or None
 
         """
-        base = self._bases.get(self._normalize_server_type(server_type))
+        try:
+            normalized_type = self._normalize_server_type(server_type)
+        except ValueError as e:
+            # Invalid server type - return failure
+            return FlextResult[_QuirksDict].fail(str(e))
+        base = self._bases.get(normalized_type)
         if not base:
             return FlextResult[_QuirksDict].fail(
                 f"No base found for server type: {server_type}",

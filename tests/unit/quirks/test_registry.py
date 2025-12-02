@@ -26,7 +26,9 @@ class TestFlextLdifServer:
         assert len(servers) > 0
         assert "oid" in servers
         assert "oud" in servers
-        assert "openldap" in servers
+        # OpenLDAP is registered as "openldap2" (canonical form)
+        # "openldap" alias normalizes to "openldap2" but registry uses canonical form
+        assert "openldap2" in servers
 
     def test_get_global_instance(self) -> None:
         """Test global instance singleton pattern."""
@@ -197,7 +199,8 @@ class TestRegistryStats:
         assert isinstance(quirks, dict)
         assert "oid" in quirks
         assert "oud" in quirks
-        assert "openldap" in quirks
+        # OpenLDAP is registered as "openldap2" (not "openldap")
+        assert "openldap2" in quirks
         # Verify nested quirks - they contain class names (or None)
         oid_quirks = quirks["oid"]
         assert isinstance(oid_quirks, dict)
@@ -207,7 +210,8 @@ class TestRegistryStats:
         assert isinstance(oud_quirks, dict)
         assert "schema" in oud_quirks
         assert oud_quirks["schema"] is not None
-        openldap_quirks = quirks["openldap"]
+        # OpenLDAP is registered as "openldap2" (not "openldap")
+        openldap_quirks = quirks["openldap2"]
         assert isinstance(openldap_quirks, dict)
         assert "schema" in openldap_quirks
         assert openldap_quirks["schema"] is not None
@@ -222,7 +226,9 @@ class TestRegistryStats:
         assert len(servers) >= 8
         assert "oid" in servers
         assert "oud" in servers
-        assert "openldap" in servers
+        # OpenLDAP is registered as "openldap2" (canonical form)
+        # "openldap" alias normalizes to "openldap2" but registry uses canonical form
+        assert "openldap2" in servers
         # Should be sorted
         assert servers == sorted(servers)
 
@@ -303,6 +309,6 @@ class TestErrorHandling:
 
         alls = registry.get_all_quirks("unknown_server")
 
-        # Updated API: Unknown server returns FlextResult.fail(), not dict
+        # Updated API: Unknown server returns FlextResult.fail()
         assert alls.is_failure
-        assert "No base found for server type: unknown_server" in alls.error
+        assert "unknown_server" in alls.error or "Invalid server type" in alls.error

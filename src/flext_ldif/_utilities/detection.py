@@ -385,7 +385,7 @@ class FlextLdifUtilitiesDetection:
         - Any combination of attribute values
         """
 
-        def can_handle(
+        def can_handle(  # noqa: PLR0911
             self,
             _entry_dn: str,
             attributes: (

@@ -13,9 +13,9 @@ from __future__ import annotations
 import copy
 import tempfile
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Collection, Generator
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
@@ -51,47 +51,53 @@ class FlextLdifTestConftest:
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
 
-    _LDIF_TEST_ENTRIES: ClassVar[list[dict[str, dict[str, list[str]] | str]]] = [
-        {
-            "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
-            "attributes": {
-                "objectclass": ["inetOrgPerson", "person"],
-                "cn": [user.get("name", "Test User")],
-                "sn": [
-                    (
-                        user.get("name", "User").split()[-1]
-                        if " " in user.get("name", "")
-                        else "User"
-                    ),
-                ],
-                "mail": [user.get("email", f"test{i}@example.com")],
-                "uid": [f"testuser{i}"],
+    _LDIF_TEST_ENTRIES: ClassVar[
+        list[dict[str, dict[str, Collection[str]] | str]]
+    ] = cast(
+        "list[dict[str, dict[str, Collection[str]] | str]]",
+        [
+            {
+                "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
+                "attributes": {
+                    "objectclass": ["inetOrgPerson", "person"],
+                    "cn": [user.get("name", "Test User")],
+                    "sn": [
+                        (
+                            user.get("name", "User").split()[-1]
+                            if " " in user.get("name", "")
+                            else "User"
+                        ),
+                    ],
+                    "mail": [user.get("email", f"test{i}@example.com")],
+                    "uid": [f"testuser{i}"],
+                },
+            }
+            for i, user in enumerate(_TEST_USERS)
+        ]
+        + [
+            {
+                "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
+                "attributes": {
+                    "objectclass": ["groupOfNames"],
+                    "cn": ["Test Group"],
+                    "description": ["Test group for LDIF processing"],
+                    "member": [
+                        f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
+                        for i, user in enumerate(_TEST_USERS)
+                    ],
+                },
             },
-        }
-        for i, user in enumerate(_TEST_USERS)
-    ] + [
-        {
-            "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-            "attributes": {
-                "objectclass": ["groupOfNames"],
-                "cn": ["Test Group"],
-                "description": ["Test group for LDIF processing"],
-                "member": [
-                    f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
-                    for i, user in enumerate(_TEST_USERS)
-                ],
-            },
-        },
-    ]
+        ],
+    )
 
-    def docker_control(self) -> FlextTestDocker:
+    def docker_control(self) -> FlextTestDocker:  # type: ignore[return-value]
         """Provide FlextTestDocker instance for container management.
 
         Uses the FLEXT workspace root to ensure compose file paths
         are resolved correctly regardless of which project runs the tests.
         """
         workspace_root = Path("/home/marlonsc/flext")
-        return FlextTestDocker(workspace_root=workspace_root)
+        return FlextTestDocker(workspace_root=workspace_root)  # type: ignore[return-value]
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
         """Get pytest-xdist worker ID for DN namespacing."""
@@ -178,7 +184,7 @@ class FlextLdifTestConftest:
 
     def ldap_container(
         self,
-        docker_control: FlextTestDocker,
+        docker_control: FlextTestDocker,  # type: ignore[arg-type]
         worker_id: str,
     ) -> GenericFieldsDict:
         """Session-scoped LDAP container configuration.
@@ -194,9 +200,13 @@ class FlextLdifTestConftest:
         if not container_config:
             pytest.skip(f"Container {container_name} not found")
 
+        # Type narrowing: container_config is not None after check above
+        assert container_config is not None  # Type narrowing for type checkers
         # Resolve compose file path using docker_control's workspace_root
-        compose_file = str(container_config["compose_file"])
-        if not compose_file.startswith("/"):
+        compose_file = str(container_config.get("compose_file", ""))
+        if not compose_file:
+            pytest.skip(f"Container {container_name} has no compose_file")
+        if not compose_file.startswith("/") and docker_control.workspace_root:
             compose_file = str(docker_control.workspace_root / compose_file)
 
         is_dirty = docker_control.is_container_dirty(container_name)
@@ -265,17 +275,17 @@ class FlextLdifTestConftest:
 
     def ldap_container_shared(self, ldap_container: GenericFieldsDict) -> str:
         """Provide LDAP connection string."""
-        return str(ldap_container["server_url"])
+        return str(ldap_container.get("server_url", "ldap://localhost:3390"))
 
     def ldap_connection(
         self,
         ldap_container: GenericFieldsDict,
     ) -> Generator[Connection]:
         """Create LDAP connection."""
-        host = str(ldap_container["host"])
-        port = int(ldap_container["port"])
-        bind_dn = str(ldap_container["bind_dn"])
-        password = str(ldap_container["password"])
+        host = str(ldap_container.get("host", "localhost"))
+        port = int(ldap_container.get("port", 3390))
+        bind_dn = str(ldap_container.get("bind_dn", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"))
+        password = str(ldap_container.get("password", "REDACTED_LDAP_BIND_PASSWORD"))
 
         server = Server(f"ldap://{host}:{port}", get_info=ALL)
         conn = Connection(server, user=bind_dn, password=password)
@@ -446,17 +456,27 @@ class FlextLdifTestConftest:
 
     def assert_result_success(
         self,
-        flext_matchers: TestAssertions,
+        flext_matchers: TestAssertions,  # type: ignore[unused-arg]
     ) -> Callable[[FlextResult[object]], None]:
         """Result success assertion."""
-        return flext_matchers.assert_result_success
+        return self._assert_result_success
 
     def assert_result_failure(
         self,
-        flext_matchers: TestAssertions,
+        flext_matchers: TestAssertions,  # type: ignore[unused-arg]
     ) -> Callable[[FlextResult[object]], None]:
         """Result failure assertion."""
-        return flext_matchers.assert_result_failure
+        return self._assert_result_failure
+
+    @staticmethod
+    def _assert_result_success(result: FlextResult[object]) -> None:
+        """Assert success."""
+        assert result.is_success, f"Expected success: {result.error}"
+
+    @staticmethod
+    def _assert_result_failure(result: FlextResult[object]) -> None:
+        """Assert failure."""
+        assert result.is_failure, f"Expected failure: {result.value}"
 
     def validate_flext_result_success(
         self,
@@ -825,18 +845,46 @@ objectClass: person
 
 # Mock replacement for FlextTestDocker
 class MockFlextTestDocker:
+    """Mock FlextTestDocker for testing without real Docker."""
+
     class ContainerStatus:
         RUNNING = "running"
         STOPPED = "stopped"
 
     class ContainerInfo:
-        def __init__(self, status="stopped") -> None:
+        def __init__(self, status: str = "stopped") -> None:
             self.status = status
 
-    SHARED_CONTAINERS = {}
+    SHARED_CONTAINERS: dict[str, dict[str, str]] = {}
 
-    def __init__(self, workspace_root=None) -> None:
-        self.workspace_root = workspace_root
+    def __init__(self, workspace_root: Path | None = None) -> None:
+        self.workspace_root = workspace_root or Path("/home/marlonsc/flext")
+
+    def is_container_dirty(self, container_name: str) -> bool:
+        """Check if container is dirty."""
+        return False  # Mock always returns False
+
+    def cleanup_dirty_containers(self) -> FlextResult[bool]:
+        """Cleanup dirty containers."""
+        return FlextResult.ok(True)
+
+    def get_container_status(
+        self, container_name: str
+    ) -> FlextResult[ContainerInfo]:
+        """Get container status."""
+        return FlextResult.ok(
+            self.ContainerInfo(status=self.ContainerStatus.RUNNING)
+        )
+
+    def start_compose_stack(self, compose_file: str) -> FlextResult[bool]:
+        """Start compose stack."""
+        return FlextResult.ok(True)
+
+    def wait_for_port_ready(
+        self, host: str, port: int, max_wait: int = 30
+    ) -> FlextResult[bool]:
+        """Wait for port to be ready."""
+        return FlextResult.ok(True)
 
 
 # Use mock instead of real FlextTestDocker

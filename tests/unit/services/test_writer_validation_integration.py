@@ -74,7 +74,6 @@ class TestWriterValidationIntegration:
         TEST_USER_PREFIX: str = "User"
         BATCH_COUNT: int = 3
         SERVER_TYPE: Literal["rfc"] = "rfc"
-        OUTPUT_TARGET: Literal["string"] = "string"
 
     class Helpers:
         """Helper methods organized as nested class."""
@@ -168,7 +167,6 @@ class TestWriterValidationIntegration:
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            output_target=self.Constants.OUTPUT_TARGET,
             format_options=FlextLdifModels.WriteFormatOptions(
                 include_version_header=True,
                 fold_long_lines=False,
@@ -193,7 +191,6 @@ class TestWriterValidationIntegration:
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            output_target=self.Constants.OUTPUT_TARGET,
             format_options=FlextLdifModels.WriteFormatOptions(
                 base64_encode_binary=True,
                 fold_long_lines=False,
@@ -233,7 +230,6 @@ class TestWriterValidationIntegration:
         result = writer.write(
             entries=entries,
             target_server_type=self.Constants.SERVER_TYPE,
-            output_target=self.Constants.OUTPUT_TARGET,
             format_options=FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
         )
 

@@ -10,39 +10,113 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 import sys
 from collections.abc import Callable, Generator
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 from flext_core import FlextResult
 from flext_tests import FlextTestDocker
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.services.server import FlextLdifServer
+from tests.fixtures import FlextLdifFixtures
 from tests.fixtures.typing import (
     GenericFieldsDict,
     GenericTestCaseDict,
 )
+from tests.helpers.test_assertions import TestAssertions
 from tests.support.conftest_factory import FlextLdifTestConftest
 from tests.support.ldif_data import LdifTestData
 from tests.support.test_files import FileManager
 from tests.support.validators import TestValidators
 
-# Add tests directory to path for local imports AFTER all imports
-tests_dir = Path(__file__).parent
-if str(tests_dir) not in sys.path:
-    sys.path.insert(0, str(tests_dir))
 
-# Singleton instance for all conftest fixtures
+# Mock classes for flext_tests module
+class MockFlextTestsBuilders:
+    """Mock FlextTestsBuilders."""
+
+    @staticmethod
+    def build_test_data() -> dict[str, object]:
+        """Build test data."""
+        return {}
+
+
+class MockFlextTestsDomains:
+    """Mock FlextTestsDomains."""
+
+    @staticmethod
+    def get_domain_config() -> dict[str, object]:
+        """Get domain config."""
+        return {}
+
+
+class MockFlextTestsFactories:
+    """Mock FlextTestsFactories."""
+
+    @staticmethod
+    def create_test_factory() -> object:
+        """Create test factory."""
+        return object()
+
+
+class MockFlextTestsMatchers:
+    """Mock FlextTestsMatchers."""
+
+    @staticmethod
+    def assert_success(result: FlextResult[object], error_msg: str | None = None) -> object:
+        """Assert success."""
+        if result.is_success:
+            return result.unwrap()
+        raise AssertionError(error_msg or f"Expected success: {result.error}")
+
+    @staticmethod
+    def assert_failure(result: FlextResult[object], expected_error: str | None = None) -> str:
+        """Assert failure."""
+        if result.is_failure:
+            error_str = str(result.error) if result.error else str(result)
+            if expected_error and expected_error not in error_str:
+                raise AssertionError(
+                    f"Expected error containing '{expected_error}' but got: {error_str}"
+                )
+            return error_str
+        raise AssertionError(f"Expected failure: {result.value}")
+
+
+class MockFlextTestsUtilities:
+    """Mock FlextTestsUtilities."""
+
+    @staticmethod
+    def cleanup_test_data() -> None:
+        """Cleanup test data."""
+
+
+# Add mock classes to global namespace for inheritance
+builtins.FlextTestsFactories = MockFlextTestsFactories  # type: ignore[attr-defined]
+builtins.FlextTestsMatchers = MockFlextTestsMatchers  # type: ignore[attr-defined]
+builtins.FlextTestsUtilities = MockFlextTestsUtilities  # type: ignore[attr-defined]
+
+# Mock flext_tests module
+mock_flext_tests = ModuleType("flext_tests")
+mock_flext_tests.FlextTestsBuilders = MockFlextTestsBuilders  # type: ignore[attr-defined]
+mock_flext_tests.FlextTestsDomains = MockFlextTestsDomains  # type: ignore[attr-defined]
+mock_flext_tests.FlextTestsFactories = MockFlextTestsFactories  # type: ignore[attr-defined]
+mock_flext_tests.FlextTestsMatchers = MockFlextTestsMatchers  # type: ignore[attr-defined]
+mock_flext_tests.FlextTestsUtilities = MockFlextTestsUtilities  # type: ignore[attr-defined]
+sys.modules["flext_tests"] = mock_flext_tests
+
+# Factory instance for all fixtures
 conftest_instance = FlextLdifTestConftest()
 
 
 # Use factory instance for all fixtures
 @pytest.fixture(scope="session")
-def docker_control() -> FlextTestDocker:
+def docker_control() -> FlextTestDocker:  # type: ignore[assignment]
     """Provide FlextTestDocker instance for container management."""
-    return conftest_instance.docker_control()
+    return conftest_instance.docker_control()  # type: ignore[return-value]
 
 
 @pytest.fixture(scope="session")
@@ -113,13 +187,13 @@ def reset_flextldif_singleton() -> Generator[None]:
 
 
 @pytest.fixture(autouse=True)
-def cleanup_state() -> Generator[None]:
+def cleanup_state() -> Generator[None, None, None]:
     """Autouse fixture to clean shared state between tests.
 
     Runs after each test to prevent state pollution to subsequent tests.
     Ensures test isolation even when fixtures have shared state.
     """
-    return
+    yield
     # Post-test cleanup - ensures each test has clean state
 
 
@@ -129,7 +203,7 @@ def ldap_container(
     worker_id: str,
 ) -> GenericFieldsDict:
     """Session-scoped LDAP container configuration."""
-    return conftest_instance.ldap_container(docker_control, worker_id)
+    return conftest_instance.ldap_container(docker_control, worker_id)  # type: ignore[arg-type]
 
 
 @pytest.fixture
@@ -142,7 +216,7 @@ def ldap_container_shared(ldap_container: GenericFieldsDict) -> str:
 
 
 @pytest.fixture
-def ldap_connection(ldap_container: GenericFieldsDict) -> Generator[object]:
+def ldap_connection(ldap_container: GenericFieldsDict) -> Generator[Connection]:
     """Create LDAP connection.
 
     Uses function scope to ensure fresh connection per test (no state pollution).
@@ -152,9 +226,9 @@ def ldap_connection(ldap_container: GenericFieldsDict) -> Generator[object]:
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: object,
-    make_test_base_dn: object,
-) -> Generator[object]:
+    ldap_connection: Connection,
+    make_test_base_dn: Callable[[str], str],
+) -> Generator[str]:
     """Create and clean isolated test OU."""
     yield from conftest_instance.clean_test_ou(ldap_connection, make_test_base_dn)
 
@@ -279,7 +353,7 @@ def integration_services() -> GenericFieldsDict:
 
 @pytest.fixture
 def assert_result_success(
-    flext_matchers: object,
+    flext_matchers: TestAssertions,
 ) -> Callable[[FlextResult[object]], None]:
     """Result success assertion."""
     return conftest_instance.assert_result_success(flext_matchers)
@@ -287,7 +361,7 @@ def assert_result_success(
 
 @pytest.fixture
 def assert_result_failure(
-    flext_matchers: object,
+    flext_matchers: TestAssertions,
 ) -> Callable[[FlextResult[object]], None]:
     """Result failure assertion."""
     return conftest_instance.assert_result_failure(flext_matchers)
@@ -308,7 +382,7 @@ def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str,
 @pytest.fixture
 def flext_result_composition_helper() -> Callable[
     [list[FlextResult[object]]],
-    dict[str, object],
+    GenericFieldsDict,
 ]:
     """Result composition helper."""
     return conftest_instance.flext_result_composition_helper()
@@ -351,13 +425,13 @@ def large_ldif_config() -> GenericFieldsDict:
 
 
 @pytest.fixture
-def flext_domains() -> object:
+def flext_domains() -> FlextLdifTestConftest.LocalTestDomains:
     """Domain-specific test data."""
     return conftest_instance.flext_domains()
 
 
 @pytest.fixture
-def flext_matchers() -> object:
+def flext_matchers() -> FlextLdifTestConftest.LocalTestMatchers:
     """Local matchers."""
     return conftest_instance.flext_matchers()
 
@@ -381,61 +455,63 @@ def ldif_error_scenarios() -> dict[str, str]:
 
 
 @pytest.fixture
-def ldif_performance_config(flext_domains: object) -> GenericFieldsDict:
+def ldif_performance_config(
+    flext_domains: FlextLdifTestConftest.LocalTestDomains,
+) -> GenericFieldsDict:
     """Performance config."""
     return conftest_instance.ldif_performance_config(flext_domains)
 
 
 @pytest.fixture
-def ldif_test_constants() -> object:
+def ldif_test_constants() -> FlextLdifTestConftest.LDIFTestConstants:
     """Test constants."""
     return conftest_instance.ldif_test_constants()
 
 
 @pytest.fixture
-def fixtures_loader() -> object:
+def fixtures_loader() -> FlextLdifFixtures.Loader:
     """Generic fixture loader."""
     return conftest_instance.fixtures_loader()
 
 
 @pytest.fixture
-def oid_fixtures() -> object:
+def oid_fixtures() -> FlextLdifFixtures.OID:
     """OID fixtures."""
     return conftest_instance.oid_fixtures()
 
 
 @pytest.fixture
-def oid_schema(oid_fixtures: object) -> str:
+def oid_schema(oid_fixtures: FlextLdifFixtures.OID) -> str:
     """OID schema."""
     return conftest_instance.oid_schema(oid_fixtures)
 
 
 @pytest.fixture
-def oid_acl(oid_fixtures: object) -> str:
+def oid_acl(oid_fixtures: FlextLdifFixtures.OID) -> str:
     """OID ACL."""
     return conftest_instance.oid_acl(oid_fixtures)
 
 
 @pytest.fixture
-def oid_entries(oid_fixtures: object) -> str:
+def oid_entries(oid_fixtures: FlextLdifFixtures.OID) -> str:
     """OID entries."""
     return conftest_instance.oid_entries(oid_fixtures)
 
 
 @pytest.fixture
-def oid_integration(oid_fixtures: object) -> str:
+def oid_integration(oid_fixtures: FlextLdifFixtures.OID) -> str:
     """OID integration."""
     return conftest_instance.oid_integration(oid_fixtures)
 
 
 @pytest.fixture
-def oud_fixtures() -> object:
+def oud_fixtures() -> FlextLdifFixtures.OUD:
     """OUD fixtures."""
     return conftest_instance.oud_fixtures()
 
 
 @pytest.fixture
-def openldap_fixtures() -> object:
+def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
     """OpenLDAP fixtures."""
     return conftest_instance.openldap_fixtures()
 
@@ -473,80 +549,29 @@ def oid() -> object:
 # Pytest configuration
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest markers."""
-    conftest_instance.pytest_configure(config)
+    config.addinivalue_line("markers", "integration: Integration tests")
+    config.addinivalue_line("markers", "unit: Unit tests")
+    config.addinivalue_line("markers", "slow: Slow tests")
 
 
-def pytest_collection_modifyitems(
-    config: pytest.Config,
-    items: list[pytest.Item],
-) -> None:
-    """Filter test items."""
-    conftest_instance.pytest_collection_modifyitems(config, items)
-
-
-# Mock replacements for flext_tests dependencies to avoid python_on_whales import
-import sys
-from types import ModuleType
-
-# Create mock module
-mock_flext_tests = ModuleType("flext_tests")
-
-
-# Mock classes
-class MockFlextTestsBuilders:
-    pass
-
-
-class MockFlextTestsDomains:
-    @staticmethod
-    def create_user():
-        return {"name": "test", "email": "test@example.com"}
+# Helper class for assertions
+class AssertionHelpers:
+    """Helper methods for test assertions."""
 
     @staticmethod
-    def create_configuration():
-        return {"setting": "value"}
-
-    @staticmethod
-    def create_service():
-        return {"service": "mock"}
-
-    @staticmethod
-    def create_payload():
-        return {"data": "mock"}
-
-    @staticmethod
-    def batch_users(count):
-        return [
-            {"name": f"user{i}", "email": f"user{i}@example.com"} for i in range(count)
-        ]
-
-    @staticmethod
-    def valid_email_cases():
-        return ["test@example.com"]
-
-    @staticmethod
-    def invalid_email_cases():
-        return ["invalid"]
-
-    @staticmethod
-    def valid_ages():
-        return [25]
-
-    @staticmethod
-    def invalid_ages():
-        return [-1]
-
-
-class MockFlextTestsFactories:
-    pass
-
-
-class MockFlextTestsMatchers:
-    @staticmethod
-    def assert_success(result, message=None):
+    def assert_success(
+        result: FlextResult[object] | object, message: str | None = None
+    ) -> object:
         """Assert result is success and return unwrapped value."""
-        if hasattr(result, "is_success") and result.is_success:
-            return result.unwrap() if hasattr(result, "unwrap") else result.value
+        if isinstance(result, FlextResult) and result.is_success:
+            unwrapped = result.unwrap()
+            return unwrapped if unwrapped is not None else ""
+        if hasattr(result, "is_success") and getattr(result, "is_success", False):
+            if hasattr(result, "unwrap"):
+                unwrap_method = result.unwrap
+                unwrapped = unwrap_method() if callable(unwrap_method) else getattr(result, "value", "")
+                return unwrapped if unwrapped is not None else ""
+            return getattr(result, "value", "")
         msg = (
             message
             or f"Expected success but got failure: {getattr(result, 'error', result)}"
@@ -554,50 +579,24 @@ class MockFlextTestsMatchers:
         raise AssertionError(msg)
 
     @staticmethod
-    def assert_failure(result, expected_error=None):
+    def assert_failure(
+        result: FlextResult[object] | object, expected_error: str | None = None
+    ) -> str:
         """Assert result is failure."""
-        if hasattr(result, "is_failure") and result.is_failure:
-            error = result.error if hasattr(result, "error") else str(result)
-            if expected_error and expected_error not in str(error):
+        if isinstance(result, FlextResult) and result.is_failure:
+            error_str = str(result.error) if result.error else str(result)
+            if expected_error and expected_error not in error_str:
                 raise AssertionError(
-                    f"Expected error containing '{expected_error}' but got: {error}"
+                    f"Expected error containing '{expected_error}' but got: {error_str}"
                 )
-            return error
-        raise AssertionError(f"Expected failure but got success: {result}")
-
-
-class MockFlextTestsUtilities:
-    class ResultHelpers:
-        @staticmethod
-        def validate_composition(*args, **kwargs) -> bool:
-            return True
-
-        @staticmethod
-        def validate_chain(*args, **kwargs) -> bool:
-            return True
-
-        @staticmethod
-        def assert_composition(*args, **kwargs) -> None:
-            pass
-
-        @staticmethod
-        def assert_chain_success(*args, **kwargs) -> None:
-            pass
-
-
-# Add mock classes to mock module
-mock_flext_tests.FlextTestsBuilders = MockFlextTestsBuilders
-mock_flext_tests.FlextTestsDomains = MockFlextTestsDomains
-mock_flext_tests.FlextTestsFactories = MockFlextTestsFactories
-mock_flext_tests.FlextTestsMatchers = MockFlextTestsMatchers
-mock_flext_tests.FlextTestsUtilities = MockFlextTestsUtilities
-
-# Inject mock module into sys.modules
-sys.modules["flext_tests"] = mock_flext_tests
-
-# Add mock classes to global namespace for inheritance
-import builtins
-
-builtins.FlextTestsFactories = MockFlextTestsFactories
-builtins.FlextTestsMatchers = MockFlextTestsMatchers
-builtins.FlextTestsUtilities = MockFlextTestsUtilities
+            return error_str
+        if hasattr(result, "is_failure") and getattr(result, "is_failure", False):
+            error_str = (
+                str(getattr(result, "error", "")) if hasattr(result, "error") and getattr(result, "error", None) else str(result)
+            )
+            if expected_error and expected_error not in error_str:
+                raise AssertionError(
+                    f"Expected error containing '{expected_error}' but got: {error_str}"
+                )
+            return error_str
+        raise AssertionError(f"Expected failure: {result}")

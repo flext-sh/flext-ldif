@@ -16,13 +16,16 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
+class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     """Direct ACL processing service using flext-core APIs.
 
     This service provides minimal, direct ACL processing by delegating
@@ -35,28 +38,58 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
     def __init__(self, server: FlextLdifServer | None = None) -> None:
         """Initialize ACL service with optional server instance."""
         super().__init__()
-        self._server = server if server is not None else FlextLdifServer()
+        # Use object.__setattr__ for PrivateAttr in frozen models
+        object.__setattr__(
+            self,
+            "_server",
+            server if server is not None else FlextLdifServer(),
+        )
 
     def parse_acl_string(
         self,
         acl_string: str,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[FlextLdifModels.Acl]:
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
+    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
         """Parse ACL string using server-specific quirks.
 
         Args:
             acl_string: Raw ACL string to parse
-            server_type: Server type for quirk selection
+            server_type: Server type for quirk selection (will be normalized)
 
         Returns:
             FlextResult containing parsed ACL model
 
         """
-        # Get ACL quirk for server type
-        acl_quirk = self._server.acl(server_type)
+        # Normalize server type to canonical form
+        # Store original server_type for fallback logic
+        original_server_type = str(server_type)
+        try:
+            normalized_server_type = FlextLdifConstants.normalize_server_type(
+                original_server_type,
+            )
+        except (ValueError, TypeError) as e:
+            # Invalid server type validation error
+            return FlextResult.fail(f"Invalid server type: {server_type} - {e}")
+
+        # Get ACL quirk for normalized server type
+        # If "openldap" (generic) was requested, try "openldap1" (legacy format) first
+        # as it's more compatible with older ACL formats, then fallback to "openldap2"
+        try:
+            # If original was "openldap", try "openldap1" first (legacy format)
+            if original_server_type.lower() == "openldap":
+                acl_quirk = self._server.acl("openldap1")
+                if acl_quirk is None:
+                    # Fallback to openldap2 if openldap1 not found
+                    acl_quirk = self._server.acl("openldap2")
+            else:
+                # Use normalized server type directly
+                acl_quirk = self._server.acl(normalized_server_type)
+        except ValueError as e:
+            # Invalid server type validation error
+            return FlextResult.fail(str(e))
         if acl_quirk is None:
             return FlextResult.fail(
-                f"No ACL quirk found for server type: {server_type}",
+                f"No ACL quirk found for server type: {normalized_server_type}",
             )
 
         # Direct call to ACL quirk parse method
@@ -70,7 +103,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
 
     def write_acl(
         self,
-        acl: FlextLdifModels.Acl,
+        acl: FlextLdifModelsDomains.Acl,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
     ) -> FlextResult[str]:
         """Write ACL model to string format.
@@ -102,7 +135,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         self,
         entry: FlextLdifModels.Entry,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[FlextLdifModels.AclResponse]:
+    ) -> FlextResult[FlextLdifModelsResults.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names.
 
         Args:
@@ -121,7 +154,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         if not acl_attr_name:
             # Server has no ACL attributes
             return FlextResult.ok(
-                FlextLdifModels.AclResponse(
+                FlextLdifModelsResults.AclResponse(
                     acls=[],
                     statistics=FlextLdifModels.Statistics(
                         processed_entries=1,
@@ -138,7 +171,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         if not acl_values:
             # No ACL values found
             return FlextResult.ok(
-                FlextLdifModels.AclResponse(
+                FlextLdifModelsResults.AclResponse(
                     acls=[],
                     statistics=FlextLdifModels.Statistics(
                         processed_entries=1,
@@ -154,7 +187,8 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
         for acl_value in acl_values:
             parse_result = self.parse_acl_string(acl_value, server_type)
             if parse_result.is_success:
-                acls.append(parse_result.unwrap())
+                acl_obj = parse_result.unwrap()
+                acls.append(acl_obj)
             else:
                 failed_count += 1
                 self.logger.warning(
@@ -164,7 +198,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
                 )
 
         # Create response
-        response = FlextLdifModels.AclResponse(
+        response = FlextLdifModelsResults.AclResponse(
             acls=acls,
             statistics=FlextLdifModels.Statistics(
                 processed_entries=1,
@@ -175,19 +209,84 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModels.AclResponse]):
 
         return FlextResult.ok(response)
 
-    def execute(self) -> FlextResult[FlextLdifModels.AclResponse]:
-        """Execute ACL service.
+    @staticmethod
+    def extract_acl_entries(
+        entries: list[FlextLdifModels.Entry],
+        acl_attributes: list[str] | None = None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Extract entries that contain ACL attributes.
 
-        This service requires input data to process ACLs. Use parse_acl_string(),
-        parse_acl_attribute(), or parse_acl_attributes() methods instead.
+        Args:
+            entries: List of entries to filter
+            acl_attributes: Optional list of ACL attribute names to look for.
+                If None, uses default ACL attributes (aci, acl, olcAccess).
 
         Returns:
-            FlextResult.fail: Always fails as input is required
+            FlextResult containing list of entries with ACL attributes
 
         """
-        return FlextResult.fail(
-            "FlextLdifAcl requires input data to process ACLs. "
-            "Use parse_acl_string(), parse_acl_attribute(), or parse_acl_attributes() methods.",
+        if not entries:
+            return FlextResult.ok([])
+
+        # Use default ACL attributes if not specified
+        if acl_attributes is None:
+            acl_attributes = list(
+                FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(None),
+            )
+
+        # Filter entries that have at least one ACL attribute
+        # Exclude schema entries even if they have ACL attributes
+        acl_entries = []
+        for entry in entries:
+            # Skip schema entries
+            if FlextLdifAcl._is_schema_entry(entry):
+                continue
+
+            # Check if entry has any of the ACL attributes
+            has_acl = False
+            for attr_name in acl_attributes:
+                attr_values = entry.get_attribute_values(attr_name)
+                if attr_values and len(attr_values) > 0:
+                    has_acl = True
+                    break
+
+            if has_acl:
+                acl_entries.append(entry)
+
+        return FlextResult.ok(acl_entries)
+
+    @staticmethod
+    def _is_schema_entry(entry: FlextLdifModels.Entry) -> bool:
+        """Check if entry is a schema entry.
+
+        Args:
+            entry: Entry to check
+
+        Returns:
+            True if entry is a schema entry, False otherwise
+
+        """
+        return FlextLdifUtilities.Entry.is_schema_entry(entry, strict=False)
+
+    def execute(self) -> FlextResult[FlextLdifModelsResults.AclResponse]:  # noqa: PLR6301
+        """Execute ACL service health check.
+
+        Returns:
+            FlextResult containing service status
+
+        Note:
+            Method must be instance method to satisfy FlextService interface.
+            Returns service status for health checks, actual ACL processing uses
+            parse_acl_string(), parse_acl_attribute(), or parse_acl_attributes() methods.
+
+        """
+        # Return service status for health check
+        # Create a minimal AclResponse indicating service is operational
+        return FlextResult[FlextLdifModelsResults.AclResponse].ok(
+            FlextLdifModelsResults.AclResponse(
+                acls=[],
+                statistics=FlextLdifModelsResults.Statistics(),
+            ),
         )
 
 

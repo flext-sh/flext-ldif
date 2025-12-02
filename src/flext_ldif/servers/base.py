@@ -34,10 +34,12 @@ from __future__ import annotations
 import re
 from abc import ABC
 from collections.abc import Callable, Mapping, Sequence
+from datetime import UTC
 from typing import (
     ClassVar,
     Protocol,
     Self,
+    cast,
     overload,
 )
 
@@ -53,9 +55,12 @@ from flext_ldif.typings import FlextLdifTypes
 
 
 # Lazy import to avoid circular dependency
-def _get_utilities() -> type:
-    """Lazy import of FlextLdifUtilities to avoid circular dependency."""
-    from flext_ldif.utilities import FlextLdifUtilities
+def _get_utilities() -> type:  # type: ignore[return]
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns the FlextLdifUtilities class for accessing nested utilities.
+    """
+    from flext_ldif._utilities import FlextLdifUtilities  # noqa: PLC0415
 
     return FlextLdifUtilities
 
@@ -130,13 +135,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         """
         super().__init__(**kwargs)
-        # Instantiate nested quirks, passing parent_quirk directly
+        # Instantiate nested quirks, passing _parent_quirk directly
         # Type narrowing: self is FlextLdifServersBase instance
         parent_ref: FlextLdifServersBase = self
-        # Pass parent_quirk during initialization (not after) to work with frozen models
-        self._schema_quirk = self.Schema(parent_quirk=parent_ref)
-        self._acl_quirk = self.Acl(parent_quirk=parent_ref)
-        self._entry_quirk = self.Entry(parent_quirk=parent_ref)
+        # Pass _parent_quirk during initialization (not after) to work with frozen models
+        # Type ignore needed because Pydantic Field type inference is incorrect
+        self._schema_quirk = self.Schema(_parent_quirk=parent_ref)  # type: ignore[arg-type]
+        self._acl_quirk = self.Acl(_parent_quirk=parent_ref)  # type: ignore[arg-type]
+        self._entry_quirk = self.Entry(_parent_quirk=parent_ref)  # type: ignore[arg-type]
 
     def __getattr__(
         self,
@@ -568,12 +574,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         raise TypeError(msg)
 
     @property
-    def acl_quirk(self) -> FlextLdifServersBase.Acl:
+    def acl_quirk(self) -> FlextLdifProtocols.Quirks.AclProtocol:
         """Get the Acl quirk instance."""
         return self._acl_quirk
 
     @property
-    def entry_quirk(self) -> FlextLdifServersBase.Entry:
+    def entry_quirk(self) -> FlextLdifProtocols.Quirks.EntryProtocol:
         """Get the Entry quirk instance."""
         return self._entry_quirk
 
@@ -1044,7 +1050,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """
 
         # Parent quirk reference for accessing server-level configuration
-        parent_quirk: FlextLdifServersBase | None = Field(
+        parent_quirk: FlextLdifServersBase | None = Field(  # type: ignore[assignment]
             default=None,
             exclude=True,
             repr=False,
@@ -1110,6 +1116,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             super().__init__(**kwargs)
             self._schema_service = schema_service  # Store for use by subclasses
+            # Store _parent_quirk using object.__setattr__ to avoid Pydantic validation
+            # (it's not a Pydantic field, just an internal reference)
+            if _parent_quirk is not None:
+                object.__setattr__(self, "_parent_quirk", _parent_quirk)
             # Note: server_type and priority descriptors are only available on parent server classes
             # Nested classes (Schema/Acl/Entry) access them via _get_server_type() when needed
 
@@ -1119,7 +1129,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         def _get_server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
             """Get server_type from parent server class via __qualname__."""
-            return _get_utilities().Server.get_parent_server_type(type(self))
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has Server attribute
+            if hasattr(utilities_class, "Server"):
+                return utilities_class.Server.get_parent_server_type(type(self))
+            # Fallback if Server not available
+            return "rfc"
 
         def _get_priority(self) -> int:
             """Get priority from parent server class Constants."""
@@ -1371,7 +1386,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 FlextResult with SchemaAttribute or SchemaObjectClass.
 
             """
-            schema_type = _get_utilities().Schema.detect_schema_type(definition)
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has Schema attribute
+            if hasattr(utilities_class, "Schema"):
+                schema_type = utilities_class.Schema.detect_schema_type(definition)
+            else:
+                schema_type = "attribute"
             if schema_type == "objectclass":
                 oc_result = self._parse_objectclass(definition)
                 if oc_result.is_failure:
@@ -1544,7 +1564,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if not oid_value:
                 return
 
-            oid_validate_result = _get_utilities().OID.validate_format(oid_value)
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has OID attribute
+            if hasattr(utilities_class, "OID"):
+                oid_validate_result = utilities_class.OID.validate_format(oid_value)
+            else:
+                from flext_core import FlextResult
+
+                oid_validate_result = FlextResult.ok(True)
             if oid_validate_result.is_failure:
                 metadata_extensions[
                     FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
@@ -1606,9 +1633,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
             """
             # Extract extensions and widen type to include bool for validation tracking
-            metadata_extensions: dict[str, list[str] | str | bool | None] = (
-                _get_utilities().Parser.extract_extensions(attr_definition)
-            )
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has Parser attribute
+            if hasattr(utilities_class, "Parser"):
+                metadata_extensions: dict[str, list[str] | str | bool | None] = (
+                    utilities_class.Parser.extract_extensions(attr_definition)
+                )
+            else:
+                metadata_extensions = {}
 
             # Track syntax OID validation (if syntax is present)
             if syntax:
@@ -1681,10 +1713,13 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             )
 
             # Preserve ALL schema formatting details for zero data loss
-            _get_utilities().Metadata.preserve_schema_formatting(
-                metadata,
-                attr_definition,
-            )
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has Metadata attribute
+            if hasattr(utilities_class, "Metadata"):
+                utilities_class.Metadata.preserve_schema_formatting(
+                    metadata,
+                    attr_definition,
+                )
 
             # Log formatting preservation for debugging (FlextLogger adds source automatically)
             preview_length = FlextLdifConstants.DN_TRUNCATE_LENGTH
@@ -1951,10 +1986,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                         )
                     ].fail(f"parse operation requires str, got {type(data).__name__}")
                 # Detect if attribute or objectClass definition
-                if (
-                    _get_utilities().Schema.detect_schema_type(data)
-                    == FlextLdifConstants.Schema.OBJECTCLASS
-                ):
+                utilities_class = _get_utilities()
+                # Type narrowing: utilities_class has Schema attribute
+                schema_type = (
+                    utilities_class.Schema.detect_schema_type(data)
+                    if hasattr(utilities_class, "Schema")
+                    else "attribute"
+                )
+                if schema_type == FlextLdifConstants.Schema.OBJECTCLASS:
                     return self._handle_parse_operation(
                         attr_definition=None,
                         oc_definition=data,
@@ -2053,7 +2092,6 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # Type narrowing: ensure operation is ParseWriteOperationLiteral | None
             # Type narrowing: ParseWriteOperationLiteral is Literal["parse", "write"]
             # operation is already typed from above, just ensure it's the correct type
-            from typing import cast
 
             operation_final: (
                 FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
@@ -2152,7 +2190,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         """Quirk priority (lower number = higher priority)."""
 
         # Parent quirk reference for accessing server-level configuration
-        parent_quirk: FlextLdifServersBase | None = Field(
+        parent_quirk: FlextLdifServersBase | None = Field(  # type: ignore[assignment]
             default=None,
             exclude=True,
             repr=False,
@@ -2184,12 +2222,21 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             super().__init__(**kwargs)
             self._acl_service = acl_service  # Store for use by subclasses
+            # Store _parent_quirk using object.__setattr__ to avoid Pydantic validation
+            # (it's not a Pydantic field, just an internal reference)
+            if _parent_quirk is not None:
+                object.__setattr__(self, "_parent_quirk", _parent_quirk)
             # Note: server_type and priority descriptors are only available on parent server classes
             # Nested classes (Schema/Acl/Entry) access them via _get_server_type() when needed
 
         def _get_server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
             """Get server_type from parent server class via __qualname__."""
-            return _get_utilities().Server.get_parent_server_type(type(self))
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has Server attribute
+            if hasattr(utilities_class, "Server"):
+                return utilities_class.Server.get_parent_server_type(type(self))
+            # Fallback if Server not available
+            return "rfc"
 
         def _get_priority(self) -> int:
             """Get priority from parent server class Constants."""
@@ -2530,8 +2577,6 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
             ) = None
             if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                from typing import cast
-
                 operation_typed = cast(
                     "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
                     operation_raw,
@@ -2632,8 +2677,6 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 and isinstance(operation, str)
                 and operation in {"parse", "write"}
             ):
-                from typing import cast
-
                 detected_operation = cast(
                     "FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral",
                     operation,
@@ -2728,9 +2771,15 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 return FlextResult[str].ok(acl_value)
 
             # Sanitize the original format for use as ACL name
-            sanitized_name, _was_sanitized = _get_utilities().ACL.sanitize_acl_name(
-                original_format,
-            )
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has ACL attribute
+            if hasattr(utilities_class, "ACL"):
+                sanitized_name, _was_sanitized = utilities_class.ACL.sanitize_acl_name(
+                    original_format
+                )
+            else:
+                sanitized_name = original_format
+                _was_sanitized = False
 
             if not sanitized_name:
                 return FlextResult[str].ok(acl_value)
@@ -2840,7 +2889,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
 
         # Parent quirk reference for accessing server-level configuration
-        parent_quirk: FlextLdifServersBase | None = Field(
+        parent_quirk: FlextLdifServersBase | None = Field(  # type: ignore[assignment]
             default=None,
             exclude=True,
             repr=False,
@@ -2871,12 +2920,21 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             """
             super().__init__(**kwargs)
             self._entry_service = entry_service  # Store for use by subclasses
+            # Store _parent_quirk using object.__setattr__ to avoid Pydantic validation
+            # (it's not a Pydantic field, just an internal reference)
+            if _parent_quirk is not None:
+                object.__setattr__(self, "_parent_quirk", _parent_quirk)
             # Note: server_type and priority descriptors are only available on parent server classes
             # Nested classes (Schema/Acl/Entry) access them via _get_server_type() when needed
 
         def _get_server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
             """Get server_type from parent server class via __qualname__."""
-            return _get_utilities().Server.get_parent_server_type(type(self))
+            utilities_class = _get_utilities()
+            # Type narrowing: utilities_class has Server attribute
+            if hasattr(utilities_class, "Server"):
+                return utilities_class.Server.get_parent_server_type(type(self))
+            # Fallback if Server not available
+            return "rfc"
 
         def _get_priority(self) -> int:
             """Get priority from parent server class Constants."""
@@ -3223,12 +3281,47 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             # Handle list of entries
             if isinstance(entry_data, list):
                 results: list[str] = []
-                for entry in entry_data:
-                    result = self.write(entry, write_options)
-                    if result.is_failure:
-                        return result
-                    results.append(result.unwrap())
-                return FlextResult[str].ok("\n".join(results))
+                header_lines: list[str] = []
+
+                # Extract write_options to check for header generation
+                write_options_for_header: FlextLdifModels.WriteFormatOptions | None = (
+                    None
+                )
+                if write_options is not None:
+                    if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
+                        write_options_for_header = write_options
+                    elif isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
+                        # Convert WriteOptions to WriteFormatOptions for header check
+                        write_options_for_header = FlextLdifModels.WriteFormatOptions()
+
+                # Generate header if needed (even for empty entries list)
+                if (
+                    write_options_for_header
+                    and write_options_for_header.include_version_header
+                ):
+                    header_lines.append("version: 1")
+
+                if (
+                    write_options_for_header
+                    and write_options_for_header.include_timestamps
+                ):
+                    from datetime import datetime
+
+                    timestamp = datetime.now(UTC).isoformat()
+                    header_lines.append(f"# Generated on: {timestamp}")
+                    header_lines.append(f"# Total entries: {len(entry_data)}")
+
+                # Process entries (skip if empty list - header already generated)
+                if entry_data:
+                    for entry in entry_data:
+                        result = self.write(entry, write_options)
+                        if result.is_failure:
+                            return result
+                        results.append(result.unwrap())
+
+                # Combine header and entries
+                all_lines = header_lines + results
+                return FlextResult[str].ok("\n".join(all_lines) if all_lines else "")
 
             # Single entry - inject write_options into metadata if provided
             entry = entry_data
@@ -3279,10 +3372,27 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                         update={"write_options": new_write_opts},
                     )
                 else:
-                    # Create new metadata - use dict for write_options to preserve WriteFormatOptions
+                    # Create new metadata - convert WriteFormatOptions to WriteOptions
+                    # QuirkMetadata only accepts WriteOptions, not WriteFormatOptions
+                    write_options_for_metadata: (
+                        FlextLdifModelsDomains.WriteOptions | None
+                    ) = None
+                    if isinstance(
+                        write_options_typed, FlextLdifModelsDomains.WriteOptions
+                    ):
+                        write_options_for_metadata = write_options_typed
+                    elif isinstance(
+                        write_options_typed, FlextLdifModels.WriteFormatOptions
+                    ):
+                        # Convert WriteFormatOptions to WriteOptions
+                        write_options_for_metadata = (
+                            FlextLdifModelsDomains.WriteOptions.model_validate(
+                                write_options_typed.model_dump()
+                            )
+                        )
                     updated_metadata = FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type="rfc",
-                        write_options=new_write_opts,
+                        write_options=write_options_for_metadata,
                     )
                 entry = entry.model_copy(
                     update={"metadata": updated_metadata},

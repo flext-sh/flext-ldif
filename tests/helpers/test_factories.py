@@ -19,6 +19,7 @@ from collections.abc import Iterator
 
 # from flext_tests import object  # Mocked in conftest
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests.fixtures.constants import DNs, Names, TestData, Values
 
@@ -162,7 +163,7 @@ class FlextLdifTestFactories:
         name: str = "testAttribute",
         syntax: str = "1.3.6.1.4.1.1466.115.121.1.15",
         **overrides: object,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Create a test SchemaAttribute.
 
         Args:
@@ -192,7 +193,7 @@ class FlextLdifTestFactories:
         oid: str = "1.3.6.1.4.1.1466.344",
         name: str = "testObjectClass",
         **overrides: object,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Create a test SchemaObjectClass.
 
         Args:

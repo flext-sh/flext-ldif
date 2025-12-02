@@ -480,9 +480,10 @@ class TestFlextLdifEntrys:
                     if attr not in operational_set
                 ]
                 if non_operational:
-                    entry_result = FlextLdifEntries.remove_attributes(
-                        entry,
-                        attributes=non_operational,
+                    entries_service = FlextLdifEntries()
+                    entry_result = entries_service.remove_attributes(
+                        entry=entry,
+                        attributes_to_remove=non_operational,
                     )
                     entry = FlextTestsMatchers.assert_success(entry_result)
                 cleaned = EntryTestHelpers.test_remove_operational_attributes_complete(

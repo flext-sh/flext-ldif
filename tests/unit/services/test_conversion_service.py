@@ -191,7 +191,9 @@ class TestFlextLdifConversionService:
         result = conversion_service.execute()
         assert result.is_success
         entry = result.unwrap()
-        assert isinstance(entry, FlextLdifModels.Entry)
+        # Entry can be FlextLdifModels.Entry or FlextLdifModelsDomains.Entry
+        from flext_ldif._models.domain import FlextLdifModelsDomains
+        assert isinstance(entry, (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry))
         assert entry.dn.value == "cn=health-check"
 
     def test_execute_health_check_success(
@@ -199,10 +201,13 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
     ) -> None:
         """Test execute() health check succeeds."""
+        from flext_ldif._models.domain import FlextLdifModelsDomains
+
         result = conversion_service.execute()
         assert result.is_success
         entry = result.unwrap()
-        assert isinstance(entry, FlextLdifModels.Entry)
+        # execute() returns FlextLdifModelsDomains.Entry, not FlextLdifModels.Entry
+        assert isinstance(entry, (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry))
         assert entry.attributes.attributes == {}
 
     # ────────────────────────────────────────────────────────────────────────

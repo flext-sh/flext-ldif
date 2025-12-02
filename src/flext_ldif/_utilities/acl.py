@@ -10,11 +10,12 @@ import re
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-# Lazy import to avoid circular dependency
-# FlextLdifConstants imported when needed in methods
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
@@ -71,7 +72,25 @@ class FlextLdifUtilitiesACL:
         if not content or not pattern:
             return None
         match = re.search(pattern, content)
-        return match.group(group) if match else None
+        if not match:
+            return None
+        # If pattern has no capturing groups, return the full match for group=0
+        # or the matched string for group=1 (treating it as a boolean pattern)
+        if match.lastindex is None:
+            # Pattern has no capturing groups
+            if group == 0:
+                return match.group(0)
+            # For group=1 or higher with no capturing groups, return the full match
+            # This allows boolean patterns like "DenyGroupOverride" to work
+            return match.group(0)
+        # Pattern has capturing groups - check if requested group exists
+        if group > match.lastindex:
+            return None
+        try:
+            return match.group(group)
+        except IndexError:
+            # Group doesn't exist in the pattern
+            return None
 
     @staticmethod
     def extract_permissions(
@@ -267,7 +286,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        config: FlextLdifModels.Config.AclMetadataConfig,
+        config: FlextLdifModelsConfig.AclMetadataConfig,
     ) -> dict[str, FlextTypes.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL.
 
@@ -579,8 +598,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        config: FlextLdifModels.Config.AciParserConfig,  # type: ignore[name-defined]
-    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
+        config: FlextLdifModelsConfig.AciParserConfig,
+    ) -> FlextResult[FlextLdifTypes.Models.Acl]:
         """Parse ACI line using server-specific config Model.
 
         Args:
@@ -591,7 +610,7 @@ class FlextLdifUtilitiesACL:
             FlextResult with parsed Acl model
 
         Example:
-            config = FlextLdifModels.Config.AciParserConfig(
+            config = FlextLdifModelsConfig.AciParserConfig(
                 server_type=FlextLdifConstants.ServerTypes.OUD,
                 version_acl_pattern=OudConstants.ACL_VERSION_ACL_PATTERN,
                 targetattr_pattern=OudConstants.ACL_TARGETATTR_PATTERN,
@@ -607,7 +626,7 @@ class FlextLdifUtilitiesACL:
             config.aci_prefix,
         )
         if not is_valid:
-            return FlextResult[FlextLdifModels.Acl].fail(
+            return FlextResult[FlextLdifTypes.Models.Acl].fail(
                 f"Not a valid ACI format: {config.aci_prefix}",
             )
 
@@ -681,33 +700,34 @@ class FlextLdifUtilitiesACL:
             if extracted:
                 extensions[pattern_name] = extracted
 
-        # Create Acl model
-        acl = FlextLdifModels.Acl(
+        # Create Acl model using concrete model class
+        acl_model = FlextLdifModelsDomains.Acl(
             name=acl_name,
-            target=FlextLdifModels.AclTarget(
+            target=FlextLdifModelsDomains.AclTarget(
                 target_dn=target_dn,
                 attributes=target_attributes,
             ),
-            subject=FlextLdifModels.AclSubject.model_validate({
+            subject=FlextLdifModelsDomains.AclSubject.model_validate({
                 "subject_type": subject_type,  # Pydantic validates against AclSubjectTypeLiteral
                 "subject_value": subject_value,
             }),
-            permissions=FlextLdifModels.AclPermissions(**permissions_dict),
+            permissions=FlextLdifModelsDomains.AclPermissions(**permissions_dict),
             server_type=config.server_type,
             raw_acl=acl_line,
             metadata=FlextLdifModels.QuirkMetadata.create_for(
                 config.server_type,
-                extensions=FlextLdifModels.DynamicMetadata(**extensions)
-                if extensions
-                else None,
+                extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions)
+                if isinstance(extensions, dict)
+                else extensions,
             ),
         )
-        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl)
+        # acl_model is FlextLdifModelsDomains.Acl which satisfies AclProtocol
+        return FlextResult[FlextLdifTypes.Models.Acl].ok(acl_model)  # type: ignore[arg-type]
 
     @staticmethod
     def write_aci(
         acl_data: FlextLdifModelsDomains.Acl,
-        config: FlextLdifModels.Config.AciWriterConfig,  # type: ignore[name-defined]
+        config: FlextLdifModelsConfig.AciWriterConfig,
     ) -> FlextResult[str]:
         """Write Acl model to ACI string using server-specific config Model.
 
@@ -719,9 +739,7 @@ class FlextLdifUtilitiesACL:
             FlextResult with formatted ACI string
 
         Example:
-            from flext_ldif.models import FlextLdifModels
-
-            config = FlextLdifModels.Config.AciWriterConfig(
+            config = FlextLdifModelsConfig.AciWriterConfig(
                 aci_prefix="aci: ",
                 version="3.0",
                 supported_permissions=OudConstants.SUPPORTED_PERMISSIONS,
@@ -730,6 +748,7 @@ class FlextLdifUtilitiesACL:
 
         """
         # Build target clause
+        # Type narrowed: acl_data is concrete Acl model with target object
         target_attributes = acl_data.target.attributes if acl_data.target else None
         target_dn = acl_data.target.target_dn if acl_data.target else None
         target_clause = FlextLdifUtilitiesACL.build_aci_target_clause(
@@ -739,9 +758,9 @@ class FlextLdifUtilitiesACL:
         )
 
         # Build permissions clause
+        # Type narrowed: acl_data is concrete Acl model with permissions object
         if not acl_data.permissions:
             return FlextResult[str].fail("ACL has no permissions")
-
         perm_names = [
             name
             for name in [
@@ -765,6 +784,7 @@ class FlextLdifUtilitiesACL:
             return FlextResult[str].fail("No supported permissions")
 
         # Build bind rule
+        # Type narrowed: acl_data is concrete Acl model with subject object
         subject_type = acl_data.subject.subject_type if acl_data.subject else "self"
         subject_value = (
             acl_data.subject.subject_value if acl_data.subject else config.self_subject

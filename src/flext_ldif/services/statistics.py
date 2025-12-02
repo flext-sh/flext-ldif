@@ -20,7 +20,11 @@ from typing import override
 
 from flext_core import FlextDecorators, FlextResult
 
-from flext_ldif._models.results import _CategoryPaths, _DynamicCounts
+from flext_ldif._models.results import (
+    _CategoryPaths,
+    _DynamicCounts,
+    _FlexibleCategories,
+)
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -69,7 +73,7 @@ class FlextLdifStatistics(
 
     def generate_statistics(
         self,
-        categorized: FlextLdifModels.FlexibleCategories,
+        categorized: FlextLdifModels.FlexibleCategories | _FlexibleCategories,
         written_counts: dict[str, int],
         output_dir: Path,
         output_files: dict[str, str],
@@ -77,28 +81,35 @@ class FlextLdifStatistics(
         """Generate complete statistics for categorized migration.
 
         Args:
-            categorized: FlexibleCategories model with categorized entries
+            categorized: FlexibleCategories model with categorized
+                entries
             written_counts: Dictionary mapping category to count written
             output_dir: Output directory path
             output_files: Dictionary mapping category to output filename
 
         Returns:
-            FlextResult containing StatisticsResult model with counts, rejection info, and metadata
+            FlextResult containing StatisticsResult model with counts,
+                rejection info, and metadata
 
         """
         total_entries = sum(len(entries) for entries in categorized.values())
 
         # Build categorized counts as _DynamicCounts model
-        # Create model with values using model_construct to avoid frozen model issues
+        # Create model with values using model_validate for frozen models
         categorized_counts_dict = {
             category: len(entries) for category, entries in categorized.items()
         }
-        categorized_counts_model = _DynamicCounts.model_construct(**categorized_counts_dict)
+        categorized_counts_model = _DynamicCounts.model_validate(
+            categorized_counts_dict
+        )
 
-        rejected_entries_raw = categorized.get(FlextLdifConstants.Categories.REJECTED, [])
+        rejected_entries_raw = categorized.get(
+            FlextLdifConstants.Categories.REJECTED, []
+        )
         # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
         rejected_entries: list[FlextLdifModels.Entry] = [
-            entry for entry in rejected_entries_raw
+            entry
+            for entry in rejected_entries_raw
             if isinstance(entry, FlextLdifModels.Entry)
         ]
         rejection_count = len(rejected_entries)
@@ -107,8 +118,8 @@ class FlextLdifStatistics(
         rejection_rate = rejection_count / total_entries if total_entries > 0 else 0.0
 
         # Build written counts as _DynamicCounts model
-        # Create model with values using model_construct to avoid frozen model issues
-        written_counts_model = _DynamicCounts.model_construct(**written_counts)
+        # Create model with values using model_validate for frozen models
+        written_counts_model = _DynamicCounts.model_validate(written_counts)
 
         # Build output files paths as _CategoryPaths model
         output_files_model = _CategoryPaths()
@@ -147,11 +158,14 @@ class FlextLdifStatistics(
         for entry in entries:
             object_class_distribution.update(entry.get_objectclass_names())
 
-            if entry.metadata and isinstance(
-                st_value := entry.metadata.extensions.get("server_type"),
-                str,
-            ):
-                server_type_distribution[st_value] += 1
+            # Check for server_type in metadata extensions
+            if entry.metadata:
+                extensions = entry.metadata.extensions
+                if extensions and isinstance(
+                    st_value := extensions.get("server_type"),
+                    str,
+                ):
+                    server_type_distribution[st_value] += 1
 
         # Build object_class_distribution as _DynamicCounts model
         obj_class_model = _DynamicCounts()
@@ -163,13 +177,20 @@ class FlextLdifStatistics(
         for server_type, count in server_type_distribution.items():
             server_type_model.set_count(server_type, count)
 
-        return FlextResult[FlextLdifModels.EntriesStatistics].ok(
-            FlextLdifModels.EntriesStatistics(
-                total_entries=len(entries),
-                object_class_distribution=obj_class_model,
-                server_type_distribution=server_type_model,
-            ),
+        # Debug: Check what we have before creating EntriesStatistics
+        # server_type_distribution dict should have the counts
+        if not server_type_distribution:
+            # If empty, create empty model
+            server_type_model = _DynamicCounts()
+
+        # Create EntriesStatistics - ensure we pass the populated models
+        entries_stats = FlextLdifModels.EntriesStatistics(
+            total_entries=len(entries),
+            object_class_distribution=obj_class_model,
+            server_type_distribution=server_type_model,
         )
+
+        return FlextResult[FlextLdifModels.EntriesStatistics].ok(entries_stats)
 
     def _extract_rejection_reasons(
         self,

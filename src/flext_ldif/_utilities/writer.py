@@ -905,8 +905,12 @@ class FlextLdifUtilitiesWriter:
         if not isinstance(marked_attrs_raw, dict):
             return (attr_name, attr_values)
 
-        marked_attrs: dict[str, dict[str, FlextTypes.MetadataAttributeValue]] = (
-            marked_attrs_raw
+        # Type narrowing: ensure marked_attrs_raw is the correct nested dict type
+        from typing import cast
+
+        marked_attrs: dict[str, dict[str, FlextTypes.MetadataAttributeValue]] = cast(
+            "dict[str, dict[str, FlextTypes.MetadataAttributeValue]]",
+            marked_attrs_raw,
         )
         attr_info = marked_attrs.get(attr_name)
 
@@ -945,7 +949,10 @@ class FlextLdifUtilitiesWriter:
                 status_raw,
             )
         else:
-            status = FlextLdifConstants.AttributeMarkerStatus.NORMAL.value
+            status = cast(
+                "FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral",
+                FlextLdifConstants.AttributeMarkerStatus.NORMAL.value,
+            )
         return FlextLdifUtilitiesWriter._handle_attribute_status(
             attr_name,
             attr_values,
@@ -972,22 +979,22 @@ class FlextLdifUtilitiesWriter:
         output_options: FlextLdifModels.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
-        if status == FlextLdifConstants.AttributeMarkerStatus.OPERATIONAL:
+        if status == FlextLdifConstants.AttributeMarkerStatus.OPERATIONAL.value:
             if output_options.show_operational_attributes:
                 return (attr_name, attr_values)
             return None
 
-        if status == FlextLdifConstants.AttributeMarkerStatus.FILTERED:
+        if status == FlextLdifConstants.AttributeMarkerStatus.FILTERED.value:
             if output_options.show_filtered_attributes:
                 return (f"# {attr_name}", attr_values)
             return None
 
-        if status == FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL:
+        if status == FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value:
             if output_options.show_removed_attributes:
                 return (f"# {attr_name}", attr_values)
             return None
 
-        if status == FlextLdifConstants.AttributeMarkerStatus.HIDDEN:
+        if status == FlextLdifConstants.AttributeMarkerStatus.HIDDEN.value:
             return None
 
         # Default: write normally
@@ -1120,6 +1127,8 @@ class FlextLdifUtilitiesWriter:
         include_changetype: bool = False,
         changetype_value: str | None = None,
         hidden_attrs: set[str] | None = None,
+        line_width: int | None = None,
+        fold_long_lines: bool = True,
     ) -> list[str]:
         """Build LDIF lines for an entry in ADD or MODIFY format.
 
@@ -1133,22 +1142,45 @@ class FlextLdifUtilitiesWriter:
             include_changetype: Whether to include changetype line
             changetype_value: Explicit changetype value (for ADD format)
             hidden_attrs: Attributes to skip (e.g., "changetype")
+            line_width: Maximum line width in bytes (None = use default 76)
+            fold_long_lines: Whether to fold lines exceeding line_width
 
         Returns:
-            List of LDIF lines
+            List of LDIF lines (folded if fold_long_lines=True)
 
         """
         ldif_lines: list[str] = []
         hidden = hidden_attrs or set()
+        width = (
+            line_width
+            if line_width is not None
+            else FlextLdifConstants.Rfc.LINE_FOLD_WIDTH
+        )
 
         # DN line (required for both formats)
-        ldif_lines.append(f"dn: {dn_value}")
+        dn_line = f"dn: {dn_value}"
+        if fold_long_lines:
+            ldif_lines.extend(FlextLdifUtilitiesWriter.fold(dn_line, width=width))
+        else:
+            ldif_lines.append(dn_line)
 
         # Changetype handling
         if format_type == "modify":
-            ldif_lines.append("changetype: modify")
+            changetype_line = "changetype: modify"
+            if fold_long_lines:
+                ldif_lines.extend(
+                    FlextLdifUtilitiesWriter.fold(changetype_line, width=width)
+                )
+            else:
+                ldif_lines.append(changetype_line)
         elif include_changetype and changetype_value:
-            ldif_lines.append(f"changetype: {changetype_value}")
+            changetype_line = f"changetype: {changetype_value}"
+            if fold_long_lines:
+                ldif_lines.extend(
+                    FlextLdifUtilitiesWriter.fold(changetype_line, width=width)
+                )
+            else:
+                ldif_lines.append(changetype_line)
 
         # Process attributes based on format
         if format_type == "modify":
@@ -1164,13 +1196,25 @@ class FlextLdifUtilitiesWriter:
                 first_attr = False
 
                 # Operation directive
-                ldif_lines.append(f"{modify_operation}: {attr_name}")
+                op_line = f"{modify_operation}: {attr_name}"
+                if fold_long_lines:
+                    ldif_lines.extend(
+                        FlextLdifUtilitiesWriter.fold(op_line, width=width)
+                    )
+                else:
+                    ldif_lines.append(op_line)
 
                 # Attribute values
-                ldif_lines.extend(
-                    FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value)
-                    for value in values
-                )
+                for value in values:
+                    attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
+                        attr_name, value
+                    )
+                    if fold_long_lines:
+                        ldif_lines.extend(
+                            FlextLdifUtilitiesWriter.fold(attr_line, width=width)
+                        )
+                    else:
+                        ldif_lines.append(attr_line)
 
             # Final separator for modify
             if ldif_lines and ldif_lines[-1] != "-":
@@ -1180,10 +1224,16 @@ class FlextLdifUtilitiesWriter:
             for attr_name, values in attributes.items():
                 if not values or attr_name in hidden:
                     continue
-                ldif_lines.extend(
-                    FlextLdifUtilitiesWriter.encode_attribute_value(attr_name, value)
-                    for value in values
-                )
+                for value in values:
+                    attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
+                        attr_name, value
+                    )
+                    if fold_long_lines:
+                        ldif_lines.extend(
+                            FlextLdifUtilitiesWriter.fold(attr_line, width=width)
+                        )
+                    else:
+                        ldif_lines.append(attr_line)
 
         return ldif_lines
 

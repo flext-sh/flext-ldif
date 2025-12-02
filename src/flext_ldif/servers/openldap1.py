@@ -34,7 +34,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         """Standardized constants for OpenLDAP 1.x quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "openldap1"
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "openldap1"
+        )
         PRIORITY: ClassVar[int] = 10
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -544,6 +546,21 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     compare=read_perm in first_access or auth_perm in first_access,
                 )
 
+                # Map who clause to subject_type
+                # OpenLDAP 1.x uses "self", "*", "anonymous", etc. as who values
+                first_who_lower = first_who.lower().strip()
+                if first_who_lower == "self":
+                    subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = "self"
+                elif first_who_lower in {"*", "all"}:
+                    subject_type = "all"
+                elif first_who_lower == "anonymous":
+                    subject_type = "anonymous"
+                elif first_who_lower == "authenticated":
+                    subject_type = "authenticated"
+                else:
+                    # Default to userdn for DN-based subjects
+                    subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = "userdn"
+
                 # Build Acl model
                 # Note: ACL_ATTRIBUTE_NAME is OpenLDAP 1.x format from Constants
                 acl = FlextLdifModels.Acl(
@@ -553,7 +570,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                         attributes=target_attrs,
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type=FlextLdifServersOpenldap1.Constants.ACL_SUBJECT_TYPE_USERDN,
+                        subject_type=subject_type,
                         subject_value=first_who,
                     ),
                     permissions=permissions,

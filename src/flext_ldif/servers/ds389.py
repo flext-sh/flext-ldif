@@ -38,7 +38,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         """Standardized constants for 389 Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "ds389"
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "ds389"
+        )
         PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "389ds"

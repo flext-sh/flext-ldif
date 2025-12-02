@@ -174,14 +174,27 @@ class FlextLdifUtilitiesDecorators:
                 # If result is successful, attach metadata using helper methods
                 if result.is_success:
                     unwrapped = result.unwrap()
-                    server_type = (
-                        FlextLdifUtilitiesDecorators._get_server_type_from_class(self)
-                    )
-                    FlextLdifUtilitiesDecorators._attach_metadata_if_present(
+                    # Type narrowing: self is a protocol, but we need concrete types
+                    # Check if unwrapped is one of the supported types
+                    if isinstance(
                         unwrapped,
-                        quirk_type,
-                        server_type,
-                    )
+                        (
+                            FlextLdifModels.Entry,
+                            FlextLdifModelsDomains.SchemaAttribute,
+                            FlextLdifModelsDomains.SchemaObjectClass,
+                            FlextLdifModelsDomains.Acl,
+                        ),
+                    ):
+                        server_type = (
+                            FlextLdifUtilitiesDecorators._get_server_type_from_class(
+                                unwrapped,
+                            )
+                        )
+                        FlextLdifUtilitiesDecorators._attach_metadata_if_present(
+                            unwrapped,
+                            quirk_type,
+                            server_type,
+                        )
 
                 return result
 

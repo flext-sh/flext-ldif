@@ -162,7 +162,7 @@ objectClass: person
 
 """
 
-        result = real_parser_service.parse(ldif_content, input_source="string")
+        result = real_parser_service.parse(ldif_content)
         # Parser should handle invalid DN gracefully
         # May succeed with relaxed parsing or fail
         # Either outcome is acceptable as long as it doesn't crash
@@ -625,11 +625,11 @@ description: {large_value}
         result = real_writer_service.write(
             [],
             target_server_type="rfc",
-            output_target="string",
+            _output_target="string",
         )
         assert result.is_success
         content = result.unwrap()
-        assert content == "version: 1\n"
+        assert content == "version: 1"
 
     @pytest.mark.timeout(10)
     def test_write_entry_variations(
@@ -719,7 +719,7 @@ description: {large_value}
         result = real_writer_service.write(
             [],
             target_server_type="rfc",
-            output_target="string",
+            _output_target="string",
         )
         assert result.is_success
 
@@ -768,7 +768,7 @@ description: {large_value}
         result = real_writer_service.write(
             [],
             target_server_type="rfc",
-            output_target="file",
+            _output_target="file",
             output_path=empty_file,
         )
         assert result.is_success

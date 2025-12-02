@@ -48,6 +48,24 @@ class FlextLdifModelsMetadata:
 
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
+        def __init__(
+            self,
+            **kwargs: FlextTypes.MetadataAttributeValue,
+        ) -> None:
+            """Initialize DynamicMetadata with arbitrary keyword arguments.
+
+            Args:
+                **kwargs: Arbitrary key-value pairs stored as extra fields.
+                          Values must be compatible with MetadataAttributeValue.
+
+            Example:
+                meta = DynamicMetadata(original_format="test", custom_field=123)
+                assert meta["original_format"] == "test"
+                assert meta["custom_field"] == 123
+
+            """
+            super().__init__(**kwargs)
+
         @overload
         def get(self, key: str) -> FlextTypes.MetadataAttributeValue: ...
 
@@ -68,7 +86,7 @@ class FlextLdifModelsMetadata:
             if extra is not None and key in extra:
                 value = extra[key]
                 # Type guard: ensure return matches MetadataValue
-                if isinstance(value, str | float | bool | list):
+                if isinstance(value, str | float | bool | list | dict):
                     return value
                 return str(value) if value is not None else None
             return default
@@ -78,12 +96,14 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, str | float | bool | list):
+                if isinstance(value, str | float | bool | list | dict):
                     return value
                 return str(value) if value is not None else None
             raise KeyError(key)
 
-        def __setitem__(self, key: str, value: FlextTypes.MetadataAttributeValue) -> None:
+        def __setitem__(
+            self, key: str, value: FlextTypes.MetadataAttributeValue
+        ) -> None:
             """Set value by key using Pydantic's extra field handling."""
             setattr(self, key, value)
 
@@ -133,7 +153,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra.pop(key)
-                if isinstance(value, str | float | bool | list):
+                if isinstance(value, str | float | bool | list | dict):
                     return value
                 return str(value) if value is not None else None
             return default
@@ -191,7 +211,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, str | float | bool | list):
+                if isinstance(value, str | float | bool | list | dict):
                     return value
                 return str(value) if value is not None else None
             raise KeyError(key)
@@ -210,7 +230,7 @@ class FlextLdifModelsMetadata:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 value = extra[key]
-                if isinstance(value, str | float | bool | list):
+                if isinstance(value, str | float | bool | list | dict):
                     return value
                 return str(value) if value is not None else None
             return default

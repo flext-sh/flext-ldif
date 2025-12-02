@@ -13,7 +13,13 @@ import time
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
+from flext_core import (
+    FlextLogger,
+    FlextResult,
+    FlextRuntime,
+    FlextTypes,
+    FlextUtilities,
+)
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -745,10 +751,11 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             str(self._target_server),
         )
         # all_output_entries is already list[FlextLdifModels.Entry] from categories.values()
+        # FlextLdifWriter.write() accepts output_path for file output
+        # (output_target parameter is not supported)
         write_result = self._writer.write(
             entries=all_output_entries,
             target_server_type=normalized_target,
-            output_target="file",
             output_path=output_path,
             format_options=self._write_opts,
         )
@@ -892,10 +899,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
             write_result = self._writer.write(
                 entries=processed_entries,
                 target_server_type=normalized_target,
-                output_target="file",
+                # FlextLdifWriter.write() accepts output_path for file output
                 output_path=output_path,
                 format_options=category_write_opts,
-                template_data=template_data,
+                _template_data=template_data,
             )
 
             if write_result.is_failure:
@@ -981,8 +988,11 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase):
         for reason, entries in self._categorization.rejection_tracker.items():
             context = FlextLdifModelsMetadata.DynamicMetadata()
             context.update({"reason": reason, "count": len(entries)})
+            # ErrorDetail is in FlextLdifModelsDomains, not FlextLdifModels
+            from flext_ldif._models.domain import FlextLdifModelsDomains
+
             error_details.append(
-                FlextLdifModels.ErrorDetail(
+                FlextLdifModelsDomains.ErrorDetail(
                     item=f"rejected_{reason}",
                     error=f"Rejected {len(entries)} entries: {reason}",
                     context=context,

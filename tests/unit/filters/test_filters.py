@@ -15,15 +15,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import dataclasses
-from typing import Final
+from typing import Final, cast
 
 import pytest
 from tests.fixtures.constants import DNs, Filters, Values
-from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_assertions import TestAssertions
 from tests.helpers.test_filter_helpers import FilterTestHelpers
 
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.services.filters import FlextLdifFilters
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
@@ -35,7 +35,7 @@ class ExclusionMetadataTestCase:
     """Test case for exclusion metadata type guards."""
 
     name: str
-    metadata_extensions: GenericFieldsDict
+    metadata_extensions: dict[str, object]
     expected_excluded: bool
     expected_reason: str | None = None
 
@@ -56,7 +56,7 @@ class ExclusionMarkingTestCase:
 
     name: str
     filter_method: str
-    filter_args: GenericFieldsDict
+    filter_args: dict[str, object]
     expected_excluded_index: int
     expected_reason_contains: str
 
@@ -160,9 +160,16 @@ class TestFlextLdifFilters:
                 },
             )
             if test_case.metadata_extensions:
+                # Cast dict[str, object] to dict[str, MetadataAttributeValue] for DynamicMetadata
+                from flext_core import FlextTypes
+
+                extensions_typed: dict[str, FlextTypes.MetadataAttributeValue] = cast(
+                    "dict[str, FlextTypes.MetadataAttributeValue]",
+                    test_case.metadata_extensions,
+                )
                 metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type="test",
-                    extensions=test_case.metadata_extensions,
+                    quirk_type="rfc",
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions_typed),
                 )
                 entry = entry.model_copy(update={"metadata": metadata})
             result = FlextLdifFilters.is_entry_excluded(entry)
@@ -184,9 +191,16 @@ class TestFlextLdifFilters:
                 },
             )
             if test_case.metadata_extensions:
+                # Cast dict[str, object] to dict[str, MetadataAttributeValue] for DynamicMetadata
+                from flext_core import FlextTypes
+
+                extensions_typed: dict[str, FlextTypes.MetadataAttributeValue] = cast(
+                    "dict[str, FlextTypes.MetadataAttributeValue]",
+                    test_case.metadata_extensions,
+                )
                 metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type="test",
-                    extensions=test_case.metadata_extensions,
+                    quirk_type="rfc",
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(**extensions_typed),
                 )
                 entry = entry.model_copy(update={"metadata": metadata})
             reason = FlextLdifFilters.get_exclusion_reason(entry)
@@ -352,7 +366,7 @@ class TestFlextLdifFilters:
                 ),
             ],
         )
-        def test_filter_success(
+        def test_filter_success(  # noqa: PLR0913, PLR0917
             self,
             filter_method: str,
             dn_pattern: str | None,
@@ -585,8 +599,6 @@ class TestFlextLdifFilters:
                 "cn=container,dc=example",
                 {Filters.ATTR_OBJECTCLASS: ["orclContainer"], "orclACI": ["some acl"]},
             )
-            metadata = FlextLdifModels.QuirkMetadata(quirk_type=Filters.SERVER_OID)
-            entry = entry.model_copy(update={"metadata": metadata})
             rules = FlextLdifModels.CategoryRules(
                 hierarchy_objectclasses=["orclContainer"],
                 acl_attributes=["orclACI"],
@@ -603,8 +615,6 @@ class TestFlextLdifFilters:
                 "cn=john,ou=users,dc=example,dc=com",
                 {Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON]},
             )
-            metadata = FlextLdifModels.QuirkMetadata(quirk_type=Filters.SERVER_OUD)
-            entry = entry.model_copy(update={"metadata": metadata})
             rules = FlextLdifModels.CategoryRules(
                 user_objectclasses=[Filters.OC_PERSON],
                 user_dn_patterns=[".*,ou=users,.*"],
@@ -621,8 +631,6 @@ class TestFlextLdifFilters:
                 "cn=user1,ou=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
                 {Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON]},
             )
-            metadata = FlextLdifModels.QuirkMetadata(quirk_type=Filters.SERVER_OUD)
-            entry = entry.model_copy(update={"metadata": metadata})
             rules = FlextLdifModels.CategoryRules(
                 user_objectclasses=[Filters.OC_PERSON],
                 user_dn_patterns=[".*,ou=users,.*"],

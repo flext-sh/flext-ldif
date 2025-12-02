@@ -2634,7 +2634,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     return f'"{clean_value}"' if clean_value else "*"
 
         @staticmethod
-        def _format_oid_permissions(permissions: FlextLdifTypes.MetadataDictMutable) -> str:
+        def _format_oid_permissions(
+            permissions: FlextLdifTypes.MetadataDictMutable,
+        ) -> str:
             """Format OID ACL permissions clause.
 
             OID uses simple comma-separated format: (write,compare,browse)
@@ -2967,13 +2969,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """Map OID subject types to RFC subject types."""
             if oid_subject_type == "self":
                 return "self", "ldap:///self"
-            if oid_subject_type in {"group_dn", "user_dn"}:
-                return "bind_rules", oid_subject_value
+            if oid_subject_type == "group_dn":
+                # Map group_dn to "group" subject type
+                return "group", oid_subject_value
+            if oid_subject_type == "user_dn":
+                # Map user_dn to "dn" subject type
+                return "dn", oid_subject_value
             if oid_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
-                return "bind_rules", oid_subject_value
+                # Map attribute-based types to "dn" with the attribute value
+                return "dn", oid_subject_value
             if oid_subject_type == "*" or oid_subject_value == "*":
                 return "anonymous", "*"
-            return "bind_rules", oid_subject_value
+            # Default fallback: use "dn" for unknown types
+            return "dn", oid_subject_value
 
         def _build_oid_acl_metadata(
             self,
@@ -2991,7 +2999,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 Metadata extensions dict for zero-data-loss preservation
 
             """
-            return FlextLdifUtilities.Metadata.build_acl_metadata_complete(
+            metadata_dict = FlextLdifUtilities.Metadata.build_acl_metadata_complete(
                 "oid",  # quirk_type - required first positional argument
                 acl_line=config.acl_line,
                 server_type="oid",
@@ -3010,6 +3018,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 constrain_to_added_object=config.constrain_to_added_object,
                 target_key=FlextLdifServersOid.Constants.OID_ACL_SOURCE_TARGET,
             )
+            # Store original OID subject type as source_subject_type for conversion
+            if config.oid_subject_type:
+                metadata_dict[
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE
+                ] = config.oid_subject_type
+            return metadata_dict
 
         def _parse_oid_specific_acl(
             self,
@@ -3381,6 +3395,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Read source subject type from GENERIC metadata
             source_subject_type = self._get_source_subject_type(metadata)
 
+            # If source_subject_type is an attribute-based type, use it directly
+            if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
+                return source_subject_type
+
             # Map RFC → OID for write (using match/case for clarity)
             match rfc_subject_type:
                 case "self":
@@ -3404,6 +3422,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         rfc_subject_value,
                         source_subject_type,
                     )
+                case "dn":
+                    # If RFC type is "dn" but source_subject_type is attribute-based, use source
+                    if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
+                        return source_subject_type
+                    return "user_dn"
                 case _:
                     # Default fallback
                     return source_subject_type or "user_dn"
@@ -4529,6 +4552,133 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             normalized_attrs = entry.attributes.attributes
 
+            # Ensure metadata exists
+            if not entry.metadata:
+                entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
+                    "oid",
+                    extensions=FlextLdifModels.DynamicMetadata(),
+                )
+
+            # Get current extensions
+            current_extensions: dict[str, FlextTypes.MetadataAttributeValue] = (
+                dict(entry.metadata.extensions) if entry.metadata.extensions else {}
+            )
+
+            # Process ACLs to extract their extensions (bindmode, deny_group_override, etc.)
+            # Use original_attrs to get ACL attributes (before any transformations)
+            orclaci_values = original_attrs.get("orclaci") if original_attrs else None
+            if not orclaci_values:
+                # Fallback to entry.attributes if not in original_attrs
+                orclaci_values = normalized_attrs.get("orclaci") if normalized_attrs else None
+
+            if orclaci_values:
+                # Get ACL quirk from parent server
+                parent = getattr(self, "_parent_quirk", None)
+                if parent:
+                    acl_quirk = getattr(parent, "_acl_quirk", None)
+                    if acl_quirk:
+                        # Process each orclaci value
+                        acl_list = (
+                            list(orclaci_values)
+                            if FlextRuntime.is_list_like(orclaci_values)
+                            else [str(orclaci_values)]
+                        )
+
+                        for acl_value in acl_list:
+                            if not isinstance(acl_value, str):
+                                continue
+
+                            # Always extract metadata directly from ACL string first
+                            # This ensures we preserve metadata even if full parsing fails
+                            bindmode = FlextLdifUtilities.ACL.extract_component(
+                                acl_value,
+                                FlextLdifServersOid.Constants.ACL_BINDMODE_PATTERN,
+                                group=1,
+                            )
+                            if bindmode:
+                                current_extensions[
+                                    FlextLdifConstants.MetadataKeys.ACL_BINDMODE
+                                ] = bindmode
+
+                            deny_group_override = (
+                                FlextLdifUtilities.ACL.extract_component(
+                                    acl_value,
+                                    FlextLdifServersOid.Constants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
+                                )
+                                is not None
+                            )
+                            if deny_group_override:
+                                current_extensions[
+                                    FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+                                ] = True
+
+                            append_to_all = (
+                                FlextLdifUtilities.ACL.extract_component(
+                                    acl_value,
+                                    FlextLdifServersOid.Constants.ACL_APPEND_TO_ALL_PATTERN,
+                                )
+                                is not None
+                            )
+                            if append_to_all:
+                                current_extensions[
+                                    FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL
+                                ] = True
+
+                            bind_ip_filter = FlextLdifUtilities.ACL.extract_component(
+                                acl_value,
+                                FlextLdifServersOid.Constants.ACL_BIND_IP_FILTER_PATTERN,
+                                group=1,
+                            )
+                            if bind_ip_filter:
+                                current_extensions[
+                                    FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER
+                                ] = bind_ip_filter
+
+                            constrain_to_added_object = FlextLdifUtilities.ACL.extract_component(
+                                acl_value,
+                                FlextLdifServersOid.Constants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
+                                group=1,
+                            )
+                            if constrain_to_added_object:
+                                current_extensions[
+                                    FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
+                                ] = constrain_to_added_object
+
+                            # Try parsing ACL for additional metadata (but don't fail if it fails)
+                            if acl_quirk:
+                                try:
+                                    acl_result = acl_quirk._parse_acl(acl_value)
+                                    if acl_result.is_success:
+                                        acl_model = acl_result.unwrap()
+                                        # Extract extensions from ACL metadata
+                                        if acl_model.metadata and acl_model.metadata.extensions:
+                                            acl_extensions = (
+                                                acl_model.metadata.extensions.model_dump()
+                                                if hasattr(acl_model.metadata.extensions, "model_dump")
+                                                else dict(acl_model.metadata.extensions)
+                                            )
+                                            # Merge additional extensions (may override direct extraction)
+                                            for key, value in acl_extensions.items():
+                                                # Map pattern names to MetadataKeys
+                                                if key == "bindmode" and not current_extensions.get(
+                                                    FlextLdifConstants.MetadataKeys.ACL_BINDMODE
+                                                ):
+                                                    current_extensions[
+                                                        FlextLdifConstants.MetadataKeys.ACL_BINDMODE
+                                                    ] = value
+                                                elif (
+                                                    key == "deny_group_override"
+                                                    and not current_extensions.get(
+                                                        FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+                                                    )
+                                                ):
+                                                    current_extensions[
+                                                        FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+                                                    ] = value
+                                except Exception:
+                                    # Ignore parsing errors - we already extracted what we can directly
+                                    pass
+
             # OID-specific: Detect ACL attribute transformations
             acl_transformations = self._detect_entry_acl_transformations(
                 original_attrs,
@@ -4541,28 +4691,26 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             )
 
             # Add OID-specific metadata to extensions
-            if entry.metadata and (
-                acl_transformations or rfc_violations or attribute_conflicts
-            ):
-                # Build extensions dict with proper typing
-                extensions: dict[str, FlextTypes.MetadataAttributeValue] = {}
-                if entry.metadata.extensions:
-                    extensions.update(entry.metadata.extensions)
+            # Serialize Pydantic models to dict for MetadataValue compatibility
+            if acl_transformations:
+                # AttributeTransformation.model_dump() → dict[str, str | list[str]]
+                current_extensions["acl_transformations"] = {
+                    name: trans.model_dump()
+                    for name, trans in acl_transformations.items()
+                }
+            if rfc_violations:
+                current_extensions["rfc_violations"] = rfc_violations
+            if attribute_conflicts:
+                current_extensions["attribute_conflicts"] = attribute_conflicts
 
-                # Serialize Pydantic models to dict for MetadataValue compatibility
-                if acl_transformations:
-                    # AttributeTransformation.model_dump() → dict[str, str | list[str]]
-                    extensions["acl_transformations"] = {
-                        name: trans.model_dump()
-                        for name, trans in acl_transformations.items()
-                    }
-                if rfc_violations:
-                    extensions["rfc_violations"] = rfc_violations
-                if attribute_conflicts:
-                    extensions["attribute_conflicts"] = attribute_conflicts
-
+            # Update entry metadata with all extensions (ACL extensions + OID-specific metadata)
+            if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
                 entry.metadata = entry.metadata.model_copy(
-                    update={"extensions": extensions},
+                    update={
+                        "extensions": FlextLdifModels.DynamicMetadata(**current_extensions)
+                        if current_extensions
+                        else FlextLdifModels.DynamicMetadata(),
+                    },
                 )
 
                 logger.debug(
@@ -4573,3 +4721,61 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
 
             return FlextResult.ok(entry)
+
+        def _write_original_attr_lines(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            original_attr_lines_complete: list[str],
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> None:
+            """Write original attribute lines preserving exact formatting.
+
+            OID-specific: Considers aci and orclaci as equivalent for ACL attributes.
+
+            Args:
+                ldif_lines: Output lines list
+                entry_data: Entry data
+                original_attr_lines_complete: Original attribute lines
+                write_options: Write format options
+
+            """
+            # Get set of current attribute names (lowercase) for filtering
+            current_attrs = set()
+            if entry_data.attributes and entry_data.attributes.attributes:
+                current_attrs = {
+                    attr_name.lower() for attr_name in entry_data.attributes.attributes
+                }
+                # OID-specific: Add orclaci if aci exists, and vice versa
+                # This allows restoring original orclaci lines even when normalized to aci
+                if "aci" in current_attrs:
+                    current_attrs.add("orclaci")
+                if "orclaci" in current_attrs:
+                    current_attrs.add("aci")
+
+            for original_line in original_attr_lines_complete:
+                # Skip DN line if it appears in original lines
+                if original_line.lower().startswith("dn:"):
+                    continue
+                # Skip comments unless write_metadata_as_comments is True
+                if original_line.strip().startswith("#") and not (
+                    write_options
+                    and getattr(write_options, "write_metadata_as_comments", False)
+                ):
+                    continue
+
+                # Only restore lines for attributes that still exist
+                if ":" in original_line:
+                    attr_name_part = original_line.split(":", 1)[0].strip().lower()
+                    attr_name_part = attr_name_part.removesuffix(":")
+                    attr_name_part = attr_name_part.removeprefix("<")
+                    if current_attrs and attr_name_part not in current_attrs:
+                        continue
+
+                ldif_lines.append(original_line)
+
+            logger.debug(
+                "Restored original attribute lines from metadata",
+                entry_dn=entry_data.dn.value[:50] if entry_data.dn else None,
+                original_lines_count=len(original_attr_lines_complete),
+            )
