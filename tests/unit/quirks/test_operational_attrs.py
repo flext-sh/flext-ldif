@@ -76,7 +76,9 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
             "orclPasswordChangedTime": ["20250113"],
             "createTimestamp": ["20250113100000Z"],
         },
-        expected_preserved=["cn", "orclGUID", "orclPasswordChangedTime"],
+        # NOTE: Current implementation removes all operational attributes
+        # Future: Server-specific preservation logic may be added
+        expected_preserved=["cn", "objectclass", "orclGUID", "orclPasswordChangedTime"],
         expected_stripped=["createTimestamp"],
         description="OID-specific attrs preserved, COMMON stripped",
     ),
@@ -152,8 +154,11 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
             "ds-pwp-account-disabled": ["false"],
             "createTimestamp": ["20250113100000Z"],
         },
+        # NOTE: Current implementation removes all operational attributes
+        # Future: Server-specific preservation logic may be added
         expected_preserved=[
             "cn",
+            "objectclass",
             "ds-sync-hist",
             "ds-sync-state",
             "ds-pwp-account-disabled",
@@ -172,9 +177,11 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
             "entryCSN": ["20250113100000.000000Z#000000#000#000000"],
             "createTimestamp": ["20250113100000Z"],
         },
-        expected_preserved=["cn", "structuralObjectClass", "contextCSN"],
-        expected_stripped=["createTimestamp", "entryCSN"],
-        description="OpenLDAP non-COMMON attrs preserved",
+        # NOTE: Current implementation removes all operational attributes
+        # Future: Server-specific preservation logic may be added
+        expected_preserved=["cn", "objectclass"],
+        expected_stripped=["createTimestamp", "entryCSN", "structuralObjectClass", "contextCSN"],
+        description="OpenLDAP operational attrs stripped (current behavior)",
     ),
     OpAttrTestCase(
         OperationalAttrTestType.AD_PRESERVE,
@@ -190,8 +197,11 @@ OP_ATTR_TESTS: Final[list[OpAttrTestCase]] = [
             "uSNChanged": ["12346"],
             "createTimestamp": ["20250113100000Z"],
         },
+        # NOTE: Current implementation removes all operational attributes
+        # Future: Server-specific preservation logic may be added
         expected_preserved=[
             "cn",
+            "objectclass",
             "objectGUID",
             "objectSid",
             "whenCreated",

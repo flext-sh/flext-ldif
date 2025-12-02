@@ -61,12 +61,12 @@ class _DynamicCounts(FlextLdifModelsBase):
 
     def set_count(self, key: str, value: int) -> None:
         """Set count for a key."""
-        setattr(self, key, value)
+        object.__setattr__(self, key, value)  # noqa: PLC2801
 
     def increment(self, key: str, amount: int = 1) -> None:
         """Increment count for a key."""
         current = self.get_count(key)
-        setattr(self, key, current + amount)
+        object.__setattr__(self, key, current + amount)  # noqa: PLC2801
 
     def __len__(self) -> int:
         """Return number of entries."""
@@ -96,11 +96,36 @@ class _DynamicCounts(FlextLdifModelsBase):
 
     def get(self, key: str, default: int = 0) -> int:
         """Get count for a key with default."""
+        # Check __dict__ first (where set_count stores values)
+        if key in self.__dict__:
+            value = self.__dict__[key]
+            return int(value) if isinstance(value, (int, float)) else default
+        # Fallback to __pydantic_extra__
         extra = self.__pydantic_extra__
         if extra is not None and key in extra:
             value = extra[key]
             return int(value) if isinstance(value, (int, float)) else default
         return default
+
+    def __getitem__(self, key: str) -> int:
+        """Allow dict-style access: counts['key']."""
+        return self.get(key, 0)
+
+    def __eq__(self, other: object) -> bool:
+        """Compare with dict or another _DynamicCounts."""
+        if isinstance(other, dict):
+            # Convert self to dict for comparison
+            self_dict = {}
+            # Check regular attributes (not starting with _) first
+            for key, value in self.__dict__.items():
+                if not key.startswith("_"):
+                    self_dict[key] = value
+            # Also check __pydantic_extra__
+            extra = self.__pydantic_extra__
+            if extra is not None:
+                self_dict.update(extra)
+            return self_dict == other
+        return super().__eq__(other)
 
     def max_key(self) -> str | None:
         """Get key with maximum value."""
@@ -653,8 +678,8 @@ class FlextLdifModelsResults:
             default_factory=_FlexibleCategories,
             description="Entries organized by category",
         )
-        statistics: FlextLdifModelsResults.Statistics | None = Field(
-            default=None,
+        statistics: FlextLdifModelsResults.Statistics = Field(
+            default_factory=_statistics_factory,
             description="Pipeline execution statistics",
         )
         file_paths: _CategoryPaths = Field(
@@ -774,7 +799,7 @@ class FlextLdifModelsResults:
             cls,
             entries: Sequence[FlextLdifModelsDomains.Entry],
             category: str = "all",
-            statistics: FlextLdifModelsResults.Statistics | None = None,
+            statistics: FlextLdifModelsResults.Statistics | None = None,  # Optional override
         ) -> FlextLdifModelsResults.EntryResult:
             """Create EntryResult from list of entries.
 

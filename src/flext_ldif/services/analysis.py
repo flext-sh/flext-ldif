@@ -17,13 +17,10 @@ from typing import override
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif._models.results import _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
-
-# Import _DynamicCounts for type usage
-from flext_ldif._models.results import _DynamicCounts
 
 
 class FlextLdifAnalysis(

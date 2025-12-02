@@ -163,13 +163,11 @@ class TestRfcWriterRealFixtures:
         # Write to file
         output_file = tmp_path / "roundtrip.ldif"
 
-        writer = FlextLdifWriter(
-            quirk_registry=quirk_registry,
-        )
+        # quirk_registry is already a FlextLdifServer instance
+        writer = FlextLdifWriter(server=quirk_registry)
         write_result = writer.write(
             entries,
             target_server_type="rfc",
-            output_target="file",
             output_path=output_file,
         )
 
@@ -210,14 +208,12 @@ class TestRfcWriterRealFixtures:
         # Write to file
         output_file = tmp_path / "acl_output.ldif"
 
-        writer = FlextLdifWriter(
-            quirk_registry=quirk_registry,
-        )
+        # quirk_registry is already a FlextLdifServer instance
+        writer = FlextLdifWriter(server=quirk_registry)
 
         result = writer.write(
             entries,
             target_server_type="rfc",
-            output_target="file",
             output_path=output_file,
         )
 
@@ -262,14 +258,12 @@ class TestRfcExceptionHandlingRealScenarios:
                 attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
-            writer = FlextLdifWriter(
-                quirk_registry=quirk_registry,
-            )
+            # quirk_registry is already a FlextLdifServer instance
+            writer = FlextLdifWriter(server=quirk_registry)
 
             result = writer.write(
                 [test_entry],
                 target_server_type="rfc",
-                output_target="file",
                 output_path=readonly_dir / "test.ldif",
             )
 

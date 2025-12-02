@@ -216,7 +216,78 @@ class GenericFieldsDict(TypedDict, total=False):
     flexible field dictionaries with any key-value pairs.
     """
 
-    # Total flexibility - any keys/values allowed via cast
+    # Container configuration fields
+    server_url: str
+    host: str
+    port: int
+    bind_dn: str
+    password: str
+    base_dn: str
+    use_ssl: bool
+    worker_id: str
+    compose_file: str
+    container_name: str
+
+    # Parser configuration fields
+    strict_parsing: bool
+    validate_dn: bool
+    max_entries: int
+    encoding: str
+    max_line_length: int
+
+    # Service fields
+    ldif_parser: object
+    schema_parser: object
+    ldif_writer: object
+    migration_pipeline: object
+    quirk_registry: object
+    config: object
+    api: object
+    parser: object
+    validator: object
+    writer: object
+
+    # Result fields
+    is_success: bool
+    has_value: bool
+    no_error: bool
+
+    # Entry fields
+    dn: str
+    attributes: dict[str, list[str] | str]
+
+    # Test configuration fields
+    normalize_attributes: bool
+    include_object_classes: list[str]
+    exclude_attributes: list[str]
+    dn_patterns: list[str]
+    attribute_filters: dict[str, str]
+    attribute_mappings: dict[str, str]
+    value_transformations: dict[str, str]
+    dn_transformations: dict[str, str]
+    validate_object_classes: list[str]
+    validate_attributes: list[str]
+    required_object_classes: list[str]
+    allowed_attributes: list[str]
+    batch_size: int
+    memory_limit: int
+    progress_reporting: bool
+    parallel_processing: bool
+    max_workers: int
+
+    # Result fields
+    total_results: int
+    success_count: int
+    failure_count: int
+    success_rate: float
+    all_successful: bool
+    any_successful: bool
+    error_messages: list[str]
+    total_entries: int
+    successful_entries: int
+    failed_entries: int
+    object_class_counts: dict[str, int]
+    attribute_counts: dict[str, int]
 
 
 class GenericTestCaseDict(TypedDict, total=False):

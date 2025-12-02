@@ -298,7 +298,7 @@ class FlextLdifUtilitiesDN:
     def split(dn: FlextLdifModelsDomains.DistinguishedName) -> list[str]: ...
 
     @staticmethod
-    def split(dn: str | object) -> list[str]:
+    def split(dn: str | FlextLdifModelsDomains.DistinguishedName) -> list[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -359,7 +359,7 @@ class FlextLdifUtilitiesDN:
     def norm_string(dn: FlextLdifModelsDomains.DistinguishedName) -> str: ...
 
     @staticmethod
-    def norm_string(dn: str | object) -> str:
+    def norm_string(dn: str | FlextLdifModelsDomains.DistinguishedName) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
@@ -389,7 +389,7 @@ class FlextLdifUtilitiesDN:
     def validate(dn: FlextLdifModelsDomains.DistinguishedName) -> bool: ...
 
     @staticmethod
-    def validate(dn: str | object) -> bool:
+    def validate(dn: str | FlextLdifModelsDomains.DistinguishedName) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -398,8 +398,6 @@ class FlextLdifUtilitiesDN:
         - All components have attr=value format
         - Valid hex escape sequences (\XX where X is hex digit)
         """
-        if dn is None:
-            return False
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return False
@@ -646,23 +644,13 @@ class FlextLdifUtilitiesDN:
         if dn_str != normalized:
             transformations.append(FlextLdifConstants.TransformationType.DN_NORMALIZED)
 
-        # Create statistics - use model_copy() for safety
-        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
+        # Create statistics
+        stats = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
             original_dn=orig,
             cleaned_dn=dn_str,
             normalized_dn=normalized,
             transformations=transformations,
         )
-        # Convert domain DNStatistics to public DNStatistics
-        if isinstance(
-            stats_domain,
-            FlextLdifModelsDomains.DNStatistics,
-        ) and not isinstance(stats_domain, FlextLdifModelsDomains.DNStatistics):
-            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
-                stats_domain.model_dump(),
-            )
-        else:
-            stats = stats_domain
 
         return FlextResult[tuple[str, FlextLdifModelsDomains.DNStatistics]].ok(
             (
@@ -770,6 +758,20 @@ class FlextLdifUtilitiesDN:
         )
 
         # Create statistics using type-safe flags from dict
+        # Extract and type-narrow validation fields
+        validation_status_raw = flags.get("validation_status", "")
+        validation_status: str = (
+            validation_status_raw if isinstance(validation_status_raw, str) else ""
+        )
+        validation_warnings_raw = flags.get("validation_warnings", [])
+        validation_warnings: list[str] = (
+            validation_warnings_raw if isinstance(validation_warnings_raw, list) else []
+        )
+        validation_errors_raw = flags.get("validation_errors", [])
+        validation_errors: list[str] = (
+            validation_errors_raw if isinstance(validation_errors_raw, list) else []
+        )
+
         stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
@@ -782,21 +784,11 @@ class FlextLdifUtilitiesDN:
             was_base64_encoded=flags.get("was_base64_encoded", False) is True,
             had_utf8_chars=flags.get("had_utf8_chars", False) is True,
             had_escape_sequences=flags.get("had_escape_sequences", False) is True,
-            validation_status=flags.get("validation_status", "") or "",
-            validation_warnings=flags.get("validation_warnings", []) or [],
-            validation_errors=flags.get("validation_errors", []) or [],
+            validation_status=validation_status,
+            validation_warnings=validation_warnings,
+            validation_errors=validation_errors,
         )
-        # Convert domain DNStatistics to public DNStatistics
-        if isinstance(
-            stats_domain,
-            FlextLdifModelsDomains.DNStatistics,
-        ) and not isinstance(stats_domain, FlextLdifModelsDomains.DNStatistics):
-            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
-                stats_domain.model_dump(),
-            )
-        else:
-            stats = stats_domain
-        return result, stats
+        return result, stats_domain
 
     @staticmethod
     def _apply_dn_transformations(
@@ -1391,7 +1383,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | FlextLdifModelsDomains.DistinguishedName | object,
+        value: str | FlextLdifModelsDomains.DistinguishedName,
         source_dn: str,
         target_dn: str,
     ) -> str:

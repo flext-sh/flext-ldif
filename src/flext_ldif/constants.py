@@ -2107,6 +2107,7 @@ class FlextLdifConstants(FlextConstants):
             "authenticated",
             "dn",
             "user_dn",
+            "userdn",
             "sddl",
         ]
         """ACL subject type literals derived from AclSubjectType StrEnum.
@@ -3501,6 +3502,8 @@ class FlextLdifConstants(FlextConstants):
             "apache": "apache",
             "novell": "novell",
             "tivoli": "ibm_tivoli",
+            # OpenLDAP aliases (openldap → openldap2 for backward compatibility)
+            "openldap": "openldap2",
             # Long forms (backward compatibility)
             "active_directory": "ad",
             "apache_directory": "apache",
@@ -4185,7 +4188,7 @@ class FlextLdifConstants(FlextConstants):
 
         # ACL utility constants
         ACL_WILDCARD_DN: Final[str] = "*"
-        ACL_WILDCARD_TYPE: Final[str] = "*"
+        ACL_WILDCARD_TYPE: Final[str] = "all"
         ACL_WILDCARD_VALUE: Final[str] = "*"
         LDIF_FILE_EXTENSION: Final[str] = ".ldif"
 

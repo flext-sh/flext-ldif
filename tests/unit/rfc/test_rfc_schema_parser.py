@@ -44,9 +44,9 @@ objectClass: person
 cn: test
 """
 
+        # FlextLdifParser.parse() accepts 'source' parameter (not 'content' or 'input_source')
         result = parser.parse(
-            content=test_ldif,
-            input_source="string",
+            source=test_ldif,
             server_type="rfc",
         )
         assert result.is_success

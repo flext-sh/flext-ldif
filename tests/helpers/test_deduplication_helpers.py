@@ -19,7 +19,6 @@ from typing import TypedDict, TypeVar, cast
 
 from flext_core import FlextResult
 
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_ldif import (
     FlextLdif,
     FlextLdifConstants,
@@ -27,6 +26,9 @@ from flext_ldif import (
     FlextLdifParser,
     FlextLdifWriter,
 )
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -34,7 +36,6 @@ from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
 from tests.fixtures.typing import (
     GenericCallableParameterDict,
     GenericFieldsDict,
@@ -126,13 +127,17 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             List of parsed entries
 
         """
+        # Normalize server_type to ServerTypeLiteral if provided
+        server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None
+        if server_type is not None:
+            normalized = FlextLdifConstants.normalize_server_type(server_type)
+            server_type_literal = cast("FlextLdifConstants.LiteralTypes.ServerTypeLiteral", normalized)
         result = parser.parse(
             ldif_content,
-            input_source="string",
-            server_type=server_type,
+            server_type=server_type_literal,
         )
         if should_succeed:
-            unwrapped = FlextTestsMatchers.assert_success(
+            unwrapped = TestAssertions.assert_success(
                 result,
                 "Parse should succeed",
             )
@@ -143,16 +148,19 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         entries: list[FlextLdifModels.Entry]
         if isinstance(unwrapped, list):
             # Ensure all entries are FlextLdifModels.Entry instances
+            # Type narrowing: unwrapped is list after isinstance check
+            unwrapped_list: list[FlextLdifModels.Entry | object] = unwrapped
             entries = [
-                entry for entry in unwrapped if isinstance(entry, FlextLdifModels.Entry)
+                entry for entry in unwrapped_list if isinstance(entry, FlextLdifModels.Entry)
             ]
-        elif hasattr(unwrapped, "entries"):
+        elif isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
             # unwrapped is ParseResponse with entries attribute
             parse_response = unwrapped
-            entries_attr = getattr(parse_response, "entries", [])
+            # ParseResponse.entries is a list[Entry]
+            entries_list = parse_response.entries
             entries = [
                 entry
-                for entry in entries_attr
+                for entry in entries_list
                 if isinstance(entry, FlextLdifModels.Entry)
             ]
         else:
@@ -183,7 +191,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         writer: FlextLdifWriter,
         entries: list[FlextLdifModels.Entry],
         *,
-        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
         output_target: str = "string",
         output_path: Path | None = None,
         must_contain: list[str] | None = None,
@@ -204,17 +212,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string or file path
 
         """
-        result = writer.write(
-            entries,
-            target_server_type=target_server_type,
-            output_target=output_target,
-            output_path=output_path,
-        )
-        output = TestAssertions.assert_write_success(
-            cast("FlextLdifTypes.WriteResult", result),
-        )
-
         if output_target == "file" and output_path:
+            write_file_result = writer.write_to_file(
+                entries,
+                output_path,
+                server_type=target_server_type,
+            )
+            # write_to_file returns FlextResult[WriteResponse], not FlextResult[str]
+            TestAssertions.assert_success(write_file_result, "Write to file should succeed")
             assert output_path.exists(), "Output file should exist"
             content = output_path.read_text(encoding="utf-8")
             if must_contain:
@@ -224,6 +229,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 for text in must_not_contain:
                     assert text not in content, f"Must not contain '{text}' found"
             return output_path
+        # Write to string
+        write_string_result = writer.write_to_string(
+            entries,
+            server_type=target_server_type,
+        )
+        # write_to_string returns FlextResult[str]
+        output = TestAssertions.assert_success(write_string_result, "Write to string should succeed")
         assert isinstance(output, str), "String output should be str"
         content = output
         if must_contain:
@@ -240,7 +252,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         writer: FlextLdifWriter,
         ldif_content: str,
         *,
-        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
         validate_identical: bool = True,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Complete roundtrip test - replaces 30-50 lines.
@@ -258,32 +270,39 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         original_entries = DeduplicationHelpers.parse_and_assert(parser, ldif_content)
 
-        write_result = writer.write(
+        write_result = writer.write_to_string(
             original_entries,
-            target_server_type=target_server_type,
-            output_target="string",
+            server_type=target_server_type,
         )
         written_ldif = TestAssertions.assert_write_success(
             cast("FlextLdifTypes.WriteResult", write_result),
         )
 
-        roundtrip_result = parser.parse(written_ldif, input_source="string")
+        roundtrip_result = parser.parse(written_ldif)
         roundtrip_data = TestAssertions.assert_success(roundtrip_result)
 
         if isinstance(roundtrip_data, list):
             roundtripped_entries_raw = roundtrip_data
-        elif hasattr(roundtrip_data, "entries"):
+        elif isinstance(roundtrip_data, FlextLdifModelsResults.ParseResponse):
+            # roundtrip_data is ParseResponse with entries attribute
             parse_response = roundtrip_data
-            entries_attr = getattr(parse_response, "entries", [])
-            roundtripped_entries_raw = list(entries_attr)
+            # ParseResponse.entries is list[Entry]
+            roundtripped_entries_raw = parse_response.entries
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
 
-        # Cast to ensure type consistency
+        # Type narrowing: roundtripped_entries_raw is list[Entry] after extraction
+        # Ensure type consistency by filtering and casting
+        # roundtripped_entries_raw is already list[Entry] from parse_response.entries
+        roundtripped_entries_list: list[FlextLdifModels.Entry | object] = (
+            roundtripped_entries_raw
+            if isinstance(roundtripped_entries_raw, list)
+            else []
+        )
         roundtripped_entries: list[FlextLdifModels.Entry] = [
-            entry
-            for entry in roundtripped_entries_raw
+            cast("FlextLdifModels.Entry", entry)
+            for entry in roundtripped_entries_list
             if isinstance(entry, FlextLdifModels.Entry)
         ]
 
@@ -310,7 +329,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str | None = None,
         expected_name: str | None = None,
         must_have_attributes: list[str] | None = None,
-    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass:
         """Complete schema parse test - replaces 15-25 lines.
 
         Args:
@@ -332,37 +351,36 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         )
 
         if expected_type == "attribute":
-            assert isinstance(schema_obj_raw, FlextLdifModels.SchemaAttribute), (
+            assert isinstance(schema_obj_raw, FlextLdifModelsDomains.SchemaAttribute), (
                 "Should return SchemaAttribute"
             )
-            schema_attr: FlextLdifModels.SchemaAttribute = (
+            schema_attr: FlextLdifModelsDomains.SchemaAttribute = (
                 schema_obj_raw  # type is already correct after isinstance
             )
             if expected_oid:
                 assert schema_attr.oid == expected_oid
             if expected_name:
                 assert schema_attr.name == expected_name
-        elif expected_type == "objectclass":
-            assert isinstance(schema_obj_raw, FlextLdifModels.SchemaObjectClass), (
+            return schema_attr
+        if expected_type == "objectclass":
+            assert isinstance(schema_obj_raw, FlextLdifModelsDomains.SchemaObjectClass), (
                 "Should return SchemaObjectClass"
             )
-            schema_oc: FlextLdifModels.SchemaObjectClass = (
+            schema_oc: FlextLdifModelsDomains.SchemaObjectClass = (
                 schema_obj_raw  # type is already correct after isinstance
             )
             if expected_oid:
                 assert schema_oc.oid == expected_oid
             if expected_name:
                 assert schema_oc.name == expected_name
-        else:
-            msg = f"Unknown expected_type: {expected_type}"
-            raise AssertionError(msg)
-
-        return schema_obj_raw
+            return schema_oc
+        msg = f"Unknown expected_type: {expected_type}"
+        raise AssertionError(msg)
 
     @staticmethod
     def schema_write_and_assert(
         schema_quirk: FlextLdifServersRfc.Schema,
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
@@ -379,7 +397,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
+        if isinstance(schema_obj, FlextLdifModelsDomains.SchemaAttribute):
             result = schema_quirk._write_attribute(schema_obj)
         else:
             result = schema_quirk._write_objectclass(schema_obj)
@@ -405,33 +423,33 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         | int
         | bool
         | FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl,
         expected_result: str
         | int
         | bool
         | FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl
         | None = None,
         should_succeed: bool = True,
         **kwargs: str
         | int
         | bool
         | FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl,
     ) -> (
         str
         | int
         | bool
         | FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl
     ):
         """Test entry quirk method with automatic assertions - replaces 10-20 lines.
 
@@ -459,20 +477,20 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     assert unwrapped == expected_result
                 # Type narrowing: unwrapped can be various types
                 return cast(
-                    "str | int | bool | FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl",
+                    "str | int | bool | FlextLdifModels.Entry | FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass | FlextLdifModelsDomains.Acl",
                     unwrapped,
                 )
             _ = TestAssertions.assert_failure(result)
             # Return the result wrapped in FlextResult for failure case
             return cast(
-                "str | int | bool | FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl",
+                "str | int | bool | FlextLdifModels.Entry | FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass | FlextLdifModelsDomains.Acl",
                 result,
             )
         if expected_result is not None:
             assert result == expected_result
         # Type narrowing: result from method call
         return cast(
-            "str | int | bool | FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl",
+            "str | int | bool | FlextLdifModels.Entry | FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass | FlextLdifModelsDomains.Acl",
             result,
         )
 
@@ -483,7 +501,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         expected_raw_acl: str | None = None,
         expected_server_type: str = "rfc",
-    ) -> FlextLdifModels.Acl:
+    ) -> FlextLdifModelsDomains.Acl:
         """Complete ACL parse test - replaces 10-15 lines.
 
         Args:
@@ -498,7 +516,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         """
         result = acl_quirk.parse(acl_line)
         acl = TestAssertions.assert_success(result, "ACL parse should succeed")
-        assert isinstance(acl, FlextLdifModels.Acl), "Parse should return Acl"
+        assert isinstance(acl, FlextLdifModelsDomains.Acl), "Parse should return Acl"
         assert acl.server_type == expected_server_type
 
         if expected_raw_acl:
@@ -511,7 +529,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def acl_quirk_write_and_assert(
         acl_quirk: FlextLdifServersRfc.Acl,
-        acl: FlextLdifModels.Acl,
+        acl: FlextLdifModelsDomains.Acl,
         *,
         must_contain: list[str] | None = None,
     ) -> str:
@@ -570,18 +588,20 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         operation: str,
         expected_type: type[
             FlextLdifModels.Entry
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass
             | str
         ]
         | None = None,
         should_succeed: bool = True,
     ) -> (
         FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
         | str
     ):
+        # Type narrowing: expected_type can be None or a type
+        # This is a type annotation, not a runtime check
         """Test route operation with assertions - replaces 10-15 lines.
 
         Args:
@@ -609,7 +629,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 )
             # Type narrowing: unwrapped can be various types
             return cast(
-                "FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str",
+                "FlextLdifModels.Entry | FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass | str",
                 unwrapped,
             )
         _ = TestAssertions.assert_failure(result)
@@ -653,11 +673,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Write
         if write_method is None:
-            if isinstance(parsed, FlextLdifModels.SchemaAttribute):
+            if isinstance(parsed, FlextLdifModelsDomains.SchemaAttribute):
                 write_method = "_write_attribute"
-            elif isinstance(parsed, FlextLdifModels.SchemaObjectClass):
+            elif isinstance(parsed, FlextLdifModelsDomains.SchemaObjectClass):
                 write_method = "_write_objectclass"
-            elif isinstance(parsed, FlextLdifModels.Acl):
+            elif isinstance(parsed, FlextLdifModelsDomains.Acl):
                 write_method = "_write_acl"
             elif isinstance(parsed, FlextLdifModels.Entry):
                 write_method = "write"
@@ -679,10 +699,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if validate_identical:
             if isinstance(
                 parsed,
-                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
             ) and isinstance(
                 roundtripped,
-                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
             ):
                 assert parsed.oid == roundtripped.oid, "OID should match"
                 assert parsed.name == roundtripped.name, "Name should match"
@@ -701,7 +721,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         ldif_content: str | Path,
         *,
         expected_count: int | None = None,
-        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
         validate_entries: bool = True,
     ) -> tuple[list[FlextLdifModels.Entry], str, list[FlextLdifModels.Entry]]:
         """Complete API parse-write-roundtrip test - replaces 30-50 lines.
@@ -727,7 +747,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(original_data, list):
             original_entries = original_data
         elif hasattr(original_data, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", original_data)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", original_data)
             entries_attr = getattr(parse_response, "entries", [])
             original_entries = [
                 cast("FlextLdifModels.Entry", entry) for entry in entries_attr
@@ -767,7 +787,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(roundtrip_data, list):
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", roundtrip_data)
             entries_attr = getattr(parse_response, "entries", [])
             roundtripped_entries_raw = list(entries_attr)
         else:
@@ -843,7 +863,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def batch_schema_parse_and_assert(
         schema_quirk: FlextLdifServersRfc.Schema,
         test_cases: list[dict[str, str | int | list[str] | None]],
-    ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+    ) -> list[FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass]:
         """Test multiple schema parse operations in batch - replaces 50-150+ lines.
 
         Args:
@@ -1036,7 +1056,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(original_data, list):
             original_entries = original_data
         elif hasattr(original_data, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", original_data)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", original_data)
             entries_attr = getattr(parse_response, "entries", [])
             original_entries = [
                 cast("FlextLdifModels.Entry", entry) for entry in entries_attr
@@ -1074,7 +1094,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(roundtrip_data, list):
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", roundtrip_data)
             entries_attr = getattr(parse_response, "entries", [])
             roundtripped_entries_raw = list(entries_attr)
         else:
@@ -1144,7 +1164,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 e for e in unwrapped if isinstance(e, FlextLdifModels.Entry)
             ]
         elif hasattr(unwrapped, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", unwrapped)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", unwrapped)
             entries_attr = getattr(parse_response, "entries", [])
             # ParseResponse.entries is list[Domain.Entry], convert to list[Entry]
             entries = [e for e in entries_attr if isinstance(e, FlextLdifModels.Entry)]
@@ -1274,10 +1294,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Parsed entries
 
         """
-        if isinstance(ldif_content, Path):
-            result = parser.parse(ldif_content, input_source="file")
-        else:
-            result = parser.parse(ldif_content, input_source="string")
+        # parse() accepts str | Path, no input_source parameter needed
+        result = parser.parse(ldif_content)
 
         entries = DeduplicationHelpers.assert_success_and_unwrap_list(
             result,
@@ -1319,18 +1337,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        if isinstance(entries, list):
-            result = writer.write(
-                entries,
-                target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
-                output_target="string",
-            )
-        else:
-            result = writer.write(
-                [entries],
-                target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
-                output_target="string",
-            )
+        # Use write_to_string() instead of write() with invalid parameters
+        entries_list: list[FlextLdifModels.Entry] = entries if isinstance(entries, list) else [entries]
+        result = writer.write_to_string(
+            entries_list,
+            server_type="rfc",  # Use literal ServerTypeLiteral
+        )
 
         return DeduplicationHelpers.assert_success_and_unwrap_string(
             cast("FlextResult[str]", result),
@@ -1346,7 +1358,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str | None = None,
         expected_name: str | None = None,
         expected_type: type[object] | None = None,
-    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass:
         """Parse schema and unwrap with validations - replaces 6-10 lines.
 
         Common pattern:
@@ -1379,7 +1391,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if not isinstance(
             schema_obj,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             msg = (
                 f"Expected SchemaAttribute or SchemaObjectClass, got {type(schema_obj)}"
@@ -1401,7 +1413,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def write_schema_and_unwrap(
         schema_quirk: FlextLdifTypes.SchemaQuirk,
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         must_contain: list[str] | None = None,
     ) -> str:
@@ -1422,7 +1434,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        result = schema_quirk.write(schema_obj)
+        # schema_quirk.write() accepts SchemaAttributeProtocol | SchemaObjectClassProtocol
+        # SchemaAttribute and SchemaObjectClass implement these protocols
+        # Type narrowing: schema_obj is already SchemaAttribute | SchemaObjectClass
+        result = schema_quirk.write(
+            cast("FlextLdifProtocols.Models.SchemaAttributeProtocol | FlextLdifProtocols.Models.SchemaObjectClassProtocol", schema_obj)
+        )
         return DeduplicationHelpers.assert_success_and_unwrap_string(
             cast("FlextResult[str]", result),
             must_contain=must_contain,
@@ -1453,9 +1470,22 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         result = entry_quirk.parse(ldif_content)
-        entries = TestAssertions.assert_success(result)
-        assert len(entries) == 1, f"Expected 1 entry, got {len(entries)}"
-        entry = entries[0]
+        parse_result = TestAssertions.assert_success(result)
+        # parse() returns FlextResult[ParseResponse], not FlextResult[list[Entry]]
+        if isinstance(parse_result, FlextLdifModelsResults.ParseResponse):
+            entries_list = parse_result.entries
+        elif isinstance(parse_result, list):
+            entries_list = parse_result
+        else:
+            msg = "Parse returned unexpected type"
+            raise AssertionError(msg)
+        assert len(entries_list) == 1, f"Expected 1 entry, got {len(entries_list)}"
+        entry_raw = entries_list[0]
+        # Type narrowing: entry_raw is Entry after isinstance check in list comprehension
+        assert isinstance(entry_raw, FlextLdifModels.Entry), "Entry must be FlextLdifModels.Entry"
+        # FlextLdifModels.Entry is an alias for FlextLdifModelsDomains.Entry
+        # Cast to ensure type compatibility
+        entry: FlextLdifModels.Entry = cast("FlextLdifModels.Entry", entry_raw)
 
         if expected_dn and hasattr(entry, "dn") and entry.dn is not None:
             assert entry.dn.value == expected_dn
@@ -1486,7 +1516,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        result = entry_quirk.write(entry)
+        # EntryProtocol.write() accepts Sequence[EntryProtocol] | EntryProtocol
+        # FlextLdifModels.Entry implements EntryProtocol, so list[Entry] is compatible
+        # Cast to ensure type compatibility with protocol
+        entry_list: list[FlextLdifProtocols.Models.EntryProtocol] = [
+            cast("FlextLdifProtocols.Models.EntryProtocol", entry)
+        ]
+        result = entry_quirk.write(entry_list)
         # EntryProtocol.write() returns FlextResult[str], unwrap and verify it's str
         unwrapped = TestAssertions.assert_success(
             result,
@@ -1640,7 +1676,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def oid_validation_and_parse(
-        oid_utility: FlextLdifUtilities.OID,
+        oid_utility: type[FlextLdifUtilitiesOID],
         schema_quirk: FlextLdifTypes.SchemaQuirk,
         oid: str,
         schema_def: str,
@@ -1651,7 +1687,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         extract_from_def: bool = True,
         extract_from_object: bool = True,
     ) -> tuple[
-        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         str,
     ]:
         """Complete OID validation + parse test - replaces 30-50+ lines.
@@ -1675,21 +1711,24 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         extracted_oid = None
 
         # Validate OID format
+        # FlextLdifUtilitiesOID methods are static, so use class directly
+        # oid_utility parameter is the class itself (FlextLdifUtilitiesOID)
+        oid_class: type[FlextLdifUtilitiesOID] = oid_utility if oid_utility is not None else FlextLdifUtilitiesOID
         if validate_format:
-            validation_result = oid_utility.validate_format(oid)
+            validation_result = oid_class.validate_format(oid)
             assert validation_result.is_success and validation_result.unwrap(), (
                 f"Invalid OID format: {oid}"
             )
 
         # Check if Oracle OID
         if check_is_oracle:
-            assert oid_utility.is_oracle_oid(oid), (
+            assert oid_class.is_oracle_oid(oid), (
                 f"OID {oid} should be detected as Oracle OID"
             )
 
         # Extract OID from definition
         if extract_from_def:
-            extracted_oid = oid_utility.extract_from_definition(schema_def)
+            extracted_oid = oid_class.extract_from_definition(schema_def)
             assert extracted_oid == oid, (
                 f"OID extraction failed: expected {oid}, got {extracted_oid}"
             )
@@ -1700,14 +1739,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if not isinstance(
             parsed,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             msg = f"Expected SchemaAttribute or SchemaObjectClass, got {type(parsed)}"
             raise TypeError(msg)
 
         # Extract OID from parsed object
         if extract_from_object:
-            extracted_from_object = oid_utility.extract_from_schema_object(parsed)
+            extracted_from_object = oid_class.extract_from_schema_object(parsed)
             expected_oid = extracted_oid or oid
             assert extracted_from_object == expected_oid, (
                 f"OID extraction from schema object failed: "
@@ -1731,8 +1770,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         schema_type: str = "attribute",
         expected_count: int | None = None,
         validate_oids: bool = True,
-        oid_utility: FlextLdifUtilities.OID | None = None,
-    ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+        oid_utility: type[FlextLdifUtilitiesOID] | None = None,
+    ) -> list[FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass]:
         """Parse schema from fixtures with full validation - replaces 50-80+ lines.
 
         Args:
@@ -1773,6 +1812,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 schema_def = line.split("objectclasses:", 1)[1].strip()
 
             # Extract and validate OID if utility provided
+            # FlextLdifUtilitiesOID methods are static, so use class directly
             if validate_oids and oid_utility:
                 extracted_oid = oid_utility.extract_from_definition(schema_def)
                 if extracted_oid:
@@ -1951,9 +1991,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             expected_count = test_case.get("expected_count")
             expected_dns = test_case.get("expected_dns")
 
-            # Parse
+            # Parse - normalize server_type to ServerTypeLiteral if provided
             if server_type:
-                result = api.parse(content, server_type=server_type)
+                normalized_server_type = FlextLdifConstants.normalize_server_type(server_type)
+                server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", normalized_server_type
+                )
+                result = api.parse(content, server_type=server_type_literal)
             else:
                 result = api.parse(content)
 
@@ -1962,7 +2006,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             if isinstance(entries_data, list):
                 entries = entries_data
             elif hasattr(entries_data, "entries"):
-                parse_response = cast("FlextLdifModels.ParseResponse", entries_data)
+                parse_response = cast("FlextLdifModelsResults.ParseResponse", entries_data)
                 entries_attr = getattr(parse_response, "entries", [])
                 entries = [
                     cast("FlextLdifModels.Entry", entry) for entry in entries_attr
@@ -2004,9 +2048,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         | FlextLdifTypes.EntryQuirk
         | FlextLdifTypes.AclQuirk,
         data: FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl
         | str,
         *,
         must_contain: str | list[str] | None = None,
@@ -2031,7 +2075,29 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Written LDIF string
 
         """
-        result = quirk.execute(data=data, operation="write")
+        # Quirks have different write() signatures based on type
+        # Check quirk type and call appropriate method with proper casting
+        if isinstance(quirk, FlextLdifProtocols.Quirks.EntryProtocol):
+            # EntryProtocol.write() accepts EntryProtocol | Sequence[EntryProtocol]
+            entry_data = cast("FlextLdifProtocols.Models.EntryProtocol", data)
+            result = quirk.write(entry_data)
+        elif isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol):
+            # SchemaProtocol.write() accepts SchemaAttributeProtocol | SchemaObjectClassProtocol
+            schema_data = cast(
+                "FlextLdifProtocols.Models.SchemaAttributeProtocol | FlextLdifProtocols.Models.SchemaObjectClassProtocol",
+                data,
+            )
+            result = quirk.write(schema_data)
+        elif isinstance(quirk, FlextLdifProtocols.Quirks.AclProtocol):
+            # AclProtocol.write() accepts AclProtocol
+            acl_data = cast("FlextLdifProtocols.Models.AclProtocol", data)
+            result = quirk.write(acl_data)
+        # Fallback: try QuirksPort.execute() if available
+        elif isinstance(quirk, FlextLdifProtocols.Quirks.QuirksPort):
+            result = quirk.execute(cast("FlextLdifProtocols.Models.EntryProtocol | FlextLdifProtocols.Models.SchemaAttributeProtocol | FlextLdifProtocols.Models.SchemaObjectClassProtocol | FlextLdifProtocols.Models.AclProtocol | str", data))
+        else:
+            msg = f"Unknown quirk type: {type(quirk)}"
+            raise TypeError(msg)
 
         if should_succeed:
             written = TestAssertions.assert_success(
@@ -2065,9 +2131,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     # def quirk_route_can_handle_and_assert(
     #     quirk: FlextLdifTypes.SchemaQuirk | FlextLdifTypes.EntryQuirk | FlextLdifTypes.AclQuirk,
     #     data: FlextLdifModels.Entry
-    #     | FlextLdifModels.SchemaAttribute
-    #     | FlextLdifModels.SchemaObjectClass
-    #     | FlextLdifModels.Acl
+    #     | FlextLdifModelsDomains.SchemaAttribute
+    #     | FlextLdifModelsDomains.SchemaObjectClass
+    #     | FlextLdifModelsDomains.Acl
     #     | str,
     #     *,
     #     expected: bool = True,
@@ -2102,9 +2168,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         | FlextLdifTypes.EntryQuirk
         | FlextLdifTypes.AclQuirk,
         data: FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl
         | str,
         *,
         must_contain: str | list[str] | None = None,
@@ -2165,7 +2231,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def service_execute_and_assert_fields(
-        service: ServiceWithExecute[object],
+        service: ServiceWithExecute,
         *,
         expected_fields: GenericFieldsDict | None = None,
         expected_type: type | None = None,
@@ -2293,7 +2359,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_has_oid_and_name(
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         expected_oid: str | None = None,
         expected_name: str | None = None,
     ) -> None:
@@ -2323,13 +2389,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def assert_isinstance_schema_attribute(
         obj: object,
         error_msg: str | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Assert object is SchemaAttribute - replaces 1-2 lines per use.
 
         Common pattern (appears 33+ times):
-            assert isinstance(attr, FlextLdifModels.SchemaAttribute)
+            assert isinstance(attr, FlextLdifModelsDomains.SchemaAttribute)
             # or
-            assert isinstance(attr, FlextLdifModels.SchemaAttribute), "Should return SchemaAttribute"
+            assert isinstance(attr, FlextLdifModelsDomains.SchemaAttribute), "Should return SchemaAttribute"
 
         Args:
             obj: Object to check
@@ -2339,7 +2405,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             The object cast to SchemaAttribute
 
         """
-        assert isinstance(obj, FlextLdifModels.SchemaAttribute), (
+        assert isinstance(obj, FlextLdifModelsDomains.SchemaAttribute), (
             error_msg or f"Expected SchemaAttribute, got {type(obj).__name__}"
         )
         return obj
@@ -2348,13 +2414,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def assert_isinstance_schema_objectclass(
         obj: object,
         error_msg: str | None = None,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Assert object is SchemaObjectClass - replaces 1-2 lines per use.
 
         Common pattern (appears 15+ times):
-            assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
+            assert isinstance(oc, FlextLdifModelsDomains.SchemaObjectClass)
             # or
-            assert isinstance(oc, FlextLdifModels.SchemaObjectClass), "Should return SchemaObjectClass"
+            assert isinstance(oc, FlextLdifModelsDomains.SchemaObjectClass), "Should return SchemaObjectClass"
 
         Args:
             obj: Object to check
@@ -2364,7 +2430,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             The object cast to SchemaObjectClass
 
         """
-        assert isinstance(obj, FlextLdifModels.SchemaObjectClass), (
+        assert isinstance(obj, FlextLdifModelsDomains.SchemaObjectClass), (
             error_msg or f"Expected SchemaObjectClass, got {type(obj).__name__}"
         )
         return obj
@@ -2800,7 +2866,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         assert key in dictionary, f"Key '{key}' not found in dictionary"
-        actual_value = dictionary[key]
+        # GenericFieldsDict is TypedDict(total=False), so use .get() with cast for type safety
+        actual_value = cast("object", dictionary.get(key))
+        assert actual_value is not None, f"Key '{key}' value is None"
         assert isinstance(actual_value, expected_type), (
             error_msg
             or f"Expected dict['{key}'] to be {expected_type.__name__}, got {type(actual_value).__name__}"
@@ -2826,7 +2894,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         assert key in dictionary, f"Key '{key}' not found in dictionary"
-        actual_value = dictionary[key]
+        # GenericFieldsDict is TypedDict(total=False), so use .get() with cast for type safety
+        actual_value = cast("object", dictionary.get(key))
         assert actual_value is not None, (
             error_msg or f"Expected dict['{key}'] to not be None, got None"
         )
@@ -2865,8 +2934,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def assert_metadata_extension_equals(
         obj: FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         key: str,
         expected_value: str | int | bool | object,
         error_msg: str | None = None,
@@ -2899,8 +2968,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def assert_metadata_extension_get_equals(
         obj: FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         key: str,
         expected_value: str | int | bool | object | None,
         error_msg: str | None = None,
@@ -2932,8 +3001,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def assert_metadata_extension_get_isinstance(
         obj: FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         key: str,
         expected_type: type,
         error_msg: str | None = None,
@@ -2964,7 +3033,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dn_value_equals(
-        dn_obj: FlextLdifModels.DistinguishedName | None,
+        dn_obj: FlextLdifModelsDomains.DistinguishedName | None,
         expected_value: str,
         error_msg: str | None = None,
     ) -> None:
@@ -2988,7 +3057,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_dn_value_is_not_none(
-        dn_obj: FlextLdifModels.DistinguishedName | None,
+        dn_obj: FlextLdifModelsDomains.DistinguishedName | None,
         error_msg: str | None = None,
     ) -> None:
         """Assert DN value is not None - replaces 1-2 lines per use.
@@ -3030,12 +3099,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert entry.dn is not None, "Entry must have DN"
         # Type narrowing: entry.dn is DistinguishedName from domain models
         # Cast to match expected type in assert_dn_value_equals
-        dn_obj = cast("FlextLdifModels.DistinguishedName | None", entry.dn)
+        dn_obj = cast("FlextLdifModelsDomains.DistinguishedName | None", entry.dn)
         DeduplicationHelpers.assert_dn_value_equals(dn_obj, expected_dn, error_msg)
 
     @staticmethod
     def service_execute_and_unwrap(
-        service: ServiceWithExecute[object],
+        service: ServiceWithExecute,
         error_msg: str | None = None,
     ) -> object:
         """Execute service and unwrap result - replaces 2-3 lines per use.
@@ -3053,7 +3122,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Unwrapped result value
 
         """
-        result = service.execute()
+        # HasParseMethodProtocol has parse() method, not execute()
+        # Check if service has execute() method, otherwise use parse()
+        if hasattr(service, "execute"):
+            result = service.execute()
+        else:
+            msg = f"Service {type(service)} does not have execute method"
+            raise AttributeError(msg)
         return DeduplicationHelpers.assert_success_and_unwrap(result, error_msg)
 
     @staticmethod
@@ -3106,7 +3181,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_oid_equals(
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         expected_oid: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3129,7 +3204,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_name_equals(
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         expected_name: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3212,9 +3287,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         | FlextLdifTypes.AclQuirk,
         data: FlextLdifModels.Entry
         | list[FlextLdifModels.Entry]
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl,
+        | FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass
+        | FlextLdifModelsDomains.Acl,
         *,
         write_method: str = "write",
         must_contain: str | list[str] | None = None,
@@ -3256,7 +3331,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_syntax_equals(
-        schema_obj: FlextLdifModels.SchemaAttribute,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute,
         expected_syntax: str | None,
         error_msg: str | None = None,
     ) -> None:
@@ -3280,7 +3355,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_single_value_equals(
-        schema_obj: FlextLdifModels.SchemaAttribute,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute,
         expected_single_value: bool,
         error_msg: str | None = None,
     ) -> None:
@@ -3304,7 +3379,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_desc_equals(
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         expected_desc: str | None,
         error_msg: str | None = None,
     ) -> None:
@@ -3635,10 +3710,10 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         obj_with_metadata = cast("ObjectWithMetadata", obj)
         metadata = obj_with_metadata.metadata
         assert metadata is not None, "Object must have metadata"
-        assert hasattr(metadata, "extensions"), (
-            f"Metadata {type(metadata)} does not have extensions attribute"
-        )
-        assert metadata.extensions is not None, (
+        # QuirkMetadata has extensions attribute, not Metadata
+        quirk_metadata = cast("FlextLdifModelsDomains.QuirkMetadata | None", metadata)
+        assert quirk_metadata is not None, "Metadata must be QuirkMetadata"
+        assert quirk_metadata.extensions is not None, (
             error_msg or "Object metadata must have extensions"
         )
 
@@ -3669,12 +3744,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         obj_with_metadata = cast("ObjectWithMetadata", obj)
         metadata = obj_with_metadata.metadata
         assert metadata is not None, "Object must have metadata"
-        assert hasattr(metadata, "extensions"), (
-            f"Metadata {type(metadata)} does not have extensions attribute"
-        )
-        assert metadata.extensions is not None, "Object must have extensions"
+        # QuirkMetadata has extensions attribute, not Metadata
+        quirk_metadata = cast("FlextLdifModelsDomains.QuirkMetadata | None", metadata)
+        assert quirk_metadata is not None, "Metadata must be QuirkMetadata"
+        assert quirk_metadata.extensions is not None, "Object must have extensions"
         # DynamicMetadata has get() method - no need for dict check
-        actual_value = metadata.extensions.get(key)
+        actual_value = quirk_metadata.extensions.get(key)
         assert actual_value == expected_value, (
             error_msg
             or f"Expected metadata.extensions['{key}'] == {expected_value!r}, got {actual_value!r}"
@@ -3682,7 +3757,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_kind_equals(
-        schema_obj: FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaObjectClass,
         expected_kind: str,
         error_msg: str | None = None,
     ) -> None:
@@ -3994,7 +4069,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Schema object validations
         if expected_oid and isinstance(
             unwrapped,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             assert unwrapped.oid == expected_oid, (
                 f"Expected OID '{expected_oid}', got '{unwrapped.oid}'"
@@ -4002,7 +4077,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if expected_name and isinstance(
             unwrapped,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             assert unwrapped.name == expected_name, (
                 f"Expected name '{expected_name}', got '{unwrapped.name}'"
@@ -4301,7 +4376,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str | None = None,
         expected_name: str | None = None,
         should_succeed: bool = True,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Parse attribute, unwrap and assert - replaces 5-8 lines per use.
 
         Common pattern (appears 17+ times):
@@ -4322,18 +4397,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Parsed SchemaAttribute
 
         """
-        assert hasattr(schema_quirk, "parse_attribute"), (
-            f"Schema quirk {type(schema_quirk)} does not have parse_attribute method"
-        )
-        # Use getattr for type safety - parse_attribute exists on schema quirks
-        parse_method = schema_quirk.parse_attribute
-        result = parse_method(attr_def)
+        # SchemaQuirk uses parse() method, not parse_attribute()
+        schema_protocol = cast("FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk)
+        result = schema_protocol.parse(attr_def)
         if should_succeed:
             attr = TestAssertions.assert_success(
                 result,
                 "Attribute parse should succeed",
             )
-            assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
+            assert isinstance(attr, FlextLdifModelsDomains.SchemaAttribute), (
                 "Parse should return SchemaAttribute"
             )
         else:
@@ -4361,7 +4433,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str | None = None,
         expected_name: str | None = None,
         should_succeed: bool = True,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Parse objectClass, unwrap and assert - replaces 5-8 lines per use.
 
         Common pattern (appears 15+ times):
@@ -4382,18 +4454,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Parsed SchemaObjectClass
 
         """
-        assert hasattr(schema_quirk, "parse_objectclass"), (
-            f"Schema quirk {type(schema_quirk)} does not have parse_objectclass method"
-        )
-        # Use getattr for type safety - parse_objectclass exists on schema quirks
-        parse_method = schema_quirk.parse_objectclass
-        result = parse_method(oc_def)
+        # SchemaQuirk uses parse() method, not parse_objectclass()
+        schema_protocol = cast("FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk)
+        result = schema_protocol.parse(oc_def)
         if should_succeed:
             oc = TestAssertions.assert_success(
                 result,
                 "ObjectClass parse should succeed",
             )
-            assert isinstance(oc, FlextLdifModels.SchemaObjectClass), (
+            assert isinstance(oc, FlextLdifModelsDomains.SchemaObjectClass), (
                 "Parse should return SchemaObjectClass"
             )
         else:
@@ -4451,7 +4520,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Auto-detect write method
         if write_method is None:
-            if isinstance(parsed, FlextLdifModels.SchemaObjectClass):
+            if isinstance(parsed, FlextLdifModelsDomains.SchemaObjectClass):
                 write_method = "write_objectclass"
             else:
                 write_method = "write_attribute"
@@ -4510,9 +4579,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(entries_data, list):
             entries_raw = entries_data
         elif hasattr(entries_data, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", entries_data)
-            entries_attr = getattr(parse_response, "entries", [])
-            entries_raw = list(entries_attr)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", entries_data)
+            entries_attr = parse_response.entries
+            entries_raw: list[FlextLdifModels.Entry | object] = (
+                entries_attr if isinstance(entries_attr, list) else []
+            )
         else:
             msg = "Parse returned unexpected type"
             raise AssertionError(msg)
@@ -4525,8 +4596,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert len(entries) == 1, f"Expected 1 entry, got {len(entries)}"
         parsed = entries[0]
 
-        # Write
-        write_result = entry_quirk.write(parsed)
+        # Write - EntryProtocol.write() accepts EntryProtocol | Sequence[EntryProtocol]
+        entry_protocol = cast("FlextLdifProtocols.Models.EntryProtocol", parsed)
+        write_result = entry_quirk.write(entry_protocol)
         written = TestAssertions.assert_success(write_result, "Write should succeed")
         assert isinstance(written, str), "Write should return string"
 
@@ -4649,7 +4721,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             # Skip validation if it's not a schema object (has "attributes" means it's an Entry)
             if not isinstance(
                 parsed,
-                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
             ):
                 # This is an Entry or other type - skip validation
                 pass
@@ -4896,7 +4968,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str,
         expected_name: str,
         expected_type: type[object] | None = None,
-    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass:
         """Parse schema and assert OID and name - replaces 6-8 lines.
 
         Common pattern:
@@ -5173,7 +5245,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if not isinstance(
             parsed,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             msg = f"Expected SchemaAttribute or SchemaObjectClass, got {type(parsed)}"
             raise TypeError(msg)
@@ -5295,19 +5367,19 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             # Ensure data is properly typed
             if isinstance(data, list):
                 entries_data = cast("list[FlextLdifModels.Entry]", data)
-                result = writer_with_write.write(
+                # Use write_to_file() instead of write() with invalid parameters
+                result = writer_with_write.write_to_file(
                     entries=entries_data,
-                    target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
-                    output_target="file",
-                    output_path=output_path,
+                    path=output_path,
+                    server_type="rfc",
                 )
             else:
-                # For other data types, use the generic write method
-                result = writer_with_write.write(
-                    entries=[cast("FlextLdifModels.Entry", data)],
-                    target_server_type=FlextLdifConstants.ServerTypes.RFC.value,
-                    output_target="file",
-                    output_path=output_path,
+                # For other data types, use write_to_file() method
+                entries_data = cast("list[FlextLdifModels.Entry]", [cast("FlextLdifModels.Entry", data)])
+                result = writer_with_write.write_to_file(
+                    entries=entries_data,
+                    path=output_path,
+                    server_type="rfc",
                 )
         else:
             # For other methods, try calling with output_path as kwarg
@@ -5348,7 +5420,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         filename: str = "roundtrip.ldif",
         expected_count: int | None = None,
         validate_identical: bool = True,
-        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> tuple[list[FlextLdifModels.Entry], Path, list[FlextLdifModels.Entry]]:
         """Complete roundtrip: parse -> write -> parse - replaces 20-35 lines per use.
 
@@ -5386,7 +5458,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(original_data, list):
             original_entries = original_data
         elif hasattr(original_data, "entries"):
-            original_entries = original_data.entries
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", original_data)
+            original_entries = parse_response.entries
         else:
             msg = "Parse should return list of entries"
             raise AssertionError(msg)
@@ -5415,7 +5488,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(roundtripped_data, list):
             roundtripped_entries = roundtripped_data
         elif hasattr(roundtripped_data, "entries"):
-            roundtripped_entries = roundtripped_data.entries
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", roundtripped_data)
+            roundtripped_entries = parse_response.entries
         else:
             msg = "Roundtrip parse should return list of entries"
             raise AssertionError(msg)
@@ -5444,7 +5518,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_name: str | None = None,
         must_contain_in_output: str | list[str] | None = None,
     ) -> tuple[
-        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         str,
     ]:
         """Schema parse -> write -> parse roundtrip - replaces 15-25 lines per use.
@@ -5481,14 +5555,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         written = DeduplicationHelpers.write_unwrap_and_assert(
             schema_quirk,
             cast(
-                "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
+                "FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass",
                 schema_obj,
             ),
             must_contain=must_contain_in_output,
         )
 
         return cast(
-            "tuple[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass, str]",
+            "tuple[FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass, str]",
             (schema_obj, written),
         )
 
@@ -5500,7 +5574,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str,
         expected_name: str,
         expected_fields: GenericFieldsDict | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Complete attribute parse test with all validations - replaces 8-15 lines.
 
         Common pattern in test files:
@@ -5551,7 +5625,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid: str,
         expected_name: str,
         expected_fields: GenericFieldsDict | None = None,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Complete objectClass parse test with all validations - replaces 8-15 lines.
 
         Common pattern in test files:
@@ -5597,7 +5671,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def write_schema_complete(
         schema_quirk: FlextLdifTypes.SchemaQuirk,
-        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        schema_obj: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         must_contain: list[str],
         must_not_contain: list[str] | None = None,
@@ -6027,7 +6101,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         Common pattern (appears 30+ times):
             result = parser.parse(content, input_source="string")
             assert result.is_success
-            entries = result.unwrap()
+            unwrapped = result.unwrap()
+            # ParseResponse has entries attribute
+            if isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
+                entries = unwrapped.entries
+            elif isinstance(unwrapped, list):
+                entries = unwrapped
+            else:
+                msg = f"Unexpected parse result type: {type(unwrapped)}"
+                raise AssertionError(msg)
             assert len(entries) == expected_count
             entry = entries[0]
             assert entry.dn.value == expected_dn
@@ -6110,7 +6192,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         if server_type:
-            result = api.parse(content, server_type=server_type)
+            # Normalize server_type to ServerTypeLiteral
+            normalized_server_type = FlextLdifConstants.normalize_server_type(server_type)
+            server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", normalized_server_type
+            )
+            result = api.parse(content, server_type=server_type_literal)
         else:
             result = api.parse(content)
 
@@ -6283,7 +6370,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_name: str | None = None,
         must_contain_in_output: str | list[str] | None = None,
     ) -> tuple[
-        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         str,
     ]:
         """Schema parse -> write and assert OID in output - replaces 8-12 lines per use.
@@ -6368,8 +6455,16 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = f"Method {write_method} not found on writer"
             raise AttributeError(msg)
 
-        if write_method == "write" and hasattr(writer, "write"):
-            result = writer.write(data, output_path=output_path)
+        # Type narrowing: writer should have write method
+        writer_with_write = cast("FlextLdifWriter", writer)
+        if write_method == "write" and hasattr(writer_with_write, "write"):
+            # FlextLdifWriter.write() doesn't accept output_path - use write_to_file() instead
+            entries_data = cast("list[FlextLdifModels.Entry]", [cast("FlextLdifModels.Entry", data)])
+            result = writer_with_write.write_to_file(
+                entries=entries_data,
+                path=output_path,
+                server_type="rfc",
+            )
         else:
             result = method(data, output_path=output_path)
 
@@ -6592,14 +6687,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         parse_method: str = "parse",
         expected_entry_count: int | None = None,
-    ) -> FlextLdifModels.ParseResponse:
+    ) -> FlextLdifModelsResults.ParseResponse:
         """Parse and unwrap ParseResponse - replaces 5-8 lines.
 
         Common pattern:
             result = parser.parse(ldif_content, input_source="string")
             assert result.is_success
             parse_response = result.unwrap()
-            assert isinstance(parse_response, FlextLdifModels.ParseResponse)
+            assert isinstance(parse_response, FlextLdifModelsResults.ParseResponse)
             entries_attr = getattr(parse_response, "entries", [])
             assert len(entries_attr) > 0
 
@@ -6616,7 +6711,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         result = getattr(parser, parse_method)(ldif_content)
         TestAssertions.assert_success(result, f"Parse failed: {result.error}")
         parse_response = result.unwrap()
-        assert isinstance(parse_response, FlextLdifModels.ParseResponse), (
+        assert isinstance(parse_response, FlextLdifModelsResults.ParseResponse), (
             f"Expected ParseResponse, got {type(parse_response)}"
         )
         if expected_entry_count is not None:
@@ -6658,7 +6753,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         result = getattr(parser, parse_method)(ldif_content)
         TestAssertions.assert_success(result, f"Parse failed: {result.error}")
         unwrapped = result.unwrap()
-        if isinstance(unwrapped, FlextLdifModels.ParseResponse):
+        if isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
             entries = unwrapped.entries
         elif isinstance(unwrapped, list):
             entries = unwrapped
@@ -6745,7 +6840,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         unwrapped = result.unwrap()
         if isinstance(unwrapped, list):
             entries = list(unwrapped)
-        elif isinstance(unwrapped, FlextLdifModels.ParseResponse):
+        elif isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
             entries = list(unwrapped.entries)
         else:
             msg = f"Unexpected type: {type(unwrapped)}"
@@ -6816,7 +6911,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             unwrapped = result.unwrap()
             if isinstance(unwrapped, list):
                 entries = list(unwrapped)
-            elif isinstance(unwrapped, FlextLdifModels.ParseResponse):
+            elif isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
                 entries = list(unwrapped.entries)
             else:
                 msg = f"Test case {i}: Unexpected type {type(unwrapped)}"
@@ -6829,11 +6924,13 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 )
 
             if entries and "expected_dn" in test_case:
-                assert entries[0].dn is not None, f"Test case {i}: Entry must have DN"
-                assert entries[0].dn.value == test_case["expected_dn"], (
-                    f"Test case {i}: Expected DN {test_case['expected_dn']}, "
-                    f"got {entries[0].dn.value}"
-                )
+                expected_dn_value = cast("str | None", test_case.get("expected_dn"))
+                if expected_dn_value is not None:
+                    assert entries[0].dn is not None, f"Test case {i}: Entry must have DN"
+                    assert entries[0].dn.value == expected_dn_value, (
+                        f"Test case {i}: Expected DN {expected_dn_value}, "
+                        f"got {entries[0].dn.value}"
+                    )
 
             if entries and "required_attributes" in test_case:
                 assert entries[0].attributes is not None, (
@@ -6861,7 +6958,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         parse_method: str = "parse",
         expected_oid: str | None = None,
         expected_name: str | None = None,
-    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass:
         """Parse schema using constants - replaces 5-8 lines with constants.
 
         Common pattern:
@@ -6886,7 +6983,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         schema_obj = result.unwrap()
         if not isinstance(
             schema_obj,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             msg = (
                 f"Expected SchemaAttribute or SchemaObjectClass, got {type(schema_obj)}"
@@ -6908,7 +7005,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         test_cases: list[GenericTestCaseDict],
         *,
         parse_method: str = "parse",
-    ) -> list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]:
+    ) -> list[FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass]:
         """Batch parse schema using constants - replaces 30-80+ lines.
 
         Common pattern:
@@ -6945,7 +7042,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             schema_obj = result.unwrap()
             if not isinstance(
                 schema_obj,
-                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
             ):
                 msg = f"Test case {i}: Unexpected type {type(schema_obj)}"
                 raise TypeError(msg)
@@ -7348,7 +7445,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         *,
         write_method: str = "write",
         expected_error_substring: str | None = None,
-    ) -> FlextResult[str | FlextLdifModels.WriteResponse]:
+    ) -> FlextResult[str | FlextLdifModelsResults.WriteResponse]:
         """Write failure with error validation - replaces 3-5 lines per use.
 
         Common pattern:
@@ -7373,7 +7470,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         result = method(data)
         TestAssertions.assert_failure(result, expected_error_substring)
-        return cast("FlextResult[str | FlextLdifModels.WriteResponse]", result)
+        return cast("FlextResult[str | FlextLdifModelsResults.WriteResponse]", result)
 
     @staticmethod
     def helper_parse_attribute_and_assert_syntax(
@@ -7385,7 +7482,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_name: str,
         expected_syntax: str | None = None,
         expected_syntax_definition: str | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Parse attribute and assert OID + name + syntax - replaces 8-12 lines per use.
 
         Common pattern (appears 20+ times):
@@ -7416,9 +7513,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         parsed = TestAssertions.assert_success(result, "Schema parse should succeed")
         assert isinstance(
             parsed,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ), "Expected SchemaAttribute or SchemaObjectClass"
-        attr = cast("FlextLdifModels.SchemaAttribute", parsed)
+        attr = cast("FlextLdifModelsDomains.SchemaAttribute", parsed)
         if expected_oid:
             assert attr.oid == expected_oid, (
                 f"OID mismatch: expected {expected_oid}, got {attr.oid}"
@@ -7428,7 +7525,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 f"Name mismatch: expected {expected_name}, got {attr.name}"
             )
 
-        assert isinstance(attr, FlextLdifModels.SchemaAttribute), (
+        assert isinstance(attr, FlextLdifModelsDomains.SchemaAttribute), (
             "Expected SchemaAttribute"
         )
 
@@ -7510,7 +7607,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_syntax_definition: str | None = None,
         expected_single_value: bool | None = None,
         expected_equality: str | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Parse attribute with complete validation - replaces 12-20 lines per use.
 
         Common pattern (appears 15+ times):
@@ -7707,7 +7804,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_desc: str | None = None,
         expected_syntax: str | None = None,
         expected_equality: str | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Parse attribute with all common fields - replaces 10-18 lines per use.
 
         Common pattern (appears 20+ times):
@@ -7785,15 +7882,21 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert hasattr(quirk, "execute"), (
             f"Quirk {type(quirk)} does not have execute method"
         )
-        quirk_with_execute = cast("ServiceWithExecute[object]", quirk)
-        if data is not None and operation is not None:
-            result = quirk_with_execute.execute(data=data, operation=operation)
-        elif data is not None:
-            result = quirk_with_execute.execute(data=data)
-        elif operation is not None:
-            result = quirk_with_execute.execute(operation=operation)
+        # Check if quirk has execute() method (QuirksPort protocol)
+        if isinstance(quirk, FlextLdifProtocols.Quirks.QuirksPort):
+            quirk_port = cast("FlextLdifProtocols.Quirks.QuirksPort", quirk)
+            if data is not None:
+                model_data = cast(
+                    "FlextLdifProtocols.Models.EntryProtocol | FlextLdifProtocols.Models.SchemaAttributeProtocol | FlextLdifProtocols.Models.SchemaObjectClassProtocol | FlextLdifProtocols.Models.AclProtocol | str",
+                    data,
+                )
+                result = quirk_port.execute(model_data)
+            else:
+                msg = "QuirksPort.execute() requires data parameter"
+                raise ValueError(msg)
         else:
-            result = quirk_with_execute.execute()
+            msg = f"Quirk {type(quirk)} does not implement QuirksPort protocol"
+            raise TypeError(msg)
 
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap(result)
 
@@ -7918,18 +8021,19 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Resolve source quirk for parsing
         if isinstance(source, str):
             server = FlextLdifServer()
-            source_quirk = server.quirk(source)
-            if source_quirk is None:
-                msg = f"Unknown server type: {source}"
+            source_quirk_result = server.quirk(source)
+            if source_quirk_result.is_failure:
+                msg = f"Unknown server type: {source}: {source_quirk_result.error}"
                 raise ValueError(msg)
+            source_quirk = source_quirk_result.unwrap()
         else:
             source_quirk = source
 
         # Parse string to model if needed
         model: (
-            FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | FlextLdifModels.Acl
+            FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass
+            | FlextLdifModelsDomains.Acl
             | FlextLdifModels.Entry
         )
         if isinstance(data, FlextLdifModels.Entry):
@@ -7937,15 +8041,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         elif isinstance(data, str):
             # Parse string to model using appropriate parser based on data_type
             if data_type.lower() == "acl":
-                # Parse as ACL
-                assert hasattr(source_quirk, "acl_quirk"), (
-                    f"Source quirk {type(source_quirk)} does not have acl_quirk"
-                )
-                acl_quirk = source_quirk.acl_quirk
-                assert hasattr(acl_quirk, "parse"), (
-                    f"ACL quirk {type(acl_quirk)} does not have parse method"
-                )
-                parse_result = acl_quirk.parse(data)
+                # Parse as ACL - use acl() method to get acl_quirk
+                server_base = cast("FlextLdifServersBase", source_quirk)
+                acl_quirk = server_base.acl()
+                acl_protocol = cast("FlextLdifProtocols.Quirks.AclProtocol", acl_quirk)
+                parse_result = acl_protocol.parse(data)
                 if parse_result.is_failure:
                     if should_succeed:
                         msg = f"Failed to parse ACL: {parse_result.error}"
@@ -7955,8 +8055,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                     return ""
                 model = parse_result.unwrap()
             else:
-                # Parse as schema (attribute or objectClass)
-                parse_result = source_quirk.schema_quirk.parse(data)
+                # Parse as schema (attribute or objectClass) - use _schema_quirk attribute
+                server_base = cast("FlextLdifServersBase", source_quirk)
+                schema_quirk = getattr(server_base, "_schema_quirk", None)
+                if schema_quirk is None:
+                    if should_succeed:
+                        raise AssertionError(f"Schema quirk not available for {type(server_base).__name__}")
+                    return ""
+                schema_protocol = cast("FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk)
+                parse_result = schema_protocol.parse(data)
                 if parse_result.is_failure:
                     if should_succeed:
                         msg = f"Failed to parse {data_type}: {parse_result.error}"
@@ -7974,8 +8081,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 msg,
             )
 
-        # Convert model using new API
-        result = conversion_matrix.convert(source, target, model)
+        # Convert model using new API - cast model to protocol type
+        model_protocol = cast(
+            "FlextLdifProtocols.Models.EntryProtocol | FlextLdifProtocols.Models.SchemaAttributeProtocol | FlextLdifProtocols.Models.SchemaObjectClassProtocol | FlextLdifProtocols.Models.AclProtocol",
+            model,
+        )
+        result = conversion_matrix.convert(source, target, model_protocol)
 
         if should_succeed:
             converted_model = TestAssertions.assert_success(
@@ -7989,18 +8100,19 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Resolve target quirk for writing
         if isinstance(target, str):
             server = FlextLdifServer()
-            target_quirk = server.quirk(target)
-            if target_quirk is None:
-                msg = f"Unknown server type: {target}"
+            target_quirk_result = server.quirk(target)
+            if target_quirk_result.is_failure:
+                msg = f"Unknown server type: {target}: {target_quirk_result.error}"
                 raise ValueError(msg)
+            target_quirk = target_quirk_result.unwrap()
         else:
             target_quirk = target
 
         # Write converted model to string for validation
-        write_result: FlextResult[str] | FlextResult[FlextLdifModels.WriteResponse]
+        write_result: FlextResult[str] | FlextResult[FlextLdifModelsResults.WriteResponse]
         if isinstance(
             converted_model,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             assert hasattr(target_quirk, "schema_quirk"), (
                 f"Target quirk {type(target_quirk)} does not have schema_quirk"
@@ -8008,7 +8120,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             schema_quirk = target_quirk.schema_quirk
             assert schema_quirk is not None, "Schema quirk must not be None"
             write_result = schema_quirk.write(converted_model)
-        elif isinstance(converted_model, FlextLdifModels.Acl):
+        elif isinstance(converted_model, FlextLdifModelsDomains.Acl):
             assert hasattr(target_quirk, "acl_quirk"), (
                 f"Target quirk {type(target_quirk)} does not have acl_quirk"
             )
@@ -8105,10 +8217,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Resolve source quirk for parsing
         if isinstance(source, str):
             server = FlextLdifServer()
-            source_quirk = server.quirk(source)
-            if source_quirk is None:
-                msg = f"Unknown server type: {source}"
+            source_quirk_result = server.quirk(source)
+            if source_quirk_result.is_failure:
+                msg = f"Unknown server type: {source}: {source_quirk_result.error}"
                 raise ValueError(msg)
+            source_quirk = source_quirk_result.unwrap()
         else:
             source_quirk = source
 
@@ -8117,9 +8230,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Parse all items to models
         models: list[
-            FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | FlextLdifModels.Acl
+            FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass
+            | FlextLdifModelsDomains.Acl
             | FlextLdifModels.Entry
         ] = []
         for item in items:
@@ -8192,10 +8305,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Resolve target quirk for writing
         if isinstance(target, str):
             server = FlextLdifServer()
-            target_quirk = server.quirk(target)
-            if target_quirk is None:
-                msg = f"Unknown server type: {target}"
+            target_quirk_result = server.quirk(target)
+            if target_quirk_result.is_failure:
+                msg = f"Unknown server type: {target}: {target_quirk_result.error}"
                 raise ValueError(msg)
+            target_quirk = target_quirk_result.unwrap()
         else:
             target_quirk = target
 
@@ -8205,7 +8319,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             assert target_quirk is not None, "Target quirk must not be None"
             if isinstance(
                 model,
-                (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+                (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
             ):
                 assert hasattr(target_quirk, "schema_quirk"), (
                     "Target quirk must have schema_quirk"
@@ -8213,7 +8327,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 schema_quirk = target_quirk.schema_quirk
                 assert schema_quirk is not None, "Schema quirk must not be None"
                 write_result = schema_quirk.write(model)
-            elif isinstance(model, FlextLdifModels.Acl):
+            elif isinstance(model, FlextLdifModelsDomains.Acl):
                 assert hasattr(target_quirk, "acl_quirk"), (
                     "Target quirk must have acl_quirk"
                 )
@@ -8578,10 +8692,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Resolve source quirk for parsing
         if isinstance(source, str):
             server = FlextLdifServer()
-            source_quirk = server.quirk(source)
-            if source_quirk is None:
-                msg = f"Unknown server type: {source}"
+            source_quirk_result = server.quirk(source)
+            if source_quirk_result.is_failure:
+                msg = f"Unknown server type: {source}: {source_quirk_result.error}"
                 raise ValueError(msg)
+            source_quirk = source_quirk_result.unwrap()
         else:
             source_quirk = source
 
@@ -8626,7 +8741,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             raise ValueError(msg)
 
         original_model = cast(
-            "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl | FlextLdifModels.Entry",
+            "FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass | FlextLdifModelsDomains.Acl | FlextLdifModels.Entry",
             TestAssertions.assert_success(
                 parse_result,
                 f"Failed to parse original {data_type}",
@@ -8668,7 +8783,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert source_quirk is not None, "Source quirk must not be None"
         if isinstance(
             roundtrip_model,
-            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+            (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
         ):
             assert hasattr(source_quirk, "schema_quirk"), (
                 "Source quirk must have schema_quirk"
@@ -8676,7 +8791,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             schema_quirk = source_quirk.schema_quirk
             assert schema_quirk is not None, "Schema quirk must not be None"
             write_result = schema_quirk.write(roundtrip_model)
-        elif isinstance(roundtrip_model, FlextLdifModels.Acl):
+        elif isinstance(roundtrip_model, FlextLdifModelsDomains.Acl):
             assert hasattr(source_quirk, "acl_quirk"), (
                 "Source quirk must have acl_quirk"
             )
@@ -8804,9 +8919,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_oid_constant: str | None = None,
         expected_name_constant: str | None = None,
         expected_type: type[
-            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
-        ] = FlextLdifModels.SchemaAttribute,
-    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+            FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass
+        ] = FlextLdifModelsDomains.SchemaAttribute,
+    ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass:
         """Parse schema with constant and validate - replaces 10-15 lines per test.
 
         Common pattern (appears 50+ times):
@@ -8814,7 +8929,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             assert constant_value is not None, "SAMPLE_ATTRIBUTE_DEF constant not found"
             result = schema_quirk._parse_attribute(constant_value)
             parsed = TestAssertions.assert_success(result, "Parse attribute should succeed")
-            assert isinstance(parsed, FlextLdifModels.SchemaAttribute), "Should return SchemaAttribute"
+            assert isinstance(parsed, FlextLdifModelsDomains.SchemaAttribute), "Should return SchemaAttribute"
             expected_oid = getattr(TestsOudConstants, "SAMPLE_ATTRIBUTE_OID", None)
             expected_name = getattr(TestsOudConstants, "SAMPLE_ATTRIBUTE_NAME", None)
             if expected_oid:
@@ -8953,8 +9068,15 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         else:
             assert len(entries) >= 1, "Should have at least 1 entry"
 
-        # Write entries
-        write_result = ldif_api.write(entries, server_type=server_type)
+        # Write entries - normalize server_type to ServerTypeLiteral if provided
+        if server_type:
+            normalized_server_type = FlextLdifConstants.normalize_server_type(server_type)
+            server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", normalized_server_type
+            )
+            write_result = ldif_api.write(entries, server_type=server_type_literal)
+        else:
+            write_result = ldif_api.write(entries)
         written_ldif = TestAssertions.assert_success(
             write_result,
             "Write should succeed",
@@ -9120,7 +9242,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         expected_name_constant: str | None = None,
         parse_method: str = "parse_attribute",
         should_succeed: bool = True,
-    ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass:
         """Parse schema with constants validation - replaces 10-15 lines per test.
 
         Common pattern (appears 30+ times):
@@ -9161,7 +9283,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Type narrowing: parsed is already validated as expected_type above
         # Cast to correct type since parsed comes from assert_success which returns object
         parsed_schema = cast(
-            "FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass",
+            "FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass",
             parsed,
         )
         if expected_oid_constant and hasattr(constants, expected_oid_constant):
@@ -9191,7 +9313,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         write_method: str = "write_attribute",
         must_contain_in_output: list[str] | None = None,
     ) -> tuple[
-        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         str,
     ]:
         """Parse and write schema with constants validation - replaces 12-18 lines.
@@ -9295,11 +9417,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         usage: str | None = None,
         x_origin: str | None = None,
         **kwargs: object,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Create schema attribute using constants - replaces 10-20 lines.
 
         Common pattern (appears 30+ times):
-            attr = FlextLdifModels.SchemaAttribute(
+            attr = FlextLdifModelsDomains.SchemaAttribute(
                 name=TestsOudConstants.SAMPLE_ATTRIBUTE_NAME,
                 oid=TestsOudConstants.SAMPLE_ATTRIBUTE_OID,
                 desc=None,
@@ -9350,7 +9472,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Ensure oid and name are strings (required fields)
         oid_str: str = cast("str", oid_value) if oid_value is not None else ""
         name_str: str = cast("str", name_value) if name_value is not None else ""
-        return FlextLdifModels.SchemaAttribute(
+        return FlextLdifModelsDomains.SchemaAttribute(
             oid=oid_str,
             name=name_str,
             desc=desc,
@@ -9378,11 +9500,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         may: list[str] | None = None,
         obsolete: bool = False,
         **kwargs: object,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Create schema objectClass using constants - replaces 10-20 lines.
 
         Common pattern (appears 25+ times):
-            oc = FlextLdifModels.SchemaObjectClass(
+            oc = FlextLdifModelsDomains.SchemaObjectClass(
                 oid=TestsOudConstants.SAMPLE_OBJECTCLASS_OID,
                 name=TestsOudConstants.SAMPLE_OBJECTCLASS_NAME,
                 sup="top",
@@ -9432,12 +9554,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             oc_kwargs["may"] = may
         # obsolete is not a valid parameter for SchemaObjectClass
         oc_kwargs.update(kwargs)
-        return FlextLdifModels.SchemaObjectClass(**oc_kwargs)
+        return FlextLdifModelsDomains.SchemaObjectClass(**oc_kwargs)
 
     @staticmethod
     def helper_assert_schema_fields(
-        schema_item: FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass,
+        schema_item: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         expected_oid: str | None = None,
         expected_name: str | None = None,
@@ -9486,7 +9608,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Type narrowing: kind is only available in SchemaObjectClass
         if expected_kind is not None and isinstance(
             schema_item,
-            FlextLdifModels.SchemaObjectClass,
+            FlextLdifModelsDomains.SchemaObjectClass,
         ):
             assert schema_item.kind == expected_kind, (
                 f"Kind mismatch: expected {expected_kind}, got {schema_item.kind}"
@@ -9500,7 +9622,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         # Type narrowing: equality and syntax are only available in SchemaAttribute
         if expected_equality is not None and isinstance(
             schema_item,
-            FlextLdifModels.SchemaAttribute,
+            FlextLdifModelsDomains.SchemaAttribute,
         ):
             assert schema_item.equality == expected_equality, (
                 f"Equality mismatch: expected {expected_equality}, got {schema_item.equality}"
@@ -9508,7 +9630,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if expected_syntax is not None and isinstance(
             schema_item,
-            FlextLdifModels.SchemaAttribute,
+            FlextLdifModelsDomains.SchemaAttribute,
         ):
             assert schema_item.syntax == expected_syntax, (
                 f"Syntax mismatch: expected {expected_syntax}, got {schema_item.syntax}"
@@ -9782,7 +9904,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         unwrapped = TestAssertions.assert_success(result, "Parse should succeed")
         if isinstance(unwrapped, list):
             items_raw = unwrapped
-        elif isinstance(unwrapped, FlextLdifModels.ParseResponse):
+        elif isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
             items_raw = list(unwrapped.entries)
         else:
             msg = f"Unexpected type: {type(unwrapped)}"
@@ -9838,7 +9960,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         unwrapped = TestAssertions.assert_success(result, "Parse should succeed")
         if isinstance(unwrapped, list):
             items_raw = unwrapped
-        elif isinstance(unwrapped, FlextLdifModels.ParseResponse):
+        elif isinstance(unwrapped, FlextLdifModelsResults.ParseResponse):
             items_raw = list(unwrapped.entries)
         else:
             msg = f"Unexpected type: {type(unwrapped)}"
@@ -9863,7 +9985,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def api_parse_with_server_type(
         api: FlextLdif,
         ldif_content: str | Path,
-        server_type: FlextLdifConstants.ServerTypeLiteral,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         *,
         expected_count: int | None = None,
         expected_dn: str | None = None,
@@ -9898,7 +10020,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(unwrapped, list):
             entries = unwrapped
         elif hasattr(unwrapped, "entries"):
-            parse_response = cast("FlextLdifModels.ParseResponse", unwrapped)
+            parse_response = cast("FlextLdifModelsResults.ParseResponse", unwrapped)
             entries_attr = getattr(parse_response, "entries", [])
             entries = list(entries_attr)
         else:
@@ -9933,7 +10055,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         entries: Sequence[FlextLdifModels.Entry],
         output_path: Path,
         *,
-        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
     ) -> Path:
@@ -9984,7 +10106,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         api: FlextLdif,
         entries: Sequence[FlextLdifModels.Entry],
         *,
-        target_server_type: FlextLdifConstants.ServerTypeLiteral = FlextLdifConstants.ServerTypes.RFC.value,
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
     ) -> str:
@@ -10058,7 +10180,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     def api_parse_fixture_and_assert(
         api: FlextLdif,
         fixture_loader: FixtureLoaderProtocol,
-        server_type: FlextLdifConstants.ServerTypeLiteral,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_name: str,
         *,
         expected_count: int | None = None,
@@ -10265,8 +10387,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def assert_schema_objects_preserve_properties(
-        obj1: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
-        obj2: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        obj1: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
+        obj2: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         preserve_oid: bool = False,
         preserve_name: bool = False,
@@ -10320,8 +10442,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if (
             preserve_syntax
-            and isinstance(obj1, FlextLdifModels.SchemaAttribute)
-            and isinstance(obj2, FlextLdifModels.SchemaAttribute)
+            and isinstance(obj1, FlextLdifModelsDomains.SchemaAttribute)
+            and isinstance(obj2, FlextLdifModelsDomains.SchemaAttribute)
         ):
             # Syntax only exists on SchemaAttribute, not SchemaObjectClass
             assert obj1.syntax == obj2.syntax, (
@@ -10330,8 +10452,8 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         if (
             preserve_single_value
-            and isinstance(obj1, FlextLdifModels.SchemaAttribute)
-            and isinstance(obj2, FlextLdifModels.SchemaAttribute)
+            and isinstance(obj1, FlextLdifModelsDomains.SchemaAttribute)
+            and isinstance(obj2, FlextLdifModelsDomains.SchemaAttribute)
         ):
             # single_value only exists on SchemaAttribute, not SchemaObjectClass
             assert obj1.single_value == obj2.single_value, (
@@ -10344,9 +10466,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             )
 
         # ObjectClass-specific properties
-        if isinstance(obj1, FlextLdifModels.SchemaObjectClass) and isinstance(
+        if isinstance(obj1, FlextLdifModelsDomains.SchemaObjectClass) and isinstance(
             obj2,
-            FlextLdifModels.SchemaObjectClass,
+            FlextLdifModelsDomains.SchemaObjectClass,
         ):
             if preserve_kind:
                 assert obj1.kind == obj2.kind, (
@@ -10580,7 +10702,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         elif hasattr(filtered, "entries"):
             # ParseResponse or WriteResponse have entries attribute
             filtered_with_entries = cast(
-                "FlextLdifModels.ParseResponse | FlextLdifModels.WriteResponse",
+                "FlextLdifModelsResults.ParseResponse | FlextLdifModelsResults.WriteResponse",
                 filtered,
             )
             entries_attr = getattr(filtered_with_entries, "entries", [])

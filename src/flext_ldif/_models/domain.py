@@ -1539,13 +1539,15 @@ class FlextLdifModelsDomains:
         # data belong in the metadata field (QuirkMetadata).
 
         # Pydantic v2: Keep field validators for now (BeforeValidator needs module-level functions)
-        dn: FlextLdifModelsDomains.DistinguishedName = Field(
+        # NOTE: Fields allow None to pass through for RFC violation capture in model_validator.
+        # RFC compliance is enforced in validate_entry_rfc_compliance, not here.
+        dn: FlextLdifModelsDomains.DistinguishedName | None = Field(
             ...,
-            description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Coerced from str via field_validator - PROTOCOL COMPATIBLE with EntryProtocol",
+            description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with EntryProtocol",
         )
-        attributes: FlextLdifModelsDomains.LdifAttributes = Field(
+        attributes: FlextLdifModelsDomains.LdifAttributes | None = Field(
             ...,
-            description="Entry attributes container (REQUIRED per RFC 2849 § 2). Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with EntryProtocol",
+            description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with EntryProtocol",
         )
 
         # PROTOCOL COMPLIANCE: Entry FULLY satisfies EntryProtocol
@@ -1557,12 +1559,16 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: str | FlextLdifModelsDomains.DistinguishedName,
-        ) -> FlextLdifModelsDomains.DistinguishedName:
-            """Convert string DN to DistinguishedName instance."""
+            value: str | FlextLdifModelsDomains.DistinguishedName | None,
+        ) -> FlextLdifModelsDomains.DistinguishedName | None:
+            """Convert string DN to DistinguishedName instance.
+
+            Allows None to pass through for violation capture in model_validator.
+            RFC 2849 § 2 violations are captured in validate_entry_rfc_compliance.
+            """
             if value is None:
-                msg = "DN cannot be None (required per RFC 2849 § 2)"
-                raise ValueError(msg)
+                # Allow None to pass through for RFC violation capture
+                return None
 
             if isinstance(value, FlextLdifModelsDomains.DistinguishedName):
                 return value
@@ -1577,12 +1583,18 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: dict[str, list[str]] | FlextLdifModelsDomains.LdifAttributes,
-        ) -> FlextLdifModelsDomains.LdifAttributes:
-            """Convert dict to LdifAttributes instance."""
+            value: dict[str, list[str]]
+            | FlextLdifModelsDomains.LdifAttributes
+            | None,
+        ) -> FlextLdifModelsDomains.LdifAttributes | None:
+            """Convert dict to LdifAttributes instance.
+            
+            Allows None to pass through for violation capture in model_validator.
+            RFC 2849 § 2 violations (attributes required) are captured in validate_entry_rfc_compliance.
+            """
             if value is None:
-                msg = "Attributes cannot be None (required per RFC 2849 § 2)"
-                raise ValueError(msg)
+                # Allow None to pass through for RFC violation capture
+                return None
 
             if isinstance(value, FlextLdifModelsDomains.LdifAttributes):
                 return value
@@ -1657,6 +1669,8 @@ class FlextLdifModelsDomains:
 
             Returns the DN as a string for protocol compatibility.
             """
+            if self.dn is None:
+                return ""
             return self.dn.value
 
         @computed_field
@@ -1665,6 +1679,8 @@ class FlextLdifModelsDomains:
 
             Returns the attributes as a dict for protocol compatibility.
             """
+            if self.attributes is None:
+                return {}
             return self.attributes.attributes
 
         def model_post_init(self, _context: object, /) -> None:
@@ -1916,30 +1932,21 @@ class FlextLdifModelsDomains:
             """
             # Collect violations from all validators
             violations: list[str] = []
+            dn_value = "<None>"
 
             # Handle case where dn might be None (e.g., model_construct)
             if self.dn is None:
-                violations.append("RFC 2849 § 2.1: DN is required")
-                # Update validation results using model_copy() for proper Model mutation
-                if (
-                    violations
-                    and self.metadata is not None
-                    and self.metadata.validation_results is not None
-                ):
-                    new_validation = self.metadata.validation_results.model_copy(
-                        update={"rfc_violations": violations},
-                    )
-                    self.metadata.validation_results = new_validation
-                return self
-            dn_value = str(self.dn.value)
-            violations.extend(self._validate_dn(dn_value))
-            violations.extend(self._validate_attributes_required())
-            violations.extend(self._validate_attribute_descriptions())
-            violations.extend(self._validate_objectclass(dn_value))
-            violations.extend(self._validate_naming_attribute(dn_value))
-            violations.extend(self._validate_binary_options())
-            violations.extend(self._validate_attribute_syntax())
-            violations.extend(self._validate_changetype())
+                violations.append("RFC 2849 § 2: DN is required")
+            else:
+                dn_value = str(self.dn.value)
+                violations.extend(self._validate_dn(dn_value))
+                violations.extend(self._validate_attributes_required())
+                violations.extend(self._validate_attribute_descriptions())
+                violations.extend(self._validate_objectclass(dn_value))
+                violations.extend(self._validate_naming_attribute(dn_value))
+                violations.extend(self._validate_binary_options())
+                violations.extend(self._validate_attribute_syntax())
+                violations.extend(self._validate_changetype())
 
             # Capture violations in validation_metadata
             if violations and self.metadata is not None:
@@ -2053,14 +2060,24 @@ class FlextLdifModelsDomains:
 
             # Get server-injected validation rules
             validation_rules = self.metadata.extensions.get("validation_rules")
-            if not isinstance(
-                validation_rules,
-                FlextLdifModelsConfig.ServerValidationRules,
-            ):
+            if not validation_rules:
                 return self
 
-            # Type guard: validation_rules is ServerValidationRules
-            rules: FlextLdifModelsConfig.ServerValidationRules = validation_rules
+            # Reconstruct ServerValidationRules from dict if needed
+            # (DynamicMetadata may serialize Pydantic models to dict)
+            if isinstance(validation_rules, dict):
+                try:
+                    rules = FlextLdifModelsConfig.ServerValidationRules(
+                        **validation_rules
+                    )
+                except Exception:
+                    return self
+            elif isinstance(
+                validation_rules, FlextLdifModelsConfig.ServerValidationRules
+            ):
+                rules = validation_rules
+            else:
+                return self
             dn_value = str(self.dn.value) if self.dn else ""
 
             # Collect violations from all rule checkers
@@ -2389,7 +2406,14 @@ class FlextLdifModelsDomains:
                     source_entry,
                     unconverted_attributes,
                 )
-                extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs)
+                # Type narrowing: convert values to MetadataAttributeValue compatible types
+                from typing import cast
+
+                ext_kwargs_typed: dict[str, FlextTypes.MetadataAttributeValue] = {
+                    k: cast("FlextTypes.MetadataAttributeValue", v)
+                    for k, v in ext_kwargs.items()
+                }
+                extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
                 return FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=FlextLdifConstants.ServerTypes.GENERIC.value,
                     extensions=extensions,
@@ -2576,7 +2600,8 @@ class FlextLdifModelsDomains:
 
             """
             # Case-insensitive attribute lookup (LDAP standard)
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            if self.attributes is None:
+                return []
             attr_name_lower = attribute_name.lower()
             for stored_name, attr_values in self.attributes.items():
                 if stored_name.lower() == attr_name_lower:
@@ -2618,7 +2643,8 @@ class FlextLdifModelsDomains:
             List of attribute names (case as stored in entry)
 
             """
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            if self.attributes is None:
+                return []
             return list(self.attributes.keys())
 
         def get_all_attributes(self) -> dict[str, list[str]]:
@@ -2628,7 +2654,8 @@ class FlextLdifModelsDomains:
             Dictionary of attribute_name -> list[str] (deep copy)
 
             """
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            if self.attributes is None:
+                return {}
             return dict(self.attributes.attributes)
 
         def count_attributes(self) -> int:
@@ -2638,7 +2665,8 @@ class FlextLdifModelsDomains:
             Number of attributes (including multivalued attributes count as 1)
 
             """
-            # Note: self.attributes is guaranteed to be non-None since it's a required field
+            if self.attributes is None:
+                return 0
             return len(self.attributes)
 
         def get_dn_components(self) -> list[str]:
@@ -2745,11 +2773,12 @@ class FlextLdifModelsDomains:
                 FlextLdifModelsDomains.Entry(
                     dn=FlextLdifModelsDomains.DistinguishedName(
                         value=self.dn.value
-                        if hasattr(self.dn, "value")
-                        else str(self.dn),
+                        if self.dn is not None and hasattr(self.dn, "value")
+                        else str(self.dn) if self.dn is not None
+                        else "",
                     ),
                     attributes=FlextLdifModelsDomains.LdifAttributes(
-                        attributes=dict(self.attributes),
+                        attributes=dict(self.attributes) if self.attributes is not None else {},
                     ),
                 ),
             ]
@@ -3418,6 +3447,10 @@ class FlextLdifModelsDomains:
             str_strip_whitespace=True,
         )
 
+        original_string_complete: str | None = Field(
+            default=None,
+            description="Complete original schema definition string for perfect round-trip",
+        )
         quotes: str | None = Field(
             default=None,
             description="Quoting style used in schema definition",

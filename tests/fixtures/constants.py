@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from flext_ldif.constants import FlextLdifConstants
 from tests.fixtures.typing import GenericFieldsDict
 
 
@@ -198,9 +199,6 @@ class Fixtures:
     BROKEN = "broken"
 
     # Server types - reuse from production constants (no duplication)
-    # Import here to avoid circular dependency
-    from flext_ldif.constants import FlextLdifConstants
-
     OID = FlextLdifConstants.ServerTypes.OID
     OUD = FlextLdifConstants.ServerTypes.OUD
     OPENLDAP = FlextLdifConstants.ServerTypes.OPENLDAP
@@ -310,8 +308,6 @@ class Filters:
     ATTR_UID = Names.UID
 
     # Server types - reuse from production constants (no duplication)
-    from flext_ldif.constants import FlextLdifConstants
-
     SERVER_RFC = FlextLdifConstants.ServerTypes.RFC
     SERVER_OID = FlextLdifConstants.ServerTypes.OID
     SERVER_OUD = FlextLdifConstants.ServerTypes.OUD

@@ -619,6 +619,7 @@ class TestAPIEntryManipulation:
             assert result.is_success
             entry = result.unwrap()
             assert isinstance(entry, FlextLdifModels.Entry)
+            assert entry.dn is not None
             assert entry.dn.value == build_case.dn
 
     ENTRY_MANIPULATION_SCENARIOS: ClassVar[set[EntryManipulationScenario]] = {
@@ -640,27 +641,27 @@ class TestAPIEntryManipulation:
     ) -> None:
         """Test entry manipulation operations with parametrized scenarios."""
         if scenario == EntryManipulationScenario.GET_DN:
-            result = api.get_entry_dn(sample_entry)
-            assert result.is_success
-            dn = result.unwrap()
+            result_dn = api.get_entry_dn(sample_entry)
+            assert result_dn.is_success
+            dn = result_dn.unwrap()
             assert isinstance(dn, str)
             assert dn == "cn=Test User,ou=People,dc=example,dc=com"
         elif scenario == EntryManipulationScenario.GET_ATTRIBUTES:
-            result = api.get_entry_attributes(sample_entry)
-            assert result.is_success
-            attrs = result.unwrap()
+            result_attrs = api.get_entry_attributes(sample_entry)
+            assert result_attrs.is_success
+            attrs = result_attrs.unwrap()
             assert isinstance(attrs, dict)
             assert "cn" in attrs
         elif scenario == EntryManipulationScenario.GET_OBJECTCLASSES:
-            result = api.get_entry_objectclasses(sample_entry)
-            assert result.is_success
-            classes = result.unwrap()
+            result_classes = api.get_entry_objectclasses(sample_entry)
+            assert result_classes.is_success
+            classes = result_classes.unwrap()
             assert isinstance(classes, list)
             assert "person" in classes
         elif scenario == EntryManipulationScenario.GET_ATTR_VALUES:
-            result = api.get_entry_attributes(sample_entry)
-            assert result.is_success
-            attributes = result.unwrap()
+            result_attrs_for_values = api.get_entry_attributes(sample_entry)
+            assert result_attrs_for_values.is_success
+            attributes = result_attrs_for_values.unwrap()
             attr_result = api.get_attribute_values(attributes["mail"])
             assert attr_result.is_success
             values = attr_result.unwrap()
@@ -734,18 +735,21 @@ class TestAPIValidationAndFiltering:
             assert hasattr(report, "total_entries")
             assert hasattr(report, "errors")
         elif scenario == ValidationScenario.FILTER_OBJECTCLASS:
-            result = api.filter(sample_entries, objectclass="inetOrgPerson")
-            if result.is_success:
-                filtered = result.unwrap()
+            # filter() returns FlextResult[list[Entry]], not FlextResult[ValidationResult]
+            filter_result = api.filter(sample_entries, objectclass="inetOrgPerson")
+            if filter_result.is_success:
+                filtered = filter_result.unwrap()
                 assert isinstance(filtered, list)
         elif scenario == ValidationScenario.FILTER_DN_PATTERN:
-            result = api.filter(sample_entries, dn_pattern="User0")
-            if result.is_success:
-                filtered = result.unwrap()
+            # filter() returns FlextResult[list[Entry]], not FlextResult[ValidationResult]
+            filter_result = api.filter(sample_entries, dn_pattern="User0")
+            if filter_result.is_success:
+                filtered = filter_result.unwrap()
                 assert isinstance(filtered, list)
         elif scenario == ValidationScenario.EXTRACT_ACLS:
-            result = api.extract_acls(entry_with_acl)
-            assert result.is_success or result.is_failure
+            # extract_acls() returns FlextResult[AclResponse], not FlextResult[ValidationResult]
+            acl_result = api.extract_acls(entry_with_acl)
+            assert acl_result.is_success or acl_result.is_failure
 
 
 class TestAPIConversionAndMigration:
@@ -826,27 +830,27 @@ class TestAPIConversionAndMigration:
     ) -> None:
         """Test conversion and attribute operations."""
         # Test get_entry_attributes
-        result = api.get_entry_attributes(migration_entries[0])
-        assert result.is_success
+        attrs_result = api.get_entry_attributes(migration_entries[0])
+        assert attrs_result.is_success
 
-        # Test write
-        result = api.write(migration_entries)
-        assert result.is_success
+        # Test write - returns FlextResult[str]
+        write_result = api.write(migration_entries)
+        assert write_result.is_success
 
-        # Test parse
+        # Test parse - returns FlextResult[list[Entry]]
         ldif_content = """dn: cn=Test,dc=example,dc=com
 cn: Test
 objectClass: person
 """
-        result = api.parse(ldif_content)
-        assert result.is_success
+        parse_result = api.parse(ldif_content)
+        assert parse_result.is_success
 
-        # Test create_entry
-        result = api.create_entry(
+        # Test create_entry - returns FlextResult[Entry]
+        create_result = api.create_entry(
             "cn=Valid,dc=example,dc=com",
             {"cn": ["Valid"], "objectClass": ["person"]},
         )
-        assert result.is_success
+        assert create_result.is_success
 
 
 class TestAPICoreProperties:
@@ -895,8 +899,9 @@ class TestAPICoreProperties:
             instance2 = FlextLdif.get_instance()
             assert instance1 is instance2
         elif scenario == CorePropertiesScenario.SINGLETON_WITH_CONFIG:
-            config = FlextLdifConfig()
-            instance = FlextLdif.get_instance(config)
+            # get_instance() expects FlextLdifConfig | None, not FlextConfig
+            ldif_config = FlextLdifConfig()
+            instance = FlextLdif.get_instance(ldif_config)
             assert instance is not None
             assert isinstance(instance, FlextLdif)
         elif scenario == CorePropertiesScenario.DETECT_OID:

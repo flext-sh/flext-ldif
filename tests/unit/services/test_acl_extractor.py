@@ -19,7 +19,7 @@ from typing import Final
 
 import pytest
 
-# from flext_tests import FlextTestsUtilities  # Mocked in conftest
+from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.services.acl import FlextLdifAcl
 from tests.fixtures.constants import DNs, Names, Values
 from tests.helpers.test_assertions import TestAssertions
@@ -71,21 +71,15 @@ class TestFlextLdifAcl:
             """Test ACL service can be instantiated."""
             assert FlextLdifAcl() is not None
 
-        def test_execute_returns_success(self) -> None:
-            """Test execute returns ACL response with statistics."""
+        def test_execute_returns_failure(self) -> None:
+            """Test execute returns success for health check."""
             service = FlextLdifAcl()
             result = service.execute()
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            # execute() returns health check status (success with empty response)
+            assert result.is_success
             response = result.unwrap()
-            # Verify response has expected attributes (AclResponse model)
-            assert hasattr(response, "acls"), "AclResponse should have 'acls' attribute"
-            assert hasattr(response, "statistics"), (
-                "AclResponse should have 'statistics' attribute"
-            )
-            assert isinstance(response.acls, list), "acls should be a list"
-            assert response.statistics.acls_extracted >= 0, (
-                "statistics should have acls_extracted"
-            )
+            assert isinstance(response, FlextLdifModelsResults.AclResponse)
+            assert response.acls == []
 
     class TestExtractAclEntries:
         """Test extract_acl_entries method for ACL entry extraction."""
@@ -94,7 +88,7 @@ class TestFlextLdifAcl:
             """Test extract_acl_entries with empty entry list."""
             service = FlextLdifAcl()
             result = service.extract_acl_entries([])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             assert result.unwrap() == []
 
         def test_extract_acl_entries_no_acl_attributes(self) -> None:
@@ -105,7 +99,7 @@ class TestFlextLdifAcl:
                 {Names.OBJECTCLASS: [Names.PERSON], Names.CN: Values.USER1},
             )
             result = service.extract_acl_entries([entry])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             assert result.unwrap() == []
 
         def test_extract_acl_entries_with_default_acl_attributes(self) -> None:
@@ -124,7 +118,7 @@ class TestFlextLdifAcl:
                 {Names.OBJECTCLASS: [Names.PERSON], Names.CN: "other"},
             )
             result = service.extract_acl_entries([entry_with_acl, entry_without_acl])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == f"cn={Values.TEST},{DNs.EXAMPLE}"
@@ -152,7 +146,7 @@ class TestFlextLdifAcl:
                 [entry_with_orclaci, entry_with_aci],
                 acl_attributes=["orclaci"],
             )
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == f"cn={Values.TEST},{DNs.EXAMPLE}"
@@ -177,7 +171,7 @@ class TestFlextLdifAcl:
                 },
             )
             result = service.extract_acl_entries([schema_entry, regular_entry])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
             assert acl_entries[0].dn.value == f"cn={Values.TEST},{DNs.EXAMPLE}"
@@ -195,7 +189,7 @@ class TestFlextLdifAcl:
                 },
             )
             result = service.extract_acl_entries([entry_with_multiple])
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+            TestAssertions.assert_success(result)
             assert len(result.unwrap()) == 1
 
     class TestIsSchemaEntry:

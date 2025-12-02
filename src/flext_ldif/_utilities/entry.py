@@ -408,7 +408,8 @@ class FlextLdifUtilitiesEntry:
 
         # Analyze attribute differences
         attribute_differences: dict[
-            str, dict[str, FlextTypes.MetadataAttributeValue],
+            str,
+            dict[str, FlextTypes.MetadataAttributeValue],
         ] = {}
         original_attributes_complete: dict[str, FlextTypes.MetadataAttributeValue] = {}
 

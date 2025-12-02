@@ -24,8 +24,10 @@ from flext_ldif.typings import FlextLdifTypes
 logger = FlextLogger(__name__)
 
 
-# RFC 2849 LDIF format constants - use directly from FlextLdifConstants (no local aliases)
-# Use FlextLdifConstants.LDIF_BASE64_INDICATOR, LDIF_REGULAR_INDICATOR, LDIF_DEFAULT_ENCODING directly
+# RFC 2849 LDIF format constants - use directly from FlextLdifConstants
+# (no local aliases)
+# Use FlextLdifConstants.LDIF_BASE64_INDICATOR, LDIF_REGULAR_INDICATOR,
+# LDIF_DEFAULT_ENCODING directly
 
 
 class MetadataDict(TypedDict, total=False):
@@ -456,7 +458,11 @@ class FlextLdifUtilitiesParser:
                 list(existing) if not isinstance(existing, list) else existing
             )
             existing_list.append(attr_value)
-            entry_dict[attr_name] = existing_list
+            # Type narrowing: convert to list[str] for RawEntryDict
+            entry_dict[attr_name] = [
+                str(item) if not isinstance(item, str) else item
+                for item in existing_list
+            ]
 
         return True
 
@@ -620,7 +626,8 @@ class FlextLdifUtilitiesParser:
     ) -> str | None:
         """Extract field from definition using regex pattern.
 
-        Generic helper to reduce duplication in schema parsing. Made public for use by RFC parsers.
+        Generic helper to reduce duplication in schema parsing.
+        Made public for use by RFC parsers.
 
         Args:
             definition: Schema definition string
@@ -638,7 +645,9 @@ class FlextLdifUtilitiesParser:
     def extract_syntax_and_length(
         definition: str,
     ) -> tuple[str | None, int | None]:
-        """Extract syntax OID and optional length from definition. Made public for use by RFC parsers.
+        """Extract syntax OID and optional length from definition.
+
+        Made public for use by RFC parsers.
 
         Args:
             definition: Schema definition string
@@ -800,8 +809,10 @@ class FlextLdifUtilitiesParser:
                     is not None
                 )
 
-            # Build metadata using helper (server_type not available in parse_rfc_attribute)
-            # Default to "rfc" for RFC parser, actual server_type set by server-specific parsers
+            # Build metadata using helper
+            # (server_type not available in parse_rfc_attribute)
+            # Default to "rfc" for RFC parser,
+            # actual server_type set by server-specific parsers
             metadata = FlextLdifUtilitiesParser._build_attribute_metadata(
                 attr_definition,
                 syntax,

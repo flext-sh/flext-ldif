@@ -23,7 +23,8 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Self, overload
+from datetime import datetime
+from typing import ClassVar, Self, cast, overload
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 from flext_core.typings import FlextTypes
@@ -31,6 +32,7 @@ from flext_core.typings import FlextTypes
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
@@ -414,13 +416,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 **kwargs: Passed to parent class
 
             """
-            # Pass schema_service and _parent_quirk to parent explicitly
+            # Pass schema_service to parent explicitly
             # Base class stores as self._schema_service
+            # Note: _parent_quirk is stored via object.__setattr__ after initialization
+            # to avoid Pydantic validation errors (it's not a Pydantic field)
             super().__init__(
                 schema_service=schema_service,
-                _parent_quirk=_parent_quirk,
                 **kwargs,
             )
+            # Store _parent_quirk after initialization using object.__setattr__
+            if _parent_quirk is not None:
+                object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
         def can_handle_attribute(
             self,
@@ -508,9 +514,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             """
             # Use passed server_type or default to RFC
-            server_type_to_use = (
-                _server_type or FlextLdifConstants.ServerTypes.RFC
-            )
+            server_type_to_use = _server_type or FlextLdifConstants.ServerTypes.RFC
             return FlextLdifServersBase.Schema.build_attribute_metadata(
                 attr_definition,
                 syntax,
@@ -608,7 +612,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         syntax_validation_error = error_value
 
                 # Type-safe extraction with narrowing for _build_attribute_metadata call
-                # Track all OIDs: attribute, syntax, matching rules (equality, ordering, substr), and SUP
+                # Track all OIDs: attribute, syntax, matching rules
+                # (equality, ordering, substr), and SUP
                 syntax_val = parsed.get("syntax")
                 syntax_for_meta: str | None = (
                     syntax_val if isinstance(syntax_val, str | type(None)) else None
@@ -872,11 +877,25 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 parsed = FlextLdifUtilities.Schema.parse_objectclass(oc_definition)
 
                 metadata_extensions_raw = parsed["metadata_extensions"]
-                metadata_extensions: dict[str, list[str] | str | bool | None] = (
+                metadata_extensions_raw_dict: dict[
+                    str,
+                    str | int | float | bool | datetime | list[str] | None,
+                ] = (
                     metadata_extensions_raw
                     if isinstance(metadata_extensions_raw, dict)
                     else {}
                 )
+                # Convert to expected type for methods that require it
+                metadata_extensions: dict[str, list[str] | str | bool | None] = {}
+                for key, value in metadata_extensions_raw_dict.items():
+                    if isinstance(value, (str, bool, list)) or value is None:
+                        metadata_extensions[key] = value
+                    elif isinstance(value, (int, float)):
+                        metadata_extensions[key] = str(value)
+                    elif isinstance(value, datetime):
+                        metadata_extensions[key] = value.isoformat()
+                    else:
+                        metadata_extensions[key] = str(value)
                 metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
                     oc_definition.strip()
                 )
@@ -980,7 +999,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     metadata=metadata,
                 )
 
-                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(objectclass)
+                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(
+                    objectclass
+                )
 
             except (ValueError, TypeError, AttributeError) as e:
                 logger.exception("RFC objectClass parsing exception")
@@ -1059,7 +1080,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _ensure_x_origin(
             self,
             output_str: str,
-            metadata: FlextLdifModels.QuirkMetadata | None,
+            metadata: FlextLdifModelsDomains.QuirkMetadata | None,
         ) -> str:
             """Ensure X-ORIGIN extension is present if in metadata.
 
@@ -1080,7 +1101,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _write_schema_item(
             self,
-            data: FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass,
+            data: FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass,
         ) -> FlextResult[str]:
             """Write schema item (attribute or objectClass) to RFC-compliant format.
 
@@ -1151,7 +1173,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     if isinstance(data, FlextLdifModelsDomains.SchemaAttribute)
                     else "objectclass"
                 )
-                logger.exception("RFC %s writing exception", item_type, exception=e)
+                logger.exception(
+                    f"RFC {item_type} writing exception",
+                    exception=e,
+                )
                 return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
 
         def _write_attribute(
@@ -1251,7 +1276,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             oc_model: FlextLdifModelsDomains.SchemaObjectClass | None = None,
             operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
             | None = None,
-        ) -> FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass | str:
+        ) -> FlextLdifTypes.SchemaModelOrString:
             """Callable interface - automatic polymorphic processor.
 
             Pass definition string for parsing or model for writing.
@@ -1278,11 +1303,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 data = oc_model
 
             result = self.execute(data=data, operation=operation)
-            return result.unwrap()
+            unwrapped = result.unwrap()
+            # Type narrowing: unwrapped is SchemaAttribute | SchemaObjectClass | str
+            # Cast to satisfy protocol return type
+            return cast("FlextLdifTypes.SchemaModelOrString", unwrapped)
 
         def __new__(
             cls,
-            schema_service: FlextLdifTypes.Services.SchemaService | None = None,
+            schema_service: FlextLdifProtocols.Services.HasParseMethodProtocol
+            | None = None,
             **kwargs: FlextLdifTypes.FlexibleKwargsMutable,
         ) -> Self:
             """Override __new__ to support auto-execute and processor instantiation."""
@@ -1303,7 +1332,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             }
             init_kwargs = {k: v for k, v in kwargs.items() if k not in filtered_kwargs}
             # Extract parent_quirk from kwargs if present
-            parent_quirk_value = kwargs.get("parent_quirk") or kwargs.get("_parent_quirk")
+            parent_quirk_value = kwargs.get("parent_quirk") or kwargs.get(
+                "_parent_quirk"
+            )
             # Initialize instance using proper type - Schema.__init__ accepts schema_service
             # Type narrowing: instance is Self (Schema subclass)
             # Guard clause: should always pass for valid Schema subclasses
@@ -1314,17 +1345,24 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             schema_instance: Self = instance  # Now properly narrowed
             # Initialize using super() to avoid mypy error about accessing __init__ on instance
             # Use FlextLdifServersBase.Schema as the base class for super()
+            # Note: _parent_quirk is stored via object.__setattr__ after initialization
+            # to avoid Pydantic validation errors (it's not a Pydantic field)
+            init_kwargs_final = init_kwargs.copy()
+            # Note: _parent_quirk is stored via object.__setattr__ after initialization
+            # to avoid Pydantic validation errors (it's not a Pydantic field)
+            # Do NOT pass _parent_quirk to __init__ - it will cause ValidationError
             if schema_service is not None:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
                     schema_service=schema_service,
-                    parent_quirk=parent_quirk_value,
-                    **init_kwargs,
+                    **init_kwargs_final,
                 )
             else:
                 super(FlextLdifServersBase.Schema, schema_instance).__init__(
-                    parent_quirk=parent_quirk_value,
-                    **init_kwargs,
+                    **init_kwargs_final,
                 )
+            # Store _parent_quirk after initialization using object.__setattr__
+            if parent_quirk_value is not None:
+                object.__setattr__(schema_instance, "_parent_quirk", parent_quirk_value)
 
             if cls.auto_execute:
                 # Type-safe extraction of kwargs with isinstance checks
@@ -1541,7 +1579,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         """
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             RFC quirk handles all ACLs as it's the baseline implementation.
@@ -1639,7 +1677,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if isinstance(unsupported, dict):
                 unsupported[feature_id] = original_value
 
-        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
             """Parse RFC-compliant ACL line (implements abstract method).
 
             Args:
@@ -1651,7 +1689,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             # Type guard: ensure acl_line is a string
             if not isinstance(acl_line, str):
-                return FlextResult[FlextLdifModels.Acl].fail(
+                return FlextResult[FlextLdifModelsDomains.Acl].fail(
                     f"ACL line must be a string, got {type(acl_line).__name__}",
                 )
             if not acl_line or not acl_line.strip():
@@ -1662,10 +1700,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # RFC passthrough: store the raw line in the model.
             # server_type_value is already the correct type from _get_server_type()
-            acl_model = FlextLdifModels.Acl(
+            acl_model = FlextLdifModelsDomains.Acl(
                 raw_acl=acl_line,
                 server_type=server_type_value,
-                metadata=FlextLdifModels.QuirkMetadata(
+                metadata=FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=server_type_value,
                     extensions=FlextLdifModels.DynamicMetadata(**{
                         FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line,
@@ -1680,7 +1718,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # create_metadata(), convert_rfc_acl_to_aci(), format_acl_value()
         # are now in base.py - these methods delegate to parent without RFC-specific logic
 
-        def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
             """Write ACL to RFC-compliant string format (internal).
 
             RFC implementation of ACL writing using raw_acl or name fallback.
@@ -1749,12 +1787,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             *,
             operation: FlextLdifConstants.LiteralTypes.ParseOperationLiteral
             | None = None,
-        ) -> FlextLdifModels.Acl: ...
+        ) -> FlextLdifModelsDomains.Acl: ...
 
         @overload
         def __call__(
             self,
-            data: FlextLdifModels.Acl,
+            data: FlextLdifModelsDomains.Acl,
             *,
             operation: FlextLdifConstants.LiteralTypes.WriteOperationLiteral
             | None = None,
@@ -1763,19 +1801,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         @overload
         def __call__(
             self,
-            data: str | FlextLdifModels.Acl | None = None,
+            data: str | FlextLdifModelsDomains.Acl | None = None,
             *,
             operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
             | None = None,
-        ) -> FlextLdifModels.Acl | str: ...
+        ) -> FlextLdifModelsDomains.Acl | str: ...
 
         def __call__(
             self,
-            data: str | FlextLdifModels.Acl | None = None,
+            data: str | FlextLdifModelsDomains.Acl | None = None,
             *,
             operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
             | None = None,
-        ) -> FlextLdifModels.Acl | str:
+        ) -> FlextLdifModelsDomains.Acl | str:
             """Callable interface - automatic polymorphic processor.
 
             Pass ACL line string for parsing or Acl model for writing.
@@ -1798,23 +1836,41 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
             # Extract parent_quirk from kwargs if present
-            parent_quirk_value = kwargs.get("parent_quirk") or kwargs.get("_parent_quirk")
-            # Use explicit type cast for __init__ call to avoid type checker issues
-            # with dynamic class instantiation
-            instance_type = type(instance)
-            if hasattr(instance_type, "__init__"):
-                instance_type.__init__(
-                    instance,
+            parent_quirk_value = kwargs.get("parent_quirk") or kwargs.get(
+                "_parent_quirk"
+            )
+            # Initialize using super() to avoid mypy error about accessing __init__ on instance
+            # Use FlextLdifServersBase.Acl as the base class for super()
+            # Type narrowing: instance is Self (Acl subclass)
+            # Guard clause: should always pass for valid Acl subclasses
+            if not isinstance(instance, FlextLdifServersRfc.Acl):
+                # Unreachable for valid Acl subclasses, but needed for type safety
+                error_msg = f"Invalid instance type: {type(instance)}"
+                raise TypeError(error_msg)
+            acl_instance: Self = instance  # Now properly narrowed
+            # Initialize using super() to avoid mypy error about accessing __init__ on instance
+            # Use FlextLdifServersBase.Acl as the base class for super()
+            # Note: _parent_quirk is stored via object.__setattr__ after initialization
+            # to avoid Pydantic validation errors (it's not a Pydantic field)
+            init_kwargs_final = init_kwargs.copy()
+            if acl_service is not None:
+                super(FlextLdifServersBase.Acl, acl_instance).__init__(
                     acl_service=acl_service,
-                    parent_quirk=parent_quirk_value,
-                    **init_kwargs,
+                    **init_kwargs_final,
                 )
+            else:
+                super(FlextLdifServersBase.Acl, acl_instance).__init__(
+                    **init_kwargs_final,
+                )
+            # Store _parent_quirk after initialization using object.__setattr__
+            if parent_quirk_value is not None:
+                object.__setattr__(acl_instance, "_parent_quirk", parent_quirk_value)
 
             if cls.auto_execute:
                 # Type-safe extraction of kwargs
                 data_raw = kwargs.get("data")
-                data: str | FlextLdifModels.Acl | None = None
-                if isinstance(data_raw, (str, FlextLdifModels.Acl)):
+                data: str | FlextLdifModelsDomains.Acl | None = None
+                if isinstance(data_raw, (str, FlextLdifModelsDomains.Acl)):
                     data = data_raw
                 op_raw = kwargs.get("operation")
                 op: (
@@ -1824,8 +1880,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     op = "parse"
                 elif op_raw == "write":
                     op = "write"
-                result = instance.execute(data=data, operation=op)
-                unwrapped: FlextLdifModels.Acl | str = result.unwrap()
+                # Type narrowing: instance is Self (Acl subclass)
+                # Use acl_instance from above
+                result = acl_instance.execute(data=data, operation=op)
+                unwrapped: FlextLdifModelsDomains.Acl | str = result.unwrap()
                 if isinstance(unwrapped, cls):
                     return unwrapped
                 return instance
@@ -2261,7 +2319,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             extensions_dict: FlextLdifTypes.MetadataDictMutable | None = None
             if entry.metadata and entry.metadata.extensions:
                 extensions_dict = entry.metadata.extensions.model_dump()
-            acl_metadata = FlextLdifModels.AclWriteMetadata.from_extensions(
+            acl_metadata = FlextLdifModelsDomains.AclWriteMetadata.from_extensions(
                 extensions_dict,
             )
 
@@ -2270,9 +2328,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return entry
 
             # Create ACL quirk instance for formatting
-            # self is already FlextLdifServersBase (RFC extends it)
+            # Get parent FlextLdifServersBase from _parent_quirk attribute
+            parent_quirk_value = getattr(self, "_parent_quirk", None)
+            if not parent_quirk_value:
+                # Fallback: if no parent, return entry unchanged
+                return entry
+            # Note: _parent_quirk is passed explicitly to avoid type issues with **kwargs
             acl_quirk = FlextLdifServersRfc.Acl(
-                parent_quirk=self,
+                _parent_quirk=parent_quirk_value,
             )
 
             # Format all ACI values
@@ -2599,12 +2662,21 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 else "add"
             )
 
+            # Extract line width and fold options from write_options
+            line_width: int | None = None
+            fold_long_lines: bool = True
+            if write_options:
+                line_width = getattr(write_options, "line_width", None)
+                fold_long_lines = getattr(write_options, "fold_long_lines", True)
+
             ldif_lines = FlextLdifUtilities.Writer.build_entry_lines(
                 dn_value=entry_data.dn.value,
                 attributes=attrs_dict,
                 format_type="add",
                 include_changetype=include_changetype,
                 changetype_value=changetype_value,
+                line_width=line_width,
+                fold_long_lines=fold_long_lines,
             )
 
             return FlextResult[str].ok(
@@ -2746,7 +2818,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
 
             original_attribute_case_val = context.get("original_attribute_case", {})
-            original_attribute_case: dict[str, str] | None = (
+            original_attribute_case: dict[str, str] | dict[str, list[str]] | None = (
                 original_attribute_case_val
                 if isinstance(original_attribute_case_val, dict)
                 else None
@@ -2758,7 +2830,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
 
             attribute_differences_val = context.get("attribute_differences", {})
-            attribute_differences: dict[str, dict[str, FlextTypes.MetadataAttributeValue]] | None = (
+            attribute_differences: (
+                dict[str, dict[str, FlextTypes.MetadataAttributeValue]] | None
+            ) = (
                 attribute_differences_val
                 if isinstance(attribute_differences_val, dict)
                 else None
@@ -2768,7 +2842,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 "original_attributes_complete",
                 {},
             )
-            original_attributes_complete: dict[str, FlextTypes.MetadataAttributeValue] | None = (
+            original_attributes_complete: (
+                dict[str, FlextTypes.MetadataAttributeValue] | None
+            ) = (
                 original_attributes_complete_val
                 if isinstance(original_attributes_complete_val, dict)
                 else None
@@ -2782,9 +2858,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 original_attr_lines=original_attr_lines,
                 dn_was_base64=dn_was_base64,
                 original_attribute_case=original_attribute_case,
-                dn_differences=dn_differences,
-                attribute_differences=attribute_differences,
-                original_attributes_complete=original_attributes_complete,
+                _dn_differences=dn_differences,
+                _attribute_differences=attribute_differences,
+                _original_attributes_complete=original_attributes_complete,
             )
 
         def _parse_entry(
@@ -3130,26 +3206,61 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 else True
             )
 
+            # Extract line width and fold options from write_options
+            line_width: int | None = None
+            fold_long_lines: bool = True
+            if write_options:
+                line_width = getattr(write_options, "line_width", None)
+                fold_long_lines = getattr(write_options, "fold_long_lines", True)
+            width = (
+                line_width
+                if line_width is not None
+                else FlextLdifConstants.Rfc.LINE_FOLD_WIDTH
+            )
+
             # Only apply base64 encoding if enabled AND value needs it
             if base64_enabled and FlextLdifUtilities.Writer.needs_base64_encoding(
                 value,
             ):
                 # Encode to base64
                 encoded_value = base64.b64encode(value.encode("utf-8")).decode("ascii")
-                ldif_lines.append(f"{attr_name}:: {encoded_value}")
+                attr_line = f"{attr_name}:: {encoded_value}"
+                if fold_long_lines:
+                    ldif_lines.extend(
+                        FlextLdifUtilities.Writer.fold(attr_line, width=width)
+                    )
+                else:
+                    ldif_lines.append(attr_line)
             # Safe value or encoding disabled - write as plain text
             # Handle multiline values: preserve newlines with proper LDIF continuation
             elif "\n" in value:
                 # Multiline value: first line with attr_name, continuation lines with space prefix
                 lines = value.split("\n")
-                ldif_lines.append(f"{attr_name}: {lines[0]}")
+                first_line = f"{attr_name}: {lines[0]}"
+                if fold_long_lines:
+                    ldif_lines.extend(
+                        FlextLdifUtilities.Writer.fold(first_line, width=width)
+                    )
+                else:
+                    ldif_lines.append(first_line)
                 # Continuation lines: prefix with space (RFC 2849 continuation)
-                ldif_lines.extend(
-                    f" {continuation_line}" for continuation_line in lines[1:]
-                )
+                for continuation_line in lines[1:]:
+                    cont_line = f" {continuation_line}"
+                    if fold_long_lines:
+                        ldif_lines.extend(
+                            FlextLdifUtilities.Writer.fold(cont_line, width=width)
+                        )
+                    else:
+                        ldif_lines.append(cont_line)
             else:
                 # Single line value
-                ldif_lines.append(f"{attr_name}: {value}")
+                attr_line = f"{attr_name}: {value}"
+                if fold_long_lines:
+                    ldif_lines.extend(
+                        FlextLdifUtilities.Writer.fold(attr_line, width=width)
+                    )
+                else:
+                    ldif_lines.append(attr_line)
 
         def _write_entry_process_attributes(
             self,
@@ -4071,7 +4182,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             if isinstance(
                 model,
-                (FlextLdifModelsDomains.SchemaAttribute, FlextLdifModelsDomains.SchemaObjectClass),
+                (
+                    FlextLdifModelsDomains.SchemaAttribute,
+                    FlextLdifModelsDomains.SchemaObjectClass,
+                ),
             ):
                 schema_quirk = FlextLdifServersRfc.Schema(parent_quirk=self)
                 return schema_quirk.write(model)
@@ -4447,22 +4561,36 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             instance = super().__new__(cls)
             # Remove auto-execute kwargs before passing to __init__
             # Also filter parent_quirk to avoid passing it twice
-            auto_execute_kwargs = {"ldif_text", "entry", "entries", "operation", "parent_quirk", "_parent_quirk"}
+            auto_execute_kwargs = {
+                "ldif_text",
+                "entry",
+                "entries",
+                "operation",
+                "parent_quirk",
+                "_parent_quirk",
+            }
             init_kwargs = {
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
             # Extract parent_quirk from kwargs if present
-            parent_quirk_value = kwargs.get("parent_quirk") or kwargs.get("_parent_quirk")
+            parent_quirk_value = kwargs.get("parent_quirk") or kwargs.get(
+                "_parent_quirk"
+            )
             # Use explicit type cast for __init__ call to avoid type checker issues
             # with dynamic class instantiation
+            # Note: _parent_quirk is stored via object.__setattr__ after initialization
+            # to avoid Pydantic validation errors (it's not a Pydantic field)
+            init_kwargs_final = init_kwargs.copy()
             instance_type = type(instance)
             if hasattr(instance_type, "__init__"):
                 instance_type.__init__(
                     instance,
                     entry_service=entry_service,
-                    parent_quirk=parent_quirk_value,
-                    **init_kwargs,
+                    **init_kwargs_final,
                 )
+            # Store _parent_quirk after initialization using object.__setattr__
+            if parent_quirk_value is not None:
+                object.__setattr__(instance, "_parent_quirk", parent_quirk_value)
 
             # Note: auto_execute pattern is disabled to maintain type safety
             # Use entry.execute() method instead of auto_execute in __new__
@@ -4657,6 +4785,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # Build LDIF lines using generalized utility
             modify_op = write_options.ldif_modify_operation if write_options else "add"
+            # Extract line width and fold options from write_options
+            line_width: int | None = None
+            fold_long_lines: bool = True
+            if write_options:
+                line_width = getattr(write_options, "line_width", None)
+                fold_long_lines = getattr(write_options, "fold_long_lines", True)
+
             ldif_lines = FlextLdifUtilities.Writer.build_entry_lines(
                 dn_value=restored_entry.dn.value
                 if restored_entry.dn
@@ -4664,6 +4799,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 attributes=attrs_dict,
                 format_type="modify",
                 modify_operation=modify_op,
+                line_width=line_width,
+                fold_long_lines=fold_long_lines,
             )
 
             return FlextResult[str].ok(

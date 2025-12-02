@@ -92,7 +92,7 @@ class TestFixtureDiscoveryValidation:
     # Edge case specialized validations using mapping-driven approach
     EDGE_CASE_VALIDATIONS: ClassVar[dict[str, GenericFieldsDict]] = {
         "deep_dn": {"count": 1},
-        "unicode": {"count": 3},
+        "unicode_names": {"count": 3},
         "large_multivalue": {"count": 1},
     }
 
@@ -225,14 +225,26 @@ class TestFixtureDiscoveryValidation:
         if category == "broken":
             # Broken fixtures have error information and mode-specific entries
             assert "valid" in expected
-            assert "error" in expected or "strict_mode" in expected or "relaxed_mode" in expected
+            assert (
+                "error" in expected
+                or "strict_mode" in expected
+                or "relaxed_mode" in expected
+            )
             # Check if entries exist in any mode
             has_entries = (
                 "entries" in expected
-                or (isinstance(expected.get("strict_mode"), dict) and "entries" in expected["strict_mode"])
-                or (isinstance(expected.get("relaxed_mode"), dict) and "entries" in expected["relaxed_mode"])
+                or (
+                    isinstance(expected.get("strict_mode"), dict)
+                    and "entries" in expected["strict_mode"]
+                )
+                or (
+                    isinstance(expected.get("relaxed_mode"), dict)
+                    and "entries" in expected["relaxed_mode"]
+                )
             )
-            assert has_entries, "Broken fixture should have entries in at least one mode"
+            assert has_entries, (
+                "Broken fixture should have entries in at least one mode"
+            )
         else:
             # Normal fixtures have entries, count, and valid at root level
             assert "entries" in expected

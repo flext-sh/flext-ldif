@@ -18,14 +18,15 @@ from __future__ import annotations
 import base64
 import dataclasses
 from enum import StrEnum
-from typing import Final
+from typing import Final, cast
 
 import pytest
 from flext_core import FlextModels
 from tests.fixtures.constants import DNs, Names, OIDs, Values
 from tests.helpers.test_factories import FlextLdifTestFactories
 
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_ldif._models.results import FlextLdifModelsResults
 
 
 class ModelTestType(StrEnum):
@@ -401,8 +402,12 @@ class TestFlextLdifModels(FlextLdifTestFactories):
                 )
                 assert result.is_success
                 entry = result.unwrap()
+                # Type narrowing: entry.dn is not None after successful creation
+                assert entry.dn is not None, "Entry must have DN"
                 assert entry.dn.value == test_case.dn
                 if test_case.attributes:
+                    # Type narrowing: entry.attributes is not None after successful creation
+                    assert entry.attributes is not None, "Entry must have attributes"
                     assert Names.CN in entry.attributes.attributes
 
             case ModelTestType.ENTRY_BINARY:
@@ -418,6 +423,8 @@ class TestFlextLdifModels(FlextLdifTestFactories):
                 )
                 assert result.is_success
                 entry = result.unwrap()
+                # Type narrowing: entry.attributes is not None after successful creation
+                assert entry.attributes is not None, "Entry must have attributes"
                 assert "userCertificate;binary" in entry.attributes.attributes
 
             case ModelTestType.ENTRY_SERIALIZATION:
@@ -476,20 +483,24 @@ class TestFlextLdifModels(FlextLdifTestFactories):
 
     def test_schema_discovery_result(self) -> None:
         """Test SchemaDiscoveryResult creation."""
+        # Create SchemaObjectClassMap and SchemaAttributeMap instances
+        # These classes extend DynamicMetadata which accepts dict via extra="allow"
+        objectclasses_map = FlextLdifModelsResults.SchemaObjectClassMap.model_validate({
+            Names.PERSON: {
+                "oid": OIDs.PERSON,
+                "description": "Person class",
+            },
+        })
+        attributes_map = FlextLdifModelsResults.SchemaAttributeMap.model_validate({
+            Names.CN: {
+                "oid": OIDs.CN,
+                "description": "Common name",
+                "syntax": OIDs.DIRECTORY_STRING,
+            },
+        })
         result = FlextLdifModels.SchemaDiscoveryResult(
-            objectclasses={
-                Names.PERSON: {
-                    "oid": OIDs.PERSON,
-                    "description": "Person class",
-                },
-            },
-            attributes={
-                Names.CN: {
-                    "oid": OIDs.CN,
-                    "description": "Common name",
-                    "syntax": OIDs.DIRECTORY_STRING,
-                },
-            },
+            objectclasses=objectclasses_map,
+            attributes=attributes_map,
             total_attributes=1,
             total_objectclasses=1,
         )
@@ -515,8 +526,11 @@ class TestFlextLdifModels(FlextLdifTestFactories):
                 assert target.attributes == test_case.attributes
 
             case ModelTestType.ACL_SUBJECT:
+                # Type narrowing: cast str to AclSubjectTypeLiteral
+                subject_type_str = test_case.subject_type or "user"
+                subject_type_literal = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", subject_type_str)
                 subject = FlextLdifModels.AclSubject(
-                    subject_type=test_case.subject_type or "user",
+                    subject_type=subject_type_literal,
                     subject_value=test_case.subject_value or "",
                 )
                 assert subject.subject_type == test_case.subject_type
@@ -538,24 +552,32 @@ class TestFlextLdifModels(FlextLdifTestFactories):
                     target_dn=test_case.target_dn or "",
                     attributes=test_case.attributes or [],
                 )
+                # Type narrowing: cast str to AclSubjectTypeLiteral
+                subject_type_str = test_case.subject_type or "user"
+                subject_type_literal = cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", subject_type_str)
                 subject = FlextLdifModels.AclSubject(
-                    subject_type=test_case.subject_type or "user",
+                    subject_type=subject_type_literal,
                     subject_value=test_case.subject_value or "",
                 )
                 permissions = FlextLdifModels.AclPermissions(
                     read=test_case.permissions_read,
                     write=test_case.permissions_write,
                 )
+                # Normalize and cast server_type to ServerTypeLiteral
+                server_type_str = test_case.acl_server_type or "oracle_oud"
+                normalized_server_type = FlextLdifConstants.normalize_server_type(server_type_str)
+                server_type_literal = normalized_server_type
                 acl = FlextLdifModels.Acl(
                     name=test_case.acl_name or "",
                     target=target,
                     subject=subject,
                     permissions=permissions,
-                    server_type=test_case.acl_server_type or "oracle_oud",
+                    server_type=server_type_literal,
                 )
                 assert isinstance(acl, FlextLdifModels.Acl)
                 assert acl.name == test_case.acl_name
-                assert acl.server_type == test_case.acl_server_type
+                # Compare with normalized server_type (normalize_server_type handles aliases)
+                assert acl.server_type == normalized_server_type
 
     # ============================================================================
     # Namespace and Inheritance Tests

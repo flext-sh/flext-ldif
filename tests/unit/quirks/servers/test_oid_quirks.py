@@ -609,8 +609,10 @@ class TestFlextLdifOidQuirks:
         )
 
         assert entry.dn.value == "cn=oracle,dc=example,dc=com"
-        assert hasattr(entry.attributes, "orclguid")
-        orclguid_values: list[str] = entry.attributes.orclguid
+        # LdifAttributes uses dictionary interface, not dynamic attributes
+        assert entry.attributes is not None
+        assert "orclguid" in entry.attributes.attributes
+        orclguid_values: list[str] = entry.attributes.attributes["orclguid"]
         assert orclguid_values[0] == "550e8400-e29b-41d4-a716-446655440000"
 
     @pytest.mark.parametrize(

@@ -16,11 +16,10 @@ from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.novell import FlextLdifServersNovell
-from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
+from tests.helpers.test_rfc_helpers import QuirkInstance, RfcTestHelpers
 
 
 class AttributeScenario(StrEnum):
@@ -82,7 +81,7 @@ class EntryTestCase:
 
     scenario: EntryScenario
     entry_dn: str
-    attributes: GenericFieldsDict
+    attributes: dict[str, list[str]]
     expected_can_handle: bool
 
 
@@ -147,19 +146,19 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.OU_SERVICES,
         entry_dn="ou=services,o=Example",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.OU_APPS,
         entry_dn="ou=apps,o=Example",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.OU_SYSTEM,
         entry_dn="ou=system,o=Example",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
@@ -167,7 +166,7 @@ ENTRY_TEST_CASES = (
         entry_dn="cn=user,o=Example",
         attributes={
             "nspmpasswordpolicy": ["policy1"],
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
+            "objectClass": ["top"],
         },
         expected_can_handle=True,
     ),
@@ -176,21 +175,21 @@ ENTRY_TEST_CASES = (
         entry_dn="cn=user,o=Example",
         attributes={
             "logindisabled": ["TRUE"],
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
+            "objectClass": ["top"],
         },
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.NDS_OBJECTCLASS,
         entry_dn="cn=user,o=Example",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ndsperson"]},
+        attributes={"objectClass": ["top", "ndsperson"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.STANDARD_RFC,
         entry_dn="cn=user,dc=example,dc=com",
         attributes={
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
+            "objectClass": ["person"],
             "cn": ["user"],
         },
         expected_can_handle=False,
@@ -205,15 +204,15 @@ def novell_server() -> FlextLdifServersNovell:
 
 
 @pytest.fixture
-def schema_quirk(novell_server: FlextLdifServersNovell) -> object:
+def schema_quirk(novell_server: FlextLdifServersNovell) -> QuirkInstance:
     """Get schema quirk from Novell server."""
-    return novell_server.schema_quirk
+    return cast("QuirkInstance", novell_server.schema_quirk)
 
 
 @pytest.fixture
-def entry_quirk(novell_server: FlextLdifServersNovell) -> object:
+def entry_quirk(novell_server: FlextLdifServersNovell) -> QuirkInstance:
     """Get entry quirk from Novell server."""
-    return novell_server.entry_quirk
+    return cast("QuirkInstance", novell_server.entry_quirk)
 
 
 class TestNovellInitialization:
@@ -222,7 +221,7 @@ class TestNovellInitialization:
     def test_server_initialization(self) -> None:
         """Test Novell eDirectory server initialization."""
         server = FlextLdifServersNovell()
-        assert server.server_type == "novell_edirectory"
+        assert server.server_type == "novell"
         assert server.priority == 20
 
     def test_schema_quirk_initialization(
@@ -240,12 +239,10 @@ class TestNovellSchemaAttributeDetection:
     def test_can_handle_attribute(
         self,
         test_case: AttributeTestCase,
-        schema_quirk: object,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test attribute detection for various scenarios."""
-        schema = cast("object", schema_quirk)
-        assert hasattr(schema, "can_handle_attribute")
-        result = schema.can_handle_attribute(test_case.attr_definition)
+        result = schema_quirk.can_handle_attribute(test_case.attr_definition)
         assert result is test_case.expected_can_handle
 
 
@@ -295,12 +292,10 @@ class TestNovellSchemaObjectClassDetection:
     def test_can_handle_objectclass(
         self,
         test_case: ObjectClassTestCase,
-        schema_quirk: object,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test objectClass detection for various scenarios."""
-        schema = cast("object", schema_quirk)
-        assert hasattr(schema, "can_handle_objectclass")
-        result = schema.can_handle_objectclass(test_case.oc_definition)
+        result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
 
 
@@ -309,12 +304,12 @@ class TestNovellSchemaObjectClassParsing:
 
     def test_parse_objectclass_structural(
         self,
-        schema_quirk: object,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,
+            cast("QuirkInstance", schema_quirk),
             oc_def,
             expected_oid="2.16.840.1.113719.2.2.6.1",
             expected_name="ndsPerson",
@@ -326,35 +321,36 @@ class TestNovellSchemaObjectClassParsing:
 
     def test_parse_objectclass_auxiliary(
         self,
-        schema_quirk: object,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,
+            cast("QuirkInstance", schema_quirk),
             oc_def,
             expected_kind="AUXILIARY",
         )
 
     def test_parse_objectclass_abstract(
         self,
-        schema_quirk: object,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,
+            cast("QuirkInstance", schema_quirk),
             oc_def,
             expected_kind="ABSTRACT",
         )
 
     def test_parse_objectclass_missing_oid(
         self,
-        schema_quirk: object,
+        schema_quirk: QuirkInstance,
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
-        result = schema_quirk.parse_objectclass(oc_def)
+        quirk_schema = cast("FlextLdifServersNovell.Schema", schema_quirk)
+        result = quirk_schema.parse_objectclass(oc_def)
 
         assert result.is_failure
         assert result.error is not None
@@ -423,10 +419,9 @@ class TestNovellEntryDetection:
     def test_can_handle_entry(
         self,
         test_case: EntryTestCase,
-        entry_quirk: object,
+        entry_quirk: QuirkInstance,
     ) -> None:
         """Test entry detection for various scenarios."""
-        entry = cast("object", entry_quirk)
-        assert hasattr(entry, "can_handle")
-        result = entry.can_handle(test_case.entry_dn, test_case.attributes)
+        quirk_entry = cast("FlextLdifServersNovell.Entry", entry_quirk)
+        result = quirk_entry.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle

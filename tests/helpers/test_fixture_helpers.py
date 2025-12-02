@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
 
 from .test_assertions import TestAssertions
 
@@ -76,9 +77,15 @@ class FixtureTestHelpers:
             fixture_filename,
         )
 
+        # Normalize server_type to ServerTypeLiteral
+        normalized_server_type = FlextLdifConstants.normalize_server_type(server_type)
+        server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", normalized_server_type
+        )
+
         parse_result = ldif_api.parse(
             fixture_path,
-            server_type=server_type,
+            server_type=server_type_literal,
         )
 
         if not parse_result.is_success:
@@ -148,7 +155,7 @@ class FixtureTestHelpers:
         return entries
 
     @staticmethod
-    def load_fixture_and_validate_structure(
+    def load_fixture_and_validate_structure(  # noqa: PLR0913
         ldif_api: FlextLdif,
         server_type: str,
         fixture_filename: str,
@@ -206,9 +213,10 @@ class FixtureTestHelpers:
 
             if expected_has_objectclass is not None:
                 assert entry.attributes is not None, "Entry must have attributes"
-                entry_typed = entry
+                # Type narrowing: entry.attributes is not None after assert
+                entry_attributes = entry.attributes
                 attr_names = {
-                    name.lower() for name in entry_typed.attributes.attributes
+                    name.lower() for name in entry_attributes.attributes
                 }
                 has_objectclass = "objectclass" in attr_names
                 assert has_objectclass == expected_has_objectclass, (
@@ -266,17 +274,22 @@ class FixtureTestHelpers:
 
         # Write entries back to file
         output_file = tmp_path / f"roundtrip_{fixture_filename}"
+        # Normalize server_type to ServerTypeLiteral
+        normalized_server_type = FlextLdifConstants.normalize_server_type(server_type)
+        server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", normalized_server_type
+        )
         write_result = ldif_api.write(
             original_entries,
             output_path=output_file,
-            server_type=server_type,
+            server_type=server_type_literal,
         )
         TestAssertions.assert_success(write_result, "Write should succeed")
 
         # Parse the written LDIF
         parse_result = ldif_api.parse(
             output_file,
-            server_type=server_type,
+            server_type=server_type_literal,
         )
         TestAssertions.assert_success(parse_result, "Re-parse should succeed")
 

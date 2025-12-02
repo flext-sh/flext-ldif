@@ -16,13 +16,14 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
-from typing import Final
+from typing import Final, cast
 
 import pytest
 from flext_core import FlextResult
 
-# from flext_tests import FlextTestsFactories  # Mocked in conftest
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdifConstants
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from tests.helpers.test_factories import FlextLdifTestFactories
 
 
 class AclTestType(StrEnum):
@@ -179,7 +180,7 @@ UNIFIED_ACL_TESTS: Final[list[UnifiedAclTestCase]] = [
 ]
 
 
-class TestFlextLdifAclComponents(FlextTestsFactories):
+class TestFlextLdifAclComponents(FlextLdifTestFactories):
     """Comprehensive LDIF ACL utilities test suite.
 
     Organized as single class with nested classes for test organization.
@@ -195,9 +196,9 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
         @staticmethod
         def create_acl_components() -> FlextResult[
             tuple[
-                FlextLdifModels.AclTarget,
-                FlextLdifModels.AclSubject,
-                FlextLdifModels.AclPermissions,
+                FlextLdifModelsDomains.AclTarget,
+                FlextLdifModelsDomains.AclSubject,
+                FlextLdifModelsDomains.AclPermissions,
             ]
         ]:
             """Create ACL components with proper validation using railway pattern.
@@ -207,34 +208,34 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
                 or failure with descriptive error message.
 
             """
-            target = FlextLdifModels.AclTarget(
+            target = FlextLdifModelsDomains.AclTarget(
                 target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
             )
             # Use "all" for wildcard subject type (valid AclSubjectTypeLiteral)
             # "*" is not a valid subject_type, use "all" instead
-            subject = FlextLdifModels.AclSubject(
+            subject = FlextLdifModelsDomains.AclSubject(
                 subject_type="all",
                 subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
             )
-            permissions = FlextLdifModels.AclPermissions(read=True)
+            permissions = FlextLdifModelsDomains.AclPermissions(read=True)
 
             return FlextResult[
                 tuple[
-                    FlextLdifModels.AclTarget,
-                    FlextLdifModels.AclSubject,
-                    FlextLdifModels.AclPermissions,
+                    FlextLdifModelsDomains.AclTarget,
+                    FlextLdifModelsDomains.AclSubject,
+                    FlextLdifModelsDomains.AclPermissions,
                 ]
             ].ok((target, subject, permissions))
 
         @staticmethod
-        def create_unified_acl(
+        def create_unified_acl(  # noqa: PLR0913, PLR0917
             name: str,
-            target: FlextLdifModels.AclTarget,
-            subject: FlextLdifModels.AclSubject,
-            permissions: FlextLdifModels.AclPermissions,
+            target: FlextLdifModelsDomains.AclTarget,
+            subject: FlextLdifModelsDomains.AclSubject,
+            permissions: FlextLdifModelsDomains.AclPermissions,
             server_type: str,
             raw_acl: str,
-        ) -> FlextResult[FlextLdifModels.Acl]:
+        ) -> FlextResult[FlextLdifModelsDomains.Acl]:
             """Create unified ACL with proper validation using railway pattern.
 
             Args:
@@ -265,18 +266,26 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
                     else FlextLdifConstants.LdapServers.OPENLDAP
                 )
 
-                unified_acl = FlextLdifModels.Acl(
+                # Type narrowing: cast server_type to ServerTypeLiteral
+                server_type_literal: (
+                    FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+                ) = cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                    effective_server_type,
+                )
+
+                unified_acl = FlextLdifModelsDomains.Acl(
                     name=name,
                     target=target,
                     subject=subject,
                     permissions=permissions,
-                    server_type=effective_server_type,
+                    server_type=server_type_literal,
                     raw_acl=raw_acl,
                 )
 
-                return FlextResult[FlextLdifModels.Acl].ok(unified_acl)
+                return FlextResult[FlextLdifModelsDomains.Acl].ok(unified_acl)
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[FlextLdifModels.Acl].fail(
+                return FlextResult[FlextLdifModelsDomains.Acl].fail(
                     f"Failed to create ACL: {e}",
                 )
 
@@ -290,9 +299,9 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
 
         match test_case.test_type:
             case AclTestType.COMPONENTS_CREATION:
-                assert isinstance(target, FlextLdifModels.AclTarget)
-                assert isinstance(subject, FlextLdifModels.AclSubject)
-                assert isinstance(permissions, FlextLdifModels.AclPermissions)
+                assert isinstance(target, FlextLdifModelsDomains.AclTarget)
+                assert isinstance(subject, FlextLdifModelsDomains.AclSubject)
+                assert isinstance(permissions, FlextLdifModelsDomains.AclPermissions)
 
             case AclTestType.COMPONENTS_TARGET:
                 assert target.target_dn == "*"
@@ -308,12 +317,19 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
     @pytest.mark.parametrize("test_case", UNIFIED_ACL_TESTS)
     def test_unified_acl_creation(self, test_case: UnifiedAclTestCase) -> None:
         """Test unified ACL creation with various server types and configurations."""
-        target = FlextLdifModels.AclTarget(target_dn=test_case.target_dn)
-        subject = FlextLdifModels.AclSubject(
-            subject_type=test_case.subject_type,
+        target = FlextLdifModelsDomains.AclTarget(target_dn=test_case.target_dn)
+        # Type narrowing: cast subject_type to AclSubjectTypeLiteral
+        subject_type_literal: (
+            FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral
+        ) = cast(
+            "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
+            test_case.subject_type,
+        )
+        subject = FlextLdifModelsDomains.AclSubject(
+            subject_type=subject_type_literal,
             subject_value=test_case.subject_value,
         )
-        permissions = FlextLdifModels.AclPermissions(
+        permissions = FlextLdifModelsDomains.AclPermissions(
             read=test_case.permissions_read,
             write=test_case.permissions_write,
             delete=test_case.permissions_delete,
@@ -332,7 +348,7 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
             case AclTestType.UNIFIED_BASIC:
                 assert result.is_success, f"Failed to create ACL: {result.error}"
                 acl = result.unwrap()
-                assert isinstance(acl, FlextLdifModels.Acl)
+                assert isinstance(acl, FlextLdifModelsDomains.Acl)
                 assert acl.name == test_case.acl_name
 
             case AclTestType.UNIFIED_PROPERTY_PRESERVATION:
@@ -347,7 +363,7 @@ class TestFlextLdifAclComponents(FlextTestsFactories):
             case AclTestType.UNIFIED_INSTANCE_TYPE:
                 assert result.is_success
                 acl = result.unwrap()
-                assert isinstance(acl, FlextLdifModels.Acl)
+                assert isinstance(acl, FlextLdifModelsDomains.Acl)
 
             case AclTestType.UNIFIED_EXCEPTION_HANDLING:
                 assert result.is_success

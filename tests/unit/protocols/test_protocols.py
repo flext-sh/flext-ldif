@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import dataclasses
 from enum import StrEnum
+from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
@@ -67,6 +68,15 @@ class TestFlextLdifProtocols:
         ACL = "AclProtocol"
         ENTRY = "EntryProtocol"
         QUIRKS_PORT = "QuirksPort"
+
+    # Protocol names list for parametrization (defined after enum)
+    # Use list() to iterate over enum members
+    _PROTOCOL_NAMES: ClassVar[list[str]] = [
+        ProtocolNames.SCHEMA.value,
+        ProtocolNames.ACL.value,
+        ProtocolNames.ENTRY.value,
+        ProtocolNames.QUIRKS_PORT.value,
+    ]
 
     class ServerTypes(StrEnum):
         """Server types implementing schema protocol organized as nested enum."""
@@ -152,7 +162,9 @@ class TestFlextLdifProtocols:
             """
             # Check for Constants class
             assert hasattr(server, "Constants")
-            constants_cls = server.Constants
+            # Type narrowing: server has Constants attribute
+            # Use getattr for type safety
+            constants_cls = getattr(server, "Constants")
 
             # SERVER_TYPE in Constants
             assert hasattr(constants_cls, "SERVER_TYPE")
@@ -190,7 +202,7 @@ class TestFlextLdifProtocols:
 
     @pytest.mark.parametrize(
         "protocol_name",
-        [p.value for p in ProtocolNames],
+        _PROTOCOL_NAMES,
     )
     def test_protocol_is_defined(self, protocol_name: str) -> None:
         """Test that protocol is defined and accessible."""
@@ -204,7 +216,7 @@ class TestFlextLdifProtocols:
 
     @pytest.mark.parametrize(
         "protocol_name",
-        [p.value for p in ProtocolNames],
+        _PROTOCOL_NAMES,
     )
     def test_protocol_in_namespace(self, protocol_name: str) -> None:
         """Test that protocol exists in Quirks namespace."""

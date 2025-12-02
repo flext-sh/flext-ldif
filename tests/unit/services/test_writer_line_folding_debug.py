@@ -50,7 +50,7 @@ class TestWriterLineFoldingDebug:
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
-            output_target="string",
+            _output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,  # RFC 2849 recommendation
@@ -84,7 +84,7 @@ class TestWriterLineFoldingDebug:
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
-            output_target="string",
+            _output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=False,
                 line_width=76,
@@ -110,7 +110,7 @@ class TestWriterLineFoldingDebug:
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
-            output_target="string",
+            _output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=False,  # Disable line folding
                 line_width=76,
@@ -136,7 +136,7 @@ class TestWriterLineFoldingDebug:
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
-            output_target="string",
+            _output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=True,
                 line_width=76,

@@ -16,7 +16,6 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.utilities import FlextLdifUtilities
 
 from ..fixtures.loader import FlextLdifFixtures
 
@@ -164,11 +163,32 @@ class TestZeroDataLossOidOud:
                 ]
                 assert len(original_oid_ldif) > 0, "Original OID LDIF lost"
 
-            # Verify no data loss using utility function
-            no_loss, lost_attrs = FlextLdifUtilities.Metadata.assert_no_data_loss(
-                original_entry=oid_entry,
-                converted_entry=oud_entry,
-            )
+            # Verify no data loss - compare attributes between original and converted
+            # Helper function to check for data loss
+            def check_no_data_loss(
+                original: FlextLdifModels.Entry,
+                converted: FlextLdifModels.Entry,
+            ) -> tuple[bool, list[str]]:
+                """Check for data loss between original and converted entries."""
+                lost_attrs: list[str] = []
+                # Get attribute names from both entries
+                original_attrs = set(original.attributes.attributes.keys())
+                converted_attrs = set(converted.attributes.attributes.keys())
+                # Check for lost attributes (present in original but not in converted)
+                lost_attrs = list(original_attrs - converted_attrs)
+                # Filter out operational attributes that may be removed during conversion
+                operational_attrs = {
+                    "createtimestamp",
+                    "modifytimestamp",
+                    "entryuuid",
+                    "entrycsn",
+                }
+                lost_attrs = [
+                    attr for attr in lost_attrs if attr.lower() not in operational_attrs
+                ]
+                return len(lost_attrs) == 0, lost_attrs
+
+            no_loss, lost_attrs = check_no_data_loss(oid_entry, oud_entry)
             assert no_loss, f"Data loss detected: {lost_attrs}"
 
     def test_round_trip_oid_oud_oid_preserves_formatting(

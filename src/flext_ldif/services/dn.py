@@ -196,8 +196,9 @@ class FlextLdifDn(
                 log_level="info" if result.is_success else "error",
             )
 
-            # Store event in instance
-            self._last_event = event
+            # Store event in instance (PrivateAttr works with frozen models via __dict__)
+            # Note: PrivateAttr fields can be set directly even in frozen models
+            object.__setattr__(self, "_last_event", event)
 
         return result
 

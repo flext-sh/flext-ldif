@@ -758,5 +758,21 @@ class FlextLdifModels(FlextModels):
 
         """
 
+    class AclResponse(FlextLdifModelsResults.AclResponse):
+        """Composed response from ACL extraction.
+
+        Combines extracted Acl models with extraction statistics.
+
+        Example:
+            response = AclResponse(
+                acls=[Acl(...), Acl(...)],
+                statistics=Statistics(
+                    processed_entries=10,
+                    acls_extracted=5
+                )
+            )
+
+        """
+
 
 __all__ = ["FlextLdifModels"]

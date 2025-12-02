@@ -6,6 +6,7 @@ Phase 1 of EntryResult-centric refactoring: Test new helper methods.
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 from flext_ldif import FlextLdifModels
+from flext_ldif._models.results import FlextLdifModelsResults
 
 
 class TestEntryResultHelpers:
@@ -25,7 +26,9 @@ class TestEntryResultHelpers:
             [entry1, entry2],
             category="users",
         )
-        assert result.entries_by_category == {"users": [entry1, entry2]}
+        # Verify entries_by_category using get() for type safety
+        users_category = result.entries_by_category.get("users", [])
+        assert users_category == [entry1, entry2]
         assert result.statistics.total_entries == 2
         assert len(result.get_all_entries()) == 2
 
@@ -33,7 +36,8 @@ class TestEntryResultHelpers:
         """Test EntryResult.empty() factory method."""
         result = FlextLdifModels.EntryResult.empty()
 
-        assert result.entries_by_category == {}
+        # Verify empty categories
+        assert len(result.entries_by_category) == 0
         assert result.statistics.total_entries == 0
         assert result.get_all_entries() == []
 
@@ -48,11 +52,12 @@ class TestEntryResultHelpers:
             attributes={"cn": ["group1"]},
         ).unwrap()
 
+        # Use _FlexibleCategories directly for type safety
+        categories = FlextLdifModelsResults.FlexibleCategories()
+        categories.add_entries("users", [entry1])
+        categories.add_entries("groups", [entry2])
         result = FlextLdifModels.EntryResult(
-            entries_by_category={
-                "users": [entry1],
-                "groups": [entry2],
-            },
+            entries_by_category=categories,
             statistics=FlextLdifModels.Statistics(total_entries=2),
         )
 
@@ -72,11 +77,12 @@ class TestEntryResultHelpers:
             attributes={"cn": ["group1"]},
         ).unwrap()
 
+        # Use _FlexibleCategories directly for type safety
+        categories = FlextLdifModelsResults.FlexibleCategories()
+        categories.add_entries("users", [entry1])
+        categories.add_entries("groups", [entry2])
         result = FlextLdifModels.EntryResult(
-            entries_by_category={
-                "users": [entry1],
-                "groups": [entry2],
-            },
+            entries_by_category=categories,
             statistics=FlextLdifModels.Statistics(total_entries=2),
         )
 
@@ -109,22 +115,28 @@ class TestEntryResultHelpers:
             attributes={"cn": ["user2"]},
         ).unwrap()
 
+        # Use _FlexibleCategories directly for type safety
+        categories1 = FlextLdifModelsResults.FlexibleCategories()
+        categories1.add_entries("users", [entry1])
         result1 = FlextLdifModels.EntryResult(
-            entries_by_category={"users": [entry1]},
+            entries_by_category=categories1,
             statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
+        categories2 = FlextLdifModelsResults.FlexibleCategories()
+        categories2.add_entries("users", [entry2])
         result2 = FlextLdifModels.EntryResult(
-            entries_by_category={"users": [entry2]},
+            entries_by_category=categories2,
             statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
 
         # Verify merged categories
-        assert len(merged.entries_by_category["users"]) == 2
-        assert entry1 in merged.entries_by_category["users"]
-        assert entry2 in merged.entries_by_category["users"]
+        users_category = merged.entries_by_category.get("users", [])
+        assert len(users_category) == 2
+        assert entry1 in users_category
+        assert entry2 in users_category
 
         # Verify merged statistics
         assert merged.statistics.total_entries == 2
@@ -140,21 +152,26 @@ class TestEntryResultHelpers:
             attributes={"cn": ["group1"]},
         ).unwrap()
 
+        # Use _FlexibleCategories directly for type safety
+        categories1 = FlextLdifModelsResults.FlexibleCategories()
+        categories1.add_entries("users", [entry1])
         result1 = FlextLdifModels.EntryResult(
-            entries_by_category={"users": [entry1]},
+            entries_by_category=categories1,
             statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
+        categories2 = FlextLdifModelsResults.FlexibleCategories()
+        categories2.add_entries("groups", [entry2])
         result2 = FlextLdifModels.EntryResult(
-            entries_by_category={"groups": [entry2]},
+            entries_by_category=categories2,
             statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
 
         # Verify separate categories preserved
-        assert merged.entries_by_category["users"] == [entry1]
-        assert merged.entries_by_category["groups"] == [entry2]
+        assert merged.entries_by_category.get("users", []) == [entry1]
+        assert merged.entries_by_category.get("groups", []) == [entry2]
         assert merged.statistics.total_entries == 2
 
     def test_merge_preserves_immutability(self) -> None:
@@ -164,8 +181,11 @@ class TestEntryResultHelpers:
             attributes={"cn": ["user1"]},
         ).unwrap()
 
+        # Use _FlexibleCategories directly for type safety
+        categories1 = FlextLdifModelsResults.FlexibleCategories()
+        categories1.add_entries("users", [entry1])
         result1 = FlextLdifModels.EntryResult(
-            entries_by_category={"users": [entry1]},
+            entries_by_category=categories1,
             statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
@@ -175,9 +195,9 @@ class TestEntryResultHelpers:
         merged = result1.merge(result2)
 
         # Original should be unchanged
-        assert result1.entries_by_category == {"users": [entry1]}
+        assert result1.entries_by_category.get("users", []) == [entry1]
         assert result1.statistics.total_entries == 1
 
         # Merged should have same data
-        assert merged.entries_by_category == {"users": [entry1]}
+        assert merged.entries_by_category.get("users", []) == [entry1]
         assert merged.statistics.total_entries == 1

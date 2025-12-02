@@ -14,12 +14,11 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests.fixtures.typing import GenericFieldsDict
 
 from flext_ldif import FlextLdifConstants
 
 
-class TestFlextLdifConstants:
+class TestFlextLdifConstants:  # noqa: PLR0904
     """Consolidated test suite for FlextLdifConstants.
 
     Tests all constant groups: Format, Processing, Encoding, Validation,
@@ -38,7 +37,7 @@ class TestFlextLdifConstants:
         ENTRY_TYPE = "entry_type"
         ENTRY_MODIFICATION = "entry_modification"
 
-    FORMAT_CONSTANTS: ClassVar[GenericFieldsDict] = {
+    FORMAT_CONSTANTS: ClassVar[dict[str, object]] = {
         "DN_ATTRIBUTE": "dn",
         "ATTRIBUTE_SEPARATOR": ":",
         "DN_PREFIX": "dn:",
@@ -56,7 +55,7 @@ class TestFlextLdifConstants:
         "LDIF_VERSION_1": "1",
     }
 
-    PROCESSING_CONSTANTS: ClassVar[GenericFieldsDict] = {
+    PROCESSING_CONSTANTS: ClassVar[dict[str, object]] = {
         "LdifProcessing.MIN_WORKERS_FOR_PARALLEL": 2,
         "LdifProcessing.MAX_WORKERS_LIMIT": 16,
         "LdifProcessing.PERFORMANCE_MIN_WORKERS": 4,
@@ -74,7 +73,7 @@ class TestFlextLdifConstants:
 
     SUPPORTED_ENCODINGS: ClassVar[list[str]] = ["utf-8", "utf-16", "ascii"]
 
-    VALIDATION_CONSTANTS: ClassVar[GenericFieldsDict] = {
+    VALIDATION_CONSTANTS: ClassVar[dict[str, object]] = {
         "LdifValidation.MIN_DN_COMPONENTS": 1,
         "LdifValidation.MAX_DN_LENGTH": 2048,
         "LdifValidation.MAX_ATTRIBUTES_PER_ENTRY": 1000,
@@ -88,16 +87,16 @@ class TestFlextLdifConstants:
         "LdifValidation.MAX_ENCODING_LENGTH": 50,
     }
 
-    QUALITY_CONSTANTS: ClassVar[GenericFieldsDict] = {
+    QUALITY_CONSTANTS: ClassVar[dict[str, object]] = {
         "QualityAnalysis.QUALITY_THRESHOLD_MEDIUM": 0.8,
         "QualityAnalysis.MIN_DN_COMPONENTS_FOR_BASE_PATTERN": 2,
     }
 
     LDAP_SERVERS: ClassVar[dict[str, str]] = {
-        "ACTIVE_DIRECTORY": "active_directory",
+        "ACTIVE_DIRECTORY": "ad",
         "OPENLDAP": "openldap",
-        "ORACLE_OID": "oracle_oid",
-        "ORACLE_OUD": "oracle_oud",
+        "ORACLE_OID": "oid",
+        "ORACLE_OUD": "oud",
     }
 
     REQUIRED_FEATURES: ClassVar[list[str]] = [

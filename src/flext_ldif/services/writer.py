@@ -40,14 +40,19 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
     def __init__(self, server: FlextLdifServer | None = None) -> None:
         """Initialize writer with optional server instance."""
         super().__init__()
-        self._server = server if server is not None else FlextLdifServer()
+        # Use object.__setattr__ for frozen model
+        object.__setattr__(
+            self, "_server", server if server is not None else FlextLdifServer()
+        )
 
     def write_to_string(
         self,
         entries: list[FlextLdifModels.Entry],
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
         format_options: (
-            FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions | None
+            FlextLdifModels.WriteFormatOptions
+            | FlextLdifModelsDomains.WriteOptions
+            | None
         ) = None,
     ) -> FlextResult[str]:
         """Write entries to LDIF string format.
@@ -64,7 +69,14 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
         # Get entry quirk for writing
         effective_server_type = server_type or "rfc"
 
-        entry_quirk = self._server.entry(effective_server_type)
+        try:
+            entry_quirk = self._server.entry(effective_server_type)
+        except ValueError as e:
+            # Invalid server type - return error instead of raising
+            return FlextResult.fail(
+                f"Invalid server type: {effective_server_type}. {e!s}",
+            )
+
         if entry_quirk is None:
             return FlextResult.fail(
                 f"No entry quirk found for server type: {effective_server_type}",
@@ -81,7 +93,24 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
             options = format_options
         elif isinstance(format_options, FlextLdifModelsDomains.WriteOptions):
             # Convert WriteOptions to WriteFormatOptions
-            options = FlextLdifModels.WriteFormatOptions.model_validate(format_options.model_dump())
+            # WriteOptions has different fields, so we need to map them
+            write_opts_dict = format_options.model_dump(exclude_none=True)
+            # Map WriteOptions fields to WriteFormatOptions
+            # WriteOptions fields: format, base_dn, hidden_attrs, sort_entries, include_comments, base64_encode_binary
+            # WriteFormatOptions doesn't have format, base_dn, hidden_attrs, sort_entries, include_comments
+            # Only base64_encode_binary is common
+            format_opts_dict_mapped: dict[
+                str,
+                bool | int | str | frozenset[str] | list[str] | dict[str, int] | None,
+            ] = {}
+            if "base64_encode_binary" in write_opts_dict:
+                base64_val = write_opts_dict["base64_encode_binary"]
+                if isinstance(base64_val, bool):
+                    format_opts_dict_mapped["base64_encode_binary"] = base64_val
+            # Create WriteFormatOptions with only valid fields
+            options = FlextLdifModels.WriteFormatOptions.model_validate(
+                format_opts_dict_mapped
+            )
         elif isinstance(format_options, dict):
             # Convert dict to WriteFormatOptions
             options = FlextLdifModels.WriteFormatOptions.model_validate(format_options)
@@ -103,7 +132,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
         path: Path,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
         format_options: (
-            FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions | None
+            FlextLdifModels.WriteFormatOptions
+            | FlextLdifModelsDomains.WriteOptions
+            | None
         ) = None,
     ) -> FlextResult[FlextLdifModelsResults.WriteResponse]:
         """Write entries to LDIF file.
@@ -152,7 +183,9 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
         _output_target: str | None = None,
         output_path: Path | None = None,
         format_options: (
-            FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions | None
+            FlextLdifModels.WriteFormatOptions
+            | FlextLdifModelsDomains.WriteOptions
+            | None
         ) = None,
         _template_data: dict[str, FlextLdifTypes.TemplateValue] | None = None,
     ) -> FlextResult[str | FlextLdifModelsResults.WriteResponse]:
@@ -172,34 +205,92 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
         if output_path is not None:
             # Write to file
             file_result = self.write_to_file(
-                entries, output_path, target_server_type, format_options,
+                entries,
+                output_path,
+                target_server_type,
+                format_options,
             )
             if file_result.is_failure:
                 return FlextResult.fail(file_result.error or "File write failed")
             return FlextResult.ok(file_result.unwrap())
         # Return string
         string_result = self.write_to_string(
-            entries, target_server_type, format_options,
+            entries,
+            target_server_type,
+            format_options,
         )
         if string_result.is_failure:
             return FlextResult.fail(string_result.error or "String write failed")
         return FlextResult.ok(string_result.unwrap())
 
-    def execute(self, params: dict) -> FlextResult[FlextLdifModelsResults.WriteResponse]:
+    def execute(
+        self, params: dict[str, object] | None = None
+    ) -> FlextResult[FlextLdifModelsResults.WriteResponse]:
         """Execute write operation with parameters.
 
         This is the main entry point for the service.
         """
-        entries = params.get("entries", [])
-        target_server_type = params.get("target_server_type", "rfc")
-        output_path = params.get("output_path")
-        format_options = params.get("format_options")
+        if params is None:
+            params = {}
+        entries_raw = params.get("entries", [])
+        entries: list[FlextLdifModels.Entry] = (
+            entries_raw if isinstance(entries_raw, list) else []
+        )
+        target_server_type_raw = params.get("target_server_type", "rfc")
+        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = (
+            None
+        )
+        if isinstance(target_server_type_raw, str):
+            normalized = FlextLdifConstants.normalize_server_type(
+                target_server_type_raw
+            )
+            if normalized is not None:
+                target_server_type = normalized
+        output_path_raw = params.get("output_path")
+        output_path: Path | None = (
+            output_path_raw if isinstance(output_path_raw, Path) else None
+        )
+        format_options_raw = params.get("format_options")
+        format_options: (
+            FlextLdifModels.WriteFormatOptions
+            | FlextLdifModelsDomains.WriteOptions
+            | None
+        ) = (
+            format_options_raw
+            if isinstance(
+                format_options_raw,
+                (
+                    FlextLdifModels.WriteFormatOptions,
+                    FlextLdifModelsDomains.WriteOptions,
+                ),
+            )
+            else None
+        )
 
-        return self.write(
+        write_result = self.write(
             entries=entries,
             target_server_type=target_server_type,
             output_path=output_path,
             format_options=format_options,
+        )
+
+        # Convert result to WriteResponse format
+        if write_result.is_failure:
+            return FlextResult.fail(write_result.error)
+
+        result_value = write_result.unwrap()
+        if isinstance(result_value, FlextLdifModelsResults.WriteResponse):
+            return FlextResult.ok(result_value)
+
+        # Convert string result to WriteResponse
+        return FlextResult.ok(
+            FlextLdifModelsResults.WriteResponse(
+                content=str(result_value),
+                statistics=FlextLdifModels.Statistics(
+                    total_entries=len(entries),
+                    processed_entries=len(entries),
+                ),
+            )
         )
 
 

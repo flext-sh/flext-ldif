@@ -209,9 +209,8 @@ class TestWriterRfc:
                 if test_case.target_type == WriteTarget.FILE:
                     output_path = tmp_path / "output.ldif"
                     result = writer.write(
-                        [entry],
+                        entries=[entry],
                         target_server_type=test_case.server_type,
-                        output_target=test_case.target_type,
                         output_path=output_path,
                         format_options=format_options,
                     )
@@ -220,9 +219,8 @@ class TestWriterRfc:
                     content = output_path.read_text()
                 else:
                     result = writer.write(
-                        [entry],
+                        entries=[entry],
                         target_server_type=test_case.server_type,
-                        output_target=test_case.target_type,
                         format_options=format_options,
                     )
                     unwrapped = FlextTestsMatchers.assert_success(result)
@@ -244,7 +242,6 @@ class TestWriterRfc:
                 result = writer.write(
                     [entry1, entry2],
                     target_server_type=test_case.server_type,
-                    output_target=test_case.target_type,
                     format_options=format_options,
                 )
 
@@ -273,7 +270,6 @@ class TestWriterRfc:
                 result = writer.write(
                     [entry],
                     target_server_type=test_case.server_type,
-                    output_target=test_case.target_type,
                     format_options=format_options,
                 )
 
@@ -289,7 +285,6 @@ class TestWriterRfc:
                 result = writer.write(
                     [entry],
                     target_server_type=test_case.server_type,
-                    output_target=test_case.target_type,
                     format_options=format_options,
                 )
 
@@ -308,7 +303,6 @@ class TestWriterRfc:
                 result = writer.write(
                     [],
                     target_server_type=test_case.server_type,
-                    output_target=test_case.target_type,
                     format_options=format_options,
                 )
 
@@ -325,7 +319,6 @@ class TestWriterRfc:
                 result = writer.write(
                     [entry],
                     target_server_type=test_case.server_type,
-                    output_target=test_case.target_type,
                     format_options=format_options,
                 )
 

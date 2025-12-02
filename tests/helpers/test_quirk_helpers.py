@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.base import FlextLdifServersBase
 
 from .test_schema_helpers import SchemaTestHelpers
@@ -26,7 +26,7 @@ class QuirkTestHelpers:
         expected_name: str,
         expected_desc: str | None = None,
         expected_syntax: str | None = None,
-    ) -> FlextLdifModels.SchemaAttribute:
+    ) -> FlextLdifModelsDomains.SchemaAttribute:
         """Complete schema attribute parse and validate - replaces entire test function.
 
         Args:
@@ -60,7 +60,7 @@ class QuirkTestHelpers:
         expected_kind: str | None = None,
         expected_must: list[str] | None = None,
         expected_may: list[str] | None = None,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass:
         """Complete schema objectClass parse and validate - replaces entire test function.
 
         Args:
@@ -91,7 +91,7 @@ class QuirkTestHelpers:
     @staticmethod
     def test_schema_write_and_validate_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: FlextLdifModelsDomains.SchemaAttribute,
         expected_content: list[str] | None = None,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
@@ -120,7 +120,7 @@ class QuirkTestHelpers:
     @staticmethod
     def test_schema_write_objectclass_and_validate_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: FlextLdifModelsDomains.SchemaObjectClass,
         expected_content: list[str] | None = None,
         must_contain: list[str] | None = None,
         must_not_contain: list[str] | None = None,
@@ -149,12 +149,12 @@ class QuirkTestHelpers:
     @staticmethod
     def test_schema_hook_post_parse_attribute_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: FlextLdifModelsDomains.SchemaAttribute,
         *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_result: bool = True,
-    ) -> FlextLdifModels.SchemaAttribute | None:
+    ) -> FlextLdifModelsDomains.SchemaAttribute | None:
         """Complete schema hook_post_parse_attribute test - replaces entire test function.
 
         Args:
@@ -179,12 +179,12 @@ class QuirkTestHelpers:
     @staticmethod
     def test_schema_hook_post_parse_objectclass_complete(
         schema_quirk: FlextLdifServersBase.Schema,
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: FlextLdifModelsDomains.SchemaObjectClass,
         *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_result: bool = True,
-    ) -> FlextLdifModels.SchemaObjectClass | None:
+    ) -> FlextLdifModelsDomains.SchemaObjectClass | None:
         """Complete schema hook_post_parse_objectclass test - replaces entire test function.
 
         Args:
@@ -212,7 +212,7 @@ class QuirkTestHelpers:
         attr_def: str,
         expected_oid: str,
         expected_name: str,
-    ) -> tuple[FlextLdifModels.SchemaAttribute, str]:
+    ) -> tuple[FlextLdifModelsDomains.SchemaAttribute, str]:
         """Complete schema attribute roundtrip test - replaces entire test function.
 
         Args:
@@ -238,7 +238,7 @@ class QuirkTestHelpers:
         oc_def: str,
         expected_oid: str,
         expected_name: str,
-    ) -> tuple[FlextLdifModels.SchemaObjectClass, str]:
+    ) -> tuple[FlextLdifModelsDomains.SchemaObjectClass, str]:
         """Complete schema objectClass roundtrip test - replaces entire test function.
 
         Args:

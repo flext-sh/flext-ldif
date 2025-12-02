@@ -11,12 +11,13 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
 from .fixtures.rfc_constants import TestsRfcConstants
@@ -260,7 +261,7 @@ class TestOpenldapQuirks:
     # =========================================================================
     def test_server_initialization(self, server: FlextLdifServersOpenldap) -> None:
         """Test OpenLDAP server initialization."""
-        assert server.server_type == "openldap"
+        assert server.server_type == "openldap2"
         assert server.priority == 20
 
     def test_server_has_all_quirks(self, server: FlextLdifServersOpenldap) -> None:
@@ -288,10 +289,14 @@ class TestOpenldapQuirks:
     ) -> None:
         """Test parsing OpenLDAP fixtures."""
         server_dir, filename, should_have_entries = config
-        fixture_path = FlextLdifTestUtils.get_fixture_path(server_dir, filename)
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+            server_dir,
+        )
+        fixture_path = FlextLdifTestUtils.get_fixture_path(server_type, filename)
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        entries = FlextLdifTestUtils.load_fixture(ldif_api, server_dir, filename)
+        entries = FlextLdifTestUtils.load_fixture(ldif_api, server_type, filename)
         if should_have_entries:
             assert entries is not None
             assert len(entries) > 0
@@ -607,14 +612,15 @@ class TestOpenldapQuirks:
         schema_quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC string format."""
+        attr_dict: dict[str, str | bool] = {
+            "oid": TestsRfcConstants.ATTR_OID_CN,
+            "name": TestsRfcConstants.ATTR_NAME_CN,
+            "desc": "common name",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "single_value": False,
+        }
         attr_model = RfcTestHelpers.test_create_schema_attribute_from_dict(
-            {
-                "oid": TestsRfcConstants.ATTR_OID_CN,
-                "name": TestsRfcConstants.ATTR_NAME_CN,
-                "desc": "common name",
-                "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-                "single_value": False,
-            },
+            cast("GenericFieldsDict", attr_dict),
         )
         result = schema_quirk.write(attr_model)
         assert result.is_success
@@ -627,15 +633,16 @@ class TestOpenldapQuirks:
         schema_quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC string format."""
+        oc_dict: dict[str, str | list[str]] = {
+            "oid": TestsRfcConstants.OC_OID_PERSON,
+            "name": TestsRfcConstants.OC_NAME_PERSON,
+            "desc": "RFC2256: person",
+            "kind": "STRUCTURAL",
+            "must": ["sn", "cn"],
+            "may": ["userPassword"],
+        }
         oc_model = RfcTestHelpers.test_create_schema_objectclass_from_dict(
-            {
-                "oid": TestsRfcConstants.OC_OID_PERSON,
-                "name": TestsRfcConstants.OC_NAME_PERSON,
-                "desc": "RFC2256: person",
-                "kind": "STRUCTURAL",
-                "must": ["sn", "cn"],
-                "may": ["userPassword"],
-            },
+            cast("GenericFieldsDict", oc_dict),
         )
         result = schema_quirk._write_objectclass(oc_model)
         assert result.is_success

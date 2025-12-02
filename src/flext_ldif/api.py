@@ -33,6 +33,7 @@ from pydantic import PrivateAttr
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import ProcessingResult
 from flext_ldif.config import FlextLdifConfigModule
 from flext_ldif.constants import FlextLdifConstants
@@ -265,7 +266,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             # Create instance with config if provided
             if config is not None:
                 instance = cls()
-                instance._init_config_value = config
+                object.__setattr__(instance, "_init_config_value", config)
                 _instance = instance
             else:
                 # Create empty instance (FlextService v2 doesn't accept positional args)
@@ -295,7 +296,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         """
         global _instance  # noqa: PLW0603
         _instance = None
-        cls._class_initialized = False
+        # ClassVar can be set directly even in frozen models
+        # Use setattr to avoid pyrefly false positive
+        setattr(cls, "_class_initialized", False)
 
     def __init__(self, **kwargs: FlextTypes.GeneralValueType) -> None:
         """Initialize LDIF facade - the sole entry point for all LDIF operations.
@@ -319,8 +322,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         if config_value is not None and isinstance(config_value, FlextLdifConfig):
             # Store temporarily before super().__init__()
             # model_post_init will read it and initialize services with it
-            # Use setattr for PrivateAttr assignment
-            self._init_config_value = config_value
+            # Use object.__setattr__ for PrivateAttr assignment in frozen models
+            object.__setattr__(self, "_init_config_value", config_value)
 
         # Convert remaining kwargs to dict for FlextService compatibility
         # FlextService.__init__ accepts **data: FlextTypes.GeneralValueType
@@ -687,7 +690,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # Writer service accepts WriteFormatOptions directly (not WriteOptions)
         # No conversion needed - writer uses WriteFormatOptions which has all fields including ldif_changetype
         resolved_format_options: (
-            FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions | None
+            FlextLdifModels.WriteFormatOptions
+            | FlextLdifModelsDomains.WriteOptions
+            | None
         ) = resolved_format_options_raw
 
         # Convert template_data to correct type if provided
@@ -911,6 +916,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             FlextLdifModels.WhitelistRules,
         ):
             msg = f"Expected WhitelistRules | None, got {type(schema_whitelist_rules)}"
+            raise TypeError(msg)
+
+        # Type narrowing: ensure all values are not None
+        if config_model is None:
+            msg = "MigrationConfig cannot be None"
+            raise TypeError(msg)
+        if categorization_rules is None:
+            msg = "CategoryRules cannot be None"
+            raise TypeError(msg)
+        if schema_whitelist_rules is None:
+            msg = "WhitelistRules cannot be None"
             raise TypeError(msg)
 
         return (opts, config_model, categorization_rules, schema_whitelist_rules)
@@ -1754,7 +1770,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
                     for key, value in ext_dict.items():
                         if key != mk.ORIGINAL_ATTRIBUTES_COMPLETE:
-                            if acl_entry.metadata.extensions is not None:
+                            if (
+                                acl_entry.metadata
+                                and acl_entry.metadata.extensions is not None
+                                and isinstance(
+                                    acl_entry.metadata.extensions,
+                                    FlextLdifModelsMetadata.DynamicMetadata,
+                                )
+                            ):
                                 acl_entry.metadata.extensions[key] = value
 
         # Track attribute transformation
@@ -2455,9 +2478,10 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 .execute_builder())
 
         """
-        self._builder_parse_result = self.parse(source, server_type, format_options)
-        if self._builder_parse_result.is_success:
-            self._builder_entries = self._builder_parse_result.unwrap()
+        parse_result = self.parse(source, server_type, format_options)
+        object.__setattr__(self, "_builder_parse_result", parse_result)
+        if parse_result.is_success:
+            object.__setattr__(self, "_builder_entries", parse_result.unwrap())
         return self
 
     def filter_builder(
@@ -2482,15 +2506,16 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         if self._builder_entries is None:
             error_msg = "Must call parse_builder() before filter_builder()"
             raise ValueError(error_msg)
-        self._builder_filter_result = self.filter(
+        filter_result = self.filter(
             self._builder_entries,
             objectclass,
             dn_pattern,
             attributes,
             custom_filter,
         )
-        if self._builder_filter_result.is_success:
-            self._builder_entries = self._builder_filter_result.unwrap()
+        object.__setattr__(self, "_builder_filter_result", filter_result)
+        if filter_result.is_success:
+            object.__setattr__(self, "_builder_entries", filter_result.unwrap())
         return self
 
     def write_builder(
@@ -2533,7 +2558,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 template_data,
             )
         if write_result.is_success:
-            self._builder_write_result = write_result
+            object.__setattr__(self, "_builder_write_result", write_result)
         return self
 
     def execute_builder(self) -> FlextResult[list[FlextLdifModels.Entry] | str]:

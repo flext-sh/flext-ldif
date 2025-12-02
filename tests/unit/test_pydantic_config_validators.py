@@ -32,6 +32,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_ldif import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 
 
 class TestFlextLdifConfigValidators:
@@ -217,7 +218,10 @@ class TestFlextLdifConfigValidators:
             config = FlextLdifConfig(
                 server_type=server_type,
             )
-            assert config.server_type == server_type
+            # The validator normalizes aliases to canonical form
+            # So we should expect the normalized value, not the original
+            expected_server_type = FlextLdifConstants.normalize_server_type(server_type)
+            assert config.server_type == expected_server_type
         else:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(

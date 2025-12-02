@@ -26,7 +26,9 @@ from flext_core import (
 )
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -1213,7 +1215,7 @@ class FlextLdifFilters(
     )
 
     # Private attributes (Pydantic v2 PrivateAttr for internal state)
-    _last_event: FlextLdifModels.FilterEvent | None = PrivateAttr(default=None)
+    _last_event: FlextLdifModelsEvents.FilterEvent | None = PrivateAttr(default=None)
 
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
@@ -1333,7 +1335,16 @@ class FlextLdifFilters(
                 filter_duration_ms = (time.perf_counter() - start_time) * 1000.0
                 entries_after = len(filtered_entries)
 
-                filter_event = FlextLdifModels.FilterEvent(
+                # Build filter criteria dict with only valid FilterCriteria fields
+                criteria_dict: dict[str, object] = {
+                    "filter_type": self.filter_criteria,
+                    "mode": self.mode,
+                }
+                if self.dn_pattern:
+                    criteria_dict["pattern"] = self.dn_pattern
+                # FilterCriteria doesn't have objectclass, attributes, or base_dn fields
+                # These are stored in the filter service itself, not in FilterCriteria
+                filter_event = FlextLdifModelsEvents.FilterEvent(
                     unique_id=f"filter_{FlextUtilities.Generators.generate_short_id(8)}",
                     event_type="ldif.filter",
                     aggregate_id=f"filter_{FlextUtilities.Generators.generate_short_id(8)}",
@@ -1342,16 +1353,7 @@ class FlextLdifFilters(
                     entries_before=entries_before,
                     entries_after=entries_after,
                     filter_criteria=[
-                        {
-                            "type": self.filter_criteria,
-                            "pattern": self.dn_pattern,
-                            "objectclass": str(self.objectclass)
-                            if self.objectclass
-                            else None,
-                            "attributes": self.attributes,
-                            "base_dn": self.base_dn,
-                            "mode": self.mode,
-                        },
+                        FlextLdifModelsConfig.FilterCriteria(**criteria_dict),
                     ],
                     filter_duration_ms=filter_duration_ms,
                 )
@@ -1376,7 +1378,7 @@ class FlextLdifFilters(
                 f"Filter failed: {e}",
             )
 
-    def get_last_event(self) -> FlextLdifModels.FilterEvent | None:
+    def get_last_event(self) -> FlextLdifModelsEvents.FilterEvent | None:
         """Retrieve last emitted FilterEvent.
 
         Returns:
@@ -1430,53 +1432,41 @@ class FlextLdifFilters(
 
     def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifFilters:
         """Set entries to filter (fluent builder)."""
-        self.entries = entries
-        return self
+        return self.model_copy(update={"entries": entries})
 
     def with_dn_pattern(self, pattern: str) -> FlextLdifFilters:
         """Set DN pattern filter (fluent builder)."""
-        self.filter_criteria = "dn"
-        self.dn_pattern = pattern
-        return self
+        return self.model_copy(update={"filter_criteria": "dn", "dn_pattern": pattern})
 
     def with_objectclass(self, *classes: str) -> FlextLdifFilters:
         """Set objectClass filter (fluent builder)."""
-        self.filter_criteria = "objectclass"
         # Use tuple if classes provided, None if empty
-        self.objectclass = tuple(classes) if classes else None
-        return self
+        objectclass_value = tuple(classes) if classes else None
+        return self.model_copy(update={"filter_criteria": "objectclass", "objectclass": objectclass_value})
 
     def with_required_attributes(self, attributes: list[str]) -> FlextLdifFilters:
         """Set required attributes (fluent builder)."""
-        self.required_attributes = attributes
-        return self
+        return self.model_copy(update={"required_attributes": attributes})
 
     def with_attributes(self, attributes: list[str]) -> FlextLdifFilters:
         """Set attribute filter (fluent builder)."""
-        self.filter_criteria = "attributes"
-        self.attributes = attributes
-        return self
+        return self.model_copy(update={"filter_criteria": "attributes", "attributes": attributes})
 
     def with_base_dn(self, base_dn: str) -> FlextLdifFilters:
         """Set base DN filter (fluent builder)."""
-        self.filter_criteria = "base_dn"
-        self.base_dn = base_dn
-        return self
+        return self.model_copy(update={"filter_criteria": "base_dn", "base_dn": base_dn})
 
     def with_mode(self, mode: str) -> FlextLdifFilters:
         """Set filter mode: include|exclude (fluent builder)."""
-        self.mode = mode
-        return self
+        return self.model_copy(update={"mode": mode})
 
     def with_match_all(self, *, match_all: bool = True) -> FlextLdifFilters:
         """Set attribute matching: ALL (True) or ANY (False) (fluent builder)."""
-        self.match_all = match_all
-        return self
+        return self.model_copy(update={"match_all": match_all})
 
     def exclude_matching(self) -> FlextLdifFilters:
         """Invert filter to exclude matching entries (fluent builder)."""
-        self.mode = FlextLdifConstants.Modes.EXCLUDE
-        return self
+        return self.model_copy(update={"mode": FlextLdifConstants.Modes.EXCLUDE})
 
     def build(self) -> FlextLdifModels.EntryResult:
         """Execute and return unwrapped result (fluent terminal)."""

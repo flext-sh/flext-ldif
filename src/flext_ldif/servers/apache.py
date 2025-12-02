@@ -30,7 +30,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Standardized constants for Apache Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "apache"
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "apache"
+        )
         PRIORITY: ClassVar[int] = 15
 
         # Server identification

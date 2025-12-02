@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 from tests.helpers.test_assertions import TestAssertions
 
 
@@ -20,7 +21,7 @@ class FlextLdifTestUtils:
 
     @staticmethod
     def get_fixture_path(
-        server_type: str,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
     ) -> Path:
         """Get the path to a fixture file.
@@ -60,7 +61,7 @@ class FlextLdifTestUtils:
     @staticmethod
     def load_fixture(
         ldif_api: FlextLdif,
-        server_type: str,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
     ) -> list[FlextLdifModels.Entry]:
         """Load a fixture LDIF file and return parsed entries.
@@ -102,7 +103,7 @@ class FlextLdifTestUtils:
     @staticmethod
     def load_fixture_entries(
         ldif_api: FlextLdif,
-        server_type: str,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         expected_min_count: int | None = None,
     ) -> list[FlextLdifModels.Entry]:
@@ -138,7 +139,7 @@ class FlextLdifTestUtils:
     @staticmethod
     def load_fixture_and_validate_structure(
         ldif_api: FlextLdif,
-        server_type: str,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         *,
         expected_has_dn: bool = True,
@@ -189,7 +190,7 @@ class FlextLdifTestUtils:
     @staticmethod
     def run_fixture_roundtrip(
         ldif_api: FlextLdif,
-        server_type: str,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         tmp_path: Path,
         *,
@@ -259,7 +260,7 @@ class FlextLdifTestUtils:
     @staticmethod
     def run_roundtrip_test(
         ldif_api: FlextLdif,
-        server_type: str,
+        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         tmp_path: Path | None = None,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry], bool]:

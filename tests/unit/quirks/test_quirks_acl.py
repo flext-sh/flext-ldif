@@ -911,19 +911,28 @@ class TestFlextLdifQuirksAcl:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with dnattr subject in default format."""
+        from flext_ldif.constants import FlextLdifConstants
+
         # Create ACL model with dnattr subject
+        # Use valid subject_type and store original type in metadata
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
                 attributes=["cn", "mail"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="dn_attr",
-                subject_value="manager#LDAPURL",
+                subject_type="dn",  # Valid Literal type
+                subject_value="manager",  # Remove suffix, writer will add it
             ),
             permissions=FlextLdifModels.AclPermissions(
                 read=True,
                 search=True,
+            ),
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
+                "oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "dn_attr",
+                },
             ),
         )
 
@@ -943,17 +952,26 @@ class TestFlextLdifQuirksAcl:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with guidattr subject in oneline format."""
+        from flext_ldif.constants import FlextLdifConstants
+
         # Create ACL model with guidattr subject
+        # Use valid subject_type and store original type in metadata
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
                 attributes=["objectGUID"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="guid_attr",
-                subject_value="owner#USERDN",
+                subject_type="dn",  # Valid Literal type
+                subject_value="owner",  # Remove suffix, writer will add it
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
+                "oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "guid_attr",
+                },
+            ),
         )
 
         # Write with oneline format
@@ -973,20 +991,29 @@ class TestFlextLdifQuirksAcl:
         oid_acl_handler: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID writer with groupattr subject in default format."""
+        from flext_ldif.constants import FlextLdifConstants
+
         # Create ACL model with groupattr subject
+        # Use valid subject_type and store original type in metadata
         acl = FlextLdifModels.Acl(
             target=FlextLdifModels.AclTarget(
                 target_dn="*",
                 attributes=["department"],
             ),
             subject=FlextLdifModels.AclSubject(
-                subject_type="group_attr",
-                subject_value="memberOf#GROUPDN",
+                subject_type="group",  # Valid Literal type
+                subject_value="memberOf",  # Remove suffix, writer will add it
             ),
             permissions=FlextLdifModels.AclPermissions(
                 read=True,
                 search=True,
                 compare=True,
+            ),
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
+                "oid",
+                extensions={
+                    FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE: "group_attr",
+                },
             ),
         )
 

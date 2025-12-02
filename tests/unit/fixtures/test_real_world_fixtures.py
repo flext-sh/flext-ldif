@@ -12,12 +12,21 @@ Tests cover:
 """
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifConstants,
+    FlextLdifModels,
+    FlextLdifProtocols,
+)
 from flext_ldif.services.server import FlextLdifServer
 from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+# Type alias for protocol
+HasParseMethod = FlextLdifProtocols.Services.HasParseMethodProtocol
 
 
 # Helper to get fixture paths relative to test file
@@ -78,6 +87,7 @@ class TestRFCFixtures:
         }
 
         for entry in entries:
+            assert entry.attributes is not None, "Entry must have attributes"
             object_classes = entry.attributes.get_values("objectClass", [])
             assert isinstance(object_classes, list)
             if "domain" in object_classes:
@@ -142,6 +152,7 @@ class TestRFCFixtures:
         # Find entry with multiple objectClass values (always multi-valued)
         multi_attr_entry = None
         for entry in entries:
+            assert entry.attributes is not None, "Entry must have attributes"
             attrs_dict = entry.attributes.attributes
             if isinstance(attrs_dict, dict) and "objectClass" in attrs_dict:
                 oc_attr = attrs_dict["objectClass"]
@@ -152,6 +163,7 @@ class TestRFCFixtures:
         assert multi_attr_entry is not None, (
             "Should have entry with multiple attribute values"
         )
+        assert multi_attr_entry.attributes is not None, "Entry must have attributes"
         assert len(multi_attr_entry.attributes.attributes["objectClass"]) >= 2
 
     def test_rfc_dn_components(self) -> None:
@@ -166,6 +178,7 @@ class TestRFCFixtures:
 
         # Verify DN components are properly formatted (attribute=value pairs)
         for entry in entries:
+            assert entry.dn is not None, "Entry must have DN"
             components = entry.dn.value.split(",")
             assert len(components) >= 1, (
                 f"Entry {entry.dn.value} should have valid components"
@@ -210,6 +223,7 @@ class TestOIDFixtures:
         # Verify entries parse successfully and have DN and objectClass
         for entry in entries:
             assert entry.dn is not None, "Entry should have DN"
+            assert entry.attributes is not None, "Entry should have attributes"
             # Check for objectClass (case-insensitive)
             has_oc = any(
                 attr.lower() == "objectclass" for attr in entry.attributes.attributes
@@ -230,12 +244,14 @@ class TestOIDFixtures:
         user_entries = [
             e
             for e in entries
-            if (oc := e.attributes.get_values("objectClass", [])) is not None
+            if e.attributes is not None
+            and (oc := e.attributes.get_values("objectClass", [])) is not None
             and "inetOrgPerson" in oc
         ]
 
         # User entries should have relevant attributes
         for user in user_entries:
+            assert user.attributes is not None, "User entry must have attributes"
             attrs = user.attributes
             # At least some users should have common attributes
             assert any(
@@ -279,13 +295,17 @@ class TestOUDFixtures:
         oracle_entries = [
             e
             for e in entries
-            if (oc := e.attributes.get_values("objectClass", [])) is not None
+            if e.attributes is not None
+            and (oc := e.attributes.get_values("objectClass", [])) is not None
             and "orclContainer" in oc
         ]
 
         # Should have some oracle-specific entries (if any)
         if len(oracle_entries) > 0:
-            assert all("cn" in e.attributes.attributes for e in oracle_entries)
+            assert all(
+                e.attributes is not None and "cn" in e.attributes.attributes
+                for e in oracle_entries
+            )
 
     def test_oud_oracle_specific_attributes(self) -> None:
         """Test OUD Oracle-specific attributes and objectClasses."""
@@ -338,13 +358,16 @@ class TestOpenLDAP2Fixtures:
         posix_accounts = [
             e
             for e in entries
-            if (oc := e.attributes.get_values("objectClass", [])) is not None
+            if e.attributes is not None
+            and (oc := e.attributes.get_values("objectClass", [])) is not None
             and "posixAccount" in oc
         ]
         assert len(posix_accounts) >= 10, "Should have at least 10 posixAccount entries"
 
         # Verify required posix attributes
         for account in posix_accounts:
+            assert account.attributes is not None, "Account must have attributes"
+            assert account.dn is not None, "Account must have DN"
             attrs_dict = (
                 account.attributes.attributes
                 if hasattr(account.attributes, "attributes")
@@ -370,13 +393,16 @@ class TestOpenLDAP2Fixtures:
         posix_groups = [
             e
             for e in entries
-            if (oc := e.attributes.get_values("objectClass", [])) is not None
+            if e.attributes is not None
+            and (oc := e.attributes.get_values("objectClass", [])) is not None
             and "posixGroup" in oc
         ]
         assert len(posix_groups) >= 2, "Should have at least 2 posixGroup entries"
 
         # Verify required posix group attributes
         for group in posix_groups:
+            assert group.attributes is not None, "Group must have attributes"
+            assert group.dn is not None, "Group must have DN"
             attrs_dict = (
                 group.attributes.attributes
                 if hasattr(group.attributes, "attributes")
@@ -401,7 +427,8 @@ class TestOpenLDAP2Fixtures:
         service_accounts = [
             e
             for e in entries
-            if (oc := e.attributes.get_values("objectClass", [])) is not None
+            if e.attributes is not None
+            and (oc := e.attributes.get_values("objectClass", [])) is not None
             and "posixAccount" in oc
             and "nologin" in str(e.attributes.get_values("loginShell", []))
         ]
@@ -421,6 +448,9 @@ class TestOpenLDAP2Fixtures:
         # Verify all entries parse without corruption (UTF-8 handling)
         # At minimum, entries with international characters should parse successfully
         assert len(entries) >= 1, "Should have entries that parse successfully"
+        for entry in entries:
+            assert entry.attributes is not None, "Entry must have attributes"
+            assert entry.dn is not None, "Entry must have DN"
 
 
 class TestCrossServerFixtures:
@@ -442,7 +472,7 @@ class TestCrossServerFixtures:
 
         for server_name, fixture_path in servers:
             # Extract server type from server name
-            server_type_map = {
+            server_type_map: dict[str, FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = {
                 "RFC": "rfc",
                 "OID": "oid",
                 "OUD": "oud",
@@ -451,7 +481,10 @@ class TestCrossServerFixtures:
             server_type = server_type_map.get(server_name, "rfc")
             result = self.ldif.parse(
                 _get_fixture_path(fixture_path.replace("tests/fixtures/", "")),
-                server_type=server_type,
+                server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None",
+                    server_type,
+                ),
             )
             assert result.is_success, (
                 f"{server_name}: Failed to parse {fixture_path}: {result.error}"
@@ -467,6 +500,7 @@ class TestCrossServerFixtures:
             # Verify entry structure
             for entry in entries:
                 assert entry.dn is not None, f"{server_name}: Entry missing DN"
+                assert entry.attributes is not None, f"{server_name}: Entry missing attributes"
                 assert len(entry.dn.value) > 0, f"{server_name}: DN cannot be empty"
                 # Check for objectClass (case-insensitive, as different servers use different cases)
                 has_oc = any(
@@ -493,7 +527,11 @@ class TestCrossServerFixtures:
             entries = unwrapped
 
             # Analyze DN structures
-            dn_depths = [len(e.dn.value.split(",")) for e in entries if e.dn]
+            dn_depths = [
+                len(e.dn.value.split(","))
+                for e in entries
+                if e.dn is not None
+            ]
             assert len(dn_depths) > 0, f"{server_name}: Should have DNs to analyze"
 
             # All entries should have reasonable DN depth (1-6 components)
@@ -502,13 +540,16 @@ class TestCrossServerFixtures:
 
     def test_fixture_entry_validation(self) -> None:
         """Test that all fixture entries validate successfully."""
-        servers = {
+        servers: dict[str, Path | str] = {
             "RFC": _get_fixture_path("rfc/rfc_entries_fixtures.ldif"),
             "OID": _get_fixture_path("oid/oid_entries_fixtures.ldif"),
             "OUD": _get_fixture_path("oud/oud_entries_fixtures.ldif"),
             "OpenLDAP2": _get_fixture_path("openldap2/openldap2_entries_fixtures.ldif"),
         }
-        RfcTestHelpers.test_fixture_parse_and_validate_batch(self.ldif, servers)
+        RfcTestHelpers.test_fixture_parse_and_validate_batch(
+            cast("HasParseMethod", self.ldif),
+            servers,
+        )
 
 
 class TestFixtureEdgeCases:
@@ -545,6 +586,8 @@ class TestFixtureEdgeCases:
         # Find entries with multi-valued attributes
         multi_valued = []
         for entry in entries:
+            assert entry.attributes is not None, "Entry must have attributes"
+            assert entry.dn is not None, "Entry must have DN"
             for attr, values in entry.attributes.attributes.items():
                 # values is always a list in the new API
                 if isinstance(values, list) and len(values) > 1:
@@ -567,10 +610,12 @@ class TestFixtureEdgeCases:
 
         # All entries should have valid attributes (no empty values)
         for entry in entries:
+            assert entry.attributes is not None, "Entry must have attributes"
+            assert entry.dn is not None, "Entry must have DN"
             # attributes is a Pydantic model, use model_dump to get dict
             attrs_dict = (
                 entry.attributes.model_dump()
-                if hasattr(entry.attributes, "model_dump")
+                if entry.attributes is not None and hasattr(entry.attributes, "model_dump")
                 else entry.attributes
             )
             if isinstance(attrs_dict, dict):

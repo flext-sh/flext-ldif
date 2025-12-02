@@ -42,7 +42,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Standardized constants for Novell eDirectory quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "novell"
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "novell"
+        )
         PRIORITY: ClassVar[int] = 20
 
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"

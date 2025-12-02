@@ -142,13 +142,10 @@ class TestRfcDockerRealData:
         # Write to new file
         output_file = tmp_path / "roundtrip.ldif"
 
-        writer = FlextLdifWriter(
-            quirk_registry=quirk_registry,
-        )
+        writer = FlextLdifWriter()
         write_result = writer.write(
-            entries,
-            target_server_type="rfc",
-            output_target="file",
+            entries=entries,
+            target_server_type="oid",
             output_path=output_file,
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
@@ -225,14 +222,11 @@ class TestRfcDockerRealData:
                 attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
-            writer = FlextLdifWriter(
-                quirk_registry=quirk_registry,
-            )
+            writer = FlextLdifWriter()
 
             result = writer.write(
-                [test_entry],
+                entries=[test_entry],
                 target_server_type="rfc",
-                output_target="file",
                 output_path=output_file,
             )
             # Should fail with permission error (not silently)
@@ -369,14 +363,15 @@ class TestRfcIntegrationRealWorld:
 
         output_file = tmp_path / "large_output.ldif"
 
+        # FlextLdifWriter accepts 'server' parameter (not 'quirk_registry')
         writer = FlextLdifWriter(
-            quirk_registry=quirk_registry,
+            server=quirk_registry,
         )
 
+        # FlextLdifWriter.write() accepts output_path (not output_target)
         result = writer.write(
             entry_models,
             target_server_type="rfc",
-            output_target="file",
             output_path=output_file,
         )
         assert result.is_success, f"Failed to write large dataset: {result.error}"

@@ -210,13 +210,11 @@ class FlextLdifValidation(
 
     def with_attribute_names(self, names: list[str]) -> Self:
         """Set attribute names to validate (fluent builder)."""
-        self.attribute_names = names
-        return self
+        return self.model_copy(update={"attribute_names": names})
 
     def with_objectclass_names(self, names: list[str]) -> Self:
         """Set objectClass names to validate (fluent builder)."""
-        self.objectclass_names = names
-        return self
+        return self.model_copy(update={"objectclass_names": names})
 
     def with_max_attr_value_length(self, length: int) -> FlextLdifValidation:
         """Set maximum attribute value length (fluent builder)."""
@@ -250,6 +248,7 @@ class FlextLdifValidation(
 
         # Convert dict[str, bool] to _BooleanFlags for ValidationBatchResult
         from flext_ldif._models.results import _BooleanFlags
+
         boolean_flags = _BooleanFlags(**result)
         return FlextLdifModels.ValidationBatchResult(results=boolean_flags)
 

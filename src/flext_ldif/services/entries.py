@@ -35,17 +35,20 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         self,
         entries: list[FlextLdifModels.Entry] | None = None,
         operation: str | None = None,
+        attributes_to_remove: list[str] | None = None,
     ) -> None:
         """Initialize entries service.
 
         Args:
             entries: List of entries to operate on
             operation: Operation to perform (for execute method)
+            attributes_to_remove: List of attribute names to remove (for remove_attributes operation)
 
         """
         super().__init__()
         self._entries = entries or []
         self._operation = operation
+        self._attributes_to_remove = attributes_to_remove or []
 
     def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute the configured operation on entries.
@@ -60,12 +63,16 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         if self._operation == "remove_operational_attributes":
             return self.remove_operational_attributes_batch(self._entries)
         if self._operation == "remove_attributes":
-            # For simplicity, assume removing common attributes
-            return self.remove_attributes_batch(self._entries, ["description"])
+            if not self._attributes_to_remove:
+                return FlextResult.fail(
+                    "No attributes_to_remove specified for remove_attributes operation",
+                )
+            return self.remove_attributes_batch(self._entries, self._attributes_to_remove)
         return FlextResult.fail(f"Unknown operation: {self._operation}")
 
     def remove_operational_attributes_batch(
-        self, entries: list[FlextLdifModels.Entry],
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Remove operational attributes from all entries."""
         result = []
@@ -77,7 +84,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         return FlextResult.ok(result)
 
     def remove_attributes_batch(
-        self, entries: list[FlextLdifModels.Entry], attributes: list[str],
+        self,
+        entries: list[FlextLdifModels.Entry],
+        attributes: list[str],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Remove specified attributes from all entries."""
         result = []
@@ -97,7 +106,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         """Extract DN from entry.
 
         Args:
-            entry: Entry model, dict, or object implementing EntryWithDnProtocol to extract DN from
+            entry: Entry model, dict, or object implementing
+                EntryWithDnProtocol to extract DN from
 
         Returns:
             FlextResult containing DN as string
@@ -112,10 +122,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         # Check if it's an EntryWithDnProtocol (has dn attribute)
         if hasattr(entry, "dn"):
             dn_val_raw = entry.dn
+            # Handle None DN
+            if dn_val_raw is None:
+                return FlextResult.fail("Entry missing DN (dn is None)")
             # Check if dn_val has .value attribute (DN model with value field)
-            if hasattr(dn_val_raw, "value"):
+            if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
                 # dn_val_raw.value can be str | list[str] | None
-                dn_value_raw = dn_val_raw.value
+                dn_value_raw = getattr(dn_val_raw, "value", None)
                 if dn_value_raw is None:
                     return FlextResult.fail("DN value is None")
                 # Convert to string for return
@@ -128,7 +141,11 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             # Direct string DN
             if isinstance(dn_val_raw, str):
                 return FlextResult.ok(dn_val_raw)
-            return FlextResult.ok(str(dn_val_raw))
+            # Try to convert to string, handle exceptions
+            try:
+                return FlextResult.ok(str(dn_val_raw))
+            except (ValueError, TypeError) as e:
+                return FlextResult.fail(f"Failed to extract DN: {e}")
 
         return FlextResult.fail(
             "Entry does not implement EntryWithDnProtocol or Entry protocol",
@@ -147,11 +164,31 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             FlextResult containing attribute dictionary
 
         """
-        if not entry.attributes or not entry.attributes.attributes:
-            return FlextResult.ok({})
+        # Check if entry has attributes attribute (handle exceptions)
+        try:
+            if not hasattr(entry, "attributes"):
+                return FlextResult.fail("Entry missing attributes attribute")
+            # Verify attributes exists - None means failure
+            if entry.attributes is None:
+                return FlextResult.fail("Entry has no attributes (attributes is None)")
+            # Verify attributes is LdifAttributes instance
+            if not entry.attributes:
+                return FlextResult.ok({})
+            # Check if attributes is LdifAttributes (has .attributes attribute)
+            if not hasattr(entry.attributes, "attributes"):
+                # If it's a dict-like object, try to use it directly
+                if isinstance(entry.attributes, dict):
+                    return FlextResult.ok(dict(entry.attributes))
+                return FlextResult.fail(
+                    f"Unknown attributes container type: {type(entry.attributes)}",
+                )
+            if not entry.attributes.attributes:
+                return FlextResult.ok({})
 
-        # Return attributes directly from entry
-        return FlextResult.ok(dict(entry.attributes.attributes))
+            # Return attributes directly from entry
+            return FlextResult.ok(dict(entry.attributes.attributes))
+        except (AttributeError, ValueError) as e:
+            return FlextResult.fail(f"Failed to extract attributes: {e}")
 
     def get_entry_objectclasses(
         self,
@@ -166,10 +203,27 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             FlextResult containing list of objectClass values
 
         """
-        if not entry.attributes or not entry.attributes.attributes:
+        # First get attributes - if this fails, return failure
+        attributes_result = self.get_entry_attributes(entry)
+        if attributes_result.is_failure:
+            return FlextResult.fail(
+                f"Failed to get entry attributes: {attributes_result.error}"
+            )
+
+        attributes = attributes_result.unwrap()
+        if not attributes:
             return FlextResult.ok([])
 
-        objectclasses = entry.attributes.attributes.get("objectClass", [])
+        # Case-insensitive search for objectClass attribute
+        objectclasses: list[str] | str | None = None
+        for key, value in attributes.items():
+            if key.lower() == "objectclass":
+                objectclasses = value
+                break
+
+        if objectclasses is None:
+            return FlextResult.fail("Entry is missing objectClass attribute")
+
         if isinstance(objectclasses, str):
             return FlextResult.ok([objectclasses])
         return FlextResult.ok(list(objectclasses))
@@ -221,11 +275,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         if not entry.attributes or not entry.attributes.attributes:
             return FlextResult.ok(entry)
 
-        # Create new attributes dict without the specified attributes
+        # Normalize attribute names to lowercase for case-insensitive comparison
+        attrs_to_remove_lower = {attr.lower() for attr in attributes_to_remove}
+
+        # Create new attributes dict without the specified attributes (case-insensitive)
         new_attrs = {
             k: v
             for k, v in entry.attributes.attributes.items()
-            if k not in attributes_to_remove
+            if k.lower() not in attrs_to_remove_lower
         }
 
         # Create new entry with modified attributes
@@ -235,6 +292,59 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             metadata=entry.metadata,
         )
 
+        return FlextResult.ok(modified_entry)
+
+    def remove_objectclasses(
+        self,
+        entry: FlextLdifModels.Entry,
+        objectclasses_to_remove: list[str],
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove specific objectClass values from entry.
+
+        Args:
+            entry: Entry to modify
+            objectclasses_to_remove: List of objectClass values to remove
+
+        Returns:
+            FlextResult containing modified entry
+
+        """
+        if not entry.attributes or not entry.attributes.attributes:
+            return FlextResult.ok(entry)
+
+        # Get current objectClass values
+        objectclasses_result = self.get_entry_objectclasses(entry)
+        if objectclasses_result.is_failure:
+            return FlextResult.ok(entry)  # No objectClass attribute, nothing to remove
+
+        current_ocs = objectclasses_result.unwrap()
+        if not current_ocs:
+            return FlextResult.ok(entry)  # Empty objectClass list, nothing to remove
+
+        # Normalize objectClass names to lowercase for case-insensitive comparison
+        ocs_to_remove_lower = {oc.lower() for oc in objectclasses_to_remove}
+
+        # Filter out objectClasses to remove (case-insensitive)
+        new_ocs = [
+            oc for oc in current_ocs if oc.lower() not in ocs_to_remove_lower
+        ]
+
+        # If all objectClasses were removed, return error
+        if not new_ocs:
+            return FlextResult.fail(
+                "Cannot remove all objectClass values from entry"
+            )
+
+        # Create new attributes dict with updated objectClass
+        new_attrs = dict(entry.attributes.attributes)
+        new_attrs["objectClass"] = new_ocs
+
+        # Create new entry with modified attributes
+        modified_entry = FlextLdifModels.Entry(
+            dn=entry.dn,
+            attributes=FlextLdifModels.LdifAttributes(attributes=new_attrs),
+            metadata=entry.metadata,
+        )
         return FlextResult.ok(modified_entry)
 
     def get_attribute_values(
@@ -252,7 +362,23 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         """
         if isinstance(attribute, str):
             return FlextResult.ok([attribute])
-        return FlextResult.ok(list(attribute))
+        if isinstance(attribute, list):
+            return FlextResult.ok(attribute)
+        # Check if it's a protocol with values attribute (not a list)
+        if hasattr(attribute, "values") and not isinstance(attribute, (list, tuple)):
+            values = getattr(attribute, "values", None)
+            if isinstance(values, str):
+                return FlextResult.ok([values])
+            if isinstance(values, (list, tuple)):
+                return FlextResult.ok(list(values))
+        # Try to iterate if it's iterable
+        try:
+            return FlextResult.ok(list(attribute))
+        except TypeError:
+            # Not iterable - return error for unsupported type
+            return FlextResult.fail(
+                f"Unsupported attribute type: {type(attribute).__name__}"
+            )
 
     def get_entry_attribute(
         self,
@@ -335,7 +461,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         return self.normalize_attribute_value(values)
 
     def remove_operational_attributes(
-        self, entry: FlextLdifModels.Entry,
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Remove operational attributes from entry.
 
@@ -373,11 +500,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         if not entry.attributes or not entry.attributes.attributes:
             return FlextResult.ok(entry)
 
-        # Create new attributes dict without operational attributes
+        # Create normalized set for case-insensitive comparison
+        operational_attrs_lower = {attr.lower() for attr in operational_attrs}
+
+        # Create new attributes dict without operational attributes (case-insensitive)
         new_attrs = {
             k: v
             for k, v in entry.attributes.attributes.items()
-            if k not in operational_attrs
+            if k.lower() not in operational_attrs_lower
         }
 
         # Create new entry with modified attributes

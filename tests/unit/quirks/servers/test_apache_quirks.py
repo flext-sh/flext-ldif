@@ -17,7 +17,6 @@ import pytest
 
 from flext_ldif import FlextLdifConstants, FlextLdifModels
 from flext_ldif.servers.apache import FlextLdifServersApache
-from tests.fixtures.typing import GenericFieldsDict
 from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
@@ -90,7 +89,7 @@ class EntryTestCase:
 
     scenario: EntryScenario
     entry_dn: str
-    attributes: GenericFieldsDict
+    attributes: dict[str, list[str]]
     expected_can_handle: bool
 
 
@@ -159,25 +158,25 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.OU_CONFIG,
         entry_dn="ou=config,dc=example,dc=com",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.OU_SERVICES,
         entry_dn="ou=services,dc=example,dc=com",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.OU_SYSTEM,
         entry_dn="ou=system,dc=example,dc=com",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.OU_PARTITIONS,
         entry_dn="ou=partitions,dc=example,dc=com",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]},
+        attributes={"objectClass": ["organizationalUnit"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
@@ -185,7 +184,7 @@ ENTRY_TEST_CASES = (
         entry_dn="cn=test,dc=example,dc=com",
         attributes={
             "ads-enabled": ["TRUE"],
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
+            "objectClass": ["top"],
         },
         expected_can_handle=True,
     ),
@@ -194,21 +193,21 @@ ENTRY_TEST_CASES = (
         entry_dn="cn=test,dc=example,dc=com",
         attributes={
             "apachedsSystemId": ["test"],
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
+            "objectClass": ["top"],
         },
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.ADS_OBJECTCLASS,
         entry_dn="cn=test,dc=example,dc=com",
-        attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-directory"]},
+        attributes={"objectClass": ["top", "ads-directory"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.STANDARD_RFC,
         entry_dn="cn=user,dc=example,dc=com",
         attributes={
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
+            "objectClass": ["person"],
             "cn": ["user"],
         },
         expected_can_handle=True,  # Apache quirk accepts all entries
@@ -226,7 +225,7 @@ class TestFlextLdifApacheQuirks:
     def test_server_initialization(self) -> None:
         """Test Apache Directory Server initialization."""
         server = FlextLdifServersApache()
-        assert server.server_type == "apache_directory"
+        assert server.server_type == "apache"
         assert server.priority == 15
 
     def test_schema_quirk_initialization(self) -> None:
@@ -249,7 +248,7 @@ class TestFlextLdifApacheQuirks:
     def test_schema_attribute_can_handle(self, test_case: AttributeTestCase) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersApache.Schema = cast("FlextLdifServersApache.Schema", server.schema_quirk)
         result = schema.can_handle_attribute(test_case.attr_definition)
         assert result is test_case.expected_can_handle
 
@@ -306,7 +305,7 @@ class TestFlextLdifApacheQuirks:
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
-        schema = cast("object", server.schema_quirk)
+        schema: FlextLdifServersApache.Schema = cast("FlextLdifServersApache.Schema", server.schema_quirk)
         result = schema.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
 
@@ -429,12 +428,12 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
+            expected_type=FlextLdifModels.Acl,
         )
+        assert isinstance(acl_model, FlextLdifModels.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
-            acl_model.raw_acl
-            if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model),
+            acl_model.raw_acl or str(acl_model),
             parse_method="parse",
         )
         assert roundtrip_result is not None
@@ -448,12 +447,12 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
+            expected_type=FlextLdifModels.Acl,
         )
+        assert isinstance(acl_model, FlextLdifModels.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
-            acl_model.raw_acl
-            if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model),
+            acl_model.raw_acl or str(acl_model),
             parse_method="parse",
         )
         assert roundtrip_result is not None
@@ -467,12 +466,12 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
+            expected_type=FlextLdifModels.Acl,
         )
+        assert isinstance(acl_model, FlextLdifModels.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
-            acl_model.raw_acl
-            if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model),
+            acl_model.raw_acl or str(acl_model),
             parse_method="parse",
         )
         assert roundtrip_result is not None
@@ -480,19 +479,15 @@ class TestFlextLdifApacheQuirks:
     def test_acl_can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
-        acl_quirk = cast("object", server.acl_quirk)
+        acl_quirk: FlextLdifServersApache.Acl = cast("FlextLdifServersApache.Acl", server.acl_quirk)
         acl_line = "access to * by * read"
-        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_line,
-            parse_method="parse",
-        )
-        assert acl_quirk.can_handle_acl(acl_model) is False
+        # Test with string directly - can_handle_acl accepts str | AclProtocol
+        assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_acl_can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
-        acl_quirk = cast("object", server.acl_quirk)
+        acl_quirk: FlextLdifServersApache.Acl = cast("FlextLdifServersApache.Acl", server.acl_quirk)
         assert acl_quirk.can_handle_acl("") is False
 
     def test_acl_parse_success(self) -> None:
@@ -531,7 +526,7 @@ class TestFlextLdifApacheQuirks:
         acl_model = FlextLdifModels.Acl(
             name="ads-aci",
             target=FlextLdifModels.AclTarget(target_dn="", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="", subject_value=""),
+            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value=""),
             permissions=FlextLdifModels.AclPermissions(),
             server_type="apache_directory",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
@@ -550,7 +545,7 @@ class TestFlextLdifApacheQuirks:
         acl_model = FlextLdifModels.Acl(
             name="aci",
             target=FlextLdifModels.AclTarget(target_dn="", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="", subject_value=""),
+            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value=""),
             permissions=FlextLdifModels.AclPermissions(),
             server_type="apache_directory",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
@@ -569,7 +564,7 @@ class TestFlextLdifApacheQuirks:
         acl_model = FlextLdifModels.Acl(
             name="ads-aci",
             target=FlextLdifModels.AclTarget(target_dn="", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="", subject_value=""),
+            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value=""),
             permissions=FlextLdifModels.AclPermissions(),
             server_type="apache_directory",
             raw_acl="",
@@ -586,12 +581,12 @@ class TestFlextLdifApacheQuirks:
     def test_entry_can_handle(self, test_case: EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
-        entry_quirk = cast("object", server.entry_quirk)
+        entry_quirk: FlextLdifServersApache.Entry = cast("FlextLdifServersApache.Entry", server.entry_quirk)
         result = entry_quirk.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle
 
     @staticmethod
-    def _build_ldif(entry_dn: str, attributes: GenericFieldsDict) -> str:
+    def _build_ldif(entry_dn: str, attributes: dict[str, list[str]]) -> str:
         """Build LDIF string from DN and attributes."""
         ldif = f"dn: {entry_dn}\n"
         for attr, values in attributes.items():

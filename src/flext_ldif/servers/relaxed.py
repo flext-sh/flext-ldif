@@ -47,7 +47,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """Standardized constants for Relaxed (lenient) quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "relaxed"
+        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
+            "relaxed"
+        )
         PRIORITY: ClassVar[int] = 200  # Lowest priority - fallback for broken LDIF
 
         # Auto-discovery constants

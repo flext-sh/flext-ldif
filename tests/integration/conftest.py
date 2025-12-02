@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from fixtures.loader import FlextLdifFixtures
+from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif import (
     FlextLdif,
@@ -548,7 +548,9 @@ def server() -> FlextLdifServer:
 def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API."""
     quirk_result = server.quirk("oid")
-    assert quirk_result.is_success, f"OID quirk must be registered: {quirk_result.error_message}"
+    assert quirk_result.is_success, (
+        f"OID quirk must be registered: {quirk_result.error_message}"
+    )
     return quirk_result.unwrap()
 
 
@@ -556,7 +558,9 @@ def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
     quirk_result = server.quirk("oud")
-    assert quirk_result.is_success, f"OUD quirk must be registered: {quirk_result.error_message}"
+    assert quirk_result.is_success, (
+        f"OUD quirk must be registered: {quirk_result.error_message}"
+    )
     return quirk_result.unwrap()
 
 
