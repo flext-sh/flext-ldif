@@ -21,8 +21,8 @@ from typing import cast
 
 from flext_core import (
     FlextLogger,
-    FlextResult,
     FlextRuntime,
+    r,
 )
 from flext_core.utilities import FlextUtilities
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
@@ -119,32 +119,23 @@ class FlextLdifFilters(
     @staticmethod
     def _ensure_str_list(value: str | list[str] | None) -> list[str]:
         """Ensure configuration values are normalized to list[str]."""
-        if value is None:
-            return []
-        if isinstance(value, str):
-            return [value]
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            return cast(
-                "list[str]",
-                u.filter(value, predicate=lambda item: isinstance(item, str)),
-            )
-        return []
+        return cast("list[str]", u.ensure(value, target_type="str_list", default=[]))
 
     @staticmethod
     def _normalize_category_rules(
         rules: FlextLdifModels.CategoryRules | Mapping[str, list[str] | str] | None,
-    ) -> FlextResult[FlextLdifModels.CategoryRules]:
+    ) -> r[FlextLdifModels.CategoryRules]:
         """Coerce dict inputs into CategoryRules models (backwards compatibility)."""
         if isinstance(rules, FlextLdifModels.CategoryRules):
-            return FlextResult.ok(rules)
+            return r.ok(rules)
 
         if rules is None:
-            return FlextResult.ok(FlextLdifModels.CategoryRules())
+            return r.ok(FlextLdifModels.CategoryRules())
 
         # Type narrowing: at this point rules must be Mapping[str, list[str] | str]
         # Validate for runtime safety
         if not isinstance(rules, Mapping):
-            return FlextResult[FlextLdifModels.CategoryRules].fail(
+            return r[FlextLdifModels.CategoryRules].fail(
                 "Category rules must be a mapping or CategoryRules model",
             )
         # Type narrowing: rules is now guaranteed to be Mapping[str, list[str] | str]
@@ -168,31 +159,31 @@ class FlextLdifFilters(
                 )
 
         try:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModels.CategoryRules.model_validate(
                     normalized,
                 ),
             )
         except ValidationError as exc:
-            return FlextResult.fail(
+            return r.fail(
                 f"Invalid category rules: {exc.errors(include_context=False)}",
             )
 
     @staticmethod
     def _normalize_whitelist_rules(
         rules: FlextLdifModels.WhitelistRules | Mapping[str, list[str] | str] | None,
-    ) -> FlextResult[FlextLdifModels.WhitelistRules]:
+    ) -> r[FlextLdifModels.WhitelistRules]:
         """Coerce dict inputs into WhitelistRules models (backwards compatibility)."""
         if isinstance(rules, FlextLdifModels.WhitelistRules):
-            return FlextResult.ok(rules)
+            return r.ok(rules)
 
         if rules is None:
-            return FlextResult.ok(FlextLdifModels.WhitelistRules())
+            return r.ok(FlextLdifModels.WhitelistRules())
 
         # Type narrowing: at this point rules must be Mapping[str, list[str] | str]
         # Validate for runtime safety
         if not isinstance(rules, Mapping):
-            return FlextResult[FlextLdifModels.WhitelistRules].fail(
+            return r[FlextLdifModels.WhitelistRules].fail(
                 "Whitelist rules must be a mapping or WhitelistRules model",
             )
         # Type narrowing: rules is now guaranteed to be Mapping[str, list[str] | str]
@@ -207,11 +198,11 @@ class FlextLdifFilters(
         }
 
         try:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModels.WhitelistRules.model_validate(normalized),
             )
         except ValidationError as exc:
-            return FlextResult.fail(
+            return r.fail(
                 f"Invalid whitelist rules: {exc.errors(include_context=False)}",
             )
 
@@ -236,7 +227,7 @@ class FlextLdifFilters(
             mode: str,
             *,
             mark_excluded: bool,
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        ) -> r[list[FlextLdifModels.Entry]]:
             """Filter entries by DN pattern.
 
             Business Rule: DN filtering uses fnmatch for wildcard pattern matching (*, ?, [seq]).
@@ -263,7 +254,7 @@ class FlextLdifFilters(
                 FlextLdifConstants.Modes.EXCLUDE,
             )
             if mode not in valid_modes:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"Invalid filter mode '{mode}'. Must be one of: {valid_modes}",
                 )
             try:
@@ -298,7 +289,7 @@ class FlextLdifFilters(
                     on_error="skip",
                 )
                 if batch_result.is_failure:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    return r[list[FlextLdifModels.Entry]].fail(
                         batch_result.error or "DN filter failed"
                     )
                 filtered = [
@@ -307,16 +298,16 @@ class FlextLdifFilters(
                     if entry is not None
                 ]
 
-                return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+                return r[list[FlextLdifModels.Entry]].ok(filtered)
             except Exception as e:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"DN filter failed: {e}",
                 )
 
         @staticmethod
         def normalize_objectclass_tuple(oc: str | tuple[str, ...]) -> tuple[str, ...]:
             """Normalize objectclass to tuple."""
-            return oc if isinstance(oc, tuple) else (oc,)
+            return u.when(condition=u.is_type(oc, tuple), then_value=oc, else_value=(oc,))
 
         @staticmethod
         def matches_objectclass_entry(
@@ -350,7 +341,7 @@ class FlextLdifFilters(
             filter_mode: str,
             *,
             mark_excluded: bool,
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        ) -> r[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
             # Call static methods within same nested class (private access ok)
             entry_matches = FlextLdifFilters.Filter.matches_objectclass_entry(
@@ -362,14 +353,14 @@ class FlextLdifFilters(
                 matches=entry_matches,
                 filter_mode=filter_mode,
             ):
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                return r[FlextLdifModels.Entry].ok(entry)
             if mark_excluded:
                 excluded_entry = FlextLdifFilters.Exclusion.mark_excluded(
                     entry,
                     f"ObjectClass filter: {oc_tuple}",
                 )
-                return FlextResult[FlextLdifModels.Entry].ok(excluded_entry)
-            return FlextResult[FlextLdifModels.Entry].fail("Entry excluded by filter")
+                return r[FlextLdifModels.Entry].ok(excluded_entry)
+            return r[FlextLdifModels.Entry].fail("Entry excluded by filter")
 
         @staticmethod
         def filter_by_objectclass(
@@ -379,7 +370,7 @@ class FlextLdifFilters(
             mode: str,
             *,
             mark_excluded: bool,
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        ) -> r[list[FlextLdifModels.Entry]]:
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
@@ -397,13 +388,14 @@ class FlextLdifFilters(
                         mode,
                         mark_excluded=mark_excluded,
                     )
+                    # Use u.when() for unified result handling (DSL pattern)
                     if result.is_success:
-                        filtered_entries.append(result.unwrap())
+                        filtered_entries.append(result.value)
 
-                return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+                return r[list[FlextLdifModels.Entry]].ok(filtered_entries)
 
             except Exception as e:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"ObjectClass filter failed: {e}",
                 )
 
@@ -415,7 +407,7 @@ class FlextLdifFilters(
             match_all: bool,
             mode: str,
             mark_excluded: bool,
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        ) -> r[list[FlextLdifModels.Entry]]:
             """Filter by attribute presence using functional composition."""
 
             def matches_attributes(
@@ -438,22 +430,22 @@ class FlextLdifFilters(
                 entry: FlextLdifModels.Entry,
                 attrs: list[str],
                 filter_mode: str,
-            ) -> FlextResult[FlextLdifModels.Entry]:
+            ) -> r[FlextLdifModels.Entry]:
                 """Process single entry for attribute filtering."""
                 entry_matches = matches_attributes(entry, attrs)
                 if should_include_attribute(
                     matches=entry_matches,
                     filter_mode=filter_mode,
                 ):
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
                 if mark_excluded:
                     excluded_entry = FlextLdifFilters.Exclusion.mark_excluded(
                         entry,
                         f"Attribute filter: {attributes}",
                     )
-                    return FlextResult[FlextLdifModels.Entry].ok(excluded_entry)
+                    return r[FlextLdifModels.Entry].ok(excluded_entry)
                 # Entry excluded - return failure to indicate filtering out
-                return FlextResult[FlextLdifModels.Entry].fail(
+                return r[FlextLdifModels.Entry].fail(
                     "Entry excluded by filter",
                 )
 
@@ -462,13 +454,14 @@ class FlextLdifFilters(
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
                     result = process_attribute_entry(entry, attributes, mode)
+                    # Use u.when() for unified result handling (DSL pattern)
                     if result.is_success:
-                        filtered_entries.append(result.unwrap())
+                        filtered_entries.append(result.value)
 
-                return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+                return r[list[FlextLdifModels.Entry]].ok(filtered_entries)
 
             except Exception as e:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"Attribute filter failed: {e}",
                 )
 
@@ -542,8 +535,10 @@ class FlextLdifFilters(
 
             # normalize() with collection and no second parameter normalizes case
             normalized_result = u.normalize(blocked_ocs)
-            blocked_ocs_normalized: set[str] = (
-                set(normalized_result) if isinstance(normalized_result, list) else set()
+            blocked_ocs_normalized: set[str] = u.when(
+                condition=u.is_type(normalized_result, list),
+                then_value=set(normalized_result),
+                else_value=set(),
             )
             for oc in entry_ocs:
                 if u.normalize(oc, blocked_ocs_normalized):
@@ -562,9 +557,10 @@ class FlextLdifFilters(
             Uses type-safe CategoryRules model instead of dict[str, Any].
             """
             rules_result = FlextLdifFilters._normalize_category_rules(rules)
-            if rules_result.is_failure:
+            # Use u.val() for unified result handling (DSL pattern)
+            normalized_rules = u.val(rules_result)
+            if normalized_rules is None:
                 return (True, rules_result.error)
-            normalized_rules = rules_result.unwrap()
 
             # Map category to pattern attribute (supports both enum and string)
             pattern_map: dict[str, list[str]] = {
@@ -577,16 +573,7 @@ class FlextLdifFilters(
             # Normalize category to string for lookup
             # CategoryLiteral is a Literal type, not an Enum, so just use str()
             category_str = str(category)
-            extract_result: FlextResult[list[str] | None] = u.extract(
-                pattern_map,
-                category_str,
-                default=[],
-            )
-            dn_patterns: list[str] = (
-                extract_result.value
-                if extract_result.is_success and extract_result.value is not None
-                else []
-            )
+            dn_patterns: list[str] = cast("list[str]", u.take(pattern_map, category_str, default=[]))
             if not dn_patterns:
                 return (False, None)
 
@@ -624,7 +611,7 @@ class FlextLdifFilters(
             entry: FlextLdifModels.Entry,
             attributes_to_mark: set[str],
             status: str = FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL,
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        ) -> r[FlextLdifModels.Entry]:
             """Mark attributes in metadata without removing from entry.attributes.
 
             SRP: Filters MARK only, entry service REMOVES.
@@ -638,16 +625,16 @@ class FlextLdifFilters(
                 status: Marker status (default: MARKED_FOR_REMOVAL)
 
             Returns:
-                FlextResult[Entry] with marked attributes in metadata
+                r[Entry] with marked attributes in metadata
 
             """
             try:
                 if not attributes_to_mark:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
 
                 # Entry.attributes is required by model, but we check for safety
                 if not hasattr(entry, "attributes") or entry.attributes is None:
-                    return FlextResult[FlextLdifModels.Entry].fail(
+                    return r[FlextLdifModels.Entry].fail(
                         f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes",
                     )
 
@@ -664,10 +651,10 @@ class FlextLdifFilters(
                 # (set→set, list→list). We must handle both for case-insensitive
                 # attribute matching. An empty result means no attributes to mark.
                 attrs_norm_result = u.normalize(attributes_to_mark)
-                attrs_normalized: set[str] = (
-                    set(attrs_norm_result)
-                    if isinstance(attrs_norm_result, (list, set, frozenset))
-                    else set()
+                attrs_normalized: set[str] = u.when(
+                    condition=u.is_type(attrs_norm_result, list, set, frozenset),
+                    then_value=set(attrs_norm_result),
+                    else_value=set(),
                 )
                 marked_attributes: dict[str, list[str]] = {}
                 marked_for_tracking: dict[str, list[str]] = {}
@@ -684,7 +671,7 @@ class FlextLdifFilters(
                     else {}
                 )
                 if not attrs_dict:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
 
                 for attr_name, attr_values in attrs_dict.items():
                     if u.normalize(attr_name, attrs_normalized):
@@ -697,7 +684,7 @@ class FlextLdifFilters(
                         marked_with_status[attr_name] = {"status": status}
 
                 if not marked_attributes:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
 
                 # Update removed_attributes in metadata (standard field)
                 # Use model_dump() for DynamicMetadata → dict conversion
@@ -739,10 +726,10 @@ class FlextLdifFilters(
                     status=status,
                 )
 
-                return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+                return r[FlextLdifModels.Entry].ok(new_entry)
 
             except Exception as e:
-                return FlextResult[FlextLdifModels.Entry].fail(
+                return r[FlextLdifModels.Entry].fail(
                     f"Mark attributes for removal failed: {e}",
                 )
 
@@ -751,7 +738,7 @@ class FlextLdifFilters(
             entry: FlextLdifModels.Entry,
             objectclasses_to_mark: set[str],
             status: str = FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL,
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        ) -> r[FlextLdifModels.Entry]:
             """Mark objectClasses in metadata without removing from entry.attributes.
 
             SRP: Filters MARK only, entry service REMOVES.
@@ -765,22 +752,24 @@ class FlextLdifFilters(
                 status: Marker status (default: MARKED_FOR_REMOVAL)
 
             Returns:
-                FlextResult[Entry] with marked objectClasses in metadata
+                r[Entry] with marked objectClasses in metadata
 
             """
             try:
                 if not objectclasses_to_mark:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
 
                 current_ocs = entry.get_attribute_values("objectClass")
                 if not current_ocs:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
 
                 # Build marked objectclasses (case-insensitive)
                 # normalize() with collection normalizes case
                 ocs_norm_result = u.normalize(objectclasses_to_mark)
-                ocs_normalized: set[str] = (
-                    set(ocs_norm_result) if isinstance(ocs_norm_result, list) else set()
+                ocs_normalized: set[str] = u.when(
+                    condition=u.is_type(ocs_norm_result, list),
+                    then_value=set(ocs_norm_result),
+                    else_value=set(),
                 )
                 marked_ocs = [
                     oc_value
@@ -789,7 +778,7 @@ class FlextLdifFilters(
                 ]
 
                 if not marked_ocs:
-                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+                    return r[FlextLdifModels.Entry].ok(entry)
 
                 # Get or create metadata using FlextLdifUtilities pattern
                 # Business Rule: Use "rfc" as default server type for filter operations.
@@ -801,20 +790,7 @@ class FlextLdifFilters(
                 # Store marked objectClasses in removed_attributes using objectClass key
                 updated_removed = current_metadata.removed_attributes.model_dump()
                 objectclass_key = FlextLdifConstants.DictKeys.OBJECTCLASS
-                extract_result: FlextResult[list[str] | None] = u.extract(
-                    updated_removed,
-                    objectclass_key,
-                    default=[],
-                )
-                existing_ocs_raw: list[str] | None = (
-                    extract_result.value if extract_result.is_success else None
-                )
-                existing_ocs: list[str] = (
-                    existing_ocs_raw
-                    if existing_ocs_raw is not None
-                    and isinstance(existing_ocs_raw, list)
-                    else []
-                )
+                existing_ocs: list[str] = cast("list[str]", u.take(updated_removed, objectclass_key, default=[]))
                 # Merge marked objectClasses (avoid duplicates)
                 merged_ocs = list(set(existing_ocs + marked_ocs))
                 updated_removed[objectclass_key] = merged_ocs
@@ -859,10 +835,10 @@ class FlextLdifFilters(
                     status=status,
                 )
 
-                return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+                return r[FlextLdifModels.Entry].ok(new_entry)
 
             except Exception as e:
-                return FlextResult[FlextLdifModels.Entry].fail(
+                return r[FlextLdifModels.Entry].fail(
                     f"Mark objectClasses for removal failed: {e}",
                 )
 
@@ -870,7 +846,7 @@ class FlextLdifFilters(
         def filter_entry_attributes(
             entry: FlextLdifModels.Entry,
             attributes_to_remove: list[str],
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        ) -> r[FlextLdifModels.Entry]:
             """Mark attributes for removal in entry metadata (SRP - never removes).
 
             This method follows Single Responsibility Principle:
@@ -883,11 +859,11 @@ class FlextLdifFilters(
                 attributes_to_remove: List of attribute names to mark
 
             Returns:
-                FlextResult[Entry] with marked attributes in metadata
+                r[Entry] with marked attributes in metadata
 
             """
             if not attributes_to_remove:
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                return r[FlextLdifModels.Entry].ok(entry)
 
             return FlextLdifFilters.Transformer.mark_attributes_for_removal(
                 entry,
@@ -899,7 +875,7 @@ class FlextLdifFilters(
         def filter_entry_objectclasses(
             entry: FlextLdifModels.Entry,
             objectclasses_to_remove: list[str],
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        ) -> r[FlextLdifModels.Entry]:
             """Mark objectClasses for removal in entry metadata (SRP - never removes).
 
             This method follows Single Responsibility Principle:
@@ -912,11 +888,11 @@ class FlextLdifFilters(
                 objectclasses_to_remove: List of objectClass names to mark
 
             Returns:
-                FlextResult[Entry] with marked objectClasses in metadata
+                r[Entry] with marked objectClasses in metadata
 
             """
             if not objectclasses_to_remove:
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                return r[FlextLdifModels.Entry].ok(entry)
 
             # Mark "objectClass" attribute as having filtered values
             # Store which specific objectClasses are marked in metadata
@@ -973,8 +949,10 @@ class FlextLdifFilters(
             attrs_keys: list[str] = list(entry.attributes.keys())
             # normalize() with collection normalizes case
             attrs_norm_result = u.normalize(attrs_keys)
-            entry_attrs_normalized: set[str] = (
-                set(attrs_norm_result) if isinstance(attrs_norm_result, list) else set()
+            entry_attrs_normalized: set[str] = u.when(
+                condition=u.is_type(attrs_norm_result, list),
+                then_value=set(attrs_norm_result),
+                else_value=set(),
             )
             return any(u.normalize(attr, entry_attrs_normalized) for attr in attributes)
 
@@ -1068,14 +1046,13 @@ class FlextLdifFilters(
             if exclusion_info is None:
                 return False
 
-            # Handle both model and dict formats
-            if isinstance(exclusion_info, FlextLdifModels.ExclusionInfo):
-                return exclusion_info.excluded
-            if FlextRuntime.is_dict_like(exclusion_info):
-                excluded = exclusion_info.get("excluded")
-                return isinstance(excluded, bool) and excluded
-
-            return False
+            # Handle both model and dict formats using u.match
+            return u.match(
+                exclusion_info,
+                (lambda x: u.is_type(x, FlextLdifModels.ExclusionInfo), lambda x: x.excluded),
+                (lambda x: FlextRuntime.is_dict_like(x), lambda x: u.is_type(x.get("excluded"), bool) and x.get("excluded")),
+                default=False,
+            )
 
         @staticmethod
         def get_exclusion_reason(entry: FlextLdifModels.Entry) -> str | None:
@@ -1091,14 +1068,13 @@ class FlextLdifFilters(
             if not FlextLdifFilters.Exclusion.is_entry_excluded(entry):
                 return None
 
-            # Handle both model and dict formats
-            if isinstance(exclusion_info, FlextLdifModels.ExclusionInfo):
-                return exclusion_info.exclusion_reason
-            if FlextRuntime.is_dict_like(exclusion_info):
-                reason = exclusion_info.get("exclusion_reason")
-                return reason if isinstance(reason, str) else None
-
-            return None
+            # Handle both model and dict formats using u.match
+            return u.match(
+                exclusion_info,
+                (lambda x: u.is_type(x, FlextLdifModels.ExclusionInfo), lambda x: x.exclusion_reason),
+                (lambda x: FlextRuntime.is_dict_like(x), lambda x: u.take(x, "exclusion_reason", as_type=str)),
+                default=None,
+            )
 
         @staticmethod
         def matches_dn_pattern(
@@ -1131,11 +1107,11 @@ class FlextLdifFilters(
             if not patterns:
                 return False
 
-            # Extract DN string (supports both DN model and str)
-            dn_str = (
-                FlextLdifUtilities.DN.get_dn_value(dn)
-                if isinstance(dn, (str, FlextLdifModels.DistinguishedName))
-                else str(dn)
+            # Extract DN string (supports both DN model and str) using u.when
+            dn_str = u.when(
+                condition=u.is_type(dn, str, FlextLdifModels.DistinguishedName),
+                then_value=FlextLdifUtilities.DN.get_dn_value(dn),
+                else_value=str(dn),
             )
 
             # First validate ALL patterns before matching
@@ -1168,7 +1144,7 @@ class FlextLdifFilters(
         def virtual_delete(
             entries: list[FlextLdifModels.Entry],
             dn_pattern: str | None = None,
-        ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+        ) -> r[dict[str, list[FlextLdifModels.Entry]]]:
             """Perform virtual (soft) delete.
 
             Non-destructive operation that marks entries for deletion by
@@ -1184,7 +1160,7 @@ class FlextLdifFilters(
             """
             try:
                 if not entries:
-                    return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(
+                    return r[dict[str, list[FlextLdifModels.Entry]]].ok(
                         {
                             "active": [],
                             "virtual_deleted": [],
@@ -1231,7 +1207,7 @@ class FlextLdifFilters(
                     else:
                         active_entries.append(entry)
 
-                return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(
+                return r[dict[str, list[FlextLdifModels.Entry]]].ok(
                     {
                         "active": active_entries,
                         "virtual_deleted": deleted_entries,
@@ -1240,14 +1216,14 @@ class FlextLdifFilters(
                 )
 
             except Exception as e:
-                return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
+                return r[dict[str, list[FlextLdifModels.Entry]]].fail(
                     f"Virtual delete failed: {e}",
                 )
 
         @staticmethod
         def restore_virtual_deleted(
             entries: list[FlextLdifModels.Entry],
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        ) -> r[list[FlextLdifModels.Entry]]:
             """Restore virtually deleted entries back to active state.
 
             Removes virtual delete markers and restores entries to active
@@ -1275,10 +1251,10 @@ class FlextLdifFilters(
                     restored_entry = entry.model_copy(update={"metadata": new_metadata})
                     restored_entries.append(restored_entry)
 
-                return FlextResult[list[FlextLdifModels.Entry]].ok(restored_entries)
+                return r[list[FlextLdifModels.Entry]].ok(restored_entries)
 
             except Exception as e:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"Restore virtual deleted failed: {e}",
                 )
 
@@ -1370,10 +1346,10 @@ class FlextLdifFilters(
     # CORE EXECUTION (V2 Universal Engine)
     # ════════════════════════════════════════════════════════════════════════
 
-    def _execute_dn_filter(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _execute_dn_filter(self) -> r[list[FlextLdifModels.Entry]]:
         """Execute DN pattern filter."""
         if self.dn_pattern is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 "dn_pattern is required for dn filter",
             )
         return self.Filter.filter_by_dn(
@@ -1383,10 +1359,10 @@ class FlextLdifFilters(
             mark_excluded=self.mark_excluded,
         )
 
-    def _execute_objectclass_filter(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _execute_objectclass_filter(self) -> r[list[FlextLdifModels.Entry]]:
         """Execute objectClass filter."""
         if self.objectclass is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 "objectclass is required for objectclass filter",
             )
         return self.Filter.filter_by_objectclass(
@@ -1397,10 +1373,10 @@ class FlextLdifFilters(
             mark_excluded=self.mark_excluded,
         )
 
-    def _execute_attributes_filter(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _execute_attributes_filter(self) -> r[list[FlextLdifModels.Entry]]:
         """Execute attributes filter."""
         if self.attributes is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 "attributes is required for attributes filter",
             )
         return self.Filter.filter_by_attributes(
@@ -1411,24 +1387,24 @@ class FlextLdifFilters(
             mark_excluded=self.mark_excluded,
         )
 
-    def _execute_base_dn_filter(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _execute_base_dn_filter(self) -> r[list[FlextLdifModels.Entry]]:
         """Execute base DN filter."""
         if self.base_dn is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 "base_dn is required for base_dn filter",
             )
         included, _excluded = self.filter_by_base_dn(
             self.entries,
             self.base_dn,
         )
-        return FlextResult[list[FlextLdifModels.Entry]].ok(included)
+        return r[list[FlextLdifModels.Entry]].ok(included)
 
     def execute(
         self,
-    ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
+    ) -> r[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute filtering based on filter_criteria and mode."""
         if not self.entries:
-            return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].ok(
+            return r[FlextLdifTypes.Models.ServiceResponseTypes].ok(
                 FlextLdifModels.EntryResult.empty(),  # type: ignore[arg-type]
             )
 
@@ -1447,13 +1423,14 @@ class FlextLdifFilters(
                 case "base_dn":
                     result = self._execute_base_dn_filter()
                 case _:
-                    return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].fail(
+                    return r[FlextLdifTypes.Models.ServiceResponseTypes].fail(
                         f"Unknown filter_criteria: {self.filter_criteria}",
                     )
 
             # Emit FilterEvent ALWAYS when filtering succeeded (MANDATORY - eventos obrigatórios)
-            if result.is_success:
-                filtered_entries = result.unwrap()
+            # Use u.val() for unified result handling (DSL pattern)
+            filtered_entries = u.val(result)
+            if filtered_entries is not None:
                 filter_duration_ms = (time.perf_counter() - start_time) * 1000.0
                 entries_after = len(filtered_entries)
 
@@ -1488,17 +1465,17 @@ class FlextLdifFilters(
                 entry_result = FlextLdifModels.EntryResult.from_entries(
                     filtered_entries,
                 )
-                return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].ok(
+                return r[FlextLdifTypes.Models.ServiceResponseTypes].ok(
                     entry_result,  # type: ignore[arg-type]
                 )
 
             # If result is failure, propagate the error
-            return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].fail(
+            return r[FlextLdifTypes.Models.ServiceResponseTypes].fail(
                 result.error or "Filter operation failed",
             )
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Models.ServiceResponseTypes].fail(
+            return r[FlextLdifTypes.Models.ServiceResponseTypes].fail(
                 f"Filter failed: {e}",
             )
 
@@ -1533,7 +1510,7 @@ class FlextLdifFilters(
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         match_all: bool = False,
         mark_excluded: bool = False,
-    ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
+    ) -> r[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Quick filter with FlextResult for composable/chainable operations."""
         instance = cls.model_validate({
             "entries": entries,
@@ -1638,7 +1615,7 @@ class FlextLdifFilters(
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern."""
         # Use Filter directly - no intermediate helper
         return cls.Filter.filter_by_dn(
@@ -1657,7 +1634,7 @@ class FlextLdifFilters(
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass."""
         # Use Filter directly - no intermediate helper
         return cls.Filter.filter_by_objectclass(
@@ -1677,7 +1654,7 @@ class FlextLdifFilters(
         match_all: bool = False,
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute presence."""
         # Use Filter directly - no intermediate helper
         return cls.Filter.filter_by_attributes(
@@ -1714,7 +1691,7 @@ class FlextLdifFilters(
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern.
 
         Prefer using by_dn() classmethod for consistency.
@@ -1734,7 +1711,7 @@ class FlextLdifFilters(
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass.
 
         Prefer using by_objectclass() classmethod for consistency.
@@ -1755,7 +1732,7 @@ class FlextLdifFilters(
         match_all: bool = False,
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute presence.
 
         Prefer using by_attributes() classmethod for consistency.
@@ -1781,7 +1758,7 @@ class FlextLdifFilters(
         cls,
         entries: list[FlextLdifModels.Entry],
         acl_attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Extract entries with ACL attributes.
 
         DELEGATED TO: FlextLdifAcl.extract_acl_entries()
@@ -1794,7 +1771,7 @@ class FlextLdifFilters(
         cls,
         entry: FlextLdifModels.Entry,
         attributes: list[str],
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Remove attributes from entry.
 
         DELEGATED TO: FlextLdifEntries.remove_attributes()
@@ -1807,7 +1784,7 @@ class FlextLdifFilters(
         cls,
         entry: FlextLdifModels.Entry,
         objectclasses: list[str],
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Remove objectClasses from entry.
 
         DELEGATED TO: FlextLdifEntries.remove_objectclasses()
@@ -1822,7 +1799,7 @@ class FlextLdifFilters(
         attributes: list[str],
         *,
         reason: str = "",
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Remove attributes and record transformation tracking in metadata.
 
         Combines attribute removal with metadata tracking for transformation comments.
@@ -1846,7 +1823,7 @@ class FlextLdifFilters(
 
         """
         if not attributes:
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            return r[FlextLdifModels.Entry].ok(entry)
 
         # Track each attribute removal in metadata for transformation comments
         # Business Rule: Use "rfc" as default server type for filter operations.
@@ -1870,10 +1847,10 @@ class FlextLdifFilters(
             for key, values in updated_entry.attributes.items():
                 if u.normalize(key, attr_lower):
                     matching_attr = key
-                    original_values = (
-                        list(values)
-                        if isinstance(values, (list, tuple))
-                        else [str(values)]
+                    original_values = u.when(
+                        condition=u.is_type(values, list, tuple),
+                        then_value=list(values),
+                        else_value=[str(values)],
                     )
                     break
 
@@ -1891,8 +1868,9 @@ class FlextLdifFilters(
 
             # Remove the attribute using standard removal
             remove_result = cls.remove_attributes(updated_entry, [attr_name])
-            if remove_result.is_success:
-                updated_entry = remove_result.unwrap()
+            # Use u.val() for unified result handling (DSL pattern)
+            updated_entry = u.val(remove_result)
+            if updated_entry is not None:
                 # Update metadata reference for next iteration
                 if updated_entry.metadata:
                     current_metadata = updated_entry.metadata
@@ -1903,7 +1881,7 @@ class FlextLdifFilters(
                 update={"metadata": current_metadata},
             )
 
-        return FlextResult[FlextLdifModels.Entry].ok(updated_entry)
+        return r[FlextLdifModels.Entry].ok(updated_entry)
 
     @classmethod
     def filter_entry(
@@ -1914,7 +1892,7 @@ class FlextLdifFilters(
         *,
         track_removed: bool = False,
         removal_reason: str = "",
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Unified entry filtering for both attributes and objectClasses.
 
         Convenience method that removes forbidden attributes and objectClasses
@@ -1955,9 +1933,10 @@ class FlextLdifFilters(
                     filtered_entry,
                     forbidden_attributes,
                 )
-            if not remove_result.is_success:
+            # Use u.val() for unified result handling (DSL pattern)
+            filtered_entry = u.val(remove_result)
+            if filtered_entry is None:
                 return remove_result
-            filtered_entry = remove_result.unwrap()
 
         # Remove objectClasses
         if forbidden_objectclasses:
@@ -1969,7 +1948,7 @@ class FlextLdifFilters(
                 return oc_result
             filtered_entry = oc_result.unwrap()
 
-        return FlextResult[FlextLdifModels.Entry].ok(filtered_entry)
+        return r[FlextLdifModels.Entry].ok(filtered_entry)
 
     @classmethod
     def filter_acls_by_base_dn(
@@ -2166,30 +2145,36 @@ class FlextLdifFilters(
         allowed_oids: dict[str, list[str]],
     ) -> tuple[list[str], ...]:
         """Extract allowed OIDs for each schema type from config dict."""
-        attr_oids = allowed_oids.get("allowed_attribute_oids")
-        if attr_oids is None:
-            attr_oids = allowed_oids.get("attributes")
-        allowed_attr_oids = attr_oids if attr_oids is not None else []
+        # Use u.take() with fallback pattern (DSL pattern)
+        attr_oids = u.maybe(
+            u.take(allowed_oids, "allowed_attribute_oids"),
+            default=u.take(allowed_oids, "attributes"),
+        )
+        allowed_attr_oids = u.maybe(attr_oids, default=[])
 
-        oc_oids = allowed_oids.get("allowed_objectclass_oids")
-        if oc_oids is None:
-            oc_oids = allowed_oids.get("objectclasses")
-        allowed_oc_oids = oc_oids if oc_oids is not None else []
+        oc_oids = u.maybe(
+            u.take(allowed_oids, "allowed_objectclass_oids"),
+            default=u.take(allowed_oids, "objectclasses"),
+        )
+        allowed_oc_oids = u.maybe(oc_oids, default=[])
 
-        mr_oids = allowed_oids.get("allowed_matchingrule_oids")
-        if mr_oids is None:
-            mr_oids = allowed_oids.get("matchingrules")
-        allowed_mr_oids = mr_oids if mr_oids is not None else []
+        mr_oids = u.maybe(
+            u.take(allowed_oids, "allowed_matchingrule_oids"),
+            default=u.take(allowed_oids, "matchingrules"),
+        )
+        allowed_mr_oids = u.maybe(mr_oids, default=[])
 
-        mru_oids = allowed_oids.get("allowed_matchingruleuse_oids")
-        if mru_oids is None:
-            mru_oids = allowed_oids.get("matchingruleuse")
-        allowed_mru_oids = mru_oids if mru_oids is not None else []
+        mru_oids = u.maybe(
+            u.take(allowed_oids, "allowed_matchingruleuse_oids"),
+            default=u.take(allowed_oids, "matchingruleuse"),
+        )
+        allowed_mru_oids = u.maybe(mru_oids, default=[])
 
-        ls_oids = allowed_oids.get("allowed_ldapsyntaxes_oids")
-        if ls_oids is None:
-            ls_oids = allowed_oids.get("ldapsyntaxes")
-        allowed_ls_oids = ls_oids if ls_oids is not None else []
+        ls_oids = u.maybe(
+            u.take(allowed_oids, "allowed_ldapsyntaxes_oids"),
+            default=u.take(allowed_oids, "ldapsyntaxes"),
+        )
+        allowed_ls_oids = u.maybe(ls_oids, default=[])
 
         return (
             allowed_attr_oids,
@@ -2223,13 +2208,14 @@ class FlextLdifFilters(
     @staticmethod
     def _has_remaining_definitions(attrs_copy: dict[str, list[str]]) -> bool:
         """Check if entry has any schema definitions remaining after filtering."""
+        # Use u.maybe() with u.take() for fallback pattern (DSL pattern)
         return any(
             [
-                attrs_copy.get("attributeTypes") or attrs_copy.get("attributetypes"),
-                attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses"),
-                attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules"),
-                attrs_copy.get("matchingRuleUse") or attrs_copy.get("matchingruleuse"),
-                attrs_copy.get("ldapSyntaxes") or attrs_copy.get("ldapsyntaxes"),
+                u.maybe(u.take(attrs_copy, "attributeTypes"), default=u.take(attrs_copy, "attributetypes")),
+                u.maybe(u.take(attrs_copy, "objectClasses"), default=u.take(attrs_copy, "objectclasses")),
+                u.maybe(u.take(attrs_copy, "matchingRules"), default=u.take(attrs_copy, "matchingrules")),
+                u.maybe(u.take(attrs_copy, "matchingRuleUse"), default=u.take(attrs_copy, "matchingruleuse")),
+                u.maybe(u.take(attrs_copy, "ldapSyntaxes"), default=u.take(attrs_copy, "ldapsyntaxes")),
             ],
         )
 
@@ -2238,7 +2224,7 @@ class FlextLdifFilters(
         cls,
         entries: list[FlextLdifModels.Entry],
         allowed_oids: dict[str, list[str]],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter schema entries by allowed OID patterns.
 
         Filters INDIVIDUAL DEFINITIONS within schema attributes (attributeTypes,
@@ -2250,7 +2236,7 @@ class FlextLdifFilters(
         each attribute to keep only whitelisted ones.
         """
         if not entries or not allowed_oids:
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            return r[list[FlextLdifModels.Entry]].ok(entries)
 
         # Extract allowed OIDs for each schema type (all 4 types: attributetypes, objectclasses, matchingrules, ldapsyntaxes)
         (
@@ -2306,14 +2292,13 @@ class FlextLdifFilters(
                     attributes=attrs_typed,
                     entry_metadata=getattr(entry, "entry_metadata", None),
                 )
+                # Use u.when() with u.is_type() for unified result handling (DSL pattern)
                 if filtered_entry_result.is_success:
-                    # Entry.create() returns Domain.Entry, which is compatible with Models.Entry
-                    # Models.Entry extends Domain.Entry, so this cast is safe
-                    new_entry = filtered_entry_result.unwrap()
-                    if isinstance(new_entry, FlextLdifModels.Entry):
-                        filtered.append(new_entry)
+                    entry = filtered_entry_result.value
+                    if u.is_type(entry, FlextLdifModels.Entry):
+                        filtered.append(entry)
 
-        return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+        return r[list[FlextLdifModels.Entry]].ok(filtered)
 
     @staticmethod
     def _filter_definitions(
@@ -2335,8 +2320,11 @@ class FlextLdifFilters(
             Returns empty list if allowed_oids is empty.
 
         """
-        if isinstance(definitions, str):
-            definitions = [definitions]
+        definitions = u.when(
+            condition=u.is_type(definitions, str),
+            then_value=[definitions],
+            else_value=definitions,
+        )
 
         # If no allowed OIDs, return empty list (nothing is allowed)
         if not allowed_oids:
@@ -2368,10 +2356,10 @@ class FlextLdifFilters(
     # PRIVATE IMPLEMENTATION (DRY Core)
     # ════════════════════════════════════════════════════════════════════════
 
-    def _execute_filter_by_dn(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _execute_filter_by_dn(self) -> r[list[FlextLdifModels.Entry]]:
         """Filter by DN pattern."""
         if not self.dn_pattern:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 "dn_pattern required for dn filter",
             )
         return self.Filter.filter_by_dn(
@@ -2381,7 +2369,7 @@ class FlextLdifFilters(
             mark_excluded=self.mark_excluded,
         )
 
-    def _apply_exclude_filter(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _apply_exclude_filter(self) -> r[list[FlextLdifModels.Entry]]:
         """Apply invert/exclude filter logic.
 
         Business Rule: Exclude filter inverts the mode temporarily to get the
@@ -2393,19 +2381,18 @@ class FlextLdifFilters(
         used in filter method calls.
         """
         try:
-            # Compute inverted mode without mutating frozen field
-            # Business Rule: Inversion toggles between include/exclude modes
-            inverted_mode = (
-                FlextLdifConstants.Modes.EXCLUDE
-                if self.mode == FlextLdifConstants.Modes.INCLUDE
-                else FlextLdifConstants.Modes.INCLUDE
+            # Compute inverted mode using u.when (DSL pattern)
+            inverted_mode = u.when(
+                condition=self.mode == FlextLdifConstants.Modes.INCLUDE,
+                then_value=FlextLdifConstants.Modes.EXCLUDE,
+                else_value=FlextLdifConstants.Modes.INCLUDE,
             )
 
             # Apply the appropriate filter with inverted mode
             match self.filter_criteria:
                 case "dn":
                     if self.dn_pattern is None:
-                        result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                        result = r[list[FlextLdifModels.Entry]].fail(
                             "dn_pattern is required",
                         )
                     else:
@@ -2418,7 +2405,7 @@ class FlextLdifFilters(
                         )
                 case "objectclass":
                     if self.objectclass is None:
-                        result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                        result = r[list[FlextLdifModels.Entry]].fail(
                             "objectclass is required",
                         )
                     else:
@@ -2432,7 +2419,7 @@ class FlextLdifFilters(
                         )
                 case "attributes":
                     if self.attributes is None:
-                        result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                        result = r[list[FlextLdifModels.Entry]].fail(
                             "attributes is required",
                         )
                     else:
@@ -2445,13 +2432,13 @@ class FlextLdifFilters(
                             mark_excluded=self.mark_excluded,
                         )
                 case _:
-                    result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                    result = r[list[FlextLdifModels.Entry]].fail(
                         f"Cannot exclude with criteria: {self.filter_criteria}",
                     )
 
             return result
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Exclude failed: {e}")
+            return r[list[FlextLdifModels.Entry]].fail(f"Exclude failed: {e}")
 
     @staticmethod
     def is_entry_excluded(entry: FlextLdifModels.Entry) -> bool:
@@ -2487,22 +2474,18 @@ class FlextLdifFilters(
         Dict input is converted to WhitelistRules model before processing.
         None input delegates to Categorizer with None.
         """
-        # Convert dict to model if needed using isinstance for type safety
-        rules_model: FlextLdifModels.WhitelistRules | None
-        if isinstance(whitelist_rules, dict):
-            blocked_objectclasses = whitelist_rules.get("blocked_objectclasses")
-            rules_model = FlextLdifModels.WhitelistRules(
-                blocked_objectclasses=[str(v) for v in blocked_objectclasses]
-                if isinstance(blocked_objectclasses, list)
-                else [],
-            )
-        elif whitelist_rules is None:
-            rules_model = None
-        elif isinstance(whitelist_rules, FlextLdifModels.WhitelistRules):
-            rules_model = whitelist_rules
-        else:
-            # Fallback: create empty WhitelistRules
-            rules_model = FlextLdifModels.WhitelistRules()
+        # Convert dict to model using u.match for unified type handling
+        rules_model: FlextLdifModels.WhitelistRules | None = u.match(
+            whitelist_rules,
+            (lambda x: u.is_type(x, dict), lambda x: FlextLdifModels.WhitelistRules(
+                blocked_objectclasses=cast("list[str]", u.ensure(
+                    u.take(x, "blocked_objectclasses"), target_type="str_list", default=[]
+                ))
+            )),
+            (lambda x: x is None, lambda _: None),
+            (lambda x: u.is_type(x, FlextLdifModels.WhitelistRules), lambda x: x),
+            default=FlextLdifModels.WhitelistRules(),
+        )
 
         return FlextLdifFilters.Categorizer.check_blocked_objectclasses(
             entry,
@@ -2520,74 +2503,38 @@ class FlextLdifFilters(
         Business Rule: Accepts CategoryRules model or dict for backward compatibility.
         Dict input is converted to CategoryRules model before validation.
         """
-        # Convert dict to model if needed using isinstance for type safety
-        if isinstance(rules, dict):
-            # Type narrowing with isinstance for safe access
-            user_dn_patterns = rules.get("user_dn_patterns") or rules.get(
-                "users",
-            )
-            group_dn_patterns = rules.get("group_dn_patterns") or rules.get(
-                "groups",
-            )
-            hierarchy_dn_patterns = rules.get(
-                "hierarchy_dn_patterns",
-            ) or rules.get("hierarchy")
-            schema_dn_patterns = rules.get("schema_dn_patterns") or rules.get(
-                "schema",
-            )
-            user_ocs_raw: list[str] | None = rules.get("user_objectclasses", [])
-            user_objectclasses: list[str] = (
-                user_ocs_raw if isinstance(user_ocs_raw, list) else []
-            )
-            group_ocs_raw: list[str] | None = rules.get("group_objectclasses", [])
-            group_objectclasses: list[str] = (
-                group_ocs_raw if isinstance(group_ocs_raw, list) else []
-            )
-            hierarchy_ocs_raw: list[str] | None = rules.get(
-                "hierarchy_objectclasses", []
-            )
-            hierarchy_objectclasses: list[str] = (
-                hierarchy_ocs_raw if isinstance(hierarchy_ocs_raw, list) else []
-            )
-            acl_attributes_raw = rules.get("acl_attributes", None)
-            acl_fallback = rules.get("acl", None)
-            acl_attributes: list[str] | None = (
-                acl_attributes_raw
-                if acl_attributes_raw is not None
-                and isinstance(acl_attributes_raw, list)
-                else (acl_fallback if isinstance(acl_fallback, list) else None)
-            )
-            rules_model = FlextLdifModels.CategoryRules(
-                user_dn_patterns=list(user_dn_patterns)
-                if isinstance(user_dn_patterns, list)
-                else [],
-                group_dn_patterns=list(group_dn_patterns)
-                if isinstance(group_dn_patterns, list)
-                else [],
-                hierarchy_dn_patterns=list(hierarchy_dn_patterns)
-                if isinstance(hierarchy_dn_patterns, list)
-                else [],
-                schema_dn_patterns=list(schema_dn_patterns)
-                if isinstance(schema_dn_patterns, list)
-                else [],
-                user_objectclasses=list(user_objectclasses)
-                if isinstance(user_objectclasses, list)
-                else [],
-                group_objectclasses=list(group_objectclasses)
-                if isinstance(group_objectclasses, list)
-                else [],
-                hierarchy_objectclasses=list(hierarchy_objectclasses)
-                if isinstance(hierarchy_objectclasses, list)
-                else [],
-                acl_attributes=list(acl_attributes)
-                if isinstance(acl_attributes, list)
-                else [],
-            )
-        elif isinstance(rules, FlextLdifModels.CategoryRules):
-            rules_model = rules
-        else:
-            # Fallback: create empty CategoryRules
-            rules_model = FlextLdifModels.CategoryRules()
+        # Convert dict to model using u.match and u.fields for unified extraction
+        rules_model: FlextLdifModels.CategoryRules = u.match(
+            rules,
+            (lambda x: u.is_type(x, dict), lambda x: FlextLdifModels.CategoryRules(
+                user_dn_patterns=cast("list[str]", u.ensure(
+                    u.take(x, "user_dn_patterns") or u.take(x, "users"), target_type="str_list", default=[]
+                )),
+                group_dn_patterns=cast("list[str]", u.ensure(
+                    u.take(x, "group_dn_patterns") or u.take(x, "groups"), target_type="str_list", default=[]
+                )),
+                hierarchy_dn_patterns=cast("list[str]", u.ensure(
+                    u.take(x, "hierarchy_dn_patterns") or u.take(x, "hierarchy"), target_type="str_list", default=[]
+                )),
+                schema_dn_patterns=cast("list[str]", u.ensure(
+                    u.take(x, "schema_dn_patterns") or u.take(x, "schema"), target_type="str_list", default=[]
+                )),
+                user_objectclasses=cast("list[str]", u.ensure(
+                    u.take(x, "user_objectclasses"), target_type="str_list", default=[]
+                )),
+                group_objectclasses=cast("list[str]", u.ensure(
+                    u.take(x, "group_objectclasses"), target_type="str_list", default=[]
+                )),
+                hierarchy_objectclasses=cast("list[str]", u.ensure(
+                    u.take(x, "hierarchy_objectclasses"), target_type="str_list", default=[]
+                )),
+                acl_attributes=cast("list[str]", u.ensure(
+                    u.take(x, "acl_attributes") or u.take(x, "acl"), target_type="str_list", default=[]
+                )),
+            )),
+            (lambda x: u.is_type(x, FlextLdifModels.CategoryRules), lambda x: x),
+            default=FlextLdifModels.CategoryRules(),
+        )
 
         return FlextLdifFilters.Categorizer.validate_category_dn_pattern(
             entry,
@@ -2640,14 +2587,15 @@ class FlextLdifFilters(
 
         """
         rules_result = FlextLdifFilters._normalize_category_rules(rules)
-        if rules_result.is_failure:
+        # Use u.val() for unified result handling (DSL pattern)
+        normalized_rules = u.val(rules_result)
+        if normalized_rules is None:
             # Business Rule: Invalid rules result in rejected category with error reason
             # StrEnum.value is "rejected" which satisfies CategoryLiteral directly
             return (
                 FlextLdifConstants.Categories.REJECTED.value,
                 rules_result.error,
             )
-        normalized_rules = rules_result.unwrap()
 
         # Check for blocked objectClasses first using helper
         is_blocked, reason = FlextLdifFilters.Categorizer.check_blocked_objectclasses(
@@ -2731,7 +2679,7 @@ class FlextLdifFilters(
     def filter_entry_attributes(
         entry: FlextLdifModels.Entry,
         attributes_to_remove: list[str],
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Mark attributes for removal in entry metadata (SRP - never removes)."""
         return FlextLdifFilters.Transformer.filter_entry_attributes(
             entry,
@@ -2742,7 +2690,7 @@ class FlextLdifFilters(
     def filter_entry_objectclasses(
         entry: FlextLdifModels.Entry,
         objectclasses_to_remove: list[str],
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Mark objectClasses for removal in entry metadata (SRP - never removes)."""
         return FlextLdifFilters.Transformer.filter_entry_objectclasses(
             entry,
@@ -2754,14 +2702,14 @@ class FlextLdifFilters(
         entries: list[FlextLdifModels.Entry],
         _filter_criteria: str | None = None,  # Reserved for future use
         _dn_pattern: str | None = None,
-    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+    ) -> r[dict[str, list[FlextLdifModels.Entry]]]:
         """Perform virtual (soft) delete - marks entries as deleted."""
         return FlextLdifFilters.Exclusion.virtual_delete(entries)
 
     @staticmethod
     def restore_virtual_deleted(
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Restore virtually deleted entries back to active state."""
         return FlextLdifFilters.Exclusion.restore_virtual_deleted(entries)
 
@@ -2771,7 +2719,7 @@ class FlextLdifFilters(
         objectclass: str | None = None,
         dn_pattern: str | None = None,
         attributes: dict[str, str | None] | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Apply standard filters (objectclass, DN pattern, attributes) to entries.
 
         Internal helper method to reduce complexity in filter() method.
@@ -2793,26 +2741,32 @@ class FlextLdifFilters(
                 objectclass,
                 mark_excluded=False,
             )
-            if not filter_result.is_success:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+            # Use u.val() for unified result handling (DSL pattern)
+            entries = u.val(filter_result)
+            if entries is None:
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"Objectclass filter failed: {filter_result.error}",
                 )
-            entries = filter_result.unwrap()
 
         # Apply dn_pattern filter if provided
         if dn_pattern is not None:
-            # Convert simple substring pattern to fnmatch pattern
-            fnmatch_pattern = f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
+            # Convert simple substring pattern to fnmatch pattern using u.when
+            fnmatch_pattern = u.when(
+                condition="*" not in dn_pattern,
+                then_value=f"*{dn_pattern}*",
+                else_value=dn_pattern,
+            )
             filter_result = FlextLdifFilters.by_dn(
                 entries,
                 fnmatch_pattern,
                 mark_excluded=False,
             )
-            if not filter_result.is_success:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+            # Use u.val() for unified result handling (DSL pattern)
+            entries = u.val(filter_result)
+            if entries is None:
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"DN pattern filter failed: {filter_result.error}",
                 )
-            entries = filter_result.unwrap()
 
         # Apply attributes filter if provided
         if attributes is not None:
@@ -2822,13 +2776,14 @@ class FlextLdifFilters(
                 attr_list,
                 mark_excluded=False,
             )
-            if not filter_result.is_success:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+            # Use u.val() for unified result handling (DSL pattern)
+            entries = u.val(filter_result)
+            if entries is None:
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"Attributes filter failed: {filter_result.error}",
                 )
-            entries = filter_result.unwrap()
 
-        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+        return r[list[FlextLdifModels.Entry]].ok(entries)
 
 
 __all__ = ["FlextLdifFilters"]

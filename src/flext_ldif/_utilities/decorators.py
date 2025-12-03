@@ -15,7 +15,7 @@ Usage:
 
     class CustomSchema(FlextLdifServersRfc.Schema):
         @FlextLdifUtilities.Decorators.attach_parse_metadata("custom_server")
-        def _parse_attribute(self, attr_definition: str) -> FlextResult[SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> r[SchemaAttribute]:
             # Parse logic here...
             result = self._do_parse(attr_definition)
 """
@@ -26,7 +26,7 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from functools import wraps
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 from flext_core.typings import T
 from flext_core.utilities import FlextUtilities
 
@@ -37,7 +37,7 @@ from flext_ldif.protocols import FlextLdifProtocols
 
 # Aliases for simplified usage - after all imports
 u = FlextUtilities  # Utilities
-r = FlextResult  # Result
+# r is already imported from flext_core
 
 logger = FlextLogger(__name__)
 
@@ -149,7 +149,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def attach_parse_metadata(
         quirk_type: str,
-    ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
+    ) -> Callable[[Callable[..., r[T]]], Callable[..., r[T]]]:
         """Decorator to automatically attach metadata to parse method results.
 
         Wraps parse_attribute, parse_objectclass, parse_acl, parse_entry methods
@@ -163,7 +163,7 @@ class FlextLdifUtilitiesDecorators:
 
         Example:
             @attach_parse_metadata("oid")
-            def _parse_attribute(self, definition: str) -> FlextResult[SchemaAttribute]:
+            def _parse_attribute(self, definition: str) -> r[SchemaAttribute]:
                 result = ... # Parse logic
                 return result
 
@@ -172,8 +172,8 @@ class FlextLdifUtilitiesDecorators:
         """
 
         def decorator(
-            func: Callable[..., FlextResult[T]],
-        ) -> Callable[..., FlextResult[T]]:
+            func: Callable[..., r[T]],
+        ) -> Callable[..., r[T]]:
             """Wrapper function for parse methods."""
 
             @wraps(func)
@@ -183,7 +183,7 @@ class FlextLdifUtilitiesDecorators:
                 | FlextLdifProtocols.Quirks.EntryProtocol,
                 *args: str | float | bool | None,
                 **kwargs: str | float | bool | list[str] | None,
-            ) -> FlextResult[T]:
+            ) -> r[T]:
                 """Call original function and attach metadata to result."""
                 result = func(self, *args, **kwargs)
 
@@ -222,7 +222,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def attach_write_metadata(
         _quirk_type: str,
-    ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
+    ) -> Callable[[Callable[..., r[T]]], Callable[..., r[T]]]:
         """Decorator to automatically attach metadata to write method results.
 
         Wraps write_attribute, write_objectclass, write_acl, write_entry methods
@@ -236,15 +236,15 @@ class FlextLdifUtilitiesDecorators:
 
         Example:
             @attach_write_metadata("oid")
-            def _write_attribute(self, definition: SchemaAttribute) -> FlextResult[str]:
+            def _write_attribute(self, definition: SchemaAttribute) -> r[str]:
                 result = ... # Write logic
                 return result
 
         """
 
         def decorator(
-            func: Callable[..., FlextResult[T]],
-        ) -> Callable[..., FlextResult[T]]:
+            func: Callable[..., r[T]],
+        ) -> Callable[..., r[T]]:
             """Wrapper function for write methods."""
 
             @wraps(func)
@@ -261,7 +261,7 @@ class FlextLdifUtilitiesDecorators:
                     | str
                 ),
                 **kwargs: str | float | bool | list[str] | None,
-            ) -> FlextResult[T]:
+            ) -> r[T]:
                 """Call original function - write methods don't modify inputs."""
                 # Write methods typically return strings, not models
                 # So metadata attachment would be on the input model
@@ -275,7 +275,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def _safe_operation(
         operation_name: str,
-    ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
+    ) -> Callable[[Callable[..., r[T]]], Callable[..., r[T]]]:
         """Generic decorator to wrap methods with standardized error handling.
 
         Internal helper used by safe_parse and safe_write decorators.
@@ -290,8 +290,8 @@ class FlextLdifUtilitiesDecorators:
         """
 
         def decorator(
-            func: Callable[..., FlextResult[T]],
-        ) -> Callable[..., FlextResult[T]]:
+            func: Callable[..., r[T]],
+        ) -> Callable[..., r[T]]:
             """Wrapper that adds error handling."""
 
             @wraps(func)
@@ -301,7 +301,7 @@ class FlextLdifUtilitiesDecorators:
                 | FlextLdifProtocols.Quirks.EntryProtocol,
                 *args: str | float | bool | None,
                 **kwargs: str | float | bool | list[str] | None,
-            ) -> FlextResult[T]:
+            ) -> r[T]:
                 """Execute function with automatic error handling."""
                 try:
                     return func(self, *args, **kwargs)
@@ -310,7 +310,7 @@ class FlextLdifUtilitiesDecorators:
                     logger.exception(
                         error_msg,
                     )  # Log exception with traceback and message
-                    return FlextResult.fail(error_msg)
+                    return r.fail(error_msg)
 
             return wrapper
 
@@ -319,11 +319,11 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def safe_parse(
         operation_name: str,
-    ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
+    ) -> Callable[[Callable[..., r[T]]], Callable[..., r[T]]]:
         """Decorator to wrap parse methods with standardized error handling.
 
         Consolidates try/except patterns across all servers (eliminates 200-300 lines).
-        Automatically catches exceptions and returns FlextResult.fail with context.
+        Automatically catches exceptions and returns r.fail with context.
 
         Args:
             operation_name: Operation name for error messages (e.g., "OID attribute parsing")
@@ -333,9 +333,9 @@ class FlextLdifUtilitiesDecorators:
 
         Example:
             @FlextLdifUtilities.Decorators.safe_parse("OID attribute parsing")
-            def _parse_attribute(self, definition: str) -> FlextResult[SchemaAttribute]:
+            def _parse_attribute(self, definition: str) -> r[SchemaAttribute]:
                 # Parse logic - exceptions automatically caught
-                return FlextResult.ok(parsed_attr)
+                return r.ok(parsed_attr)
 
         """
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
@@ -343,7 +343,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def safe_write(
         operation_name: str,
-    ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
+    ) -> Callable[[Callable[..., r[T]]], Callable[..., r[T]]]:
         """Decorator to wrap write methods with standardized error handling.
 
         Consolidates try/except patterns for write operations across all servers.
@@ -356,9 +356,9 @@ class FlextLdifUtilitiesDecorators:
 
         Example:
             @FlextLdifUtilities.Decorators.safe_write("OID attribute writing")
-            def _write_attribute(self, attr: SchemaAttribute) -> FlextResult[str]:
+            def _write_attribute(self, attr: SchemaAttribute) -> r[str]:
                 # Write logic - exceptions automatically caught
-                return FlextResult.ok(ldif_str)
+                return r.ok(ldif_str)
 
         """
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)

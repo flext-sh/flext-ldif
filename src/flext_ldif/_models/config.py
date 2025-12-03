@@ -10,15 +10,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.result import FlextResult as r
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif.constants import FlextLdifConstants
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifModelsConfig:
@@ -1798,7 +1803,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        parse_core_hook: Callable[[str], FlextResult] = Field(
+        parse_core_hook: Callable[[str], r[object]] = Field(
             ...,
             description="Core parsing logic",
         )
@@ -1842,7 +1847,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        create_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = (
+        create_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = (
             Field(
                 ...,
                 description="Entry creation logic",
@@ -1941,7 +1946,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[FlextLdifModels.Entry], FlextResult] = Field(
+        write_entry_hook: Callable[[FlextLdifModels.Entry], r[object]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -1956,4 +1961,126 @@ class FlextLdifModelsConfig:
         entry_separator: str = Field(
             default="\n",
             description="Separator between entries",
+        )
+
+    class SortConfig(FlextModelsEntity.Value):
+        """Configuration for entry sorting.
+
+        Consolidates parameters for FlextLdifSorting.sort method.
+        Reduces function signature from 9 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        entries: list[object] = Field(
+            ...,
+            description="List of entries to sort",
+        )
+        target: str = Field(
+            default=FlextLdifConstants.SortTarget.ENTRIES.value,
+            description="Sort target (entries, attributes, acl)",
+        )
+        by: str | FlextLdifConstants.SortStrategy = Field(
+            default=FlextLdifConstants.SortStrategy.HIERARCHY,
+            description="Sort strategy",
+        )
+        traversal: str = Field(
+            default="depth-first",
+            description="Traversal order",
+        )
+        predicate: Callable[[object], str | int | float] | None = Field(
+            default=None,
+            description="Custom predicate function",
+        )
+        sort_attributes: bool = Field(
+            default=False,
+            description="Sort attributes within entries",
+        )
+        attribute_order: list[str] | None = Field(
+            default=None,
+            description="Custom attribute order",
+        )
+        sort_acl: bool = Field(
+            default=False,
+            description="Sort ACL attributes",
+        )
+        acl_attributes: list[str] | None = Field(
+            default=None,
+            description="ACL attributes to sort",
+        )
+
+    class SchemaConversionPipelineConfig(FlextModelsEntity.Value):
+        """Configuration for schema conversion pipeline.
+
+        Consolidates parameters for _process_schema_conversion_pipeline method.
+        Reduces function signature from 6 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        source_schema: object = Field(
+            ...,
+            description="Source schema quirk",
+        )
+        target_schema: object = Field(
+            ...,
+            description="Target schema quirk",
+        )
+        write_method: Callable[[object], r[str]] = Field(
+            ...,
+            description="Write method to call on source schema",
+        )
+        parse_method: Callable[[object, str], r[object]] = Field(
+            ...,
+            description="Parse method to call on target schema",
+        )
+        item_name: str = Field(
+            ...,
+            description="Item name for error messages",
+        )
+
+    class PermissionMappingConfig(FlextModelsEntity.Value):
+        """Configuration for permission mapping during ACL conversion.
+
+        Consolidates parameters for FlextLdifConversion._apply_permission_mapping method.
+        Reduces function signature from 6 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        original_acl: FlextLdifModelsDomains.Acl = Field(
+            ...,
+            description="Original ACL model",
+        )
+        converted_acl: FlextLdifModelsDomains.Acl = Field(
+            ...,
+            description="Converted ACL model (modified in-place)",
+        )
+        orig_perms_dict: dict[str, bool] = Field(
+            ...,
+            description="Original permissions dict",
+        )
+        source_server_type: str | None = Field(
+            default=None,
+            description="Source server type",
+        )
+        target_server_type: str | None = Field(
+            default=None,
+            description="Target server type",
+        )
+        converted_has_permissions: bool = Field(
+            default=False,
+            description="Whether converted ACL has permissions",
         )

@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast, override
 
-from flext_core import FlextLogger, FlextResult, t, u
+from flext_core import FlextLogger, r, t, u
 from flext_core.models import FlextModelsCollections
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -173,7 +173,7 @@ class FlextLdifCategorization(
     @override
     def execute(
         self,
-    ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
+    ) -> r[FlextLdifModels.FlexibleCategories]:
         """Execute empty categorization (placeholder - use individual methods).
 
         This service provides multiple public methods for categorization steps.
@@ -191,7 +191,7 @@ class FlextLdifCategorization(
         categories[FlextLdifConstants.Categories.GROUPS] = []
         categories[FlextLdifConstants.Categories.ACL] = []
         categories[FlextLdifConstants.Categories.REJECTED] = []
-        return FlextResult[FlextLdifModels.FlexibleCategories].ok(categories)
+        return r[FlextLdifModels.FlexibleCategories].ok(categories)
 
     @property
     def rejection_tracker(self) -> dict[str, list[FlextLdifModels.Entry]]:
@@ -246,7 +246,7 @@ class FlextLdifCategorization(
     def validate_dns(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 
         Business Rule: DN validation follows RFC 4514 specification. Invalid DNs are
@@ -345,7 +345,7 @@ class FlextLdifCategorization(
                 rejected_dns_preview=sample_rejected_dns,
             )
 
-        return FlextResult[list[FlextLdifModels.Entry]].ok(validated)
+        return r[list[FlextLdifModels.Entry]].ok(validated)
 
     def is_schema_entry(self, entry: FlextLdifModels.Entry) -> bool:  # noqa: PLR6301
         """Check if entry is a schema definition.
@@ -385,7 +385,7 @@ class FlextLdifCategorization(
     def _get_server_constants(
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[type]:
+    ) -> r[type]:
         """Get and validate server constants via FlextLdifServer registry.
 
         DELEGATED TO: FlextLdifServer.get_constants() for SRP compliance.
@@ -575,7 +575,7 @@ class FlextLdifCategorization(
             | Mapping[str, t.MetadataAttributeValue]
             | None
         ),
-    ) -> FlextResult[FlextLdifModels.CategoryRules]:
+    ) -> r[FlextLdifModels.CategoryRules]:
         """Normalize rules to CategoryRules model.
 
         Args:
@@ -586,15 +586,15 @@ class FlextLdifCategorization(
 
         """
         if isinstance(rules, FlextLdifModels.CategoryRules):
-            return FlextResult.ok(rules)
+            return r.ok(rules)
         if isinstance(rules, dict):
             try:
-                return FlextResult.ok(
+                return r.ok(
                     FlextLdifModels.CategoryRules.model_validate(rules)
                 )
             except Exception as e:
-                return FlextResult.fail(f"Invalid category rules: {e}")
-        return FlextResult.ok(self._categorization_rules)
+                return r.fail(f"Invalid category rules: {e}")
+        return r.ok(self._categorization_rules)
 
     def _match_entry_to_category(  # noqa: PLR6301
         self,
@@ -815,7 +815,7 @@ class FlextLdifCategorization(
     def categorize_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[FlextLdifModels.FlexibleCategories]:
+    ) -> r[FlextLdifModels.FlexibleCategories]:
         """Categorize entries into 6 categories.
 
         Business Rule: Batch categorization processes all entries and organizes them into
@@ -926,15 +926,15 @@ class FlextLdifCategorization(
                 categories[category].append(entry_to_append)
 
         # Log category statistics
-        for cat, cat_entries in categories.items():
+        for cat, cat_entries in u.pairs(categories):
             if cat_entries:
                 logger.info(
                     "Category entries",
                     category=cat,
-                    entries_count=len(cat_entries),
+                    entries_count=u.count(cat_entries),
                 )
 
-        return FlextResult[FlextLdifModels.FlexibleCategories].ok(categories)
+        return r[FlextLdifModels.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
         self,
@@ -969,7 +969,7 @@ class FlextLdifCategorization(
         # Collect all excluded entries from all categories
         all_excluded_entries: list[FlextLdifModels.Entry] = []
 
-        for category, entries in categories.items():
+        for category, entries in u.pairs(categories):
             if not entries:
                 continue
 
@@ -1005,9 +1005,9 @@ class FlextLdifCategorization(
                     logger.info(
                         "Applied base DN filter",
                         category=category,
-                        total_entries=len(entries),
-                        kept_entries=len(included_updated),
-                        rejected_entries=len(excluded_updated),
+                        total_entries=u.count(entries),
+                        kept_entries=u.count(included_updated),
+                        rejected_entries=u.count(excluded_updated),
                     )
             else:
                 filtered[category] = entries
@@ -1028,7 +1028,7 @@ class FlextLdifCategorization(
     def filter_schema_by_oids(
         self,
         schema_entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Filter schema entries by OID whitelist.
 
         Public method using FlextLdifFilters.filter_schema_by_oids service.
@@ -1041,7 +1041,7 @@ class FlextLdifCategorization(
 
         """
         if not self._schema_whitelist_rules:
-            return FlextResult[list[FlextLdifModels.Entry]].ok(schema_entries)
+            return r[list[FlextLdifModels.Entry]].ok(schema_entries)
 
         # Build dict from WhitelistRules model fields for filter_schema_by_oids
         allowed_oids = {
@@ -1061,15 +1061,15 @@ class FlextLdifCategorization(
             filtered = result.unwrap()
             logger.info(
                 "Applied schema OID whitelist filter",
-                total_entries=len(schema_entries),
-                filtered_entries=len(filtered),
-                removed_entries=len(schema_entries) - len(filtered),
+                total_entries=u.count(schema_entries),
+                filtered_entries=u.count(filtered),
+                removed_entries=u.count(schema_entries) - u.count(filtered),
             )
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+            return r[list[FlextLdifModels.Entry]].ok(filtered)
 
         # Error handling: result.error might be None
         error_msg = result.error or "Unknown filtering error"
-        return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
+        return r[list[FlextLdifModels.Entry]].fail(error_msg)
 
     @staticmethod
     def filter_categories_by_base_dn(
@@ -1103,7 +1103,7 @@ class FlextLdifCategorization(
             FlextLdifConstants.Categories.ACL,
         }
 
-        for category, entries in categories.items():
+        for category, entries in u.pairs(categories):
             if not entries:
                 filtered[category] = []
                 continue

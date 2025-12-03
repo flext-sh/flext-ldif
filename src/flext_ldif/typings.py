@@ -29,7 +29,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypedDict, TypeVar
 
-from flext_core import FlextResult
+from flext_core import r
 from flext_core.typings import FlextTypes, T
 
 from flext_ldif.models import FlextLdifModels
@@ -234,7 +234,7 @@ class FlextLdifTypes:
     # RESULT TYPE ALIASES - For common FlextResult return types
     # =========================================================================
 
-    type ParseResult = FlextResult[
+    type ParseResult = r[
         "FlextLdifTypes.Models.Entry"
         | list[FlextLdifTypes.Models.Entry]
         | "FlextLdifProtocols.Services.HasEntriesProtocol"
@@ -242,15 +242,15 @@ class FlextLdifTypes:
     ]
     """Type alias for parse operation results."""
 
-    type WriteResult = FlextResult[str | FlextLdifProtocols.Services.HasContentProtocol]
+    type WriteResult = r[str | FlextLdifProtocols.Services.HasContentProtocol]
     """Type alias for write operation results."""
 
-    type UnifiedParseResult = FlextResult[
+    type UnifiedParseResult = r[
         FlextLdifProtocols.Services.UnifiedParseResultProtocol
     ]
     """Type alias for unified parse results that support get_entries()."""
 
-    type UnifiedWriteResult = FlextResult[
+    type UnifiedWriteResult = r[
         FlextLdifProtocols.Services.UnifiedWriteResultProtocol
     ]
     """Type alias for unified write results that support get_content()."""

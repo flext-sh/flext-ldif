@@ -14,10 +14,10 @@ from __future__ import annotations
 
 from collections.abc import Generator, Mapping
 from dataclasses import dataclass
-from typing import Protocol, TypeVar
+from typing import TYPE_CHECKING, Protocol, TypeVar
 
 import structlog
-from flext_core import FlextResult
+from flext_core import r
 from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.config import FlextLdifModelsConfig
@@ -30,6 +30,22 @@ logger = structlog.get_logger(__name__)
 
 # Aliases for simplified usage - after all imports
 u = FlextUtilities  # Utilities
+
+# Lazy import for u_ldif to avoid circular imports
+if TYPE_CHECKING:
+    from flext_ldif.utilities import FlextLdifUtilities
+else:
+    FlextLdifUtilities = None
+
+
+def _get_u_ldif() -> object:
+    """Get FlextLdifUtilities instance (lazy import)."""
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
+
+
+u_ldif = property(lambda _: _get_u_ldif())
 
 # Type aliases
 T = TypeVar("T")
@@ -68,7 +84,7 @@ class FlextLdifUtilitiesParsers:
                 self,
                 dn: str,
                 attrs: EntryAttrs,
-            ) -> FlextResult[FlextLdifModels.Entry]: ...
+            ) -> r[FlextLdifModels.Entry]: ...
 
         class PreserveMetadataHook(Protocol):
             """Protocol for metadata preservation hooks."""
@@ -115,7 +131,7 @@ class FlextLdifUtilitiesParsers:
         def parse(
             config: FlextLdifModelsConfig.LdifContentParseConfig | None = None,
             **kwargs: object,
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        ) -> r[list[FlextLdifModels.Entry]]:
             """Parse LDIF content using hook-based configuration.
 
             Args:
@@ -144,7 +160,7 @@ class FlextLdifUtilitiesParsers:
             # Early return for empty content
             if not config.ldif_content.strip():
                 logger.debug("Empty LDIF content", server_type=config.server_type)
-                return FlextResult[list[FlextLdifModels.Entry]].ok([])
+                return r[list[FlextLdifModels.Entry]].ok([])
 
             try:
                 # Parse LDIF using provided parser or default
@@ -189,14 +205,14 @@ class FlextLdifUtilitiesParsers:
                         with_metadata=stats.with_metadata,
                     )
 
-                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+                return r[list[FlextLdifModels.Entry]].ok(entries)
 
             except Exception as e:
                 logger.exception(
                     "Failed to parse LDIF content",
                     server_type=config.server_type,
                 )
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return r[list[FlextLdifModels.Entry]].fail(
                     f"Failed to parse {config.server_type} LDIF: {e}",
                 )
 
@@ -217,16 +233,19 @@ class FlextLdifUtilitiesParsers:
                 processor=build_attr_lines,
                 on_error="skip",
             )
-            if attr_lines_result.is_success and isinstance(
-                attr_lines_result.value, list
-            ):
+            u_ldif_instance = _get_u_ldif()
+            if attr_lines_result.is_success:
+                attr_lines_raw = u_ldif_instance.as_type(  # type: ignore[attr-defined]
+                    attr_lines_result.value,
+                    target="list",
+                    default=[],
+                )
                 # Flatten nested list of lines
-                attr_lines = [
-                    line
-                    for sublist in attr_lines_result.value
-                    if isinstance(sublist, list)
-                    for line in sublist
-                ]
+                attr_lines = u_ldif_instance.process_flatten(  # type: ignore[attr-defined]
+                    attr_lines_raw,
+                    processor=lambda sublist: u_ldif_instance.as_type(sublist, target="list", default=[]),  # type: ignore[attr-defined]
+                    on_error="skip",
+                )
             else:
                 # Fallback: build lines directly from attributes
                 attr_lines = [
@@ -355,7 +374,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 definition: str,
-            ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]: ...
+            ) -> r[FlextLdifModelsDomains.SchemaAttribute]: ...
 
         class ValidateSyntaxHook(Protocol):
             """Protocol for syntax validation."""
@@ -381,7 +400,7 @@ class FlextLdifUtilitiesParsers:
             *,
             validate_syntax_hook: ValidateSyntaxHook | None = None,
             enrich_metadata_hook: EnrichMetadataHook | None = None,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+        ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
             """Parse attribute definition using hooks.
 
             Args:
@@ -411,11 +430,11 @@ class FlextLdifUtilitiesParsers:
                 if enrich_metadata_hook:
                     attribute = enrich_metadata_hook(attribute, definition)
 
-                return FlextResult[FlextLdifModelsDomains.SchemaAttribute].ok(attribute)
+                return r[FlextLdifModelsDomains.SchemaAttribute].ok(attribute)
 
             except Exception as e:
                 logger.exception("Failed to parse attribute", server_type=server_type)
-                return FlextResult[FlextLdifModelsDomains.SchemaAttribute].fail(
+                return r[FlextLdifModelsDomains.SchemaAttribute].fail(
                     f"Failed to parse attribute: {e}",
                 )
 
@@ -434,7 +453,7 @@ class FlextLdifUtilitiesParsers:
             def __call__(
                 self,
                 definition: str,
-            ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]: ...
+            ) -> r[FlextLdifModelsDomains.SchemaObjectClass]: ...
 
         class ValidateStructuralHook(Protocol):
             """Protocol for structural validation."""
@@ -460,29 +479,23 @@ class FlextLdifUtilitiesParsers:
         @staticmethod
         def normalize_sup_list(sup: object) -> list[str]:
             """Normalize sup to list[str]."""
-            # Type narrowing for FlextRuntime.is_list_like
-            if isinstance(sup, list):
-                sup_list_raw = sup
-            elif isinstance(sup, str):
-                sup_list_raw = [sup]
-            else:
-                sup_list_raw = []
-            if not isinstance(sup_list_raw, list):
-                msg = f"Expected list, got {type(sup_list_raw)}"
-                raise TypeError(msg)
-            filtered_sup = u.filter(
-                sup_list_raw,
-                predicate=lambda item: isinstance(item, str),
+            u_ldif_instance = _get_u_ldif()
+            sup_list_raw = u_ldif_instance.as_type(  # type: ignore[attr-defined]
+                sup,
+                target="list",
+                default=[sup] if u_ldif_instance.is_type(sup, str) else [],  # type: ignore[attr-defined]
             )
-            if isinstance(filtered_sup, list):
-                return [str(item) for item in filtered_sup]
-            return []
+            return u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+                sup_list_raw,
+                mapper=str,
+                predicate=lambda item: bool(item),
+            )
 
         @staticmethod
         def parse(
             config: FlextLdifModelsConfig.ObjectClassParseConfig | None = None,
             **kwargs: object,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+        ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
             """Parse objectClass definition using hooks.
 
             Args:
@@ -532,7 +545,7 @@ class FlextLdifUtilitiesParsers:
                 if config.enrich_metadata_hook:
                     config.enrich_metadata_hook(objectclass)
 
-                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(
+                return r[FlextLdifModelsDomains.SchemaObjectClass].ok(
                     objectclass,
                 )
 
@@ -540,7 +553,7 @@ class FlextLdifUtilitiesParsers:
                 logger.exception(
                     "Failed to parse objectClass", server_type=config.server_type
                 )
-                return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].fail(
+                return r[FlextLdifModelsDomains.SchemaObjectClass].fail(
                     f"Failed to parse objectClass: {e}",
                 )
 
@@ -560,7 +573,7 @@ class FlextLdifUtilitiesParsers:
                 self,
                 dn: str,
                 attrs: EntryAttrs,
-            ) -> FlextResult[FlextLdifModels.Entry]: ...
+            ) -> r[FlextLdifModels.Entry]: ...
 
         class BuildMetadataHook(Protocol):
             """Protocol for metadata building."""
@@ -587,7 +600,7 @@ class FlextLdifUtilitiesParsers:
         def parse(
             config: FlextLdifModelsConfig.EntryParseConfig | None = None,
             **kwargs: object,
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        ) -> r[FlextLdifModels.Entry]:
             """Parse entry using hooks.
 
             Args:
@@ -637,7 +650,7 @@ class FlextLdifUtilitiesParsers:
                     if metadata:
                         entry.metadata = metadata
 
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                return r[FlextLdifModels.Entry].ok(entry)
 
             except Exception as e:
                 logger.exception(
@@ -645,6 +658,6 @@ class FlextLdifUtilitiesParsers:
                     server_type=config.server_type,
                     dn=config.dn[:50] if config.dn else None,
                 )
-                return FlextResult[FlextLdifModels.Entry].fail(
+                return r[FlextLdifModels.Entry].fail(
                     f"Failed to parse entry: {e}",
                 )

@@ -23,7 +23,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextResult
+from flext_core import r
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
 
@@ -50,7 +50,7 @@ class FlextLdifProtocols(FlextProtocols):
     1. All quirk classes inherit from ABC base classes (Schema, Acl, Entry)
     2. All base classes satisfy protocols through structural typing (duck typing)
     3. isinstance() checks validate protocol compliance at runtime
-    4. All methods use "FlextResult[T]" for railway-oriented error handling
+    4. All methods use "r[T]" for railway-oriented error handling
     5. execute() method provides polymorphic type-based routing
 
     **Minimal Public Interface:**
@@ -288,7 +288,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 ldif_input: str | Path,
                 server_type: str | None = None,
-            ) -> FlextResult[Sequence[FlextLdifProtocols.Models.EntryProtocol]]:
+            ) -> r[Sequence[FlextLdifProtocols.Models.EntryProtocol]]:
                 """Parse LDIF content."""
                 ...
 
@@ -300,7 +300,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 entries: Sequence[FlextLdifProtocols.Models.EntryProtocol]
                 | FlextLdifProtocols.Models.EntryProtocol,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Write entries to LDIF."""
                 ...
 
@@ -311,7 +311,7 @@ class FlextLdifProtocols(FlextProtocols):
             def write(
                 self,
                 entries: Sequence[FlextLdifProtocols.Models.EntryProtocol],
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Write entries to LDIF."""
                 ...
 
@@ -463,7 +463,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def execute(
                 self,
-            ) -> FlextResult[
+            ) -> r[
                 FlextLdifProtocols.Services.UnifiedParseResultProtocol
                 | FlextLdifProtocols.Services.HasEntriesProtocol
                 | Sequence[FlextLdifProtocols.Models.EntryProtocol]
@@ -486,7 +486,7 @@ class FlextLdifProtocols(FlextProtocols):
                 mode: str = "include",
                 match_all: bool = False,
                 mark_excluded: bool = False,
-            ) -> FlextResult[
+            ) -> r[
                 FlextLdifProtocols.Services.UnifiedParseResultProtocol
                 | FlextLdifProtocols.Services.HasEntriesProtocol
                 | Sequence[FlextLdifProtocols.Models.EntryProtocol]
@@ -507,21 +507,21 @@ class FlextLdifProtocols(FlextProtocols):
 
             def execute(
                 self,
-            ) -> FlextResult[FlextLdifProtocols.Services.FlexibleCategoriesProtocol]:
+            ) -> r[FlextLdifProtocols.Services.FlexibleCategoriesProtocol]:
                 """Execute categorization based on configured rules."""
                 ...
 
             def validate_dns(
                 self,
                 entries: Sequence[FlextLdifProtocols.Models.EntryProtocol],
-            ) -> FlextResult[Sequence[FlextLdifProtocols.Models.EntryProtocol]]:
+            ) -> r[Sequence[FlextLdifProtocols.Models.EntryProtocol]]:
                 """Validate entry DNs according to RFC 4514."""
                 ...
 
             def categorize_entries(
                 self,
                 entries: Sequence[FlextLdifProtocols.Models.EntryProtocol],
-            ) -> FlextResult[FlextLdifProtocols.Services.FlexibleCategoriesProtocol]:
+            ) -> r[FlextLdifProtocols.Services.FlexibleCategoriesProtocol]:
                 """Categorize all entries into categories."""
                 ...
 
@@ -562,7 +562,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 attr_definition: str,
-            ) -> FlextResult[
+            ) -> r[
                 FlextLdifProtocols.Models.SchemaAttributeProtocol
                 | FlextLdifProtocols.Models.SchemaObjectClassProtocol
             ]:
@@ -573,7 +573,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 model: FlextLdifProtocols.Models.SchemaAttributeProtocol
                 | FlextLdifProtocols.Models.SchemaObjectClassProtocol,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Write schema definition."""
                 ...
 
@@ -584,14 +584,14 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 acl_line: str,
-            ) -> FlextResult[FlextLdifProtocols.Models.AclProtocol]:
+            ) -> r[FlextLdifProtocols.Models.AclProtocol]:
                 """Parse ACL definition."""
                 ...
 
             def write(
                 self,
                 acl_data: FlextLdifProtocols.Models.AclProtocol,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Write ACL definition."""
                 ...
 
@@ -602,7 +602,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 entry_lines: Sequence[str],
-            ) -> FlextResult[FlextLdifProtocols.Models.EntryProtocol]:
+            ) -> r[FlextLdifProtocols.Models.EntryProtocol]:
                 """Parse entry definition."""
                 ...
 
@@ -610,7 +610,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 entry_dn: str,
                 entry_attrs: Mapping[str, Sequence[str]],
-            ) -> FlextResult[FlextLdifProtocols.Models.EntryProtocol]:
+            ) -> r[FlextLdifProtocols.Models.EntryProtocol]:
                 """Parse single entry from DN and attributes."""
                 ...
 
@@ -620,7 +620,7 @@ class FlextLdifProtocols(FlextProtocols):
                 | Sequence[FlextLdifProtocols.Models.EntryProtocol],
                 format_options: FlextLdifProtocols.Models.WriteFormatOptionsProtocol
                 | None = None,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Write entries to LDIF."""
                 ...
 
@@ -638,7 +638,7 @@ class FlextLdifProtocols(FlextProtocols):
                 | FlextLdifProtocols.Models.AclProtocol
                 | FlextLdifProtocols.Models.EntryProtocol
                 | str,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Execute quirk operation on any model type."""
                 ...
 

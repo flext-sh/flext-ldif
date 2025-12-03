@@ -19,7 +19,7 @@ import re
 from pathlib import Path
 from typing import Protocol, cast, override
 
-from flext_core import FlextResult
+from flext_core import r
 from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.results import _ConfigSettings, _DynamicCounts
@@ -106,7 +106,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
         max_lines: int = FlextLdifConstants.ServerDetection.DEFAULT_MAX_LINES,
-    ) -> FlextResult[FlextLdifModels.ServerDetectionResult]:
+    ) -> r[FlextLdifModels.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content.
 
         Business Rule: Server detection uses weighted pattern matching across multiple
@@ -126,7 +126,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             max_lines: Maximum lines to scan for detection (default: ServerDetection.DEFAULT_MAX_LINES)
 
         Returns:
-            FlextResult with detection results:
+            r with detection results:
             {
                 "detected_server_type": server type from FlextLdifConstants.ServerTypes,
                 "confidence": 0.0-1.0,
@@ -138,17 +138,17 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         """
         if ldif_content is None:
             if ldif_path is None:
-                return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                return r[FlextLdifModels.ServerDetectionResult].fail(
                     "Either ldif_path or ldif_content must be provided",
                 )
             if not ldif_path.exists():
-                return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                return r[FlextLdifModels.ServerDetectionResult].fail(
                     f"LDIF file not found: {ldif_path}",
                 )
             try:
                 ldif_content = ldif_path.read_text(encoding="utf-8")
             except UnicodeDecodeError as e:
-                return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                return r[FlextLdifModels.ServerDetectionResult].fail(
                     f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
                 )
 
@@ -170,16 +170,16 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             is_confident=confidence
             >= FlextLdifConstants.ServerDetection.CONFIDENCE_THRESHOLD,
         )
-        return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
+        return r[FlextLdifModels.ServerDetectionResult].ok(
             detection_result,
         )
 
     @override
-    def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:
+    def execute(self) -> r[FlextLdifModels.ClientStatus]:
         """Execute server detector self-check (required by FlextService).
 
         Returns:
-            FlextResult with detector status
+            r with detector status
 
         """
         config_settings = _ConfigSettings()
@@ -189,7 +189,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             services=["detect_server_type"],
             config=config_settings,
         )
-        return FlextResult[FlextLdifModels.ClientStatus].ok(status_result)
+        return r[FlextLdifModels.ClientStatus].ok(status_result)
 
     @staticmethod
     def resolve_from_config(  # noqa: PLR0911
@@ -244,7 +244,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         self,
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
-    ) -> FlextResult[FlextLdifConstants.LiteralTypes.ServerTypeLiteral]:
+    ) -> r[FlextLdifConstants.LiteralTypes.ServerTypeLiteral]:
         """Resolve the effective LDAP server type to use for processing.
 
         Business Rule: Effective server type combines configuration hierarchy with
@@ -268,7 +268,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             ldif_content: Optional LDIF content string for auto-detection
 
         Returns:
-            FlextResult with the server type literal to use
+            r with the server type literal to use
 
         """
         if ldif_path is not None or ldif_content is not None:
@@ -279,9 +279,9 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             if detection_result.is_success:
                 result = detection_result.unwrap()
                 if isinstance(result, FlextLdifModels.ServerDetectionResult):
-                    return FlextResult.ok(result.detected_server_type)
+                    return r.ok(result.detected_server_type)
 
-        return FlextResult.ok("rfc")
+        return r.ok("rfc")
 
     def _update_server_scores(  # noqa: PLR6301, PLR0913, PLR0917
         self,
@@ -481,8 +481,8 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             return "rfc", 0.0
 
         # Find max score
-        max_score: int = max(scores.values()) if scores.values() else 0
-        total_score: int = sum(scores.values()) if scores.values() else 0
+        max_score: int = max(u.vals(scores)) if scores else 0
+        total_score: int = u.sum(scores) if scores else 0
 
         # If no signals, default to RFC
         if max_score == 0:
@@ -575,8 +575,13 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             getattr(constants, "ORCLACI", None),
             getattr(constants, "ORCLENTRYLEVELACI", None),
         ]
-        if any(
-            attr and isinstance(attr, str) and attr in content for attr in acl_attrs
+        if u.any_(
+            acl_attrs,
+            predicate=lambda attr: u.when(
+                u.is_type(attr, str),
+                lambda: u.in_(attr, content),
+                else_value=False,
+            ),
         ):
             self._add_pattern_if_match(
                 condition="Oracle OID ACLs" not in patterns,
