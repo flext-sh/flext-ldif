@@ -329,9 +329,7 @@ class FlextLdifServer:
 
         """
         normalized = self._normalize_server_type(server_type)
-        base: FlextLdifServersBase | None = u.get(
-            self._bases, normalized, default=None
-        )
+        base: FlextLdifServersBase | None = u.get(self._bases, normalized, default=None)
         if base is None:
             return FlextResult[FlextLdifServersBase].fail(
                 f"No base found for server type: {server_type}",

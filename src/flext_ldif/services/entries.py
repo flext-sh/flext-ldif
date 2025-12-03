@@ -250,7 +250,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         return FlextResult.ok(str(dn_value))
 
     @staticmethod
-    def _extract_dn_from_value(dn_value_raw: str | list[str] | None) -> FlextResult[str]:
+    def _extract_dn_from_value(
+        dn_value_raw: str | list[str] | None,
+    ) -> FlextResult[str]:
         """Extract DN string from value (str, list, or None)."""
         if dn_value_raw is None:
             return FlextResult.fail("DN value is None")
@@ -306,6 +308,20 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             "Entry does not implement EntryWithDnProtocol or Entry protocol",
         )
 
+    @staticmethod
+    def _extract_attrs_from_container(
+        attrs: object,
+    ) -> FlextResult[dict[str, list[str]]]:
+        """Extract attributes from container object."""
+        if hasattr(attrs, "attributes"):
+            attrs_dict = attrs.attributes
+            return FlextResult.ok(dict(attrs_dict) if attrs_dict else {})
+        if isinstance(attrs, dict):
+            return FlextResult.ok(dict(attrs))
+        return FlextResult.fail(
+            f"Unknown attributes container type: {type(attrs)}",
+        )
+
     def get_entry_attributes(
         self,
         entry: FlextLdifModels.Entry,
@@ -338,20 +354,12 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         try:
             if not hasattr(entry, "attributes"):
                 return FlextResult.fail("Entry missing attributes attribute")
-            if entry.attributes is None:
+            attrs = entry.attributes
+            if attrs is None:
                 return FlextResult.fail("Entry has no attributes (attributes is None)")
-            if not entry.attributes:
+            if not attrs:
                 return FlextResult.ok({})
-            # Check if attributes is LdifAttributes (has .attributes attribute)
-            if hasattr(entry.attributes, "attributes"):
-                attrs_dict = entry.attributes.attributes
-                return FlextResult.ok(dict(attrs_dict) if attrs_dict else {})
-            # If it's a dict-like object, try to use it directly
-            if isinstance(entry.attributes, dict):
-                return FlextResult.ok(dict(entry.attributes))
-            return FlextResult.fail(
-                f"Unknown attributes container type: {type(entry.attributes)}",
-            )
+            return FlextLdifEntries._extract_attrs_from_container(attrs)
         except (AttributeError, ValueError) as e:
             # Business Rule: Convert exceptions to FlextResult failures
             # This ensures railway-oriented error handling throughout the codebase
@@ -585,6 +593,24 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             return FlextResult.ok([value])
         return FlextResult.ok(list(value))
 
+    @staticmethod
+    def _normalize_string_value(value: str) -> FlextResult[str]:
+        """Normalize string value."""
+        stripped = value.strip()
+        if not stripped:
+            return FlextResult.fail("Cannot normalize empty string")
+        return FlextResult.ok(stripped)
+
+    @staticmethod
+    def _normalize_list_value(value: list[str]) -> FlextResult[str]:
+        """Normalize list value to single string."""
+        if len(value) == 0:
+            return FlextResult.fail("Cannot normalize empty list")
+        first = value[0]
+        if isinstance(first, str):
+            return FlextLdifEntries._normalize_string_value(first)
+        return FlextResult.ok(str(first))
+
     def normalize_attribute_value(
         self,
         value: str | list[str] | None,
@@ -601,20 +627,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         if value is None:
             return FlextResult.fail("Cannot normalize None value")
         if isinstance(value, str):
-            stripped = value.strip()
-            if not stripped:
-                return FlextResult.fail("Cannot normalize empty string")
-            return FlextResult.ok(stripped)
+            return FlextLdifEntries._normalize_string_value(value)
         if isinstance(value, list):
-            if len(value) == 0:
-                return FlextResult.fail("Cannot normalize empty list")
-            first = value[0]
-            if isinstance(first, str):
-                stripped = first.strip()
-                if not stripped:
-                    return FlextResult.fail("Cannot normalize empty string")
-                return FlextResult.ok(stripped)
-            return FlextResult.ok(str(first))
+            return FlextLdifEntries._normalize_list_value(value)
         return FlextResult.fail(f"Cannot normalize value of type {type(value)}")
 
     def get_normalized_attribute(

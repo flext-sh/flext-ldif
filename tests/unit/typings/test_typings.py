@@ -44,7 +44,8 @@ class TestFlextLdifTypesNamespace:
         members = inspect.getmembers(flext_ldif.typings)
         # Filter out built-in functions like TypedDict from typing module
         user_functions = [
-            m for m in members
+            m
+            for m in members
             if inspect.isfunction(m[1])
             and not m[0].startswith("__")
             and m[1].__module__ not in {"typing", "builtins"}
@@ -67,10 +68,16 @@ class TestFlextLdifTypesNamespace:
 
         # Only public modules should be imported (no _models/ internal imports)
         # typings.py imports from flext_ldif.protocols (and possibly others)
-        assert "flext_ldif.protocols" in flext_ldif_imports, "typings.py must import from flext_ldif.protocols"
+        assert "flext_ldif.protocols" in flext_ldif_imports, (
+            "typings.py must import from flext_ldif.protocols"
+        )
         # Verify no internal imports
-        internal_imports = [imp for imp in flext_ldif_imports if "_" in imp.split(".")[-1]]
-        assert len(internal_imports) == 0, f"typings.py must not import from internal modules: {internal_imports}"
+        internal_imports = [
+            imp for imp in flext_ldif_imports if "_" in imp.split(".")[-1]
+        ]
+        assert len(internal_imports) == 0, (
+            f"typings.py must not import from internal modules: {internal_imports}"
+        )
 
 
 class TestCommonDictionaryTypes:
@@ -152,7 +159,10 @@ class TestEntryTypes:
         data: FlextLdifTypes.Entry.EntryCreateData = {
             Names.DN: f"cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}",
             "permissions": ["read", "write"],
-            "metadata": {"source": ["oid"], "imported": ["true"]},  # dict[str, list[str]]
+            "metadata": {
+                "source": ["oid"],
+                "imported": ["true"],
+            },  # dict[str, list[str]]
             "attributes_count": "12",
         }
         assert isinstance(data["permissions"], list)
@@ -251,18 +261,34 @@ class TestRemovalOfOverEngineering:
     """Test that over-engineered types were properly removed."""
 
     REMOVED_NAMESPACES: ClassVar[list[str]] = [
-        "Parser", "Writer", "LdifValidation", "LdifProcessing",
-        "Analytics", "ServerTypes", "Functional", "Streaming",
-        "AnnotatedLdif", "ModelAliases", "LdifProject", "Project",
+        "Parser",
+        "Writer",
+        "LdifValidation",
+        "LdifProcessing",
+        "Analytics",
+        "ServerTypes",
+        "Functional",
+        "Streaming",
+        "AnnotatedLdif",
+        "ModelAliases",
+        "LdifProject",
+        "Project",
     ]
 
     REMOVED_COMMON_DICT: ClassVar[list[str]] = [
-        "ChangeDict", "CategorizedDict", "TreeDict", "HierarchyDict",
+        "ChangeDict",
+        "CategorizedDict",
+        "TreeDict",
+        "HierarchyDict",
     ]
 
     REMOVED_ENTRY: ClassVar[list[str]] = [
-        "EntryConfiguration", "EntryAttributes", "EntryValidation",
-        "EntryTransformation", "EntryMetadata", "EntryProcessing",
+        "EntryConfiguration",
+        "EntryAttributes",
+        "EntryValidation",
+        "EntryTransformation",
+        "EntryMetadata",
+        "EntryProcessing",
     ]
 
     @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
@@ -287,7 +313,8 @@ class TestPhase1StandardizationResults:
     def test_minimal_type_system(self) -> None:
         """Type system should be minimal and focused on actual usage."""
         classes = [
-            m for m in inspect.getmembers(FlextLdifTypes)
+            m
+            for m in inspect.getmembers(FlextLdifTypes)
             if inspect.isclass(m[1]) and not m[0].startswith("_")
         ]
         assert len(classes) >= 3
@@ -336,7 +363,9 @@ class TestIntegrationWithLdifFixtures:
             Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         # Cast to dict[str, GenericFieldsDict] for type compatibility
-        schema_attrs: dict[str, GenericFieldsDict] = cast("dict[str, GenericFieldsDict]", schema_dict)
+        schema_attrs: dict[str, GenericFieldsDict] = cast(
+            "dict[str, GenericFieldsDict]", schema_dict
+        )
         # Type narrowing: access with cast since keys aren't in GenericFieldsDict
         cn_oid = cast("str", schema_attrs[Names.CN].get("oid"))
         assert cn_oid == OIDs.CN

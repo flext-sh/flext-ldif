@@ -271,9 +271,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         # Convert frozenset to list for t.GeneralValueType compatibility
         all_kwargs: dict[
             str,
-            t.ScalarValue
-            | list[str]
-            | dict[str, t.ScalarValue | list[str]],
+            t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]],
         ] = {}
         for k, v in {**mode_overrides, **format_kwargs}.items():
             if isinstance(v, frozenset):
@@ -762,7 +760,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 filter_entry,
                 on_error="skip",
             )
-            filtered_entries = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+            filtered_entries = cast(
+                "list[FlextLdifModels.Entry]", batch_result.value["results"]
+            )
 
             # Replace category entries with filtered entries
             categories[category] = filtered_entries
@@ -807,9 +807,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                     continue
 
                 attrs_dict = entry.attributes.attributes
-                has_acl = any(
-                    attr_name in acl_attr_names for attr_name in attrs_dict
-                )
+                has_acl = any(attr_name in acl_attr_names for attr_name in attrs_dict)
 
                 if has_acl:
                     # Duplicate entry to ACL category (deep copy to avoid shared references)

@@ -196,12 +196,20 @@ class FlextLdifUtilitiesACL:
             if isinstance(bind_rules_list, list):
                 flattened_result = u.process(
                     bind_rules_list,
-                    processor=lambda rule_list: rule_list if isinstance(rule_list, list) else [],
+                    processor=lambda rule_list: rule_list
+                    if isinstance(rule_list, list)
+                    else [],
                     on_error="skip",
                 )
-                if flattened_result.is_success and isinstance(flattened_result.value, list):
+                if flattened_result.is_success and isinstance(
+                    flattened_result.value, list
+                ):
                     bind_rules = u.ensure(
-                        [item for sublist in flattened_result.value for item in sublist],
+                        [
+                            item
+                            for sublist in flattened_result.value
+                            for item in sublist
+                        ],
                         target_type="list",
                         default=[],
                     )
@@ -546,6 +554,7 @@ class FlextLdifUtilitiesACL:
         def matches_special(_k: str, _unused_value_tuple: tuple[str, str]) -> bool:
             """Check if rule value matches special key."""
             return bool(u.normalize(rule_value, _k))
+
         found = u.find(
             special_values,
             predicate=matches_special,
@@ -1507,7 +1516,8 @@ class FlextLdifUtilitiesACL:
             return batch_result
         batch_data = batch_result.value
         results = [
-            r for r in batch_data["results"]
+            r
+            for r in batch_data["results"]
             if isinstance(r, FlextLdifModelsDomains.Acl)
         ]
         if batch_data["error_count"] > 0 and not skip_invalid:
@@ -1537,6 +1547,7 @@ class FlextLdifUtilitiesACL:
             ... )
 
         """
+
         def convert_single_permissions(permissions: dict[str, bool]) -> dict[str, bool]:
             """Convert single permission set."""
             if direction == "oid_to_oud":
@@ -1551,9 +1562,7 @@ class FlextLdifUtilitiesACL:
         if batch_result.is_failure:
             return batch_result
         batch_data = batch_result.value
-        results = [
-            r for r in batch_data["results"] if isinstance(r, dict)
-        ]
+        results = [r for r in batch_data["results"] if isinstance(r, dict)]
         return r.ok(results)
 
     @staticmethod

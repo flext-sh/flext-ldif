@@ -447,6 +447,7 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(value, list):
                 return [str(v) for v in value]
             return []
+
         violations_result = u.process(
             violation_keys,
             processor=extract_violations,
@@ -454,7 +455,10 @@ class FlextLdifUtilitiesMetadata:
         )
         if violations_result.is_success and isinstance(violations_result.value, list):
             violations = [
-                v for sublist in violations_result.value if isinstance(sublist, list) for v in sublist
+                v
+                for sublist in violations_result.value
+                if isinstance(sublist, list)
+                for v in sublist
             ]
         else:
             violations = []

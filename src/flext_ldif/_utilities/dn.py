@@ -392,12 +392,14 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _validate_components(components: list[str]) -> bool:
         """Validate each DN component has attr=value format (helper method)."""
+
         def is_valid_component(comp: str) -> bool:
             """Check if component is valid."""
             if "=" not in comp:
                 return False
             attr, _, value = comp.partition("=")
             return bool(attr.strip() and value.strip())
+
         filtered = u.filter(components, predicate=is_valid_component)
         return isinstance(filtered, list) and len(filtered) == len(components)
 
@@ -647,7 +649,9 @@ class FlextLdifUtilitiesDN:
             normalized_list = process_result.value
             if not isinstance(normalized_list, list):
                 return r.fail(f"Unexpected normalize result type from '{dn_str}'")
-            filtered_str = u.filter(normalized_list, predicate=lambda x: isinstance(x, str))
+            filtered_str = u.filter(
+                normalized_list, predicate=lambda x: isinstance(x, str)
+            )
             normalized = filtered_str if isinstance(filtered_str, list) else []
             return (
                 r.ok(",".join(normalized))
