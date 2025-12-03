@@ -576,10 +576,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             getattr(constants, "ORCLENTRYLEVELACI", None),
         ]
         if any(
-            attr
-            and isinstance(attr, str)
-            and attr in content
-            for attr in acl_attrs
+            attr and isinstance(attr, str) and attr in content for attr in acl_attrs
         ):
             self._add_pattern_if_match(
                 condition="Oracle OID ACLs" not in patterns,

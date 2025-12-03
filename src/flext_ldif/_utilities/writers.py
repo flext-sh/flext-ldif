@@ -173,7 +173,9 @@ class FlextLdifUtilitiesWriters:
 
             except Exception as e:
                 entry_for_error = config.entry
-                dn_error_raw = FlextLdifUtilitiesWriters.Entry.get_dn_string(entry_for_error)
+                dn_error_raw = FlextLdifUtilitiesWriters.Entry.get_dn_string(
+                    entry_for_error
+                )
                 dn_error: str | None = dn_error_raw[:50] if dn_error_raw else None
                 logger.exception(
                     "Failed to write entry",
@@ -405,6 +407,7 @@ class FlextLdifUtilitiesWriters:
             stats: Stats,
         ) -> list[str]:
             """Fallback manual processing if batch fails."""
+
             def process_entry(entry: FlextLdifModels.Entry) -> str | None:
                 """Process single entry."""
                 return FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
@@ -412,6 +415,7 @@ class FlextLdifUtilitiesWriters:
                     write_entry_hook,
                     stats,
                 )
+
             processed_result = u.process(
                 entries,
                 processor=process_entry,
@@ -463,10 +467,12 @@ class FlextLdifUtilitiesWriters:
 
                 def write_single_entry(entry: FlextLdifModels.Entry) -> str | None:
                     """Write single entry, return None on error."""
-                    return FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
-                        entry,
-                        config.write_entry_hook,
-                        stats,
+                    return (
+                        FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
+                            entry,
+                            config.write_entry_hook,
+                            stats,
+                        )
                     )
 
                 batch_result = u.batch(
@@ -498,5 +504,7 @@ class FlextLdifUtilitiesWriters:
                 return FlextResult[str].ok(content)
 
             except Exception as e:
-                logger.exception("Failed to write content", server_type=config.server_type)
+                logger.exception(
+                    "Failed to write content", server_type=config.server_type
+                )
                 return FlextResult[str].fail(f"Failed to write content: {e}")

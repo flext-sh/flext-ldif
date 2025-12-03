@@ -495,6 +495,7 @@ class FlextLdifSorting(
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort attributes in all entries."""
+
         def sort_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             """Sort entry attributes."""
             if self.attribute_order:
@@ -579,6 +580,7 @@ class FlextLdifSorting(
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort ACL attributes in all entries."""
+
         def sort_acl_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             """Sort ACL attributes in entry."""
             if not entry.attributes:
@@ -885,7 +887,9 @@ class FlextLdifSorting(
                     normalized = (
                         norm_result.unwrap() if norm_result.is_success else None
                     )
-                    normalized_dn_lower = u.normalize(normalized or dn_value, case="lower")
+                    normalized_dn_lower = u.normalize(
+                        normalized or dn_value, case="lower"
+                    )
                     dn_key = cast("str", normalized_dn_lower)
                     if dn_key not in visited:
                         # Add all entries with this DN
@@ -897,9 +901,7 @@ class FlextLdifSorting(
                             default=[],
                         )
                         entries_for_dn_raw: list[FlextLdifModels.Entry] | None = (
-                            extract_result.value
-                            if extract_result.is_success
-                            else None
+                            extract_result.value if extract_result.is_success else None
                         )
                         entries_for_dn: list[FlextLdifModels.Entry] = (
                             entries_for_dn_raw if entries_for_dn_raw is not None else []

@@ -211,6 +211,7 @@ class FlextLdifUtilitiesEntry:
             """Normalize attribute name."""
             attr_name, values = item
             return (get_normalized_name(attr_name), values)
+
         mapped_result = u.map(
             list(attributes.items()),
             mapper=normalize_attr_pair,
@@ -437,6 +438,7 @@ class FlextLdifUtilitiesEntry:
             attr_str = str(attr_name)
             canonical = normalize(attr_str)
             return (canonical, attr_str) if canonical != attr_str else None
+
         case_mappings_result = u.process(
             [str(attr) for attr in entry_attrs],
             processor=extract_case_mapping,
@@ -714,7 +716,9 @@ class FlextLdifUtilitiesEntry:
         result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
         operational_lower = (
-            {a.lower() for a in config.operational_attrs} if config.operational_attrs else set()
+            {a.lower() for a in config.operational_attrs}
+            if config.operational_attrs
+            else set()
         )
         for attr_name, values in attributes.items():
             # Step 1: Check if operational and should skip
@@ -736,9 +740,12 @@ class FlextLdifUtilitiesEntry:
                 if config.boolean_mappings and value in config.boolean_mappings:
                     return config.boolean_mappings[value]
                 return value
+
             mapped_values_result = u.map(values, mapper=normalize_value)
             output_values = (
-                mapped_values_result if isinstance(mapped_values_result, list) else values
+                mapped_values_result
+                if isinstance(mapped_values_result, list)
+                else values
             )
 
             result[output_name] = output_values
@@ -848,16 +855,22 @@ class FlextLdifUtilitiesEntry:
 
         if config.required_attrs:
             checks.append(
-                FlextLdifUtilitiesEntry.has_all_attributes(entry, list(config.required_attrs))
+                FlextLdifUtilitiesEntry.has_all_attributes(
+                    entry, list(config.required_attrs)
+                )
             )
 
         if config.any_attrs:
             checks.append(
-                FlextLdifUtilitiesEntry.has_any_attributes(entry, list(config.any_attrs))
+                FlextLdifUtilitiesEntry.has_any_attributes(
+                    entry, list(config.any_attrs)
+                )
             )
 
         if config.dn_pattern:
-            checks.append(FlextLdifUtilitiesEntry._check_dn_pattern(entry, config.dn_pattern))
+            checks.append(
+                FlextLdifUtilitiesEntry._check_dn_pattern(entry, config.dn_pattern)
+            )
 
         return all(checks)
 

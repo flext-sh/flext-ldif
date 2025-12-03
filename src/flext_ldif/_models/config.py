@@ -1694,15 +1694,24 @@ class FlextLdifModelsConfig:
             ...,
             description="Hook to parse (dn, attrs) into Entry",
         )
-        transform_attrs_hook: Callable[[str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]] | None = Field(
+        transform_attrs_hook: (
+            Callable[
+                [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
+            ]
+            | None
+        ) = Field(
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None = Field(
+        post_parse_hook: (
+            Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None
+        ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[FlextLdifModels.Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: (
+            Callable[[FlextLdifModels.Entry, str, str], None] | None
+        ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -1714,7 +1723,9 @@ class FlextLdifModelsConfig:
             default="debug",
             description="Logging verbosity ('debug', 'info', 'warning')",
         )
-        ldif_parser: Callable[[str], list[tuple[str, Mapping[str, list[str]]]]] | None = Field(
+        ldif_parser: (
+            Callable[[str], list[tuple[str, Mapping[str, list[str]]]]] | None
+        ) = Field(
             default=None,
             description="Optional custom LDIF parser",
         )
@@ -1740,15 +1751,24 @@ class FlextLdifModelsConfig:
             ...,
             description="Hook to parse (dn, attrs) into Entry",
         )
-        transform_attrs_hook: Callable[[str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]] | None = Field(
+        transform_attrs_hook: (
+            Callable[
+                [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
+            ]
+            | None
+        ) = Field(
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None = Field(
+        post_parse_hook: (
+            Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None
+        ) = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: Callable[[FlextLdifModels.Entry, str, str], None] | None = Field(
+        preserve_metadata_hook: (
+            Callable[[FlextLdifModels.Entry, str, str], None] | None
+        ) = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -1790,7 +1810,9 @@ class FlextLdifModelsConfig:
             default=None,
             description="Optional SUP transformation",
         )
-        enrich_metadata_hook: Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None = Field(
+        enrich_metadata_hook: (
+            Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None
+        ) = Field(
             default=None,
             description="Optional metadata enrichment",
         )
@@ -1820,11 +1842,19 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        create_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = Field(
-            ...,
-            description="Entry creation logic",
+        create_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = (
+            Field(
+                ...,
+                description="Entry creation logic",
+            )
         )
-        build_metadata_hook: Callable[[str, Mapping[str, list[str]]], FlextLdifModelsDomains.QuirkMetadata | None] | None = Field(
+        build_metadata_hook: (
+            Callable[
+                [str, Mapping[str, list[str]]],
+                FlextLdifModelsDomains.QuirkMetadata | None,
+            ]
+            | None
+        ) = Field(
             default=None,
             description="Optional metadata building",
         )
@@ -1832,7 +1862,12 @@ class FlextLdifModelsConfig:
             default=None,
             description="Optional DN normalization",
         )
-        transform_attrs_hook: Callable[[str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]] | None = Field(
+        transform_attrs_hook: (
+            Callable[
+                [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
+            ]
+            | None
+        ) = Field(
             default=None,
             description="Optional attribute transformation",
         )
@@ -1858,15 +1893,21 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[[FlextLdifModels.Entry, list[str]], None] = Field(
-            ...,
-            description="Core attributes writing",
+        write_attributes_hook: Callable[[FlextLdifModels.Entry, list[str]], None] = (
+            Field(
+                ...,
+                description="Core attributes writing",
+            )
         )
-        write_comments_hook: Callable[[FlextLdifModels.Entry, list[str]], None] | None = Field(
+        write_comments_hook: (
+            Callable[[FlextLdifModels.Entry, list[str]], None] | None
+        ) = Field(
             default=None,
             description="Optional comments writing",
         )
-        transform_entry_hook: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None = Field(
+        transform_entry_hook: (
+            Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None
+        ) = Field(
             default=None,
             description="Optional entry transformation",
         )

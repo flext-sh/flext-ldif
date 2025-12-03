@@ -130,8 +130,9 @@ class FlextLdifUtilitiesParsers:
 
             Example:
                 >>> config = FlextLdifModelsConfig.LdifContentParseConfig(
-                ...     ldif_content=content, server_type="oid",
-                ...     parse_entry_hook=oid_quirk._parse_entry
+                ...     ldif_content=content,
+                ...     server_type="oid",
+                ...     parse_entry_hook=oid_quirk._parse_entry,
                 ... )
                 >>> result = FlextLdifUtilitiesParsers.Content.parse(config)
 
@@ -205,16 +206,20 @@ class FlextLdifUtilitiesParsers:
             current_attrs: EntryAttrs,
         ) -> str:
             """Build LDIF lines from DN and attributes."""
+
             def build_attr_lines(attr_item: tuple[str, list[str]]) -> list[str]:
                 """Build attribute lines for single attribute."""
                 attr, vals = attr_item
                 return [f"{attr}: {val}" for val in vals]
+
             attr_lines_result = u.process(
                 list(current_attrs.items()),
                 processor=build_attr_lines,
                 on_error="skip",
             )
-            if attr_lines_result.is_success and isinstance(attr_lines_result.value, list):
+            if attr_lines_result.is_success and isinstance(
+                attr_lines_result.value, list
+            ):
                 # Flatten nested list of lines
                 attr_lines = [
                     line
@@ -504,8 +509,10 @@ class FlextLdifUtilitiesParsers:
 
                 # Validate structural if hook provided
                 if config.validate_structural_hook:
-                    sup_list_validate = FlextLdifUtilitiesParsers.ObjectClass.normalize_sup_list(
-                        objectclass.sup,
+                    sup_list_validate = (
+                        FlextLdifUtilitiesParsers.ObjectClass.normalize_sup_list(
+                            objectclass.sup,
+                        )
                     )
                     config.validate_structural_hook(
                         objectclass.kind or "STRUCTURAL",
@@ -514,8 +521,10 @@ class FlextLdifUtilitiesParsers:
 
                 # Transform SUP if hook provided
                 if config.transform_sup_hook and objectclass.sup:
-                    sup_list_transform = FlextLdifUtilitiesParsers.ObjectClass.normalize_sup_list(
-                        objectclass.sup,
+                    sup_list_transform = (
+                        FlextLdifUtilitiesParsers.ObjectClass.normalize_sup_list(
+                            objectclass.sup,
+                        )
                     )
                     objectclass.sup = config.transform_sup_hook(sup_list_transform)
 
@@ -528,7 +537,9 @@ class FlextLdifUtilitiesParsers:
                 )
 
             except Exception as e:
-                logger.exception("Failed to parse objectClass", server_type=config.server_type)
+                logger.exception(
+                    "Failed to parse objectClass", server_type=config.server_type
+                )
                 return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].fail(
                     f"Failed to parse objectClass: {e}",
                 )
@@ -608,7 +619,9 @@ class FlextLdifUtilitiesParsers:
                 dn_transformed = config.dn
                 attrs = config.attrs
                 if config.transform_attrs_hook:
-                    dn_transformed, attrs = config.transform_attrs_hook(config.dn, config.attrs)
+                    dn_transformed, attrs = config.transform_attrs_hook(
+                        config.dn, config.attrs
+                    )
                 dn = dn_transformed
 
                 # Create entry using hook
