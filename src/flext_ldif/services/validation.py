@@ -112,7 +112,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextDecorators, FlextResult, t
+from flext_core import FlextDecorators, r, t
 from pydantic import Field
 
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -133,7 +133,7 @@ class FlextLdifValidation(
     can contain letters/digits/hyphens, case-insensitive, length limits apply.
 
     Implication: RFC-compliant validation ensures interoperability across LDAP
-    servers. Validation failures result in fail-fast error responses via FlextResult.
+    servers. Validation failures result in fail-fast error responses via r.
     Batch validation enables efficient processing of multiple attributes.
 
     Provides comprehensive validation for LDAP attribute names, object class names,
@@ -151,7 +151,7 @@ class FlextLdifValidation(
     - Proper error handling with FlextResult monadic composition
     - Fluent builder pattern for batch validation operations
 
-    All validation methods return FlextResult[bool] for consistent error handling
+    All validation methods return r[bool] for consistent error handling
     and composable operations.
 
     FlextService V2 Integration:
@@ -173,7 +173,7 @@ class FlextLdifValidation(
     @FlextDecorators.track_performance()
     def execute(
         self,
-    ) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
+    ) -> r[FlextLdifModels.ValidationServiceStatus]:
         """Execute validation service self-check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -187,7 +187,7 @@ class FlextLdifValidation(
             FlextResult with ValidationServiceStatus containing service metadata
 
         """
-        return FlextResult[FlextLdifModels.ValidationServiceStatus].ok(
+        return r[FlextLdifModels.ValidationServiceStatus].ok(
             FlextLdifModels.ValidationServiceStatus(
                 service="ValidationService",
                 status="operational",
@@ -262,7 +262,7 @@ class FlextLdifValidation(
         boolean_flags = FlextLdifModelsResults.BooleanFlags(**result)
         return FlextLdifModels.ValidationBatchResult(results=boolean_flags)
 
-    def validate_attribute_name(self, name: str) -> FlextResult[bool]:
+    def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
 
         Business Rule: Attribute name validation follows RFC 4512 Section 2.5 rules.
@@ -299,12 +299,12 @@ class FlextLdifValidation(
         """
         try:
             is_valid = FlextLdifUtilities.Constants.validate_attribute_name(name)
-            return FlextResult[bool].ok(is_valid)
+            return r[bool].ok(is_valid)
 
         except Exception as e:
-            return FlextResult[bool].fail(f"Failed to validate attribute name: {e}")
+            return r[bool].fail(f"Failed to validate attribute name: {e}")
 
-    def validate_objectclass_name(self, name: str) -> FlextResult[bool]:
+    def validate_objectclass_name(self, name: str) -> r[bool]:
         """Validate LDAP object class name against RFC 4512 rules.
 
         Business Rule: ObjectClass name validation follows RFC 4512 Section 2.4 rules.
@@ -344,7 +344,7 @@ class FlextLdifValidation(
         self,
         value: str,
         max_length: int | None = None,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate LDAP attribute value length and format.
 
         Args:
@@ -365,7 +365,7 @@ class FlextLdifValidation(
         try:
             # Allow empty values (valid in LDAP)
             if not value:
-                return FlextResult[bool].ok(True)
+                return r[bool].ok(True)
 
             # Check length
             max_len = (
@@ -374,18 +374,18 @@ class FlextLdifValidation(
                 else FlextLdifConstants.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
-                return FlextResult[bool].ok(False)
+                return r[bool].ok(False)
 
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[bool].fail(f"Failed to validate attribute value: {e}")
+            return r[bool].fail(f"Failed to validate attribute value: {e}")
 
     def validate_dn_component(
         self,
         attr: str,
         value: t.ScalarValue,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate DN component (attribute=value pair).
 
         Validates both the attribute name and value for DN usage.
@@ -408,23 +408,23 @@ class FlextLdifValidation(
             # Validate attribute name
             attr_result = self.validate_attribute_name(attr)
             if attr_result.is_failure or not attr_result.unwrap():
-                return FlextResult[bool].ok(False)
+                return r[bool].ok(False)
 
             # Validate value - must be a string for DN component
             # Use isinstance check directly for simplicity
             if not isinstance(value, str):
-                return FlextResult[bool].ok(False)
+                return r[bool].ok(False)
 
             # DN values can be empty strings
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[bool].fail(f"Failed to validate DN component: {e}")
+            return r[bool].fail(f"Failed to validate DN component: {e}")
 
     def validate_attribute_names(
         self,
         names: list[str],
-    ) -> FlextResult[dict[str, bool]]:
+    ) -> r[dict[str, bool]]:
         """Batch validate multiple attribute names.
 
         Validates a list of attribute names and returns results for each.
@@ -458,10 +458,10 @@ class FlextLdifValidation(
                     # If validation fails, mark as invalid
                     validated_names[name] = False
 
-            return FlextResult[dict[str, bool]].ok(validated_names)
+            return r[dict[str, bool]].ok(validated_names)
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[dict[str, bool]].fail(
+            return r[dict[str, bool]].fail(
                 f"Failed to batch validate attribute names: {e}",
             )
 

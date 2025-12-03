@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 import structlog
-from flext_core import FlextResult, FlextRuntime, u
+from flext_core import FlextRuntime, r, u
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -139,7 +139,7 @@ class FlextLdifUtilitiesWriters:
             *,
             config: FlextLdifModelsConfig.EntryWriteConfig | None = None,
             **kwargs: object,
-        ) -> FlextResult[str]:
+        ) -> r[str]:
             """Write entry to LDIF string using hooks.
 
             Args:
@@ -169,7 +169,7 @@ class FlextLdifUtilitiesWriters:
 
                 # Join lines and return
                 ldif_str = "\n".join(lines) + "\n"
-                return FlextResult[str].ok(ldif_str)
+                return r[str].ok(ldif_str)
 
             except Exception as e:
                 entry_for_error = config.entry
@@ -182,7 +182,7 @@ class FlextLdifUtilitiesWriters:
                     server_type=config.server_type,
                     dn=dn_error,
                 )
-                return FlextResult[str].fail(f"Failed to write entry: {e}")
+                return r[str].fail(f"Failed to write entry: {e}")
 
     # =========================================================================
     # ATTRIBUTE WRITER - Write attribute type definitions
@@ -224,7 +224,7 @@ class FlextLdifUtilitiesWriters:
             *,
             transform_hook: TransformHook | None = None,
             format_oid_hook: FormatOidHook | None = None,
-        ) -> FlextResult[str]:
+        ) -> r[str]:
             """Write attribute definition using hooks.
 
             Args:
@@ -252,11 +252,11 @@ class FlextLdifUtilitiesWriters:
 
                 # Join parts into definition
                 definition = "( " + " ".join(parts) + " )"
-                return FlextResult[str].ok(definition)
+                return r[str].ok(definition)
 
             except Exception as e:
                 logger.exception("Failed to write attribute", server_type=server_type)
-                return FlextResult[str].fail(f"Failed to write attribute: {e}")
+                return r[str].fail(f"Failed to write attribute: {e}")
 
     # =========================================================================
     # OBJECTCLASS WRITER - Write objectClass definitions
@@ -298,7 +298,7 @@ class FlextLdifUtilitiesWriters:
             *,
             transform_hook: TransformHook | None = None,
             transform_sup_hook: TransformSupHook | None = None,
-        ) -> FlextResult[str]:
+        ) -> r[str]:
             """Write objectClass definition using hooks.
 
             Args:
@@ -334,11 +334,11 @@ class FlextLdifUtilitiesWriters:
 
                 # Join parts into definition
                 definition = "( " + " ".join(parts) + " )"
-                return FlextResult[str].ok(definition)
+                return r[str].ok(definition)
 
             except Exception as e:
                 logger.exception("Failed to write objectClass", server_type=server_type)
-                return FlextResult[str].fail(f"Failed to write objectClass: {e}")
+                return r[str].fail(f"Failed to write objectClass: {e}")
 
     # =========================================================================
     # CONTENT WRITER - Write multiple entries
@@ -352,7 +352,7 @@ class FlextLdifUtilitiesWriters:
         class WriteEntryHook(Protocol):
             """Protocol for writing individual entries."""
 
-            def __call__(self, entry: FlextLdifModels.Entry) -> FlextResult[str]: ...
+            def __call__(self, entry: FlextLdifModels.Entry) -> r[str]: ...
 
         class WriteHeaderHook(Protocol):
             """Protocol for writing LDIF header."""
@@ -383,7 +383,7 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write_single_entry_with_stats(
             entry: FlextLdifModels.Entry,
-            write_entry_hook: Callable[[FlextLdifModels.Entry], FlextResult[str]],
+            write_entry_hook: Callable[[FlextLdifModels.Entry], r[str]],
             stats: Stats,
         ) -> str | None:
             """Write single entry with stats tracking."""
@@ -403,7 +403,7 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write_entries_fallback(
             entries: list[FlextLdifModels.Entry],
-            write_entry_hook: Callable[[FlextLdifModels.Entry], FlextResult[str]],
+            write_entry_hook: Callable[[FlextLdifModels.Entry], r[str]],
             stats: Stats,
         ) -> list[str]:
             """Fallback manual processing if batch fails."""
@@ -434,7 +434,7 @@ class FlextLdifUtilitiesWriters:
             *,
             config: FlextLdifModelsConfig.BatchWriteConfig | None = None,
             **kwargs: object,
-        ) -> FlextResult[str]:
+        ) -> r[str]:
             """Write multiple entries to LDIF string.
 
             Args:
@@ -501,10 +501,10 @@ class FlextLdifUtilitiesWriters:
 
                 # Join with separator
                 content = config.entry_separator.join(parts)
-                return FlextResult[str].ok(content)
+                return r[str].ok(content)
 
             except Exception as e:
                 logger.exception(
                     "Failed to write content", server_type=config.server_type
                 )
-                return FlextResult[str].fail(f"Failed to write content: {e}")
+                return r[str].fail(f"Failed to write content: {e}")

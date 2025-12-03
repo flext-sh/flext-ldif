@@ -9,7 +9,7 @@ from typing import ClassVar, Literal, TypeVar, cast, overload, override
 from flext_core import (
     FlextConfig,
     FlextContext,
-    FlextResult,
+    r,
     FlextService,
     t,
 )
@@ -123,13 +123,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     _context: FlextContext | None = PrivateAttr(default=None)
     _init_config_value: FlextLdifConfig | None = PrivateAttr(default=None)
     _builder_entries: list[FlextLdifModels.Entry] | None = PrivateAttr(default=None)
-    _builder_parse_result: FlextResult[list[FlextLdifModels.Entry]] | None = (
+    _builder_parse_result: r[list[FlextLdifModels.Entry]] | None = (
         PrivateAttr(default=None)
     )
-    _builder_filter_result: FlextResult[list[FlextLdifModels.Entry]] | None = (
+    _builder_filter_result: r[list[FlextLdifModels.Entry]] | None = (
         PrivateAttr(default=None)
     )
-    _builder_write_result: FlextResult[str] | None = PrivateAttr(default=None)
+    _builder_write_result: r[str] | None = PrivateAttr(default=None)
 
     # Direct class access for builders and services (no wrappers)
     AclService: ClassVar[type[FlextLdifAcl]] = FlextLdifAcl
@@ -394,16 +394,16 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     def execute(
         self,
         **_kwargs: str | float | bool | None,
-    ) -> FlextResult[FlextLdifTypes.Models.ServiceResponseTypes]:
+    ) -> r[FlextLdifTypes.Models.ServiceResponseTypes]:
         """Execute facade self-check and return status.
 
         Returns:
-            FlextResult containing status string
+            r containing status string
 
         """
         # Return status string as health check
         status = "FlextLdif facade healthy - all services initialized"
-        return FlextResult.ok(status)
+        return r.ok(status)
 
     def parse(
         self,
@@ -411,7 +411,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
         format_options: FlextLdifModels.ParseFormatOptions | None = None,
         **format_kwargs: str | float | bool | None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Parse LDIF content from text or file using the parser service."""
         parser_service = self._get_service(FlextLdifConstants.ServiceType.PARSER)
 
@@ -426,7 +426,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             **format_kwargs,
         )
         if options_result.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 f"Invalid format options: {options_result.error}",
             )
         # Note: format_options validated but not passed to parse() - parser service handles format internally
@@ -437,9 +437,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             server_type=server_type,
         )
 
-        # Service returns ParseResponse - extract entries
-        if parse_result.is_success:
-            parse_response = parse_result.unwrap()
+        # Service returns ParseResponse - extract entries using u.val() for DSL pattern
+        parse_response = u.val(parse_result)
+        if parse_response is not None:
             # ParseResponse.entries is list[FlextLdifModelsDomains.Entry]
             # FlextLdifModels.Entry extends FlextLdifModelsDomains.Entry
             # Convert domain entries to public Entry models if needed
@@ -454,9 +454,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 )
                 for entry in entries_raw
             ]
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            return r[list[FlextLdifModels.Entry]].ok(entries)
 
-        return FlextResult[list[FlextLdifModels.Entry]].fail(
+        return r[list[FlextLdifModels.Entry]].fail(
             parse_result.error or "Unknown error",
         )
 
@@ -470,7 +470,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: FlextLdifTypes.MetadataDictMutable | None = None,
         **format_kwargs: t.MetadataAttributeValue,
-    ) -> FlextResult[str]: ...
+    ) -> r[str]: ...
 
     @overload
     def write(
@@ -481,7 +481,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: FlextLdifTypes.MetadataDictMutable | None = None,
         **format_kwargs: t.MetadataAttributeValue,
-    ) -> FlextResult[str]: ...
+    ) -> r[str]: ...
 
     def write(
         self,
@@ -491,7 +491,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: FlextLdifTypes.MetadataDictMutable | None = None,
         **format_kwargs: t.MetadataAttributeValue,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write entries to LDIF format string or file.
 
         Business Rule: Writing delegates to FlextLdifWriter service with options
@@ -567,10 +567,10 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             **format_kwargs,
         )
         if options_result.is_failure:
-            return FlextResult[str].fail(
+            return r[str].fail(
                 f"Invalid format options: {options_result.error}",
             )
-        resolved_format_options_raw = options_result.unwrap()
+        resolved_format_options_raw = options_result.value
         # Writer service accepts WriteFormatOptions directly (not WriteOptions)
         # No conversion needed - writer uses WriteFormatOptions which has all fields including ldif_changetype
         resolved_format_options: (
@@ -604,22 +604,23 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             _template_data=template_data_converted,
         )
 
-        if write_result.is_success:
-            if output_path:
-                # File write returns success message
-                return FlextResult[str].ok(
-                    f"LDIF written successfully to {output_path}",
-                )
-            # String write returns the LDIF content
-            unwrapped = write_result.unwrap()
-            if isinstance(unwrapped, str):
-                return FlextResult[str].ok(unwrapped)
-            return FlextResult[str].fail(
-                f"Write operation returned non-string result: "
-                f"{type(unwrapped).__name__}",
+        # Use u.val() for unified result handling (DSL pattern)
+        unwrapped = u.val(write_result)
+        if unwrapped is not None:
+            # Use u.when() for conditional return (DSL pattern)
+            return u.when(
+                condition=output_path is not None,
+                then_value=r[str].ok(f"LDIF written successfully to {output_path}"),
+                else_value=u.when(
+                    condition=u.is_type(unwrapped, str),
+                    then_value=r[str].ok(unwrapped),
+                    else_value=r[str].fail(
+                        f"Write operation returned non-string result: {type(unwrapped).__name__}"
+                    ),
+                ),
             )
 
-        return FlextResult[str].fail(write_result.error or "Unknown error")
+        return r[str].fail(write_result.error or "Unknown error")
 
     def get_entry_dn(
         self,
@@ -629,7 +630,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             | FlextLdifProtocols.Models.EntryWithDnProtocol
             | dict[str, str | list[str]]
         ),
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
         Delegates to FlextLdifEntries service for SRP compliance.
@@ -647,7 +648,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     def get_entry_attributes(
         self,
         entry: FlextLdifModels.Entry | FlextLdifProtocols.Models.EntryProtocol,
-    ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
+    ) -> r[FlextLdifTypes.CommonDict.AttributeDict]:
         """Extract attributes from any entry type.
 
         Delegates to FlextLdifEntries service for SRP compliance.
@@ -661,17 +662,21 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
-        # Type narrowing: ensure entry is FlextLdifModels.Entry
-        if not isinstance(entry, FlextLdifModels.Entry):
-            return FlextResult.fail("Entry must be FlextLdifModels.Entry instance")
-        return entries_service.get_entry_attributes(entry)
+        # Type narrowing: ensure entry is FlextLdifModels.Entry using u.when()
+        return u.when(
+            condition=u.is_type(entry, FlextLdifModels.Entry),
+            then_value=entries_service.get_entry_attributes(entry),
+            else_value=r[FlextLdifTypes.CommonDict.AttributeDict].fail(
+                "Entry must be FlextLdifModels.Entry instance"
+            ),
+        )
 
     def create_entry(
         self,
         dn: str,
         attributes: dict[str, str | list[str]],
         objectclasses: list[str] | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Create a new LDIF entry with validation.
 
         Delegates to FlextLdifEntries service for SRP compliance.
@@ -692,7 +697,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     def get_entry_objectclasses(
         self,
         entry: FlextLdifModels.Entry | FlextLdifProtocols.Models.EntryProtocol,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Extract objectClass values from any entry type.
 
         Delegates to FlextLdifEntries service for SRP compliance.
@@ -705,15 +710,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         entries_service = self._get_service(FlextLdifConstants.ServiceType.ENTRIES)
-        # Type narrowing: ensure entry is FlextLdifModels.Entry
-        if not isinstance(entry, FlextLdifModels.Entry):
-            return FlextResult.fail("Entry must be FlextLdifModels.Entry instance")
-        return entries_service.get_entry_objectclasses(entry)
+        # Type narrowing: ensure entry is FlextLdifModels.Entry using u.when()
+        return u.when(
+            condition=u.is_type(entry, FlextLdifModels.Entry),
+            then_value=entries_service.get_entry_objectclasses(entry),
+            else_value=r[list[str]].fail("Entry must be FlextLdifModels.Entry instance"),
+        )
 
     def get_attribute_values(
         self,
         attribute: list[str] | str,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Extract values from an attribute value object.
 
         Delegates to FlextLdifEntries service for SRP compliance.
@@ -1041,21 +1048,19 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             FlextLdifModels.MigrationConfig
             | FlextLdifTypes.Migration.MigrationConfigDict
             | None
-        ) = None
-        if migration_config_raw is None:
-            migration_config_input = None
-        elif isinstance(migration_config_raw, FlextLdifModels.MigrationConfig):
-            migration_config_input = migration_config_raw
-        elif isinstance(migration_config_raw, dict):
-            # Convert dict to MigrationConfigDict type
-            migration_config_input = cast(
-                "FlextLdifTypes.Migration.MigrationConfigDict", migration_config_raw
+        ) = (
+            migration_config_raw
+            if isinstance(migration_config_raw, FlextLdifModels.MigrationConfig)
+            else (
+                cast("FlextLdifTypes.Migration.MigrationConfigDict", migration_config_raw)
+                if isinstance(migration_config_raw, dict)
+                else (
+                    migration_config_raw.model_dump()
+                    if hasattr(migration_config_raw, "model_dump")
+                    else None
+                )
             )
-        # Convert to dict if it's a model with model_dump
-        elif hasattr(migration_config_raw, "model_dump"):
-            migration_config_input = migration_config_raw.model_dump()
-        else:
-            migration_config_input = None
+        ) if migration_config_raw is not None else None
 
         migration_setup = (
             FlextResult.ok(opts)

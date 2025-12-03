@@ -17,10 +17,11 @@ import operator
 from collections.abc import Callable
 from typing import ClassVar, Self, cast, override
 
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextRuntime, r
 from flext_core.utilities import FlextUtilities
 from pydantic import Field, field_validator, model_validator
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -199,7 +200,7 @@ class FlextLdifSorting(
         return self
 
     @override
-    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def execute(self) -> r[list[FlextLdifModels.Entry]]:
         """Execute sorting based on sort_target.
 
         Business Rule: Sorting execution routes to appropriate sorting method based on
@@ -215,7 +216,7 @@ class FlextLdifSorting(
 
         """
         if not self.entries:
-            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+            return r[list[FlextLdifModels.Entry]].ok([])
 
         dispatch = {
             FlextLdifConstants.SortTarget.ENTRIES.value: self._sort_entries,
@@ -228,7 +229,7 @@ class FlextLdifSorting(
         return (
             method()
             if method
-            else FlextResult[list[FlextLdifModels.Entry]].fail(
+            else r[list[FlextLdifModels.Entry]].fail(
                 f"Unknown sort_target: {self.sort_target}",
             )
         )
@@ -236,38 +237,52 @@ class FlextLdifSorting(
     @classmethod
     def sort(
         cls,
-        entries: list[FlextLdifModels.Entry],
-        *,
-        target: str = FlextLdifConstants.SortTarget.ENTRIES.value,
-        by: str
-        | FlextLdifConstants.SortStrategy = FlextLdifConstants.SortStrategy.HIERARCHY,
-        traversal: str = "depth-first",
-        predicate: Callable[[FlextLdifModels.Entry], str | int | float] | None = None,
-        sort_attributes: bool = False,
-        attribute_order: list[str] | None = None,
-        sort_acl: bool = False,
-        acl_attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        config: FlextLdifModelsConfig.SortConfig | None = None,
+        **kwargs: object,
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort entries with FlextResult for composable operations."""
-        strategy = by.value if isinstance(by, FlextLdifConstants.SortStrategy) else by
-        default_acl_attrs = list(
-            FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES,
-        )
-
+        if config is None:
+            # Backward compatibility: build config from kwargs
+            entries = kwargs.pop("entries", [])
+            target = kwargs.pop("target", FlextLdifConstants.SortTarget.ENTRIES.value)
+            by = kwargs.pop(
+                "by", FlextLdifConstants.SortStrategy.HIERARCHY
+            )
+            traversal = kwargs.pop("traversal", "depth-first")
+            predicate = kwargs.pop("predicate", None)
+            sort_attributes = kwargs.pop("sort_attributes", False)
+            attribute_order = kwargs.pop("attribute_order", None)
+            sort_acl = kwargs.pop("sort_acl", False)
+            acl_attributes = kwargs.pop("acl_attributes", None)
+            default_acl_attrs = list(
+                FlextLdifConstants.AclAttributes.DEFAULT_ACL_ATTRIBUTES,
+            )
+            config = FlextLdifModelsConfig.SortConfig(
+                entries=entries,
+                target=target,
+                by=by,
+                traversal=traversal,
+                predicate=predicate,
+                sort_attributes=sort_attributes,
+                attribute_order=attribute_order,
+                sort_acl=sort_acl,
+                acl_attributes=acl_attributes or default_acl_attrs,
+            )
+        strategy = config.by.value if isinstance(config.by, FlextLdifConstants.SortStrategy) else config.by
         return cls(
-            entries=entries,
+            entries=config.entries,
             sort_target=cast(
-                "FlextLdifConstants.LiteralTypes.SortTargetLiteral", target
+                "FlextLdifConstants.LiteralTypes.SortTargetLiteral", config.target
             ),
             sort_by=cast(
                 "FlextLdifConstants.LiteralTypes.SortStrategyLiteral", strategy
             ),
-            traversal=traversal,
-            custom_predicate=predicate,
-            sort_attributes=sort_attributes,
-            attribute_order=attribute_order,
-            sort_acl=sort_acl,
-            acl_attributes=acl_attributes or default_acl_attrs,
+            traversal=config.traversal,
+            custom_predicate=config.predicate,
+            sort_attributes=config.sort_attributes,
+            attribute_order=config.attribute_order,
+            sort_acl=config.sort_acl,
+            acl_attributes=config.acl_attributes,
         ).execute()
 
     # PUBLIC CLASSMETHOD HELPERS (Direct Entry Points)
@@ -276,7 +291,7 @@ class FlextLdifSorting(
     def by_hierarchy(
         cls,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort entries by hierarchy (depth-first, then alphabetical).
 
         Args:
@@ -301,7 +316,7 @@ class FlextLdifSorting(
     def by_dn(
         cls,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort entries alphabetically by full DN.
 
         Args:
@@ -326,7 +341,7 @@ class FlextLdifSorting(
     def by_schema(
         cls,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort schema entries by OID (attributeTypes before objectClasses).
 
         Args:
@@ -352,7 +367,7 @@ class FlextLdifSorting(
         cls,
         entries: list[FlextLdifModels.Entry],
         predicate: Callable[[FlextLdifModels.Entry], str | int | float],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort entries using custom predicate function.
 
         Args:
@@ -384,7 +399,7 @@ class FlextLdifSorting(
         cls,
         entries: list[FlextLdifModels.Entry],
         order: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort attributes within entries.
 
         Args:
@@ -414,7 +429,7 @@ class FlextLdifSorting(
         cls,
         entries: list[FlextLdifModels.Entry],
         acl_attrs: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort ACL attribute values within entries.
 
         Args:
@@ -437,7 +452,7 @@ class FlextLdifSorting(
         )
         return sorting_instance.execute()
 
-    def _sort_entries(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _sort_entries(self) -> r[list[FlextLdifModels.Entry]]:
         """Universal entry sorting engine."""
         strategies = {
             FlextLdifConstants.SortStrategy.HIERARCHY.value: self._by_hierarchy,
@@ -448,24 +463,24 @@ class FlextLdifSorting(
         }
         method = strategies.get(self.sort_by)
         if not method:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 f"Unknown strategy: {self.sort_by}",
             )
         return method()
 
-    def _sort_only_attributes(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _sort_only_attributes(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort ONLY attributes (no entry sorting)."""
         return self._sort_attributes_in_entries(self.entries)
 
-    def _sort_only_acl(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _sort_only_acl(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort ONLY ACL attributes (no entry sorting)."""
         return self._sort_acl_in_entries(self.entries)
 
-    def _sort_schema_entries(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _sort_schema_entries(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort schema entries by OID (equivalent to _by_schema but explicit)."""
         return self._by_schema()
 
-    def _sort_combined(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _sort_combined(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort EVERYTHING: entries + attributes + ACL + schema."""
         # Step 1: Sort entries
         result = self._sort_entries()
@@ -488,12 +503,12 @@ class FlextLdifSorting(
                 return result
             sorted_entries = result.unwrap()
 
-        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+        return r[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
     def _sort_attributes_in_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort attributes in all entries."""
 
         def sort_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
@@ -513,10 +528,10 @@ class FlextLdifSorting(
                     action_attempted="sort_entry_attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
                     entry_index=0,  # Index not available in batch context
-                    total_entries=len(entries),
+                    total_entries=u.count(entries),
                     error=str(error_msg),
                     error_type=type(result.error).__name__ if result.error else None,
-                    attributes_count=len(original_attrs),
+                    attributes_count=u.count(original_attrs),
                     consequence="Entry attributes were not sorted",
                 )
                 error_text = f"Attribute sort failed: {error_msg}"
@@ -530,11 +545,11 @@ class FlextLdifSorting(
             on_error="fail",
         )
         if batch_result.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 batch_result.error or "Attribute sort failed"
             )
         processed = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
-        return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
+        return r[list[FlextLdifModels.Entry]].ok(processed)
 
     @staticmethod
     def _ensure_metadata_extensions(
@@ -578,7 +593,7 @@ class FlextLdifSorting(
     def _sort_acl_in_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Sort ACL attributes in all entries."""
 
         def sort_acl_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
@@ -592,7 +607,7 @@ class FlextLdifSorting(
                     if FlextRuntime.is_list_like(vals)
                     else [str(vals)]
                 )
-                for k, vals in entry.attributes.attributes.items()
+                for k, vals in u.pairs(entry.attributes.attributes)
             }
             modified = False
 
@@ -604,7 +619,7 @@ class FlextLdifSorting(
                         if FlextRuntime.is_list_like(acl_values_raw)
                         else [str(acl_values_raw)]
                     )
-                    if len(acl_values) > 1:
+                    if u.count(acl_values) > 1:
                         sorted_acl: list[str] = [
                             str(item)
                             for item in sorted(acl_values, key=lambda x: str(x).lower())
@@ -624,11 +639,11 @@ class FlextLdifSorting(
             on_error="skip",
         )
         if batch_result.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 batch_result.error or "ACL sort failed"
             )
         processed = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
-        return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
+        return r[list[FlextLdifModels.Entry]].ok(processed)
 
     @staticmethod
     def _build_dn_tree(
@@ -727,7 +742,7 @@ class FlextLdifSorting(
         result = list(dn_to_entries[dn])
 
         # Recursively visit all children (already sorted alphabetically)
-        extract_result: FlextResult[list[str] | None] = u.get(
+        extract_result: r[list[str] | None] = u.get(
             parent_to_children,
             dn,
             default=[],
@@ -764,7 +779,7 @@ class FlextLdifSorting(
         """
         root_dns: list[str] = []
 
-        for dn_key, entry_list in dn_to_entries.items():
+        for dn_key, entry_list in u.pairs(dn_to_entries):
             # Use first entry to check root status (all duplicates have same DN)
             entry = entry_list[0]
             dn_value = (
@@ -831,7 +846,7 @@ class FlextLdifSorting(
 
         return sorted(entries, key=sort_key)
 
-    def _by_hierarchy(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _by_hierarchy(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort by DN hierarchy using configurable traversal strategy.
 
         Traversal Modes:
@@ -851,7 +866,7 @@ class FlextLdifSorting(
         Preserves duplicate DNs (same DN but different attributes).
         """
         if not self.entries:
-            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+            return r[list[FlextLdifModels.Entry]].ok([])
 
         # Choose traversal strategy based on self.traversal
         if self.traversal == "depth-first":
@@ -893,7 +908,7 @@ class FlextLdifSorting(
                     dn_key = cast("str", normalized_dn_lower)
                     if dn_key not in visited:
                         # Add all entries with this DN
-                        extract_result: FlextResult[
+                        extract_result: r[
                             list[FlextLdifModels.Entry] | None
                         ] = u.get(
                             dn_to_entries,
@@ -909,19 +924,19 @@ class FlextLdifSorting(
                         sorted_entries.extend(entries_for_dn)
                         visited.add(dn_key)
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+            return r[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
         if self.traversal == "level-order":
             # Use level-order traversal (original behavior)
             sorted_entries = self._levelorder_traverse(self.entries)
-            return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+            return r[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
         # Should never happen due to validator, but handle gracefully
-        return FlextResult[list[FlextLdifModels.Entry]].fail(
+        return r[list[FlextLdifModels.Entry]].fail(
             f"Unknown traversal mode: {self.traversal}",
         )
 
-    def _by_dn(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _by_dn(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort alphabetically by DN using RFC 4514 normalization.
 
         Uses FlextLdifUtilities.DN.norm() for RFC 4514 compliant DN normalization
@@ -941,9 +956,9 @@ class FlextLdifSorting(
             return cast("str", u.normalize(normalized or dn_value, case="lower"))
 
         sorted_entries = sorted(self.entries, key=dn_sort_key)
-        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+        return r[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
-    def _by_schema(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _by_schema(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort schema entries by OID."""
 
         def schema_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
@@ -972,32 +987,35 @@ class FlextLdifSorting(
             return (priority, oid)
 
         sorted_entries = sorted(self.entries, key=schema_key)
-        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+        return r[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
-    def _by_custom(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def _by_custom(self) -> r[list[FlextLdifModels.Entry]]:
         """Sort using custom predicate."""
         if self.custom_predicate is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return r[list[FlextLdifModels.Entry]].fail(
                 "Custom predicate not provided",
             )
         sorted_entries = sorted(self.entries, key=self.custom_predicate)
-        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+        return r[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
     def _sort_entry_attributes_alphabetically(
         self,
         entry: FlextLdifModels.Entry,
         *,
         case_sensitive: bool = False,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Sort entry attributes alphabetically using Entry Model + Metadata pattern."""
         if not entry.attributes:
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            return r[FlextLdifModels.Entry].ok(entry)
 
         attrs_dict = entry.attributes.attributes
-        sorted_items = (
-            sorted(attrs_dict.items(), key=operator.itemgetter(0))
-            if case_sensitive
-            else sorted(attrs_dict.items(), key=lambda x: x[0].lower())
+        sorted_items = FlextLdifUtilities.match(
+            case_sensitive,
+            (
+                True,
+                lambda _: sorted(u.pairs(attrs_dict), key=operator.itemgetter(0)),
+            ),
+            default=lambda _: sorted(u.pairs(attrs_dict), key=lambda x: x[0].lower()),
         )
 
         original_attr_order = list(attrs_dict.keys())
@@ -1017,12 +1035,13 @@ class FlextLdifSorting(
                 # Track attribute order transformation in metadata extensions
                 # Uses constants
                 mk = FlextLdifConstants.MetadataKeys
-                strategy_type = (
-                    FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_SENSITIVE
-                    if case_sensitive
-                    else (
-                        FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_INSENSITIVE
-                    )
+                strategy_type = FlextLdifUtilities.match(
+                    case_sensitive,
+                    (
+                        True,
+                        lambda _: FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_SENSITIVE,
+                    ),
+                    default=lambda _: FlextLdifConstants.SortingStrategyType.ALPHABETICAL_CASE_INSENSITIVE,
                 )
                 # DynamicMetadata supports __setitem__ for extra fields
                 extensions[mk.ATTRIBUTE_ORDER] = original_attr_order
@@ -1032,15 +1051,15 @@ class FlextLdifSorting(
                 self.logger.debug(
                     "Sorted entry attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
-                    attributes_count=len(original_attr_order),
+                    attributes_count=u.count(original_attr_order),
                 )
 
-        return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+        return r[FlextLdifModels.Entry].ok(new_entry)
 
     def _sort_entry_attributes_by_order(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> r[FlextLdifModels.Entry]:
         """Sort entry attributes by custom order.
 
         Uses Entry Model + Metadata pattern.
@@ -1049,14 +1068,20 @@ class FlextLdifSorting(
             return self._sort_entry_attributes_alphabetically(entry)
 
         if not entry.attributes:
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            return r[FlextLdifModels.Entry].ok(entry)
 
         attrs_dict = entry.attributes.attributes
         order = self.attribute_order
         original_attr_order = list(attrs_dict.keys())
-        ordered = [(k, attrs_dict[k]) for k in order if k in attrs_dict]
+        ordered = u.map(
+            u.filter(order, predicate=lambda k: k in attrs_dict),
+            mapper=lambda k: (k, attrs_dict[k]),
+        )
         remaining = sorted(
-            [(k, v) for k, v in attrs_dict.items() if k not in order],
+            u.filter(
+                u.pairs(attrs_dict),
+                predicate=lambda kv: kv[0] not in order,
+            ),
             key=lambda x: x[0].lower(),
         )
         sorted_dict = dict(ordered + remaining)
@@ -1090,9 +1115,9 @@ class FlextLdifSorting(
                 self.logger.debug(
                     "Sorted entry attributes by custom order",
                     entry_dn=str(entry.dn) if entry.dn else None,
-                    attributes_count=len(original_attr_order),
-                    ordered_count=len(ordered_attrs),
-                    remaining_count=len(remaining_attrs),
+                    attributes_count=u.count(original_attr_order),
+                    ordered_count=u.count(ordered_attrs),
+                    remaining_count=u.count(remaining_attrs),
                 )
 
-        return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+        return r[FlextLdifModels.Entry].ok(new_entry)

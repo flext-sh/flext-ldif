@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextResult, u
+from flext_core import r, u
 from flext_core.utilities import u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -68,7 +68,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         self,
         acl_string: str,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
-    ) -> FlextResult[FlextLdifModelsDomains.Acl]:
+    ) -> r[FlextLdifModelsDomains.Acl]:
         """Parse ACL string using server-specific quirks.
 
         Business Rule: ACL parsing normalizes server type to canonical form before
@@ -97,7 +97,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             )
         except (ValueError, TypeError) as e:
             # Invalid server type validation error
-            return FlextResult.fail(f"Invalid server type: {server_type} - {e}")
+            return r.fail(f"Invalid server type: {server_type} - {e}")
 
         # Get ACL quirk for normalized server type
         # If "openldap" (generic) was requested, try "openldap1" (legacy format) first
@@ -114,9 +114,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
                 acl_quirk = self._server.acl(normalized_server_type)
         except ValueError as e:
             # Invalid server type validation error
-            return FlextResult.fail(str(e))
+            return r.fail(str(e))
         if acl_quirk is None:
-            return FlextResult.fail(
+            return r.fail(
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
 
@@ -124,7 +124,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         parse_result = acl_quirk.parse(acl_string)
 
         if parse_result.is_failure:
-            return FlextResult.fail(parse_result.error or "ACL parsing failed")
+            return r.fail(parse_result.error or "ACL parsing failed")
 
         # Return the parsed ACL directly (no unnecessary conversions)
         return parse_result
@@ -133,7 +133,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         self,
         acl: FlextLdifModelsDomains.Acl,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write ACL model to string format.
 
         Business Rule: ACL writing uses server-specific quirks for formatting.
@@ -156,7 +156,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Get ACL quirk for server type
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
-            return FlextResult.fail(
+            return r.fail(
                 f"No ACL quirk found for server type: {server_type}",
             )
 
@@ -164,7 +164,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         write_result = acl_quirk.write(acl)
 
         if write_result.is_failure:
-            return FlextResult.fail(write_result.error or "ACL writing failed")
+            return r.fail(write_result.error or "ACL writing failed")
 
         return write_result
 
@@ -172,7 +172,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         self,
         entry: FlextLdifModels.Entry,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[FlextLdifModelsResults.AclResponse]:
+    ) -> r[FlextLdifModelsResults.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names.
 
         Business Rule: ACL extraction uses server-specific attribute detection via
@@ -200,7 +200,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         if not acl_attr_name:
             # Server has no ACL attributes
             # Statistics is a PEP 695 type alias - use the underlying class directly
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsResults.AclResponse(
                     acls=[],
                     statistics=FlextLdifModelsResults.Statistics(
@@ -218,7 +218,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         if not acl_values:
             # No ACL values found
             # Statistics is a PEP 695 type alias - use the underlying class directly
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsResults.AclResponse(
                     acls=[],
                     statistics=FlextLdifModelsResults.Statistics(
@@ -270,13 +270,13 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             ),
         )
 
-        return FlextResult.ok(response)
+        return r.ok(response)
 
     @staticmethod
     def extract_acl_entries(
         entries: list[FlextLdifModels.Entry],
         acl_attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Entry]]:
         """Extract entries that contain ACL attributes.
 
         Args:
@@ -289,7 +289,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         """
         if not entries:
-            return FlextResult.ok([])
+            return r.ok([])
 
         # Use default ACL attributes if not specified
         if acl_attributes is None:
@@ -325,7 +325,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             if entry is not None
         ]
 
-        return FlextResult.ok(acl_entries)
+        return r.ok(acl_entries)
 
     @staticmethod
     def _is_schema_entry(entry: FlextLdifModels.Entry) -> bool:
@@ -344,7 +344,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     def evaluate_acl_context(
         acls: list[FlextLdifModelsDomains.Acl],
         required_permissions: FlextLdifModelsDomains.AclPermissions | dict[str, bool],
-    ) -> FlextResult[FlextLdifModelsResults.AclEvaluationResult]:
+    ) -> r[FlextLdifModelsResults.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions.
 
         Business Rule: ACL context evaluation checks if any ACL in the list grants
@@ -372,7 +372,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         # Empty ACL list - evaluation fails (no permissions granted)
         if not acls:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsResults.AclEvaluationResult(
                     granted=False,
                     matched_acl=None,
@@ -390,7 +390,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         # If no permissions required, evaluation passes trivially
         if not required_perms:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsResults.AclEvaluationResult(
                     granted=True,
                     matched_acl=acls[0] if acls else None,
@@ -410,7 +410,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         )
 
         if found is not None:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsResults.AclEvaluationResult(
                     granted=True,
                     matched_acl=found,
@@ -419,7 +419,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             )
 
         # No ACL grants all required permissions
-        return FlextResult.ok(
+        return r.ok(
             FlextLdifModelsResults.AclEvaluationResult(
                 granted=False,
                 matched_acl=None,
@@ -427,7 +427,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             ),
         )
 
-    def execute(self) -> FlextResult[FlextLdifModelsResults.AclResponse]:  # noqa: PLR6301
+    def execute(self) -> r[FlextLdifModelsResults.AclResponse]:  # noqa: PLR6301
         """Execute ACL service health check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -447,7 +447,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         """
         # Return service status for health check
         # Create a minimal AclResponse indicating service is operational
-        return FlextResult[FlextLdifModelsResults.AclResponse].ok(
+        return r[FlextLdifModelsResults.AclResponse].ok(
             FlextLdifModelsResults.AclResponse(
                 acls=[],
                 statistics=FlextLdifModelsResults.Statistics(),

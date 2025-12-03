@@ -16,7 +16,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import cast, override
 
-from flext_core import FlextResult
+from flext_core import r
 from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.processing import ProcessingResult
@@ -69,7 +69,7 @@ class FlextLdifProcessing(
     @override
     def execute(
         self,
-    ) -> FlextResult[list[ProcessingResult]]:
+    ) -> r[list[ProcessingResult]]:
         """Execute method required by FlextService abstract base class.
 
         Business Rule: Processing service does not support generic execute() operation.
@@ -83,7 +83,7 @@ class FlextLdifProcessing(
             FlextResult with not implemented error
 
         """
-        return FlextResult[list[ProcessingResult]].fail(
+        return r[list[ProcessingResult]].fail(
             "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )
 
@@ -95,7 +95,7 @@ class FlextLdifProcessing(
         parallel: bool = False,
         batch_size: int = 100,
         max_workers: int = 4,
-    ) -> FlextResult[list[ProcessingResult]]:
+    ) -> r[list[ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes.
 
         Business Rule: Processing method routes to batch or parallel execution based on
@@ -143,7 +143,7 @@ class FlextLdifProcessing(
         """
         processor_result = self._get_processor_function(processor_name)
         if processor_result.is_failure:
-            return FlextResult[list[ProcessingResult]].fail(
+            return r[list[ProcessingResult]].fail(
                 processor_result.error or "Processor function not found",
             )
         processor_func = processor_result.unwrap()
@@ -159,7 +159,7 @@ class FlextLdifProcessing(
     def _get_processor_function(
         self,
         processor_name: str,
-    ) -> FlextResult[Callable[[FlextLdifModels.Entry], ProcessingResult]]:
+    ) -> r[Callable[[FlextLdifModels.Entry], ProcessingResult]]:
         """Get processor function by name.
 
         Args:
@@ -177,11 +177,11 @@ class FlextLdifProcessing(
             FlextLdifConstants.ProcessorTypes.VALIDATE: self._create_validate_processor,
         }
         if processor_name in processor_map:
-            return FlextResult[Callable[[FlextLdifModels.Entry], ProcessingResult]].ok(
+            return r[Callable[[FlextLdifModels.Entry], ProcessingResult]].ok(
                 processor_map[processor_name](),
             )
         supported = "'transform', 'validate'"
-        return FlextResult[Callable[[FlextLdifModels.Entry], ProcessingResult]].fail(
+        return r[Callable[[FlextLdifModels.Entry], ProcessingResult]].fail(
             f"Unknown processor: '{processor_name}'. Supported: {supported}",
         )
 
@@ -190,7 +190,7 @@ class FlextLdifProcessing(
         entries: list[FlextLdifModels.Entry],
         processor_func: Callable[[FlextLdifModels.Entry], ProcessingResult],
         max_workers: int,
-    ) -> FlextResult[list[ProcessingResult]]:
+    ) -> r[list[ProcessingResult]]:
         """Execute parallel processing using ThreadPoolExecutor.
 
         Args:
@@ -208,14 +208,14 @@ class FlextLdifProcessing(
                 executor.submit(processor_func, entry): entry for entry in entries
             }
             results = [future.result() for future in as_completed(future_to_entry)]
-        return FlextResult[list[ProcessingResult]].ok(results)
+        return r[list[ProcessingResult]].ok(results)
 
     @staticmethod
     def _execute_batch_processing(
         entries: list[FlextLdifModels.Entry],
         processor_func: Callable[[FlextLdifModels.Entry], ProcessingResult],
         batch_size: int,  # noqa: ARG004
-    ) -> FlextResult[list[ProcessingResult]]:
+    ) -> r[list[ProcessingResult]]:
         """Execute batch processing sequentially.
 
         Args:
@@ -233,11 +233,11 @@ class FlextLdifProcessing(
             on_error="collect",
         )
         if batch_result.is_failure:
-            return FlextResult[list[ProcessingResult]].fail(
+            return r[list[ProcessingResult]].fail(
                 batch_result.error or "Batch processing failed",
             )
         results = cast("list[ProcessingResult]", batch_result.value["results"])
-        return FlextResult[list[ProcessingResult]].ok(results)
+        return r[list[ProcessingResult]].ok(results)
 
     @staticmethod
     def _create_transform_processor() -> Callable[

@@ -6,7 +6,7 @@ in a server-agnostic service using dependency injection via FlextLdifServer.
 Architecture:
     - FlextLdifSchema: Core service for schema operations
     - Uses FlextLdifServer via DI for server-specific behavior
-    - Provides FlextResult[T] for railway-oriented error handling
+    - Provides r[T] for railway-oriented error handling
     - Leverages FlextLdifUtilities extensively for metadata operations
     - Uses Entry + Metadata patterns conforming to FlextLdifConstants
     - Never knows about OID/OUD directly - all via FlextLdifServer
@@ -50,7 +50,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextResult
+from flext_core import r
 from pydantic import PrivateAttr
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -194,14 +194,14 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     @override
     def execute(
         self,
-    ) -> FlextResult[FlextLdifModels.SchemaServiceStatus]:
+    ) -> r[FlextLdifModels.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
             FlextResult containing service status
 
         """
-        return FlextResult[FlextLdifModels.SchemaServiceStatus].ok(
+        return r[FlextLdifModels.SchemaServiceStatus].ok(
             FlextLdifModels.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=self._server_type,
@@ -228,7 +228,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         attr_definition: str,
         *,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+    ) -> r[FlextLdifModels.SchemaAttribute]:
         """Parse attribute type definition.
 
         Uses FlextLdifUtilities.Parser for RFC parsing and FlextLdifServer
@@ -246,7 +246,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         """
         try:
             if not attr_definition or not attr_definition.strip():
-                return FlextResult.fail("Attribute definition is empty")
+                return r.fail("Attribute definition is empty")
 
             # Use utilities for RFC parsing
             parse_result = FlextLdifUtilities.Parser.parse_rfc_attribute(
@@ -269,7 +269,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             # Metadata is already built by FlextLdifUtilities.Parser
             # No additional metadata building needed here
 
-            return FlextResult.ok(attr)
+            return r.ok(attr)
 
         except Exception as e:
             error_msg = f"Error parsing attribute: {e}"
@@ -277,14 +277,14 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 "Failed to parse attribute definition",
                 error=str(e),
             )
-            return FlextResult.fail(error_msg)
+            return r.fail(error_msg)
 
     def parse_objectclass(
         self,
         oc_definition: str,
         *,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+    ) -> r[FlextLdifModels.SchemaObjectClass]:
         """Parse objectClass definition.
 
         Uses FlextLdifUtilities.Parser for RFC parsing and FlextLdifServer
@@ -302,7 +302,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         """
         try:
             if not oc_definition or not oc_definition.strip():
-                return FlextResult.fail("ObjectClass definition is empty")
+                return r.fail("ObjectClass definition is empty")
 
             # Use utilities for RFC parsing
             parse_result = FlextLdifUtilities.Parser.parse_rfc_objectclass(
@@ -325,7 +325,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             # Metadata is already built by FlextLdifUtilities.Parser
             # No additional metadata building needed here
 
-            return FlextResult.ok(oc)
+            return r.ok(oc)
 
         except Exception as e:
             error_msg = f"Error parsing objectClass: {e}"
@@ -333,7 +333,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 "Failed to parse objectClass definition",
                 error=str(e),
             )
-            return FlextResult.fail(error_msg)
+            return r.fail(error_msg)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCHEMA VALIDATION OPERATIONS
@@ -342,7 +342,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     def validate_attribute(
         self,
         attr: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate attribute model syntax and constraints.
 
         Uses FlextLdifUtilities for validation operations.
@@ -351,7 +351,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             attr: SchemaAttribute model to validate (guaranteed non-None by Pydantic)
 
         Returns:
-            FlextResult[bool]: True if valid, error otherwise
+            r[bool]: True if valid, error otherwise
 
         Note:
             - attr cannot be None (Pydantic Field(...) ensures this)
@@ -362,9 +362,9 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         try:
             # Validate required fields are not empty
             if not attr.oid or not attr.oid.strip():
-                return FlextResult.fail("Attribute OID is required and cannot be empty")
+                return r.fail("Attribute OID is required and cannot be empty")
             if not attr.name or not attr.name.strip():
-                return FlextResult.fail(
+                return r.fail(
                     "Attribute NAME is required and cannot be empty",
                 )
 
@@ -372,9 +372,9 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             if attr.syntax:
                 validation_result = FlextLdifUtilities.OID.validate_format(attr.syntax)
                 if validation_result.is_failure or not validation_result.unwrap():
-                    return FlextResult.fail(f"Invalid SYNTAX OID: {attr.syntax}")
+                    return r.fail(f"Invalid SYNTAX OID: {attr.syntax}")
 
-            return FlextResult.ok(True)
+            return r.ok(True)
 
         except Exception as e:
             error_msg = f"Error validating attribute: {e}"
@@ -382,12 +382,12 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 "Failed to validate attribute",
                 error=str(e),
             )
-            return FlextResult.fail(error_msg)
+            return r.fail(error_msg)
 
     def validate_objectclass(
         self,
         oc: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate objectClass model syntax and constraints.
 
         Uses FlextLdifConstants for validation constants.
@@ -396,7 +396,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             oc: SchemaObjectClass model to validate (guaranteed non-None by Pydantic)
 
         Returns:
-            FlextResult[bool]: True if valid, error otherwise
+            r[bool]: True if valid, error otherwise
 
         Note:
             - oc cannot be None (Pydantic Field(...) ensures this)
@@ -407,11 +407,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         try:
             # Validate required fields are not empty
             if not oc.oid or not oc.oid.strip():
-                return FlextResult.fail(
+                return r.fail(
                     "ObjectClass OID is required and cannot be empty",
                 )
             if not oc.name or not oc.name.strip():
-                return FlextResult.fail(
+                return r.fail(
                     "ObjectClass NAME is required and cannot be empty",
                 )
 
@@ -427,11 +427,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                     f"{FlextLdifConstants.Schema.STRUCTURAL}, or "
                     f"{FlextLdifConstants.Schema.AUXILIARY}"
                 )
-                return FlextResult.fail(
+                return r.fail(
                     f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}",
                 )
 
-            return FlextResult.ok(True)
+            return r.ok(True)
 
         except Exception as e:
             error_msg = f"Error validating objectclass: {e}"
@@ -439,7 +439,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 "Failed to validate objectClass",
                 error=str(e),
             )
-            return FlextResult.fail(error_msg)
+            return r.fail(error_msg)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCHEMA WRITING OPERATIONS
@@ -448,7 +448,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     def write_attribute(
         self,
         attr: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Convert attribute model to LDIF format.
 
         Uses FlextLdifUtilities.Writer for writing operations.
@@ -464,7 +464,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             # Validate first
             validation = self.validate_attribute(attr)
             if not validation.is_success:
-                return FlextResult.fail(validation.error or "Unknown error")
+                return r.fail(validation.error or "Unknown error")
 
             # Use utilities to write
             return FlextLdifUtilities.Writer.write_rfc_attribute(attr)
@@ -475,12 +475,12 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 "Failed to write attribute",
                 error=str(e),
             )
-            return FlextResult.fail(error_msg)
+            return r.fail(error_msg)
 
     def write_objectclass(
         self,
         oc: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Convert objectClass model to LDIF format.
 
         Uses FlextLdifUtilities.Writer for writing operations.
@@ -496,7 +496,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
             # Validate first
             validation = self.validate_objectclass(oc)
             if not validation.is_success:
-                return FlextResult.fail(validation.error or "Unknown error")
+                return r.fail(validation.error or "Unknown error")
 
             # Use utilities to write
             return FlextLdifUtilities.Writer.write_rfc_objectclass(oc)
@@ -507,7 +507,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 "Failed to write objectClass",
                 error=str(e),
             )
-            return FlextResult.fail(error_msg)
+            return r.fail(error_msg)
 
     # ════════════════════════════════════════════════════════════════════════
     # SCHEMA DETECTION OPERATIONS
