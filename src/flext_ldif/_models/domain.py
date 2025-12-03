@@ -20,8 +20,7 @@ from typing import ClassVar, Self, TypedDict, Unpack, cast
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextTypes,
-    FlextUtilities,
+    t,
 )
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
@@ -851,7 +850,7 @@ class FlextLdifModelsDomains:
             # Store metadata as typed dict
             self.attribute_metadata[attribute_name] = {
                 "status": "deleted",
-                "deleted_at": FlextUtilities.Generators.generate_iso_timestamp(),
+                "deleted_at": uenerate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": list(self.attributes[attribute_name]),
@@ -1501,7 +1500,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def from_extensions(
             cls,
-            extensions: Mapping[str, FlextTypes.MetadataAttributeValue] | None,
+            extensions: Mapping[str, t.MetadataAttributeValue] | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 
@@ -1654,8 +1653,8 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: dict[str, FlextTypes.MetadataAttributeValue],
-        ) -> dict[str, FlextTypes.MetadataAttributeValue]:
+            data: dict[str, t.MetadataAttributeValue],
+        ) -> dict[str, t.MetadataAttributeValue]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
             Pydantic v2 Context Pattern: Using model_validator with mode='before'
@@ -2457,8 +2456,8 @@ class FlextLdifModelsDomains:
                     unconverted_attributes,
                 )
                 # Type narrowing: convert values to MetadataAttributeValue compatible types
-                ext_kwargs_typed: dict[str, FlextTypes.MetadataAttributeValue] = {
-                    k: cast("FlextTypes.MetadataAttributeValue", v)
+                ext_kwargs_typed: dict[str, t.MetadataAttributeValue] = {
+                    k: cast("t.MetadataAttributeValue", v)
                     for k, v in ext_kwargs.items()
                 }
                 extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
@@ -3782,7 +3781,7 @@ class FlextLdifModelsDomains:
             quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
-                | dict[str, FlextTypes.MetadataAttributeValue]
+                | dict[str, t.MetadataAttributeValue]
                 | None
             ) = None,
         ) -> Self:

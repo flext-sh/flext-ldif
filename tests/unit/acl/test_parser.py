@@ -337,16 +337,50 @@ class TestFlextLdifAclParser:
                 )
 
             case AclParserTestType.EVALUATE_EMPTY:
-                # NOTE: evaluate_acl_context is not currently implemented
-                pytest.skip("evaluate_acl_context functionality not implemented")
+                # Test evaluate_acl_context with empty ACL list
+                empty_result = acl_service.evaluate_acl_context(
+                    acls=[],
+                    required_permissions={"read": True},
+                )
+                assert empty_result.is_success
+                eval_result = empty_result.unwrap()
+                assert not eval_result.granted
+                assert eval_result.matched_acl is None
+                assert "No ACLs to evaluate" in eval_result.message
 
             case AclParserTestType.EVALUATE_VALID:
-                # NOTE: evaluate_acl_context is not currently implemented
-                pytest.skip("evaluate_acl_context functionality not implemented")
+                # Test evaluate_acl_context with ACL that grants required permissions
+                test_acl = AclParserTestFactory.create_test_acl(
+                    name="valid-acl",
+                    read=True,
+                    write=True,
+                )
+                valid_result = acl_service.evaluate_acl_context(
+                    acls=[test_acl],
+                    required_permissions={"read": True},
+                )
+                assert valid_result.is_success
+                eval_result = valid_result.unwrap()
+                assert eval_result.granted
+                assert eval_result.matched_acl is not None
+                assert eval_result.matched_acl.name == "valid-acl"
 
             case AclParserTestType.EVALUATE_MISMATCH:
-                # NOTE: evaluate_acl_context is not currently implemented
-                pytest.skip("evaluate_acl_context functionality not implemented")
+                # Test evaluate_acl_context with ACL that doesn't grant required permissions
+                test_acl = AclParserTestFactory.create_test_acl(
+                    name="mismatch-acl",
+                    read=True,
+                    write=False,
+                )
+                mismatch_result = acl_service.evaluate_acl_context(
+                    acls=[test_acl],
+                    required_permissions={"write": True},
+                )
+                assert mismatch_result.is_success
+                eval_result = mismatch_result.unwrap()
+                assert not eval_result.granted
+                assert eval_result.matched_acl is None
+                assert "No ACL grants required permissions" in eval_result.message
 
 
 __all__ = [

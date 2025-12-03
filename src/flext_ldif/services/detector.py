@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Protocol, override
+from typing import Protocol, cast, override
 
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.results import _ConfigSettings, _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
@@ -27,6 +28,9 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 def _get_server_registry() -> FlextLdifServer:
@@ -279,7 +283,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
 
         return FlextResult.ok("rfc")
 
-    def _update_server_scores(  # noqa: PLR0913, PLR0917, PLR6301
+    def _update_server_scores(  # noqa: PLR6301, PLR0913, PLR0917
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         pattern: str,
@@ -299,7 +303,8 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
 
         score_attr_match = FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
         for item in (*attributes, *(objectclasses or [])):
-            if item.lower() in content_lower:
+            # normalize() auto-detects contains when two strings are passed
+            if u.normalize(server_type, item):
                 scores[server_type] += score_attr_match
 
     def _process_server_with_oid_pattern(  # noqa: PLR0913
@@ -516,7 +521,11 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             "rfc": "rfc",
             "generic": "rfc",
         }
-        detected = server_type_map.get(detected_key, "rfc")
+        detected_raw = u.get(server_type_map, detected_key, default="rfc")
+        detected: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = cast(
+            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+            detected_raw,
+        )
         return detected, confidence
 
     @staticmethod
@@ -555,7 +564,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
     def _extract_oid_specific_patterns(
         self,
         constants: type[ServerDetectionConstants] | None,
-        content_lower: str,
+        content: str,
         patterns: list[str],
     ) -> None:
         """Extract OID-specific patterns (ACLs, etc.)."""
@@ -567,7 +576,9 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
             getattr(constants, "ORCLENTRYLEVELACI", None),
         ]
         if any(
-            attr and isinstance(attr, str) and attr.lower() in content_lower
+            attr
+            and isinstance(attr, str)
+            and attr in content
             for attr in acl_attrs
         ):
             self._add_pattern_if_match(
@@ -623,7 +634,7 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 patterns,
                 case_sensitive=True,
             )
-            self._extract_oid_specific_patterns(oid_constants, content_lower, patterns)
+            self._extract_oid_specific_patterns(oid_constants, content, patterns)
 
         # Oracle OUD
         oud_server_type = FlextLdifConstants.normalize_server_type(
@@ -677,8 +688,10 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
                 patterns,
                 case_sensitive=True,
             )
+            # normalize() with two strings performs case-insensitive contains check
+            contains_result = u.contains(content, "samaccountname")
             self._add_pattern_if_match(
-                condition="samaccountname" in content_lower,
+                condition=contains_result is True,
                 description="Active Directory attributes",
                 patterns=patterns,
             )

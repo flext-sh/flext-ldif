@@ -19,11 +19,16 @@ from collections.abc import Callable
 from typing import override
 
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 from pydantic import Field, PrivateAttr, field_validator
 
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.utilities import FlextLdifUtilities
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
+r = FlextResult  # Result
 
 # Semantic type for Distinguished Name operations
 type DN = str
@@ -152,9 +157,11 @@ class FlextLdifDn(
             "parse_rdn": lambda: self._parser.parse_rdn_operation(self.dn),
         }
 
-        handler: Callable[[], FlextResult[str]] | None = handlers.get(self.operation)
+        handler: Callable[[], FlextResult[str]] | None = handlers.get(
+            self.operation, default=None
+        )
         if not handler:
-            return FlextResult[str].fail(f"Unknown operation: {self.operation}")
+            return r.fail(f"Unknown operation: {self.operation}")
 
         return handler()
 
@@ -166,7 +173,7 @@ class FlextLdifDn(
 
         """
         if not self.other_dn:
-            return FlextResult[str].fail("other_dn required for compare operation")
+            return r.fail("other_dn required for compare operation")
         return self._parser.compare_operation(self.dn, self.other_dn)
 
     @override
@@ -405,7 +412,7 @@ class FlextLdifDn(
     def norm(self, dn: str | None) -> FlextResult[str]:
         """Instance method shortcut for normalize."""
         if dn is None:
-            return FlextResult[str].fail("DN cannot be None")
+            return r.fail("DN cannot be None")
         return self.normalize(dn)
 
     def esc(self, value: str) -> str:
@@ -622,7 +629,7 @@ class FlextLdifDn(
         def clean_operation(dn: str) -> FlextResult[str]:
             """Clean DN operation (internal)."""
             cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
-            return FlextResult[str].ok(cleaned)
+            return r.ok(cleaned)
 
         @staticmethod
         def escape_operation(dn: str, escape_mode: str) -> FlextResult[str]:
@@ -631,13 +638,13 @@ class FlextLdifDn(
                 escaped = FlextLdifDn.Normalizer.hex_escape(dn)
             else:
                 escaped = FlextLdifDn.Normalizer.escape_dn_value(dn)
-            return FlextResult[str].ok(escaped)
+            return r.ok(escaped)
 
         @staticmethod
         def unescape_operation(dn: str) -> FlextResult[str]:
             """Unescape DN operation (internal)."""
             unescaped = FlextLdifDn.Normalizer.unescape_dn_value(dn)
-            return FlextResult[str].ok(unescaped)
+            return r.ok(unescaped)
 
     # ════════════════════════════════════════════════════════════════════════
     # NESTED CASE REGISTRY CLASS

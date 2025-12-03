@@ -268,7 +268,7 @@ def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextRes
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[FlextTypes.Dict]:
+def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[t.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -344,7 +344,7 @@ class QuirksConversionMatrix:
 
         """
 
-    def get_supported_conversions(self) -> dict[str, FlextTypes.StringList]:
+    def get_supported_conversions(self) -> dict[str, t.StringList]:
         """Get matrix of supported source→target conversions.
 
         Returns:
@@ -455,15 +455,15 @@ class Entry(BaseModel):
     """LDIF entry domain model."""
 
     dn: str = Field(..., description="Distinguished Name")
-    attributes: dict[str, FlextTypes.StringList] = Field(
+    attributes: dict[str, t.StringList] = Field(
         default_factory=dict,
         description="Entry attributes as key-value pairs"
     )
 
-    def get_object_classes(self) -> FlextTypes.StringList:
+    def get_object_classes(self) -> t.StringList:
         """Get object class values for this entry."""
 
-    def get_attribute_values(self, attr_name: str) -> FlextTypes.StringList:
+    def get_attribute_values(self, attr_name: str) -> t.StringList:
         """Get values for specific attribute."""
 
     def has_object_class(self, object_class: str) -> bool:
@@ -547,7 +547,7 @@ class Factory:
     """Factory for creating LDIF domain objects."""
 
     @staticmethod
-    def create(data: FlextTypes.Dict | str, attributes: dict[str, FlextTypes.StringList] | None = None) -> Entry:
+    def create(data: t.Dict | str, attributes: dict[str, t.StringList] | None = None) -> Entry:
         """Create LDIF entry with validation."""
 
     @staticmethod
@@ -567,7 +567,7 @@ class Factory:
     def create_group_entry(
         dn: str,
         cn: str,
-        members: FlextTypes.StringList,
+        members: t.StringList,
         **additional_attrs
     ) -> Entry:
         """Create group entry with members."""
@@ -638,18 +638,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 
 # Successful operation
 result = api.parse_file("valid.ldif")
@@ -741,7 +741,7 @@ if result.is_success:
 ### Pipeline Processing
 
 ```python
-def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[FlextTypes.Dict]:
+def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[t.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
 
@@ -775,7 +775,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextRe
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dict]:
+def process_multiple_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
     """Process multiple LDIF files in batch."""
     api = FlextLdif()
     all_entries = []
@@ -788,9 +788,9 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dic
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return FlextResult[FlextTypes.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return FlextResult[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
-    return FlextResult[FlextTypes.Dict].ok({
+    return FlextResult[t.Dict].ok({
         'total_entries': len(all_entries),
         'file_stats': processing_stats,
         'entries': all_entries
@@ -850,7 +850,7 @@ class RfcSchemaParserService:
             server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[t.Dict]:
         """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
@@ -940,7 +940,7 @@ class FlextLdifMigration:
             target_server_type: Target server type (e.g., "oud", "openldap")
         """
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[t.Dict]:
         """Execute migration pipeline.
 
         Generic transformation process:
@@ -1049,18 +1049,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 
 # Access global container
 container = FlextContainer.get_global()
@@ -1086,18 +1086,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 
 # Structured logging in LDIF operations
 logger = FlextLogger(__name__)

@@ -41,7 +41,20 @@ from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.sorting import FlextLdifSorting
 from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.utilities import (
+    FlextLdifUtilities,
+    c,
+    d,
+    e,
+    h,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+    x,
+)
 
 __email__ = "dev@flext.com"
 
@@ -67,6 +80,18 @@ __all__ = [
     "FlextLdifTypes",  # ✅ Type definitions
     "FlextLdifUtilities",  # ✅ Public helpers
     "FlextLdifWriter",  # ✅ Writer service (public API)
+    # Convenience aliases
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
 ]
 
 # Pydantic v2 with `from __future__ import annotations` resolves forward references

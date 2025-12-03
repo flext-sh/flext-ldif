@@ -117,7 +117,7 @@ encodings.
 ### Writing LDIF Text
 
 1. Caller invokes `FlextLdif.write` with entries and optional format overrides.
-2. Writer options are merged through `FlextUtilities.Configuration.build_options_from_kwargs`
+2. Writer options are merged through `u.Configuration.build_options_from_kwargs`
    to combine defaults and explicit values.
 3. The writer uses the shared quirk registry to format entries for the chosen
    server type before emitting LDIF text or writing to disk.

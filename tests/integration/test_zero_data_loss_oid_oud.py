@@ -413,13 +413,14 @@ class TestZeroDataLossOidOud:
             # Type narrowing: minimal_differences and original_strings are DynamicMetadata
             if isinstance(entry.metadata.minimal_differences, dict):
                 dn_diff_raw = entry.metadata.minimal_differences.get("dn")
-                if isinstance(dn_diff_raw, dict) and dn_diff_raw.get(
-                    "has_differences", False
+                if (
+                    isinstance(dn_diff_raw, dict)
+                    and dn_diff_raw.get("has_differences", False)
+                    and isinstance(entry.metadata.original_strings, dict)
                 ):
-                    if isinstance(entry.metadata.original_strings, dict):
-                        assert "dn_original" in entry.metadata.original_strings, (
-                            "DN differences detected but dn_original not preserved"
-                        )
+                    assert "dn_original" in entry.metadata.original_strings, (
+                        "DN differences detected but dn_original not preserved"
+                    )
 
     def test_restore_original_format_option(
         self,

@@ -30,11 +30,13 @@ from pathlib import Path
 from typing import TypedDict, TypeVar
 
 from flext_core import FlextResult
-from flext_core.typings import FlextTypes, T  # Reuse TypeVar from flext-core
+from flext_core.typings import FlextTypes, T
 
-# Import models facade for concrete types (avoiding circular imports via facade)
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
+
+# Aliases for simplified usage - after all imports
+t = FlextTypes  # Types (alias for flext_core.typings.FlextTypes)
 
 # Model type aliases moved to nested classes to follow FLEXT standards
 
@@ -56,15 +58,15 @@ Used in metadata utilities for type-safe model operations.
 class FlextLdifTypes:
     """Official type aliases for flext-ldif domain.
 
-    Composes with FlextTypes base types (FlextTypes.GeneralValueType, ScalarValue, etc.)
+    Composes with t base types (t.GeneralValueType, ScalarValue, etc.)
     when appropriate, while maintaining domain-specific types aligned to business needs.
 
     These aliases reduce code complexity by providing precise types instead of generic 'object'.
     They should be used in src/ code to avoid type guards and casts.
 
     Architecture: Composition (not inheritance)
-    - Composes with FlextTypes.GeneralValueType (imported from flext_core.typings) for generic recursive value types
-    - Composes with FlextTypes.ScalarValue for primitive scalar values
+    - Composes with t.GeneralValueType (imported from flext_core.typings) for generic recursive value types
+    - Composes with t.ScalarValue for primitive scalar values
     - Defines domain-specific types (LDIF quirks, entries, metadata) aligned to business logic
     - All types organized in nested classes for better organization
     - No inheritance - only composition to maintain separation of concerns
@@ -78,10 +80,10 @@ class FlextLdifTypes:
         from flext_ldif.typings import FlextLdifTypes
         # Access types directly from class
         def process(data: FlextLdifTypes.EntryQuirkInstance) -> None: ...
-        def parse(metadata: "FlextTypes.MetadataAttributeValue") -> None: ...
-        # Compose with FlextTypes.GeneralValueType when needed
-        from flext_core.typings import FlextTypes
-        def generic(value: FlextTypes.GeneralValueType) -> None: ...
+        def parse(metadata: "t.MetadataAttributeValue") -> None: ...
+        # Compose with t.GeneralValueType when needed
+        from flext_core.typings import t
+        def generic(value: t.GeneralValueType) -> None: ...
     """
 
     class Models:
@@ -164,7 +166,7 @@ class FlextLdifTypes:
     # TYPE ALIASES - From types.py consolidation
     # =========================================================================
 
-    # ScalarValue removed - use FlextTypes.ScalarValue directly
+    # ScalarValue removed - use t.ScalarValue directly
     # This alias was removed per user requirement to eliminate simple aliases
 
     type AclQuirk = FlextLdifProtocols.Quirks.AclProtocol
@@ -183,13 +185,13 @@ class FlextLdifTypes:
     # FLEXIBLE INPUT/OUTPUT TYPES - For API flexibility
     # =========================================================================
     # Business context: LDIF API input/output flexibility (string, file, models)
-    # Composes with FlextTypes patterns for base types (str, Path)
+    # Composes with t patterns for base types (str, Path)
 
     type FlexibleParseInput = str | Path
     """Type alias for parse operation inputs.
 
     Business context: LDIF parsing from string or file path.
-    Composes with FlextTypes patterns (str, Path from pathlib).
+    Composes with t patterns (str, Path from pathlib).
     """
 
     type FlexibleWriteInput = (
@@ -211,7 +213,7 @@ class FlextLdifTypes:
     """Type alias for write operation outputs.
 
     Business context: LDIF writing results (LDIF string format).
-    Composes with FlextTypes.StringValue pattern.
+    Composes with t.StringValue pattern.
     """
 
     type AclOrString = str | FlextLdifModels.Acl
@@ -358,11 +360,11 @@ class FlextLdifTypes:
 
         type EntryCreateData = dict[
             str,
-            FlextTypes.ScalarValue | list[str] | dict[str, list[str]],
+            t.ScalarValue | list[str] | dict[str, list[str]],
         ]
         """Type alias for entry creation data dictionaries.
 
-        Composes with FlextTypes.ScalarValue for primitive values.
+        Composes with t.ScalarValue for primitive values.
         Extends with list[str] and nested dicts for entry-specific structures.
         """
 
@@ -408,7 +410,7 @@ class FlextLdifTypes:
         """Common dictionary type aliases for LDIF operations.
 
         Business context: LDAP attribute and distribution data structures used
-        throughout LDIF processing. Reuses FlextTypes.Types patterns for consistency.
+        throughout LDIF processing. Reuses t.Types patterns for consistency.
 
         Uses collections.ABC types (Mapping, Sequence) for read-only semantics
         where appropriate (Python 3.13+ PEP 695 best practices).
@@ -425,16 +427,16 @@ class FlextLdifTypes:
         """Read-only attribute dictionary (Python 3.13+ collections.ABC).
 
         Business context: Function parameters that should not modify attributes.
-        Reuses FlextTypes.Types pattern (Mapping for read-only).
+        Reuses t.Types pattern (Mapping for read-only).
         Format: {attribute_name: [value1, value2, ...]}
         """
 
         type AttributeDictGeneric = Mapping[
             str,
-            FlextTypes.ScalarValue
+            t.ScalarValue
             | Sequence[str]
-            | Sequence[FlextTypes.ScalarValue]
-            | dict[str, FlextTypes.ScalarValue | Sequence[str]],
+            | Sequence[t.ScalarValue]
+            | dict[str, t.ScalarValue | Sequence[str]],
         ]
         """Generic read-only attribute dictionary for flexible attribute containers.
 
@@ -455,7 +457,7 @@ class FlextLdifTypes:
         """Read-only distribution dictionary (Python 3.13+ collections.ABC).
 
         Business context: Function parameters that should not modify distributions.
-        Reuses FlextTypes.Types pattern (Mapping for read-only).
+        Reuses t.Types pattern (Mapping for read-only).
         Format: {category: count}
         """
 
@@ -518,30 +520,30 @@ class FlextLdifTypes:
     type AttributeConflictEntry = dict[str, str | list[str]]
     """Type alias for attribute conflict entries."""
 
-    # Metadata types - use FlextTypes directly (no aliases per user requirement)
-    # These are now defined generically in flext-core.FlextTypes
-    # Use FlextTypes.MetadataAttributeValue and FlextTypes.Metadata directly
+    # Metadata types - use t directly (no aliases per user requirement)
+    # These are now defined generically in flext-core.t
+    # Use t.MetadataAttributeValue and t.Metadata directly
 
-    type MetadataDict = Mapping[str, FlextTypes.MetadataAttributeValue]
+    type MetadataDict = Mapping[str, t.MetadataAttributeValue]
     """Type alias for metadata dictionaries using collections.ABC.Mapping (read-only).
 
     Use this for function parameters where metadata should not be modified.
     For mutable metadata, use dict[str, MetadataAttributeValue] instead.
-    Uses FlextTypes.MetadataAttributeValue directly (no alias).
+    Uses t.MetadataAttributeValue directly (no alias).
     """
 
-    type MetadataDictMutable = dict[str, FlextTypes.MetadataAttributeValue]
+    type MetadataDictMutable = dict[str, t.MetadataAttributeValue]
     """Type alias for mutable metadata dictionaries.
 
     Use this when metadata needs to be modified.
     For read-only metadata, use MetadataDict (Mapping) instead.
-    Uses FlextTypes.MetadataAttributeValue directly (no alias).
+    Uses t.MetadataAttributeValue directly (no alias).
     """
 
-    type TemplateValue = FlextTypes.ScalarValue | list[str]
+    type TemplateValue = t.ScalarValue | list[str]
     """Type alias for template data values (header templates, etc.).
 
-    Composes with FlextTypes.ScalarValue for primitive types.
+    Composes with t.ScalarValue for primitive types.
     Extends with list[str] for template-specific list values.
     """
 
@@ -551,10 +553,10 @@ class FlextLdifTypes:
     type AttributeMetadataMap = dict[str, dict[str, str | list[str]]]
     """Type alias for attribute name -> metadata dict mapping."""
 
-    type ConversionHistory = dict[str, FlextTypes.ScalarValue | list[str]]
+    type ConversionHistory = dict[str, t.ScalarValue | list[str]]
     """Type alias for conversion history.
 
-    Composes with FlextTypes.ScalarValue for primitive values.
+    Composes with t.ScalarValue for primitive values.
     Extends with list[str] for conversion-specific list values.
     """
 
@@ -670,18 +672,16 @@ class FlextLdifTypes:
             dn_was_base64: bool
             original_attribute_case: dict[str, str] | None
             dn_differences: (
-                dict[str, FlextTypes.MetadataAttributeValue]
-                | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                dict[str, t.MetadataAttributeValue]
+                | dict[str, dict[str, t.MetadataAttributeValue]]
                 | None
             )
             attribute_differences: (
-                dict[str, FlextTypes.MetadataAttributeValue]
-                | dict[str, dict[str, FlextTypes.MetadataAttributeValue]]
+                dict[str, t.MetadataAttributeValue]
+                | dict[str, dict[str, t.MetadataAttributeValue]]
                 | None
             )
-            original_attributes_complete: (
-                dict[str, FlextTypes.MetadataAttributeValue] | None
-            )
+            original_attributes_complete: dict[str, t.MetadataAttributeValue] | None
 
         class AttributeWriteContext(TypedDict, total=False):
             """TypedDict for attribute write context with specific fields.
@@ -691,40 +691,36 @@ class FlextLdifTypes:
             """
 
             attr_name: str
-            attr_values: FlextTypes.GeneralValueType
-            minimal_differences_attrs: dict[str, FlextTypes.MetadataAttributeValue]
+            attr_values: t.GeneralValueType
+            minimal_differences_attrs: dict[str, t.MetadataAttributeValue]
             hidden_attrs: set[str]
             write_options: object  # WriteFormatOptions - avoid circular import
 
-        type AclParseContext = dict[str, FlextTypes.ScalarValue | list[str]]
+        type AclParseContext = dict[str, t.ScalarValue | list[str]]
         """Type alias for ACL parsing context dictionaries.
 
-        Composes with FlextTypes.ScalarValue for primitive values.
+        Composes with t.ScalarValue for primitive values.
         Extends with list[str] for ACL-specific list values.
         """
 
         type ParsedAttributeDict = dict[
             str,
-            FlextTypes.ScalarValue
-            | list[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]],
+            t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]],
         ]
         """Type alias for parsed schema attribute dictionary.
 
-        Composes with FlextTypes.ScalarValue for primitive values.
+        Composes with t.ScalarValue for primitive values.
         Extends with list[str] and nested dicts for schema-specific structures.
         Includes nested dicts for metadata_extensions and syntax_validation.
         """
 
         type ParsedObjectClassDict = dict[
             str,
-            FlextTypes.ScalarValue
-            | list[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]],
+            t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]],
         ]
         """Type alias for parsed schema objectClass dictionary.
 
-        Composes with FlextTypes.ScalarValue for primitive values.
+        Composes with t.ScalarValue for primitive values.
         Extends with list[str] and nested dicts for schema-specific structures.
         Includes nested dict for metadata_extensions.
         """
@@ -736,20 +732,20 @@ class FlextLdifTypes:
     class Extensions:
         """Nested class for extension-related type aliases."""
 
-        type ExtensionsDict = dict[str, FlextTypes.MetadataAttributeValue]
+        type ExtensionsDict = dict[str, t.MetadataAttributeValue]
         """Type alias for quirk metadata extensions dictionary.
 
         Replaces dict[str, object] with specific MetadataAttributeValue type.
         Used in QuirkMetadata.extensions and server-specific extensions.
-        Uses FlextTypes.MetadataAttributeValue directly (no alias).
+        Uses t.MetadataAttributeValue directly (no alias).
         """
 
-        type ExtensionsDictMutable = dict[str, FlextTypes.MetadataAttributeValue]
+        type ExtensionsDictMutable = dict[str, t.MetadataAttributeValue]
         """Type alias for mutable extensions dictionary.
 
         Use this when extensions need to be modified.
         For read-only extensions, use ExtensionsDict (Mapping) instead.
-        Uses FlextTypes.MetadataAttributeValue directly (no alias).
+        Uses t.MetadataAttributeValue directly (no alias).
         """
 
     # =========================================================================
@@ -765,9 +761,7 @@ class FlextLdifTypes:
 
         type MigrationConfigDict = dict[
             str,
-            FlextTypes.ScalarValue
-            | list[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]],
+            t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]],
         ]
         """Type for MigrationConfig dictionary input.
 
@@ -777,10 +771,10 @@ class FlextLdifTypes:
 
         type CategoryRulesDict = dict[
             str,
-            FlextTypes.ScalarValue
+            t.ScalarValue
             | list[str]
             | frozenset[str]
-            | dict[str, FlextTypes.ScalarValue | list[str] | frozenset[str]],
+            | dict[str, t.ScalarValue | list[str] | frozenset[str]],
         ]
         """Type for CategoryRules dictionary input.
 
@@ -790,10 +784,10 @@ class FlextLdifTypes:
 
         type WriteFormatOptionsDict = dict[
             str,
-            FlextTypes.ScalarValue
+            t.ScalarValue
             | list[str]
             | frozenset[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]],
+            | dict[str, t.ScalarValue | list[str]],
         ]
         """Type for WriteFormatOptions dictionary input.
 
@@ -803,10 +797,10 @@ class FlextLdifTypes:
 
         type WhitelistRulesDict = dict[
             str,
-            FlextTypes.ScalarValue
+            t.ScalarValue
             | list[str]
             | frozenset[str]
-            | dict[str, FlextTypes.ScalarValue | list[str] | frozenset[str]],
+            | dict[str, t.ScalarValue | list[str] | frozenset[str]],
         ]
         """Type for WhitelistRules dictionary input.
 
@@ -903,20 +897,18 @@ class FlextLdifTypes:
 
         # Keep for existing code that expects these types
         type AttributeMetadataMap = dict[str, dict[str, str | list[str]]]
-        type MetadataDictMutable = dict[str, FlextTypes.MetadataAttributeValue]
+        type MetadataDictMutable = dict[str, t.MetadataAttributeValue]
 
     class Conversion:
         """Conversion-related type aliases for conversion operations."""
 
         type ConversionHistory = dict[
             str,
-            FlextTypes.ScalarValue
-            | list[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]],
+            t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]],
         ]
         """Type alias for conversion history tracking.
 
-        Composes with FlextTypes.ScalarValue for primitive values.
+        Composes with t.ScalarValue for primitive values.
         Extends with list[str] and nested dicts for conversion-specific structures.
         Replaces dict[str, object] with specific structure.
         """

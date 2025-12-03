@@ -10,7 +10,12 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Literal
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import (
+    FlextLogger,
+    FlextResult,
+)
+from flext_core.typings import t as FlextTypes  # noqa: N812
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -18,10 +23,15 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
+t = FlextTypes  # Types
+r = FlextResult  # Result
+
 logger = FlextLogger(__name__)
 
 # Type for parsed ACL components (using MetadataValue for nested structures)
-AclComponent = dict[str, str | FlextTypes.MetadataAttributeValue]
+AclComponent = dict[str, str | t.MetadataAttributeValue]
 
 
 class FlextLdifUtilitiesACL:
@@ -53,6 +63,18 @@ class FlextLdifUtilitiesACL:
         return attr_name.strip(), remainder.strip()
 
     @staticmethod
+    def _extract_from_match(match: re.Match[str], group: int) -> str | None:
+        """Extract group from regex match."""
+        if match.lastindex is None:
+            return match.group(0)
+        if group > match.lastindex:
+            return None
+        try:
+            return match.group(group)
+        except IndexError:
+            return None
+
+    @staticmethod
     def extract_component(content: str, pattern: str, group: int = 1) -> str | None:
         r"""Extract single ACL component using regex pattern.
 
@@ -73,25 +95,9 @@ class FlextLdifUtilitiesACL:
         if not content or not pattern:
             return None
         match = re.search(pattern, content)
-        if not match:
-            return None
-        # If pattern has no capturing groups, return the full match for group=0
-        # or the matched string for group=1 (treating it as a boolean pattern)
-        if match.lastindex is None:
-            # Pattern has no capturing groups
-            if group == 0:
-                return match.group(0)
-            # For group=1 or higher with no capturing groups, return the full match
-            # This allows boolean patterns like "DenyGroupOverride" to work
-            return match.group(0)
-        # Pattern has capturing groups - check if requested group exists
-        if group > match.lastindex:
-            return None
-        try:
-            return match.group(group)
-        except IndexError:
-            # Group doesn't exist in the pattern
-            return None
+        return (
+            FlextLdifUtilitiesACL._extract_from_match(match, group) if match else None
+        )
 
     @staticmethod
     def extract_permissions(
@@ -138,7 +144,8 @@ class FlextLdifUtilitiesACL:
 
             if ops:
                 perms = [op.strip() for op in ops.split(ops_separator)]
-                permissions.extend([p for p in perms if p])
+                filtered_perms = [p for p in perms if p]
+                permissions.extend(filtered_perms)
 
         return permissions
 
@@ -173,10 +180,31 @@ class FlextLdifUtilitiesACL:
 
         patterns = bind_patterns or default_patterns
 
-        bind_rules: list[dict[str, str]] = []
-        for bind_type, pattern in patterns.items():
+        def extract_bind_rule(bind_type: str, pattern: str) -> list[dict[str, str]]:
+            """Extract bind rules for single bind type."""
             matches = re.findall(pattern, content, re.IGNORECASE)
-            bind_rules.extend({"type": bind_type, "value": m} for m in matches)
+            return [{"type": bind_type, "value": m} for m in matches]
+
+        bind_rules_result = u.process(
+            list(patterns.items()),
+            processor=lambda item: extract_bind_rule(item[0], item[1]),
+            on_error="skip",
+        )
+        bind_rules: list[dict[str, str]] = []
+        if bind_rules_result.is_success:
+            bind_rules_list = bind_rules_result.value
+            if isinstance(bind_rules_list, list):
+                flattened_result = u.process(
+                    bind_rules_list,
+                    processor=lambda rule_list: rule_list if isinstance(rule_list, list) else [],
+                    on_error="skip",
+                )
+                if flattened_result.is_success and isinstance(flattened_result.value, list):
+                    bind_rules = u.ensure(
+                        [item for sublist in flattened_result.value for item in sublist],
+                        target_type="list",
+                        default=[],
+                    )
 
         return bind_rules
 
@@ -202,19 +230,48 @@ class FlextLdifUtilitiesACL:
 
         def normalize(perm: str) -> str:
             """Normalize permission name using map if available."""
-            if permission_map and perm in permission_map:
-                return permission_map[perm]
-            return perm
+            return permission_map.get(perm, perm) if permission_map else perm
+
+        def build_from_list(perm_list: list[str], *, is_allow: bool) -> dict[str, bool]:
+            """Build dict from permission list."""
+
+            def process_perm(p: str) -> tuple[str, bool] | None:
+                """Process single permission."""
+                return (normalize(p), is_allow) if p else None
+
+            def is_valid_perm(p: str) -> bool:
+                """Check if permission is valid."""
+                return bool(p)
+
+            process_result = u.process(
+                perm_list,
+                processor=process_perm,
+                predicate=is_valid_perm,
+                on_error="skip",
+            )
+            if not process_result.is_success or not isinstance(
+                process_result.value, list
+            ):
+                return {}
+            tuple_length = 2
+            filtered_tuples = u.filter(
+                process_result.value,
+                predicate=lambda t: isinstance(t, tuple) and len(t) == tuple_length,
+            )
+            if isinstance(filtered_tuples, list):
+                result_dict = {
+                    perm_tuple[0]: perm_tuple[1]
+                    for perm_tuple in filtered_tuples
+                    if isinstance(perm_tuple, tuple) and len(perm_tuple) == tuple_length
+                }
+            else:
+                result_dict = {}
+            return result_dict
 
         if allow_permissions:
-            for perm in allow_permissions:
-                if perm:
-                    permissions[normalize(perm)] = True
-
+            permissions.update(build_from_list(allow_permissions, is_allow=True))
         if deny_permissions:
-            for perm in deny_permissions:
-                if perm:
-                    permissions[normalize(perm)] = False
+            permissions.update(build_from_list(deny_permissions, is_allow=False))
 
         return permissions
 
@@ -288,7 +345,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsConfig.AclMetadataConfig,
-    ) -> dict[str, FlextTypes.MetadataAttributeValue]:
+    ) -> dict[str, t.MetadataAttributeValue]:
         """Build QuirkMetadata extensions for ACL.
 
         Args:
@@ -298,7 +355,7 @@ class FlextLdifUtilitiesACL:
             Metadata extensions dictionary
 
         """
-        extensions: dict[str, FlextTypes.MetadataAttributeValue] = {}
+        extensions: dict[str, t.MetadataAttributeValue] = {}
 
         if config.line_breaks:
             # config.line_breaks is list[int] | None, compatible with MetadataAttributeValue
@@ -321,21 +378,37 @@ class FlextLdifUtilitiesACL:
         if not raw_name or not raw_name.strip():
             return "", False
 
-        result: list[str] = []
-        was_sanitized = False
-
-        for char in raw_name:
+        def sanitize_char(char: str) -> str:
+            """Sanitize single character."""
             char_ord = ord(char)
             if (
                 char_ord < FlextLdifConstants.Rfc.ASCII_PRINTABLE_MIN
                 or char_ord > FlextLdifConstants.Rfc.ASCII_PRINTABLE_MAX
                 or char == '"'
             ):
-                was_sanitized = True
-                if result and result[-1] != " ":
-                    result.append(" ")
-            else:
+                return " "
+            return char
+
+        sanitized_chars_result = u.map(list(raw_name), mapper=sanitize_char)
+        sanitized_chars = (
+            sanitized_chars_result
+            if isinstance(sanitized_chars_result, list)
+            else list(raw_name)
+        )
+
+        def should_keep_char(char: str, prev_char: str) -> bool:
+            """Check if character should be kept."""
+            return not (char == " " and prev_char == " ")
+
+        result: list[str] = []
+        was_sanitized = False
+        prev_char = ""
+        for char in sanitized_chars:
+            if should_keep_char(char, prev_char):
                 result.append(char)
+                if char == " ":
+                    was_sanitized = True
+                prev_char = char
 
         sanitized = " ".join("".join(result).split())
 
@@ -369,7 +442,8 @@ class FlextLdifUtilitiesACL:
         first_line = acl_line.split("\n", maxsplit=1)[0].strip()
         if not first_line.startswith(aci_prefix):
             return False, ""
-        if "\n" in acl_line:
+        has_newline = "\n" in acl_line
+        if has_newline:
             lines = acl_line.split("\n")
             first_line_content = lines[0].split(":", 1)[1].strip()
             aci_content = first_line_content + "\n" + "\n".join(lines[1:])
@@ -397,12 +471,39 @@ class FlextLdifUtilitiesACL:
         context: dict[str, str | None] = dict(defaults or {})
         context["aci_content"] = aci_content
 
-        for name, (pattern, group) in patterns.items():
+        def extract_pattern(
+            name: str, pattern_spec: str | tuple[str, int]
+        ) -> tuple[str, str | None]:
+            """Extract component from pattern spec."""
+            if isinstance(pattern_spec, tuple):
+                pattern, group = pattern_spec
+            else:
+                pattern = pattern_spec
+                group = 1
             if not pattern:
-                continue
+                return name, None
             value = FlextLdifUtilitiesACL.extract_component(aci_content, pattern, group)
-            if value is not None:
-                context[name] = value
+            return name, value
+
+        def has_pattern(pattern_spec: str | tuple[str, int]) -> bool:
+            """Check if pattern spec is valid."""
+            if isinstance(pattern_spec, tuple):
+                return bool(pattern_spec[0])
+            return bool(pattern_spec)
+
+        process_result = u.process(
+            patterns,
+            processor=extract_pattern,
+            predicate=lambda _k, v: has_pattern(v),
+            on_error="skip",
+        )
+        if process_result.is_success and isinstance(process_result.value, dict):
+            filtered_dict = u.filter(
+                process_result.value,
+                predicate=lambda _k, v: isinstance(v, str),
+            )
+            if isinstance(filtered_dict, dict):
+                context.update(filtered_dict)
 
         return context
 
@@ -424,12 +525,37 @@ class FlextLdifUtilitiesACL:
         if not targetattr_str:
             return [], "*"
         if separator in targetattr_str:
-            return [
-                a.strip() for a in targetattr_str.split(separator) if a.strip()
-            ], "*"
+            parts = targetattr_str.split(separator)
+            filtered = u.filter(parts, predicate=lambda a: bool(a.strip()))
+            if isinstance(filtered, list):
+                mapped = u.map(filtered, mapper=lambda a: a.strip())
+                return mapped if isinstance(mapped, list) else [], "*"
+            return [], "*"
         if targetattr_str != "*":
             return [targetattr_str.strip()], "*"
         return [], "*"
+
+    @staticmethod
+    def _check_special_value(
+        rule_value: str,
+        special_values: dict[str, tuple[str, str]],
+    ) -> tuple[str, str] | None:
+        """Check if rule value matches any special value."""
+        tuple_length = 2
+
+        def matches_special(_k: str, _unused_value_tuple: tuple[str, str]) -> bool:
+            """Check if rule value matches special key."""
+            return bool(u.normalize(rule_value, _k))
+        found = u.find(
+            special_values,
+            predicate=matches_special,
+            return_key=True,
+        )
+        if found and isinstance(found, tuple) and len(found) == tuple_length:
+            key, value_tuple = found
+            if u.normalize(rule_value, key):
+                return value_tuple
+        return None
 
     @staticmethod
     def build_aci_subject(
@@ -451,20 +577,30 @@ class FlextLdifUtilitiesACL:
         if not bind_rules_data:
             return "self", "ldap:///self"
 
-        for rule in bind_rules_data:
+        def process_rule(rule: dict[str, str]) -> tuple[str, str] | None:
+            """Process single bind rule."""
             rule_type = rule.get("type", "").lower()
             rule_value = rule.get("value", "")
-
-            # Check special values first
-            for special_key, (stype, svalue) in special_values.items():
-                if rule_value.lower() == special_key.lower():
-                    return stype, svalue
-
-            # Map bind type to subject type
+            special_match = FlextLdifUtilitiesACL._check_special_value(
+                rule_value, special_values
+            )
+            if special_match:
+                return special_match
             if rule_type in subject_type_map:
                 return subject_type_map[rule_type], rule_value
+            return None
 
-        return "user", bind_rules_data[0].get("value", "")
+        process_result = u.process(
+            bind_rules_data,
+            processor=process_rule,
+            on_error="skip",
+        )
+        if process_result.is_success and isinstance(process_result.value, list):
+            found = u.find(process_result.value, predicate=lambda r: r is not None)
+            if found is not None:
+                return found
+
+        return "user", bind_rules_data[0].get("value", "") if bind_rules_data else ""
 
     @staticmethod
     def filter_supported_permissions(
@@ -481,8 +617,12 @@ class FlextLdifUtilitiesACL:
             Filtered list of supported permissions
 
         """
-        supported_lower = {s.lower() for s in supported}
-        return [p for p in permissions if p.lower() in supported_lower]
+        supported_lower = {u.normalize(s, case="lower") for s in supported}
+        filtered = u.filter(
+            permissions,
+            predicate=lambda p: u.normalize(p, case="lower") in supported_lower,
+        )
+        return filtered if isinstance(filtered, list) else []
 
     @staticmethod
     def build_aci_target_clause(
@@ -577,24 +717,160 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_aci_line(
-        name: str,
-        target_clause: str,
-        permissions_clause: str,
-        bind_rule: str,
-        version: str = "3.0",
-        aci_prefix: str = "aci: ",
+        config: FlextLdifModelsConfig.AciLineFormatConfig,
     ) -> str:
-        """Format complete ACI line from components."""
-        sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(name)
+        r"""Format complete ACI line from components.
+
+        Args:
+            config: AciLineFormatConfig with all formatting parameters
+
+        Returns:
+            Formatted ACI line string
+
+        Example:
+            config = FlextLdifModelsConfig.AciLineFormatConfig(
+                name="test-acl",
+                target_clause="(targetattr=\"cn\")",
+                permissions_clause="allow (read,write)",
+                bind_rule="userdn=\"ldap:///self\"",
+            )
+            aci_line = FlextLdifUtilities.ACL.format_aci_line(config)
+
+        """
+        sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(config.name)
         return (
-            f"{aci_prefix}{target_clause}"
-            f'(version {version}; acl "{sanitized_name}"; '
-            f"{permissions_clause} {bind_rule};)"
+            f"{config.aci_prefix}{config.target_clause}"
+            f'(version {config.version}; acl "{sanitized_name}"; '
+            f"{config.permissions_clause} {config.bind_rule};)"
         )
 
     # =========================================================================
     # HIGH-LEVEL PARSE/WRITE - Uses Models for server-specific config
     # =========================================================================
+
+    @staticmethod
+    def _extract_version_and_name(
+        aci_content: str,
+        version_pattern: str,
+        default_name: str,
+    ) -> tuple[str, str]:
+        """Extract version and ACL name from content."""
+        version = "3.0"
+        acl_name = default_name
+        version_match = re.search(version_pattern, aci_content)
+        if version_match:
+            version = version_match.group(1)
+            acl_name = version_match.group(2)
+        return version, acl_name
+
+    @staticmethod
+    def _extract_target_info(
+        aci_content: str,
+        config: FlextLdifModelsConfig.AciParserConfig,
+    ) -> tuple[list[str], str]:
+        """Extract target attributes and DN from ACI content.
+
+        Args:
+            aci_content: ACI content string
+            config: AciParserConfig with targetattr_pattern and default_targetattr
+
+        Returns:
+            Tuple of (target_attributes, target_dn)
+
+        """
+        # Extract targetattr
+        targetattr = config.default_targetattr
+        targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
+            aci_content,
+            config.targetattr_pattern,
+            group=2,
+        )
+        if targetattr_extracted:
+            targetattr = targetattr_extracted
+        target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(
+            targetattr,
+        )
+        return target_attributes, target_dn
+
+    @staticmethod
+    def _build_subject_and_permissions(
+        aci_content: str,
+        config: FlextLdifModelsConfig.AciParserConfig,
+    ) -> tuple[str, str, dict[str, bool]]:
+        """Build subject and permissions from ACI content.
+
+        Args:
+            aci_content: ACI content string
+            config: AciParserConfig with patterns and maps
+
+        Returns:
+            Tuple of (subject_type, subject_value, permissions_dict)
+
+        """
+        # Extract permissions and bind rules
+        permissions_list = FlextLdifUtilitiesACL.extract_permissions(
+            aci_content,
+            config.allow_deny_pattern,
+            config.ops_separator,
+            config.action_filter,
+        )
+        bind_rules_data = FlextLdifUtilitiesACL.extract_bind_rules(
+            aci_content,
+            config.bind_patterns,
+        )
+
+        # Build subject and permissions
+        subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
+        subject_type, subject_value = FlextLdifUtilitiesACL.build_aci_subject(
+            bind_rules_data,
+            subject_type_map,
+            config.special_subjects,
+        )
+        permissions_dict_raw = FlextLdifUtilitiesACL.build_permissions_dict(
+            permissions_list,
+            config.permission_map,
+        )
+        permissions_dict: dict[str, bool] = {
+            k: bool(v) if isinstance(v, (bool, int, str)) else False
+            for k, v in permissions_dict_raw.items()
+        }
+        return subject_type, subject_value, permissions_dict
+
+    @staticmethod
+    def _build_extensions(
+        aci_content: str,
+        version: str,
+        acl_line: str,
+        extra_patterns: dict[str, str],
+    ) -> dict[str, t.MetadataAttributeValue]:
+        """Build metadata extensions dict."""
+        extensions: dict[str, t.MetadataAttributeValue] = {
+            "version": version,
+            "original_format": acl_line,
+        }
+
+        def extract_extra(_pattern_name: str, pattern: str) -> str | None:
+            """Extract extra field from pattern."""
+            return FlextLdifUtilitiesACL.extract_component(
+                aci_content,
+                pattern,
+                group=1,
+            )
+
+        extra_result = u.process(
+            extra_patterns,
+            processor=extract_extra,
+            predicate=lambda _k, v: bool(v),
+            on_error="skip",
+        )
+        if extra_result.is_success and isinstance(extra_result.value, dict):
+            filtered_extensions = u.filter(
+                extra_result.value,
+                predicate=lambda _k, v: isinstance(v, str),
+            )
+            if isinstance(filtered_extensions, dict):
+                extensions.update(filtered_extensions)
+        return extensions
 
     @staticmethod
     def parse_aci(
@@ -627,81 +903,40 @@ class FlextLdifUtilitiesACL:
             config.aci_prefix,
         )
         if not is_valid:
-            return FlextResult[FlextLdifModelsDomains.Acl].fail(
+            return r.fail(
                 f"Not a valid ACI format: {config.aci_prefix}",
             )
 
         # Extract version and name
-        acl_name = config.default_name
-        version = "3.0"
-        version_match = re.search(config.version_acl_pattern, aci_content)
-        if version_match:
-            version = version_match.group(1)
-            acl_name = version_match.group(2)
-
-        # Extract targetattr
-        targetattr = config.default_targetattr
-        targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
+        version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
             aci_content,
-            config.targetattr_pattern,
-            group=2,
-        )
-        if targetattr_extracted:
-            targetattr = targetattr_extracted
-        target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(
-            targetattr,
+            config.version_acl_pattern,
+            config.default_name,
         )
 
-        # Extract permissions
-        permissions_list = FlextLdifUtilitiesACL.extract_permissions(
+        # Extract target info
+        target_attributes, target_dn = FlextLdifUtilitiesACL._extract_target_info(
             aci_content,
-            config.allow_deny_pattern,
-            config.ops_separator,
-            config.action_filter,
+            config,
         )
 
-        # Extract bind rules
-        bind_rules_data = FlextLdifUtilitiesACL.extract_bind_rules(
-            aci_content,
-            config.bind_patterns,
-        )
-
-        # Build subject using config's special_subjects
-        subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
-        subject_type, subject_value = FlextLdifUtilitiesACL.build_aci_subject(
-            bind_rules_data,
-            subject_type_map,
-            config.special_subjects,
-        )
-
-        # Build permissions dict using config's permission_map
-        permissions_dict_raw = FlextLdifUtilitiesACL.build_permissions_dict(
-            permissions_list,
-            config.permission_map,
-        )
-
-        # Convert to typed permissions dict for AclPermissions model
-        # AclPermissions expects bool fields, so ensure all values are bool
-        permissions_dict: dict[str, bool] = {
-            k: bool(v) if isinstance(v, (bool, int, str)) else False
-            for k, v in permissions_dict_raw.items()
-        }
-
-        # Extract extra fields via extra_patterns and build extensions
-        extensions: dict[str, FlextTypes.MetadataAttributeValue] = {
-            "version": version,
-            "original_format": acl_line,
-        }
-        for pattern_name, pattern in config.extra_patterns.items():
-            extracted = FlextLdifUtilitiesACL.extract_component(
+        # Build subject and permissions
+        subject_type, subject_value, permissions_dict = (
+            FlextLdifUtilitiesACL._build_subject_and_permissions(
                 aci_content,
-                pattern,
-                group=1,
+                config,
             )
-            if extracted:
-                extensions[pattern_name] = extracted
+        )
 
-        # Create Acl model using concrete model class
+        # Build extensions
+        extensions = FlextLdifUtilitiesACL._build_extensions(
+            aci_content,
+            version,
+            acl_line,
+            config.extra_patterns,
+        )
+
+        # Create Acl model
         acl_model = FlextLdifModelsDomains.Acl(
             name=acl_name,
             target=FlextLdifModelsDomains.AclTarget(
@@ -709,7 +944,7 @@ class FlextLdifUtilitiesACL:
                 attributes=target_attributes,
             ),
             subject=FlextLdifModelsDomains.AclSubject.model_validate({
-                "subject_type": subject_type,  # Pydantic validates against AclSubjectTypeLiteral
+                "subject_type": subject_type,
                 "subject_value": subject_value,
             }),
             permissions=FlextLdifModelsDomains.AclPermissions(**permissions_dict),
@@ -722,7 +957,7 @@ class FlextLdifUtilitiesACL:
                 else extensions,
             ),
         )
-        return FlextResult[FlextLdifModelsDomains.Acl].ok(acl_model)
+        return r.ok(acl_model)
 
     @staticmethod
     def write_aci(
@@ -760,7 +995,7 @@ class FlextLdifUtilitiesACL:
         # Build permissions clause
         # Type narrowed: acl_data is concrete Acl model with permissions object
         if not acl_data.permissions:
-            return FlextResult[str].fail("ACL has no permissions")
+            return r.fail("ACL has no permissions")
         perm_names = [
             name
             for name in [
@@ -781,7 +1016,7 @@ class FlextLdifUtilitiesACL:
             config.supported_permissions,
         )
         if not permissions_clause:
-            return FlextResult[str].fail("No supported permissions")
+            return r.fail("No supported permissions")
 
         # Build bind rule
         # Type narrowed: acl_data is concrete Acl model with subject object
@@ -799,19 +1034,20 @@ class FlextLdifUtilitiesACL:
 
         # Format complete ACI
         acl_name = acl_data.name or "ACL"
-        aci_line = FlextLdifUtilitiesACL.format_aci_line(
-            acl_name,
-            target_clause,
-            permissions_clause,
-            bind_rule,
-            config.version,
-            config.aci_prefix,
+        format_config = FlextLdifModelsConfig.AciLineFormatConfig(
+            name=acl_name,
+            target_clause=target_clause,
+            permissions_clause=permissions_clause,
+            bind_rule=bind_rule,
+            version=config.version,
+            aci_prefix=config.aci_prefix,
         )
-        return FlextResult[str].ok(aci_line)
+        aci_line = FlextLdifUtilitiesACL.format_aci_line(format_config)
+        return r.ok(aci_line)
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: dict[str, FlextTypes.MetadataAttributeValue] | None,
+        extensions: dict[str, t.MetadataAttributeValue] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -844,46 +1080,46 @@ class FlextLdifUtilitiesACL:
         if not extensions:
             return []
 
-        bind_rules: list[str] = []
-
-        for ext_key, format_template, operator_default in rule_config:
-            # Get value - can be ScalarValue or tuple (operator, value)
-            # Use FlextTypes.MetadataAttributeValue to include tuples
-            value_raw: FlextTypes.MetadataAttributeValue | None = (
+        def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
+            """Process single rule config item."""
+            ext_key, format_template, operator_default = rule_item
+            value_raw: t.MetadataAttributeValue | None = (
                 extensions.get(ext_key) if extensions else None
             )
             if not value_raw:
-                continue
+                return None
 
-            # Handle tuple values (operator, value)
-            # Type narrowing: check if value is tuple before accessing
             operator_placeholder = "{" + "operator" + "}"
-            if isinstance(value_raw, tuple) and len(value_raw) == tuple_length:
+            expected_tuple_length = tuple_length
+            if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
                 operator, val = value_raw
                 if operator_placeholder in format_template:
-                    bind_rules.append(
-                        format_template.format(operator=str(operator), value=str(val)),
+                    return format_template.format(
+                        operator=str(operator), value=str(val)
                     )
-                else:
-                    bind_rules.append(format_template.format(value=str(val)))
-            # Handle simple string values
-            elif operator_placeholder in format_template and operator_default:
-                # Type narrowing: value is not tuple here, safe to use as string
-                value_str = str(value_raw)
-                bind_rules.append(
-                    format_template.format(operator=operator_default, value=value_str),
+                return format_template.format(value=str(val))
+            if operator_placeholder in format_template and operator_default:
+                return format_template.format(
+                    operator=operator_default, value=str(value_raw)
                 )
-            else:
-                # Type narrowing: value is not tuple here, safe to use as string
-                value_str = str(value_raw)
-                bind_rules.append(format_template.format(value=value_str))
+            return format_template.format(value=str(value_raw))
 
-        return bind_rules
+        process_result = u.process(
+            rule_config,
+            processor=process_rule_config,
+            predicate=lambda item: bool(
+                extensions.get(item[0]) if extensions else None
+            ),
+            on_error="skip",
+        )
+        if process_result.is_success and isinstance(process_result.value, list):
+            return [rule for rule in process_result.value if rule is not None]
+        return []
 
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, FlextTypes.MetadataAttributeValue]
+        | dict[str, t.MetadataAttributeValue]
         | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
@@ -913,19 +1149,28 @@ class FlextLdifUtilitiesACL:
         if not extensions:
             return []
 
-        target_parts: list[str] = []
-
-        for ext_key, format_template in target_config:
+        def process_target_config(target_item: tuple[str, str]) -> str | None:
+            """Process single target config item."""
+            ext_key, format_template = target_item
             value = extensions.get(ext_key)
-            if value:
-                target_parts.append(format_template.format(value=value))
+            return format_template.format(value=value) if value else None
 
-        return target_parts
+        process_result = u.process(
+            target_config,
+            processor=process_target_config,
+            predicate=lambda item: bool(
+                extensions.get(item[0]) if extensions else None
+            ),
+            on_error="skip",
+        )
+        if process_result.is_success and isinstance(process_result.value, list):
+            return [part for part in process_result.value if part is not None]
+        return []
 
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, FlextTypes.MetadataAttributeValue]
+        | dict[str, t.MetadataAttributeValue]
         | None,
         converted_from_key: str,
         comments_key: str,
@@ -951,7 +1196,8 @@ class FlextLdifUtilitiesACL:
         if not comments or not isinstance(comments, list):
             return []
 
-        result = [str(comment) for comment in comments]
+        mapped = u.map(comments, mapper=str)
+        result = mapped if isinstance(mapped, list) else []
         result.append("")  # Empty line after comments
         return result
 
@@ -1166,32 +1412,35 @@ class FlextLdifUtilitiesACL:
             'ldap:///dc=example'
 
         """
-        results: dict[str, object] = {}
         effective_defaults = defaults or {}
 
-        for name, pattern_spec in patterns.items():
-            # Handle (pattern, group_index) tuple or plain pattern string
+        def extract_component_batch(
+            name: str, pattern_spec: str | tuple[str, int]
+        ) -> tuple[str, object]:
+            """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
             else:
                 pattern = pattern_spec
-                group_idx = 1  # Default to first capture group
+                group_idx = 1
+            value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
+            default_value = effective_defaults.get(name)
+            return name, value if value is not None else default_value
 
-            # Extract using existing method (group_idx is the third argument)
-            value = FlextLdifUtilitiesACL.extract_component(
-                content,
-                pattern,
-                group_idx,
-            )
-
-            # Apply default if value not found
-            if value is None:
-                default = effective_defaults.get(name)
-                results[name] = default
-            else:
-                results[name] = value
-
-        return results
+        process_result = u.process(
+            patterns,
+            processor=extract_component_batch,
+            on_error="skip",
+        )
+        if process_result.is_success and isinstance(process_result.value, dict):
+            results: dict[str, object] = {}
+            tuple_length = 2
+            for name, value_tuple in process_result.value.items():
+                if isinstance(value_tuple, tuple) and len(value_tuple) == tuple_length:
+                    _, value = value_tuple
+                    results[name] = value
+            return results
+        return {}
 
     @staticmethod
     def parse_batch(
@@ -1229,26 +1478,42 @@ class FlextLdifUtilitiesACL:
         results: list[FlextLdifModelsDomains.Acl] = []
         errors: list[str] = []
 
-        for i, acl_line in enumerate(acl_lines):
+        def parse_single_acl(acl_line: str) -> FlextLdifModelsDomains.Acl | None:
+            """Parse single ACL line, return None on error."""
             try:
                 result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
-
                 if result.is_success:
-                    results.append(result.unwrap())
-                elif fail_fast:
-                    return FlextResult.fail(f"ACL {i} parse failed: {result.error}")
-                elif not skip_invalid:
-                    errors.append(f"ACL {i}: {result.error}")
+                    return result.unwrap()
+                error_msg = f"ACL parse failed: {result.error}"
+                if fail_fast:
+                    raise ValueError(error_msg)
+                if not skip_invalid:
+                    errors.append(error_msg)
+                return None
             except Exception as e:
                 if fail_fast:
-                    return FlextResult.fail(f"ACL {i} parse exception: {e}")
+                    raise
                 if not skip_invalid:
-                    errors.append(f"ACL {i} exception: {e}")
+                    errors.append(f"ACL exception: {e}")
+                return None
 
-        if errors:
-            return FlextResult.fail(f"Parse errors: {'; '.join(errors)}")
-
-        return FlextResult.ok(results)
+        batch_result = u.batch(
+            list(acl_lines),
+            operation=parse_single_acl,
+            on_error="collect" if not fail_fast else "fail",
+            post_validate=lambda r: r is not None,
+        )
+        if batch_result.is_failure:
+            return batch_result
+        batch_data = batch_result.value
+        results = [
+            r for r in batch_data["results"]
+            if isinstance(r, FlextLdifModelsDomains.Acl)
+        ]
+        if batch_data["error_count"] > 0 and not skip_invalid:
+            error_msgs = [f"ACL {idx}: {err}" for idx, err in batch_data["errors"]]
+            return r.fail(f"Parse errors: {'; '.join(error_msgs)}")
+        return r.ok(results)
 
     @staticmethod
     def convert_permissions_batch(
@@ -1272,23 +1537,24 @@ class FlextLdifUtilitiesACL:
             ... )
 
         """
-        results: list[dict[str, bool]] = []
+        def convert_single_permissions(permissions: dict[str, bool]) -> dict[str, bool]:
+            """Convert single permission set."""
+            if direction == "oid_to_oud":
+                return FlextLdifUtilitiesACL.map_oid_to_oud_permissions(permissions)
+            return FlextLdifUtilitiesACL.map_oud_to_oid_permissions(permissions)
 
-        for i, permissions in enumerate(permissions_list):
-            try:
-                if direction == "oid_to_oud":
-                    converted = FlextLdifUtilitiesACL.map_oid_to_oud_permissions(
-                        permissions
-                    )
-                else:  # oud_to_oid
-                    converted = FlextLdifUtilitiesACL.map_oud_to_oid_permissions(
-                        permissions
-                    )
-                results.append(converted)
-            except Exception as e:
-                return FlextResult.fail(f"Permission set {i} conversion failed: {e}")
-
-        return FlextResult.ok(results)
+        batch_result = u.batch(
+            list(permissions_list),
+            operation=convert_single_permissions,
+            on_error="fail",
+        )
+        if batch_result.is_failure:
+            return batch_result
+        batch_data = batch_result.value
+        results = [
+            r for r in batch_data["results"] if isinstance(r, dict)
+        ]
+        return r.ok(results)
 
     @staticmethod
     def validate_batch(
@@ -1342,7 +1608,7 @@ class FlextLdifUtilitiesACL:
             if not collect_errors and results[-1][1] is False:
                 break
 
-        return FlextResult.ok(results)
+        return r.ok(results)
 
 
 __all__ = [

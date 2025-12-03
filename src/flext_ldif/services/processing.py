@@ -14,14 +14,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.processing import ProcessingResult
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifProcessing(
@@ -210,24 +214,29 @@ class FlextLdifProcessing(
     def _execute_batch_processing(
         entries: list[FlextLdifModels.Entry],
         processor_func: Callable[[FlextLdifModels.Entry], ProcessingResult],
-        batch_size: int,
+        batch_size: int,  # noqa: ARG004
     ) -> FlextResult[list[ProcessingResult]]:
         """Execute batch processing sequentially.
 
         Args:
             entries: List of entries to process
             processor_func: Processor function to apply
-            batch_size: Number of entries per batch
+            batch_size: Number of entries per batch (reserved for future chunking)
 
         Returns:
             FlextResult with list of processed results
 
         """
-        results = []
-        for i in range(0, len(entries), batch_size):
-            batch = entries[i : i + batch_size]
-            batch_results = [processor_func(entry) for entry in batch]
-            results.extend(batch_results)
+        batch_result = u.process(
+            entries,
+            processor_func,
+            on_error="collect",
+        )
+        if batch_result.is_failure:
+            return FlextResult[list[ProcessingResult]].fail(
+                batch_result.error or "Batch processing failed",
+            )
+        results = cast("list[ProcessingResult]", batch_result.value["results"])
         return FlextResult[list[ProcessingResult]].ok(results)
 
     @staticmethod

@@ -19,7 +19,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextResult
+from flext_core import FlextResult, u
 
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
@@ -256,41 +256,47 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         })
 
     @staticmethod
-    def comprehensive_migration_workflow() -> FlextResult[dict[str, object]]:  # noqa: PLR0912
-        """Comprehensive migration workflow with parallel processing and validation."""
-        api = FlextLdif.get_instance()
+    def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
+        """Setup migration directories."""
+        source_dir = base_dir / "source"
+        intermediate_dir = base_dir / "intermediate"
+        final_dir = base_dir / "final"
 
-        # Setup directories
-        workflow_dir = Path("examples/comprehensive_migration")
-        source_dir = workflow_dir / "source"
-        intermediate_dir = workflow_dir / "intermediate"
-        final_dir = workflow_dir / "final"
-
-        for dir_path in [source_dir, intermediate_dir, final_dir]:
+        def setup_dir(dir_path: Path) -> None:
+            """Setup directory."""
             dir_path.mkdir(exist_ok=True, parents=True)
 
-        # Create comprehensive test data
-        source_data = []
-        for i in range(20):
+        _ = u.process(
+            [source_dir, intermediate_dir, final_dir],
+            setup_dir,
+            on_error="skip",
+        )
+        )
+        return source_dir, intermediate_dir, final_dir
+
+    @staticmethod
+    def _create_test_data(source_dir: Path) -> None:
+        """Create and write test data files."""
+        def create_entry_data(i: int) -> str:
+            """Create entry data based on index."""
             if i % 4 == 0:
                 # OU entries
-                entry = f"""dn: ou=Container{i},dc=example,dc=com
+                return f"""dn: ou=Container{i},dc=example,dc=com
 objectClass: organizationalUnit
 ou: Container{i}
 description: Container {i}
 orclaci: access to * by * read
 """
-            elif i % 2 == 0:
+            if i % 2 == 0:
                 # Group entries with OID characteristics
-                entry = f"""dn: cn=Group{i},ou=Groups,dc=example,dc=com
+                return f"""dn: cn=Group{i},ou=Groups,dc=example,dc=com
 objectClass: groupOfUniqueNames
 cn: Group{i}
 uniquemember: cn=User{i},ou=People,dc=example,dc=com
 orclguid: group{i}guid123
 """
-            else:
-                # Person entries with mixed characteristics
-                entry = f"""dn: cn=User{i},ou=People,dc=example,dc=com
+            # Person entries with mixed characteristics
+            return f"""dn: cn=User{i},ou=People,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 cn: User{i}
@@ -299,30 +305,71 @@ mail: user{i}@example.com
 orclguid: user{i}guid456
 aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
 """
-            source_data.append(entry)
 
-        # Write source files
-        for i, entry in enumerate(source_data):
+        batch_result = u
+            list(range(20)),
+            create_entry_data,
+            on_error="skip",
+        )
+        source_data = (
+            cast("list[str]", batch_result.value["results"])
+            if batch_result.is_success
+            else []
+        )
+
+        def write_file(item: tuple[int, str]) -> None:
+            """Write entry to file."""
+            i, entry = item
             (source_dir / f"data_{i:02d}.ldif").write_text(entry)
 
-        workflow_results: dict[str, object] = {}
+        _ = u
+            list(enumerate(source_data)),
+            write_file,
+            on_error="skip",
+        )
 
-        # Step 1: Detect server type from source data
+    @staticmethod
+    def _detect_server_type(api: FlextLdif, source_dir: Path) -> tuple[str, dict[str, object]]:
+        """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_path=sample_file)
+        detection_data: dict[str, object] = {}
         if detect_result.is_success:
             detection = detect_result.unwrap()
-            workflow_results["detected_server"] = detection.detected_server_type
-            workflow_results["detection_confidence"] = detection.confidence
-            source_server = detection.detected_server_type or "oid"
-        else:
-            source_server = "oid"  # Default fallback
+            detection_data = {
+                "detected_server": detection.detected_server_type,
+                "detection_confidence": detection.confidence,
+            }
+            return detection.detected_server_type or "oid", detection_data
+        return "oid", detection_data
+
+    @staticmethod
+    def comprehensive_migration_workflow() -> FlextResult[dict[str, object]]:
+        """Comprehensive migration workflow with parallel processing and validation."""
+        api = FlextLdif.get_instance()
+
+        # Setup directories
+        workflow_dir = Path("examples/comprehensive_migration")
+        source_dir, intermediate_dir, final_dir = ExampleServerMigration._setup_directories(
+            workflow_dir
+        )
+
+        # Create test data
+        ExampleServerMigration._create_test_data(source_dir)
+
+        # Detect server type
+        source_server, detection_data = ExampleServerMigration._detect_server_type(
+            api, source_dir
+        )
 
         # Step 2: Migrate OID → Intermediate (OUD format)
+        source_server_typed = cast(
+            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", source_server
+        )
         intermediate_migration = api.migrate(
             input_dir=source_dir,
             output_dir=intermediate_dir,
-            source_server=source_server,
+            source_server=source_server_typed,
             target_server="oud",
             options=FlextLdifModels.MigrateOptions(
                 write_options=FlextLdifModels.WriteFormatOptions(
@@ -332,9 +379,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             ),
         )
 
-        if intermediate_migration.is_success:
-            workflow_results["intermediate_migration"] = "success"
-        else:
+        if intermediate_migration.is_failure:
             return FlextResult.fail(
                 f"Intermediate migration failed: {intermediate_migration.error}",
             )
@@ -347,24 +392,26 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             target_server="rfc",
         )
 
-        if final_migration.is_success:
-            workflow_results["final_migration"] = "success"
-            result = final_migration.unwrap()
-
-            # Count final entries
-            final_count = 0
-            if hasattr(result, "statistics") and result.statistics:
-                final_count = result.statistics.processed_entries
-            workflow_results["final_entry_count"] = final_count
-        else:
+        if final_migration.is_failure:
             return FlextResult.fail(f"Final migration failed: {final_migration.error}")
 
+        final_result = final_migration.unwrap()
+        final_count = (
+            final_result.statistics.processed_entries
+            if hasattr(final_result, "statistics") and final_result.statistics
+            else 0
+        )
+
         # Step 4: Validate final results
-        workflow_results.update({
+        workflow_results = {
+            **detection_data,
+            "intermediate_migration": "success",
+            "final_migration": "success",
+            "final_entry_count": final_count,
             "source_server_detected": source_server,
             "migration_pipeline": "oid → oud → rfc",
             "parallel_processing": True,
             "validation_performed": True,
-        })
+        }
 
         return FlextResult.ok(workflow_results)

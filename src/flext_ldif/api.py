@@ -11,8 +11,7 @@ from flext_core import (
     FlextContext,
     FlextResult,
     FlextService,
-    FlextTypes,
-    FlextUtilities,
+    t,
 )
 from pydantic import PrivateAttr
 
@@ -44,7 +43,7 @@ from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.utilities import FlextLdifUtilities, u
 
 # Alias for backward compatibility - no circular import
 FlextLdifConfig = FlextLdifConfigModule.FlextLdifConfig
@@ -151,7 +150,26 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     @classmethod
     def get_instance(cls, config: FlextLdifConfig | None = None) -> FlextLdif:
-        """Return the process-wide singleton, creating it on first use."""
+        """Return the process-wide singleton, creating it on first use.
+
+        Business Rule: Singleton pattern ensures single FlextLdif instance per process.
+        Configuration can be provided on first creation to initialize services with
+        specific settings. Subsequent calls return the same instance regardless of
+        config parameter.
+
+        Implication: Services initialized with first instance configuration persist
+        throughout process lifetime. For test isolation, use _reset_instance() in
+        test fixtures. Production code should call get_instance() once and reuse
+        the returned instance.
+
+        Args:
+            config: Optional LDIF configuration for initial instance creation.
+                   Ignored if instance already exists.
+
+        Returns:
+            FlextLdif singleton instance
+
+        """
         global _instance  # noqa: PLW0603
         if _instance is None:
             # Create instance with config if provided
@@ -190,7 +208,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # This is safe for ClassVar[bool] as it's not part of the model fields.
         type.__setattr__(cls, "_class_initialized", False)
 
-    def __init__(self, **kwargs: FlextTypes.GeneralValueType) -> None:
+    def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize the facade and capture optional LDIF configuration."""
         # Extract 'config' from kwargs to avoid Pydantic extra='forbid' error
         # Store it in _init_config_value for use in model_post_init
@@ -202,9 +220,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             object.__setattr__(self, "_init_config_value", config_value)
 
         # Convert remaining kwargs to dict for FlextService compatibility
-        # FlextService.__init__ accepts **data: FlextTypes.GeneralValueType
+        # FlextService.__init__ accepts **data: t.GeneralValueType
         # Filter to only scalar values (GeneralValueType includes dict/Sequence)
-        service_kwargs: dict[str, FlextTypes.ScalarValue] = {
+        service_kwargs: dict[str, t.ScalarValue] = {
             k: v
             for k, v in kwargs.items()
             if isinstance(v, (str, int, float, bool, type(None)))
@@ -218,10 +236,22 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     def model_post_init(
         self,
-        _context: FlextTypes.Metadata | None,
+        _context: t.Metadata | None,
         /,
     ) -> None:
-        """Populate service instances after Pydantic initialization."""
+        """Populate service instances after Pydantic initialization.
+
+        Business Rule: Service initialization follows Dependency Injection pattern
+        using SERVICE_MAPPING for DRY initialization. Writer service requires
+        FlextLdifServer quirk registry as dependency, while other services are
+        initialized without dependencies.
+
+        Implication: All services are initialized lazily during facade creation,
+        not on first use. This ensures services are available immediately after
+        facade instantiation. Service instances are stored in _services dict
+        keyed by ServiceType for O(1) lookup.
+
+        """
         # Initialize context (inherited from FlextService)
         # Context is already initialized by FlextService.__init__()
 
@@ -334,16 +364,23 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     ):
         """Get service instance with type safety and error handling.
 
-        DRY helper for service access, eliminating repetitive None checks.
+        Business Rule: Service access uses overloaded method signatures for type
+        safety. Each ServiceType maps to specific service class, enabling type
+        narrowing in callers. Services are initialized in model_post_init() and
+        stored in _services dict.
+
+        Implication: Type checker can infer exact service type from ServiceType
+        literal, enabling autocomplete and type checking. Runtime validation
+        ensures service exists before return, preventing None access errors.
 
         Args:
             service_type: Type of service to retrieve
 
         Returns:
-            Service instance
+            Service instance (type narrowed by overload)
 
         Raises:
-            RuntimeError: If service not initialized
+            RuntimeError: If service not initialized (fail-fast validation)
 
         """
         service = self._services.get(service_type)
@@ -382,7 +419,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # - Model provides defaults via Field(default=...) definitions
         # - format_options can override (explicit options pattern)
         # - format_kwargs can override individual options (kwargs pattern)
-        options_result = FlextUtilities.Configuration.build_options_from_kwargs(
+        options_result = u.build_options_from_kwargs(
             model_class=FlextLdifModels.ParseFormatOptions,
             explicit_options=format_options,
             default_factory=FlextLdifModels.ParseFormatOptions,
@@ -432,7 +469,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: FlextLdifTypes.MetadataDictMutable | None = None,
-        **format_kwargs: FlextTypes.MetadataAttributeValue,
+        **format_kwargs: t.MetadataAttributeValue,
     ) -> FlextResult[str]: ...
 
     @overload
@@ -443,7 +480,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: FlextLdifTypes.MetadataDictMutable | None = None,
-        **format_kwargs: FlextTypes.MetadataAttributeValue,
+        **format_kwargs: t.MetadataAttributeValue,
     ) -> FlextResult[str]: ...
 
     def write(
@@ -453,9 +490,19 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         template_data: FlextLdifTypes.MetadataDictMutable | None = None,
-        **format_kwargs: FlextTypes.MetadataAttributeValue,
+        **format_kwargs: t.MetadataAttributeValue,
     ) -> FlextResult[str]:
         """Write entries to LDIF format string or file.
+
+        Business Rule: Writing delegates to FlextLdifWriter service with options
+        resolution pattern. Options can be provided as model (format_options) or
+        kwargs (format_kwargs), with kwargs taking precedence. Template data
+        enables header generation with variables.
+
+        Implication: Options resolution follows flext-core pattern: model defaults
+        → explicit model → kwargs overrides. This enables flexible API usage
+        while maintaining type safety. Template data is converted to correct
+        type (dict[str, ScalarValue | list[str]]) for writer service compatibility.
 
         Args:
             entries: Entry model or list of Entry models to write
@@ -513,7 +560,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # - Model provides defaults via Field(default=...) definitions
         # - format_options can override (explicit options pattern)
         # - format_kwargs can override individual options (kwargs pattern)
-        options_result = FlextUtilities.Configuration.build_options_from_kwargs(
+        options_result = u.build_options_from_kwargs(
             model_class=FlextLdifModels.WriteFormatOptions,
             explicit_options=format_options,
             default_factory=FlextLdifModels.WriteFormatOptions,
@@ -533,11 +580,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         ) = resolved_format_options_raw
 
         # Convert template_data to correct type if provided
-        template_data_converted: (
-            dict[str, FlextTypes.ScalarValue | list[str]] | None
-        ) = None
+        template_data_converted: dict[str, t.ScalarValue | list[str]] | None = None
         if template_data is not None:
-            converted_dict: dict[str, FlextTypes.ScalarValue | list[str]] = {}
+            converted_dict: dict[str, t.ScalarValue | list[str]] = {}
             for k, v in template_data.items():
                 if isinstance(v, (str, int, float, bool, type(None))):
                     converted_dict[k] = v

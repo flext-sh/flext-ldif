@@ -27,7 +27,7 @@ from datetime import datetime
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -1888,7 +1888,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Business Rule: FlextService.__init__ expects GeneralValueType
                 # Implication: Protocol types must be cast to GeneralValueType for type safety
                 super(FlextLdifServersBase.Acl, acl_instance).__init__(
-                    acl_service=cast("FlextTypes.GeneralValueType", acl_service),
+                    acl_service=cast("t.GeneralValueType", acl_service),
                     **init_kwargs_final,
                 )
             else:
@@ -2835,9 +2835,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             original_entry_dn: str,
             cleaned_dn: str,
         ) -> tuple[
-            dict[str, FlextTypes.MetadataAttributeValue],
-            dict[str, dict[str, FlextTypes.MetadataAttributeValue]],
-            dict[str, FlextTypes.MetadataAttributeValue],
+            dict[str, t.MetadataAttributeValue],
+            dict[str, dict[str, t.MetadataAttributeValue]],
+            dict[str, t.MetadataAttributeValue],
             dict[str, str],
         ]:
             """Analyze DN and attribute differences for round-trip support (DRY wrapper)."""
@@ -2896,19 +2896,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             dn_differences_val = context.get("dn_differences", {})
             # Type narrowing: convert to MetadataAttributeValue-compatible dict
-            dn_differences: dict[str, FlextTypes.MetadataAttributeValue] | None = (
-                cast("dict[str, FlextTypes.MetadataAttributeValue]", dn_differences_val)
+            dn_differences: dict[str, t.MetadataAttributeValue] | None = (
+                cast("dict[str, t.MetadataAttributeValue]", dn_differences_val)
                 if isinstance(dn_differences_val, dict)
                 else None
             )
 
             attribute_differences_val = context.get("attribute_differences", {})
             # Type narrowing: function expects dict[str, MetadataAttributeValue], not nested
-            attribute_differences: (
-                dict[str, FlextTypes.MetadataAttributeValue] | None
-            ) = (
+            attribute_differences: dict[str, t.MetadataAttributeValue] | None = (
                 cast(
-                    "dict[str, FlextTypes.MetadataAttributeValue]",
+                    "dict[str, t.MetadataAttributeValue]",
                     attribute_differences_val,
                 )
                 if isinstance(attribute_differences_val, dict)
@@ -2921,9 +2919,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
             # Type narrowing: convert to MetadataAttributeValue-compatible dict
             # The isinstance check narrows the type - no cast needed
-            original_attributes_complete: (
-                dict[str, FlextTypes.MetadataAttributeValue] | None
-            ) = (
+            original_attributes_complete: dict[str, t.MetadataAttributeValue] | None = (
                 original_attributes_complete_val
                 if isinstance(original_attributes_complete_val, dict)
                 else None
@@ -3183,7 +3179,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _add_conditional_comments(
             self,
             ldif_lines: list[str],
-            entries: dict[str, FlextTypes.ScalarValue],
+            entries: dict[str, t.ScalarValue],
             header: str | None = None,
         ) -> None:
             """Add conditional comments based on key-value pairs.
@@ -3249,7 +3245,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 "Quirk Type": entry_data.metadata.quirk_type,
             }
             # Convert to ScalarValue format
-            entries: dict[str, FlextTypes.ScalarValue] = {}
+            entries: dict[str, t.ScalarValue] = {}
             for k, v in entries_raw.items():
                 if isinstance(v, (str, int, float, bool, datetime, type(None))):
                     entries[k] = v
@@ -3600,7 +3596,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             minimal_differences_attrs_raw = context.get("minimal_differences_attrs", {})
             # Type narrowing: convert to dict[str, MetadataAttributeValue]
             # The isinstance check narrows the type - no cast needed
-            minimal_differences_attrs: dict[str, FlextTypes.MetadataAttributeValue] = (
+            minimal_differences_attrs: dict[str, t.MetadataAttributeValue] = (
                 minimal_differences_attrs_raw
                 if isinstance(minimal_differences_attrs_raw, dict)
                 else {}
@@ -3734,11 +3730,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 attr_values = entry_data.attributes.attributes[original_attr_name]
                 # Business Rule: AttributeWriteContext expects dict[str, MetadataAttributeValue] for minimal_differences_attrs
                 # Implication: Convert dict[str, list[str]] to dict[str, MetadataAttributeValue]
-                minimal_differences_attrs_typed: dict[
-                    str, FlextTypes.MetadataAttributeValue
-                ] = cast(
-                    "dict[str, FlextTypes.MetadataAttributeValue]",
-                    minimal_differences_attrs,
+                minimal_differences_attrs_typed: dict[str, t.MetadataAttributeValue] = (
+                    cast(
+                        "dict[str, t.MetadataAttributeValue]",
+                        minimal_differences_attrs,
+                    )
                 )
                 write_context: FlextLdifTypes.ModelMetadata.AttributeWriteContext = {
                     "attr_name": attr_name,

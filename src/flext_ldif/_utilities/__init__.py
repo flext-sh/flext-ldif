@@ -1,9 +1,9 @@
-"""Extracted nested classes from FlextLdifUtilities for better modularity.
+"""FLEXT LDIF Utilities - Reusable helpers for LDIF operations.
 
-This module contains nested classes that were extracted from FlextLdifUtilities
-to separate files while maintaining 100% backward compatibility through aliases.
+This module provides LDIF-specific utility functions building on flext-core
+u, following SOLID and DRY principles.
 
-Also provides power method infrastructure:
+Provides power method infrastructure:
     - FlextLdifResult: Extended result type with DSL operators
     - Transformers: Entry transformation pipeline components
     - Filters: Entry filtering with composable operators
@@ -18,6 +18,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import Literal
+
+from flext_core import FlextConstants, FlextModels
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -118,14 +121,26 @@ from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import FlextLdifUtilitiesConstants
 
+# Aliases for static method calls and type references - after all imports
+u = FlextUtilities  # Utilities (from flext-core)
+c = FlextConstants  # Constants
+m = FlextModels  # Models
 
-class FlextLdifUtilities:
-    """Unified LDIF utilities namespace combining all domain-specific utility classes.
 
-    Organizes LDIF-specific utilities into logical nested classes for better API
-    organization and discoverability.
+class FlextLdifUtilities(FlextUtilities):
+    """FLEXT LDIF Utilities - Centralized helpers for LDIF operations.
 
-    Power Methods (new):
+    Extends flext-core utility functions building on
+    flext-core, following SOLID and DRY principles.
+
+    Business Rules:
+    ───────────────
+    1. All utility methods MUST be static (no instance state)
+    2. All operations MUST return FlextResult[T] for error handling
+    3. LDIF-specific helpers MUST extend flext-core u
+    4. Common patterns MUST be consolidated here (DRY principle)
+
+    Power Methods:
         - process() - Universal entry processor
         - transform() - Transformation pipeline
         - filter() - Entry filtering
@@ -134,16 +149,22 @@ class FlextLdifUtilities:
         - dn() - Fluent DN operations
         - entry() - Fluent entry operations
 
-    Submodules (existing):
+    Submodules (LDIF-specific):
         - ACL, Attribute, Constants, Decorators, Detection
         - DN, Entry, Events, Metadata, ObjectClass
         - OID, Parser, Parsers, Schema, Server
         - Validation, Writer, Writers
 
+    Inherited from u
+        - Enum, Collection, Args, Model, Cache
+        - Validation, Generators, TextProcessor, TypeGuards
+        - Reliability, TypeChecker, Configuration, Context
+        - DataMapper, Domain, Pagination, StringParser
+
     Usage:
         from flext_ldif._utilities import FlextLdifUtilities
 
-        # Existing submodule access
+        # LDIF-specific access
         FlextLdifUtilities.DN.parse("cn=test,dc=example,dc=com")
         FlextLdifUtilities.Entry.has_objectclass(entry, "person")
 
@@ -151,6 +172,9 @@ class FlextLdifUtilities:
         result = FlextLdifUtilities.process(entries, source_server="oid")
         result = FlextLdifUtilities.transform(entries, Normalize.dn())
         result = FlextLdifUtilities.filter(entries, Filter.by_objectclass("person"))
+
+        # unce
+        result = FlextLdifUtilities.Validation.is_valid_email("test@example.com")
     """
 
     # === Existing submodule references (preserved) ===
@@ -181,10 +205,7 @@ class FlextLdifUtilities:
         entries: Sequence[FlextLdifModelsDomains.Entry],
         *,
         config: ProcessConfig | None = None,
-        source_server: ServerType = "auto",
-        target_server: ServerType | None = None,
-        normalize_dns: bool = True,
-        normalize_attrs: bool = True,
+        **kwargs: object,
     ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
         """Universal entry processor.
 
@@ -194,10 +215,8 @@ class FlextLdifUtilities:
         Args:
             entries: Entries to process
             config: ProcessConfig for detailed configuration
-            source_server: Source server type (or "auto" for detection)
-            target_server: Target server type (optional)
-            normalize_dns: Enable DN normalization
-            normalize_attrs: Enable attribute normalization
+            **kwargs: Optional parameters for ProcessConfig (source_server, target_server,
+                normalize_dns, normalize_attrs) - used only if config is None
 
         Returns:
             FlextLdifResult containing processed entries
@@ -214,14 +233,9 @@ class FlextLdifUtilities:
             ... )
 
         """
-        # Use provided config or build from parameters
+        # Use provided config or build from kwargs
         if config is None:
-            config = ProcessConfig(
-                source_server=source_server,
-                target_server=target_server,
-                normalize_dns=normalize_dns,
-                normalize_attrs=normalize_attrs,
-            )
+            config = ProcessConfig(**kwargs)  # type: ignore[arg-type]
 
         pipeline = ProcessingPipeline(config)
         return FlextLdifResult.from_result(pipeline.execute(list(entries)))
@@ -394,12 +408,9 @@ __all__ = [
     "CustomFilter",
     "CustomTransformer",
     "DnNormalizationConfig",
-    # Power Method Fluent APIs
     "DnOps",
-    # Power Method Filters
     "EntryFilter",
     "EntryOps",
-    # Power Method Transformers
     "EntryTransformer",
     "EscapeHandlingOption",
     "ExcludeAttrsFilter",
@@ -410,9 +421,7 @@ __all__ = [
     "FilterConfigBuilder",
     "FilterPredicate",
     "FilterProtocol",
-    # Power Method Result
     "FlextLdifResult",
-    # Existing utilities
     "FlextLdifUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
@@ -445,17 +454,14 @@ __all__ = [
     "OrFilter",
     "OutputFormat",
     "Pipeline",
-    # Power Method Pipeline
     "PipelineStep",
     "PipelineStepProtocol",
     "ProcessConfig",
-    # Power Method Builders
     "ProcessConfigBuilder",
     "ProcessingPipeline",
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
     "SchemaParseConfig",
-    # Power Method Configs
     "ServerType",
     "SimpleTransformer",
     "SortOption",
@@ -463,7 +469,6 @@ __all__ = [
     "Transform",
     "TransformConfig",
     "TransformConfigBuilder",
-    # Power Method Protocols
     "TransformerProtocol",
     "ValidationConfig",
     "ValidationPipeline",
@@ -475,4 +480,5 @@ __all__ = [
     "WritableProtocol",
     "WriteConfig",
     "WriteConfigBuilder",
+    "u",
 ]

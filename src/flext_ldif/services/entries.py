@@ -15,12 +15,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.utilities import FlextLdifUtilities
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
@@ -191,13 +197,15 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             FlextResult containing processed entries (operational attributes removed)
 
         """
-        result = []
-        for entry in entries:
-            processed = self.remove_operational_attributes(entry)
-            if processed.is_failure:
-                return FlextResult.fail(f"Failed to process entry: {processed.error}")
-            result.append(processed.value)
-        return FlextResult.ok(result)
+        batch_result = u.process(
+            entries,
+            self.remove_operational_attributes,
+            on_error="fail",
+        )
+        if batch_result.is_failure:
+            return FlextResult.fail(batch_result.error or "Batch processing failed")
+        results = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        return FlextResult.ok(results)
 
     def remove_attributes_batch(
         self,
@@ -223,13 +231,49 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
             FlextResult containing processed entries (specified attributes removed)
 
         """
-        result = []
-        for entry in entries:
-            processed = self.remove_attributes(entry, attributes)
-            if processed.is_failure:
-                return FlextResult.fail(f"Failed to process entry: {processed.error}")
-            result.append(processed.value)
-        return FlextResult.ok(result)
+        batch_result = u.process(
+            entries,
+            lambda entry: self.remove_attributes(entry, attributes),
+            on_error="fail",
+        )
+        if batch_result.is_failure:
+            return FlextResult.fail(batch_result.error or "Batch processing failed")
+        results = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        return FlextResult.ok(results)
+
+    @staticmethod
+    def _extract_dn_from_dict(entry: dict[str, str | list[str]]) -> FlextResult[str]:
+        """Extract DN from dict entry."""
+        dn_value = u.get(entry, "dn", default=None)
+        if dn_value is None:
+            return FlextResult.fail("Dict entry missing 'dn' key")
+        return FlextResult.ok(str(dn_value))
+
+    @staticmethod
+    def _extract_dn_from_value(dn_value_raw: str | list[str] | None) -> FlextResult[str]:
+        """Extract DN string from value (str, list, or None)."""
+        if dn_value_raw is None:
+            return FlextResult.fail("DN value is None")
+        if isinstance(dn_value_raw, str):
+            return FlextResult.ok(dn_value_raw)
+        if isinstance(dn_value_raw, list):
+            return FlextResult.ok(str(dn_value_raw[0]) if dn_value_raw else "")
+        return FlextResult.fail("DN value has unexpected type")
+
+    @staticmethod
+    def _extract_dn_from_object(dn_val_raw: object) -> FlextResult[str]:
+        """Extract DN from object with dn attribute."""
+        if dn_val_raw is None:
+            return FlextResult.fail("Entry missing DN (dn is None)")
+        if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
+            dn_value_raw = getattr(dn_val_raw, "value", None)
+            return FlextLdifEntries._extract_dn_from_value(dn_value_raw)
+        if isinstance(dn_val_raw, str):
+            return FlextResult.ok(dn_val_raw)
+        try:
+            return FlextResult.ok(str(dn_val_raw))
+        except (ValueError, TypeError) as e:
+            return FlextResult.fail(f"Failed to extract DN: {e}")
 
     def get_entry_dn(
         self,
@@ -255,39 +299,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
 
         """
         if isinstance(entry, dict):
-            dn_val = entry.get("dn")
-            if not dn_val:
-                return FlextResult.fail("Dict entry missing 'dn' key")
-            return FlextResult.ok(str(dn_val))
-
-        # Check if it's an EntryWithDnProtocol (has dn attribute)
+            return FlextLdifEntries._extract_dn_from_dict(entry)
         if hasattr(entry, "dn"):
-            dn_val_raw = entry.dn
-            # Handle None DN
-            if dn_val_raw is None:
-                return FlextResult.fail("Entry missing DN (dn is None)")
-            # Check if dn_val has .value attribute (DN model with value field)
-            if hasattr(dn_val_raw, "value") and not isinstance(dn_val_raw, str):
-                # dn_val_raw.value can be str | list[str] | None
-                dn_value_raw = getattr(dn_val_raw, "value", None)
-                if dn_value_raw is None:
-                    return FlextResult.fail("DN value is None")
-                # Convert to string for return
-                if isinstance(dn_value_raw, str):
-                    return FlextResult.ok(dn_value_raw)
-                if isinstance(dn_value_raw, list):
-                    # For list, join or use first element (depends on DN structure)
-                    return FlextResult.ok(str(dn_value_raw[0]) if dn_value_raw else "")
-                return FlextResult.fail("DN value has unexpected type")
-            # Direct string DN
-            if isinstance(dn_val_raw, str):
-                return FlextResult.ok(dn_val_raw)
-            # Try to convert to string, handle exceptions
-            try:
-                return FlextResult.ok(str(dn_val_raw))
-            except (ValueError, TypeError) as e:
-                return FlextResult.fail(f"Failed to extract DN: {e}")
-
+            return FlextLdifEntries._extract_dn_from_object(entry.dn)
         return FlextResult.fail(
             "Entry does not implement EntryWithDnProtocol or Entry protocol",
         )
@@ -324,25 +338,20 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         try:
             if not hasattr(entry, "attributes"):
                 return FlextResult.fail("Entry missing attributes attribute")
-            # Verify attributes exists - None means failure per EntryProtocol
             if entry.attributes is None:
                 return FlextResult.fail("Entry has no attributes (attributes is None)")
-            # Verify attributes is LdifAttributes instance
             if not entry.attributes:
                 return FlextResult.ok({})
             # Check if attributes is LdifAttributes (has .attributes attribute)
-            if not hasattr(entry.attributes, "attributes"):
-                # If it's a dict-like object, try to use it directly
-                if isinstance(entry.attributes, dict):
-                    return FlextResult.ok(dict(entry.attributes))
-                return FlextResult.fail(
-                    f"Unknown attributes container type: {type(entry.attributes)}",
-                )
-            if not entry.attributes.attributes:
-                return FlextResult.ok({})
-
-            # Return attributes directly from entry
-            return FlextResult.ok(dict(entry.attributes.attributes))
+            if hasattr(entry.attributes, "attributes"):
+                attrs_dict = entry.attributes.attributes
+                return FlextResult.ok(dict(attrs_dict) if attrs_dict else {})
+            # If it's a dict-like object, try to use it directly
+            if isinstance(entry.attributes, dict):
+                return FlextResult.ok(dict(entry.attributes))
+            return FlextResult.fail(
+                f"Unknown attributes container type: {type(entry.attributes)}",
+            )
         except (AttributeError, ValueError) as e:
             # Business Rule: Convert exceptions to FlextResult failures
             # This ensures railway-oriented error handling throughout the codebase

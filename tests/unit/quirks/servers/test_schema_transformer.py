@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_core import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
@@ -165,8 +165,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         def transform_name(
-            n: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            n: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             n_str: str | None = (
                 str(n) if isinstance(n, str) else (n if n is None else str(n))
             )
@@ -177,8 +177,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )
 
         def transform_equality(
-            eq: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            eq: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             eq_str: str | None = (
                 str(eq) if isinstance(eq, str) else (eq if eq is None else str(eq))
             )
@@ -191,8 +191,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )[0]
 
         def transform_substr(
-            sub: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            sub: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             sub_str: str | None = (
                 str(sub) if isinstance(sub, str) else (sub if sub is None else str(sub))
             )
@@ -205,8 +205,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
             )[1]
 
         def transform_syntax(
-            syn: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            syn: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             syn_str: str | None = (
                 str(syn) if isinstance(syn, str) else (syn if syn is None else str(syn))
             )
@@ -220,8 +220,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         field_transforms: dict[
             str,
             Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+                [t.GeneralValueType],
+                t.GeneralValueType | FlextResult[t.GeneralValueType],
             ]
             | str
             | list[str]
@@ -254,8 +254,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         )
 
         def transform_name(
-            n: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            n: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             n_str: str | None = (
                 str(n) if isinstance(n, str) else (n if n is None else str(n))
             )
@@ -268,8 +268,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         field_transforms: dict[
             str,
             Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+                [t.GeneralValueType],
+                t.GeneralValueType | FlextResult[t.GeneralValueType],
             ]
             | str
             | list[str]

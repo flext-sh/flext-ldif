@@ -18,12 +18,16 @@ from collections.abc import Callable
 from typing import ClassVar, Self, cast, override
 
 from flext_core import FlextResult, FlextRuntime
+from flext_core.utilities import FlextUtilities
 from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifSorting(
@@ -491,14 +495,14 @@ class FlextLdifSorting(
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort attributes in all entries."""
-        processed: list[FlextLdifModels.Entry] = []
-        for entry in entries:
+        def sort_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+            """Sort entry attributes."""
             if self.attribute_order:
                 result = self._sort_entry_attributes_by_order(entry)
             else:
                 result = self._sort_entry_attributes_alphabetically(entry)
 
-            if not result.is_success:
+            if result.is_failure:
                 error_msg = result.error or "Unknown error"
                 original_attrs = (
                     list(entry.attributes.attributes.keys()) if entry.attributes else []
@@ -507,18 +511,28 @@ class FlextLdifSorting(
                     "Failed to sort entry attributes",
                     action_attempted="sort_entry_attributes",
                     entry_dn=str(entry.dn) if entry.dn else None,
-                    entry_index=len(processed) + 1,
+                    entry_index=0,  # Index not available in batch context
                     total_entries=len(entries),
                     error=str(error_msg),
                     error_type=type(result.error).__name__ if result.error else None,
                     attributes_count=len(original_attrs),
                     consequence="Entry attributes were not sorted",
                 )
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Attribute sort failed: {error_msg}",
-                )
-            processed.append(result.unwrap())
+                error_text = f"Attribute sort failed: {error_msg}"
+                raise ValueError(error_text)
 
+            return result.unwrap()
+
+        batch_result = u.process(
+            entries,
+            sort_entry,
+            on_error="fail",
+        )
+        if batch_result.is_failure:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                batch_result.error or "Attribute sort failed"
+            )
+        processed = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
         return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
 
     @staticmethod
@@ -565,11 +579,10 @@ class FlextLdifSorting(
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort ACL attributes in all entries."""
-        processed = []
-        for entry in entries:
+        def sort_acl_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+            """Sort ACL attributes in entry."""
             if not entry.attributes:
-                processed.append(entry)
-                continue
+                return entry
 
             attrs_dict: dict[str, list[str]] = {
                 str(k): (
@@ -600,10 +613,19 @@ class FlextLdifSorting(
             if modified:
                 sorted_attrs = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
                 new_entry = entry.model_copy(update={"attributes": sorted_attrs})
-                processed.append(self._track_acl_sorting_metadata(new_entry))
-            else:
-                processed.append(entry)
+                return self._track_acl_sorting_metadata(new_entry)
+            return entry
 
+        batch_result = u.process(
+            entries,
+            sort_acl_entry,
+            on_error="skip",
+        )
+        if batch_result.is_failure:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                batch_result.error or "ACL sort failed"
+            )
+        processed = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
         return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
 
     @staticmethod
@@ -634,7 +656,8 @@ class FlextLdifSorting(
             # Normalize DN for consistent handling
             norm_result = FlextLdifUtilities.DN.norm(dn_value)
             normalized_dn = norm_result.unwrap() if norm_result.is_success else None
-            dn_key = normalized_dn.lower() if normalized_dn else dn_value.lower()
+            normalized_dn_lower = u.normalize(normalized_dn or dn_value, case="lower")
+            dn_key = cast("str", normalized_dn_lower)
 
             # Store entry (append to list to support duplicates)
             if dn_key not in dn_to_entries:
@@ -702,7 +725,17 @@ class FlextLdifSorting(
         result = list(dn_to_entries[dn])
 
         # Recursively visit all children (already sorted alphabetically)
-        for child_dn in parent_to_children.get(dn, []):
+        extract_result: FlextResult[list[str] | None] = u.get(
+            parent_to_children,
+            dn,
+            default=[],
+        )
+        children: list[str] = (
+            extract_result.value
+            if extract_result.is_success and extract_result.value is not None
+            else []
+        )
+        for child_dn in children:
             result.extend(
                 FlextLdifSorting._dfs_traverse(
                     child_dn,
@@ -790,7 +823,7 @@ class FlextLdifSorting(
             depth = dn_value.count(",") + 1
             norm_result = FlextLdifUtilities.DN.norm(dn_value)
             normalized = norm_result.unwrap() if norm_result.is_success else None
-            sort_dn = normalized.lower() if normalized else dn_value.lower()
+            sort_dn = cast("str", u.normalize(normalized or dn_value, case="lower"))
 
             return (depth, sort_dn)
 
@@ -852,10 +885,26 @@ class FlextLdifSorting(
                     normalized = (
                         norm_result.unwrap() if norm_result.is_success else None
                     )
-                    dn_key = normalized.lower() if normalized else dn_value.lower()
+                    normalized_dn_lower = u.normalize(normalized or dn_value, case="lower")
+                    dn_key = cast("str", normalized_dn_lower)
                     if dn_key not in visited:
                         # Add all entries with this DN
-                        sorted_entries.extend(dn_to_entries.get(dn_key, []))
+                        extract_result: FlextResult[
+                            list[FlextLdifModels.Entry] | None
+                        ] = u.get(
+                            dn_to_entries,
+                            dn_key,
+                            default=[],
+                        )
+                        entries_for_dn_raw: list[FlextLdifModels.Entry] | None = (
+                            extract_result.value
+                            if extract_result.is_success
+                            else None
+                        )
+                        entries_for_dn: list[FlextLdifModels.Entry] = (
+                            entries_for_dn_raw if entries_for_dn_raw is not None else []
+                        )
+                        sorted_entries.extend(entries_for_dn)
                         visited.add(dn_key)
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
@@ -887,7 +936,7 @@ class FlextLdifSorting(
             # Normalize DN using FlextLdifUtilities for RFC 4514 compliance
             norm_result = FlextLdifUtilities.DN.norm(dn_value)
             normalized = norm_result.unwrap() if norm_result.is_success else None
-            return normalized.lower() if normalized else dn_value.lower()
+            return cast("str", u.normalize(normalized or dn_value, case="lower"))
 
         sorted_entries = sorted(self.entries, key=dn_sort_key)
         return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)

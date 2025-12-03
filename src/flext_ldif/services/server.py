@@ -8,6 +8,7 @@ from typing import cast
 from flext_core import (
     FlextLogger,
     FlextResult,
+    u,
 )
 
 import flext_ldif.servers as servers_package
@@ -297,7 +298,9 @@ class FlextLdifServer:
         except ValueError as e:
             # Invalid server type - return failure instead of raising
             return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(str(e))
-        base = self._bases.get(normalized_type)
+        base: FlextLdifTypes.QuirkInstanceType | None = u.find(
+            self._bases, normalized_type, default=None
+        )
         if not base:
             return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(
                 f"No base found for server type: {server_type}",
@@ -325,7 +328,10 @@ class FlextLdifServer:
             FlextResult with base quirk instance or error message
 
         """
-        base = self._bases.get(self._normalize_server_type(server_type))
+        normalized = self._normalize_server_type(server_type)
+        base: FlextLdifServersBase | None = u.get(
+            self._bases, normalized, default=None
+        )
         if base is None:
             return FlextResult[FlextLdifServersBase].fail(
                 f"No base found for server type: {server_type}",
@@ -347,7 +353,9 @@ class FlextLdifServer:
         except ValueError as e:
             # Invalid server type - return failure
             return FlextResult[_QuirksDict].fail(str(e))
-        base = self._bases.get(normalized_type)
+        base: FlextLdifServersBase | None = u.get(
+            self._bases, normalized_type, default=None
+        )
         if not base:
             return FlextResult[_QuirksDict].fail(
                 f"No base found for server type: {server_type}",

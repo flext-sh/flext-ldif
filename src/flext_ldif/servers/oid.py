@@ -22,8 +22,8 @@ from dataclasses import dataclass
 from functools import reduce
 from typing import ClassVar, Literal, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities
-from flext_core.typings import FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core.typings import t
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -31,7 +31,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.utilities import FlextLdifUtilities, u
 
 logger = FlextLogger(__name__)
 
@@ -1423,7 +1423,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Timestamp
             attr_data.metadata.extensions[
                 FlextLdifConstants.Rfc.META_TRANSFORMATION_TIMESTAMP
-            ] = FlextUtilities.Generators.generate_iso_timestamp()
+            ] = u.Generators.generate_iso_timestamp()
 
         def _parse_attribute(
             self,
@@ -1917,7 +1917,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 if oc_data.metadata:
                     oc_data.metadata.extensions[
                         FlextLdifConstants.Rfc.META_TRANSFORMATION_TIMESTAMP
-                    ] = FlextUtilities.Generators.generate_iso_timestamp()
+                    ] = u.Generators.generate_iso_timestamp()
 
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
 
@@ -4505,14 +4505,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Business Rule: DynamicMetadata accepts MetadataAttributeValue
             # Implication: All values must be compatible with MetadataAttributeValue
             # Type annotation ensures MetadataValue compatibility
-            extensions_data: dict[str, FlextTypes.MetadataAttributeValue] = dict(
+            extensions_data: dict[str, t.MetadataAttributeValue] = dict(
                 conversion_metadata,
             )
             extensions_data.update(dn_metadata)
             # Type narrowing: rfc_compliance_metadata is DynamicMetadata with MetadataAttributeValue values
             extensions_data.update(
                 cast(
-                    "dict[str, FlextTypes.MetadataAttributeValue]",
+                    "dict[str, t.MetadataAttributeValue]",
                     rfc_compliance_metadata,
                 )
             )
@@ -4520,9 +4520,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Type narrowing: original_extensions values are compatible with MetadataAttributeValue
             # str | int | bool | list[str] → MetadataAttributeValue (list[str] is Sequence[ScalarValue])
             extensions_data.update(
-                cast(
-                    "dict[str, FlextTypes.MetadataAttributeValue]", original_extensions
-                )
+                cast("dict[str, t.MetadataAttributeValue]", original_extensions)
             )
             extensions_data[FlextLdifConstants.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
                 original_entry.dn,
@@ -4790,7 +4788,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
 
             # Get current extensions
-            current_extensions: dict[str, FlextTypes.MetadataAttributeValue] = (
+            current_extensions: dict[str, t.MetadataAttributeValue] = (
                 dict(entry.metadata.extensions) if entry.metadata.extensions else {}
             )
 

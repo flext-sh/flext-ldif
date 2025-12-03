@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import override
 
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextResult, FlextRuntime, u
 
 from flext_ldif._models.results import _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
@@ -120,7 +120,8 @@ class FlextLdifAnalysis(
         objectclass_distribution: Counter[str] = Counter()
         patterns_detected: set[str] = set()
 
-        for entry in entries:
+        def process_entry(entry: FlextLdifModels.Entry) -> None:
+            """Process entry for analysis."""
             for oc_name in entry.get_objectclass_names():
                 objectclass_distribution[oc_name] += 1
 
@@ -129,6 +130,12 @@ class FlextLdifAnalysis(
                 patterns_detected.add("user pattern")
             if "ou=groups" in dn_str_lower:
                 patterns_detected.add("group pattern")
+
+        _ = u.process(
+            entries,
+            process_entry,
+            on_error="skip",
+        )
 
         return FlextResult[FlextLdifModels.EntryAnalysisResult].ok(
             FlextLdifModels.EntryAnalysisResult(
@@ -180,14 +187,24 @@ class FlextLdifAnalysis(
         errors: list[str] = []
         valid_count = 0
 
-        for entry in entries:
+        def validate_entry(entry: FlextLdifModels.Entry) -> bool:
+            """Validate single entry and collect errors."""
             is_entry_valid, entry_errors = self._validate_single_entry(
                 entry,
                 validation_service,
             )
             errors.extend(entry_errors)
-            if is_entry_valid:
-                valid_count += 1
+            return is_entry_valid
+
+        batch_result = u.batch_process(
+            entries,
+            validate_entry,
+            on_error="skip",
+        )
+        if batch_result.is_success:
+            valid_count = sum(
+                1 for result in batch_result.value["results"] if result is True
+            )
 
         total_entries = len(entries)
         invalid_count = total_entries - valid_count
@@ -255,7 +272,12 @@ class FlextLdifAnalysis(
                 is_entry_valid = False
 
         # Validate objectClass values
-        oc_values = entry.attributes.attributes.get("objectClass", [])
+        oc_values_raw: list[str] | str | None = u.get(
+            entry.attributes.attributes,
+            "objectClass",
+            default=[],
+        )
+        oc_values: list[str] | str = oc_values_raw if oc_values_raw is not None else []
         if FlextRuntime.is_list_like(oc_values):
             for oc in oc_values:
                 if not isinstance(oc, str):

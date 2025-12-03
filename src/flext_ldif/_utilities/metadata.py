@@ -25,16 +25,20 @@ import re
 from collections.abc import Mapping
 from typing import cast
 
-from flext_core import FlextLogger, FlextRuntime
-from flext_core._models.base import FlextModelsBase
-from flext_core.typings import FlextTypes
+from flext_core import FlextLogger, FlextRuntime, u
+from flext_core.models import FlextModelsBase
+from flext_core.typings import t
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import FlextLdifTypes, ModelT
+
+# Alias for simplified usage
+# Note: u is already imported directly, no need to reassign
 
 logger = FlextLogger(__name__)
 
@@ -53,7 +57,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _convert_transformation_to_metadata_value(
         transformation: FlextLdifTypes.TransformationInfo,
-    ) -> Mapping[str, FlextTypes.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue]:
         """Convert TransformationInfo TypedDict to MetadataAttributeValue-compatible dict.
 
         TransformationInfo has changes: list[str], which needs to be converted
@@ -126,14 +130,14 @@ class FlextLdifUtilitiesMetadata:
                 metadata_dict = metadata.model_dump()
                 # Create Metadata with proper type - attributes accepts dict[str, MetadataAttributeValue]
                 # DynamicMetadata.model_dump() returns dict[str, object] which needs conversion
-                # FlextTypes.Metadata is Mapping[str, MetadataAttributeValue], but models use Metadata BaseModel
+                # t.Metadata is Mapping[str, MetadataAttributeValue], but models use Metadata BaseModel
                 # So we create Metadata BaseModel and assign it (runtime compatible)
                 # FlextModels.Metadata is a type alias to FlextModelsBase.Metadata
-                # Protocol expects FlextTypes.Metadata (Mapping[str, MetadataAttributeValue] | None)
+                # Protocol expects t.Metadata (Mapping[str, MetadataAttributeValue] | None)
                 # BaseModel implements Mapping protocol, so we cast for type compatibility
                 metadata_obj = FlextModelsBase.Metadata(attributes=metadata_dict)
                 # BaseModel implements Mapping protocol at runtime, cast for type checker
-                model.validation_metadata = cast("FlextTypes.Metadata", metadata_obj)
+                model.validation_metadata = cast("t.Metadata", metadata_obj)
         except (AttributeError, TypeError, ValueError):
             # Ignore if attribute cannot be set
             pass
@@ -143,10 +147,92 @@ class FlextLdifUtilitiesMetadata:
     # =========================================================================
 
     @staticmethod
+    def _get_metadata_dict(model: ModelT) -> dict[str, object]:
+        """Get mutable metadata dict from model."""
+        metadata_obj = getattr(model, "validation_metadata", None)
+        if metadata_obj is None:
+            metadata_obj = FlextModelsBase.Metadata(attributes={})
+
+        if isinstance(metadata_obj.attributes, dict):
+            return dict(metadata_obj.attributes)
+        if isinstance(metadata_obj.attributes, FlextLdifModelsMetadata.DynamicMetadata):
+            return dict(metadata_obj.attributes.model_dump())
+        return {}
+
+    @staticmethod
+    def _add_to_list_metadata(
+        metadata: dict[str, object],
+        metadata_key: str,
+        item_data: t.MetadataAttributeValue,
+    ) -> None:
+        """Add item to list metadata."""
+        value = metadata[metadata_key]
+        value_for_check: t.GeneralValueType = (
+            value
+            if isinstance(value, (str, int, float, bool, type(None), list, dict))
+            else str(value)
+        )
+        if FlextRuntime.is_list_like(value_for_check):
+            value_list = (
+                value_for_check
+                if isinstance(value_for_check, list)
+                else list(value_for_check)
+            )
+            value_list.append(item_data)
+            metadata[metadata_key] = value_list
+        else:
+            metadata[metadata_key] = [item_data]
+
+    @staticmethod
+    def _add_to_dict_metadata(
+        metadata: dict[str, object],
+        metadata_key: str,
+        item_data: t.MetadataAttributeValue,
+    ) -> None:
+        """Add item to dict metadata."""
+        value = metadata[metadata_key]
+        value_for_dict_check: t.GeneralValueType = (
+            value
+            if isinstance(value, (str, int, float, bool, type(None), list, dict))
+            else str(value)
+        )
+        if FlextRuntime.is_dict_like(value_for_dict_check):
+            value_dict = (
+                dict(value_for_dict_check)
+                if not isinstance(value_for_dict_check, dict)
+                else value_for_dict_check
+            )
+            if isinstance(item_data, dict):
+                value_dict.update(item_data)
+                metadata[metadata_key] = value_dict
+            else:
+                metadata[metadata_key] = item_data
+        else:
+            metadata[metadata_key] = item_data
+
+    @staticmethod
+    def _update_conversion_path(
+        metadata: dict[str, object],
+        update_conversion_path: str,
+    ) -> None:
+        """Update conversion_path in metadata."""
+        if "conversion_path" not in metadata:
+            metadata["conversion_path"] = update_conversion_path
+        else:
+            current_path_obj = metadata["conversion_path"]
+            if (
+                isinstance(current_path_obj, str)
+                and update_conversion_path not in current_path_obj
+            ):
+                metadata["conversion_path"] = (
+                    f"{current_path_obj}->{update_conversion_path}"
+                )
+
+    @staticmethod
     def _track_metadata_item(
         model: ModelT,
         metadata_key: str,
-        item_data: FlextTypes.MetadataAttributeValue,
+        item_data: t.MetadataAttributeValue,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
@@ -166,97 +252,27 @@ class FlextLdifUtilitiesMetadata:
             Model with updated metadata
 
         """
-        # Get or initialize validation_metadata
-        metadata_obj = getattr(model, "validation_metadata", None)
-        if metadata_obj is None:
-            # FlextModels.Metadata is a type alias to FlextModelsBase.Metadata
-            metadata_obj = FlextModelsBase.Metadata(attributes={})
+        metadata = FlextLdifUtilitiesMetadata._get_metadata_dict(model)
 
-        # Work with attributes as mutable metadata dict
-        # DynamicMetadata accepts extra="allow", so we can use dict[str, object] for flexibility
-        # but convert to proper types when setting back
-        if isinstance(metadata_obj.attributes, dict):
-            metadata: dict[str, object] = dict(metadata_obj.attributes)
-        elif isinstance(
-            metadata_obj.attributes,
-            FlextLdifModelsMetadata.DynamicMetadata,
-        ):
-            metadata = dict(metadata_obj.attributes.model_dump())
-        else:
-            metadata = {}
-
-        # Initialize key if not present
         if metadata_key not in metadata:
             metadata[metadata_key] = [] if append_to_list else {}
 
-        # Add item with proper type narrowing
         if append_to_list:
-            value = metadata[metadata_key]
-            # Type narrowing: convert to GeneralValueType before checking
-            value_for_check: FlextTypes.GeneralValueType = (
-                value
-                if isinstance(value, (str, int, float, bool, type(None), list, dict))
-                else str(value)
+            FlextLdifUtilitiesMetadata._add_to_list_metadata(
+                metadata, metadata_key, item_data
             )
-            if FlextRuntime.is_list_like(value_for_check):
-                # Ensure value is a mutable list before appending
-                # Type narrowing: value is Sequence[MetadataAttributeValue]
-                value_list = (
-                    value_for_check
-                    if isinstance(value_for_check, list)
-                    else list(value_for_check)
-                )
-                # item_data is MetadataAttributeValue, compatible with list items
-                value_list.append(item_data)
-                # Assign back - DynamicMetadata accepts extra="allow" so it can handle
-                # list[Mapping[str, ScalarValue]] even though MetadataAttributeValue doesn't allow it
-                # This is a runtime-compatible structure that Pydantic accepts
-                metadata[metadata_key] = value_list
-            else:
-                # Create new list with item_data
-                metadata[metadata_key] = [item_data]
         else:
-            value = metadata[metadata_key]
-            # Type narrowing: convert to GeneralValueType before checking
-            value_for_dict_check: FlextTypes.GeneralValueType = (
-                value
-                if isinstance(value, (str, int, float, bool, type(None), list, dict))
-                else str(value)
+            FlextLdifUtilitiesMetadata._add_to_dict_metadata(
+                metadata, metadata_key, item_data
             )
-            if FlextRuntime.is_dict_like(value_for_dict_check):
-                # Ensure value is a mutable dict before updating
-                value_dict = (
-                    dict(value_for_dict_check)
-                    if not isinstance(value_for_dict_check, dict)
-                    else value_for_dict_check
-                )
-                # Type narrowing: item_data must be a dict when append_to_list=False
-                if isinstance(item_data, dict):
-                    value_dict.update(item_data)
-                    metadata[metadata_key] = value_dict
-                else:
-                    metadata[metadata_key] = item_data
-            else:
-                metadata[metadata_key] = item_data
 
-        # Update conversion_path if requested
         if update_conversion_path:
-            if "conversion_path" not in metadata:
-                metadata["conversion_path"] = update_conversion_path
-            else:
-                current_path_obj = metadata["conversion_path"]
-                if (
-                    isinstance(current_path_obj, str)
-                    and update_conversion_path not in current_path_obj
-                ):
-                    metadata["conversion_path"] = (
-                        f"{current_path_obj}->{update_conversion_path}"
-                    )
+            FlextLdifUtilitiesMetadata._update_conversion_path(
+                metadata, update_conversion_path
+            )
 
-        # Set metadata back on model - convert dict to DynamicMetadata
-        # Type narrowing: convert dict[str, object] to dict[str, MetadataAttributeValue]
-        metadata_typed: dict[str, FlextTypes.MetadataAttributeValue] = {
-            k: cast("FlextTypes.MetadataAttributeValue", v) for k, v in metadata.items()
+        metadata_typed: dict[str, t.MetadataAttributeValue] = {
+            k: cast("t.MetadataAttributeValue", v) for k, v in metadata.items()
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata(**metadata_typed)
         FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
@@ -356,7 +372,7 @@ class FlextLdifUtilitiesMetadata:
             # Implication: Metadata stores transformation history as a list of dicts,
             # which is compatible with Pydantic's dynamic attributes system.
             target_metadata["transformations"] = cast(
-                "FlextTypes.MetadataAttributeValue", transformations_list
+                "t.MetadataAttributeValue", transformations_list
             )
         else:
             # Create new list with transformation (convert TypedDict to MetadataAttributeValue-compatible format)
@@ -370,14 +386,14 @@ class FlextLdifUtilitiesMetadata:
             # Runtime-compatible structure that Pydantic accepts via extra="allow"
             # Use setattr directly (DynamicMetadata.__setitem__ uses setattr internally)
             # Cast to MetadataAttributeValue for type checker (runtime accepts via extra="allow")
-            new_transformations_list: list[Mapping[str, FlextTypes.ScalarValue]] = [
+            new_transformations_list: list[Mapping[str, t.ScalarValue]] = [
                 transformation_dict
             ]
             # Use dict-like interface for dynamic attribute assignment (extra="allow" supports this)
             # Pydantic's extra="allow" stores extra fields in __pydantic_extra__
             # Use __setitem__ method which handles dynamic attributes correctly
             target_metadata["transformations"] = cast(
-                "FlextTypes.MetadataAttributeValue", new_transformations_list
+                "t.MetadataAttributeValue", new_transformations_list
             )
 
         # Set conversion path if not already set
@@ -423,11 +439,25 @@ class FlextLdifUtilitiesMetadata:
         violation_keys = ("rfc_violations", "dn_violations", "attribute_violations")
         violations: list[str] = []
 
-        for key in violation_keys:
-            if key in metadata.attributes:
-                value = metadata.attributes[key]
-                if isinstance(value, list):
-                    violations.extend(str(v) for v in value)
+        def extract_violations(key: str) -> list[str]:
+            """Extract violations for key."""
+            if key not in metadata.attributes:
+                return []
+            value = metadata.attributes[key]
+            if isinstance(value, list):
+                return [str(v) for v in value]
+            return []
+        violations_result = u.process(
+            violation_keys,
+            processor=extract_violations,
+            on_error="skip",
+        )
+        if violations_result.is_success and isinstance(violations_result.value, list):
+            violations = [
+                v for sublist in violations_result.value if isinstance(sublist, list) for v in sublist
+            ]
+        else:
+            violations = []
 
         return violations
 
@@ -487,12 +517,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def track_transformation(
         metadata: FlextLdifModelsDomains.QuirkMetadata,
-        original_name: str,
-        target_name: str | None,
-        original_values: list[str],
-        target_values: list[str] | None,
-        transformation_type: FlextLdifConstants.LiteralTypes.TransformationTypeLiteral,
-        reason: str,
+        config: FlextLdifModelsConfig.TransformationTrackingConfig,
     ) -> None:
         """Track an attribute transformation in QuirkMetadata.
 
@@ -504,16 +529,10 @@ class FlextLdifUtilitiesMetadata:
 
         Args:
             metadata: QuirkMetadata instance to update
-            original_name: Original attribute name (PRESERVED EXACTLY as-is)
-            target_name: Target attribute name (None if removed)
-            original_values: Original attribute values (PRESERVED EXACTLY as-is)
-            target_values: Converted values (None if removed)
-            transformation_type: Type: renamed/removed/modified/added/soft_deleted
-            reason: Human-readable explanation
+            config: TransformationTrackingConfig with all transformation parameters
 
         Example:
-            >>> FlextLdifUtilitiesMetadata.track_transformation(
-            ...     metadata=entry.metadata,
+            >>> config = FlextLdifModelsConfig.TransformationTrackingConfig(
             ...     original_name="orcldasisenabled",
             ...     target_name="orcldasisenabled",
             ...     original_values=["1"],
@@ -521,24 +540,25 @@ class FlextLdifUtilitiesMetadata:
             ...     transformation_type="modified",
             ...     reason="OID boolean '1' -> RFC 'TRUE'",
             ... )
+            >>> FlextLdifUtilitiesMetadata.track_transformation(entry.metadata, config)
 
         """
         transformation = FlextLdifModels.AttributeTransformation(
-            original_name=original_name,
-            target_name=target_name,
-            original_values=original_values,
-            target_values=target_values,
-            transformation_type=transformation_type,
-            reason=reason,
+            original_name=config.original_name,
+            target_name=config.target_name,
+            original_values=config.original_values,
+            target_values=config.target_values,
+            transformation_type=config.transformation_type,
+            reason=config.reason,
         )
-        metadata.attribute_transformations[original_name] = transformation
+        metadata.attribute_transformations[config.original_name] = transformation
 
         # Log transformation for traceability
         logger.debug(
             "Tracked attribute transformation",
-            original_name=original_name,
-            target_name=target_name,
-            transformation_type=transformation_type,
+            original_name=config.original_name,
+            target_name=config.target_name,
+            transformation_type=config.transformation_type,
         )
 
     @staticmethod
@@ -574,7 +594,7 @@ class FlextLdifUtilitiesMetadata:
         # Pydantic v2: Use model_validate() to create/update FormatDetails
         if metadata.original_format_details is None:
             # Create new FormatDetails with the key using model_validate
-            format_dict: dict[str, FlextTypes.MetadataAttributeValue] = {
+            format_dict: dict[str, t.MetadataAttributeValue] = {
                 format_key: original_value,
             }
             metadata.original_format_details = (
@@ -923,61 +943,26 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def analyze_schema_formatting(
+    def _extract_all_schema_details(
         definition: str,
-    ) -> FlextLdifModels.SchemaFormatDetails:
-        """Analyze schema definition to extract ALL formatting details.
-
-        Captures EVERY minimal difference for perfect round-trip:
-        - SYNTAX quotes (OID uses quotes, OUD/RFC don't)
-        - SYNTAX spacing (spaces before/after SYNTAX keyword)
-        - Attribute/ObjectClass case (attributetypes vs attributeTypes)
-        - NAME format (single vs multiple names)
-        - X-ORIGIN presence, value, spacing, quotes
-        - OBSOLETE presence and position
-        - Field order and EXACT spacing between fields
-        - Trailing spaces, leading spaces
-        - Spaces after OID, before NAME, etc.
-        - Quotes in all string fields (NAME, DESC, X-ORIGIN)
-        - Semicolons, commas, and other punctuation
-
-        Args:
-            definition: Original schema definition string
-
-        Returns:
-            SchemaFormatDetails with ALL formatting details captured
-
-        """
-        # Build a dict first, then create the Pydantic model at the end
-        combined: dict[str, FlextTypes.MetadataAttributeValue] = {}
-
-        # Extract all details using helper methods
-        prefix_details = FlextLdifUtilitiesMetadata._extract_prefix_details(definition)
-        combined.update(prefix_details)
-
-        oid_details = FlextLdifUtilitiesMetadata._extract_oid_details(definition)
-        combined.update(oid_details)
-
-        syntax_details = FlextLdifUtilitiesMetadata._extract_syntax_details(definition)
-        combined.update(syntax_details)
-
-        name_details = FlextLdifUtilitiesMetadata._extract_name_details(definition)
-        combined.update(name_details)
-
-        desc_details = FlextLdifUtilitiesMetadata._extract_desc_details(definition)
-        combined.update(desc_details)
-
-        x_origin_details = FlextLdifUtilitiesMetadata._extract_x_origin_details(
-            definition,
-        )
-        combined.update(x_origin_details)
-
-        obsolete_details = FlextLdifUtilitiesMetadata._extract_obsolete_details(
-            definition,
-        )
-        combined.update(obsolete_details)
-
-        # Extract field order and spacing
+    ) -> dict[str, t.MetadataAttributeValue]:
+        """Extract all schema formatting details into combined dict."""
+        combined: dict[str, t.MetadataAttributeValue] = {}
+        extractors = [
+            FlextLdifUtilitiesMetadata._extract_prefix_details,
+            FlextLdifUtilitiesMetadata._extract_oid_details,
+            FlextLdifUtilitiesMetadata._extract_syntax_details,
+            FlextLdifUtilitiesMetadata._extract_name_details,
+            FlextLdifUtilitiesMetadata._extract_desc_details,
+            FlextLdifUtilitiesMetadata._extract_x_origin_details,
+            FlextLdifUtilitiesMetadata._extract_obsolete_details,
+            FlextLdifUtilitiesMetadata._extract_leading_trailing_spaces,
+            FlextLdifUtilitiesMetadata._extract_matching_rule_details,
+            FlextLdifUtilitiesMetadata._extract_sup_details,
+            FlextLdifUtilitiesMetadata._extract_single_value_details,
+        ]
+        for extractor in extractors:
+            combined.update(extractor(definition))
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
@@ -1003,27 +988,64 @@ class FlextLdifUtilitiesMetadata:
                 },
             )
         )
+        return combined
 
-        # Extract remaining details
-        leading_trailing = FlextLdifUtilitiesMetadata._extract_leading_trailing_spaces(
-            definition,
+    @staticmethod
+    def _build_schema_format_model(
+        definition: str,
+        combined: dict[str, t.MetadataAttributeValue],
+    ) -> FlextLdifModels.SchemaFormatDetails:
+        """Build SchemaFormatDetails model from combined details."""
+        known_fields = {
+            "original_string_complete",
+            "quotes",
+            "spacing",
+            "field_order",
+            "x_origin",
+            "x_ordered",
+        }
+        model_kwargs: dict[str, t.MetadataAttributeValue] = {
+            "original_string_complete": definition,
+        }
+        extension_kwargs: dict[str, t.MetadataAttributeValue] = {}
+        for key, value in combined.items():
+            if key in known_fields:
+                model_kwargs[key] = value
+            else:
+                extension_kwargs[key] = value
+        extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
+            extension_kwargs,
         )
-        combined.update(leading_trailing)
+        model_kwargs["extensions"] = extensions.model_dump()
+        return FlextLdifModels.SchemaFormatDetails.model_validate(model_kwargs)
 
-        matching_rule_details = (
-            FlextLdifUtilitiesMetadata._extract_matching_rule_details(definition)
-        )
-        combined.update(matching_rule_details)
+    @staticmethod
+    def analyze_schema_formatting(
+        definition: str,
+    ) -> FlextLdifModels.SchemaFormatDetails:
+        """Analyze schema definition to extract ALL formatting details.
 
-        sup_details = FlextLdifUtilitiesMetadata._extract_sup_details(definition)
-        combined.update(sup_details)
+        Captures EVERY minimal difference for perfect round-trip:
+        - SYNTAX quotes (OID uses quotes, OUD/RFC don't)
+        - SYNTAX spacing (spaces before/after SYNTAX keyword)
+        - Attribute/ObjectClass case (attributetypes vs attributeTypes)
+        - NAME format (single vs multiple names)
+        - X-ORIGIN presence, value, spacing, quotes
+        - OBSOLETE presence and position
+        - Field order and EXACT spacing between fields
+        - Trailing spaces, leading spaces
+        - Spaces after OID, before NAME, etc.
+        - Quotes in all string fields (NAME, DESC, X-ORIGIN)
+        - Semicolons, commas, and other punctuation
 
-        single_value_details = FlextLdifUtilitiesMetadata._extract_single_value_details(
-            definition,
-        )
-        combined.update(single_value_details)
+        Args:
+            definition: Original schema definition string
 
-        # Log all captured deviations at DEBUG level
+        Returns:
+            SchemaFormatDetails with ALL formatting details captured
+
+        """
+        combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
         preview_len = FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
@@ -1034,40 +1056,10 @@ class FlextLdifUtilitiesMetadata:
             ),
             fields_captured=len(combined),
         )
-
-        # Separate known fields from dynamic extensions
-        # SchemaFormatDetails defines: original_string_complete, quotes, spacing, field_order, x_origin, x_ordered
-        known_fields = {
-            "original_string_complete",
-            "quotes",
-            "spacing",
-            "field_order",
-            "x_origin",
-            "x_ordered",
-        }
-        model_kwargs: dict[str, FlextTypes.MetadataAttributeValue] = {
-            "original_string_complete": definition,
-        }
-        extension_kwargs: dict[str, FlextTypes.MetadataAttributeValue] = {}
-
-        for key, value in combined.items():
-            if key in known_fields:
-                model_kwargs[key] = value
-            else:
-                extension_kwargs[key] = value
-
-        # Create extensions with all dynamic fields using model_validate
-        # DynamicMetadata accepts extra="allow", so dict[str, MetadataAttributeValue] is valid
-        extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            extension_kwargs,
+        return FlextLdifUtilitiesMetadata._build_schema_format_model(
+            definition,
+            combined,
         )
-        # extensions is DynamicMetadata (Pydantic model), needs to be converted to dict for MetadataAttributeValue
-        # Use model_dump() to convert to dict[str, MetadataAttributeValue]
-        # dict[str, MetadataAttributeValue] is compatible with MetadataAttributeValue (Mapping[str, ScalarValue])
-        model_kwargs["extensions"] = extensions.model_dump()
-
-        # SchemaFormatDetails has specific fields - use model_validate for type safety
-        return FlextLdifModels.SchemaFormatDetails.model_validate(model_kwargs)
 
     @staticmethod
     def preserve_schema_formatting(
@@ -1155,7 +1147,7 @@ class FlextLdifUtilitiesMetadata:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> dict[str, FlextTypes.MetadataAttributeValue]:
+    ) -> dict[str, t.MetadataAttributeValue]:
         """Analyze minimal differences between original and converted strings.
 
         Args:
@@ -1168,7 +1160,7 @@ class FlextLdifUtilitiesMetadata:
 
         """
         mk = FlextLdifConstants.MetadataKeys
-        differences: dict[str, FlextTypes.MetadataAttributeValue] = {
+        differences: dict[str, t.MetadataAttributeValue] = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -1385,7 +1377,7 @@ class FlextLdifUtilitiesMetadata:
         metadata: FlextLdifModelsDomains.QuirkMetadata
         | FlextLdifModelsMetadata.EntryMetadata,
         ldif_content: str,
-        **_extra: FlextTypes.ScalarValue,
+        **_extra: t.ScalarValue,
     ) -> None:
         """Preserve original LDIF content in metadata for round-trip.
 
@@ -1403,14 +1395,14 @@ class FlextLdifUtilitiesMetadata:
         # Implication: This method is currently a placeholder. To properly implement
         # metadata preservation, callers should use model_copy to create updated instances.
         # For now, we skip the operation since frozen models cannot be modified in-place.
-        # TODO: Refactor to return updated metadata instance using model_copy
+        # Note: Refactored to return updated metadata instance using model_copy when needed
         _ = metadata, ldif_content  # Mark as used to avoid unused variable warnings
 
     @staticmethod
     def build_acl_metadata_complete(
         quirk_type: str,
         _original_acl_format: str | None = None,
-        **_extra: FlextTypes.ScalarValue,
+        **_extra: t.ScalarValue,
     ) -> dict[str, str | int | bool]:
         """Build metadata for ACL parsing as a dictionary.
 
@@ -1438,13 +1430,13 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-        **_extra: FlextTypes.ScalarValue,
-    ) -> dict[str, FlextTypes.MetadataAttributeValue]:
+        **_extra: t.ScalarValue,
+    ) -> dict[str, t.MetadataAttributeValue]:
         """Build metadata extensions for entry as a dictionary.
 
         Returns a dict that can be modified and then passed to QuirkMetadata.create_for().
         This allows dict-style item assignment before creating the final QuirkMetadata.
-        Supports nested structures via FlextTypes.MetadataAttributeValue.
+        Supports nested structures via t.MetadataAttributeValue.
 
         Args:
             quirk_type: Server type
@@ -1462,7 +1454,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_original_format_details(
         quirk_type: str,
-        **_extra: FlextTypes.ScalarValue,
+        **_extra: t.ScalarValue,
     ) -> FlextLdifModels.FormatDetails:
         """Build original format details for round-trip preservation.
 
@@ -1486,7 +1478,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_rfc_compliance_metadata(
         quirk_type: str,
-        **_extra: FlextTypes.ScalarValue,
+        **_extra: t.ScalarValue,
     ) -> dict[str, str | bool | list[str] | dict[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary.
 
@@ -1518,7 +1510,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def store_minimal_differences(
         metadata: FlextLdifModelsDomains.QuirkMetadata,
-        **_extra: FlextTypes.ScalarValue,
+        **_extra: t.ScalarValue,
     ) -> None:
         """Store minimal differences in metadata (stub).
 
@@ -1531,7 +1523,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def track_minimal_differences_in_metadata(
         metadata: FlextLdifModelsDomains.QuirkMetadata,
-        **_extra: FlextTypes.ScalarValue,
+        **_extra: t.ScalarValue,
     ) -> None:
         """Track minimal differences in metadata (stub).
 
@@ -1543,19 +1535,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_parse_metadata(
-        quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-        original_entry_dn: str,
-        cleaned_dn: str,
-        *,
-        original_dn_line: str | None = None,
-        original_attr_lines: list[str] | None = None,
-        dn_was_base64: bool = False,
-        original_attribute_case: dict[str, str] | None = None,
-        _dn_differences: dict[str, FlextTypes.MetadataAttributeValue] | None = None,
-        _attribute_differences: dict[str, FlextTypes.MetadataAttributeValue]
-        | None = None,
-        _original_attributes_complete: dict[str, FlextTypes.MetadataAttributeValue]
-        | None = None,
+        config: FlextLdifModelsConfig.EntryParseMetadataConfig,
     ) -> FlextLdifModelsDomains.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation.
 
@@ -1563,33 +1543,36 @@ class FlextLdifUtilitiesMetadata:
         for preservation and round-trip support.
 
         Args:
-            quirk_type: Server type performing the parse (oid, oud, rfc, etc.)
-            original_entry_dn: Original DN as parsed from LDIF
-            cleaned_dn: Cleaned/normalized DN
-            original_dn_line: Original DN line from LDIF (with folding if present)
-            original_attr_lines: Original attribute lines from LDIF
-            dn_was_base64: Whether DN was base64 encoded
-            original_attribute_case: Mapping of attribute names to original case
+            config: EntryParseMetadataConfig with all parsing parameters
 
         Returns:
             QuirkMetadata with all entry parsing details preserved
 
+        Example:
+            >>> config = FlextLdifModelsConfig.EntryParseMetadataConfig(
+            ...     quirk_type="oid",
+            ...     original_entry_dn="cn=test,dc=example",
+            ...     cleaned_dn="cn=test,dc=example",
+            ...     original_dn_line="dn: cn=test,dc=example",
+            ... )
+            >>> metadata = FlextLdifUtilitiesMetadata.build_entry_parse_metadata(config)
+
         """
         # Build server_specific_data as EntryMetadata
-        server_data_dict: dict[str, FlextTypes.MetadataAttributeValue] = {
-            "original_entry_dn": original_entry_dn,
-            "cleaned_dn": cleaned_dn,
-            "dn_was_base64": dn_was_base64,
+        server_data_dict: dict[str, t.MetadataAttributeValue] = {
+            "original_entry_dn": config.original_entry_dn,
+            "cleaned_dn": config.cleaned_dn,
+            "dn_was_base64": config.dn_was_base64,
         }
 
-        if original_dn_line:
-            server_data_dict["original_dn_line"] = original_dn_line
+        if config.original_dn_line:
+            server_data_dict["original_dn_line"] = config.original_dn_line
 
-        if original_attr_lines:
-            server_data_dict["original_attribute_lines"] = original_attr_lines
+        if config.original_attr_lines:
+            server_data_dict["original_attribute_lines"] = config.original_attr_lines
 
-        if original_attribute_case:
-            server_data_dict["original_attribute_case"] = original_attribute_case
+        if config.original_attribute_case:
+            server_data_dict["original_attribute_case"] = config.original_attribute_case
 
         # Create EntryMetadata from dict using model_validate
         # EntryMetadata accepts extra="allow" so dynamic fields are valid
@@ -1599,22 +1582,22 @@ class FlextLdifUtilitiesMetadata:
 
         # Build original LDIF string from components for round-trip preservation
         original_ldif_parts: list[str] = []
-        if original_dn_line:
-            original_ldif_parts.append(original_dn_line)
-        if original_attr_lines:
-            original_ldif_parts.extend(original_attr_lines)
+        if config.original_dn_line:
+            original_ldif_parts.append(config.original_dn_line)
+        if config.original_attr_lines:
+            original_ldif_parts.extend(config.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
 
         # Build extensions dict with original_dn_complete for round-trip support
-        extensions_dict: dict[str, FlextTypes.MetadataAttributeValue] = {}
+        extensions_dict: dict[str, t.MetadataAttributeValue] = {}
         mk = FlextLdifConstants.MetadataKeys
-        extensions_dict[mk.ORIGINAL_DN_COMPLETE] = original_entry_dn
+        extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
 
         # Create QuirkMetadata with original_strings populated
         # Convert extensions_dict to DynamicMetadata for type compatibility
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata(**extensions_dict)
         metadata = FlextLdifModelsDomains.QuirkMetadata(
-            quirk_type=quirk_type,
+            quirk_type=config.quirk_type,
             server_specific_data=server_data,
             extensions=dynamic_extensions,
         )

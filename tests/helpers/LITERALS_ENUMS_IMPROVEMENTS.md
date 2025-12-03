@@ -4,10 +4,10 @@
 
 ### ✅ tests/helpers/constants.py
 
-#### Melhorias Aplicadas:
-1. **TypeAlias Adicionado**: 
+#### Melhorias Aplicadas
+
+1. **TypeAlias Adicionado**:
    - Import de `TypeAlias` adicionado para melhor type checking
-   
 2. **TestLiterals Class Criada**:
    - Classe para centralizar type aliases de Literals de produção
    - Reutiliza `FlextLdifConstants.LiteralTypes.*` sem duplicar
@@ -22,13 +22,15 @@
    - Adicionado type alias `ValidationLevelLiteral` correto
 
 **Princípios Seguidos**:
+
 - ✅ Não duplica constantes de produção
 - ✅ Reutiliza tipos de produção via type aliases
 - ✅ Mantém apenas constantes específicas de teste
 
 ### ✅ tests/helpers/test_rfc_helpers.py
 
-#### Melhorias Aplicadas:
+#### Melhorias Aplicadas
+
 1. **Parâmetros `server_type` Atualizados**:
    - De `str | None` → `FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None`
    - Mantém compatibilidade retroativa com `str`
@@ -43,6 +45,7 @@
    - Import de `FlextLdifTestConstants` para usar os Literals
 
 **Benefícios**:
+
 - Type safety melhorado em testes
 - Consistência com padrões de produção
 - Autocomplete melhorado no IDE
@@ -71,4 +74,3 @@
 - O arquivo de constants de teste segue o padrão de não duplicar constantes de produção
 - Todos os Literals reutilizam tipos de produção via type aliases
 - Compatibilidade retroativa mantida para não quebrar testes existentes
-

@@ -206,7 +206,7 @@ def cleanup_state() -> None:
     Ensures test isolation even when fixtures have shared state.
     """
     # Post-test cleanup - ensures each test has clean state
-    yield
+    return
 
 
 @pytest.fixture(scope="session")

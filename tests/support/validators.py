@@ -36,7 +36,7 @@ ResultHelpers = MockResultHelpers
 Matchers = MockMatchers
 
 # Now import other modules
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextResult, u
 
 from flext_ldif.models import FlextLdifModels
 from tests.fixtures.typing import GenericFieldsDict
@@ -49,8 +49,8 @@ class TestValidators:
     Only LDIF-specific validation methods are implemented here.
     """
 
-    # Expose FlextUtilities.Validation for pattern validation
-    Validation = FlextUtilities.Validation
+    # Expose uor pattern validation
+    Validation = u
 
     @staticmethod
     def validate_ldif_entry(entry: FlextLdifModels.Entry) -> dict[str, bool]:

@@ -109,6 +109,7 @@ class FilterTestHelpers:
             if expected_in_removed and filtered.metadata:
                 for attr in attributes_to_filter:
                     if entry.has_attribute(attr):
+                        # DynamicMetadata uses .keys() for membership check
                         assert attr in filtered.metadata.removed_attributes
             return filtered
         TestAssertions.assert_failure(result)

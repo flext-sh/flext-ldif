@@ -11,12 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
 import structlog
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextResult, FlextRuntime, u
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -103,71 +105,79 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def write(
+        def get_dn_string(entry: FlextLdifModels.Entry) -> str:
+            """Extract DN string from entry."""
+            if entry.dn is None:
+                return ""
+            if hasattr(entry.dn, "value"):
+                return entry.dn.value or (str(entry.dn) if entry.dn else "")
+            return str(entry.dn) if entry.dn else ""
+
+        @staticmethod
+        def write_entry_parts(
             entry: FlextLdifModels.Entry,
-            server_type: str,
-            write_attributes_hook: WriteAttributesHook,
+            config: FlextLdifModelsConfig.EntryWriteConfig,
+            lines: list[str],
+        ) -> None:
+            """Write entry parts (comments, DN, attributes)."""
+            # Write comments if hook provided and enabled
+            if config.include_comments and config.write_comments_hook:
+                config.write_comments_hook(entry, lines)
+
+            # Write DN
+            dn_str = FlextLdifUtilitiesWriters.Entry.get_dn_string(entry)
+            if config.write_dn_hook:
+                config.write_dn_hook(dn_str, lines)
+            else:
+                lines.append(f"dn: {dn_str}")
+
+            # Write attributes using hook
+            config.write_attributes_hook(entry, lines)
+
+        @staticmethod
+        def write(
             *,
-            write_comments_hook: WriteCommentsHook | None = None,
-            transform_entry_hook: TransformEntryHook | None = None,
-            write_dn_hook: WriteDnHook | None = None,
-            include_comments: bool = True,
+            config: FlextLdifModelsConfig.EntryWriteConfig | None = None,
+            **kwargs: object,
         ) -> FlextResult[str]:
             """Write entry to LDIF string using hooks.
 
             Args:
-                entry: Entry model to write
-                server_type: Server type identifier
-                write_attributes_hook: Core attributes writing
-                write_comments_hook: Optional comments writing
-                transform_entry_hook: Optional entry transformation
-                write_dn_hook: Optional DN writing
-                include_comments: Include metadata comments
+                config: EntryWriteConfig with all writing parameters (preferred)
+                **kwargs: Optional parameters for EntryWriteConfig (entry, server_type,
+                    write_attributes_hook, write_comments_hook, transform_entry_hook,
+                    write_dn_hook, include_comments) - used only if config is None
 
             Returns:
                 FlextResult with LDIF string
 
             """
+            # Use provided config or build from kwargs
+            if config is None:
+                config = FlextLdifModelsConfig.EntryWriteConfig(**kwargs)  # type: ignore[arg-type]
+
             try:
                 lines: list[str] = []
+                entry = config.entry
 
                 # Transform entry if hook provided
-                if transform_entry_hook:
-                    entry = transform_entry_hook(entry)
+                if config.transform_entry_hook:
+                    entry = config.transform_entry_hook(entry)
 
-                # Write comments if hook provided and enabled
-                if include_comments and write_comments_hook:
-                    write_comments_hook(entry, lines)
-
-                # Write DN
-                if entry.dn is None:
-                    dn_str = ""
-                elif hasattr(entry.dn, "value"):
-                    dn_str = entry.dn.value or (str(entry.dn) if entry.dn else "")
-                else:
-                    dn_str = str(entry.dn) if entry.dn else ""
-                if write_dn_hook:
-                    write_dn_hook(dn_str, lines)
-                else:
-                    lines.append(f"dn: {dn_str}")
-
-                # Write attributes using hook
-                write_attributes_hook(entry, lines)
+                # Write entry parts
+                FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
 
                 # Join lines and return
                 ldif_str = "\n".join(lines) + "\n"
                 return FlextResult[str].ok(ldif_str)
 
             except Exception as e:
-                if entry.dn is None:
-                    dn_error: str | None = None
-                elif hasattr(entry.dn, "value") and entry.dn.value:
-                    dn_error = entry.dn.value[:50]
-                else:
-                    dn_error = str(entry.dn)[:50] if entry.dn else None
+                entry_for_error = config.entry
+                dn_error_raw = FlextLdifUtilitiesWriters.Entry.get_dn_string(entry_for_error)
+                dn_error: str | None = dn_error_raw[:50] if dn_error_raw else None
                 logger.exception(
                     "Failed to write entry",
-                    server_type=server_type,
+                    server_type=config.server_type,
                     dn=dn_error,
                 )
                 return FlextResult[str].fail(f"Failed to write entry: {e}")
@@ -310,7 +320,7 @@ class FlextLdifUtilitiesWriters:
                     # Convert sup to list[str] if it's a string
                     sup_value = objectclass.sup
                     if FlextRuntime.is_list_like(sup_value):
-                        sup_list: list[str] = [str(item) for item in sup_value]
+                        sup_list = [str(item) for item in sup_value]
                     elif isinstance(sup_value, str):
                         sup_list = [sup_value]
                     else:
@@ -360,66 +370,133 @@ class FlextLdifUtilitiesWriters:
         # ===== STATIC METHODS =====
 
         @staticmethod
-        def write(
+        def get_entry_dn_for_error(entry: FlextLdifModels.Entry) -> str | None:
+            """Get DN string for error logging."""
+            if entry.dn is None:
+                return None
+            if hasattr(entry.dn, "value") and entry.dn.value:
+                return entry.dn.value[:50]
+            return str(entry.dn)[:50] if entry.dn else None
+
+        @staticmethod
+        def write_single_entry_with_stats(
+            entry: FlextLdifModels.Entry,
+            write_entry_hook: Callable[[FlextLdifModels.Entry], FlextResult[str]],
+            stats: Stats,
+        ) -> str | None:
+            """Write single entry with stats tracking."""
+            result = write_entry_hook(entry)
+            if result.is_success:
+                stats.successful += 1
+                return result.unwrap()
+            stats.failed += 1
+            dn_str = FlextLdifUtilitiesWriters.Content.get_entry_dn_for_error(entry)
+            logger.error(
+                "Failed to write entry",
+                dn=dn_str,
+                error=str(result.error),
+            )
+            return None
+
+        @staticmethod
+        def write_entries_fallback(
             entries: list[FlextLdifModels.Entry],
-            server_type: str,
-            write_entry_hook: WriteEntryHook,
+            write_entry_hook: Callable[[FlextLdifModels.Entry], FlextResult[str]],
+            stats: Stats,
+        ) -> list[str]:
+            """Fallback manual processing if batch fails."""
+            def process_entry(entry: FlextLdifModels.Entry) -> str | None:
+                """Process single entry."""
+                return FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
+                    entry,
+                    write_entry_hook,
+                    stats,
+                )
+            processed_result = u.process(
+                entries,
+                processor=process_entry,
+                on_error="skip",
+            )
+            if processed_result.is_success and isinstance(processed_result.value, list):
+                filtered_result = u.filter(
+                    processed_result.value,
+                    predicate=lambda item: item is not None and isinstance(item, str),
+                )
+                return filtered_result if isinstance(filtered_result, list) else []
+            return []
+
+        @staticmethod
+        def write(
             *,
-            write_header_hook: WriteHeaderHook | None = None,
-            include_header: bool = True,
-            entry_separator: str = "\n",
+            config: FlextLdifModelsConfig.BatchWriteConfig | None = None,
+            **kwargs: object,
         ) -> FlextResult[str]:
             """Write multiple entries to LDIF string.
 
             Args:
-                entries: List of entries to write
-                server_type: Server type identifier
-                write_entry_hook: Entry writing logic
-                write_header_hook: Optional header writing
-                include_header: Include LDIF header
-                entry_separator: Separator between entries
+                config: BatchWriteConfig with all writing parameters (preferred)
+                **kwargs: Optional parameters for BatchWriteConfig (entries, server_type,
+                    write_entry_hook, write_header_hook, include_header, entry_separator) -
+                    used only if config is None
 
             Returns:
                 FlextResult with complete LDIF string
 
             """
+            # Use provided config or build from kwargs
+            if config is None:
+                config = FlextLdifModelsConfig.BatchWriteConfig(**kwargs)  # type: ignore[arg-type]
+
             try:
                 parts: list[str] = []
 
                 # Write header if enabled
-                if include_header and write_header_hook:
-                    header = write_header_hook()
+                if config.include_header and config.write_header_hook:
+                    header = config.write_header_hook()
                     if header:
                         parts.append(header)
 
-                # Write each entry
+                # Write each entry using u.batch
                 stats = FlextLdifUtilitiesWriters.Content.Stats(
-                    total_entries=len(entries),
+                    total_entries=len(config.entries),
                 )
 
-                for entry in entries:
-                    result = write_entry_hook(entry)
-                    if result.is_success:
-                        parts.append(result.unwrap())
-                        stats.successful += 1
-                    else:
-                        stats.failed += 1
-                        if entry.dn is None:
-                            dn_str: str | None = None
-                        elif hasattr(entry.dn, "value") and entry.dn.value:
-                            dn_str = entry.dn.value[:50]
-                        else:
-                            dn_str = str(entry.dn)[:50] if entry.dn else None
-                        logger.error(
-                            "Failed to write entry",
-                            dn=dn_str,
-                            error=str(result.error),
+                def write_single_entry(entry: FlextLdifModels.Entry) -> str | None:
+                    """Write single entry, return None on error."""
+                    return FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
+                        entry,
+                        config.write_entry_hook,
+                        stats,
+                    )
+
+                batch_result = u.batch(
+                    list(config.entries),
+                    operation=write_single_entry,
+                    on_error="collect",
+                    post_validate=lambda r: r is not None,
+                )
+                if batch_result.is_success:
+                    batch_data = batch_result.value
+                    filtered_results = u.filter(
+                        batch_data["results"],
+                        predicate=lambda r: isinstance(r, str),
+                    )
+                    if isinstance(filtered_results, list):
+                        parts.extend(filtered_results)
+                else:
+                    # Fallback to manual processing if batch fails
+                    parts.extend(
+                        FlextLdifUtilitiesWriters.Content.write_entries_fallback(
+                            config.entries,
+                            config.write_entry_hook,
+                            stats,
                         )
+                    )
 
                 # Join with separator
-                content = entry_separator.join(parts)
+                content = config.entry_separator.join(parts)
                 return FlextResult[str].ok(content)
 
             except Exception as e:
-                logger.exception("Failed to write content", server_type=server_type)
+                logger.exception("Failed to write content", server_type=config.server_type)
                 return FlextResult[str].fail(f"Failed to write content: {e}")
