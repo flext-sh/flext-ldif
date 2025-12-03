@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Generator, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol, TypeVar
+from typing import TYPE_CHECKING, Protocol, TypeVar, cast
 
 import structlog
 from flext_core import r
@@ -155,6 +155,11 @@ class FlextLdifUtilitiesParsers:
             """
             # Use provided config or build from kwargs
             if config is None:
+                # Ensure FlextLdifModels is available and model is rebuilt
+                # Import here to avoid circular imports
+                from flext_ldif.models import FlextLdifModels  # noqa: PLC0415
+                # Ensure model is rebuilt after FlextLdifModels is available
+                FlextLdifModelsConfig.LdifContentParseConfig.model_rebuild()
                 config = FlextLdifModelsConfig.LdifContentParseConfig(**kwargs)  # type: ignore[arg-type]
 
             # Early return for empty content
@@ -331,33 +336,42 @@ class FlextLdifUtilitiesParsers:
                 )
 
                 # Parse entry using hook
-                match config.parse_entry_hook(current_dn, current_attrs):
-                    case FlextResult(is_success=True) as result:
-                        entry = result.unwrap()
-
-                        # Apply post-parse hook if provided
-                        if config.post_parse_hook:
-                            entry = config.post_parse_hook(entry)
-
-                        # Preserve metadata
-                        FlextLdifUtilitiesParsers.Content.preserve_entry_metadata(
-                            entry,
-                            original_ldif,
-                            config,
-                            stats,
-                        )
-
-                        stats.successful += 1
-                        yield entry
-
-                    case FlextResult(is_failure=True) as result:
+                parse_result = config.parse_entry_hook(current_dn, current_attrs)
+                if parse_result.is_success:
+                    # Use u.val() for unified result value extraction (DSL pattern)
+                    entry = u.val(parse_result)
+                    if entry is None:
                         stats.failed += 1
                         logger.error(
                             "Failed to parse entry",
                             entry_dn=current_dn[:50] if current_dn else None,
                             entry_index=idx + 1,
-                            error=str(result.error),
+                            error=u.err(parse_result),
                         )
+                        continue
+
+                    # Apply post-parse hook if provided
+                    if config.post_parse_hook:
+                        entry = config.post_parse_hook(entry)
+
+                    # Preserve metadata
+                    FlextLdifUtilitiesParsers.Content.preserve_entry_metadata(
+                        entry,
+                        original_ldif,
+                        config,
+                        stats,
+                    )
+
+                    stats.successful += 1
+                    yield entry
+                else:
+                    stats.failed += 1
+                    logger.error(
+                        "Failed to parse entry",
+                        entry_dn=current_dn[:50] if current_dn else None,
+                        entry_index=idx + 1,
+                        error=u.err(parse_result),
+                    )
 
     # =========================================================================
     # ATTRIBUTE PARSER - Parse attribute type definitions
@@ -418,9 +432,20 @@ class FlextLdifUtilitiesParsers:
                 # Parse using core hook
                 result = parse_core_hook(definition)
                 if result.is_failure:
-                    return result
+                    return cast("r[FlextLdifModelsDomains.SchemaAttribute]", result)
 
-                attribute = result.unwrap()
+                # Use u.val() for unified result value extraction (DSL pattern)
+                attribute_raw = u.val(result)
+                if attribute_raw is None:
+                    return r[FlextLdifModelsDomains.SchemaAttribute].fail(
+                        u.err(cast("r[object]", result), default="Failed to parse attribute")
+                    )
+                # Type narrowing: result.value is SchemaAttribute when is_success=True
+                if not isinstance(attribute_raw, FlextLdifModelsDomains.SchemaAttribute):
+                    return r[FlextLdifModelsDomains.SchemaAttribute].fail(
+                        f"Expected SchemaAttribute, got {type(attribute_raw).__name__}"
+                    )
+                attribute: FlextLdifModelsDomains.SchemaAttribute = attribute_raw
 
                 # Validate syntax if hook provided
                 if validate_syntax_hook and attribute.syntax:
@@ -510,15 +535,29 @@ class FlextLdifUtilitiesParsers:
             """
             # Use provided config or build from kwargs
             if config is None:
+                # Ensure FlextLdifModels is available and model is rebuilt
+                from flext_ldif.models import FlextLdifModels  # noqa: PLC0415
+                FlextLdifModelsConfig.ObjectClassParseConfig.model_rebuild()
                 config = FlextLdifModelsConfig.ObjectClassParseConfig(**kwargs)  # type: ignore[arg-type]
 
             try:
                 # Parse using core hook
                 result = config.parse_core_hook(config.definition)
                 if result.is_failure:
-                    return result
+                    return cast("r[FlextLdifModelsDomains.SchemaObjectClass]", result)
 
-                objectclass = result.unwrap()
+                # Use u.val() for unified result value extraction (DSL pattern)
+                objectclass_raw = u.val(result)
+                if objectclass_raw is None:
+                    return r[FlextLdifModelsDomains.SchemaObjectClass].fail(
+                        u.err(cast("r[object]", result), default="Failed to parse objectClass")
+                    )
+                # Type narrowing: result.value is SchemaObjectClass when is_success=True
+                if not isinstance(objectclass_raw, FlextLdifModelsDomains.SchemaObjectClass):
+                    return r[FlextLdifModelsDomains.SchemaObjectClass].fail(
+                        f"Expected SchemaObjectClass, got {type(objectclass_raw).__name__}"
+                    )
+                objectclass: FlextLdifModelsDomains.SchemaObjectClass = objectclass_raw
 
                 # Validate structural if hook provided
                 if config.validate_structural_hook:
@@ -620,6 +659,9 @@ class FlextLdifUtilitiesParsers:
             """
             # Use provided config or build from kwargs
             if config is None:
+                # Ensure FlextLdifModels is available and model is rebuilt
+                from flext_ldif.models import FlextLdifModels  # noqa: PLC0415
+                FlextLdifModelsConfig.EntryParseConfig.model_rebuild()
                 config = FlextLdifModelsConfig.EntryParseConfig(**kwargs)  # type: ignore[arg-type]
 
             try:
@@ -640,9 +682,20 @@ class FlextLdifUtilitiesParsers:
                 # Create entry using hook
                 result = config.create_entry_hook(dn, attrs)
                 if result.is_failure:
-                    return result
+                    return cast("r[FlextLdifModels.Entry]", result)
 
-                entry = result.unwrap()
+                # Use u.val() for unified result value extraction (DSL pattern)
+                entry_raw = u.val(result)
+                if entry_raw is None:
+                    return r[FlextLdifModels.Entry].fail(
+                        u.err(cast("r[object]", result), default="Failed to create entry")
+                    )
+                # Type narrowing: result.value is Entry when is_success=True
+                if not isinstance(entry_raw, FlextLdifModels.Entry):
+                    return r[FlextLdifModels.Entry].fail(
+                        f"Expected Entry, got {type(entry_raw).__name__}"
+                    )
+                entry: FlextLdifModels.Entry = entry_raw
 
                 # Build metadata if hook provided
                 if config.build_metadata_hook:

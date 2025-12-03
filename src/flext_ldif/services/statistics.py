@@ -115,28 +115,45 @@ class FlextLdifStatistics(
                 rejection info, and metadata
 
         """
-        total_entries = u.sum(u.map(categorized.values(), mapper=lambda entries: u.count(entries)))
+        # Use u.count directly via u.map for unified counting (DSL pattern)
+        def count_entries(entries: object) -> int:
+            """Count entries in list."""
+            entries_list = cast("list[object]", entries) if isinstance(entries, list) else []
+            return u.count(entries_list)
 
-        # Build categorized counts as _DynamicCounts model
-        # Create model with values using model_validate for frozen models
-        categorized_counts_dict = u.map_dict(
-            categorized,
-            mapper=lambda category, entries: (category, u.count(entries)),
-        )
+        categorized_values_list = list(categorized.values())
+        total_entries = u.sum(u.map(categorized_values_list, mapper=count_entries))
+
+        # Build categorized counts as _DynamicCounts model using DSL pattern
+        # Use dict comprehension with u.count for clarity
+        categorized_counts_dict = {
+            category: u.count(cast("list[object]", entries))
+            for category, entries in categorized.items()
+        }
         categorized_counts_model = _DynamicCounts.model_validate(
             categorized_counts_dict
         )
 
-        rejected_entries_raw = u.take(
-            categorized,
-            FlextLdifConstants.Categories.REJECTED,
-            default=[],
+        rejected_entries_raw: list[FlextLdifModels.Entry] = cast(
+            "list[FlextLdifModels.Entry]",
+            u.take(
+                categorized,
+                FlextLdifConstants.Categories.REJECTED,
+                default=[],
+            ),
         )
         # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
-        rejected_entries = u.filter(
+        # Use named function instead of lambda (DSL pattern)
+
+        def is_entry(entry: object) -> bool:
+            """Check if entry is Entry model."""
+            return isinstance(entry, FlextLdifModels.Entry)
+
+        rejected_entries_list = u.filter(
             rejected_entries_raw,
-            predicate=lambda entry: u.is_type(entry, FlextLdifModels.Entry),
+            predicate=is_entry,
         )
+        rejected_entries = cast("list[FlextLdifModels.Entry]", rejected_entries_list)
         rejection_count = u.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
@@ -150,7 +167,7 @@ class FlextLdifStatistics(
         output_files_model = _CategoryPaths()
         for category in written_counts:
             path_str = str(
-                output_dir / u.take(output_files, category, default=f"{category}.ldif")
+                output_dir / cast("str", u.take(output_files, category, default=f"{category}.ldif"))
             )
             setattr(output_files_model, category, path_str)
 
@@ -190,7 +207,7 @@ class FlextLdifStatistics(
             if entry.metadata:
                 extensions = entry.metadata.extensions
                 st_value = u.take(extensions, "server_type") if extensions else None
-                if u.is_type(st_value, str):
+                if isinstance(st_value, str):
                     server_type_distribution[st_value] += 1
 
         _ = u.batch(
@@ -201,12 +218,12 @@ class FlextLdifStatistics(
 
         # Build object_class_distribution as _DynamicCounts model
         obj_class_model = _DynamicCounts()
-        for class_name, count in u.pairs(object_class_distribution):
+        for class_name, count in object_class_distribution.items():
             obj_class_model.set_count(class_name, count)
 
         # Build server_type_distribution as _DynamicCounts model
         server_type_model = _DynamicCounts()
-        for server_type, count in u.pairs(server_type_distribution):
+        for server_type, count in server_type_distribution.items():
             server_type_model.set_count(server_type, count)
 
         # Debug: Check what we have before creating EntriesStatistics

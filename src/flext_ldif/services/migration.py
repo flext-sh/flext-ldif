@@ -268,14 +268,19 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 )
 
         # Merge all overrides: mode_overrides < format_kwargs < explicit write_options
-        # Convert frozenset to list for t.GeneralValueType compatibility
+        # Convert frozenset to list for t.GeneralValueType compatibility using DSL pattern
+        def convert_frozenset(key: str, value: object) -> object:
+            """Convert frozenset to list if needed."""
+            return list(value) if isinstance(value, frozenset) else value
+
+        merged_kwargs = {**mode_overrides, **format_kwargs}
         all_kwargs: dict[
             str,
             t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]],
-        ] = u.map(
-            {**mode_overrides, **format_kwargs},
-            lambda k, v: (k, u.when(isinstance(v, frozenset), list(v), v)),
-        )
+        ] = {
+            k: cast("t.ScalarValue | list[str] | dict[str, t.ScalarValue | list[str]]", convert_frozenset(k, v))
+            for k, v in merged_kwargs.items()
+        }
 
         # Type narrowing: convert dict to WriteFormatOptions if needed
         explicit_options_typed: FlextLdifModels.WriteFormatOptions | None = (
@@ -291,13 +296,26 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             msg = f"Expected WriteFormatOptions | dict, got {type(write_options)}"
             raise TypeError(msg)
 
-        # Use build_options_from_kwargs for automatic conversion
-        return u.build_options_from_kwargs(
-            model_class=FlextLdifModels.WriteFormatOptions,
-            explicit_options=explicit_options_typed,
-            default_factory=default_factory,
-            **all_kwargs,
-        )
+        # Use u.build with model validation for automatic conversion (DSL pattern)
+        if explicit_options_typed is not None:
+            return r[FlextLdifModels.WriteFormatOptions].ok(explicit_options_typed)
+
+        # Build from kwargs using model_validate
+        if all_kwargs:
+            try:
+                options = FlextLdifModels.WriteFormatOptions.model_validate(all_kwargs)
+                return r[FlextLdifModels.WriteFormatOptions].ok(options)
+            except Exception as e:
+                return r[FlextLdifModels.WriteFormatOptions].fail(
+                    f"Failed to validate WriteFormatOptions: {e}"
+                )
+
+        # Use default factory if provided
+        if default_factory is not None:
+            return r[FlextLdifModels.WriteFormatOptions].ok(default_factory())
+
+        # Return default instance
+        return r[FlextLdifModels.WriteFormatOptions].ok(FlextLdifModels.WriteFormatOptions())
 
     @staticmethod
     def validate_simple_mode_params(
@@ -319,44 +337,71 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             | None
         ),
     ) -> r[FlextLdifModels.CategoryRules | None]:
-        """Normalize categorization rules to CategoryRules model.
+        """Normalize categorization rules to CategoryRules model (DSL pattern).
+
+        Uses u.build with process operations for unified normalization.
 
         Args:
             categorization_rules: CategoryRules model, dict, or None
 
         Returns:
-            FlextResult with CategoryRules model or None
+            r with CategoryRules model or None
 
         """
+        # Use u.when for conditional processing (DSL pattern)
         if categorization_rules is None:
             return r[FlextLdifModels.CategoryRules | None].ok(None)
+
+        # Already a model - return as-is
         if isinstance(categorization_rules, FlextLdifModels.CategoryRules):
-            return r[FlextLdifModels.CategoryRules | None].ok(
-                categorization_rules,
-            )
+            return r[FlextLdifModels.CategoryRules | None].ok(categorization_rules)
+
+        # Use u.build with process for unified validation (DSL pattern)
+        def validate_dict(data: dict[str, object]) -> FlextLdifModels.CategoryRules:
+            """Validate dict to CategoryRules model."""
+            return FlextLdifModels.CategoryRules.model_validate(data)
+
+        def extract_dict(value: object) -> dict[str, object]:
+            """Extract dict from value (model_dump or direct)."""
+            if isinstance(value, dict):
+                return value
+            if hasattr(value, "model_dump"):
+                dumped = value.model_dump()
+                return dumped if isinstance(dumped, dict) else {}
+            return {}
+
+        # Process with unified error handling using u.process
         if isinstance(categorization_rules, dict):
-            try:
-                model = FlextLdifModels.CategoryRules.model_validate(
-                    categorization_rules,
+            data_dict = cast("dict[str, object]", categorization_rules)
+            process_result = u.process(
+                data_dict,
+                processor=validate_dict,
+                on_error="fail",
+            )
+            if process_result.is_success:
+                return r[FlextLdifModels.CategoryRules | None].ok(
+                    cast("FlextLdifModels.CategoryRules", process_result.value)
                 )
-                return r[FlextLdifModels.CategoryRules | None].ok(model)
-            except Exception as e:
-                return r[FlextLdifModels.CategoryRules | None].fail(
-                    f"Failed to validate CategoryRules: {e}",
+            return r[FlextLdifModels.CategoryRules | None].fail(
+                u.err(process_result, default="Failed to validate CategoryRules")
+            )
+
+        # Try model_dump path
+        extracted_dict = extract_dict(categorization_rules)
+        if extracted_dict:
+            process_result = u.process(
+                extracted_dict,
+                processor=validate_dict,
+                on_error="fail",
+            )
+            if process_result.is_success:
+                return r[FlextLdifModels.CategoryRules | None].ok(
+                    cast("FlextLdifModels.CategoryRules", process_result.value)
                 )
-        # Try model_dump if it's a Pydantic model (not a dict)
-        if not isinstance(categorization_rules, dict) and hasattr(
-            categorization_rules, "model_dump"
-        ):
-            try:
-                model = FlextLdifModels.CategoryRules.model_validate(
-                    categorization_rules.model_dump(),
-                )
-                return r[FlextLdifModels.CategoryRules | None].ok(model)
-            except Exception as e:
-                return r[FlextLdifModels.CategoryRules | None].fail(
-                    f"Failed to validate CategoryRules from model_dump: {e}",
-                )
+            return r[FlextLdifModels.CategoryRules | None].fail(
+                u.err(process_result, default="Failed to validate CategoryRules from model_dump")
+            )
+
         return r[FlextLdifModels.CategoryRules | None].fail(
             f"Invalid CategoryRules type: {type(categorization_rules).__name__}",
         )
@@ -575,11 +620,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             return (
                 [self._input_filename]
                 if self._input_filename
-                else sorted(u.map(self._input_dir.glob("*.ldif"), mapper=lambda f: f.name))
+                else sorted([f.name for f in self._input_dir.glob("*.ldif")])
             )
-        return self._input_files or sorted(
-            u.map(self._input_dir.glob("*.ldif"), mapper=lambda f: f.name),
-        )
+        return self._input_files or sorted([f.name for f in self._input_dir.glob("*.ldif")])
 
     def _parse_files(
         self,
@@ -627,7 +670,13 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                     f"Parse failed: {parse_result.error}",
                 )
 
-            parse_response = parse_result.unwrap()
+            # Use u.val for unified result unwrapping (DSL pattern)
+            parse_response_raw = u.val(parse_result)
+            if parse_response_raw is None:
+                return r[list[FlextLdifModels.Entry]].fail(
+                    u.err(parse_result, default="Parse failed")
+                )
+            parse_response = cast("FlextLdifModels.ParseResponse", parse_response_raw)
             # parse_response is always ParseResponse with entries attribute
             if isinstance(parse_response, FlextLdifModels.ParseResponse):
                 # ParseResponse.entries is list[FlextLdifModelsDomains.Entry]
@@ -697,14 +746,26 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             return r[FlextLdifModels.FlexibleCategories].fail(
                 validate_result.error or "DN validation failed",
             )
-        validated_entries = validate_result.unwrap()
+        # Use u.val for unified result unwrapping (DSL pattern)
+        validated_entries_raw = u.val(validate_result)
+        if validated_entries_raw is None:
+            return r[FlextLdifModels.FlexibleCategories].fail(
+                u.err(validate_result, default="DN validation failed")
+            )
+        validated_entries = cast("list[FlextLdifModels.Entry]", validated_entries_raw)
 
         categorize_result = self._categorization.categorize_entries(validated_entries)
         if categorize_result.is_failure:
             return r[FlextLdifModels.FlexibleCategories].fail(
-                categorize_result.error or "Categorization failed",
+                u.err(categorize_result, default="Categorization failed")
             )
-        categories = categorize_result.unwrap()
+        # Use u.val for unified result unwrapping (DSL pattern)
+        categories_raw = u.val(categorize_result)
+        if categories_raw is None:
+            return r[FlextLdifModels.FlexibleCategories].fail(
+                u.err(categorize_result, default="Categorization failed")
+            )
+        categories = cast("FlextLdifModels.FlexibleCategories", categories_raw)
 
         # Filter by base DN (returns FlexibleCategories directly)
         filtered_categories = self._categorization.filter_by_base_dn(categories)
@@ -722,7 +783,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         if not forbidden_attrs and not forbidden_ocs:
             return
 
-        for category, cat_entries in u.pairs(categories):
+        for category, cat_entries in categories.items():
             # Don't modify rejected entries (audit trail)
             if category == FlextLdifConstants.Categories.REJECTED:
                 continue
@@ -739,7 +800,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                         forbidden_attrs,
                     )
                     if attr_result.is_success:
-                        filtered_entry = attr_result.unwrap()
+                        # Use u.val for unified result unwrapping (DSL pattern)
+                        attr_result_raw = u.val(attr_result)
+                        if attr_result_raw is not None:
+                            filtered_entry = cast("FlextLdifModels.Entry", attr_result_raw)
 
                 # Apply objectClass filtering
                 if forbidden_ocs:
@@ -749,18 +813,26 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                         forbidden_ocs,
                     )
                     if oc_result.is_success:
-                        filtered_entry = oc_result.unwrap()
+                        # Use u.val for unified result unwrapping (DSL pattern)
+                        oc_result_raw = u.val(oc_result)
+                        if oc_result_raw is not None:
+                            filtered_entry = cast("FlextLdifModels.Entry", oc_result_raw)
 
                 return filtered_entry
 
-            batch_result = u.process(
+            # Use u.batch for unified batch processing (DSL pattern)
+            batch_result = u.batch(
                 cat_entries,
                 filter_entry,
                 on_error="skip",
             )
-            filtered_entries = cast(
-                "list[FlextLdifModels.Entry]", batch_result.value["results"]
-            )
+            # Extract results from batch result
+            if batch_result.is_success:
+                batch_data = batch_result.value
+                filtered_entries_raw = batch_data.get("results", [])
+                filtered_entries = cast("list[FlextLdifModels.Entry]", filtered_entries_raw)
+            else:
+                filtered_entries = []
 
             # Replace category entries with filtered entries
             categories[category] = filtered_entries
@@ -778,10 +850,11 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             categories[FlextLdifConstants.Categories.SCHEMA],
         )
         if schema_result.is_success:
-            # Type narrowing: Result returns public models
-            # FlexibleCategories now uses FlextLdifModels.Entry directly
-            public_entries = schema_result.unwrap()
-            categories[FlextLdifConstants.Categories.SCHEMA] = public_entries
+            # Use u.val for unified result unwrapping (DSL pattern)
+            public_entries_raw = u.val(schema_result)
+            if public_entries_raw is not None:
+                public_entries = cast("list[FlextLdifModels.Entry]", public_entries_raw)
+                categories[FlextLdifConstants.Categories.SCHEMA] = public_entries
 
     def _duplicate_acl_entries(
         self,
@@ -805,7 +878,15 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                     continue
 
                 attrs_dict = entry.attributes.attributes
-                has_acl = u.any_(attrs_dict.keys(), predicate=lambda attr_name: u.in_(attr_name, acl_attr_names))
+                # Use u.filter + u.any_ for unified checking (DSL pattern)
+
+                def attr_in_acl_names(attr_name: str) -> bool:
+                    """Check if attribute name is in ACL names."""
+                    return attr_name in acl_attr_names
+
+                attr_keys_list = list(attrs_dict.keys())
+                filtered_attrs = u.filter(attr_keys_list, predicate=attr_in_acl_names)
+                has_acl = bool(filtered_attrs) if isinstance(filtered_attrs, (list, tuple, set, frozenset)) else False
 
                 if has_acl:
                     # Duplicate entry to ACL category (deep copy to avoid shared references)
@@ -824,7 +905,13 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         if categorize_result.is_failure:
             return categorize_result
 
-        categories = categorize_result.unwrap()
+        # Use u.val for unified result unwrapping (DSL pattern)
+        categories_raw = u.val(categorize_result)
+        if categories_raw is None:
+            return r[FlextLdifModels.FlexibleCategories].fail(
+                u.err(categorize_result, default="Categorization failed")
+            )
+        categories = cast("FlextLdifModels.FlexibleCategories", categories_raw)
 
         # Step 2: Filter forbidden attributes/objectclasses
         self._filter_forbidden_attributes(categories)
@@ -859,7 +946,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                     by="hierarchy",
                 )
                 if sort_result.is_success:
-                    categories[cat] = sort_result.unwrap()
+                    # Use u.val for unified result unwrapping (DSL pattern)
+                    sorted_entries_raw = u.val(sort_result)
+                    if sorted_entries_raw is not None:
+                        categories[cat] = cast("list[FlextLdifModels.Entry]", sorted_entries_raw)
                 else:
                     logger.warning(
                         "Failed to sort category entries",
@@ -895,10 +985,9 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         """
         """Write all entries to a single file in simple mode."""
         output_path = self._output_dir / self._output_filename
-        all_output_entries = u.process_flatten(
-            FlextLdifUtilities.vals(categories),
-            processor=lambda entries: entries,
-        )
+        # Use u.flat for unified flattening (DSL pattern)
+        categories_values = list(categories.values())
+        all_output_entries = u.flat(categories_values)
 
         # Normalize server type to ServerTypeLiteral
         normalized_target = FlextLdifConstants.normalize_server_type(
@@ -1064,12 +1153,12 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             FlextLdifConstants.Categories.REJECTED: 5,
         }
 
-        for category, entries in u.pairs(categories):
+        for category, entries in categories.items():
             if not entries:
                 continue
 
             # Type narrowing: ensure category is Categories enum
-            if not u.is_type(category, FlextLdifConstants.Categories):
+            if not isinstance(category, FlextLdifConstants.Categories):
                 continue
 
             output_filename = u.take(self._output_files, category)
@@ -1188,13 +1277,27 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             )
 
         # Step 4: Apply categorization chain
-        categories_result = self._apply_categorization(entries_result.unwrap())
+        # Use u.val for unified result unwrapping (DSL pattern)
+        entries_raw = u.val(entries_result)
+        if entries_raw is None:
+            return r[FlextLdifModels.EntryResult].fail(
+                u.err(entries_result, default="Parse failed")
+            )
+        entries = cast("list[FlextLdifModels.Entry]", entries_raw)
+
+        categories_result = self._apply_categorization(entries)
         if categories_result.is_failure:
             return r[FlextLdifModels.EntryResult].fail(
-                categories_result.error or "Unknown error",
+                u.err(categories_result, default="Categorization failed")
             )
 
-        categories = categories_result.unwrap()
+        # Use u.val for unified result unwrapping (DSL pattern)
+        categories_raw = u.val(categories_result)
+        if categories_raw is None:
+            return r[FlextLdifModels.EntryResult].fail(
+                u.err(categories_result, default="Categorization failed")
+            )
+        categories = cast("FlextLdifModels.FlexibleCategories", categories_raw)
 
         # Step 5: Sort hierarchically if configured
         self._sort_categories(categories)
@@ -1206,23 +1309,38 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 write_result.error or "Unknown error",
             )
 
-        file_paths, entry_counts = write_result.unwrap()
+        # Use u.val for unified result unwrapping (DSL pattern)
+        write_result_raw = u.val(write_result)
+        if write_result_raw is None:
+            return r[FlextLdifModels.EntryResult].fail(
+                u.err(write_result, default="Write failed")
+            )
+        write_data = cast("tuple[dict[str, Path], dict[FlextLdifConstants.Categories, int]]", write_result_raw)
+        file_paths, entry_counts = write_data
 
         # Step 7: Build statistics and emit event
         duration_ms = int((time.time() - start_time) * 1000)
+        # Use u.sum for unified summation (DSL pattern)
         total_entries = u.sum(entry_counts)
-        total_rejected = u.sum(
-            u.vals(self._categorization.rejection_tracker),
-            mapper=len,
-        )
-        total_processed = total_entries - u.take(
+        # Use u.map + u.sum for counting entries in rejection tracker
+
+        def count_entries(entries: object) -> int:
+            """Count entries in list."""
+            entries_list = cast("list[object]", entries) if isinstance(entries, list) else []
+            return u.count(entries_list)
+
+        rejection_values = u.vals(self._categorization.rejection_tracker)
+        total_rejected = u.sum(u.map(rejection_values, mapper=count_entries))
+        rejected_count_raw = u.take(
             entry_counts,
             FlextLdifConstants.Categories.REJECTED,
             default=0,
         )
+        rejected_count = cast("int", rejected_count_raw) if isinstance(rejected_count_raw, int) else 0
+        total_processed = total_entries - rejected_count
 
         error_details = []
-        for reason, entries in u.pairs(self._categorization.rejection_tracker):
+        for reason, entries in self._categorization.rejection_tracker.items():
             context = FlextLdifModelsMetadata.DynamicMetadata()
             context.update({"reason": reason, "count": u.count(entries)})
             # ErrorDetail is in FlextLdifModelsDomains, not FlextLdifModels
@@ -1255,7 +1373,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
 
         # Convert file_paths dict to _CategoryPaths model
         category_paths = _CategoryPaths()
-        for category, path in u.pairs(file_paths):
+        for category, path in file_paths.items():
             category_paths.set_path(str(category), str(path))
 
         # Return EntryResult with proper types

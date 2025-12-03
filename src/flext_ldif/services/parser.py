@@ -206,7 +206,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             on_error="skip",
         )
         if batch_result.is_success:
-            for entry_lines in batch_result.value.get("results", []):
+            # u.process returns r[list[R]] when input is list, so value is list[list[str]]
+            processed_entries = cast("list[list[str]]", batch_result.value)
+            for entry_lines in processed_entries:
                 if entry_lines:
                     ldif_lines.extend(cast("list[str]", entry_lines))
 

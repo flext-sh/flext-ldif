@@ -523,7 +523,10 @@ class FlextLdifFilters(
             if rules_result.is_failure:
                 return (True, rules_result.error)
 
-            rules_model = rules_result.unwrap()
+            # Use u.val() for unified result value extraction (DSL pattern)
+            rules_model = u.val(rules_result)
+            if rules_model is None:
+                return (True, u.err(rules_result))
 
             blocked_ocs = rules_model.blocked_objectclasses
             if not blocked_ocs:
@@ -1578,9 +1581,12 @@ class FlextLdifFilters(
     def build(self) -> FlextLdifModels.EntryResult:
         """Execute and return unwrapped result (fluent terminal)."""
         # execute() returns ServiceResponseTypes but we know it's always EntryResult for FlextLdifFilters
-        result = self.execute().unwrap()
+        # Use u.val() for unified result value extraction (DSL pattern)
+        result = u.val(self.execute())
+        if result is None:
+            return []
         # Type narrowing: result is EntryResult for FlextLdifFilters
-        if isinstance(result, FlextLdifModels.EntryResult):
+        if u.is_type(result, FlextLdifModels.EntryResult):
             return result
         msg = f"Expected EntryResult but got {type(result).__name__}"
         raise TypeError(msg)

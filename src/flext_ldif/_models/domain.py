@@ -24,6 +24,7 @@ from flext_core import (
 )
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.generators import FlextGenerators
 from pydantic import (
     ConfigDict,
     Field,
@@ -850,7 +851,7 @@ class FlextLdifModelsDomains:
             # Store metadata as typed dict
             self.attribute_metadata[attribute_name] = {
                 "status": "deleted",
-                "deleted_at": uenerate_iso_timestamp(),
+                "deleted_at": FlextGenerators.generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": list(self.attributes[attribute_name]),

@@ -291,19 +291,19 @@ class FlextLdifCategorization(
                 return None
 
             norm_result = FlextLdifUtilities.DN.norm(dn_str)
-            if not norm_result.is_success:
+            # Use u.val() for unified result value extraction (DSL pattern)
+            normalized_dn = u.val(norm_result)
+            if normalized_dn is None:
                 # Track rejection in metadata using FlextLdifUtilities
                 rejected_entry = FlextLdifUtilities.Metadata.update_entry_statistics(
                     entry,
                     mark_rejected=(
                         FlextLdifConstants.RejectionCategory.INVALID_DN,
-                        f"DN normalization failed: {norm_result.error or 'Unknown error'}",
+                        f"DN normalization failed: {u.err(norm_result)}",
                     ),
                 )
                 self._rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
                 return None
-
-            normalized_dn = norm_result.unwrap()
             return entry.model_copy(
                 update={"dn": FlextLdifModels.DistinguishedName(value=normalized_dn)},
             )
@@ -313,14 +313,16 @@ class FlextLdifCategorization(
             validate_entry,
             on_error="skip",
         )
-        validated = (
-            [
+        # Use u.val() with u.when() for unified result handling (DSL pattern)
+        batch_data = u.val(batch_result)
+        validated = u.when(
+            condition=batch_data is not None,
+            then_value=[
                 cast("FlextLdifModels.Entry", entry)
-                for entry in batch_result.value["results"]
+                for entry in batch_data["results"]  # type: ignore[index]
                 if entry is not None
-            ]
-            if batch_result.is_success
-            else []
+            ],
+            else_value=[],
         )
 
         logger.info(
@@ -761,9 +763,10 @@ class FlextLdifCategorization(
         """
         # Normalize rules using helper
         rules_result = self._normalize_rules(rules)
-        if rules_result.is_failure:
-            return (FlextLdifConstants.Categories.REJECTED.value, rules_result.error)
-        normalized_rules = rules_result.unwrap()
+        # Use u.val() for unified result value extraction (DSL pattern)
+        normalized_rules = u.val(rules_result)
+        if normalized_rules is None:
+            return (FlextLdifConstants.Categories.REJECTED.value, u.err(rules_result))
 
         # Normalize server_type
         effective_server_type_raw = server_type or self._server_type
@@ -788,7 +791,9 @@ class FlextLdifCategorization(
         constants: type | None = None
         constants_result = self._get_server_constants(effective_server_type)
         if constants_result.is_success:
-            constants = constants_result.unwrap()
+            constants_raw = u.val(constants_result)
+            if constants_raw is not None:
+                constants = cast("type", constants_raw)
         elif not merged_category_map:
             # No rules and no constants = fail
             return (
@@ -872,8 +877,10 @@ class FlextLdifCategorization(
             categorize_single_entry,
             on_error="skip",
         )
-        if batch_result.is_success:
-            for result_item in batch_result.value["results"]:
+        # Use u.val() for unified result value extraction (DSL pattern)
+        batch_data = u.val(batch_result)
+        if batch_data is not None:
+            for result_item in batch_data["results"]:  # type: ignore[index]
                 if result_item is not None:
                     category, entry_to_append = cast(
                         "tuple[str, FlextLdifModels.Entry]", result_item
@@ -1058,17 +1065,20 @@ class FlextLdifCategorization(
         )
 
         if result.is_success:
-            filtered = result.unwrap()
-            logger.info(
-                "Applied schema OID whitelist filter",
-                total_entries=u.count(schema_entries),
-                filtered_entries=u.count(filtered),
-                removed_entries=u.count(schema_entries) - u.count(filtered),
-            )
-            return r[list[FlextLdifModels.Entry]].ok(filtered)
+            filtered_raw = u.val(result)
+            if filtered_raw is not None:
+                filtered = cast("list[FlextLdifModels.Entry]", filtered_raw)
+                logger.info(
+                    "Applied schema OID whitelist filter",
+                    total_entries=u.count(schema_entries),
+                    filtered_entries=u.count(filtered),
+                    removed_entries=u.count(schema_entries) - u.count(filtered),
+                )
+                return r[list[FlextLdifModels.Entry]].ok(filtered)
 
         # Error handling: result.error might be None
-        error_msg = result.error or "Unknown filtering error"
+        # Use u.err() for unified error extraction (DSL pattern)
+        error_msg = u.err(result)
         return r[list[FlextLdifModels.Entry]].fail(error_msg)
 
     @staticmethod

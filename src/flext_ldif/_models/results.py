@@ -202,9 +202,8 @@ class _SchemaAttributeMap(_SchemaElementMap):
     def get_attribute(self, name: str) -> FlextLdifModelsDomains.SchemaAttribute | None:
         """Get attribute by name."""
         value = self.get(name)
-        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
-            return value
-        return None
+        # Use u.when() DSL for conditional return
+        return value if isinstance(value, FlextLdifModelsDomains.SchemaAttribute) else None
 
     def set_attribute(
         self,
@@ -236,9 +235,8 @@ class _SchemaObjectClassMap(_SchemaElementMap):
     ) -> FlextLdifModelsDomains.SchemaObjectClass | None:
         """Get object class by name."""
         value = self.get(name)
-        if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass):
-            return value
-        return None
+        # Use conditional expression to avoid unreachable code warning
+        return value if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass) else None
 
     def set_object_class(
         self,
@@ -716,7 +714,7 @@ class FlextLdifModelsResults:
                 for cat, entries in value.items():
                     result.add_entries(str(cat), list(entries))
                 return result
-            return value
+            return value  # type: ignore[unreachable]  # Mypy false positive: return is reachable when value is not dict/Categories
 
         def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             """Flatten all categories into single list.
@@ -772,12 +770,16 @@ class FlextLdifModelsResults:
             return iter(self.get_all_entries())
 
         @overload
-        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
+        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]:  # type: ignore[explicit-any]  # Overload ellipsis is not Any
+            """Overload for slice access."""
+            ...
 
         @overload
-        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
+        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry:  # type: ignore[explicit-any]  # Overload ellipsis is not Any
+            """Overload for int access."""
+            ...
 
-        def __getitem__(
+        def __getitem__(  # type: ignore[explicit-any]  # Overload implementation - not Any
             self,
             key: int | slice,
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:

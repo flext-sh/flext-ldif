@@ -19,7 +19,7 @@ from types import ModuleType
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
+from flext_core import r, u
 from flext_tests import FlextTestDocker
 from ldap3 import Connection
 
@@ -76,26 +76,32 @@ class MockFlextTestsMatchers:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[object], error_msg: str | None = None
+        result: r[object], error_msg: str | None = None
     ) -> object:
         """Assert success."""
         if result.is_success:
-            return result.unwrap()
-        raise AssertionError(error_msg or f"Expected success: {result.error}")
+            # Use u.val() for unified result value extraction (DSL pattern)
+            value = u.val(result)
+            if value is None:
+                raise AssertionError(error_msg or u.err(result, default="Expected success"))
+            return value
+        raise AssertionError(error_msg or u.err(result, default="Expected success"))
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[object], expected_error: str | None = None
+        result: r[object], expected_error: str | None = None
     ) -> str:
         """Assert failure."""
         if result.is_failure:
-            error_str = str(result.error) if result.error else str(result)
+            # Use u.err() for unified error extraction (DSL pattern)
+            error_str = u.err(result, default="Unknown error")
             if expected_error and expected_error not in error_str:
                 raise AssertionError(
                     f"Expected error containing '{expected_error}' but got: {error_str}"
                 )
             return error_str
-        raise AssertionError(f"Expected failure: {result.value}")
+        value = u.val(result)
+        raise AssertionError(f"Expected failure: {value}")
 
 
 class MockFlextTestsUtilities:
@@ -366,7 +372,7 @@ def integration_services() -> GenericFieldsDict:
 @pytest.fixture
 def assert_result_success(
     flext_matchers: TestAssertions,
-) -> Callable[[FlextResult[object]], None]:
+) -> Callable[[r[object]], None]:
     """Result success assertion."""
     return conftest_instance.assert_result_success(flext_matchers)
 
@@ -374,26 +380,26 @@ def assert_result_success(
 @pytest.fixture
 def assert_result_failure(
     flext_matchers: TestAssertions,
-) -> Callable[[FlextResult[object]], None]:
+) -> Callable[[r[object]], None]:
     """Result failure assertion."""
     return conftest_instance.assert_result_failure(flext_matchers)
 
 
 @pytest.fixture
-def validate_flext_result_success() -> Callable[[FlextResult[object]], dict[str, bool]]:
+def validate_flext_result_success() -> Callable[[r[object]], dict[str, bool]]:
     """Validate success result."""
     return conftest_instance.validate_flext_result_success()
 
 
 @pytest.fixture
-def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str, bool]]:
+def validate_flext_result_failure() -> Callable[[r[object]], dict[str, bool]]:
     """Validate failure result."""
     return conftest_instance.validate_flext_result_failure()
 
 
 @pytest.fixture
 def flext_result_composition_helper() -> Callable[
-    [list[FlextResult[object]]],
+    [list[r[object]]],
     GenericFieldsDict,
 ]:
     """Result composition helper."""
@@ -576,7 +582,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[object] | object, message: str | None = None
+        result: r[object] | object, message: str | None = None
     ) -> object:
         """Assert result is success and return unwrapped value.
 
@@ -588,8 +594,9 @@ class AssertionHelpers:
             DeprecationWarning,
             stacklevel=2,
         )
-        if isinstance(result, FlextResult) and result.is_success:
-            unwrapped = result.unwrap()
+        if isinstance(result, r) and result.is_success:
+            # Use u.val() for unified result value extraction (DSL pattern)
+            unwrapped = u.val(result)
             return unwrapped if unwrapped is not None else ""
         if hasattr(result, "is_success") and getattr(result, "is_success", False):
             if hasattr(result, "unwrap"):
@@ -601,15 +608,14 @@ class AssertionHelpers:
                 )
                 return unwrapped if unwrapped is not None else ""
             return getattr(result, "value", "")
-        msg = (
-            message
-            or f"Expected success but got failure: {getattr(result, 'error', result)}"
-        )
+        # Use u.err() for unified error extraction (DSL pattern)
+        error_msg = u.err(result, default=str(result)) if isinstance(result, r) else str(result)
+        msg = message or f"Expected success but got failure: {error_msg}"
         raise AssertionError(msg)
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[object] | object, expected_error: str | None = None
+        result: r[object] | object, expected_error: str | None = None
     ) -> str:
         """Assert result is failure.
 
@@ -621,8 +627,9 @@ class AssertionHelpers:
             DeprecationWarning,
             stacklevel=2,
         )
-        if isinstance(result, FlextResult) and result.is_failure:
-            error_str = str(result.error) if result.error else str(result)
+        if isinstance(result, r) and result.is_failure:
+            # Use u.err() for unified error extraction (DSL pattern)
+            error_str = u.err(result, default="Unknown error")
             if expected_error and expected_error not in error_str:
                 raise AssertionError(
                     f"Expected error containing '{expected_error}' but got: {error_str}"
@@ -652,10 +659,10 @@ class AssertionHelpers:
 @pytest.fixture
 def parse_ldif_content(
     ldif_api: FlextLdif,
-) -> Callable[[str | Path], FlextResult[object]]:
+) -> Callable[[str | Path], r[object]]:
     """Fixture for parsing LDIF content.
 
-    Returns a callable that parses LDIF content and returns FlextResult.
+    Returns a callable that parses LDIF content and returns r.
     Use this fixture to avoid duplicating parse logic in tests.
 
     Example:
@@ -665,10 +672,10 @@ def parse_ldif_content(
 
     """
 
-    def _parse(content: str | Path) -> FlextResult[object]:
+    def _parse(content: str | Path) -> r[object]:
         parse_result = ldif_api.parse(content)
-        # Cast to FlextResult[object] for type compatibility
-        return cast("FlextResult[object]", parse_result)
+        # Cast to r[object] for type compatibility
+        return cast("r[object]", parse_result)
 
     return _parse
 
@@ -676,10 +683,10 @@ def parse_ldif_content(
 @pytest.fixture
 def write_ldif_entries(
     ldif_api: FlextLdif,
-) -> Callable[[list[FlextLdifModels.Entry], Path], FlextResult[object]]:
+) -> Callable[[list[FlextLdifModels.Entry], Path], r[object]]:
     """Fixture for writing LDIF entries to file.
 
-    Returns a callable that writes entries to a file and returns FlextResult.
+    Returns a callable that writes entries to a file and returns r.
     Use this fixture to avoid duplicating write logic in tests.
 
     Example:
@@ -689,10 +696,10 @@ def write_ldif_entries(
 
     """
 
-    def _write(entries: list[FlextLdifModels.Entry], path: Path) -> FlextResult[object]:
+    def _write(entries: list[FlextLdifModels.Entry], path: Path) -> r[object]:
         write_result = ldif_api.write(entries, output_path=path)
-        # Cast to FlextResult[object] for type compatibility
-        return cast("FlextResult[object]", write_result)
+        # Cast to r[object] for type compatibility
+        return cast("r[object]", write_result)
 
     return _write
 

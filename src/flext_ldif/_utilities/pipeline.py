@@ -250,7 +250,7 @@ class Pipeline:
             """
             func_result = func(entry)
             if func_result is None:
-                return r.ok(None)
+                return r.ok(FILTERED)  # Use sentinel instead of None
             if isinstance(func_result, FlextResult):
                 # If result is Entry, wrap in Entry | None union
                 if func_result.is_success:

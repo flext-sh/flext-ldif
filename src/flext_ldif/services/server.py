@@ -7,7 +7,7 @@ from typing import cast
 
 from flext_core import (
     FlextLogger,
-    FlextResult,
+    r,
     u,
 )
 
@@ -167,7 +167,7 @@ class FlextLdifServer:
             )
             raise
 
-    def register(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
+    def register(self, quirk: FlextLdifServersBase) -> r[bool]:
         """Register a quirk after protocol validation.
 
         Business Rule: Manual registration validates quirk properties (server_type,
@@ -183,7 +183,7 @@ class FlextLdifServer:
             quirk: FlextLdifServersBase instance to register
 
         Returns:
-            FlextResult with True on success, error message on failure
+            r with True on success, error message on failure
 
         """
         try:
@@ -196,15 +196,16 @@ class FlextLdifServer:
                     raise TypeError(msg)
                 server_type: str = server_type_value
             except AttributeError as e:
-                return FlextResult[bool].fail(
+                return r[bool].fail(
                     f"Quirk missing Constants.SERVER_TYPE: {e}",
                 )
 
             # Validate that all nested quirks satisfy their protocols
             validation_result = self._validate_protocols(quirk)
             if validation_result.is_failure:
-                return FlextResult[bool].fail(
-                    f"Protocol validation failed: {validation_result.error}",
+                error_msg = u.err(validation_result) or "Protocol validation failed"
+                return r[bool].fail(
+                    f"Protocol validation failed: {error_msg}",
                 )
 
             # Register in dict by server_type
@@ -214,12 +215,12 @@ class FlextLdifServer:
                 quirk_name=quirk.__class__.__name__,
                 server_type=server_type,
             )
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[bool].fail(f"Failed to register quirk: {e}")
+            return r[bool].fail(f"Failed to register quirk: {e}")
 
-    def _validate_protocols(self, quirk: FlextLdifServersBase) -> FlextResult[bool]:
+    def _validate_protocols(self, quirk: FlextLdifServersBase) -> r[bool]:
         """Ensure a quirk exposes Schema, Acl, and Entry classes with valid protocols.
 
         Business Rule: Protocol validation checks that quirk exposes schema_quirk,
@@ -235,18 +236,18 @@ class FlextLdifServer:
             quirk: FlextLdifServersBase instance to validate
 
         Returns:
-            FlextResult with True on success, error message on failure
+            r with True on success, error message on failure
 
         """
         try:
             # Check that nested quirk classes exist (capitalized class names)
             quirk_class = type(quirk)
             if not hasattr(quirk_class, "Schema"):
-                return FlextResult[bool].fail("Missing Schema nested class")
+                return r[bool].fail("Missing Schema nested class")
             if not hasattr(quirk_class, "Acl"):
-                return FlextResult[bool].fail("Missing Acl nested class")
+                return r[bool].fail("Missing Acl nested class")
             if not hasattr(quirk_class, "Entry"):
-                return FlextResult[bool].fail("Missing Entry nested class")
+                return r[bool].fail("Missing Entry nested class")
 
             # Verify nested classes are properly defined
             schema_class = getattr(quirk_class, "Schema", None)
@@ -254,18 +255,18 @@ class FlextLdifServer:
             entry_class = getattr(quirk_class, "Entry", None)
 
             if schema_class is None or acl_class is None or entry_class is None:
-                return FlextResult[bool].fail("Nested quirk classes not found")
+                return r[bool].fail("Nested quirk classes not found")
 
             if (
                 not inspect.isclass(schema_class)
                 or not inspect.isclass(acl_class)
                 or not inspect.isclass(entry_class)
             ):
-                return FlextResult[bool].fail("Nested quirks are not classes")
+                return r[bool].fail("Nested quirks are not classes")
 
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return FlextResult[bool].fail(f"Protocol validation error: {e}")
+            return r[bool].fail(f"Protocol validation error: {e}")
 
     def _normalize_server_type(
         self,
@@ -282,7 +283,7 @@ class FlextLdifServer:
         self,
         server_type: str,
         attr_name: str,
-    ) -> FlextResult[
+    ) -> r[
         FlextLdifTypes.SchemaQuirkInstance
         | FlextLdifTypes.AclQuirkInstance
         | FlextLdifTypes.EntryQuirkInstance
@@ -297,18 +298,18 @@ class FlextLdifServer:
             normalized_type = self._normalize_server_type(server_type)
         except ValueError as e:
             # Invalid server type - return failure instead of raising
-            return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(str(e))
-        base: FlextLdifTypes.QuirkInstanceType | None = u.find(
+            return r[FlextLdifTypes.QuirkInstanceType | None].fail(str(e))
+        base: FlextLdifTypes.QuirkInstanceType | None = u.get(
             self._bases, normalized_type, default=None
         )
         if not base:
-            return FlextResult[FlextLdifTypes.QuirkInstanceType | None].fail(
+            return r[FlextLdifTypes.QuirkInstanceType | None].fail(
                 f"No base found for server type: {server_type}",
             )
         # Quirk attributes are named with _quirk suffix: schema_quirk, acl_quirk, entry_quirk
         quirk_attr_name = f"{attr_name}_quirk"
         quirk = getattr(base, quirk_attr_name, None)
-        return FlextResult[FlextLdifTypes.QuirkInstanceType | None].ok(quirk)
+        return r[FlextLdifTypes.QuirkInstanceType | None].ok(quirk)
 
     # =========================================================================
     # THIN INTERFACE - Server-agnostic quirk access (no duplication)
@@ -317,7 +318,7 @@ class FlextLdifServer:
     def quirk(
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
-    ) -> FlextResult[FlextLdifServersBase]:
+    ) -> r[FlextLdifServersBase]:
         """Get base quirk for a server type.
 
         Args:
@@ -325,37 +326,37 @@ class FlextLdifServer:
                 Accepts ServerTypeLiteral or str for backward compatibility
 
         Returns:
-            FlextResult with base quirk instance or error message
+            r with base quirk instance or error message
 
         """
         normalized = self._normalize_server_type(server_type)
         base: FlextLdifServersBase | None = u.get(self._bases, normalized, default=None)
         if base is None:
-            return FlextResult[FlextLdifServersBase].fail(
+            return r[FlextLdifServersBase].fail(
                 f"No base found for server type: {server_type}",
             )
-        return FlextResult[FlextLdifServersBase].ok(base)
+        return r[FlextLdifServersBase].ok(base)
 
-    def get_all_quirks(self, server_type: str) -> FlextResult[_QuirksDict]:
+    def get_all_quirks(self, server_type: str) -> r[_QuirksDict]:
         """Get all quirk types for a server.
 
         Args:
             server_type: Server type (e.g., 'oid', 'oud', 'openldap')
 
         Returns:
-            FlextResult with dict containing 'schema', 'acl', 'entry' keys with quirk instances or None
+            r with dict containing 'schema', 'acl', 'entry' keys with quirk instances or None
 
         """
         try:
             normalized_type = self._normalize_server_type(server_type)
         except ValueError as e:
             # Invalid server type - return failure
-            return FlextResult[_QuirksDict].fail(str(e))
+            return r[_QuirksDict].fail(str(e))
         base: FlextLdifServersBase | None = u.get(
             self._bases, normalized_type, default=None
         )
         if not base:
-            return FlextResult[_QuirksDict].fail(
+            return r[_QuirksDict].fail(
                 f"No base found for server type: {server_type}",
             )
         # Type narrowing: Protocols are compatible with concrete types via structural subtyping
@@ -366,7 +367,7 @@ class FlextLdifServer:
             "entry": base.entry_quirk,
         }
         quirks_dict: _QuirksDict = cast("_QuirksDict", quirks_dict_raw)
-        return FlextResult[_QuirksDict].ok(quirks_dict)
+        return r[_QuirksDict].ok(quirks_dict)
 
     def schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
         """Get schema quirk for a server type.
@@ -381,9 +382,10 @@ class FlextLdifServer:
         result = self._get_attr(server_type, "schema")
         if result.is_failure:
             return None
-        quirk = result.unwrap()
-        if quirk is None:
+        quirk_raw = u.val(result)
+        if quirk_raw is None:
             return None
+        quirk = cast("FlextLdifTypes.SchemaQuirkInstance", quirk_raw)
         if not isinstance(quirk, FlextLdifServersBase.Schema):
             msg = f"Expected FlextLdifServersBase.Schema, got {type(quirk)}"
             raise TypeError(msg)
@@ -402,9 +404,10 @@ class FlextLdifServer:
         result = self._get_attr(server_type, "acl")
         if result.is_failure:
             return None
-        quirk = result.unwrap()
-        if quirk is None:
+        quirk_raw = u.val(result)
+        if quirk_raw is None:
             return None
+        quirk = cast("FlextLdifTypes.AclQuirkInstance", quirk_raw)
         if not isinstance(quirk, FlextLdifServersBase.Acl):
             msg = f"Expected FlextLdifServersBase.Acl, got {type(quirk)}"
             raise TypeError(msg)
@@ -423,9 +426,10 @@ class FlextLdifServer:
         result = self._get_attr(server_type, "entry")
         if result.is_failure:
             return None
-        quirk = result.unwrap()
-        if quirk is None:
+        quirk_raw = u.val(result)
+        if quirk_raw is None:
             return None
+        quirk = cast("FlextLdifTypes.EntryQuirkInstance", quirk_raw)
         if not isinstance(quirk, FlextLdifServersBase.Entry):
             msg = f"Expected FlextLdifServersBase.Entry, got {type(quirk)}"
             raise TypeError(msg)
@@ -484,7 +488,7 @@ class FlextLdifServer:
     def get_constants(
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[type]:
+    ) -> r[type]:
         """Get Constants class from server quirk.
 
         Centralizes access to server-specific constants (CATEGORIZATION_PRIORITY,
@@ -494,39 +498,45 @@ class FlextLdifServer:
             server_type: Server type identifier (e.g., 'oid', 'oud', 'rfc')
 
         Returns:
-            FlextResult with Constants class or error message
+            r with Constants class or error message
 
         """
         server_quirk_result = self.quirk(server_type)
         if server_quirk_result.is_failure:
-            return FlextResult[type].fail(
-                f"Unknown server type: {server_type}: {server_quirk_result.error}",
+            error_msg = u.err(server_quirk_result) or "Unknown server type"
+            return r[type].fail(
+                f"Unknown server type: {server_type}: {error_msg}",
             )
 
-        server_quirk = server_quirk_result.unwrap()
+        server_quirk_raw = u.val(server_quirk_result)
+        if server_quirk_raw is None:
+            return r[type].fail(
+                f"Unknown server type: {server_type}",
+            )
+        server_quirk = cast("FlextLdifServersBase", server_quirk_raw)
         quirk_class = type(server_quirk)
         constants = getattr(quirk_class, "Constants", None)
         if constants is None:
-            return FlextResult[type].fail(
+            return r[type].fail(
                 f"Server type {server_type} missing Constants class",
             )
 
         # Validate required categorization constants
         if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
-            return FlextResult[type].fail(
+            return r[type].fail(
                 f"Server {server_type} missing CATEGORIZATION_PRIORITY",
             )
         if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
-            return FlextResult[type].fail(
+            return r[type].fail(
                 f"Server {server_type} missing CATEGORY_OBJECTCLASSES",
             )
 
-        return FlextResult[type].ok(constants)
+        return r[type].ok(constants)
 
     def get_detection_constants(
         self,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-    ) -> FlextResult[type]:
+    ) -> r[type]:
         """Get Constants class with detection attributes from server quirk.
 
         Used by FlextLdifDetector for server type auto-detection.
@@ -535,20 +545,26 @@ class FlextLdifServer:
             server_type: Server type identifier (e.g., 'oid', 'oud', 'openldap')
 
         Returns:
-            FlextResult with Constants class containing DETECTION_* attributes or error message
+            r with Constants class containing DETECTION_* attributes or error message
 
         """
         server_quirk_result = self.quirk(server_type)
         if server_quirk_result.is_failure:
-            return FlextResult[type].fail(
-                f"Failed to get server quirk for {server_type}: {server_quirk_result.error}",
+            error_msg = u.err(server_quirk_result) or "Failed to get server quirk"
+            return r[type].fail(
+                f"Failed to get server quirk for {server_type}: {error_msg}",
             )
 
-        server_quirk = server_quirk_result.unwrap()
+        server_quirk_raw = u.val(server_quirk_result)
+        if server_quirk_raw is None:
+            return r[type].fail(
+                f"Failed to get server quirk for {server_type}",
+            )
+        server_quirk = cast("FlextLdifServersBase", server_quirk_raw)
         quirk_class = type(server_quirk)
         constants = getattr(quirk_class, "Constants", None)
         if constants is None:
-            return FlextResult[type].fail(
+            return r[type].fail(
                 f"Server type {server_type} missing Constants class",
             )
 
@@ -559,11 +575,11 @@ class FlextLdifServer:
             and hasattr(constants, "DETECTION_WEIGHT")
             and hasattr(constants, "DETECTION_ATTRIBUTES")
         ):
-            return FlextResult[type].fail(
+            return r[type].fail(
                 f"Server type {server_type} Constants class missing required DETECTION_* attributes",
             )
 
-        return FlextResult[type].ok(constants)
+        return r[type].ok(constants)
 
     class _GlobalAccess:
         """Nested singleton management for global quirk registry."""

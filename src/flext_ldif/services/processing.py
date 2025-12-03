@@ -236,7 +236,8 @@ class FlextLdifProcessing(
             return r[list[ProcessingResult]].fail(
                 batch_result.error or "Batch processing failed",
             )
-        results = cast("list[ProcessingResult]", batch_result.value["results"])
+        # u.process returns list[R] directly when processing a list
+        results = cast("list[ProcessingResult]", batch_result.value)
         return r[list[ProcessingResult]].ok(results)
 
     @staticmethod

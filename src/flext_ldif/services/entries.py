@@ -253,12 +253,26 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
     def _extract_dn_from_value(
         dn_value_raw: str | list[str] | None,
     ) -> r[str]:
-        """Extract DN string from value (str, list, or None)."""
+        """Extract DN string from value (str, list, or None) using DSL pattern."""
+        # Use named functions instead of lambdas for clarity (DSL pattern)
+        def handle_none(_value: None) -> r[str]:
+            """Handle None case."""
+            return r.fail("DN value is None")
+
+        def handle_str(value: str) -> r[str]:
+            """Handle string case."""
+            return r.ok(value)
+
+        def handle_list(value_list: list[str]) -> r[str]:
+            """Handle list case - extract first item."""
+            first_dn = u.first(value_list, default="")
+            return r.ok(str(first_dn))
+
         return FlextLdifUtilities.match(
             dn_value_raw,
-            (type(None), lambda _: r.fail("DN value is None")),
-            (str, lambda s: r.ok(s)),
-            (list, lambda l: r.ok(str(u.first(l, default="")))),
+            (type(None), handle_none),
+            (str, handle_str),
+            (list, handle_list),
             default=r.fail("DN value has unexpected type"),
         )
 
@@ -409,7 +423,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[FlextLdifModels.Entry]]):
         # Implication: This handles entries with "objectClass", "objectclass", "OBJECTCLASS", etc.
         objectclasses = u.maybe(
             u.find(
-                attributes.items(),
+                list(attributes.items()),
                 predicate=lambda kv: u.normalize(kv[0], case="lower") == "objectclass",
             ),
             mapper=lambda kv: kv[1] if kv else None,
