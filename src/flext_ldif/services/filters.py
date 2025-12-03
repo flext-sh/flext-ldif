@@ -1944,9 +1944,10 @@ class FlextLdifFilters(
                 filtered_entry,
                 forbidden_objectclasses,
             )
-            if not oc_result.is_success:
+            # Use u.val() for unified result handling (DSL pattern)
+            filtered_entry = u.val(oc_result)
+            if filtered_entry is None:
                 return oc_result
-            filtered_entry = oc_result.unwrap()
 
         return r[FlextLdifModels.Entry].ok(filtered_entry)
 
@@ -1990,10 +1991,11 @@ class FlextLdifFilters(
         acls_without_basedn: list[FlextLdifModels.Entry] = []
 
         base_dn_norm_result = FlextLdifUtilities.DN.norm(base_dn)
-        base_dn_norm = (
-            base_dn_norm_result.unwrap()
-            if base_dn_norm_result.is_success
-            else base_dn.lower()
+        # Use u.val() with fallback using u.when() (DSL pattern)
+        base_dn_norm = u.when(
+            condition=base_dn_norm_result.is_success,
+            then_value=u.val(base_dn_norm_result) or base_dn.lower(),
+            else_value=base_dn.lower(),
         )
 
         for acl_entry in acl_entries:
@@ -2005,10 +2007,11 @@ class FlextLdifFilters(
                     else str(acl_entry.dn)
                 )
                 entry_dn_norm_result = FlextLdifUtilities.DN.norm(dn_value)
-                entry_dn_norm = (
-                    entry_dn_norm_result.unwrap()
-                    if entry_dn_norm_result.is_success
-                    else dn_value.lower()
+                # Use u.val() with fallback using u.when() (DSL pattern)
+                entry_dn_norm = u.when(
+                    condition=entry_dn_norm_result.is_success,
+                    then_value=u.val(entry_dn_norm_result) or dn_value.lower(),
+                    else_value=dn_value.lower(),
                 )
                 (
                     acls_with_basedn
