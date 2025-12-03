@@ -185,10 +185,12 @@ class FlextLdifConversion(
             server = FlextLdifServer()
             # Get base quirk from registry
             resolved_result = server.quirk(quirk_or_type)
-            if resolved_result.is_failure:
-                msg = f"Unknown server type: {quirk_or_type}"
-                raise ValueError(msg)
-            return resolved_result.unwrap()
+            # Use u.val() for unified result value extraction (DSL pattern)
+            resolved = u.val(resolved_result)
+            if resolved is None:
+                error_msg = f"Unknown server type: {quirk_or_type}"
+                raise ValueError(error_msg)
+            return resolved
         return quirk_or_type
 
     @override
@@ -285,8 +287,9 @@ class FlextLdifConversion(
         duration_ms = (time.perf_counter() - start_time) * 1000.0
 
         # Emit ConversionEvent with results
-        items_converted = 1 if result.is_success else 0
-        items_failed = 0 if result.is_success else 1
+        # Use u.when() for conditional assignment (DSL pattern)
+        items_converted = u.when(condition=result.is_success, then_value=1, else_value=0)
+        items_failed = u.when(condition=result.is_success, then_value=0, else_value=1)
 
         # Create conversion event config
         conversion_config = FlextLdifModels.ConversionEventConfig(
@@ -297,19 +300,21 @@ class FlextLdifConversion(
             items_converted=items_converted,
             items_failed=items_failed,
             conversion_duration_ms=duration_ms,
-            error_details=[
-                FlextLdifModelsDomains.ErrorDetail(
-                    item=model_type,
-                    error=str(result.error),
-                ),
-            ]
-            if result.is_failure
-            else None,
+            error_details=u.when(
+                condition=u.val(result) is None,
+                then_value=[
+                    FlextLdifModelsDomains.ErrorDetail(
+                        item=model_type,
+                        error=u.err(result) or "Unknown error",
+                    ),
+                ],
+                else_value=[],
+            ),
         )
         _ = FlextLdifUtilities.Events.log_and_emit_conversion_event(
             logger=logger,
             config=conversion_config,
-            log_level="info" if result.is_success else "error",
+            log_level=u.when(condition=result.is_success, then_value="info", else_value="error"),
         )
 
         return result
@@ -432,21 +437,16 @@ class FlextLdifConversion(
                 processor=process_conversion,
                 on_error="skip",
             ),
-            lambda result: (
-                u.reduce_dict(
-                    u.map_filter(
-                        result.value if result.is_success else [],
-                        predicate=lambda item: (
-                            u.is_type(item, tuple)
-                            and u.count(item) == TUPLE_LENGTH_PAIR
-                            and u.is_type(item[0], str)
-                            and u.is_type(item[1], dict)
-                        ),
+            lambda result: u.reduce_dict(
+                u.map_filter(
+                    u.val(result, default=[]),
+                    predicate=lambda item: (
+                        u.is_type(item, tuple)
+                        and u.count(item) == TUPLE_LENGTH_PAIR
+                        and u.is_type(item[0], str)
+                        and u.is_type(item[1], dict)
                     ),
-                )
-                if result.is_success
-                and u.is_type(result.value, list)
-                else {}
+                ),
             ),
             lambda reduced: u.evolve(analysis, reduced),
         )
@@ -534,7 +534,7 @@ class FlextLdifConversion(
         get_boolean = u.prop("boolean_conversions")
         get_attr_case = u.prop("original_attribute_case")
         get_format_details = u.prop("original_format_details")
-        
+
         boolean_conversions = u.maybe(
             get_boolean(source_metadata),
             default={},
@@ -542,7 +542,7 @@ class FlextLdifConversion(
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
             boolean_conversions, target_server_str
         )
-        
+
         return FlextLdifUtilities.pipe(
             conversion_analysis,
             lambda acc: u.evolve(
@@ -627,7 +627,7 @@ class FlextLdifConversion(
             # Store analysis in converted entry for downstream processing
             get_metadata = u.prop("metadata")
             get_extensions = u.prop("extensions")
-            
+
             converted_entry = FlextLdifUtilities.pipe(
                 converted_entry,
                 lambda entry: (
@@ -750,24 +750,25 @@ class FlextLdifConversion(
     ) -> r[ConvertibleModelUnion]:
         """Process schema conversion pipeline (write->parse)."""
         write_result = config.write_method(config.source_schema)
-        if write_result.is_failure:
+        # Use u.val() for unified result value extraction (DSL pattern)
+        write_value = u.val(write_result)
+        if write_value is None:
             return r.fail(
-                f"Failed to write {config.item_name} in source format: {write_result.error}",
+                f"Failed to write {config.item_name} in source format: {u.err(write_result)}",
             )
 
-        ldif_result = FlextLdifConversion._validate_ldif_string(
-            write_result.unwrap(), config.item_name
-        )
-        if ldif_result.is_failure:
+        ldif_result = FlextLdifConversion._validate_ldif_string(write_value, config.item_name)
+        ldif_string = u.val(ldif_result)
+        if ldif_string is None:
             return cast("r[ConvertibleModelUnion]", ldif_result)
 
-        parse_result = config.parse_method(config.target_schema, ldif_result.unwrap())
-        if parse_result.is_failure:
+        parse_result = config.parse_method(config.target_schema, ldif_string)
+        # Use u.val() for unified result value extraction (DSL pattern)
+        parsed_value = u.val(parse_result)
+        if parsed_value is None:
             return r.fail(
-                f"Failed to parse {config.item_name} in target format: {parse_result.error}",
+                f"Failed to parse {config.item_name} in target format: {u.err(parse_result)}",
             )
-
-        parsed_value = parse_result.unwrap()
         return r[ConvertibleModelUnion].ok(
             cast("ConvertibleModelUnion", parsed_value),
         )
@@ -783,17 +784,17 @@ class FlextLdifConversion(
             source_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 source_quirk, "Source"
             )
-            if source_schema_result.is_failure:
+            # Use u.val() for unified result value extraction (DSL pattern)
+            source_schema = u.val(source_schema_result)
+            if source_schema is None:
                 return cast("r[ConvertibleModelUnion]", source_schema_result)
 
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 target_quirk, "Target"
             )
-            if target_schema_result.is_failure:
+            target_schema = u.val(target_schema_result)
+            if target_schema is None:
                 return cast("r[ConvertibleModelUnion]", target_schema_result)
-
-            source_schema = source_schema_result.unwrap()
-            target_schema = target_schema_result.unwrap()
             config = FlextLdifModelsConfig.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
@@ -822,17 +823,17 @@ class FlextLdifConversion(
             source_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 source_quirk, "Source"
             )
-            if source_schema_result.is_failure:
+            # Use u.val() for unified result value extraction (DSL pattern)
+            source_schema = u.val(source_schema_result)
+            if source_schema is None:
                 return cast("r[ConvertibleModelUnion]", source_schema_result)
 
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 target_quirk, "Target"
             )
-            if target_schema_result.is_failure:
+            target_schema = u.val(target_schema_result)
+            if target_schema is None:
                 return cast("r[ConvertibleModelUnion]", target_schema_result)
-
-            source_schema = source_schema_result.unwrap()
-            target_schema = target_schema_result.unwrap()
             config = FlextLdifModelsConfig.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
                 target_schema=target_schema,
@@ -929,12 +930,15 @@ class FlextLdifConversion(
         # Business Rule: Structural typing ensures runtime correctness, cast satisfies type checker
         acl_protocol = cast("FlextLdifProtocols.Models.AclProtocol", acl)
         write_result = source_acl.write(acl_protocol)
-        if write_result.is_failure:
-            return r.fail(
-                f"Failed to write ACL in source format: {write_result.error}",
-            )
+        # Use u.val() for unified result value extraction (DSL pattern)
+        write_value = u.val(write_result)
+        if write_value is None:
+            return r.fail(f"Failed to write ACL in source format: {u.err(write_result)}")
 
-        unwrapped = write_result.unwrap()
+        # Use u.val() for unified result value extraction (DSL pattern)
+        unwrapped = u.val(write_result)
+        if unwrapped is None:
+            return r.fail(u.err(write_result) or "Failed to write ACL")
         if not u.is_type(unwrapped, str):
             return r.fail(
                 f"Write operation returned unexpected type: {type(unwrapped).__name__}, expected str",
@@ -953,12 +957,10 @@ class FlextLdifConversion(
     ) -> r[FlextLdifModelsDomains.Acl]:
         """Parse ACL from LDIF string."""
         parse_result = target_acl.parse(ldif_string)
-        if parse_result.is_failure:
-            return r.fail(
-                f"Failed to parse ACL in target format: {parse_result.error}",
-            )
-
-        converted_acl = parse_result.unwrap()
+        # Use u.val() for unified result value extraction (DSL pattern)
+        converted_acl = u.val(parse_result)
+        if converted_acl is None:
+            return r.fail(f"Failed to parse ACL in target format: {u.err(parse_result)}")
         if not u.is_type(converted_acl, FlextLdifModelsDomains.Acl):
             return r.fail(
                 f"ACL conversion produced invalid type: {type(converted_acl).__name__}, expected Acl",
@@ -984,10 +986,11 @@ class FlextLdifConversion(
             cast("dict[str, t.GeneralValueType]", perms_dict),
             strip_none=True,
         )
-        clean_dict = (
-            transform_result.value
-            if transform_result.is_success
-            else u.where(perms_dict, predicate=lambda _k, v: v is not None)
+        # Use u.val() with fallback using u.when() (DSL pattern)
+        clean_dict = u.when(
+            condition=transform_result.is_success,
+            then_value=u.val(transform_result),
+            else_value=u.where(perms_dict, predicate=lambda _k, v: v is not None),
         )
         return FlextLdifModelsDomains.AclPermissions(**clean_dict)  # type: ignore[arg-type]
 
@@ -1227,7 +1230,7 @@ class FlextLdifConversion(
         # Metadata contains source_subject_type and other conversion hints needed by target writers
         get_metadata = u.prop("metadata")
         get_extensions = u.prop("extensions")
-        
+
         return FlextLdifUtilities.pipe(
             converted_acl,
             lambda acl: (
@@ -1259,10 +1262,10 @@ class FlextLdifConversion(
                                 default={},
                             ),
                             lambda orig_ext: u.merge(conv_ext, orig_ext),
-                            lambda merge_result: (
-                                merge_result.value
-                                if merge_result.is_success
-                                else conv_ext
+                            lambda merge_result: u.when(
+                                condition=merge_result.is_success,
+                                then_value=u.val(merge_result),
+                                else_value=conv_ext,
                             ),
                         )
                         if get_metadata(original_acl)
@@ -1349,10 +1352,10 @@ class FlextLdifConversion(
 
             # Step 2: Convert Entry using Entry conversion (which preserves metadata.acls)
             entry_result = self._convert_entry(source_quirk, target_quirk, rfc_entry)
-            if entry_result.is_failure:
+            # Use u.val() for unified result value extraction (DSL pattern)
+            converted_entry = u.val(entry_result)
+            if converted_entry is None:
                 return entry_result
-
-            converted_entry = entry_result.unwrap()
             if not u.is_type(converted_entry, FlextLdifModelsDomains.Entry):
                 return r.fail(
                     f"Entry conversion returned unexpected type: {type(converted_entry).__name__}",
@@ -1363,7 +1366,7 @@ class FlextLdifConversion(
             get_acls = u.prop("acls")
             metadata = u.maybe(get_metadata(converted_entry))
             acls = u.maybe(get_acls(metadata)) if metadata else None
-            
+
             if not acls:
                 return r.fail(
                     "Converted entry has no ACLs in metadata.acls",
@@ -1498,10 +1501,11 @@ class FlextLdifConversion(
         try:
             schema_quirk = _get_schema_quirk(cast("FlextLdifServersBase", source_quirk))
             write_result = write_method(schema_quirk, schema_item)
-            return (
-                r.ok(write_result.unwrap())
-                if write_result.is_success
-                else r.ok(fallback)
+            # Use u.when() for conditional return (DSL pattern)
+            return u.when(
+                condition=write_result.is_success,
+                then_value=r.ok(u.val(write_result)),
+                else_value=r.ok(fallback),
             )
         except TypeError:
             return r.ok(fallback)
@@ -1550,37 +1554,35 @@ class FlextLdifConversion(
             if not isinstance(data, str):
                 return r.fail("Attribute conversion requires string data")
 
+            # Use u.map() for unified result pipeline (DSL pattern)
             parse_result = self._parse_source_attribute(source, data)
-            if parse_result.is_failure:
-                error_msg = parse_result.error or "Failed to parse source attribute"
+            parsed_attr = u.val(parse_result)
+            if parsed_attr is None:
                 return r[
                     FlextLdifModelsDomains.SchemaAttribute
                     | t.MetadataAttributeValue
                     | str
-                ].fail(error_msg)
+                ].fail(u.err(parse_result))
 
-            rfc_result = self._write_attribute_to_rfc(source, parse_result.unwrap())
-            if rfc_result.is_failure:
+            # Use u.map() for unified result pipeline (DSL pattern)
+            rfc_result = self._write_attribute_to_rfc(source, parsed_attr)
+            rfc_value = u.val(rfc_result)
+            if rfc_value is None:
                 return cast(
                     "r[FlextLdifModelsDomains.SchemaAttribute | str | t.MetadataAttributeValue]",
                     rfc_result,
                 )
 
-            rfc_value = rfc_result.unwrap()
-            if not isinstance(rfc_value, str):
+            # Use u.when() for conditional type check (DSL pattern)
+            if not u.is_type(rfc_value, str):
                 return r.ok(rfc_value)
 
+            # Use u.map() for unified result handling (DSL pattern)
             target_parse_result = self._parse_target_attribute(target, rfc_value)
-            return (
-                self._write_target_attribute(target_parse_result.unwrap())
-                if target_parse_result.is_success
-                else r[
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | t.MetadataAttributeValue
-                    | str
-                ].fail(
-                    target_parse_result.error or "Failed to parse target attribute"
-                )
+            return u.map(
+                target_parse_result,
+                mapper=lambda parsed: self._write_target_attribute(parsed),
+                default_error="Failed to parse target attribute",
             )
 
         except Exception as e:
@@ -1696,14 +1698,14 @@ class FlextLdifConversion(
             ),
             source_oc,
         )
-        if write_result.is_success:
-            write_value = write_result.unwrap()
-            if isinstance(write_value, str):
-                return r[
-                    str
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                    | t.MetadataAttributeValue
-                ].ok(write_value)
+        # Use u.val() for unified result value extraction (DSL pattern)
+        write_value = u.val(write_result)
+        if write_value is not None and isinstance(write_value, str):
+            return r[
+                str
+                | FlextLdifModelsDomains.SchemaObjectClass
+                | t.MetadataAttributeValue
+            ].ok(write_value)
         return cast(
             "r[str | FlextLdifModelsDomains.SchemaObjectClass | t.MetadataAttributeValue]",
             write_result,
@@ -1725,23 +1727,23 @@ class FlextLdifConversion(
             if not isinstance(data, str):
                 return r.fail("ObjectClass conversion requires string data")
 
+            # Use u.map() for unified result pipeline (DSL pattern)
             parse_result = self._parse_source_objectclass(source, data)
-            if parse_result.is_failure:
-                error_msg = parse_result.error or "Failed to parse source objectClass"
+            parsed_oc = u.val(parse_result)
+            if parsed_oc is None:
                 return r[
                     FlextLdifModelsDomains.SchemaObjectClass
                     | str
                     | t.MetadataAttributeValue
-                ].fail(error_msg)
+                ].fail(u.err(parse_result) or "Failed to parse source objectClass")
 
-            write_result = self._write_objectclass_to_rfc(source, parse_result.unwrap())
-            if write_result.is_failure:
+            write_result = self._write_objectclass_to_rfc(source, parsed_oc)
+            rfc_value = u.val(write_result)
+            if rfc_value is None:
                 return cast(
                     "r[FlextLdifModelsDomains.SchemaObjectClass | str | t.MetadataAttributeValue]",
                     write_result,
                 )
-
-            rfc_value = write_result.unwrap()
             if not isinstance(rfc_value, str):
                 if isinstance(rfc_value, (FlextLdifModelsDomains.SchemaObjectClass, dict)):
                     return r[
@@ -1752,15 +1754,12 @@ class FlextLdifConversion(
                 msg = f"Expected SchemaObjectClass | str | dict, got {type(rfc_value)}"
                 raise TypeError(msg)
 
+            # Use u.map() for unified result handling (DSL pattern)
             target_result = self._parse_target_objectclass(target, rfc_value)
-            return (
-                self._write_target_objectclass(target, target_result.unwrap())
-                if target_result.is_success
-                else r[
-                    FlextLdifModelsDomains.SchemaObjectClass
-                    | str
-                    | t.MetadataAttributeValue
-                ].fail(target_result.error or "Failed to parse target objectClass")
+            return u.map(
+                target_result,
+                mapper=lambda parsed: self._write_target_objectclass(target, parsed),
+                default_error="Failed to parse target objectClass",
             )
 
         except Exception as e:
@@ -1851,8 +1850,9 @@ class FlextLdifConversion(
         # schema_quirk is already properly typed from _get_schema_quirk
         write_result = schema_quirk.write_objectclass(parsed_oc)
         # write_objectclass returns r[str] - convert to union type
-        if write_result.is_success:
-            written_str = write_result.unwrap()
+        # Use u.val() for unified result value extraction (DSL pattern)
+        written_str = u.val(write_result)
+        if written_str is not None:
             # Type narrowing: write_objectclass returns str
             if not isinstance(written_str, str):
                 msg = f"Expected str from write_objectclass, got {type(written_str)}"
@@ -1862,7 +1862,8 @@ class FlextLdifConversion(
                 | str
                 | t.MetadataAttributeValue
             ].ok(written_str)
-        error_msg = write_result.error or "Failed to write objectClass"
+        # Use u.err() for unified error extraction (DSL pattern)
+        error_msg = u.err(write_result) or "Failed to write objectClass"
         return r[
             FlextLdifModelsDomains.SchemaObjectClass | str | t.MetadataAttributeValue
         ].fail(error_msg)
@@ -1932,13 +1933,14 @@ class FlextLdifConversion(
 
             for idx, model_item in enumerate(model_list):
                 result = self.convert(source, target, model_item)
-                if result.is_success:
-                    unwrapped = result.unwrap()
+                # Use u.val() for unified result value extraction (DSL pattern)
+                unwrapped = u.val(result)
+                if unwrapped is not None:
                     # convert() returns ConvertibleModel (protocol-based)
                     # so unwrapped is already typed correctly
                     converted.append(unwrapped)
                 else:
-                    error_msg = str(result.error)
+                    error_msg = u.err(result) or "Unknown error"
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(
                         FlextLdifModelsDomains.ErrorDetail(
@@ -2181,7 +2183,8 @@ class FlextLdifConversion(
             return support
 
         attr_result = parse_attr(test_attr_def)
-        if isinstance(attr_result, r) and attr_result.is_success:
+        # Use u.val() for unified result value extraction (DSL pattern)
+        if isinstance(attr_result, r) and u.val(attr_result) is not None:
             support["attribute"] = 1
 
         return support
@@ -2219,7 +2222,8 @@ class FlextLdifConversion(
             return support
 
         oc_result = parse_oc(test_oc_def)
-        if isinstance(oc_result, r) and oc_result.is_success:
+        # Use u.val() for unified result value extraction (DSL pattern)
+        if isinstance(oc_result, r) and u.val(oc_result) is not None:
             support[FlextLdifConstants.DictKeys.OBJECTCLASS] = 1
 
         return support
@@ -2259,7 +2263,8 @@ class FlextLdifConversion(
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         if acl and callable(getattr(acl, "parse", None)):
             acl_result = acl.parse(test_acl_def)
-            if acl_result.is_success:
+            # Use u.val() for unified result value extraction (DSL pattern)
+            if u.val(acl_result) is not None:
                 support["acl"] = 1
         return support
 

@@ -1695,7 +1695,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier (e.g., 'rfc', 'oid')",
         )
-        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = Field(
+        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = Field(
             ...,
             description="Hook to parse (dn, attrs) into Entry",
         )
@@ -1752,7 +1752,7 @@ class FlextLdifModelsConfig:
             ...,
             description="List of (dn, attrs) tuples from parser",
         )
-        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = Field(
+        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = Field(
             ...,
             description="Hook to parse (dn, attrs) into Entry",
         )
@@ -1946,7 +1946,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[FlextLdifModels.Entry], r[object]] = Field(
+        write_entry_hook: Callable[[FlextLdifModels.Entry], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )

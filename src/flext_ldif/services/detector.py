@@ -577,10 +577,8 @@ class FlextLdifDetector(FlextLdifServiceBase[FlextLdifModels.ClientStatus]):
         ]
         if u.any_(
             acl_attrs,
-            predicate=lambda attr: u.when(
-                u.is_type(attr, str),
-                lambda: u.in_(attr, content),
-                else_value=False,
+            predicate=lambda attr: (
+                u.in_(attr, content) if u.is_type(attr, str) else False
             ),
         ):
             self._add_pattern_if_match(

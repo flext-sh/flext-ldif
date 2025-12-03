@@ -472,29 +472,25 @@ class FlextLdifUtilitiesACL:
             mapper=sanitize_char,
         )
 
-        def should_keep_char(char: str, prev_char: str) -> bool:
-            """Check if character should be kept."""
-            return not (char == " " and prev_char == " ")
-
-        def fold_chars(
-            acc: tuple[list[str], str, bool],
-            char: str,
-        ) -> tuple[list[str], str, bool]:
-            """Fold characters with state tracking."""
-            result_list, prev_char, was_sanitized = acc
-            if should_keep_char(char, prev_char):
-                result_list.append(char)
-                new_sanitized = was_sanitized or (char == " ")
-                return result_list, char, new_sanitized
-            return acc
-
-        result_list, _, was_sanitized = u_ldif_instance.fold(  # type: ignore[attr-defined]
-            sanitized_chars,
-            initial=([], "", False),
-            folder=fold_chars,  # type: ignore[arg-type]
+        # Check if any characters were modified during sanitization
+        sanitized_chars_list: list[str] = (
+            sanitized_chars
+            if isinstance(sanitized_chars, list)
+            else list(sanitized_chars)
         )
+        was_sanitized = sanitized_chars_list != list(raw_name)
 
-        sanitized = " ".join("".join(result_list).split())
+        # Remove consecutive spaces
+        result_chars: list[str] = []
+        prev_char = ""
+        for char in sanitized_chars_list:
+            if not (char == " " and prev_char == " "):
+                result_chars.append(char)
+            else:
+                was_sanitized = True
+            prev_char = char
+
+        sanitized = " ".join("".join(result_chars).split())
 
         if len(sanitized) > max_length:
             sanitized = sanitized[: max_length - 3] + "..."

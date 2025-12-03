@@ -30,7 +30,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from typing import Literal, cast
 
-from flext_core import FlextResult
+from flext_core import r
 from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -40,7 +40,7 @@ from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 # Aliases for simplified usage - after all imports
 u = FlextUtilities  # Utilities
-r = FlextResult  # Result
+r = r  # Result
 
 # =========================================================================
 # TYPE ALIASES
@@ -71,19 +71,19 @@ class EntryTransformer[T](ABC):
     __slots__ = ()
 
     @abstractmethod
-    def apply(self, item: T) -> FlextResult[T]:
+    def apply(self, item: T) -> r[T]:
         """Apply the transformation to an item.
 
         Args:
             item: The item to transform
 
         Returns:
-            FlextResult containing transformed item or error
+            r containing transformed item or error
 
         """
         ...
 
-    def apply_batch(self, items: Sequence[T]) -> FlextResult[list[T]]:
+    def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
         """Apply transformation to a batch of items.
 
         Default implementation applies transformation sequentially.
@@ -93,12 +93,14 @@ class EntryTransformer[T](ABC):
             items: Sequence of items to transform
 
         Returns:
-            FlextResult containing list of transformed items or error
+            r containing list of transformed items or error
 
         """
         results: list[T] = []
+        # Use u.batch for unified batch processing (DSL pattern)
+        items_list = list(items)
         batch_result = u.batch(
-            list(items),
+            items_list,
             self.apply,
             on_error="fail",
         )
@@ -147,7 +149,7 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         self._validate = validate
 
     @staticmethod
-    def _validate_dn_components(dn_str: str) -> FlextResult[None]:
+    def _validate_dn_components(dn_str: str) -> r[None]:
         """Helper: Validate DN components."""
         components = FlextLdifUtilitiesDN.split(dn_str)
         all_errors: list[str] = []
@@ -161,7 +163,7 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
             return r.fail(f"Invalid DN: {', '.join(all_errors)}")
-        return r.ok(None)
+        return r.ok(True)  # Validation passed (cannot use None)
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
         """Helper: Apply case folding and space handling."""
@@ -183,14 +185,14 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Apply DN normalization to an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing entry with normalized DN
+            r containing entry with normalized DN
 
         """
         if item.dn is None:
@@ -203,7 +205,10 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         if self._validate:
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
             if validation_result.is_failure:
-                return validation_result
+                # Return failure as r[Entry] by mapping error
+                return r[FlextLdifModelsDomains.Entry].fail(
+                    u.err(validation_result, default="DN validation failed")
+                )
 
         # Normalize DN
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
@@ -255,14 +260,14 @@ class NormalizeAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Apply attribute normalization to an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing entry with normalized attributes
+            r containing entry with normalized attributes
 
         """
         if item.attributes is None:
@@ -289,7 +294,12 @@ class NormalizeAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]
                 processed.append(trimmed_value)
             return processed
 
-        new_attrs = u.map(attrs, mapper=lambda _k, v: process_value_list(v))
+        # Use named function instead of lambda (DSL pattern)
+        def map_process_value(_key: str, value: list[str]) -> list[str]:
+            """Process value list for attribute."""
+            return process_value_list(value)
+
+        new_attrs = u.map(attrs, mapper=map_process_value)
         needs_update = (
             self._case_fold_names
             or self._trim_values
@@ -398,14 +408,14 @@ class ReplaceBaseDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"])
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Replace base DN in an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing entry with replaced base DN
+            r containing entry with replaced base DN
 
         """
         if item.dn is None:
@@ -463,14 +473,14 @@ class ConvertBooleansTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Convert boolean attributes in an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing entry with converted booleans
+            r containing entry with converted booleans
 
         """
         # Business Rule: Convert boolean attribute values between formats (0/1 vs TRUE/FALSE)
@@ -536,14 +546,14 @@ class FilterAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Filter attributes in an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing entry with filtered attributes
+            r containing entry with filtered attributes
 
         """
         if item.attributes is None:
@@ -553,25 +563,45 @@ class FilterAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
             item.attributes.attributes if hasattr(item.attributes, "attributes") else {}
         )
 
-        # Apply include filter using u.filter
+        # Apply include filter using u.filter (DSL pattern)
         if self._include is not None:
             include_lower = {i.lower() for i in self._include}
+            # Use named function instead of lambda (DSL pattern)
+
+            def key_in_include(key: str, _value: object) -> bool:
+                """Check if key lowercase is in include set."""
+                return key.lower() in include_lower
+
             filtered = u.filter(
                 attrs,
-                predicate=lambda k, _v: k.lower() in include_lower,
+                predicate=key_in_include,
             )
-            attrs = filtered if isinstance(filtered, dict) else {}
+            # Type narrowing: filtered is dict[str, list[str]] | list[tuple[str, list[str]]]
+            if isinstance(filtered, dict):
+                attrs = cast("dict[str, list[str]]", filtered)
+            else:
+                attrs = {}
 
-        # Apply exclude filter
+        # Apply exclude filter using u.filter (DSL pattern)
         if self._exclude:
             exclude_lower = {e.lower() for e in self._exclude}
-            # Use u.filter to exclude attributes by lowercase name
-            attrs = dict(
-                u.filter(
-                    attrs,
-                    predicate=lambda k, _v: k.lower() not in exclude_lower,
-                )
+            # Use named function instead of lambda (DSL pattern)
+
+            def key_not_in_exclude(key: str, _value: object) -> bool:
+                """Check if key lowercase is not in exclude set."""
+                return key.lower() not in exclude_lower
+
+            filtered_excluded = u.filter(
+                attrs,
+                predicate=key_not_in_exclude,
             )
+            # Type narrowing: filtered_excluded is dict[str, list[str]] | list[tuple[str, list[str]]]
+            if isinstance(filtered_excluded, dict):
+                attrs = cast("dict[str, list[str]]", filtered_excluded)
+            elif isinstance(filtered_excluded, (list, tuple)):
+                attrs = dict(cast("list[tuple[str, list[str]]]", filtered_excluded))
+            else:
+                attrs = {}
 
         # Update entry with filtered attributes
         new_attributes = FlextLdifModelsDomains.LdifAttributes(attributes=attrs)
@@ -596,14 +626,14 @@ class RemoveAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Remove attributes from an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing entry with removed attributes
+            r containing entry with removed attributes
 
         """
         # Business Rule: Remove specified attributes from entry for data sanitization
@@ -628,31 +658,31 @@ class CustomTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         self,
         func: Callable[
             [FlextLdifModelsDomains.Entry],
-            FlextLdifModelsDomains.Entry | FlextResult[FlextLdifModelsDomains.Entry],
+            FlextLdifModelsDomains.Entry | r[FlextLdifModelsDomains.Entry],
         ],
     ) -> None:
         """Initialize custom transformer.
 
         Args:
-            func: Transformation function (returns Entry or FlextResult[Entry])
+            func: Transformation function (returns Entry or r[Entry])
 
         """
         self._func = func
 
     def apply(
         self, item: FlextLdifModelsDomains.Entry
-    ) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    ) -> r[FlextLdifModelsDomains.Entry]:
         """Apply custom transformation to an entry.
 
         Args:
             item: Entry to transform
 
         Returns:
-            FlextResult containing transformed entry
+            r containing transformed entry
 
         """
         result = self._func(item)
-        if isinstance(result, FlextResult):
+        if isinstance(result, r):
             return result
         return r.ok(result)
 
@@ -746,7 +776,7 @@ class Transform:
     def custom(
         func: Callable[
             [FlextLdifModelsDomains.Entry],
-            FlextLdifModelsDomains.Entry | FlextResult[FlextLdifModelsDomains.Entry],
+            FlextLdifModelsDomains.Entry | r[FlextLdifModelsDomains.Entry],
         ],
     ) -> CustomTransformer:
         """Create a custom transformer from a function.

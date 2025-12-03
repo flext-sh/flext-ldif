@@ -1219,10 +1219,11 @@ class FlextLdifUtilitiesWriter:
             changetype_config: Dict with keys: include_changetype, changetype_value, fold_long_lines, width
 
         """
-        include_changetype = changetype_config.get("include_changetype", False)
+        include_changetype = bool(changetype_config.get("include_changetype"))
         changetype_value = changetype_config.get("changetype_value")
-        fold_long_lines = changetype_config.get("fold_long_lines", True)
-        width = changetype_config.get("width", 76)
+        fold_long_lines = bool(changetype_config.get("fold_long_lines", True))
+        width_raw = changetype_config.get("width", 76)
+        width = int(width_raw) if isinstance(width_raw, int | str) else 76
 
         if format_type == "modify":
             changetype_line = "changetype: modify"
@@ -1271,19 +1272,18 @@ class FlextLdifUtilitiesWriter:
 
         """
         config = {**(format_config or {}), **kwargs}
-        format_type = config.get("format_type", "add")
-        modify_operation = config.get("modify_operation", "add")
-        include_changetype = config.get("include_changetype", False)
+        format_type = str(config.get("format_type", "add"))
+        modify_operation = str(config.get("modify_operation", "add"))
+        include_changetype = bool(config.get("include_changetype"))
         changetype_value = config.get("changetype_value")
         hidden_attrs = config.get("hidden_attrs")
-        line_width = config.get("line_width")
-        fold_long_lines = config.get("fold_long_lines", True)
+        line_width_raw = config.get("line_width")
+        fold_long_lines = bool(config.get("fold_long_lines", True))
 
         ldif_lines: list[str] = []
         hidden = hidden_attrs or set() if isinstance(hidden_attrs, set) else set()
         width = (
-            line_width
-            if line_width is not None
+            int(line_width_raw) if isinstance(line_width_raw, int | str)
             else FlextLdifConstants.Rfc.LINE_FOLD_WIDTH
         )
 

@@ -4047,9 +4047,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return self._parse_entry(dn, attrs_dict)
 
             return FlextLdifUtilities.Parsers.Content.parse(
-                ldif_content,
-                self._get_server_type(),
-                adapted_parse_entry,
+                ldif_content=ldif_content,
+                server_type=self._get_server_type(),
+                parse_entry_hook=adapted_parse_entry,
             )
 
         def normalize_entry_dn(
