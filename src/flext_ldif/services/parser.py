@@ -8,8 +8,10 @@ wrapped in ``FlextResult`` to keep error handling explicit.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 from pydantic import PrivateAttr
 
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -17,6 +19,9 @@ from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
@@ -178,22 +183,32 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             FlextResult with ParseResponse containing entries and statistics
 
         """
-        # Convert ldap3 results to LDIF string format
+        # Convert ldap3 results to LDIF string format using u
         # Business Rule: LDIF lines are built dynamically from runtime data
         # Implication: Must use list[str] not list[LiteralString] for dynamic string construction
         ldif_lines: list[str] = []
 
-        for dn, attrs in results:
-            # Business Rule: DN and attribute values come from runtime data (not literals)
-            # Implication: f-strings with runtime values produce str, not LiteralString
-            ldif_lines.append(f"dn: {dn}")
+        def convert_entry(dn_attrs: tuple[str, dict[str, list[str]]]) -> list[str]:
+            """Convert single entry to LDIF lines."""
+            dn, attrs = dn_attrs
+            entry_lines: list[str] = [f"dn: {dn}"]
             for attr_name, values in attrs.items():
-                # Convert generator to list to avoid LiteralString type issues
                 # Business Rule: Attribute lines are built from runtime attribute names and values
                 # Implication: Must use list[str] for dynamic string construction
                 attr_lines: list[str] = [f"{attr_name}: {value}" for value in values]
-                ldif_lines.extend(attr_lines)
-            ldif_lines.append("")  # Empty line between entries
+                entry_lines.extend(attr_lines)
+            entry_lines.append("")  # Empty line between entries
+            return entry_lines
+
+        batch_result = u.process(
+            results,
+            convert_entry,
+            on_error="skip",
+        )
+        if batch_result.is_success:
+            for entry_lines in batch_result.value.get("results", []):
+                if entry_lines:
+                    ldif_lines.extend(cast("list[str]", entry_lines))
 
         content = "\n".join(ldif_lines)
 

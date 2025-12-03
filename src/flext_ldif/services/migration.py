@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextTypes,
-    FlextUtilities,
+    t,
+    u,
 )
 from pydantic import PrivateAttr
 
@@ -216,16 +216,16 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
         ),
         config_model: FlextLdifModels.MigrationConfig | None,
         **format_kwargs: (
-            FlextTypes.ScalarValue
+            t.ScalarValue
             | list[str]
             | frozenset[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]]
+            | dict[str, t.ScalarValue | list[str]]
         ),
     ) -> FlextResult[FlextLdifModels.WriteFormatOptions]:
         """Set default write options for structured and categorized modes using FlextResult.
 
         Architecture:
-            - Uses FlextUtilities.Configuration.build_options_from_kwargs for automatic conversion
+            - Uses u.build_options_from_kwargs for automatic conversion
             - FlextLdifConfig is the source of truth for all write options
             - This method allows CLI overrides via write_options parameter or **format_kwargs
             - If no override, gets from config and applies mode-specific settings
@@ -243,7 +243,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             FlextResult with WriteFormatOptions Pydantic model or error
 
         """
-        # Use FlextUtilities.Configuration.build_options_from_kwargs for automatic conversion
+        # Use u.build_options_from_kwargs for automatic conversion
         default_factory = FlextLdifMigrationPipeline._get_default_write_options
         mode_overrides: FlextLdifTypes.Migration.WriteFormatOptionsDict = {}
 
@@ -268,12 +268,12 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 )
 
         # Merge all overrides: mode_overrides < format_kwargs < explicit write_options
-        # Convert frozenset to list for FlextTypes.GeneralValueType compatibility
+        # Convert frozenset to list for t.GeneralValueType compatibility
         all_kwargs: dict[
             str,
-            FlextTypes.ScalarValue
+            t.ScalarValue
             | list[str]
-            | dict[str, FlextTypes.ScalarValue | list[str]],
+            | dict[str, t.ScalarValue | list[str]],
         ] = {}
         for k, v in {**mode_overrides, **format_kwargs}.items():
             if isinstance(v, frozenset):
@@ -296,7 +296,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 raise TypeError(msg)
 
         # Use build_options_from_kwargs for automatic conversion
-        return FlextUtilities.Configuration.build_options_from_kwargs(
+        return u.build_options_from_kwargs(
             model_class=FlextLdifModels.WriteFormatOptions,
             explicit_options=explicit_options_typed,
             default_factory=default_factory,
@@ -649,9 +649,17 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                 )
             # Register all DNs in registry for case normalization
             # entries is list[FlextLdifModels.Entry]
-            for entry in entries:
+
+            def register_dn(entry: FlextLdifModels.Entry) -> None:
+                """Register DN in registry."""
                 if entry.dn and entry.dn.value:
                     _ = self._dn_registry.register_dn(entry.dn.value)
+
+            _ = u.process(
+                entries,
+                register_dn,
+                on_error="skip",
+            )
             all_entries.extend(entries)
             logger.info(
                 "Parsed entries from file",
@@ -723,8 +731,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
             if category == FlextLdifConstants.Categories.REJECTED:
                 continue
 
-            filtered_entries = []
-            for entry in cat_entries:
+            def filter_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+                """Filter entry attributes and objectClasses."""
                 filtered_entry = entry
 
                 # Apply attribute filtering
@@ -747,7 +755,14 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
                     if oc_result.is_success:
                         filtered_entry = oc_result.unwrap()
 
-                filtered_entries.append(filtered_entry)
+                return filtered_entry
+
+            batch_result = u.process(
+                cat_entries,
+                filter_entry,
+                on_error="skip",
+            )
+            filtered_entries = cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
 
             # Replace category entries with filtered entries
             categories[category] = filtered_entries
@@ -793,7 +808,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[FlextLdifModels.EntryResul
 
                 attrs_dict = entry.attributes.attributes
                 has_acl = any(
-                    attr_name.lower() in acl_attr_names for attr_name in attrs_dict
+                    attr_name in acl_attr_names for attr_name in attrs_dict
                 )
 
                 if has_acl:

@@ -19,11 +19,15 @@ from collections.abc import Callable
 from typing import ClassVar, override
 
 from flext_core import FlextDecorators, FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus]):
@@ -155,7 +159,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
             return FlextResult[str].fail("OID cannot be empty")
 
         try:
-            name = self._oid_to_name.get(oid)
+            name = u.get(self._oid_to_name, oid, default=None)
             if name is None:
                 return FlextResult[str].fail(f"Syntax name not found for OID: {oid}")
             return FlextResult[str].ok(name)
@@ -176,7 +180,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
             return FlextResult[str].fail("Syntax name cannot be empty")
 
         try:
-            oid = self._name_to_oid.get(name)
+            oid = u.get(self._name_to_oid, name, default=None)
             if oid is None:
                 return FlextResult[str].fail(f"OID not found for syntax name: {name}")
             return FlextResult[str].ok(oid)
@@ -262,10 +266,13 @@ class FlextLdifSyntax(FlextLdifServiceBase[FlextLdifModels.SyntaxServiceStatus])
             )
 
         type_category = resolve_result.unwrap().type_category
-        validator: Callable[[str], FlextResult[bool]] = self._VALIDATOR_MAP.get(
+        validator = u.get(
+            self._VALIDATOR_MAP,
             type_category,
-            lambda _: FlextResult[bool].ok(True),
+            default=lambda _: FlextResult[bool].ok(True),
         )
+        if validator is None:
+            validator = lambda _: FlextResult[bool].ok(True)  # noqa: E731
         return validator(value)
 
     def get_syntax_category(self, oid: str) -> FlextResult[str]:

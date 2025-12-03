@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -2595,7 +2595,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             try:
                 c = FlextLdifServersOud.Constants
-                extensions: dict[str, FlextTypes.MetadataAttributeValue] | None = (
+                extensions: dict[str, t.MetadataAttributeValue] | None = (
                     acl_data.metadata.extensions.model_dump()
                     if acl_data.metadata and acl_data.metadata.extensions
                     else None
@@ -3285,7 +3285,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Updated metadata with ACL information
 
             """
-            current_extensions: dict[str, FlextTypes.MetadataAttributeValue] = (
+            current_extensions: dict[str, t.MetadataAttributeValue] = (
                 dict(metadata.extensions) if metadata.extensions else {}
             )
 
@@ -4524,7 +4524,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
 
             # Get current extensions
-            current_extensions: dict[str, FlextTypes.MetadataAttributeValue] = (
+            current_extensions: dict[str, t.MetadataAttributeValue] = (
                 dict(entry.metadata.extensions) if entry.metadata.extensions else {}
             )
 
@@ -4664,7 +4664,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         def _finalize_and_parse_entry(
             self,
-            entry_dict: dict[str, FlextTypes.GeneralValueType],
+            entry_dict: dict[str, t.GeneralValueType],
             entries_list: list[FlextLdifModels.Entry],
         ) -> None:
             """Finalize entry dict and parse into entries list.

@@ -117,8 +117,8 @@ def parse(
 
 ```python
 def _transform_categories(
-    self, categorized: dict[str, list[FlextTypes.Dict]]
-) -> FlextResult[dict[str, list[FlextTypes.Dict]]]:
+    self, categorized: dict[str, list[t.Dict]]
+) -> FlextResult[dict[str, list[t.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
     Uses parse()

@@ -1617,7 +1617,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         result = FlextLdifModels.LdifAttributes.create(attributes)
         return cast(
             "FlextLdifModels.LdifAttributes",
-            DeduplicationHelpers.assert_success_and_unwrap(
+            TestAssertions.assert_success(
                 result,
                 "Attributes creation should succeed",
             ),
@@ -3247,7 +3247,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         else:
             msg = f"Service {type(service)} does not have execute method"
             raise AttributeError(msg)
-        return DeduplicationHelpers.assert_success_and_unwrap(result, error_msg)
+        return TestAssertions.assert_success(result, error_msg)
 
     @staticmethod
     def assert_entry_has_attribute(
@@ -7484,7 +7484,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             Unwrapped value
 
         """
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap(result, error_msg)
+        unwrapped = TestAssertions.assert_success(result, error_msg)
         assert isinstance(unwrapped, expected_type), (
             f"Expected {expected_type}, got {type(unwrapped)}"
         )
@@ -8130,7 +8130,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             msg = f"Quirk {type(quirk)} does not implement QuirksPort protocol"
             raise TypeError(msg)
 
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap(result)
+        unwrapped = TestAssertions.assert_success(result)
 
         if expected_type:
             assert isinstance(unwrapped, expected_type), (
@@ -11063,7 +11063,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             mode,
             mark_excluded=mark_excluded,
         )
-        filtered = DeduplicationHelpers.assert_success_and_unwrap(
+        filtered = TestAssertions.assert_success(
             result,
             "Filter by DN should succeed",
         )
@@ -11102,7 +11102,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             objectclass,
             required_attributes=required_attributes,
         )
-        filtered = DeduplicationHelpers.assert_success_and_unwrap(
+        filtered = TestAssertions.assert_success(
             result,
             "Filter by objectClass should succeed",
         )
@@ -11128,7 +11128,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             attributes,
             match_all=match_all,
         )
-        filtered = DeduplicationHelpers.assert_success_and_unwrap(
+        filtered = TestAssertions.assert_success(
             result,
             "Filter by attributes should succeed",
         )
@@ -11160,7 +11160,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         )
 
         result = service.execute()
-        filtered = DeduplicationHelpers.assert_success_and_unwrap(
+        filtered = TestAssertions.assert_success(
             result,
             "Filter execute should succeed",
         )
@@ -11216,7 +11216,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             required_attributes=required_attributes,
         )
 
-        filtered = DeduplicationHelpers.assert_success_and_unwrap(
+        filtered = TestAssertions.assert_success(
             result,
             "Filter classmethod should succeed",
         )
@@ -11268,9 +11268,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]]",
             result,
         )
-        modified = DeduplicationHelpers.assert_success_and_unwrap_entry(
+        modified = TestAssertions.assert_success(
             modified_result,
-            error_msg="Remove attributes should succeed",
+            "Remove attributes should succeed",
         )
 
         for attr in attributes:
@@ -11300,9 +11300,9 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             "FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]]",
             result,
         )
-        modified = DeduplicationHelpers.assert_success_and_unwrap_entry(
+        modified = TestAssertions.assert_success(
             modified_result,
-            error_msg="Remove objectClasses should succeed",
+            "Remove objectClasses should succeed",
         )
 
         entry_ocs = modified.get_attribute_values("objectClass")

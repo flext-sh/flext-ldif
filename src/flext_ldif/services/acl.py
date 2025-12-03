@@ -14,7 +14,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from typing import cast
+
+from flext_core import FlextResult, u
+from flext_core.utilities import u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -101,7 +104,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # as it's more compatible with older ACL formats, then fallback to "openldap2"
         try:
             # If original was "openldap", try "openldap1" first (legacy format)
-            if original_server_type.lower() == "openldap":
+            if original_server_type == "openldap":
                 acl_quirk = self._server.acl("openldap1")
                 if acl_quirk is None:
                     # Fallback to openldap2 if openldap1 not found
@@ -225,22 +228,36 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
                 ),
             )
 
-        # Parse each ACL value
-        acls = []
+        # Parse each ACL value using u
+        acls: list[FlextLdifModelsDomains.Acl] = []
         failed_count = 0
 
-        for acl_value in acl_values:
+        def parse_single_acl(acl_value: str) -> FlextLdifModelsDomains.Acl | None:
+            """Parse single ACL value."""
+            nonlocal failed_count
             parse_result = self.parse_acl_string(acl_value, server_type)
             if parse_result.is_success:
-                acl_obj = parse_result.unwrap()
-                acls.append(acl_obj)
-            else:
-                failed_count += 1
-                self.logger.warning(
-                    "Failed to parse ACL value",
-                    error=parse_result.error,
-                    server_type=server_type,
-                )
+                return parse_result.unwrap()
+            failed_count += 1
+            self.logger.warning(
+                "Failed to parse ACL value",
+                error=parse_result.error,
+                server_type=server_type,
+            )
+            return None
+
+        batch_result = u.batch(
+            list(acl_values),
+            parse_single_acl,
+            on_error="skip",
+        )
+        if batch_result.is_success:
+            results_raw = batch_result.value.get("results", [])
+            acls = [
+                cast("FlextLdifModelsDomains.Acl", acl)
+                for acl in results_raw
+                if acl is not None
+            ]
 
         # Create response
         # Statistics is a PEP 695 type alias - use the underlying class directly
@@ -255,7 +272,6 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         return FlextResult.ok(response)
 
-    @staticmethod
     @staticmethod
     def extract_acl_entries(
         entries: list[FlextLdifModels.Entry],
@@ -283,22 +299,31 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         # Filter entries that have at least one ACL attribute
         # Exclude schema entries even if they have ACL attributes
-        acl_entries = []
-        for entry in entries:
+        def filter_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry | None:
+            """Filter entry if it has ACL attributes."""
             # Skip schema entries
             if FlextLdifAcl._is_schema_entry(entry):
-                continue
+                return None
 
             # Check if entry has any of the ACL attributes
-            has_acl = False
             for attr_name in acl_attributes:
                 attr_values = entry.get_attribute_values(attr_name)
                 if attr_values and len(attr_values) > 0:
-                    has_acl = True
-                    break
+                    return entry
+            return None
 
-            if has_acl:
-                acl_entries.append(entry)
+        batch_result = u.batch(
+            entries,
+            filter_entry,
+            on_error="skip",
+        )
+        acl_entries: list[FlextLdifModels.Entry] = [
+            cast("FlextLdifModels.Entry", entry)
+            for entry in (
+                batch_result.value.get("results", []) if batch_result.is_success else []
+            )
+            if entry is not None
+        ]
 
         return FlextResult.ok(acl_entries)
 
@@ -314,6 +339,93 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         """
         return FlextLdifUtilities.Entry.is_schema_entry(entry, strict=False)
+
+    @staticmethod
+    def evaluate_acl_context(
+        acls: list[FlextLdifModelsDomains.Acl],
+        required_permissions: FlextLdifModelsDomains.AclPermissions | dict[str, bool],
+    ) -> FlextResult[FlextLdifModelsResults.AclEvaluationResult]:
+        """Evaluate if ACLs grant required permissions.
+
+        Business Rule: ACL context evaluation checks if any ACL in the list grants
+        all required permissions. Empty ACL lists fail immediately. Each required
+        permission must be explicitly granted by at least one ACL (no implicit grants).
+
+        Implication: This method provides security context evaluation for access control
+        decisions. It follows a "deny by default" model - permissions must be explicitly
+        granted. Results include match details for auditing and debugging.
+
+        Args:
+            acls: List of ACLs to evaluate
+            required_permissions: Required permissions (as AclPermissions model or dict)
+
+        Returns:
+            FlextResult containing AclEvaluationResult with match status and details
+
+        """
+        # Convert dict to AclPermissions if needed
+        required = (
+            FlextLdifModelsDomains.AclPermissions(**required_permissions)
+            if isinstance(required_permissions, dict)
+            else required_permissions
+        )
+
+        # Empty ACL list - evaluation fails (no permissions granted)
+        if not acls:
+            return FlextResult.ok(
+                FlextLdifModelsResults.AclEvaluationResult(
+                    granted=False,
+                    matched_acl=None,
+                    message="No ACLs to evaluate - access denied by default",
+                ),
+            )
+
+        # Build list of required permission names using u.filter
+        perm_names = ["read", "write", "delete", "add", "search", "compare"]
+        filtered = u.filter(
+            perm_names,
+            predicate=lambda p: getattr(required, p, False),
+        )
+        required_perms = filtered if isinstance(filtered, list) else []
+
+        # If no permissions required, evaluation passes trivially
+        if not required_perms:
+            return FlextResult.ok(
+                FlextLdifModelsResults.AclEvaluationResult(
+                    granted=True,
+                    matched_acl=acls[0] if acls else None,
+                    message="No permissions required - access granted trivially",
+                ),
+            )
+
+        # Find ACL that grants all required permissions
+        def acl_grants_all(acl: FlextLdifModelsDomains.Acl) -> bool:
+            """Check if ACL grants all required permissions."""
+            return all(getattr(acl.permissions, p, False) for p in required_perms)
+
+        # find() returns T | None for list input (no tuple since return_key=False default)
+        found = cast(
+            "FlextLdifModelsDomains.Acl | None",
+            u.find(acls, predicate=acl_grants_all),
+        )
+
+        if found is not None:
+            return FlextResult.ok(
+                FlextLdifModelsResults.AclEvaluationResult(
+                    granted=True,
+                    matched_acl=found,
+                    message=f"ACL '{found.name}' grants required permissions: {required_perms}",
+                ),
+            )
+
+        # No ACL grants all required permissions
+        return FlextResult.ok(
+            FlextLdifModelsResults.AclEvaluationResult(
+                granted=False,
+                matched_acl=None,
+                message=f"No ACL grants required permissions: {required_perms}",
+            ),
+        )
 
     def execute(self) -> FlextResult[FlextLdifModelsResults.AclResponse]:  # noqa: PLR6301
         """Execute ACL service health check.

@@ -12,19 +12,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Generator, Mapping
 from dataclasses import dataclass
 from typing import Protocol, TypeVar
 
 import structlog
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif.models import FlextLdifModels
 
 logger = structlog.get_logger(__name__)
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 # Type aliases
 T = TypeVar("T")
@@ -108,50 +113,45 @@ class FlextLdifUtilitiesParsers:
 
         @staticmethod
         def parse(
-            ldif_content: str,
-            server_type: str,
-            parse_entry_hook: ParseEntryHook,
-            *,
-            transform_attrs_hook: TransformAttrsHook | None = None,
-            post_parse_hook: PostParseHook | None = None,
-            preserve_metadata_hook: PreserveMetadataHook | None = None,
-            skip_empty_entries: bool = True,
-            log_level: str = "debug",
-            ldif_parser: Callable[[str], list[tuple[str, EntryAttrs]]] | None = None,
+            config: FlextLdifModelsConfig.LdifContentParseConfig | None = None,
+            **kwargs: object,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Parse LDIF content using hook-based configuration.
 
             Args:
-                ldif_content: Raw LDIF content string
-                server_type: Server type identifier (e.g., "rfc", "oid")
-                parse_entry_hook: Hook to parse (dn, attrs) into Entry
-                transform_attrs_hook: Optional hook to transform attrs before parsing
-                post_parse_hook: Optional hook to transform entry after parsing
-                preserve_metadata_hook: Optional hook to preserve original LDIF
-                skip_empty_entries: Skip entries with no attributes
-                log_level: Logging verbosity ("debug", "info", "warning")
-                ldif_parser: Optional custom LDIF parser
+                config: LdifContentParseConfig with all parsing parameters
+                **kwargs: Optional parameters for LdifContentParseConfig (ldif_content,
+                    server_type, parse_entry_hook, transform_attrs_hook, post_parse_hook,
+                    preserve_metadata_hook, skip_empty_entries, log_level, ldif_parser) -
+                    used only if config is None
 
             Returns:
                 FlextResult with list of parsed Entry objects
 
             Example:
-                >>> result = FlextLdifUtilitiesParsers.Content.parse(
-                ...     ldif_content, "oid", oid_quirk._parse_entry
+                >>> config = FlextLdifModelsConfig.LdifContentParseConfig(
+                ...     ldif_content=content, server_type="oid",
+                ...     parse_entry_hook=oid_quirk._parse_entry
                 ... )
+                >>> result = FlextLdifUtilitiesParsers.Content.parse(config)
 
             """
+            # Use provided config or build from kwargs
+            if config is None:
+                config = FlextLdifModelsConfig.LdifContentParseConfig(**kwargs)  # type: ignore[arg-type]
+
             # Early return for empty content
-            if not ldif_content.strip():
-                logger.debug("Empty LDIF content", server_type=server_type)
+            if not config.ldif_content.strip():
+                logger.debug("Empty LDIF content", server_type=config.server_type)
                 return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
             try:
                 # Parse LDIF using provided parser or default
-                parser = ldif_parser or FlextLdifUtilitiesParser.parse_ldif_lines
-                parsed_entries_raw = parser(ldif_content)
+                parser = config.ldif_parser or FlextLdifUtilitiesParser.parse_ldif_lines
+                parsed_entries_raw = parser(config.ldif_content)
 
                 # Convert to proper type (dict -> Mapping for type compatibility)
+                # Direct conversion is simpler than u.process for this case
                 parsed_entries: list[tuple[str, EntryAttrs]] = [
                     (dn, attrs) for dn, attrs in parsed_entries_raw
                 ]
@@ -162,23 +162,26 @@ class FlextLdifUtilitiesParsers:
                 )
 
                 # Process entries using generator
+                process_config = FlextLdifModelsConfig.EntryProcessingConfig(
+                    parsed_entries=parsed_entries,
+                    parse_entry_hook=config.parse_entry_hook,
+                    transform_attrs_hook=config.transform_attrs_hook,
+                    post_parse_hook=config.post_parse_hook,
+                    preserve_metadata_hook=config.preserve_metadata_hook,
+                    skip_empty_entries=config.skip_empty_entries,
+                )
                 entries = list(
                     FlextLdifUtilitiesParsers.Content.process_entries(
-                        parsed_entries,
-                        parse_entry_hook,
-                        transform_attrs_hook,
-                        post_parse_hook,
-                        preserve_metadata_hook,
-                        skip_empty_entries=skip_empty_entries,
+                        process_config,
                         stats=stats,
                     ),
                 )
 
                 # Log final stats
-                if log_level == "debug":
+                if config.log_level == "debug":
                     logger.debug(
                         "Parsed %s LDIF content",
-                        server_type.upper(),
+                        config.server_type.upper(),
                         total=stats.total_entries,
                         successful=stats.successful,
                         failed=stats.failed,
@@ -190,47 +193,104 @@ class FlextLdifUtilitiesParsers:
             except Exception as e:
                 logger.exception(
                     "Failed to parse LDIF content",
-                    server_type=server_type,
+                    server_type=config.server_type,
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to parse {server_type} LDIF: {e}",
+                    f"Failed to parse {config.server_type} LDIF: {e}",
                 )
 
         @staticmethod
+        def build_ldif_lines(
+            current_dn: str,
+            current_attrs: EntryAttrs,
+        ) -> str:
+            """Build LDIF lines from DN and attributes."""
+            def build_attr_lines(attr_item: tuple[str, list[str]]) -> list[str]:
+                """Build attribute lines for single attribute."""
+                attr, vals = attr_item
+                return [f"{attr}: {val}" for val in vals]
+            attr_lines_result = u.process(
+                list(current_attrs.items()),
+                processor=build_attr_lines,
+                on_error="skip",
+            )
+            if attr_lines_result.is_success and isinstance(attr_lines_result.value, list):
+                # Flatten nested list of lines
+                attr_lines = [
+                    line
+                    for sublist in attr_lines_result.value
+                    if isinstance(sublist, list)
+                    for line in sublist
+                ]
+            else:
+                # Fallback: build lines directly from attributes
+                attr_lines = [
+                    f"{attr}: {val}"
+                    for attr, vals in current_attrs.items()
+                    for val in vals
+                ]
+            return "\n".join([f"dn: {current_dn}"] + attr_lines) + "\n"
+
+        @staticmethod
+        def preserve_entry_metadata(
+            entry: FlextLdifModels.Entry,
+            original_ldif: str,
+            config: FlextLdifModelsConfig.EntryProcessingConfig,
+            stats: Stats,
+        ) -> None:
+            """Preserve metadata for entry."""
+            if entry.metadata and config.preserve_metadata_hook:
+                config.preserve_metadata_hook(
+                    entry,
+                    original_ldif,
+                    "entry_original_ldif",
+                )
+                stats.with_metadata += 1
+            elif entry.metadata:
+                # Type narrowing: convert internal QuirkMetadata to public QuirkMetadata
+                if not isinstance(
+                    entry.metadata,
+                    FlextLdifModelsDomains.QuirkMetadata,
+                ):
+                    metadata_public = (
+                        FlextLdifModelsDomains.QuirkMetadata.model_validate(
+                            entry.metadata.model_dump(),
+                        )
+                    )
+                else:
+                    metadata_public = entry.metadata
+                FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
+                    metadata=metadata_public,
+                    ldif_content=original_ldif,
+                    context="entry_original_ldif",
+                )
+                stats.with_metadata += 1
+
+        @staticmethod
         def process_entries(
-            parsed_entries: list[tuple[str, EntryAttrs]],
-            parse_entry_hook: ParseEntryHook,
-            transform_attrs_hook: TransformAttrsHook | None,
-            post_parse_hook: PostParseHook | None,
-            preserve_metadata_hook: PreserveMetadataHook | None,
+            config: FlextLdifModelsConfig.EntryProcessingConfig,
             *,
-            skip_empty_entries: bool = True,
             stats: Stats,
         ) -> Generator[FlextLdifModels.Entry]:
             """Process parsed entries using hooks.
 
             Args:
-                parsed_entries: List of (dn, attrs) tuples from parser
-                parse_entry_hook: Hook to parse (dn, attrs) into Entry
-                transform_attrs_hook: Optional hook to transform attrs before parsing
-                post_parse_hook: Optional hook to transform entry after parsing
-                preserve_metadata_hook: Optional hook to preserve original LDIF
-                skip_empty_entries: Skip entries with no attributes
+                config: EntryProcessingConfig with all processing parameters
                 stats: Statistics tracker
 
             Yields:
                 Entry models parsed from LDIF content
 
             """
-            for idx, (original_dn, original_attrs) in enumerate(parsed_entries):
+            for idx, (original_dn, original_attrs) in enumerate(config.parsed_entries):
                 # Skip empty entries if configured
-                if skip_empty_entries and not original_attrs:
+                if config.skip_empty_entries and not original_attrs:
                     stats.skipped += 1
                     continue
 
                 # Apply transform hook if provided
-                if transform_attrs_hook:
-                    transformed_dn, transformed_attrs = transform_attrs_hook(
+                if config.transform_attrs_hook:
+                    transformed_dn, transformed_attrs = config.transform_attrs_hook(
                         original_dn,
                         original_attrs,
                     )
@@ -241,54 +301,27 @@ class FlextLdifUtilitiesParsers:
                     current_attrs = original_attrs
 
                 # Reconstruct original LDIF
-                original_ldif = (
-                    "\n".join(
-                        [f"dn: {current_dn}"]
-                        + [
-                            f"{attr}: {val}"
-                            for attr, vals in current_attrs.items()
-                            for val in vals
-                        ],
-                    )
-                    + "\n"
+                original_ldif = FlextLdifUtilitiesParsers.Content.build_ldif_lines(
+                    current_dn,
+                    current_attrs,
                 )
 
                 # Parse entry using hook
-                match parse_entry_hook(current_dn, current_attrs):
+                match config.parse_entry_hook(current_dn, current_attrs):
                     case FlextResult(is_success=True) as result:
                         entry = result.unwrap()
 
                         # Apply post-parse hook if provided
-                        if post_parse_hook:
-                            entry = post_parse_hook(entry)
+                        if config.post_parse_hook:
+                            entry = config.post_parse_hook(entry)
 
                         # Preserve metadata
-                        if entry.metadata and preserve_metadata_hook:
-                            preserve_metadata_hook(
-                                entry,
-                                original_ldif,
-                                "entry_original_ldif",
-                            )
-                            stats.with_metadata += 1
-                        elif entry.metadata:
-                            # Type narrowing: convert internal QuirkMetadata to public QuirkMetadata
-                            if not isinstance(
-                                entry.metadata,
-                                FlextLdifModelsDomains.QuirkMetadata,
-                            ):
-                                metadata_public = (
-                                    FlextLdifModelsDomains.QuirkMetadata.model_validate(
-                                        entry.metadata.model_dump(),
-                                    )
-                                )
-                            else:
-                                metadata_public = entry.metadata
-                            FlextLdifUtilitiesMetadata.preserve_original_ldif_content(
-                                metadata=metadata_public,
-                                ldif_content=original_ldif,
-                                context="entry_original_ldif",
-                            )
-                            stats.with_metadata += 1
+                        FlextLdifUtilitiesParsers.Content.preserve_entry_metadata(
+                            entry,
+                            original_ldif,
+                            config,
+                            stats,
+                        )
 
                         stats.successful += 1
                         yield entry
@@ -420,90 +453,82 @@ class FlextLdifUtilitiesParsers:
         # ===== STATIC METHODS =====
 
         @staticmethod
+        def normalize_sup_list(sup: object) -> list[str]:
+            """Normalize sup to list[str]."""
+            # Type narrowing for FlextRuntime.is_list_like
+            if isinstance(sup, list):
+                sup_list_raw = sup
+            elif isinstance(sup, str):
+                sup_list_raw = [sup]
+            else:
+                sup_list_raw = []
+            if not isinstance(sup_list_raw, list):
+                msg = f"Expected list, got {type(sup_list_raw)}"
+                raise TypeError(msg)
+            filtered_sup = u.filter(
+                sup_list_raw,
+                predicate=lambda item: isinstance(item, str),
+            )
+            if isinstance(filtered_sup, list):
+                return [str(item) for item in filtered_sup]
+            return []
+
+        @staticmethod
         def parse(
-            definition: str,
-            server_type: str,
-            parse_core_hook: ParseCoreHook,
-            *,
-            validate_structural_hook: ValidateStructuralHook | None = None,
-            transform_sup_hook: TransformSupHook | None = None,
-            enrich_metadata_hook: EnrichMetadataHook | None = None,
+            config: FlextLdifModelsConfig.ObjectClassParseConfig | None = None,
+            **kwargs: object,
         ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
             """Parse objectClass definition using hooks.
 
             Args:
-                definition: Raw objectClass definition
-                server_type: Server type identifier
-                parse_core_hook: Core parsing logic
-                validate_structural_hook: Optional structural validation
-                transform_sup_hook: Optional SUP transformation
-                enrich_metadata_hook: Optional metadata enrichment
+                config: ObjectClassParseConfig with all parsing parameters
+                **kwargs: Optional parameters for ObjectClassParseConfig (definition,
+                    server_type, parse_core_hook, validate_structural_hook,
+                    transform_sup_hook, enrich_metadata_hook) - used only if config is None
 
             Returns:
                 FlextResult with parsed SchemaObjectClass model
 
             """
+            # Use provided config or build from kwargs
+            if config is None:
+                config = FlextLdifModelsConfig.ObjectClassParseConfig(**kwargs)  # type: ignore[arg-type]
+
             try:
                 # Parse using core hook
-                result = parse_core_hook(definition)
+                result = config.parse_core_hook(config.definition)
                 if result.is_failure:
                     return result
 
                 objectclass = result.unwrap()
 
                 # Validate structural if hook provided
-                if validate_structural_hook:
-                    # Convert sup to list[str] if it's a string
-                    sup_list_raw = (
-                        objectclass.sup
-                        if FlextRuntime.is_list_like(objectclass.sup)
-                        else [objectclass.sup]
-                        if isinstance(objectclass.sup, str)
-                        else []
+                if config.validate_structural_hook:
+                    sup_list_validate = FlextLdifUtilitiesParsers.ObjectClass.normalize_sup_list(
+                        objectclass.sup,
                     )
-                    # Type narrowing: list[object] | list[str] → list[str]
-                    if not isinstance(sup_list_raw, list):
-                        msg = f"Expected list, got {type(sup_list_raw)}"
-                        raise TypeError(msg)
-                    # Filter to only str items
-                    sup_list_validate: list[str] = [
-                        str(item) for item in sup_list_raw if isinstance(item, str)
-                    ]
-                    validate_structural_hook(
+                    config.validate_structural_hook(
                         objectclass.kind or "STRUCTURAL",
                         sup_list_validate,
                     )
 
                 # Transform SUP if hook provided
-                if transform_sup_hook and objectclass.sup:
-                    # Convert sup to list[str] if it's a string
-                    sup_list_raw = (
-                        objectclass.sup
-                        if FlextRuntime.is_list_like(objectclass.sup)
-                        else [objectclass.sup]
-                        if isinstance(objectclass.sup, str)
-                        else []
+                if config.transform_sup_hook and objectclass.sup:
+                    sup_list_transform = FlextLdifUtilitiesParsers.ObjectClass.normalize_sup_list(
+                        objectclass.sup,
                     )
-                    # Type narrowing: list[object] | list[str] → list[str]
-                    if not isinstance(sup_list_raw, list):
-                        msg = f"Expected list, got {type(sup_list_raw)}"
-                        raise TypeError(msg)
-                    # Filter to only str items
-                    sup_list_transform: list[str] = [
-                        str(item) for item in sup_list_raw if isinstance(item, str)
-                    ]
-                    objectclass.sup = transform_sup_hook(sup_list_transform)
+                    objectclass.sup = config.transform_sup_hook(sup_list_transform)
 
                 # Enrich metadata if hook provided
-                if enrich_metadata_hook:
-                    objectclass = enrich_metadata_hook(objectclass, definition)
+                if config.enrich_metadata_hook:
+                    config.enrich_metadata_hook(objectclass)
 
                 return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].ok(
                     objectclass,
                 )
 
             except Exception as e:
-                logger.exception("Failed to parse objectClass", server_type=server_type)
+                logger.exception("Failed to parse objectClass", server_type=config.server_type)
                 return FlextResult[FlextLdifModelsDomains.SchemaObjectClass].fail(
                     f"Failed to parse objectClass: {e}",
                 )
@@ -549,49 +574,53 @@ class FlextLdifUtilitiesParsers:
 
         @staticmethod
         def parse(
-            dn: str,
-            attrs: EntryAttrs,
-            server_type: str,
-            create_entry_hook: CreateEntryHook,
-            *,
-            build_metadata_hook: BuildMetadataHook | None = None,
-            normalize_dn_hook: NormalizeDnHook | None = None,
-            transform_attrs_hook: TransformAttrsHook | None = None,
+            config: FlextLdifModelsConfig.EntryParseConfig | None = None,
+            **kwargs: object,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse entry using hooks.
 
             Args:
-                dn: Distinguished name
-                attrs: Entry attributes
-                server_type: Server type identifier
-                create_entry_hook: Entry creation logic
-                build_metadata_hook: Optional metadata building
-                normalize_dn_hook: Optional DN normalization
-                transform_attrs_hook: Optional attribute transformation
+                config: EntryParseConfig with all parsing parameters (preferred)
+                dn: Distinguished name (used if config is None)
+                attrs: Entry attributes (used if config is None)
+                server_type: Server type identifier (used if config is None)
+                create_entry_hook: Entry creation logic (used if config is None)
+                build_metadata_hook: Optional metadata building (used if config is None)
+                normalize_dn_hook: Optional DN normalization (used if config is None)
+                transform_attrs_hook: Optional attribute transformation (used if config is None)
+                **kwargs: Optional parameters for EntryParseConfig (used only if config is None)
 
             Returns:
                 FlextResult with parsed Entry model
 
             """
+            # Use provided config or build from kwargs
+            if config is None:
+                config = FlextLdifModelsConfig.EntryParseConfig(**kwargs)  # type: ignore[arg-type]
+
             try:
                 # Normalize DN if hook provided
-                if normalize_dn_hook:
-                    dn = normalize_dn_hook(dn)
+                dn = config.dn
+                if config.normalize_dn_hook:
+                    dn = config.normalize_dn_hook(dn)
 
                 # Transform attrs if hook provided
-                if transform_attrs_hook:
-                    attrs = transform_attrs_hook(attrs)
+                dn_transformed = config.dn
+                attrs = config.attrs
+                if config.transform_attrs_hook:
+                    dn_transformed, attrs = config.transform_attrs_hook(config.dn, config.attrs)
+                dn = dn_transformed
 
                 # Create entry using hook
-                result = create_entry_hook(dn, attrs)
+                result = config.create_entry_hook(dn, attrs)
                 if result.is_failure:
                     return result
 
                 entry = result.unwrap()
 
                 # Build metadata if hook provided
-                if build_metadata_hook:
-                    metadata = build_metadata_hook(dn, attrs)
+                if config.build_metadata_hook:
+                    metadata = config.build_metadata_hook(dn, attrs)
                     if metadata:
                         entry.metadata = metadata
 
@@ -600,8 +629,8 @@ class FlextLdifUtilitiesParsers:
             except Exception as e:
                 logger.exception(
                     "Failed to parse entry",
-                    server_type=server_type,
-                    dn=dn[:50] if dn else None,
+                    server_type=config.server_type,
+                    dn=config.dn[:50] if config.dn else None,
                 )
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to parse entry: {e}",

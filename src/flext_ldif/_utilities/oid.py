@@ -10,8 +10,13 @@ import operator
 import re
 
 from flext_core import FlextLogger, FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
+r = FlextResult  # Result
 
 logger = FlextLogger(__name__)
 
@@ -305,12 +310,16 @@ class FlextLdifUtilitiesOID:
             'ad'
 
         """
-        if FlextLdifUtilitiesOID.is_oracle_oid(definition_or_oid):
-            return "oid"
-        if FlextLdifUtilitiesOID.is_microsoft_ad_oid(definition_or_oid):
-            return "ad"
-        if FlextLdifUtilitiesOID.is_openldap_oid(definition_or_oid):
-            return "openldap"
+        # Early checks for common patterns
+        early_checks = [
+            (FlextLdifUtilitiesOID.is_oracle_oid, "oid"),
+            (FlextLdifUtilitiesOID.is_microsoft_ad_oid, "ad"),
+            (FlextLdifUtilitiesOID.is_openldap_oid, "openldap"),
+        ]
+
+        for check_func, server_type in early_checks:
+            if check_func(definition_or_oid):
+                return server_type
 
         # Check other patterns
         if not definition_or_oid:
@@ -323,12 +332,15 @@ class FlextLdifUtilitiesOID:
                 return None
             oid = extracted
 
-        if FlextLdifUtilitiesOID.REDHAT_389DS_PATTERN.match(oid):
-            return "ds389"
-        if FlextLdifUtilitiesOID.NOVELL_PATTERN.match(oid):
-            return "novell"
-        if FlextLdifUtilitiesOID.IBM_TIVOLI_PATTERN.match(oid):
-            return "tivoli"
+        pattern_checks = [
+            (FlextLdifUtilitiesOID.REDHAT_389DS_PATTERN, "ds389"),
+            (FlextLdifUtilitiesOID.NOVELL_PATTERN, "novell"),
+            (FlextLdifUtilitiesOID.IBM_TIVOLI_PATTERN, "tivoli"),
+        ]
+
+        for pattern, server_type in pattern_checks:
+            if pattern.match(oid):
+                return server_type
 
         return None
 

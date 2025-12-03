@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.events import FlextLdifModelsEvents
@@ -182,7 +182,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def store_event_in_instance(
-        instance: FlextTypes.GeneralValueType,
+        instance: t.GeneralValueType,
         event: FlextModelsEntity.DomainEvent,
         attr_name: str = "_last_event",
     ) -> None:
@@ -271,7 +271,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _process_extras(
         extras: FlextLdifModelsConfig.LogContextExtras | None = None,
-    ) -> dict[str, FlextTypes.ScalarValue]:
+    ) -> dict[str, t.ScalarValue]:
         """Extract and filter extras into a dict of loggable context.
 
         Handles all known fields + dynamic extra fields from LogContextExtras.
@@ -283,7 +283,7 @@ class FlextLdifUtilitiesEvents:
             Filtered dict with string/int/float/bool values only
 
         """
-        filtered_extras: dict[str, FlextTypes.ScalarValue] = {}
+        filtered_extras: dict[str, t.ScalarValue] = {}
         if not extras:
             return filtered_extras
 
@@ -347,7 +347,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
 
         # Build log context with event data (explicit type annotation for compatibility)
-        log_context: dict[str, FlextTypes.ScalarValue] = {
+        log_context: dict[str, t.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,
@@ -372,7 +372,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _log_and_emit_generic_event(
         logger: FlextLogger,
-        log_context: dict[str, FlextTypes.ScalarValue],
+        log_context: dict[str, t.ScalarValue],
         log_message: str,
         log_level: str = "info",
         extras: FlextLdifModelsConfig.LogContextExtras | None = None,
@@ -444,7 +444,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_migration_event(config)
 
         # Build log context with event data + computed metrics
-        log_context: dict[str, FlextTypes.ScalarValue] = {
+        log_context: dict[str, t.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "migration_operation": config.migration_operation,
             "source_server": config.source_server,
@@ -511,7 +511,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_conversion_event(config)
 
         # Build log context with event data + computed metrics
-        log_context: dict[str, FlextTypes.ScalarValue] = {
+        log_context: dict[str, t.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "conversion_operation": config.conversion_operation,
             "source_format": config.source_format,
@@ -577,7 +577,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_schema_event(config)
 
         # Build log context with event data + computed metrics (explicit type annotation)
-        log_context: dict[str, FlextTypes.ScalarValue] = {
+        log_context: dict[str, t.ScalarValue] = {
             "aggregate_id": event.aggregate_id,
             "schema_operation": config.schema_operation,
             "items_processed": config.items_processed,

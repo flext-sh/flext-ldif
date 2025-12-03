@@ -17,21 +17,21 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from flext_ldif import FlextLdif
 
-def process_directory_export(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_directory_export(file_path: str) -> FlextResult[t.Dict]:
     """Process LDIF directory export with railway programming."""
     api = FlextLdif()
 
@@ -62,7 +62,7 @@ def process_directory_export(file_path: str) -> FlextResult[FlextTypes.Dict]:
 import os
 from pathlib import Path
 
-def process_ldif_with_memory_check(file_path: Path) -> FlextResult[FlextTypes.Dict]:
+def process_ldif_with_memory_check(file_path: Path) -> FlextResult[t.Dict]:
     """Process LDIF with memory size validation."""
     api = FlextLdif()
 
@@ -71,7 +71,7 @@ def process_ldif_with_memory_check(file_path: Path) -> FlextResult[FlextTypes.Di
     max_size = 100 * 1024 * 1024  # 100MB limit for memory-bound parser
 
     if file_size > max_size:
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[t.Dict].fail(
             f"File too large ({file_size} bytes). "
             f"Current implementation limited to {max_size} bytes."
         )
@@ -93,18 +93,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from pathlib import Path
 
 class client-aOUDMigrationService:
@@ -123,7 +123,7 @@ class client-aOUDMigrationService:
 
         self._ldif_api = FlextLdif(config=migration_config)
 
-    def process_oud_export(self, export_file: Path) -> FlextResult[FlextTypes.Dict]:
+    def process_oud_export(self, export_file: Path) -> FlextResult[t.Dict]:
         """Process Oracle Unified Directory LDIF export."""
         self.logger.info("Starting OUD LDIF processing", extra={
             'export_file': str(export_file),
@@ -147,7 +147,7 @@ class client-aOUDMigrationService:
             .map(self._log_ldif_completion)
         )
 
-    def _categorize_ldif_entries(self, entries) -> FlextResult[FlextTypes.Dict]:
+    def _categorize_ldif_entries(self, entries) -> FlextResult[t.Dict]:
         """Categorize LDIF entries for migration processing."""
         try:
             users = []
@@ -165,7 +165,7 @@ class client-aOUDMigrationService:
                 else:
                     other.append(entry)
 
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[t.Dict].ok({
                 'users': users,
                 'groups': groups,
                 'organizational_units': organizational_units,
@@ -173,9 +173,9 @@ class client-aOUDMigrationService:
                 'total': len(entries)
             })
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(f"LDIF entry categorization failed: {e}")
+            return FlextResult[t.Dict].fail(f"LDIF entry categorization failed: {e}")
 
-    def _apply_migration_transformations(self, categorized: dict) -> FlextResult[FlextTypes.Dict]:
+    def _apply_migration_transformations(self, categorized: dict) -> FlextResult[t.Dict]:
         """Apply client-a-specific LDIF entry transformations."""
         # LDIF-specific transformations for OUD migration
 
@@ -190,7 +190,7 @@ class client-aOUDMigrationService:
         transformed_users = self._transform_user_entries(categorized['users'])
         transformed_groups = self._transform_group_entries(categorized['groups'])
 
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[t.Dict].ok({
             'users': transformed_users,
             'groups': transformed_groups,
             'organizational_units': categorized['organizational_units'],
@@ -245,18 +245,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from flext_ldif import FlextLdif
 
 class LdifAPIService(FlextAPIService):
@@ -266,14 +266,14 @@ class LdifAPIService(FlextAPIService):
         super().__init__()
         self._ldif_api = FlextLdif()
 
-    def parse_ldif_endpoint(self, file_content: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_ldif_endpoint(self, file_content: str) -> FlextResult[t.Dict]:
         """API endpoint for LDIF parsing with memory awareness."""
         # Check content size before processing
         content_size = len(file_content.encode('utf-8'))
         max_size = 50 * 1024 * 1024  # 50MB for API operations
 
         if content_size > max_size:
-            return FlextResult[FlextTypes.Dict].fail({
+            return FlextResult[t.Dict].fail({
                 'status': 'error',
                 'message': f'LDIF content too large ({content_size} bytes). Maximum: {max_size} bytes.',
                 'error_type': 'memory_limit_exceeded'
@@ -317,18 +317,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from flext_ldif import FlextLdif
 from pathlib import Path
 
@@ -409,24 +409,24 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from flext_ldif import FlextLdif
 from pathlib import Path
 import psutil
 import os
 
-def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dict]:
+def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
     """Process multiple LDIF files with memory monitoring."""
     api = FlextLdif()
     all_entries = []
@@ -441,7 +441,7 @@ def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[FlextType
         memory_increase = current_memory - initial_memory
 
         if memory_increase > 500 * 1024 * 1024:  # 500MB increase limit
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[t.Dict].fail(
                 f"Memory usage too high ({memory_increase} bytes). "
                 f"Processed {len(processing_stats)} files before limit."
             )
@@ -455,12 +455,12 @@ def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[FlextType
                 'memory_after': current_memory
             }
         else:
-            return FlextResult[FlextTypes.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return FlextResult[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
     final_memory = process.memory_info().rss
     total_memory_used = final_memory - initial_memory
 
-    return FlextResult[FlextTypes.Dict].ok({
+    return FlextResult[t.Dict].ok({
         'total_entries': len(all_entries),
         'files_processed': len(processing_stats),
         'file_stats': processing_stats,
@@ -499,7 +499,7 @@ def safe_ldif_processing(file_path: Path) -> FlextResult[list]:
 Handle LDIF format errors specifically:
 
 ```python
-def robust_ldif_processing(content: str) -> FlextResult[FlextTypes.Dict]:
+def robust_ldif_processing(content: str) -> FlextResult[t.Dict]:
     """Process LDIF with format-specific error handling."""
     api = FlextLdif()
 
@@ -507,11 +507,11 @@ def robust_ldif_processing(content: str) -> FlextResult[FlextTypes.Dict]:
     if result.is_failure:
         error_msg = result.error
         if "LDIF" in error_msg or "parse" in error_msg.lower():
-            return FlextResult[FlextTypes.Dict].fail(f"LDIF format error: {error_msg}")
+            return FlextResult[t.Dict].fail(f"LDIF format error: {error_msg}")
         else:
-            return FlextResult[FlextTypes.Dict].fail(f"Processing error: {error_msg}")
+            return FlextResult[t.Dict].fail(f"Processing error: {error_msg}")
 
-    return FlextResult[FlextTypes.Dict].ok({'entries': result.unwrap()})
+    return FlextResult[t.Dict].ok({'entries': result.unwrap()})
 ```
 
 ### 3. LDIF Entry Type Processing
@@ -548,10 +548,10 @@ def categorize_ldif_entries(entries) -> dict[str, object]:
 
 ```python
 # ✅ Good: Small to medium LDIF files
-def process_small_ldif(file_path: Path) -> FlextResult[FlextTypes.Dict]:
+def process_small_ldif(file_path: Path) -> FlextResult[t.Dict]:
     """Process LDIF files under 100MB."""
     if file_path.stat().st_size > 100 * 1024 * 1024:
-        return FlextResult[FlextTypes.Dict].fail("File too large for current implementation")
+        return FlextResult[t.Dict].fail("File too large for current implementation")
 
     api = FlextLdif()
     return api.parse_file(file_path)

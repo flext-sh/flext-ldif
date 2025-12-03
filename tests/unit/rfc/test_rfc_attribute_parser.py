@@ -116,6 +116,16 @@ class TestRfcAttributeParser:
             "2.5.4.3",
             TestsRfcConstants.ATTR_NAME_CN,
         ),
+        AttributeTestCase.QUOTED_SYNTAX: (
+            "( 2.5.4.3 NAME 'cn' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )",
+            "2.5.4.3",
+            TestsRfcConstants.ATTR_NAME_CN,
+        ),
+        AttributeTestCase.UNQUOTED_SYNTAX: (
+            "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+            "2.5.4.3",
+            TestsRfcConstants.ATTR_NAME_CN,
+        ),
     }
 
     # Syntax definition test data with expected syntax name
@@ -137,19 +147,45 @@ class TestRfcAttributeParser:
             "boolean",
         ),
         SyntaxTestCase.INTEGER: (
-            (
-                "( 1.3.6.1.4.1.1466.115.121.1.26 NAME 'uid' "
-                f"SYNTAX {TestsRfcConstants.SYNTAX_OID_INTEGER} )"
-            ),
-            "1.3.6.1.4.1.1466.115.121.1.26",
-            "uid",
-            "ia5_string",
+            ("( 2.5.4.0 NAME 'objectClass' SYNTAX 2.5.5.5 )"),
+            "2.5.4.0",
+            "objectClass",
+            "integer",
         ),
         SyntaxTestCase.RFC4517_NONSTANDARD: (
             (
                 f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
                 f"'{TestsRfcConstants.ATTR_NAME_CN}' "
                 "SYNTAX 9.9.9.9.9.9 )"
+            ),
+            TestsRfcConstants.ATTR_OID_CN,
+            TestsRfcConstants.ATTR_NAME_CN,
+            None,
+        ),
+        SyntaxTestCase.RFC4517_VALID: (
+            (
+                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
+                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            ),
+            TestsRfcConstants.ATTR_OID_CN,
+            TestsRfcConstants.ATTR_NAME_CN,
+            "directory_string",
+        ),
+        SyntaxTestCase.IA5STRING: (
+            (
+                "( 0.9.2342.19200300.100.1.1 NAME 'uid' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
+            ),
+            "0.9.2342.19200300.100.1.1",
+            "uid",
+            "ia5_string",
+        ),
+        SyntaxTestCase.INVALID_FORMAT: (
+            (
+                f"( {TestsRfcConstants.ATTR_OID_CN} NAME "
+                f"'{TestsRfcConstants.ATTR_NAME_CN}' "
+                "SYNTAX invalid-syntax-oid )"
             ),
             TestsRfcConstants.ATTR_OID_CN,
             TestsRfcConstants.ATTR_NAME_CN,

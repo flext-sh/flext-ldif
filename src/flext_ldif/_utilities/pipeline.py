@@ -31,14 +31,19 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self
+from typing import Self, cast
 
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.configs import ProcessConfig
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
+r = FlextResult  # Result
 
 
 # Sentinel for filtered out entries (since FlextResult.ok(None) is not allowed)
@@ -173,10 +178,10 @@ class Pipeline:
             transformer_result = transformer.apply(entry)
             if transformer_result.is_failure:
                 # Convert FlextResult[Entry] failure to FlextResult[Entry | None] failure
-                return FlextResult.fail(transformer_result.error)
+                return r.fail(transformer_result.error)
             # Transformers always return Entry (never None), but pipeline accepts Entry | None
             entry_value = transformer_result.unwrap()
-            return FlextResult.ok(entry_value)
+            return r.ok(entry_value)
 
         self._steps.append((step_name, wrapped_transformer))
         return self
@@ -205,8 +210,8 @@ class Pipeline:
             entry: FlextLdifModelsDomains.Entry,
         ) -> FlextResult[FlextLdifModelsDomains.Entry | _Filtered]:
             if entry_filter.matches(entry):
-                return FlextResult.ok(entry)
-            return FlextResult.ok(FILTERED)  # Filter out using sentinel
+                return r.ok(entry)
+            return r.ok(FILTERED)  # Filter out using sentinel
 
         self._steps.append((step_name, filter_func))  # type: ignore[arg-type]
         return self
@@ -245,17 +250,17 @@ class Pipeline:
             """
             func_result = func(entry)
             if func_result is None:
-                return FlextResult.ok(None)
+                return r.ok(None)
             if isinstance(func_result, FlextResult):
                 # If result is Entry, wrap in Entry | None union
                 if func_result.is_success:
                     entry_value = func_result.unwrap()
-                    return FlextResult.ok(entry_value)
+                    return r.ok(entry_value)
                 # Convert FlextResult[Entry] failure to FlextResult[Entry | None] failure
-                return FlextResult.fail(func_result.error)
+                return r.fail(func_result.error)
             # func_result is Entry (not None, not FlextResult)
             entry_value_result: FlextLdifModelsDomains.Entry | None = func_result
-            return FlextResult.ok(entry_value_result)
+            return r.ok(entry_value_result)
 
         self._steps.append((name, wrapped_func))
         return self
@@ -277,21 +282,18 @@ class Pipeline:
 
         for step_name, step_func in self._steps:
             if isinstance(current, _Filtered):
-                return FlextResult.ok(FILTERED)
+                return r.ok(FILTERED)
 
             result = step_func(current)
             if result.is_failure:
-                return FlextResult.fail(f"Step '{step_name}' failed: {result.error}")
+                return r.fail(f"Step '{step_name}' failed: {result.error}")
 
             unwrapped = result.unwrap()
             # Business Rule: None indicates entry was filtered out
             # Convert None to FILTERED sentinel for type safety
-            if unwrapped is None:
-                current = FILTERED
-            else:
-                current = unwrapped
+            current = FILTERED if unwrapped is None else unwrapped
 
-        return FlextResult.ok(current)
+        return r.ok(current)
 
     def execute(
         self,
@@ -306,26 +308,36 @@ class Pipeline:
             FlextResult containing list of processed entries or error
 
         """
-        results: list[FlextLdifModelsDomains.Entry] = []
-        errors: list[str] = []
 
-        for i, entry in enumerate(entries):
+        def process_entry(
+            entry: FlextLdifModelsDomains.Entry,
+        ) -> FlextLdifModelsDomains.Entry | None:
+            """Process single entry through pipeline."""
             result = self.execute_one(entry)
-
             if result.is_failure:
-                if self._fail_fast:
-                    return FlextResult.fail(f"Entry {i}: {result.error}")
-                errors.append(f"Entry {i}: {result.error}")
-                continue
-
+                # For fail_fast, batch will stop on first error
+                # For collect mode, return None to skip this entry
+                return None
             processed = result.unwrap()
-            if not isinstance(processed, _Filtered):  # Not filtered out
-                results.append(processed)
+            if isinstance(processed, _Filtered):
+                return None
+            return processed
 
-        if errors:
-            return FlextResult.fail(f"Pipeline errors: {'; '.join(errors)}")
+        batch_result = u.batch(
+            list(entries),
+            process_entry,
+            on_error="fail" if self._fail_fast else "collect",
+        )
+        if batch_result.is_failure:
+            return r.fail(batch_result.error or "Pipeline execution failed")
 
-        return FlextResult.ok(results)
+        # Filter out None values (filtered entries)
+        results = [
+            cast("FlextLdifModelsDomains.Entry", entry)
+            for entry in batch_result.value["results"]
+            if entry is not None
+        ]
+        return r.ok(results)
 
     @property
     def step_count(self) -> int:
@@ -379,7 +391,7 @@ class ProcessingPipeline:
             Configured Pipeline instance
 
         """
-        from flext_ldif._utilities.transformers import Normalize
+        from flext_ldif._utilities.transformers import Normalize  # noqa: PLC0415
 
         pipeline = Pipeline()
 
@@ -488,7 +500,7 @@ class ValidationPipeline:
         else:
             # Validate DN - validate each RDN value separately
             # is_valid_dn_string validates individual RDN values, not full DN strings
-            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
 
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
             components = FlextLdifUtilitiesDN.split(dn_str)
@@ -521,7 +533,7 @@ class ValidationPipeline:
                 else:
                     warnings.append("Entry has no objectClass attribute")
 
-        return FlextResult.ok(
+        return r.ok(
             ValidationResult(
                 is_valid=len(errors) == 0,
                 errors=errors,
@@ -552,7 +564,7 @@ class ValidationPipeline:
             validation_result = self.validate_one(entry)
             if validation_result.is_failure:
                 # Convert FlextResult[ValidationResult] failure to FlextResult[list[ValidationResult]] failure
-                return FlextResult.fail(validation_result.error)
+                return r.fail(validation_result.error)
 
             validation = validation_result.unwrap()
             results.append(validation)
@@ -564,7 +576,7 @@ class ValidationPipeline:
             if not self._collect_all and not validation.is_valid:
                 break
 
-        return FlextResult.ok(results)
+        return r.ok(results)
 
 
 # =========================================================================

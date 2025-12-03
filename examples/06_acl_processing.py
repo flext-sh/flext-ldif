@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import cast
 
+from flext_core import u
+
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
@@ -141,7 +143,8 @@ sn: test
     acl_service = api.acl_service
 
     # Process each entry for ACLs
-    for entry in entries:
+    def process_entry_acls(entry: FlextLdifModels.Entry) -> tuple[str, int] | None:
+        """Extract ACLs from entry."""
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
         if acl_result.is_success:
@@ -150,7 +153,15 @@ sn: test
 
             if acls:
                 # Entry has ACLs
-                _ = (entry.dn, len(acls))
+                return (str(entry.dn), len(acls))
+        return None
+
+    _ = u.process(
+        entries,
+        process_entry_acls,
+        on_error="skip",
+    )
+    )
 
 
 def execute_acl_service() -> None:

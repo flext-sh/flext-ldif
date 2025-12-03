@@ -5,10 +5,10 @@ Tests categorization and base DN filtering with real-world scenarios including:
 - ACL filtering edge cases
 - Entries that should be rejected vs categorized
 
-All test outputs are written to tests/data/output for inspection.
-
 Note: These tests use generic examples (dc=example) to validate behavior.
 Real-world scenarios (like CTBC) are tested in client-a-oud-mig project.
+
+All test outputs use pytest tmp_path fixture for proper cleanup.
 """
 
 from __future__ import annotations
@@ -18,15 +18,11 @@ from pathlib import Path
 from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Output directory for real migration data
-OUTPUT_DIR = Path(__file__).parent.parent / "data" / "output"
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
 
 class TestCategorizationRealData:
     """Test categorization with real-world data scenarios."""
 
-    def test_base_dn_substring_matching_edge_cases(self) -> None:
+    def test_base_dn_substring_matching_edge_cases(self, tmp_path: Path) -> None:
         """Test categorization with base DN that could cause substring matching false positives.
 
         Business Rule: Entries under base DN should be categorized correctly using
@@ -95,12 +91,13 @@ class TestCategorizationRealData:
         # Filter by base DN
         filtered = categorization.filter_by_base_dn(categories)
 
-        # Write results to file for inspection
-        output_file = OUTPUT_DIR / "test_base_dn_substring_edge_cases.ldif"
+        # Write results to temporary file for validation (not inspection)
+        output_file = tmp_path / "test_base_dn_substring_edge_cases.ldif"
+        output_content_lines: list[str] = []
         with output_file.open("w", encoding="utf-8") as f:
-            f.write("# Base DN Substring Matching Edge Cases Test\n")
-            f.write(f"# Base DN: {base_dn}\n")
-            f.write("# Tests: dc=example vs dc=example2 (should not match)\n\n")
+            header = f"# Base DN Substring Matching Edge Cases Test\n# Base DN: {base_dn}\n# Tests: dc=example vs dc=example2 (should not match)\n\n"
+            f.write(header)
+            output_content_lines.append(header)
 
             for category in [
                 FlextLdifConstants.Categories.SCHEMA,
@@ -112,17 +109,32 @@ class TestCategorizationRealData:
             ]:
                 cat_entries = filtered.get_entries(category)
                 if cat_entries:
-                    f.write(f"# Category: {category}\n")
+                    category_header = f"# Category: {category}\n"
+                    f.write(category_header)
+                    output_content_lines.append(category_header)
                     for entry in cat_entries:
                         dn = entry.dn.value if entry.dn else "N/A"
-                        f.write(f"dn: {dn}\n")
+                        entry_line = f"dn: {dn}\n"
+                        f.write(entry_line)
+                        output_content_lines.append(entry_line)
                         if entry.metadata and entry.metadata.processing_stats:
                             stats = entry.metadata.processing_stats
                             if stats.rejected:
-                                f.write(f"# Rejected: {stats.rejected}\n")
+                                rejected_line = f"# Rejected: {stats.rejected}\n"
+                                f.write(rejected_line)
+                                output_content_lines.append(rejected_line)
                             if stats.filtered:
-                                f.write(f"# Filtered: {stats.filtered}\n")
+                                filtered_line = f"# Filtered: {stats.filtered}\n"
+                                f.write(filtered_line)
+                                output_content_lines.append(filtered_line)
                         f.write("\n")
+                        output_content_lines.append("\n")
+
+        # Validate output file was created and has content
+        assert output_file.exists(), "Output file should be created"
+        output_content = output_file.read_text(encoding="utf-8")
+        assert len(output_content) > 0, "Output file should not be empty"
+        assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
 
         # Validate: Entries under base DN should be in correct categories
         hierarchy = filtered.get_entries(FlextLdifConstants.Categories.HIERARCHY)
@@ -171,7 +183,7 @@ class TestCategorizationRealData:
             "ou=test,dc=example2 should be rejected (not under base DN)"
         )
 
-    def test_acl_filtering_substring_matching_edge_cases(self) -> None:
+    def test_acl_filtering_substring_matching_edge_cases(self, tmp_path: Path) -> None:
         """Test ACL filtering with base DN that could cause substring matching false positives.
 
         Business Rule: ACLs should be classified correctly using hierarchical DN check
@@ -236,24 +248,41 @@ class TestCategorizationRealData:
             else:
                 acls_without_basedn.append(entry)
 
-        # Write results to file for inspection
-        output_file = OUTPUT_DIR / "test_acl_substring_edge_cases.ldif"
+        # Write results to temporary file for validation
+        output_file = tmp_path / "test_acl_substring_edge_cases.ldif"
+        output_content_lines: list[str] = []
         with output_file.open("w", encoding="utf-8") as f:
-            f.write("# ACL Substring Matching Edge Cases Test\n")
-            f.write(f"# Base DN: {base_dn}\n")
-            f.write("# Tests: dc=example vs dc=example2 (should not match)\n\n")
+            header = f"# ACL Substring Matching Edge Cases Test\n# Base DN: {base_dn}\n# Tests: dc=example vs dc=example2 (should not match)\n\n"
+            f.write(header)
+            output_content_lines.append(header)
 
             f.write("# ACLs WITH BaseDN (should be filtered):\n")
+            output_content_lines.append("# ACLs WITH BaseDN (should be filtered):\n")
             for entry in acls_with_basedn:
                 dn = entry.dn.value if entry.dn else "N/A"
-                f.write(f"dn: {dn}\n")
-                f.write("\n")
+                entry_line = f"dn: {dn}\n\n"
+                f.write(entry_line)
+                output_content_lines.append(entry_line)
 
             f.write("\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n")
+            output_content_lines.append(
+                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n"
+            )
             for entry in acls_without_basedn:
                 dn = entry.dn.value if entry.dn else "N/A"
-                f.write(f"dn: {dn}\n")
-                f.write("\n")
+                entry_line = f"dn: {dn}\n\n"
+                f.write(entry_line)
+                output_content_lines.append(entry_line)
+
+        # Validate output file was created and has content
+        assert output_file.exists(), "Output file should be created"
+        output_content = output_file.read_text(encoding="utf-8")
+        assert len(output_content) > 0, "Output file should not be empty"
+        assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
+        assert "dc=example" in output_content, "Output should contain matching entries"
+        assert "dc=example2" in output_content, (
+            "Output should contain non-matching entries"
+        )
 
         # Validate: dc=example and ou=users,dc=example should be in acls_with_basedn
         basedn_dns = [e.dn.value for e in acls_with_basedn if e.dn]
@@ -276,10 +305,10 @@ class TestCategorizationRealData:
             "dc=example2 should be in acls_without_basedn (not matching base DN)"
         )
 
-    def test_complete_migration_with_real_data(self) -> None:
+    def test_complete_migration_with_real_data(self, tmp_path: Path) -> None:
         """Test complete migration pipeline with real-world data.
 
-        Creates a complete migration scenario and writes all outputs to tests/data/output.
+        Creates a complete migration scenario using temporary files.
         Uses generic examples (dc=example) to validate behavior.
         """
         # Create realistic LDIF content with generic examples
@@ -310,9 +339,15 @@ objectClass: organizationalUnit
 ou: test
 """
 
-        # Write input file for reference
-        input_file = OUTPUT_DIR / "input_real_migration.ldif"
+        # Write input file to temporary directory
+        input_file = tmp_path / "input_real_migration.ldif"
         input_file.write_text(ldif_content, encoding="utf-8")
+
+        # Validate input file was created
+        assert input_file.exists(), "Input file should be created"
+        assert input_file.read_text(encoding="utf-8") == ldif_content, (
+            "Input file content should match"
+        )
 
         # Parse entries from file content (parse accepts string content directly)
         ldif = FlextLdif()
@@ -338,12 +373,13 @@ ou: test
         categories = categories_result.unwrap()
         filtered = categorization.filter_by_base_dn(categories)
 
-        # Write categorized output
-        output_file = OUTPUT_DIR / "output_real_migration_categorized.ldif"
+        # Write categorized output to temporary file
+        output_file = tmp_path / "output_real_migration_categorized.ldif"
+        output_content_lines: list[str] = []
         with output_file.open("w", encoding="utf-8") as f:
-            f.write("# Complete Migration Test Output\n")
-            f.write(f"# Base DN: {base_dn}\n")
-            f.write(f"# Total entries processed: {len(entries)}\n\n")
+            header = f"# Complete Migration Test Output\n# Base DN: {base_dn}\n# Total entries processed: {len(entries)}\n\n"
+            f.write(header)
+            output_content_lines.append(header)
 
             for category in [
                 FlextLdifConstants.Categories.SCHEMA,
@@ -355,13 +391,14 @@ ou: test
             ]:
                 cat_entries = filtered.get_entries(category)
                 if cat_entries:
-                    f.write("\n# ========================================\n")
-                    f.write(f"# Category: {category} ({len(cat_entries)} entries)\n")
-                    f.write("# ========================================\n\n")
+                    category_header = f"\n# ========================================\n# Category: {category} ({len(cat_entries)} entries)\n# ========================================\n\n"
+                    f.write(category_header)
+                    output_content_lines.append(category_header)
 
                     for entry in cat_entries:
                         dn = entry.dn.value if entry.dn else "N/A"
                         f.write(f"dn: {dn}\n")
+                        output_content_lines.append(f"dn: {dn}\n")
 
                         if entry.attributes and entry.attributes.attributes:
                             for (
@@ -370,16 +407,34 @@ ou: test
                             ) in entry.attributes.attributes.items():
                                 if isinstance(attr_values, list):
                                     for val in attr_values:
-                                        f.write(f"{attr_name}: {val}\n")
+                                        attr_line = f"{attr_name}: {val}\n"
+                                        f.write(attr_line)
+                                        output_content_lines.append(attr_line)
 
                         if entry.metadata and entry.metadata.processing_stats:
                             stats = entry.metadata.processing_stats
                             if stats.rejected:
-                                f.write(f"# Rejected: {stats.rejected}\n")
+                                rejected_line = f"# Rejected: {stats.rejected}\n"
+                                f.write(rejected_line)
+                                output_content_lines.append(rejected_line)
                             if stats.filtered:
-                                f.write(f"# Filtered: {stats.filtered}\n")
+                                filtered_line = f"# Filtered: {stats.filtered}\n"
+                                f.write(filtered_line)
+                                output_content_lines.append(filtered_line)
 
                         f.write("\n")
+                        output_content_lines.append("\n")
+
+        # Validate output file was created and has expected content
+        assert output_file.exists(), "Output file should be created"
+        output_content = output_file.read_text(encoding="utf-8")
+        assert len(output_content) > 0, "Output file should not be empty"
+        assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
+        assert str(len(entries)) in output_content, "Output should contain entry count"
+        # Validate that entries under base DN are in correct categories
+        assert "dc=example" in output_content, (
+            "Output should contain entries under base DN"
+        )
 
         # Validate results
         hierarchy = filtered.get_entries(FlextLdifConstants.Categories.HIERARCHY)

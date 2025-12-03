@@ -13,7 +13,7 @@ from collections.abc import Callable
 from typing import TypedDict, cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -453,7 +453,7 @@ class FlextLdifUtilitiesParser:
         # For str and other types, check if list-like using FlextRuntime
         # Cast to GeneralValueType for type checker (set[str] already handled above)
         if not FlextRuntime.is_list_like(
-            cast("FlextTypes.GeneralValueType", existing),
+            cast("t.GeneralValueType", existing),
         ):
             # Type narrowing: existing is str, convert to list
             if isinstance(existing, str):
@@ -580,8 +580,8 @@ class FlextLdifUtilitiesParser:
     def extract_schema_definitions(
         ldif_content: str,
         definition_type: str = "attributeTypes",
-        parse_callback: Callable[[str], FlextTypes.GeneralValueType] | None = None,
-    ) -> list[FlextTypes.GeneralValueType]:
+        parse_callback: Callable[[str], t.GeneralValueType] | None = None,
+    ) -> list[t.GeneralValueType]:
         """Extract and parse schema definitions from LDIF content.
 
         Generic line-by-line parser that:
@@ -599,7 +599,7 @@ class FlextLdifUtilitiesParser:
             List of successfully parsed schema objects
 
         """
-        definitions: list[FlextTypes.GeneralValueType] = []
+        definitions: list[t.GeneralValueType] = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()

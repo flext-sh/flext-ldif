@@ -23,8 +23,8 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextRuntime,
-    FlextUtilities,
 )
+from flext_core.utilities import FlextUtilities
 from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
 from flext_ldif._models.config import FlextLdifModelsConfig
@@ -41,6 +41,9 @@ from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifFilters(
@@ -121,7 +124,10 @@ class FlextLdifFilters(
         if isinstance(value, str):
             return [value]
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            return [item for item in value if isinstance(item, str)]
+            return cast(
+                "list[str]",
+                u.filter(value, predicate=lambda item: isinstance(item, str)),
+            )
         return []
 
     @staticmethod
@@ -262,24 +268,44 @@ class FlextLdifFilters(
                 )
             try:
                 pattern = dn_pattern  # Type narrowing
-                filtered = []
-                for entry in entries:
+
+                def filter_entry(
+                    entry: FlextLdifModels.Entry,
+                ) -> FlextLdifModels.Entry | None:
+                    """Filter entry by DN pattern."""
                     # Use DN utility to get string value (supports DN model and str)
                     entry_dn_str = FlextLdifUtilities.DN.get_dn_value(entry.dn)
-                    matches = fnmatch.fnmatch(entry_dn_str.lower(), pattern.lower())
+                    matches = fnmatch.fnmatch(
+                        cast("str", u.normalize(entry_dn_str, case="lower")),
+                        cast("str", u.normalize(pattern, case="lower")),
+                    )
                     include = (
                         mode == FlextLdifConstants.Modes.INCLUDE and matches
                     ) or (mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
 
                     if include:
-                        filtered.append(entry)
-                    elif mark_excluded:
-                        filtered.append(
-                            FlextLdifFilters.Exclusion.mark_excluded(
-                                entry,
-                                f"DN pattern: {dn_pattern}",
-                            ),
+                        return entry
+                    if mark_excluded:
+                        return FlextLdifFilters.Exclusion.mark_excluded(
+                            entry,
+                            f"DN pattern: {dn_pattern}",
                         )
+                    return None
+
+                batch_result = u.batch(
+                    entries,
+                    filter_entry,
+                    on_error="skip",
+                )
+                if batch_result.is_failure:
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        batch_result.error or "DN filter failed"
+                    )
+                filtered = [
+                    cast("FlextLdifModels.Entry", entry)
+                    for entry in batch_result.value["results"]
+                    if entry is not None
+                ]
 
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
             except Exception as e:
@@ -514,9 +540,13 @@ class FlextLdifFilters(
             if not entry_ocs:
                 return (False, None)
 
-            blocked_ocs_lower = {oc.lower() for oc in blocked_ocs}
+            # normalize() with collection and no second parameter normalizes case
+            normalized_result = u.normalize(blocked_ocs)
+            blocked_ocs_normalized: set[str] = (
+                set(normalized_result) if isinstance(normalized_result, list) else set()
+            )
             for oc in entry_ocs:
-                if oc.lower() in blocked_ocs_lower:
+                if u.normalize(oc, blocked_ocs_normalized):
                     return (True, f"Blocked objectClass: {oc}")
 
             return (False, None)
@@ -547,7 +577,16 @@ class FlextLdifFilters(
             # Normalize category to string for lookup
             # CategoryLiteral is a Literal type, not an Enum, so just use str()
             category_str = str(category)
-            dn_patterns = pattern_map.get(category_str, [])
+            extract_result: FlextResult[list[str] | None] = u.extract(
+                pattern_map,
+                category_str,
+                default=[],
+            )
+            dn_patterns: list[str] = (
+                extract_result.value
+                if extract_result.is_success and extract_result.value is not None
+                else []
+            )
             if not dn_patterns:
                 return (False, None)
 
@@ -621,7 +660,15 @@ class FlextLdifFilters(
                 )
 
                 # Build marked attributes dict with original values
-                attrs_lower = {attr.lower() for attr in attributes_to_mark}
+                # Business Rule: u.normalize() preserves input type
+                # (set→set, list→list). We must handle both for case-insensitive
+                # attribute matching. An empty result means no attributes to mark.
+                attrs_norm_result = u.normalize(attributes_to_mark)
+                attrs_normalized: set[str] = (
+                    set(attrs_norm_result)
+                    if isinstance(attrs_norm_result, (list, set, frozenset))
+                    else set()
+                )
                 marked_attributes: dict[str, list[str]] = {}
                 marked_for_tracking: dict[str, list[str]] = {}
                 marked_with_status: dict[str, dict[str, str]] = {}
@@ -640,7 +687,7 @@ class FlextLdifFilters(
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
                 for attr_name, attr_values in attrs_dict.items():
-                    if attr_name.lower() in attrs_lower:
+                    if u.normalize(attr_name, attrs_normalized):
                         # Store original values for recovery
                         # Business Rule: Attribute values from LdifAttributes are already
                         # list[str], so we just copy them. No conversion needed.
@@ -730,11 +777,15 @@ class FlextLdifFilters(
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
 
                 # Build marked objectclasses (case-insensitive)
-                ocs_lower = {oc.lower() for oc in objectclasses_to_mark}
+                # normalize() with collection normalizes case
+                ocs_norm_result = u.normalize(objectclasses_to_mark)
+                ocs_normalized: set[str] = (
+                    set(ocs_norm_result) if isinstance(ocs_norm_result, list) else set()
+                )
                 marked_ocs = [
                     oc_value
                     for oc_value in current_ocs
-                    if oc_value.lower() in ocs_lower
+                    if u.normalize(oc_value, ocs_normalized)
                 ]
 
                 if not marked_ocs:
@@ -750,9 +801,20 @@ class FlextLdifFilters(
                 # Store marked objectClasses in removed_attributes using objectClass key
                 updated_removed = current_metadata.removed_attributes.model_dump()
                 objectclass_key = FlextLdifConstants.DictKeys.OBJECTCLASS
-                existing_ocs = updated_removed.get(objectclass_key, [])
-                if not isinstance(existing_ocs, list):
-                    existing_ocs = []
+                extract_result: FlextResult[list[str] | None] = u.extract(
+                    updated_removed,
+                    objectclass_key,
+                    default=[],
+                )
+                existing_ocs_raw: list[str] | None = (
+                    extract_result.value if extract_result.is_success else None
+                )
+                existing_ocs: list[str] = (
+                    existing_ocs_raw
+                    if existing_ocs_raw is not None
+                    and isinstance(existing_ocs_raw, list)
+                    else []
+                )
                 # Merge marked objectClasses (avoid duplicates)
                 merged_ocs = list(set(existing_ocs + marked_ocs))
                 updated_removed[objectclass_key] = merged_ocs
@@ -909,8 +971,12 @@ class FlextLdifFilters(
 
             # Convert keys to list for type compatibility
             attrs_keys: list[str] = list(entry.attributes.keys())
-            entry_attrs_lower = {attr.lower() for attr in attrs_keys}
-            return any(attr.lower() in entry_attrs_lower for attr in attributes)
+            # normalize() with collection normalizes case
+            attrs_norm_result = u.normalize(attrs_keys)
+            entry_attrs_normalized: set[str] = (
+                set(attrs_norm_result) if isinstance(attrs_norm_result, list) else set()
+            )
+            return any(u.normalize(attr, entry_attrs_normalized) for attr in attributes)
 
         @staticmethod
         def matches_oid_pattern(
@@ -972,7 +1038,7 @@ class FlextLdifFilters(
             exclusion_info = FlextLdifModels.ExclusionInfo(
                 excluded=True,
                 exclusion_reason=reason,
-                timestamp=FlextUtilities.Generators.generate_iso_timestamp(),
+                timestamp=u.Generators.generate_iso_timestamp(),
             )
 
             # Get or create metadata using FlextLdifUtilities pattern
@@ -1085,11 +1151,11 @@ class FlextLdifFilters(
                 raise ValueError(msg)
 
             # Now do the matching
-            dn_lower = dn_str.lower()
+            dn_normalized = cast("str", u.normalize(dn_str, case="lower"))
             for pattern in patterns:
                 try:
-                    pattern_lower = pattern.lower()
-                    if re.search(pattern_lower, dn_lower):
+                    pattern_normalized = cast("str", u.normalize(pattern, case="lower"))
+                    if re.search(pattern_normalized, dn_normalized):
                         return True
                 except re.error:
                     # This shouldn't happen since we already validated,
@@ -1151,7 +1217,7 @@ class FlextLdifFilters(
                         updated_extensions = current_metadata.extensions.model_dump()
                         updated_extensions["virtual_deleted"] = True
                         updated_extensions["deletion_timestamp"] = (
-                            FlextUtilities.Generators.generate_iso_timestamp()
+                            u.Generators.generate_iso_timestamp()
                         )
 
                         updated_metadata = current_metadata.model_copy(
@@ -1403,9 +1469,9 @@ class FlextLdifFilters(
                 # FilterCriteria doesn't have objectclass, attributes, or base_dn fields
                 # These are stored in the filter service itself, not in FilterCriteria
                 filter_event = FlextLdifModelsEvents.FilterEvent(
-                    unique_id=f"filter_{FlextUtilities.Generators.generate_short_id(8)}",
+                    unique_id=f"filter_{u.Generators.generate_short_id(8)}",
                     event_type="ldif.filter",
-                    aggregate_id=f"filter_{FlextUtilities.Generators.generate_short_id(8)}",
+                    aggregate_id=f"filter_{u.Generators.generate_short_id(8)}",
                     created_at=datetime.now(UTC),
                     filter_operation=f"filter_by_{self.filter_criteria}",
                     entries_before=entries_before,
@@ -1802,7 +1868,7 @@ class FlextLdifFilters(
                 continue
 
             for key, values in updated_entry.attributes.items():
-                if key.lower() == attr_lower:
+                if u.normalize(key, attr_lower):
                     matching_attr = key
                     original_values = (
                         list(values)
@@ -2469,10 +2535,28 @@ class FlextLdifFilters(
             schema_dn_patterns = rules.get("schema_dn_patterns") or rules.get(
                 "schema",
             )
-            user_objectclasses = rules.get("user_objectclasses", [])
-            group_objectclasses = rules.get("group_objectclasses", [])
-            hierarchy_objectclasses = rules.get("hierarchy_objectclasses", [])
-            acl_attributes = rules.get("acl_attributes") or rules.get("acl")
+            user_ocs_raw: list[str] | None = rules.get("user_objectclasses", [])
+            user_objectclasses: list[str] = (
+                user_ocs_raw if isinstance(user_ocs_raw, list) else []
+            )
+            group_ocs_raw: list[str] | None = rules.get("group_objectclasses", [])
+            group_objectclasses: list[str] = (
+                group_ocs_raw if isinstance(group_ocs_raw, list) else []
+            )
+            hierarchy_ocs_raw: list[str] | None = rules.get(
+                "hierarchy_objectclasses", []
+            )
+            hierarchy_objectclasses: list[str] = (
+                hierarchy_ocs_raw if isinstance(hierarchy_ocs_raw, list) else []
+            )
+            acl_attributes_raw = rules.get("acl_attributes", None)
+            acl_fallback = rules.get("acl", None)
+            acl_attributes: list[str] | None = (
+                acl_attributes_raw
+                if acl_attributes_raw is not None
+                and isinstance(acl_attributes_raw, list)
+                else (acl_fallback if isinstance(acl_fallback, list) else None)
+            )
             rules_model = FlextLdifModels.CategoryRules(
                 user_dn_patterns=list(user_dn_patterns)
                 if isinstance(user_dn_patterns, list)

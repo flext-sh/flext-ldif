@@ -17,6 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import FlextResult
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -25,6 +26,9 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]):
@@ -292,11 +296,13 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
         """
         if params is None:
             params = {}
-        entries_raw = params.get("entries", [])
+        entries_raw: list[FlextLdifModels.Entry] | None = u.get(
+            params, "entries", default=[]
+        )
         entries: list[FlextLdifModels.Entry] = (
             entries_raw if isinstance(entries_raw, list) else []
         )
-        target_server_type_raw = params.get("target_server_type", "rfc")
+        target_server_type_raw = u.get(params, "target_server_type", default="rfc")
         target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = (
             None
         )
@@ -306,11 +312,11 @@ class FlextLdifWriter(FlextLdifServiceBase[FlextLdifModelsResults.WriteResponse]
             )
             if normalized is not None:
                 target_server_type = normalized
-        output_path_raw = params.get("output_path")
+        output_path_raw = u.get(params, "output_path", default=None)
         output_path: Path | None = (
             output_path_raw if isinstance(output_path_raw, Path) else None
         )
-        format_options_raw = params.get("format_options")
+        format_options_raw = u.get(params, "format_options", default=None)
         format_options: (
             FlextLdifModels.WriteFormatOptions
             | FlextLdifModelsDomains.WriteOptions

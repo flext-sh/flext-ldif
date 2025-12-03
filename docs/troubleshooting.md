@@ -101,7 +101,7 @@ MemoryError: Unable to allocate array
 **Solution**:
 
 ```python
-def process_large_file_safely(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_large_file_safely(file_path: str) -> FlextResult[t.Dict]:
     """Process large LDIF files with memory management."""
     import psutil
     import os
@@ -114,7 +114,7 @@ def process_large_file_safely(file_path: str) -> FlextResult[FlextTypes.Dict]:
     print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[t.Dict].fail(
             f"File too large for available memory. "
             f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB"
         )
@@ -128,7 +128,7 @@ def process_large_file_safely(file_path: str) -> FlextResult[FlextTypes.Dict]:
     api = FlextLdif(config=config)
     return api.parse_file(file_path)
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[FlextTypes.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[t.Dict]:
     """Process file in chunks to manage memory."""
     results = {'total_entries': 0, 'processed_chunks': 0}
 
@@ -160,11 +160,11 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[F
                     results['total_entries'] += len(current_chunk)
                     results['processed_chunks'] += 1
 
-        return FlextResult[FlextTypes.Dict].ok(results)
+        return FlextResult[t.Dict].ok(results)
     except Exception as e:
-        return FlextResult[FlextTypes.Dict].fail(f"Chunk processing failed: {e}")
+        return FlextResult[t.Dict].fail(f"Chunk processing failed: {e}")
 
-def process_chunk(chunk_entries: FlextTypes.StringList) -> FlextResult[None]:
+def process_chunk(chunk_entries: t.StringList) -> FlextResult[None]:
     """Process a chunk of LDIF entries."""
     chunk_content = '\n\n'.join(chunk_entries)
     api = FlextLdif()
@@ -296,7 +296,7 @@ def optimize_processing_config() -> FlextLdifModels.Config:
         buffer_size=32768          # Larger buffer for I/O
     )
 
-def process_with_optimization(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_with_optimization(file_path: str) -> FlextResult[t.Dict]:
     """Process LDIF with performance optimizations."""
     config = optimize_processing_config()
     api = FlextLdif(config=config)

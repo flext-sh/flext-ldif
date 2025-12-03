@@ -23,19 +23,35 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from functools import wraps
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities
+from flext_core import FlextLogger, FlextResult
 from flext_core.typings import T
+from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
+r = FlextResult  # Result
+
 logger = FlextLogger(__name__)
 
 # Use TypeVars from flext-core (no local aliases)
+
+
+def generate_iso_timestamp() -> str:
+    """Generate ISO 8601 timestamp string.
+
+    Returns:
+        ISO 8601 formatted timestamp string (e.g., "2025-01-15T10:30:00Z")
+
+    """
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 class FlextLdifUtilitiesDecorators:
@@ -107,7 +123,7 @@ class FlextLdifUtilitiesDecorators:
         # Create metadata with extensions
         extensions_dict = {
             "server_type": server_type,
-            "parsed_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+            "parsed_timestamp": generate_iso_timestamp(),
         }
         # Normalize quirk_type if provided, otherwise None
         normalized_quirk_type: (

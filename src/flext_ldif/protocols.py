@@ -23,7 +23,13 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult, FlextTypes
+from flext_core import FlextResult
+from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes
+
+# Aliases for simplified usage - after all imports
+p = FlextProtocols  # Protocols
+t = FlextTypes  # Types (alias for flext_core.typings.FlextTypes)
 
 # =========================================================================
 # PROTOCOL DESIGN NOTES
@@ -37,7 +43,7 @@ from flext_core import FlextProtocols, FlextResult, FlextTypes
 class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocol definitions extending FlextProtocols.
 
-    This class extends the base FlextProtocols with LDIF-specific protocol
+    This class extends the base p with LDIF-specific protocol
     definitions for the minimal, streamlined public interfaces of quirks.
 
     **Protocol Compliance Strategy:**
@@ -95,7 +101,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def metadata(self) -> FlextTypes.Metadata | None:
+            def metadata(self) -> t.Metadata | None:
                 """Optional metadata for processing context."""
                 ...
 
@@ -107,7 +113,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 deep: bool = False,
-                update: FlextTypes.Metadata | None = None,
+                update: t.Metadata | None = None,
             ) -> Self:
                 """Create a copy of the entry with optional updates."""
                 ...
@@ -150,7 +156,7 @@ class FlextLdifProtocols(FlextProtocols):
             target: Mapping[str, str]
             subject: Mapping[str, str]
             permissions: Mapping[str, bool]
-            metadata: FlextTypes.Metadata | None
+            metadata: t.Metadata | None
 
         @runtime_checkable
         class SchemaAttributeProtocol(Protocol):
@@ -467,7 +473,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @classmethod
-            def filter(  # noqa: PLR0913 - Protocol signature with many optional parameters
+            def filter(
                 cls,
                 entries: Sequence[FlextLdifProtocols.Models.EntryProtocol],
                 *,
@@ -681,4 +687,4 @@ class FlextLdifProtocols(FlextProtocols):
         class ModelWithValidationMetadata(Protocol):
             """Protocol for models that have validation_metadata attribute."""
 
-            validation_metadata: FlextTypes.Metadata | None
+            validation_metadata: t.Metadata | None

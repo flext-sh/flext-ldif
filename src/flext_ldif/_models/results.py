@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from typing import overload
 
-from flext_core import FlextTypes
+from flext_core import t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -162,8 +162,8 @@ class _SchemaElementMap(FlextLdifModelsMetadata.DynamicMetadata):
     def get_element(
         self,
         name: str,
-        element_type: type[FlextTypes.MetadataAttributeValue],
-    ) -> FlextTypes.MetadataAttributeValue | None:
+        element_type: type[t.MetadataAttributeValue],
+    ) -> t.MetadataAttributeValue | None:
         """Get element by name with type check.
 
         Returns element if it matches the specified type, None otherwise.
@@ -183,14 +183,12 @@ class _SchemaElementMap(FlextLdifModelsMetadata.DynamicMetadata):
             return value_raw
         return None
 
-    def set_element(
-        self, name: str, element: FlextTypes.MetadataAttributeValue
-    ) -> None:
+    def set_element(self, name: str, element: t.MetadataAttributeValue) -> None:
         """Set element by name.
 
         Accepts schema elements (SchemaAttribute, SchemaObjectClass) or
         primitive types (str, int, float, bool, None).
-        Uses FlextTypes.MetadataAttributeValue to avoid circular import with models.py.
+        Uses t.MetadataAttributeValue to avoid circular import with models.py.
         """
         setattr(self, name, element)
 
@@ -1904,7 +1902,7 @@ class FlextLdifModelsResults:
             # Use model_fields_set for Pydantic v2 compatibility
             return list(self.model_fields_set)
 
-        def items(self) -> list[tuple[str, FlextTypes.ScalarValue]]:
+        def items(self) -> list[tuple[str, t.ScalarValue]]:
             """Return list of (key, value) tuples (dict-style access)."""
             # Use model_fields_set for Pydantic v2 compatibility
             # Values are ScalarValue (str | int | float | bool | None)
@@ -2155,6 +2153,27 @@ class FlextLdifModelsResults:
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
             description="ACL extraction statistics",
+        )
+
+    class AclEvaluationResult(FlextModelsEntity.Value):
+        """Result from ACL context evaluation.
+
+        Contains evaluation outcome indicating if ACLs grant required permissions.
+        """
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+
+        granted: bool = Field(
+            default=False,
+            description="Whether required permissions are granted",
+        )
+        matched_acl: FlextLdifModelsDomains.Acl | None = Field(
+            default=None,
+            description="ACL that matched (if granted)",
+        )
+        message: str = Field(
+            default="",
+            description="Evaluation details message",
         )
 
     class WriteResponse(FlextModelsEntity.Value):

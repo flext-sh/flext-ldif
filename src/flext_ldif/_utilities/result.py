@@ -36,7 +36,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import IO, Self, overload
+from typing import IO, Self, cast, overload
 
 from flext_core import FlextResult
 
@@ -44,6 +44,9 @@ from flext_ldif._utilities.power_protocols import (
     FilterProtocol,
     TransformerProtocol,
 )
+
+# Alias for simplified usage - after all imports
+r = FlextResult  # Result
 
 # Type variable for the result value type
 type ResultValue[T] = T
@@ -113,7 +116,7 @@ class FlextLdifResult[T]:
             FlextLdifResult containing the success value
 
         """
-        return cls(FlextResult.ok(value))
+        return cls(r.ok(value))
 
     @classmethod
     def fail(cls, error: str | Exception) -> FlextLdifResult[T]:
@@ -127,7 +130,7 @@ class FlextLdifResult[T]:
 
         """
         error_msg = str(error) if isinstance(error, Exception) else error
-        return cls(FlextResult.fail(error_msg))
+        return cls(r.fail(error_msg))
 
     @classmethod
     def from_result(cls, result: FlextResult[T]) -> FlextLdifResult[T]:
@@ -327,14 +330,14 @@ class FlextLdifResult[T]:
         if hasattr(transformer, "apply"):
             apply_method = getattr(transformer, "apply", None)
             if apply_method is not None and callable(apply_method):
-                transform_result = apply_method(self.value)  # type: ignore[call-arg]
+                transform_result = apply_method(self.value)
                 if isinstance(transform_result, FlextResult):
                     return FlextLdifResult.from_result(transform_result)
                 return FlextLdifResult.ok(transform_result)
 
         # It's a callable (function or lambda)
         if callable(transformer):
-            result = transformer(self.value)  # type: ignore[call-arg]
+            result = transformer(self.value)
             if isinstance(result, FlextResult):
                 return FlextLdifResult.from_result(result)
             return FlextLdifResult.ok(result)
@@ -365,7 +368,6 @@ class FlextLdifResult[T]:
             return FlextLdifResult.fail(self.error)
 
         # Get the value and write it
-        value = self.value
 
         # Handle different output types
         if isinstance(output, str):
@@ -504,12 +506,13 @@ class FlextLdifResult[T]:
             # hasattr check, so we use getattr to satisfy pyright strict mode.
             matches_method = getattr(pred, "matches", None)
             if matches_method is not None and callable(matches_method):
-                return matches_method  # type: ignore[return-value]
+                return cast("Callable[[T], bool]", matches_method)
             # Predicate is callable directly
             if callable(pred):
-                return pred  # type: ignore[return-value]
+                return pred
             # Invalid predicate type
-            raise TypeError("Predicate must be FilterProtocol or callable")
+            msg = "Predicate must be FilterProtocol or callable"
+            raise TypeError(msg)
 
         matches_func = get_matches_func(predicate)
 

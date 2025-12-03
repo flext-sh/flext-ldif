@@ -9,6 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
+from typing import Literal
+
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
@@ -226,6 +229,487 @@ class FlextLdifModelsConfig:
                 "anonymous": "userdn",
             },
             description="Mapping of subject type to bind operator",
+        )
+
+    class AciLineFormatConfig(FlextModelsEntity.Value):
+        r"""Configuration for formatting ACI line.
+
+        Consolidates parameters for format_aci_line utility function.
+        Reduces function signature from 6 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.AciLineFormatConfig(
+                name="test-acl",
+                target_clause="(targetattr=\"cn\")",
+                permissions_clause="allow (read,write)",
+                bind_rule="userdn=\"ldap:///self\"",
+            )
+            aci_line = FlextLdifUtilities.ACL.format_aci_line(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        name: str = Field(
+            ...,
+            description="ACL name",
+        )
+        target_clause: str = Field(
+            ...,
+            description="Target clause string",
+        )
+        permissions_clause: str = Field(
+            ...,
+            description="Permissions clause string",
+        )
+        bind_rule: str = Field(
+            ...,
+            description="Bind rule string",
+        )
+        version: str = Field(
+            default="3.0",
+            description="ACI version",
+        )
+        aci_prefix: str = Field(
+            default="aci: ",
+            description="Prefix for ACI line",
+        )
+
+    class ServerPatternsConfig(FlextModelsEntity.Value):
+        """Configuration for server pattern matching.
+
+        Consolidates parameters for matches_server_patterns utility function.
+        Reduces function signature from 6 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.ServerPatternsConfig(
+                dn_patterns=(("ou=users",), ("cn=REDACTED_LDAP_BIND_PASSWORD",)),
+                attr_prefixes=("orcl", "oracle"),
+                attr_names={"orclaci", "orclentrylevelaci"},
+                keyword_patterns=("orcl", "oracle"),
+            )
+            matches = FlextLdifUtilities.Entry.matches_server_patterns(
+                entry_dn, attributes, config
+            )
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        dn_patterns: tuple[tuple[str, ...], ...] = Field(
+            default=(),
+            description="Tuple of DN pattern tuples - entry matches if ALL patterns in ANY tuple match",
+        )
+        attr_prefixes: tuple[str, ...] | frozenset[str] = Field(
+            default=(),
+            description="Attribute name prefixes to check",
+        )
+        attr_names: frozenset[str] | set[str] = Field(
+            default_factory=frozenset,
+            description="Set of attribute names that indicate this server",
+        )
+        keyword_patterns: tuple[str, ...] = Field(
+            default=(),
+            description="Keywords to search in attribute names",
+        )
+
+    class AttributeDenormalizeConfig(FlextModelsEntity.Value):
+        """Configuration for attribute denormalization.
+
+        Consolidates parameters for denormalize_attributes_batch utility function.
+        Reduces function signature from 6 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.AttributeDenormalizeConfig(
+                case_mappings={"objectclass": "objectClass"},
+                boolean_mappings={"TRUE": "1", "FALSE": "0"},
+            )
+            denorm = FlextLdifUtilities.Entry.denormalize_attributes_batch(
+                attributes, config
+            )
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        case_mappings: dict[str, str] | None = Field(
+            default=None,
+            description="Attribute case restoration {normalized: original}",
+        )
+        boolean_mappings: dict[str, str] | None = Field(
+            default=None,
+            description='Boolean value mappings {TRUE: "1", FALSE: "0"}',
+        )
+        attr_name_mappings: dict[str, str] | None = Field(
+            default=None,
+            description="Attribute name mappings {rfc_name: server_name}",
+        )
+        value_transformations: dict[str, dict[str, str]] | None = Field(
+            default=None,
+            description="Per-attribute value mappings",
+        )
+
+    class AttributeNormalizeConfig(FlextModelsEntity.Value):
+        """Configuration for attribute normalization.
+
+        Consolidates parameters for normalize_attributes_batch utility function.
+        Reduces function signature from 6 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.AttributeNormalizeConfig(
+                case_mappings={"objectClass": "objectclass"},
+                boolean_mappings={"1": "TRUE", "0": "FALSE"},
+                strip_operational=True,
+            )
+            norm = FlextLdifUtilities.Entry.normalize_attributes_batch(
+                attributes, config
+            )
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        case_mappings: dict[str, str] | None = Field(
+            default=None,
+            description="Attribute case normalization {original: normalized}",
+        )
+        boolean_mappings: dict[str, str] | None = Field(
+            default=None,
+            description='Boolean value mappings {"1": "TRUE", "0": "FALSE"}',
+        )
+        attr_name_mappings: dict[str, str] | None = Field(
+            default=None,
+            description="Attribute name mappings {server_name: rfc_name}",
+        )
+        strip_operational: bool = Field(
+            default=False,
+            description="Whether to remove operational attributes",
+        )
+        operational_attrs: set[str] | None = Field(
+            default=None,
+            description="Set of operational attribute names",
+        )
+
+    class EntryCriteriaConfig(FlextModelsEntity.Value):
+        """Configuration for entry criteria matching.
+
+        Consolidates parameters for matches_criteria utility function.
+        Reduces function signature from 7 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.EntryCriteriaConfig(
+                objectclasses=["inetOrgPerson", "person"],
+                objectclass_mode="any",
+                required_attrs=["cn", "sn"],
+            )
+            matches = FlextLdifUtilities.Entry.matches_criteria(entry, config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        objectclasses: Sequence[str] | None = Field(
+            default=None,
+            description="Required objectClasses",
+        )
+        objectclass_mode: Literal["any", "all"] = Field(
+            default="any",
+            description='"any" (has any) or "all" (has all)',
+        )
+        required_attrs: Sequence[str] | None = Field(
+            default=None,
+            description="All of these attributes must exist",
+        )
+        any_attrs: Sequence[str] | None = Field(
+            default=None,
+            description="At least one of these attributes must exist",
+        )
+        dn_pattern: str | None = Field(
+            default=None,
+            description="Regex pattern that DN must match",
+        )
+        is_schema: bool | None = Field(
+            default=None,
+            description="If set, entry must (True) or must not (False) be schema",
+        )
+
+    class EntryTransformConfig(FlextModelsEntity.Value):
+        """Configuration for entry transformation.
+
+        Consolidates parameters for transform_batch utility function.
+        Reduces function signature from 7 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.EntryTransformConfig(
+                normalize_dns=True,
+                normalize_attrs=True,
+                attr_case="lower",
+                remove_attrs=["userPassword"],
+            )
+            result = FlextLdifUtilities.Entry.transform_batch(entries, config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        normalize_dns: bool = Field(
+            default=False,
+            description="Normalize DN format",
+        )
+        normalize_attrs: bool = Field(
+            default=False,
+            description="Normalize attribute names to specified case",
+        )
+        attr_case: Literal["lower", "upper", "preserve"] = Field(
+            default="lower",
+            description="Case for attribute normalization",
+        )
+        convert_booleans: tuple[str, str] | None = Field(
+            default=None,
+            description='Tuple of (source_format, target_format) e.g., ("true/false", "TRUE/FALSE")',
+        )
+        remove_attrs: Sequence[str] | None = Field(
+            default=None,
+            description="List of attributes to remove",
+        )
+        fail_fast: bool = Field(
+            default=False,
+            description="Stop on first error",
+        )
+
+    class EntryFilterConfig(FlextModelsEntity.Value):
+        """Configuration for entry filtering.
+
+        Consolidates parameters for filter_batch utility function.
+        Reduces function signature from 7 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.EntryFilterConfig(
+                objectclasses=["inetOrgPerson"],
+                exclude_schema=True,
+            )
+            result = FlextLdifUtilities.Entry.filter_batch(entries, config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        objectclasses: Sequence[str] | None = Field(
+            default=None,
+            description="Filter by objectClass",
+        )
+        objectclass_mode: Literal["any", "all"] = Field(
+            default="any",
+            description='"any" or "all"',
+        )
+        required_attrs: Sequence[str] | None = Field(
+            default=None,
+            description="Only include entries with all these attrs",
+        )
+        dn_pattern: str | None = Field(
+            default=None,
+            description="Only include entries matching DN pattern",
+        )
+        is_schema: bool | None = Field(
+            default=None,
+            description="Only include schema (True) or non-schema (False) entries",
+        )
+        exclude_schema: bool = Field(
+            default=False,
+            description="Convenience flag to exclude schema entries",
+        )
+
+    class TransformationTrackingConfig(FlextModelsEntity.Value):
+        """Configuration for transformation tracking.
+
+        Consolidates parameters for track_transformation utility function.
+        Reduces function signature from 7 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.TransformationTrackingConfig(
+                original_name="orcldasisenabled",
+                target_name="orcldasisenabled",
+                original_values=["1"],
+                target_values=["TRUE"],
+                transformation_type="modified",
+                reason="OID boolean '1' -> RFC 'TRUE'",
+            )
+            FlextLdifUtilities.Metadata.track_transformation(metadata, config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        original_name: str = Field(
+            ...,
+            description="Original attribute name (PRESERVED EXACTLY as-is)",
+        )
+        target_name: str | None = Field(
+            default=None,
+            description="Target attribute name (None if removed)",
+        )
+        original_values: list[str] = Field(
+            ...,
+            description="Original attribute values (PRESERVED EXACTLY as-is)",
+        )
+        target_values: list[str] | None = Field(
+            default=None,
+            description="Converted values (None if removed)",
+        )
+        transformation_type: FlextLdifConstants.LiteralTypes.TransformationTypeLiteral = Field(
+            ...,
+            description="Type: renamed/removed/modified/added/soft_deleted",
+        )
+        reason: str = Field(
+            ...,
+            description="Human-readable explanation",
+        )
+
+    class EntryParseMetadataConfig(FlextModelsEntity.Value):
+        """Configuration for building entry parse metadata.
+
+        Consolidates parameters for build_entry_parse_metadata utility function.
+        Reduces function signature from 7 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModelsConfig.EntryParseMetadataConfig(
+                quirk_type="oid",
+                original_entry_dn="cn=test,dc=example",
+                cleaned_dn="cn=test,dc=example",
+                original_dn_line="dn: cn=test,dc=example",
+            )
+            metadata = FlextLdifUtilities.Metadata.build_entry_parse_metadata(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+            ...,
+            description="Server type performing the parse (oid, oud, rfc, etc.)",
+        )
+        original_entry_dn: str = Field(
+            ...,
+            description="Original DN as parsed from LDIF",
+        )
+        cleaned_dn: str = Field(
+            ...,
+            description="Cleaned/normalized DN",
+        )
+        original_dn_line: str | None = Field(
+            default=None,
+            description="Original DN line from LDIF (with folding if present)",
+        )
+        original_attr_lines: list[str] | None = Field(
+            default=None,
+            description="Original attribute lines from LDIF",
+        )
+        dn_was_base64: bool = Field(
+            default=False,
+            description="Whether DN was base64 encoded",
+        )
+        original_attribute_case: dict[str, str] | None = Field(
+            default=None,
+            description="Mapping of attribute names to original case",
+        )
+
+    class RdnProcessingConfig(FlextModelsEntity.Value):
+        """Configuration for RDN character processing.
+
+        Consolidates parameters for _process_rdn_char and _advance_rdn_position.
+        Reduces function signature from 7 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        current_attr: str = Field(
+            default="",
+            description="Current attribute name being parsed",
+        )
+        current_val: str = Field(
+            default="",
+            description="Current attribute value being parsed",
+        )
+        in_value: bool = Field(
+            default=False,
+            description="Whether currently parsing value (after '=')",
+        )
+        pairs: list[tuple[str, str]] = Field(
+            default_factory=list,
+            description="List of (attr, value) pairs parsed so far",
+        )
+
+    class MetadataTransformationConfig(FlextModelsEntity.Value):
+        """Configuration for metadata transformation tracking.
+
+        Consolidates parameters for _update_metadata_for_transformation.
+        Reduces function signature from 8 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        original_dn: str = Field(
+            ...,
+            description="Original DN before transformation",
+        )
+        transformed_dn: str = Field(
+            ...,
+            description="Transformed DN after transformation",
+        )
+        source_dn: str = Field(
+            ...,
+            description="Source base DN that was replaced",
+        )
+        target_dn: str = Field(
+            ...,
+            description="Target base DN replacement",
+        )
+        transformed_attr_names: list[str] = Field(
+            default_factory=list,
+            description="List of attribute names that were transformed",
+        )
+        original_attrs: dict[str, list[str]] = Field(
+            default_factory=dict,
+            description="Original attributes before transformation",
+        )
+        transformed_attrs: dict[str, list[str]] = Field(
+            default_factory=dict,
+            description="Transformed attributes after transformation",
         )
 
     class LogContextExtras(FlextModelsEntity.Value):
@@ -1183,4 +1667,252 @@ class FlextLdifModelsConfig:
         )
         enable_relaxed_parsing: bool = Field(
             description="Whether relaxed parsing mode is enabled",
+        )
+
+    class LdifContentParseConfig(FlextModelsEntity.Value):
+        """Configuration for LDIF content parsing.
+
+        Consolidates parameters for Content.parse method.
+        Reduces function signature from 9 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        ldif_content: str = Field(
+            ...,
+            description="Raw LDIF content string",
+        )
+        server_type: str = Field(
+            ...,
+            description="Server type identifier (e.g., 'rfc', 'oid')",
+        )
+        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = Field(
+            ...,
+            description="Hook to parse (dn, attrs) into Entry",
+        )
+        transform_attrs_hook: Callable[[str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]] | None = Field(
+            default=None,
+            description="Optional hook to transform attrs before parsing",
+        )
+        post_parse_hook: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None = Field(
+            default=None,
+            description="Optional hook to transform entry after parsing",
+        )
+        preserve_metadata_hook: Callable[[FlextLdifModels.Entry, str, str], None] | None = Field(
+            default=None,
+            description="Optional hook to preserve original LDIF",
+        )
+        skip_empty_entries: bool = Field(
+            default=True,
+            description="Skip entries with no attributes",
+        )
+        log_level: str = Field(
+            default="debug",
+            description="Logging verbosity ('debug', 'info', 'warning')",
+        )
+        ldif_parser: Callable[[str], list[tuple[str, Mapping[str, list[str]]]]] | None = Field(
+            default=None,
+            description="Optional custom LDIF parser",
+        )
+
+    class EntryProcessingConfig(FlextModelsEntity.Value):
+        """Configuration for entry processing.
+
+        Consolidates parameters for Content.process_entries method.
+        Reduces function signature from 7 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        parsed_entries: list[tuple[str, Mapping[str, list[str]]]] = Field(
+            ...,
+            description="List of (dn, attrs) tuples from parser",
+        )
+        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = Field(
+            ...,
+            description="Hook to parse (dn, attrs) into Entry",
+        )
+        transform_attrs_hook: Callable[[str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]] | None = Field(
+            default=None,
+            description="Optional hook to transform attrs before parsing",
+        )
+        post_parse_hook: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None = Field(
+            default=None,
+            description="Optional hook to transform entry after parsing",
+        )
+        preserve_metadata_hook: Callable[[FlextLdifModels.Entry, str, str], None] | None = Field(
+            default=None,
+            description="Optional hook to preserve original LDIF",
+        )
+        skip_empty_entries: bool = Field(
+            default=True,
+            description="Skip entries with no attributes",
+        )
+
+    class ObjectClassParseConfig(FlextModelsEntity.Value):
+        """Configuration for objectClass definition parsing.
+
+        Consolidates parameters for ObjectClass.parse method.
+        Reduces function signature from 6 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        definition: str = Field(
+            ...,
+            description="Raw objectClass definition",
+        )
+        server_type: str = Field(
+            ...,
+            description="Server type identifier",
+        )
+        parse_core_hook: Callable[[str], FlextResult] = Field(
+            ...,
+            description="Core parsing logic",
+        )
+        validate_structural_hook: Callable[[str, list[str]], bool] | None = Field(
+            default=None,
+            description="Optional structural validation",
+        )
+        transform_sup_hook: Callable[[list[str]], list[str]] | None = Field(
+            default=None,
+            description="Optional SUP transformation",
+        )
+        enrich_metadata_hook: Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None = Field(
+            default=None,
+            description="Optional metadata enrichment",
+        )
+
+    class EntryParseConfig(FlextModelsEntity.Value):
+        """Configuration for entry parsing.
+
+        Consolidates parameters for Entry.parse method.
+        Reduces function signature from 7 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        dn: str = Field(
+            ...,
+            description="Distinguished name",
+        )
+        attrs: Mapping[str, list[str]] = Field(
+            ...,
+            description="Entry attributes",
+        )
+        server_type: str = Field(
+            ...,
+            description="Server type identifier",
+        )
+        create_entry_hook: Callable[[str, Mapping[str, list[str]]], FlextResult] = Field(
+            ...,
+            description="Entry creation logic",
+        )
+        build_metadata_hook: Callable[[str, Mapping[str, list[str]]], FlextLdifModelsDomains.QuirkMetadata | None] | None = Field(
+            default=None,
+            description="Optional metadata building",
+        )
+        normalize_dn_hook: Callable[[str], str] | None = Field(
+            default=None,
+            description="Optional DN normalization",
+        )
+        transform_attrs_hook: Callable[[str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]] | None = Field(
+            default=None,
+            description="Optional attribute transformation",
+        )
+
+    class EntryWriteConfig(FlextModelsEntity.Value):
+        """Configuration for entry writing.
+
+        Consolidates parameters for Entry.write method.
+        Reduces function signature from 7 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        entry: FlextLdifModels.Entry = Field(
+            ...,
+            description="Entry model to write",
+        )
+        server_type: str = Field(
+            ...,
+            description="Server type identifier",
+        )
+        write_attributes_hook: Callable[[FlextLdifModels.Entry, list[str]], None] = Field(
+            ...,
+            description="Core attributes writing",
+        )
+        write_comments_hook: Callable[[FlextLdifModels.Entry, list[str]], None] | None = Field(
+            default=None,
+            description="Optional comments writing",
+        )
+        transform_entry_hook: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None = Field(
+            default=None,
+            description="Optional entry transformation",
+        )
+        write_dn_hook: Callable[[str, list[str]], None] | None = Field(
+            default=None,
+            description="Optional DN writing",
+        )
+        include_comments: bool = Field(
+            default=True,
+            description="Include metadata comments",
+        )
+
+    class BatchWriteConfig(FlextModelsEntity.Value):
+        """Configuration for batch entry writing.
+
+        Consolidates parameters for Batch.write method.
+        Reduces function signature from 6 parameters to 1 model.
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ...,
+            description="List of entries to write",
+        )
+        server_type: str = Field(
+            ...,
+            description="Server type identifier",
+        )
+        write_entry_hook: Callable[[FlextLdifModels.Entry], FlextResult] = Field(
+            ...,
+            description="Entry writing logic",
+        )
+        write_header_hook: Callable[[], str] | None = Field(
+            default=None,
+            description="Optional header writing",
+        )
+        include_header: bool = Field(
+            default=True,
+            description="Include LDIF header",
+        )
+        entry_separator: str = Field(
+            default="\n",
+            description="Separator between entries",
         )

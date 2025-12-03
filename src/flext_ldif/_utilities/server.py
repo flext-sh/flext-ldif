@@ -17,8 +17,13 @@ from __future__ import annotations
 
 import re
 
+from flext_core.utilities import FlextUtilities
+
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
+
+# Aliases for simplified usage - after all imports
+u = FlextUtilities  # Utilities
 
 
 class FlextLdifUtilitiesServer:
@@ -161,10 +166,34 @@ class FlextLdifUtilitiesServer:
             ... )
 
         """
-        if isinstance(value, str):
-            if re.search(oid_pattern, value):
+
+        def check_oid_pattern(check_value: str | None) -> bool:
+            """Check OID pattern match."""
+            return bool(check_value and re.search(oid_pattern, check_value))
+
+        def check_name_in_set(name: str | None) -> bool:
+            """Check if name is in detection set."""
+            return bool(name and name.lower() in detection_names)
+
+        def check_model_patterns(
+            model: FlextLdifModelsDomains.SchemaAttribute
+            | FlextLdifModelsDomains.SchemaObjectClass,
+        ) -> bool:
+            """Check patterns for model types."""
+            if check_oid_pattern(model.oid) or check_name_in_set(model.name):
                 return True
+            name_lower = model.name.lower() if model.name else ""
             return FlextLdifUtilitiesServer._check_name_patterns(
+                name_lower,
+                detection_names,
+                detection_string,
+                use_prefix_match=use_prefix_match,
+            )
+
+        if isinstance(value, str):
+            return check_oid_pattern(
+                value
+            ) or FlextLdifUtilitiesServer._check_name_patterns(
                 value.lower(),
                 detection_names,
                 detection_string,
@@ -172,23 +201,9 @@ class FlextLdifUtilitiesServer:
             )
 
         if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
-            if re.search(oid_pattern, value.oid):
-                return True
-            return FlextLdifUtilitiesServer._check_name_patterns(
-                value.name.lower(),
-                detection_names,
-                detection_string,
-                use_prefix_match=use_prefix_match,
-            )
+            return check_model_patterns(value)
 
         if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass):
-            if re.search(oid_pattern, value.oid):
-                return True
-            return FlextLdifUtilitiesServer._check_name_patterns(
-                value.name.lower(),
-                detection_names,
-                detection_string,
-                use_prefix_match=use_prefix_match,
-            )
+            return check_model_patterns(value)
 
         return False

@@ -18,7 +18,7 @@ import dataclasses
 from typing import Final, cast
 
 import pytest
-from flext_core import FlextTypes
+from flext_core import t
 from tests.fixtures.constants import DNs, Filters, Values
 from tests.helpers.test_assertions import TestAssertions
 from tests.helpers.test_filter_helpers import FilterTestHelpers
@@ -163,8 +163,8 @@ class TestFlextLdifFilters:
             if test_case.metadata_extensions:
                 # Cast dict[str, object] to dict[str, MetadataAttributeValue] for DynamicMetadata
 
-                extensions_typed: dict[str, FlextTypes.MetadataAttributeValue] = cast(
-                    "dict[str, FlextTypes.MetadataAttributeValue]",
+                extensions_typed: dict[str, t.MetadataAttributeValue] = cast(
+                    "dict[str, t.MetadataAttributeValue]",
                     test_case.metadata_extensions,
                 )
                 metadata = FlextLdifModels.QuirkMetadata(
@@ -195,8 +195,8 @@ class TestFlextLdifFilters:
             if test_case.metadata_extensions:
                 # Cast dict[str, object] to dict[str, MetadataAttributeValue] for DynamicMetadata
 
-                extensions_typed: dict[str, FlextTypes.MetadataAttributeValue] = cast(
-                    "dict[str, FlextTypes.MetadataAttributeValue]",
+                extensions_typed: dict[str, t.MetadataAttributeValue] = cast(
+                    "dict[str, t.MetadataAttributeValue]",
                     test_case.metadata_extensions,
                 )
                 metadata = FlextLdifModels.QuirkMetadata(

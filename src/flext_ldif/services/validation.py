@@ -112,7 +112,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextDecorators, FlextResult, FlextTypes
+from flext_core import FlextDecorators, FlextResult, t
 from pydantic import Field
 
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -384,7 +384,7 @@ class FlextLdifValidation(
     def validate_dn_component(
         self,
         attr: str,
-        value: FlextTypes.ScalarValue,
+        value: t.ScalarValue,
     ) -> FlextResult[bool]:
         """Validate DN component (attribute=value pair).
 
@@ -411,7 +411,7 @@ class FlextLdifValidation(
                 return FlextResult[bool].ok(False)
 
             # Validate value - must be a string for DN component
-            # ScalarValue includes str, but DN components require str specifically
+            # Use isinstance check directly for simplicity
             if not isinstance(value, str):
                 return FlextResult[bool].ok(False)
 

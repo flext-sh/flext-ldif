@@ -61,7 +61,7 @@ class _ParserHelper:
         self._content = content
         self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, dict[str, FlextTypes.StringList]]]:
+    def parse(self) -> Iterator[tuple[str, dict[str, t.StringList]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
         pass
@@ -201,24 +201,24 @@ def test_memory_usage():
 
 ```python
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_small_ldif(file_path: str) -> FlextResult[t.Dict]:
     """Process LDIF files under 100MB."""
     api = FlextLdif()
     return api.parse_file(file_path)
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_large_ldif(file_path: str) -> FlextResult[t.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
     pass
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_with_monitoring(file_path: str) -> FlextResult[t.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = os.path.getsize(file_path)
     if file_size > 100 * 1024 * 1024:  # 100MB
-        return FlextResult[FlextTypes.Dict].fail("File too large for current implementation")
+        return FlextResult[t.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
 ```

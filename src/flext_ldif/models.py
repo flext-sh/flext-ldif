@@ -16,7 +16,7 @@ Architecture:
 - Extends flext-core FlextModels for consistency
 - Uses Pydantic v2 with computed fields and validators
 - All models are immutable by default (frozen=True where applicable)
-- Server-specific quirk data preserved in extensions (FlextTypes.MetadataAttributeValue)
+- Server-specific quirk data preserved in extensions (t.MetadataAttributeValue)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

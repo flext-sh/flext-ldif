@@ -96,7 +96,7 @@ class FlextLdifServiceRegistry:
         # Implication: Use setattr to satisfy pyright strict mode while maintaining
         # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
         # This pattern enables factory registration for dependency injection.
-        setattr(cls, "_filter_factory", factory)
+        cls._filter_factory = factory
 
     @classmethod
     def register_categorization_factory(
@@ -121,7 +121,7 @@ class FlextLdifServiceRegistry:
         # Implication: Use setattr to satisfy pyright strict mode while maintaining
         # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
         # This pattern enables factory registration for dependency injection.
-        setattr(cls, "_categorization_factory", factory)
+        cls._categorization_factory = factory
 
     @classmethod
     def get_filter_service(
@@ -212,5 +212,5 @@ class FlextLdifServiceRegistry:
         # Implication: Use setattr to satisfy pyright strict mode while maintaining
         # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
         # This pattern enables factory reset for test isolation.
-        setattr(cls, "_filter_factory", None)
-        setattr(cls, "_categorization_factory", None)
+        cls._filter_factory = None
+        cls._categorization_factory = None

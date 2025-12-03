@@ -16,9 +16,9 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
-from flext_core import FlextDecorators, FlextResult
+from flext_core import FlextDecorators, FlextResult, u
 
 from flext_ldif._models.results import (
     _CategoryPaths,
@@ -45,7 +45,7 @@ class FlextLdifStatistics(
     users, groups, ACL, rejected) with file tracking and rejection reasons.
 
     Single Responsibility: Statistics generation and analysis only.
-    Uses FlextUtilities for data processing and FlextResult for error handling.
+    Uses ucessing and FlextResult for error handling.
     """
 
     def __init__(self) -> None:
@@ -178,7 +178,8 @@ class FlextLdifStatistics(
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
 
-        for entry in entries:
+        def process_entry(entry: FlextLdifModels.Entry) -> None:
+            """Process entry to update distributions."""
             object_class_distribution.update(entry.get_objectclass_names())
 
             # Check for server_type in metadata extensions
@@ -189,6 +190,12 @@ class FlextLdifStatistics(
                     str,
                 ):
                     server_type_distribution[st_value] += 1
+
+        _ = u.batch(
+            list(entries),
+            process_entry,
+            on_error="skip",
+        )
 
         # Build object_class_distribution as _DynamicCounts model
         obj_class_model = _DynamicCounts()
@@ -229,11 +236,23 @@ class FlextLdifStatistics(
 
         """
         reasons: set[str] = set()
-        for entry in rejected_entries:
+
+        def extract_reason(entry: FlextLdifModels.Entry) -> str | None:
+            """Extract rejection reason from entry."""
             if entry.metadata and entry.metadata.processing_stats:
-                rejection_reason = entry.metadata.processing_stats.rejection_reason
-                if rejection_reason is not None:
-                    reasons.add(rejection_reason)
+                return entry.metadata.processing_stats.rejection_reason
+            return None
+
+        batch_result = u.batch(
+            rejected_entries,
+            extract_reason,
+            on_error="skip",
+        )
+        if batch_result.is_success:
+            results = cast("list[str | None]", batch_result.value["results"])
+            for reason in results:
+                if reason is not None:
+                    reasons.add(reason)
         return sorted(reasons)
 
 

@@ -15,7 +15,7 @@ from __future__ import annotations
 import codecs
 from typing import Self
 
-from flext_core import FlextConfig, FlextConstants, FlextProtocols
+from flext_core import FlextConfig, FlextConstants, p
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -549,7 +549,7 @@ class FlextLdifConfigModule:
         def validate_ldif_encoding(
             cls,
             v: str,
-            info: FlextProtocols.ValidationInfo,
+            info: p.ValidationInfo,
         ) -> str:
             """Validate ldif_encoding is a valid Python codec.
 
@@ -584,7 +584,7 @@ class FlextLdifConfigModule:
         def validate_server_type(
             cls,
             v: str,
-            info: FlextProtocols.ValidationInfo,
+            info: p.ValidationInfo,
         ) -> str:
             """Validate server_type is a recognized LDAP server.
 
@@ -644,7 +644,7 @@ class FlextLdifConfigModule:
         def validate_ldif_line_separator(
             cls,
             v: str,
-            info: FlextProtocols.ValidationInfo,
+            info: p.ValidationInfo,
         ) -> str:
             """Validate ldif_line_separator is RFC 2849 compliant.
 
@@ -681,7 +681,7 @@ class FlextLdifConfigModule:
         def validate_ldif_version_string(
             cls,
             v: str,
-            info: FlextProtocols.ValidationInfo,
+            info: p.ValidationInfo,
         ) -> str:
             """Validate ldif_version_string is RFC 2849 compliant.
 
@@ -737,7 +737,7 @@ class FlextLdifConfigModule:
         def validate_quirks_server_type(
             cls,
             v: str | None,
-            info: FlextProtocols.ValidationInfo,
+            info: p.ValidationInfo,
         ) -> str | None:
             """Validate quirks_server_type when specified is a recognized server.
 
@@ -798,7 +798,7 @@ class FlextLdifConfigModule:
         def validate_ldif_default_server_type(
             cls,
             v: str,
-            info: FlextProtocols.ValidationInfo,
+            info: p.ValidationInfo,
         ) -> str:
             """Validate ldif_default_server_type is a recognized server.
 

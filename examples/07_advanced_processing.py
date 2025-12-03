@@ -28,6 +28,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+from flext_core import u
+
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
 
@@ -257,12 +259,17 @@ sn: User
     entries = parse_result.unwrap()
 
     # Validate using services
-    for entry in entries:
-        # Use FlextLdifDn for DN validation
+    def validate_entry(entry: FlextLdifModels.Entry) -> bool:
+        """Validate entry DN."""
         dn_result = FlextLdifDn.validate_format(str(entry.dn))
+        return dn_result.is_success
 
-        if dn_result.is_failure:
-            continue
+    _ = u.process(
+        entries,
+        validate_entry,
+        on_error="skip",
+    )
+    )
 
     # Batch process - ONE LINE! (was 15+ lines)
     batch_result = api.process("transform", entries, parallel=False)

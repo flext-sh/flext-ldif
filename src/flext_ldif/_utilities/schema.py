@@ -12,7 +12,7 @@ from collections.abc import Callable, Mapping
 from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -247,8 +247,8 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         field_name: str,
         transform_fn: Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+            [t.GeneralValueType],
+            t.GeneralValueType | FlextResult[t.GeneralValueType],
         ],
     ) -> FlextResult[
         FlextLdifModelsDomains.SchemaAttribute
@@ -353,8 +353,8 @@ class FlextLdifUtilitiesSchema:
         field_transforms: dict[
             str,
             Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+                [t.GeneralValueType],
+                t.GeneralValueType | FlextResult[t.GeneralValueType],
             ]
             | str
             | list[str]
@@ -383,8 +383,8 @@ class FlextLdifUtilitiesSchema:
                 continue
             # After isinstance check, transform_fn is Callable
             transform_callable: Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+                [t.GeneralValueType],
+                t.GeneralValueType | FlextResult[t.GeneralValueType],
             ] = transform_fn
             result = FlextLdifUtilitiesSchema._apply_field_transformation(
                 current,
@@ -446,9 +446,8 @@ class FlextLdifUtilitiesSchema:
             dict[
                 str,
                 Callable[
-                    [FlextTypes.GeneralValueType],
-                    FlextTypes.GeneralValueType
-                    | FlextResult[FlextTypes.GeneralValueType],
+                    [t.GeneralValueType],
+                    t.GeneralValueType | FlextResult[t.GeneralValueType],
                 ]
                 | str
                 | list[str]
@@ -710,9 +709,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: dict[str, FlextTypes.MetadataAttributeValue]
-        | None = None,
-    ) -> dict[str, FlextTypes.MetadataAttributeValue]:
+        additional_extensions: dict[str, t.MetadataAttributeValue] | None = None,
+    ) -> dict[str, t.MetadataAttributeValue]:
         """Build metadata extensions dictionary for schema definitions.
 
         Generic method to build metadata from schema definition string.
@@ -730,9 +728,7 @@ class FlextLdifUtilitiesSchema:
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
         # ExtensionsDict is dict[str, str | list[str] | bool | None]
         # Convert to dict[str, MetadataAttributeValue] for compatibility
-        extensions: dict[str, FlextTypes.MetadataAttributeValue] = dict(
-            extensions_raw.items()
-        )
+        extensions: dict[str, t.MetadataAttributeValue] = dict(extensions_raw.items())
 
         # Store original format for round-trip fidelity
         extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = definition.strip()
@@ -772,8 +768,8 @@ class FlextLdifUtilitiesSchema:
             - no_user_modification: bool
             - sup: str | None
             - usage: str | None
-            - metadata_extensions: dict[str, FlextTypes.MetadataAttributeValue]
-            - syntax_validation: dict[str, FlextTypes.MetadataAttributeValue] | None
+            - metadata_extensions: dict[str, t.MetadataAttributeValue]
+            - syntax_validation: dict[str, t.MetadataAttributeValue] | None
 
         Raises:
             ValueError: If OID is missing or invalid
@@ -812,9 +808,7 @@ class FlextLdifUtilitiesSchema:
 
         # Validate syntax OID (if requested)
         syntax_extensions: dict[str, bool | list[str] | str | None] = {}
-        syntax_validation_result: (
-            dict[str, FlextTypes.MetadataAttributeValue] | None
-        ) = None
+        syntax_validation_result: dict[str, t.MetadataAttributeValue] | None = None
         if validate_syntax and syntax and syntax.strip():
             validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
             if validate_result.is_failure:
@@ -873,9 +867,9 @@ class FlextLdifUtilitiesSchema:
 
         # Build metadata using utilities
         # Convert syntax_extensions to MetadataAttributeValue dict if needed
-        additional_extensions_converted: (
-            dict[str, FlextTypes.MetadataAttributeValue] | None
-        ) = None
+        additional_extensions_converted: dict[str, t.MetadataAttributeValue] | None = (
+            None
+        )
         if syntax_validation_result:
             additional_extensions_converted = syntax_validation_result
 
@@ -886,16 +880,13 @@ class FlextLdifUtilitiesSchema:
 
         # Build parsed attribute dict with correct types
         # Convert extensions and syntax_validation_result to match ParsedAttributeDict type
-        extensions_converted: dict[str, FlextTypes.ScalarValue | list[str]] = {
-            k: cast("FlextTypes.ScalarValue | list[str]", v)
-            for k, v in extensions_raw.items()
+        extensions_converted: dict[str, t.ScalarValue | list[str]] = {
+            k: cast("t.ScalarValue | list[str]", v) for k, v in extensions_raw.items()
         }
-        syntax_validation_converted: (
-            dict[str, FlextTypes.ScalarValue | list[str]] | None
-        ) = None
+        syntax_validation_converted: dict[str, t.ScalarValue | list[str]] | None = None
         if syntax_validation_result is not None:
             syntax_validation_converted = {
-                k: cast("FlextTypes.ScalarValue | list[str]", v)
+                k: cast("t.ScalarValue | list[str]", v)
                 for k, v in syntax_validation_result.items()
             }
         parsed_dict: FlextLdifTypes.ModelMetadata.ParsedAttributeDict = {
@@ -937,7 +928,7 @@ class FlextLdifUtilitiesSchema:
             - kind: str (STRUCTURAL, AUXILIARY, or ABSTRACT)
             - must: list[str] | None
             - may: list[str] | None
-            - metadata_extensions: dict[str, FlextTypes.MetadataAttributeValue]
+            - metadata_extensions: dict[str, t.MetadataAttributeValue]
 
         Raises:
             ValueError: If OID is missing or invalid
@@ -1016,9 +1007,8 @@ class FlextLdifUtilitiesSchema:
         )
 
         # Convert extensions to match ParsedObjectClassDict type
-        extensions_converted: dict[str, FlextTypes.ScalarValue | list[str]] = {
-            k: cast("FlextTypes.ScalarValue | list[str]", v)
-            for k, v in extensions_raw.items()
+        extensions_converted: dict[str, t.ScalarValue | list[str]] = {
+            k: cast("t.ScalarValue | list[str]", v) for k, v in extensions_raw.items()
         }
 
         # Build parsed objectClass dict with correct types

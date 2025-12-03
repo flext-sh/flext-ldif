@@ -36,6 +36,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
+from flext_core import u
+
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
 
@@ -309,8 +311,8 @@ def schema_driven_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Step 1: Create entries using direct API methods
-    entries = []
-    for i in range(5):
+    def create_user_entry(i: int) -> FlextLdifModels.Entry | None:
+        """Create user entry."""
         person_result = api.create_entry(
             dn=f"cn=User {i},ou=People,dc=example,dc=com",
             attributes={
@@ -320,8 +322,19 @@ def schema_driven_workflow() -> None:
             },
         )
 
-        if person_result.is_success:
-            entries.append(person_result.unwrap())
+        return person_result.unwrap() if person_result.is_success else None
+
+    batch_result = u.process(
+        list(range(5)),
+        create_user_entry,
+        on_error="skip",
+    )
+    )
+    _entries = (
+        cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
+        if batch_result.is_success
+        else []
+    )
 
 
 def acl_processing_workflow() -> None:
@@ -348,7 +361,8 @@ sn: Test
     entries = parse_result.unwrap()
 
     # Extract ACLs using direct API method (no service instantiation!)
-    for entry in entries:
+    def process_entry_acl(entry: FlextLdifModels.Entry) -> bool | None:
+        """Extract and evaluate ACLs from entry."""
         acl_result = api.extract_acls(entry)
 
         if acl_result.is_success:
@@ -366,7 +380,14 @@ sn: Test
                 eval_result = api.evaluate_acl_rules(public_acls)
 
                 if eval_result.is_success:
-                    _ = eval_result.unwrap()
+                    return eval_result.unwrap()
+        return None
+
+    _ = u
+        entries,
+        process_entry_acl,
+        on_error="skip",
+    )
 
 
 def batch_processing_workflow() -> None:
@@ -489,7 +510,8 @@ cn: test
 
     if not validation_report.is_valid:
         # Handle validation errors and attempt recovery by fixing entries
-        for entry in entries:
+        def fix_entry(entry: FlextLdifModels.Entry) -> None:
+            """Fix entry by adding missing required attribute."""
             # Add missing required attribute
             if entry.attributes:
                 obj_class_attr = entry.attributes.attributes.get("objectClass", [])
@@ -499,6 +521,12 @@ cn: test
                     and "sn" not in entry.attributes.attributes
                 ):
                     entry.attributes.add_attribute("sn", "recovered")
+
+        _ = u
+            entries,
+            fix_entry,
+            on_error="skip",
+        )
 
         # Retry validation
         retry_result = api.validate_entries(entries)
