@@ -1,11 +1,19 @@
 from __future__ import annotations
-from tests import c, m, s, t
 
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import m, s
+
+from flext_ldif.models import m
+
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+
+
+class TestsFlextLdifEntryRfcValidators(s):
+    """Test RFC validators for Entry model."""
+
     class RFCTestCase(StrEnum):
         """Test case identifiers for RFC validation scenarios."""
 

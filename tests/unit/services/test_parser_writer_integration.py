@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsFactories
-from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import tm, tt, u
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
 from flext_ldif.models import m
@@ -77,7 +75,7 @@ cn: test
     }
 
 
-class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
+class FlextLdifParserWriterIntegrationTests(tt):
     """Comprehensive parser-writer integration tests using advanced Python 3.13 patterns.
 
     Tests roundtrip operations with format options compatibility, error handling,
@@ -123,7 +121,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         ]
 
         # Verify we got entries
-        FlextTestsMatchers.assert_length_greater_than(
+        tm.assert_length_greater_than(
             entries,
             0,
             f"No entries parsed for {scenario}",
@@ -136,7 +134,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
             output_target="string",
         )
 
-        FlextTestsMatchers.assert_result_success(write_result)
+        tm.assert_result_success(write_result)
         output_content_raw = write_result.unwrap()
         # Extract string from WriteResponse if needed
         if isinstance(output_content_raw, str):
@@ -193,7 +191,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         entries: list[m.Entry] = [
             entry for entry in entries_list if isinstance(entry, m.Entry)
         ]
-        FlextTestsMatchers.assert_length_equals(
+        tm.assert_length_equals(
             entries,
             1,
             "Should parse one entry from file",
@@ -211,9 +209,9 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert write_result.is_success, "Failed to write to file"
 
         # Verify file was created and has content
-        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
+        u.Tests.FileHelpers.assert_file_exists(output_file)
         output_content = output_file.read_text()
-        FlextTestsMatchers.assert_length_greater_than(
+        tm.assert_length_greater_than(
             output_content,
             0,
             "Output file should not be empty",
@@ -258,7 +256,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
             parse_response = parse_result.unwrap()
             entries = parse_response.entries
             # At minimum, we should have attempted to parse something
-            FlextTestsUtilities.Assertions.assert_result_matches_expected(
+            u.Tests.Assertions.assert_result_matches_expected(
                 entries,
                 list,
                 description="parse response entries",
@@ -334,7 +332,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, "Empty content should parse successfully"
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
-        FlextTestsMatchers.assert_length_equals(
+        tm.assert_length_equals(
             entries,
             0,
             "Empty content should produce no entries",
@@ -350,7 +348,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, "Version-only content should parse successfully"
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
-        FlextTestsMatchers.assert_length_equals(
+        tm.assert_length_equals(
             entries,
             0,
             "Version-only content should produce no entries",

@@ -7,8 +7,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextConfig
-from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import tm, u
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
@@ -333,8 +332,8 @@ class TestsFlextLdifWriterFormatOptions(s):
         ("option_field", "test_value", "expected_pattern", "check_absence"),
         [
             # Version header
-            (WriterOption.INCLUDE_VERSION_HEADER, True, Writer.PATTERN_VERSION, False),
-            (WriterOption.INCLUDE_VERSION_HEADER, False, Writer.PATTERN_VERSION, True),
+            (WriterOption.INCLUDE_VERSION_HEADER, True, r"^version:\s*1$", False),
+            (WriterOption.INCLUDE_VERSION_HEADER, False, r"^version:\s*1$", True),
             # Timestamps
             (
                 WriterOption.INCLUDE_TIMESTAMPS,
@@ -345,22 +344,22 @@ class TestsFlextLdifWriterFormatOptions(s):
             (
                 WriterOption.INCLUDE_TIMESTAMPS,
                 False,
-                Writer.PATTERN_TIMESTAMP_PREFIX,
+                r"# Timestamp:",
                 True,
             ),
             # Write hidden attrs as comments
             (
                 WriterOption.WRITE_HIDDEN_ATTRS_AS_COMMENTS,
                 True,
-                Writer.PATTERN_HIDDEN_ATTR,
+                r"^#\s+\w+:",
                 False,
             ),
             # Write empty values
-            (WriterOption.WRITE_EMPTY_VALUES, True, Writer.PATTERN_EMPTY_ATTR, False),
-            (WriterOption.WRITE_EMPTY_VALUES, False, Writer.PATTERN_EMPTY_ATTR, True),
+            (WriterOption.WRITE_EMPTY_VALUES, True, r"^\w+:\s*$", False),
+            (WriterOption.WRITE_EMPTY_VALUES, False, r"^\w+:\s*$", True),
             # Include DN comments
-            (WriterOption.INCLUDE_DN_COMMENTS, True, Writer.PATTERN_DN_COMMENT, False),
-            (WriterOption.INCLUDE_DN_COMMENTS, False, Writer.PATTERN_DN_COMMENT, True),
+            (WriterOption.INCLUDE_DN_COMMENTS, True, r"^# DN:", False),
+            (WriterOption.INCLUDE_DN_COMMENTS, False, r"^# DN:", True),
         ],
     )
     def test_boolean_option(
@@ -442,7 +441,7 @@ class TestsFlextLdifWriterFormatOptions(s):
             for line in lines
             if len(line) > line_width and not line.startswith(" ")
         ]
-        FlextTestsMatchers.assert_length_equals(
+        tm.assert_length_equals(
             long_lines,
             0,
             f"Found unfolded lines longer than {line_width}",
@@ -648,7 +647,7 @@ class TestsFlextLdifWriterFormatOptions(s):
             for line in lines
             if len(line) > 60 and not line.startswith(" ") and not line.startswith("#")
         ]
-        FlextTestsMatchers.assert_length_equals(long_lines, 0)
+        tm.assert_length_equals(long_lines, 0)
 
     # =========================================================================
     # Output Target Tests
@@ -747,7 +746,7 @@ class TestsFlextLdifWriterFormatOptions(s):
         # Note: With a minimal width of 10 bytes, some lines may still exceed if they cannot be folded
         # (e.g., attribute names like "objectClass: person" = 19 bytes cannot be folded below 10)
         # This test verifies that the writer handles minimal width configuration without errors
-        FlextTestsMatchers.assert_length_greater_than(
+        tm.assert_length_greater_than(
             output,
             0,
             "Output should not be empty",
@@ -878,7 +877,7 @@ class TestsFlextLdifWriterFormatOptions(s):
                 max_length=50,
             )
 
-            FlextTestsMatchers.assert_length_equals(sanitized, 50)
+            tm.assert_length_equals(sanitized, 50)
             assert sanitized.endswith("...")
             assert was_sanitized
 

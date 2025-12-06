@@ -7,9 +7,8 @@ import pytest
 from flext_tests.utilities import FlextTestsUtilities
 
 from flext_ldif import FlextLdifMigrationPipeline
-from flext_ldif.constants import c
 from flext_ldif.models import m
-from tests import c, m
+from tests import c, m, s
 
 
 class TestsTestFlextLdifMigrationPipeline(s):

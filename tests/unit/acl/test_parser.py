@@ -10,11 +10,9 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests import ), AclParserTestCase(, c
-        AclParserTestType.EXECUTE, AclParserTestCase(
-        AclParserTestType.PARSE_OID, AclParserTestCase(
-        AclParserTestType.PARSE_OPENLDAP, AclParserTestCase(
-        AclParserTestType.PARSE_OUD, GenericTestCaseDict, acl_line=f'access to * by dn.exact="{c.DNs.TEST_USER}" write', acl_line=f'aci: (targetattr="*")(version 3.0, acl_line=f'orclaci: access to entry by dn="{c.DNs.TEST_USER}" (read)', c, description="Execute ACL service (empty result)", description="Initialize ACL service", description="Parse OpenLDAP ACL format", description="Parse Oracle OID ACL format", etc.) are available from conftest.py
+from tests import c, s
+
+
 class AclParserTestType(StrEnum):
     """Types of ACL parser tests."""
 
@@ -46,11 +44,29 @@ class AclParserTestCase:
 # Test cases for comprehensive coverage
 PARSER_TESTS: Final[list[AclParserTestCase]] = [
     AclParserTestCase(
-        AclParserTestType.INITIALIZATION, s
-
-
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-# TypedDicts (GenericFieldsDict, server_type=c.Fixtures.OID, server_type=c.Fixtures.OPENLDAP, server_type=c.Fixtures.OUD; acl "Test ACL"; allow (read,search) userdn="ldap:///{c.DNs.TEST_USER}";)',
+        AclParserTestType.INITIALIZATION,
+        description="Initialize ACL service",
+    ),
+    AclParserTestCase(
+        AclParserTestType.EXECUTE,
+        description="Execute ACL service (empty result)",
+    ),
+    AclParserTestCase(
+        AclParserTestType.PARSE_OPENLDAP,
+        server_type=c.Fixtures.OPENLDAP,
+        acl_line=f'access to * by dn.exact="{c.DNs.TEST_USER}" write',
+        description="Parse OpenLDAP ACL format",
+    ),
+    AclParserTestCase(
+        AclParserTestType.PARSE_OID,
+        server_type=c.Fixtures.OID,
+        acl_line=f'orclaci: access to entry by dn="{c.DNs.TEST_USER}" (read)',
+        description="Parse Oracle OID ACL format",
+    ),
+    AclParserTestCase(
+        AclParserTestType.PARSE_OUD,
+        server_type=c.Fixtures.OUD,
+        acl_line=f'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///{c.DNs.TEST_USER}";)',
         description="Parse Oracle OUD ACI format",
     ),
     AclParserTestCase(

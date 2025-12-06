@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
-from flext_tests.matchers import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif.models import m
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -439,7 +439,7 @@ class TestsTestFlextLdifConversionService(s):
         )
         assert result.is_success
         converted = result.unwrap()
-        FlextTestsMatchers.assert_length_equals(converted, 1)
+        tm.assert_length_equals(converted, 1)
         assert isinstance(converted[0], m.Entry)
 
     def test_batch_convert_multiple_entries(
@@ -467,7 +467,7 @@ class TestsTestFlextLdifConversionService(s):
         )
         assert result.is_success
         converted = result.unwrap()
-        FlextTestsMatchers.assert_length_equals(converted, 2)
+        tm.assert_length_equals(converted, 2)
         assert all(isinstance(e, m.Entry) for e in converted)
 
     def test_batch_convert_with_partial_failures(

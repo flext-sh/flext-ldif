@@ -725,8 +725,8 @@ class FlextLdifUtilitiesParser:
 
         """
         # Use build_attribute_metadata from base.py which handles server_type correctly
-        # Lazy import to avoid circular dependency: parser -> servers.base -> utilities -> parser
-        from flext_ldif.servers.base import FlextLdifServersBase
+        # Circular dependency: parser -> servers.base -> utilities -> parser (justified)
+        from flext_ldif.servers.base import FlextLdifServersBase  # noqa: PLC0415
 
         return FlextLdifServersBase.Schema.build_attribute_metadata(
             attr_definition=attr_definition,

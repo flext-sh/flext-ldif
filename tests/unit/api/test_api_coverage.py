@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import ClassVar, cast
 
 import pytest
 
@@ -19,6 +19,8 @@ from tests import m, s
 
 class TestsFlextLdifApiCoverage(s):
     """Test coverage for FlextLdif API operations."""
+
+    api: ClassVar[FlextLdif]  # pytest fixture
 
     @pytest.fixture
     def api(self) -> FlextLdif:

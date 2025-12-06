@@ -232,6 +232,8 @@ class TestsTestFlextLdifProtocols(s):
         """Test that Relaxed server class has protocol attributes in Constants."""
         self.Helpers.verify_server_attributes(FlextLdifServersRelaxed)
 
+    oid_schema: ClassVar[FlextLdifServersOid.Schema]  # pytest fixture
+
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID Schema instance."""

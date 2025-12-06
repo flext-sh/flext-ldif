@@ -26,7 +26,6 @@ Usage:
 
 from __future__ import annotations
 
-
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from typing import Any, Literal, cast
@@ -109,9 +108,7 @@ class EntryTransformer[T](ABC):
 
         # Type narrowing: cast to correct type for batch operation
         # mypy has trouble inferring the generic type, so we cast explicitly
-        from collections.abc import Callable as CallableABC
-
-        batch_operation = cast("CallableABC[[T], T | r[T]]", apply_wrapper)
+        batch_operation = cast("Callable[[T], T | r[T]]", apply_wrapper)
         batch_result = u.Collection.batch(
             items_list,
             batch_operation,
@@ -217,11 +214,8 @@ class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
             if validation_result.is_failure:
                 # Return failure as r[Entry] by mapping error
-                # Lazy import to avoid circular dependency
-                from flext_ldif.utilities import u as u_ldif
-
                 return r[m.Entry].fail(
-                    u_ldif.err(validation_result, default="DN validation failed"),
+                    u.err(validation_result, default="DN validation failed"),
                 )
 
         # Normalize DN

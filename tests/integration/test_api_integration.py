@@ -17,7 +17,7 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsFactories
+from flext_tests import tt
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
@@ -79,7 +79,7 @@ objectClass: person
     }
 
 
-class TestFlextLdifAPIIntegration(FlextTestsFactories):
+class TestFlextLdifAPIIntegration(tt):
     """Comprehensive API integration tests for FlextLdif facade.
 
     Uses advanced Python 3.13 patterns:

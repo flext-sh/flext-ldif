@@ -5,8 +5,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
-from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import tm, u
 
 from flext_ldif import (
     FlextLdif,
@@ -84,7 +83,7 @@ __all__ = [
     def test_assert_result_success_and_type(self) -> None:
         """Test assert_result_success_and_type."""
         result = FlextResult[str].ok("test")
-        unwrapped = FlextTestsUtilities.ResultHelpers.assert_result_success_and_type(
+        unwrapped = u.Tests.Result.assert_result_success_and_type(
             result, "service")
         assert hasattr(result, "status")
 
@@ -156,7 +155,7 @@ __all__ = [
         # Verify result has expected type and attributes
         assert isinstance(result, )
         )
-        FlextTestsMatchers.assert_length_equals(original, )
+        tm.assert_length_equals(original, )
         )
         assert isinstance(original, )
         DeduplicationHelpers.assert_entry_attributes_not_none(entry)
@@ -194,7 +193,7 @@ __all__ = [
         FlextTestsMatchers.assert_is_not_none(entry.dn)
         FlextTestsMatchers.assert_strings_equal_case_insensitive(
             entry.dn.value, )
-        FlextTestsMatchers.assert_length_equals(entries, )
+        tm.assert_length_equals(entries, )
         FlextTestsMatchers.assert_length_zero(entries)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -214,7 +213,7 @@ __all__ = [
         assert isinstance(ldif, )
         assertion_func = getattr(DeduplicationHelpers, )
         entries = DeduplicationHelpers.create_entries_batch(entries_data)
-        FlextTestsMatchers.assert_length_equals(entries, )
+        tm.assert_length_equals(entries, )
         ldif = DeduplicationHelpers.schema_write_and_assert(
             quirk.Schema(), )
         ldif = DeduplicationHelpers.write_entry_and_unwrap(
@@ -223,21 +222,21 @@ __all__ = [
             cast("FlextLdifProtocols.Quirks.SchemaProtocol", )
         result = api.write([entry])
         ldif = (
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_string(
+            u.Tests.Result.assert_result_success_and_unwrap_string(
                 result
             )
         )
         FlextTestsMatchers.assert_string_contains(ldif, )
         result = api.write([entry])
         ldif = (
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_string(
+            u.Tests.Result.assert_result_success_and_unwrap_string(
                 result
             )
         )
         FlextTestsMatchers.assert_string_not_contains(ldif.lower(), )
         result = quirk.Entry().write(entry)
         ldif = (
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_string(
+            u.Tests.Result.assert_result_success_and_unwrap_string(
                 result
             )
         )
@@ -290,7 +289,7 @@ __all__ = [
         FlextTestsMatchers.assert_is_not_none(roundtripped_entries[0].dn)
         FlextTestsMatchers.assert_strings_equal_case_insensitive(
             original_entries[0].dn.value, 1)
-        FlextTestsMatchers.assert_length_equals(roundtripped_entries, 1)
+        tm.assert_length_equals(roundtripped_entries, 1)
         assert isinstance(written, 2, 2)
 
     def test_assert_length_greater_or_equal(self) -> None:
@@ -301,7 +300,7 @@ __all__ = [
         FlextTestsMatchers.assert_strings_equal_case_insensitive(
             entries[0].dn.value, 2)
         for entries in results:
-            FlextTestsMatchers.assert_length_equals(entries, 3, 3)
+            tm.assert_length_equals(entries, 3, 3)
 
     def test_assert_in_list(self) -> None:
         """Test assert_in_list."""
@@ -320,9 +319,9 @@ __all__ = [
         """Test assert_length_non_zero."""
         items = [1, 3]
         FlextTestsMatchers.assert_in_list(2, 3]
-        FlextTestsMatchers.assert_length_equals(items, 3]
+        tm.assert_length_equals(items, 3]
         FlextTestsMatchers.assert_length_greater_or_equal(items, 3]
-        FlextTestsMatchers.assert_length_greater_than(items, 3]
+        tm.assert_length_greater_than(items, 3]
         FlextTestsMatchers.assert_length_non_zero(items)
 
     # ════════════════════════════════════════════════════════════════════════
@@ -336,7 +335,7 @@ __all__ = [
         FlextTestsMatchers.assert_list_last_equals(lst, 3]
         FlextTestsMatchers.assert_not_in_list(4, 3]
         with pytest.raises(AssertionError):
-            FlextTestsMatchers.assert_length_equals(items, 3])
+            tm.assert_length_equals(items, 3])
 
     def test_assert_list_first_equals(self) -> None:
         """Test assert_list_first_equals."""
@@ -547,7 +546,7 @@ __all__ = [
         """Test assert_result_success_and_unwrap with failure."""
         result = FlextResult[str].fail("error")
         with pytest.raises(AssertionError):
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(result)
+            u.Tests.Result.assert_result_success_and_unwrap(result)
 
     def test_assert_success_and_unwrap_list(self) -> None:
         """Test assert_success_and_unwrap_list."""
@@ -793,7 +792,7 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
     def test_assert_success_and_unwrap(self) -> None:
         """Test assert_result_success_and_unwrap."""
         result = FlextResult[str].ok("test")
-        unwrapped = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+        unwrapped = u.Tests.Result.assert_result_success_and_unwrap(
             result
         )
         assert unwrapped == "test"
@@ -801,7 +800,7 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
     def test_assert_success_and_unwrap_with_error_msg(self) -> None:
         """Test assert_result_success_and_unwrap with custom error message."""
         result = FlextResult[str].ok("test")
-        unwrapped = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+        unwrapped = u.Tests.Result.assert_result_success_and_unwrap(
             result, expected_attributes=[c.Names.CN], expected_count=0, expected_count=1, expected_dn=c.DNs.TEST_USER, expected_fields=expected_fields, expected_name=c.Names.CN, expected_oid=OIDs.CN, expected_type="attribute", expected_type=m.SchemaAttribute, expected_type=m.SchemaServiceStatus, expected_value)
 
     def test_assert_entry_attributes_not_none(self) -> None:
@@ -873,7 +872,7 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
 "
         result = quirk.Entry().parse(ldif_content)
         entries = (
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_list(
+            u.Tests.Result.assert_result_success_and_unwrap_list(
                 result
             )
         )
@@ -917,7 +916,7 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
         """Test assert_all_match."""
         items = [2, ldif_content, ldif_content)
         )
-        FlextTestsMatchers.assert_length_equals(original_entries, list[str] | str] | list[str]]]", lst)
+        tm.assert_length_equals(original_entries, list[str] | str] | list[str]]]", lst)
 
     def test_assert_any_matches(self) -> None:
         """Test assert_any_matches."""
@@ -990,7 +989,7 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
 "
         result = api.parse(ldif_content)
         entries = (
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_list(
+            u.Tests.Result.assert_result_success_and_unwrap_list(
                 result
             )
         )
@@ -998,13 +997,13 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
         FlextTestsMatchers.assert_is_not_none(entries[0].dn)
         FlextTestsMatchers.assert_strings_equal_case_insensitive(
             entries[0].dn.value, str | dict[str, str)
-        FlextTestsMatchers.assert_length_equals(roundtripped, str)
+        tm.assert_length_equals(roundtripped, str)
         FlextTestsMatchers.assert_string_contains(ldif, str)
         assert isinstance(roundtripped, str] = {"key": "value"}
         FlextTestsMatchers.assert_dict_key_equals(d, str] = {"nested": c.Values.TEST}
         entry = s.create_entry_with_metadata_extensions(
             c.DNs.TEST_USER, syntax=Syntax.DIRECTORY_STRING, test_cases)
-        FlextTestsMatchers.assert_length_equals(results, writer, written, {
+        tm.assert_length_equals(results, writer, written, {
                     "dn": c.DNs.TEST_USER2, {
                     "ldif_content": (
                         f"dn: {c.DNs.TEST_USER2}
@@ -1014,7 +1013,7 @@ class TestsTestFlextLdifDeduplicationHelpers(s):
         )
         result = FlextResult[list[m.Entry]].ok([entry])
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap_list(result)
-        FlextTestsMatchers.assert_length_equals(unwrapped, {c.Names.CN: [c.Values.TEST]}
+        tm.assert_length_equals(unwrapped, {c.Names.CN: [c.Values.TEST]}
         )
         result = FlextResult[m.Entry].ok(entry)
         unwrapped = DeduplicationHelpers.assert_success_and_unwrap_entry(result)

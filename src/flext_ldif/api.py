@@ -675,12 +675,12 @@ class FlextLdif(FlextLdifServiceBase[m.Entry]):
 
     def get_entry_statistics(
         self,
-        entries: list[m.Entry],
+        _entries: list[m.Entry],
     ) -> r[m.EntryStatistics]:
         """Get statistics for list of entries.
 
         Args:
-            entries: List of Entry models to analyze (currently unused - placeholder for future implementation).
+            _entries: List of Entry models to analyze (currently unused - placeholder for future implementation).
 
         Returns:
             FlextResult containing EntryStatistics model.

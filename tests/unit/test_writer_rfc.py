@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.models import m
@@ -187,7 +187,7 @@ class TestsFlextLdifsFlextLdifWriterRfc(s):
                         output_path=output_path,
                         format_options=format_options,
                     )
-                    unwrapped = FlextTestsMatchers.assert_success(result)
+                    unwrapped = tm.ok(result)
                     assert output_path.exists()
                     content = output_path.read_text()
                 else:
@@ -196,7 +196,7 @@ class TestsFlextLdifsFlextLdifWriterRfc(s):
                         target_server_type=test_case.server_type,
                         format_options=format_options,
                     )
-                    unwrapped = FlextTestsMatchers.assert_success(result)
+                    unwrapped = tm.ok(result)
                     assert isinstance(unwrapped, str)
                     content = unwrapped
 
@@ -218,7 +218,7 @@ class TestsFlextLdifsFlextLdifWriterRfc(s):
                     format_options=format_options,
                 )
 
-                unwrapped = FlextTestsMatchers.assert_success(result)
+                unwrapped = tm.ok(result)
                 assert isinstance(unwrapped, str)
                 content = unwrapped
 
@@ -246,7 +246,7 @@ class TestsFlextLdifsFlextLdifWriterRfc(s):
                     format_options=format_options,
                 )
 
-                unwrapped = FlextTestsMatchers.assert_success(result)
+                unwrapped = tm.ok(result)
                 assert isinstance(unwrapped, str)
                 # Verify we have the entry in output
                 assert "dn: cn=testuser,ou=people,dc=example,dc=com" in unwrapped
@@ -261,7 +261,7 @@ class TestsFlextLdifsFlextLdifWriterRfc(s):
                     format_options=format_options,
                 )
 
-                unwrapped = FlextTestsMatchers.assert_success(result)
+                unwrapped = tm.ok(result)
                 assert isinstance(unwrapped, str)
                 content = unwrapped
 
@@ -279,7 +279,7 @@ class TestsFlextLdifsFlextLdifWriterRfc(s):
                     format_options=format_options,
                 )
 
-                unwrapped = FlextTestsMatchers.assert_success(result)
+                unwrapped = tm.ok(result)
                 assert isinstance(unwrapped, str)
                 # Empty list produces LDIF version header but no entries
                 assert unwrapped == "version: 1\n"

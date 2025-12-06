@@ -4,7 +4,7 @@ from tests import c, m, s, t
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif import FlextLdifProtocols
 from flext_ldif.models import m
@@ -105,7 +105,7 @@ from flext_ldif.services.entries import FlextLdifEntries
             entry = TestFlextLdifEntries.Factories.create_test_entry()
             service = FlextLdifEntries()
             result = service.get_entry_dn(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             assert result.unwrap() == c.DNs.TEST_USER
 
         @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ from flext_ldif.services.entries import FlextLdifEntries
             result = service.get_entry_dn(entry_input)
             if should_succeed:
                 assert expected_dn is not None
-                FlextTestsMatchers.assert_success(result)
+                tm.ok(result)
                 assert result.unwrap() == expected_dn
             else:
                 assert result.is_failure
@@ -208,7 +208,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 )
             service = FlextLdifEntries()
             result = service.get_entry_dn(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             assert result.unwrap() == dn_value
 
     class TestCreateEntry:
@@ -224,7 +224,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                     c.Names.SN: c.Values.TEST,
                 },
             )
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             entry = result.unwrap()
             assert entry.dn is not None
             assert entry.attributes is not None
@@ -242,7 +242,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 },
                 objectclasses=[c.Names.PERSON, c.Names.TOP],
             )
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             entry = result.unwrap()
             assert entry.attributes is not None
             assert c.Names.OBJECTCLASS in entry.attributes.attributes
@@ -284,12 +284,12 @@ from flext_ldif.services.entries import FlextLdifEntries
                 dn=c.DNs.TEST_USER,
                 attributes=attributes,
             )
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             entry = result.unwrap()
             assert entry.attributes is not None
             cn_values = entry.attributes.attributes[c.Names.CN]
             assert isinstance(cn_values, list)
-            FlextTestsMatchers.assert_length_equals(cn_values, expected_cn_count)
+            tm.assert_length_equals(cn_values, expected_cn_count)
             if expected_cn_first:
                 assert cn_values[0] == expected_cn_first
 
@@ -314,7 +314,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 },
             )
             if should_succeed:
-                FlextTestsMatchers.assert_success(result)
+                tm.ok(result)
             else:
                 assert result.is_failure
                 if result.error:
@@ -338,7 +338,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 },
             )
             result = service.get_entry_attributes(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             attrs = result.unwrap()
             assert c.Names.CN in attrs
             assert c.Names.SN in attrs
@@ -415,7 +415,7 @@ from flext_ldif.services.entries import FlextLdifEntries
             service = FlextLdifEntries()
             entry = EntryWithDictAttributes(attributes)
             result = service.get_entry_attributes(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             attrs = result.unwrap()
             for attr in expected_attrs:
                 assert attr in attrs
@@ -478,7 +478,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 },
             )
             result = service.get_entry_objectclasses(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             objectclasses = result.unwrap()
             assert c.Names.PERSON in objectclasses
             assert c.Names.TOP in objectclasses
@@ -511,7 +511,7 @@ from flext_ldif.services.entries import FlextLdifEntries
             service = FlextLdifEntries()
             entry = EntryWithLowercaseObjectclass()
             result = service.get_entry_objectclasses(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             objectclasses = result.unwrap()
             assert "person" in objectclasses
             assert "top" in objectclasses
@@ -526,7 +526,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 },
             )
             result = service.get_entry_objectclasses(entry)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             objectclasses = result.unwrap()
             assert c.Names.PERSON in objectclasses
 
@@ -598,7 +598,7 @@ from flext_ldif.services.entries import FlextLdifEntries
             """Test get_attribute_values with string and list using parametrization."""
             service = FlextLdifEntries()
             result = service.get_attribute_values(attr_input)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             assert result.unwrap() == expected_values
 
         @pytest.mark.parametrize(
@@ -619,7 +619,7 @@ from flext_ldif.services.entries import FlextLdifEntries
                 values,
             )
             result = service.get_attribute_values(attr_value)
-            FlextTestsMatchers.assert_success(result)
+            tm.ok(result)
             assert result.unwrap() == expected_values
 
         def test_get_attribute_values_from_invalid_type(self) -> None:
