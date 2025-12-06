@@ -9,7 +9,7 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Process batches of entries
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestDocker.ldap_container fixture.
+container management via FlextTestsDocker.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,7 +24,9 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
+from tests import m
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -137,12 +139,12 @@ class TestRealLdapBatchOperations:
             if result.is_success:
                 unwrapped_entry = result.unwrap()
                 # Convert domain Entry to facade Entry if needed
-                if isinstance(unwrapped_entry, FlextLdifModels.Entry):
+                if isinstance(unwrapped_entry, m.Entry):
                     entries.append(unwrapped_entry)
                 else:
                     # Convert domain Entry to facade Entry
                     entry_dict = unwrapped_entry.model_dump()
-                    facade_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                    facade_entry = m.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
 
         assert len(entries) == 20
@@ -244,12 +246,12 @@ class TestRealLdapBatchOperations:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, FlextLdifModels.Entry):
+            if isinstance(unwrapped_entry, m.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                facade_entry = m.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         export_file = tmp_path / "batch_export.ldif"

@@ -24,6 +24,11 @@ from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
 
+# NOTE: This module uses FlextLdifModelsDomains.* internally to avoid circular imports.
+# The public facade models (m.*) are defined in models.py which imports this module.
+# When types from this module are exposed via FlextLdifModelsResults in models.py,
+# they are wrapped with public facade classes (FlextLdifModelsDomains.Entry, FlextLdifModelsDomains.SchemaAttribute, etc.)
+
 # Use type directly from FlextLdifTypes.Schema.SchemaElement (no local alias)
 # Import will be done where needed to avoid circular imports
 
@@ -67,12 +72,12 @@ class _DynamicCounts(FlextLdifModelsBase):
 
     def set_count(self, key: str, value: int) -> None:
         """Set count for a key."""
-        object.__setattr__(self, key, value)  # noqa: PLC2801
+        setattr(self, key, value)
 
     def increment(self, key: str, amount: int = 1) -> None:
         """Increment count for a key."""
         current = self.get_count(key)
-        object.__setattr__(self, key, current + amount)  # noqa: PLC2801
+        setattr(self, key, current + amount)
 
     def __len__(self) -> int:
         """Return number of entries."""
@@ -203,7 +208,9 @@ class _SchemaAttributeMap(_SchemaElementMap):
         """Get attribute by name."""
         value = self.get(name)
         # Use u.when() DSL for conditional return
-        return value if isinstance(value, FlextLdifModelsDomains.SchemaAttribute) else None
+        return (
+            value if isinstance(value, FlextLdifModelsDomains.SchemaAttribute) else None
+        )
 
     def set_attribute(
         self,
@@ -236,7 +243,11 @@ class _SchemaObjectClassMap(_SchemaElementMap):
         """Get object class by name."""
         value = self.get(name)
         # Use conditional expression to avoid unreachable code warning
-        return value if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass) else None
+        return (
+            value
+            if isinstance(value, FlextLdifModelsDomains.SchemaObjectClass)
+            else None
+        )
 
     def set_object_class(
         self,
@@ -440,7 +451,7 @@ class FlextLdifModelsResults:
     """LDIF result and response models container class.
 
     This class acts as a namespace container for LDIF result and response models.
-    All nested classes are accessed via FlextLdifModels.* in the main models.py.
+    All nested classes are accessed via m.* in the main models.py.
     """
 
     # Type alias for domain events (used in Statistics.events)
@@ -714,7 +725,7 @@ class FlextLdifModelsResults:
                 for cat, entries in value.items():
                     result.add_entries(str(cat), list(entries))
                 return result
-            return value  # type: ignore[unreachable]  # Mypy false positive: return is reachable when value is not dict/Categories
+            return value
 
         def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
             """Flatten all categories into single list.
@@ -770,16 +781,12 @@ class FlextLdifModelsResults:
             return iter(self.get_all_entries())
 
         @overload
-        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]:  # type: ignore[explicit-any]  # Overload ellipsis is not Any
-            """Overload for slice access."""
-            ...
+        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
 
         @overload
-        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry:  # type: ignore[explicit-any]  # Overload ellipsis is not Any
-            """Overload for int access."""
-            ...
+        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
 
-        def __getitem__(  # type: ignore[explicit-any]  # Overload implementation - not Any
+        def __getitem__(
             self,
             key: int | slice,
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
@@ -822,7 +829,7 @@ class FlextLdifModelsResults:
 
             Args:
                 entries: Sequence of Entry objects (domain Entry type or subtypes)
-                        Uses Sequence for covariance, allowing FlextLdifModels.Entry
+                        Uses Sequence for covariance, allowing FlextLdifModelsDomains.Entry
                         which inherits from domain Entry.
                 category: Category name for the entries (default: "all")
                 statistics: Optional statistics object (creates default if None)
@@ -2135,9 +2142,9 @@ class FlextLdifModelsResults:
                     FlextLdifModelsDomains.Entry(
                         dn=FlextLdifModelsDomains.DistinguishedName(value=dn_value),
                         attributes=FlextLdifModelsDomains.LdifAttributes(
-                            attributes=attrs_dict
+                            attributes=attrs_dict,
                         ),
-                    )
+                    ),
                 )
             return converted_entries
 

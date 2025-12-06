@@ -329,7 +329,6 @@ def schema_driven_workflow() -> None:
         create_user_entry,
         on_error="skip",
     )
-    )
     _entries = (
         cast("list[FlextLdifModels.Entry]", batch_result.value["results"])
         if batch_result.is_success
@@ -383,7 +382,7 @@ sn: Test
                     return eval_result.unwrap()
         return None
 
-    _ = u
+    _ = u.process(
         entries,
         process_entry_acl,
         on_error="skip",
@@ -522,7 +521,7 @@ cn: test
                 ):
                     entry.attributes.add_attribute("sn", "recovered")
 
-        _ = u
+        _ = u.process(
             entries,
             fix_entry,
             on_error="skip",

@@ -20,9 +20,8 @@ import pytest
 
 from flext_ldif import FlextLdif
 
-from ..fixtures import FlextLdifFixtures
 
-
+# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
 class TestOudSchemaIntegration:
     """Integration tests for OUD schema processing.
 

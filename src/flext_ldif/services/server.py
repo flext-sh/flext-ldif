@@ -8,13 +8,14 @@ from typing import cast
 from flext_core import (
     FlextLogger,
     r,
-    u,
 )
 
 import flext_ldif.servers as servers_package
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
@@ -271,23 +272,20 @@ class FlextLdifServer:
     def _normalize_server_type(
         self,
         server_type: str,
-    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+    ) -> c.LiteralTypes.ServerTypeLiteral:
         """Normalize server type to canonical short form.
 
-        Delegates to FlextLdifConstants.normalize_server_type() for proper
+        Delegates to c.normalize_server_type() for proper
         normalization and validation with fast-fail on invalid types.
         """
-        return FlextLdifConstants.normalize_server_type(server_type)
+        return c.normalize_server_type(server_type)
 
     def _get_attr(
         self,
         server_type: str,
         attr_name: str,
     ) -> r[
-        FlextLdifTypes.SchemaQuirkInstance
-        | FlextLdifTypes.AclQuirkInstance
-        | FlextLdifTypes.EntryQuirkInstance
-        | None
+        p.Quirks.SchemaProtocol | p.Quirks.AclProtocol | p.Quirks.EntryProtocol | None
     ]:
         """Retrieve a quirk attribute (schema, ACL, or entry) for a server.
 
@@ -298,18 +296,20 @@ class FlextLdifServer:
             normalized_type = self._normalize_server_type(server_type)
         except ValueError as e:
             # Invalid server type - return failure instead of raising
-            return r[FlextLdifTypes.QuirkInstanceType | None].fail(str(e))
-        base: FlextLdifTypes.QuirkInstanceType | None = u.get(
-            self._bases, normalized_type, default=None
+            return r[t.QuirkInstanceType | None].fail(str(e))
+        base: t.QuirkInstanceType | None = u.Mapper.get(
+            self._bases,
+            normalized_type,
+            default=None,
         )
         if not base:
-            return r[FlextLdifTypes.QuirkInstanceType | None].fail(
+            return r[t.QuirkInstanceType | None].fail(
                 f"No base found for server type: {server_type}",
             )
         # Quirk attributes are named with _quirk suffix: schema_quirk, acl_quirk, entry_quirk
         quirk_attr_name = f"{attr_name}_quirk"
         quirk = getattr(base, quirk_attr_name, None)
-        return r[FlextLdifTypes.QuirkInstanceType | None].ok(quirk)
+        return r[t.QuirkInstanceType | None].ok(quirk)
 
     # =========================================================================
     # THIN INTERFACE - Server-agnostic quirk access (no duplication)
@@ -317,7 +317,7 @@ class FlextLdifServer:
 
     def quirk(
         self,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
+        server_type: c.LiteralTypes.ServerTypeLiteral | str,
     ) -> r[FlextLdifServersBase]:
         """Get base quirk for a server type.
 
@@ -330,7 +330,11 @@ class FlextLdifServer:
 
         """
         normalized = self._normalize_server_type(server_type)
-        base: FlextLdifServersBase | None = u.get(self._bases, normalized, default=None)
+        base: FlextLdifServersBase | None = u.Mapper.get(
+            self._bases,
+            normalized,
+            default=None,
+        )
         if base is None:
             return r[FlextLdifServersBase].fail(
                 f"No base found for server type: {server_type}",
@@ -352,8 +356,10 @@ class FlextLdifServer:
         except ValueError as e:
             # Invalid server type - return failure
             return r[_QuirksDict].fail(str(e))
-        base: FlextLdifServersBase | None = u.get(
-            self._bases, normalized_type, default=None
+        base: FlextLdifServersBase | None = u.Mapper.get(
+            self._bases,
+            normalized_type,
+            default=None,
         )
         if not base:
             return r[_QuirksDict].fail(
@@ -382,14 +388,11 @@ class FlextLdifServer:
         result = self._get_attr(server_type, "schema")
         if result.is_failure:
             return None
-        quirk_raw = u.val(result)
+        quirk_raw = u.unwrap_or(result, default=None)
         if quirk_raw is None:
             return None
-        quirk = cast("FlextLdifTypes.SchemaQuirkInstance", quirk_raw)
-        if not isinstance(quirk, FlextLdifServersBase.Schema):
-            msg = f"Expected FlextLdifServersBase.Schema, got {type(quirk)}"
-            raise TypeError(msg)
-        return quirk
+        # Type narrowing: quirk_raw is SchemaProtocol, cast to concrete type
+        return cast("FlextLdifServersBase.Schema", quirk_raw)
 
     def acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
         """Get ACL quirk for a server type.
@@ -404,14 +407,11 @@ class FlextLdifServer:
         result = self._get_attr(server_type, "acl")
         if result.is_failure:
             return None
-        quirk_raw = u.val(result)
+        quirk_raw = u.unwrap_or(result, default=None)
         if quirk_raw is None:
             return None
-        quirk = cast("FlextLdifTypes.AclQuirkInstance", quirk_raw)
-        if not isinstance(quirk, FlextLdifServersBase.Acl):
-            msg = f"Expected FlextLdifServersBase.Acl, got {type(quirk)}"
-            raise TypeError(msg)
-        return quirk
+        # Type narrowing: quirk_raw is AclProtocol, cast to concrete type
+        return cast("FlextLdifServersBase.Acl", quirk_raw)
 
     def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
         """Get entry quirk for a server type.
@@ -426,14 +426,11 @@ class FlextLdifServer:
         result = self._get_attr(server_type, "entry")
         if result.is_failure:
             return None
-        quirk_raw = u.val(result)
+        quirk_raw = u.unwrap_or(result, default=None)
         if quirk_raw is None:
             return None
-        quirk = cast("FlextLdifTypes.EntryQuirkInstance", quirk_raw)
-        if not isinstance(quirk, FlextLdifServersBase.Entry):
-            msg = f"Expected FlextLdifServersBase.Entry, got {type(quirk)}"
-            raise TypeError(msg)
-        return quirk
+        # Type narrowing: quirk_raw is EntryProtocol, cast to concrete type
+        return cast("FlextLdifServersBase.Entry", quirk_raw)
 
     def list_registered_servers(self) -> list[str]:
         """List all server types that have registered quirks.
@@ -446,7 +443,7 @@ class FlextLdifServer:
 
     def get_registry_stats(
         self,
-    ) -> FlextLdifTypes.Registry.RegistryStatsDict:
+    ) -> t.Registry.RegistryStatsDict:
         """Get comprehensive registry statistics.
 
         Returns:
@@ -456,11 +453,11 @@ class FlextLdifServer:
             - server_priorities: Dict mapping server types to their priorities
 
         """
-        quirks_by_server: dict[str, FlextLdifTypes.Registry.QuirksByServerDict] = {}
+        quirks_by_server: dict[str, t.Registry.QuirksByServerDict] = {}
         server_priorities: dict[str, int] = {}
 
         for server_type, base_quirk in self._bases.items():
-            quirks_by_server[server_type] = FlextLdifTypes.Registry.QuirksByServerDict(
+            quirks_by_server[server_type] = t.Registry.QuirksByServerDict(
                 schema=base_quirk.schema_quirk.__class__.__name__
                 if base_quirk.schema_quirk
                 else None,
@@ -479,7 +476,7 @@ class FlextLdifServer:
             priority_value: int = priority_value_raw
             server_priorities[server_type] = priority_value
 
-        return FlextLdifTypes.Registry.RegistryStatsDict(
+        return t.Registry.RegistryStatsDict(
             total_servers=len(self._bases),
             quirks_by_server=quirks_by_server,
             server_priorities=server_priorities,
@@ -487,7 +484,7 @@ class FlextLdifServer:
 
     def get_constants(
         self,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.LiteralTypes.ServerTypeLiteral,
     ) -> r[type]:
         """Get Constants class from server quirk.
 
@@ -508,12 +505,14 @@ class FlextLdifServer:
                 f"Unknown server type: {server_type}: {error_msg}",
             )
 
-        server_quirk_raw = u.val(server_quirk_result)
+        # Type narrowing: unwrap_or returns FlextLdifServersBase | None
+        server_quirk_raw = u.unwrap_or(server_quirk_result, default=None)
         if server_quirk_raw is None:
             return r[type].fail(
                 f"Unknown server type: {server_type}",
             )
-        server_quirk = cast("FlextLdifServersBase", server_quirk_raw)
+        # Type narrowing: server_quirk_raw is FlextLdifServersBase when not None
+        server_quirk: FlextLdifServersBase = server_quirk_raw
         quirk_class = type(server_quirk)
         constants = getattr(quirk_class, "Constants", None)
         if constants is None:
@@ -535,7 +534,7 @@ class FlextLdifServer:
 
     def get_detection_constants(
         self,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.LiteralTypes.ServerTypeLiteral,
     ) -> r[type]:
         """Get Constants class with detection attributes from server quirk.
 
@@ -555,12 +554,14 @@ class FlextLdifServer:
                 f"Failed to get server quirk for {server_type}: {error_msg}",
             )
 
-        server_quirk_raw = u.val(server_quirk_result)
+        # Type narrowing: unwrap_or returns FlextLdifServersBase | None
+        server_quirk_raw = u.unwrap_or(server_quirk_result, default=None)
         if server_quirk_raw is None:
             return r[type].fail(
                 f"Failed to get server quirk for {server_type}",
             )
-        server_quirk = cast("FlextLdifServersBase", server_quirk_raw)
+        # Type narrowing: server_quirk_raw is FlextLdifServersBase when not None
+        server_quirk: FlextLdifServersBase = server_quirk_raw
         quirk_class = type(server_quirk)
         constants = getattr(quirk_class, "Constants", None)
         if constants is None:

@@ -19,10 +19,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextResult, u
+from flext_core import r, u
 
-from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdif, m
+from flext_ldif.constants import c
 
 
 class ExampleServerMigration:
@@ -36,7 +36,7 @@ class ExampleServerMigration:
     """
 
     @staticmethod
-    def parallel_server_migration() -> FlextResult[FlextLdifModels.EntryResult]:
+    def parallel_server_migration() -> r[m.EntryResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = FlextLdif.get_instance()
 
@@ -86,9 +86,9 @@ member: cn=OUD User,ou=People,dc=example,dc=com
             output_dir=output_dir,
             source_server="oid",  # Source server with specific quirks
             target_server="oud",  # Target server with different quirks
-            options=FlextLdifModels.MigrateOptions(
+            options=m.MigrateOptions(
                 # Enable parallel processing for large datasets
-                write_options=FlextLdifModels.WriteFormatOptions(
+                write_options=m.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),
@@ -96,7 +96,7 @@ member: cn=OUD User,ou=People,dc=example,dc=com
         )
 
         if migration_result.is_failure:
-            return FlextResult.fail(f"Migration failed: {migration_result.error}")
+            return r.fail(f"Migration failed: {migration_result.error}")
 
         result = migration_result.unwrap()
 
@@ -109,10 +109,10 @@ member: cn=OUD User,ou=People,dc=example,dc=com
                 "entries_by_category",
             ) else 0
 
-        return FlextResult.ok(result)
+        return r.ok(result)
 
     @staticmethod
-    def auto_detection_migration_pipeline() -> FlextResult[dict[str, object]]:
+    def auto_detection_migration_pipeline() -> r[dict[str, object]]:
         """Migration pipeline with automatic server detection."""
         api = FlextLdif.get_instance()
 
@@ -138,7 +138,7 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
         # Auto-detect source server type
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.is_failure:
-            return FlextResult.fail(f"Server detection failed: {detect_result.error}")
+            return r.fail(f"Server detection failed: {detect_result.error}")
 
         detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
@@ -146,7 +146,7 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
         # Parse with detected server type
         parse_result = api.parse(mixed_ldif, server_type=detected_server)
         if parse_result.is_failure:
-            return FlextResult.fail(f"Parse failed: {parse_result.error}")
+            return r.fail(f"Parse failed: {parse_result.error}")
 
         entries = parse_result.unwrap()
 
@@ -166,11 +166,11 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
         )
 
         if migration_result.is_failure:
-            return FlextResult.fail(
+            return r.fail(
                 f"Migration to RFC failed: {migration_result.error}",
             )
 
-        return FlextResult.ok({
+        return r.ok({
             "detected_server": detected_server,
             "confidence": detection.confidence,
             "patterns_found": detection.patterns_found,
@@ -179,7 +179,7 @@ member: cn=Auto Detect Test,ou=People,dc=example,dc=com
         })
 
     @staticmethod
-    def batch_server_comparison() -> FlextResult[dict[str, object]]:
+    def batch_server_comparison() -> r[dict[str, object]]:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = FlextLdif.get_instance()
 
@@ -206,9 +206,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         # Parallel parsing comparison
         for server in servers:
             # Cast to Literal type for server_type parameter
-            server_type = cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server
-            )
+            server_type = cast("c.LiteralTypes.ServerTypeLiteral", server)
             parse_result = api.parse(test_ldif, server_type=server_type)
             if parse_result.is_success:
                 entries = parse_result.unwrap()
@@ -246,7 +244,7 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
         )
         total_servers = len(servers)
 
-        return FlextResult.ok({
+        return r.ok({
             "servers_tested": total_servers,
             "successful_parses": successful_parses,
             "success_rate": successful_parses / total_servers
@@ -271,12 +269,12 @@ entryCSN: 20240101000000.000000Z#000000#000#000000
             setup_dir,
             on_error="skip",
         )
-        )
         return source_dir, intermediate_dir, final_dir
 
     @staticmethod
     def _create_test_data(source_dir: Path) -> None:
         """Create and write test data files."""
+
         def create_entry_data(i: int) -> str:
             """Create entry data based on index."""
             if i % 4 == 0:
@@ -306,7 +304,7 @@ orclguid: user{i}guid456
 aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)
 """
 
-        batch_result = u
+        batch_result = u.process(
             list(range(20)),
             create_entry_data,
             on_error="skip",
@@ -322,14 +320,17 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             i, entry = item
             (source_dir / f"data_{i:02d}.ldif").write_text(entry)
 
-        _ = u
+        _ = u.process(
             list(enumerate(source_data)),
             write_file,
             on_error="skip",
         )
 
     @staticmethod
-    def _detect_server_type(api: FlextLdif, source_dir: Path) -> tuple[str, dict[str, object]]:
+    def _detect_server_type(
+        api: FlextLdif,
+        source_dir: Path,
+    ) -> tuple[str, dict[str, object]]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_path=sample_file)
@@ -344,14 +345,14 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         return "oid", detection_data
 
     @staticmethod
-    def comprehensive_migration_workflow() -> FlextResult[dict[str, object]]:
+    def comprehensive_migration_workflow() -> r[dict[str, object]]:
         """Comprehensive migration workflow with parallel processing and validation."""
         api = FlextLdif.get_instance()
 
         # Setup directories
         workflow_dir = Path("examples/comprehensive_migration")
-        source_dir, intermediate_dir, final_dir = ExampleServerMigration._setup_directories(
-            workflow_dir
+        source_dir, intermediate_dir, final_dir = (
+            ExampleServerMigration._setup_directories(workflow_dir)
         )
 
         # Create test data
@@ -359,20 +360,19 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
 
         # Detect server type
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api, source_dir
+            api,
+            source_dir,
         )
 
         # Step 2: Migrate OID → Intermediate (OUD format)
-        source_server_typed = cast(
-            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", source_server
-        )
+        source_server_typed = cast("c.LiteralTypes.ServerTypeLiteral", source_server)
         intermediate_migration = api.migrate(
             input_dir=source_dir,
             output_dir=intermediate_dir,
             source_server=source_server_typed,
             target_server="oud",
-            options=FlextLdifModels.MigrateOptions(
-                write_options=FlextLdifModels.WriteFormatOptions(
+            options=m.MigrateOptions(
+                write_options=m.WriteFormatOptions(
                     fold_long_lines=False,
                     sort_attributes=True,
                 ),
@@ -380,7 +380,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         )
 
         if intermediate_migration.is_failure:
-            return FlextResult.fail(
+            return r.fail(
                 f"Intermediate migration failed: {intermediate_migration.error}",
             )
 
@@ -393,7 +393,7 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
         )
 
         if final_migration.is_failure:
-            return FlextResult.fail(f"Final migration failed: {final_migration.error}")
+            return r.fail(f"Final migration failed: {final_migration.error}")
 
         final_result = final_migration.unwrap()
         final_count = (
@@ -414,4 +414,4 @@ aci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="
             "validation_performed": True,
         }
 
-        return FlextResult.ok(workflow_results)
+        return r.ok(workflow_results)

@@ -814,7 +814,7 @@ class TestSchemaDeviationsComplete:
 
         # Validate that all required OID deviations are tracked
         tracked_fields = len(extensions_dict) + len(
-            format_details.__class__.model_fields
+            format_details.__class__.model_fields,
         )
         assert tracked_fields >= len(oid_must_track), (
             f"Should track at least {len(oid_must_track)} fields, got {tracked_fields}"
@@ -880,7 +880,7 @@ class TestSchemaDeviationsComplete:
 
         # Validate that all required OUD deviations are tracked
         tracked_fields = len(extensions_dict) + len(
-            format_details.__class__.model_fields
+            format_details.__class__.model_fields,
         )
         assert tracked_fields >= len(oud_must_track), (
             f"Should track at least {len(oud_must_track)} fields, got {tracked_fields}"

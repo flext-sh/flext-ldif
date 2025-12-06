@@ -1,22 +1,7 @@
-"""Entry Service Tests - Comprehensive test coverage for FlextLdifEntries with real implementations.
+"""Comprehensive tests for FlextLdifEntries service.
 
-Modules Tested:
-- flext_ldif.services.entries: Entry CRUD, transformation, manipulation
-- flext_ldif.services.validation: RFC 4512/4514 LDAP validation
-- flext_ldif.services.syntax: RFC 4517 LDAP attribute syntax
-- flext_ldif.utilities: DN cleaning, entry operations
-
-Scope:
-- DN cleaning with various formats (spaces, escaped chars, already clean)
-- Attribute removal (single, multiple, nonexistent, case-insensitive)
-- Operational attribute removal (single, batch, case-insensitive)
-- Execute pattern, builder pattern, integration pipelines
-- Edge cases (no attributes, only operational, unicode, long values, many attributes)
-- RFC 4512/4514 validation (attribute names, objectClass, values, DN components)
-- RFC 4517 syntax validation (OID format, lookup, resolve, validate value)
-
-Uses Python 3.13 features, factories, parametrization, and helpers for minimal code
-with maximum coverage. All tests use real implementations, no mocks.
+Tests entry manipulation, validation, syntax checking, and edge cases
+using real implementations and flext_tests matchers for concise assertions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,18 +13,36 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers  # Mocked in conftest
 
-from flext_ldif import FlextLdifModels, FlextLdifUtilities
+from flext_ldif import FlextLdifUtilities
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
-from tests.fixtures.constants import EntryTestConstants, Names, Values
-from tests.helpers.test_entry_helpers import EntryTestHelpers
-from tests.helpers.test_factories import FlextLdifTestFactories
+from tests import c, m, s, tm
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+
+# Module-level constants to avoid NameError during class definition
+_OPERATIONAL_ATTRS = [
+    "createTimestamp",
+    "modifyTimestamp",
+    "creatorsName",
+    "modifiersName",
+    "entryCSN",
+    "entryUUID",
+]
+_LONG_VALUE_LENGTH = 10000
+_MANY_ATTRS_COUNT = 100
+_MANY_ATTRS_REMOVE_COUNT = 50
+_UNICODE_DN = "cn=测试,dc=example,dc=com"
+_UNICODE_VALUE = "测试值"
+_VALID_ATTR_NAMES = ["cn", "sn", "mail", "objectClass", "uid"]
+_INVALID_ATTR_NAMES = ["2invalid", "invalid-name", "invalid name"]
+_BOOLEAN_OID = "1.3.6.1.4.1.1466.115.121.1.7"
+_BOOLEAN_NAME = "Boolean"
 
 
-class TestFlextLdifEntrys:
+class TestsTestFlextLdifEntrys(s):
     """Comprehensive tests for FlextLdifEntries service with real implementations.
 
     Single class with nested test groups following project patterns.
@@ -101,56 +104,67 @@ class TestFlextLdifEntrys:
     class Constants:
         """Test constants organized in nested class."""
 
-        # Operational attributes
-        OPERATIONAL_ATTRS: Final[list[str]] = EntryTestConstants.OPERATIONAL_ATTRS
+        # Operational attributes - use module-level constants
+        OPERATIONAL_ATTRS: Final[list[str]] = _OPERATIONAL_ATTRS
 
-        # Edge case values
-        LONG_VALUE_LENGTH: Final[int] = EntryTestConstants.LONG_VALUE_LENGTH
-        MANY_ATTRS_COUNT: Final[int] = EntryTestConstants.MANY_ATTRS_COUNT
-        MANY_ATTRS_REMOVE_COUNT: Final[int] = EntryTestConstants.MANY_ATTRS_REMOVE_COUNT
+        # Edge case values - use module-level constants
+        LONG_VALUE_LENGTH: Final[int] = _LONG_VALUE_LENGTH
+        MANY_ATTRS_COUNT: Final[int] = _MANY_ATTRS_COUNT
+        MANY_ATTRS_REMOVE_COUNT: Final[int] = _MANY_ATTRS_REMOVE_COUNT
 
-        # Unicode test values
-        UNICODE_DN: Final[str] = EntryTestConstants.UNICODE_DN
-        UNICODE_VALUE: Final[str] = EntryTestConstants.UNICODE_VALUE
+        # Unicode test values - use module-level constants
+        UNICODE_DN: Final[str] = _UNICODE_DN
+        UNICODE_VALUE: Final[str] = _UNICODE_VALUE
 
-        # Validation test values
-        VALID_ATTR_NAMES: Final[list[str]] = EntryTestConstants.VALID_ATTR_NAMES
-        INVALID_ATTR_NAMES: Final[list[str]] = EntryTestConstants.INVALID_ATTR_NAMES
+        # Validation test values - use module-level constants
+        VALID_ATTR_NAMES: Final[list[str]] = _VALID_ATTR_NAMES
+        INVALID_ATTR_NAMES: Final[list[str]] = _INVALID_ATTR_NAMES
 
-        # Syntax test values
-        BOOLEAN_OID: Final[str] = EntryTestConstants.BOOLEAN_OID
-        BOOLEAN_NAME: Final[str] = EntryTestConstants.BOOLEAN_NAME
+        # Syntax test values - use module-level constants
+        BOOLEAN_OID: Final[str] = _BOOLEAN_OID
+        BOOLEAN_NAME: Final[str] = _BOOLEAN_NAME
 
         # DN cleaning test cases
-        DN_CLEANING_CASES: Final[dict[str, tuple[str, str | None, str | None]]] = (
-            EntryTestConstants.DN_CLEANING_CASES
-        )
+        DN_CLEANING_CASES: Final[dict[str, tuple[str, str | None, str | None]]] = {
+            "with_spaces": ("cn=test ,dc=example,dc=com", "cn=test", " "),
+            "already_clean": (
+                "cn=test,dc=example,dc=com",
+                "cn=test,dc=example,dc=com",
+                None,
+            ),
+            "with_escaped_chars": ("cn=test\\,user,dc=example", "cn=test\\,user", None),
+        }
 
     class Factories:
         """Entry factories for testing."""
 
         @staticmethod
-        def create_simple_entry() -> FlextLdifModels.Entry:
+        def create_simple_entry() -> m.Entry:
             """Create a simple test entry using factory."""
-            return FlextLdifTestFactories.create_user_entry(
+            return s.create_user_entry(
                 username="john",
-                template=FlextLdifTestFactories.USER_TEMPLATE,
+                template=s.USER_TEMPLATE,
                 sn=["Doe"],
                 mail=["john@example.com"],
             )
 
         @staticmethod
-        def create_entry_with_operational_attrs() -> FlextLdifModels.Entry:
+        def create_entry_with_operational_attrs() -> m.Entry:
             """Create entry with operational attributes."""
-            return FlextLdifTestFactories.create_entry(
-                dn="cn=jane,ou=users,dc=example,dc=com",
+            return s.create_entry(
+                dn=f"cn={c.Values.USER2},ou=users,{c.DNs.EXAMPLE}",
                 attributes={
-                    Names.CN: ["jane"],
-                    Names.SN: ["Smith"],
-                    Names.MAIL: ["jane@example.com"],
+                    c.Names.CN: ["jane"],
+                    c.Names.SN: ["Smith"],
+                    c.Names.MAIL: ["jane@example.com"],
                     **{
                         attr: ["20250104120000Z"]
-                        for attr in EntryTestConstants.OPERATIONAL_ATTRS[:4]
+                        for attr in [
+                            "createTimestamp",
+                            "modifyTimestamp",
+                            "creatorsName",
+                            "modifiersName",
+                        ]
                     },
                     "entryCSN": ["20250105120000.123456Z#000000#000#000000"],
                     "entryUUID": ["12345678-1234-5678-1234-567812345678"],
@@ -158,16 +172,25 @@ class TestFlextLdifEntrys:
             )
 
         @staticmethod
-        def create_entries_batch() -> list[FlextLdifModels.Entry]:
+        def create_entries_batch() -> list[m.Entry]:
             """Create batch of entries for testing."""
+            # Access Constants via class attribute after class is fully defined
+            operational_attrs = [
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryCSN",
+                "entryUUID",
+            ]
             return [
-                FlextLdifTestFactories.create_entry(
-                    f"cn=user{i},ou=users,dc=example,dc=com",
+                s.create_entry(
+                    f"cn={c.Values.USER}{i},ou=users,{c.DNs.EXAMPLE}",
                     {
-                        Names.CN: [f"user{i}"],
+                        c.Names.CN: [f"user{i}"],
                         **(
                             {
-                                EntryTestConstants.OPERATIONAL_ATTRS[i % 3]: [
+                                operational_attrs[i % 3]: [
                                     "20250104120000Z",
                                 ],
                             }
@@ -185,8 +208,19 @@ class TestFlextLdifEntrys:
         @pytest.mark.parametrize(
             ("scenario", "input_dn", "expected_present", "expected_absent"),
             [
-                (name, *data)
-                for name, data in EntryTestConstants.DN_CLEANING_CASES.items()
+                ("with_spaces", "cn=test ,dc=example,dc=com", "cn=test", " "),
+                (
+                    "already_clean",
+                    "cn=test,dc=example,dc=com",
+                    "cn=test,dc=example,dc=com",
+                    None,
+                ),
+                (
+                    "with_escaped_chars",
+                    "cn=test\\,user,dc=example",
+                    "cn=test\\,user",
+                    None,
+                ),
             ],
         )
         def test_clean_dn(
@@ -198,11 +232,11 @@ class TestFlextLdifEntrys:
         ) -> None:
             """Parametrized test for DN cleaning."""
             cleaned = FlextLdifUtilities.DN.clean_dn(input_dn)
-            assert isinstance(cleaned, str) and len(cleaned) > 0
+            tm.that(cleaned, is_=str, empty=False)
             if expected_present:
-                assert expected_present in cleaned
+                tm.that(cleaned, contains=expected_present)
             if expected_absent:
-                assert expected_absent not in cleaned
+                tm.that(cleaned, not_contains=expected_absent)
 
     class TestAttributeRemoval:
         """Test attribute removal public API."""
@@ -222,15 +256,15 @@ class TestFlextLdifEntrys:
             "test_remove_single_attribute": (
                 "remove_single",
                 "simple_entry",
-                [Names.MAIL],
-                [Names.MAIL],
+                [c.Names.MAIL],
+                [c.Names.MAIL],
                 True,
             ),
             "test_remove_multiple_attributes": (
                 "remove_multiple",
                 "simple_entry",
-                [Names.MAIL, Names.SN, Names.OBJECTCLASS],
-                [Names.MAIL, Names.SN, Names.OBJECTCLASS],
+                [c.Names.MAIL, c.Names.SN, c.Names.OBJECTCLASS],
+                [c.Names.MAIL, c.Names.SN, c.Names.OBJECTCLASS],
                 True,
             ),
             "test_remove_nonexistent_attribute": (
@@ -244,21 +278,21 @@ class TestFlextLdifEntrys:
                 "case_insensitive",
                 "simple_entry",
                 ["MAIL", "SN"],
-                [Names.MAIL, Names.SN],
+                [c.Names.MAIL, c.Names.SN],
                 True,
             ),
             "test_remove_operational_attributes_single": (
                 "operational_single",
                 "entry_with_operational_attrs",
                 None,
-                EntryTestConstants.OPERATIONAL_ATTRS[:4],
+                ["createTimestamp", "modifyTimestamp", "creatorsName", "modifiersName"],
                 False,
             ),
             "test_remove_operational_attributes_batch": (
                 "operational_batch",
                 "entries_batch",
                 None,
-                EntryTestConstants.OPERATIONAL_ATTRS[:3],
+                ["createTimestamp", "modifyTimestamp", "creatorsName"],
                 False,
             ),
             "test_case_insensitive_operational_attr_matching": (
@@ -294,13 +328,13 @@ class TestFlextLdifEntrys:
             is_selective: bool,
         ) -> None:
             """Parametrized test for attribute removal scenarios."""
-            simple_entry = TestFlextLdifEntrys.Factories.create_simple_entry()
+            simple_entry = TestsTestFlextLdifEntrys.Factories.create_simple_entry()
             entry_with_operational_attrs = (
-                TestFlextLdifEntrys.Factories.create_entry_with_operational_attrs()
+                TestsTestFlextLdifEntrys.Factories.create_entry_with_operational_attrs()
             )
-            entries_batch = TestFlextLdifEntrys.Factories.create_entries_batch()
+            entries_batch = TestsTestFlextLdifEntrys.Factories.create_entries_batch()
 
-            fixtures: dict[str, FlextLdifModels.Entry | list[FlextLdifModels.Entry]] = {
+            fixtures: dict[str, m.Entry | list[m.Entry]] = {
                 "simple_entry": simple_entry,
                 "entry_with_operational_attrs": entry_with_operational_attrs,
                 "entries_batch": entries_batch,
@@ -308,69 +342,90 @@ class TestFlextLdifEntrys:
             fixture_data = fixtures[fixture_name]
 
             if is_selective and fixture_name == "simple_entry":
-                assert isinstance(fixture_data, FlextLdifModels.Entry)
-                EntryTestHelpers.test_remove_attributes_complete(
-                    fixture_data,
-                    attrs_to_remove or [],
-                    expected_removed=attrs_to_check,
+                tm.ok(fixture_data, is_=m.Entry)
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(fixture_data)
+                    .with_operation("remove_attributes")
+                    .with_attributes_to_remove(attrs_to_remove or [])
+                    .execute(),
+                    is_=m.Entry,
                 )
+                tm.entry(result, not_has_attr=attrs_to_check)
             elif is_selective and fixture_name == "entries_batch":
-                assert isinstance(fixture_data, list)
-                EntryTestHelpers.test_batch_remove_attributes_complete(
-                    fixture_data,
-                    attrs_to_remove or [],
-                    expected_removed=attrs_to_check,
+                tm.ok(fixture_data, is_=list)
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entries(fixture_data)
+                    .with_operation("remove_attributes")
+                    .with_attributes_to_remove(attrs_to_remove or [])
+                    .execute(),
+                    is_=list,
+                )
+                tm.entries(
+                    result,
+                    all_have_attr=attrs_to_check,
+                    not_has_attr=attrs_to_check,
                 )
             elif fixture_name == "entries_batch":
-                assert isinstance(fixture_data, list)
-                EntryTestHelpers.test_batch_remove_operational_attributes_complete(
-                    fixture_data,
-                    expected_removed=attrs_to_check,
+                tm.ok(fixture_data, is_=list)
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entries(fixture_data)
+                    .with_operation("remove_operational_attributes")
+                    .execute(),
+                    is_=list,
+                )
+                tm.entries(
+                    result,
+                    all_have_attr=attrs_to_check,
+                    not_has_attr=attrs_to_check,
                 )
             else:
-                assert isinstance(fixture_data, FlextLdifModels.Entry)
-                EntryTestHelpers.test_remove_operational_attributes_complete(
-                    fixture_data,
-                    expected_removed=attrs_to_check,
+                tm.ok(fixture_data, is_=m.Entry)
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(fixture_data)
+                    .with_operation("remove_operational_attributes")
+                    .execute(),
+                    is_=m.Entry,
                 )
+                tm.entry(result, not_has_attr=attrs_to_check)
 
     class TestPatterns:
         """Test execute pattern, builder pattern, and integration scenarios."""
 
         def test_execute_pattern_operations(self) -> None:
             """Test execute() method with various operations."""
-            entries_batch = TestFlextLdifEntrys.Factories.create_entries_batch()
-            simple_entry = TestFlextLdifEntrys.Factories.create_simple_entry()
+            entries_batch = TestsTestFlextLdifEntrys.Factories.create_entries_batch()
+            simple_entry = TestsTestFlextLdifEntrys.Factories.create_simple_entry()
 
-            # Test 1: Batch operational attribute removal
+            # Test 1: Batch operational attribute removal - using unified method
             service1 = FlextLdifEntries(
                 entries=entries_batch,
                 operation="remove_operational_attributes",
             )
-            result1 = FlextTestsMatchers.assert_success(service1.execute())
-            assert isinstance(result1, list) and len(result1) == 3
+            tm.ok_entries(service1.execute(), count=3)
 
-            # Test 2: Selective attribute removal
+            # Test 2: Selective attribute removal - using unified method
             service2 = FlextLdifEntries(
                 entries=[simple_entry],
                 operation="remove_attributes",
-                attributes_to_remove=[Names.MAIL],
+                attributes_to_remove=[c.Names.MAIL],
             )
-            result2 = FlextTestsMatchers.assert_success(service2.execute())
-            assert isinstance(result2, list) and len(result2) == 1
-            assert Names.MAIL not in result2[0].attributes.attributes
+            result2 = tm.ok_entries(service2.execute(), count=1)
+            tm.entry(result2[0], not_has_attr=c.Names.MAIL)
 
-            # Test 3: Empty batch
+            # Test 3: Empty batch - using unified method
             service4 = FlextLdifEntries(
                 entries=[],
                 operation="remove_operational_attributes",
             )
-            result4 = FlextTestsMatchers.assert_success(service4.execute())
-            assert isinstance(result4, list) and result4 == []
+            tm.ok_entries(service4.execute(), empty=True)
 
         def test_builder_pattern(self) -> None:
             """Test fluent builder pattern."""
-            simple_entry = TestFlextLdifEntrys.Factories.create_simple_entry()
+            simple_entry = TestsTestFlextLdifEntrys.Factories.create_simple_entry()
 
             # Test 1: Basic builder
             result1 = (
@@ -379,19 +434,20 @@ class TestFlextLdifEntrys:
                 .with_operation("remove_operational_attributes")
                 .build()
             )
-            assert isinstance(result1, list) and len(result1) == 1
-            assert Names.CN in result1[0].attributes.attributes
+            result1 = tm.ok_entries(result1, count=1)
+            tm.entry(result1[0], has_attr=c.Names.CN)
 
             # Test 2: Builder with attributes_to_remove
             result2 = (
                 FlextLdifEntries.builder()
                 .with_entries([simple_entry])
                 .with_operation("remove_attributes")
-                .with_attributes_to_remove([Names.MAIL, Names.SN])
+                .with_attributes_to_remove([c.Names.MAIL, c.Names.SN])
                 .build()
             )
             attrs = result2[0].attributes.attributes
-            assert Names.MAIL not in attrs and Names.SN not in attrs
+            assert c.Names.MAIL not in attrs
+            assert c.Names.SN not in attrs
 
             # Test 3: Builder chaining returns same instance
             builder = FlextLdifEntries.builder()
@@ -400,40 +456,47 @@ class TestFlextLdifEntrys:
         def test_integration_pipeline(self) -> None:
             """Test realistic processing pipelines."""
             entry_with_operational_attrs = (
-                TestFlextLdifEntrys.Factories.create_entry_with_operational_attrs()
+                TestsTestFlextLdifEntrys.Factories.create_entry_with_operational_attrs()
             )
-            entries_batch = TestFlextLdifEntrys.Factories.create_entries_batch()
+            entries_batch = TestsTestFlextLdifEntrys.Factories.create_entries_batch()
 
             # Single entry pipeline
-            intermediate = EntryTestHelpers.test_remove_operational_attributes_complete(
-                entry_with_operational_attrs,
-                expected_removed=EntryTestConstants.OPERATIONAL_ATTRS[:4],
+            intermediate = tm.ok(
+                FlextLdifEntries()
+                .with_entry(entry_with_operational_attrs)
+                .with_operation("remove_operational_attributes")
+                .execute(),
+                is_=m.Entry,
             )
-            assert intermediate is not None
-            final = EntryTestHelpers.test_remove_attributes_complete(
-                intermediate,
-                [Names.MAIL],
-                expected_removed=[Names.MAIL],
-                expected_present=[Names.CN],
+            operational_attrs = [
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+            ]
+            tm.entry(intermediate, not_has_attr=operational_attrs)
+            final = tm.ok_entry(
+                FlextLdifEntries()
+                .with_entry(intermediate)
+                .with_operation("remove_attributes")
+                .with_attributes_to_remove([c.Names.MAIL])
+                .execute(),
             )
-            assert final is not None
-            assert Names.MAIL not in final.attributes.attributes
-            assert "createTimestamp" not in final.attributes.attributes
+            tm.entry(final, not_has_attr=c.Names.MAIL, has_attr=[c.Names.CN])
 
-            # Batch pipeline
+            # Batch pipeline - using unified methods
             entries_service = FlextLdifEntries()
-            batch_result = FlextTestsMatchers.assert_success(
+            batch_result = tm.ok_entries(
                 entries_service.remove_operational_attributes_batch(entries_batch),
             )
-            final_batch = FlextTestsMatchers.assert_success(
+            final_batch = tm.ok_entries(
                 entries_service.remove_attributes_batch(
                     batch_result,
-                    attributes=[Names.CN],
+                    attributes=[c.Names.CN],
                 ),
+                count=len(entries_batch),
             )
-            assert len(final_batch) == len(entries_batch)
-            for entry in final_batch:
-                assert Names.CN not in entry.attributes.attributes
+            tm.entries(final_batch, all_have_attr=c.Names.CN, count=len(entries_batch))
 
     class TestEdgeCases:
         """Test edge cases and special situations."""
@@ -457,24 +520,31 @@ class TestFlextLdifEntrys:
         ) -> None:
             """Parametrized test for edge cases."""
             if test_type == "no_attributes":
-                entry = FlextLdifTestFactories.create_entry(
-                    "cn=empty,dc=example,dc=com",
-                    {Names.CN: ["empty"]},
+                entry = self.create_entry(
+                    f"cn={c.Values.TEST},{c.DNs.EXAMPLE}",
+                    {c.Names.CN: ["empty"]},
                 )
-                EntryTestHelpers.test_remove_operational_attributes_complete(
-                    entry,
-                    expected_present=[Names.CN],
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(entry)
+                    .with_operation("remove_operational_attributes")
+                    .execute(),
+                    is_=m.Entry,
                 )
+                tm.entry(result, has_attr=c.Names.CN)
 
             elif test_type == "only_operational":
-                entry = FlextLdifTestFactories.create_entry(
-                    "cn=test,dc=example,dc=com",
+                entry = self.create_entry(
+                    c.DNs.TEST_USER,
                     {
                         attr: ["20250104120000Z"]
-                        for attr in EntryTestConstants.OPERATIONAL_ATTRS[:2]
+                        for attr in ["createTimestamp", "modifyTimestamp"]
                     },
                 )
-                operational_set = {"dn", *EntryTestConstants.OPERATIONAL_ATTRS[:2]}
+                operational_set = {
+                    "dn",
+                    *["createTimestamp", "modifyTimestamp"],
+                }
                 non_operational = [
                     attr
                     for attr in entry.attributes.attributes
@@ -486,66 +556,73 @@ class TestFlextLdifEntrys:
                         entry=entry,
                         attributes_to_remove=non_operational,
                     )
-                    entry = FlextTestsMatchers.assert_success(entry_result)
-                cleaned = EntryTestHelpers.test_remove_operational_attributes_complete(
-                    entry,
+                    entry = tm.ok(entry_result)
+                cleaned = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(entry)
+                    .with_operation("remove_operational_attributes")
+                    .execute(),
+                    is_=m.Entry,
                 )
-                assert cleaned is not None
-                assert (
-                    len(cleaned.attributes.attributes) <= 1
-                    or "dn" in cleaned.attributes.attributes
+                tm.that(
+                    len(cleaned.attributes.attributes),
+                    lte=1,
+                    msg="Should have at most 1 attribute (dn)",
                 )
 
             elif test_type == "unicode_dn":
-                entry = FlextLdifTestFactories.create_entry(
-                    EntryTestConstants.UNICODE_DN,
-                    {Names.CN: [EntryTestConstants.UNICODE_VALUE]},
+                entry = self.create_entry(
+                    "cn=测试,dc=example,dc=com",
+                    {c.Names.CN: ["测试值"]},
                 )
-                EntryTestHelpers.test_remove_operational_attributes_complete(
-                    entry,
-                    expected_present=[Names.CN],
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(entry)
+                    .with_operation("remove_operational_attributes")
+                    .execute(),
+                    is_=m.Entry,
                 )
+                tm.entry(result, has_attr=c.Names.CN)
 
             elif test_type == "long_values":
-                long_value = "x" * EntryTestConstants.LONG_VALUE_LENGTH
-                entry = FlextLdifTestFactories.create_entry(
-                    "cn=test,dc=example,dc=com",
-                    {Names.CN: [Values.TEST], "description": [long_value]},
+                long_value = "x" * 10000
+                entry = self.create_entry(
+                    c.DNs.TEST_USER,
+                    {c.Names.CN: [c.Values.TEST], "description": [long_value]},
                 )
-                EntryTestHelpers.test_remove_attributes_complete(
-                    entry,
-                    ["description"],
-                    expected_removed=["description"],
-                    expected_present=[Names.CN],
+                result = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(entry)
+                    .with_operation("remove_attributes")
+                    .with_attributes_to_remove(["description"])
+                    .execute(),
+                    is_=m.Entry,
                 )
+                tm.entry(result, not_has_attr="description")
+                tm.entry(result, has_attr=c.Names.CN)
 
             elif test_type == "many_attributes":
                 attrs: dict[str, str | list[str]] = {
-                    f"attr{i}": [f"value{i}"]
-                    for i in range(EntryTestConstants.MANY_ATTRS_COUNT)
+                    f"attr{i}": [f"value{i}"] for i in range(100)
                 }
-                attrs[Names.CN] = [Values.TEST]
-                entry = FlextLdifTestFactories.create_entry(
-                    "cn=test,dc=example,dc=com",
-                    attrs,
+                attrs[c.Names.CN] = [c.Values.TEST]
+                entry = self.create_entry(c.DNs.TEST_USER, attrs)
+                attrs_to_remove = [f"attr{i}" for i in range(50)]
+                cleaned = tm.ok(
+                    FlextLdifEntries()
+                    .with_entry(entry)
+                    .with_operation("remove_attributes")
+                    .with_attributes_to_remove(attrs_to_remove)
+                    .execute(),
+                    is_=m.Entry,
                 )
-                cleaned = EntryTestHelpers.test_remove_attributes_complete(
-                    entry,
-                    [
-                        f"attr{i}"
-                        for i in range(EntryTestConstants.MANY_ATTRS_REMOVE_COUNT)
-                    ],
-                )
-                assert cleaned is not None
-                assert all(
-                    f"attr{i}" not in cleaned.attributes.attributes
-                    for i in range(EntryTestConstants.MANY_ATTRS_REMOVE_COUNT)
-                )
+                for i in range(_MANY_ATTRS_REMOVE_COUNT):
+                    tm.entry(cleaned, not_has_attr=f"attr{i}")
                 assert all(
                     f"attr{i}" in cleaned.attributes.attributes
                     for i in range(
-                        EntryTestConstants.MANY_ATTRS_REMOVE_COUNT,
-                        EntryTestConstants.MANY_ATTRS_COUNT,
+                        50,
+                        100,
                     )
                 )
 
@@ -574,43 +651,35 @@ class TestFlextLdifEntrys:
             service = FlextLdifValidation()
 
             if test_type == "validate_attr_name_valid":
-                for name in EntryTestConstants.VALID_ATTR_NAMES:
-                    assert service.validate_attribute_name(name).unwrap() is True
+                valid_attr_names = ["cn", "sn", "mail", "objectClass", "uid"]
+                for name in valid_attr_names:
+                    tm.ok(service.validate_attribute_name(name), eq=True)
 
             elif test_type == "validate_attr_name_invalid":
-                for name in EntryTestConstants.INVALID_ATTR_NAMES:
-                    assert service.validate_attribute_name(name).unwrap() is False
+                invalid_attr_names = ["2invalid", "invalid-name", "invalid name"]
+                for name in invalid_attr_names:
+                    tm.ok(service.validate_attribute_name(name), eq=False)
 
             elif test_type == "validate_objectclass":
-                assert service.validate_objectclass_name(Names.PERSON).unwrap() is True
-                assert (
-                    service.validate_objectclass_name("invalid class").unwrap() is False
-                )
+                tm.ok(service.validate_objectclass_name(c.Names.PERSON), eq=True)
+                tm.ok(service.validate_objectclass_name("invalid class"), eq=False)
 
             elif test_type == "validate_attr_value":
-                assert service.validate_attribute_value("John Smith").unwrap() is True
-                assert (
-                    service.validate_attribute_value("test", max_length=2).unwrap()
-                    is False
-                )
+                tm.ok(service.validate_attribute_value("John Smith"), eq=True)
+                tm.ok(service.validate_attribute_value("test", max_length=2), eq=False)
 
             elif test_type == "validate_dn_component":
-                assert (
-                    service.validate_dn_component(Names.CN, "John Smith").unwrap()
-                    is True
-                )
-                assert (
-                    service.validate_dn_component("2invalid", "value").unwrap() is False
-                )
+                tm.ok(service.validate_dn_component(c.Names.CN, "John Smith"), eq=True)
+                tm.ok(service.validate_dn_component("2invalid", "value"), eq=False)
 
             elif test_type == "validate_attr_names_batch":
                 validated = service.validate_attribute_names([
-                    Names.CN,
-                    Names.MAIL,
+                    c.Names.CN,
+                    c.Names.MAIL,
                     "2invalid",
-                    Names.OBJECTCLASS,
+                    c.Names.OBJECTCLASS,
                 ]).unwrap()
-                assert validated[Names.CN] is True
+                assert validated[c.Names.CN] is True
                 assert validated["2invalid"] is False
 
     class TestSyntax:
@@ -640,49 +709,57 @@ class TestFlextLdifEntrys:
             syntax = FlextLdifSyntax()
 
             if test_type == "validate_oid":
-                assert (
-                    syntax.validate_oid(EntryTestConstants.BOOLEAN_OID).unwrap() is True
+                tm.ok(
+                    syntax.validate_oid("1.3.6.1.4.1.1466.115.121.1.7"),
+                    eq=True,
                 )
-                assert syntax.validate_oid("invalid-oid").unwrap() is False
+                tm.ok(syntax.validate_oid("invalid-oid"), eq=False)
 
             elif test_type == "is_rfc4517_standard":
-                assert syntax.is_rfc4517_standard(
-                    EntryTestConstants.BOOLEAN_OID,
-                ).is_success
+                tm.ok(syntax.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7"))
 
             elif test_type == "lookup_name":
-                result = syntax.lookup_name(EntryTestConstants.BOOLEAN_NAME)
+                result = syntax.lookup_name("Boolean")
                 if not result.is_success:
-                    result = syntax.lookup_name(
-                        EntryTestConstants.BOOLEAN_NAME.capitalize(),
-                    )
-                assert result.unwrap() == EntryTestConstants.BOOLEAN_OID
+                    result = syntax.lookup_name("Boolean".capitalize())
+                tm.ok(
+                    result,
+                    eq=TestsTestFlextLdifEntrys._Constants.BOOLEAN_OID,
+                )
 
             elif test_type == "lookup_oid":
-                assert (
-                    syntax.lookup_oid(EntryTestConstants.BOOLEAN_OID).unwrap().lower()
-                    == EntryTestConstants.BOOLEAN_NAME
+                result = tm.ok(syntax.lookup_oid(_BOOLEAN_OID))
+                tm.that(
+                    result.lower(),
+                    eq=_BOOLEAN_NAME,
                 )
 
             elif test_type == "resolve_syntax":
-                assert (
-                    syntax.resolve_syntax(EntryTestConstants.BOOLEAN_OID).unwrap().oid
-                    == EntryTestConstants.BOOLEAN_OID
+                syntax_obj = tm.ok(
+                    syntax.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7"),
+                )
+                tm.that(
+                    syntax_obj.oid,
+                    eq=TestsTestFlextLdifEntrys._Constants.BOOLEAN_OID,
                 )
 
             elif test_type == "validate_value":
-                assert syntax.validate_value(
-                    "TRUE",
-                    EntryTestConstants.BOOLEAN_OID,
-                ).is_success
+                tm.ok(
+                    syntax.validate_value(
+                        "TRUE",
+                        TestsTestFlextLdifEntrys._Constants.BOOLEAN_OID,
+                    ),
+                )
 
             elif test_type == "get_category":
-                result = syntax.get_syntax_category(EntryTestConstants.BOOLEAN_OID)
-                assert result.is_success and isinstance(result.unwrap(), str)
+                tm.ok(
+                    syntax.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7"),
+                    is_=str,
+                )
 
             elif test_type == "list_all":
-                oids = syntax.list_common_syntaxes().unwrap()
-                assert isinstance(oids, list) and len(oids) > 0
+                oids = tm.ok(syntax.list_common_syntaxes(), is_=list)
+                tm.len(oids, gt=0)
 
 
 __all__ = ["TestFlextLdifEntrys"]

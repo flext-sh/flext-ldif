@@ -10,19 +10,17 @@ import base64
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
-from flext_core.typings import t
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities, t
 from jinja2 import Environment
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.typings import FlextLdifTypes
 
 # Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
-r = FlextResult  # Result
+# Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
+u = FlextUtilities  # Use base class to avoid circular dependency
+r = FlextResult  # Shared from flext-core
 
 logger = FlextLogger(__name__)
 
@@ -272,7 +270,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: m.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
@@ -285,7 +283,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: m.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add syntax and length to attribute parts list.
@@ -304,7 +302,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: m.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add flags to attribute parts list."""
@@ -319,7 +317,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_attribute_parts(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: m.SchemaAttribute,
     ) -> list[str]:
         """Build RFC attribute definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -353,7 +351,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_attribute(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: m.SchemaAttribute,
     ) -> FlextResult[str]:
         """Write attribute data to RFC 4512 format."""
         try:
@@ -396,7 +394,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_objectclass_parts(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: m.SchemaObjectClass,
     ) -> list[str]:
         """Build RFC objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -441,7 +439,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_objectclass(
-        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+        objectclass: m.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC 4512 format."""
         try:
@@ -530,7 +528,8 @@ class FlextLdifUtilitiesWriter:
                 # Implication: We use cast for type conversion since runtime values
                 # are compatible with MetadataAttributeValue.
                 extensions_dict = cast(
-                    "dict[str, t.MetadataAttributeValue]", extensions_raw
+                    "dict[str, t.MetadataAttributeValue]",
+                    extensions_raw,
                 )
                 if FlextRuntime.is_dict_like(extensions_dict):
                     attr_order = extensions_dict.get("attribute_order")
@@ -879,8 +878,8 @@ class FlextLdifUtilitiesWriter:
     def _apply_output_options(
         attr_name: str,
         attr_values: list[str],
-        entry_metadata: FlextLdifModelsDomains.QuirkMetadata,
-        output_options: FlextLdifModels.WriteOutputOptions,
+        entry_metadata: m.QuirkMetadata,
+        output_options: m.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Apply output visibility options based on attribute status.
 
@@ -957,9 +956,8 @@ class FlextLdifUtilitiesWriter:
                 status_raw,
             )
         else:
-            # Business Rule: NORMAL.value is "normal" which satisfies AttributeMarkerStatusLiteral
-            # StrEnum.value already satisfies Literal type - no cast needed
-            status = FlextLdifConstants.AttributeMarkerStatus.NORMAL.value
+            # Business Rule: Use literal "normal" to satisfy AttributeMarkerStatusLiteral
+            status = "normal"
         return FlextLdifUtilitiesWriter._handle_attribute_status(
             attr_name,
             attr_values,
@@ -971,7 +969,7 @@ class FlextLdifUtilitiesWriter:
     def _handle_removed_attribute(
         attr_name: str,
         attr_values: list[str],
-        output_options: FlextLdifModels.WriteOutputOptions,
+        output_options: m.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle already-removed attributes (extracted to reduce complexity)."""
         if output_options.show_removed_attributes:
@@ -983,7 +981,7 @@ class FlextLdifUtilitiesWriter:
         attr_name: str,
         attr_values: list[str],
         status: FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral,
-        output_options: FlextLdifModels.WriteOutputOptions,
+        output_options: m.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
         status_handlers = {
@@ -1167,15 +1165,22 @@ class FlextLdifUtilitiesWriter:
 
             op_line = f"{modify_operation}: {attr_name}"
             FlextLdifUtilitiesWriter._add_line_with_folding(
-                lines, op_line, fold_long_lines=fold_long_lines, width=width
+                lines,
+                op_line,
+                fold_long_lines=fold_long_lines,
+                width=width,
             )
 
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name, value
+                    attr_name,
+                    value,
                 )
                 FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines, attr_line, fold_long_lines=fold_long_lines, width=width
+                    lines,
+                    attr_line,
+                    fold_long_lines=fold_long_lines,
+                    width=width,
                 )
 
         if lines and lines[-1] != "-":
@@ -1197,10 +1202,14 @@ class FlextLdifUtilitiesWriter:
                 continue
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name, value
+                    attr_name,
+                    value,
                 )
                 FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines, attr_line, fold_long_lines=fold_long_lines, width=width
+                    lines,
+                    attr_line,
+                    fold_long_lines=fold_long_lines,
+                    width=width,
                 )
         return lines
 
@@ -1283,14 +1292,18 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str] = []
         hidden = hidden_attrs or set() if isinstance(hidden_attrs, set) else set()
         width = (
-            int(line_width_raw) if isinstance(line_width_raw, int | str)
+            int(line_width_raw)
+            if isinstance(line_width_raw, int | str)
             else FlextLdifConstants.Rfc.LINE_FOLD_WIDTH
         )
 
         # DN line (required for both formats)
         dn_line = f"dn: {dn_value}"
         FlextLdifUtilitiesWriter._add_line_with_folding(
-            ldif_lines, dn_line, fold_long_lines=fold_long_lines, width=width
+            ldif_lines,
+            dn_line,
+            fold_long_lines=fold_long_lines,
+            width=width,
         )
 
         # Changetype handling
@@ -1317,7 +1330,10 @@ class FlextLdifUtilitiesWriter:
             )
         else:
             attr_lines = FlextLdifUtilitiesWriter._process_add_attributes(
-                attributes, hidden, fold_long_lines=fold_long_lines, width=width
+                attributes,
+                hidden,
+                fold_long_lines=fold_long_lines,
+                width=width,
             )
         ldif_lines.extend(attr_lines)
 

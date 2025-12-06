@@ -22,67 +22,66 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> p.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> p.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> p.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
 
 from __future__ import annotations
 
-import re
 from abc import ABC
-from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, datetime
+from collections.abc import Callable, Sequence
 from typing import (
     ClassVar,
-    Protocol,
     Self,
     cast,
     overload,
 )
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
-from pydantic import ConfigDict, Field
+from flext_core import FlextLogger, FlextResult, FlextService
+from pydantic import ConfigDict
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.servers._base import (
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+)
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 # Business Rule: Lazy import to avoid circular dependency between servers/base.py
-# and _utilities modules. This function returns the FlextLdifUtilities class type
+# and _utilities modules. This function returns the u class type
 # for accessing nested utilities like Server, Schema, etc.
 # Implication: Type checker cannot infer the exact type, so we use type[object]
 # and rely on runtime hasattr checks for type safety.
 def _get_utilities() -> type[object]:
-    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+    """Lazy import of u to avoid circular dependency.
 
-    Returns the FlextLdifUtilities class for accessing nested utilities.
+    Returns the u class for accessing nested utilities.
     Business Rule: This is a lazy import pattern to break circular dependencies.
     The returned type is type[object] because the exact type cannot be inferred
     statically. Runtime hasattr checks ensure type safety.
 
     Returns:
-        FlextLdifUtilities class type (inferred as type[object] for type safety)
+        u class type (inferred as type[object] for type safety)
 
     """
-    from flext_ldif._utilities import FlextLdifUtilities  # noqa: PLC0415
-
-    return FlextLdifUtilities
+    return u
 
 
 def _get_server_type_from_utilities(
     quirk_class: type[FlextLdifServersBase | object],
-) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+) -> c.LiteralTypes.ServerTypeLiteral:
     """Get server type from utilities using type-safe access pattern.
 
     Business Rule: Server type is determined by inspecting the class hierarchy
-    and accessing FlextLdifUtilities.Server.get_parent_server_type().
+    and accessing u.Server.get_parent_server_type().
     This helper function encapsulates the type-safe access pattern to avoid
     repetition and ensure consistent error handling.
 
@@ -106,10 +105,9 @@ def _get_server_type_from_utilities(
             server_type_raw = get_parent_method(quirk_class)
             # Business Rule: get_parent_server_type returns str, but we need
             # ServerTypeLiteral. Cast is safe because the method returns valid literals.
-            from typing import cast
 
             return cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                "c.LiteralTypes.ServerTypeLiteral",
                 server_type_raw,
             )
     # Fallback if Server not available - return RFC as default
@@ -122,18 +120,18 @@ logger = FlextLogger(__name__)
 # All server-specific Constants should inherit from FlextLdifServersRfc.Constants
 
 
-class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
+class FlextLdifServersBase(FlextService[m.Entry], ABC):
     r"""Abstract base class for LDIF/LDAP server quirks as FlextService V2.
 
     Configuration:
         Allows arbitrary types and extra attributes for nested quirk classes.
 
     This class defines the complete contract for a server quirk implementation
-    that satisfies `FlextLdifProtocols.Quirks.QuirksPort` through structural typing.
+    that satisfies `p.Quirks.QuirksPort` through structural typing.
     It uses the `ABC` helper class to define all methods as abstract,
     ensuring that any concrete subclass must implement the full interface.
 
-    Note: This class satisfies FlextLdifProtocols.Quirks.QuirksPort through
+    Note: This class satisfies p.Quirks.QuirksPort through
     structural typing (duck typing), not through inheritance, to avoid
     metaclass conflicts between ABC and Protocol.
 
@@ -167,11 +165,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         extra="allow",
     )
 
-    # Type annotations - descriptors behave as their return types when accessed
-    server_type: ClassVar[
-        FlextLdifConstants.LiteralTypes.ServerTypeLiteral | _DescriptorProtocol
-    ]
-    priority: ClassVar[int | _DescriptorProtocol]
+    # Class-level descriptor attributes (not Pydantic model fields)
+    # These are Python descriptors assigned dynamically at class level
+    # Annotations omitted to prevent type checker interference with descriptor assignment
+    # The descriptors implement __get__ returning str/int when accessed
 
     # Instance attributes for nested quirks (initialized in __init__)
     # schema_quirk: Self.Schema  # Commented out to avoid forward reference issues
@@ -297,17 +294,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         # Use getattr to access attributes safely after hasattr validation
         server_type_value = constants_class.SERVER_TYPE
         priority_value = constants_class.PRIORITY
-        # Descriptors can be set on class in __init_subclass__ - pyrefly false positive
-        cls.server_type = _ServerTypeDescriptor(  # pyrefly: ignore[read-only]
-            server_type_value
-        )  # pyrefly: ignore[read-only]
-        cls.priority = _PriorityDescriptor(  # pyrefly: ignore[read-only]
-            priority_value
-        )  # pyrefly: ignore[read-only]
+        # Use type.__setattr__ to set class-level descriptors (required to bypass
+        # both Pydantic's __setattr__ and pyrefly's descriptor immutability checks)
+        type.__setattr__(cls, "server_type", _ServerTypeDescriptor(server_type_value))
+        type.__setattr__(cls, "priority", _PriorityDescriptor(priority_value))
 
     def get_schema_quirk(
         self,
-    ) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    ) -> p.Quirks.SchemaProtocol:
         """Get schema quirk instance.
 
         Returns:
@@ -319,7 +313,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     def acl(
         self,
-    ) -> FlextLdifProtocols.Quirks.AclProtocol:
+    ) -> p.Quirks.AclProtocol:
         """Get ACL quirk instance.
 
         Returns:
@@ -330,7 +324,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     def entry(
         self,
-    ) -> FlextLdifProtocols.Quirks.EntryProtocol:
+    ) -> p.Quirks.EntryProtocol:
         """Get entry quirk instance.
 
         Returns:
@@ -362,10 +356,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         self,
         *,
         ldif_text: str | None = None,
-        entries: Sequence[FlextLdifModels.Entry] | None = None,
-        _operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
-        | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+        entries: Sequence[m.Entry] | None = None,
+        _operation: c.LiteralTypes.ParseWriteOperationLiteral | None = None,
+    ) -> FlextResult[m.Entry]:
         r"""Execute quirk operation with auto-detection.
 
         Args:
@@ -382,31 +375,31 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         if entries is not None and isinstance(entries, Sequence) and entries:
             first_entry = entries[0]
-            if isinstance(first_entry, FlextLdifModels.Entry):
-                return FlextResult[FlextLdifModels.Entry].ok(first_entry)
-            return FlextResult[FlextLdifModels.Entry].fail(
+            if isinstance(first_entry, m.Entry):
+                return FlextResult[m.Entry].ok(first_entry)
+            return FlextResult[m.Entry].fail(
                 f"Invalid entry type: {type(first_entry).__name__}",
             )
 
-        return FlextResult[FlextLdifModels.Entry].fail("No valid parameters")
+        return FlextResult[m.Entry].fail("No valid parameters")
 
-    def _execute_parse(self, ldif_text: str) -> FlextResult[FlextLdifModels.Entry]:
+    def _execute_parse(self, ldif_text: str) -> FlextResult[m.Entry]:
         """Execute parse operation."""
         parse_result = self.parse(ldif_text)
         if not parse_result.is_success:
-            return FlextResult[FlextLdifModels.Entry].fail(
+            return FlextResult[m.Entry].fail(
                 parse_result.error or "Parse failed",
             )
         parse_response = parse_result.unwrap()
         entries = getattr(parse_response, "entries", [])
         if not entries:
-            return FlextResult[FlextLdifModels.Entry].fail("No entries parsed")
+            return FlextResult[m.Entry].fail("No entries parsed")
         # Get first entry - it's already a valid Entry model
         first_entry = entries[0]
-        if isinstance(first_entry, FlextLdifModels.Entry):
-            return FlextResult[FlextLdifModels.Entry].ok(first_entry)
+        if isinstance(first_entry, m.Entry):
+            return FlextResult[m.Entry].ok(first_entry)
         # Should never reach here, but handle just in case
-        return FlextResult[FlextLdifModels.Entry].fail("Invalid entry type")
+        return FlextResult[m.Entry].fail("Invalid entry type")
 
     @overload
     def __call__(
@@ -414,34 +407,32 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         ldif_text: str,
         *,
         entries: None = None,
-        operation: FlextLdifConstants.LiteralTypes.ParseOperationLiteral | None = None,
-    ) -> FlextLdifModels.Entry | str: ...
+        operation: c.LiteralTypes.ParseOperationLiteral | None = None,
+    ) -> m.Entry | str: ...
 
     @overload
     def __call__(
         self,
         *,
         ldif_text: None = None,
-        entries: list[FlextLdifModels.Entry],
-        operation: FlextLdifConstants.LiteralTypes.WriteOperationLiteral | None = None,
+        entries: list[m.Entry],
+        operation: c.LiteralTypes.WriteOperationLiteral | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[FlextLdifModels.Entry] | None = None,
-        operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
-        | None = None,
-    ) -> FlextLdifModels.Entry | str: ...
+        entries: list[m.Entry] | None = None,
+        operation: c.LiteralTypes.ParseWriteOperationLiteral | None = None,
+    ) -> m.Entry | str: ...
 
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[FlextLdifModels.Entry] | None = None,
-        operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
-        | None = None,
-    ) -> FlextLdifModels.Entry | str:
+        entries: list[m.Entry] | None = None,
+        operation: c.LiteralTypes.ParseWriteOperationLiteral | None = None,
+    ) -> m.Entry | str:
         r"""Callable interface - use as processor.
 
         Enables direct usage as processor:
@@ -462,13 +453,15 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         """
         result = self.execute(
-            ldif_text=ldif_text, entries=entries, _operation=operation
+            ldif_text=ldif_text,
+            entries=entries,
+            _operation=operation,
         )
         return result.unwrap()
 
     def __new__(
         cls,
-        **kwargs: FlextLdifTypes.Server.ServerInitKwargs,
+        **kwargs: t.Server.ServerInitKwargs,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation.
 
@@ -522,7 +515,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 entries=entries,
                 _operation=operation,
             )
-            unwrapped: FlextLdifModels.Entry | str = result.unwrap()
+            unwrapped: m.Entry | str = result.unwrap()
             if not isinstance(unwrapped, cls):
                 msg = f"Expected {cls.__name__}, got {type(unwrapped)}"
                 raise TypeError(msg)
@@ -532,7 +525,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: FlextLdifTypes.Server.ServerInitKwargs,
+        kwargs: t.Server.ServerInitKwargs,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
@@ -545,8 +538,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @staticmethod
     def _extract_entries(
-        kwargs: FlextLdifTypes.Server.ServerInitKwargs,
-    ) -> list[FlextLdifModels.Entry] | None:
+        kwargs: t.Server.ServerInitKwargs,
+    ) -> list[m.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
@@ -560,10 +553,10 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             return []
         # Type narrowing: verify all items are Entry instances
         # Use list comprehension to create properly typed list
-        entries: list[FlextLdifModels.Entry] = []
+        entries: list[m.Entry] = []
         for idx in range(len(raw)):
-            item: FlextLdifModels.Entry | str = raw[idx]
-            if isinstance(item, FlextLdifModels.Entry):
+            item: m.Entry | str = raw[idx]
+            if isinstance(item, m.Entry):
                 entries.append(item)
             else:
                 msg = f"Expected list[Entry] for entries, got item of type {type(item)}"
@@ -572,8 +565,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     @staticmethod
     def _extract_operation(
-        kwargs: FlextLdifTypes.Server.ServerInitKwargs,
-    ) -> FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None:
+        kwargs: t.Server.ServerInitKwargs,
+    ) -> c.LiteralTypes.ParseWriteOperationLiteral | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:
             return None
@@ -590,11 +583,11 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: FlextLdifTypes.Server.ServerInitKwargs,
+        kwargs: t.Server.ServerInitKwargs,
     ) -> tuple[
         str | None,
-        list[FlextLdifModels.Entry] | None,
-        FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None,
+        list[m.Entry] | None,
+        c.LiteralTypes.ParseWriteOperationLiteral | None,
     ]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -608,7 +601,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # =========================================================================
 
     @property
-    def schema_quirk(self) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+    def schema_quirk(self) -> p.Quirks.SchemaProtocol:
         """Get the Schema quirk instance."""
         # Type narrowing: _schema_quirk implements SchemaProtocol structurally
         # The concrete Schema class implements all protocol methods
@@ -639,24 +632,23 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             msg = "Schema instance does not satisfy SchemaProtocol - missing required methods"
             raise TypeError(msg)
         # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
-        from typing import cast
 
-        return cast("FlextLdifProtocols.Quirks.SchemaProtocol", schema_instance)
+        return cast("p.Quirks.SchemaProtocol", schema_instance)
 
     @property
-    def acl_quirk(self) -> FlextLdifProtocols.Quirks.AclProtocol:
+    def acl_quirk(self) -> p.Quirks.AclProtocol:
         """Get the Acl quirk instance."""
         # Type narrowing: _acl_quirk implements AclProtocol structurally
         # Acl class implements AclProtocol structurally (all methods match)
         # Mypy doesn't recognize structural typing, so we use cast
         acl_instance = self._acl_quirk
-        return cast("FlextLdifProtocols.Quirks.AclProtocol", acl_instance)
+        return cast("p.Quirks.AclProtocol", acl_instance)
 
     @property
-    def entry_quirk(self) -> FlextLdifProtocols.Quirks.EntryProtocol:
+    def entry_quirk(self) -> p.Quirks.EntryProtocol:
         """Get the Entry quirk instance."""
         # Type narrowing: _entry_quirk implements EntryProtocol structurally
-        return cast("FlextLdifProtocols.Quirks.EntryProtocol", self._entry_quirk)
+        return cast("p.Quirks.EntryProtocol", self._entry_quirk)
 
     # =========================================================================
     # Core Quirk Methods - Parsing and Writing (Primary Interface)
@@ -665,7 +657,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def parse(
         self,
         ldif_text: str,
-    ) -> FlextResult[FlextLdifModelsResults.ParseResponse]:
+    ) -> FlextResult[m.ParseResponse]:
         """Parse LDIF text to Entry models.
 
         Routes to Entry quirk for server-specific parsing logic.
@@ -687,38 +679,33 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         if not entry_class:
             return FlextResult.fail("Entry nested class not available")
         entry_quirk = entry_class()
-        entries_result: FlextResult[list[FlextLdifModels.Entry]] = entry_quirk.parse(
+        entries_result: FlextResult[list[m.Entry]] = entry_quirk.parse(
             ldif_text,
         )
-        # Statistics is a PEP 695 type alias - use the underlying class directly
-        # FlextLdifModelsResults is imported at top of file
-
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
-            return FlextResult[FlextLdifModelsResults.ParseResponse].fail(error_msg)
+            return FlextResult[m.ParseResponse].fail(error_msg)
 
         entries = entries_result.unwrap()
         detected_server = getattr(self, "server_type", None)
-        statistics = FlextLdifModelsResults.Statistics(
+        statistics = m.Statistics(
             total_entries=len(entries),
             processed_entries=len(entries),
             detected_server_type=detected_server,
         )
         # Convert entries for ParseResponse - use model_copy() for safety
-        domain_entries: Sequence[FlextLdifModels.Entry] = [
-            entry
-            if isinstance(entry, FlextLdifModels.Entry)
-            else entry.model_copy(deep=True)
+        domain_entries: Sequence[m.Entry] = [
+            entry if isinstance(entry, m.Entry) else entry.model_copy(deep=True)
             for entry in entries
         ]
-        parse_response = FlextLdifModels.ParseResponse(
+        parse_response = m.ParseResponse(
             entries=list(domain_entries),
             statistics=statistics,
             detected_server_type=detected_server,
         )
-        return FlextResult[FlextLdifModelsResults.ParseResponse].ok(parse_response)
+        return FlextResult[m.ParseResponse].ok(parse_response)
 
-    def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+    def write(self, entries: list[m.Entry]) -> FlextResult[str]:
         """Write Entry models to LDIF text.
 
         Routes to Entry quirk for server-specific writing logic.
@@ -741,7 +728,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             return FlextResult[str].fail("Entry quirk not available")
 
         # Use functional composition to write all entries
-        def write_single_entry(entry_model: FlextLdifModels.Entry) -> FlextResult[str]:
+        def write_single_entry(entry_model: m.Entry) -> FlextResult[str]:
             """Write single entry using entry quirk."""
             if entry_quirk is not None:
                 # Cast to FlextResult[str] - entry_quirk.write returns FlextResult[str]
@@ -766,7 +753,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
     def _route_model_to_write(
         self,
-        model: FlextLdifTypes.ConvertibleModel,
+        model: t.ConvertibleModel,
     ) -> FlextResult[str]:
         """Route a single model to appropriate write method.
 
@@ -786,27 +773,27 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         """
         # Use isinstance for proper type narrowing and direct method calls
-        if isinstance(model, FlextLdifModels.Entry):
+        if isinstance(model, m.Entry):
             # Cast to EntryProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
-            entry_protocol: FlextLdifProtocols.Models.EntryProtocol = cast(
-                "FlextLdifProtocols.Models.EntryProtocol",
+            entry_protocol: p.Models.EntryProtocol = cast(
+                "p.Models.EntryProtocol",
                 model,
             )
             return self.entry_quirk.write(entry_protocol)
-        if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
+        if isinstance(model, m.SchemaAttribute):
             # Use _schema_quirk directly to access write_attribute method
             # which is not in the protocol but exists on the concrete Schema class
             return self._schema_quirk.write_attribute(model)
-        if isinstance(model, FlextLdifModelsDomains.SchemaObjectClass):
+        if isinstance(model, m.SchemaObjectClass):
             # Use _schema_quirk directly to access write_objectclass method
             # which is not in the protocol but exists on the concrete Schema class
             return self._schema_quirk.write_objectclass(model)
-        if isinstance(model, FlextLdifModelsDomains.Acl):
+        if isinstance(model, m.Acl):
             # Cast to AclProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
-            acl_protocol: FlextLdifProtocols.Models.AclProtocol = cast(
-                "FlextLdifProtocols.Models.AclProtocol",
+            acl_protocol: p.Models.AclProtocol = cast(
+                "p.Models.AclProtocol",
                 model,
             )
             return self.acl_quirk.write(acl_protocol)
@@ -816,7 +803,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def _handle_parse_operation(
         self,
         ldif_text: str,
-    ) -> FlextResult[FlextLdifModels.Entry | str]:
+    ) -> FlextResult[m.Entry | str]:
         """Handle parse operation for main quirk.
 
         Generic implementation that parses LDIF text and returns the first entry
@@ -839,23 +826,23 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if entries and len(entries) > 0:
                 domain_entry = entries[0]
                 # Convert domain Entry to public Entry type for type compatibility
-                # FlextLdifModels.Entry extends FlextLdifModelsDomains.Entry
-                if isinstance(domain_entry, FlextLdifModels.Entry):
+                # m.Entry extends m.Entry
+                if isinstance(domain_entry, m.Entry):
                     # Already public type
-                    return FlextResult[FlextLdifModels.Entry | str].ok(domain_entry)
+                    return FlextResult[m.Entry | str].ok(domain_entry)
                 # Convert domain entry to public entry using model_validate
-                public_entry = FlextLdifModels.Entry.model_validate(
+                public_entry = m.Entry.model_validate(
                     domain_entry.model_dump(mode="python"),
                 )
-                return FlextResult[FlextLdifModels.Entry | str].ok(public_entry)
-            return FlextResult[FlextLdifModels.Entry | str].ok("")
+                return FlextResult[m.Entry | str].ok(public_entry)
+            return FlextResult[m.Entry | str].ok("")
         error_msg: str = parse_result.error or "Parse failed"
-        return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
+        return FlextResult[m.Entry | str].fail(error_msg)
 
     def _handle_write_operation(
         self,
-        entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[FlextLdifModels.Entry | str]:
+        entries: list[m.Entry],
+    ) -> FlextResult[m.Entry | str]:
         """Handle write operation for main quirk.
 
         Generic implementation that writes Entry models to LDIF text.
@@ -871,9 +858,9 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
         write_result = self.write(entries)
         if write_result.is_success:
             written_text: str = write_result.unwrap()
-            return FlextResult[FlextLdifModels.Entry | str].ok(written_text)
+            return FlextResult[m.Entry | str].ok(written_text)
         error_msg: str = write_result.error or "Write failed"
-        return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
+        return FlextResult[m.Entry | str].fail(error_msg)
 
     # =========================================================================
     # Registry method for DI-based automatic registration
@@ -887,7 +874,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def _get_server_type_from_mro(
         cls,
         quirk_class: type[object],
-    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+    ) -> c.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent class Constants via MRO traversal.
 
         Uses functional patterns.
@@ -925,7 +912,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if server_type and isinstance(server_type, str):
                 # Type narrowing: ensure server_type is a valid ServerTypeLiteral
                 # Use normalize_server_type for proper validation and type narrowing
-                return FlextLdifConstants.normalize_server_type(server_type)
+                return c.normalize_server_type(server_type)
         except StopIteration:
             pass
 
@@ -986,12 +973,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     def _register_in_registry(
         cls,
         quirk_instance: (
-            FlextLdifProtocols.Quirks.SchemaProtocol
-            | FlextLdifProtocols.Quirks.AclProtocol
-            | FlextLdifProtocols.Quirks.EntryProtocol
+            p.Quirks.SchemaProtocol
+            | p.Quirks.AclProtocol
+            | p.Quirks.EntryProtocol
             | FlextLdifServersBase
         ),
-        registry: FlextLdifProtocols.Registry.QuirkRegistryProtocol,
+        registry: p.Registry.QuirkRegistryProtocol,
     ) -> None:
         """Helper method to register a quirk instance in the registry.
 
@@ -1009,12 +996,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
 
         # Functional composition: validate + register
         def validate_registry(
-            registry_obj: FlextLdifProtocols.Registry.QuirkRegistryProtocol,
+            registry_obj: p.Registry.QuirkRegistryProtocol,
         ) -> (
             Callable[
                 [
-                    FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
-                    FlextLdifProtocols.Quirks.SchemaProtocol,
+                    c.LiteralTypes.ServerTypeLiteral | str,
+                    p.Quirks.SchemaProtocol,
                 ],
                 None,
             ]
@@ -1030,7 +1017,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             if method and callable(method):
                 # Type narrowing: method is callable, cast to expected signature
                 return cast(
-                    "Callable[[FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str, FlextLdifProtocols.Quirks.SchemaProtocol], None]",
+                    "Callable[[c.LiteralTypes.ServerTypeLiteral | str, p.Quirks.SchemaProtocol], None]",
                     method,
                 )
             return None
@@ -1039,17 +1026,17 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             register_func: (
                 Callable[
                     [
-                        FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
-                        FlextLdifProtocols.Quirks.SchemaProtocol,
+                        c.LiteralTypes.ServerTypeLiteral | str,
+                        p.Quirks.SchemaProtocol,
                     ],
                     None,
                 ]
                 | None
             ),
             instance: (
-                FlextLdifProtocols.Quirks.SchemaProtocol
-                | FlextLdifProtocols.Quirks.AclProtocol
-                | FlextLdifProtocols.Quirks.EntryProtocol
+                p.Quirks.SchemaProtocol
+                | p.Quirks.AclProtocol
+                | p.Quirks.EntryProtocol
                 | FlextLdifServersBase
             ),
         ) -> None:
@@ -1065,11 +1052,8 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                     for method in required_methods
                 ):
                     # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
-                    from typing import cast
 
-                    schema_quirk = cast(
-                        "FlextLdifProtocols.Quirks.SchemaProtocol", instance
-                    )
+                    schema_quirk = cast("p.Quirks.SchemaProtocol", instance)
                     register_func("auto", schema_quirk)
                 # If not SchemaProtocol, skip registration (schema_quirk would be None)
 
@@ -1088,2727 +1072,14 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # =========================================================================
     # Nested Abstract Base Classes for Internal Implementation
     # =========================================================================
+    class Acl(FlextLdifServersBaseSchemaAcl):
+        """Nested Acl quirk base class."""
 
-    class Schema(
-        FlextService[
-            (
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-                | str
-            )
-        ],
-    ):
-        """Base class for schema quirks - FlextService V2 with enhanced usability.
+    class Entry(FlextLdifServersBaseEntry):
+        """Nested Entry quirk base class."""
 
-        NOTE: This is an implementation detail - DO NOT import directly.
-        Use FlextLdifServersBase.Schema instead.
-
-        Schema quirks extend RFC 4512 schema parsing with server-specific features
-        for attribute and objectClass processing.
-
-        **FlextService V2 Integration:**
-        - Inherits from FlextService for dependency injection,
-          logging, and validation
-        - Uses V2 patterns: .result property for direct access,
-          .execute() for FlextResult
-        - Auto-registration in DI container via FlextService
-        - Type-safe with TDomainResult = FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass
-
-        **V2 Usage Patterns:**
-            >>> schema = FlextLdifServersRfc.Schema()
-            >>> # Parse attribute with direct access
-            >>> attr = schema.parse_attribute(attr_def).result
-            >>> # Or use execute() for FlextResult composition
-            >>> result = schema.parse_attribute(attr_def)
-
-        """
-
-        # Protocol-required fields
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc"
-        """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."""
-
-        priority: int = 0
-        """Quirk priority (lower number = higher priority).
-
-        **STANDARDIZED CONSTANTS REQUIRED**: Each Schema implementation MUST define
-        a Constants nested class with:
-        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
-        - ALIASES: All valid names for this server including canonical
-        - PRIORITY: Selection priority (lower = higher priority)
-        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
-        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
-
-        **Protocol Compliance**: All implementations MUST satisfy
-        FlextLdifProtocols.Quirks.SchemaProtocol through structural typing.
-        This means all public methods must match protocol signatures exactly.
-
-        **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
-        to check protocol compliance at runtime.
-
-        Common schema extension patterns:
-        - Vendor-specific prefixes (e.g., vendor prefix + attribute name)
-        - Enhanced schema features beyond RFC baseline
-        - Configuration-specific attributes
-        - Vendor-specific schema extensions
-        - RFC 4512 compliant baseline (no extensions)
-        """
-
-        # Parent quirk reference for accessing server-level configuration
-        parent_quirk: FlextLdifServersBase | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description=(
-                "Reference to parent FlextLdifServersBase instance "
-                "for server-level access"
-            ),
-        )
-
-        # Auto-execute parameters (for __new__ pattern with auto_execute)
-        # These fields are excluded from serialization and only processed by __new__
-        attr_definition: str | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description="Attribute definition for auto-execute pattern",
-        )
-        oc_definition: str | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description="ObjectClass definition for auto-execute pattern",
-        )
-        attr_model: FlextLdifProtocols.Models.SchemaAttributeProtocol | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description="SchemaAttribute model for auto-execute pattern",
-        )
-        oc_model: FlextLdifProtocols.Models.SchemaObjectClassProtocol | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description="SchemaObjectClass model for auto-execute pattern",
-        )
-        operation: str | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description="Operation type for auto-execute pattern",
-        )
-
-        def __new__(
-            cls,
-            _schema_service: FlextLdifProtocols.Services.HasParseMethodProtocol
-            | None = None,
-            _parent_quirk: FlextLdifServersBase | None = None,
-            **kwargs: str | float | bool | list[str] | None,
-        ) -> Self:
-            """Override __new__ to filter _parent_quirk before passing to FlextService.
-
-            Business Rule: _parent_quirk is not a Pydantic field and must be filtered
-            from kwargs before passing to FlextService.__new__ which expects only
-            GeneralValueType values.
-
-            Args:
-                _schema_service: Injected schema service (optional, passed to __init__)
-                _parent_quirk: Parent quirk reference (optional, filtered from kwargs)
-                **kwargs: Additional initialization parameters
-
-            Returns:
-                Schema instance
-
-            """
-            # Filter _parent_quirk from kwargs to avoid type errors in FlextService.__new__
-            # Business Rule: _schema_service is not a GeneralValueType, so it must be handled separately
-            # Implication: _schema_service is passed to __init__ instead of __new__
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-            # Call FlextService.__new__ with filtered kwargs (without _schema_service)
-            instance = super().__new__(cls, **filtered_kwargs)
-            # Store _parent_quirk after instance creation using object.__setattr__
-            if _parent_quirk is not None:
-                object.__setattr__(instance, "_parent_quirk", _parent_quirk)
-            # _schema_service will be set in __init__
-            return instance
-
-        def __init__(
-            self,
-            _schema_service: FlextLdifProtocols.Services.HasParseMethodProtocol
-            | None = None,
-            _parent_quirk: FlextLdifServersBase | None = None,
-            **kwargs: str | float | bool | None,
-        ) -> None:
-            """Initialize schema quirk service with optional DI service injection.
-
-            Business Rule: _schema_service parameter name matches __new__ signature.
-            Both use underscore prefix to indicate internal use and avoid Pydantic field conflicts.
-            _schema_service is NOT passed to FlextService.__init__ because it's not a GeneralValueType.
-            Instead, it's stored directly on the instance using object.__setattr__.
-
-            Implication: FlextService.__init__ expects only GeneralValueType kwargs,
-            so protocol types must be handled separately from Pydantic initialization.
-
-            Args:
-                _schema_service: Injected FlextLdifSchema service
-                    (optional, lazy-created if None)
-                _parent_quirk: Reference to parent FlextLdifServersBase (optional)
-                **kwargs: Additional initialization parameters for FlextService
-
-            Note:
-                server_type and priority are no longer passed to nested classes.
-                They should be accessed via _get_server_type() and Constants.PRIORITY
-                from the parent server class.
-
-            """
-            # Business Rule: Filter _parent_quirk from kwargs to avoid type errors
-            # Implication: _parent_quirk is handled separately, not via Pydantic fields
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-            super().__init__(**filtered_kwargs)
-            self._schema_service = _schema_service  # Store for use by subclasses
-            # Store _parent_quirk using object.__setattr__ to avoid Pydantic validation
-            # (it's not a Pydantic field, just an internal reference)
-            if _parent_quirk is not None:
-                object.__setattr__(self, "_parent_quirk", _parent_quirk)
-            # Note: server_type and priority descriptors are only available on parent server classes
-            # Nested classes (Schema/Acl/Entry) access them via _get_server_type() when needed
-
-        # =====================================================================
-        # HOOKS for Customization - Override in subclasses to customize behavior
-        # =====================================================================
-
-        def _get_server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
-            """Get server_type from parent server class via __qualname__.
-
-            Business Rule: Server type is determined by inspecting the class hierarchy
-            and accessing FlextLdifUtilities.Server.get_parent_server_type().
-            This method uses lazy import pattern to avoid circular dependencies.
-            Implication: Type checker cannot infer exact types, so we use hasattr
-            checks and type narrowing for runtime safety.
-
-            Returns:
-                Server type literal (e.g., 'oid', 'oud', 'rfc')
-
-            """
-            return _get_server_type_from_utilities(type(self))
-
-        def _get_priority(self) -> int:
-            """Get priority from parent server class Constants."""
-            parent = getattr(self, "_parent_quirk", None)
-            if (
-                parent
-                and hasattr(parent, "Constants")
-                and hasattr(parent.Constants, "PRIORITY")
-            ):
-                priority_value = parent.Constants.PRIORITY
-                if not isinstance(priority_value, int):
-                    msg = f"Expected int, got {type(priority_value)}"
-                    raise TypeError(msg)
-                return priority_value
-            return 100  # Default priority
-
-        # Control auto-execution
-        auto_execute: ClassVar[bool] = False
-
-        # =====================================================================
-        # Automatic Routing Methods - Moved to rfc.py.Schema
-        # =====================================================================
-        # Concrete implementations of routing methods are now in
-        # FlextLdifServersRfc.Schema
-        # Base class keeps only abstract methods and hooks
-
-        def _parse_attribute(  # noqa: PLR6301
-            self,
-            attr_definition: str,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
-            """Parse server-specific attribute definition (internal).
-
-            Extracts attribute metadata (OID, NAME, DESC, SYNTAX, etc.)
-            from RFC 4512 format and applies server-specific enhancements.
-
-            Args:
-                attr_definition: AttributeType definition string
-
-            Returns:
-                FlextResult with parsed SchemaAttribute model
-
-            """
-            del attr_definition  # Unused in base, required by protocol
-            return FlextResult.fail("Must be implemented by subclass")
-
-        def _parse_objectclass(  # noqa: PLR6301
-            self,
-            oc_definition: str,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
-            """Parse server-specific objectClass definition (internal).
-
-            Extracts objectClass metadata (OID, NAME, SUP, MUST, MAY, etc.)
-            from RFC 4512 format and applies server-specific enhancements.
-
-            Args:
-                oc_definition: ObjectClass definition string
-
-            Returns:
-                FlextResult with parsed SchemaObjectClass model
-
-            """
-            _ = oc_definition  # Explicitly mark as intentionally unused in base
-            return FlextResult.fail("Must be implemented by subclass")
-
-        # =====================================================================
-        # Concrete Routing Methods - Moved to rfc.py.Schema
-        # =====================================================================
-        # _route_write, _route_can_handle, _handle_parse_operation,
-        # _handle_write_operation, _auto_detect_operation, _route_operation,
-        # execute, __call__, __new__ are now concrete implementations in FlextLdifServersRfc.Schema
-
-        def _hook_post_parse_attribute(  # noqa: PLR6301
-            self,
-            attr: FlextLdifModelsDomains.SchemaAttribute,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
-            """Hook called after parsing an attribute definition.
-
-            Override in subclasses for server-specific post-processing of parsed attributes.
-
-            Default behavior: returns attribute unchanged (pass-through).
-
-            **When to use:**
-            - Normalize attribute properties after parsing
-            - Add server-specific metadata
-            - Validate attribute constraints
-            - Transform attribute format
-
-            Args:
-                attr: Parsed SchemaAttribute from parse_attribute()
-
-            Returns:
-                FlextResult[FlextLdifModelsDomains.SchemaAttribute] - modified or original attribute
-
-            **Example:**
-                def _hook_post_parse_attribute(self, attr):
-                    # OID-specific: normalize OID format
-                    if attr.oid:
-                        attr.oid = normalize_oid(attr.oid)
-                    return FlextResult.ok(attr)
-
-            """
-            return FlextResult.ok(attr)
-
-        def _hook_post_parse_objectclass(  # noqa: PLR6301
-            self,
-            oc: FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
-            """Hook called after parsing an objectClass definition.
-
-            Override in subclasses for server-specific post-processing of parsed objectClasses.
-
-            Default behavior: returns objectClass unchanged (pass-through).
-
-            **When to use:**
-            - Normalize objectClass properties after parsing
-            - Add server-specific metadata
-            - Validate objectClass constraints
-            - Transform objectClass format
-
-            Args:
-                oc: Parsed SchemaObjectClass from parse_objectclass()
-
-            Returns:
-                FlextResult[FlextLdifModelsDomains.SchemaObjectClass] - modified or original objectClass
-
-            **Example:**
-                def _hook_post_parse_objectclass(self, oc):
-                    # OID-specific: validate MUST/MAY attributes exist
-                    if oc.must:
-                        for attr_name in oc.must:
-                            if not self.validate_attribute_exists(attr_name):
-                                return FlextResult.fail(f"Unknown attribute: {attr_name}")
-                    return FlextResult.ok(oc)
-
-            """
-            return FlextResult.ok(oc)
-
-        def can_handle_attribute(
-            self,
-            attr_definition: str | FlextLdifModelsDomains.SchemaAttribute,
-        ) -> bool:
-            """Check if this quirk can handle the attribute definition.
-
-            Called BEFORE parsing to detect if this quirk should process the definition.
-            Receives the raw attribute definition string (e.g., "( 2.5.4.3 NAME 'cn' ...)")
-            OR SchemaAttribute model object (for convenience in tests).
-
-            Args:
-                attr_definition: AttributeType definition string
-
-            Returns:
-                True if this quirk can parse this attribute definition
-
-            """
-            _ = attr_definition  # Explicitly mark as intentionally unused in base
-            return False  # CONSOLIDATED into parse(definition, model_type=None)  # CONSOLIDATED into parse(definition, model_type=None)
-
-        # CONSOLIDATED into parse(definition, model_type=None)
-        # See consolidated parse() method below
-
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> bool:
-            """Check if this quirk can handle the objectClass definition.
-
-            Called BEFORE parsing to detect if this quirk should process the definition.
-            Receives the raw objectClass definition string (e.g., "( 2.5.6.6 NAME 'person' ...)")
-            OR SchemaObjectClass model object (for convenience in tests).
-
-            Args:
-                oc_definition: ObjectClass definition string or model
-
-            Returns:
-                True if this quirk can parse this objectClass definition
-
-            """
-            _ = oc_definition  # Explicitly mark as intentionally unused in base
-            return False  # CONSOLIDATED into parse(definition, model_type=None)
-
-        # CONSOLIDATED into parse(definition, model_type=None)
-        # See consolidated parse() method below
-
-        # REMOVED: convert_attribute - Entry is always RFC with metadata
-        # All conversion is handled by quirk_metadata in the model itself
-
-        # REMOVED: convert_objectclass - See convert_attribute
-
-        # REMOVED: convert_attribute - See convert_attribute
-
-        # REMOVED: convert_objectclass - See convert_attribute
-
-        # =====================================================================
-        # Concrete Helper Methods - Moved to rfc.py.Schema
-        # =====================================================================
-        # create_metadata is now a concrete implementation in FlextLdifServersRfc.Schema
-
-        def parse_attribute(
-            self,
-            attr_definition: str,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
-            """Parse attribute definition (public API).
-
-            Delegates to _parse_attribute() for server-specific implementation.
-
-            Args:
-                attr_definition: Attribute definition string
-
-            Returns:
-                FlextResult with parsed SchemaAttribute model
-
-            """
-            return self._parse_attribute(attr_definition)
-
-        def parse_objectclass(
-            self,
-            oc_definition: str,
-        ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
-            """Parse objectClass definition (public API).
-
-            Delegates to _parse_objectclass() for server-specific implementation.
-
-            Args:
-                oc_definition: ObjectClass definition string
-
-            Returns:
-                FlextResult with parsed SchemaObjectClass model
-
-            """
-            return self._parse_objectclass(oc_definition)
-
-        def route_parse(
-            self,
-            definition: str,
-        ) -> FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-        ]:
-            """Route schema definition to appropriate parse method.
-
-            Generic implementation that automatically detects if definition is
-            attribute or objectclass and routes to the appropriate parser.
-            This method is available to all server implementations.
-
-            Args:
-                definition: Schema definition string.
-
-            Returns:
-                FlextResult with SchemaAttribute or SchemaObjectClass.
-
-            """
-            # Business Rule: Schema type detection uses FlextLdifUtilities.Schema
-            # via lazy import pattern. Type checker cannot infer exact types.
-            # Implication: We use runtime hasattr checks and getattr for type safety.
-            utilities_class = _get_utilities()
-            schema_util = getattr(utilities_class, "Schema", None)
-            if schema_util is not None:
-                detect_method = getattr(schema_util, "detect_schema_type", None)
-                if detect_method is not None and callable(detect_method):
-                    schema_type = detect_method(definition)
-                else:
-                    schema_type = "attribute"
-            else:
-                schema_type = "attribute"
-            if schema_type == "objectclass":
-                oc_result = self._parse_objectclass(definition)
-                if oc_result.is_failure:
-                    return FlextResult[
-                        (
-                            FlextLdifModelsDomains.SchemaAttribute
-                            | FlextLdifModelsDomains.SchemaObjectClass
-                        )
-                    ].fail(oc_result.error or "Parse failed")
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                    )
-                ].ok(oc_result.unwrap())
-            attr_result = self._parse_attribute(definition)
-            if attr_result.is_failure:
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                    )
-                ].fail(attr_result.error or "Parse failed")
-            return FlextResult[
-                (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                )
-            ].ok(attr_result.unwrap())
-
-        def parse(
-            self,
-            definition: str,
-        ) -> FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-        ]:
-            """Parse schema definition (attribute or objectClass).
-
-            Generic implementation that automatically routes to parse_attribute()
-            or parse_objectclass() based on content. This method is available
-            to all server implementations.
-
-            Args:
-                definition: Schema definition string (attribute or objectClass)
-
-            Returns:
-                FlextResult with SchemaAttribute or SchemaObjectClass model
-
-            """
-            return self.route_parse(definition)
-
-        def write_attribute(
-            self,
-            attr_data: FlextLdifModelsDomains.SchemaAttribute,
-        ) -> FlextResult[str]:
-            """Write attribute to RFC-compliant string format (public API).
-
-            Delegates to _write_attribute() for server-specific implementation.
-
-            Args:
-                attr_data: SchemaAttribute model
-
-            Returns:
-                FlextResult with RFC-compliant attribute string
-
-            """
-            return self._write_attribute(attr_data)
-
-        def write_objectclass(
-            self,
-            oc_data: FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> FlextResult[str]:
-            """Write objectClass to RFC-compliant string format (public API).
-
-            Delegates to _write_objectclass() for server-specific implementation.
-
-            Args:
-                oc_data: SchemaObjectClass model
-
-            Returns:
-                FlextResult with RFC-compliant objectClass string
-
-            """
-            return self._write_objectclass(oc_data)
-
-        def _write_attribute(
-            self,
-            attr_data: FlextLdifModelsDomains.SchemaAttribute,
-        ) -> FlextResult[str]:
-            """Write attribute data to RFC-compliant string format (internal).
-
-            Args:
-                attr_data: SchemaAttribute model to write
-
-            Returns:
-                FlextResult with RFC-compliant attribute string
-
-            """
-            _ = attr_data  # Explicitly mark as intentionally unused in base
-            return FlextResult.fail(
-                "Must be implemented by subclass",
-            )  # Must be implemented by subclass
-
-        def _write_objectclass(
-            self,
-            oc_data: FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> FlextResult[str]:
-            """Write objectClass data to RFC-compliant string format (internal).
-
-            Args:
-                oc_data: SchemaObjectClass model
-
-            Returns:
-                FlextResult with RFC-compliant objectClass string
-
-            """
-            _ = oc_data  # Explicitly mark as intentionally unused in base
-            return FlextResult.fail("Must be implemented by subclass")
-
-        def _hook_validate_attributes(
-            self,
-            attributes: list[FlextLdifModelsDomains.SchemaAttribute],
-            available_attrs: set[str],
-        ) -> FlextResult[bool]:
-            """Hook for server-specific attribute validation during schema extraction.
-
-            Subclasses can override this to perform validation of attribute dependencies
-            before objectClass extraction. This is called only when validate_dependencies=True.
-
-            Default implementation: No validation (pass-through).
-
-            Args:
-                attributes: List of parsed SchemaAttribute models
-                available_attrs: Set of lowercase attribute names available
-
-            Returns:
-                FlextResult[bool] - True if valid, fails with error if invalid
-
-            Example Override (in OUD):
-                def _hook_validate_attributes(self, attributes, available_attrs):
-                    # OUD-specific validation logic
-                    for attr in attributes:
-                        if attr.requires_dependency not in available_attrs:
-                            return FlextResult.fail("Missing dependency")
-                    return FlextResult.ok(True)
-
-            """
-            # Default: No validation needed
-            _ = attributes
-            _ = available_attrs
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_and_track_oid(
-            metadata_extensions: dict[str, list[str] | str | bool | None],
-            oid_value: str | None,
-            oid_name: str,
-        ) -> None:
-            """Validate OID and track result in metadata extensions.
-
-            Uses FlextLdifConstants.MetadataKeys for standardized metadata keys.
-
-            Args:
-                metadata_extensions: Metadata extensions dict to update
-                oid_value: OID value to validate (optional)
-                oid_name: Name of OID for error messages (e.g., "attribute", "syntax", "equality")
-
-            """
-            if not oid_value:
-                return
-
-            # Business Rule: OID validation uses FlextLdifUtilities.OID
-            # via lazy import pattern. Type checker cannot infer exact types.
-            # Implication: We use runtime hasattr checks and getattr for type safety.
-            # Business Rule: Validate OID format using FlextLdifUtilities.OID
-            # OID validation returns FlextResult[bool] indicating format validity
-            # Use structural checks and cast to satisfy pyright strict mode
-            utilities_class = _get_utilities()
-            oid_util = getattr(utilities_class, "OID", None)
-            oid_validate_result: FlextResult[bool]
-            if oid_util is not None:
-                validate_method = getattr(oid_util, "validate_format", None)
-                if validate_method is not None and callable(validate_method):
-                    validate_result_raw = validate_method(oid_value)
-                    # Type narrowing: validate_format returns FlextResult[bool]
-                    if isinstance(validate_result_raw, FlextResult):
-                        oid_validate_result = validate_result_raw
-                    else:
-                        oid_validate_result = FlextResult.ok(bool(validate_result_raw))
-                else:
-                    oid_validate_result = FlextResult.ok(True)
-            else:
-                oid_validate_result = FlextResult.ok(True)
-            if oid_validate_result.is_failure:
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
-                ] = f"{oid_name.capitalize()} OID validation failed: {oid_validate_result.error}"
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
-                ] = False
-            elif not oid_validate_result.unwrap():
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
-                ] = (
-                    f"Invalid {oid_name} OID format: {oid_value} "
-                    f"(must be numeric dot-separated format)"
-                )
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
-                ] = False
-            else:
-                # OID is valid - track in metadata
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
-                ] = True
-
-        @staticmethod
-        def build_attribute_metadata(
-            attr_definition: str,
-            syntax: str | None,
-            syntax_validation_error: str | None,
-            attribute_oid: str | None = None,
-            equality_oid: str | None = None,
-            ordering_oid: str | None = None,
-            substr_oid: str | None = None,
-            sup_oid: str | None = None,
-            server_type: str | None = None,
-        ) -> FlextLdifModelsDomains.QuirkMetadata | None:
-            """Build metadata for attribute including extensions and OID validation.
-
-            Tracks OID validation for:
-            - Attribute OID (required)
-            - Syntax OID (optional)
-            - Matching rule OIDs: equality, ordering, substr (optional)
-            - SUP OID (optional)
-
-            Uses FlextLdifConstants.MetadataKeys for standardized metadata keys.
-
-            Args:
-                attr_definition: Original attribute definition
-                syntax: Syntax OID (optional)
-                syntax_validation_error: Validation error for syntax OID if any
-                attribute_oid: Attribute OID (optional, for validation tracking)
-                equality_oid: Equality matching rule OID (optional)
-                ordering_oid: Ordering matching rule OID (optional)
-                substr_oid: Substring matching rule OID (optional)
-                sup_oid: SUP OID (optional)
-                server_type: Server type identifier (optional, defaults to RFC)
-
-            Returns:
-                QuirkMetadata or None
-
-            """
-            # Extract extensions and widen type to include bool for validation tracking
-            utilities_class = _get_utilities()
-            # Business Rule: Extension extraction uses FlextLdifUtilities.Parser
-            # via lazy import pattern. Type checker cannot infer exact types.
-            # Business Rule: Extract metadata extensions using FlextLdifUtilities.Parser
-            # extract_extensions returns dict[str, list[str] | str | bool | None]
-            # Use structural checks and cast to satisfy pyright strict mode
-            parser_util = getattr(utilities_class, "Parser", None)
-            metadata_extensions: dict[str, list[str] | str | bool | None]
-            if parser_util is not None:
-                extract_method = getattr(parser_util, "extract_extensions", None)
-                if extract_method is not None and callable(extract_method):
-                    extensions_raw = extract_method(attr_definition)
-                    # Type narrowing: extract_extensions returns dict[str, list[str] | str | bool | None]
-                    if isinstance(extensions_raw, dict):
-                        metadata_extensions = cast(
-                            "dict[str, list[str] | str | bool | None]", extensions_raw
-                        )
-                    else:
-                        metadata_extensions = {}
-                else:
-                    metadata_extensions = {}
-            else:
-                metadata_extensions = {}
-
-            # Track syntax OID validation (if syntax is present)
-            if syntax:
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
-                ] = syntax_validation_error is None
-                if syntax_validation_error:
-                    metadata_extensions[
-                        FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
-                    ] = syntax_validation_error
-
-            # Track attribute OID validation (if attribute_oid is provided)
-            # Use helper method for DRY OID validation
-            FlextLdifServersBase.Schema.validate_and_track_oid(
-                metadata_extensions,
-                attribute_oid,
-                "attribute",
-            )
-
-            # Track matching rule OID validation (equality, ordering, substr)
-            # These are OIDs that should be validated per RFC 4517
-            for matching_rule_name, matching_rule_oid in [
-                ("equality matching rule", equality_oid),
-                ("ordering matching rule", ordering_oid),
-                ("substring matching rule", substr_oid),
-            ]:
-                FlextLdifServersBase.Schema.validate_and_track_oid(
-                    metadata_extensions,
-                    matching_rule_oid,
-                    matching_rule_name,
-                )
-
-            # Track SUP OID validation (supertype OID)
-            FlextLdifServersBase.Schema.validate_and_track_oid(
-                metadata_extensions,
-                sup_oid,
-                "SUP",
-            )
-
-            # Preserve complete original format
-            metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
-                attr_definition.strip()
-            )
-            metadata_extensions[
-                FlextLdifConstants.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE
-            ] = attr_definition  # Complete with all formatting
-
-            # Create metadata with schema formatting details
-            # Use provided server_type or default to RFC
-            # Type narrowing: ensure server_type is ServerTypeLiteral
-            # Business Rule: Server type validation uses StrEnum values for type checking
-            # StrEnum class itself is not iterable - must iterate over enum members
-            # Implication: Server type validation ensures only valid enum values are accepted,
-            # preventing invalid server type strings from propagating through the system
-            quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-            if server_type and isinstance(server_type, str):
-                # Convert StrEnum members to set of string values for membership testing
-                # Business Rule: Use enum member iteration to get all valid server type values
-                valid_types = {
-                    member.value
-                    for member in FlextLdifConstants.ServerTypes.__members__.values()
-                }
-                if server_type in valid_types:
-                    quirk_type = FlextLdifConstants.normalize_server_type(server_type)
-                else:
-                    quirk_type = FlextLdifConstants.normalize_server_type("rfc")
-            else:
-                quirk_type = FlextLdifConstants.normalize_server_type("rfc")
-            metadata = (
-                FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=quirk_type,
-                    extensions=FlextLdifModels.DynamicMetadata(**metadata_extensions),
-                )
-                if metadata_extensions
-                else FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=quirk_type,
-                    extensions=FlextLdifModels.DynamicMetadata(),
-                )
-            )
-
-            # Preserve ALL schema formatting details for zero data loss
-            # Business Rule: Metadata preservation uses FlextLdifUtilities.Metadata
-            # via lazy import pattern. Type checker cannot infer exact types.
-            # Implication: We use runtime hasattr checks and getattr for type safety.
-            utilities_class = _get_utilities()
-            metadata_util = getattr(utilities_class, "Metadata", None)
-            if metadata_util is not None:
-                preserve_method = getattr(
-                    metadata_util, "preserve_schema_formatting", None
-                )
-                if preserve_method is not None and callable(preserve_method):
-                    preserve_method(
-                        metadata,
-                        attr_definition,
-                    )
-
-            # Log formatting preservation for debugging (FlextLogger adds source automatically)
-            preview_length = FlextLdifConstants.DN_TRUNCATE_LENGTH
-            logger.debug(
-                "Preserved schema formatting details",
-                attr_definition_preview=attr_definition[:preview_length]
-                if len(attr_definition) > preview_length
-                else attr_definition,
-            )
-
-            return (
-                metadata
-                if metadata_extensions or metadata.schema_format_details
-                else None
-            )
-
-        # =====================================================================
-        # Concrete Template Methods - Moved to rfc.py.Schema
-        # =====================================================================
-        # extract_schemas_from_ldif is now a concrete implementation in FlextLdifServersRfc.Schema
-
-        # REMOVED: should_filter_out_attribute - Roteamento interno, não deve ser abstrato
-
-        # REMOVED: should_filter_out_objectclass - Roteamento interno, não deve ser abstrato
-
-        def _handle_parse_operation(
-            self,
-            attr_definition: str | None,
-            oc_definition: str | None,
-        ) -> FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | str
-        ]:
-            """Handle parse operation for schema quirk.
-
-            Generic implementation that routes to parse_attribute() or
-            parse_objectclass() based on provided parameters. This method is
-            available to all server implementations.
-
-            Args:
-                attr_definition: Attribute definition string to parse (optional).
-                oc_definition: ObjectClass definition string to parse (optional).
-
-            Returns:
-                FlextResult with parsed SchemaAttribute or SchemaObjectClass model,
-                or error if parsing failed or no parameter provided.
-
-            """
-            if attr_definition:
-                attr_result = self.parse_attribute(attr_definition)
-                if attr_result.is_success:
-                    parsed_attr: FlextLdifModelsDomains.SchemaAttribute = (
-                        attr_result.unwrap()
-                    )
-                    return FlextResult[
-                        (
-                            FlextLdifModelsDomains.SchemaAttribute
-                            | FlextLdifModelsDomains.SchemaObjectClass
-                            | str
-                        )
-                    ].ok(parsed_attr)
-                error_msg: str = attr_result.error or "Parse attribute failed"
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                        | str
-                    )
-                ].fail(error_msg)
-            if oc_definition:
-                oc_result = self.parse_objectclass(oc_definition)
-                if oc_result.is_success:
-                    parsed_oc: FlextLdifModelsDomains.SchemaObjectClass = (
-                        oc_result.unwrap()
-                    )
-                    return FlextResult[
-                        (
-                            FlextLdifModelsDomains.SchemaAttribute
-                            | FlextLdifModelsDomains.SchemaObjectClass
-                            | str
-                        )
-                    ].ok(parsed_oc)
-                error_msg = oc_result.error or "Parse objectclass failed"
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                        | str
-                    )
-                ].fail(error_msg)
-            return FlextResult[
-                (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                    | str
-                )
-            ].fail("No parse parameter provided")
-
-        def _handle_write_operation(
-            self,
-            attr_model: FlextLdifModelsDomains.SchemaAttribute | None,
-            oc_model: FlextLdifModelsDomains.SchemaObjectClass | None,
-        ) -> FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | str
-        ]:
-            """Handle write operation for schema quirk.
-
-            Generic implementation that routes to write_attribute() or
-            write_objectclass() based on provided parameters. This method is
-            available to all server implementations.
-
-            Args:
-                attr_model: SchemaAttribute model to write (optional).
-                oc_model: SchemaObjectClass model to write (optional).
-
-            Returns:
-                FlextResult with LDIF string representation, or error if writing
-                failed or no parameter provided.
-
-            """
-            if attr_model:
-                write_result = self.write_attribute(attr_model)
-                if write_result.is_success:
-                    written_text: str = write_result.unwrap()
-                    return FlextResult[
-                        (
-                            FlextLdifModelsDomains.SchemaAttribute
-                            | FlextLdifModelsDomains.SchemaObjectClass
-                            | str
-                        )
-                    ].ok(written_text)
-                error_msg: str = write_result.error or "Write attribute failed"
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                        | str
-                    )
-                ].fail(error_msg)
-            if oc_model:
-                write_oc_result = self.write_objectclass(oc_model)
-                if write_oc_result.is_success:
-                    written_text = write_oc_result.unwrap()
-                    return FlextResult[
-                        (
-                            FlextLdifModelsDomains.SchemaAttribute
-                            | FlextLdifModelsDomains.SchemaObjectClass
-                            | str
-                        )
-                    ].ok(written_text)
-                error_msg = write_oc_result.error or "Write objectclass failed"
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                        | str
-                    )
-                ].fail(error_msg)
-            return FlextResult[
-                (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                    | str
-                )
-            ].fail("No write parameter provided")
-
-        def _auto_detect_operation(
-            self,
-            data: (
-                str
-                | FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            ),
-            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
-            | None,
-        ) -> (
-            FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral
-            | FlextResult[
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-                | str
-            ]
-        ):
-            """Auto-detect operation from data type.
-
-            Generic implementation that detects whether to parse or write based on
-            data type. Returns operation or error result. This method is available
-            to all server implementations.
-
-            Args:
-                data: Data to process (str for parse, SchemaAttribute/SchemaObjectClass
-                    for write, or None).
-                operation: Explicit operation to use (optional, auto-detected if None).
-
-            Returns:
-                ParseWriteOperationLiteral if operation can be determined, or
-                FlextResult with error if data type is unknown.
-
-            """
-            if operation is not None:
-                return operation
-
-            if isinstance(data, str):
-                # "parse" is a valid ParseWriteOperationLiteral
-                return "parse"
-            if isinstance(
-                data,
-                (
-                    FlextLdifModelsDomains.SchemaAttribute,
-                    FlextLdifModelsDomains.SchemaObjectClass,
-                ),
-            ):
-                return "write"
-
-            return FlextResult[
-                (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                    | str
-                )
-            ].fail(
-                f"Unknown data type: {type(data).__name__}. "
-                "Expected str, SchemaAttribute, or SchemaObjectClass",
-            )
-
-        def _route_operation(
-            self,
-            data: (
-                str
-                | FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            ),
-            operation: FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral,
-        ) -> FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | str
-        ]:
-            """Route data to appropriate parse or write handler.
-
-            Generic implementation that routes data to _handle_parse_operation()
-            or _handle_write_operation() based on operation type. This method is
-            available to all server implementations.
-
-            Args:
-                data: Data to process (str, SchemaAttribute, or SchemaObjectClass).
-                operation: Operation to perform ("parse" or "write").
-
-            Returns:
-                FlextResult with parsed model or written string, or error if
-                operation/data type mismatch.
-
-            """
-            if operation == "parse":
-                if not isinstance(data, str):
-                    return FlextResult[
-                        (
-                            FlextLdifModelsDomains.SchemaAttribute
-                            | FlextLdifModelsDomains.SchemaObjectClass
-                            | str
-                        )
-                    ].fail(f"parse operation requires str, got {type(data).__name__}")
-                # Detect if attribute or objectClass definition
-                # Business Rule: Schema type detection uses FlextLdifUtilities.Schema
-                # via lazy import pattern. Type checker cannot infer exact types.
-                # Implication: We use runtime hasattr checks and getattr for type safety.
-                utilities_class = _get_utilities()
-                schema_util = getattr(utilities_class, "Schema", None)
-                if schema_util is not None:
-                    detect_method = getattr(schema_util, "detect_schema_type", None)
-                    if detect_method is not None and callable(detect_method):
-                        schema_type = detect_method(data)
-                    else:
-                        schema_type = "attribute"
-                else:
-                    schema_type = "attribute"
-                if schema_type == FlextLdifConstants.Schema.OBJECTCLASS:
-                    return self._handle_parse_operation(
-                        attr_definition=None,
-                        oc_definition=data,
-                    )
-                return self._handle_parse_operation(
-                    attr_definition=data,
-                    oc_definition=None,
-                )
-
-            if operation == "write":
-                if isinstance(data, FlextLdifModelsDomains.SchemaAttribute):
-                    return self._handle_write_operation(attr_model=data, oc_model=None)
-                if isinstance(data, FlextLdifModelsDomains.SchemaObjectClass):
-                    return self._handle_write_operation(attr_model=None, oc_model=data)
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                        | str
-                    )
-                ].fail(
-                    f"write operation requires SchemaAttribute or "
-                    f"SchemaObjectClass, got {type(data).__name__}",
-                )
-
-            # Should not reach here (Literal type ensures only parse or write)
-            msg = f"Unknown operation: {operation}"
-            raise AssertionError(msg)
-
-        def execute(
-            self,
-            *,
-            data: (
-                str
-                | FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-                | None
-            ) = None,
-            operation: str | None = None,
-            **kwargs: FlextLdifTypes.Server.ServerInitKwargs,
-        ) -> FlextResult[
-            FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | str
-        ]:
-            """Execute schema operation with auto-detection: str→parse, Model→write.
-
-            Generic implementation that auto-detects operation type and routes to
-            appropriate handler. This method is available to all server implementations.
-
-            Args:
-                **kwargs: data (str | SchemaAttribute | SchemaObjectClass), operation (optional)
-
-            Returns:
-                FlextResult with parsed model or written string
-
-            """
-            # Extract from kwargs if not provided
-            if data is None:
-                data_raw = kwargs.get("data")
-                if isinstance(
-                    data_raw,
-                    (
-                        str,
-                        FlextLdifModelsDomains.SchemaAttribute,
-                        FlextLdifModelsDomains.SchemaObjectClass,
-                    ),
-                ):
-                    data = data_raw
-
-            if operation is None:
-                operation_raw = kwargs.get("operation")
-                # Type narrowing: check if operation_raw is a valid Literal value
-                operation_typed: (
-                    FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
-                ) = None
-                if isinstance(operation_raw, str):
-                    if operation_raw == "parse":
-                        operation_typed = "parse"
-                    elif operation_raw == "write":
-                        operation_typed = "write"
-                operation = operation_typed
-
-            # Health check: no data provided
-            if data is None:
-                empty_str: str = ""
-                return FlextResult[
-                    (
-                        FlextLdifModelsDomains.SchemaAttribute
-                        | FlextLdifModelsDomains.SchemaObjectClass
-                        | str
-                    )
-                ].ok(empty_str)
-
-            # Auto-detect or validate operation
-            # Type narrowing: ensure operation is ParseWriteOperationLiteral | None
-            # Type narrowing: ParseWriteOperationLiteral is Literal["parse", "write"]
-            # operation is already typed from above, just ensure it's the correct type
-
-            # Business Rule: operation is already validated as ParseWriteOperationLiteral via isinstance check
-            # Implication: No cast needed - type checker can infer the correct type from the guard
-            operation_final: (
-                FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
-            ) = (
-                operation  # type: ignore[assignment]  # Type narrowing from isinstance check
-                if isinstance(operation, str) and operation in {"parse", "write"}
-                else None
-            )
-            detected_op = self._auto_detect_operation(data, operation_final)
-            if isinstance(detected_op, FlextResult):
-                return detected_op
-
-            # Route to appropriate handler
-            return self._route_operation(data, detected_op)
-
-        def write(
-            self,
-            model: FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> FlextResult[str]:
-            """Write schema model to string format.
-
-            Dispatches to write_attribute or write_objectclass based on model type.
-            This satisfies FlextLdifProtocols.Quirks.SchemaProtocol.
-
-            Args:
-                model: SchemaAttribute or SchemaObjectClass model to write
-
-            Returns:
-                FlextResult with string representation
-
-            """
-            if isinstance(model, FlextLdifModelsDomains.SchemaAttribute):
-                return self.write_attribute(model)
-            if isinstance(model, FlextLdifModelsDomains.SchemaObjectClass):
-                return self.write_objectclass(model)
-            return FlextResult.fail(f"Unsupported model type: {type(model)}")
-
-    class Acl(
-        FlextService[FlextLdifModelsDomains.Acl | str],
-    ):
-        """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclProtocol.
-
-        NOTE: This is an implementation detail - DO NOT import directly.
-        Use FlextLdifServersBase.Acl instead.
-
-        ACL quirks extend RFC 4516 ACL parsing with server-specific formats
-        for access control list processing.
-
-        **STANDARDIZED CONSTANTS REQUIRED**: Each Acl implementation MUST define
-        a Constants nested class with:
-        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
-        - ALIASES: All valid names for this server including canonical
-        - PRIORITY: Selection priority (lower = higher priority)
-        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
-        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
-
-        **Protocol Compliance**: All implementations MUST satisfy
-        FlextLdifProtocols.Quirks.AclProtocol through structural typing.
-        This means all public methods must match protocol signatures exactly.
-
-        **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.AclProtocol)
-        to check protocol compliance at runtime.
-
-        Common ACL patterns:
-        - Vendor-specific ACI attributes
-        - Enhanced ACI formats beyond RFC baseline
-        - Access control directives
-        - Vendor-specific security descriptors
-        - RFC 4516 compliant baseline
-
-        **FlextService V2 Integration:**
-        - Inherits from FlextService for dependency injection, logging, and validation
-        - Uses V2 patterns: .result property for direct access, .execute() for FlextResult
-        - Auto-registration in DI container via FlextService
-        - Type-safe with TDomainResult = Acl
-        """
-
-        # Registry method for DI-based automatic registration
-        # Default ACL attribute name (RFC baseline). Override in subclass for server-specific name.
-        acl_attribute_name: ClassVar[str] = "acl"
-
-        # NOTE: server_type and priority are ClassVar in the PARENT SERVER CLASS ONLY
-        # NOT in nested Schema/Acl/Entry classes
-        # (e.g., FlextLdifServersOid.server_type, FlextLdifServersOid.priority)
-        # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
-
-        # Protocol-required fields
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc"
-        """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."""
-
-        priority: int = 0
-        """Quirk priority (lower number = higher priority)."""
-
-        # Parent quirk reference for accessing server-level configuration
-        parent_quirk: FlextLdifServersBase | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description=(
-                "Reference to parent FlextLdifServersBase instance "
-                "for server-level access"
-            ),
-        )
-
-        def __init__(
-            self,
-            acl_service: FlextLdifProtocols.Services.HasParseMethodProtocol
-            | None = None,
-            _parent_quirk: FlextLdifServersBase | None = None,
-            **kwargs: str | float | bool | None,
-        ) -> None:
-            """Initialize ACL quirk service with optional DI service injection.
-
-            Args:
-                acl_service: Injected FlextLdifAcl service (optional, lazy-created if None)
-                parent_quirk: Reference to parent FlextLdifServersBase
-                **kwargs: Additional initialization parameters for FlextService
-
-            Note:
-                server_type and priority are no longer passed to nested classes.
-                They should be accessed via _get_server_type() and Constants.PRIORITY
-                from the parent server class.
-
-            """
-            super().__init__(**kwargs)
-            self._acl_service = acl_service  # Store for use by subclasses
-            # Store _parent_quirk using object.__setattr__ to avoid Pydantic validation
-            # (it's not a Pydantic field, just an internal reference)
-            if _parent_quirk is not None:
-                object.__setattr__(self, "_parent_quirk", _parent_quirk)
-            # Note: server_type and priority descriptors are only available on parent server classes
-            # Nested classes (Schema/Acl/Entry) access them via _get_server_type() when needed
-
-        def _get_server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
-            """Get server_type from parent server class via __qualname__.
-
-            Business Rule: Server type is determined by inspecting the class hierarchy
-            and accessing FlextLdifUtilities.Server.get_parent_server_type().
-            This method uses lazy import pattern to avoid circular dependencies.
-            Implication: Type checker cannot infer exact types, so we use hasattr
-            checks and type narrowing for runtime safety.
-
-            Returns:
-                Server type literal (e.g., 'oid', 'oud', 'rfc')
-
-            """
-            return _get_server_type_from_utilities(type(self))
-
-        def _get_priority(self) -> int:
-            """Get priority from parent server class Constants."""
-            parent = getattr(self, "_parent_quirk", None)
-            if (
-                parent
-                and hasattr(parent, "Constants")
-                and hasattr(parent.Constants, "PRIORITY")
-            ):
-                priority_value = parent.Constants.PRIORITY
-                if not isinstance(priority_value, int):
-                    msg = f"Expected int, got {type(priority_value)}"
-                    raise TypeError(msg)
-                return priority_value
-            return 100  # Default priority
-
-        # =====================================================================
-        # ServerAclProtocol Implementation - Required by Protocol
-        # =====================================================================
-
-        # RFC Foundation - Standard LDAP ACL attributes (all servers start here)
-        RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
-            "aci",  # Standard LDAP (RFC 4876)
-            "acl",  # Alternative format
-            "olcAccess",  # Configuration-based access control
-            "aclRights",  # Generic rights
-            "aclEntry",  # ACL entry
-        ]
-
-        def get_acl_attributes(self) -> list[str]:
-            """Get ACL attributes for this server.
-
-            Returns RFC foundation attributes. Subclasses should override to add
-            server-specific attributes.
-
-            Returns:
-                List of ACL attribute names (lowercase)
-
-            """
-            return self.RFC_ACL_ATTRIBUTES
-
-        def is_acl_attribute(self, attribute_name: str) -> bool:
-            """Check if attribute is ACL attribute (case-insensitive).
-
-            Args:
-                attribute_name: Attribute name to check
-
-            Returns:
-                True if attribute is ACL attribute, False otherwise
-
-            """
-            # Use set for O(1) lookup performance
-            all_attrs_lower = {a.lower() for a in self.get_acl_attributes()}
-            return attribute_name.lower() in all_attrs_lower
-
-        # Control auto-execution
-        auto_execute: ClassVar[bool] = False
-
-        # =====================================================================
-        # Concrete Routing Methods - Moved to rfc.py.Acl
-        # =====================================================================
-        # _route_parse, _route_write, _handle_parse_acl, _handle_write_acl,
-        # execute, __call__, __new__ are now concrete implementations in
-        # FlextLdifServersRfc.Acl
-
-        def _hook_post_parse_acl(
-            self,
-            acl: FlextLdifModelsDomains.Acl,
-        ) -> FlextResult[FlextLdifModelsDomains.Acl]:
-            """Hook called after parsing an ACL line.
-
-            Override in subclasses for server-specific post-processing of parsed ACLs.
-
-            Default behavior: returns ACL unchanged (pass-through).
-
-            **When to use:**
-            - Normalize ACL properties after parsing
-            - Add server-specific metadata
-            - Validate ACL constraints
-            - Transform ACL format
-
-            Args:
-                acl: Parsed Acl from parse_acl()
-
-            Returns:
-                FlextResult[Acl] - modified or original ACL
-
-            **Example:**
-                def _hook_post_parse_acl(self, acl):
-                    # OID-specific: normalize permission format
-                    if acl.permissions:
-                        acl.permissions = normalize_permissions(acl.permissions)
-                    return FlextResult.ok(acl)
-
-            """
-            return FlextResult.ok(acl)
-
-        def can_handle_acl(self, acl_line: str | FlextLdifModelsDomains.Acl) -> bool:
-            """Check if this quirk can handle the ACL definition.
-
-            Called BEFORE parsing to detect if this quirk should process the ACL line.
-            Receives the raw ACL line string (e.g., "orclaci: { ... }") or Acl model.
-
-            Args:
-                acl_line: ACL definition line string
-
-            Returns:
-                True if this quirk can handle this ACL definition
-
-            """
-            _ = acl_line  # Explicitly mark as intentionally unused in base
-            return False  # Must be implemented by subclass  # Must be implemented by subclass
-
-        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
-            """Check if this ACL can be handled after parsing.
-
-            Generic implementation that assumes any ACL that has been successfully
-            parsed into the Acl model is handleable. This method is available to
-            all server implementations.
-
-            Subclasses can override for server-specific validation logic.
-
-            Args:
-                acl_line: The ACL string or Acl model to check.
-
-            Returns:
-                True if the ACL can be handled, False otherwise.
-
-            """
-            _ = acl_line  # Unused in base implementation
-            return True  # Default: all parsed ACLs are handleable
-
-        def _supports_feature(self, feature_id: str) -> bool:
-            """Check if this server supports a specific feature.
-
-            Generic implementation that checks if feature_id is in
-            RFC_STANDARD_FEATURES. This method is available to all server
-            implementations.
-
-            Subclasses can override to declare additional supported features
-            beyond RFC_STANDARD_FEATURES.
-
-            Args:
-                feature_id: Feature ID from FeatureCapabilities
-
-            Returns:
-                True if feature is supported, False otherwise.
-
-            """
-            return (
-                feature_id
-                in FlextLdifConstants.FeatureCapabilities.RFC_STANDARD_FEATURES
-            )
-
-        def _get_feature_fallback(self, feature_id: str) -> str | None:
-            """Get RFC fallback value for unsupported vendor feature.
-
-            Generic implementation that uses FeatureCapabilities.RFC_FALLBACKS
-            for standard fallbacks. This method is available to all server
-            implementations.
-
-            Subclasses can override to customize fallback behavior.
-
-            Args:
-                feature_id: Feature ID from FeatureCapabilities
-
-            Returns:
-                Fallback permission string, or None if no fallback.
-
-            """
-            return FlextLdifConstants.FeatureCapabilities.RFC_FALLBACKS.get(feature_id)
-
-        # =====================================================================
-        # Public Interface Methods - Moved to rfc.py.Acl
-        # =====================================================================
-        # parse, can_handle, write are now concrete implementations in
-        # FlextLdifServersRfc.Acl. Subclasses should override _parse_acl,
-        # _write_acl, and can_handle_acl for server-specific logic.
-
-        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
-            r"""REQUIRED: Parse server-specific ACL definition (internal).
-
-            Parses an ACL (Access Control List) definition line into Acl model.
-            Called for each acl attribute during entry parsing.
-
-            **What you must do:**
-            1. Parse the ACL definition line (format varies by server)
-            2. Extract permissions, subjects, targets, and server-specific rules
-            3. Create Acl model with structured representation
-            4. Call _hook_post_parse_acl() if implementing hooks
-            5. Return FlextResult.ok(acl)
-
-            **Important constraints:**
-            - NEVER raise exceptions - return FlextResult.fail()
-            - Handle malformed ACL rules gracefully with best-effort parsing
-            - Preserve server-specific syntax in quirk_metadata
-            - Different servers have different ACL syntax (vendor-specific formats)
-
-            **Edge cases to handle:**
-            - Empty string -> return fail("ACL line is empty")
-            - Malformed rule -> handle gracefully or reject with clear message
-            - Unknown permission types -> preserve as string for server-specific handling
-            - Complex nested rules -> flatten or preserve structure as appropriate
-            - Server-specific extensions -> preserve in quirk_metadata for round-trip conversion
-            - Partial/incomplete rules -> validate completeness if needed
-
-            Args:
-                acl_line: ACL definition line (server-specific format)
-
-            Returns:
-                FlextResult with Acl model or fail(message) on error
-
-            Examples of vendor-specific ACL formats:
-                - Configuration-based: "access to attrs=cn by * read"
-                - ACI-based: "aci: (targetdn=\"...\") (version 3.0;...)"
-
-            """
-            _ = acl_line  # Explicitly mark as intentionally unused in base
-            return FlextResult.fail("Must be implemented by subclass")
-
-        def can_handle_attribute(
-            self,
-            attribute: FlextLdifModelsDomains.SchemaAttribute,
-        ) -> bool:
-            """Check if this ACL quirk should be aware of a specific attribute definition.
-
-            ACL quirks may need to evaluate rules based on attribute schema properties
-            (e.g., sensitivity, usage). This method allows the quirk to indicate
-            if it has special handling for a given attribute model.
-
-            Args:
-                attribute: The SchemaAttribute model.
-
-            Returns:
-                True if this quirk has specific logic related to this attribute.
-
-            """
-            _ = attribute  # Explicitly mark as intentionally unused in base
-            return False  # Must be implemented by subclass  # Must be implemented by subclass
-
-        def can_handle_objectclass(
-            self,
-            objectclass: FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> bool:
-            """Check if this ACL quirk should be aware of a specific objectClass definition.
-
-            ACL quirks may need to evaluate rules based on objectClass properties.
-
-            Args:
-                objectclass: The SchemaObjectClass model.
-
-            Returns:
-                True if this quirk has specific logic related to this objectClass.
-
-            """
-            _ = objectclass  # Explicitly mark as intentionally unused in base
-            return False  # Must be implemented by subclass  # Must be implemented by subclass
-
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
-            """Write ACL data to RFC-compliant string format (internal).
-
-            Base class stub - must be implemented by subclass.
-
-            Args:
-                acl_data: Acl model
-
-            Returns:
-                FlextResult.fail with "Must be implemented by subclass"
-
-            """
-            _ = acl_data
-            return FlextResult[str].fail("Must be implemented by subclass")
-
-        def parse(self, acl_line: str) -> FlextResult[FlextLdifModelsDomains.Acl]:
-            """Parse ACL line to Acl model.
-
-            This satisfies FlextLdifProtocols.Quirks.AclProtocol.
-
-            Args:
-                acl_line: ACL definition line
-
-            Returns:
-                FlextResult with Acl model
-
-            """
-            return self._parse_acl(acl_line)
-
-        def write(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
-            """Write Acl model to string format.
-
-            This satisfies FlextLdifProtocols.Quirks.AclProtocol.
-
-            Args:
-                acl_data: Acl model
-
-            Returns:
-                FlextResult with string representation
-
-            """
-            return self._write_acl(acl_data)
-
-        def _extract_acl_parameters(
-            self,
-            kwargs: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | list[str]
-                | dict[str, str | int | float | bool | list[str] | None]
-                | None,
-            ],
-        ) -> tuple[
-            str | FlextLdifModelsDomains.Acl | None,
-            FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None,
-        ]:
-            """Extract and validate ACL operation parameters from kwargs.
-
-            Args:
-                kwargs: Keyword arguments containing 'data' and optional 'operation'
-
-            Returns:
-                Tuple of (data, operation) with type narrowing applied
-
-            """
-            # Extract data parameter
-            data_raw = kwargs.get("data")
-            data: str | FlextLdifModelsDomains.Acl | None = (
-                data_raw
-                if isinstance(data_raw, (str, FlextLdifModelsDomains.Acl, type(None)))
-                else None
-            )
-
-            # Extract operation parameter with type narrowing
-            # Business Rule: isinstance check with literal values provides type narrowing
-            # Implication: No cast needed - type checker can infer the correct type from the guard
-            operation_raw = kwargs.get("operation")
-            operation_typed: (
-                FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
-            ) = None
-            if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
-                operation_typed = operation_raw  # type: ignore[assignment]  # Type narrowing from isinstance check
-            operation = operation_typed
-
-            return data, operation
-
-        def _execute_acl_parse(
-            self,
-            data: str,
-        ) -> FlextResult[FlextLdifModelsDomains.Acl | str]:
-            """Execute ACL parse operation.
-
-            Args:
-                data: ACL data string to parse
-
-            Returns:
-                FlextResult with parsed Acl model
-
-            """
-            parse_result = self.parse(data)
-            if parse_result.is_success:
-                return FlextResult[FlextLdifModelsDomains.Acl | str].ok(
-                    parse_result.unwrap()
-                )
-            return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
-                parse_result.error or "Parse failed",
-            )
-
-        def _execute_acl_write(
-            self,
-            data: FlextLdifModelsDomains.Acl,
-        ) -> FlextResult[FlextLdifModelsDomains.Acl | str]:
-            """Execute ACL write operation.
-
-            Args:
-                data: Acl model to write
-
-            Returns:
-                FlextResult with written string
-
-            """
-            write_result = self.write(data)
-            if write_result.is_success:
-                return FlextResult[FlextLdifModelsDomains.Acl | str].ok(
-                    write_result.unwrap()
-                )
-            return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
-                write_result.error or "Write failed",
-            )
-
-        def execute(
-            self,
-            *,
-            data: str | FlextLdifModelsDomains.Acl | None = None,
-            operation: str | None = None,
-            **kwargs: FlextLdifTypes.Server.ServerInitKwargs,
-        ) -> FlextResult[FlextLdifModelsDomains.Acl | str]:
-            """Execute ACL operation with auto-detection: str→parse, Acl→write.
-
-            Generic implementation that auto-detects operation type and routes to
-            appropriate handler. This method is available to all server implementations.
-
-            Args:
-                **kwargs: data (str | Acl), operation (optional)
-
-            Returns:
-                FlextResult with parsed Acl model or written string
-
-            """
-            # Extract from kwargs if not provided
-            if data is None:
-                data_raw = kwargs.get("data")
-                if isinstance(data_raw, (str, FlextLdifModelsDomains.Acl)):
-                    data = data_raw
-
-            if operation is None:
-                operation_raw = kwargs.get("operation")
-                if isinstance(operation_raw, str) and operation_raw in {
-                    "parse",
-                    "write",
-                }:
-                    operation = operation_raw
-
-            # Health check: no data provided
-            if data is None:
-                empty_acl: FlextLdifModelsDomains.Acl = FlextLdifModelsDomains.Acl()
-                return FlextResult[FlextLdifModelsDomains.Acl | str].ok(empty_acl)
-
-            # Auto-detect operation from data type, unless overridden
-            # Type narrowing: ParseWriteOperationLiteral is Literal["parse", "write"]
-            # Business Rule: isinstance check with literal values provides type narrowing
-            # Implication: No cast needed - type checker can infer the correct type from the guard
-            detected_operation: (
-                FlextLdifConstants.LiteralTypes.ParseWriteOperationLiteral | None
-            ) = None
-            if (
-                operation is not None
-                and isinstance(operation, str)
-                and operation in {"parse", "write"}
-            ):
-                detected_operation = operation  # type: ignore[assignment]  # Type narrowing from isinstance check
-            elif operation is not None:
-                # operation is str but not a valid literal value
-                detected_operation = None
-            if detected_operation is None:
-                detected_operation = "parse" if isinstance(data, str) else "write"
-
-            # Execute based on detected/forced operation
-            if detected_operation == "parse":
-                if not isinstance(data, str):
-                    return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
-                        f"parse operation requires str, got {type(data).__name__}",
-                    )
-                return self._execute_acl_parse(data)
-
-            # detected_operation == "write"
-            if not isinstance(data, FlextLdifModelsDomains.Acl):
-                return FlextResult[FlextLdifModelsDomains.Acl | str].fail(
-                    f"write operation requires Acl, got {type(data).__name__}",
-                )
-            return self._execute_acl_write(data)
-
-        def create_metadata(
-            self,
-            original_format: str,
-            extensions: FlextLdifTypes.MetadataDictMutable | None = None,
-        ) -> FlextLdifModelsDomains.QuirkMetadata:
-            """Create ACL quirk metadata.
-
-            Generic implementation that creates QuirkMetadata with quirk_type
-            and extensions. This method is available to all server implementations.
-
-            Args:
-                original_format: Original ACL format string to store in metadata.
-                extensions: Optional additional extensions to include in metadata.
-
-            Returns:
-                QuirkMetadata with quirk_type and extensions.
-
-            """
-            all_extensions: FlextLdifTypes.MetadataDictMutable = {
-                FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format,
-            }
-            if extensions:
-                all_extensions.update(extensions)
-            # Convert dict to DynamicMetadata for QuirkMetadata
-            extensions_model = FlextLdifModels.DynamicMetadata(**all_extensions)
-            return FlextLdifModelsDomains.QuirkMetadata(
-                quirk_type=self._get_server_type(),
-                extensions=extensions_model,
-            )
-
-        def format_acl_value(
-            self,
-            acl_value: str,
-            acl_metadata: FlextLdifModelsDomains.AclWriteMetadata,
-            *,
-            use_original_format_as_name: bool = False,
-        ) -> FlextResult[str]:
-            """Format ACL value for writing, optionally using original format as name.
-
-            Generic implementation that optionally replaces ACL name with sanitized
-            original format when use_original_format_as_name is True and original
-            format is available. This method is available to all server implementations.
-
-            Subclasses can override _hook_format_acl_name_pattern() to customize
-            the pattern matching and replacement logic for server-specific ACL formats.
-
-            Args:
-                acl_value: The ACL string value to format (e.g., ACI attribute value).
-                acl_metadata: AclWriteMetadata extracted from entry metadata.
-                use_original_format_as_name: If True, replace ACL name with
-                    sanitized original format from metadata.
-
-            Returns:
-                FlextResult[str] with formatted ACL value, or unchanged value
-                if formatting not applicable.
-
-            """
-            # If option not enabled or no original format available, return unchanged
-            if not use_original_format_as_name:
-                return FlextResult[str].ok(acl_value)
-
-            if not acl_metadata.has_original_format():
-                return FlextResult[str].ok(acl_value)
-
-            original_format = acl_metadata.original_format
-            if not original_format:
-                return FlextResult[str].ok(acl_value)
-
-            # Sanitize the original format for use as ACL name
-            # Business Rule: ACL name sanitization uses FlextLdifUtilities.ACL
-            # via lazy import pattern. Type checker cannot infer exact types.
-            # Implication: We use runtime hasattr checks and getattr for type safety.
-            # Use getattr to satisfy pyright strict mode while maintaining runtime safety
-            utilities_class = _get_utilities()
-            # Business Rule: Sanitize ACL name using FlextLdifUtilities.ACL
-            # sanitize_acl_name returns tuple[str, bool] (sanitized_name, was_sanitized)
-            # Use structural checks and type annotation to satisfy pyright strict mode
-            acl_util = getattr(utilities_class, "ACL", None)
-            sanitized_name: str
-            _was_sanitized: bool
-            if acl_util is not None:
-                sanitize_method = getattr(acl_util, "sanitize_acl_name", None)
-                if sanitize_method is not None and callable(sanitize_method):
-                    sanitize_result = sanitize_method(original_format)
-                    # Type narrowing: sanitize_acl_name returns tuple[str, bool]
-                    if isinstance(sanitize_result, tuple) and len(sanitize_result) == 2:
-                        sanitized_name, _was_sanitized = cast(
-                            "tuple[str, bool]", sanitize_result
-                        )
-                    else:
-                        sanitized_name = original_format
-                        _was_sanitized = False
-                else:
-                    sanitized_name = original_format
-                    _was_sanitized = False
-            else:
-                sanitized_name = original_format
-                _was_sanitized = False
-
-            if not sanitized_name:
-                return FlextResult[str].ok(acl_value)
-
-            # Use hook for server-specific pattern matching and replacement
-            pattern_result = self._hook_format_acl_name_pattern()
-            if pattern_result.is_failure:
-                return FlextResult[str].ok(acl_value)
-
-            pattern, replacement_template = pattern_result.unwrap()
-            formatted_value = pattern.sub(
-                replacement_template.format(sanitized_name),
-                acl_value,
-            )
-
-            return FlextResult[str].ok(formatted_value)
-
-        def _hook_format_acl_name_pattern(
-            self,
-        ) -> FlextResult[tuple[re.Pattern[str], str]]:
-            """Hook for server-specific ACL name pattern matching.
-
-            Returns pattern and replacement template for formatting ACL names.
-            Default implementation uses RFC ACI format pattern.
-
-            Returns:
-                FlextResult with tuple of (pattern, replacement_template).
-                Replacement template should use {0} or {name} for the sanitized name.
-
-            """
-            # RFC ACI format: acl "name"
-            pattern = re.compile(r'acl\s+"[^"]*"')
-            replacement_template = 'acl "{0}"'
-            return FlextResult[tuple[re.Pattern[str], str]].ok((
-                pattern,
-                replacement_template,
-            ))
-
-        def convert_rfc_acl_to_aci(
-            self,
-            rfc_acl_attrs: dict[str, list[str]],
-            target_server: str,
-        ) -> FlextResult[dict[str, list[str]]]:
-            """Convert RFC ACL format to server-specific ACI format.
-
-            Base implementation: Pass-through (RFC ACLs are already in RFC format).
-            Subclasses should override for server-specific conversions.
-
-            Args:
-                rfc_acl_attrs: ACL attributes in RFC format
-                target_server: Target server type identifier
-
-            Returns:
-                FlextResult[dict[str, list[str]]] with server-specific ACL attributes
-
-            """
-            _ = target_server
-            return FlextResult[dict[str, list[str]]].ok(rfc_acl_attrs)
-
-    class Entry(
-        FlextService[FlextLdifModels.Entry | str],
-    ):
-        """Base class for entry processing quirks - satisfies FlextLdifProtocols.Quirks.EntryProtocol.
-
-        NOTE: This is an implementation detail - DO NOT import directly.
-        Use FlextLdifServersBase.Entry instead.
-
-        Entry quirks handle server-specific entry attributes and transformations
-        for LDAP entry processing.
-
-        **STANDARDIZED CONSTANTS REQUIRED**: Each Entry implementation MUST define
-        a Constants nested class with:
-        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
-        - ALIASES: All valid names for this server including canonical
-        - PRIORITY: Selection priority (lower = higher priority)
-        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
-        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
-
-
-        **Protocol Compliance**: All implementations MUST satisfy
-        FlextLdifProtocols.Quirks.EntryProtocol through structural typing.
-        This means all public methods must match protocol signatures exactly.
-
-        **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.EntryProtocol)
-        to check protocol compliance at runtime.
-
-        Common entry transformation patterns:
-        - Vendor operational attributes
-        - Configuration entries (e.g., cn=config subtree)
-        - Vendor-specific attributes
-        - Server-specific DN formats
-        - RFC baseline entry handling
-
-        """
-
-        # Protocol-required fields
-        server_type: str = "unknown"
-        """Server type identifier."""
-
-        priority: int = 0
-        """Quirk priority (lower number = higher priority)."""
-
-        # Registry method for DI-based automatic registration
-        # NOTE: server_type and priority are ClassVar in the PARENT SERVER CLASS ONLY
-        # NOT in nested Schema/Acl/Entry classes
-        # (e.g., FlextLdifServersOid.server_type, FlextLdifServersOid.priority)
-        # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
-
-        # Parent quirk reference for accessing server-level configuration
-        parent_quirk: FlextLdifServersBase | None = Field(
-            default=None,
-            exclude=True,
-            repr=False,
-            description=(
-                "Reference to parent FlextLdifServersBase instance "
-                "for server-level access"
-            ),
-        )
-
-        def __init__(
-            self,
-            entry_service: FlextLdifProtocols.Services.HasParseMethodProtocol
-            | None = None,
-            _parent_quirk: FlextLdifServersBase | None = None,
-            **kwargs: str | float | bool | None,
-        ) -> None:
-            """Initialize entry quirk service with optional DI service injection.
-
-            Args:
-                entry_service: Injected FlextLdifEntry service (optional, lazy-created if None)
-                **kwargs: Passed to FlextService for initialization (includes parent_quirk)
-
-            Note:
-                server_type and priority are no longer passed to nested classes.
-                They should be accessed via _get_server_type() and Constants.PRIORITY
-                from the parent server class.
-
-            """
-            super().__init__(**kwargs)
-            self._entry_service = entry_service  # Store for use by subclasses
-            # Store _parent_quirk using object.__setattr__ to avoid Pydantic validation
-            # (it's not a Pydantic field, just an internal reference)
-            if _parent_quirk is not None:
-                object.__setattr__(self, "_parent_quirk", _parent_quirk)
-            # Note: server_type and priority descriptors are only available on parent server classes
-            # Nested classes (Schema/Acl/Entry) access them via _get_server_type() when needed
-
-        def _get_server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
-            """Get server_type from parent server class via __qualname__.
-
-            Business Rule: Server type is determined by inspecting the class hierarchy
-            and accessing FlextLdifUtilities.Server.get_parent_server_type().
-            This method uses lazy import pattern to avoid circular dependencies.
-            Implication: Type checker cannot infer exact types, so we use hasattr
-            checks and type narrowing for runtime safety.
-
-            Returns:
-                Server type literal (e.g., 'oid', 'oud', 'rfc')
-
-            """
-            return _get_server_type_from_utilities(type(self))
-
-        def _get_priority(self) -> int:
-            """Get priority from parent server class Constants."""
-            parent = getattr(self, "_parent_quirk", None)
-            if (
-                parent
-                and hasattr(parent, "Constants")
-                and hasattr(parent.Constants, "PRIORITY")
-            ):
-                priority_value = parent.Constants.PRIORITY
-                if not isinstance(priority_value, int):
-                    msg = f"Expected int, got {type(priority_value)}"
-                    raise TypeError(msg)
-                return priority_value
-            return 100  # Default priority
-
-        # Control auto-execution
-        auto_execute: ClassVar[bool] = False
-
-        # =====================================================================
-        # Public Parse/Write Interface
-        # =====================================================================
-        # Concrete Routing Methods - Moved to rfc.py.Entry
-        # =====================================================================
-        # parse, write, _route_parse, _route_write, _route_write_many,
-        # _handle_parse_entry, _handle_write_entry, execute, __call__, __new__,
-        # _auto_detect_entry_operation, _route_entry_operation are now
-        # concrete implementations in FlextLdifServersRfc.Entry
-
-        def _hook_validate_entry_raw(
-            self,
-            dn: str,
-            attrs: dict[str, list[str | bytes]],
-        ) -> FlextResult[bool]:
-            """Hook to validate raw entry before parsing.
-
-            Called before parse_entry() to allow server-specific validation of raw DN and attributes.
-
-            Default behavior: validates DN is not empty.
-
-            **When to use:**
-            - Validate DN format before parsing
-            - Check required attributes exist
-            - Enforce server-specific rules
-            - Filter out invalid entries early
-
-            Args:
-                dn: Distinguished Name
-                attrs: Raw attributes dict (not used in base implementation)
-
-            Returns:
-                FlextResult[bool] with True on success, fail() on failure
-
-            """
-            _ = attrs
-            if not dn:
-                return FlextResult.fail("DN cannot be empty")
-            return FlextResult.ok(True)
-
-        def _hook_post_parse_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Hook called after parsing an entry.
-
-            Override in subclasses for server-specific post-processing of parsed entries.
-
-            Default behavior: returns entry unchanged (pass-through).
-
-            **When to use:**
-            - Normalize entry properties after parsing
-            - Add server-specific metadata
-            - Transform entry attributes
-
-            Args:
-                entry: Parsed Entry from parse_entry()
-
-            Returns:
-                FlextResult[Entry] - modified or original entry
-
-            """
-            return FlextResult.ok(entry)
-
-        def _hook_pre_write_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Hook called before writing an entry.
-
-            Override in subclasses for server-specific pre-processing before write_entry_to_rfc().
-
-            Default behavior: returns entry unchanged (pass-through).
-
-            **When to use:**
-            - Normalize entry properties before writing
-            - Add server-specific metadata for write
-            - Transform entry format for output
-
-            Args:
-                entry: Entry to write
-
-            Returns:
-                FlextResult[Entry] - modified or original entry
-
-            """
-            return FlextResult.ok(entry)
-
-        def can_handle_attribute(
-            self,
-            attribute: FlextLdifModelsDomains.SchemaAttribute,
-        ) -> bool:
-            """Check if this quirk can handle a schema attribute.
-
-            Entry quirks typically don't handle schema attributes - that's handled
-            by Schema quirks. Base implementation returns False.
-
-            Args:
-                attribute: SchemaAttribute model
-
-            Returns:
-                False in base class (Entry doesn't handle attributes)
-
-            """
-            _ = attribute  # Entry doesn't handle attributes
-            return False
-
-        def can_handle_objectclass(
-            self,
-            objectclass: FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> bool:
-            """Check if this quirk can handle a schema objectClass.
-
-            Entry quirks typically don't handle objectclasses - that's handled
-            by Schema quirks. Base implementation returns False.
-
-            Args:
-                objectclass: SchemaObjectClass model
-
-            Returns:
-                False in base class (Entry doesn't handle objectclasses)
-
-            """
-            _ = objectclass  # Entry doesn't handle objectclasses
-            return False
-
-        def can_handle(
-            self,
-            entry_dn: str,
-            attributes: dict[str, list[str]],
-        ) -> bool:
-            """Check if this quirk can handle the entry.
-
-            Called BEFORE parsing to detect if this quirk should process the entry.
-            Receives raw entry data (DN and attributes) from LDIF parser.
-
-            Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes mapping
-
-            Returns:
-                True if this quirk should process this entry
-
-            """
-            _ = entry_dn  # Explicitly mark as intentionally unused in base
-            _ = attributes  # Explicitly mark as intentionally unused in base
-            return False  # Must be implemented by subclass  # Must be implemented by subclass
-
-        def _normalize_attribute_name(self, attr_name: str) -> str:
-            """Normalize attribute name to RFC 2849 canonical form.
-
-            RFC 2849 specifies: Attribute names are case-insensitive.
-            This method normalizes to canonical form for consistent matching.
-
-            Key rule: objectclass (any case) → objectClass (canonical)
-            All other attributes: preserved as-is (most are already lowercase)
-
-            Args:
-                attr_name: Attribute name from LDIF (any case)
-
-            Returns:
-                Canonical form of the attribute name
-
-            """
-            # Handle empty strings
-            if not attr_name:
-                return attr_name
-            # RFC 2849: objectclass → objectClass (canonical form)
-            if attr_name.lower() == "objectclass":
-                return "objectClass"
-            # All other attributes: preserved as-is
-            return attr_name
-
-        def _convert_raw_attributes(
-            self,
-            entry_attrs: dict[str, list[str | bytes]],
-        ) -> dict[str, list[str]]:
-            """Convert raw LDIF attributes to dict[str, list[str]] format.
-
-            Handles bytes values from ldif3 parser and normalizes attribute names.
-
-            Args:
-                entry_attrs: Raw attributes mapping from LDIF parser
-
-            Returns:
-                Converted attributes with normalized names and string values
-
-            """
-            converted_attrs: dict[str, list[str]] = {}
-            # Business Rule: entry_attrs is dict[str, list[str | bytes]] but pyrefly may infer
-            # attr_values as Sequence[Unknown] | list[bytes | str] due to type inference limitations.
-            # Implication: We validate and convert explicitly to ensure type safety.
-            for attr_name, attr_values_raw in entry_attrs.items():
-                # Normalize attribute name to canonical case (RFC 2849)
-                canonical_attr_name = self._normalize_attribute_name(attr_name)
-
-                # Convert values to strings
-                # Type guard: Ensure attr_values is a list before processing
-                if not isinstance(attr_values_raw, list):
-                    # Business Rule: LDIF attribute values must be lists per RFC 2849
-                    # Implication: Skip non-list values (shouldn't happen in practice)
-                    continue
-                attr_values: list[str | bytes] = attr_values_raw
-                string_values: list[str] = []
-                if isinstance(attr_values, list):
-                    # Type narrowing: attr_values is list[str | bytes]
-                    string_values = [
-                        (
-                            value.decode("utf-8", errors="replace")
-                            if isinstance(value, bytes)
-                            else str(value)
-                        )
-                        for value in attr_values
-                    ]
-                elif isinstance(attr_values, bytes):
-                    string_values = [
-                        attr_values.decode("utf-8", errors="replace"),
-                    ]
-                elif FlextRuntime.is_list_like(attr_values):
-                    # Handle Sequence types (tuple, etc.) - convert to list[str]
-                    string_values = [
-                        (
-                            value.decode("utf-8", errors="replace")
-                            if isinstance(value, bytes)
-                            else str(value)
-                        )
-                        for value in attr_values
-                    ]
-                else:
-                    string_values = [str(attr_values)]
-
-                # RFC 2849: If attribute already exists, append values
-                if canonical_attr_name in converted_attrs:
-                    converted_attrs[canonical_attr_name].extend(string_values)
-                else:
-                    converted_attrs[canonical_attr_name] = string_values
-
-            return converted_attrs
-
-        def _parse_content(
-            self,
-            ldif_content: str,
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
-            """Parse raw LDIF content string into Entry models (internal).
-
-            PRIMARY parsing entry point - called by framework with raw LDIF.
-
-            **You must:**
-            1. Use ldif3.LDIFParser to parse LDIF content
-            2. For each (dn, attrs) pair from ldif3:
-               - Call _hook_validate_entry_raw(dn, attrs) [optional hook]
-               - Call _parse_entry(dn, attrs) [required]
-               - Call _hook_post_parse_entry(entry) [optional hook]
-            3. Return list of all parsed entries
-
-            **Edge cases:**
-            - Empty string -> return ok([])
-            - Whitespace only -> return ok([])
-            - Malformed LDIF -> return fail(message)
-            - Encoding errors -> catch UnicodeDecodeError, return fail()
-
-            **NEVER raise exceptions** - return FlextResult.fail()
-
-            Args:
-                ldif_content: Raw LDIF content as string
-
-            Returns:
-                FlextResult with list[Entry] on success or fail(message)
-
-            """
-            _ = ldif_content  # Explicitly mark as intentionally unused in base
-            return FlextResult.fail("Must be implemented by subclass")
-
-        # =====================================================================
-        # Concrete Helper Methods - Moved to rfc.py.Entry
-        # =====================================================================
-        # parse_entry is now a concrete implementation in FlextLdifServersRfc.Entry
-        # NOTE: can_handle_attribute() and can_handle_objectclass() are Schema-level
-        # methods only. Entry detection uses can_handle(dn, attributes) instead.
-
-        def _write_entry(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[str]:
-            r"""Write Entry model to RFC-compliant LDIF string (internal).
-
-            Converts Entry model back to LDIF text format.
-
-            **RFC 2849 Format:**
-            - Start with "dn: <distinguished-name>"
-            - Follow with "attribute: value" pairs
-            - Use "attribute:: <base64>" for binary/non-ASCII
-            - Blank line after last attribute
-            - Proper line continuations for long values
-
-            **Edge cases:**
-            - Null entry -> return fail("Entry is None")
-            - Missing DN -> return fail("Entry DN is None")
-            - Empty attributes -> return ok("dn: ...\n\n")
-            - Special chars in DN -> proper escaping
-
-            Args:
-                entry_data: Entry model to write
-
-            Returns:
-                FlextResult with LDIF string or fail(message)
-
-            """
-            _ = entry_data  # Explicitly mark as intentionally unused in base
-            return FlextResult.fail("Must be implemented by subclass")
-
-        def parse(self, ldif_content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
-            """Parse LDIF content string into Entry models.
-
-            This satisfies FlextLdifProtocols.Quirks.EntryProtocol.
-
-            Args:
-                ldif_content: Raw LDIF content as string
-
-            Returns:
-                FlextResult with list of Entry models
-
-            """
-            return self._parse_content(ldif_content)
-
-        def write(
-            self,
-            entry_data: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
-            write_options: FlextLdifModels.WriteFormatOptions | None = None,
-        ) -> FlextResult[str]:
-            """Write Entry model(s) to LDIF string format.
-
-            Generic implementation that handles single Entry or list of Entries,
-            and optionally injects write_options into entry metadata. This method
-            is available to all server implementations.
-
-            Args:
-                entry_data: Entry model or list of Entry models
-                write_options: Optional write format options to inject into metadata
-
-            Returns:
-                FlextResult with LDIF string
-
-            """
-            # Handle list of entries
-            if isinstance(entry_data, list):
-                results: list[str] = []
-                header_lines: list[str] = []
-
-                # Extract write_options to check for header generation
-                write_options_for_header: FlextLdifModels.WriteFormatOptions | None = (
-                    None
-                )
-                if write_options is not None:
-                    if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
-                        write_options_for_header = write_options
-                    elif isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
-                        # Convert WriteOptions to WriteFormatOptions for header check
-                        write_options_for_header = FlextLdifModels.WriteFormatOptions()
-
-                # Generate header if needed (even for empty entries list)
-                if (
-                    write_options_for_header
-                    and write_options_for_header.include_version_header
-                ):
-                    header_lines.append("version: 1")
-
-                if (
-                    write_options_for_header
-                    and write_options_for_header.include_timestamps
-                ):
-                    timestamp = datetime.now(UTC).isoformat()
-                    header_lines.extend((
-                        f"# Generated on: {timestamp}",
-                        f"# Total entries: {len(entry_data)}",
-                    ))
-
-                # Process entries (skip if empty list - header already generated)
-                if entry_data:
-                    for entry in entry_data:
-                        result = self.write(entry, write_options)
-                        if result.is_failure:
-                            return result
-                        results.append(result.unwrap())
-
-                # Combine header and entries
-                all_lines = header_lines + results
-                ldif_output = "\n".join(all_lines) if all_lines else ""
-                # Ensure trailing newline if header was generated
-                if header_lines and not ldif_output.endswith("\n"):
-                    ldif_output += "\n"
-                return FlextResult[str].ok(ldif_output)
-
-            # Single entry - inject write_options into metadata if provided
-            entry = entry_data
-            if write_options is not None:
-                new_write_opts = (
-                    dict(entry.metadata.write_options)
-                    if entry.metadata and entry.metadata.write_options
-                    else {}
-                )
-                # Convert dict to WriteOptions model if needed
-                # Accept WriteFormatOptions, WriteOptions, or dict
-                # Preserve WriteFormatOptions (has ldif_changetype) or convert WriteOptions
-                # Entry quirk needs WriteFormatOptions to check ldif_changetype for modify format
-                write_options_typed: (
-                    FlextLdifModels.WriteFormatOptions
-                    | FlextLdifModelsDomains.WriteOptions
-                    | None
-                ) = None
-                if isinstance(write_options, FlextLdifModels.WriteFormatOptions):
-                    # Preserve WriteFormatOptions - has all fields including ldif_changetype
-                    write_options_typed = write_options
-                elif isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
-                    write_options_typed = write_options
-                elif isinstance(write_options, dict):
-                    # Try WriteFormatOptions first (has more fields)
-                    try:
-                        write_options_typed = (
-                            FlextLdifModels.WriteFormatOptions.model_validate(
-                                write_options,
-                            )
-                        )
-                    except Exception:
-                        # Fallback to WriteOptions if WriteFormatOptions validation fails
-                        write_options_typed = (
-                            FlextLdifModelsDomains.WriteOptions.model_validate(
-                                write_options,
-                            )
-                        )
-                else:
-                    msg = f"Expected WriteFormatOptions | WriteOptions | dict, got {type(write_options)}"
-                    raise TypeError(msg)
-                new_write_opts[FlextLdifConstants.MetadataKeys.WRITE_OPTIONS] = (
-                    write_options_typed
-                )
-                # Create metadata with write_options - preserve WriteFormatOptions type
-                if entry.metadata:
-                    updated_metadata = entry.metadata.model_copy(
-                        update={"write_options": new_write_opts},
-                    )
-                else:
-                    # Create new metadata - convert WriteFormatOptions to WriteOptions
-                    # QuirkMetadata only accepts WriteOptions, not WriteFormatOptions
-                    write_options_for_metadata: (
-                        FlextLdifModelsDomains.WriteOptions | None
-                    ) = None
-                    if isinstance(
-                        write_options_typed, FlextLdifModelsDomains.WriteOptions
-                    ):
-                        write_options_for_metadata = write_options_typed
-                    elif isinstance(
-                        write_options_typed, FlextLdifModels.WriteFormatOptions
-                    ):
-                        # Convert WriteFormatOptions to WriteOptions
-                        write_options_for_metadata = (
-                            FlextLdifModelsDomains.WriteOptions.model_validate(
-                                write_options_typed.model_dump()
-                            )
-                        )
-                    updated_metadata = FlextLdifModelsDomains.QuirkMetadata(
-                        quirk_type="rfc",
-                        write_options=write_options_for_metadata,
-                    )
-                entry = entry.model_copy(
-                    update={"metadata": updated_metadata},
-                )
-
-            return self._write_entry(entry)
-
-        def _normalize_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextLdifModels.Entry:
-            """Normalize entry to RFC format with metadata tracking.
-
-            Hook for server-specific normalization. Override in server quirks
-            to transform server-specific attributes/formats to RFC baseline.
-
-            Base Implementation: Returns entry as-is (no normalization).
-            Servers override to convert their formats to RFC.
-
-            Args:
-                entry: Entry to normalize
-
-            Returns:
-                Normalized entry (base implementation returns unchanged)
-
-            Example Override (OID):
-                def _normalize_entry(self, entry):
-                    # Convert OID boolean "1"/"0" to RFC "TRUE"/"FALSE"
-                    # Track in metadata via entry.track_transformation(...)
-                    return normalized_entry
-
-            """
-            return entry
-
-        def _denormalize_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-            target_server: str | None = None,
-        ) -> FlextLdifModels.Entry:
-            """Denormalize entry from RFC format to target server format.
-
-            Hook for server-specific denormalization. Override in server quirks
-            to convert RFC format back to server-specific representation.
-
-            Base Implementation: Returns entry as-is (no denormalization).
-            Servers override to convert RFC back to their native format.
-
-            Args:
-                entry: RFC-normalized entry
-                target_server: Target server type (optional hint)
-
-            Returns:
-                Denormalized entry for target server (base implementation returns unchanged)
-
-            Example Override (OUD):
-                def _denormalize_entry(self, entry, target_server):
-                    # Convert RFC booleans back to OUD format
-                    # Use metadata.conversion_notes for context
-                    return denormalized_entry
-
-            """
-            _ = target_server
-            return entry
-
-        def execute(
-            self,
-            **kwargs: FlextLdifTypes.FlexibleKwargsMutable,
-        ) -> FlextResult[FlextLdifModels.Entry | str]:
-            """Execute entry operation (parse/write)."""
-            ldif_content = kwargs.get("ldif_content")
-            entry_model = kwargs.get("entry_model")
-
-            if isinstance(ldif_content, str):
-                entries_result = self._parse_content(ldif_content)
-                if entries_result.is_success:
-                    entries = entries_result.unwrap()
-                    return FlextResult[FlextLdifModels.Entry | str].ok(
-                        entries[0] if entries else "",
-                    )
-                return FlextResult[FlextLdifModels.Entry | str].ok("")
-            if isinstance(entry_model, FlextLdifModels.Entry):
-                str_result = self._write_entry(entry_model)
-                return FlextResult[FlextLdifModels.Entry | str].ok(
-                    str_result.unwrap() if str_result.is_success else "",
-                )
-
-            return FlextResult[FlextLdifModels.Entry | str].ok("")
-
-        def parse_entry(
-            self,
-            entry_dn: str,
-            entry_attrs: dict[str, list[str]],
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Parse a single entry from DN and attributes.
-
-            Base implementation delegates to _parse_content() after constructing
-            LDIF content string. Subclasses should override for server-specific parsing.
-
-            Args:
-                entry_dn: Entry distinguished name
-                entry_attrs: Entry attributes mapping (dict[str, list[str]])
-
-            Returns:
-                FlextResult[Entry] with parsed entry model
-
-            """
-            # Convert entry_attrs to dict if needed
-            if isinstance(entry_attrs, Mapping):
-                attrs_dict: dict[
-                    str,
-                    str | list[str] | bytes | list[bytes] | int | float | bool | None,
-                ] = dict(entry_attrs)
-            elif isinstance(entry_attrs, dict):
-                attrs_dict = entry_attrs
-            else:
-                msg = f"Expected Mapping | dict, got {type(entry_attrs)}"
-                raise TypeError(msg)
-
-            # Build LDIF content string from DN and attributes
-            ldif_lines = [f"dn: {entry_dn}"]
-            for attr_name, attr_values in attrs_dict.items():
-                if FlextRuntime.is_list_like(attr_values):
-                    if not isinstance(attr_values, list):
-                        msg = f"Expected list, got {type(attr_values)}"
-                        raise TypeError(msg)
-                    # Decode bytes to string before formatting
-                    ldif_lines.extend(
-                        f"{attr_name}: {value.decode('utf-8') if isinstance(value, bytes) else value}"
-                        for value in attr_values
-                    )
-                else:
-                    # Decode bytes to string before formatting
-                    value_str = (
-                        attr_values.decode("utf-8")
-                        if isinstance(attr_values, bytes)
-                        else attr_values
-                    )
-                    ldif_lines.append(f"{attr_name}: {value_str}")
-            ldif_content = "\n".join(ldif_lines) + "\n"
-
-            # Parse using _parse_content and return first entry
-            result = self._parse_content(ldif_content)
-            if result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    result.error or "Failed to parse entry",
-                )
-            entries = result.unwrap()
-            if not entries:
-                return FlextResult[FlextLdifModels.Entry].fail("No entries parsed")
-            return FlextResult[FlextLdifModels.Entry].ok(entries[0])
+    class Schema(FlextLdifServersBaseSchema):
+        """Nested Schema quirk base class."""
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to RFC 2849 canonical form.
@@ -3830,22 +1101,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             return attr_name
         # Normalize objectclass variants to canonical objectClass
         if attr_name.lower() == "objectclass":
-            return FlextLdifConstants.DictKeys.OBJECTCLASS
+            return c.DictKeys.OBJECTCLASS
         # Other attributes: preserve as-is (cn, mail, uid, etc.)
         return attr_name
 
 
 # =========================================================================
-
-
-class _DescriptorProtocol(Protocol):
-    """Protocol for descriptors that behave like their return type."""
-
-    def __get__(
-        self,
-        obj: FlextLdifServersBase | None,
-        _objtype: type | None = None,
-    ) -> str | int: ...
 
 
 class _ServerTypeDescriptor:
@@ -3882,13 +1143,11 @@ class _PriorityDescriptor:
 # class and instance access. Descriptors implement __get__ returning str/int,
 # satisfying the type annotations above. This is a class-level assignment that
 # happens at module import time, not instance creation time.
-# Implication: Type checkers may complain about readonly fields, but descriptors
-# are a valid Python pattern for computed attributes. We use type: ignore comments
-# to suppress false positives from type checkers that don't understand descriptors.
-# Attach descriptors to FlextLdifServersBase for class and instance access
-# Descriptors implement __get__ returning str/int, satisfying the type annotations above
-FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
-FlextLdifServersBase.priority = _PriorityDescriptor(0)
+# Use type.__setattr__ to bypass both Pydantic's __setattr__ and pyrefly's
+# descriptor immutability checks - this is the canonical pattern for setting
+# class-level descriptors on Pydantic models
+type.__setattr__(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
+type.__setattr__(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

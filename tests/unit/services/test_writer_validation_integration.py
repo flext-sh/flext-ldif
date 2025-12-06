@@ -1,41 +1,18 @@
-"""Tests for Writer integrated with ValidationService.
-
-**Modules Tested:**
-- `flext_ldif.services.writer.FlextLdifWriter` - LDIF entry writing service
-- `flext_ldif.services.validation.FlextLdifValidation` - Entry validation service
-
-**Scope:**
-- Real validation of entries before writing using actual ValidationService
-- Attribute name validation against RFC 4512 rules
-- DN component validation
-- LDIF string output generation with various format options
-- Batch entry validation and writing
-- Base64 encoding support
-
-**Test Coverage:**
-- Valid entry attribute validation
-- Invalid attribute name detection
-- DN component structure validation
-- LDIF string output generation
-- Base64 encoding configuration
-- Batch entry processing
-
-ZERO mocks - all real services and data.
-"""
-
 from __future__ import annotations
 
 from typing import Literal
 
 import pytest
 
-from flext_ldif import FlextLdifModels, FlextLdifTypes, FlextLdifWriter
+from flext_ldif import FlextLdifTypes, FlextLdifWriter
+from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
-from tests.fixtures.constants import Names
-from tests.helpers import FlextLdifTestFactories, TestAssertions
+from tests import c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
-class TestWriterValidationIntegration:
+class TestsFlextLdifWriterValidationIntegration(s):
     """Test Writer integration with ValidationService for entry validation.
 
     Tests real validation of entries before writing, using actual ValidationService.
@@ -53,22 +30,26 @@ class TestWriterValidationIntegration:
         return FlextLdifValidation()
 
     @pytest.fixture
-    def valid_entry(self) -> FlextLdifModels.Entry:
+    def valid_entry(self) -> m.Entry:
         """Create a valid LDAP entry with RFC-compliant attributes."""
-        return FlextLdifTestFactories.create_entry(
+        return self.create_entry(
             dn="cn=John Doe,ou=people,dc=example,dc=com",
             attributes={
-                Names.CN: ["John Doe"],
-                Names.SN: ["Doe"],
-                Names.MAIL: ["john@example.com"],
-                Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
+                c.Names.CN: ["John Doe"],
+                c.Names.SN: ["Doe"],
+                c.Names.MAIL: ["john@example.com"],
+                c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
             },
         )
 
     class Constants:
         """Test constants organized as nested class."""
 
-        VALID_ATTR_NAMES: tuple[str, ...] = (Names.CN, Names.MAIL, Names.OBJECTCLASS)
+        VALID_ATTR_NAMES: tuple[str, ...] = (
+            c.Names.CN,
+            c.Names.MAIL,
+            c.Names.OBJECTCLASS,
+        )
         INVALID_ATTR_NAME: str = "invalid attr"
         DN_COMPONENTS: tuple[str, ...] = ("cn=", "ou=", "dc=")
         TEST_USER_PREFIX: str = "User"
@@ -81,7 +62,7 @@ class TestWriterValidationIntegration:
         @staticmethod
         def validate_all_attributes(
             validation_service: FlextLdifValidation,
-            entry: FlextLdifModels.Entry,
+            entry: m.Entry,
         ) -> bool:
             """Validate all attribute names in entry."""
             for attr_name in entry.attributes.attributes:
@@ -115,7 +96,7 @@ class TestWriterValidationIntegration:
     def test_valid_entry_validates_successfully(
         self,
         validation_service: FlextLdifValidation,
-        valid_entry: FlextLdifModels.Entry,
+        valid_entry: m.Entry,
     ) -> None:
         """Test that valid entry attributes pass RFC validation."""
         is_valid = self.Helpers.validate_all_attributes(
@@ -128,9 +109,9 @@ class TestWriterValidationIntegration:
         ("attr_name", "expected_valid"),
         [
             ("invalid attr", False),
-            (Names.CN, True),
-            (Names.MAIL, True),
-            (Names.OBJECTCLASS, True),
+            (c.Names.CN, True),
+            (c.Names.MAIL, True),
+            (c.Names.OBJECTCLASS, True),
         ],
     )
     def test_attribute_name_validation(
@@ -141,7 +122,7 @@ class TestWriterValidationIntegration:
     ) -> None:
         """Test attribute name validation with parameterized test cases."""
         result = validation_service.validate_attribute_name(attr_name)
-        TestAssertions.assert_success(
+        self.assert_success(
             result,
             f"Validation should succeed for '{attr_name}'",
         )
@@ -152,7 +133,7 @@ class TestWriterValidationIntegration:
 
     def test_validate_dn_components_with_valid_entry(
         self,
-        valid_entry: FlextLdifModels.Entry,
+        valid_entry: m.Entry,
     ) -> None:
         """Test DN component validation on valid entry."""
         dn_value = valid_entry.dn.value if valid_entry.dn else ""
@@ -161,19 +142,19 @@ class TestWriterValidationIntegration:
     def test_write_valid_entry_to_string(
         self,
         writer: FlextLdifWriter,
-        valid_entry: FlextLdifModels.Entry,
+        valid_entry: m.Entry,
     ) -> None:
         """Test writing valid entry to LDIF string format."""
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=FlextLdifModels.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 include_version_header=True,
                 fold_long_lines=False,
             ),
         )
 
-        unwrapped = TestAssertions.assert_success(result, "Write should succeed")
+        unwrapped = self.assert_success(result, "Write should succeed")
         output = FlextLdifTypes.ResultExtractors.extract_content(unwrapped)
         self.Helpers.assert_ldif_output_contains(
             output,
@@ -185,19 +166,19 @@ class TestWriterValidationIntegration:
     def test_write_entry_with_base64_encoding(
         self,
         writer: FlextLdifWriter,
-        valid_entry: FlextLdifModels.Entry,
+        valid_entry: m.Entry,
     ) -> None:
         """Test writing entry with base64 encoding for binary values."""
         result = writer.write(
             entries=[valid_entry],
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=FlextLdifModels.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 base64_encode_binary=True,
                 fold_long_lines=False,
             ),
         )
 
-        unwrapped = TestAssertions.assert_success(result, "Write should succeed")
+        unwrapped = self.assert_success(result, "Write should succeed")
         output = FlextLdifTypes.ResultExtractors.extract_content(unwrapped)
         assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output
 
@@ -208,12 +189,12 @@ class TestWriterValidationIntegration:
     ) -> None:
         """Test validation of multiple entries before writing."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 dn=f"cn={self.Constants.TEST_USER_PREFIX}{i},ou=people,dc=example,dc=com",
                 attributes={
-                    Names.CN: [f"{self.Constants.TEST_USER_PREFIX}{i}"],
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.MAIL: [f"user{i}@example.com"],
+                    c.Names.CN: [f"{self.Constants.TEST_USER_PREFIX}{i}"],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON],
+                    c.Names.MAIL: [f"user{i}@example.com"],
                 },
             )
             for i in range(1, self.Constants.BATCH_COUNT + 1)
@@ -230,10 +211,10 @@ class TestWriterValidationIntegration:
         result = writer.write(
             entries=entries,
             target_server_type=self.Constants.SERVER_TYPE,
-            format_options=FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.WriteFormatOptions(fold_long_lines=False),
         )
 
-        unwrapped = TestAssertions.assert_success(result, "Write should succeed")
+        unwrapped = self.assert_success(result, "Write should succeed")
         output = FlextLdifTypes.ResultExtractors.extract_content(unwrapped)
         for i in range(1, self.Constants.BATCH_COUNT + 1):
             assert f"{self.Constants.TEST_USER_PREFIX}{i}" in output

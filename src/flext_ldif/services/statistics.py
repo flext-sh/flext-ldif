@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import cast, override
 
-from flext_core import FlextDecorators, r, u
+from flext_core import d, r
 
 from flext_ldif._models.results import (
     _CategoryPaths,
@@ -26,12 +26,13 @@ from flext_ldif._models.results import (
     _FlexibleCategories,
 )
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[FlextLdifModels.StatisticsServiceStatus],
+    FlextLdifServiceBase[m.StatisticsServiceStatus],
 ):
     """Statistics service for LDIF processing pipeline.
 
@@ -53,11 +54,11 @@ class FlextLdifStatistics(
         super().__init__()
 
     @override
-    @FlextDecorators.log_operation("statistics_service_check")
-    @FlextDecorators.track_performance()
+    @d.log_operation("statistics_service_check")
+    @d.track_performance()
     def execute(
         self,
-    ) -> r[FlextLdifModels.StatisticsServiceStatus]:
+    ) -> r[m.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Business Rule: Service health check validates statistics generation
@@ -72,8 +73,8 @@ class FlextLdifStatistics(
             r containing service status (health check)
 
         """
-        return r[FlextLdifModels.StatisticsServiceStatus].ok(
-            FlextLdifModels.StatisticsServiceStatus(
+        return r[m.StatisticsServiceStatus].ok(
+            m.StatisticsServiceStatus(
                 service="StatisticsService",
                 status="operational",
                 capabilities=[
@@ -87,11 +88,11 @@ class FlextLdifStatistics(
 
     def generate_statistics(
         self,
-        categorized: FlextLdifModels.FlexibleCategories | _FlexibleCategories,
+        categorized: m.FlexibleCategories | _FlexibleCategories,
         written_counts: dict[str, int],
         output_dir: Path,
         output_files: dict[str, str],
-    ) -> r[FlextLdifModels.StatisticsResult]:
+    ) -> r[m.StatisticsResult]:
         """Generate complete statistics for categorized migration.
 
         Business Rule: Statistics generation computes comprehensive metrics from
@@ -115,49 +116,62 @@ class FlextLdifStatistics(
                 rejection info, and metadata
 
         """
+
         # Use u.count directly via u.map for unified counting (DSL pattern)
         def count_entries(entries: object) -> int:
             """Count entries in list."""
-            entries_list = cast("list[object]", entries) if isinstance(entries, list) else []
-            return u.count(entries_list)
+            entries_list = (
+                cast("list[object]", entries) if isinstance(entries, list) else []
+            )
+            return u.Collection.count(entries_list)
 
-        categorized_values_list = list(categorized.values())
-        total_entries = u.sum(u.map(categorized_values_list, mapper=count_entries))
+        # Convert values to list with explicit type casting
+        # Build list manually to avoid ValuesView type issues with pyrefly
+        # Use .items() to get (key, value) pairs and extract values
+        categorized_values_list: list[object] = [
+            entries for _category_key, entries in categorized.items()
+        ]
+        # Sum counts using built-in sum() - u.Collection.map returns list[int]
+        mapped_counts = u.Collection.map(categorized_values_list, mapper=count_entries)
+        total_entries = sum(mapped_counts) if isinstance(mapped_counts, list) else 0
 
         # Build categorized counts as _DynamicCounts model using DSL pattern
         # Use dict comprehension with u.count for clarity
         categorized_counts_dict = {
-            category: u.count(cast("list[object]", entries))
+            category: u.Collection.count(cast("list[object]", entries))
             for category, entries in categorized.items()
         }
         categorized_counts_model = _DynamicCounts.model_validate(
-            categorized_counts_dict
+            categorized_counts_dict,
         )
 
-        rejected_entries_raw: list[FlextLdifModels.Entry] = cast(
-            "list[FlextLdifModels.Entry]",
-            u.take(
-                categorized,
-                FlextLdifConstants.Categories.REJECTED,
-                default=[],
-            ),
+        # Access rejected entries directly from categorized dict
+        # u.take() doesn't work correctly with _FlexibleCategories Pydantic models
+        rejected_key = c.Categories.REJECTED
+        rejected_entries_raw: list[m.Entry] = cast(
+            "list[m.Entry]",
+            categorized.get(rejected_key, []) if hasattr(categorized, "get") else [],
         )
         # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
         # Use named function instead of lambda (DSL pattern)
 
         def is_entry(entry: object) -> bool:
             """Check if entry is Entry model."""
-            return isinstance(entry, FlextLdifModels.Entry)
+            return isinstance(entry, m.Entry)
 
-        rejected_entries_list = u.filter(
-            rejected_entries_raw,
-            predicate=is_entry,
-        )
-        rejected_entries = cast("list[FlextLdifModels.Entry]", rejected_entries_list)
-        rejection_count = u.count(rejected_entries)
+        # Use list comprehension to avoid u.filter overload issues with object type
+        # Type narrowing: isinstance ensures list[m.Entry]
+        rejected_entries = [
+            entry for entry in rejected_entries_raw if isinstance(entry, m.Entry)
+        ]
+        rejection_count = u.Collection.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
 
-        rejection_rate = rejection_count / total_entries if total_entries > 0 else 0.0
+        # Type narrowing: ensure total_entries is int for division
+        total_entries_int = total_entries if isinstance(total_entries, int) else 0
+        rejection_rate = (
+            rejection_count / total_entries_int if total_entries_int > 0 else 0.0
+        )
 
         # Build written counts as _DynamicCounts model
         # Create model with values using model_validate for frozen models
@@ -167,13 +181,17 @@ class FlextLdifStatistics(
         output_files_model = _CategoryPaths()
         for category in written_counts:
             path_str = str(
-                output_dir / cast("str", u.take(output_files, category, default=f"{category}.ldif"))
+                output_dir
+                / cast(
+                    "str",
+                    u.take(output_files, category, default=f"{category}.ldif"),
+                ),
             )
             setattr(output_files_model, category, path_str)
 
-        return r[FlextLdifModels.StatisticsResult].ok(
-            FlextLdifModels.StatisticsResult(
-                total_entries=total_entries,
+        return r[m.StatisticsResult].ok(
+            m.StatisticsResult(
+                total_entries=total_entries_int,
                 categorized=categorized_counts_model,
                 rejection_rate=rejection_rate,
                 rejection_count=rejection_count,
@@ -185,8 +203,8 @@ class FlextLdifStatistics(
 
     def calculate_for_entries(
         self,
-        entries: Sequence[FlextLdifModels.Entry],
-    ) -> r[FlextLdifModels.EntriesStatistics]:
+        entries: Sequence[m.Entry],
+    ) -> r[m.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 
         Args:
@@ -199,18 +217,18 @@ class FlextLdifStatistics(
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
 
-        def process_entry(entry: FlextLdifModels.Entry) -> None:
+        def process_entry(entry: m.Entry) -> None:
             """Process entry to update distributions."""
             object_class_distribution.update(entry.get_objectclass_names())
 
             # Check for server_type in metadata extensions
-            if entry.metadata:
+            if entry.metadata and entry.metadata.extensions:
                 extensions = entry.metadata.extensions
-                st_value = u.take(extensions, "server_type") if extensions else None
-                if isinstance(st_value, str):
+                st_value = u.take(extensions, "server_type", as_type=str)
+                if st_value is not None:
                     server_type_distribution[st_value] += 1
 
-        _ = u.batch(
+        _ = u.Collection.batch(
             list(entries),
             process_entry,
             on_error="skip",
@@ -233,17 +251,17 @@ class FlextLdifStatistics(
             server_type_model = _DynamicCounts()
 
         # Create EntriesStatistics - ensure we pass the populated models
-        entries_stats = FlextLdifModels.EntriesStatistics(
+        entries_stats = m.EntriesStatistics(
             total_entries=len(entries),
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )
 
-        return r[FlextLdifModels.EntriesStatistics].ok(entries_stats)
+        return r[m.EntriesStatistics].ok(entries_stats)
 
     def _extract_rejection_reasons(
         self,
-        rejected_entries: list[FlextLdifModels.Entry],
+        rejected_entries: list[m.Entry],
     ) -> list[str]:
         """Extract unique rejection reasons from rejected entries.
 
@@ -256,19 +274,24 @@ class FlextLdifStatistics(
         """
         reasons: set[str] = set()
 
-        def extract_reason(entry: FlextLdifModels.Entry) -> str | None:
+        def extract_reason(entry: m.Entry) -> str | r[str]:
             """Extract rejection reason from entry."""
             if entry.metadata and entry.metadata.processing_stats:
-                return entry.metadata.processing_stats.rejection_reason
-            return None
+                reason = entry.metadata.processing_stats.rejection_reason
+                if reason:
+                    return r[str].ok(reason)
+            return r[str].fail("No rejection reason")
 
-        batch_result = u.batch(
+        batch_result = u.Collection.batch(
             rejected_entries,
             extract_reason,
             on_error="skip",
         )
-        if batch_result.is_success:
-            results = cast("list[str | None]", batch_result.value["results"])
+        # u.batch returns FlextResult[BatchResultDict]
+        if batch_result.is_success and batch_result.value:
+            batch_dict = batch_result.value
+            results_raw = batch_dict.get("results", [])
+            results = cast("list[str | None]", results_raw)
             for reason in results:
                 if reason is not None:
                     reasons.add(reason)

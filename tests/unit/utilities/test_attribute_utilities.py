@@ -1,18 +1,10 @@
-"""Comprehensive tests for FlextLdifUtilitiesAttribute.
-
-Tests all methods with real data, edge cases, and RFC 4512 compliance.
-Uses parametrized tests and factories for maximum coverage with minimal code.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
+from tests import s
 
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 
@@ -35,7 +27,7 @@ class AttributeTestCase(StrEnum):
     OPTION_UNDERSCORE = "option_underscore"
 
 
-class TestFlextLdifUtilitiesAttribute:
+class TestsTestFlextLdifUtilitiesAttribute(s):
     """Comprehensive tests for attribute utilities."""
 
     # Test data for split_attribute_description
@@ -153,12 +145,13 @@ class TestFlextLdifUtilitiesAttribute:
             FlextLdifUtilitiesAttribute.split_attribute_description("")
 
         with pytest.raises(ValueError, match="cannot be empty"):
-            FlextLdifUtilitiesAttribute.split_attribute_description(None)  # type: ignore[arg-type]
+            FlextLdifUtilitiesAttribute.split_attribute_description(cast("str", None))
 
     def test_split_attribute_description_none(self) -> None:
         """Test split_attribute_description raises ValueError for None."""
-        with pytest.raises((ValueError, TypeError)):
-            FlextLdifUtilitiesAttribute.split_attribute_description(None)  # type: ignore[arg-type]
+        # Method raises ValueError per implementation (line 69-71)
+        with pytest.raises(ValueError, match="cannot be empty or None"):
+            FlextLdifUtilitiesAttribute.split_attribute_description(cast("str", None))
 
     @pytest.mark.parametrize("attribute_name", VALID_NAMES)
     def test_validate_attribute_name_valid(
@@ -185,7 +178,7 @@ class TestFlextLdifUtilitiesAttribute:
 
     def test_validate_attribute_name_none(self) -> None:
         """Test validate_attribute_name with None."""
-        result = FlextLdifUtilitiesAttribute.validate_attribute_name(None)  # type: ignore[arg-type]
+        result = FlextLdifUtilitiesAttribute.validate_attribute_name(cast("str", None))
         assert result is False
 
     def test_validate_attribute_name_too_long(self) -> None:
@@ -219,7 +212,9 @@ class TestFlextLdifUtilitiesAttribute:
 
     def test_validate_attribute_option_none(self) -> None:
         """Test validate_attribute_option with None."""
-        result = FlextLdifUtilitiesAttribute.validate_attribute_option(None)  # type: ignore[arg-type]
+        result = FlextLdifUtilitiesAttribute.validate_attribute_option(
+            cast("str", None),
+        )
         assert result is False
 
     def test_validate_attribute_option_with_value(self) -> None:

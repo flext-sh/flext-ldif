@@ -58,21 +58,14 @@ def analyze_file(file_path: Path) -> TestStats:
 def main() -> None:
     """DRY main: process arguments and generate report."""
     if len(sys.argv) != 2:
-        print("Usage: python scripts/refactor_all_tests.py <test_file_path>")
         sys.exit(1)
 
     file_path = Path(sys.argv[1])
     if not file_path.exists():
-        print(f"File not found: {file_path}")
         sys.exit(1)
 
     # DRY: Analyze and report in one pipeline
-    stats = analyze_file(file_path)
-    print(f"Analysis Results for {stats['path']}:")
-    print(f"  Lines: {stats['lines']}")
-    print(f"  Classes: {stats['classes']} ({stats['class_names']})")
-    print(f"  Methods: {stats['methods']} ({len(stats['method_names'])})")
-    print(f"  Fixtures: {stats['fixtures']} ({stats['fixture_names']})")
+    analyze_file(file_path)
 
 
 if __name__ == "__main__":

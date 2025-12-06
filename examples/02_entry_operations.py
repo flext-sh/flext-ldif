@@ -15,21 +15,21 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import r
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif, m
 
 
 class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def intelligent_builders() -> FlextResult[list[FlextLdifModels.Entry]]:
+    def intelligent_builders() -> r[list[m.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
 
         # DRY: Single list comprehension creates all entries
-        return FlextResult.ok([
+        return r.ok([
             api.create_entry(
                 dn=f"cn={name},ou=People,dc=example,dc=com",
                 attributes={
@@ -56,7 +56,7 @@ class DRYEntryOperations:
         ])
 
     @staticmethod
-    def advanced_filtering() -> FlextResult[list[FlextLdifModels.Entry]]:
+    def advanced_filtering() -> r[list[m.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
 
@@ -91,13 +91,13 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> FlextResult[list[dict[str, object]]]:
+    def batch_processing() -> r[list[dict[str, object]]]:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
 
         # Build → filter → parallel transform in one composition
         return DRYEntryOperations.advanced_filtering().flat_map(
             lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
-                lambda results: [r.model_dump() for r in results]
+                lambda results: [r.model_dump() for r in results],
             ),
         )

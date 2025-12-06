@@ -1,47 +1,21 @@
-"""Comprehensive tests for server detector service with all code paths.
-
-Tests FlextLdifDetector service with complete coverage including:
-- Oracle OID server detection via OID patterns and attributes
-- Oracle OUD server detection via ds-* patterns and attributes
-- OpenLDAP server detection via olc* patterns
-- Active Directory detection via AD OID patterns and attributes
-- 389 DS and Apache DS detection
-- Confidence threshold handling and fallback to RFC
-- Error handling (missing input, encoding errors, exceptions)
-- Pattern extraction from LDIF content
-- File-based detection
-- Config resolution methods
-
-Scope:
-- Server type auto-detection from LDIF content
-- Pattern matching and heuristics
-- Confidence scoring and thresholds
-- Error recovery and edge cases
-
-Modules tested: flext_ldif.services.detector, flext_ldif.config, flext_ldif.constants
-
-Uses advanced Python 3.13 features, factories, parametrization, mappings, and helpers
-for minimal code with maximum coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 import pytest
 from flext_core import FlextConfig
-from flext_tests import FlextTestsMatchers  # Mocked in conftest
+from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.services.detector import FlextLdifDetector
+from tests import c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 def _get_ldif_config() -> FlextLdifConfig:
@@ -67,7 +41,9 @@ class DetectorTestData:
 
     # LDIF content templates
     LDIF_VERSION_HEADER: Final[str] = "version: 1\n"
-    LDIF_BASIC_ENTRY: Final[str] = "dn: cn=test,dc=example,dc=com\nobjectClass: top\n"
+    LDIF_BASIC_ENTRY: Final[str] = (
+        f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n"
+    )
 
     # Server detection patterns mapping - DRY pattern for all server types
     SERVER_PATTERNS: Final[Mapping[str, Mapping[str, list[str]]]] = {
@@ -149,7 +125,7 @@ class DetectorTestData:
         return "".join(parts)
 
 
-class TestServerDetector:
+class TestsFlextLdifServerDetector(s):
     """Comprehensive tests for server detector service.
 
     All tests use real implementations without mocks.
@@ -164,7 +140,7 @@ class TestServerDetector:
 
     @staticmethod
     def _assert_detection_result(
-        result: FlextLdifModels.ServerDetectionResult,
+        result: m.ServerDetectionResult,
         min_confidence: float = 0.0,
     ) -> None:
         """Helper to assert detection result validity."""
@@ -231,7 +207,7 @@ class TestServerDetector:
             FlextTestsMatchers.assert_success(result)
             detection = result.unwrap()
             TestServerDetector._assert_detection_result(detection)
-            assert len(detection.scores) > 0
+            assert len(detection.scores) > 0, "Should have at least one score"
 
         @pytest.mark.parametrize(
             ("server_key", "expected_type"),
@@ -249,7 +225,7 @@ class TestServerDetector:
             """Test detection of other server types (389DS, Apache DS)."""
             patterns = DetectorTestData.SERVER_PATTERNS[server_key]
             content = DetectorTestData.build_ldif_content(server_key, patterns)
-            content += "objectClass: top\n"
+            content += f"{c.Names.OBJECTCLASS}: {c.Names.TOP}\n"
             result = detector.detect_server_type(ldif_content=content)
             FlextTestsMatchers.assert_success(result)
             TestServerDetector._assert_detection_result(result.unwrap())
@@ -286,8 +262,8 @@ class TestServerDetector:
             self,
             detector: FlextLdifDetector,
         ) -> None:
-            """Test low confidence detection falls back to RFC."""
-            content = f"""{DetectorTestData.LDIF_VERSION_HEADER}{DetectorTestData.LDIF_BASIC_ENTRY}cn: test
+            """Test low confidence detection falls back to c.RFC."""
+            content = f"""{DetectorTestData.LDIF_VERSION_HEADER}{DetectorTestData.LDIF_BASIC_ENTRY}{c.Names.CN}: {c.Values.TEST}
 """
             result = detector.detect_server_type(ldif_content=content)
             FlextTestsMatchers.assert_success(result)
@@ -313,7 +289,7 @@ class TestServerDetector:
             FlextTestsMatchers.assert_success(result)
             detection = result.unwrap()
             TestServerDetector._assert_detection_result(detection)
-            assert len(detection.scores) > 0
+            assert len(detection.scores) > 0, "Should have at least one score"
 
     class TestPatternExtraction:
         """Test pattern extraction from LDIF content using mappings."""
@@ -338,7 +314,7 @@ class TestServerDetector:
             detection = result.unwrap()
             patterns_found = detection.patterns_found
             assert isinstance(patterns_found, list)
-            assert len(patterns_found) > 0
+            FlextTestsMatchers.assert_length_greater_than(patterns_found, 0)
 
     class TestFileInput:
         """Test server detection from LDIF files."""
@@ -432,7 +408,7 @@ class TestServerDetector:
             status_result = detector.execute()
             FlextTestsMatchers.assert_success(status_result)
             status = status_result.unwrap()
-            assert isinstance(status, FlextLdifModels.ClientStatus)
+            assert isinstance(status, m.ClientStatus)
             assert status.config["service"] == "FlextLdifDetector"
             assert "detect_server_type" in status.services
 
@@ -453,8 +429,6 @@ class TestServerDetector:
             expected: str,
         ) -> None:
             """Test resolve_from_config with target_server_type override."""
-            from typing import cast
-
             ldif_config = _get_ldif_config()
             result = FlextLdifDetector.resolve_from_config(
                 ldif_config,
@@ -512,7 +486,7 @@ class TestServerDetector:
             ldif_config = _get_ldif_config()
             result = FlextLdifDetector.resolve_from_config(ldif_config)
             assert isinstance(result, str)
-            assert len(result) > 0
+            FlextTestsMatchers.assert_length_greater_than(result, 0)
 
     class TestGetEffectiveServerType:
         """Test get_effective_server_type() method using parametrization."""
@@ -538,7 +512,7 @@ class TestServerDetector:
             FlextTestsMatchers.assert_success(result)
             effective_type = result.unwrap()
             assert isinstance(effective_type, str)
-            assert len(effective_type) > 0
+            FlextTestsMatchers.assert_length_greater_than(effective_type, 0)
 
         @pytest.mark.parametrize(
             "server_type",

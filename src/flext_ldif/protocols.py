@@ -17,19 +17,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Runtime imports needed for Protocol type hints (Protocols are runtime_checkable)
-# These cannot be in TYPE_CHECKING because Protocols use isinstance checks at runtime
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import r
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
-
-# Aliases for simplified usage - after all imports
-p = FlextProtocols  # Protocols
-t = FlextTypes  # Types (alias for flext_core.typings.FlextTypes)
+from flext_core import FlextProtocols, r, t
 
 # =========================================================================
 # PROTOCOL DESIGN NOTES
@@ -76,28 +68,47 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryProtocol(Protocol):
             """Protocol for LDIF Entry models.
 
-            Business Rule: Entry protocol defines the structural contract for LDIF entries
-            that all Entry implementations must satisfy. The protocol uses union types
-            to accept both primitive types and domain model wrappers:
+            Business Rule: Entry protocol defines the structural contract for
+            LDIF entries that all Entry implementations must satisfy. The
+            protocol uses union types to accept both primitive types and domain
+            model wrappers:
             - dn: Accepts str or DistinguishedName wrapper (has .value property)
-            - attributes: Accepts dict-like Mapping or LdifAttributes wrapper (has .attributes)
+            - attributes: Accepts dict-like Mapping or LdifAttributes wrapper
+              (has .attributes)
 
-            Implication: Code using EntryProtocol should handle both primitive and model types.
-            Use FlextLdifUtilities.DN.get_dn_value() for safe DN extraction.
-            Use FlextLdifUtilities.Attributes helpers for safe attribute access.
+            Implication: Code using EntryProtocol should handle both primitive
+            and model types. Use FlextLdifUtilities.DN.get_dn_value() for safe
+            DN extraction. Use FlextLdifUtilities.Attributes helpers for safe
+            attribute access.
 
-            The protocol allows None for these fields to support RFC violation capture
-            during parsing (RFC 2849 § 2 violations are captured, not rejected).
+            The protocol allows None for these fields to support RFC violation
+            capture during parsing (RFC 2849 § 2 violations are captured, not
+            rejected).
             """
 
             @property
             def dn(self) -> str | object | None:
-                """Distinguished Name - str, DistinguishedName model, or None for violations."""
+                """Distinguished Name.
+
+                Can be str, DistinguishedName model, or None for violations.
+
+                Returns:
+                    Distinguished Name as string, DistinguishedName model,
+                    or None.
+
+                """
                 ...
 
             @property
             def attributes(self) -> Mapping[str, Sequence[str]] | object | None:
-                """Entry attributes - Mapping, LdifAttributes model, or None for violations."""
+                """Entry attributes.
+
+                Can be Mapping, LdifAttributes model, or None for violations.
+
+                Returns:
+                    Entry attributes as Mapping, LdifAttributes model, or None.
+
+                """
                 ...
 
             @property
@@ -233,8 +244,8 @@ class FlextLdifProtocols(FlextProtocols):
             Implication: Pattern matching is case-insensitive. Empty patterns mean
             no entries match that category. The dn_patterns use fnmatch-style wildcards.
 
-            Note: Properties return list[str] to be compatible with both list and Sequence
-            implementations in concrete classes.
+            Note: Properties return list[str] to be compatible with both list
+            and Sequence implementations in concrete classes.
             """
 
             @property
@@ -274,7 +285,15 @@ class FlextLdifProtocols(FlextProtocols):
 
             @property
             def acl_attributes(self) -> list[str]:
-                """Attribute names that identify ACL entries (e.g., 'aci', 'orclACI')."""
+                """Attribute names that identify ACL entries.
+
+                Examples:
+                    Common ACL attributes include 'aci' and 'orclACI'.
+
+                Returns:
+                    List of attribute names that identify ACL entries.
+
+                """
                 ...
 
     class Services:
@@ -556,6 +575,27 @@ class FlextLdifProtocols(FlextProtocols):
         """Protocol definitions for quirk implementations."""
 
         @runtime_checkable
+        class ParentQuirkProtocol(Protocol):
+            """Protocol for parent quirk (FlextLdifServersBase) instances.
+
+            This protocol defines the minimal interface needed by nested quirk
+            classes (Schema, Acl, Entry) to access their parent server quirk.
+
+            Note: Uses `str` for server_type per protocol design notes -
+            validation via Literal types happens at implementation level.
+            """
+
+            @property
+            def server_type(self) -> str:
+                """Server type identifier."""
+                ...
+
+            class Constants:
+                """Nested Constants class protocol."""
+
+                PRIORITY: int
+
+        @runtime_checkable
         class SchemaProtocol(Protocol):
             """Protocol for Schema quirk implementations."""
 
@@ -688,3 +728,10 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for models that have validation_metadata attribute."""
 
             validation_metadata: t.Metadata | None
+
+
+# Direct access: use FlextLdifProtocols directly
+# Tests helpers provide alias p = TestsProtocols for test modules
+
+p = FlextLdifProtocols
+__all__ = ["FlextLdifProtocols", "p"]

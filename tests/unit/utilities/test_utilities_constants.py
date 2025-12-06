@@ -1,21 +1,10 @@
-"""Test suite for FlextLdifUtilities.Constants module.
-
-Modules tested: FlextLdifUtilities.Constants (get_valid_values, is_valid, validate_many)
-Scope: Validates constants utilities for server types, encodings, and other categories.
-Tests parametrized scenarios for getting valid values, validating single values, and
-validating multiple values. Includes tests for unknown categories and case-insensitive
-validation.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import s
 
 from flext_ldif import FlextLdifUtilities
 
@@ -54,7 +43,7 @@ class ValidateManyType(StrEnum):
 
 
 @pytest.mark.unit
-class TestFlextLdifUtilitiesConstants:
+class TestsTestFlextLdifConstants(s):
     """Test constants utilities."""
 
     # Get valid values test data

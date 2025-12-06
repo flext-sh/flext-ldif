@@ -1,19 +1,10 @@
-"""Test suite for quirks registry service.
-
-This module provides comprehensive testing for FlextLdifServer which manages
-discovery, registration, and retrieval of server-specific quirks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from flext_ldif.services.server import FlextLdifServer
+from tests import s
 
 
-class TestFlextLdifServer:
+class TestsTestFlextLdifServer(s):
     """Test suite for quirk registry initialization and auto-discovery."""
 
     def test_initialization(self) -> None:

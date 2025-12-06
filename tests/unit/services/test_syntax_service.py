@@ -1,42 +1,12 @@
-"""Test suite for Syntax Service - RFC 4517 Validation and Resolution.
-
-Modules tested:
-- flext_ldif.services.syntax.FlextLdifSyntax (RFC 4517 syntax validation and resolution)
-
-Scope:
-- Service initialization and execute pattern
-- OID format validation (valid, invalid, empty, single number, very long)
-- RFC 4517 standard OID detection
-- OID to name lookup (boolean, directory_string, integer, unknown, empty)
-- Name to OID lookup (boolean, directory_string, integer, unknown, empty)
-- Syntax resolution (with manual name, description, server_type, unknown OID)
-- Value validation (boolean, integer, string, DN, time, binary, empty, unknown syntax)
-- Syntax category retrieval (boolean, ia5_string, directory_string, unknown OID)
-- Listing common syntaxes (sorted)
-- Multiple service instances independence
-- Error handling (regex errors, key errors, invalid formats, resolve failures)
-
-Test Coverage:
-- All syntax service methods (validate_oid, is_rfc4517_standard, lookup_oid, lookup_name,
-  resolve_syntax, validate_value, get_syntax_category, list_common_syntaxes)
-- Edge cases (empty values, unknown OIDs, invalid formats, error paths)
-- RFC 4517 compliance validation
-
-Uses Python 3.13 features, factories, constants, dynamic tests, and extensive helper reuse
-to reduce code while maintaining 100% behavior coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from flext_core import FlextResult
 
 from flext_ldif.services.syntax import FlextLdifSyntax
+from tests import s
 
 
-class TestFlextLdifSyntax:
+class TestsTestFlextLdifSyntax(s):
     """Test FlextLdifSyntax service with consolidated parametrized tests.
 
     Uses nested classes for organization: TestServiceInitialization, TestOidValidation,

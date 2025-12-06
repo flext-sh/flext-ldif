@@ -11,12 +11,12 @@ import pytest
 from flext_ldif import (
     FlextLdif,
     FlextLdifConstants,
-    FlextLdifModels,
     FlextLdifParser,
     FlextLdifProtocols,
     FlextLdifTypes,
     FlextLdifWriter,
 )
+from flext_ldif.models import m
 from flext_ldif.servers import (
     FlextLdifServersOid,
     FlextLdifServersOud,
@@ -25,10 +25,7 @@ from flext_ldif.servers import (
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
-from tests.fixtures.loader import FlextLdifFixtures
-
-from .fixtures.general_constants import TestGeneralConstants
-from .fixtures.rfc_constants import TestsRfcConstants
+from tests import c
 
 
 @pytest.fixture
@@ -95,11 +92,11 @@ def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> FlextLdifTypes.AclQuirkIns
 
 
 @pytest.fixture
-def sample_schema_attribute() -> FlextLdifModels.SchemaAttribute:
+def sample_schema_attribute() -> m.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return FlextLdifModels.SchemaAttribute(
-        oid=TestsRfcConstants.ATTR_OID_CN,
-        name=TestsRfcConstants.ATTR_NAME_CN,
+    return m.SchemaAttribute(
+        oid=c.RFC.ATTR_OID_CN,
+        name=c.RFC.ATTR_NAME_CN,
         desc=None,
         sup=None,
         equality=None,
@@ -117,31 +114,31 @@ def sample_schema_attribute() -> FlextLdifModels.SchemaAttribute:
 
 
 @pytest.fixture
-def sample_schema_objectclass() -> FlextLdifModels.SchemaObjectClass:
+def sample_schema_objectclass() -> m.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return FlextLdifModels.SchemaObjectClass(
-        oid=TestsRfcConstants.OC_OID_PERSON,
-        name=TestsRfcConstants.OC_NAME_PERSON,
+    return m.SchemaObjectClass(
+        oid=c.RFC.OC_OID_PERSON,
+        name=c.RFC.OC_NAME_PERSON,
         desc=None,
         sup=None,
     )
 
 
 @pytest.fixture
-def sample_entry() -> FlextLdifModels.Entry:
+def sample_entry() -> m.Entry:
     """Provides a sample Entry for tests."""
-    result = FlextLdifModels.Entry.create(
-        dn=TestGeneralConstants.SAMPLE_DN,
+    result = m.Entry.create(
+        dn=c.General.SAMPLE_DN,
         attributes={
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                TestGeneralConstants.OC_NAME_PERSON,
+                c.General.OC_NAME_PERSON,
             ],
-            TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
+            c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
     )
     entry_domain = result.unwrap()
-    # Create new instance using FlextLdifModels.Entry to ensure correct type
-    return FlextLdifModels.Entry(
+    # Create new instance using m.Entry to ensure correct type
+    return m.Entry(
         dn=entry_domain.dn,
         attributes=entry_domain.attributes,
         metadata=entry_domain.metadata,
@@ -149,27 +146,27 @@ def sample_entry() -> FlextLdifModels.Entry:
 
 
 @pytest.fixture
-def sample_acl() -> FlextLdifModels.Acl:
+def sample_acl() -> m.Acl:
     """Provides a sample Acl for tests."""
-    return FlextLdifModels.Acl(raw_acl="test: acl", server_type="rfc")
+    return m.Acl(raw_acl="test: acl", server_type="rfc")
 
 
 @pytest.fixture
 def attribute_definition_string() -> str:
     """Provides a sample attribute definition string."""
-    return TestsRfcConstants.ATTR_DEF_CN_FULL
+    return c.RFC.ATTR_DEF_CN_FULL
 
 
 @pytest.fixture
 def objectclass_definition_string() -> str:
     """Provides a sample objectclass definition string."""
-    return TestsRfcConstants.OC_DEF_PERSON
+    return c.RFC.OC_DEF_PERSON
 
 
 @pytest.fixture
 def sample_ldif_content() -> str:
     """Provides sample LDIF content for schema extraction."""
-    return TestsRfcConstants.SAMPLE_LDIF_CONTENT
+    return c.RFC.SAMPLE_LDIF_CONTENT
 
 
 # Test constants and configurations use centralized constants from fixtures
@@ -177,9 +174,9 @@ def sample_ldif_content() -> str:
 
 
 @pytest.fixture
-def sample_write_options() -> FlextLdifModels.WriteFormatOptions:
+def sample_write_options() -> m.WriteFormatOptions:
     """Provides sample WriteFormatOptions for tests."""
-    return FlextLdifModels.WriteFormatOptions()
+    return m.WriteFormatOptions()
 
 
 class WriteOptionsWithAllowedOids:
@@ -191,7 +188,7 @@ class WriteOptionsWithAllowedOids:
 
     def __init__(self) -> None:
         """Initialize with real WriteFormatOptions and allowed_schema_oids."""
-        self._options = FlextLdifModels.WriteFormatOptions()
+        self._options = m.WriteFormatOptions()
         self.allowed_schema_oids = frozenset(["1.2.3.4"])
 
     def __getattr__(self, name: str) -> object:
@@ -209,9 +206,9 @@ def write_options_with_allowed_oids() -> WriteOptionsWithAllowedOids:
 
 
 @pytest.fixture
-def acl_transformation_object() -> FlextLdifModels.AttributeTransformation:
+def acl_transformation_object() -> m.AttributeTransformation:
     """Provides a real AttributeTransformation object for tests."""
-    return FlextLdifModels.AttributeTransformation(
+    return m.AttributeTransformation(
         original_name="aci",
         original_values=["original aci"],
         target_name="aci",
@@ -230,23 +227,23 @@ invalidAttribute: value without proper formatting
 
 
 @pytest.fixture
-def sample_entry_with_metadata() -> FlextLdifModels.Entry:
+def sample_entry_with_metadata() -> m.Entry:
     """Provides a sample Entry with metadata for tests."""
-    result = FlextLdifModels.Entry.create(
-        dn=TestGeneralConstants.SAMPLE_DN,
+    result = m.Entry.create(
+        dn=c.General.SAMPLE_DN,
         attributes={
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                TestGeneralConstants.OC_NAME_PERSON,
+                c.General.OC_NAME_PERSON,
             ],
-            TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
+            c.General.ATTR_NAME_CN: [c.General.ATTR_VALUE_TEST],
         },
-        entry_metadata={
-            "write_options": FlextLdifModels.WriteFormatOptions(),
-        },
+        entry_metadata=m.EntryMetadata(
+            write_options=m.WriteFormatOptions(),
+        ),
     )
     entry_domain = result.unwrap()
-    # Create new instance using FlextLdifModels.Entry to ensure correct type
-    return FlextLdifModels.Entry(
+    # Create new instance using m.Entry to ensure correct type
+    return m.Entry(
         dn=entry_domain.dn,
         attributes=entry_domain.attributes,
         metadata=entry_domain.metadata,
@@ -297,8 +294,14 @@ def oid_entry_quirk(
 
 
 @pytest.fixture
-def oid_fixtures() -> FlextLdifFixtures.OID:
-    """Provides OID fixture loader instance for tests."""
+def oid_fixtures() -> object:
+    """Provides OID fixture loader instance for tests.
+
+    Uses lazy loading to defer fixture file loading until actually needed.
+    This prevents automatic loading of all fixture files on module import.
+    """
+    from tests.fixtures.loader import FlextLdifFixtures
+
     return FlextLdifFixtures.get_oid()
 
 
@@ -322,69 +325,5 @@ def real_parser_service() -> FlextLdifParser:
     return FlextLdifParser()
 
 
-class ConversionTestConstants:
-    """Constants for conversion tests."""
-
-    # OID attribute definitions
-    OID_ATTRIBUTE_ORCLGUID = (
-        "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
-    )
-    OID_ATTRIBUTE_ORCLDBNAME = (
-        "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' "
-        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-    )
-    OID_ATTRIBUTE_ORCLGUID_COMPLEX = (
-        "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-        "DESC 'Oracle Global Unique Identifier' "
-        "EQUALITY caseIgnoreMatch "
-        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 "
-        "SINGLE-VALUE )"
-    )
-
-    # OUD attribute definitions
-    OUD_ATTRIBUTE_ORCLGUID = (
-        "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
-    )
-
-    # OID objectClass definitions
-    OID_OBJECTCLASS_ORCLCONTEXT = (
-        "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
-    )
-    OID_OBJECTCLASS_ORCLCONTAINER = (
-        "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
-    )
-    OID_OBJECTCLASS_ORCLCONTEXT_WITH_MAY = (
-        "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' "
-        "SUP top STRUCTURAL "
-        "MUST cn "
-        "MAY ( description $ orclVersion ) )"
-    )
-
-    # OUD objectClass definitions
-    OUD_OBJECTCLASS_ORCLCONTEXT = (
-        "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
-    )
-
-    # Invalid test data (use constants from general_constants - no duplication)
-    INVALID_ATTRIBUTE = TestGeneralConstants.INVALID_ATTRIBUTE
-    INVALID_DN = TestGeneralConstants.INVALID_DN
-    INVALID_DATA_TYPE = TestGeneralConstants.INVALID_DATA_TYPE
-
-    # Sample LDIF entries for conversion (use constants from general_constants)
-    SAMPLE_LDIF_ENTRY = TestGeneralConstants.SAMPLE_LDIF_ENTRY
-
-    # Error messages (use constants from general_constants - no duplication)
-    WRITER_FAILED_MSG = TestGeneralConstants.WRITER_FAILED_MSG
-    PARSER_ERROR_MSG = TestGeneralConstants.PARSER_ERROR_MSG
-    DN_ERROR_MSG = TestGeneralConstants.DN_ERROR_MSG
-    INVALID_ENTRY_MSG = TestGeneralConstants.INVALID_ENTRY_MSG
-    PARSE_FAILED_MSG = TestGeneralConstants.PARSE_FAILED_MSG
-    WRITE_FAILED_MSG = TestGeneralConstants.WRITE_FAILED_MSG
-
-
-@pytest.fixture
-def conversion_constants() -> ConversionTestConstants:
-    """Provides conversion test constants."""
-    return ConversionTestConstants()
+# Conversion test constants are now in tests/constants.py as c.Conversion
+# Access via: c.Conversion.OID_ATTRIBUTE_ORCLGUID, c.Conversion.OID_OBJECTCLASS_ORCLCONTEXT, etc.

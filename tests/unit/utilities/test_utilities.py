@@ -1,49 +1,17 @@
-"""Tests for LDIF processing using newer services (post-v0.10.0).
-
-Tests validate that:
-1. Service APIs are available and work correctly
-2. Core modules can be imported
-3. Services can be instantiated
-4. Configuration service works
-5. Constants module is accessible
-
-Modules tested:
-- flext_ldif.services.dn.FlextLdifDn (DN and attribute normalization service)
-- flext_ldif.services.statistics.FlextLdifStatistics (Pipeline statistics service)
-- flext_ldif.models.FlextLdifModels (Direct model instantiation)
-- flext_ldif.config.FlextLdifConfig (Configuration service)
-- flext_ldif.constants.FlextLdifConstants (Constants module)
-
-Scope:
-- Service API availability and instantiation
-- Import verification for core modules
-- Module structure validation
-- Configuration service initialization
-
-Test Coverage:
-- Service instantiation (DN and Statistics services)
-- Import availability checks (Models, Constants, Utilities, Services, Configuration)
-- Module specification validation
-
-Uses factories, helpers, and constants to reduce code duplication.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import importlib.util
 from enum import StrEnum
 
 import pytest
+from tests import s
 
 from flext_ldif import FlextLdifConfig, FlextLdifConstants, FlextLdifModels, services
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.statistics import FlextLdifStatistics
 
 
-class TestFlextLdifServiceAPIs:
+class TestsTestFlextLdifServiceAPIs(s):
     """Test that newer service APIs are available and work correctly.
 
     Tests service instantiation and import availability using parametrized tests

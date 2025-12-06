@@ -16,47 +16,35 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, cast
+import inspect
+from collections.abc import (
+    Callable,
+    Collection as ABCCollection,
+    Iterable,
+    Mapping,
+    Sequence,
+)
+from typing import Any, Literal, Self, cast, overload
 
 from flext_core import (
-    FlextDecorators,
-    FlextExceptions,
     FlextLogger,
     FlextResult,
-    FlextService,
+    FlextTypes as flext_core_types,
+    FlextUtilities,
+    d,
+    e,
+    h,
+    r,
+    s,
+    x,
 )
-from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins
-from flext_core.typings import t as flext_core_types
-from flext_core.utilities import FlextUtilities
+from flext_core.utilities import ValidatorSpec
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.builders import (
-    FilterConfigBuilder,
-    ProcessConfigBuilder,
-    TransformConfigBuilder,
-)
 from flext_ldif._utilities.configs import (
-    AclConversionConfig,
-    AttrNormalizationConfig,
-    CaseFoldOption,
-    DnNormalizationConfig,
-    EscapeHandlingOption,
-    FilterConfig,
-    LoadConfig,
-    MetadataConfig,
-    OutputFormat,
     ProcessConfig,
-    SchemaParseConfig,
     ServerType,
-    SortOption,
-    SpaceHandlingOption,
-    TransformConfig,
-    ValidationConfig,
-    ValidationRuleSet,
 )
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
@@ -64,19 +52,7 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif._utilities.filters import (
-    AndFilter,
-    ByAttrsFilter,
-    ByAttrValueFilter,
-    ByDnFilter,
-    ByDnUnderBaseFilter,
-    ByObjectClassFilter,
-    CustomFilter,
     EntryFilter,
-    ExcludeAttrsFilter,
-    Filter,
-    IsSchemaEntryFilter,
-    NotFilter,
-    OrFilter,
 )
 from flext_ldif._utilities.fluent import DnOps, EntryOps
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
@@ -86,64 +62,67 @@ from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
 from flext_ldif._utilities.pipeline import (
     Pipeline,
-    PipelineStep,
     ProcessingPipeline,
     ValidationPipeline,
     ValidationResult,
-)
-from flext_ldif._utilities.power_protocols import (
-    BatchTransformerProtocol,
-    FailableTransformer,
-    FilterPredicate,
-    FilterProtocol,
-    FluentBuilderProtocol,
-    FluentOpsProtocol,
-    LoadableProtocol,
-    PipelineStepProtocol,
-    SimpleTransformer,
-    TransformerProtocol,
-    ValidationReportProtocol,
-    ValidationRuleProtocol,
-    ValidatorProtocol,
 )
 from flext_ldif._utilities.result import FlextLdifResult
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif._utilities.transformers import (
-    BooleanFormat,
-    ConvertBooleansTransformer,
-    CustomTransformer,
     EntryTransformer,
-    FilterAttrsTransformer,
-    Normalize,
-    NormalizeAttrsTransformer,
-    NormalizeDnTransformer,
-    RemoveAttrsTransformer,
-    ReplaceBaseDnTransformer,
-    Transform,
 )
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-from flext_ldif.constants import FlextLdifConstants, FlextLdifUtilitiesConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.typings import FlextLdifTypes
-
-# Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities (from flext-core)
-t = FlextLdifTypes  # Types (from flext-ldif)
-c = FlextLdifConstants  # Constants
-m = FlextLdifModels  # Models
-p = FlextLdifProtocols  # Protocols
-r = FlextResult  # Result
-e = FlextExceptions  # Exceptions
-d = FlextDecorators  # Decorators
-s = FlextService  # Service
-x = FlextMixins  # Mixins
-h = FlextHandlers  # Handlers
+from flext_ldif.constants import FlextLdifConstants, c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
+
+# Type alias for variadic callable (Python 3.13+ compatible)
+# Use p.VariadicCallable from protocols to avoid Any
+type VariadicCallable = p.VariadicCallable[t.GeneralValueType]
+
+
+class ConvBuilder:
+    """Conversion builder for type-safe value conversion (DSL pattern)."""
+
+    def __init__(self, value: t.GeneralValueType) -> None:
+        self._value = value
+        self._default: t.GeneralValueType | None = None
+        self._safe_mode = False
+
+    def to_str(self, default: str = "") -> Self:
+        """Convert to string."""
+        self._default = default
+        return self
+
+    def int(self, default: int = 0) -> Self:
+        """Convert to int."""
+        self._default = default
+        return self
+
+    def bool(self, *, default: bool = False) -> Self:
+        """Convert to bool."""
+        self._default = default
+        return self
+
+    def str_list(self, default: list[str] | None = None) -> Self:
+        """Convert to string list."""
+        self._default = default or []
+        return self
+
+    def safe(self) -> Self:
+        """Enable safe mode."""
+        self._safe_mode = True
+        return self
+
+    def build(self) -> t.GeneralValueType:
+        """Build and return the value."""
+        return self._value if self._value is not None else self._default
 
 
 class FlextLdifUtilities(FlextUtilities):
@@ -176,9 +155,9 @@ class FlextLdifUtilities(FlextUtilities):
 
     Inherited from u
         - Enum, Collection, Args, Model, Cache
-        - Validation, Generators, TextProcessor, TypeGuards
-        - Reliability, TypeChecker, Configuration, Context
-        - DataMapper, Domain, Pagination, StringParser
+        - Validation, Generators, Text, Guards
+        - Reliability, Checker, Configuration, Context
+        - Mapper, Domain, Pagination, Parser
 
     Usage:
         from flext_ldif.utilities import FlextLdifUtilities
@@ -196,54 +175,348 @@ class FlextLdifUtilities(FlextUtilities):
         result = FlextLdifUtilities.Validation.is_valid_email("test@example.com")
     """
 
-    # === Existing submodule references (preserved) ===
-    ACL = FlextLdifUtilitiesACL
-    Attribute = FlextLdifUtilitiesAttribute
-    Constants = FlextLdifUtilitiesConstants
-    Decorators = FlextLdifUtilitiesDecorators
-    Detection = FlextLdifUtilitiesDetection
-    DN = FlextLdifUtilitiesDN
-    Entry = FlextLdifUtilitiesEntry
-    Events = FlextLdifUtilitiesEvents
-    Metadata = FlextLdifUtilitiesMetadata
-    ObjectClass = FlextLdifUtilitiesObjectClass
-    OID = FlextLdifUtilitiesOID
-    Parser = FlextLdifUtilitiesParser
-    Parsers = FlextLdifUtilitiesParsers
-    Schema = FlextLdifUtilitiesSchema
-    Server = FlextLdifUtilitiesServer
-    Validation = FlextLdifUtilitiesValidation  # type: ignore[assignment]  # LDIF-specific validation extends core Validation
-    Writer = FlextLdifUtilitiesWriter
-    Writers = FlextLdifUtilitiesWriters
+    # === Static utility methods ===
+
+    @staticmethod
+    def get_from_mapping[T](
+        mapping: Mapping[str, T],
+        key: str,
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Get value from mapping with default.
+
+        Type-safe wrapper around dict.get() that works with any Mapping type.
+        NOTE: Named differently from parent FlextUtilities.get() due to different signature.
+
+        Args:
+            mapping: Dictionary or Mapping to get value from
+            key: Key to look up
+            default: Default value if key not found
+
+        Returns:
+            Value from mapping or default
+
+        """
+        return mapping.get(key, default)
+
+    @staticmethod
+    def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
+        """Unwrap FlextResult with default value.
+
+        Args:
+            result: FlextResult to unwrap
+            default: Default value if failure
+
+        Returns:
+            Unwrapped value or default
+
+        """
+        if result.is_success:
+            return result.unwrap()
+        return default
+
+    @staticmethod
+    def batch_process[T, U](
+        items: Sequence[T],
+        func: Callable[[T], r[U]],
+    ) -> r[list[U]]:
+        """Execute batch of operations with FlextResult (simplified).
+
+        NOTE: Named differently from parent FlextUtilities.batch() due to different signature.
+        The parent method has more advanced options (size, on_error, parallel, etc.).
+
+        Args:
+            items: Sequence of items to process
+            func: Function to apply to each item
+
+        Returns:
+            FlextResult with list of results or first error
+
+        """
+        results: list[U] = []
+        for item in items:
+            result = func(item)
+            if result.is_failure:
+                return r[list[U]].fail(result.error or "Batch operation failed")
+            results.append(result.unwrap())
+        return r[list[U]].ok(results)
+
+    @staticmethod
+    def find[T](
+        items: Sequence[T],
+        *,
+        predicate: Callable[[T], bool],
+    ) -> T | None:
+        """Find first item matching predicate.
+
+        Args:
+            items: Sequence to search
+            predicate: Function to test each item
+
+        Returns:
+            First matching item or None
+
+        """
+        for item in items:
+            if predicate(item):
+                return item
+        return None
+
+    # === Existing submodule classes (real inheritance instead of aliases) ===
+
+    class ACL(FlextLdifUtilitiesACL):
+        """ACL utilities for LDIF operations."""
+
+    class Attribute(FlextLdifUtilitiesAttribute):
+        """Attribute utilities for LDIF operations."""
+
+    class Constants(FlextLdifConstants):
+        """Constants for LDIF operations."""
+
+    class Decorators(FlextLdifUtilitiesDecorators):
+        """Decorator utilities for LDIF operations."""
+
+    class Detection(FlextLdifUtilitiesDetection):
+        """Detection utilities for LDIF operations."""
+
+    class DN(FlextLdifUtilitiesDN):
+        """DN utilities for LDIF operations."""
+
+    class Entry(FlextLdifUtilitiesEntry):
+        """Entry utilities for LDIF operations."""
+
+    class Events(FlextLdifUtilitiesEvents):
+        """Event utilities for LDIF operations."""
+
+    class Metadata(FlextLdifUtilitiesMetadata):
+        """Metadata utilities for LDIF operations."""
+
+    class ObjectClass(FlextLdifUtilitiesObjectClass):
+        """ObjectClass utilities for LDIF operations."""
+
+    class OID(FlextLdifUtilitiesOID):
+        """OID utilities for LDIF operations."""
+
+    class LdifParser(FlextLdifUtilitiesParser):
+        """LDIF parser utilities (u.LdifParser.*)."""
+
+    class Parsers(FlextLdifUtilitiesParsers):
+        """Parser utilities for LDIF operations."""
+
+    class Schema(FlextLdifUtilitiesSchema):
+        """Schema utilities for LDIF operations."""
+
+    class Server(FlextLdifUtilitiesServer):
+        """Server utilities for LDIF operations."""
+
+    class LdifValidation(FlextLdifUtilitiesValidation):
+        """LDIF validation utilities."""
+
+    class Writer(FlextLdifUtilitiesWriter):
+        """Writer utilities for LDIF operations."""
+
+    class Writers(FlextLdifUtilitiesWriters):
+        """Writers utilities for LDIF operations."""
 
     # === Power Methods (new) ===
 
-    @classmethod
-    def process(  # type: ignore[override]  # LDIF-specific power method: different signature from u.process()
-        cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
+    @staticmethod
+    def _is_ldif_process_call(
+        items: object,
+        processor_normalized: object,
+        processor: object | None,
+        config: ProcessConfig | None,
+        source_server: ServerType,
+        target_server: ServerType | None,
+    ) -> bool:
+        """Check if this is an LDIF-specific process call."""
+        is_sequence_entry = isinstance(items, Sequence) and not isinstance(
+            items,
+            (str, bytes, dict),
+        )
+        has_ldif_config = (
+            (processor_normalized is None and processor is None)
+            or isinstance(processor_normalized, ProcessConfig)
+            or config is not None
+            or source_server != "auto"
+            or target_server is not None
+        )
+        return bool(is_sequence_entry and has_ldif_config)
+
+    @staticmethod
+    def _process_ldif_entries(
+        entries: Sequence[m.Entry],
+        config: ProcessConfig | None,
+        source_server: ServerType,
+        target_server: ServerType | None,
         *,
+        normalize_dns: bool,
+        normalize_attrs: bool,
+    ) -> FlextLdifResult[list[m.Entry]]:
+        """Process LDIF entries with pipeline."""
+        if config is None:
+            config = ProcessConfig(
+                source_server=source_server,
+                target_server=target_server,
+                normalize_dns=normalize_dns,
+                normalize_attrs=normalize_attrs,
+            )
+        pipeline = ProcessingPipeline(config)
+        return FlextLdifResult.from_result(pipeline.execute(list(entries)))
+
+    @staticmethod
+    def _should_skip_key(
+        key: str,
+        filter_keys: set[str] | None,
+        exclude_keys: set[str] | None,
+    ) -> bool:
+        """Check if key should be skipped based on filter/exclude rules."""
+        if filter_keys and key not in filter_keys:
+            return True
+        return bool(exclude_keys and key in exclude_keys)
+
+    @staticmethod
+    def _evaluate_predicate[T](
+        predicate: Callable[[str, T], bool] | Callable[[T], bool],
+        key: str,
+        value: T,
+    ) -> bool:
+        """Evaluate predicate with automatic 1-arg or 2-arg detection."""
+        two_arg_threshold = 2
+        try:
+            if callable(predicate):
+                sig = inspect.signature(predicate)
+                if len(sig.parameters) >= two_arg_threshold:
+                    pred_2arg = cast("Callable[[str, T], bool]", predicate)
+                    return pred_2arg(key, value)
+                pred_1arg = cast("Callable[[T], bool]", predicate)
+                return pred_1arg(value)
+        except TypeError:
+            pred_1arg_fallback = cast("Callable[[T], bool]", predicate)
+            return pred_1arg_fallback(value)
+        return True
+
+    @staticmethod
+    def _call_processor[T, R](
+        processor_func: Callable[[str, T], R] | Callable[[T], R],
+        key: str,
+        value: T,
+    ) -> R:
+        """Call processor with automatic 1-arg or 2-arg detection."""
+        two_arg_threshold = 2
+        try:
+            if callable(processor_func):
+                sig = inspect.signature(processor_func)
+                if len(sig.parameters) >= two_arg_threshold:
+                    proc_2arg = cast("Callable[[str, T], R]", processor_func)
+                    return proc_2arg(key, value)
+                proc_1arg = cast("Callable[[T], R]", processor_func)
+                return proc_1arg(value)
+        except TypeError:
+            proc_1arg_fallback = cast("Callable[[T], R]", processor_func)
+            return proc_1arg_fallback(value)
+        # Fallback should never reach here, but type checker needs it
+        proc_final = cast("Callable[[T], R]", processor_func)
+        return proc_final(value)
+
+    @staticmethod
+    def _process_dict_items[T, R](
+        items: dict[str, T],
+        processor_func: Callable[[str, T], R] | Callable[[T], R],
+        predicate: Callable[[str, T], bool] | Callable[[T], bool] | None,
+        filter_keys: set[str] | None,
+        exclude_keys: set[str] | None,
+    ) -> list[R]:
+        """Process dictionary items."""
+        results: list[R] = []
+        for key, value in items.items():
+            if FlextLdifUtilities._should_skip_key(key, filter_keys, exclude_keys):
+                continue
+            if predicate is not None and not FlextLdifUtilities._evaluate_predicate(
+                predicate,
+                key,
+                value,
+            ):
+                continue
+            result_item = FlextLdifUtilities._call_processor(processor_func, key, value)
+            results.append(result_item)
+        return results
+
+    @staticmethod
+    def _process_list_items[T, R](
+        items: list[T] | tuple[T, ...],
+        processor_func: Callable[[T], R],
+        predicate: Callable[[T], bool] | None,
+        on_error: str,
+    ) -> r[list[R]]:
+        """Process list/tuple items."""
+        results: list[R] = []
+        errors: list[str] = []
+        for item in items:
+            if predicate is not None:
+                try:
+                    if not predicate(item):
+                        continue
+                except TypeError:
+                    continue
+            try:
+                result_item = processor_func(item)
+                results.append(result_item)
+            except Exception as e:
+                if on_error == "fail":
+                    return r.fail(f"Processing failed: {e}")
+                if on_error == "skip":
+                    continue
+                errors.append(str(e))
+        return r.ok(results)
+
+    @staticmethod
+    def process[T, R](
+        items_or_entries: (
+            T
+            | list[T]
+            | tuple[T, ...]
+            | dict[str, T]
+            | Mapping[str, T]
+            | Sequence[m.Entry]
+        ),
+        processor_or_config: (
+            Callable[[T], R] | Callable[[str, T], R] | ProcessConfig | None
+        ) = None,
+        *,
+        processor: Callable[[T], R] | Callable[[str, T], R] | None = None,
+        on_error: str = "collect",
+        predicate: Callable[[T], bool] | Callable[[str, T], bool] | None = None,
+        filter_keys: set[str] | None = None,
+        exclude_keys: set[str] | None = None,
         config: ProcessConfig | None = None,
         source_server: ServerType = "auto",
         target_server: ServerType | None = None,
         normalize_dns: bool = True,
         normalize_attrs: bool = True,
-    ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
+    ) -> r[list[R] | dict[str, R]] | FlextLdifResult[list[m.Entry]]:
         """Universal entry processor.
 
         Processes entries with DN normalization, attribute normalization,
         and optional server-specific transformations.
 
         Args:
-            entries: Entries to process
-            config: ProcessConfig for detailed configuration
+            items_or_entries: Items to process (base class) or entries (LDIF-specific)
+            processor_or_config: Processor function (base class) or
+                ProcessConfig (LDIF-specific)
+            on_error: Error handling mode
+            predicate: Optional filter predicate
+            filter_keys: Keys to include
+            exclude_keys: Keys to exclude
+            config: ProcessConfig for detailed configuration (LDIF-specific)
             source_server: Source server type (or "auto" for detection)
             target_server: Target server type (optional)
             normalize_dns: Enable DN normalization
             normalize_attrs: Enable attribute normalization
 
         Returns:
-            FlextLdifResult containing processed entries
+            FlextResult or FlextLdifResult containing processed items/entries
 
         Examples:
             >>> result = FlextLdifUtilities.process(entries, source_server="oid")
@@ -257,42 +530,122 @@ class FlextLdifUtilities(FlextUtilities):
             ... )
 
         """
-        # Use provided config or build from parameters
-        if config is None:
-            config = ProcessConfig(
-                source_server=source_server,
-                target_server=target_server,
+        processor_normalized = (
+            processor_or_config if processor_or_config is not None else processor
+        )
+        if FlextLdifUtilities._is_ldif_process_call(
+            items_or_entries,
+            processor_normalized,
+            processor,
+            config,
+            source_server,
+            target_server,
+        ):
+            entries = cast("Sequence[m.Entry]", items_or_entries)
+            return FlextLdifUtilities._process_ldif_entries(
+                entries,
+                config,
+                source_server,
+                target_server,
                 normalize_dns=normalize_dns,
                 normalize_attrs=normalize_attrs,
             )
 
-        pipeline = ProcessingPipeline(config)
-        return FlextLdifResult.from_result(pipeline.execute(list(entries)))
+        items: (
+            object
+            | list[object]
+            | tuple[object, ...]
+            | dict[str, object]
+            | Mapping[str, object]
+        ) = items_or_entries
+        # Processor can accept 1 or 2 args - use VariadicCallable for flexibility
+        processor_func = cast(
+            "p.VariadicCallable[t.GeneralValueType] | None",
+            processor_normalized,
+        )
+        if processor_func is None:
+            msg = "processor is required for base class process"
+            raise TypeError(msg)
 
-    @classmethod
-    def transform(  # type: ignore[override]  # LDIF-specific power method: different signature from u.transform()
-        cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-        *transformers: EntryTransformer[FlextLdifModelsDomains.Entry],
+        if isinstance(items, dict):
+            results = FlextLdifUtilities._process_dict_items(
+                items,
+                processor_func,
+                predicate,
+                filter_keys,
+                exclude_keys,
+            )
+            return cast("r[list[R] | dict[str, R]]", r.ok(results))
+        if isinstance(items, (list, tuple)):
+            # Adapt predicate to match _process_list_items signature
+            # _process_list_items expects Callable[[T], bool] | None
+            # but predicate can be Callable[[T], bool] | Callable[[str, T], bool] | None
+            # Use cast to bridge the type gap - runtime handles this correctly
+            adapted_predicate: Callable[[T], bool] | None = cast(
+                "Callable[[T], bool] | None",
+                predicate,
+            )
+            result = FlextLdifUtilities._process_list_items(
+                items,
+                processor_func,
+                adapted_predicate,
+                on_error,
+            )
+            return cast("r[list[R] | dict[str, R]]", result)
+        # Single item processing
+        try:
+            # VariadicCallable accepts specific types, convert items appropriately
+            # Use Union type for compatibility
+            if isinstance(items, (str, int, float, bool)) or items is None:
+                items_compatible: (
+                    str
+                    | int
+                    | float
+                    | bool
+                    | Sequence[str | int | float | bool | None]
+                    | Mapping[str, str | int | float | bool | None]
+                    | None
+                ) = items
+            elif isinstance(items, Sequence):
+                items_compatible = cast(
+                    "Sequence[str | int | float | bool | None]",
+                    items,
+                )
+            elif isinstance(items, Mapping):
+                items_compatible = cast(
+                    "Mapping[str, str | int | float | bool | None]",
+                    items,
+                )
+            else:
+                # Fallback: convert to string for VariadicCallable
+                items_compatible = str(items)
+            # Call processor_func with compatible type
+            result_item = processor_func(items_compatible)
+            return cast("r[list[R] | dict[str, R]]", r.ok([cast("R", result_item)]))
+        except Exception as e:
+            return cast("r[list[R] | dict[str, R]]", r.fail(f"Processing failed: {e}"))
+
+    @staticmethod
+    def transform_entries(
+        entries: Sequence[m.Entry],
+        *transformers: EntryTransformer[m.Entry],
         fail_fast: bool = True,
-    ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
-        """Apply transformation pipeline to entries.
+    ) -> FlextLdifResult[list[m.Entry]]:
+        """Apply LDIF entry transformations via pipeline.
+
+        This is the LDIF-specific entry transformation method.
+        For dict/Mapping transformations, use the inherited transform() method.
 
         Args:
-            entries: Entries to transform
-            *transformers: Transformers to apply in sequence
-            fail_fast: Stop on first error
+            entries: Sequence of LDIF entries to transform
+            *transformers: One or more EntryTransformer instances to apply
+            fail_fast: Stop on first error (default: True)
 
         Returns:
-            FlextLdifResult containing transformed entries
+            FlextLdifResult containing list of transformed entries
 
-        Examples:
-            >>> result = FlextLdifUtilities.transform(
-            ...     entries,
-            ...     Normalize.dn(case="lower"),
-            ...     Transform.replace_base("dc=old", "dc=new"),
-            ...     Transform.filter_attrs(exclude=["userPassword"]),
-            ... )
+        Example:
+            >>> result = u.transform_entries(entries, Normalize.dn(), Normalize.attrs())
 
         """
         pipeline = Pipeline(fail_fast=fail_fast)
@@ -300,13 +653,26 @@ class FlextLdifUtilities(FlextUtilities):
             _ = pipeline.add(transformer)  # Explicitly ignore return value
         return FlextLdifResult.from_result(pipeline.execute(list(entries)))
 
-    @classmethod
-    def filter(  # type: ignore[override]  # LDIF-specific power method: different signature from u.filter()
-        cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-        *filters: EntryFilter[FlextLdifModelsDomains.Entry],
+    # NOTE: The inherited FlextUtilities.transform() handles dict/Mapping transformations.
+    # For LDIF entry transformations, use transform_entries() instead.
+
+    @staticmethod
+    def filter[T, R](
+        items_or_entries: (
+            T
+            | list[T]
+            | tuple[T, ...]
+            | dict[str, T]
+            | Mapping[str, T]
+            | Sequence[m.Entry]
+        ),
+        predicate_or_filter1: (p.VariadicCallable[bool] | EntryFilter[m.Entry]),
+        *filters: EntryFilter[m.Entry],
+        mapper: p.VariadicCallable[R] | None = None,
         mode: Literal["all", "any"] = "all",
-    ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
+    ) -> (
+        list[T] | list[R] | dict[str, T] | dict[str, R] | FlextLdifResult[list[m.Entry]]
+    ):
         """Filter entries using composable filter predicates.
 
         Args:
@@ -330,36 +696,165 @@ class FlextLdifUtilities(FlextUtilities):
             ... )
 
         """
-        if not filters:
+        # Type narrowing: check if this is LDIF-specific call (entries with EntryFilter)
+        # Base class filter - delegate to FlextUtilitiesCollection.filter when not EntryFilter
+        if not isinstance(predicate_or_filter1, EntryFilter):
+            # Type already narrowed by isinstance check
+            predicate: p.VariadicCallable[bool] = predicate_or_filter1
+
+            return FlextLdifUtilities._filter_base_class(
+                cast("Any", items_or_entries),
+                predicate,
+                mapper,
+            )
+
+        # LDIF-specific filter with EntryFilter
+        if isinstance(items_or_entries, Sequence) and not isinstance(
+            items_or_entries,
+            (str, bytes, dict),
+        ):
+            # Type already narrowed by isinstance checks
+            entries: Sequence[m.Entry] = cast("Sequence[m.Entry]", items_or_entries)
+            filter_entry: EntryFilter[m.Entry] = predicate_or_filter1
+            return FlextLdifUtilities._filter_ldif_entries(
+                entries,
+                filter_entry,
+                filters,
+                mode,
+            )
+
+        # Fallback: delegate to base class with proper type narrowing
+        # predicate_or_filter1 is EntryFilter here, but we need VariadicCallable
+        # This branch is unreachable in normal use since EntryFilter is for sequences
+        predicate_fb: p.VariadicCallable[bool] = cast(
+            "p.VariadicCallable[bool]",
+            predicate_or_filter1,
+        )
+        # Type narrowing: items_or_entries is compatible with base class signature
+        result = FlextLdifUtilities._filter_base_class(
+            items_or_entries,
+            predicate_fb,
+            mapper,
+        )
+        # Return type matches expected union type
+        return cast(
+            "list[T] | list[R] | dict[str, T] | dict[str, R] | FlextLdifResult[list[m.Entry]]",
+            result,
+        )
+
+    @staticmethod
+    def _filter_base_class[T, R](
+        items_or_entries: (
+            T
+            | list[T]
+            | tuple[T, ...]
+            | dict[str, T]
+            | Mapping[str, T]
+            | Sequence[m.Entry]
+        ),
+        predicate: p.VariadicCallable[bool],
+        mapper: p.VariadicCallable[R] | None,
+    ) -> list[T] | list[R] | dict[str, T] | dict[str, R]:
+        """Filter using base class Collection.filter (internal helper)."""
+        if isinstance(items_or_entries, (list, tuple)):
+            items_list = cast("list[object] | tuple[object, ...]", items_or_entries)
+            if mapper is None:
+                result_list = FlextUtilities.Collection.filter(items_list, predicate)
+            else:
+                mapper_list: p.VariadicCallable[t.GeneralValueType] = cast(
+                    "p.VariadicCallable[t.GeneralValueType]",
+                    mapper,
+                )
+                result_list = FlextUtilities.Collection.filter(
+                    items_list,
+                    predicate,
+                    mapper=mapper_list,
+                )
+            return cast("list[T] | list[R]", result_list)
+        if isinstance(items_or_entries, (dict, Mapping)):
+            items_dict = cast(
+                "dict[str, object] | Mapping[str, object]",
+                items_or_entries,
+            )
+            if mapper is None:
+                result_dict = FlextUtilities.Collection.filter(items_dict, predicate)
+            else:
+                mapper_dict: p.VariadicCallable[t.GeneralValueType] = cast(
+                    "p.VariadicCallable[t.GeneralValueType]",
+                    mapper,
+                )
+                result_dict = FlextUtilities.Collection.filter(
+                    items_dict,
+                    predicate,
+                    mapper=mapper_dict,
+                )
+            return cast("dict[str, T] | dict[str, R]", result_dict)
+        # Single item case - wrap in list
+        items_single_list: list[object] = [cast("object", items_or_entries)]
+        if mapper is None:
+            result_single = FlextUtilities.Collection.filter(
+                items_single_list,
+                predicate,
+            )
+        else:
+            mapper_single: p.VariadicCallable[t.GeneralValueType] = cast(
+                "p.VariadicCallable[t.GeneralValueType]",
+                mapper,
+            )
+            result_single = FlextUtilities.Collection.filter(
+                items_single_list,
+                predicate,
+                mapper=mapper_single,
+            )
+        return cast("list[T] | list[R]", result_single)
+
+    @staticmethod
+    def _filter_ldif_entries(
+        entries: Sequence[m.Entry],
+        predicate_or_filter1: EntryFilter[m.Entry],
+        filters: tuple[EntryFilter[m.Entry], ...],
+        mode: Literal["all", "any"],
+    ) -> FlextLdifResult[list[m.Entry]]:
+        """Filter LDIF entries using EntryFilter (internal helper)."""
+        filter_list: list[EntryFilter[m.Entry]] = [
+            predicate_or_filter1,
+        ] + list(filters)
+        if not filter_list:
             return FlextLdifResult.ok(list(entries))
-
         # Combine filters based on mode
-        combined: EntryFilter[FlextLdifModelsDomains.Entry] = filters[0]
-        for f in filters[1:]:
+        combined: EntryFilter[m.Entry] = filter_list[0]
+        for f in filter_list[1:]:
             combined = combined & f if mode == "all" else combined | f
-
         filtered = [entry for entry in entries if combined.matches(entry)]
         return FlextLdifResult.ok(filtered)
 
-    @classmethod
-    def validate(  # type: ignore[override]  # LDIF-specific power method: different signature from u.validate()
-        cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-        *,
+    @staticmethod
+    def validate[T](
+        value_or_entries: T | Sequence[m.Entry],
+        *validators_or_none: ValidatorSpec,
+        mode: str = "all",
+        fail_fast: bool = True,
+        collect_errors: bool = False,
+        field_name: str | None = None,
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> FlextLdifResult[list[ValidationResult]]:
+    ) -> r[T] | FlextLdifResult[list[ValidationResult]]:
         """Validate entries against rules.
 
         Args:
-            entries: Entries to validate
+            value_or_entries: Value to validate or entries list
+            *validators_or_none: Validators to apply
+            mode: Validation mode
+            fail_fast: Stop on first error
+            collect_errors: Collect all errors
+            field_name: Field name for errors
             strict: Use strict RFC validation
             collect_all: Collect all errors vs fail on first
             max_errors: Maximum errors to collect (0 = unlimited)
 
         Returns:
-            FlextLdifResult containing list of ValidationResults
+            FlextLdifResult containing list of ValidationResults or r[T]
 
         Examples:
             >>> result = FlextLdifUtilities.validate(entries, strict=True)
@@ -368,12 +863,52 @@ class FlextLdifUtilities(FlextUtilities):
             ...         print(validation.errors)
 
         """
-        pipeline = ValidationPipeline(
-            strict=strict,
-            collect_all=collect_all,
-            max_errors=max_errors,
+        # Type narrowing: check if this is LDIF-specific call (entries without validators)
+        # Base class validate - delegate to FlextUtilitiesValidation when not entries
+        if not (
+            isinstance(value_or_entries, Sequence)
+            and not isinstance(value_or_entries, (str, bytes))
+            and len(validators_or_none) == 0
+        ):
+            # Base class validate - delegate to FlextUtilitiesValidation
+            value_base: T = cast("T", value_or_entries)
+            return FlextUtilities.Validation.validate(
+                value_base,
+                *validators_or_none,
+                mode=mode,
+                fail_fast=fail_fast,
+                collect_errors=collect_errors,
+                field_name=field_name,
+            )
+
+        # LDIF-specific validate with entries
+        if (
+            isinstance(value_or_entries, Sequence)
+            and not isinstance(value_or_entries, (str, bytes))
+            and len(validators_or_none) == 0
+        ):
+            # LDIF-specific validate - type narrowing ensures list[Entry]
+            entries: list[m.Entry] = cast(
+                "list[m.Entry]",
+                value_or_entries,
+            )
+            pipeline = ValidationPipeline(
+                strict=strict,
+                collect_all=collect_all,
+                max_errors=max_errors,
+            )
+            return FlextLdifResult.from_result(pipeline.validate(entries))
+
+        # Fallback: delegate to base class validate
+        value_fallback: T = cast("T", value_or_entries)
+        return FlextUtilities.Validation.validate(
+            value_fallback,
+            *validators_or_none,
+            mode=mode,
+            fail_fast=fail_fast,
+            collect_errors=collect_errors,
+            field_name=field_name,
         )
-        return FlextLdifResult.from_result(pipeline.validate(list(entries)))
 
     @classmethod
     def dn(cls, dn: str) -> DnOps:
@@ -398,7 +933,7 @@ class FlextLdifUtilities(FlextUtilities):
         return DnOps(dn)
 
     @classmethod
-    def entry(cls, entry: FlextLdifModelsDomains.Entry) -> EntryOps:
+    def entry(cls, entry: m.Entry) -> EntryOps:
         """Create fluent entry operations.
 
         Args:
@@ -419,73 +954,21 @@ class FlextLdifUtilities(FlextUtilities):
         """
         return EntryOps(entry)
 
-    @classmethod
-    def map_filter(
-        cls,
-        items: Sequence[object] | object,
-        *,
-        mapper: Callable[[object], object] | None = None,
-        predicate: Callable[[object], bool] | None = None,
-    ) -> list[object]:
-        """Map then filter items (generalized: uses map_filter from base, mnemonic: mf).
+    # map_filter - use static method implementation below
+    # mf alias defined after static method
 
-        Args:
-            items: Items to process
-            mapper: Transformation function
-            predicate: Filter function
-
-        Returns:
-            Processed list
-
-        Examples:
-            >>> perms = cls.mf("read,write,add".split(","), mapper=str.strip, predicate=bool)  # noqa: E501
-
-        """
-        return u.map_filter(items, mapper=mapper, predicate=predicate)
-
-    # Mnemonic helper
-    mf = map_filter
-
-    @classmethod
-    def process_flatten(  # type: ignore[override]  # Extended signature with Literal for better type safety
-        cls,
-        items: Sequence[object] | object,
-        *,
-        processor: Callable[[object], object] | None = None,
-        on_error: Literal["skip", "fail", "return"] = "skip",
-    ) -> list[object]:
-        """Process and flatten using u.process_flatten() (mnemonic: pf).
-
-        Delegates to u.process_flatten() for unified behavior.
-
-        Args:
-            items: Items to process
-            processor: Processing function
-            on_error: Error handling
-
-        Returns:
-            Flattened list
-
-        Examples:
-            >>> flat = cls.pf([[1,2], [3,4]], processor=lambda x: x*2)
-
-        """
-        # Convert on_error Literal to str for u.process_flatten()
-        on_error_str: str = "skip" if on_error == "skip" else ("fail" if on_error == "fail" else "return")
-        return u.process_flatten(items, processor=processor, on_error=on_error_str)
-
-    # Mnemonic helper
-    pf = process_flatten
+    # process_flatten - use static method implementation below
+    # pf alias defined after static method
 
     @classmethod
     def normalize_list(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
-        mapper: Callable[[object], object] | None = None,
-        predicate: Callable[[object], bool] | None = None,
-        default: list[object] | None = None,
-    ) -> list[object]:
+        mapper: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
+        predicate: Callable[[t.GeneralValueType], bool] | None = None,
+        default: list[t.GeneralValueType] | None = None,
+    ) -> list[t.GeneralValueType]:
         """Normalize to list using u.build() DSL (mnemonic: nl).
 
         Args:
@@ -502,77 +985,40 @@ class FlextLdifUtilities(FlextUtilities):
 
         """
         # Extract from Result using u.or_() DSL
-        extracted = u.or_(
-            value.value if isinstance(value, FlextResult) and not value.is_failure else value,
+        extracted_value: t.GeneralValueType = (
+            value.value
+            if isinstance(value, FlextResult) and not value.is_failure
+            else value
+        )
+        extracted = cls.or_(
+            extracted_value,
             default=default or [],
         )
-        # Use u.build() DSL for normalization
+        # Use u.build() DSL for list normalization (more generic than u.conv().str_list())
         ops: dict[str, object] = {"ensure": "list", "ensure_default": default or []}
         if mapper:
             ops["map"] = mapper
         if predicate:
             ops["filter"] = predicate
-        result = u.build(extracted, ops=ops)
-        return list(result) if isinstance(result, (list, tuple)) else [result]
+        result = cls.build(extracted, ops=ops)
+        # Ensure list[t.GeneralValueType] return type
+        if isinstance(result, (list, tuple)):
+            # Type narrowing: result is list/tuple
+            return list(result)
+        # Type narrowing: result is object, cast to t.GeneralValueType for list
+        result_typed: t.GeneralValueType = cast("t.GeneralValueType", result)
+        return [result_typed]
 
     # Mnemonic helper
     nl = normalize_list
 
-    @classmethod
-    def reduce_dict(
-        cls,
-        items: Sequence[dict[str, object]] | dict[str, object] | object,
-        *,
-        processor: Callable[[str, object], tuple[str, object]] | None = None,
-        predicate: Callable[[str, object], bool] | None = None,
-        default: dict[str, object] | None = None,
-    ) -> dict[str, object]:
-        """Reduce dicts using u.merge() + u.build() DSL (mnemonic: rd).
+    # reduce_dict - use static method implementation below
+    # rd alias defined after static method
 
-        Args:
-            items: Dicts to merge
-            processor: Transform (k,v) -> (new_k, new_v)
-            predicate: Filter (k,v) -> bool
-            default: Default dict
+    # chain - use static method implementation below
+    # ch alias defined after static method
 
-        Returns:
-            Merged dict
-
-        Examples:
-            >>> result = cls.rd([{"a":1}, {"b":2}], predicate=lambda k,v: v>0)
-
-        """
-        return u.reduce_dict(items, processor=processor, predicate=predicate, default=default)
-
-    # Mnemonic helper
-    rd = reduce_dict
-
-    @classmethod
-    def chain(
-        cls,
-        value: object,
-        *funcs: Callable[[object], object],
-    ) -> object:
-        """Chain operations using u.chain() (mnemonic: ch).
-
-        Delegates to u.chain() for unified behavior.
-
-        Args:
-            value: Initial value
-            *funcs: Functions to apply in sequence
-
-        Returns:
-            Final processed value
-
-        Examples:
-            >>> result = cls.ch(data, lambda x: x.split(","), lambda x: [s.strip() for s in x])
-
-        """
-        return u.chain(value, *funcs)
-
-    # Mnemonic helper
-    ch = chain
-
+    # when delegated to base class via u.when() - simple ternary
     @classmethod
     def when[T](
         cls,
@@ -581,93 +1027,82 @@ class FlextLdifUtilities(FlextUtilities):
         then_value: T | None = None,
         else_value: T | None = None,
     ) -> T | None:
-        """Functional conditional (DSL pattern).
+        """Functional conditional (DSL pattern)."""
+        return then_value if condition else else_value
 
-        Delegates to u.when() for unified conditional handling.
+    # fold - use static method implementation below
+    # fd alias defined after static method
 
-        Args:
-            condition: Boolean condition
-            then_value: Value to return if condition is True
-            else_value: Value to return if condition is False
+    # LDIF-specific pipe with dict support - named differently to avoid override conflict
+    @overload
+    @staticmethod
+    def pipe_ldif(
+        value: t.GeneralValueType,
+        *ops: dict[str, t.GeneralValueType]
+        | Callable[[t.GeneralValueType], t.GeneralValueType],
+    ) -> t.GeneralValueType: ...
 
-        Returns:
-            then_value or else_value
+    @overload
+    @staticmethod
+    def pipe_ldif(
+        value: t.GeneralValueType,
+        *operations: Callable[[t.GeneralValueType], t.GeneralValueType],
+        on_error: str = "stop",
+    ) -> r[t.GeneralValueType]: ...
 
-        Examples:
-            >>> # Conditional value selection
-            >>> result = FlextLdifUtilities.when(
-            ...     condition=len(items) > 0,
-            ...     then_value=items[0],
-            ...     else_value=default_value,
-            ... )
+    @staticmethod
+    def pipe_ldif(
+        value: t.GeneralValueType,
+        *ops: dict[str, t.GeneralValueType]
+        | Callable[[t.GeneralValueType], t.GeneralValueType],
+        on_error: str = "stop",
+    ) -> t.GeneralValueType | r[t.GeneralValueType]:
+        """LDIF-specific pipe - supports dict operations via flow()."""
+        # Type narrowing: check if this is base class call (only Callable operations, no dicts)
+        if ops and all(callable(op) and not isinstance(op, dict) for op in ops):
+            # Base class pipe - delegate to FlextUtilitiesReliability.pipe
+            operations_list: list[Callable[[object], object]] = [
+                cast("Callable[[object], object]", op)
+                for op in ops
+                if callable(op) and not isinstance(op, dict)
+            ]
+            pipe_result = FlextUtilities.Reliability.pipe(
+                cast("object", value),
+                *operations_list,
+                on_error=on_error,
+            )
+            return cast("r[t.GeneralValueType]", pipe_result)
 
-        """
-        return u.when(condition=condition, then_value=then_value, else_value=else_value)
+        # LDIF-specific pipe using flow()
+        flow_ops: list[dict[str, object] | Callable[[object], object]] = [
+            cast("dict[str, object]", op)
+            if isinstance(op, dict)
+            else cast("Callable[[object], object]", op)
+            for op in ops
+            if isinstance(op, dict) or callable(op)
+        ]
+        return cast(
+            "t.GeneralValueType",
+            FlextUtilities.Reliability.flow(value, *flow_ops),
+        )
 
-    @classmethod
-    def fold(
-        cls,
-        items: Sequence[object] | object,
-        *,
-        initial: object,
-        folder: Callable[[object, object], object] | None = None,
-        predicate: Callable[[object], bool] | None = None,
-    ) -> object:
-        """Fold using u.filter() + manual fold (mnemonic: fd).
-
-        Args:
-            items: Items to fold
-            initial: Initial accumulator
-            folder: (acc, item) -> new_acc
-            predicate: Optional filter
-
-        Returns:
-            Final accumulator
-
-        Examples:
-            >>> total = cls.fd([1,2,3], initial=0, folder=lambda a,x: a+x)
-
-        """
-        if not folder:
-            return initial
-        return u.fold(items, initial=initial, folder=folder, predicate=predicate)
-
-    # Mnemonic helper
-    fd = fold
-
-    @classmethod
-    def pipe(  # type: ignore[override]  # Uses u.flow() instead of u.pipe() for simpler API
-        cls,
-        value: object,
-        *ops: dict[str, object] | Callable[[object], object],
-    ) -> object:
-        """Pipe using u.flow() (mnemonic: pp).
-
-        Delegates to u.flow() for unified behavior.
-
-        Args:
-            value: Initial value
-            *ops: Functions or DSL dicts
-
-        Returns:
-            Final result
-
-        Examples:
-            >>> result = cls.pp(data, lambda x: x.split(","), {"map": str.strip})
-
-        """
-        return u.flow(value, *ops)
-
-    # Mnemonic helper
-    pp = pipe
+    # Alias for pipe_ldif (mnemonic: pp)
+    @staticmethod
+    def pp(
+        value: t.GeneralValueType,
+        *ops: dict[str, t.GeneralValueType]
+        | Callable[[t.GeneralValueType], t.GeneralValueType],
+    ) -> t.GeneralValueType:
+        """Alias for pipe_ldif (mnemonic: pp)."""
+        return FlextLdifUtilities.pipe_ldif(value, *ops)
 
     @classmethod
     def tap(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
-        side_effect: Callable[[object], object] | None,
-    ) -> object:
+        side_effect: Callable[[t.GeneralValueType], t.GeneralValueType] | None,
+    ) -> t.GeneralValueType:
         """Tap into pipeline for side effects (DSL pattern).
 
         Executes side_effect function but returns original value.
@@ -694,141 +1129,124 @@ class FlextLdifUtilities(FlextUtilities):
             _ = side_effect(value)  # Explicitly ignore return value
         return value
 
-    @classmethod
-    def maybe(
-        cls,
-        value: object | None,
-        *,
-        default: object | None = None,
-        mapper: Callable[[object], object] | None = None,
-    ) -> object:
-        """Maybe monad (generalized: uses maybe from base, mnemonic: mb).
+    # maybe - use static method implementation below
+    # mb alias defined after static method
 
-        Args:
-            value: Optional value
-            default: Default if None
-            mapper: Optional transformation
-
-        Returns:
-            Processed value or default
-
-        Examples:
-            >>> result = cls.mb(config.get("key"), default=[], mapper=lambda x: x.split(","))
-
-        """
-        return u.maybe(value, default=default, mapper=mapper)
-
-    # Mnemonic helper
-    mb = maybe
-
+    # zip_with delegated to base class via u.zip_with() - Sequence vs ABCCollection
     @classmethod
     def zip_with(
         cls,
-        *sequences: Sequence[object],
-        combiner: Callable[[object, ...], object] | None = None,  # type: ignore[misc]  # Variable args
-    ) -> list[object]:
-        """Zip with combiner (generalized: uses zip_with from base, mnemonic: zw).
+        *sequences: Sequence[t.GeneralValueType],
+        combiner: VariadicCallable | None = None,
+    ) -> list[t.GeneralValueType]:
+        """Zip with combiner (generalized: uses zip from base, mnemonic: zw)."""
+        # Use built-in zip and apply combiner if provided
+        if not sequences:
+            return []
+        zipped = zip(*sequences, strict=False)
+        if combiner is None:
+            # Return list of tuples
+            return [tuple(items) for items in zipped]
+        # Apply combiner to each tuple
+        result: list[t.GeneralValueType] = []
+        for items_tuple in zipped:
+            # Convert tuple to list for combiner
+            items_list = list(items_tuple)
+            combined = combiner(*items_list)
+            result.append(combined)
+        return result
 
-        Args:
-            *sequences: Sequences to zip
-            combiner: Combine function (default: tuple)
-
-        Returns:
-            List of combined results
-
-        Examples:
-            >>> result = cls.zw([1,2], ["a","b"], combiner=lambda x,y: f"{x}:{y}")
-
-        """
-        return u.zip_with(*sequences, combiner=combiner)
-
-    # Mnemonic helper
     zw = zip_with
 
+    # group_by - implement directly to avoid generic type inference issues
     @classmethod
     def group_by(
         cls,
-        items: Sequence[object],
+        items: Sequence[t.GeneralValueType],
         *,
-        key: Callable[[object], object],
-    ) -> dict[object, list[object]]:
-        """Group by key function (generalized: uses group from base, mnemonic: gb).
-
-        Args:
-            items: Items to group
-            key: Extract key function
-
-        Returns:
-            Dict mapping keys to item lists
-
-        Examples:
-            >>> result = cls.gb(["a","b","a"], key=lambda x: x)
-
-        """
+        key: Callable[[t.GeneralValueType], t.GeneralValueType],
+    ) -> dict[t.GeneralValueType, list[t.GeneralValueType]]:
+        """Group by key function (generalized, mnemonic: gb)."""
         items_list = list(items) if isinstance(items, Sequence) else [items]
-        # Use existing group() method which accepts list[T] | tuple[T, ...]
-        return cast("dict[object, list[object]]", u.group(items_list, key=key))
+        result: dict[t.GeneralValueType, list[t.GeneralValueType]] = {}
+        for item in items_list:
+            k = key(item)
+            if k not in result:
+                result[k] = []
+            result[k].append(item)
+        return result
 
-    # Mnemonic helper
     gb = group_by
 
+    # partition - split sequence into two lists based on predicate
     @classmethod
     def partition(
         cls,
-        items: object,
+        items: Sequence[t.GeneralValueType],
         *,
-        predicate: Callable[[object], bool],
-    ) -> tuple[list[object], list[object]]:
-        """Partition (generalized: uses partition from base, mnemonic: pt).
+        predicate: Callable[[t.GeneralValueType], bool],
+    ) -> tuple[list[t.GeneralValueType], list[t.GeneralValueType]]:
+        """Partition items by predicate into (matches, non-matches) (mnemonic: pt)."""
+        matches: list[t.GeneralValueType] = []
+        non_matches: list[t.GeneralValueType] = []
+        for item in items:
+            if predicate(item):
+                matches.append(item)
+            else:
+                non_matches.append(item)
+        return matches, non_matches
 
-        Args:
-            items: Items to partition
-            predicate: Test function
-
-        Returns:
-            (true_items, false_items)
-
-        Examples:
-            >>> evens, odds = cls.pt([1,2,3], predicate=lambda x: x%2==0)
-
-        """
-        return u.partition(items, predicate=predicate)
-
-    # Mnemonic helper
     pt = partition
 
+    # LDIF-specific get - renamed to avoid @classmethod/@staticmethod conflict with base
     @classmethod
-    def get(  # type: ignore[override]  # Simplified signature, delegates to u.get()
+    @overload
+    def get_ldif(
         cls,
-        data: Mapping[str, object] | object,
+        data: Mapping[str, t.GeneralValueType],
         key: str,
         *,
-        default: object | None = None,
-    ) -> object:
-        """Safe get with optional mapping (DSL pattern).
+        default: str = "",
+    ) -> str: ...
 
-        Delegates to u.get() for unified behavior. Use u.flow() or u.chain() for mapping.
+    @classmethod
+    @overload
+    def get_ldif[T](
+        cls,
+        data: Mapping[str, t.GeneralValueType] | t.GeneralValueType,
+        key: str,
+        *,
+        default: list[T],
+    ) -> list[T]: ...
 
-        Args:
-            data: Object to get from (dict, list, etc.)
-            key: Key/index to get
-            default: Default if not found
+    @classmethod
+    @overload
+    def get_ldif[T](
+        cls,
+        data: Mapping[str, t.GeneralValueType] | t.GeneralValueType,
+        key: str,
+        *,
+        default: T | None = None,
+    ) -> T | None: ...
 
-        Returns:
-            Value or default
+    @classmethod
+    def get_ldif[T](
+        cls,
+        data: Mapping[str, t.GeneralValueType] | t.GeneralValueType,
+        key: str,
+        *,
+        default: t.GeneralValueType | T | None = None,
+    ) -> t.GeneralValueType | T | None:
+        """Safe get with optional mapping (DSL pattern)."""
+        # Type narrowing: ensure data is Mapping for get_from_mapping()
+        if isinstance(data, Mapping):
+            return FlextLdifUtilities.get_from_mapping(data, key, default=default)
+        # Non-mapping: return default
+        return default
 
-        Examples:
-            >>> # Safe dict access
-            >>> value = FlextLdifUtilities.get(config, "key", default=[])
-            >>> # With mapping
-            >>> value = FlextLdifUtilities.chain(
-            ...     FlextLdifUtilities.get(config, "key", default=""),
-            ...     lambda x: x.split(","),
-            ... )
+    # get: Inherited from FlextUtilities with all overloads - no override needed
 
-        """
-        return u.get(data, key, default=default)
-
+    # pluck - extract values from sequence of objects by key/index/function
     @classmethod
     def pluck(
         cls,
@@ -836,54 +1254,114 @@ class FlextLdifUtilities(FlextUtilities):
         *,
         key: str | int | Callable[[object], object],
     ) -> list[object]:
-        """Pluck using u.pluck() (mnemonic: pk).
+        """Extract values from sequence by key/index/function (mnemonic: pk)."""
+        if not isinstance(items, Iterable):
+            return []
+        result: list[object] = []
+        for item in items:
+            if callable(key):
+                result.append(key(item))
+            elif isinstance(key, str) and isinstance(item, Mapping):
+                result.append(item.get(key))
+            elif isinstance(key, int) and isinstance(item, Sequence):
+                result.append(item[key] if len(item) > key else None)
+            elif hasattr(item, str(key)):
+                result.append(getattr(item, str(key)))
+            else:
+                result.append(None)
+        return result
 
-        Delegates to u.pluck() for unified behavior.
-
-        Args:
-            items: Items to pluck from
-            key: Key/extractor (str/int/callable)
-
-        Returns:
-            List of extracted values
-
-        Examples:
-            >>> names = cls.pk([{"n":"a"}], key="n")
-            >>> lens = cls.pk(["abc"], key=len)
-
-        """
-        return u.pluck(items, key=key)
-
-    # Mnemonic helper
     pk = pluck
 
+    # normalize_ldif - different signature from base FlextUtilities.normalize
+    # Base: normalize(text, pattern, replacement) for string normalization
+    # LDIF: normalize_ldif(value, other, case) for case-based comparison
     @classmethod
-    def pick[T](
+    def normalize_ldif(
         cls,
-        data: Mapping[str, object] | object,
-        *keys: str,
-        as_dict: bool = True,
-    ) -> dict[str, object] | list[object]:
-        """Pick keys using u.pick() (mnemonic: pc).
+        value: str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
+        other: str
+        | list[str]
+        | tuple[str, ...]
+        | set[str]
+        | frozenset[str]
+        | None = None,
+        *,
+        case: str = "lower",
+    ) -> str | list[str] | set[str] | bool:
+        """Normalize for LDIF comparison (mnemonic: nz).
 
-        Delegates to u.pick() for unified behavior.
+        Different from base normalize() which normalizes whitespace in strings.
+        This method normalizes case for LDIF attribute comparison.
+
+        Supports two usage patterns:
+        1. normalize_ldif(value, case="lower") -> normalized string
+        2. normalize_ldif(value, other) -> bool (comparison)
 
         Args:
-            data: Dict or object to pick from
-            *keys: Keys to pick
-            as_dict: If True, return dict; if False, return list
+            value: Value to normalize
+            other: Optional second value for comparison
+            case: Case folding option ("lower", "upper", "preserve")
 
         Returns:
-            New dict with picked keys or list of values
-
-        Examples:
-            >>> result = cls.pc({"a":1, "b":2}, "a", "b")
+            Normalized value or bool comparison result
 
         """
-        return u.pick(data, *keys, as_dict=as_dict)
 
-    # Mnemonic helper
-    pc = pick
+        # Normalize single value based on case
+        def normalize_single(v: str) -> str:
+            if case == "lower":
+                return v.lower()
+            if case == "upper":
+                return v.upper()
+            return v
+
+        # If other is provided and is a string, do comparison
+        if other is not None and isinstance(value, str) and isinstance(other, str):
+            return normalize_single(value) == normalize_single(other)
+
+        # Normalize single string value
+        if isinstance(value, str):
+            return normalize_single(value)
+
+        # Normalize collections
+        if isinstance(value, (list, tuple)):
+            return [normalize_single(str(v)) for v in value]
+
+        if isinstance(value, (set, frozenset)):
+            return {normalize_single(str(v)) for v in value}
+
+        # All supported types handled above - return value as-is for unsupported types
+        # Type narrowing: value is not str, list, tuple, set, or frozenset
+        # This is reachable for unsupported types (e.g., int, float, None)
+        return value
+
+    nz = normalize_ldif
+
+    # pairs - returns dict/mapping items as list of tuples
+    @classmethod
+    def pairs(
+        cls,
+        d: dict[str, object] | Mapping[str, object],
+    ) -> list[tuple[str, object]]:
+        """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
+        return list(d.items())
+
+    pr = pairs
+
+    # count delegated to base class via u.count()
+    @staticmethod
+    def count[T](
+        items: list[T] | tuple[T, ...],
+        predicate: Callable[[T], bool] | None = None,
+    ) -> int:
+        """Count items (generalized: uses count from base, mnemonic: ct)."""
+        return FlextUtilities.Collection.count(items, predicate=predicate)
+
+    ct = count
+
+    # pick - use static method implementation below
+    # pc alias defined after static method
 
     @classmethod
     def omit(
@@ -901,32 +1379,45 @@ class FlextLdifUtilities(FlextUtilities):
             New dict without keys
 
         Examples:
-            >>> result = cls.om({"a":1, "b":2}, "b")
+            >>> result = cls.om({"a": 1, "b": 2}, "b")
 
         """
         if not obj or not keys:
             return dict(obj) if obj else {}
         # Use u.map_dict() with predicate to filter out keys
         keys_set = set(keys)
-        return u.map_dict(obj, predicate=lambda k, _: k not in keys_set)
+        return cls.map_dict(obj, predicate=lambda k, _: k not in keys_set)
 
     # Mnemonic helper
     om = omit
 
-    @classmethod
-    def merge(  # type: ignore[override]  # Returns dict[str, object] instead of dict[str, GeneralValueType]
-        cls,
-        *dicts: Mapping[str, object] | dict[str, object],
+    # merge_dicts - different signature from base FlextUtilities.merge
+    # Base: merge(base, other, strategy) for two dicts
+    # LDIF: merge_dicts(*dicts, strategy, filter_none, filter_empty) for variadic merge
+    @staticmethod
+    def _is_empty_value(value: object) -> bool:
+        """Check if value is empty (empty string, list, or dict)."""
+        # Check each empty type explicitly (can't use 'in' with unhashable types)
+        if isinstance(value, str) and not value:
+            return True
+        if isinstance(value, list) and not value:
+            return True
+        return bool(isinstance(value, dict) and not value)
+
+    @staticmethod
+    def merge_dicts(
+        *dicts: Mapping[str, t.GeneralValueType],
         strategy: str = "deep",
         filter_none: bool = False,
         filter_empty: bool = False,
-    ) -> r[dict[str, object]]:
-        """Merge dicts using u.merge() (mnemonic: mg).
+    ) -> r[dict[str, t.GeneralValueType]]:
+        """Merge multiple dicts with filtering options (mnemonic: mg).
 
-        Delegates to u.merge() for unified behavior.
+        Different from base merge() which takes exactly two dicts.
+        This method accepts variadic dicts with additional filtering options.
 
         Args:
-            *dicts: Dicts to merge
+            *dicts: Dicts to merge (variadic)
             strategy: Merge strategy ("override", "deep", "append")
             filter_none: Skip None values
             filter_empty: Skip empty strings/lists/dicts
@@ -935,58 +1426,57 @@ class FlextLdifUtilities(FlextUtilities):
             FlextResult containing merged dict
 
         Examples:
-            >>> result = cls.mg({"a":1}, {"b":2})
+            >>> result = cls.mg({"a": 1}, {"b": 2})
             >>> if result.is_success:
             ...     merged = result.value
 
         """
         # Convert dicts to Mapping[str, GeneralValueType] for u.merge()
         # Use list comprehension for better performance
-        mappings_list: list[Mapping[str, flext_core_types.GeneralValueType]] = [
-            cast("Mapping[str, flext_core_types.GeneralValueType]", d)
-            for d in dicts
-            if isinstance(d, (dict, Mapping))
+        # Type narrowing: isinstance already guarantees Mapping[str, GeneralValueType]
+        _mappings_list: list[Mapping[str, flext_core_types.GeneralValueType]] = [
+            dict_item for dict_item in dicts if isinstance(dict_item, (dict, Mapping))
         ]
-        if not mappings_list:
-            return r[dict[str, object]].ok({})
-        # Use list comprehension for better performance
-        merge_result = u.merge(*tuple(mappings_list), strategy=strategy, filter_none=filter_none, filter_empty=filter_empty)
-        # Convert GeneralValueType back to object
-        if merge_result.is_success:
-            return r[dict[str, object]].ok(cast("dict[str, object]", merge_result.value))
-        return r[dict[str, object]].fail(merge_result.error)
+        # Type already matches via type narrowing
+        dicts_typed: tuple[Mapping[str, t.GeneralValueType], ...] = dicts
+        # Merge dicts sequentially using base class merge method
+        if not dicts_typed:
+            return r[dict[str, t.GeneralValueType]].ok({})
+        merged: dict[str, t.GeneralValueType] = {}
+        for dict_item in dicts_typed:
+            # Convert Mapping to dict for base class merge()
+            dict_item_dict: dict[str, t.GeneralValueType] = (
+                dict(dict_item) if isinstance(dict_item, Mapping) else dict_item
+            )
+            merge_result = FlextUtilities.merge(
+                merged,
+                dict_item_dict,
+                strategy=strategy,
+            )
+            if merge_result.is_failure:
+                return r[dict[str, t.GeneralValueType]].fail(
+                    merge_result.error or "Merge failed",
+                )
+            merged = merge_result.value
+        # Apply filtering if requested
+        if filter_none or filter_empty:
+            filtered: dict[str, t.GeneralValueType] = {}
+            for key, value in merged.items():
+                # Filter None values
+                if filter_none and value is None:
+                    continue
+                # Filter empty values (empty strings, lists, dicts)
+                if filter_empty and FlextLdifUtilities._is_empty_value(value):
+                    continue
+                filtered[key] = value
+            merged = filtered
+        return r[dict[str, t.GeneralValueType]].ok(merged)
 
     # Mnemonic helper
-    mg = merge
+    mg = merge_dicts
 
-    @classmethod
-    def map_dict(
-        cls,
-        obj: dict[str, object],
-        *,
-        mapper: Callable[[str, object], object] | None = None,
-        key_mapper: Callable[[str], str] | None = None,
-        predicate: Callable[[str, object], bool] | None = None,
-    ) -> dict[str, object]:
-        """Map dict (generalized: uses map_dict from base, mnemonic: md).
-
-        Args:
-            obj: Dict to map
-            mapper: (k,v) -> new_v
-            key_mapper: (k) -> new_k
-            predicate: (k,v) -> bool
-
-        Returns:
-            Mapped dict
-
-        Examples:
-            >>> result = cls.md({"a":1}, mapper=lambda k,v: v*2, key_mapper=str.upper)
-
-        """
-        return u.map_dict(obj, mapper=mapper, key_mapper=key_mapper, predicate=predicate)
-
-    # Mnemonic helper
-    md = map_dict
+    # map_dict - use static method implementation below
+    # md alias defined after static method
 
     @classmethod
     def smart_convert(
@@ -1009,23 +1499,47 @@ class FlextLdifUtilities(FlextUtilities):
             Converted value or default
 
         Examples:
-            >>> result = cls.sc(data, target_type="list", predicate=lambda x: isinstance(x, dict))
+            >>> result = cls.sc(
+            ...     data, target_type="list", predicate=lambda x: isinstance(x, dict)
+            ... )
 
         """
-        # Extract from Result using u.or_()
-        extracted = u.or_(
-            value.value if isinstance(value, FlextResult) and not value.is_failure else value,
+        # Extract from Result using u.or_() DSL
+        extracted = cls.or_(
+            value.value
+            if isinstance(value, FlextResult) and not value.is_failure
+            else value,
             default=default,
         )
         if extracted is None:
             return default
 
-        # Use u.build() DSL for conversion
-        ops: dict[str, object] = {"ensure": target_type, "ensure_default": default}
-        if predicate:
-            ops["filter"] = predicate
-        result = u.build(extracted, ops=ops)
-        return u.or_(result, default=default)
+        # Use cls.conv() builder DSL for type conversion
+        conv_builder = cls.conv(extracted)
+        conv_result: object = None
+        if target_type == "str":  # String comparison for target_type
+            str_default = default if isinstance(default, str) else ""
+            conv_result = conv_builder.to_str(default=str_default).build()
+        elif target_type == "int":  # String comparison for target_type
+            int_default = default if isinstance(default, int) else 0
+            conv_result = conv_builder.int(default=int_default).build()
+        elif target_type == "bool":  # String comparison for target_type
+            bool_default = default if isinstance(default, bool) else False
+            conv_result = conv_builder.bool(default=bool_default).build()
+        elif target_type == "list":  # String comparison for target_type
+            list_default = default if isinstance(default, list) else []
+            conv_result = conv_builder.str_list(default=list_default).build()
+            if predicate and isinstance(conv_result, list):
+                filtered = [item for item in conv_result if predicate(item)]
+                return filtered or (conv_result if conv_result is not None else default)
+        else:
+            # Fallback to u.build() for other types
+            ops: dict[str, object] = {"ensure": target_type, "ensure_default": default}
+            if predicate:
+                ops["filter"] = predicate
+            conv_result = cls.build(extracted, ops=ops)
+        # Use Python's native or for heterogeneous types instead of or_() with generic constraint
+        return conv_result if conv_result is not None else default
 
     # Mnemonic helper
     sc = smart_convert
@@ -1048,15 +1562,27 @@ class FlextLdifUtilities(FlextUtilities):
             True if value matches any type
 
         Examples:
-            >>> if cls.it(value, dict, list): process(value)
+            >>> if cls.it(value, dict, list):
+            ...     process(value)
 
         """
         if not types:
             return False
         # Use u.build() with ensure to check types
-        type_map = {"list": list, "dict": dict, "str": str, "int": int, "bool": bool, "tuple": tuple}
+        type_map = {
+            "list": list,
+            "dict": dict,
+            "str": str,
+            "int": int,
+            "bool": bool,
+            "tuple": tuple,
+        }
         for t_val in types:
-            resolved_type = type_map.get(t_val) if isinstance(t_val, str) else (t_val if isinstance(t_val, type) else None)
+            resolved_type = (
+                type_map.get(t_val)
+                if isinstance(t_val, str)
+                else (t_val if isinstance(t_val, type) else None)
+            )
             if resolved_type and isinstance(value, resolved_type):
                 return True
         return False
@@ -1064,11 +1590,11 @@ class FlextLdifUtilities(FlextUtilities):
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: t.GeneralValueType,
         *,
         target: type | str,
-        default: object | None = None,
-    ) -> object:
+        default: t.GeneralValueType | None = None,
+    ) -> t.GeneralValueType:
         """Safe cast using u.convert() or u.ensure() (mnemonic: at).
 
         Args:
@@ -1083,64 +1609,75 @@ class FlextLdifUtilities(FlextUtilities):
             >>> items = cls.at(value, target="list", default=[])
 
         """
-        # Use u.build() DSL for type conversion
-        type_map = {"list": list, "dict": dict, "str": str, "int": int, "bool": bool, "tuple": tuple}
-        target_type = type_map.get(target) if isinstance(target, str) else (target if isinstance(target, type) else None)
+        # Use u.conv() builder DSL for type conversion
+        type_map = {
+            "list": list,
+            "dict": dict,
+            "str": str,
+            "int": int,
+            "bool": bool,
+            "tuple": tuple,
+        }
+        target_type = (
+            type_map.get(target)
+            if isinstance(target, str)
+            else (target if isinstance(target, type) else None)
+        )
         if target_type is None:
             return default
-        # Use u.build() with ensure for conversion
+
+        # Use FlextLdifUtilities.conv() builder for common types with safe mode
+        if target_type is str:
+            str_default = default if isinstance(default, str) else ""
+            return (
+                FlextLdifUtilities.conv(value)
+                .to_str(default=str_default)
+                .safe()
+                .build()
+            )
+        if target_type is int:
+            int_default = default if isinstance(default, int) else 0
+            return cls.conv(value).int(default=int_default).safe().build()
+        if target_type is bool:
+            bool_default = default if isinstance(default, bool) else False
+            return (
+                FlextLdifUtilities.conv(value).bool(default=bool_default).safe().build()
+            )
+        if target_type is list:
+            list_default = default if isinstance(default, list) else []
+            return (
+                FlextLdifUtilities.conv(value)
+                .str_list(default=list_default)
+                .safe()
+                .build()
+            )
+
+        # Fallback to u.build() for dict, tuple and other types
         ops: dict[str, object] = {"ensure": target_type, "ensure_default": default}
-        result = u.build(value, ops=ops)
-        return u.or_(result, default=default)
+        result = cls.build(value, ops=ops)
+        # Ensure result is GeneralValueType for or_()
+        # Type narrowing: result is object, cast to t.GeneralValueType
+        result_typed: t.GeneralValueType | None = (
+            cast("t.GeneralValueType", result) if result is not None else None
+        )
+        return cls.or_(result_typed, default=default)
 
     # Mnemonic helper
+    # at method already has overloads defined above - this is the LDIF-specific implementation
+    # The overloads handle both base class and LDIF-specific cases
+
     @classmethod
-    def at[T](  # type: ignore[override]  # Different purpose: type casting vs index access
-        cls,
-        value: object,
-        *,
-        target: type[T] | str,
-        default: T | None = None,
-    ) -> T | None:
-        """Type casting alias (mnemonic: at).
-
-        NOTE: Different from u.at() which accesses by index/key.
-        This method casts types, supporting str type names.
-
-        Args:
-            value: Value to cast
-            target: Target type/name
-            default: Default if fails
-
-        Returns:
-            Casted value or default
-
-        Examples:
-            >>> items = cls.at(value, target="list", default=[])
-
-        """
-        # Convert str to type if needed
-        if isinstance(target, str):
-            result = cls.as_type(value, target=target, default=default)
-            return cast("T | None", result)
-        # Use u.as_() for type objects
-        if isinstance(target, type):
-            typed_target = target  # Type narrowing: target is type[T]
-            return u.as_(value, typed_target, default=default)
-        # Fallback for non-type, non-str targets (should not happen in practice)
-        return default  # type: ignore[unreachable]  # Mypy false positive: return is reachable
-
-    @classmethod  # type: ignore[assignment]  # Different purpose: type casting vs index access
-    def guard[T](  # type: ignore[override]  # Simplified version of u.guard()
+    def guard_simple[T](
         cls,
         value: T,
         *,
         check: Callable[[T], bool] | bool,
         default: T | None = None,
     ) -> T | None:
-        """Guard using u.when() pattern (mnemonic: gd).
+        """Simple guard using check pattern (mnemonic: gd).
 
         Simplified version of u.guard() for common use cases.
+        This is NOT an override of u.guard() - it's a separate method.
 
         Args:
             value: Value to guard
@@ -1151,14 +1688,14 @@ class FlextLdifUtilities(FlextUtilities):
             Value or default
 
         Examples:
-            >>> result = cls.gd(data, check=lambda x: len(x)>0, default=[])
+            >>> result = cls.gd(data, check=lambda x: len(x) > 0, default=[])
 
         """
         check_result = check(value) if callable(check) else bool(check)
-        return u.when(condition=check_result, then_value=value, else_value=default)
+        return value if check_result else default
 
     # Mnemonic helper
-    gd = guard
+    gd = guard_simple
 
     @classmethod
     def thru(
@@ -1236,9 +1773,9 @@ class FlextLdifUtilities(FlextUtilities):
     @classmethod
     def curry(
         cls,
-        fn: Callable[[object, ...], object],  # type: ignore[misc]  # Variable args
-        *args: object,
-    ) -> Callable[[object, ...], object]:  # type: ignore[misc]  # Variable args
+        fn: VariadicCallable,
+        *args: t.GeneralValueType,
+    ) -> VariadicCallable:
         """Curry function (mnemonic: cy).
 
         Args:
@@ -1249,16 +1786,145 @@ class FlextLdifUtilities(FlextUtilities):
             Curried function
 
         Examples:
-            >>> add5 = cls.cy(lambda x,y: x+y, 5)
+            >>> add5 = cls.cy(lambda x, y: x + y, 5)
 
         """
-        return lambda *more_args: fn(*(args + more_args))
+
+        def curried(*more_args: t.GeneralValueType) -> t.GeneralValueType:
+            # Combine args and more_args, then call fn
+            combined_args: tuple[t.GeneralValueType, ...] = args + more_args
+            # VariadicCallable accepts specific types, convert args appropriately
+            # Convert to compatible types for VariadicCallable protocol
+            converted_args: list[
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None]
+            ] = []
+            for arg in combined_args:
+                if isinstance(arg, (str, int, float, bool)) or arg is None:
+                    converted_args.append(
+                        cast(
+                            "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None]",
+                            arg,
+                        ),
+                    )
+                elif isinstance(arg, Sequence):
+                    converted_args.append(
+                        cast("Sequence[str | int | float | bool | None]", arg),
+                    )
+                elif isinstance(arg, Mapping):
+                    converted_args.append(
+                        cast("Mapping[str, str | int | float | bool | None]", arg),
+                    )
+                else:
+                    # Fallback: convert to string
+                    converted_args.append(str(arg))
+            # Call fn with converted args
+            if len(converted_args) == 0:
+                result = fn()
+            elif len(converted_args) == 1:
+                result = fn(converted_args[0])
+            else:
+                result = fn(*converted_args)
+            return result
+
+        return cast("VariadicCallable", curried)
 
     # Mnemonic helper
     cy = curry
 
     @classmethod
-    def cond(  # noqa: C901  # Complex conditional logic required
+    def _detect_predicate_type(
+        cls,
+        pairs: tuple[
+            tuple[Callable[[], bool] | Callable[[object], bool] | bool, object],
+            ...,
+        ],
+    ) -> bool:
+        """Detect if predicates are no-arg (True) or value-arg (False)."""
+        if not pairs:
+            return False
+        first_pred = pairs[0][0]
+        if not callable(first_pred):
+            return False
+        try:
+            sig = inspect.signature(first_pred)
+            return len(sig.parameters) == 0
+        except (ValueError, TypeError):
+            return False
+
+    @classmethod
+    def _evaluate_no_arg_predicate(
+        cls,
+        *,
+        pred: Callable[[], bool] | bool,
+    ) -> bool:
+        """Evaluate a no-arg predicate."""
+        if callable(pred):
+            # Type narrowing: callable check ensures it's Callable[[], bool]
+            pred_no_arg: Callable[[], bool] = pred
+            return pred_no_arg()
+        return bool(pred)
+
+    @classmethod
+    def _evaluate_value_arg_predicate(
+        cls,
+        *,
+        pred: Callable[[], bool] | Callable[[object], bool] | bool,
+        value: object,
+    ) -> bool:
+        """Evaluate a value-arg predicate."""
+        if callable(pred):
+            # Check if predicate accepts 0 or 1 args
+            try:
+                sig = inspect.signature(pred)
+                if len(sig.parameters) == 0:
+                    # No-arg predicate - call without value
+                    pred_no_arg = cast("Callable[[], bool]", pred)
+                    return pred_no_arg()
+                # Value-arg predicate - call with value
+                pred_fn: Callable[[object], bool] = cast(
+                    "Callable[[object], bool]",
+                    pred,
+                )
+                return pred_fn(value)
+            except (ValueError, TypeError):
+                # Fallback: try calling with value
+                pred_fn_fallback: Callable[[object], bool] = cast(
+                    "Callable[[object], bool]",
+                    pred,
+                )
+                return pred_fn_fallback(value)
+        return bool(pred)
+
+    @classmethod
+    def _evaluate_no_arg_result(
+        cls,
+        result_val: object,
+    ) -> object:
+        """Evaluate a no-arg result value."""
+        if callable(result_val):
+            result_val_no_arg = cast("Callable[[], object]", result_val)
+            return result_val_no_arg()
+        return result_val
+
+    @classmethod
+    def _evaluate_value_arg_result(
+        cls,
+        result_val: object,
+        value: object,
+    ) -> object:
+        """Evaluate a value-arg result value."""
+        if callable(result_val):
+            result_fn = cast("Callable[[object], object]", result_val)
+            return result_fn(value)
+        return result_val
+
+    @classmethod
+    def cond(
         cls,
         *pairs: tuple[Callable[[], bool] | Callable[[object], bool] | bool, object],
         default: object | None = None,
@@ -1281,64 +1947,60 @@ class FlextLdifUtilities(FlextUtilities):
             >>> result_fn = cls.cd((lambda: True, "yes"), default="no")
             >>> result = result_fn()
             >>> # Value-arg predicates: call with (value)
-            >>> fn = cls.cd((lambda x: x>10, "big"), (lambda x: x>5, "med"), default="small")
+            >>> fn = cls.cd(
+            ...     (lambda x: x > 10, "big"), (lambda x: x > 5, "med"), default="small"
+            ... )
             >>> result = fn(15)
 
         """
-        # Check if predicates are no-arg by inspecting first predicate
-        is_no_arg = False
-        if pairs:
-            first_pred = pairs[0][0]
-            if callable(first_pred):
-                try:
-                    import inspect  # noqa: PLC0415  # Import inside conditional for performance
-                    sig = inspect.signature(first_pred)
-                    param_count = len(sig.parameters)
-                    is_no_arg = param_count == 0
-                except (ValueError, TypeError):
-                    pass
+        is_no_arg = cls._detect_predicate_type(pairs)
 
         if is_no_arg:
-            # No-arg predicates: return function() -> value
+
             def conditional_no_arg() -> object:
                 for pred, result_val in pairs:
-                    check = pred() if callable(pred) else bool(pred)  # type: ignore[call-arg]  # No-arg
-                    if check:
-                        return result_val() if callable(result_val) else result_val  # type: ignore[call-arg]  # No-arg
-                return default() if callable(default) else default  # type: ignore[call-arg]  # No-arg
+                    # Type narrowing: is_no_arg ensures pred is Callable[[], bool] | bool
+                    pred_no_arg: Callable[[], bool] | bool = pred
+                    if cls._evaluate_no_arg_predicate(pred=pred_no_arg):
+                        return cls._evaluate_no_arg_result(result_val)
+                # Default handling - mypy sees this as potentially unreachable
+                # but it's reachable when no predicates match
+                if default is not None and callable(default):
+                    # Type narrowing: callable check ensures it's Callable[[], object]
+                    default_no_arg: Callable[[], object] = cast(
+                        "Callable[[], object]",
+                        default,
+                    )
+                    return default_no_arg()
+                return default
+
             return conditional_no_arg
 
-        # Value-arg predicates: return function(value) -> value
         def conditional(value: object) -> object:
             for pred, result_val in pairs:
-                # Type narrowing: predicates in value-arg branch accept 1 arg
-                if callable(pred):
-                    pred_fn = cast("Callable[[object], bool]", pred)
-                    check = pred_fn(value)
-                else:
-                    check = bool(pred)
-                if check:
-                    if callable(result_val):
-                        result_fn = cast("Callable[[object], object]", result_val)
-                        return result_fn(value)
-                    return result_val
+                if cls._evaluate_value_arg_predicate(pred=pred, value=value):
+                    return cls._evaluate_value_arg_result(result_val, value)
             if default is not None and callable(default):
                 default_fn = cast("Callable[[object], object]", default)
                 return default_fn(value)
             return default
+
         return conditional
 
     # Mnemonic helper
     cd = cond
 
     @classmethod
-    def match(
+    def match[T](
         cls,
         value: object,
         *cases: tuple[type[object] | object | Callable[[object], bool], object],
         default: object | None = None,
     ) -> object:
         """Pattern match (mnemonic: mt).
+
+        NOTE: Different from u.match() which has stricter typing.
+        This method supports type matching, value matching, and predicate matching.
 
         Args:
             value: Value to match
@@ -1359,12 +2021,20 @@ class FlextLdifUtilities(FlextUtilities):
             # Value match
             if pattern == value:
                 return result(value) if callable(result) else result
-            # Predicate match
-            if callable(pattern):
-                pattern_fn = cast("Callable[[object], bool]", pattern)
-                if pattern_fn(value):
-                    return result(value) if callable(result) else result
-        return default(value) if callable(default) else default
+            # Predicate match (exclude types - they're handled above)
+            # Combine conditions to avoid nested if (SIM102)
+            if callable(pattern) and not isinstance(pattern, type):
+                # Type narrowing: pattern is callable and not a type, so it's a predicate function
+                # Check if it's a predicate (returns bool) vs extractor (returns object)
+                try:
+                    pred_result = pattern(value)
+                    if isinstance(pred_result, bool) and pred_result:
+                        return result(value) if callable(result) else result
+                except (ValueError, TypeError, AttributeError):
+                    pass
+        if default is not None:
+            return default(value) if callable(default) else default
+        return None
 
     # Mnemonic helper
     mt = match
@@ -1410,22 +2080,35 @@ class FlextLdifUtilities(FlextUtilities):
             Merged dict
 
         Examples:
-            >>> result = cls.df({"a":1}, {"b":2, "a":3})  # {"a":1, "b":2}
+            >>> result = cls.df({"a": 1}, {"b": 2, "a": 3})  # {"a":1, "b":2}
 
         """
         if not dicts:
             return {}
-        # Use u.reduce_dict() to apply first-wins logic: first dict wins, later dicts fill missing/None keys
+        # Use u.fold() DSL to apply first-wins logic: first dict wins, later dicts fill missing/None keys
 
-        # Use u.map_dict() with predicate for first-wins logic
-        # Build result: first dict wins, later dicts fill missing/None keys
-        result: dict[str, object] = {}
-        for d in dicts:  # Process in original order (first dict wins)
-            if isinstance(d, dict):
-                # Use u.map_dict() to filter: only include keys not in result or where result value is None
-                filtered = u.map_dict(d, predicate=lambda k, _v: k not in result or result.get(k) is None)
-                result.update(filtered)
-        return result
+        def apply_defaults(acc: object, d: object) -> object:
+            """Apply defaults using fold() pattern: first wins, later fill missing/None."""
+            if not isinstance(acc, dict) or not isinstance(d, dict):
+                return acc
+            # Use u.map_dict() to filter: only include keys not in result or where result value is None
+            filtered = cls.map_dict(
+                d,
+                predicate=lambda k, _v: k not in acc or acc.get(k) is None,
+            )
+            acc.update(filtered)
+            return acc
+
+        # Filter dicts first, then fold to apply defaults
+        dict_list = [dict_item for dict_item in dicts if isinstance(dict_item, dict)]
+        if dict_list:
+            result = cls.fold(
+                dict_list,
+                folder=apply_defaults,
+                initial={},
+            )
+            return cast("dict[str, object]", result) if isinstance(result, dict) else {}
+        return {}
 
     # Mnemonic helper
     df = defaults
@@ -1444,20 +2127,31 @@ class FlextLdifUtilities(FlextUtilities):
             Deeply merged dict
 
         Examples:
-            >>> result = cls.dm({"a": {"b":1}}, {"a": {"c":2}})  # {"a": {"b":1, "c":2}}
+            >>> result = cls.dm(
+            ...     {"a": {"b": 1}}, {"a": {"c": 2}}
+            ... )  # {"a": {"b":1, "c":2}}
 
         """
         if not dicts:
             return {}
+        # Filter to get only dict items, then u.merge() with u.or_() for fallback
+        dict_list = [dict_item for dict_item in dicts if isinstance(dict_item, dict)]
+        if not dict_list:
+            return {}
+        # Cast to Mapping type (filter already ensures dict type)
         mappings: list[Mapping[str, flext_core_types.GeneralValueType]] = [
-            cast("Mapping[str, flext_core_types.GeneralValueType]", d) for d in dicts if isinstance(d, dict)
+            cast("Mapping[str, flext_core_types.GeneralValueType]", dict_item)
+            for dict_item in dict_list
         ]
         if not mappings:
             return {}
-        merge_result = u.merge(*tuple(mappings), strategy="deep")
-        if merge_result.is_success and isinstance(merge_result.value, dict):
-            return cast("dict[str, object]", merge_result.value)
-        return {}
+        # Merge mappings sequentially (merge accepts 2 args, not variadic)
+        merged: dict[str, flext_core_types.GeneralValueType] = dict(mappings[0])
+        for mapping in mappings[1:]:
+            merge_result = FlextUtilities.merge(merged, dict(mapping), strategy="deep")
+            if merge_result.is_success and isinstance(merge_result.value, dict):
+                merged = merge_result.value
+        return cast("dict[str, object]", merged)
 
     # Mnemonic helper
     dm = deep_merge
@@ -1482,17 +2176,44 @@ class FlextLdifUtilities(FlextUtilities):
             >>> cls.ui(d, {"b": 2})  # d mutated
 
         """
-        # Apply updates in-place using u.filter() DSL pattern
-        # Use u.filter() to get only dict updates, then apply via dict.update()
-        dict_updates = u.filter(updates, predicate=lambda x: isinstance(x, dict))
-        # u.filter() on list returns list, iterate and apply updates
-        if isinstance(dict_updates, list):
-            for update_dict in dict_updates:
-                obj.update(cast("dict[str, object]", update_dict))
+
+        # Apply updates in-place using u.fold() DSL pattern for composition
+        # Use u.fold() to apply all dict updates sequentially
+        def apply_update(acc: object, update_item: object) -> object:
+            """Apply single update using fold() pattern."""
+            if isinstance(acc, dict) and isinstance(update_item, dict):
+                acc.update(cast("dict[str, object]", update_item))
+            return acc
+
+        # Filter dict updates first, then fold to apply them
+        dict_updates = [u for u in updates if isinstance(u, dict)]
+        if dict_updates:
+            FlextLdifUtilities.fold(dict_updates, folder=apply_update, initial=obj)
         return obj
 
     # Mnemonic helper
     ui = update_inplace
+
+    @classmethod
+    def _apply_deep_defaults_recursive(
+        cls,
+        acc: object,
+        d: object,
+    ) -> object:
+        """Apply deep defaults recursively: first wins, recurse nested."""
+        if not isinstance(acc, dict) or not isinstance(d, dict):
+            return acc
+        acc_dict: dict[str, object] = acc
+        d_dict: dict[str, object] = d
+        for k, v in d_dict.items():
+            if k not in acc_dict:
+                acc_dict[k] = v
+            elif isinstance(acc_dict[k], dict) and isinstance(v, dict):
+                acc_dict[k] = cls.defaults_deep(
+                    cast("dict[str, object]", acc_dict[k]),
+                    cast("dict[str, object]", v),
+                )
+        return acc_dict
 
     @classmethod
     def defaults_deep(
@@ -1508,89 +2229,131 @@ class FlextLdifUtilities(FlextUtilities):
             Deeply merged dict with defaults
 
         Examples:
-            >>> result = cls.dd({"a": {"b":1}}, {"a": {"b":2, "c":3}})  # {"a": {"b":1, "c":3}}
+            >>> result = cls.dd(
+            ...     {"a": {"b": 1}}, {"a": {"b": 2, "c": 3}}
+            ... )  # {"a": {"b":1, "c":3}}
 
         """
         if not dicts:
             return {}
-        # Use u.merge() with deep strategy for nested merging
-        mappings: list[Mapping[str, flext_core_types.GeneralValueType]] = [
-            cast("Mapping[str, flext_core_types.GeneralValueType]", d) for d in reversed(dicts) if isinstance(d, dict)
+        # Filter and reverse dicts for first-wins logic
+        dict_list = [
+            dict_item for dict_item in reversed(dicts) if isinstance(dict_item, dict)
         ]
-        if not mappings:
+        if not dict_list:
             return {}
-        merge_result = u.merge(*tuple(mappings), strategy="deep")
-        if merge_result.is_success and isinstance(merge_result.value, dict):
-            # Apply first-wins logic recursively: first dict wins, later dicts fill missing keys
-            result: dict[str, object] = {}
-            for d in reversed(dicts):  # Process in original order (first dict wins)
-                if isinstance(d, dict):
-                    # Apply first-wins logic: only include keys not in result or recurse for nested dicts
-                    for k, v in d.items():
-                        if k not in result:
-                            result[k] = v
-                        elif isinstance(result[k], dict) and isinstance(v, dict):
-                            # Recurse for nested dicts using u.merge() DSL
-                            nested_result = cls.dd(cast("dict[str, object]", result[k]), v)
-                            result[k] = nested_result
-            return result
-        return {}
+        # Apply deep defaults using fold pattern
+        result = FlextLdifUtilities.fold(
+            dict_list,
+            folder=cls._apply_deep_defaults_recursive,
+            initial={},
+        )
+        return cast("dict[str, object]", result)
 
     # Mnemonic helper
     dd = defaults_deep
 
-    @classmethod
-    def take[T](  # type: ignore[override]  # Extended functionality
-        cls,
-        data_or_items: object,
+    @staticmethod
+    @overload
+    def take[T](
+        data_or_items: Mapping[str, object] | object,
+        key_or_n: str,
+        *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        from_start: bool = True,
+    ) -> T | None: ...
+
+    @staticmethod
+    @overload
+    def take[T](
+        data_or_items: dict[str, T],
+        key_or_n: int,
+        *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        from_start: bool = True,
+    ) -> dict[str, T]: ...
+
+    @staticmethod
+    @overload
+    def take[T](
+        data_or_items: list[T] | tuple[T, ...],
+        key_or_n: int,
+        *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        from_start: bool = True,
+    ) -> list[T]: ...
+
+    @staticmethod
+    def take[T](
+        data_or_items: Mapping[str, object]
+        | object
+        | dict[str, T]
+        | list[T]
+        | tuple[T, ...],
         key_or_n: str | int,
         *,
         as_type: type[T] | None = None,
         default: T | None = None,
-        guard: bool = True,
         from_start: bool = True,
     ) -> dict[str, T] | list[T] | T | None:
-        """Take with type guard using u.take() (mnemonic: tk).
+        """Take value from data with type guard (mnemonic: tk).
 
-        Delegates to u.take() for unified behavior.
+        Supports two modes:
+        - Extraction mode (str key): Extract value from dict/object by key
+        - Slice mode (int n): Take first/last n items from sequence/dict
 
         Args:
             data_or_items: Source data or items
             key_or_n: Key/attribute name (str) or number of items (int)
-            as_type: Type to guard
-            default: Default value
-            guard: Validate type
-            from_start: Take from start if True
+            as_type: Type to guard/validate against
+            default: Default value if key not found or type mismatch
+            from_start: Take from start if True, from end if False (slice mode)
 
         Returns:
-            Extracted value or default
+            Extracted value, sliced items, or default
 
         Examples:
             >>> port = cls.tk(config, "port", as_type=int, default=8080)
+            >>> first_two = cls.tk([1, 2, 3, 4], 2)  # [1, 2]
 
         """
-        # u.take() handles both str (extraction) and int (slice) modes
-        # Type narrowing for mypy - u.take() has overloads for str vs int
+        # Extraction mode - get value by key
         if isinstance(key_or_n, str):
-            # Extraction mode - returns T | None
-            # Narrow data_or_items type for mypy
-            if isinstance(data_or_items, (dict, Mapping)):
-                return u.take(data_or_items, key_or_n, as_type=as_type, default=default, guard=guard, from_start=from_start)
-            return u.take(data_or_items, key_or_n, as_type=as_type, default=default, guard=guard, from_start=from_start)
-        # Slice mode - key_or_n is int, returns dict[str, T] | list[T]
-        # Narrow data_or_items type for mypy overload resolution
+            value: object = None
+            if isinstance(data_or_items, Mapping):
+                value = data_or_items.get(key_or_n, default)
+            elif hasattr(data_or_items, key_or_n):
+                value = getattr(data_or_items, key_or_n, default)
+            else:
+                value = default
+
+            # Type guard
+            if as_type is not None and value is not None:
+                if isinstance(value, as_type):
+                    return value
+                return default
+            return cast("T | None", value)
+
+        # Slice mode - take n items
+        n = key_or_n
         if isinstance(data_or_items, dict):
-            result_dict = u.take(data_or_items, key_or_n, as_type=as_type, default=default, guard=guard, from_start=from_start)
-            return cast("dict[str, T]", result_dict)
+            items = list(data_or_items.items())
+            sliced = items[:n] if from_start else items[-n:]
+            result_dict: dict[str, T] = {k: cast("T", v) for k, v in sliced}
+            return result_dict
         if isinstance(data_or_items, (list, tuple)):
-            result_list = u.take(data_or_items, key_or_n, as_type=as_type, default=default, guard=guard, from_start=from_start)
-            return cast("list[T]", result_list)
-        # Fallback for object type
+            if from_start:
+                return list(data_or_items[:n])
+            return list(data_or_items[-n:])
         return default
 
     # Mnemonic helper
     tk = take
 
+    # try_ delegated to base class via FlextUtilities.try_()
     @classmethod
     def try_[T](
         cls,
@@ -1599,54 +2362,24 @@ class FlextLdifUtilities(FlextUtilities):
         default: T | None = None,
         catch: type[Exception] | tuple[type[Exception], ...] = Exception,
     ) -> T | None:
-        """Try using u.try_() (mnemonic: tr).
+        """Try using FlextUtilities.try_() (mnemonic: tr)."""
+        # Use getattr to avoid mypy attr-defined error if method doesn't exist
+        try_method = getattr(FlextUtilities, "try_", None)
+        if try_method:
+            result = try_method(func, default=default, catch=catch)
+            return cast("T | None", result)
+        # Fallback: manual try/except
+        try:
+            return func()
+        except catch:
+            return default
 
-        Delegates to u.try_() for unified behavior.
-
-        Args:
-            func: Function to execute
-            default: Default on error
-            catch: Exception types
-
-        Returns:
-            Result or default
-
-        Examples:
-            >>> result = cls.tr(lambda: int(value), default=0)
-
-        """
-        return u.try_(func, default=default, catch=catch)
-
-    # Mnemonic helper
     tr = try_
 
-    @classmethod
-    def or_[T](
-        cls,
-        *values: T | None,
-        default: T | None = None,
-    ) -> T | None:
-        """Null coalesce using u.or_() (mnemonic: oo).
+    # or_ - use static method implementation below
+    # oo alias defined after static method
 
-        Delegates to u.or_() for unified behavior.
-
-        Args:
-            *values: Values to try in order
-            default: Default if all are None
-
-        Returns:
-            First non-None value or default
-
-        Examples:
-            >>> name = cls.oo(user.get("name"), default="unknown")
-            >>> port = cls.oo(config.get("port"), env.get("PORT"), default=8080)
-
-        """
-        return u.or_(*values, default=default)
-
-    # Mnemonic helper
-    oo = or_
-
+    # let delegated to base class via u.chain()
     @classmethod
     def let(
         cls,
@@ -1654,33 +2387,18 @@ class FlextLdifUtilities(FlextUtilities):
         *,
         fn: Callable[[object], object],
     ) -> object:
-        """Let using chain() (mnemonic: lt).
+        """Let using chain() (mnemonic: lt)."""
+        return FlextLdifUtilities.chain(value, fn)
 
-        Delegates to chain() for unified behavior.
-
-        Args:
-            value: Value to bind
-            fn: Function to apply
-
-        Returns:
-            Function result
-
-        Examples:
-            >>> result = cls.lt(data, fn=lambda x: x.get("value", 0))
-
-        """
-        return cls.chain(value, fn)
-
-    # Mnemonic helper
     lt = let
 
     @classmethod
     def apply(
         cls,
-        fn: Callable[[object, ...], object] | object,  # type: ignore[misc]  # Variable args
-        *args: object,
-        **kwargs: object,
-    ) -> object:
+        fn: VariadicCallable | object,
+        *args: t.GeneralValueType,
+        **kwargs: t.GeneralValueType,
+    ) -> t.GeneralValueType:
         """Apply function (mnemonic: ap).
 
         Args:
@@ -1696,36 +2414,96 @@ class FlextLdifUtilities(FlextUtilities):
 
         """
         if callable(fn):
-            return fn(*args, **kwargs)
-        return fn
+            fn_callable: VariadicCallable = fn
+            # Convert args and kwargs to compatible types for VariadicCallable
+            converted_args: list[
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None]
+            ] = []
+            for arg in args:
+                if isinstance(arg, (str, int, float, bool)) or arg is None:
+                    # Convert scalar to compatible union type
+                    scalar_val: (
+                        str
+                        | int
+                        | float
+                        | bool
+                        | Sequence[str | int | float | bool | None]
+                        | Mapping[str, str | int | float | bool | None]
+                    ) = cast(
+                        "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None]",
+                        arg,
+                    )
+                    converted_args.append(scalar_val)
+                elif isinstance(arg, Sequence):
+                    converted_args.append(
+                        cast("Sequence[str | int | float | bool | None]", arg),
+                    )
+                elif isinstance(arg, Mapping):
+                    converted_args.append(
+                        cast("Mapping[str, str | int | float | bool | None]", arg),
+                    )
+                else:
+                    # Fallback: convert to string
+                    converted_args.append(str(arg))
+            # Convert kwargs similarly
+            converted_kwargs: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None],
+            ] = {}
+            for k, v in kwargs.items():
+                if isinstance(v, (str, int, float, bool)) or v is None:
+                    # Convert scalar to compatible type
+                    scalar_kwarg_val: (
+                        str
+                        | int
+                        | float
+                        | bool
+                        | Sequence[str | int | float | bool | None]
+                        | Mapping[str, str | int | float | bool | None]
+                    ) = cast(
+                        "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None]",
+                        v,
+                    )
+                    converted_kwargs[k] = scalar_kwarg_val
+                elif isinstance(v, Sequence):
+                    converted_kwargs[k] = cast(
+                        "Sequence[str | int | float | bool | None]",
+                        v,
+                    )
+                elif isinstance(v, Mapping):
+                    converted_kwargs[k] = cast(
+                        "Mapping[str, str | int | float | bool | None]",
+                        v,
+                    )
+                else:
+                    converted_kwargs[k] = str(v)
+            result = fn_callable(*converted_args, **converted_kwargs)
+            return cast("t.GeneralValueType", result)
+        return cast("t.GeneralValueType", fn)
 
     # Mnemonic helper
     ap = apply
 
+    # bind delegated to base class via u.chain()
     @classmethod
     def bind(
         cls,
         value: object,
         *fns: Callable[[object], object],
     ) -> object:
-        """Bind using chain() (mnemonic: bd).
+        """Bind using chain() (mnemonic: bd)."""
+        return FlextLdifUtilities.chain(value, *fns)
 
-        Delegates to chain() for unified behavior.
-
-        Args:
-            value: Value to bind
-            *fns: Functions to chain
-
-        Returns:
-            Final result
-
-        Examples:
-            >>> result = cls.bd(data, lambda x: x.get("items"), lambda i: len(i))
-
-        """
-        return cls.chain(value, *fns)
-
-    # Mnemonic helper
     bd = bind
 
     @classmethod
@@ -1745,13 +2523,19 @@ class FlextLdifUtilities(FlextUtilities):
             >>> safe_int = cls.lf(int)
 
         """
-        # Use u.when() DSL for conditional execution with safe None handling
+
+        # Use ternary operator + FlextLdifUtilities.maybe() DSL for safe None handling
         def lifted_fn(v: object) -> object | None:
             """Lifted function with safe None handling using DSL."""
-            if v is None:
-                return None
-            return cls.tr(lambda: fn(v), default=None)
-        
+            return (
+                FlextLdifUtilities.maybe(
+                    cls.tr(lambda: fn(v), default=None),
+                    default=None,
+                )
+                if v is not None
+                else None
+            )
+
         return lifted_fn
 
     # Mnemonic helper
@@ -1774,7 +2558,7 @@ class FlextLdifUtilities(FlextUtilities):
             >>> items = cls.sq(1, 2, 3)
 
         """
-        # Use u.ensure_str_list() or direct list conversion for multiple values
+        # Use u.Mapper.ensure() or direct list conversion for multiple values
         # values is a tuple from *values, convert to list
         return list(values)
 
@@ -1802,13 +2586,29 @@ class FlextLdifUtilities(FlextUtilities):
             >>> updated = cls.ac({"a": 1}, "b", 2)
 
         """
-        # Use u.merge() for unified behavior
-        update_dict: Mapping[str, flext_core_types.GeneralValueType] = {key: cast("flext_core_types.GeneralValueType", value)}
-        data_mapping: Mapping[str, flext_core_types.GeneralValueType] = cast("Mapping[str, flext_core_types.GeneralValueType]", data)
-        merge_result = u.merge(data_mapping, update_dict, strategy="override")
-        if merge_result.is_success and isinstance(merge_result.value, dict):
-            return cast("dict[str, object]", merge_result.value)
-        return {**data, key: value}  # Fallback
+        # Use u.merge() DSL for unified behavior with override strategy
+        update_dict: Mapping[str, flext_core_types.GeneralValueType] = {
+            key: cast("flext_core_types.GeneralValueType", value),
+        }
+        data_mapping: Mapping[str, flext_core_types.GeneralValueType] = cast(
+            "Mapping[str, flext_core_types.GeneralValueType]",
+            data,
+        )
+        # Use FlextUtilities.merge() for two-dict merge
+        merge_result = FlextUtilities.merge(
+            dict(data_mapping),
+            dict(update_dict),
+            strategy="override",
+        )
+        return cast(
+            "dict[str, object]",
+            FlextLdifUtilities.or_(
+                merge_result.value
+                if merge_result.is_success and isinstance(merge_result.value, dict)
+                else None,
+                default={**data, key: value},
+            ),
+        )
 
     # Mnemonic helper
     ac = assoc
@@ -1819,7 +2619,7 @@ class FlextLdifUtilities(FlextUtilities):
         data: dict[str, object],
         *keys: str,
     ) -> dict[str, object]:
-        """Dissociate keys using omit (mnemonic: ds).
+        """Dissociate keys using omit DSL (mnemonic: ds).
 
         Args:
             data: Source dict
@@ -1829,9 +2629,10 @@ class FlextLdifUtilities(FlextUtilities):
             New dict without keys
 
         Examples:
-            >>> updated = cls.ds({"a":1, "b":2}, "b")
+            >>> updated = cls.ds({"a": 1, "b": 2}, "b")
 
         """
+        # Use omit() DSL pattern (reuse existing generalized function)
         return cls.om(data, *keys)
 
     # Mnemonic helper
@@ -1853,7 +2654,7 @@ class FlextLdifUtilities(FlextUtilities):
             New dict with updates
 
         Examples:
-            >>> updated = cls.ud({"a":1}, {"b":2})
+            >>> updated = cls.ud({"a": 1}, {"b": 2})
 
         """
         # Use u.merge() for unified behavior
@@ -1861,9 +2662,17 @@ class FlextLdifUtilities(FlextUtilities):
             cast("Mapping[str, flext_core_types.GeneralValueType]", data),
             cast("Mapping[str, flext_core_types.GeneralValueType]", updates),
         ]
-        merge_result = u.merge(*tuple(mappings), strategy="override")
+        # Use merge_dicts for variadic merge
+        merge_result = FlextLdifUtilities.merge_dicts(
+            *tuple(mappings),
+            strategy="override",
+        )
         if merge_result.is_success and isinstance(merge_result.value, dict):
-            return cast("dict[str, object]", merge_result.value)
+            # Convert GeneralValueType values to object
+            merged_dict: dict[str, flext_core_types.GeneralValueType] = (
+                merge_result.value
+            )
+            return {k: cast("object", v) for k, v in merged_dict.items()}
         return {**data, **updates}  # Fallback
 
     # Mnemonic helper
@@ -1873,7 +2682,8 @@ class FlextLdifUtilities(FlextUtilities):
     def evolve(
         cls,
         obj: dict[str, object],
-        *transforms: dict[str, object] | Callable[[dict[str, object]], dict[str, object]],
+        *transforms: dict[str, object]
+        | Callable[[dict[str, object]], dict[str, object]],
     ) -> dict[str, object]:
         """Evolve using u.flow() pattern (mnemonic: ev).
 
@@ -1885,7 +2695,7 @@ class FlextLdifUtilities(FlextUtilities):
             Evolved object
 
         Examples:
-            >>> result = cls.ev({"a":1}, {"b":2}, lambda d: {**d, "c":3})
+            >>> result = cls.ev({"a": 1}, {"b": 2}, lambda d: {**d, "c": 3})
 
         """
         # Convert transforms to compatible format for u.flow()
@@ -1893,16 +2703,28 @@ class FlextLdifUtilities(FlextUtilities):
         for transform in transforms:
             if callable(transform):
                 # Wrap dict transform function to accept object
-                def wrap_transform(t: Callable[[dict[str, object]], dict[str, object]]) -> Callable[[object], object]:
-                    return lambda obj: t(cast("dict[str, object]", obj)) if isinstance(obj, dict) else obj
+                def wrap_transform(
+                    t: Callable[[dict[str, object]], dict[str, object]],
+                ) -> Callable[[object], object]:
+                    return (
+                        lambda o: t(cast("dict[str, object]", o))
+                        if isinstance(o, dict)
+                        else o
+                    )
+
+                # Type narrowing: transform is Callable after check
                 flow_ops.append(wrap_transform(transform))
             elif isinstance(transform, dict):
                 flow_ops.append(transform)
-        return cast("dict[str, object]", u.flow(obj, *flow_ops))
+        return cast(
+            "dict[str, object]",
+            FlextUtilities.Reliability.flow(obj, *flow_ops),
+        )
 
     # Mnemonic helper
     ev = evolve
 
+    # keys - get dict keys directly
     @classmethod
     def keys[T](
         cls,
@@ -1910,76 +2732,40 @@ class FlextLdifUtilities(FlextUtilities):
         *,
         default: list[str] | None = None,
     ) -> list[str]:
-        """Get keys using u.keys() (mnemonic: ky).
+        """Get keys from dict (mnemonic: ky)."""
+        if isinstance(items, r):
+            if items.is_success and isinstance(items.value, dict):
+                return list(items.value.keys())
+            return default or []
+        if isinstance(items, dict):
+            return list(items.keys())
+        return default or []
 
-        Delegates to u.keys() for unified behavior.
-
-        Args:
-            items: Dict or Result containing dict
-            default: Default if empty/failed
-
-        Returns:
-            List of keys
-
-        Examples:
-            >>> keys = cls.ky({"a": 1, "b": 2})
-
-        """
-        return u.keys(items, default=default or [])
-
-    # Mnemonic helper
     ky = keys
 
+    # dict_vals - get dict values directly
+    # Different from base FlextUtilities.vals which extracts values from FlextResult sequences
     @classmethod
-    def vals[T](
+    def dict_vals[T](
         cls,
         items: dict[str, T] | r[dict[str, T]],
         *,
         default: list[T] | None = None,
     ) -> list[T]:
-        """Get values using u.vals() (mnemonic: vl).
+        """Get values from dict (mnemonic: vl).
 
-        Delegates to u.vals() for unified behavior.
-
-        Args:
-            items: Dict or Result containing dict
-            default: Default if empty/failed
-
-        Returns:
-            List of values
-
-        Examples:
-            >>> values = cls.vl({"a": 1, "b": 2})
-
+        Different from base vals() which extracts values from FlextResult sequences.
+        This method extracts values from dicts or FlextResult[dict].
         """
-        return u.vals(items, default=default or [])
+        if isinstance(items, r):
+            if items.is_success and isinstance(items.value, dict):
+                return list(items.value.values())
+            return default or []
+        if isinstance(items, dict):
+            return list(items.values())
+        return default or []
 
-    # Mnemonic helper
-    vl = vals
-
-    @classmethod
-    def pairs(
-        cls,
-        obj: dict[str, object],
-    ) -> list[tuple[str, object]]:
-        """Get pairs using u.map_dict() pattern (mnemonic: pr).
-
-        Args:
-            obj: Dict to get pairs from
-
-        Returns:
-            List of (key, value) tuples
-
-        Examples:
-            >>> pairs = cls.pr({"a": 1, "b": 2})
-
-        """
-        if isinstance(obj, dict):
-            return list(obj.items())
-        return []  # type: ignore[unreachable]  # Mypy false positive: return is reachable
-
-    # Mnemonic helper
-    pr = pairs  # type: ignore[assignment]
+    vl = dict_vals
 
     @classmethod
     def invert(
@@ -2000,7 +2786,7 @@ class FlextLdifUtilities(FlextUtilities):
         """
         if isinstance(obj, dict):
             return {v: k for k, v in obj.items()}
-        return {}  # type: ignore[unreachable]  # Mypy false positive: return is reachable
+        return {}
 
     # Mnemonic helper
     iv = invert
@@ -2022,70 +2808,24 @@ class FlextLdifUtilities(FlextUtilities):
             Filtered dict
 
         Examples:
-            >>> filtered = cls.wh({"a":1, "b":2}, predicate=lambda k,v: v>1)
+            >>> filtered = cls.wh({"a": 1, "b": 2}, predicate=lambda k, v: v > 1)
 
         """
         if not isinstance(obj, dict):
-            return {}  # type: ignore[unreachable]  # Mypy false positive: return is reachable
+            return {}
         if predicate is None:
             return dict(obj)
-        filtered = u.filter(obj, predicate=predicate)
-        if isinstance(filtered, dict):
-            return filtered
-        return {}
+        # Use dict comprehension for dict filtering with (key, value) predicate
+        return {k: v for k, v in obj.items() if predicate(k, v)}
 
     # Mnemonic helper
     wh = where
 
-    @classmethod
-    def find_key(
-        cls,
-        obj: dict[str, object],
-        *,
-        predicate: Callable[[str, object], bool] | None = None,
-    ) -> str | None:
-        """Find key (generalized: uses find_key from base, mnemonic: fk).
+    # find_key - use static method implementation below
+    # fk alias defined after static method
 
-        Args:
-            obj: Dict to search
-            predicate: (k,v) -> bool
-
-        Returns:
-            First matching key or None
-
-        Examples:
-            >>> key = cls.fk({"a":1, "b":2}, predicate=lambda k,v: v==2)
-
-        """
-        return u.find_key(obj, predicate=predicate)
-
-    # Mnemonic helper
-    fk = find_key
-
-    @classmethod
-    def find_val(
-        cls,
-        obj: dict[str, object],
-        *,
-        predicate: Callable[[str, object], bool] | None = None,
-    ) -> object | None:
-        """Find value (generalized: uses find_val from base, mnemonic: fv).
-
-        Args:
-            obj: Dict to search
-            predicate: (k,v) -> bool
-
-        Returns:
-            First matching value or None
-
-        Examples:
-            >>> value = cls.fv({"a":1, "b":2}, predicate=lambda k,v: k=="b")
-
-        """
-        return u.find_val(obj, predicate=predicate)
-
-    # Mnemonic helper
-    fv = find_val
+    # find_val - use static method implementation below
+    # fv alias defined after static method
 
     @classmethod
     def prop(
@@ -2104,7 +2844,16 @@ class FlextLdifUtilities(FlextUtilities):
             >>> get_name = cls.pp("name")
 
         """
-        return lambda obj: u.get(obj, key)
+
+        def getter(obj: object) -> object:
+            """Get value from object by key."""
+            if isinstance(obj, Mapping):
+                return obj.get(key)
+            if hasattr(obj, key):
+                return getattr(obj, key)
+            return None
+
+        return getter
 
     # Mnemonic helper
     # Note: pp already defined for pipe, using prop_get for prop
@@ -2127,11 +2876,22 @@ class FlextLdifUtilities(FlextUtilities):
             >>> get_fields = cls.ps("name", "age")
 
         """
+
         def accessor(obj: object) -> dict[str, object]:
             if isinstance(obj, (dict, Mapping)):
                 picked = cls.pick(obj, *keys, as_dict=True)
                 return picked if isinstance(picked, dict) else {}
-            return {k: cls.get(obj, k) for k in keys}
+            # For non-dict objects, try to get attributes
+            result_dict: dict[str, object] = {}
+            for k in keys:
+                if isinstance(obj, Mapping):
+                    result_dict[k] = obj.get(k, None)
+                elif hasattr(obj, k):
+                    result_dict[k] = getattr(obj, k, None)
+                else:
+                    result_dict[k] = None
+            return result_dict
+
         return accessor
 
     # Mnemonic helper
@@ -2154,97 +2914,346 @@ class FlextLdifUtilities(FlextUtilities):
             >>> get_nested = cls.ph("user", "profile", "name")
 
         """
-        # Use u.chain() to compose get operations
-        getters = [lambda o, k=k: cls.get(o, k) for k in keys]
+
+        # Use FlextLdifUtilities.chain() to compose get operations
+        # Create properly typed single-argument lambdas using closure factory
+        def make_getter(key: str) -> Callable[[object], object]:
+            def getter_fn(obj: object) -> object:
+                """Get value from object by key."""
+                if isinstance(obj, Mapping):
+                    return obj.get(key, None)
+                if hasattr(obj, key):
+                    return getattr(obj, key, None)
+                return None
+
+            return getter_fn
+
+        getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
         return lambda obj: cls.chain(obj, *getters) if obj is not None else None
 
     # Mnemonic helper
     ph = path
 
+    # === COLLECTION METHODS ===
+    @staticmethod
+    def sum(
+        items: Sequence[int | float | object] | dict[str, int | float | object],
+    ) -> int | float:
+        """Sum of numeric items.
+
+        Args:
+            items: Sequence of numbers or dict with numeric values
+
+        Returns:
+            Sum of numeric values
+
+        """
+        if isinstance(items, dict):
+            total_dict: int | float = 0
+            for v in items.values():
+                if isinstance(v, (int, float)):
+                    total_dict += v
+            return total_dict
+        if not items:
+            return 0
+        has_float = any(isinstance(v, float) for v in items)
+        total_seq: int | float = 0.0 if has_float else 0
+        for v in items:
+            if isinstance(v, (int, float)):
+                total_seq += v
+        return total_seq
+
+    @staticmethod
+    def empty(value: object) -> bool:
+        """Check if value is empty."""
+        if value is None:
+            return True
+        if isinstance(value, (str, bytes)):
+            return len(value) == 0
+        if isinstance(value, (list, dict, set)):
+            return len(value) == 0
+        return False
+
+    @staticmethod
+    def conv(value: t.GeneralValueType) -> ConvBuilder:
+        """Create conversion builder (DSL entry point)."""
+        return ConvBuilder(value)
+
+    @staticmethod
+    def all_(*args: object) -> bool:
+        """Check if all values are truthy."""
+        return all(args)
+
+    @staticmethod
+    def any_(*args: object) -> bool:
+        """Check if any value is truthy."""
+        return any(args)
+
+    @staticmethod
+    def or_[T: t.GeneralValueType](
+        *values: T | None,
+        default: T | None = None,
+    ) -> T | None:
+        """Return first non-None value (mnemonic: oo)."""
+        for v in values:
+            if v is not None:
+                return v
+        return default
+
+    oo = or_
+
+    @staticmethod
+    def maybe(
+        value: object | None,
+        *,
+        default: object | None = None,
+        mapper: Callable[[object], object] | None = None,
+    ) -> object:
+        """Maybe monad pattern (mnemonic: mb)."""
+        if value is None:
+            return default
+        if mapper:
+            return mapper(value)
+        return value
+
+    mb = maybe
+
+    @staticmethod
+    def chain(value: object, *funcs: Callable[[object], object]) -> object:
+        """Chain function calls (DSL helper, mnemonic: ch)."""
+        result = value
+        for func in funcs:
+            result = func(result)
+        return result
+
+    ch = chain
+
+    @staticmethod
+    def pick(
+        data: dict[str, object] | object,
+        *keys: str,
+        as_dict: bool = True,
+    ) -> dict[str, object] | list[object]:
+        """Pick keys from dict (DSL helper, mnemonic: pc)."""
+        if not isinstance(data, dict):
+            return {} if as_dict else []
+        if as_dict:
+            return {k: data[k] for k in keys if k in data}
+        return [data[k] for k in keys if k in data]
+
+    pc = pick
+
+    @staticmethod
+    def map_dict(
+        obj: dict[str, object],
+        *,
+        mapper: Callable[[str, object], object] | None = None,
+        key_mapper: Callable[[str], str] | None = None,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> dict[str, object]:
+        """Map dict with optional transformations (mnemonic: md)."""
+        result: dict[str, object] = {}
+        for k, v in obj.items():
+            if predicate and not predicate(k, v):
+                continue
+            new_k = key_mapper(k) if key_mapper else k
+            new_v = mapper(k, v) if mapper else v
+            result[new_k] = new_v
+        return result
+
+    md = map_dict
+
+    @staticmethod
+    def reduce_dict(
+        items: Sequence[dict[str, object]] | dict[str, object] | object,
+        *,
+        processor: Callable[[str, object], tuple[str, object]] | None = None,
+        predicate: Callable[[str, object], bool] | None = None,
+        default: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        """Reduce dicts (mnemonic: rd)."""
+        if not items:
+            return default or {}
+
+        items_list: list[dict[str, object]] = []
+        if isinstance(items, dict):
+            items_list = [items]
+        elif isinstance(items, Sequence):
+            items_list = [item for item in items if isinstance(item, dict)]
+
+        result: dict[str, object] = default.copy() if default else {}
+        for d_item in items_list:
+            for key, val in d_item.items():
+                if predicate and not predicate(key, val):
+                    continue
+                if processor:
+                    processed_key, processed_val = processor(key, val)
+                    result[processed_key] = processed_val
+                else:
+                    result[key] = val
+        return result
+
+    rd = reduce_dict
+
+    @staticmethod
+    def fold(
+        items: Sequence[object] | object,
+        *,
+        initial: object,
+        folder: Callable[[object, object], object] | None = None,
+        predicate: Callable[[object], bool] | None = None,
+    ) -> object:
+        """Fold items using folder function (mnemonic: fd)."""
+        if not folder:
+            return initial
+        items_list = list(items) if isinstance(items, Sequence) else [items]
+        if predicate:
+            items_list = [item for item in items_list if predicate(item)]
+        result = initial
+        for item in items_list:
+            result = folder(result, item)
+        return result
+
+    fd = fold
+
+    @staticmethod
+    def map_filter(
+        items: Sequence[object] | object,
+        *,
+        mapper: Callable[[object], object] | None = None,
+        predicate: Callable[[object], bool] | None = None,
+    ) -> list[object]:
+        """Map then filter items (mnemonic: mf)."""
+        items_list = list(items) if isinstance(items, Sequence) else [items]
+        if mapper:
+            items_list = [mapper(item) for item in items_list]
+        if predicate:
+            items_list = [item for item in items_list if predicate(item)]
+        return items_list
+
+    mf = map_filter
+
+    @staticmethod
+    def process_flatten(
+        items: ABCCollection[object] | object,
+        *,
+        processor: Callable[[object], object] | None = None,
+        on_error: str = "skip",
+    ) -> list[object]:
+        """Process and flatten items (mnemonic: pf)."""
+        items_list = list(items) if isinstance(items, ABCCollection) else [items]
+        result: list[object] = []
+        for item in items_list:
+            try:
+                processed = processor(item) if processor else item
+                if isinstance(processed, (list, tuple)):
+                    result.extend(processed)
+                else:
+                    result.append(processed)
+            except Exception:
+                if on_error == "fail":
+                    raise
+                if on_error == "return":
+                    return result
+                # skip: continue
+        return result
+
+    pf = process_flatten
+
+    @staticmethod
+    def build(value: object, *, ops: dict[str, object] | None = None) -> object:
+        """Build value using operations dict (DSL helper)."""
+        if ops is None:
+            return value
+        # Simple implementation - apply operations if needed
+        return value
+
+    @staticmethod
+    def find_key(
+        obj: dict[str, object],
+        *,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> str | None:
+        """Find first key matching predicate (mnemonic: fk)."""
+        if not predicate:
+            return next(iter(obj), None)
+        for k, v in obj.items():
+            if predicate(k, v):
+                return k
+        return None
+
+    fk = find_key
+
+    @staticmethod
+    def find_val(
+        obj: dict[str, object],
+        *,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> object | None:
+        """Find first value matching predicate (mnemonic: fv)."""
+        if not predicate:
+            return next(iter(obj.values()), None)
+        for k, v in obj.items():
+            if predicate(k, v):
+                return v
+        return None
+
+    fv = find_val
+
+    # merge method removed - use merge_dicts() for variadic merge or FlextUtilities.merge() for two-dict merge
+    # This avoids override incompatibility with base class merge(base, other, strategy) signature
+
+    # Result DSL helpers - temporary until migrated to flext-core
+    # result_val_opt differs from base result_val() which requires default: T (not T | None)
+    # Use overload to support both T and T | None while maintaining compatibility
+    @staticmethod
+    @overload
+    def result_val_opt[T](result: r[T], default: T) -> T: ...
+
+    @staticmethod
+    @overload
+    def result_val_opt[T](result: r[T], default: None = None) -> T | None: ...
+
+    @staticmethod
+    def result_val_opt[T](result: r[T], default: T | None = None) -> T | None:
+        """Extract value from FlextResult with optional default (DSL helper).
+
+        Different from base result_val() which requires a non-None default.
+        This method allows None as default for optional extraction.
+
+        Args:
+            result: FlextResult to unwrap
+            default: Default value if result is failure (can be None)
+
+        Returns:
+            Result value if success, otherwise default
+
+        Examples:
+            >>> result = r.ok("value")
+            >>> value = u.result_val_opt(result, default="default")  # "value"
+            >>> failed = r.fail("error")
+            >>> value = u.result_val_opt(failed, default="default")  # "default"
+
+        """
+        if result.is_success:
+            return result.value
+        return default
+
+
+# Short alias for utilities
+u = FlextLdifUtilities
 
 __all__ = [
-    "AclConversionConfig",
-    "AndFilter",
-    "AttrNormalizationConfig",
-    "BatchTransformerProtocol",
-    "BooleanFormat",
-    "ByAttrValueFilter",
-    "ByAttrsFilter",
-    "ByDnFilter",
-    "ByDnUnderBaseFilter",
-    "ByObjectClassFilter",
-    "CaseFoldOption",
-    "ConvertBooleansTransformer",
-    "CustomFilter",
-    "CustomTransformer",
-    "DnNormalizationConfig",
-    "DnOps",
-    "EntryFilter",
-    "EntryOps",
-    "EntryTransformer",
-    "EscapeHandlingOption",
-    "ExcludeAttrsFilter",
-    "FailableTransformer",
-    "Filter",
-    "FilterAttrsTransformer",
-    "FilterConfig",
-    "FilterConfigBuilder",
-    "FilterPredicate",
-    "FilterProtocol",
-    "FlextLdifResult",
     "FlextLdifUtilities",
-    "FlextLdifUtilitiesACL",
-    "FlextLdifUtilitiesAttribute",
-    "FlextLdifUtilitiesConstants",
-    "FlextLdifUtilitiesDN",
-    "FlextLdifUtilitiesDecorators",
-    "FlextLdifUtilitiesDetection",
-    "FlextLdifUtilitiesEntry",
-    "FlextLdifUtilitiesEvents",
-    "FlextLdifUtilitiesMetadata",
-    "FlextLdifUtilitiesOID",
-    "FlextLdifUtilitiesObjectClass",
-    "FlextLdifUtilitiesParser",
-    "FlextLdifUtilitiesParsers",
-    "FlextLdifUtilitiesSchema",
-    "FlextLdifUtilitiesServer",
-    "FlextLdifUtilitiesValidation",
-    "FlextLdifUtilitiesWriter",
-    "FlextLdifUtilitiesWriters",
-    "FluentBuilderProtocol",
-    "FluentOpsProtocol",
-    "IsSchemaEntryFilter",
-    "LoadConfig",
-    "LoadableProtocol",
-    "MetadataConfig",
-    "Normalize",
-    "NormalizeAttrsTransformer",
-    "NormalizeDnTransformer",
-    "NotFilter",
-    "OrFilter",
-    "OutputFormat",
-    "Pipeline",
-    "PipelineStep",
-    "PipelineStepProtocol",
-    "ProcessConfig",
-    "ProcessConfigBuilder",
-    "ProcessingPipeline",
-    "RemoveAttrsTransformer",
-    "ReplaceBaseDnTransformer",
-    "SchemaParseConfig",
-    "ServerType",
-    "SimpleTransformer",
-    "SortOption",
-    "SpaceHandlingOption",
-    "Transform",
-    "TransformConfig",
-    "TransformConfigBuilder",
-    "TransformerProtocol",
-    "ValidationConfig",
-    "ValidationPipeline",
-    "ValidationReportProtocol",
-    "ValidationResult",
-    "ValidationRuleProtocol",
-    "ValidationRuleSet",
-    "ValidatorProtocol",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
 ]

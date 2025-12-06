@@ -1,19 +1,11 @@
-"""Test utilities for server quirks testing.
-
-This module provides utility functions and fixtures for testing server-specific
-quirks implementations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
-from tests.helpers.test_assertions import TestAssertions
+from flext_ldif.models import m
+from tests import m
 
 
 class FlextLdifTestUtils:
@@ -63,7 +55,7 @@ class FlextLdifTestUtils:
         ldif_api: FlextLdif,
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Load a fixture LDIF file and return parsed entries.
 
         Args:
@@ -106,7 +98,7 @@ class FlextLdifTestUtils:
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         expected_min_count: int | None = None,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Load fixture LDIF file and return parsed entries with validation.
 
         Args:
@@ -145,7 +137,7 @@ class FlextLdifTestUtils:
         expected_has_dn: bool = True,
         expected_has_attributes: bool = True,
         expected_has_objectclass: bool | None = None,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Load fixture and validate entry structure.
 
         Args:
@@ -195,7 +187,7 @@ class FlextLdifTestUtils:
         tmp_path: Path,
         *,
         validate_identical: bool = True,
-    ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry], bool]:
+    ) -> tuple[list[m.Entry], list[m.Entry], bool]:
         """Run roundtrip test on fixture.
 
         Args:
@@ -221,13 +213,13 @@ class FlextLdifTestUtils:
             output_path=output_file,
             server_type=server_type,
         )
-        TestAssertions.assert_success(write_result, "Write should succeed")
+        self.assert_success(write_result, "Write should succeed")
 
         parse_result = ldif_api.parse(
             output_file,
             server_type=server_type,
         )
-        TestAssertions.assert_success(parse_result, "Re-parse should succeed")
+        self.assert_success(parse_result, "Re-parse should succeed")
 
         parsed_data = parse_result.unwrap()
         if isinstance(parsed_data, list):
@@ -263,7 +255,7 @@ class FlextLdifTestUtils:
         server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
         fixture_filename: str,
         tmp_path: Path | None = None,
-    ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry], bool]:
+    ) -> tuple[list[m.Entry], list[m.Entry], bool]:
         """Run a roundtrip test on a fixture.
 
         Parse -> Write -> Parse and compare original vs roundtrip entries.
@@ -322,8 +314,8 @@ class FlextLdifTestUtils:
 
     @staticmethod
     def compare_entries(
-        original_entries: list[FlextLdifModels.Entry],
-        roundtrip_entries: list[FlextLdifModels.Entry],
+        original_entries: list[m.Entry],
+        roundtrip_entries: list[m.Entry],
     ) -> tuple[bool, list[str]]:
         """Compare two lists of entries for differences.
 

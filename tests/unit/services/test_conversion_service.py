@@ -1,14 +1,3 @@
-"""Comprehensive unit tests for FlextLdifConversion service.
-
-Tests all conversion service methods with REAL implementations.
-No mocks, patches, or bypasses - only real code execution.
-
-Consolidated test class using StrEnum scenarios and pytest.mark.parametrize.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -17,8 +6,9 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
+from flext_tests.matchers import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
@@ -26,7 +16,7 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes
-from tests.helpers.test_assertions import TestAssertions
+from tests import m, s
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -70,7 +60,7 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 
 
 @pytest.fixture
-def simple_entry() -> FlextLdifModels.Entry:
+def simple_entry() -> m.Entry:
     """Create simple entry for conversion testing."""
     return TestAssertions.create_entry(
         "cn=test,dc=example,dc=com",
@@ -83,7 +73,7 @@ def simple_entry() -> FlextLdifModels.Entry:
 
 
 @pytest.fixture
-def complex_entry() -> FlextLdifModels.Entry:
+def complex_entry() -> m.Entry:
     """Create complex entry for conversion testing."""
     return TestAssertions.create_entry(
         "cn=John Doe,ou=People,dc=example,dc=com",
@@ -102,7 +92,7 @@ def complex_entry() -> FlextLdifModels.Entry:
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestFlextLdifConversionService:
+class TestsTestFlextLdifConversionService(s):
     """Test FlextLdifConversion service with real implementations."""
 
     class ExecuteScenario(StrEnum):
@@ -194,10 +184,8 @@ class TestFlextLdifConversionService:
         result = conversion_service.execute()
         assert result.is_success
         entry = result.unwrap()
-        # Entry can be FlextLdifModels.Entry or FlextLdifModelsDomains.Entry
-        from flext_ldif._models.domain import FlextLdifModelsDomains
-
-        assert isinstance(entry, (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry))
+        # Entry can be m.Entry or m.Entry
+        assert isinstance(entry, (m.Entry, m.Entry))
         # Type narrowing: ensure dn is not None
         if entry.dn is not None:
             assert entry.dn.value == "cn=health-check"
@@ -207,13 +195,11 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
     ) -> None:
         """Test execute() health check succeeds."""
-        from flext_ldif._models.domain import FlextLdifModelsDomains
-
         result = conversion_service.execute()
         assert result.is_success
         entry = result.unwrap()
-        # execute() returns FlextLdifModelsDomains.Entry, not FlextLdifModels.Entry
-        assert isinstance(entry, (FlextLdifModels.Entry, FlextLdifModelsDomains.Entry))
+        # execute() returns m.Entry, not m.Entry
+        assert isinstance(entry, (m.Entry, m.Entry))
         # Type narrowing: ensure attributes is not None
         if entry.attributes is not None:
             assert entry.attributes.attributes == {}
@@ -272,16 +258,18 @@ class TestFlextLdifConversionService:
         self,
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test converting Entry from RFC to RFC (roundtrip)."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, rfc_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            rfc_quirk,
+            rfc_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_success
         converted = result.unwrap()
-        assert isinstance(converted, FlextLdifModels.Entry)
+        assert isinstance(converted, m.Entry)
         # Type narrowing: ensure dn is not None
         if converted.dn is not None and simple_entry.dn is not None:
             assert converted.dn.value == simple_entry.dn.value
@@ -291,16 +279,18 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test converting Entry from RFC to OID."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_success
         converted = result.unwrap()
-        assert isinstance(converted, FlextLdifModels.Entry)
+        assert isinstance(converted, m.Entry)
         # Type narrowing: ensure dn is not None
         if converted.dn is not None and simple_entry.dn is not None:
             assert converted.dn.value == simple_entry.dn.value
@@ -310,16 +300,18 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
         oud_quirk: FlextLdifServersOud,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test converting Entry from OID to OUD."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            oid_quirk, oud_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            oid_quirk,
+            oud_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_success
         converted = result.unwrap()
-        assert isinstance(converted, FlextLdifModels.Entry)
+        assert isinstance(converted, m.Entry)
         # Type narrowing: ensure dn is not None
         if converted.dn is not None and simple_entry.dn is not None:
             assert converted.dn.value == simple_entry.dn.value
@@ -329,46 +321,52 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
         oud_quirk: FlextLdifServersOud,
         rfc_quirk: FlextLdifServersRfc,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
-        """Test converting Entry from OUD to RFC."""
+        """Test converting Entry from OUD to c.RFC."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            oud_quirk, rfc_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            oud_quirk,
+            rfc_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_success
         converted = result.unwrap()
-        assert isinstance(converted, FlextLdifModels.Entry)
+        assert isinstance(converted, m.Entry)
 
     def test_convert_with_string_server_types(
         self,
         conversion_service: FlextLdifConversion,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test converting Entry using string server types."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            "rfc", "oid", cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            "rfc",
+            "oid",
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_success
         converted = result.unwrap()
-        assert isinstance(converted, FlextLdifModels.Entry)
+        assert isinstance(converted, m.Entry)
 
     def test_convert_complex_entry(
         self,
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
-        complex_entry: FlextLdifModels.Entry,
+        complex_entry: m.Entry,
     ) -> None:
         """Test converting complex Entry."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", complex_entry)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", complex_entry),
         )
         assert result.is_success
         converted = result.unwrap()
-        assert isinstance(converted, FlextLdifModels.Entry)
+        assert isinstance(converted, m.Entry)
         # Type narrowing: ensure dn is not None
         if converted.dn is not None and complex_entry.dn is not None:
             assert converted.dn.value == complex_entry.dn.value
@@ -382,10 +380,13 @@ class TestFlextLdifConversionService:
         invalid_model = "this is not a valid model"
         # Cast to ConvertibleModel for type checker (will fail at runtime)
         result = conversion_service.convert(
-            rfc_quirk, rfc_quirk, cast("FlextLdifTypes.ConvertibleModel", invalid_model)
+            rfc_quirk,
+            rfc_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", invalid_model),
         )
         assert result.is_failure
-        assert result.error is not None and "Unsupported model type" in result.error
+        assert result.error is not None
+        assert "Unsupported model type" in result.error
 
     def test_convert_entry_with_invalid_dn(
         self,
@@ -393,13 +394,15 @@ class TestFlextLdifConversionService:
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test converting Entry with invalid DN."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="invalid-dn-format"),
-            attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+        entry = m.Entry(
+            dn=m.DistinguishedName(value="invalid-dn-format"),
+            attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
         )
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, rfc_quirk, cast("FlextLdifTypes.ConvertibleModel", entry)
+            rfc_quirk,
+            rfc_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", entry),
         )
         assert result.is_failure
         error_msg = result.error or ""
@@ -418,14 +421,14 @@ class TestFlextLdifConversionService:
         result = conversion_service.batch_convert(rfc_quirk, rfc_quirk, [])
         assert result.is_success
         converted = result.unwrap()
-        assert len(converted) == 0
+        FlextTestsMatchers.assert_length_zero(converted)
 
     def test_batch_convert_single_entry(
         self,
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test batch_convert with single entry."""
         # Cast Entry to ConvertibleModel for type checker
@@ -436,8 +439,8 @@ class TestFlextLdifConversionService:
         )
         assert result.is_success
         converted = result.unwrap()
-        assert len(converted) == 1
-        assert isinstance(converted[0], FlextLdifModels.Entry)
+        FlextTestsMatchers.assert_length_equals(converted, 1)
+        assert isinstance(converted[0], m.Entry)
 
     def test_batch_convert_multiple_entries(
         self,
@@ -464,8 +467,8 @@ class TestFlextLdifConversionService:
         )
         assert result.is_success
         converted = result.unwrap()
-        assert len(converted) == 2
-        assert all(isinstance(e, FlextLdifModels.Entry) for e in converted)
+        FlextTestsMatchers.assert_length_equals(converted, 2)
+        assert all(isinstance(e, m.Entry) for e in converted)
 
     def test_batch_convert_with_partial_failures(
         self,
@@ -479,9 +482,9 @@ class TestFlextLdifConversionService:
                 "cn=valid,dc=example,dc=com",
                 {"cn": ["valid"], "objectClass": ["person"]},
             ),
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="invalid-dn"),
-                attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+            m.Entry(
+                dn=m.DistinguishedName(value="invalid-dn"),
+                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
             ),
         ]
         # Cast list[Entry] to Sequence[ConvertibleModel] for type checker
@@ -492,7 +495,7 @@ class TestFlextLdifConversionService:
         )
         if result.is_success:
             converted = result.unwrap()
-            assert len(converted) >= 1
+            FlextTestsMatchers.assert_length_greater_or_equal(converted, 1)
         else:
             error_msg = result.error or ""
             assert "error" in error_msg.lower() or "validation" in error_msg.lower()
@@ -509,7 +512,7 @@ class TestFlextLdifConversionService:
         assert conversion_service.dn_registry is not None
         assert isinstance(
             conversion_service.dn_registry,
-            FlextLdifModels.DnRegistry,
+            m.DnRegistry,
         )
 
     def test_dn_registry_tracks_dns(
@@ -517,12 +520,14 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test DN registry tracks DNs during conversion."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_success
         assert conversion_service.dn_registry is not None
@@ -640,47 +645,58 @@ class TestFlextLdifConversionService:
         conversion_service: FlextLdifConversion,
         rfc_quirk: FlextLdifServersRfc,
         oid_quirk: FlextLdifServersOid,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
-        """Test roundtrip conversion: RFC → OID → RFC."""
+        """Test roundtrip conversion: RFC → OID → c.RFC."""
         # Cast Entry to ConvertibleModel for type checker
         result1 = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result1.is_success
         oid_entry = result1.unwrap()
         result2 = conversion_service.convert(
-            oid_quirk, rfc_quirk, cast("FlextLdifTypes.ConvertibleModel", oid_entry)
+            oid_quirk,
+            rfc_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", oid_entry),
         )
         assert result2.is_success
         rfc_entry = result2.unwrap()
         # Type narrowing: ensure dn is not None and rfc_entry is Entry
-        if isinstance(rfc_entry, FlextLdifModels.Entry):
-            if rfc_entry.dn is not None and simple_entry.dn is not None:
-                assert rfc_entry.dn.value == simple_entry.dn.value
+        if (
+            isinstance(rfc_entry, m.Entry)
+            and rfc_entry.dn is not None
+            and simple_entry.dn is not None
+        ):
+            assert rfc_entry.dn.value == simple_entry.dn.value
 
     def test_roundtrip_oid_to_oud_to_oid(
         self,
         conversion_service: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
         oud_quirk: FlextLdifServersOud,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test roundtrip conversion: OID → OUD → OID."""
         # Cast Entry to ConvertibleModel for type checker
         result1 = conversion_service.convert(
-            oid_quirk, oud_quirk, cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            oid_quirk,
+            oud_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result1.is_success
         oud_entry = result1.unwrap()
         result2 = conversion_service.convert(
-            oud_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", oud_entry)
+            oud_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", oud_entry),
         )
         assert result2.is_success
         oid_entry_result = result2.unwrap()
         # Type narrowing: ensure dn is not None
         if (
-            isinstance(oid_entry_result, FlextLdifModels.Entry)
+            isinstance(oid_entry_result, m.Entry)
             and oid_entry_result.dn is not None
             and simple_entry.dn is not None
         ):
@@ -697,18 +713,20 @@ class TestFlextLdifConversionService:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test SchemaAttribute conversion is supported."""
-        attr = FlextLdifModels.SchemaAttribute(
+        attr = m.SchemaAttribute(
             oid="2.5.4.3",
             name="cn",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         # Cast SchemaAttribute to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", attr)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", attr),
         )
         assert result.is_success
         converted_attr = result.unwrap()
-        assert isinstance(converted_attr, FlextLdifModels.SchemaAttribute)
+        assert isinstance(converted_attr, m.SchemaAttribute)
         assert converted_attr.name == "cn"
 
     def test_convert_schema_objectclass(
@@ -718,18 +736,20 @@ class TestFlextLdifConversionService:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test SchemaObjectClass conversion is supported."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             oid="2.5.6.6",
             name="person",
             kind="STRUCTURAL",
         )
         # Cast SchemaObjectClass to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", oc)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", oc),
         )
         assert result.is_success
         converted_oc = result.unwrap()
-        assert isinstance(converted_oc, FlextLdifModels.SchemaObjectClass)
+        assert isinstance(converted_oc, m.SchemaObjectClass)
         assert converted_oc.name == "person"
 
     # ────────────────────────────────────────────────────────────────────────
@@ -750,7 +770,9 @@ class TestFlextLdifConversionService:
         acl = parse_result.unwrap()
         # Cast Acl to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, oid_quirk, cast("FlextLdifTypes.ConvertibleModel", acl)
+            rfc_quirk,
+            oid_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", acl),
         )
         assert isinstance(result, FlextResult)
 
@@ -767,7 +789,9 @@ class TestFlextLdifConversionService:
         acl = parse_result.unwrap()
         # Cast Acl to ConvertibleModel for type checker
         result = conversion_service.convert(
-            rfc_quirk, rfc_quirk, cast("FlextLdifTypes.ConvertibleModel", acl)
+            rfc_quirk,
+            rfc_quirk,
+            cast("FlextLdifTypes.ConvertibleModel", acl),
         )
         assert isinstance(result, FlextResult)
 
@@ -778,12 +802,14 @@ class TestFlextLdifConversionService:
     def test_convert_with_invalid_source_type(
         self,
         conversion_service: FlextLdifConversion,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test convert with invalid source server type."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            "invalid_type", "rfc", cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            "invalid_type",
+            "rfc",
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_failure
         error_msg = result.error or ""
@@ -792,12 +818,14 @@ class TestFlextLdifConversionService:
     def test_convert_with_invalid_target_type(
         self,
         conversion_service: FlextLdifConversion,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test convert with invalid target server type."""
         # Cast Entry to ConvertibleModel for type checker
         result = conversion_service.convert(
-            "rfc", "invalid_type", cast("FlextLdifTypes.ConvertibleModel", simple_entry)
+            "rfc",
+            "invalid_type",
+            cast("FlextLdifTypes.ConvertibleModel", simple_entry),
         )
         assert result.is_failure
         error_msg = result.error or ""
@@ -806,7 +834,7 @@ class TestFlextLdifConversionService:
     def test_batch_convert_with_invalid_source(
         self,
         conversion_service: FlextLdifConversion,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Test batch_convert with invalid source."""
         # Cast Entry to ConvertibleModel for type checker

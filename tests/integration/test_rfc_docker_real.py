@@ -16,11 +16,12 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifModels,
     FlextLdifParser,
     FlextLdifWriter,
 )
+from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
+from tests import m
 
 
 class TestRfcDockerRealData:
@@ -217,9 +218,9 @@ class TestRfcDockerRealData:
         try:
             output_file = readonly_dir / "test.ldif"
             # Create test entry
-            test_entry = FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+            test_entry = m.Entry(
+                dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
             writer = FlextLdifWriter()
@@ -345,11 +346,11 @@ class TestRfcIntegrationRealWorld:
         # Create 100 test entries
         # Create Entry models directly (writer expects Entry objects, not dicts)
         entry_models = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(
+            m.Entry(
+                dn=m.DistinguishedName(
                     value=f"cn=user{i},ou=people,dc=example,dc=com",
                 ),
-                attributes=FlextLdifModels.LdifAttributes(
+                attributes=m.LdifAttributes(
                     attributes={
                         "cn": [f"user{i}"],
                         "objectClass": ["person", "inetOrgPerson"],

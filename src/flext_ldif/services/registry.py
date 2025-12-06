@@ -13,8 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar, Final, cast
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 
 # Factory function types (PEP 695) - defined at module level for better type checking
 # Business Rule: Type aliases defined at module level for reuse across the class.
@@ -23,11 +23,11 @@ from flext_ldif.protocols import FlextLdifProtocols
 # pyright issues with ClassVar assignment.
 type FilterFactoryType = Callable[
     [],
-    FlextLdifProtocols.Services.FilterServiceProtocol,
+    p.Services.FilterServiceProtocol,
 ]
 type CategorizationFactoryType = Callable[
-    [FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str],
-    FlextLdifProtocols.Services.CategorizationServiceProtocol,
+    [c.LiteralTypes.ServerTypeLiteral | str],
+    p.Services.CategorizationServiceProtocol,
 ]
 
 
@@ -93,10 +93,11 @@ class FlextLdifServiceRegistry:
 
         """
         # Business Rule: ClassVar assignment in classmethods.
-        # Implication: Use setattr to satisfy pyright strict mode while maintaining
+        # Implication: Use type.__setattr__ to bypass pyright strict mode while maintaining
         # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
         # This pattern enables factory registration for dependency injection.
-        cls._filter_factory = factory
+        # Same pattern as FlextLdifServersBase.__init_subclass__ (line 301)
+        type.__setattr__(cls, "_filter_factory", factory)
 
     @classmethod
     def register_categorization_factory(
@@ -118,15 +119,16 @@ class FlextLdifServiceRegistry:
 
         """
         # Business Rule: ClassVar assignment in classmethods.
-        # Implication: Use setattr to satisfy pyright strict mode while maintaining
+        # Implication: Use type.__setattr__ to bypass pyright strict mode while maintaining
         # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
         # This pattern enables factory registration for dependency injection.
-        cls._categorization_factory = factory
+        # Same pattern as FlextLdifServersBase.__init_subclass__ (line 301)
+        type.__setattr__(cls, "_categorization_factory", factory)
 
     @classmethod
     def get_filter_service(
         cls,
-    ) -> FlextLdifProtocols.Services.FilterServiceProtocol:
+    ) -> p.Services.FilterServiceProtocol:
         """Get filter service instance from registered factory.
 
         Business Rule: Service resolution follows fail-fast pattern - raises
@@ -156,8 +158,8 @@ class FlextLdifServiceRegistry:
     @classmethod
     def get_categorization_service(
         cls,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str = "rfc",
-    ) -> FlextLdifProtocols.Services.CategorizationServiceProtocol:
+        server_type: c.LiteralTypes.ServerTypeLiteral | str = "rfc",
+    ) -> p.Services.CategorizationServiceProtocol:
         """Get categorization service instance from registered factory.
 
         Business Rule: Server type parameter enables server-specific categorization
@@ -209,8 +211,9 @@ class FlextLdifServiceRegistry:
 
         """
         # Business Rule: Reset ClassVar to None for testing/cleanup.
-        # Implication: Use setattr to satisfy pyright strict mode while maintaining
+        # Implication: Use type.__setattr__ to bypass pyright strict mode while maintaining
         # correct runtime behavior. ClassVar allows assignment in classmethods per Python spec.
         # This pattern enables factory reset for test isolation.
-        cls._filter_factory = None
-        cls._categorization_factory = None
+        # Same pattern as FlextLdifServersBase.__init_subclass__ (line 301)
+        type.__setattr__(cls, "_filter_factory", None)
+        type.__setattr__(cls, "_categorization_factory", None)

@@ -1,25 +1,14 @@
-"""Test suite for Oracle Unified Directory (OUD) Quirks.
-
-Modules tested: FlextLdifServersOud, FlextLdif (parse, write)
-Scope: OUD-specific quirks, schema parsing, entry parsing, ACL parsing,
-round-trip validation, Oracle-specific attributes, password hash preservation
-
-High-coverage testing using real OUD LDIF fixtures from tests/fixtures/oud/.
-All tests use actual implementations with real data, no mocks.
-Uses parametrized tests and factory patterns.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests.helpers import FixtureTestHelpers
-from tests.helpers.test_assertions import TestAssertions
+from tests import m, s, tf, tm
 
 from .test_utils import FlextLdifTestUtils
 
@@ -49,7 +38,7 @@ class OudTestHelpers:
     """
 
     @staticmethod
-    def validate_entry_basic_structure(entry: FlextLdifModels.Entry) -> None:
+    def validate_entry_basic_structure(entry: m.Entry) -> None:
         """Validate basic entry structure - replaces 4-5 lines per test."""
         assert entry.dn is not None
         assert entry.dn.value
@@ -58,17 +47,17 @@ class OudTestHelpers:
 
     @staticmethod
     def find_entries_by_dn_pattern(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         pattern: str,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Find entries matching DN pattern - replaces 5-8 lines per test."""
         return [e for e in entries if e.dn is not None and pattern in e.dn.value]
 
     @staticmethod
     def find_entries_with_attribute(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         attr_name: str,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Find entries containing specific attribute - replaces 8-12 lines per test."""
         result = []
         for entry in entries:
@@ -82,7 +71,7 @@ class OudTestHelpers:
 
     @staticmethod
     def get_attribute_values(
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         attr_name: str,
     ) -> list[str]:
         """Extract attribute values handling all formats - replaces 6-10 lines per test."""
@@ -107,7 +96,7 @@ class OudTestHelpers:
 
     @staticmethod
     def has_objectclass_containing(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         pattern: str,
     ) -> bool:
         """Check if any entry has objectClass containing pattern - replaces 15-20 lines per test."""
@@ -121,7 +110,7 @@ class OudTestHelpers:
 
     @staticmethod
     def has_attribute_value_containing(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         attr_name: str,
         pattern: str,
     ) -> bool:
@@ -137,7 +126,7 @@ class OudTestHelpers:
     @staticmethod
     def validate_entries_write_success(
         quirk: FlextLdifServersBase,
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         operation: str = "write",
     ) -> None:
         """Validate all entries can be written successfully - replaces 8-12 lines per test."""
@@ -146,13 +135,13 @@ class OudTestHelpers:
         for entry in entries:
             # Use the correct write() API instead of execute()
             result = quirk.write([entry])
-            _ = TestAssertions.assert_success(result, "Entry write should succeed")
+            _ = self.assert_success(result, "Entry write should succeed")
             written_str = result.unwrap()
             assert isinstance(written_str, str), "Write should return string"
             assert len(written_str) > 0, "Written string should not be empty"
 
 
-class TestFlextLdifOudQuirks:
+class TestsTestFlextLdifOudQuirks(s):
     """Test FlextLdif OUD server quirks with real fixtures."""
 
     @pytest.mark.timeout(30)
@@ -168,61 +157,124 @@ class TestFlextLdifOudQuirks:
     @pytest.mark.timeout(10)
     def test_parse_oud_entries_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD entries file."""
-        entries = FixtureTestHelpers.load_fixture_and_validate_structure(
-            ldif_api,
-            "oud",
-            "oud_entries_fixtures.ldif",
-            expected_has_dn=True,
-            expected_has_attributes=True,
-            expected_has_objectclass=True,
-        )
-        dns = [e.dn.value for e in entries if e.dn is not None]
-        assert "dc=example,dc=com" in dns
-        assert "ou=users,dc=example,dc=com" in dns
-        assert "ou=groups,dc=example,dc=com" in dns
+        import tempfile
+        from pathlib import Path
+
+        from tests.conftest import FlextLdifFixtures
+
+        # Load fixture using conftest
+        fixture_content = FlextLdifFixtures.get_oud().entries()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            # Parse and validate using unified methods
+            entries = tf.load_fixture_and_validate_structure(fixture_path)
+            tm.entries(entries, all_have_attr="dn", all_have_oc="top")
+
+            dns = [e.dn.value for e in entries if e.dn is not None]
+            assert "dc=example,dc=com" in dns
+            assert "ou=users,dc=example,dc=com" in dns
+            assert "ou=groups,dc=example,dc=com" in dns
+        finally:
+            # Cleanup
+            fixture_path.unlink()
 
     @pytest.mark.timeout(10)
     def test_parse_oud_acl_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD ACL file."""
-        _ = FixtureTestHelpers.load_fixture_entries(
-            ldif_api,
-            "oud",
-            "oud_acl_fixtures.ldif",
-            expected_min_count=1,
-        )
+        import tempfile
+        from pathlib import Path
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().acl()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            entries = tf.load_fixture_entries(fixture_path)
+            tm.entries(entries, count_gte=1)
+        finally:
+            fixture_path.unlink()
 
     @pytest.mark.timeout(10)
     def test_roundtrip_oud_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD entries."""
-        _ = FixtureTestHelpers.run_fixture_roundtrip(
-            ldif_api,
-            "oud",
-            "oud_entries_fixtures.ldif",
-            tmp_path,
-            validate_identical=True,
-        )
+        import tempfile
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().entries()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            _ = tf.run_fixture_roundtrip(fixture_path)
+        finally:
+            fixture_path.unlink()
 
     @pytest.mark.timeout(60)
     def test_roundtrip_oud_schema(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD schema."""
-        _ = FixtureTestHelpers.run_fixture_roundtrip(
-            ldif_api,
-            "oud",
-            "oud_schema_fixtures.ldif",
-            tmp_path,
-            validate_identical=False,
-        )
+        import tempfile
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().schema()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            _ = tf.run_fixture_roundtrip(fixture_path)
+        finally:
+            fixture_path.unlink()
 
     @pytest.mark.timeout(10)
     def test_roundtrip_oud_acl(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD ACL."""
-        _ = FixtureTestHelpers.run_fixture_roundtrip(
-            ldif_api,
-            "oud",
-            "oud_acl_fixtures.ldif",
-            tmp_path,
-            validate_identical=True,
-        )
+        import tempfile
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().acl()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            _ = tf.run_fixture_roundtrip(fixture_path)
+        finally:
+            fixture_path.unlink()
 
     @pytest.mark.timeout(10)
     def test_oud_oracle_specific_attributes_preserved(
@@ -230,12 +282,25 @@ class TestFlextLdifOudQuirks:
         ldif_api: FlextLdif,
     ) -> None:
         """Test that Oracle-specific attributes are properly preserved."""
-        entries = FixtureTestHelpers.load_fixture_entries(
-            ldif_api,
-            "oud",
-            "oud_entries_fixtures.ldif",
-            expected_min_count=1,
-        )
+        import tempfile
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().entries()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            entries = tf.load_fixture_entries(fixture_path)
+            tm.entries(entries, count_gte=1)
+        finally:
+            fixture_path.unlink()
         oracle_entries = OudTestHelpers.find_entries_by_dn_pattern(
             entries,
             "OracleContext",
@@ -253,12 +318,25 @@ class TestFlextLdifOudQuirks:
     @pytest.mark.timeout(10)
     def test_oud_password_hashes_preserved(self, ldif_api: FlextLdif) -> None:
         """Test that OUD password hashes are properly preserved."""
-        entries = FixtureTestHelpers.load_fixture_entries(
-            ldif_api,
-            "oud",
-            "oud_entries_fixtures.ldif",
-            expected_min_count=1,
-        )
+        import tempfile
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().entries()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            entries = tf.load_fixture_entries(fixture_path)
+            tm.entries(entries, count_gte=1)
+        finally:
+            fixture_path.unlink()
         password_entries = OudTestHelpers.find_entries_with_attribute(
             entries,
             "userPassword",
@@ -277,12 +355,26 @@ class TestFlextLdifOudQuirks:
         This test validates that the automatic write routing
         correctly processes OUD entries through the Entry quirk's write methods.
         """
-        entries = FixtureTestHelpers.load_fixture_entries(
-            ldif_api,
-            "oud",
-            "oud_entries_fixtures.ldif",
-            expected_min_count=1,
-        )
+        import tempfile
+
+        from tests.conftest import FlextLdifFixtures
+
+        fixture_content = FlextLdifFixtures.get_oud().entries()
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
+            f.write(fixture_content)
+            fixture_path = Path(f.name)
+
+        try:
+            entries = tf.load_fixture_entries(fixture_path)
+            tm.entries(entries, count_gte=1)
+        finally:
+            fixture_path.unlink()
+
         oud = FlextLdifServersOud()
         OudTestHelpers.validate_entries_write_success(
             oud,

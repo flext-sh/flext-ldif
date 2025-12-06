@@ -1,13 +1,3 @@
-"""Tests for FlextLdifServer - server-specific quirks management.
-
-This module provides comprehensive testing for the quirks registry which
-manages server-specific LDAP quirks and configurations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -17,6 +7,7 @@ import pytest
 
 from flext_ldif import FlextLdifConstants
 from flext_ldif.services.server import FlextLdifServer
+from tests import s
 
 
 # Test scenario enums
@@ -123,7 +114,7 @@ def registry() -> FlextLdifServer:
 
 
 # Test classes
-class TestFlextLdifServerInitialization:
+class TestsTestFlextLdifServerInitialization(s):
     """Test FlextLdifServer initialization and singleton behavior."""
 
     def test_initialization(self, registry: FlextLdifServer) -> None:

@@ -1,12 +1,3 @@
-"""Tests for OpenLDAP 2.x server quirks.
-
-Modules tested: FlextLdifServersOpenldap, FlextLdif (parse, write)
-Scope: OpenLDAP 2.x-specific quirks validation via parametrized tests.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -15,15 +6,13 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-from tests.fixtures.typing import GenericFieldsDict
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
-
-from .fixtures.rfc_constants import TestsRfcConstants
-from .test_utils import FlextLdifTestUtils
+from tests import RfcTestHelpers, s
 
 
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 class FixtureType(StrEnum):
     """Fixture types for OpenLDAP tests."""
 
@@ -73,7 +62,7 @@ class EntryTestType(StrEnum):
 
 
 @pytest.mark.unit
-class TestOpenldapQuirks:
+class TestsFlextLdifOpenldapQuirks(s):
     """Consolidated test class for OpenLDAP 2.x quirks."""
 
     # =========================================================================
@@ -558,18 +547,18 @@ class TestOpenldapQuirks:
         acl_quirk: FlextLdifServersOpenldap.Acl,
     ) -> None:
         """Test writing ACL in RFC format."""
-        acl_data = FlextLdifModels.Acl(
+        acl_data = m.Acl(
             name="test-acl",
-            target=FlextLdifModels.AclTarget(
+            target=m.AclTarget(
                 target_dn="*",
                 attributes=["userPassword"],
             ),
-            subject=FlextLdifModels.AclSubject(
+            subject=m.AclSubject(
                 subject_type="userdn",
                 subject_value="self",
             ),
-            permissions=FlextLdifModels.AclPermissions(write=True),
-            metadata=FlextLdifModels.QuirkMetadata.create_for("openldap"),
+            permissions=m.AclPermissions(write=True),
+            metadata=m.QuirkMetadata.create_for("openldap"),
             raw_acl="to attrs=userPassword by self write by * none",
         )
         result = acl_quirk.write(acl_data)

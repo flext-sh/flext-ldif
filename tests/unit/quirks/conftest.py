@@ -11,8 +11,6 @@ import pytest
 from flext_ldif import FlextLdif
 
 from .servers.conftest import (
-    ConversionTestConstants,
-    conversion_constants,
     conversion_matrix,
     oid_quirk,
     oid_schema_quirk,
@@ -41,9 +39,7 @@ def api() -> FlextLdif:
 
 
 __all__ = [
-    "ConversionTestConstants",
     "api",
-    "conversion_constants",
     "conversion_matrix",
     "oid_quirk",
     "oid_schema_quirk",

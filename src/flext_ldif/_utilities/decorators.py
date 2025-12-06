@@ -14,7 +14,9 @@ Usage:
     from flext_ldif.utilities import FlextLdifUtilities
 
     class CustomSchema(FlextLdifServersRfc.Schema):
-        @FlextLdifUtilities.Decorators.attach_parse_metadata("custom_server")
+        # Lazy import inside example to avoid circular dependency
+        from flext_ldif.utilities import u as u_ldif
+        @u_ldif.Decorators.attach_parse_metadata("custom_server")
         def _parse_attribute(self, attr_definition: str) -> r[SchemaAttribute]:
             # Parse logic here...
             result = self._do_parse(attr_definition)
@@ -26,17 +28,14 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from functools import wraps
 
-from flext_core import FlextLogger, r
-from flext_core.typings import T
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextLogger, T, r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 
-# Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
+# Use flext-core utilities directly to avoid circular dependency
+# For decorators that need FlextLdifUtilities, use lazy import inside decorator functions
 # r is already imported from flext_core
 
 logger = FlextLogger(__name__)
@@ -58,7 +57,9 @@ WriteMethodArg = (
     | str
 )
 
-ParseMethod = Callable[[ProtocolType, ParseMethodArg], r[T]]
+# ParseMethod supports both single-arg (parse_attribute) and multi-arg (parse_entry) methods
+# Using Callable[..., r[T]] for flexible argument support (standard pattern for variable-arg decorators)
+ParseMethod = Callable[..., r[T]]
 WriteMethod = Callable[[ProtocolType, WriteMethodArg], r[T]]
 SafeMethod = Callable[[ProtocolType, ParseMethodArg], r[T]]
 
@@ -78,14 +79,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _get_server_type_from_class(
-        obj: (
-            FlextLdifModels.Entry
-            | FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | FlextLdifModelsDomains.Acl
-            | str
-            | float
-        ),
+        obj: (m.Entry | m.SchemaAttribute | m.SchemaObjectClass | m.Acl | str | float),
     ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal.
 
@@ -110,10 +104,10 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def _attach_metadata_if_present(
         result_value: (
-            FlextLdifModels.Entry
-            | FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass
-            | FlextLdifModelsDomains.Acl
+            m.Entry
+            | m.SchemaAttribute
+            | m.SchemaObjectClass
+            | m.Acl
             | str
             | float
             | None
@@ -148,9 +142,9 @@ class FlextLdifUtilitiesDecorators:
         normalized_quirk_type: (
             FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
         ) = FlextLdifConstants.normalize_server_type(quirk_type) if quirk_type else None
-        metadata = FlextLdifModels.QuirkMetadata.create_for(
+        metadata = m.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
-            extensions=FlextLdifModels.DynamicMetadata(**extensions_dict),
+            extensions=m.DynamicMetadata(**extensions_dict),
         )
 
         # Attach metadata using type narrowing with isinstance check
@@ -158,9 +152,9 @@ class FlextLdifUtilitiesDecorators:
         if isinstance(
             result_value,
             (
-                FlextLdifModels.Entry,
-                FlextLdifModelsDomains.SchemaAttribute,
-                FlextLdifModelsDomains.SchemaObjectClass,
+                m.Entry,
+                m.SchemaAttribute,
+                m.SchemaObjectClass,
             ),
         ):
             result_value.metadata = metadata
@@ -192,16 +186,17 @@ class FlextLdifUtilitiesDecorators:
 
         def decorator(
             func: ParseMethod[T],
-        ) -> ParseMethod[T]:
+        ) -> Callable[..., r[T]]:
             """Wrapper function for parse methods."""
 
             @wraps(func)
             def wrapper(
                 self: ProtocolType,
-                arg: ParseMethodArg,
+                *args: object,
+                **kwargs: object,
             ) -> r[T]:
                 """Call original function and attach metadata to result."""
-                result = func(self, arg)
+                result = func(self, *args, **kwargs)
 
                 # If result is successful, attach metadata using helper methods
                 if result.is_success:
@@ -211,10 +206,10 @@ class FlextLdifUtilitiesDecorators:
                     if isinstance(
                         unwrapped,
                         (
-                            FlextLdifModels.Entry,
-                            FlextLdifModelsDomains.SchemaAttribute,
-                            FlextLdifModelsDomains.SchemaObjectClass,
-                            FlextLdifModelsDomains.Acl,
+                            m.Entry,
+                            m.SchemaAttribute,
+                            m.SchemaObjectClass,
+                            m.Acl,
                         ),
                     ):
                         server_type = (
@@ -308,11 +303,11 @@ class FlextLdifUtilitiesDecorators:
                 """Execute function with automatic error handling."""
                 try:
                     return func(self, arg)
-                except Exception as e:
+                except BaseException as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(
                         error_msg,
-                    )  # Log exception with traceback and message
+                    )  # Log error with message (no traceback for KeyboardInterrupt)
                     return r.fail(error_msg)
 
             return wrapper
@@ -335,7 +330,9 @@ class FlextLdifUtilitiesDecorators:
             Decorator that adds error handling
 
         Example:
-            @FlextLdifUtilities.Decorators.safe_parse("OID attribute parsing")
+            # Lazy import inside decorator to avoid circular dependency
+            from flext_ldif.utilities import u as u_ldif
+            @u_ldif.Decorators.safe_parse("OID attribute parsing")
             def _parse_attribute(self, definition: str) -> r[SchemaAttribute]:
                 # Parse logic - exceptions automatically caught
                 return r.ok(parsed_attr)
@@ -358,7 +355,9 @@ class FlextLdifUtilitiesDecorators:
             Decorator that adds error handling
 
         Example:
-            @FlextLdifUtilities.Decorators.safe_write("OID attribute writing")
+            # Lazy import inside decorator to avoid circular dependency
+            from flext_ldif.utilities import u as u_ldif
+            @u_ldif.Decorators.safe_write("OID attribute writing")
             def _write_attribute(self, attr: SchemaAttribute) -> r[str]:
                 # Write logic - exceptions automatically caught
                 return r.ok(ldif_str)
@@ -367,16 +366,9 @@ class FlextLdifUtilitiesDecorators:
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
 
-# Export standalone functions for backward compatibility
-attach_parse_metadata = FlextLdifUtilitiesDecorators.attach_parse_metadata
-attach_write_metadata = FlextLdifUtilitiesDecorators.attach_write_metadata
-safe_parse = FlextLdifUtilitiesDecorators.safe_parse
-safe_write = FlextLdifUtilitiesDecorators.safe_write
+# Use FlextLdifUtilitiesDecorators directly - no aliases needed
+# Access via: FlextLdifUtilitiesDecorators.attach_parse_metadata(...)
 
 __all__ = [
     "FlextLdifUtilitiesDecorators",
-    "attach_parse_metadata",
-    "attach_write_metadata",
-    "safe_parse",
-    "safe_write",
 ]

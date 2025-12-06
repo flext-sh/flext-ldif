@@ -9,11 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Import after setting up mocks
+from tests import s
+
 import flext_ldif.__version__ as version_module
 
 
-class TestVersionModule:
+class TestsFlextLdifVersion(s):
     """Test version module metadata loading and exports."""
 
     def test_version_exported(self) -> None:

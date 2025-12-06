@@ -30,23 +30,19 @@ Usage:
 
 from __future__ import annotations
 
+
 from collections.abc import Callable, Sequence
-from typing import Self, cast
+from typing import Self
 
-from flext_core import FlextResult
-from flext_core.utilities import FlextUtilities
+from flext_core import r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.configs import ProcessConfig
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer
-
-# Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
-r = FlextResult  # Result
+from flext_ldif.models import m
 
 
-# Sentinel for filtered out entries (since FlextResult.ok(None) is not allowed)
+# Sentinel for filtered out entries (since r.ok(None) is not allowed)
 class _Filtered:
     """Sentinel class to signal that an entry was filtered out."""
 
@@ -72,7 +68,7 @@ class PipelineStep[TIn, TOut]:
     def __init__(
         self,
         name: str,
-        func: Callable[[TIn], FlextResult[TOut]],
+        func: Callable[[TIn], r[TOut]],
     ) -> None:
         """Initialize pipeline step.
 
@@ -89,14 +85,14 @@ class PipelineStep[TIn, TOut]:
         """Get step name."""
         return self._name
 
-    def execute(self, input_data: TIn) -> FlextResult[TOut]:
+    def execute(self, input_data: TIn) -> r[TOut]:
         """Execute this step.
 
         Args:
             input_data: Input data
 
         Returns:
-            FlextResult containing output or error
+            r containing output or error
 
         """
         return self._func(input_data)
@@ -137,8 +133,8 @@ class Pipeline:
             tuple[
                 str,
                 Callable[
-                    [FlextLdifModelsDomains.Entry],
-                    FlextResult[FlextLdifModelsDomains.Entry | None],
+                    [m.Entry],
+                    r[m.Entry | _Filtered],
                 ],
             ]
         ] = []
@@ -146,7 +142,7 @@ class Pipeline:
 
     def add(
         self,
-        transformer: EntryTransformer[FlextLdifModelsDomains.Entry],
+        transformer: EntryTransformer[m.Entry],
         *,
         name: str | None = None,
     ) -> Self:
@@ -161,25 +157,25 @@ class Pipeline:
 
         """
         # Business Rule: Add transformer step to pipeline
-        # Transformers return FlextResult[Entry], but pipeline filters can return None
-        # Wrap transformer.apply to match pipeline signature FlextResult[Entry | None]
+        # Transformers return r[Entry], but pipeline filters can return None
+        # Wrap transformer.apply to match pipeline signature r[Entry | None]
         step_name = name or transformer.__class__.__name__
 
         def wrapped_transformer(
-            entry: FlextLdifModelsDomains.Entry,
-        ) -> FlextResult[FlextLdifModelsDomains.Entry | None]:
+            entry: m.Entry,
+        ) -> r[m.Entry | _Filtered]:
             """Wrap transformer to match pipeline filter signature.
 
             Business Rule:
-            - Transformers return FlextResult[Entry] (never None)
-            - Pipeline filters can return Entry | None (None = filter out)
+            - Transformers return r[Entry] (never None)
+            - Pipeline filters can return Entry | FILTERED (FILTERED = filter out)
             - Wrap transformer result to match pipeline signature
             """
             transformer_result = transformer.apply(entry)
             if transformer_result.is_failure:
-                # Convert FlextResult[Entry] failure to FlextResult[Entry | None] failure
+                # Convert r[Entry] failure to r[Entry | FILTERED] failure
                 return r.fail(transformer_result.error)
-            # Transformers always return Entry (never None), but pipeline accepts Entry | None
+            # Transformers always return Entry (never FILTERED)
             entry_value = transformer_result.unwrap()
             return r.ok(entry_value)
 
@@ -188,7 +184,7 @@ class Pipeline:
 
     def filter(
         self,
-        entry_filter: EntryFilter[FlextLdifModelsDomains.Entry],
+        entry_filter: EntryFilter[m.Entry],
         *,
         name: str | None = None,
     ) -> Self:
@@ -207,22 +203,21 @@ class Pipeline:
         step_name = name or entry_filter.__class__.__name__
 
         def filter_func(
-            entry: FlextLdifModelsDomains.Entry,
-        ) -> FlextResult[FlextLdifModelsDomains.Entry | _Filtered]:
+            entry: m.Entry,
+        ) -> r[m.Entry | _Filtered]:
             if entry_filter.matches(entry):
                 return r.ok(entry)
-            return r.ok(FILTERED)  # Filter out using sentinel
+            # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
+            return r.ok(FILTERED)
 
-        self._steps.append((step_name, filter_func))  # type: ignore[arg-type]
+        self._steps.append((step_name, filter_func))
         return self
 
     def custom(
         self,
         func: Callable[
-            [FlextLdifModelsDomains.Entry],
-            FlextLdifModelsDomains.Entry
-            | FlextResult[FlextLdifModelsDomains.Entry]
-            | None,
+            [m.Entry],
+            m.Entry | r[m.Entry] | None,
         ],
         *,
         name: str = "custom",
@@ -230,7 +225,7 @@ class Pipeline:
         """Add a custom function to the pipeline.
 
         Args:
-            func: Custom function (returns Entry, FlextResult[Entry], or None to filter)
+            func: Custom function (returns Entry, r[Entry], or None to filter)
             name: Step name for logging
 
         Returns:
@@ -239,104 +234,117 @@ class Pipeline:
         """
 
         def wrapped_func(
-            entry: FlextLdifModelsDomains.Entry,
-        ) -> FlextResult[FlextLdifModelsDomains.Entry | None]:
+            entry: m.Entry,
+        ) -> r[m.Entry | _Filtered]:
             """Wrap function to match pipeline filter signature.
 
             Business Rule:
-            - Pipeline filters can return Entry (keep), None (filter out), or FlextResult
-            - Wraps all return types to consistent FlextResult[Entry | None] format
-            - None values indicate entry should be filtered out (removed from pipeline)
+            - Pipeline filters can return Entry (keep), None (filter out), or r
+            - Wraps all return types to consistent r[Entry | FILTERED] format
+            - None values are converted to FILTERED sentinel (r.ok(None) is not allowed)
             """
             func_result = func(entry)
             if func_result is None:
-                return r.ok(FILTERED)  # Use sentinel instead of None
-            if isinstance(func_result, FlextResult):
-                # If result is Entry, wrap in Entry | None union
+                # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
+                return r.ok(FILTERED)
+            if isinstance(func_result, r):
+                # If result is Entry, wrap in Entry | FILTERED union
                 if func_result.is_success:
                     entry_value = func_result.unwrap()
+                    # Type narrowing: entry_value is Entry when success
                     return r.ok(entry_value)
-                # Convert FlextResult[Entry] failure to FlextResult[Entry | None] failure
+                # Convert r[Entry] failure to r[Entry | FILTERED] failure
                 return r.fail(func_result.error)
-            # func_result is Entry (not None, not FlextResult)
-            entry_value_result: FlextLdifModelsDomains.Entry | None = func_result
-            return r.ok(entry_value_result)
+            # func_result is Entry (not None, not r)
+            # Type narrowing: func_result is Entry
+            return r.ok(func_result)
 
         self._steps.append((name, wrapped_func))
         return self
 
     def execute_one(
         self,
-        entry: FlextLdifModelsDomains.Entry,
-    ) -> FlextResult[FlextLdifModelsDomains.Entry | _Filtered]:
+        entry: m.Entry,
+    ) -> r[m.Entry | _Filtered]:
         """Execute pipeline on a single entry.
 
         Args:
             entry: Entry to process
 
         Returns:
-            FlextResult containing processed entry, FILTERED sentinel if filtered, or error
+            r containing processed entry, FILTERED if filtered, or error
 
         """
-        current: FlextLdifModelsDomains.Entry | _Filtered = entry
+        current: m.Entry | _Filtered = entry
 
         for step_name, step_func in self._steps:
             if isinstance(current, _Filtered):
+                # Entry was filtered out in previous step
                 return r.ok(FILTERED)
 
+            # Type narrowing: current is Entry when not _Filtered
             result = step_func(current)
             if result.is_failure:
                 return r.fail(f"Step '{step_name}' failed: {result.error}")
 
             unwrapped = result.unwrap()
-            # Business Rule: None indicates entry was filtered out
-            # Convert None to FILTERED sentinel for type safety
-            current = FILTERED if unwrapped is None else unwrapped
+            # Business Rule: FILTERED sentinel indicates entry was filtered out
+            # Type narrowing: unwrapped is Entry | FILTERED
+            current = unwrapped
 
         return r.ok(current)
 
     def execute(
         self,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-    ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+        entries: Sequence[m.Entry],
+    ) -> r[list[m.Entry]]:
         """Execute pipeline on a sequence of entries.
 
         Args:
             entries: Entries to process
 
         Returns:
-            FlextResult containing list of processed entries or error
+            r containing list of processed entries or error
 
         """
 
         def process_entry(
-            entry: FlextLdifModelsDomains.Entry,
-        ) -> FlextLdifModelsDomains.Entry | None:
-            """Process single entry through pipeline."""
+            entry: m.Entry,
+        ) -> r[m.Entry] | None:
+            """Process single entry through pipeline.
+
+            Returns:
+                r[Entry] on success, None if filtered (not an error)
+
+            """
             result = self.execute_one(entry)
             if result.is_failure:
                 # For fail_fast, batch will stop on first error
-                # For collect mode, return None to skip this entry
-                return None
+                # For collect mode, fail result signals skip
+                return r[m.Entry].fail(result.error or "Processing failed")
             processed = result.unwrap()
+            # Type narrowing: processed is Entry | _Filtered
             if isinstance(processed, _Filtered):
+                # Filtered entries return None (not an error, just skipped)
                 return None
-            return processed
+            # Type narrowing: processed is Entry when not _Filtered
+            return r[m.Entry].ok(processed)
 
-        batch_result = u.batch(
-            list(entries),
-            process_entry,
-            on_error="fail" if self._fail_fast else "collect",
-        )
-        if batch_result.is_failure:
-            return r.fail(batch_result.error or "Pipeline execution failed")
-
-        # Filter out None values (filtered entries)
-        results = [
-            cast("FlextLdifModelsDomains.Entry", entry)
-            for entry in batch_result.value["results"]
-            if entry is not None
-        ]
+        # Process entries: filtered entries return None (not an error)
+        results: list[m.Entry] = []
+        for entry in entries:
+            process_result = process_entry(entry)
+            if process_result is None:
+                # Filtered entry - skip (not an error)
+                continue
+            if process_result.is_failure:
+                # Real error - handle based on fail_fast setting
+                if self._fail_fast:
+                    return r.fail(process_result.error or "Pipeline execution failed")
+                # Collect mode: skip error and continue
+                continue
+            # Success: add to results
+            results.append(process_result.unwrap())
         return r.ok(results)
 
     @property
@@ -391,7 +399,7 @@ class ProcessingPipeline:
             Configured Pipeline instance
 
         """
-        from flext_ldif._utilities.transformers import Normalize  # noqa: PLC0415
+        from flext_ldif._utilities.transformers import Normalize
 
         pipeline = Pipeline()
 
@@ -421,15 +429,15 @@ class ProcessingPipeline:
 
     def execute(
         self,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-    ) -> FlextResult[list[FlextLdifModelsDomains.Entry]]:
+        entries: Sequence[m.Entry],
+    ) -> r[list[m.Entry]]:
         """Execute the processing pipeline.
 
         Args:
             entries: Entries to process
 
         Returns:
-            FlextResult containing processed entries or error
+            r containing processed entries or error
 
         """
         return self._pipeline.execute(entries)
@@ -480,15 +488,15 @@ class ValidationPipeline:
 
     def validate_one(
         self,
-        entry: FlextLdifModelsDomains.Entry,
-    ) -> FlextResult[ValidationResult]:
+        entry: m.Entry,
+    ) -> r[ValidationResult]:
         """Validate a single entry.
 
         Args:
             entry: Entry to validate
 
         Returns:
-            FlextResult containing ValidationResult
+            r containing ValidationResult
 
         """
         errors: list[str] = []
@@ -500,7 +508,7 @@ class ValidationPipeline:
         else:
             # Validate DN - validate each RDN value separately
             # is_valid_dn_string validates individual RDN values, not full DN strings
-            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
+            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
             components = FlextLdifUtilitiesDN.split(dn_str)
@@ -510,7 +518,7 @@ class ValidationPipeline:
                     continue
                 _, _, value = comp.partition("=")
                 is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                    value.strip()
+                    value.strip(),
                 )
                 if not is_valid:
                     errors.extend([f"RDN value '{value}': {e}" for e in dn_errors])
@@ -538,20 +546,20 @@ class ValidationPipeline:
                 is_valid=len(errors) == 0,
                 errors=errors,
                 warnings=warnings,
-            )
+            ),
         )
 
     def validate(
         self,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-    ) -> FlextResult[list[ValidationResult]]:
+        entries: Sequence[m.Entry],
+    ) -> r[list[ValidationResult]]:
         """Validate a sequence of entries.
 
         Args:
             entries: Entries to validate
 
         Returns:
-            FlextResult containing list of ValidationResults
+            r containing list of ValidationResults
 
         """
         results: list[ValidationResult] = []
@@ -563,7 +571,7 @@ class ValidationPipeline:
         for entry in entries:
             validation_result = self.validate_one(entry)
             if validation_result.is_failure:
-                # Convert FlextResult[ValidationResult] failure to FlextResult[list[ValidationResult]] failure
+                # Convert r[ValidationResult] failure to r[list[ValidationResult]] failure
                 return r.fail(validation_result.error)
 
             validation = validation_result.unwrap()

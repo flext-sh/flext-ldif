@@ -1,38 +1,12 @@
-"""Test FlextLdifWriter with RFC quirks.
-
-Tests validate that FlextLdifWriter:
-1. Writes entries correctly with RFC server type
-2. Generates correct LDIF format output
-3. Handles string output targets
-4. Produces valid RFC 2849 compliant LDIF
-
-Modules tested:
-- flext_ldif.writer.FlextLdifWriter (LDIF writing service)
-- flext_ldif.models.FlextLdifModels.Entry (entry models)
-
-Scope:
-- RFC server type configuration
-- String output target
-- Basic entry writing
-- LDIF format validation
-
-Uses FlextTestsMatchers and FlextLdifTestFactories for reduced code duplication.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests.fixtures.constants import DNs, Names, Values
-from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_factories import FlextLdifTestFactories
+from tests import m, s
 
-from flext_ldif import FlextLdifModels, FlextLdifWriter
+from flext_ldif import FlextLdifWriter
 
 
 class WriterOutputType(StrEnum):
@@ -54,21 +28,21 @@ def writer() -> FlextLdifWriter:
 
 
 @pytest.fixture
-def simple_entry() -> FlextLdifModels.Entry:
+def simple_entry() -> m.Entry:
     """Create a simple RFC-compliant entry using factory."""
-    return FlextLdifTestFactories.create_entry(
-        dn=DNs.TEST_USER,
+    return s().create_entry(
+        dn="cn=testuser,ou=users,dc=example,dc=com",
         attributes={
-            Names.CN: [Values.TEST],
-            Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
-            Names.SN: [f"{Values.TEST}-{Values.USER}"],
-            Names.MAIL: [Values.TEST_EMAIL],
+            "cn": ["testuser"],
+            "objectClass": ["person", "inetOrgPerson"],
+            "sn": ["testuser-user"],
+            "mail": ["testuser@example.com"],
         },
     )
 
 
 @pytest.mark.unit
-class TestFlextLdifWriterRfc:
+class TestFlextLdifWriterRfc(s):
     """Test FlextLdifWriter with RFC server type configuration."""
 
     WRITER_OUTPUT_DATA: ClassVar[
@@ -91,7 +65,7 @@ class TestFlextLdifWriterRfc:
         output_type: WriterOutputType,
         expected_content: str,
         writer: FlextLdifWriter,
-        simple_entry: FlextLdifModels.Entry,
+        simple_entry: m.Entry,
     ) -> None:
         """Parametrized test for writer output generation."""
         # FlextLdifWriter.write() returns string when output_path is not provided
@@ -101,7 +75,7 @@ class TestFlextLdifWriterRfc:
             target_server_type="rfc",
         )
 
-        content = TestAssertions.assert_success(
+        content = self.assert_success(
             result,
             f"Write failed for scenario {scenario.value}",
         )
@@ -110,4 +84,4 @@ class TestFlextLdifWriterRfc:
         # Writer output may not include "version: 1" header by default
         # Check that content contains the entry DN instead
         assert simple_entry.dn.value in content or expected_content in content
-        assert f"dn: {DNs.TEST_USER}" in content
+        assert "dn: cn=testuser" in content

@@ -1,13 +1,3 @@
-"""Test suite for Novell eDirectory Quirks.
-
-Modules tested: FlextLdifServersNovell, FlextLdifServersNovell.Schema
-Scope: Novell eDirectory quirks, schema parsing, OID pattern detection,
-attribute detection, prefix-based detection
-
-Tests for Novell eDirectory quirks implementation.
-Uses parametrized tests and factory patterns.
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -16,10 +6,9 @@ from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.servers.novell import FlextLdifServersNovell
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.helpers.test_rfc_helpers import QuirkInstance, RfcTestHelpers
+from tests import m, s
 
 
 class AttributeScenario(StrEnum):
@@ -215,7 +204,7 @@ def entry_quirk(novell_server: FlextLdifServersNovell) -> QuirkInstance:
     return cast("QuirkInstance", novell_server.entry_quirk)
 
 
-class TestNovellInitialization:
+class TestsFlextLdifNovellInitialization(s):
     """Test initialization of Novell quirks."""
 
     def test_server_initialization(self) -> None:
@@ -359,7 +348,7 @@ class TestNovellSchemaObjectClassParsing:
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
         quirk = FlextLdifServersNovell.Schema()
-        attr_data = FlextLdifModels.SchemaAttribute(
+        attr_data = m.SchemaAttribute(
             oid="2.16.840.1.113719.1.1.4.1.501",
             name="nspmPasswordPolicyDN",
             desc="Password Policy DN",
@@ -380,7 +369,7 @@ class TestNovellSchemaObjectClassParsing:
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
         quirk = FlextLdifServersNovell.Schema()
-        oc_data = FlextLdifModels.SchemaObjectClass(
+        oc_data = m.SchemaObjectClass(
             oid="2.16.840.1.113719.2.2.6.1",
             name="ndsPerson",
             kind="STRUCTURAL",

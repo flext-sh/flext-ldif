@@ -1,15 +1,3 @@
-"""Test suite for RFC 4512 schema parser.
-
-Comprehensive testing for FlextLdifParser automatic schema parsing
-which parses LDAP schema definitions according to RFC 4512 specification.
-
-All tests use real implementations with real data, no mocks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -17,17 +5,17 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from flext_ldif import FlextLdifModels, FlextLdifParser
+from flext_ldif import FlextLdifParser
+from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests.helpers.test_quirk_helpers import QuirkTestHelpers
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
+from tests import RfcTestHelpers, s
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 # Test constants - always at top of module, no type checking
 # Use classes directly, no instantiation needed
 
 
-class TestRfcSchemaParserInitialization:
+class TestsFlextLdifRfcSchemaParserInitialization(s):
     """Test suite for RFC schema parser initialization."""
 
     @pytest.mark.timeout(5)
@@ -265,8 +253,8 @@ class TestRfcSchemaQuirkDirectUsage:
     def test_schema_quirk_methods(
         self,
         rfc_schema_quirk: FlextLdifServersRfc.Schema,
-        sample_schema_attribute: FlextLdifModels.SchemaAttribute,
-        sample_schema_objectclass: FlextLdifModels.SchemaObjectClass,
+        sample_schema_attribute: m.SchemaAttribute,
+        sample_schema_objectclass: m.SchemaObjectClass,
     ) -> None:
         """Test Schema quirk can_handle and should_filter methods."""
         assert rfc_schema_quirk.can_handle_attribute("any attribute definition") is True

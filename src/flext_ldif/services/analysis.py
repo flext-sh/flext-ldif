@@ -12,19 +12,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 from collections import Counter
 from typing import override
 
-from flext_core import FlextRuntime, r, u
+from flext_core import r
 
 from flext_ldif._models.results import _DynamicCounts
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.models import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
+from flext_ldif.utilities import u
 
 
 class FlextLdifAnalysis(
-    FlextLdifServiceBase[FlextLdifModels.EntryAnalysisResult],
+    FlextLdifServiceBase[m.EntryAnalysisResult],
 ):
     """Service for entry analysis and validation.
 
@@ -62,7 +64,7 @@ class FlextLdifAnalysis(
     @override
     def execute(
         self,
-    ) -> r[FlextLdifModels.EntryAnalysisResult]:
+    ) -> r[m.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class.
 
         Business Rule: Analysis service does not support generic execute() operation.
@@ -77,14 +79,14 @@ class FlextLdifAnalysis(
             r.fail() with error message directing to correct usage
 
         """
-        return r[FlextLdifModels.EntryAnalysisResult].fail(
+        return r[m.EntryAnalysisResult].fail(
             "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
+    @staticmethod
     def analyze(
-        self,
-        entries: list[FlextLdifModels.Entry],
-    ) -> r[FlextLdifModels.EntryAnalysisResult]:
+        entries: list[m.Entry],
+    ) -> r[m.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
 
         Business Rule: Entry analysis generates comprehensive statistics including
@@ -120,7 +122,7 @@ class FlextLdifAnalysis(
         objectclass_distribution: Counter[str] = Counter()
         patterns_detected: set[str] = set()
 
-        def process_entry(entry: FlextLdifModels.Entry) -> None:
+        def process_entry(entry: m.Entry) -> None:
             """Process entry for analysis."""
             for oc_name in entry.get_objectclass_names():
                 objectclass_distribution[oc_name] += 1
@@ -131,25 +133,25 @@ class FlextLdifAnalysis(
             if "ou=groups" in dn_str_lower:
                 patterns_detected.add("group pattern")
 
-        _ = u.process(
-            entries,
-            process_entry,
-            on_error="skip",
-        )
+        # Process entries using simple iteration - u.process has different signature
+        # (u.process is for server transformations, not generic processing)
+        for entry in entries:
+            with contextlib.suppress(Exception):  # Skip errors like on_error="skip"
+                process_entry(entry)
 
-        return r[FlextLdifModels.EntryAnalysisResult].ok(
-            FlextLdifModels.EntryAnalysisResult(
+        return r[m.EntryAnalysisResult].ok(
+            m.EntryAnalysisResult(
                 total_entries=total_entries,
                 objectclass_distribution=_DynamicCounts(**objectclass_distribution),
                 patterns_detected=sorted(patterns_detected),
             ),
         )
 
+    @staticmethod
     def validate_entries(
-        self,
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         validation_service: FlextLdifValidation,
-    ) -> r[FlextLdifModels.ValidationResult]:
+    ) -> r[m.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
 
         Business Rule: Entry validation delegates to FlextLdifValidation service
@@ -187,31 +189,29 @@ class FlextLdifAnalysis(
         errors: list[str] = []
         valid_count = 0
 
-        def validate_entry(entry: FlextLdifModels.Entry) -> bool:
+        def validate_entry(entry: m.Entry) -> bool:
             """Validate single entry and collect errors."""
-            is_entry_valid, entry_errors = self._validate_single_entry(
+            is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
                 entry,
                 validation_service,
             )
             errors.extend(entry_errors)
             return is_entry_valid
 
-        batch_result = u.batch_process(
-            entries,
-            validate_entry,
-            on_error="skip",
+        # Process entries using u.Collection.map() - u.batch_process() doesn't exist
+        # Map each entry through validation function, collecting results
+        validation_results = u.Collection.map(entries, validate_entry)
+        # Count valid entries (True values)
+        valid_count = u.Collection.count(
+            validation_results,
+            predicate=lambda r: r is True,
         )
-        if batch_result.is_success:
-            valid_count = u.count(
-                batch_result.value["results"],
-                predicate=lambda r: r is True,
-            )
 
-        total_entries = u.count(entries)
+        total_entries = u.Collection.count(entries)
         invalid_count = total_entries - valid_count
 
-        return r[FlextLdifModels.ValidationResult].ok(
-            FlextLdifModels.ValidationResult(
+        return r[m.ValidationResult].ok(
+            m.ValidationResult(
                 is_valid=invalid_count == 0,
                 total_entries=total_entries,
                 valid_entries=valid_count,
@@ -220,9 +220,97 @@ class FlextLdifAnalysis(
             ),
         )
 
+    @staticmethod
+    @staticmethod
+    def _validate_entry_dn(entry: m.Entry) -> tuple[bool, str, list[str]]:
+        """Validate entry DN.
+
+        Returns:
+            Tuple of (is_valid, dn_str, errors)
+
+        """
+        errors: list[str] = []
+        if entry.dn is None:
+            errors.append("Entry has None DN")
+            return (False, "", errors)
+        # Type narrowing: entry.dn is not None
+        dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+        if not dn_str:
+            errors.append(f"Entry has invalid DN: {entry.dn}")
+            return (False, dn_str, errors)
+        return (True, dn_str, errors)
+
+    @staticmethod
+    def _validate_entry_attributes(
+        entry: m.Entry,
+        dn_str: str,
+        validation_service: FlextLdifValidation,
+    ) -> tuple[bool, list[str]]:
+        """Validate entry attributes.
+
+        Returns:
+            Tuple of (is_valid, errors)
+
+        """
+        errors: list[str] = []
+        is_valid = True
+        if entry.attributes is None:
+            errors.append(f"Entry {dn_str}: Attributes cannot be None")
+            return (False, errors)
+
+        for attr_name in entry.attributes.attributes:
+            attr_result = validation_service.validate_attribute_name(attr_name)
+            if attr_result.is_failure or not attr_result.unwrap():
+                errors.append(f"Entry {dn_str}: Invalid attribute name '{attr_name}'")
+                is_valid = False
+        return (is_valid, errors)
+
+    @staticmethod
+    def _validate_entry_objectclasses(
+        entry: m.Entry,
+        dn_str: str,
+        validation_service: FlextLdifValidation,
+    ) -> tuple[bool, list[str]]:
+        """Validate entry objectClass values.
+
+        Returns:
+            Tuple of (is_valid, errors)
+
+        """
+        errors: list[str] = []
+        is_valid = True
+        oc_values_raw: object = u.Mapper.get(
+            entry.attributes.attributes if entry.attributes else {},
+            "objectClass",
+            default=[],
+        )
+        # Type narrowing: u.get returns object, but we know objectClass is list[str] | str
+        oc_values: list[str] | str = (
+            oc_values_raw if isinstance(oc_values_raw, (list, str)) else []
+        )
+        # Type narrowing: oc_values is list[str] | str
+        # Note: list may contain non-str items, so we validate each item
+        if isinstance(oc_values, list):
+            for oc_item in oc_values:
+                # Runtime validation: ensure each item is str
+                if not isinstance(oc_item, str):
+                    msg = f"Expected str, got {type(oc_item)}"
+                    raise TypeError(msg)
+                oc_result = validation_service.validate_objectclass_name(oc_item)
+                if oc_result.is_failure or not oc_result.unwrap():
+                    errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_item}'")
+                    is_valid = False
+        elif isinstance(oc_values, str):
+            # Single string objectClass value
+            oc_result = validation_service.validate_objectclass_name(oc_values)
+            if oc_result.is_failure or not oc_result.unwrap():
+                errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_values}'")
+                is_valid = False
+        return (is_valid, errors)
+
+    @staticmethod
     def _validate_single_entry(
-        self,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
         """Validate a single LDIF entry.
@@ -248,48 +336,34 @@ class FlextLdifAnalysis(
         errors: list[str] = []
         is_entry_valid = True
 
-        # Validate DN (dn is required, cannot be None)
-        # Business Rule: DN validation handles None DNs gracefully - None DNs are invalid
-        if entry.dn is None:
-            errors.append("Entry has None DN")
-            is_entry_valid = False
-            return (is_entry_valid, errors)
-        # Type narrowing: entry.dn is not None
-        dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
-        if not dn_str:
-            errors.append(f"Entry has invalid DN: {entry.dn}")
-            is_entry_valid = False
+        # Validate DN
+        dn_valid, dn_str, dn_errors = FlextLdifAnalysis._validate_entry_dn(entry)
+        errors.extend(dn_errors)
+        if not dn_valid:
+            return (False, errors)
+        is_entry_valid = is_entry_valid and dn_valid
 
-        # Validate each attribute name (attributes is required, cannot be None)
-        if entry.attributes is None:
-            errors.append(f"Entry {dn_str}: Attributes cannot be None")
-            is_entry_valid = False
-            return (is_entry_valid, errors)
-
-        for attr_name in entry.attributes.attributes:
-            attr_result = validation_service.validate_attribute_name(attr_name)
-            if attr_result.is_failure or not attr_result.unwrap():
-                errors.append(f"Entry {dn_str}: Invalid attribute name '{attr_name}'")
-                is_entry_valid = False
-
-        # Validate objectClass values
-        oc_values_raw: list[str] | str | None = u.get(
-            entry.attributes.attributes,
-            "objectClass",
-            default=[],
+        # Validate attributes
+        attrs_valid, attrs_errors = FlextLdifAnalysis._validate_entry_attributes(
+            entry,
+            dn_str,
+            validation_service,
         )
-        oc_values: list[str] | str = oc_values_raw if oc_values_raw is not None else []
-        if FlextRuntime.is_list_like(oc_values):
-            for oc in oc_values:
-                if not isinstance(oc, str):
-                    msg = f"Expected str, got {type(oc)}"
-                    raise TypeError(msg)
-                oc_result = validation_service.validate_objectclass_name(oc)
-                if oc_result.is_failure or not oc_result.unwrap():
-                    errors.append(f"Entry {dn_str}: Invalid objectClass '{oc}'")
-                    is_entry_valid = False
+        errors.extend(attrs_errors)
+        if not attrs_valid:
+            return (False, errors)
+        is_entry_valid = is_entry_valid and attrs_valid
 
-        return is_entry_valid, errors
+        # Validate objectClasses
+        oc_valid, oc_errors = FlextLdifAnalysis._validate_entry_objectclasses(
+            entry,
+            dn_str,
+            validation_service,
+        )
+        errors.extend(oc_errors)
+        is_entry_valid = is_entry_valid and oc_valid
+
+        return (is_entry_valid, errors)
 
 
 __all__ = ["FlextLdifAnalysis"]

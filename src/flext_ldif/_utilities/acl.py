@@ -29,14 +29,36 @@ u = FlextUtilities  # Utilities (from flext-core)
 # r is already imported from flext_core
 
 
-# Lazy import for DSL methods to avoid circular import
-def _get_u_ldif() -> object:
-    """Get FlextLdifUtilities lazily to avoid circular import."""
-    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
-    return FlextLdifUtilities
+# Lazy-loading proxy for FlextLdifUtilities to avoid circular import
+# utilities.py imports this module, so we can't import at module level
+class _LazyLdifUtilities:
+    """Lazy proxy for FlextLdifUtilities to avoid circular imports."""
+
+    _cached: type | None = None
+
+    def __getattr__(self, name: str) -> object:
+        """Lazy-load FlextLdifUtilities on first attribute access."""
+        if self._cached is None:
+            # Import inside method to break circular dependency
+            from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+            object.__setattr__(self, "_cached", FlextLdifUtilities)
+        cached = object.__getattribute__(self, "_cached")
+        return getattr(cached, name)
 
 
-u_ldif = property(lambda _: _get_u_ldif())  # type: ignore[assignment]
+u_ldif = _LazyLdifUtilities()
+
+
+def _get_u_ldif() -> _LazyLdifUtilities:
+    """Get u_ldif utilities lazily to avoid circular imports.
+
+    Returns:
+        Lazy proxy for FlextLdifUtilities
+
+    """
+    return u_ldif
+
 
 logger = FlextLogger(__name__)
 
@@ -159,7 +181,7 @@ class FlextLdifUtilitiesACL:
             if ops:
                 split_ops = ops.split(ops_separator)
                 u_ldif_instance = _get_u_ldif()
-                filtered_perms_list = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+                filtered_perms_list = u_ldif_instance.map_filter(
                     split_ops,
                     mapper=str.strip,
                     predicate=bool,
@@ -206,24 +228,27 @@ class FlextLdifUtilitiesACL:
             def build_rule(match: str) -> dict[str, str]:
                 """Build rule dict from match."""
                 return {"type": bind_type, "value": match}
+
             u_ldif_instance = _get_u_ldif()
-            mapped_rules = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+            mapped_rules = u_ldif_instance.map_filter(
                 matches,
-                mapper=build_rule,  # type: ignore[arg-type]
-                predicate=lambda r: u_ldif_instance.is_type(r, dict),  # type: ignore[attr-defined]
+                mapper=build_rule,
+                predicate=lambda r: u_ldif_instance.is_type(r, dict),
             )
             return cast("list[dict[str, str]]", mapped_rules)
 
         u_ldif_instance = _get_u_ldif()
-        bind_rules_result = u.process(
-            u_ldif_instance.pairs(patterns),  # type: ignore[attr-defined]
+        bind_rules_result = u.Collection.process(
+            u_ldif_instance.pairs(patterns),
             processor=lambda item: extract_bind_rule(item[0], item[1]),
             on_error="skip",
         )
-        bind_rules = u_ldif_instance.process_flatten(  # type: ignore[attr-defined]
+        bind_rules = u_ldif_instance.process_flatten(
             bind_rules_result.value if bind_rules_result.is_success else [],
-                processor=lambda rule_list: u_ldif_instance.as_type(  # type: ignore[attr-defined]
-                rule_list, target="list", default=[],
+            processor=lambda rule_list: u_ldif_instance.as_type(
+                rule_list,
+                target="list",
+                default=[],
             ),
             on_error="skip",
         )
@@ -238,8 +263,8 @@ class FlextLdifUtilitiesACL:
         if not permission_map:
             return perm
         u_ldif_instance = _get_u_ldif()
-        return u_ldif_instance.maybe(  # type: ignore[attr-defined]
-            u_ldif_instance.get(permission_map, perm),  # type: ignore[attr-defined]
+        return u_ldif_instance.maybe(
+            u_ldif_instance.get(permission_map, perm),
             default=perm,
         )
 
@@ -261,39 +286,38 @@ class FlextLdifUtilitiesACL:
             """Check if permission is valid."""
             return bool(p)
 
-        process_result = u.process(
+        u_ldif_instance = _get_u_ldif()
+        process_result = u.Collection.process(
             perm_list,
             processor=process_perm,
             predicate=is_valid_perm,
             on_error="skip",
         )
-        u_ldif_instance = _get_u_ldif()
         if not process_result.is_success:
             return {}
-        filtered_tuples = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+        filtered_tuples = u_ldif_instance.map_filter(
             process_result.value,
-            predicate=lambda t: (  # type: ignore[attr-defined]
+            predicate=lambda t: (
                 u_ldif_instance.is_type(t, tuple) and len(t) == TUPLE_LENGTH_PAIR
             ),
         )
 
         def map_tuple_to_dict(t: object) -> dict[str, bool] | None:
             """Map tuple to dict."""
-            u_ldif_instance = _get_u_ldif()
-            if (  # type: ignore[attr-defined]
-                u_ldif_instance.is_type(t, tuple) and len(t) == TUPLE_LENGTH_PAIR
-            ):
-                return {t[0]: t[1]}  # type: ignore[index]
+            u_ldif_instance_inner = _get_u_ldif()
+            if u_ldif_instance_inner.is_type(t, tuple) and len(t) == TUPLE_LENGTH_PAIR:
+                t_tuple = t
+                return {t_tuple[0]: t_tuple[1]}
             return None
 
-        mapped_dicts = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+        mapped_dicts = u_ldif_instance.map_filter(
             filtered_tuples,
             mapper=map_tuple_to_dict,
             predicate=lambda d: d is not None,
         )
-        return u_ldif_instance.reduce_dict(  # type: ignore[attr-defined]
+        return u_ldif_instance.reduce_dict(
             mapped_dicts,
-            predicate=lambda _k, v: u_ldif_instance.is_type(v, bool),  # type: ignore[attr-defined]
+            predicate=lambda _k, v: u_ldif_instance.is_type(v, bool),
         )
 
     @staticmethod
@@ -315,21 +339,25 @@ class FlextLdifUtilitiesACL:
 
         """
         u_ldif_instance = _get_u_ldif()
-        allow_dict = u_ldif_instance.when(  # type: ignore[attr-defined]
+        allow_dict = u_ldif_instance.when(
             condition=bool(allow_permissions),
             then=lambda: FlextLdifUtilitiesACL._process_permission_list(
-                allow_permissions, permission_map, is_allow=True,
+                allow_permissions,
+                permission_map,
+                is_allow=True,
             ),
             else_={},
         )
-        deny_dict = u_ldif_instance.when(  # type: ignore[attr-defined]
+        deny_dict = u_ldif_instance.when(
             condition=bool(deny_permissions),
             then=lambda: FlextLdifUtilitiesACL._process_permission_list(
-                deny_permissions, permission_map, is_allow=False,
+                deny_permissions or [],
+                permission_map,
+                is_allow=False,
             ),
             else_={},
         )
-        return u_ldif_instance.merge(allow_dict, deny_dict)  # type: ignore[attr-defined]
+        return u_ldif_instance.merge(allow_dict, deny_dict)
 
     # NOTE: OID-specific methods (extract_oid_target, detect_oid_subject,
     # parse_oid_permissions, format_oid_target, format_oid_subject,
@@ -359,7 +387,7 @@ class FlextLdifUtilitiesACL:
         """
         u_ldif_instance = _get_u_ldif()
         cleaned_value = subject_value.replace(", ", ",")
-        return u_ldif_instance.switch(  # type: ignore[attr-defined]
+        return u_ldif_instance.switch(
             bind_operator,
             {
                 "userdn": f'userdn="ldap:///{cleaned_value}"',
@@ -391,22 +419,22 @@ class FlextLdifUtilitiesACL:
             return ("", "")
 
         first_rule = bind_rules_data[0]
-        get_type = u_ldif_instance.prop("type")  # type: ignore[attr-defined]
-        get_value = u_ldif_instance.prop("value")  # type: ignore[attr-defined]
-        rule_type = u_ldif_instance.maybe(get_type(first_rule), default="")  # type: ignore[attr-defined]
-        rule_value = u_ldif_instance.maybe(get_value(first_rule), default="")  # type: ignore[attr-defined]
+        get_type = u_ldif_instance.prop("type")
+        get_value = u_ldif_instance.prop("value")
+        rule_type = u_ldif_instance.maybe(get_type(first_rule), default="")
+        rule_value = u_ldif_instance.maybe(get_value(first_rule), default="")
 
         # Check for special values first
-        special_match = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-            u_ldif_instance.get(special_values, rule_value),  # type: ignore[attr-defined]
+        special_match = u_ldif_instance.maybe(
+            u_ldif_instance.get(special_values, rule_value),
         )
         if special_match:
             return cast("tuple[str, str]", special_match)
 
         # Map the type
-        subject_type = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-            u_ldif_instance.get(subject_type_map, rule_type),  # type: ignore[attr-defined]
-            default=rule_type,  # type: ignore[arg-type]
+        subject_type = u_ldif_instance.maybe(
+            u_ldif_instance.get(subject_type_map, rule_type),
+            default=rule_type,
         )
 
         return (subject_type, rule_value)
@@ -424,11 +452,16 @@ class FlextLdifUtilitiesACL:
             Metadata extensions dictionary
 
         """
+
         def build_extension_entry(
-            key: str, value: object,
+            key: str,
+            value: object,
         ) -> dict[str, t.MetadataAttributeValue] | None:
             """Build extension entry if value exists."""
-            return {key: value} if value else None
+            if value:
+                return {key: value}
+                return None
+            return None
 
         extension_items = [
             ("line_breaks", config.line_breaks),
@@ -440,7 +473,7 @@ class FlextLdifUtilitiesACL:
 
         extension_dicts = u_ldif.process_flatten(
             extension_items,
-            processor=lambda item: build_extension_entry(item[0], item[1]),  # type: ignore[arg-type]
+            processor=lambda item: build_extension_entry(item[0], item[1]),
             on_error="skip",
         )
 
@@ -467,7 +500,7 @@ class FlextLdifUtilitiesACL:
             return char
 
         u_ldif_instance = _get_u_ldif()
-        sanitized_chars = u_ldif_instance.normalize_list(  # type: ignore[attr-defined]
+        sanitized_chars = u_ldif_instance.normalize_list(
             list(raw_name),
             mapper=sanitize_char,
         )
@@ -523,20 +556,18 @@ class FlextLdifUtilitiesACL:
         first_line = acl_line.split("\n", maxsplit=1)[0].strip()
         if not first_line.startswith(aci_prefix):
             return False, ""
-        aci_content = u_ldif_instance.cond(  # type: ignore[attr-defined]
+        aci_content = u_ldif_instance.cond(
             (
                 lambda: "\n" in acl_line,
-                lambda: u_ldif_instance.pipe(  # type: ignore[arg-type]
+                lambda: u_ldif_instance.pipe(
                     acl_line,
                     lambda line: line.split("\n"),
                     lambda lines: (
-                        lines[0].split(":", 1)[1].strip()
-                        + "\n"
-                        + "\n".join(lines[1:])
+                        lines[0].split(":", 1)[1].strip() + "\n" + "\n".join(lines[1:])
                     ),
                 ),
             ),
-            default=lambda: acl_line.split(":", 1)[1].strip(),  # type: ignore[arg-type]  # noqa: PLW0108
+            default=acl_line.split(":", 1)[1].strip,
         )()
         return True, aci_content
 
@@ -561,12 +592,14 @@ class FlextLdifUtilitiesACL:
         context["aci_content"] = aci_content
 
         def extract_pattern(
-            name: str, pattern_spec: str | tuple[str, int],
+            name: str,
+            pattern_spec: str | tuple[str, int],
         ) -> tuple[str, str | None]:
             """Extract component from pattern spec."""
             u_ldif_instance = _get_u_ldif()
-            if u_ldif_instance.is_type(pattern_spec, tuple):  # type: ignore[attr-defined]
-                pattern, group = pattern_spec
+            if u_ldif_instance.is_type(pattern_spec, tuple):
+                pattern_spec_tuple = pattern_spec
+                pattern, group = pattern_spec_tuple
             else:
                 pattern = pattern_spec
                 group = 1
@@ -578,11 +611,11 @@ class FlextLdifUtilitiesACL:
         def has_pattern(pattern_spec: str | tuple[str, int]) -> bool:
             """Check if pattern spec is valid."""
             u_ldif_instance = _get_u_ldif()
-            if u_ldif_instance.is_type(pattern_spec, tuple):  # type: ignore[attr-defined]
+            if u_ldif_instance.is_type(pattern_spec, tuple):
                 return bool(pattern_spec[0])
             return bool(pattern_spec)
 
-        process_result = u.process(
+        process_result = u.Collection.process(
             patterns,
             processor=extract_pattern,
             predicate=lambda _k, v: has_pattern(v),
@@ -590,10 +623,10 @@ class FlextLdifUtilitiesACL:
         )
         u_ldif_instance = _get_u_ldif()
         if process_result.is_success:
-            filtered_dict = u_ldif_instance.as_type(  # type: ignore[attr-defined]
-                u.filter(
+            filtered_dict = u_ldif_instance.as_type(
+                u.Collection.filter(
                     process_result.value,
-                    predicate=lambda _k, v: u_ldif_instance.is_type(v, str),  # type: ignore[attr-defined]
+                    predicate=lambda _k, v: u_ldif_instance.is_type(v, str),
                 ),
                 target="dict",
                 default={},
@@ -622,20 +655,23 @@ class FlextLdifUtilitiesACL:
         if not targetattr_str:
             return [], "*"
 
-        return u_ldif_instance.cond(  # type: ignore[attr-defined]
-            (lambda s: separator in s, lambda s: (  # type: ignore[arg-type]
-                u_ldif_instance.as_type(  # type: ignore[attr-defined]
-                    u_ldif_instance.map_filter(  # type: ignore[attr-defined]
-                        s.split(separator),
-                        mapper=lambda a: a.strip(),
-                        predicate=lambda a: bool(a.strip()),
+        return u_ldif_instance.cond(
+            (
+                lambda s: separator in s,
+                lambda s: (
+                    u_ldif_instance.as_type(
+                        u_ldif_instance.map_filter(
+                            s.split(separator),
+                            mapper=lambda a: a.strip(),
+                            predicate=lambda a: bool(a.strip()),
+                        ),
+                        target="list",
+                        default=[],
                     ),
-                    target="list",
-                    default=[],
+                    "*",
                 ),
-                "*",
-            )),
-            (lambda s: s != "*", lambda s: ([s.strip()], "*")),  # type: ignore[arg-type]
+            ),
+            (lambda s: s != "*", lambda s: ([s.strip()], "*")),
             default=([], "*"),
         )(targetattr_str)
 
@@ -645,11 +681,12 @@ class FlextLdifUtilitiesACL:
         special_values: dict[str, tuple[str, str]],
     ) -> tuple[str, str] | None:
         """Check if rule value matches any special value."""
+
         def matches_special(_k: str, _unused_value_tuple: tuple[str, str]) -> bool:
             """Check if rule value matches special key."""
             return bool(u.normalize(rule_value, _k))
 
-        found = u.find(
+        found = u.Collection.find(
             special_values,
             predicate=matches_special,
             return_key=True,
@@ -659,17 +696,22 @@ class FlextLdifUtilitiesACL:
             """Check if found item is valid special match tuple."""
             u_ldif_instance = _get_u_ldif()
             if (
-                not u_ldif_instance.is_type(found_item, tuple)  # type: ignore[attr-defined]
+                not u_ldif_instance.is_type(found_item, tuple)
                 or len(found_item) != TUPLE_LENGTH_PAIR
             ):
                 return False
-            value_tuple = found_item[1]
+            found_item_tuple = found_item
+            value_tuple = found_item_tuple[1]
             if (
-                not u_ldif_instance.is_type(value_tuple, tuple)  # type: ignore[attr-defined]
+                not u_ldif_instance.is_type(value_tuple, tuple)
                 or len(value_tuple) != TUPLE_LENGTH_PAIR
             ):
                 return False
-            return isinstance(value_tuple[0], str) and isinstance(value_tuple[1], str)
+            value_tuple_typed = value_tuple
+            return isinstance(value_tuple_typed[0], str) and isinstance(
+                value_tuple_typed[1],
+                str,
+            )
 
         if found and is_valid_special_match(found):
             key, value_tuple = cast("tuple[str, tuple[str, str]]", found)
@@ -700,49 +742,55 @@ class FlextLdifUtilitiesACL:
         def process_rule(rule: dict[str, str]) -> tuple[str, str] | None:
             """Process single bind rule."""
             u_ldif_instance = _get_u_ldif()
-            get_type = u_ldif_instance.prop("type")  # type: ignore[attr-defined]
-            get_value = u_ldif_instance.prop("value")  # type: ignore[attr-defined]
-            rule_type = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                get_type(rule), default="", mapper=str.lower,
+            get_type = u_ldif_instance.prop("type")
+            get_value = u_ldif_instance.prop("value")
+            rule_type = u_ldif_instance.maybe(
+                get_type(rule),
+                default="",
+                mapper=str.lower,
             )
-            rule_value = u_ldif_instance.maybe(get_value(rule), default="")  # type: ignore[attr-defined]
+            rule_value = u_ldif_instance.maybe(get_value(rule), default="")
             special_match = FlextLdifUtilitiesACL._check_special_value(
-                rule_value, special_values,
+                rule_value,
+                special_values,
             )
             if special_match:
                 return special_match
-            mapped_type = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(subject_type_map, rule_type),  # type: ignore[attr-defined]
+            mapped_type = u_ldif_instance.maybe(
+                u_ldif_instance.get(subject_type_map, rule_type),
             )
             if mapped_type:
                 return mapped_type, rule_value
             return None
 
-        process_result = u.process(
+        process_result = u.Collection.process(
             bind_rules_data,
             processor=process_rule,
             on_error="skip",
         )
         tuple_length_expected = 2
         u_ldif_instance = _get_u_ldif()
-        if (
-            process_result.is_success
-            and u_ldif_instance.is_type(process_result.value, "list")  # type: ignore[attr-defined]
+        if process_result.is_success and u_ldif_instance.is_type(
+            process_result.value,
+            "list",
         ):
-            found = u.find(process_result.value, predicate=lambda r: r is not None)
+            process_value = process_result.value
+            if isinstance(process_value, dict):
+                process_value = list(process_value.values())
+            found = u.Collection.find(process_value, predicate=lambda r: r is not None)
             u_ldif_instance = _get_u_ldif()
             if (
                 found is not None
-                and u_ldif_instance.is_type(found, tuple)  # type: ignore[attr-defined]
+                and u_ldif_instance.is_type(found, tuple)
                 and len(found) == tuple_length_expected
-                and u_ldif_instance.is_type(found[0], str)  # type: ignore[attr-defined]
-                and u_ldif_instance.is_type(found[1], str)  # type: ignore[attr-defined]
+                and u_ldif_instance.is_type(found[0], str)
+                and u_ldif_instance.is_type(found[1], str)
             ):
                 return cast("tuple[str, str]", found)
 
         u_ldif_instance = _get_u_ldif()
-        get_value = u_ldif_instance.prop("value")  # type: ignore[attr-defined]
-        default_value = u_ldif_instance.maybe(  # type: ignore[attr-defined]
+        get_value = u_ldif_instance.prop("value")
+        default_value = u_ldif_instance.maybe(
             get_value(bind_rules_data[0]) if bind_rules_data else None,
             default="",
         )
@@ -764,10 +812,10 @@ class FlextLdifUtilitiesACL:
 
         """
         u_ldif_instance = _get_u_ldif()
-        supported_lower = {u.normalize(s, case="lower") for s in supported}
-        return u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+        supported_lower = {s.lower() for s in supported}
+        return u_ldif_instance.map_filter(
             permissions,
-            mapper=lambda p: u.normalize(p, case="lower"),
+            mapper=lambda p: p.lower(),
             predicate=lambda p: p in supported_lower,
         )
 
@@ -789,14 +837,14 @@ class FlextLdifUtilitiesACL:
 
         """
         u_ldif_instance = _get_u_ldif()
-        return u_ldif_instance.cond(  # type: ignore[attr-defined]
+        return u_ldif_instance.cond(
             (
                 lambda: bool(target_attributes),
-                lambda: f'(targetattr="{separator.join(target_attributes)}")',  # type: ignore[arg-type]
+                lambda: f'(targetattr="{separator.join(target_attributes)}")',
             ),
             (
                 lambda: bool(target_dn) and target_dn != "*",
-                lambda: f'(targetattr="{target_dn}")',  # type: ignore[arg-type]
+                lambda: f'(targetattr="{target_dn}")',
             ),
             default='(targetattr="*")',
         )()
@@ -819,15 +867,15 @@ class FlextLdifUtilitiesACL:
 
         """
         u_ldif_instance = _get_u_ldif()
-        filtered = u_ldif_instance.when(  # type: ignore[attr-defined]
+        filtered = u_ldif_instance.when(
             condition=bool(supported_permissions),
             then=lambda: FlextLdifUtilitiesACL.filter_supported_permissions(
                 permissions,
-                supported_permissions,
+                supported_permissions or frozenset(),
             ),
             else_=permissions,
         )
-        return u_ldif_instance.when(  # type: ignore[attr-defined]
+        return u_ldif_instance.when(
             condition=bool(filtered),
             then=lambda: f"{allow_prefix}{','.join(filtered)})",
             else_=None,
@@ -863,28 +911,28 @@ class FlextLdifUtilitiesACL:
         }
         u_ldif_instance = _get_u_ldif()
         operators = bind_operators or default_operators
-        get_self = u_ldif_instance.prop("self")  # type: ignore[attr-defined]
-        get_anonymous = u_ldif_instance.prop("anonymous")  # type: ignore[attr-defined]
-        get_subject = u_ldif_instance.prop(subject_type)  # type: ignore[attr-defined]
+        get_self = u_ldif_instance.prop("self")
+        get_anonymous = u_ldif_instance.prop("anonymous")
+        get_subject = u_ldif_instance.prop(subject_type)
 
-        return u_ldif_instance.switch(  # type: ignore[attr-defined]
+        return u_ldif_instance.switch(
             subject_type,
             {
                 "self": (
-                    f'{u_ldif_instance.maybe(get_self(operators), default="userdn")}='  # type: ignore[attr-defined]
+                    f"{u_ldif_instance.maybe(get_self(operators), default='userdn')}="
                     f'"{self_value}"'
                 ),
                 "anonymous": (
-                    f'{u_ldif_instance.maybe(get_anonymous(operators), default="userdn")}='  # type: ignore[attr-defined]
+                    f"{u_ldif_instance.maybe(get_anonymous(operators), default='userdn')}="
                     f'"{anonymous_value}"'
                 ),
             },
-            default=u_ldif_instance.pipe(  # type: ignore[attr-defined]
+            default=u_ldif_instance.pipe(
                 subject_value,
                 lambda v: v.replace(", ", ","),
                 lambda v: v if v.startswith("ldap:///") else f"ldap:///{v}",
                 lambda v: (
-                    f'{u_ldif_instance.maybe(get_subject(operators), default="userdn")}='  # type: ignore[attr-defined]
+                    f"{u_ldif_instance.maybe(get_subject(operators), default='userdn')}="
                     f'"{v}"'
                 ),
             ),
@@ -932,7 +980,7 @@ class FlextLdifUtilitiesACL:
         """Extract version and ACL name from content."""
         u_ldif_instance = _get_u_ldif()
         version_match = re.search(version_pattern, aci_content)
-        version = u_ldif_instance.or_(  # type: ignore[attr-defined]
+        version = u_ldif_instance.or_(
             (
                 version_match.group(1)
                 if version_match
@@ -942,7 +990,7 @@ class FlextLdifUtilitiesACL:
             ),
             default="3.0",
         )
-        acl_name = u_ldif_instance.or_(  # type: ignore[attr-defined]
+        acl_name = u_ldif_instance.or_(
             (
                 version_match.group(TUPLE_LENGTH_PAIR)
                 if version_match
@@ -976,7 +1024,7 @@ class FlextLdifUtilitiesACL:
             config.targetattr_pattern,
             group=2,
         )
-        targetattr = u_ldif_instance.or_(  # type: ignore[attr-defined]
+        targetattr = u_ldif_instance.or_(
             targetattr_extracted,
             default=config.default_targetattr,
         )
@@ -1024,12 +1072,10 @@ class FlextLdifUtilitiesACL:
             config.permission_map,
         )
         u_ldif_instance = _get_u_ldif()
-        permissions_dict = u_ldif_instance.map_dict(  # type: ignore[attr-defined]
+        permissions_dict = u_ldif_instance.map_dict(
             permissions_dict_raw,
-            mapper=lambda _k, v: (  # type: ignore[attr-defined]
-                bool(v)
-                if u_ldif_instance.is_type(v, bool, int, str)  # type: ignore[attr-defined]
-                else False
+            mapper=lambda _k, v: (
+                bool(v) if u_ldif_instance.is_type(v, bool, int, str) else False
             ),
         )
         return subject_type, subject_value, permissions_dict
@@ -1055,7 +1101,7 @@ class FlextLdifUtilitiesACL:
                 group=1,
             )
 
-        extra_result = u.process(
+        extra_result = u.Collection.process(
             extra_patterns,
             processor=extract_extra,
             predicate=lambda _k, v: bool(v),
@@ -1063,16 +1109,16 @@ class FlextLdifUtilitiesACL:
         )
         u_ldif_instance = _get_u_ldif()
         if extra_result.is_success:
-            filtered_extensions = u_ldif_instance.as_type(  # type: ignore[attr-defined]
-                u.filter(
+            filtered_extensions = u_ldif_instance.as_type(
+                u.Collection.filter(
                     extra_result.value,
-                    predicate=lambda _k, v: u_ldif_instance.is_type(v, str),  # type: ignore[attr-defined]
+                    predicate=lambda _k, v: u_ldif_instance.is_type(v, str),
                 ),
                 target="dict",
                 default={},
             )
             if filtered_extensions:
-                extensions = u_ldif_instance.evolve(extensions, filtered_extensions)  # type: ignore[attr-defined]
+                extensions = u_ldif_instance.evolve(extensions, filtered_extensions)
         return extensions
 
     @staticmethod
@@ -1203,10 +1249,16 @@ class FlextLdifUtilitiesACL:
             return r.fail("ACL has no permissions")
         u_ldif_instance = _get_u_ldif()
         perm_candidates = [
-            "read", "write", "add", "delete",
-            "search", "compare", "self_write", "proxy",
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "self_write",
+            "proxy",
         ]
-        perm_names = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+        perm_names = u_ldif_instance.map_filter(
             perm_candidates,
             predicate=lambda name: bool(getattr(acl_data.permissions, name, False)),
         )
@@ -1286,12 +1338,8 @@ class FlextLdifUtilitiesACL:
             """Process single rule config item."""
             ext_key, format_template, operator_default = rule_item
             u_ldif_instance = _get_u_ldif()
-            value_raw = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                (
-                    u_ldif_instance.get(extensions, ext_key)  # type: ignore[attr-defined]
-                    if extensions
-                    else None
-                ),
+            value_raw = u_ldif_instance.maybe(
+                (u_ldif_instance.get(extensions, ext_key) if extensions else None),
             )
             if not value_raw:
                 return None
@@ -1299,53 +1347,55 @@ class FlextLdifUtilitiesACL:
             operator_placeholder = "{" + "operator" + "}"
             expected_tuple_length = tuple_length
             u_ldif_instance = _get_u_ldif()
-            return u_ldif_instance.match(  # type: ignore[attr-defined]
+            return u_ldif_instance.match(
                 value_raw,
-            (
-                lambda v: (
-                    u_ldif_instance.is_type(v, tuple)  # type: ignore[attr-defined]
-                    and len(v) == expected_tuple_length
+                (
+                    lambda v: (
+                        u_ldif_instance.is_type(v, tuple)
+                        and len(v) == expected_tuple_length
+                    ),
+                    lambda v: (
+                        format_template.format(
+                            operator=str(v[0]),
+                            value=str(v[1]),
+                        )
+                        if operator_placeholder in format_template
+                        else format_template.format(value=str(v[1]))
+                    ),
                 ),
-                lambda v: (
-                    format_template.format(
-                        operator=str(v[0]), value=str(v[1]),  # type: ignore[index]
-                    )
-                    if operator_placeholder in format_template
-                    else format_template.format(value=str(v[1]))  # type: ignore[index]
-                ),
-            ),
                 (
                     lambda _v: (
                         operator_placeholder in format_template
                         and operator_default is not None
                     ),
                     lambda v: format_template.format(
-                        operator=operator_default, value=str(v),  # type: ignore[arg-type]
+                        operator=operator_default,
+                        value=str(v),
                     ),
                 ),
-                default=lambda v: format_template.format(value=str(v)),  # type: ignore[arg-type]
+                default=lambda v: format_template.format(value=str(v)),
             )
 
-        process_result = u.process(
+        process_result = u.Collection.process(
             rule_config,
             processor=process_rule_config,
-            predicate=lambda item: bool(  # type: ignore[arg-type]
-                u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                    u_ldif_instance.get(extensions, item[0]) if extensions else None,  # type: ignore[attr-defined]
+            predicate=lambda item: bool(
+                u_ldif_instance.maybe(
+                    u_ldif_instance.get(extensions, item[0]) if extensions else None,
                 ),
             ),
             on_error="skip",
         )
         u_ldif_instance = _get_u_ldif()
-        return u_ldif_instance.maybe(  # type: ignore[attr-defined]
+        return u_ldif_instance.maybe(
             process_result.value if process_result.is_success else None,
             default=[],
-            mapper=lambda v: (  # type: ignore[attr-defined]
-                u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+            mapper=lambda v: (
+                u_ldif_instance.map_filter(
                     v,
                     predicate=lambda rule: rule is not None,
                 )
-                if u_ldif_instance.is_type(v, "list")  # type: ignore[attr-defined]
+                if u_ldif_instance.is_type(v, "list")
                 else []
             ),
         )
@@ -1387,32 +1437,34 @@ class FlextLdifUtilitiesACL:
             """Process single target config item."""
             ext_key, format_template = target_item
             u_ldif_instance = _get_u_ldif()
-            value = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(extensions, ext_key),  # type: ignore[attr-defined]
+            value = u_ldif_instance.maybe(
+                u_ldif_instance.get(extensions, ext_key),
             )
-            return u_ldif_instance.maybe(  # type: ignore[attr-defined]
+            return u_ldif_instance.maybe(
                 value,
-                mapper=lambda v: format_template.format(value=v),  # type: ignore[arg-type]
+                mapper=lambda v: format_template.format(value=v),
             )
 
-        process_result = u.process(
+        process_result = u.Collection.process(
             target_config,
             processor=process_target_config,
-            predicate=lambda item: bool(  # type: ignore[arg-type]
-                u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                    u_ldif_instance.get(extensions, item[0]) if extensions else None,  # type: ignore[attr-defined]
+            predicate=lambda item: bool(
+                u_ldif_instance.maybe(
+                    u_ldif_instance.get(extensions, item[0]) if extensions else None,
                 ),
             ),
             on_error="skip",
         )
         u_ldif_instance = _get_u_ldif()
-        return u_ldif_instance.maybe(  # type: ignore[attr-defined]
+        return u_ldif_instance.maybe(
             process_result.value if process_result.is_success else None,
             default=[],
-            mapper=lambda v: u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+            mapper=lambda v: u_ldif_instance.map_filter(
                 v,
                 predicate=lambda part: part is not None,
-            ) if u_ldif_instance.is_type(v, "list") else [],  # type: ignore[attr-defined]
+            )
+            if u_ldif_instance.is_type(v, "list")
+            else [],
         )
 
     @staticmethod
@@ -1438,18 +1490,18 @@ class FlextLdifUtilitiesACL:
             return []
 
         u_ldif_instance = _get_u_ldif()
-        if not u_ldif_instance.maybe(  # type: ignore[attr-defined]
-            u_ldif_instance.get(extensions, converted_from_key),  # type: ignore[attr-defined]
+        if not u_ldif_instance.maybe(
+            u_ldif_instance.get(extensions, converted_from_key),
         ):
             return []
 
-        return u_ldif_instance.pipe(  # type: ignore[attr-defined]
-            u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(extensions, comments_key),  # type: ignore[attr-defined]
-                default=[],  # type: ignore[arg-type]
+        return u_ldif_instance.pipe(
+            u_ldif_instance.maybe(
+                u_ldif_instance.get(extensions, comments_key),
+                default=[],
             ),
-            lambda c: u_ldif_instance.normalize_list(c, mapper=str),  # type: ignore[attr-defined]
-            lambda m: u_ldif_instance.as_type(m, target="list", default=[]),  # type: ignore[attr-defined]
+            lambda c: u_ldif_instance.normalize_list(c, mapper=str),
+            lambda m: u_ldif_instance.as_type(m, target="list", default=[]),
             lambda r: r + [""],  # Empty line after comments
         )
 
@@ -1479,14 +1531,14 @@ class FlextLdifUtilitiesACL:
 
         first_line = acl_string.split("\n", maxsplit=1)[0].strip()
 
-        return u_ldif_instance.cond(  # type: ignore[attr-defined]
+        return u_ldif_instance.cond(
             (
                 lambda: first_line.startswith(("orclaci:", "orclentrylevelaci:")),
-                lambda: {"format": "oid"},  # type: ignore[arg-type]
+                lambda: {"format": "oid"},
             ),
             (
                 lambda: first_line.startswith("aci:"),
-                lambda: {"format": "oud"},  # type: ignore[arg-type]
+                lambda: {"format": "oud"},
             ),
             default=None,
         )()
@@ -1519,14 +1571,19 @@ class FlextLdifUtilitiesACL:
         """
         u_ldif_instance = _get_u_ldif()
         pass_through_perms = {
-            "read", "write", "add", "delete",
-            "search", "compare", "all",
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
         }
 
         def map_perm(perm_name: str, *, perm_value: bool) -> dict[str, bool]:
             """Map single permission."""
             u_ldif_instance = _get_u_ldif()
-            return u_ldif_instance.switch(  # type: ignore[attr-defined]
+            return u_ldif_instance.switch(
                 perm_name,
                 {
                     "browse": {
@@ -1536,30 +1593,29 @@ class FlextLdifUtilitiesACL:
                     "selfwrite": {"write": perm_value},
                 },
                 default=(
-                    {perm_name: perm_value}
-                    if perm_name in pass_through_perms
-                    else {}
+                    {perm_name: perm_value} if perm_name in pass_through_perms else {}
                 ),
             )
 
         u_ldif_instance = _get_u_ldif()
-        pairs = u_ldif_instance.pairs(oid_permissions)  # type: ignore[attr-defined]
-        mapped_dicts = u_ldif_instance.process_flatten(  # type: ignore[attr-defined]
+        pairs = u_ldif_instance.pairs(oid_permissions)
+        mapped_dicts = u_ldif_instance.process_flatten(
             pairs,
-            processor=lambda item: map_perm(  # type: ignore[arg-type]
-                item[0], perm_value=item[1],
+            processor=lambda item: map_perm(
+                item[0],
+                perm_value=item[1],
             ),
             on_error="skip",
         )
 
         # Merge with OR combiner for boolean values
-        filtered_dicts = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+        filtered_dicts = u_ldif_instance.map_filter(
             mapped_dicts,
-            predicate=lambda d: u_ldif_instance.is_type(d, dict),  # type: ignore[attr-defined]
+            predicate=lambda d: u_ldif_instance.is_type(d, dict),
         )
-        return u_ldif_instance.merge(  # type: ignore[attr-defined]
+        return u_ldif_instance.merge(
             *filtered_dicts,
-            combiner=lambda _k, v1, v2: v1 or v2,  # type: ignore[arg-type]
+            combiner=lambda _k, v1, v2: v1 or v2,
         )
 
     @staticmethod
@@ -1587,34 +1643,39 @@ class FlextLdifUtilitiesACL:
         """
         u_ldif_instance = _get_u_ldif()
         pass_through_perms = {
-            "read", "write", "add", "delete",
-            "search", "compare", "all",
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
         }
 
         # Handle read + search → browse conversion
-        get_read = u_ldif_instance.prop("read")  # type: ignore[attr-defined]
-        get_search = u_ldif_instance.prop("search")  # type: ignore[attr-defined]
-        has_read = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-            get_read(oud_permissions), default=False,
+        get_read = u_ldif_instance.prop("read")
+        get_search = u_ldif_instance.prop("search")
+        has_read = u_ldif_instance.maybe(
+            get_read(oud_permissions),
+            default=False,
         )
-        has_search = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-            get_search(oud_permissions), default=False,
+        has_search = u_ldif_instance.maybe(
+            get_search(oud_permissions),
+            default=False,
         )
         browse_dict = (
-            {"browse": has_read and has_search}
-            if (has_read or has_search)
-            else {}
+            {"browse": has_read and has_search} if (has_read or has_search) else {}
         )
 
         # Pass through standard permissions (except read/search)
-        pass_through = u_ldif_instance.where(  # type: ignore[attr-defined]
+        pass_through = u_ldif_instance.where(
             oud_permissions,
-            predicate=lambda k, _v: (  # type: ignore[arg-type]
+            predicate=lambda k, _v: (
                 k in pass_through_perms and k not in {"read", "search"}
             ),
         )
 
-        return u_ldif_instance.merge(browse_dict, pass_through)  # type: ignore[attr-defined]
+        return u_ldif_instance.merge(browse_dict, pass_through)
 
     # =========================================================================
     # BATCH METHODS - Power Method Support
@@ -1674,32 +1735,34 @@ class FlextLdifUtilitiesACL:
         effective_defaults = defaults or {}
 
         def extract_component_batch(
-            name: str, pattern_spec: str | tuple[str, int],
+            name: str,
+            pattern_spec: str | tuple[str, int],
         ) -> tuple[str, object]:
             """Extract component from pattern spec."""
             u_ldif_instance = _get_u_ldif()
-            if u_ldif_instance.is_type(pattern_spec, tuple):  # type: ignore[attr-defined]
-                pattern, group_idx = pattern_spec
+            if u_ldif_instance.is_type(pattern_spec, tuple):
+                pattern_spec_tuple = pattern_spec
+                pattern, group_idx = pattern_spec_tuple
             else:
                 pattern = pattern_spec
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
             u_ldif_instance = _get_u_ldif()
-            default_value = u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(effective_defaults, name),  # type: ignore[attr-defined]
+            default_value = u_ldif_instance.maybe(
+                u_ldif_instance.get(effective_defaults, name),
             )
-            return name, u_ldif_instance.maybe(value, default=default_value)  # type: ignore[attr-defined]
+            return name, u_ldif_instance.maybe(value, default=default_value)
 
         u_ldif_instance = _get_u_ldif()
-        process_result = u.process(
+        process_result = u.Collection.process(
             patterns,
             processor=extract_component_batch,
             on_error="skip",
         )
         u_ldif_instance = _get_u_ldif()
-        if (
-            not process_result.is_success
-            or not u_ldif_instance.is_type(process_result.value, "dict")  # type: ignore[attr-defined]
+        if not process_result.is_success or not u_ldif_instance.is_type(
+            process_result.value,
+            "dict",
         ):
             return {}
 
@@ -1707,25 +1770,30 @@ class FlextLdifUtilitiesACL:
             """Extract value from tuple."""
             u_ldif_instance = _get_u_ldif()
             if (
-                u_ldif_instance.is_type(value_tuple, tuple)  # type: ignore[attr-defined]
+                u_ldif_instance.is_type(value_tuple, tuple)
                 and len(value_tuple) == TUPLE_LENGTH_PAIR
             ):
-                return {name: value_tuple[1]}
+                value_tuple_typed = value_tuple
+                return {name: value_tuple_typed[1]}
             return None
 
         u_ldif_instance = _get_u_ldif()
-        pairs = u_ldif_instance.pipe(  # type: ignore[attr-defined]
-            process_result.value if process_result.is_success else {},
-            lambda v: u_ldif_instance.as_type(v, target="dict"),  # type: ignore[attr-defined]
-            u_ldif_instance.pairs,  # type: ignore[attr-defined]
-        ) if process_result.is_success else []
-        mapped_dicts = u_ldif_instance.process_flatten(  # type: ignore[attr-defined]
+        pairs = (
+            u_ldif_instance.pipe(
+                process_result.value if process_result.is_success else {},
+                lambda v: u_ldif_instance.as_type(v, target="dict"),
+                u_ldif_instance.pairs,
+            )
+            if process_result.is_success
+            else []
+        )
+        mapped_dicts = u_ldif_instance.process_flatten(
             pairs,
-            processor=extract_value,  # type: ignore[arg-type]
+            processor=extract_value,
             on_error="skip",
         )
 
-        return u_ldif_instance.reduce_dict(mapped_dicts)  # type: ignore[attr-defined]
+        return u_ldif_instance.reduce_dict(mapped_dicts)
 
     @staticmethod
     def _parse_single_acl_with_config(
@@ -1736,7 +1804,7 @@ class FlextLdifUtilitiesACL:
     ) -> FlextLdifModelsDomains.Acl | None:
         """Parse single ACL line, return None on error."""
         u_ldif_instance = _get_u_ldif()
-        result = u_ldif_instance.try_(  # type: ignore[attr-defined]
+        result = u_ldif_instance.try_(
             lambda: FlextLdifUtilitiesACL.parse_aci(acl_line, config),
             default=None,
         )
@@ -1751,9 +1819,9 @@ class FlextLdifUtilitiesACL:
     def _format_batch_errors(errors: list[tuple[int, str]]) -> list[str]:
         """Format batch error tuples to strings."""
         u_ldif_instance = _get_u_ldif()
-        return u_ldif_instance.pipe(  # type: ignore[attr-defined]
+        return u_ldif_instance.pipe(
             errors,
-            lambda errs: u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+            lambda errs: u_ldif_instance.map_filter(
                 errs,
                 mapper=lambda t: f"ACL {t[0]}: {t[1]}",
             ),
@@ -1767,40 +1835,39 @@ class FlextLdifUtilitiesACL:
     ) -> r[list[FlextLdifModelsDomains.Acl]]:
         """Process batch results and return r."""
         u_ldif_instance = _get_u_ldif()
-        results = u_ldif_instance.smart_convert(  # type: ignore[attr-defined]
-            u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(batch_data, "results"),  # type: ignore[attr-defined]
-                default=[],  # type: ignore[arg-type]
+        results = u_ldif_instance.smart_convert(
+            u_ldif_instance.maybe(
+                u_ldif_instance.get(batch_data, "results"),
+                default=[],
             ),
             target_type="list",
-            predicate=lambda r: (  # type: ignore[attr-defined]
-                u_ldif_instance.is_type(r, FlextLdifModelsDomains.Acl)  # type: ignore[attr-defined]
+            predicate=lambda r: (
+                u_ldif_instance.is_type(r, FlextLdifModelsDomains.Acl)
             ),
             default=[],
         )
         results_typed = cast("list[FlextLdifModelsDomains.Acl]", results)
 
-        error_count = u_ldif_instance.pipe(  # type: ignore[attr-defined]
-            u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(batch_data, "error_count"),  # type: ignore[attr-defined]
-                default=0,  # type: ignore[arg-type]
+        error_count = u_ldif_instance.pipe(
+            u_ldif_instance.maybe(
+                u_ldif_instance.get(batch_data, "error_count"),
+                default=0,
             ),
-            lambda v: u_ldif_instance.as_type(v, target=int, default=0),  # type: ignore[attr-defined]
+            lambda v: u_ldif_instance.as_type(v, target=int, default=0),
         )
         if error_count > 0 and not skip_invalid:
-            errors_raw = u_ldif_instance.as_type(  # type: ignore[attr-defined]
-                u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                    u_ldif_instance.get(batch_data, "errors"),  # type: ignore[attr-defined]
-                    default=[],  # type: ignore[arg-type]
+            errors_raw = u_ldif_instance.as_type(
+                u_ldif_instance.maybe(
+                    u_ldif_instance.get(batch_data, "errors"),
+                    default=[],
                 ),
                 target="list",
                 default=[],
             )
-            errors_typed = u_ldif_instance.map_filter(  # type: ignore[attr-defined]
+            errors_typed = u_ldif_instance.map_filter(
                 errors_raw,
-                predicate=lambda e: (  # type: ignore[attr-defined]
-                    u_ldif_instance.is_type(e, tuple)  # type: ignore[attr-defined]
-                    and len(e) == TUPLE_LENGTH_PAIR
+                predicate=lambda e: (
+                    u_ldif_instance.is_type(e, tuple) and len(e) == TUPLE_LENGTH_PAIR
                 ),
             )
             if errors_typed:
@@ -1843,10 +1910,13 @@ class FlextLdifUtilitiesACL:
             ...     acls = result.unwrap()
 
         """
+
         def parse_single_acl(acl_line: str) -> FlextLdifModelsDomains.Acl | None:
             """Parse single ACL line wrapper."""
             return FlextLdifUtilitiesACL._parse_single_acl_with_config(
-                acl_line, config, fail_fast=fail_fast,
+                acl_line,
+                config,
+                fail_fast=fail_fast,
             )
 
         u_ldif_instance = _get_u_ldif()
@@ -1854,19 +1924,21 @@ class FlextLdifUtilitiesACL:
             list(acl_lines),
             operation=parse_single_acl,
             on_error="collect" if not fail_fast else "fail",
-            post_validate=lambda r: r is not None,
+            pre_validate=lambda r: r
+            is not None,  # Changed from post_validate to pre_validate
         )
         if batch_result.is_failure:
             return cast("r[list[FlextLdifModelsDomains.Acl]]", batch_result)
 
-        batch_data_dict = u_ldif_instance.pick(  # type: ignore[attr-defined]
+        batch_data_dict = u_ldif_instance.pick(
             batch_result.value,
             "results",
             "errors",
             "error_count",
         )
         return FlextLdifUtilitiesACL._process_batch_results(
-            batch_data_dict, skip_invalid=skip_invalid,
+            batch_data_dict,
+            skip_invalid=skip_invalid,
         )
 
     @staticmethod
@@ -1895,21 +1967,25 @@ class FlextLdifUtilitiesACL:
         def convert_single_permissions(permissions: dict[str, bool]) -> dict[str, bool]:
             """Convert single permission set."""
             u_ldif_instance = _get_u_ldif()
-            return u_ldif_instance.switch(  # type: ignore[attr-defined]
+            return u_ldif_instance.switch(
                 direction,
                 {
                     "oid_to_oud": (
-                        lambda: (  # type: ignore[arg-type]
-                            FlextLdifUtilitiesACL.map_oid_to_oud_permissions(permissions)
+                        lambda: (
+                            FlextLdifUtilitiesACL.map_oid_to_oud_permissions(
+                                permissions,
+                            )
                         )
                     ),
                     "oud_to_oid": (
-                        lambda: (  # type: ignore[arg-type]
-                            FlextLdifUtilitiesACL.map_oud_to_oid_permissions(permissions)
+                        lambda: (
+                            FlextLdifUtilitiesACL.map_oud_to_oid_permissions(
+                                permissions,
+                            )
                         )
                     ),
                 },
-                default=lambda: permissions,  # type: ignore[arg-type]
+                default=lambda: permissions,
             )()
 
         batch_result: r[t.Types.BatchResultDict] = u.batch(
@@ -1920,18 +1996,16 @@ class FlextLdifUtilitiesACL:
         if batch_result.is_failure:
             return cast("r[list[dict[str, bool]]]", batch_result)
         u_ldif_instance = _get_u_ldif()
-        results = u_ldif_instance.pipe(  # type: ignore[attr-defined]
+        results = u_ldif_instance.pipe(
             batch_result.value,
-            lambda b: u_ldif_instance.maybe(  # type: ignore[attr-defined]
-                u_ldif_instance.get(b, "results"),  # type: ignore[attr-defined]
-                default=[],  # type: ignore[arg-type]
+            lambda b: u_ldif_instance.maybe(
+                u_ldif_instance.get(b, "results"),
+                default=[],
             ),
-            lambda r: u_ldif_instance.smart_convert(  # type: ignore[attr-defined]
+            lambda r: u_ldif_instance.smart_convert(
                 r,
                 target_type="list",
-                predicate=lambda x: (  # type: ignore[attr-defined]
-                    u_ldif_instance.is_type(x, dict)  # type: ignore[attr-defined]
-                ),
+                predicate=lambda x: (u_ldif_instance.is_type(x, dict)),
                 default=[],
             ),
         )
@@ -1972,6 +2046,7 @@ class FlextLdifUtilitiesACL:
             ...         print(f"Valid: {is_valid}")
 
         """
+
         def validate_single_acl(acl_line: str) -> tuple[str, bool, str | None]:
             """Validate single ACL line."""
             is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(acl_line)
@@ -1982,16 +2057,16 @@ class FlextLdifUtilitiesACL:
 
         u_ldif_instance = _get_u_ldif()
         if collect_errors:
-            validated_result = u.process(
+            validated_result = u.Collection.process(
                 list(acl_lines),
                 processor=validate_single_acl,
                 on_error="skip",
             )
-            results = u_ldif_instance.maybe(  # type: ignore[attr-defined]
+            results = u_ldif_instance.maybe(
                 validated_result.value if validated_result.is_success else None,
                 default=[],
-                mapper=lambda v: (  # type: ignore[attr-defined]
-                    u_ldif_instance.as_type(v, target="list", default=[])  # type: ignore[attr-defined]
+                mapper=lambda v: (
+                    u_ldif_instance.as_type(v, target="list", default=[])
                 ),
             )
         else:
@@ -2008,10 +2083,10 @@ class FlextLdifUtilitiesACL:
                 results_list.append(result_tuple)
                 return results_list, not result_tuple[1]
 
-            results, _ = u_ldif_instance.fold(  # type: ignore[attr-defined]
+            results, _ = u_ldif_instance.fold(
                 list(acl_lines),
                 initial=([], False),
-                folder=fold_validate,  # type: ignore[arg-type]
+                folder=fold_validate,
             )
 
         return r.ok(results)

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextContext, FlextResult
+from flext_core import FlextContext, r
 
 from flext_ldif import FlextLdif
 
@@ -40,11 +40,11 @@ sn: Smith
 mail: jane.smith@example.com
 """
 
-    def process_pipeline(self) -> FlextResult:
+    def process_pipeline(self) -> r:
         """DRY railway: detect → parse → validate → parallel process.
 
         Returns:
-            FlextResult with parsed and validated entries or error.
+            r with parsed and validated entries or error.
 
         """
         api = FlextLdif.get_instance()
@@ -52,7 +52,7 @@ mail: jane.smith@example.com
         # Railway pattern with proper error handling
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
         if detect_result.is_failure:
-            return FlextResult.fail(detect_result.error or "Detection failed")
+            return r.fail(detect_result.error or "Detection failed")
 
         detected = detect_result.unwrap()
         server_type = detected.detected_server_type or "rfc"
@@ -65,25 +65,25 @@ mail: jane.smith@example.com
 
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
-            return FlextResult.fail(validate_result.error or "Validation failed")
+            return r.fail(validate_result.error or "Validation failed")
 
         # Process returns transformed data, but we want entries
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
-        return (process_result.is_success and FlextResult.ok(entries)) or process_result
+        return (process_result.is_success and r.ok(entries)) or process_result
 
     @staticmethod
-    def file_pipeline() -> FlextResult:
+    def file_pipeline() -> r:
         """DRY file processing: detect → parse → validate → write.
 
         Returns:
-            FlextResult with processing result or error.
+            r with processing result or error.
 
         """
         api = FlextLdif.get_instance()
         sample_file = Path("examples/sample_basic.ldif")
 
         if not sample_file.exists():
-            return FlextResult.fail("Sample file not found")
+            return r.fail("Sample file not found")
 
         detect_result = api.detect_server_type(ldif_path=sample_file)
         if detect_result.is_failure:
@@ -107,13 +107,13 @@ mail: jane.smith@example.com
         if write_result.is_failure:
             return write_result
 
-        return FlextResult.ok("File processing complete")
+        return r.ok("File processing complete")
 
-    def context_pipeline(self) -> FlextResult:
+    def context_pipeline(self) -> r:
         """Context-aware processing with correlation tracking.
 
         Returns:
-            FlextResult with processing result or error.
+            r with processing result or error.
 
         """
         api = FlextLdif.get_instance()
@@ -121,7 +121,7 @@ mail: jane.smith@example.com
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
-                return FlextResult.fail(
+                return r.fail(
                     server_result.error or "Server detection failed",
                 )
 
@@ -134,12 +134,12 @@ mail: jane.smith@example.com
 
             validate_result = api.validate_entries(parse_result.unwrap())
             if validate_result.is_failure:
-                return FlextResult.fail(validate_result.error or "Validation failed")
+                return r.fail(validate_result.error or "Validation failed")
 
-            return FlextResult.ok(parse_result.unwrap())
+            return r.ok(parse_result.unwrap())
 
     @staticmethod
-    def batch_transform() -> FlextResult:
+    def batch_transform() -> r:
         """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
 
@@ -159,7 +159,7 @@ mail: jane.smith@example.com
                 entries.append(result.unwrap())
 
         if not entries:
-            return FlextResult.fail("Failed to create entries")
+            return r.fail("Failed to create entries")
 
         # Transform and return entries (not processing results)
         transform_result = api.process(
@@ -171,4 +171,4 @@ mail: jane.smith@example.com
         if transform_result.is_failure:
             return transform_result
 
-        return FlextResult.ok(entries)
+        return r.ok(entries)

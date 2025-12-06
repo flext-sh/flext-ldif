@@ -1,18 +1,14 @@
-"""Tests for Writer integrated with DnService for DN normalization.
-
-Tests real DN normalization of entries before writing, using actual DnService.
-ZERO mocks - all real services and data.
-"""
-
 from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdifModels, FlextLdifWriter
+from flext_ldif import FlextLdifWriter
+from flext_ldif.models import m
 from flext_ldif.services.dn import FlextLdifDn
+from tests import m
 
 
-class TestWriterDnNormalization:
+class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
     """Test Writer integration with DnService for DN normalization."""
 
     @pytest.fixture
@@ -140,9 +136,9 @@ class TestWriterDnNormalization:
         normalized_dn = normalize_result.unwrap()
 
         # Create entry with normalized DN
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value=normalized_dn),
-            attributes=FlextLdifModels.LdifAttributes(
+        entry = m.Entry(
+            dn=m.DistinguishedName(value=normalized_dn),
+            attributes=m.LdifAttributes(
                 attributes={
                     "cn": ["John Doe"],
                     "objectClass": ["person"],
@@ -154,7 +150,7 @@ class TestWriterDnNormalization:
         write_result = writer.write(
             entries=[entry],
             target_server_type="rfc",
-            format_options=FlextLdifModels.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.WriteFormatOptions(fold_long_lines=False),
         )
 
         assert write_result.is_success

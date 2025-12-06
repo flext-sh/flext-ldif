@@ -3,13 +3,12 @@
 Phase 1 of EntryResult-centric refactoring: Test new helper methods.
 """
 
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
+from tests import m, s
 
-from flext_ldif import FlextLdifModels
-from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif.models import m
 
 
-class TestEntryResultHelpers:
+class TestsFlextLdifEntryResultHelpers(s):
     """Test EntryResult helper methods added in Phase 1."""
 
     def test_from_entries_creates_entry_result(self) -> None:
@@ -22,7 +21,7 @@ class TestEntryResultHelpers:
             "cn=user2,dc=example,dc=com",
             {"cn": ["user2"], "objectClass": ["person"]},
         )
-        result = FlextLdifModels.EntryResult.from_entries(
+        result = m.EntryResult.from_entries(
             [entry1, entry2],
             category="users",
         )
@@ -34,7 +33,7 @@ class TestEntryResultHelpers:
 
     def test_empty_creates_empty_entry_result(self) -> None:
         """Test EntryResult.empty() factory method."""
-        result = FlextLdifModels.EntryResult.empty()
+        result = m.EntryResult.empty()
 
         # Verify empty categories
         assert len(result.entries_by_category) == 0
@@ -43,22 +42,22 @@ class TestEntryResultHelpers:
 
     def test_get_all_entries_flattens_categories(self) -> None:
         """Test get_all_entries() flattens all categories."""
-        entry1 = FlextLdifModels.Entry.create(
+        entry1 = m.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
         ).unwrap()
-        entry2 = FlextLdifModels.Entry.create(
+        entry2 = m.Entry.create(
             dn="cn=group1,dc=example,dc=com",
             attributes={"cn": ["group1"]},
         ).unwrap()
 
         # Use _FlexibleCategories directly for type safety
-        categories = FlextLdifModelsResults.FlexibleCategories()
+        categories = m.FlexibleCategories()
         categories.add_entries("users", [entry1])
         categories.add_entries("groups", [entry2])
-        result = FlextLdifModels.EntryResult(
+        result = m.EntryResult(
             entries_by_category=categories,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=2),
+            statistics=m.Statistics(total_entries=2),
         )
 
         all_entries = result.get_all_entries()
@@ -68,22 +67,22 @@ class TestEntryResultHelpers:
 
     def test_get_category_returns_entries(self) -> None:
         """Test get_category() returns specific category."""
-        entry1 = FlextLdifModels.Entry.create(
+        entry1 = m.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
         ).unwrap()
-        entry2 = FlextLdifModels.Entry.create(
+        entry2 = m.Entry.create(
             dn="cn=group1,dc=example,dc=com",
             attributes={"cn": ["group1"]},
         ).unwrap()
 
         # Use _FlexibleCategories directly for type safety
-        categories = FlextLdifModelsResults.FlexibleCategories()
+        categories = m.FlexibleCategories()
         categories.add_entries("users", [entry1])
         categories.add_entries("groups", [entry2])
-        result = FlextLdifModels.EntryResult(
+        result = m.EntryResult(
             entries_by_category=categories,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=2),
+            statistics=m.Statistics(total_entries=2),
         )
 
         users = result.get_category("users")
@@ -94,7 +93,7 @@ class TestEntryResultHelpers:
 
     def test_get_category_with_default(self) -> None:
         """Test get_category() with default for missing category."""
-        result = FlextLdifModels.EntryResult.empty()
+        result = m.EntryResult.empty()
 
         # Missing category returns default
         entries = result.get_category("missing", default=[])
@@ -106,28 +105,28 @@ class TestEntryResultHelpers:
 
     def test_merge_combines_entry_results(self) -> None:
         """Test merge() combines two EntryResults."""
-        entry1 = FlextLdifModels.Entry.create(
+        entry1 = m.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
         ).unwrap()
-        entry2 = FlextLdifModels.Entry.create(
+        entry2 = m.Entry.create(
             dn="cn=user2,dc=example,dc=com",
             attributes={"cn": ["user2"]},
         ).unwrap()
 
         # Use _FlexibleCategories directly for type safety
-        categories1 = FlextLdifModelsResults.FlexibleCategories()
+        categories1 = m.FlexibleCategories()
         categories1.add_entries("users", [entry1])
-        result1 = FlextLdifModels.EntryResult(
+        result1 = m.EntryResult(
             entries_by_category=categories1,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
+            statistics=m.Statistics(total_entries=1),
         )
 
-        categories2 = FlextLdifModelsResults.FlexibleCategories()
+        categories2 = m.FlexibleCategories()
         categories2.add_entries("users", [entry2])
-        result2 = FlextLdifModels.EntryResult(
+        result2 = m.EntryResult(
             entries_by_category=categories2,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
+            statistics=m.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -143,28 +142,28 @@ class TestEntryResultHelpers:
 
     def test_merge_handles_different_categories(self) -> None:
         """Test merge() with different categories."""
-        entry1 = FlextLdifModels.Entry.create(
+        entry1 = m.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
         ).unwrap()
-        entry2 = FlextLdifModels.Entry.create(
+        entry2 = m.Entry.create(
             dn="cn=group1,dc=example,dc=com",
             attributes={"cn": ["group1"]},
         ).unwrap()
 
         # Use _FlexibleCategories directly for type safety
-        categories1 = FlextLdifModelsResults.FlexibleCategories()
+        categories1 = m.FlexibleCategories()
         categories1.add_entries("users", [entry1])
-        result1 = FlextLdifModels.EntryResult(
+        result1 = m.EntryResult(
             entries_by_category=categories1,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
+            statistics=m.Statistics(total_entries=1),
         )
 
-        categories2 = FlextLdifModelsResults.FlexibleCategories()
+        categories2 = m.FlexibleCategories()
         categories2.add_entries("groups", [entry2])
-        result2 = FlextLdifModels.EntryResult(
+        result2 = m.EntryResult(
             entries_by_category=categories2,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
+            statistics=m.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -176,20 +175,20 @@ class TestEntryResultHelpers:
 
     def test_merge_preserves_immutability(self) -> None:
         """Test merge() doesn't modify original EntryResults."""
-        entry1 = FlextLdifModels.Entry.create(
+        entry1 = m.Entry.create(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"]},
         ).unwrap()
 
         # Use _FlexibleCategories directly for type safety
-        categories1 = FlextLdifModelsResults.FlexibleCategories()
+        categories1 = m.FlexibleCategories()
         categories1.add_entries("users", [entry1])
-        result1 = FlextLdifModels.EntryResult(
+        result1 = m.EntryResult(
             entries_by_category=categories1,
-            statistics=FlextLdifModelsResults.Statistics(total_entries=1),
+            statistics=m.Statistics(total_entries=1),
         )
 
-        result2 = FlextLdifModels.EntryResult.empty()
+        result2 = m.EntryResult.empty()
 
         # Merge should create new instance
         merged = result1.merge(result2)

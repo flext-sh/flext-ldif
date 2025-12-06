@@ -7,7 +7,7 @@ Test suite verifying LDIF export functionality:
     - Export to LDIF files with file I/O
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestDocker.ldap_container fixture.
+container management via FlextTestsDocker.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,7 +22,9 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
+from tests import m
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution
@@ -175,12 +177,12 @@ class TestRealLdapExport:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, FlextLdifModels.Entry):
+            if isinstance(unwrapped_entry, m.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                facade_entry = m.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)
@@ -262,12 +264,12 @@ class TestRealLdapExport:
             assert result.is_success
             unwrapped_entry = result.unwrap()
             # Convert domain Entry to facade Entry if needed
-            if isinstance(unwrapped_entry, FlextLdifModels.Entry):
+            if isinstance(unwrapped_entry, m.Entry):
                 entries.append(unwrapped_entry)
             else:
                 # Convert domain Entry to facade Entry
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+                facade_entry = m.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
 
         write_result = flext_api.write(entries)

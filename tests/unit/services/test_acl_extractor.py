@@ -19,13 +19,12 @@ from typing import Final
 
 import pytest
 
-from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests.fixtures.constants import DNs, Names, Values
-from tests.helpers.test_assertions import TestAssertions
+from tests import u
 
 # Use helper to eliminate duplication - replaces 8-12 lines per use
-create_test_entry = TestAssertions.create_entry
+create_test_entry = u.TestAssertions.create_entry
 
 # ACL test constants
 ACL_VALUE_SAMPLE: Final[str] = (
@@ -57,7 +56,7 @@ SCHEMA_ENTRY_TESTS: Final[list[SchemaEntryTestCase]] = [
 ]
 
 
-class TestFlextLdifAcl:
+class TestsFlextLdifAclService:
     """Comprehensive test suite for FlextLdifAcl service.
 
     Organized in nested classes for logical grouping while maintaining single main class structure.
@@ -78,7 +77,7 @@ class TestFlextLdifAcl:
             # execute() returns health check status (success with empty response)
             assert result.is_success
             response = result.unwrap()
-            assert isinstance(response, FlextLdifModelsResults.AclResponse)
+            assert isinstance(response, m.LdifResults.AclResponse)
             assert response.acls == []
 
     class TestExtractAclEntries:
@@ -88,57 +87,57 @@ class TestFlextLdifAcl:
             """Test extract_acl_entries with empty entry list."""
             service = FlextLdifAcl()
             result = service.extract_acl_entries([])
-            TestAssertions.assert_success(result)
+            u.TestAssertions.assert_success(result)
             assert result.unwrap() == []
 
         def test_extract_acl_entries_no_acl_attributes(self) -> None:
             """Test extract_acl_entries with entries without ACL attributes."""
             service = FlextLdifAcl()
             entry = create_test_entry(
-                f"cn={Values.USER1},{DNs.EXAMPLE}",
-                {Names.OBJECTCLASS: [Names.PERSON], Names.CN: Values.USER1},
+                "cn=user1,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": "user1"},
             )
             result = service.extract_acl_entries([entry])
-            TestAssertions.assert_success(result)
+            u.TestAssertions.assert_success(result)
             assert result.unwrap() == []
 
         def test_extract_acl_entries_with_default_acl_attributes(self) -> None:
             """Test extract_acl_entries with default ACL attributes (acl, aci, olcAccess)."""
             service = FlextLdifAcl()
             entry_with_acl = create_test_entry(
-                f"cn={Values.TEST},{DNs.EXAMPLE}",
+                "cn=test,dc=example,dc=com",
                 {
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.CN: Values.TEST,
+                    "objectClass": ["person"],
+                    "cn": "test",
                     "aci": ACL_VALUE_SAMPLE,
                 },
             )
             entry_without_acl = create_test_entry(
-                f"cn=other,{DNs.EXAMPLE}",
-                {Names.OBJECTCLASS: [Names.PERSON], Names.CN: "other"},
+                "cn=other,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": "other"},
             )
             result = service.extract_acl_entries([entry_with_acl, entry_without_acl])
-            TestAssertions.assert_success(result)
+            u.TestAssertions.assert_success(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
-            assert acl_entries[0].dn.value == f"cn={Values.TEST},{DNs.EXAMPLE}"
+            assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
 
         def test_extract_acl_entries_with_custom_acl_attributes(self) -> None:
             """Test extract_acl_entries with custom ACL attributes."""
             service = FlextLdifAcl()
             entry_with_orclaci = create_test_entry(
-                f"cn={Values.TEST},{DNs.EXAMPLE}",
+                "cn=test,dc=example,dc=com",
                 {
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.CN: Values.TEST,
+                    "objectClass": ["person"],
+                    "cn": "test",
                     "orclaci": ACL_VALUE_SAMPLE,
                 },
             )
             entry_with_aci = create_test_entry(
-                f"cn=other,{DNs.EXAMPLE}",
+                "cn=other,dc=example,dc=com",
                 {
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.CN: "other",
+                    "objectClass": ["person"],
+                    "cn": "other",
                     "aci": ACL_VALUE_SAMPLE,
                 },
             )
@@ -146,10 +145,10 @@ class TestFlextLdifAcl:
                 [entry_with_orclaci, entry_with_aci],
                 acl_attributes=["orclaci"],
             )
-            TestAssertions.assert_success(result)
+            u.TestAssertions.assert_success(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
-            assert acl_entries[0].dn.value == f"cn={Values.TEST},{DNs.EXAMPLE}"
+            assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
 
         def test_extract_acl_entries_excludes_schema_entries(self) -> None:
             """Test extract_acl_entries excludes schema entries even if they have ACL attributes."""
@@ -157,39 +156,39 @@ class TestFlextLdifAcl:
             schema_entry = create_test_entry(
                 SCHEMA_DN,
                 {
-                    Names.OBJECTCLASS: ["subschema"],
+                    "objectClass": ["subschema"],
                     "attributeTypes": SCHEMA_ATTR_TYPES,
                     "aci": ACL_VALUE_SAMPLE,
                 },
             )
             regular_entry = create_test_entry(
-                f"cn={Values.TEST},{DNs.EXAMPLE}",
+                "cn=test,dc=example,dc=com",
                 {
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.CN: Values.TEST,
+                    "objectClass": ["person"],
+                    "cn": "test",
                     "aci": ACL_VALUE_SAMPLE,
                 },
             )
             result = service.extract_acl_entries([schema_entry, regular_entry])
-            TestAssertions.assert_success(result)
+            u.TestAssertions.assert_success(result)
             acl_entries = result.unwrap()
             assert len(acl_entries) == 1
-            assert acl_entries[0].dn.value == f"cn={Values.TEST},{DNs.EXAMPLE}"
+            assert acl_entries[0].dn.value == "cn=test,dc=example,dc=com"
 
         def test_extract_acl_entries_multiple_acl_attributes(self) -> None:
             """Test extract_acl_entries with multiple ACL attributes in same entry."""
             service = FlextLdifAcl()
             entry_with_multiple = create_test_entry(
-                f"cn={Values.TEST},{DNs.EXAMPLE}",
+                "cn=test,dc=example,dc=com",
                 {
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.CN: Values.TEST,
+                    "objectClass": ["person"],
+                    "cn": "test",
                     "aci": ACL_VALUE_SAMPLE,
                     "acl": ACL_VALUE_SAMPLE,
                 },
             )
             result = service.extract_acl_entries([entry_with_multiple])
-            TestAssertions.assert_success(result)
+            u.TestAssertions.assert_success(result)
             assert len(result.unwrap()) == 1
 
     class TestIsSchemaEntry:
@@ -204,7 +203,7 @@ class TestFlextLdifAcl:
             entry = create_test_entry(
                 SCHEMA_DN,
                 {
-                    Names.OBJECTCLASS: ["subschema"],
+                    "objectClass": ["subschema"],
                     test_case.schema_attr: test_case.schema_value,
                 },
             )
@@ -213,10 +212,10 @@ class TestFlextLdifAcl:
         def test_is_schema_entry_regular_entry(self) -> None:
             """Test _is_schema_entry returns False for regular entry."""
             entry = create_test_entry(
-                f"cn={Values.USER1},{DNs.EXAMPLE}",
-                {Names.OBJECTCLASS: [Names.PERSON], Names.CN: Values.USER1},
+                "cn=user1,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": "user1"},
             )
             assert FlextLdifAcl._is_schema_entry(entry) is False
 
 
-__all__ = ["TestFlextLdifAcl"]
+__all__ = ["TestsFlextLdifAclService"]

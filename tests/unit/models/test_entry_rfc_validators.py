@@ -1,31 +1,11 @@
-"""Tests for FASE 1: Entry RFC Compliance Validators.
-
-Tests: FlextLdifModels.Entry RFC compliance validation
-Modules: FlextLdifModels.Entry.validate_entry_rfc_compliance() model_validator
-Scope: RFC 2849 § 2 (DN/attributes required), RFC 4512 § 2.5 (attribute naming), validation metadata capture
-
-Strategy: Capture RFC violations WITHOUT rejecting entries (preserve for round-trip conversions).
-"""
-
 from __future__ import annotations
+from tests import c, m, s, t
 
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from tests.fixtures.typing import GenericFieldsDict
-
-from flext_ldif import FlextLdifModels
-from flext_ldif._models.domain import FlextLdifModelsDomains
-
-
-class TestEntryRfcCompliance:
-    """Test Entry RFC compliance validation with metadata capture."""
-
-    # =========================================================================
-    # Test Cases - Organized as Nested StrEnum and Mappings
-    # =========================================================================
-
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
     class RFCTestCase(StrEnum):
         """Test case identifiers for RFC validation scenarios."""
 
@@ -223,19 +203,19 @@ class TestEntryRfcCompliance:
     def create_entry_with_handling(
         dn: str | None,
         attributes: dict[str, str | list[str]] | None,
-    ) -> FlextLdifModels.Entry:
+    ) -> m.Entry:
         """Create entry handling None values specially for edge case testing."""
         # Create metadata for RFC validation capture
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="rfc",
         )
         # Convert str to DistinguishedName and dict to LdifAttributes using constructors
         # DistinguishedName and LdifAttributes accept str/dict directly via Pydantic validators
-        dn_model: FlextLdifModelsDomains.DistinguishedName | None = None
+        dn_model: m.DistinguishedName | None = None
         if dn is not None:
-            dn_model = FlextLdifModelsDomains.DistinguishedName(value=dn)
+            dn_model = m.DistinguishedName(value=dn)
 
-        attrs_model: FlextLdifModelsDomains.LdifAttributes | None = None
+        attrs_model: m.LdifAttributes | None = None
         if attributes is not None:
             # Normalize attributes: convert str values to list[str]
             normalized_attrs: dict[str, list[str]] = {}
@@ -246,13 +226,11 @@ class TestEntryRfcCompliance:
                     normalized_attrs[key] = value
                 else:
                     normalized_attrs[key] = [str(value)]
-            attrs_model = FlextLdifModelsDomains.LdifAttributes(
-                attributes=normalized_attrs
-            )
+            attrs_model = m.LdifAttributes(attributes=normalized_attrs)
 
         # For None cases, directly instantiate Entry with Pydantic __init__
         # which triggers both field validators and model_validator
-        return FlextLdifModels.Entry(
+        return m.Entry(
             dn=dn_model,
             attributes=attrs_model,
             metadata=metadata,
@@ -288,7 +266,7 @@ class TestEntryRfcCompliance:
         if dn is None or attributes is None:
             entry = self.create_entry_with_handling(dn, attributes)
         else:
-            result = FlextLdifModels.Entry.create(dn=dn, attributes=attributes)
+            result = m.Entry.create(dn=dn, attributes=attributes)
             assert result.is_success, f"Entry creation failed for {test_case}"
             entry = result.unwrap()
 
@@ -328,7 +306,7 @@ class TestEntryRfcCompliance:
         should_be_valid: bool,
     ) -> None:
         """Parametrized test for RFC 4512 § 2.5 attribute name validation."""
-        entry_result = FlextLdifModels.Entry.create(
+        entry_result = m.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
@@ -364,7 +342,7 @@ class TestEntryRfcCompliance:
 
     def test_validation_metadata_structure(self) -> None:
         """Test that validation context metadata is properly structured."""
-        result = FlextLdifModels.Entry.create(dn="", attributes={})
+        result = m.Entry.create(dn="", attributes={})
         assert result.is_success
         entry = result.unwrap()
 
@@ -378,7 +356,7 @@ class TestEntryRfcCompliance:
 
     def test_entry_data_preservation_with_violations(self) -> None:
         """Test that invalid entries preserve data while capturing violations."""
-        result = FlextLdifModels.Entry.create(
+        result = m.Entry.create(
             dn="invalid dn",
             attributes={"1invalid": ["value"], "cn": ["test"]},
         )
@@ -396,4 +374,5 @@ class TestEntryRfcCompliance:
         assert metadata is not None
         # ValidationMetadata is a Pydantic model, not a dict - use attribute access
         violations: list[str] = getattr(metadata, "rfc_violations", [])
-        assert isinstance(violations, list) and len(violations) > 0
+        assert isinstance(violations, list)
+        assert len(violations) > 0

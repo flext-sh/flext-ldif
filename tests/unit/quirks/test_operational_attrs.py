@@ -1,16 +1,3 @@
-"""Tests for operational attributes stripping in entry quirks.
-
-Modules tested: FlextLdifEntries (remove_operational_attributes)
-Scope: Common operational attributes stripping, server-specific preservation
-Tests with real entry models using factories.
-
-Uses advanced Python 3.13 patterns: StrEnum, frozen dataclasses, parametrization.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -20,7 +7,7 @@ from typing import Final
 import pytest
 
 from flext_ldif.services.entries import FlextLdifEntries
-from tests.helpers.test_factories import FlextLdifTestFactories
+from tests import s
 
 
 class OperationalAttrTestType(StrEnum):
@@ -271,7 +258,7 @@ def get_op_attr_tests() -> list[OpAttrTestCase]:
     return OP_ATTR_TESTS
 
 
-class TestOperationalAttributesStripping:
+class TestsFlextLdifOperationalAttributesStripping(s):
     """Test operational attributes stripping functionality."""
 
     @pytest.mark.parametrize("test_case", get_op_attr_tests())
@@ -283,7 +270,7 @@ class TestOperationalAttributesStripping:
         entrys = FlextLdifEntries()
 
         # Create entry from test case data
-        entry = FlextLdifTestFactories.create_entry(test_case.dn, test_case.attributes)
+        entry = self.create_entry(test_case.dn, test_case.attributes)
 
         # Remove operational attributes
         result = entrys.remove_operational_attributes(entry)
@@ -309,7 +296,6 @@ __all__ = [
     "OperationalAttrTestType",
     "TestOperationalAttributesStripping",
 ]
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

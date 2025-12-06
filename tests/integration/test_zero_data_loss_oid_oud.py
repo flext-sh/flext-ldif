@@ -15,9 +15,34 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
+from tests import m
 
-from ..fixtures.loader import FlextLdifFixtures
+
+# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
+def _verify_soft_deleted_attributes(entry: m.Entry) -> None:
+    """Verify soft-deleted attributes are preserved in removed_attributes."""
+    if not entry.metadata:
+        return
+
+    soft_deleted = entry.metadata.soft_delete_markers
+    if not soft_deleted:
+        return
+
+    for attr_name in soft_deleted:
+        if not isinstance(entry.metadata.removed_attributes, dict):
+            continue
+
+        assert attr_name in entry.metadata.removed_attributes, (
+            f"Soft-deleted attribute {attr_name} not in removed_attributes"
+        )
+
+        removed_attr_value = entry.metadata.removed_attributes[attr_name]
+        if isinstance(removed_attr_value, (str, list, tuple)):
+            assert len(removed_attr_value) > 0, (
+                f"Soft-deleted attribute {attr_name} has no preserved values"
+            )
 
 
 class TestZeroDataLossOidOud:
@@ -178,7 +203,7 @@ class TestZeroDataLossOidOud:
                 and "entry_original_ldif" in oid_entry.metadata.original_strings
             ):
                 original_oid_ldif_raw = oid_entry.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if isinstance(original_oid_ldif_raw, str):
                     original_oid_ldif = original_oid_ldif_raw
@@ -187,8 +212,8 @@ class TestZeroDataLossOidOud:
             # Verify no data loss - compare attributes between original and converted
             # Helper function to check for data loss
             def check_no_data_loss(
-                original: FlextLdifModels.Entry,
-                converted: FlextLdifModels.Entry,
+                original: m.Entry,
+                converted: m.Entry,
             ) -> tuple[bool, list[str]]:
                 """Check for data loss between original and converted entries."""
                 lost_attrs: list[str] = []
@@ -239,7 +264,7 @@ class TestZeroDataLossOidOud:
         write_oid = api.write(
             oud_entries,
             server_type="oid",
-            format_options=FlextLdifModels.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 restore_original_format=True,
             ),
         )
@@ -259,31 +284,29 @@ class TestZeroDataLossOidOud:
             if (
                 orig.metadata
                 and "entry_original_ldif" in orig.metadata.original_strings
+                and isinstance(orig.metadata.original_strings, dict)
             ):
-                # Type narrowing: original_strings is DynamicMetadata
-                if isinstance(orig.metadata.original_strings, dict):
-                    original_ldif_raw = orig.metadata.original_strings.get(
-                        "entry_original_ldif"
-                    )
-                    if isinstance(original_ldif_raw, str):
-                        original_ldif = original_ldif_raw
-                        # When restore_original_format=True, roundtrip should match original
-                        if (
-                            roundtrip.metadata
-                            and isinstance(roundtrip.metadata.original_strings, dict)
-                            and "entry_original_ldif"
-                            in roundtrip.metadata.original_strings
-                        ):
-                            roundtrip_original_raw = (
-                                roundtrip.metadata.original_strings.get(
-                                    "entry_original_ldif"
-                                )
+                original_ldif_raw = orig.metadata.original_strings.get(
+                    "entry_original_ldif",
+                )
+                if isinstance(original_ldif_raw, str):
+                    original_ldif = original_ldif_raw
+                    # When restore_original_format=True, roundtrip should match original
+                    if (
+                        roundtrip.metadata
+                        and isinstance(roundtrip.metadata.original_strings, dict)
+                        and "entry_original_ldif" in roundtrip.metadata.original_strings
+                    ):
+                        roundtrip_original_raw = (
+                            roundtrip.metadata.original_strings.get(
+                                "entry_original_ldif",
                             )
-                            if isinstance(roundtrip_original_raw, str):
-                                roundtrip_original = roundtrip_original_raw
-                                # Original formatting should be preserved
-                                assert len(original_ldif) > 0
-                                assert len(roundtrip_original) > 0
+                        )
+                        if isinstance(roundtrip_original_raw, str):
+                            roundtrip_original = roundtrip_original_raw
+                            # Original formatting should be preserved
+                            assert len(original_ldif) > 0
+                            assert len(roundtrip_original) > 0
 
     def test_minimal_differences_tracking(
         self,
@@ -339,24 +362,7 @@ class TestZeroDataLossOidOud:
 
         # Check if any entries have soft-deleted attributes
         for entry in entries:
-            if entry.metadata:
-                soft_deleted = entry.metadata.soft_delete_markers
-                if soft_deleted:
-                    # Verify soft-deleted attributes are in removed_attributes
-                    for attr_name in soft_deleted:
-                        # Type narrowing: removed_attributes is DynamicMetadata
-                        if isinstance(entry.metadata.removed_attributes, dict):
-                            assert attr_name in entry.metadata.removed_attributes, (
-                                f"Soft-deleted attribute {attr_name} not in removed_attributes"
-                            )
-                            # Verify values are preserved
-                            removed_attr_value = entry.metadata.removed_attributes[
-                                attr_name
-                            ]
-                            if isinstance(removed_attr_value, (str, list, tuple)):
-                                assert len(removed_attr_value) > 0, (
-                                    f"Soft-deleted attribute {attr_name} has no preserved values"
-                                )
+            _verify_soft_deleted_attributes(entry)
 
     def test_conversion_history_tracking(
         self,
@@ -403,7 +409,7 @@ class TestZeroDataLossOidOud:
             # Type narrowing: original_strings is DynamicMetadata
             if isinstance(entry.metadata.original_strings, dict):
                 original_ldif_raw = entry.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if isinstance(original_ldif_raw, str):
                     original_ldif = original_ldif_raw
@@ -437,7 +443,7 @@ class TestZeroDataLossOidOud:
         write_result = api.write(
             entries,
             server_type="oid",
-            format_options=FlextLdifModels.WriteFormatOptions(
+            format_options=m.WriteFormatOptions(
                 restore_original_format=True,
             ),
         )
@@ -449,16 +455,15 @@ class TestZeroDataLossOidOud:
             if (
                 entry.metadata
                 and "entry_original_ldif" in entry.metadata.original_strings
+                and isinstance(entry.metadata.original_strings, dict)
             ):
-                # Type narrowing: original_strings is DynamicMetadata
-                if isinstance(entry.metadata.original_strings, dict):
-                    original_ldif_raw = entry.metadata.original_strings.get(
-                        "entry_original_ldif"
-                    )
-                    if isinstance(original_ldif_raw, str):
-                        original_ldif = original_ldif_raw
-                        # Restored LDIF should contain the original entry
-                        if isinstance(restored_ldif, str):
-                            assert original_ldif.strip() in restored_ldif, (
-                                f"Original LDIF not found in restored output for entry {entry.dn}"
-                            )
+                original_ldif_raw = entry.metadata.original_strings.get(
+                    "entry_original_ldif",
+                )
+                if isinstance(original_ldif_raw, str):
+                    original_ldif = original_ldif_raw
+                    # Restored LDIF should contain the original entry
+                    if isinstance(restored_ldif, str):
+                        assert original_ldif.strip() in restored_ldif, (
+                            f"Original LDIF not found in restored output for entry {entry.dn}"
+                        )

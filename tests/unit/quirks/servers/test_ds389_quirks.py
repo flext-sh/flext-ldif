@@ -1,11 +1,3 @@
-"""Test suite for 389 Directory Server Quirks.
-
-Modules tested: FlextLdifServersDs389, FlextLdifServersDs389.Schema
-Scope: DS389 server-specific quirks, schema parsing, ACL handling, entry detection
-Tests for 389 Directory Server quirks implementation.
-Uses parametrized tests and factory patterns.
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -14,9 +6,10 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
+from tests import m, s
 
 
 class AttributeScenario(StrEnum):
@@ -243,7 +236,7 @@ ENTRY_TEST_CASES = (
 )
 
 
-class TestFlextLdifDs389Quirks:
+class TestsTestFlextLdifDs389Quirks(s):
     """Test FlextLdif DS389 server quirks."""
 
     ATTRIBUTE_DATA: ClassVar[tuple[AttributeTestCase, ...]] = ATTRIBUTE_TEST_CASES
@@ -283,7 +276,8 @@ class TestFlextLdifDs389Quirks:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersDs389()
         schema: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         assert hasattr(schema, "can_handle_attribute")
         result = schema.can_handle_attribute(test_case.attr_definition)
@@ -293,7 +287,8 @@ class TestFlextLdifDs389Quirks:
         """Test parsing DS389 attribute definition."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' DESC 'Directory suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
@@ -310,7 +305,8 @@ class TestFlextLdifDs389Quirks:
         """Test parsing attribute with syntax length specification."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         attr_def = "( 2.16.840.1.113730.3.1.2 NAME 'nsslapd-database' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
@@ -324,7 +320,8 @@ class TestFlextLdifDs389Quirks:
         """Test parsing attribute without OID fails."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         attr_def = "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
         result = schema_quirk.parse(attr_def)
@@ -341,7 +338,8 @@ class TestFlextLdifDs389Quirks:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersDs389()
         schema: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         assert hasattr(schema, "can_handle_objectclass")
         result = schema.can_handle_objectclass(test_case.oc_definition)
@@ -351,7 +349,8 @@ class TestFlextLdifDs389Quirks:
         """Test parsing STRUCTURAL objectClass."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' DESC 'Container class' SUP top STRUCTURAL MUST ( cn ) MAY ( nsslapd-port ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
@@ -369,7 +368,8 @@ class TestFlextLdifDs389Quirks:
         """Test parsing AUXILIARY objectClass."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
@@ -382,21 +382,23 @@ class TestFlextLdifDs389Quirks:
         """Test parsing ABSTRACT objectClass."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         oc_def = "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
         result = schema_quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
+        assert isinstance(oc_data, m.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
         oc_def = "NAME 'nscontainer' SUP top STRUCTURAL"
         result = schema_quirk.parse(oc_def)
@@ -409,9 +411,10 @@ class TestFlextLdifDs389Quirks:
         """Test writing objectClass to RFC string format."""
         server = FlextLdifServersDs389()
         schema_quirk: FlextLdifServersDs389.Schema = cast(
-            "FlextLdifServersDs389.Schema", server.schema_quirk
+            "FlextLdifServersDs389.Schema",
+            server.schema_quirk,
         )
-        oc_data = FlextLdifModels.SchemaObjectClass(
+        oc_data = m.SchemaObjectClass(
             oid="2.16.840.1.113730.3.2.1",
             name="nscontainer",
             kind="STRUCTURAL",
@@ -435,7 +438,8 @@ class TestFlextLdifDs389Quirks:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersDs389()
         entry: FlextLdifServersDs389.Entry = cast(
-            "FlextLdifServersDs389.Entry", server.entry_quirk
+            "FlextLdifServersDs389.Entry",
+            server.entry_quirk,
         )
         result = entry.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle

@@ -15,14 +15,11 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import (
-    FlextLdifModels,
-    FlextLdifParser,
-    FlextLdifWriter,
-)
+from flext_ldif import FlextLdifWriter
+from flext_ldif.models import m
+from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
-
-from ..helpers.test_ldif_helpers import OptimizedLdifTestHelpers
+from tests import tm
 
 
 class TestRfcParserRealFixtures:
@@ -43,13 +40,13 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        # Using optimized helper - reduces 8 lines to 1 line
-        parse_response = OptimizedLdifTestHelpers.parse_ldif_file_and_validate(
-            entries_file,
-        )
+        # Using unified methods - parse and validate
+        parser = FlextLdifParser()
+        parse_result = parser.parse(entries_file)
+        parse_response = tm.ok(parse_result)
 
-        # Additional validation specific to this test
-        OptimizedLdifTestHelpers.validate_entries_structure(parse_response.entries)
+        # Validate entries structure using unified method
+        tm.entries(parse_response.entries)
 
     def test_parse_oud_entries_fixture(
         self,
@@ -253,9 +250,9 @@ class TestRfcExceptionHandlingRealScenarios:
 
         try:
             # Create test entry
-            test_entry = FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+            test_entry = m.Entry(
+                dn=m.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=m.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
             # quirk_registry is already a FlextLdifServer instance

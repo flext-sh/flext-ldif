@@ -1,21 +1,3 @@
-"""Real validation of line folding with actual algar-oud-mig data.
-
-Tests FlextLdifWriter service with complete RFC 2849 compliance validation
-using actual production data from algar-oud-mig project.
-
-Scope:
-- RFC 2849 line folding compliance (76-byte limit)
-- Real production LDIF data validation
-- Writer service integration
-- Format options and configuration
-
-Uses advanced Python 3.13 features, factories, and centralized constants
-for minimal code with maximum coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -23,13 +5,13 @@ from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
-from flext_tests import FlextTestsMatchers  # Mocked in conftest
+from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels, FlextLdifWriter
+from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
-from tests.fixtures.constants import Names
-from tests.helpers.test_factories import FlextLdifTestFactories
+from flext_ldif.models import m
+from tests import m, s
 
 # =============================================================================
 # TEST SCENARIO ENUMS & CONSTANTS
@@ -54,7 +36,6 @@ LONG_DESCRIPTION: Final[str] = (
     "A very long description that simulates configuration entries from "
     "real LDIF files that have extended attributes requiring proper line folding"
 )
-
 
 # =============================================================================
 # FIXTURES
@@ -82,7 +63,7 @@ def rfc_config() -> FlextLdifConfig:
 
 
 @pytest.mark.unit
-class TestFlextLdifWriterAlgarRealData:
+class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
     """Test writer with actual algar-oud-mig production data.
 
     Validates RFC 2849 compliance using real production LDIF files.
@@ -116,12 +97,12 @@ class TestFlextLdifWriterAlgarRealData:
         if not ALGAR_INPUT_FILE.exists():
             pytest.skip("algar-oud-mig data not available in this environment")
 
-        # Create test entry using factory
-        entry = FlextLdifTestFactories.create_entry(
+        # Create test entry
+        entry = m.Entry(
             dn=CONFIG_DN,
             attributes={
-                Names.OBJECTCLASS: [Names.TOP, "configserver"],
-                Names.CN: ["config"],
+                "objectClass": ["top", "configserver"],
+                "cn": ["config"],
                 "description": [LONG_DESCRIPTION],
             },
         )
@@ -136,7 +117,7 @@ class TestFlextLdifWriterAlgarRealData:
         content = write_result.unwrap()
 
         # Validate RFC 2849 compliance
-        if isinstance(content, FlextLdifModels.WriteResponse) and content.content:
+        if isinstance(content, m.WriteResponse) and content.content:
             lines = content.content.split("\n")
         else:
             lines = []

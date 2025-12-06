@@ -74,7 +74,7 @@ Each service owns one responsibility:
   `services/statistics.py`):** provide helper routines for inspecting, ordering,
   and summarizing parsed datasets.
 - **Detection, Entry Manipulation, DN helpers, and Migration (`services/detector.py`,
-  `services/entry_manipulation.py`, `services/dn.py`, `services/migration.py`):**
+  `services/entries.py`, `services/dn.py`, `services/migration.py`):**
   identify server types, adjust entries, normalize DNs, and orchestrate migration
   flows.
 

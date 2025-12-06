@@ -1,28 +1,17 @@
-"""Consolidated test suite for OID boolean attribute handling.
-
-Consolidates 6 original test classes (18 test methods) into a single parametrized class
-using modern pytest techniques (StrEnum, ClassVar, parametrize) for 70% code reduction.
-
-Tests boolean attribute parsing, roundtrip stability, known boolean attributes,
-conversion mappings, value detection, and invalid substring rules.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests import TestDeduplicationHelpers, m, s
 
 
-class TestFlextLdifOidBooleanAttributes:
+class TestsTestFlextLdifOidBooleanAttributes(s):
     """Consolidated test suite for OID boolean attribute handling.
 
     Replaces 6 original test classes with parametrized tests using StrEnum
@@ -98,9 +87,9 @@ class TestFlextLdifOidBooleanAttributes:
     # ═════════════════════════════════════════════════════════════════════════════
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersBaseSchema", FlextLdifServersOid().schema_quirk)
 
     # ═════════════════════════════════════════════════════════════════════════════
     # BOOLEAN ATTRIBUTE PARSING TESTS
@@ -136,7 +125,7 @@ class TestFlextLdifOidBooleanAttributes:
         scenario: str,
         oid: str,
         name: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test parsing boolean attributes with various options."""
         parts = [f"( {oid} NAME '{name}'"]
@@ -155,16 +144,16 @@ class TestFlextLdifOidBooleanAttributes:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.name == name
         assert attr.oid == oid
 
     def test_parse_basic_boolean_attribute(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test parsing basic boolean attribute."""
         attr_def = (
@@ -176,10 +165,10 @@ class TestFlextLdifOidBooleanAttributes:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.name == "orclBasicBool"
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -196,7 +185,7 @@ class TestFlextLdifOidBooleanAttributes:
     def test_boolean_attribute_roundtrip(
         self,
         scenario: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test boolean attribute roundtrip stability."""
         attr_def = (
@@ -209,9 +198,9 @@ class TestFlextLdifOidBooleanAttributes:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
-        parsed1 = parsed1_result
+        parsed1 = cast("m.SchemaAttribute", parsed1_result)
 
         # Write
         written = TestDeduplicationHelpers.quirk_write_and_unwrap(
@@ -225,9 +214,9 @@ class TestFlextLdifOidBooleanAttributes:
             oid_schema,
             written,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
-        parsed2 = parsed2_result
+        parsed2 = cast("m.SchemaAttribute", parsed2_result)
 
         # Verify roundtrip integrity
         assert parsed1.oid == parsed2.oid
@@ -253,7 +242,7 @@ class TestFlextLdifOidBooleanAttributes:
         self,
         scenario: str,
         attr_name: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test recognition of known boolean attributes."""
         oid_val = f"2.16.840.1.113894.1.1.{1300 + hash(attr_name) % 100}"
@@ -265,15 +254,15 @@ class TestFlextLdifOidBooleanAttributes:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.name == attr_name
 
     def test_known_oracle_boolean_attributes(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test known Oracle boolean attribute recognition."""
         known_attrs = [
@@ -380,7 +369,7 @@ class TestFlextLdifOidBooleanAttributes:
     def test_invalid_substring_rules(
         self,
         scenario: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test that boolean attributes reject invalid substring rules."""
         # Boolean attributes shouldn't have substring matching
@@ -397,7 +386,7 @@ class TestFlextLdifOidBooleanAttributes:
 
     def test_boolean_attribute_restrictions(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test boolean attribute semantic restrictions."""
         # Boolean with valid equality rule
@@ -411,10 +400,10 @@ class TestFlextLdifOidBooleanAttributes:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.name == "orclValidBool"
         # Verify it's a valid boolean attribute structure
         assert attr.syntax or attr.syntax is None  # Syntax may or may not be preserved
@@ -425,7 +414,7 @@ class TestFlextLdifOidBooleanAttributes:
 
     def test_boolean_attributes_in_context(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test boolean attributes in schema context."""
         boolean_attrs = [
@@ -439,7 +428,7 @@ class TestFlextLdifOidBooleanAttributes:
 
     def test_mixed_attribute_types(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test boolean attributes mixed with other types."""
         attrs = [
@@ -486,23 +475,28 @@ orclIsEnabled: 1
         entry = parse_response.entries[0]
         assert entry.attributes is not None
 
-        # Check that boolean values are preserved (OID format 1/0 is preserved during parsing)
+        # Check parsed values:
+        # - Known boolean attributes (in BOOLEAN_ATTRIBUTES) are converted OID→RFC
+        # - Unknown attributes are preserved as-is
         attrs = entry.attributes.attributes
-        # OID boolean values (1/0) are preserved as-is during parsing
-        # Conversion to TRUE/FALSE may happen during conversion, not parsing
+        # orclEnabled and orclComputerSecurity are NOT in BOOLEAN_ATTRIBUTES,
+        # so they are preserved as-is
         assert attrs["orclEnabled"] == ["1"], (
-            f"Expected '1' (OID format preserved), got {attrs['orclEnabled']}"
+            f"Expected '1' (not in BOOLEAN_ATTRIBUTES, preserved), got {attrs['orclEnabled']}"
         )
         assert attrs["orclComputerSecurity"] == ["0"], (
-            f"Expected '0' (OID format preserved), got {attrs['orclComputerSecurity']}"
+            f"Expected '0' (not in BOOLEAN_ATTRIBUTES, preserved), got {attrs['orclComputerSecurity']}"
         )
-        assert attrs["orclIsEnabled"] == ["1"], (
-            f"Expected '1' (OID format preserved), got {attrs['orclIsEnabled']}"
+        # orclIsEnabled IS in BOOLEAN_ATTRIBUTES (as 'orclisenabled'),
+        # so it is converted OID→RFC during parsing
+        assert attrs["orclIsEnabled"] == ["TRUE"], (
+            f"Expected 'TRUE' (in BOOLEAN_ATTRIBUTES, converted OID→RFC), got {attrs['orclIsEnabled']}"
         )
 
         # Write back to LDIF
         # Write expects list[Entry], not ParseResponse
-        write_result = oid_server.write(parse_response.entries)
+        entries_list = cast("list[m.Entry]", list(parse_response.entries))
+        write_result = oid_server.write(entries_list)
         assert write_result.is_success, f"Write failed: {write_result.error}"
 
         written_ldif = write_result.unwrap()

@@ -16,19 +16,14 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import override
+from typing import Self, override
 
 from flext_core import r
-from flext_core.utilities import FlextUtilities
 from pydantic import Field, PrivateAttr, field_validator
 
-from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.utilities import FlextLdifUtilities
-
-# Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
-# r is imported from flext_core
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 
 # Semantic type for Distinguished Name operations
 type DN = str
@@ -42,7 +37,7 @@ class FlextLdifDn(
     Business Rule: DN service provides RFC 4514 compliant operations for
     Distinguished Names. Service handles parsing, validation, normalization,
     cleaning, escaping/unescaping, comparison, and RDN parsing. All pure DN
-    operations delegate to FlextLdifUtilities.DN to avoid code duplication.
+    operations delegate to u.DN to avoid code duplication.
     Service uses nested classes (Parser, Normalizer, Registry) for SRP compliance.
 
     Implication: DN service enables consistent DN handling across the codebase.
@@ -96,7 +91,7 @@ class FlextLdifDn(
 
     # Private attributes (Pydantic v2 PrivateAttr for internal state)
     # Note: Using object.__setattr__ for frozen models
-    _last_event: FlextLdifModelsEvents.DnEvent | None = PrivateAttr(default=None)
+    _last_event: m.DnEvent | None = PrivateAttr(default=None)
 
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
@@ -157,9 +152,7 @@ class FlextLdifDn(
             "parse_rdn": lambda: self._parser.parse_rdn_operation(self.dn),
         }
 
-        handler: Callable[[], r[str]] | None = handlers.get(
-            self.operation, default=None
-        )
+        handler: Callable[[], r[str]] | None = handlers.get(self.operation)
         if not handler:
             return r.fail(f"Unknown operation: {self.operation}")
 
@@ -195,7 +188,7 @@ class FlextLdifDn(
                     parse_components = parse_result.unwrap()
 
             # Create DN event config
-            dn_config = FlextLdifModelsEvents.DnEventConfig(
+            dn_config = m.DnEventConfig(
                 dn_operation=self.operation,
                 input_dn=self.dn,
                 output_dn=result.unwrap() if result.is_success else None,
@@ -205,7 +198,7 @@ class FlextLdifDn(
                 else None,
                 parse_components=parse_components,
             )
-            event = FlextLdifUtilities.Events.log_and_emit_dn_event(
+            event = u.Events.log_and_emit_dn_event(
                 logger=self.logger,
                 config=dn_config,
                 log_level="info" if result.is_success else "error",
@@ -217,7 +210,7 @@ class FlextLdifDn(
 
         return result
 
-    def get_last_event(self) -> FlextLdifModelsEvents.DnEvent | None:
+    def get_last_event(self) -> m.DnEvent | None:
         """Retrieve last emitted DnEvent.
 
         Returns:
@@ -428,7 +421,7 @@ class FlextLdifDn(
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def builder(cls) -> FlextLdifDn:
+    def builder(cls) -> Self:
         """Create fluent builder instance.
 
         Returns:
@@ -445,15 +438,15 @@ class FlextLdifDn(
         """
         return cls(dn="")
 
-    def with_dn(self, dn: str) -> FlextLdifDn:
+    def with_dn(self, dn: str) -> Self:
         """Set DN to operate on (fluent builder)."""
         return self.model_copy(update={"dn": dn})
 
-    def with_operation(self, operation: str) -> FlextLdifDn:
+    def with_operation(self, operation: str) -> Self:
         """Set operation to execute (fluent builder)."""
         return self.model_copy(update={"operation": operation})
 
-    def with_escape_mode(self, mode: str) -> FlextLdifDn:
+    def with_escape_mode(self, mode: str) -> Self:
         """Set escape mode (fluent builder)."""
         return self.model_copy(update={"escape_mode": mode})
 
@@ -478,23 +471,23 @@ class FlextLdifDn(
         @staticmethod
         def parse_components(dn: str) -> r[list[tuple[str, str]]]:
             """Parse DN into RFC 4514 compliant components."""
-            return FlextLdifUtilities.DN.parse(dn)
+            return u.DN.parse(dn)
 
         @staticmethod
         def validate_format(dn: str) -> r[bool]:
             """Validate DN format against RFC 4514."""
-            is_valid = FlextLdifUtilities.DN.validate(dn)
+            is_valid = u.DN.validate(dn)
             return r[bool].ok(is_valid)
 
         @staticmethod
         def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
             """Parse a single RDN component."""
-            return FlextLdifUtilities.DN.parse_rdn(rdn)
+            return u.DN.parse_rdn(rdn)
 
         @staticmethod
         def compare_dns(dn1: str, dn2: str) -> r[int]:
             """Compare two DNs per RFC 4514 (case-insensitive)."""
-            return FlextLdifUtilities.DN.compare_dns(dn1, dn2)
+            return u.DN.compare_dns(dn1, dn2)
 
         @staticmethod
         def parse_operation(dn: str) -> r[str]:
@@ -551,22 +544,22 @@ class FlextLdifDn(
         @staticmethod
         def normalize(dn: str) -> r[str]:
             """Normalize DN per RFC 4514."""
-            return FlextLdifUtilities.DN.norm(dn)
+            return u.DN.norm(dn)
 
         @staticmethod
         def clean_dn(dn: str) -> str:
             """Clean DN string to fix spacing and escaping issues."""
-            return FlextLdifUtilities.DN.clean_dn(dn)
+            return u.DN.clean_dn(dn)
 
         @staticmethod
         def escape_dn_value(value: str) -> str:
             """Escape special characters in DN value per RFC 4514."""
-            return FlextLdifUtilities.DN.esc(value)
+            return u.DN.esc(value)
 
         @staticmethod
         def unescape_dn_value(value: str) -> str:
             """Unescape special characters in DN value per RFC 4514."""
-            return FlextLdifUtilities.DN.unesc(value)
+            return u.DN.unesc(value)
 
         @staticmethod
         def hex_escape(value: str) -> str:

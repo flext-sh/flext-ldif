@@ -1,17 +1,3 @@
-"""Test suite for FlextLdifSchema Service.
-
-Modules tested: FlextLdifSchema
-Scope: Schema parsing, validation, transformation, attribute operations,
-objectClass operations, builder pattern, error handling
-
-Tests all schema parsing, validation, and transformation methods with REAL implementations.
-Validates attribute and objectClass operations, builder pattern, and error handling.
-Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -20,8 +6,9 @@ from enum import StrEnum
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.schema import FlextLdifSchema
+from tests import s
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST SCENARIO ENUMS
@@ -284,7 +271,6 @@ OBJECTCLASS_VALIDATION_TESTS = [
     ),
 ]
 
-
 # ════════════════════════════════════════════════════════════════════════════
 # PARAMETRIZATION FUNCTIONS
 # ════════════════════════════════════════════════════════════════════════════
@@ -315,7 +301,7 @@ def get_objectclass_validation_tests() -> list[ObjectClassValidationTestCase]:
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestExecuteAndBuilder:
+class TestsFlextLdifExecuteAndBuilder(s):
     """Test execute() method and builder pattern."""
 
     def test_execute_returns_status(
@@ -423,7 +409,7 @@ class TestValidation:
         test_case: AttributeValidationTestCase,
     ) -> None:
         """Test validating attributes with parametrized test cases."""
-        attr = FlextLdifModels.SchemaAttribute(
+        attr = m.SchemaAttribute(
             oid=test_case.oid,
             name=test_case.name,
             syntax=test_case.syntax,
@@ -447,7 +433,7 @@ class TestValidation:
         test_case: ObjectClassValidationTestCase,
     ) -> None:
         """Test validating objectClasses with parametrized test cases."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             oid=test_case.oid,
             name=test_case.name,
             kind=test_case.kind,
@@ -473,7 +459,7 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing valid attribute."""
-        attr = FlextLdifModels.SchemaAttribute(
+        attr = m.SchemaAttribute(
             oid="2.5.4.3",
             name="cn",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -489,23 +475,22 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing invalid attribute (should fail validation)."""
-        attr = FlextLdifModels.SchemaAttribute(
+        attr = m.SchemaAttribute(
             oid="",  # Invalid - no OID
             name="testAttr",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
         )
         result = schema_service.write_attribute(attr)
         assert result.is_failure
-        assert result.error is not None and (
-            "OID" in result.error or "validation" in result.error.lower()
-        )
+        assert result.error is not None
+        assert "OID" in result.error or "validation" in result.error.lower()
 
     def test_write_objectclass_success(
         self,
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing valid objectClass."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             oid="2.5.6.6",
             name="person",
             kind="STRUCTURAL",
@@ -521,16 +506,15 @@ class TestWriting:
         schema_service: FlextLdifSchema,
     ) -> None:
         """Test writing invalid objectClass (should fail validation)."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             oid="",  # Invalid - no OID
             name="testOC",
             kind="STRUCTURAL",
         )
         result = schema_service.write_objectclass(oc)
         assert result.is_failure
-        assert result.error is not None and (
-            "OID" in result.error or "validation" in result.error.lower()
-        )
+        assert result.error is not None
+        assert "OID" in result.error or "validation" in result.error.lower()
 
 
 class TestRoundtrip:
@@ -612,7 +596,6 @@ __all__ = [
     "TestValidation",
     "TestWriting",
 ]
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import types
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Self
 
 from .ldif_data import LdifSample, LdifTestData
 
@@ -161,13 +163,21 @@ class FileManager:
             yield created_files
 
     def __init__(self) -> None:
-        self._temp_dir = None
+        """Initialize FileManager."""
+        self._temp_dir: TemporaryDirectory[str] | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
+        """Enter context manager."""
         self._temp_dir = TemporaryDirectory()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
+        """Exit context manager."""
         if self._temp_dir:
             self._temp_dir.cleanup()
 
@@ -181,7 +191,10 @@ class FileManager:
         raise RuntimeError(msg)
 
     def create_text_file(
-        self, content: str, filename: str, directory: Path | None = None
+        self,
+        content: str,
+        filename: str,
+        directory: Path | None = None,
     ) -> Path:
         """Create text file with given content."""
         target_dir = self._resolve_directory(directory)
@@ -190,7 +203,9 @@ class FileManager:
         return file_path
 
     def create_file_set(
-        self, files: dict[str, str], extension: str = ""
+        self,
+        files: dict[str, str],
+        extension: str = "",
     ) -> dict[str, Path]:
         """Create set of files."""
         created = {}

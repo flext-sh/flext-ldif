@@ -1,14 +1,3 @@
-"""Test suite for standardized quirks constants and auto-discovery.
-
-Modules tested: FlextLdifServersRfc, FlextLdifServersOid, FlextLdifServersOud (Constants)
-Scope: Validates standardized Constants in all quirks (CANONICAL_NAME, ALIASES, PRIORITY,
-CAN_NORMALIZE_FROM, CAN_DENORMALIZE_TO). Tests auto-interchange via RFC intermediate format
-and alias discovery for normalization. Validates real LDIF fixture handling.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,11 +8,13 @@ import pytest
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests.fixtures.constants import Fixtures
+from tests import c, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 @pytest.mark.unit
-class TestQuirksStandardizedConstants:
+class TestsFlextLdifQuirksStandardizedConstants(s):
     """Verify all quirks have standardized Constants."""
 
     def test_rfc_schema_constants(self) -> None:
@@ -91,8 +82,8 @@ class TestQuirksStandardizedConstants:
             ]
         ] = [
             (FlextLdifServersRfc, "rfc"),
-            (FlextLdifServersOid, Fixtures.OID),
-            (FlextLdifServersOud, Fixtures.OUD),
+            (FlextLdifServersOid, c.Fixtures.OID),
+            (FlextLdifServersOud, c.Fixtures.OUD),
         ]
 
         for quirk_class, expected_canonical in quirks:
@@ -153,7 +144,7 @@ class TestQuirksWithRealLdifFixtures:
     @pytest.fixture
     def oid_schema_ldif(self) -> str:
         """Load real OID schema LDIF fixture."""
-        fixture_path = Path(f"tests/fixtures/{Fixtures.OID}/oid_schema_fixtures.ldif")
+        fixture_path = Path(f"tests/fixtures/{c.Fixtures.OID}/oid_schema_fixtures.ldif")
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
         return fixture_path.read_text(encoding="utf-8")
@@ -161,7 +152,7 @@ class TestQuirksWithRealLdifFixtures:
     @pytest.fixture
     def oud_schema_ldif(self) -> str:
         """Load real OUD schema LDIF fixture."""
-        fixture_path = Path(f"tests/fixtures/{Fixtures.OUD}/oud_schema_fixtures.ldif")
+        fixture_path = Path(f"tests/fixtures/{c.Fixtures.OUD}/oud_schema_fixtures.ldif")
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
         return fixture_path.read_text(encoding="utf-8")

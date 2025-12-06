@@ -10,19 +10,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# No imports needed - all methods were removed
+from flext_core.utilities import FlextUtilities
 
 
-class FlextLdifUtilitiesValidation:
-    """Pure validation functions for Entry model validators.
+class FlextLdifUtilitiesValidation(FlextUtilities.Validation):
+    """LDIF-specific validation functions extending flext-core validation.
 
     Architecture:
+    - Inherits all validation methods from FlextUtilitiesValidation
+    - Adds LDIF-specific validations (RFC 2849, schema, DN validation)
     - Stateless pure functions (no side effects)
-    - Return (bool, violations) tuples
     - ZERO server-specific logic (only RFC validation)
-    - Used by Entry.validate_server_specific_rules()
 
-    Purpose: Enable dynamic validation via DI-injected rules.
+    Purpose: Unified validation via u.Validation access.
     """
 
-    # All methods were unused and have been removed
+    # Inherits all methods from FlextUtilitiesValidation
+    # LDIF-specific methods can be added here as needed

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import m
 
 logger = FlextLogger(__name__)
 
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_missing_sup(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: m.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix missing SUP for AUXILIARY objectClasses (server-specific fixes).
@@ -95,7 +95,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: m.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
@@ -151,7 +151,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def ensure_sup_for_auxiliary(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: m.SchemaObjectClass,
         default_sup: str = "top",
     ) -> None:
         """Ensure AUXILIARY objectClasses have a SUP clause.
@@ -175,7 +175,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def align_kind_with_superior(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: m.SchemaObjectClass,
         superior_kind: str | None,
     ) -> None:
         """Align ObjectClass kind with its superior class kind.

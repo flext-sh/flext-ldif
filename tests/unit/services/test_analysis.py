@@ -1,38 +1,13 @@
-"""Test suite for Analysis Service - Entry Analysis and Validation.
-
-Modules tested:
-- flext_ldif.services.analysis.FlextLdifAnalysis (entry analysis and validation)
-
-Scope:
-- Service initialization and execute pattern
-- Entry collection analysis (empty, single, multiple entries)
-- Entry validation (empty, all valid, invalid attributes, invalid objectClasses, mixed)
-- Single entry validation (valid, invalid attribute, invalid objectClass)
-- Statistics generation and pattern detection
-- Error limit handling (max 100 errors)
-
-Test Coverage:
-- All analysis methods (analyze, validate_entries, _validate_single_entry)
-- Edge cases (empty lists, entries without objectClasses, error limits)
-- Validation scenarios (valid, invalid attributes, invalid objectClasses, mixed)
-
-Uses Python 3.13 features, factories, constants, dynamic tests, and extensive helper reuse
-to reduce code while maintaining 100% behavior coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.validation import FlextLdifValidation
-from tests.helpers.test_assertions import TestAssertions
+from tests import m, s
 
 
-class TestFlextLdifAnalysis:
+class TestsTestFlextLdifAnalysis(s):
     """Test FlextLdifAnalysis service with consolidated parametrized tests.
 
     Uses nested classes for organization: TestServiceInitialization, TestAnalyzeMethod,
@@ -63,7 +38,7 @@ class TestFlextLdifAnalysis:
             """Test analyze with empty entry list."""
             service = FlextLdifAnalysis()
             result = service.analyze([])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 0
             assert stats.objectclass_distribution == {}
@@ -81,7 +56,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.analyze([entry])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 1
             oc_dist = stats.objectclass_distribution.model_dump()
@@ -94,7 +69,7 @@ class TestFlextLdifAnalysis:
             service = FlextLdifAnalysis()
             entries_service = FlextLdifEntries()
 
-            entries: list[FlextLdifModels.Entry] = []
+            entries: list[m.Entry] = []
             for i in range(3):
                 entry_result = entries_service.create_entry(
                     dn=f"cn=user{i},ou=users,dc=example,dc=com",
@@ -111,7 +86,7 @@ class TestFlextLdifAnalysis:
             entries.append(group_result.unwrap())
 
             result = service.analyze(entries)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 4
             oc_dist = stats.objectclass_distribution.model_dump()
@@ -132,7 +107,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.analyze([entry])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 1
             assert stats.objectclass_distribution == {}
@@ -145,7 +120,7 @@ class TestFlextLdifAnalysis:
             service = FlextLdifAnalysis()
             validation_service = FlextLdifValidation()
             result = service.validate_entries([], validation_service)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is True
             assert report.total_entries == 0
@@ -159,7 +134,7 @@ class TestFlextLdifAnalysis:
             validation_service = FlextLdifValidation()
             entries_service = FlextLdifEntries()
 
-            entries: list[FlextLdifModels.Entry] = []
+            entries: list[m.Entry] = []
             for i in range(2):
                 entry_result = entries_service.create_entry(
                     dn=f"cn=user{i},dc=example,dc=com",
@@ -169,7 +144,7 @@ class TestFlextLdifAnalysis:
                 entries.append(entry_result.unwrap())
 
             result = service.validate_entries(entries, validation_service)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is True
             assert report.total_entries == 2
@@ -194,7 +169,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.validate_entries([entry], validation_service)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is False
             assert report.total_entries == 1
@@ -220,7 +195,7 @@ class TestFlextLdifAnalysis:
             entry = entry_result.unwrap()
 
             result = service.validate_entries([entry], validation_service)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             report = result.unwrap()
             # Validation service may accept objectClass names that are RFC-compliant format
             # even if they don't exist in schema. Check if validation actually fails.
@@ -264,7 +239,7 @@ class TestFlextLdifAnalysis:
                 [valid_entry_result.unwrap(), invalid_entry_result.unwrap()],
                 validation_service,
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             report = result.unwrap()
             assert report.is_valid is False
             assert report.total_entries == 2
@@ -277,7 +252,7 @@ class TestFlextLdifAnalysis:
             validation_service = FlextLdifValidation()
             entries_service = FlextLdifEntries()
 
-            entries: list[FlextLdifModels.Entry] = []
+            entries: list[m.Entry] = []
             for i in range(150):
                 entry_result = entries_service.create_entry(
                     dn=f"cn=test{i},dc=example,dc=com",
@@ -291,7 +266,7 @@ class TestFlextLdifAnalysis:
                 entries.append(entry_result.unwrap())
 
             result = service.validate_entries(entries, validation_service)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             report = result.unwrap()
             assert len(report.errors) <= 100
 

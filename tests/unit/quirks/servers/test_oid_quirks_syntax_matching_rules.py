@@ -1,28 +1,17 @@
-"""Consolidated test suite for OID syntax and matching rule transformations.
-
-Consolidates 5 original test classes (20 test methods) into a single parametrized class
-using modern pytest techniques (StrEnum, ClassVar, parametrize) for 75% code reduction.
-
-Tests syntax preservation, matching rule transformations, OUD compatibility, attribute
-transformations, and comprehensive transformation validation.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests import m, s
 
 
-class TestFlextLdifOidSyntaxTransformations:
+class TestsTestFlextLdifOidSyntaxTransformations(s):
     """Consolidated test suite for OID syntax and matching rule transformations.
 
     Replaces 5 original test classes with parametrized tests using StrEnum
@@ -124,9 +113,9 @@ class TestFlextLdifOidSyntaxTransformations:
     # ═════════════════════════════════════════════════════════════════════════════
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
+        return cast("FlextLdifServersBaseSchema", FlextLdifServersOid().schema_quirk)
 
     # ═════════════════════════════════════════════════════════════════════════════
     # SYNTAX TRANSFORMATION TESTS
@@ -162,7 +151,7 @@ class TestFlextLdifOidSyntaxTransformations:
         scenario: str,
         syntax_oid: str,
         syntax_name: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test that syntax is preserved during transformations."""
         attr_def = (
@@ -174,15 +163,15 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.syntax == syntax_oid or syntax_oid in (attr.syntax or "")
 
     def test_syntax_transformation_comprehensive(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test comprehensive syntax transformations."""
         syntax_cases = [
@@ -234,7 +223,7 @@ class TestFlextLdifOidSyntaxTransformations:
         scenario: str,
         rule_name: str,
         rule_expected: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test that matching rules are preserved during transformations."""
         attr_def = (
@@ -248,10 +237,10 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         # caseIgnoreSubstringsMatch is moved to SUBSTR field by OID quirk
         if "Substrings" in rule_name:
             assert attr.substr == rule_expected or rule_expected in (attr.substr or "")
@@ -262,7 +251,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_multiple_matching_rules(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test attributes with multiple matching rules."""
         attr_def = (
@@ -277,11 +266,11 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
-        assert attr.equality or attr.substring or attr.ordering
+        attr = cast("m.SchemaAttribute", parsed_result)
+        assert attr.equality or attr.substr or attr.ordering
 
     # ═════════════════════════════════════════════════════════════════════════════
     # OUD COMPATIBILITY TESTS
@@ -289,7 +278,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_oud_compatibility_attribute(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OID to OUD compatibility for attributes."""
         attr_def = (
@@ -302,10 +291,10 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.name == "orclOudCompat"
 
     @pytest.mark.parametrize(
@@ -328,7 +317,7 @@ class TestFlextLdifOidSyntaxTransformations:
         scenario: str,
         oid: str,
         name: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OUD compatibility in various scenarios."""
         attr_def = f"( {oid} NAME '{name}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -365,7 +354,7 @@ class TestFlextLdifOidSyntaxTransformations:
         scenario: str,
         oid: str,
         name: str,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test various attribute transformation scenarios."""
         if scenario == "with_syntax":
@@ -391,7 +380,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_complex_attribute_transformation(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test complex attribute with all options."""
         attr_def = (
@@ -410,10 +399,10 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.name == "orclComplex"
         assert attr.syntax
 
@@ -423,7 +412,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_all_syntax_types_coverage(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test that all syntax types are covered."""
         syntax_oids = [
@@ -445,7 +434,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_all_matching_rules_coverage(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test that all matching rules are covered."""
         rules = [
@@ -468,7 +457,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_case_ignore_substrings_typo_correction(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test correction of caseIgnoreSubStringsMatch typo (capital S).
 
@@ -490,10 +479,10 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def_with_typo,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         # After transformation: typo corrected and moved to SUBSTR
         assert attr.substr == "caseIgnoreSubstringsMatch", (
             f"Expected corrected substr 'caseIgnoreSubstringsMatch', got {attr.substr}"
@@ -508,7 +497,7 @@ class TestFlextLdifOidSyntaxTransformations:
 
     def test_combined_transformations(
         self,
-        oid_schema: FlextLdifServersOid.Schema,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test combined syntax and matching rule transformations."""
         attr_def = (
@@ -525,9 +514,9 @@ class TestFlextLdifOidSyntaxTransformations:
             oid_schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
 
-        attr = parsed_result
+        attr = cast("m.SchemaAttribute", parsed_result)
         assert attr.syntax
         assert attr.equality

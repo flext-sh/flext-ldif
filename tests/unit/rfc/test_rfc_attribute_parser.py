@@ -1,22 +1,3 @@
-"""RFC 4512 AttributeParser with RFC 4517 Syntax Integration Tests.
-
-**Modules Tested:**
-- flext_ldif.servers.rfc.FlextLdifServersRfc.Schema: RFC 4512 attribute definition parsing
-- flext_ldif.services.syntax.FlextLdifSyntax: RFC 4517 syntax validation
-- flext_ldif models: SchemaAttribute, Syntax domain models
-
-**Scope:**
-- RFC 4512 attribute definition parsing (complete, minimal, with syntax/matching rules)
-- RFC 4517 syntax definition resolution via computed_field
-- Syntax OID validation and type-specific validators (Boolean, Integer, DirectoryString, IA5String)
-- Schema quirk integration methods (can_handle, should_filter, write)
-- Error handling and roundtrip validation
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -24,14 +5,14 @@ from typing import ClassVar
 
 import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
+from tests import m, s
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 
-class TestRfcAttributeParser:
+class TestsFlextLdifRfcAttributeParser(s):
     """Unified RFC 4512 attribute parser tests with RFC 4517 syntax integration.
 
     Tests cover:
@@ -327,10 +308,10 @@ class TestRfcAttributeParser:
 
         syntax = attr.syntax_definition
         if expected_syntax is None:
-            assert syntax is None or isinstance(syntax, FlextLdifModels.Syntax)
+            assert syntax is None or isinstance(syntax, m.Syntax)
         else:
             assert syntax is not None
-            assert isinstance(syntax, FlextLdifModels.Syntax)
+            assert isinstance(syntax, m.Syntax)
             assert syntax.name == expected_syntax
 
     @pytest.mark.timeout(5)
@@ -344,12 +325,12 @@ class TestRfcAttributeParser:
         result = rfc_schema_quirk.parse(attr_def)
         assert result.is_success
         attr = result.unwrap()
-        assert isinstance(attr, FlextLdifModels.SchemaAttribute)
+        assert isinstance(attr, m.SchemaAttribute)
         assert attr.syntax is None
         assert attr.syntax_definition is None
 
         # Case 2: Empty syntax
-        empty_syntax_attr = FlextLdifModels.SchemaAttribute(
+        empty_syntax_attr = m.SchemaAttribute(
             oid=TestsRfcConstants.ATTR_OID_CN,
             name=TestsRfcConstants.ATTR_NAME_CN,
             syntax="",
@@ -369,7 +350,7 @@ class TestRfcAttributeParser:
         assert empty_syntax_attr.syntax_definition is None
 
         # Case 3: Invalid OID format
-        invalid_oid_attr = FlextLdifModels.SchemaAttribute(
+        invalid_oid_attr = m.SchemaAttribute(
             oid=TestsRfcConstants.ATTR_OID_CN,
             name=TestsRfcConstants.ATTR_NAME_CN,
             syntax="not.a.valid.oid.at.all",
@@ -387,7 +368,7 @@ class TestRfcAttributeParser:
             x_oid=None,
         )
         syntax = invalid_oid_attr.syntax_definition
-        assert syntax is None or isinstance(syntax, FlextLdifModels.Syntax)
+        assert syntax is None or isinstance(syntax, m.Syntax)
 
     @pytest.mark.timeout(5)
     def test_syntax_definition_caching_behavior(
@@ -410,8 +391,8 @@ class TestRfcAttributeParser:
 
         assert syntax1 is not None
         assert syntax2 is not None
-        assert isinstance(syntax1, FlextLdifModels.Syntax)
-        assert isinstance(syntax2, FlextLdifModels.Syntax)
+        assert isinstance(syntax1, m.Syntax)
+        assert isinstance(syntax2, m.Syntax)
         assert syntax1.oid == syntax2.oid
         assert syntax1.name == syntax2.name
 
@@ -462,7 +443,7 @@ class TestRfcAttributeParser:
         assert result.is_success
 
         attr = result.unwrap()
-        assert isinstance(attr, FlextLdifModels.SchemaAttribute)
+        assert isinstance(attr, m.SchemaAttribute)
         assert attr.oid == expected_oid
         assert attr.name == expected_name
 
@@ -502,7 +483,7 @@ class TestRfcAttributeParser:
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
         attr_model = parse_result.unwrap()
-        assert isinstance(attr_model, FlextLdifModels.SchemaAttribute)
+        assert isinstance(attr_model, m.SchemaAttribute)
         assert rfc_schema_quirk.can_handle_attribute(attr_model) is True
 
     @pytest.mark.timeout(5)
@@ -519,7 +500,7 @@ class TestRfcAttributeParser:
         parse_result = rfc_schema_quirk.parse(attr_def)
         assert parse_result.is_success
         attr_model = parse_result.unwrap()
-        assert isinstance(attr_model, FlextLdifModels.SchemaAttribute)
+        assert isinstance(attr_model, m.SchemaAttribute)
         assert rfc_schema_quirk.should_filter_out_attribute(attr_model) is False
 
     @pytest.mark.timeout(5)
