@@ -30,15 +30,15 @@ Usage:
 
 from __future__ import annotations
 
-
 from collections.abc import Callable, Sequence
 from typing import Self
 
 from flext_core import r
 
 from flext_ldif._utilities.configs import ProcessConfig
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
-from flext_ldif._utilities.transformers import EntryTransformer
+from flext_ldif._utilities.transformers import EntryTransformer, Normalize
 from flext_ldif.models import m
 
 
@@ -399,8 +399,6 @@ class ProcessingPipeline:
             Configured Pipeline instance
 
         """
-        from flext_ldif._utilities.transformers import Normalize
-
         pipeline = Pipeline()
 
         # Add DN normalization if enabled
@@ -508,8 +506,6 @@ class ValidationPipeline:
         else:
             # Validate DN - validate each RDN value separately
             # is_valid_dn_string validates individual RDN values, not full DN strings
-            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
             dn_str = entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
             components = FlextLdifUtilitiesDN.split(dn_str)
             for comp in components:

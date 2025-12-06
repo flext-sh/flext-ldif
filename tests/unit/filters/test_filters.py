@@ -5,14 +5,9 @@ from typing import Final, cast
 
 import pytest
 from flext_core import t
-from tests import ", c, Filters, TestCategorization
-                f"got {len(filtered)} entries, "")), "(also bad", "Attribute filter", "DN pattern", "ObjectClass", "attributeTypes": ["( 1.2.3 NAME 'test' )"], "attributes", "attrs", "blockedClass"]}, "dn_pattern", "exclusion_reason": "test reason"}}, "exclusion_reason": "test"}}, "expected_categories"), "expected_count", "filter_by_attributes", "filter_by_dn", "filter_by_objectclass", "match_all": False, "mode", "mode": Filters.MODE_EXCLUDE, "mode": Filters.MODE_INCLUDE, "mode": Filters.MODE_INCLUDE}, "objectclass", "orclACI": ["some acl"]}, "orclaci": ["acl rule"], "required_attributes": None, "test reason", "valid.*"], (
-                    "cn=123, (
-                    "cn=test", (
-                    "filter_by_attributes", (
-                    "filter_by_objectclass", (
-                    f"Expected match={test_case.expected_match} for {test_case.name}"
-                )
+from tests import c, Filters, s
+
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 
     class TestAclAttributes:
         """Test ACL attribute detection edge cases."""

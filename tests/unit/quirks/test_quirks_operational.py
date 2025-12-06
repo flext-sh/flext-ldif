@@ -1,5 +1,4 @@
 from __future__ import annotations
-from tests import c, p, s, t
 
 import dataclasses
 from collections.abc import Callable
@@ -13,16 +12,18 @@ from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
+
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+from flext_ldif.services.entries import (
     extract_attributes,
     extract_objectclasses,
     extract_oid,
 )
+from tests import c, s
 
 # Type variables for generic validators
 T = TypeVar("T")
+
 
 # Test scenario enums
 class FixtureType(IntEnum):
@@ -31,12 +32,14 @@ class FixtureType(IntEnum):
     ATTRIBUTES = 1
     OBJECTCLASSES = 2
 
+
 class ConversionScenario(IntEnum):
     """Conversion scenarios for OID/OUD testing."""
 
     OID_TO_OUD = 1
     OUD_TO_OID = 2
     ROUNDTRIP = 3
+
 
 # Test data structures
 @dataclasses.dataclass(frozen=True)
@@ -48,8 +51,10 @@ class SchemaTestConfig:
     min_success_rate: float = 0.90
     roundtrip_test_count: int = 1
 
+
 # Module-level test configuration
 DEFAULT_TEST_CONFIG = SchemaTestConfig()
+
 
 # Factory functions
 def create_server(
@@ -62,6 +67,7 @@ def create_server(
         return FlextLdifServersOud()
     msg = f"Unknown server type: {server_type}"
     raise ValueError(msg)
+
 
 def extract_schema_data(
     fixtures: FlextLdifFixtures.OID,
@@ -79,6 +85,7 @@ def extract_schema_data(
         return extract_objectclasses(schema)
     msg = f"Unknown data type: {data_type}"
     raise ValueError(msg)
+
 
 # Validator class
 class SchemaValidator:
@@ -159,18 +166,22 @@ class SchemaValidator:
                     f"{attr} not preserved: {orig_value} → {final_value}"
                 )
 
+
 # Parametrization functions
 def get_attribute_indices() -> list[int]:
     """Generate attribute test indices for parametrization."""
     return list(range(DEFAULT_TEST_CONFIG.attr_test_count))
 
+
 def get_objectclass_indices() -> list[int]:
     """Generate objectClass test indices for parametrization."""
     return list(range(DEFAULT_TEST_CONFIG.oc_test_count))
 
+
 def get_roundtrip_indices() -> list[int]:
     """Generate roundtrip test indices for parametrization."""
     return list(range(DEFAULT_TEST_CONFIG.roundtrip_test_count))
+
 
 # Module-level fixtures
 @pytest.fixture
@@ -178,15 +189,18 @@ def oid_server() -> FlextLdifServersOid:
     """Create OID server instance."""
     return create_server(c.Fixtures.OID)
 
+
 @pytest.fixture
 def oud_server() -> FlextLdifServersOud:
     """Create OUD server instance."""
     return create_server(c.Fixtures.OUD)
 
+
 @pytest.fixture
 def conversion_service() -> FlextLdifConversion:
     """Create conversion service instance."""
     return FlextLdifConversion()
+
 
 @pytest.fixture
 def oid_schema_attributes(
@@ -195,6 +209,7 @@ def oid_schema_attributes(
     """Extract OID attributes from schema fixture."""
     return extract_schema_data(oid_fixtures, FixtureType.ATTRIBUTES)
 
+
 @pytest.fixture
 def oid_schema_objectclasses(
     oid_fixtures: FlextLdifFixtures.OID,
@@ -202,12 +217,14 @@ def oid_schema_objectclasses(
     """Extract OID objectClasses from schema fixture."""
     return extract_schema_data(oid_fixtures, FixtureType.OBJECTCLASSES)
 
+
 @pytest.fixture
 def oid_conversion_attributes(
     oid_fixtures: FlextLdifFixtures.OID,
 ) -> list[str]:
     """Extract OID attributes for conversion testing."""
     return extract_schema_data(oid_fixtures, FixtureType.ATTRIBUTES)
+
 
 # Test classes
 class TestsFlextLdifOperationalSchemaAttributeParsing(s):
@@ -250,6 +267,7 @@ class TestsFlextLdifOperationalSchemaAttributeParsing(s):
             DEFAULT_TEST_CONFIG.min_success_rate,
         )
 
+
 class TestOperationalSchemaObjectClassParsing:
     """Test parsing real OID objectClasses from fixtures."""
 
@@ -287,6 +305,7 @@ class TestOperationalSchemaObjectClassParsing:
             parse_objectclass,
             DEFAULT_TEST_CONFIG.min_success_rate,
         )
+
 
 class TestOperationalServerConversion:
     """Test OID↔OUD server conversion operations."""
@@ -346,6 +365,7 @@ class TestOperationalServerConversion:
 
         assert not failures, f"Conversion failures: {failures}"
         assert successes > 0, "No successful conversions"
+
 
 class TestOperationalServerRoundtrip:
     """Test roundtrip conversions between OID and OUD servers."""
@@ -408,6 +428,7 @@ class TestOperationalServerRoundtrip:
             final_model,
             ["oid", "name"],
         )
+
 
 __all__ = [
     "ConversionScenario",

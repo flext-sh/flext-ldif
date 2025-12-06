@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.models import m
@@ -49,7 +49,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             ),
         )
 
-        FlextTestsMatchers.assert_success(result)
+        tm.ok(result)
         output = result.unwrap()
 
         # With folding ENABLED, long lines should be wrapped
@@ -83,7 +83,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             ),
         )
 
-        FlextTestsMatchers.assert_success(result)
+        tm.ok(result)
         output = result.unwrap()
 
         # With folding DISABLED, verify output is valid
@@ -109,7 +109,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             ),
         )
 
-        FlextTestsMatchers.assert_success(result)
+        tm.ok(result)
         output = result.unwrap()
 
         # With folding DISABLED, verify output is valid
@@ -135,7 +135,7 @@ class TestsFlextLdifWriterLineFoldingDebug(s):
             ),
         )
 
-        FlextTestsMatchers.assert_success(result)
+        tm.ok(result)
         output = result.unwrap()
 
         lines = output.split("\n") if isinstance(output, str) else []

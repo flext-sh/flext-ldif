@@ -16,7 +16,19 @@ from flext_ldif import (
     FlextLdifWriter,
 )
 from flext_ldif.services.server import FlextLdifServer
+
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+
+
+class FlextLdifTestFactory:
+    """RFC-first service factory for testing."""
+
+    class _RfcParserFactory:
+        """Nested RFC-first parser factory."""
+
+        @staticmethod
+        def create_ldif_parser(
+            params: GenericFieldsDict | None = None,
         ) -> FlextLdifParser:
             """Create unified LDIF parser service.
 

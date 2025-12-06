@@ -16,6 +16,7 @@ from flext_core import FlextLogger
 
 from flext_ldif.constants import c
 from flext_ldif.protocols import p
+from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
 
@@ -82,8 +83,6 @@ def _get_utilities() -> type:
         FlextLdifUtilities class type
 
     """
-    from flext_ldif.utilities import FlextLdifUtilities
-
     return FlextLdifUtilities
 
 

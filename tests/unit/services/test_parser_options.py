@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 import pytest
-from flext_tests.matchers import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import m
@@ -469,7 +469,7 @@ sn:"""
         schema_entries = [
             e for e in response_obj.entries if "schema" in str(e.dn).lower()
         ]
-        FlextTestsMatchers.assert_length_greater_than(
+        tm.assert_length_greater_than(
             schema_entries,
             0,
             "Should have at least one schema entry",
@@ -478,7 +478,7 @@ sn:"""
         data_entries = [
             e for e in response_obj.entries if "schema" not in str(e.dn).lower()
         ]
-        FlextTestsMatchers.assert_length_greater_than(
+        tm.assert_length_greater_than(
             data_entries,
             0,
             "Should have at least one data entry",
@@ -505,7 +505,7 @@ sn:"""
             input_source="file",
             format_options=options,
         )
-        FlextTestsMatchers.assert_length_equals(response_obj.entries, 1)
+        tm.assert_length_equals(response_obj.entries, 1)
         assert response_obj.entries[0].dn.value == "cn=file-test,dc=example,dc=com"
 
     def test_ldap3_parsing_with_options(
@@ -525,7 +525,7 @@ sn:"""
             input_source="ldap3",
             format_options=options,
         )
-        FlextTestsMatchers.assert_length_equals(response_obj.entries, 1)
+        tm.assert_length_equals(response_obj.entries, 1)
         entry = response_obj.entries[0]
         attr_names = [name.lower() for name in entry.attributes.attributes]
         # Note: format_options are not currently used by FlextLdifParser.parse_ldap3_results()
@@ -562,7 +562,7 @@ sn:"""
             format_options=None if expected_entries > 0 else m.ParseFormatOptions(),
         )
         assert response_obj.statistics.parse_errors == expected_errors
-        FlextTestsMatchers.assert_length_equals(response_obj.entries, expected_entries)
+        tm.assert_length_equals(response_obj.entries, expected_entries)
 
     def test_invalid_server_type_with_options(
         self,

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
@@ -113,7 +113,7 @@ class TestsFlextLdifsFlextLdifWriterAlgarRealData(s):
             target_server_type=FlextLdifConstants.ServerTypes.RFC,
         )
 
-        FlextTestsMatchers.assert_success(write_result)
+        tm.ok(write_result)
         content = write_result.unwrap()
 
         # Validate RFC 2849 compliance

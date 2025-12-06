@@ -14,16 +14,19 @@ from flext_ldif import (
     FlextLdifConstants,
 )
 from flext_ldif.models import FlextLdifModels, m
-from tests import "aci": [, c, TestDeduplicationHelpers
-                "(targetattr=*)(version 3.0, )
+from tests import c, s
+
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 
 
 @pytest.fixture
 def sample_entries() -> list[m.Entry]:
     """Create sample entries for testing."""
     return [
-        self.create_entry(
-            dn=f"cn={c.Values.USER}{i}, )
+        s.create_entry(
+            dn=f"cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}",
+            attributes={c.Names.CN: [f"{c.Values.USER}{i}"], c.Names.OBJECTCLASS: [c.Names.PERSON]},
+        )
         for i in range(3)
     ]
 
@@ -31,11 +34,15 @@ def sample_entries() -> list[m.Entry]:
 @pytest.fixture
 def entry_with_acl() -> m.Entry:
     """Create an entry with ACL attributes."""
-    return self.create_entry(
-        dn=f"cn={c.Values.TEST} ACL, attributes={
-                c.Names.CN: [f"{c.Values.USER}{i}"], attributes={
-            c.Names.CN: [f"{c.Values.TEST} ACL"], attributes={
-            c.Names.CN: [f"{c.Values.TEST} {c.Values.USER}"], c, c.Names.INET_ORG_PERSON], c.Names.MAIL: [c.Values.TEST_EMAIL], c.Names.MAIL: [f"{c.Values.USER}{i}{c.Values.EMAIL_BASE}"], c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.SN: [c.Values.USER], m, ou=People, s
+    return s.create_entry(
+        dn=f"cn={c.Values.TEST} ACL, {c.DNs.EXAMPLE}",
+        attributes={
+            c.Names.CN: [f"{c.Values.TEST} ACL"],
+            c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
+            c.Names.MAIL: [c.Values.TEST_EMAIL],
+            "orclACI": ["(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)"],
+        },
+    )
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
@@ -318,9 +325,10 @@ def simple_ldif_content() -> str:
 @pytest.fixture
 def sample_entry() -> m.Entry:
     """Create a sample entry for testing."""
-    return self.create_entry(
-        dn=f"cn={c.Values.TEST} {c.Values.USER}, {c.DNs.EXAMPLE}", }; acl rule; allow (all) userdn=ldap:///anyone;)",
-            ],
+    return s.create_entry(
+        dn=f"cn={c.Values.TEST} {c.Values.USER}, {c.DNs.EXAMPLE}",
+        attributes={
+            c.Names.CN: [f"{c.Values.TEST} {c.Values.USER}"],
             c.Names.OBJECTCLASS: [c.Names.PERSON],
         },
     )
@@ -337,7 +345,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.SIMPLE_STRING: ParsingTestCase(
             scenario=ParsingScenario.SIMPLE_STRING,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=SIMPLE_LDIF_CONTENT,
             expected_count=2,
             description="Parse from string with RFC server",
@@ -345,7 +353,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.COMMENTS_FOLDING: ParsingTestCase(
             scenario=ParsingScenario.COMMENTS_FOLDING,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=COMMENTS_FOLDING_CONTENT,
             expected_count=1,
             description="Parse with comments and line folding",
@@ -353,7 +361,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.MULTIPLE_VALUES: ParsingTestCase(
             scenario=ParsingScenario.MULTIPLE_VALUES,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=MULTIPLE_VALUES_CONTENT,
             expected_count=1,
             description="Parse with multiple attribute values",
@@ -361,7 +369,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.MULTIPLE_ENTRIES: ParsingTestCase(
             scenario=ParsingScenario.MULTIPLE_ENTRIES,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=MULTIPLE_ENTRIES_CONTENT,
             expected_count=3,
             description="Parse multiple entries",
@@ -369,7 +377,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.CHANGETYPE_OPS: ParsingTestCase(
             scenario=ParsingScenario.CHANGETYPE_OPS,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=CHANGETYPE_CONTENT,
             expected_count=2,
             description="Parse with changetype operations",
@@ -385,7 +393,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.LARGE_ENTRIES: ParsingTestCase(
             scenario=ParsingScenario.LARGE_ENTRIES,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=LARGE_ENTRIES_CONTENT,
             expected_count=100,
             description="Parse large number of entries",
@@ -393,7 +401,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.SERVER_TYPES: ParsingTestCase(
             scenario=ParsingScenario.SERVER_TYPES,
             input_type=InputType.STRING,
-            server_type=c.ServerType.OID,
+            server_type=c.ServerTypes.OID,
             content=OID_SPECIFIC_CONTENT,
             expected_count=1,
             description="Parse OID-specific content",
@@ -401,7 +409,7 @@ class TestsFlextLdifAPIParsingOperations(s):
         ParsingScenario.BROKEN_LDIF: ParsingTestCase(
             scenario=ParsingScenario.BROKEN_LDIF,
             input_type=InputType.STRING,
-            server_type=c.ServerType.RFC,
+            server_type=c.ServerTypes.RFC,
             content=BROKEN_CONTENT,
             expected_count=1,
             description="Parse broken LDIF content",
@@ -717,7 +725,7 @@ class TestAPIConversionAndMigration:
     def migration_entries(self) -> list[m.Entry]:
         """Create sample entries for migration testing."""
         return [
-            self.create_entry(
+            s.create_entry(
                 dn=f"cn={c.Values.USER}{i},ou=People,{c.DNs.EXAMPLE}",
                 attributes={
                     c.Names.CN: [f"{c.Values.USER}{i}"],

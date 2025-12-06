@@ -720,11 +720,40 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             List of formatted extension clauses
 
         """
-        extensions: list[str] = []
-
         if not metadata:
-            return extensions
+            return []
 
+        meta_extensions = self._extract_extensions_dict(metadata)
+        if not meta_extensions:
+            return []
+
+        return self._format_extensions(meta_extensions)
+
+    def _extract_extensions_dict(
+        self,
+        metadata: (
+            m.QuirkMetadata
+            | dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | list[str]
+                | dict[str, str | list[str]]
+                | None,
+            ]
+        ),
+    ) -> dict[str, str | int | float | bool | list[str] | None]:
+        """Extract extensions dict from metadata, converting types if needed.
+
+        Args:
+            metadata: Metadata in any acceptable format
+
+        Returns:
+            Dictionary of extensions or empty dict if none found
+
+        """
         # Ensure metadata is m.QuirkMetadata (public facade)
         if not isinstance(metadata, m.QuirkMetadata):
             if hasattr(metadata, "model_dump"):
@@ -733,43 +762,51 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             elif isinstance(metadata, dict):
                 metadata = m.QuirkMetadata.model_validate(metadata)
             else:
-                return extensions
+                return {}
 
-        meta_extensions = getattr(metadata, "extensions", None)
-        if not meta_extensions:
-            return extensions
+        return getattr(metadata, "extensions", None) or {}
 
+    def _format_extensions(
+        self,
+        meta_extensions: dict[str, str | int | float | bool | list[str] | None],
+    ) -> list[str]:
+        """Format extension values based on metadata key type.
+
+        Args:
+            meta_extensions: Metadata extensions dictionary
+
+        Returns:
+            List of formatted extension clause strings
+
+        """
+        extensions: list[str] = []
         meta_keys = FlextLdifConstants.MetadataKeys
 
-        # Generic extensions (filter, constraint)
+        # Generic extensions
         if acl_filter := meta_extensions.get(meta_keys.ACL_FILTER):
             extensions.append(f"filter={acl_filter}")
 
         if acl_constraint := meta_extensions.get(meta_keys.ACL_CONSTRAINT):
             extensions.append(f"added_object_constraint=({acl_constraint})")
 
-        # OID-specific extensions (validated against Oracle OID documentation)
-        # BINDMODE: Authentication/encryption requirements
+        # Valued OID-specific extensions
         if bindmode := meta_extensions.get(meta_keys.ACL_BINDMODE):
             extensions.append(f"bindmode=({bindmode})")
 
-        # DenyGroupOverride: Prevents override by higher ACPs
-        if meta_extensions.get(meta_keys.ACL_DENY_GROUP_OVERRIDE):
-            extensions.append("DenyGroupOverride")
-
-        # AppendToAll: Adds subject to all other ACIs
-        if meta_extensions.get(meta_keys.ACL_APPEND_TO_ALL):
-            extensions.append("AppendToAll")
-
-        # BINDIPFILTER: IP-based access restriction
         if bind_ip_filter := meta_extensions.get(meta_keys.ACL_BIND_IP_FILTER):
             extensions.append(f"bindipfilter=({bind_ip_filter})")
 
-        # constraintonaddedobject: Entry type constraints
         if constrain_to_added := meta_extensions.get(
             meta_keys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         ):
             extensions.append(f"constraintonaddedobject=({constrain_to_added})")
+
+        # Boolean OID-specific extensions
+        if meta_extensions.get(meta_keys.ACL_DENY_GROUP_OVERRIDE):
+            extensions.append("DenyGroupOverride")
+
+        if meta_extensions.get(meta_keys.ACL_APPEND_TO_ALL):
+            extensions.append("AppendToAll")
 
         return extensions
 

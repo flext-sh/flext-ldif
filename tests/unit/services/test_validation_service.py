@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
@@ -121,7 +121,7 @@ class TestsTestFlextLdifValidation(s):
             """Test attribute name validation with comprehensive cases."""
             service = FlextLdifValidation()
             result = service.validate_attribute_name(name)
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is expected
 
     class TestObjectClassName:
@@ -150,7 +150,7 @@ class TestsTestFlextLdifValidation(s):
             """Test object class name validation with comprehensive cases."""
             service = FlextLdifValidation()
             result = service.validate_objectclass_name(name)
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is expected
 
         def test_validate_objectclass_delegates_to_attribute(self) -> None:
@@ -183,7 +183,7 @@ class TestsTestFlextLdifValidation(s):
             """Test attribute value validation with comprehensive cases."""
             service = FlextLdifValidation()
             result = service.validate_attribute_value(value)
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is expected
 
         @pytest.mark.parametrize(
@@ -203,7 +203,7 @@ class TestsTestFlextLdifValidation(s):
             """Test attribute value validation with custom max length."""
             service = FlextLdifValidation()
             result = service.validate_attribute_value(value, max_length=max_length)
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is expected
 
     class TestDnComponent:
@@ -228,14 +228,14 @@ class TestsTestFlextLdifValidation(s):
             """Test DN component validation with comprehensive cases."""
             service = FlextLdifValidation()
             result = service.validate_dn_component(attr, value)
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is expected
 
         def test_validate_dn_component_invalid_attribute(self) -> None:
             """Test DN component validation with invalid attribute fails."""
             service = FlextLdifValidation()
             result = service.validate_dn_component("", "test")
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is False
 
     class TestExecute:
@@ -245,7 +245,7 @@ class TestsTestFlextLdifValidation(s):
             """Test execute returns successful status."""
             service = FlextLdifValidation()
             result = service.execute()
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, m.ValidationServiceStatus)
             assert unwrapped.service == "ValidationService"
             assert unwrapped.status == "operational"
@@ -333,7 +333,7 @@ class TestsTestFlextLdifValidation(s):
             """Test batch validation of multiple attribute names."""
             service = FlextLdifValidation()
             result = service.validate_attribute_names(["cn", "mail", "2invalid"])
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped["cn"] is True
             assert unwrapped["mail"] is True
             assert unwrapped["2invalid"] is False
@@ -342,7 +342,7 @@ class TestsTestFlextLdifValidation(s):
             """Test batch validation with empty list."""
             service = FlextLdifValidation()
             result = service.validate_attribute_names([])
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped == {}
 
         def test_validate_attribute_names_with_failure_handling(self) -> None:
@@ -350,7 +350,7 @@ class TestsTestFlextLdifValidation(s):
             service = FlextLdifValidation()
             # This should succeed even if individual validations might fail
             result = service.validate_attribute_names(["cn", "valid-name"])
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert isinstance(unwrapped, dict)
             assert "cn" in unwrapped
             assert "valid-name" in unwrapped
@@ -362,14 +362,14 @@ class TestsTestFlextLdifValidation(s):
             """Test validate_dn_component with non-string value."""
             service = FlextLdifValidation()
             result = service.validate_dn_component("cn", 123)
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is False
 
         def test_validate_dn_component_with_string_value(self) -> None:
             """Test validate_dn_component with string value."""
             service = FlextLdifValidation()
             result = service.validate_dn_component("cn", "test")
-            unwrapped = FlextTestsMatchers.assert_success(result)
+            unwrapped = tm.ok(result)
             assert unwrapped is True  # String value should succeed
 
 

@@ -13,8 +13,17 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.models import m
-from tests import c, m, s
+from tests import m, s
+
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+
+
+class TestDnCaseRegistry(s):
+    """Test DN case registry functionality."""
+
+    registry: ClassVar[m.DnRegistry]  # pytest fixture
+
+    @pytest.fixture
     def registry(self) -> m.DnRegistry:
         """Create fresh DN registry."""
         return m.DnRegistry()

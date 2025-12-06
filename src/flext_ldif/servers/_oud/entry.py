@@ -20,6 +20,7 @@ from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.protocols import p
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -171,10 +172,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Business Rule: Entry.__init__ accepts entry_service and _parent_quirk
         # Implication: Call parent __init__ directly, parent handles FlextService call
         # Use same pattern as FlextLdifServersRfcEntry - call base class directly
-        from flext_ldif.servers._base.entry import (
-            FlextLdifServersBaseEntry,
-        )
-
         # Cast entry_service to protocol type for type compatibility
         entry_service_typed: p.Services.HasParseMethodProtocol | None = (
             cast("p.Services.HasParseMethodProtocol", entry_service)
@@ -2312,24 +2309,3 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
 
             entries_list.append(entry)
-
-
-"""Oracle Unified Directory (OUD) Quirks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides OUD-specific quirks for schema, ACL, and entry processing.
-"""
-
-
-from typing import TYPE_CHECKING
-
-from flext_core import FlextLogger
-
-from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-if TYPE_CHECKING:
-    from flext_ldif.services.entries import FlextLdifEntries
-
-logger = FlextLogger(__name__)

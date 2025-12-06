@@ -210,8 +210,6 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         }
         # Business Rule: Acl.__init__ accepts acl_service and _parent_quirk
         # Cast acl_service to HasParseMethodProtocol for type compatibility
-        from typing import cast
-
         acl_service_typed: p.Services.HasParseMethodProtocol | None = (
             cast("p.Services.HasParseMethodProtocol", acl_service)
             if acl_service is not None
@@ -1369,28 +1367,3 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             result = self.parse(aci_text)
             if result.is_success:
                 acls.append(result.unwrap())
-
-
-"""Oracle Unified Directory (OUD) Quirks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Provides OUD-specific quirks for schema, ACL, and entry processing.
-"""
-
-
-from typing import TYPE_CHECKING
-
-from flext_core import FlextLogger
-
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-# Aliases for simplified usage
-p = FlextLdifProtocols
-
-if TYPE_CHECKING:
-    from flext_ldif.services.acl import FlextLdifAcl
-
-logger = FlextLogger(__name__)

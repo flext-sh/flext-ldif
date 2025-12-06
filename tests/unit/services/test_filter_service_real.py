@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsFactories
+from flext_tests import tt
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
@@ -173,7 +173,7 @@ def oid_acl_entries() -> list[m.Entry]:
     return load_real_ldif_entries("oid/oid_acl_fixtures.ldif")
 
 
-class TestFlextLdifFilterService(FlextTestsFactories):
+class TestFlextLdifFilterService(tt):
     """Comprehensive filter service tests using REAL LDIF fixtures.
 
     Uses advanced Python 3.13 patterns: StrEnum, frozen dataclasses, parametrization,

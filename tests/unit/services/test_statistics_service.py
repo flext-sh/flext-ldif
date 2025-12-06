@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
-from flext_tests.matchers import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.constants import FlextLdifConstants
@@ -538,7 +538,7 @@ class TestsTestFlextLdifStatistics(s):
             assert stats.total_entries == 1000
             assert stats.rejection_count == 900
             assert abs(stats.rejection_rate - 0.9) < 0.001
-            FlextTestsMatchers.assert_length_equals(stats.rejection_reasons, 5)
+            tm.assert_length_equals(stats.rejection_reasons, 5)
 
         def test_statistics_with_complex_path_objects(self) -> None:
             """Test statistics generation with complex Path objects."""

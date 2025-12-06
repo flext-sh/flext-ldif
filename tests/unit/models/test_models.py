@@ -7,19 +7,9 @@ from typing import Final, cast
 
 import pytest
 from flext_core import FlextModels
-from tests import "Attribute creation", "CN=Test, "Entry must have DN", c
-                assert entry.dn.value == test_case.dn
-                if test_case.attributes:
-                    # Type narrowing: entry.attributes is not None after successful creation
-                    assert entry.attributes is not None, "Entry must have attributes"
-                    assert c.Names.CN in entry.attributes.attributes
+from tests import c, s
 
-            case ModelTestType.ENTRY_BINARY:
-                binary_data = b"binary content"
-                encoded_data = base64.b64encode(binary_data).decode("ascii")
-                attrs: dict[str, "ObjectClass creation", "cn=" + "x" * 2048 + ", "cn=test\+user, "invalid-dn-format", ), )
-                assert attrs.get(c.Names.CN) == [""]
-                assert attrs.get(c.Names.SN) == []
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 
     # ============================================================================
     # Entry Tests

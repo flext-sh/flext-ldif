@@ -1146,8 +1146,8 @@ class _PriorityDescriptor:
 # Use type.__setattr__ to bypass both Pydantic's __setattr__ and pyrefly's
 # descriptor immutability checks - this is the canonical pattern for setting
 # class-level descriptors on Pydantic models
-type.__setattr__(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
-type.__setattr__(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
+type.__setattr__(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))  # noqa: PLC2801
+type.__setattr__(FlextLdifServersBase, "priority", _PriorityDescriptor(0))  # noqa: PLC2801
 
 # Pydantic v2 automatically resolves forward references when classes are defined
 # No manual model_rebuild() calls needed

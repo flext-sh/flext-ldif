@@ -5,7 +5,7 @@ from enum import StrEnum
 from typing import cast
 
 import pytest
-from tests import s
+from tests import c, s
 
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -59,25 +59,25 @@ OUD_ONLY_ATTRIBUTES = ["ds-privilege-name"]
 # ACL protocol test cases for attribute validation
 ACL_ATTRIBUTE_TESTS = [
     AclProtocolTestCase(
-        c.ServerType.OID,
+        c.ServerTypes.OID,
         AttributeCategory.RFC_FOUNDATION,
         RFC_ACL_ATTRIBUTES,
         "OID RFC foundation attributes",
     ),
     AclProtocolTestCase(
-        c.ServerType.OID,
+        c.ServerTypes.OID,
         AttributeCategory.SERVER_EXTENSIONS,
         OID_ONLY_ATTRIBUTES,
         "OID-specific extensions",
     ),
     AclProtocolTestCase(
-        c.ServerType.OUD,
+        c.ServerTypes.OUD,
         AttributeCategory.RFC_FOUNDATION,
         RFC_ACL_ATTRIBUTES,
         "OUD RFC foundation attributes",
     ),
     AclProtocolTestCase(
-        c.ServerType.OUD,
+        c.ServerTypes.OUD,
         AttributeCategory.SERVER_EXTENSIONS,
         OUD_ONLY_ATTRIBUTES,
         "OUD-specific extensions",
@@ -87,51 +87,51 @@ ACL_ATTRIBUTE_TESTS = [
 # Case sensitivity test cases
 CASE_INSENSITIVE_TESTS = [
     # OID case-insensitive tests
-    CaseInsensitivityTestCase(c.ServerType.OID, "aci", True, "OID lowercase aci"),
-    CaseInsensitivityTestCase(c.ServerType.OID, "ACI", True, "OID uppercase ACI"),
-    CaseInsensitivityTestCase(c.ServerType.OID, "Aci", True, "OID mixed case Aci"),
+    CaseInsensitivityTestCase(c.ServerTypes.OID, "aci", True, "OID lowercase aci"),
+    CaseInsensitivityTestCase(c.ServerTypes.OID, "ACI", True, "OID uppercase ACI"),
+    CaseInsensitivityTestCase(c.ServerTypes.OID, "Aci", True, "OID mixed case Aci"),
     CaseInsensitivityTestCase(
-        c.ServerType.OID,
+        c.ServerTypes.OID,
         "orclaci",
         True,
         "OID lowercase orclaci",
     ),
     CaseInsensitivityTestCase(
-        c.ServerType.OID,
+        c.ServerTypes.OID,
         "ORCLACI",
         True,
         "OID uppercase ORCLACI",
     ),
     CaseInsensitivityTestCase(
-        c.ServerType.OID,
+        c.ServerTypes.OID,
         "OrclAci",
         True,
         "OID mixed case OrclAci",
     ),
-    CaseInsensitivityTestCase(c.ServerType.OID, "cn", False, "OID non-ACL attribute"),
+    CaseInsensitivityTestCase(c.ServerTypes.OID, "cn", False, "OID non-ACL attribute"),
     # OUD case-insensitive tests
-    CaseInsensitivityTestCase(c.ServerType.OUD, "aci", True, "OUD lowercase aci"),
-    CaseInsensitivityTestCase(c.ServerType.OUD, "ACI", True, "OUD uppercase ACI"),
-    CaseInsensitivityTestCase(c.ServerType.OUD, "Aci", True, "OUD mixed case Aci"),
+    CaseInsensitivityTestCase(c.ServerTypes.OUD, "aci", True, "OUD lowercase aci"),
+    CaseInsensitivityTestCase(c.ServerTypes.OUD, "ACI", True, "OUD uppercase ACI"),
+    CaseInsensitivityTestCase(c.ServerTypes.OUD, "Aci", True, "OUD mixed case Aci"),
     CaseInsensitivityTestCase(
-        c.ServerType.OUD,
+        c.ServerTypes.OUD,
         "ds-privilege-name",
         True,
         "OUD lowercase ds-privilege-name",
     ),
     CaseInsensitivityTestCase(
-        c.ServerType.OUD,
+        c.ServerTypes.OUD,
         "DS-PRIVILEGE-NAME",
         True,
         "OUD uppercase DS-PRIVILEGE-NAME",
     ),
     CaseInsensitivityTestCase(
-        c.ServerType.OUD,
+        c.ServerTypes.OUD,
         "orclaci",
         False,
         "OUD should not match OID attribute",
     ),
-    CaseInsensitivityTestCase(c.ServerType.OUD, "cn", False, "OUD non-ACL attribute"),
+    CaseInsensitivityTestCase(c.ServerTypes.OUD, "cn", False, "OUD non-ACL attribute"),
 ]
 
 
@@ -140,9 +140,9 @@ def get_acl_instance(
     server_type: str,
 ) -> FlextLdifServersOid.Acl | FlextLdifServersOud.Acl:
     """Create ACL instance by server type."""
-    if server_type == c.ServerType.OID:
+    if server_type == c.ServerTypes.OID:
         return FlextLdifServersOid.Acl()
-    if server_type == c.ServerType.OUD:
+    if server_type == c.ServerTypes.OUD:
         return FlextLdifServersOud.Acl()
     msg = f"Unknown server type: {server_type}"
     raise ValueError(msg)
@@ -152,9 +152,9 @@ def get_acl_class(
     server_type: str,
 ) -> type[FlextLdifServersOid.Acl | FlextLdifServersOud.Acl]:
     """Get ACL class by server type."""
-    if server_type == c.ServerType.OID:
+    if server_type == c.ServerTypes.OID:
         return FlextLdifServersOid.Acl
-    if server_type == c.ServerType.OUD:
+    if server_type == c.ServerTypes.OUD:
         return FlextLdifServersOud.Acl
     msg = f"Unknown server type: {server_type}"
     raise ValueError(msg)
@@ -175,16 +175,16 @@ def get_case_insensitive_tests() -> list[CaseInsensitivityTestCase]:
 @pytest.fixture
 def oid_acl() -> FlextLdifServersOid.Acl:
     """Create OID ACL instance."""
-    instance = get_acl_instance(c.ServerType.OID)
-    # Type narrowing: c.ServerType.OID always returns FlextLdifServersOid.Acl
+    instance = get_acl_instance(c.ServerTypes.OID)
+    # Type narrowing: c.ServerTypes.OID always returns FlextLdifServersOid.Acl
     return cast("FlextLdifServersOid.Acl", instance)
 
 
 @pytest.fixture
 def oud_acl() -> FlextLdifServersOud.Acl:
     """Create OUD ACL instance."""
-    instance = get_acl_instance(c.ServerType.OUD)
-    # Type narrowing: c.ServerType.OUD always returns FlextLdifServersOud.Acl
+    instance = get_acl_instance(c.ServerTypes.OUD)
+    # Type narrowing: c.ServerTypes.OUD always returns FlextLdifServersOud.Acl
     return cast("FlextLdifServersOud.Acl", instance)
 
 
@@ -239,8 +239,8 @@ class TestsFlextLdifAclProtocolCompliance(s):
 
     def test_oid_class_constants(self) -> None:
         """Test OID ACL class variables are properly defined."""
-        acl_class = get_acl_class(c.ServerType.OID)
-        # Type narrowing: c.ServerType.OID always returns FlextLdifServersOid.Acl class
+        acl_class = get_acl_class(c.ServerTypes.OID)
+        # Type narrowing: c.ServerTypes.OID always returns FlextLdifServersOid.Acl class
         oid_class = cast("type[FlextLdifServersOid.Acl]", acl_class)
 
         # RFC attributes
@@ -255,8 +255,8 @@ class TestsFlextLdifAclProtocolCompliance(s):
 
     def test_oud_class_constants(self) -> None:
         """Test OUD ACL class variables are properly defined."""
-        acl_class = get_acl_class(c.ServerType.OUD)
-        # Type narrowing: c.ServerType.OUD always returns FlextLdifServersOud.Acl class
+        acl_class = get_acl_class(c.ServerTypes.OUD)
+        # Type narrowing: c.ServerTypes.OUD always returns FlextLdifServersOud.Acl class
         oud_class = cast("type[FlextLdifServersOud.Acl]", acl_class)
 
         # RFC attributes
@@ -285,11 +285,11 @@ class TestsFlextLdifAclProtocolCompliance(s):
         """Test both OID and OUD share RFC foundation."""
         oid_class = cast(
             "type[FlextLdifServersOid.Acl]",
-            get_acl_class(c.ServerType.OID),
+            get_acl_class(c.ServerTypes.OID),
         )
         oud_class = cast(
             "type[FlextLdifServersOud.Acl]",
-            get_acl_class(c.ServerType.OUD),
+            get_acl_class(c.ServerTypes.OUD),
         )
         oid_rfc = set(oid_class.RFC_ACL_ATTRIBUTES)
         oud_rfc = set(oud_class.RFC_ACL_ATTRIBUTES)

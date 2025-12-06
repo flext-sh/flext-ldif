@@ -15,7 +15,7 @@ OID-specific features:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -145,8 +145,6 @@ class FlextLdifServersOidSchema(
         }
         # Business Rule: Call parent Schema.__init__ which accepts _schema_service and _parent_quirk
         # Cast schema_service to HasParseMethodProtocol for type compatibility
-        from typing import cast
-
         schema_service_typed: p.Services.HasParseMethodProtocol | None = (
             cast("p.Services.HasParseMethodProtocol", schema_service)
             if schema_service is not None

@@ -9,7 +9,7 @@ from flext_core import FlextResult
 
 from flext_ldif import FlextLdifConstants
 from flext_ldif.models import m
-from tests import m
+from tests import m, s
 
 
 class AclTestType(StrEnum):

@@ -5,7 +5,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
 from flext_ldif.models import m
 from flext_ldif.services.filters import FlextLdifFilters
@@ -391,7 +391,7 @@ class TestsFlextLdifFilterService(s):
 
             elif scenario == PublicAPIScenario.EXTRACT_ACL_ENTRIES:
                 result = FlextLdifFilters.extract_acl_entries(mixed_entries)
-                acl_entries = FlextTestsMatchers.assert_success(
+                acl_entries = tm.ok(
                     result,
                     f"Extract ACL failed: {result.error}",
                 )
@@ -828,7 +828,7 @@ class TestsFlextLdifFilterService(s):
                     Filters.DN_PATTERN_USERS,
                     mark_excluded=True,
                 )
-                filtered = FlextTestsMatchers.assert_success(result)
+                filtered = tm.ok(result)
                 assert len(filtered) > 0
 
             elif scenario == ExclusionScenario.EXCLUSION_HELPERS:
@@ -855,7 +855,7 @@ class TestsFlextLdifFilterService(s):
                     Filters.DN_PATTERN_USERS,
                     mode=Filters.MODE_INCLUDE,
                 )
-                filtered = FlextTestsMatchers.assert_success(result)
+                filtered = tm.ok(result)
                 assert filtered is not None
 
     class TestEdgeCasesAndErrors:
@@ -884,7 +884,7 @@ class TestsFlextLdifFilterService(s):
             if scenario == EdgeCaseScenario.EDGE_CASES:
                 # Test with empty list
                 result = FlextLdifFilters.by_dn([], Filters.DN_PATTERN_USERS)
-                filtered = FlextTestsMatchers.assert_success(result)
+                filtered = tm.ok(result)
                 assert len(filtered) == 0
 
             elif scenario == EdgeCaseScenario.ERROR_CASES:
@@ -921,7 +921,7 @@ class TestsFlextLdifFilterService(s):
                     single_entry,
                     Filters.DN_PATTERN_USERS,
                 )
-                filtered = FlextTestsMatchers.assert_success(result)
+                filtered = tm.ok(result)
                 assert filtered is not None
 
     class TestInternalHelpers:
