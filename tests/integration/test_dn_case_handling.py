@@ -12,21 +12,16 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdifModels
-from tests.fixtures.typing import GenericFieldsDict
-
-
-class TestDnCaseRegistry:
-    """Test DN Case Registry basic functionality."""
-
-    @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
+from flext_ldif.models import m
+from tests import c, m, s
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+    def registry(self) -> m.DnRegistry:
         """Create fresh DN registry."""
-        return FlextLdifModels.DnRegistry()
+        return m.DnRegistry()
 
     def test_register_dn_first_becomes_canonical(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test that first registered DN becomes canonical case."""
         canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
@@ -38,7 +33,7 @@ class TestDnCaseRegistry:
 
     def test_register_dn_with_force_override(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test forcing new canonical case."""
         registry.register_dn("CN=Admin,DC=Com")
@@ -47,7 +42,7 @@ class TestDnCaseRegistry:
 
     def test_get_canonical_dn_case_insensitive(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test case-insensitive DN lookup."""
         registry.register_dn("cn=test,dc=example,dc=com")
@@ -68,14 +63,14 @@ class TestDnCaseRegistry:
 
     def test_get_canonical_dn_unknown_returns_none(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test unknown DN returns None."""
         assert registry.get_canonical_dn("cn=unknown,dc=com") is None
 
     def test_has_dn_case_insensitive(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test DN existence check is case-insensitive."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -87,7 +82,7 @@ class TestDnCaseRegistry:
 
     def test_get_case_variants_tracks_all_cases(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test that all case variants are tracked."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -102,7 +97,7 @@ class TestDnCaseRegistry:
 
     def test_validate_oud_consistency_single_case(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test validation passes with single case variant."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -113,7 +108,7 @@ class TestDnCaseRegistry:
 
     def test_validate_oud_consistency_multiple_cases(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test validation detects multiple case variants."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -126,7 +121,7 @@ class TestDnCaseRegistry:
 
     def test_normalize_dn_references_single_dn(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test normalizing single DN field."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -141,7 +136,7 @@ class TestDnCaseRegistry:
 
     def test_normalize_dn_references_list_of_dns(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test normalizing list of DNs (e.g., group members)."""
         registry.register_dn("cn=user1,dc=com")
@@ -159,7 +154,7 @@ class TestDnCaseRegistry:
 
     def test_normalize_dn_references_unregistered_dn_unchanged(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
         data: GenericFieldsDict = {"dn": "cn=unknown,dc=com"}
@@ -171,7 +166,7 @@ class TestDnCaseRegistry:
 
     def test_clear_removes_all_registrations(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test clearing registry removes all DNs."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -182,7 +177,7 @@ class TestDnCaseRegistry:
         assert not registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         assert not registry.has_dn("cn=user,dc=com")
 
-    def test_get_stats(self, registry: FlextLdifModels.DnRegistry) -> None:
+    def test_get_stats(self, registry: m.DnRegistry) -> None:
         """Test registry statistics."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("CN=Admin,DC=Com")  # Same DN, different case
@@ -198,13 +193,13 @@ class TestDnCaseNormalizationScenarios:
     """Test various DN case normalization scenarios."""
 
     @pytest.fixture
-    def registry(self) -> FlextLdifModels.DnRegistry:
+    def registry(self) -> m.DnRegistry:
         """Create DN registry."""
-        return FlextLdifModels.DnRegistry()
+        return m.DnRegistry()
 
     def test_multiple_references_to_same_dn_different_cases(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test tracking multiple case variants of same DN."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")  # First variant
@@ -223,7 +218,7 @@ class TestDnCaseNormalizationScenarios:
 
     def test_hierarchical_dn_references(
         self,
-        registry: FlextLdifModels.DnRegistry,
+        registry: m.DnRegistry,
     ) -> None:
         """Test DN case consistency in hierarchical structure."""
         # Register parent DN

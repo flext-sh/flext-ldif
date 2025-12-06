@@ -346,6 +346,24 @@ make validate
 - **Security**: Bandit security scanning
 - **PEP 8**: Full compliance
 
+### Test Infrastructure
+
+All tests use unified test helpers for concise, parameterized validation:
+
+```python
+from tests import tm, tf, c, m, s
+
+# Unified entry validation
+entry = tf.create_entry("cn=test,dc=example", attrs={"cn": ["test"]})
+tm.entry(entry, dn="cn=test,dc=example", has_attr="cn", attr_count_gte=1)
+
+# Unified result validation
+result = service.execute()
+entries = tm.ok_entries(result, count=3, all_have_attr="cn")
+```
+
+See [CLAUDE.md](CLAUDE.md) for complete test helper documentation.
+
 ### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.

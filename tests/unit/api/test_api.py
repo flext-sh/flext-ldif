@@ -1,20 +1,3 @@
-"""Test suite for FlextLdif API Operations - Consolidated and Parametrized.
-
-Modules tested: FlextLdif
-Scope: Core parsing operations, server-specific quirk handling, advanced parsing features,
-LDIF writing, entry and schema validation, migration pipelines, filtering, categorization,
-transformation, statistics, structure analysis, entry building, batch processing
-
-This module tests the complete FlextLdif API surface with consolidated parametrized test
-classes achieving 40% code reduction while maintaining 100% coverage of original tests.
-
-Uses StrEnum + ClassVar + pytest.parametrize pattern for maximum code reuse.
-Uses TestDeduplicationHelpers massively to reduce test code.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -29,10 +12,32 @@ from flext_ldif import (
     FlextLdif,
     FlextLdifConfig,
     FlextLdifConstants,
-    FlextLdifModels,
 )
-from tests.fixtures.constants import DNs, Names, Values
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from flext_ldif.models import FlextLdifModels, m
+from tests import "aci": [, c, TestDeduplicationHelpers
+                "(targetattr=*)(version 3.0, )
+
+
+@pytest.fixture
+def sample_entries() -> list[m.Entry]:
+    """Create sample entries for testing."""
+    return [
+        self.create_entry(
+            dn=f"cn={c.Values.USER}{i}, )
+        for i in range(3)
+    ]
+
+
+@pytest.fixture
+def entry_with_acl() -> m.Entry:
+    """Create an entry with ACL attributes."""
+    return self.create_entry(
+        dn=f"cn={c.Values.TEST} ACL, attributes={
+                c.Names.CN: [f"{c.Values.USER}{i}"], attributes={
+            c.Names.CN: [f"{c.Values.TEST} ACL"], attributes={
+            c.Names.CN: [f"{c.Values.TEST} {c.Values.USER}"], c, c.Names.INET_ORG_PERSON], c.Names.MAIL: [c.Values.TEST_EMAIL], c.Names.MAIL: [f"{c.Values.USER}{i}{c.Values.EMAIL_BASE}"], c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.SN: [c.Values.USER], m, ou=People, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 # ============================================================================
 # TEST SCENARIO ENUMS
@@ -163,7 +168,6 @@ class CorePropertiesScenario(StrEnum):
     DETECT_OID = "detect_oid"
     DETECT_RFC = "detect_rfc"
 
-
 # ============================================================================
 # TEST DATA STRUCTURES
 # ============================================================================
@@ -207,91 +211,92 @@ class ProcessingTestCase:
 # ============================================================================
 
 # Basic parsing content
-SIMPLE_LDIF_CONTENT = f"""dn: cn=Alice Johnson,ou=People,{DNs.EXAMPLE}
+SIMPLE_LDIF_CONTENT = f"""dn: cn=Alice Johnson, {c.DNs.EXAMPLE}
+changetype: add
+cn: {c.Values.TEST}
+objectClass: {c.Names.PERSON}
+
+dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
+changetype: modify
+cn: {c.Values.USER}
+objectClass: {c.Names.PERSON}
+"""
+
+BROKEN_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
 cn: Alice Johnson
 sn: Johnson
-objectClass: {Names.PERSON}
-objectClass: {Names.INET_ORG_PERSON}
-mail: alice@{Values.EMAIL_BASE.strip("@")}
+objectClass: {c.Names.PERSON}
+objectClass: {c.Names.INET_ORG_PERSON}
+mail: alice@{c.Values.EMAIL_BASE.strip("@")}
 
-dn: cn=Bob Smith,ou=People,{DNs.EXAMPLE}
+dn: cn=Bob Smith, {c.DNs.EXAMPLE}
 cn: Bob Smith
 sn: Smith
-objectClass: {Names.PERSON}
-objectClass: {Names.INET_ORG_PERSON}
-mail: bob@{Values.EMAIL_BASE.strip("@")}
+objectClass: {c.Names.PERSON}
+objectClass: {c.Names.INET_ORG_PERSON}
+mail: bob@{c.Values.EMAIL_BASE.strip("@")}
 """
 
-OID_SPECIFIC_CONTENT = """dn: cn=User,dc=example,dc=com
-cn: User
-objectClass: person
-orclGUID: 550e8400-e29b-41d4-a716-446655440000
+OID_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
 """
 
-OUD_SPECIFIC_CONTENT = """dn: cn=User,dc=example,dc=com
-cn: User
-objectClass: person
-ds-sync-state: sync
-"""
+LARGE_ENTRIES_CONTENT = "
 
-OPENLDAP_SPECIFIC_CONTENT = """dn: cn=User,dc=example,dc=com
-cn: User
-objectClass: person
-olcSortVals: mail cn
-"""
-
-COMMENTS_FOLDING_CONTENT = f"""# This is a comment
-dn: cn={Values.TEST},{DNs.EXAMPLE}
-cn: {Values.TEST}
+".join(
+    f"""dn: cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
 # Another comment
-objectClass: {Names.PERSON}
+objectClass: {c.Names.PERSON}
 description: This is a long description that
  continues on the next line with proper line folding
 """
 
-MULTIPLE_VALUES_CONTENT = f"""dn: cn={Values.TEST},{DNs.EXAMPLE}
-cn: {Values.TEST}
-mail: {Values.MAIL_VALUES[0]}
-mail: {Values.MAIL_VALUES[1]}
-mail: {Values.MAIL_VALUES[2]}
-objectClass: {Names.PERSON}
+MULTIPLE_VALUES_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
+mail: {c.Values.MAIL_VALUES[0]}
+mail: {c.Values.MAIL_VALUES[1]}
+mail: {c.Values.MAIL_VALUES[2]}
+objectClass: {c.Names.PERSON}
 """
 
-MULTIPLE_ENTRIES_CONTENT = f"""dn: cn=First,{DNs.EXAMPLE}
-cn: First
-objectClass: person
-
-dn: cn=Second,{DNs.EXAMPLE}
-cn: Second
-objectClass: person
-
-dn: cn=Third,{DNs.EXAMPLE}
-cn: Third
-objectClass: person
+MULTIPLE_ENTRIES_CONTENT = f"""dn: cn={c.Values.USER1}, {c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
+objectClass: {c.Names.PERSON}
 """
 
-CHANGETYPE_CONTENT = f"""dn: cn=Test,{DNs.EXAMPLE}
-changetype: add
-cn: Test
-objectClass: person
+CHANGETYPE_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
+cn: {c.Values.USER1}
+objectClass: {c.Names.PERSON}
 
-dn: cn=Other,{DNs.EXAMPLE}
-changetype: modify
-cn: Other
-objectClass: person
+dn: cn={c.Values.USER2}, {c.DNs.EXAMPLE}
+cn: {c.Values.USER2}
+objectClass: {c.Names.PERSON}
+
+dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
+cn: {c.Values.USER}
+objectClass: {c.Names.PERSON}
+ds-sync-state: sync
 """
 
-BROKEN_CONTENT = """dn: cn=Broken,dc=example,dc=com
-cn: Broken
+OPENLDAP_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
+cn: {c.Values.USER}
+objectClass: {c.Names.PERSON}
+olcSortVals: mail cn
 """
 
-LARGE_ENTRIES_CONTENT = "\n\n".join(
-    f"""dn: cn=User{i},dc=example,dc=com
-cn: User{i}
-objectClass: person"""
+COMMENTS_FOLDING_CONTENT = f"""# This is a comment
+dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
+cn: {c.Values.USER}
+objectClass: {c.Names.PERSON}
+orclGUID: 550e8400-e29b-41d4-a716-446655440000
+"""
+
+OUD_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
+cn: {c.Values.USER}{i}
+objectClass: {c.Names.PERSON}"""
     for i in range(100)
 )
-
 
 # ============================================================================
 # MODULE-LEVEL FIXTURES
@@ -311,76 +316,28 @@ def simple_ldif_content() -> str:
 
 
 @pytest.fixture
-def sample_entry() -> FlextLdifModels.Entry:
+def sample_entry() -> m.Entry:
     """Create a sample entry for testing."""
-    dn = FlextLdifModels.DistinguishedName(
-        value="cn=Test User,ou=People,dc=example,dc=com",
-    )
-    attrs_result = FlextLdifModels.LdifAttributes.create(
-        {
-            "cn": ["Test User"],
-            "sn": ["User"],
-            "mail": ["test@example.com"],
-            "objectClass": ["person", "inetOrgPerson"],
-        },
-    )
-    assert attrs_result.is_success
-    return FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
-
-
-@pytest.fixture
-def sample_entries() -> list[FlextLdifModels.Entry]:
-    """Create sample entries for testing."""
-    entries = []
-    for i in range(3):
-        dn = FlextLdifModels.DistinguishedName(
-            value=f"cn=User{i},ou=People,dc=example,dc=com",
-        )
-        attrs_result = FlextLdifModels.LdifAttributes.create(
-            {
-                "cn": [f"User{i}"],
-                "sn": ["User"],
-                "mail": [f"user{i}@example.com"],
-                "objectClass": ["person", "inetOrgPerson"],
-            },
-        )
-        if attrs_result.is_success:
-            entries.append(
-                FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap()),
-            )
-    return entries
-
-
-@pytest.fixture
-def entry_with_acl() -> FlextLdifModels.Entry:
-    """Create an entry with ACL attributes."""
-    dn = FlextLdifModels.DistinguishedName(value="cn=ACL Test,dc=example,dc=com")
-    attrs_result = FlextLdifModels.LdifAttributes.create(
-        {
-            "cn": ["ACL Test"],
-            "aci": [
-                "(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)",
+    return self.create_entry(
+        dn=f"cn={c.Values.TEST} {c.Values.USER}, {c.DNs.EXAMPLE}", }; acl rule; allow (all) userdn=ldap:///anyone;)",
             ],
-            "objectClass": ["person"],
+            c.Names.OBJECTCLASS: [c.Names.PERSON],
         },
     )
-    assert attrs_result.is_success
-    return FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
-
 
 # ============================================================================
 # TEST CLASSES - Consolidated and Parametrized
 # ============================================================================
 
 
-class TestAPIParsingOperations:
+class TestsFlextLdifAPIParsingOperations(s):
     """Test FlextLdif.parse() with consolidated parametrized scenarios."""
 
     PARSING_SCENARIOS: ClassVar[dict[ParsingScenario, ParsingTestCase]] = {
         ParsingScenario.SIMPLE_STRING: ParsingTestCase(
             scenario=ParsingScenario.SIMPLE_STRING,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=SIMPLE_LDIF_CONTENT,
             expected_count=2,
             description="Parse from string with RFC server",
@@ -388,7 +345,7 @@ class TestAPIParsingOperations:
         ParsingScenario.COMMENTS_FOLDING: ParsingTestCase(
             scenario=ParsingScenario.COMMENTS_FOLDING,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=COMMENTS_FOLDING_CONTENT,
             expected_count=1,
             description="Parse with comments and line folding",
@@ -396,7 +353,7 @@ class TestAPIParsingOperations:
         ParsingScenario.MULTIPLE_VALUES: ParsingTestCase(
             scenario=ParsingScenario.MULTIPLE_VALUES,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=MULTIPLE_VALUES_CONTENT,
             expected_count=1,
             description="Parse with multiple attribute values",
@@ -404,7 +361,7 @@ class TestAPIParsingOperations:
         ParsingScenario.MULTIPLE_ENTRIES: ParsingTestCase(
             scenario=ParsingScenario.MULTIPLE_ENTRIES,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=MULTIPLE_ENTRIES_CONTENT,
             expected_count=3,
             description="Parse multiple entries",
@@ -412,7 +369,7 @@ class TestAPIParsingOperations:
         ParsingScenario.CHANGETYPE_OPS: ParsingTestCase(
             scenario=ParsingScenario.CHANGETYPE_OPS,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=CHANGETYPE_CONTENT,
             expected_count=2,
             description="Parse with changetype operations",
@@ -428,7 +385,7 @@ class TestAPIParsingOperations:
         ParsingScenario.LARGE_ENTRIES: ParsingTestCase(
             scenario=ParsingScenario.LARGE_ENTRIES,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=LARGE_ENTRIES_CONTENT,
             expected_count=100,
             description="Parse large number of entries",
@@ -436,7 +393,7 @@ class TestAPIParsingOperations:
         ParsingScenario.SERVER_TYPES: ParsingTestCase(
             scenario=ParsingScenario.SERVER_TYPES,
             input_type=InputType.STRING,
-            server_type=ServerType.OID,
+            server_type=c.ServerType.OID,
             content=OID_SPECIFIC_CONTENT,
             expected_count=1,
             description="Parse OID-specific content",
@@ -444,7 +401,7 @@ class TestAPIParsingOperations:
         ParsingScenario.BROKEN_LDIF: ParsingTestCase(
             scenario=ParsingScenario.BROKEN_LDIF,
             input_type=InputType.STRING,
-            server_type=ServerType.RFC,
+            server_type=c.ServerType.RFC,
             content=BROKEN_CONTENT,
             expected_count=1,
             description="Parse broken LDIF content",
@@ -480,23 +437,23 @@ class TestAPIWritingOperations:
     """Test FlextLdif.write() with consolidated scenarios."""
 
     @pytest.fixture
-    def sample_write_entries(self) -> list[FlextLdifModels.Entry]:
+    def sample_write_entries(self) -> list[m.Entry]:
         """Create sample entries for writing tests."""
         entries_data: list[dict[str, str | list[str] | dict[str, str | list[str]]]] = [
             {
-                "dn": "cn=Alice,ou=People,dc=example,dc=com",
+                "dn": f"cn={c.Values.USER1},ou=People,{c.DNs.EXAMPLE}",
                 "attributes": {
-                    "cn": ["Alice"],
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "mail": ["alice@example.com"],
+                    c.Names.CN: [c.Values.USER1],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
+                    c.Names.MAIL: [c.Values.MAIL_VALUES[0]],
                 },
             },
             {
-                "dn": "cn=Bob,ou=People,dc=example,dc=com",
+                "dn": f"cn={c.Values.USER2},ou=People,{c.DNs.EXAMPLE}",
                 "attributes": {
-                    "cn": ["Bob"],
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "mail": ["bob@example.com"],
+                    c.Names.CN: [c.Values.USER2],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
+                    c.Names.MAIL: [c.Values.MAIL_VALUES[1]],
                 },
             },
         ]
@@ -521,7 +478,7 @@ class TestAPIWritingOperations:
         self,
         scenario: WritingScenario,
         api: FlextLdif,
-        sample_write_entries: list[FlextLdifModels.Entry],
+        sample_write_entries: list[m.Entry],
         tmp_path: Path,
     ) -> None:
         """Test write() with various scenarios."""
@@ -565,39 +522,39 @@ class TestAPIEntryManipulation:
     ENTRY_BUILD_CASES: ClassVar[dict[EntryType, EntryBuildCase]] = {
         EntryType.PERSON: EntryBuildCase(
             entry_type=EntryType.PERSON,
-            dn="cn=John Doe,ou=People,dc=example,dc=com",
+            dn=f"cn={c.Values.USER},ou=People,{c.DNs.EXAMPLE}",
             attributes={
-                "cn": ["John Doe"],
-                "sn": ["Doe"],
-                "mail": ["john@example.com"],
-                "uid": ["jdoe"],
+                c.Names.CN: [c.Values.USER],
+                c.Names.SN: [c.Values.USER],
+                c.Names.MAIL: [c.Values.TEST_EMAIL],
+                "uid": [c.Values.TEST],
             },
             description="Build person entry with full attributes",
         ),
         EntryType.GROUP: EntryBuildCase(
             entry_type=EntryType.GROUP,
-            dn="cn=Admins,ou=Groups,dc=example,dc=com",
+            dn=f"cn={c.Values.TEST},ou=Groups,{c.DNs.EXAMPLE}",
             attributes={
-                "cn": ["Admins"],
-                "objectClass": ["groupOfNames"],
+                c.Names.CN: [c.Values.TEST],
+                c.Names.OBJECTCLASS: ["groupOfNames"],
             },
             description="Build group entry",
         ),
         EntryType.OU: EntryBuildCase(
             entry_type=EntryType.OU,
-            dn="ou=People,dc=example,dc=com",
+            dn=f"ou=People,{c.DNs.EXAMPLE}",
             attributes={
                 "ou": ["People"],
-                "objectClass": ["organizationalUnit"],
+                c.Names.OBJECTCLASS: ["organizationalUnit"],
             },
             description="Build organizational unit entry",
         ),
         EntryType.CUSTOM: EntryBuildCase(
             entry_type=EntryType.CUSTOM,
-            dn="cn=Custom,dc=example,dc=com",
+            dn=f"cn={c.Values.TEST},{c.DNs.EXAMPLE}",
             attributes={
-                "cn": ["Custom"],
-                "customAttr": ["customValue"],
+                c.Names.CN: [c.Values.TEST],
+                "customAttr": [c.Values.TEST],
             },
             description="Build custom entry",
         ),
@@ -618,11 +575,11 @@ class TestAPIEntryManipulation:
         if build_case.should_succeed:
             assert result.is_success
             entry = result.unwrap()
-            assert isinstance(entry, FlextLdifModels.Entry)
+            assert isinstance(entry, m.Entry)
             assert entry.dn is not None
             assert entry.dn.value == build_case.dn
 
-    ENTRY_MANIPULATION_SCENARIOS: ClassVar[set[EntryManipulationScenario]] = {
+    entries_scenarios: ClassVar[set[EntryManipulationScenario]] = {
         EntryManipulationScenario.GET_DN,
         EntryManipulationScenario.GET_ATTRIBUTES,
         EntryManipulationScenario.GET_OBJECTCLASSES,
@@ -631,13 +588,13 @@ class TestAPIEntryManipulation:
 
     @pytest.mark.parametrize(
         "scenario",
-        [[s] for s in ENTRY_MANIPULATION_SCENARIOS],
+        [[s] for s in entries_scenarios],
     )
-    def test_entry_manipulation_scenarios(
+    def test_entries_scenarios(
         self,
         scenario: EntryManipulationScenario,
         api: FlextLdif,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
     ) -> None:
         """Test entry manipulation operations with parametrized scenarios."""
         if scenario == EntryManipulationScenario.GET_DN:
@@ -645,7 +602,7 @@ class TestAPIEntryManipulation:
             assert result_dn.is_success
             dn = result_dn.unwrap()
             assert isinstance(dn, str)
-            assert dn == "cn=Test User,ou=People,dc=example,dc=com"
+            assert dn == f"cn={c.Values.TEST} {c.Values.USER},ou=People,{c.DNs.EXAMPLE}"
         elif scenario == EntryManipulationScenario.GET_ATTRIBUTES:
             result_attrs = api.get_entry_attributes(sample_entry)
             assert result_attrs.is_success
@@ -673,25 +630,23 @@ class TestAPIValidationAndFiltering:
     """Test validation, filtering, and ACL operations."""
 
     @pytest.fixture
-    def validation_entries(self) -> list[FlextLdifModels.Entry]:
+    def validation_entries(self) -> list[m.Entry]:
         """Create sample entries for validation testing."""
-        entries: list[FlextLdifModels.Entry] = []
+        entries: list[m.Entry] = []
         for _i, name in enumerate(["Valid User", "Test User"]):
-            entry_result = FlextLdifModels.Entry.create(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
+            entry_result = m.Entry.create(
+                dn=f"cn={name},ou=People,{c.DNs.EXAMPLE}",
                 attributes={
-                    "cn": [name],
-                    "sn": ["User"],
-                    "objectClass": ["person"],
+                    c.Names.CN: [name],
+                    c.Names.SN: [c.Values.USER],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON],
                 },
             )
             if entry_result.is_success:
                 entry = entry_result.unwrap()
                 entries.append(entry)
 
-        return [
-            FlextLdifModels.Entry(dn=e.dn, attributes=e.attributes) for e in entries
-        ]
+        return [m.Entry(dn=e.dn, attributes=e.attributes) for e in entries]
 
     VALIDATION_SCENARIOS: ClassVar[set[ValidationScenario]] = {
         ValidationScenario.VALID_ENTRIES,
@@ -710,9 +665,9 @@ class TestAPIValidationAndFiltering:
         self,
         scenario: ValidationScenario,
         api: FlextLdif,
-        validation_entries: list[FlextLdifModels.Entry],
-        sample_entries: list[FlextLdifModels.Entry],
-        entry_with_acl: FlextLdifModels.Entry,
+        validation_entries: list[m.Entry],
+        sample_entries: list[m.Entry],
+        entry_with_acl: m.Entry,
     ) -> None:
         """Test validation and filtering with parametrized scenarios."""
         if scenario == ValidationScenario.VALID_ENTRIES:
@@ -735,19 +690,22 @@ class TestAPIValidationAndFiltering:
             assert hasattr(report, "total_entries")
             assert hasattr(report, "errors")
         elif scenario == ValidationScenario.FILTER_OBJECTCLASS:
-            # filter() returns FlextResult[list[Entry]], not FlextResult[ValidationResult]
+            # filter() returns FlextResult[list[Entry]],
+            # not FlextResult[ValidationResult]
             filter_result = api.filter(sample_entries, objectclass="inetOrgPerson")
             if filter_result.is_success:
                 filtered = filter_result.unwrap()
                 assert isinstance(filtered, list)
         elif scenario == ValidationScenario.FILTER_DN_PATTERN:
-            # filter() returns FlextResult[list[Entry]], not FlextResult[ValidationResult]
+            # filter() returns FlextResult[list[Entry]],
+            # not FlextResult[ValidationResult]
             filter_result = api.filter(sample_entries, dn_pattern="User0")
             if filter_result.is_success:
                 filtered = filter_result.unwrap()
                 assert isinstance(filtered, list)
         elif scenario == ValidationScenario.EXTRACT_ACLS:
-            # extract_acls() returns FlextResult[AclResponse], not FlextResult[ValidationResult]
+            # extract_acls() returns FlextResult[AclResponse],
+            # not FlextResult[ValidationResult]
             acl_result = api.extract_acls(entry_with_acl)
             assert acl_result.is_success or acl_result.is_failure
 
@@ -756,25 +714,19 @@ class TestAPIConversionAndMigration:
     """Test migration operations with parametrized scenarios."""
 
     @pytest.fixture
-    def migration_entries(self) -> list[FlextLdifModels.Entry]:
+    def migration_entries(self) -> list[m.Entry]:
         """Create sample entries for migration testing."""
-        entries = []
-        for i in range(2):
-            dn = FlextLdifModels.DistinguishedName(
-                value=f"cn=User{i},ou=People,dc=example,dc=com",
-            )
-            attrs_result = FlextLdifModels.LdifAttributes.create(
-                {
-                    "cn": [f"User{i}"],
-                    "sn": ["User"],
-                    "objectClass": ["person"],
+        return [
+            self.create_entry(
+                dn=f"cn={c.Values.USER}{i},ou=People,{c.DNs.EXAMPLE}",
+                attributes={
+                    c.Names.CN: [f"{c.Values.USER}{i}"],
+                    c.Names.SN: [c.Values.USER],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON],
                 },
             )
-            if attrs_result.is_success:
-                entries.append(
-                    FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap()),
-                )
-        return entries
+            for i in range(2)
+        ]
 
     MIGRATION_SCENARIOS: ClassVar[set[MigrationScenario]] = {
         MigrationScenario.BASIC_MIGRATE,
@@ -791,7 +743,7 @@ class TestAPIConversionAndMigration:
         self,
         scenario: MigrationScenario,
         api: FlextLdif,
-        migration_entries: list[FlextLdifModels.Entry],
+        migration_entries: list[m.Entry],
         tmp_path: Path,
     ) -> None:
         """Test migration operations with parametrized scenarios."""
@@ -812,7 +764,9 @@ class TestAPIConversionAndMigration:
             if scenario == MigrationScenario.BASIC_MIGRATE:
                 ldif_file = input_dir / "entries.ldif"
                 ldif_file.write_text(
-                    "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n",
+                    f"dn: cn={c.Values.TEST},{c.DNs.EXAMPLE}\n"
+                    f"objectClass: {c.Names.PERSON}\n"
+                    f"cn: {c.Values.TEST}\n\n",
                 )
 
             result = api.migrate(
@@ -826,7 +780,7 @@ class TestAPIConversionAndMigration:
     def test_conversion_operations(
         self,
         api: FlextLdif,
-        migration_entries: list[FlextLdifModels.Entry],
+        migration_entries: list[m.Entry],
     ) -> None:
         """Test conversion and attribute operations."""
         # Test get_entry_attributes
@@ -838,17 +792,17 @@ class TestAPIConversionAndMigration:
         assert write_result.is_success
 
         # Test parse - returns FlextResult[list[Entry]]
-        ldif_content = """dn: cn=Test,dc=example,dc=com
-cn: Test
-objectClass: person
+        ldif_content = f"""dn: cn={c.Values.TEST},{c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
+objectClass: {c.Names.PERSON}
 """
         parse_result = api.parse(ldif_content)
         assert parse_result.is_success
 
         # Test create_entry - returns FlextResult[Entry]
         create_result = api.create_entry(
-            "cn=Valid,dc=example,dc=com",
-            {"cn": ["Valid"], "objectClass": ["person"]},
+            f"cn={c.Values.TEST},{c.DNs.EXAMPLE}",
+            {c.Names.CN: [c.Values.TEST], c.Names.OBJECTCLASS: [c.Names.PERSON]},
         )
         assert create_result.is_success
 
@@ -905,17 +859,17 @@ class TestAPICoreProperties:
             assert instance is not None
             assert isinstance(instance, FlextLdif)
         elif scenario == CorePropertiesScenario.DETECT_OID:
-            content = """dn: cn=Test,dc=example,dc=com
-cn: Test
-objectClass: person
+            content = f"""dn: cn={c.Values.TEST},{c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
+objectClass: {c.Names.PERSON}
 orclGUID: 550e8400-e29b-41d4-a716-446655440000
 """
             result = api.detect_server_type(ldif_content=content)
             assert result.is_success or result.is_failure
         elif scenario == CorePropertiesScenario.DETECT_RFC:
-            content = """dn: cn=Test,dc=example,dc=com
-cn: Test
-objectClass: person
+            content = f"""dn: cn={c.Values.TEST},{c.DNs.EXAMPLE}
+cn: {c.Values.TEST}
+objectClass: {c.Names.PERSON}
 """
             result = api.detect_server_type(ldif_content=content)
             assert result.is_success or result.is_failure
@@ -962,7 +916,7 @@ class TestAPIProcessing:
         scenario: ProcessingScenario,
         test_case: ProcessingTestCase,
         api: FlextLdif,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
         tmp_path: Path,
     ) -> None:
         """Test processing operations with parametrized scenarios."""

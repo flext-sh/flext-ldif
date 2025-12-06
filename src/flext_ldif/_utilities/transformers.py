@@ -26,21 +26,22 @@ Usage:
 
 from __future__ import annotations
 
+
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
-from flext_core import r
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextUtilities, r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.configs import CaseFoldOption, SpaceHandlingOption
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif.models import m
 
 # Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
-r = r  # Result
+# Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
+u = FlextUtilities  # Use base class to avoid circular dependency
+# r is already imported from flext_core
 
 # =========================================================================
 # TYPE ALIASES
@@ -99,9 +100,21 @@ class EntryTransformer[T](ABC):
         results: list[T] = []
         # Use u.batch for unified batch processing (DSL pattern)
         items_list = list(items)
-        batch_result = u.batch(
+        # Type narrowing: create wrapper to ensure correct type inference
+        # batch expects Callable[[T], R | r[R]], where R = T in our case
+
+        def apply_wrapper(item: T) -> T | r[T]:
+            """Wrapper for apply method to ensure correct type inference."""
+            return self.apply(item)
+
+        # Type narrowing: cast to correct type for batch operation
+        # mypy has trouble inferring the generic type, so we cast explicitly
+        from collections.abc import Callable as CallableABC
+
+        batch_operation = cast("CallableABC[[T], T | r[T]]", apply_wrapper)
+        batch_result = u.Collection.batch(
             items_list,
-            self.apply,
+            batch_operation,
             on_error="fail",
         )
         if batch_result.is_failure:
@@ -115,7 +128,7 @@ class EntryTransformer[T](ABC):
 # =========================================================================
 
 
-class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
     """Transformer for DN normalization.
 
     Normalizes Distinguished Names according to specified options.
@@ -149,7 +162,7 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         self._validate = validate
 
     @staticmethod
-    def _validate_dn_components(dn_str: str) -> r[None]:
+    def _validate_dn_components(dn_str: str) -> r[bool]:
         """Helper: Validate DN components."""
         components = FlextLdifUtilitiesDN.split(dn_str)
         all_errors: list[str] = []
@@ -163,7 +176,7 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
             return r.fail(f"Invalid DN: {', '.join(all_errors)}")
-        return r.ok(True)  # Validation passed (cannot use None)
+        return r.ok(True)  # Validation passed
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
         """Helper: Apply case folding and space handling."""
@@ -183,9 +196,7 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
             normalized_dn = ",".join(p.strip() for p in parts)
         return normalized_dn
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Apply DN normalization to an entry.
 
         Args:
@@ -206,8 +217,11 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
             if validation_result.is_failure:
                 # Return failure as r[Entry] by mapping error
-                return r[FlextLdifModelsDomains.Entry].fail(
-                    u.err(validation_result, default="DN validation failed")
+                # Lazy import to avoid circular dependency
+                from flext_ldif.utilities import u as u_ldif
+
+                return r[m.Entry].fail(
+                    u_ldif.err(validation_result, default="DN validation failed"),
                 )
 
         # Normalize DN
@@ -219,13 +233,15 @@ class NormalizeDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
         # Update entry DN (create new DistinguishedName)
-        new_dn = FlextLdifModelsDomains.DistinguishedName(value=normalized_dn)
-        updated_entry = item.model_copy(update={"dn": new_dn})
+        # Use cast for model_copy update to avoid type checker strictness
+        new_dn = m.DistinguishedName(value=normalized_dn)
+        update_dict: dict[str, Any] = {"dn": new_dn}
+        updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class NormalizeAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class NormalizeAttrsTransformer(EntryTransformer["m.Entry"]):
     """Transformer for attribute normalization.
 
     Normalizes attribute names and optionally values.
@@ -258,9 +274,7 @@ class NormalizeAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]
         self._trim_values = trim_values
         self._remove_empty = remove_empty
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Apply attribute normalization to an entry.
 
         Args:
@@ -299,7 +313,7 @@ class NormalizeAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]
             """Process value list for attribute."""
             return process_value_list(value)
 
-        new_attrs = u.map(attrs, mapper=map_process_value)
+        new_attrs = u.Collection.map(attrs, mapper=map_process_value)
         needs_update = (
             self._case_fold_names
             or self._trim_values
@@ -309,8 +323,10 @@ class NormalizeAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]
 
         # Update entry with processed attributes if anything changed
         if needs_update:
-            new_attributes = FlextLdifModelsDomains.LdifAttributes(attributes=new_attrs)
-            item = item.model_copy(update={"attributes": new_attributes})
+            # Use cast for model_copy update to avoid type checker strictness
+            new_attributes = m.LdifAttributes(attributes=new_attrs)
+            update_dict: dict[str, Any] = {"attributes": new_attributes}
+            item = item.model_copy(update=update_dict)
 
         return r.ok(item)
 
@@ -379,7 +395,7 @@ class Normalize:
 # =========================================================================
 
 
-class ReplaceBaseDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class ReplaceBaseDnTransformer(EntryTransformer["m.Entry"]):
     """Transformer for replacing base DN in entries.
 
     Replaces the base DN suffix with a new one.
@@ -406,9 +422,7 @@ class ReplaceBaseDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"])
         self._new_base = new_base
         self._case_insensitive = case_insensitive
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Replace base DN in an entry.
 
         Args:
@@ -435,13 +449,15 @@ class ReplaceBaseDnTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"])
         )
 
         # Create new DN and update entry
-        new_dn = FlextLdifModelsDomains.DistinguishedName(value=new_dn_str)
-        updated_entry = item.model_copy(update={"dn": new_dn})
+        # Use cast for model_copy update to avoid type checker strictness
+        new_dn = m.DistinguishedName(value=new_dn_str)
+        update_dict: dict[str, Any] = {"dn": new_dn}
+        updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class ConvertBooleansTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class ConvertBooleansTransformer(EntryTransformer["m.Entry"]):
     """Transformer for converting boolean attribute values.
 
     Converts boolean values between different formats.
@@ -471,9 +487,7 @@ class ConvertBooleansTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"
         self._format = boolean_format
         self._attributes = attributes
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Convert boolean attributes in an entry.
 
         Args:
@@ -512,15 +526,15 @@ class ConvertBooleansTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"
         )
 
         # Create new entry with converted attributes
-        new_attributes = FlextLdifModelsDomains.LdifAttributes(
-            attributes=converted_attrs
-        )
-        updated_entry = item.model_copy(update={"attributes": new_attributes})
+        # Use cast for model_copy update to avoid type checker strictness
+        new_attributes = m.LdifAttributes(attributes=converted_attrs)
+        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class FilterAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class FilterAttrsTransformer(EntryTransformer["m.Entry"]):
     """Transformer for filtering entry attributes.
 
     Includes or excludes specific attributes from entries.
@@ -544,9 +558,7 @@ class FilterAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         self._include = set(include) if include else None
         self._exclude = set(exclude) if exclude else set()
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Filter attributes in an entry.
 
         Args:
@@ -572,15 +584,12 @@ class FilterAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
                 """Check if key lowercase is in include set."""
                 return key.lower() in include_lower
 
-            filtered = u.filter(
+            filtered = u.Collection.filter(
                 attrs,
                 predicate=key_in_include,
             )
             # Type narrowing: filtered is dict[str, list[str]] | list[tuple[str, list[str]]]
-            if isinstance(filtered, dict):
-                attrs = cast("dict[str, list[str]]", filtered)
-            else:
-                attrs = {}
+            attrs = filtered if isinstance(filtered, dict) else {}
 
         # Apply exclude filter using u.filter (DSL pattern)
         if self._exclude:
@@ -591,26 +600,28 @@ class FilterAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
                 """Check if key lowercase is not in exclude set."""
                 return key.lower() not in exclude_lower
 
-            filtered_excluded = u.filter(
+            filtered_excluded = u.Collection.filter(
                 attrs,
                 predicate=key_not_in_exclude,
             )
             # Type narrowing: filtered_excluded is dict[str, list[str]] | list[tuple[str, list[str]]]
             if isinstance(filtered_excluded, dict):
-                attrs = cast("dict[str, list[str]]", filtered_excluded)
+                attrs = filtered_excluded
             elif isinstance(filtered_excluded, (list, tuple)):
-                attrs = dict(cast("list[tuple[str, list[str]]]", filtered_excluded))
+                attrs = dict(filtered_excluded)
             else:
                 attrs = {}
 
         # Update entry with filtered attributes
-        new_attributes = FlextLdifModelsDomains.LdifAttributes(attributes=attrs)
-        updated_entry = item.model_copy(update={"attributes": new_attributes})
+        # Use cast for model_copy update to avoid type checker strictness
+        new_attributes = m.LdifAttributes(attributes=attrs)
+        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class RemoveAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class RemoveAttrsTransformer(EntryTransformer["m.Entry"]):
     """Transformer for removing specific attributes from entries."""
 
     __slots__ = ("_attributes",)
@@ -624,9 +635,7 @@ class RemoveAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         """
         self._attributes = {attr.lower() for attr in attributes}
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Remove attributes from an entry.
 
         Args:
@@ -646,7 +655,7 @@ class RemoveAttrsTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         return r.ok(updated_entry)
 
 
-class CustomTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
+class CustomTransformer(EntryTransformer["m.Entry"]):
     """Transformer using a custom function.
 
     Allows arbitrary transformations via a callable.
@@ -657,8 +666,8 @@ class CustomTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
     def __init__(
         self,
         func: Callable[
-            [FlextLdifModelsDomains.Entry],
-            FlextLdifModelsDomains.Entry | r[FlextLdifModelsDomains.Entry],
+            [m.Entry],
+            m.Entry | r[m.Entry],
         ],
     ) -> None:
         """Initialize custom transformer.
@@ -669,9 +678,7 @@ class CustomTransformer(EntryTransformer["FlextLdifModelsDomains.Entry"]):
         """
         self._func = func
 
-    def apply(
-        self, item: FlextLdifModelsDomains.Entry
-    ) -> r[FlextLdifModelsDomains.Entry]:
+    def apply(self, item: m.Entry) -> r[m.Entry]:
         """Apply custom transformation to an entry.
 
         Args:
@@ -720,7 +727,9 @@ class Transform:
 
         """
         return ReplaceBaseDnTransformer(
-            old_base, new_base, case_insensitive=case_insensitive
+            old_base,
+            new_base,
+            case_insensitive=case_insensitive,
         )
 
     @staticmethod
@@ -775,8 +784,8 @@ class Transform:
     @staticmethod
     def custom(
         func: Callable[
-            [FlextLdifModelsDomains.Entry],
-            FlextLdifModelsDomains.Entry | r[FlextLdifModelsDomains.Entry],
+            [m.Entry],
+            m.Entry | r[m.Entry],
         ],
     ) -> CustomTransformer:
         """Create a custom transformer from a function.

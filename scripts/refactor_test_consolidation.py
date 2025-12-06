@@ -70,26 +70,13 @@ def analyze_test_file(file_path: Path) -> FileAnalysis:
 
 def print_analysis(analysis: FileAnalysis) -> None:
     """Print analysis result."""
-    print(f"\n📋 Analysis: {analysis.file_path.name}")
-    print(f"   Lines: {analysis.line_count}")
-    print(f"   Classes: {analysis.class_count}")
-    print(f"   Methods: {analysis.method_count}")
-    print(
-        f"   Estimated reduction (30%): {analysis.file_path.name} → {int(analysis.line_count * 0.7)} lines",
-    )
-    print("\n   Classes and test counts:")
-    for class_name, method_count in analysis.method_counts.items():
-        print(f"   - {class_name}: {method_count} tests")
+    for _class_name, _method_count in analysis.method_counts.items():
+        pass
 
 
 def main() -> None:
     """Main entry point."""
     if len(sys.argv) < 2:
-        print("Usage: python refactor_test_consolidation.py <test_file_path>")
-        print("\nExample:")
-        print(
-            "  python refactor_test_consolidation.py tests/unit/quirks/servers/test_apache_quirks.py",
-        )
         sys.exit(1)
 
     file_path = Path(sys.argv[1])
@@ -98,17 +85,7 @@ def main() -> None:
         analysis = analyze_test_file(file_path)
         print_analysis(analysis)
 
-        print("\n✅ Analysis complete!")
-        print("\nNext steps:")
-        print("  1. Review class structure above")
-        print("  2. Create [file]_new.py with consolidated TestFlextLdif[Module] class")
-        print("  3. Use StrEnum for test scenarios")
-        print("  4. Parametrize tests with pytest.mark.parametrize")
-        print("  5. Validate: ruff check + mypy + pytest --co + pytest")
-        print("  6. Swap: old → .bak, new → main")
-
-    except FileNotFoundError as e:
-        print(f"❌ Error: {e}", file=sys.stderr)
+    except FileNotFoundError:
         sys.exit(1)
 
 

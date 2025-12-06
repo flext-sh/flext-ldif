@@ -1,15 +1,5 @@
-"""Test suite for RFC LDIF parsers and writers.
-
-Consolidated test module for RFC-compliant LDIF processing using real services
-and FlextTests infrastructure. Consolidates 11 test classes into single
-TestFlextLdifRfcLdifParser class with organized test scenarios.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
+from tests import c, m, s, t, RfcTestHelpers, TestDeduplicationHelpers
 
 import base64
 from enum import StrEnum
@@ -17,19 +7,17 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from flext_tests.utilities import FlextTestsUtilities
 
-from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
+from flext_ldif import FlextLdifParser, FlextLdifWriter
+from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-from ...helpers.test_deduplication_helpers import (
     ParseTestCaseDict,
     TestDeduplicationHelpers,
 )
-from ...helpers.test_rfc_helpers import RfcTestHelpers
-from ..quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
-
-class TestFlextLdifRfcLdifParser:
+class TestsTestFlextLdifRfcLdifParser(s):
     """Consolidated test suite for RFC LDIF parsers and writers.
 
     Combines functionality from:
@@ -385,9 +373,6 @@ description: {"x" * 10000}
 objectClass: person
 cn: test1
 
-
-
-
 dn: cn=test2,dc=example,dc=com
 objectClass: person
 cn: test2
@@ -607,8 +592,8 @@ description: {large_value}
     def test_write_entries_variations(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
-        sample_entries: list[FlextLdifModels.Entry],
+        sample_entry: m.Entry,
+        sample_entries: list[m.Entry],
     ) -> None:
         """Test writing various entry configurations."""
         _ = RfcTestHelpers.test_write_entries_to_string(
@@ -676,7 +661,7 @@ description: {large_value}
     def test_write_comprehensive_to_file(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entries: list[FlextLdifModels.Entry],
+        sample_entries: list[m.Entry],
         tmp_path: Path,
     ) -> None:
         """Test writing entries to file."""
@@ -691,7 +676,7 @@ description: {large_value}
     def test_write_to_nonexistent_directory(
         self,
         real_writer_service: FlextLdifWriter,
-        sample_entries: list[FlextLdifModels.Entry],
+        sample_entries: list[m.Entry],
         tmp_path: Path,
     ) -> None:
         """Test writing to file in non-existent directory."""
@@ -776,7 +761,8 @@ description: {large_value}
             output_path=empty_file,
         )
         assert result.is_success
-        assert empty_file.exists()
+
+        FlextTestsUtilities.FileHelpers.assert_file_exists(empty_file)
 
     # ════════════════════════════════════════════════════════════════════════
     # ENTRY QUIRK INTEGRATION TESTS
@@ -908,8 +894,8 @@ objectClass: person
     def test_entry_quirk_can_handle_methods(
         self,
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
-        sample_schema_attribute: FlextLdifModels.SchemaAttribute,
-        sample_schema_objectclass: FlextLdifModels.SchemaObjectClass,
+        sample_schema_attribute: m.SchemaAttribute,
+        sample_schema_objectclass: m.SchemaObjectClass,
     ) -> None:
         """Test Entry quirk can_handle methods."""
         assert (
@@ -930,9 +916,9 @@ objectClass: person
     def test_acl_quirk_can_handle_methods(
         self,
         rfc_acl_quirk: FlextLdifServersRfc.Acl,
-        sample_acl: FlextLdifModels.Acl,
-        sample_schema_attribute: FlextLdifModels.SchemaAttribute,
-        sample_schema_objectclass: FlextLdifModels.SchemaObjectClass,
+        sample_acl: m.Acl,
+        sample_schema_attribute: m.SchemaAttribute,
+        sample_schema_objectclass: m.SchemaObjectClass,
     ) -> None:
         """Test ACL quirk can_handle methods."""
         assert rfc_acl_quirk.can_handle_acl("access to entry by * (browse)") is True
@@ -962,7 +948,7 @@ objectClass: person
             expected_content=acl_line,
         )
 
-        name_only_acl = FlextLdifModels.Acl(name="test_acl", server_type="rfc")
+        name_only_acl = m.Acl(name="test_acl", server_type="rfc")
         _ = RfcTestHelpers.test_acl_quirk_write_and_verify(
             rfc_acl_quirk,
             name_only_acl,
@@ -970,7 +956,7 @@ objectClass: person
         )
 
         # Test empty ACL through public write() method
-        empty_acl = FlextLdifModels.Acl(server_type="rfc")
+        empty_acl = m.Acl(server_type="rfc")
         result = rfc_acl_quirk.write(empty_acl)
         assert result.is_failure
         assert result.error is not None
@@ -1019,7 +1005,6 @@ objectClass: person
         assert TestsRfcConstants.ATTR_NAME_CN == "cn"
         assert TestsRfcConstants.OC_OID_PERSON == "2.5.6.6"
         assert TestsRfcConstants.SCHEMA_DN_SCHEMA == "cn=schema"
-
 
 __all__ = [
     "TestFlextLdifRfcLdifParser",

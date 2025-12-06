@@ -1,26 +1,15 @@
-"""Test suite for Relaxed Quirks - Lenient LDIF Processing.
-
-Modules tested: FlextLdifServersRelaxed.Schema, FlextLdifServersRelaxed.Acl,
-FlextLdifServersRelaxed.Entry
-Scope: Lenient LDIF processing, malformed file handling, best-effort parsing,
-error recovery, edge cases
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Union
+from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdifConstants, FlextLdifModels
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from tests import s
 
 meta_keys = FlextLdifConstants.MetadataKeys
 
@@ -47,7 +36,7 @@ class WriteScenario(StrEnum):
 
 
 @pytest.mark.unit
-class TestFlextLdifRelaxedQuirks:
+class TestsTestFlextLdifRelaxedQuirks(s):
     """Consolidated test suite for Relaxed quirk functionality.
 
     Merges 16 original test classes into one parametrized test class for:
@@ -221,7 +210,7 @@ class TestFlextLdifRelaxedQuirks:
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test writing attribute back to RFC format."""
-        attr_data = FlextLdifModelsDomains.SchemaAttribute(
+        attr_data = m.SchemaAttribute(
             oid="1.2.3.4",
             name="testAttr",
             desc="Test attribute",
@@ -280,11 +269,11 @@ class TestFlextLdifRelaxedQuirks:
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
-        acl_data = FlextLdifModels.Acl(
+        acl_data = m.Acl(
             name="test_acl",
-            target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value="*"),
-            permissions=FlextLdifModels.AclPermissions(),
+            target=m.AclTarget(target_dn="*", attributes=[]),
+            subject=m.AclSubject(subject_type="all", subject_value="*"),
+            permissions=m.AclPermissions(),
             raw_acl=raw_acl,
         )
         result = acl_quirk.write(acl_data)
@@ -306,7 +295,7 @@ class TestFlextLdifRelaxedQuirks:
         self,
         relaxed_instance: FlextLdifServersRelaxed,
     ) -> None:
-        """Test entry quirk accepts malformed DNs."""
+        """Test entry quirk accepts malformed c.DNs."""
         assert hasattr(relaxed_instance, "entry_quirk") or True
 
     # ========== Error Recovery Tests ==========
@@ -326,10 +315,7 @@ class TestFlextLdifRelaxedQuirks:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        result: Union[
-            FlextResult[FlextLdifModelsDomains.SchemaAttribute],
-            FlextResult[FlextLdifModelsDomains.SchemaObjectClass],
-        ]
+        result: FlextResult[m.SchemaAttribute] | FlextResult[m.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(bad_input)
         else:
@@ -360,10 +346,7 @@ class TestFlextLdifRelaxedQuirks:
         input_without_oid: str,
     ) -> None:
         """Test parsing fails without OID even in relaxed mode."""
-        result: Union[
-            FlextResult[FlextLdifModelsDomains.SchemaAttribute],
-            FlextResult[FlextLdifModelsDomains.SchemaObjectClass],
-        ]
+        result: FlextResult[m.SchemaAttribute] | FlextResult[m.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_without_oid)
         else:
@@ -385,10 +368,7 @@ class TestFlextLdifRelaxedQuirks:
         input_with_oid: str,
     ) -> None:
         """Test parsing succeeds with OID even with binary data."""
-        result: Union[
-            FlextResult[FlextLdifModelsDomains.SchemaAttribute],
-            FlextResult[FlextLdifModelsDomains.SchemaObjectClass],
-        ]
+        result: FlextResult[m.SchemaAttribute] | FlextResult[m.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_with_oid)
         else:
@@ -465,8 +445,8 @@ class TestFlextLdifRelaxedQuirks:
         self,
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
-        """Test attribute conversion from OID format to RFC."""
-        attr_data = FlextLdifModelsDomains.SchemaAttribute(
+        """Test attribute conversion from OID format to c.RFC."""
+        attr_data = m.SchemaAttribute(
             oid="2.16.840.1.113894.1.1.1",
             name="orclGUID",
             desc="Oracle GUID",
@@ -493,8 +473,8 @@ class TestFlextLdifRelaxedQuirks:
         self,
         schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
-        """Test objectclass conversion from OID format to RFC."""
-        oc_data = FlextLdifModelsDomains.SchemaObjectClass(
+        """Test objectclass conversion from OID format to c.RFC."""
+        oc_data = m.SchemaObjectClass(
             oid="2.16.840.1.113894.1.2.1",
             name="orclContext",
             desc="Oracle Context",

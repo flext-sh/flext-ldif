@@ -1,22 +1,3 @@
-"""Consolidated filter service tests with parametrization and massive code reduction.
-
-Consolidates 35 nested test classes (166 test methods) into 8 parametrized classes using
-modern pytest techniques (StrEnum, ClassVar, parametrize) for 35-40% code reduction.
-
-Structure:
-- TestPublicAPIClassmethods: Public API helpers (by_dn, by_objectclass, etc.)
-- TestExecutePattern: Execute pattern tests (V1 style)
-- TestBuilderPattern: Fluent builder pattern tests
-- TestCategorization: Categorization logic across all server types
-- TestTransformations: Attribute/objectClass removal and filtering
-- TestExclusionAndMarking: Exclusion behavior and metadata marking
-- TestEdgeCasesAndErrors: Edge cases, error handling, validation
-- TestInternalHelpers: Internal methods and normalization
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -24,17 +5,16 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_tests import FlextTestsMatchers  # Mocked in conftest
+from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.filters import FlextLdifFilters
-from tests.fixtures.constants import DNs, Filters, Names, OIDs, Values
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
-from tests.helpers.test_factories import FlextLdifTestFactories
+from tests import Filters, TestDeduplicationHelpers, c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 # Use factory directly to eliminate duplication
-create_entry = FlextLdifTestFactories.create_entry
-
+create_entry = s.create_entry
 
 # ════════════════════════════════════════════════════════════════════════════
 # SCENARIO ENUMS - Semantic test categorization
@@ -143,29 +123,29 @@ class InternalHelperScenario(StrEnum):
 
 
 @pytest.fixture
-def user_entries() -> list[FlextLdifModels.Entry]:
+def user_entries() -> list[m.Entry]:
     """Create user entries for filtering tests."""
     return [
         create_entry(
             Filters.DN_USER_JOHN,
             {
-                Filters.ATTR_CN: [Values.USER1],
-                Filters.ATTR_MAIL: [Values.USER1_EMAIL],
+                Filters.ATTR_CN: [c.Values.USER1],
+                Filters.ATTR_MAIL: [c.Values.USER1_EMAIL],
                 Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
             },
         ),
         create_entry(
             Filters.DN_USER_JANE,
             {
-                Filters.ATTR_CN: [Values.USER2],
-                Filters.ATTR_MAIL: [Values.USER2_EMAIL],
+                Filters.ATTR_CN: [c.Values.USER2],
+                Filters.ATTR_MAIL: [c.Values.USER2_EMAIL],
                 Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
             },
         ),
         create_entry(
             Filters.DN_USER_ADMIN,
             {
-                Filters.ATTR_CN: [Values.ADMIN],
+                Filters.ATTR_CN: [c.Values.ADMIN],
                 Filters.ATTR_OBJECTCLASS: [Filters.OC_PERSON],
             },
         ),
@@ -173,11 +153,11 @@ def user_entries() -> list[FlextLdifModels.Entry]:
 
 
 @pytest.fixture
-def hierarchy_entries() -> list[FlextLdifModels.Entry]:
+def hierarchy_entries() -> list[m.Entry]:
     """Create hierarchy/container entries."""
     return [
         create_entry(
-            DNs.EXAMPLE,
+            c.DNs.EXAMPLE,
             {"dc": ["example"], Filters.ATTR_OBJECTCLASS: [Filters.OC_DOMAIN]},
         ),
         create_entry(
@@ -198,15 +178,15 @@ def hierarchy_entries() -> list[FlextLdifModels.Entry]:
 
 
 @pytest.fixture
-def schema_entries() -> list[FlextLdifModels.Entry]:
+def schema_entries() -> list[m.Entry]:
     """Create schema entries."""
     return [
         create_entry(
-            DNs.SCHEMA,
+            c.DNs.SCHEMA,
             {
                 Filters.ATTR_CN: ["schema"],
                 "attributeTypes": [
-                    f"( {OIDs.CN} NAME '{Names.CN}' EQUALITY caseIgnoreMatch )",
+                    f"( {OIDs.CN} NAME '{c.Names.CN}' EQUALITY caseIgnoreMatch )",
                 ],
             },
         ),
@@ -224,10 +204,10 @@ def schema_entries() -> list[FlextLdifModels.Entry]:
 
 @pytest.fixture
 def mixed_entries(
-    user_entries: list[FlextLdifModels.Entry],
-    hierarchy_entries: list[FlextLdifModels.Entry],
-    schema_entries: list[FlextLdifModels.Entry],
-) -> list[FlextLdifModels.Entry]:
+    user_entries: list[m.Entry],
+    hierarchy_entries: list[m.Entry],
+    schema_entries: list[m.Entry],
+) -> list[m.Entry]:
     """Create mixed entry collection with ACL entries."""
     acl_entry = create_entry(
         Filters.DN_ACL_POLICY,
@@ -244,7 +224,7 @@ def mixed_entries(
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestFilterService:
+class TestsFlextLdifFilterService(s):
     """Comprehensive filter service tests with parametrized scenarios.
 
     Consolidates 35 nested test classes into 8 parametrized classes using
@@ -277,10 +257,10 @@ class TestFilterService:
         def test_public_api_methods(
             self,
             scenario: PublicAPIScenario,
-            user_entries: list[FlextLdifModels.Entry],
-            hierarchy_entries: list[FlextLdifModels.Entry],
-            schema_entries: list[FlextLdifModels.Entry],
-            mixed_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
+            hierarchy_entries: list[m.Entry],
+            schema_entries: list[m.Entry],
+            mixed_entries: list[m.Entry],
         ) -> None:
             """Test public API classmethod helpers with parametrization."""
             if scenario == PublicAPIScenario.BY_DN_BASIC:
@@ -374,7 +354,7 @@ class TestFilterService:
             elif scenario == PublicAPIScenario.BY_BASE_DN_BASIC:
                 included, excluded = FlextLdifFilters.by_base_dn(
                     hierarchy_entries,
-                    DNs.EXAMPLE,
+                    c.DNs.EXAMPLE,
                 )
                 assert len(included) == 3
                 assert len(excluded) == 0
@@ -382,7 +362,7 @@ class TestFilterService:
             elif scenario == PublicAPIScenario.BY_BASE_DN_HIERARCHY:
                 entries = [
                     create_entry(
-                        DNs.EXAMPLE,
+                        c.DNs.EXAMPLE,
                         {"dc": ["example"]},
                     ),
                     create_entry(
@@ -397,7 +377,7 @@ class TestFilterService:
                 ]
                 included, excluded = FlextLdifFilters.by_base_dn(
                     entries,
-                    DNs.EXAMPLE,
+                    c.DNs.EXAMPLE,
                 )
                 assert len(included) == 3
                 assert len(excluded) == 1
@@ -435,7 +415,7 @@ class TestFilterService:
         def test_execute_patterns(
             self,
             scenario: ExecutePatternScenario,
-            user_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
         ) -> None:
             """Test execute() pattern and builder methods with parametrization."""
             if scenario == ExecutePatternScenario.EXECUTE_FILTERS:
@@ -498,7 +478,7 @@ class TestFilterService:
         def test_builder_patterns(
             self,
             scenario: BuilderPatternScenario,
-            user_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
         ) -> None:
             """Test builder pattern methods with parametrization."""
             if scenario == BuilderPatternScenario.BUILDER_BASIC:
@@ -533,14 +513,14 @@ class TestFilterService:
 
             elif scenario == BuilderPatternScenario.BUILDER_WITH_BASE_DN:
                 hierarchy_entries = [
-                    create_entry(DNs.EXAMPLE, {Filters.ATTR_CN: ["example"]}),
+                    create_entry(c.DNs.EXAMPLE, {Filters.ATTR_CN: ["example"]}),
                     create_entry(Filters.DN_OU_USERS, {Filters.ATTR_CN: ["users"]}),
                     create_entry(Filters.DN_OU_GROUPS, {Filters.ATTR_CN: ["groups"]}),
                 ]
                 result = (
                     FlextLdifFilters.builder()
                     .with_entries(hierarchy_entries)
-                    .with_base_dn(DNs.EXAMPLE)
+                    .with_base_dn(c.DNs.EXAMPLE)
                     .build()
                 )
                 assert len(result) == 3
@@ -670,11 +650,11 @@ class TestFilterService:
 
             elif scenario == CategorizationScenario.CATEGORIZE_SCHEMA:
                 entry = create_entry(
-                    DNs.SCHEMA,
+                    c.DNs.SCHEMA,
                     {
                         Filters.ATTR_CN: ["schema"],
                         "attributeTypes": [
-                            f"( {OIDs.CN} NAME '{Names.CN}' )",
+                            f"( {OIDs.CN} NAME '{c.Names.CN}' )",
                         ],
                     },
                 )
@@ -772,7 +752,7 @@ class TestFilterService:
         def test_transformation_scenarios(
             self,
             scenario: TransformationScenario,
-            user_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
         ) -> None:
             """Test transformation and filtering with parametrization."""
             if scenario == TransformationScenario.REMOVE_ATTRIBUTES:
@@ -787,13 +767,13 @@ class TestFilterService:
                     "cn=test,dc=x",
                     {
                         Filters.ATTR_CN: ["test"],
-                        Filters.ATTR_OBJECTCLASS: [Names.TOP, Filters.OC_PERSON],
+                        Filters.ATTR_OBJECTCLASS: [c.Names.TOP, Filters.OC_PERSON],
                     },
                 )
                 TestDeduplicationHelpers.remove_objectclasses_and_validate(
                     entry,
                     [Filters.OC_PERSON],
-                    must_still_have=[Names.TOP],
+                    must_still_have=[c.Names.TOP],
                 )
 
             elif scenario == TransformationScenario.SCHEMA_FILTERING_BY_OIDS:
@@ -838,7 +818,7 @@ class TestFilterService:
         def test_exclusion_scenarios(
             self,
             scenario: ExclusionScenario,
-            user_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
         ) -> None:
             """Test exclusion and marking behavior with parametrization."""
             if scenario == ExclusionScenario.EXCLUSION_MARKING:
@@ -863,7 +843,7 @@ class TestFilterService:
                 # Test applying exclude filter
                 included, excluded = FlextLdifFilters.by_base_dn(
                     user_entries,
-                    DNs.EXAMPLE,
+                    c.DNs.EXAMPLE,
                 )
                 assert len(included) >= 0
                 assert len(excluded) >= 0
@@ -898,7 +878,7 @@ class TestFilterService:
         def test_edge_case_scenarios(
             self,
             scenario: EdgeCaseScenario,
-            user_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
         ) -> None:
             """Test edge cases and error handling with parametrization."""
             if scenario == EdgeCaseScenario.EDGE_CASES:
@@ -961,7 +941,7 @@ class TestFilterService:
         def test_internal_helper_scenarios(
             self,
             scenario: InternalHelperScenario,
-            user_entries: list[FlextLdifModels.Entry],
+            user_entries: list[m.Entry],
         ) -> None:
             """Test internal helper methods with parametrization."""
             if scenario == InternalHelperScenario.INTERNAL_NORMALIZATION:

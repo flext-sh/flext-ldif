@@ -12,12 +12,12 @@ import pytest
 
 from flext_ldif import (
     FlextLdifConstants,
-    FlextLdifModels,
     FlextLdifParser,
     FlextLdifWriter,
 )
+from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+from tests import c
 
 
 @pytest.fixture(autouse=True)
@@ -56,11 +56,11 @@ def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
 
 
 @pytest.fixture
-def sample_schema_attribute() -> FlextLdifModels.SchemaAttribute:
+def sample_schema_attribute() -> m.SchemaAttribute:
     """Provides a sample SchemaAttribute for tests with all required parameters."""
-    return FlextLdifModels.SchemaAttribute(
-        oid=TestsRfcConstants.ATTR_OID_CN,
-        name=TestsRfcConstants.ATTR_NAME_CN,
+    return m.SchemaAttribute(
+        oid=c.RFC.ATTR_OID_CN,
+        name=c.RFC.ATTR_NAME_CN,
         desc=None,
         sup=None,
         equality=None,
@@ -78,20 +78,20 @@ def sample_schema_attribute() -> FlextLdifModels.SchemaAttribute:
 
 
 @pytest.fixture
-def sample_schema_objectclass() -> FlextLdifModels.SchemaObjectClass:
+def sample_schema_objectclass() -> m.SchemaObjectClass:
     """Provides a sample SchemaObjectClass for tests with all required parameters."""
-    return FlextLdifModels.SchemaObjectClass(
-        oid=TestsRfcConstants.OC_OID_PERSON,
-        name=TestsRfcConstants.OC_NAME_PERSON,
+    return m.SchemaObjectClass(
+        oid=c.RFC.OC_OID_PERSON,
+        name=c.RFC.OC_NAME_PERSON,
         desc=None,
         sup=None,
     )
 
 
 @pytest.fixture
-def sample_acl() -> FlextLdifModels.Acl:
+def sample_acl() -> m.Acl:
     """Provides a sample Acl for tests."""
-    return FlextLdifModels.Acl(raw_acl="test: acl", server_type="rfc")
+    return m.Acl(raw_acl="test: acl", server_type="rfc")
 
 
 @pytest.fixture
@@ -107,9 +107,9 @@ def real_writer_service() -> FlextLdifWriter:
 
 
 @pytest.fixture
-def sample_entry() -> FlextLdifModels.Entry:
+def sample_entry() -> m.Entry:
     """Provides a sample Entry for RFC tests."""
-    result = FlextLdifModels.Entry.create(
+    result = m.Entry.create(
         dn="cn=Test User,dc=example,dc=com",
         attributes={
             "cn": ["Test User"],
@@ -118,15 +118,15 @@ def sample_entry() -> FlextLdifModels.Entry:
             "mail": ["test@example.com"],
         },
     )
-    return cast("FlextLdifModels.Entry", result.unwrap())
+    return cast("m.Entry", result.unwrap())
 
 
 @pytest.fixture
 def sample_entries(
-    sample_entry: FlextLdifModels.Entry,
-) -> list[FlextLdifModels.Entry]:
+    sample_entry: m.Entry,
+) -> list[m.Entry]:
     """Provides multiple sample entries for RFC tests."""
-    entry2_result = FlextLdifModels.Entry.create(
+    entry2_result = m.Entry.create(
         dn="cn=Another User,dc=example,dc=com",
         attributes={
             "cn": ["Another User"],
@@ -134,4 +134,4 @@ def sample_entries(
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
         },
     )
-    return [sample_entry, cast("FlextLdifModels.Entry", entry2_result.unwrap())]
+    return [sample_entry, cast("m.Entry", entry2_result.unwrap())]

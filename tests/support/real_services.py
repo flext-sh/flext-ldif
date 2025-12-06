@@ -16,22 +16,7 @@ from flext_ldif import (
     FlextLdifWriter,
 )
 from flext_ldif.services.server import FlextLdifServer
-from tests.fixtures.typing import GenericFieldsDict
-
-
-class FlextLdifTestFactory:
-    """Unified test service factory - FLEXT pattern compliant.
-
-    Provides RFC-first parsers and services for testing with
-    various configuration options.
-    """
-
-    class _RfcParserFactory:
-        """Nested RFC parser factory."""
-
-        @staticmethod
-        def create_ldif_parser(
-            params: GenericFieldsDict | None = None,
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
         ) -> FlextLdifParser:
             """Create unified LDIF parser service.
 
@@ -82,9 +67,8 @@ class FlextLdifTestFactory:
             return FlextLdifMigrationPipeline(
                 input_dir=input_dir,
                 output_dir=output_dir,
-                mode="simple",
-                source_server=source_server_type,
-                target_server=target_server_type,
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
             )
 
     class _ConfigFactory:

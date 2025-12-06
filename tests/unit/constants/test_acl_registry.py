@@ -1,17 +1,10 @@
-"""Tests for AclAttributeRegistry in FlextLdifConstants.
-
-Verifies RFC foundation + server quirks HIERARCHY pattern.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import s
 
 from flext_ldif import FlextLdifConstants
 
@@ -47,7 +40,7 @@ class IsAclAttributeType(StrEnum):
 
 
 @pytest.mark.unit
-class TestFlextLdifAclAttributeRegistry:
+class TestsTestFlextLdifAclAttributeRegistry(s):
     """Test suite for AclAttributeRegistry."""
 
     # Get ACL attributes test data - (server_type, required_attrs, forbidden_attrs)

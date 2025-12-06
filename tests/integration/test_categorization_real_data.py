@@ -14,9 +14,99 @@ All test outputs use pytest tmp_path fixture for proper cleanup.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TextIO
 
-from flext_ldif import FlextLdif, FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
+from tests import m
+
+
+def _write_entry_to_file(
+    entry: m.Entry,
+    f: TextIO,
+    output_content_lines: list[str],
+    *,
+    include_attributes: bool = False,
+) -> None:
+    """Write single entry to file."""
+    dn = entry.dn.value if entry.dn else "N/A"
+    entry_line = f"dn: {dn}\n"
+    f.write(entry_line)
+    output_content_lines.append(entry_line)
+
+    if include_attributes and entry.attributes and entry.attributes.attributes:
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            if isinstance(attr_values, list):
+                for val in attr_values:
+                    attr_line = f"{attr_name}: {val}\n"
+                    f.write(attr_line)
+                    output_content_lines.append(attr_line)
+
+    if entry.metadata and entry.metadata.processing_stats:
+        stats = entry.metadata.processing_stats
+        if stats.rejected:
+            rejected_line = f"# Rejected: {stats.rejected}\n"
+            f.write(rejected_line)
+            output_content_lines.append(rejected_line)
+        if stats.filtered:
+            filtered_line = f"# Filtered: {stats.filtered}\n"
+            f.write(filtered_line)
+            output_content_lines.append(filtered_line)
+
+    f.write("\n")
+    output_content_lines.append("\n")
+
+
+def _write_categories_to_file(
+    filtered: m.FlexibleCategories,
+    f: TextIO,
+    output_content_lines: list[str],
+    *,
+    include_attributes: bool = False,
+) -> None:
+    """Write categories to file."""
+    categories = [
+        FlextLdifConstants.Categories.SCHEMA,
+        FlextLdifConstants.Categories.HIERARCHY,
+        FlextLdifConstants.Categories.USERS,
+        FlextLdifConstants.Categories.GROUPS,
+        FlextLdifConstants.Categories.ACL,
+        FlextLdifConstants.Categories.REJECTED,
+    ]
+
+    for category in categories:
+        cat_entries = filtered.get_entries(category)
+        if not cat_entries:
+            continue
+
+        _write_category_header(
+            category,
+            len(cat_entries),
+            include_attributes,
+            f,
+            output_content_lines,
+        )
+
+        for entry in cat_entries:
+            _write_entry_to_file(entry, f, output_content_lines, include_attributes)
+
+
+def _write_category_header(
+    category: str,
+    entry_count: int,
+    include_attributes: bool,
+    f: TextIO,
+    output_content_lines: list[str],
+) -> None:
+    """Write category header to file."""
+    category_header = (
+        f"\n# ========================================\n# Category: {category} ({entry_count} entries)\n# ========================================\n\n"
+        if include_attributes
+        else f"# Category: {category}\n"
+    )
+    f.write(category_header)
+    output_content_lines.append(category_header)
 
 
 class TestCategorizationRealData:
@@ -36,38 +126,30 @@ class TestCategorizationRealData:
 
         # Create entries that could cause false positives with substring matching
         entries = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="dc=example"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["domain"]}
+            m.Entry(
+                dn=m.DistinguishedName(value="dc=example"),
+                attributes=m.LdifAttributes(attributes={"objectClass": ["domain"]}),
+            ),
+            m.Entry(
+                dn=m.DistinguishedName(value="ou=users,dc=example"),
+                attributes=m.LdifAttributes(
+                    attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="ou=users,dc=example"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["organizationalUnit"]}
-                ),
-            ),
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(
-                    value="cn=user1,ou=users,dc=example"
-                ),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["person"]}
-                ),
+            m.Entry(
+                dn=m.DistinguishedName(value="cn=user1,ou=users,dc=example"),
+                attributes=m.LdifAttributes(attributes={"objectClass": ["person"]}),
             ),
             # This should NOT match base DN (false positive with substring matching)
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="dc=example2"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["domain"]}
-                ),
+            m.Entry(
+                dn=m.DistinguishedName(value="dc=example2"),
+                attributes=m.LdifAttributes(attributes={"objectClass": ["domain"]}),
             ),
             # This should NOT match base DN (false positive with substring matching)
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="ou=test,dc=example2"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["organizationalUnit"]}
+            m.Entry(
+                dn=m.DistinguishedName(value="ou=test,dc=example2"),
+                attributes=m.LdifAttributes(
+                    attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
         ]
@@ -99,36 +181,12 @@ class TestCategorizationRealData:
             f.write(header)
             output_content_lines.append(header)
 
-            for category in [
-                FlextLdifConstants.Categories.SCHEMA,
-                FlextLdifConstants.Categories.HIERARCHY,
-                FlextLdifConstants.Categories.USERS,
-                FlextLdifConstants.Categories.GROUPS,
-                FlextLdifConstants.Categories.ACL,
-                FlextLdifConstants.Categories.REJECTED,
-            ]:
-                cat_entries = filtered.get_entries(category)
-                if cat_entries:
-                    category_header = f"# Category: {category}\n"
-                    f.write(category_header)
-                    output_content_lines.append(category_header)
-                    for entry in cat_entries:
-                        dn = entry.dn.value if entry.dn else "N/A"
-                        entry_line = f"dn: {dn}\n"
-                        f.write(entry_line)
-                        output_content_lines.append(entry_line)
-                        if entry.metadata and entry.metadata.processing_stats:
-                            stats = entry.metadata.processing_stats
-                            if stats.rejected:
-                                rejected_line = f"# Rejected: {stats.rejected}\n"
-                                f.write(rejected_line)
-                                output_content_lines.append(rejected_line)
-                            if stats.filtered:
-                                filtered_line = f"# Filtered: {stats.filtered}\n"
-                                f.write(filtered_line)
-                                output_content_lines.append(filtered_line)
-                        f.write("\n")
-                        output_content_lines.append("\n")
+            _write_categories_to_file(
+                filtered,
+                f,
+                output_content_lines,
+                include_attributes=False,
+            )
 
         # Validate output file was created and has content
         assert output_file.exists(), "Output file should be created"
@@ -196,30 +254,30 @@ class TestCategorizationRealData:
 
         # Create ACL entries that could cause false positives
         acl_entries = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="dc=example"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+            m.Entry(
+                dn=m.DistinguishedName(value="dc=example"),
+                attributes=m.LdifAttributes(
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="ou=users,dc=example"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+            m.Entry(
+                dn=m.DistinguishedName(value="ou=users,dc=example"),
+                attributes=m.LdifAttributes(
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             # This should NOT match base DN (false positive with substring matching)
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="dc=example2"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+            m.Entry(
+                dn=m.DistinguishedName(value="dc=example2"),
+                attributes=m.LdifAttributes(
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             # System ACL (no base DN)
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="cn=config"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+            m.Entry(
+                dn=m.DistinguishedName(value="cn=config"),
+                attributes=m.LdifAttributes(
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
         ]
@@ -237,8 +295,8 @@ class TestCategorizationRealData:
         acl_category = categories.get_entries(FlextLdifConstants.Categories.ACL)
 
         # Filter ACLs by base DN (simulating client-a-oud-mig logic)
-        acls_with_basedn: list[FlextLdifModels.Entry] = []
-        acls_without_basedn: list[FlextLdifModels.Entry] = []
+        acls_with_basedn: list[m.Entry] = []
+        acls_without_basedn: list[m.Entry] = []
 
         for entry in acl_category:
             dn_str = entry.dn.value if entry.dn else None
@@ -266,7 +324,7 @@ class TestCategorizationRealData:
 
             f.write("\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n")
             output_content_lines.append(
-                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n"
+                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n",
             )
             for entry in acls_without_basedn:
                 dn = entry.dn.value if entry.dn else "N/A"
@@ -381,49 +439,12 @@ ou: test
             f.write(header)
             output_content_lines.append(header)
 
-            for category in [
-                FlextLdifConstants.Categories.SCHEMA,
-                FlextLdifConstants.Categories.HIERARCHY,
-                FlextLdifConstants.Categories.USERS,
-                FlextLdifConstants.Categories.GROUPS,
-                FlextLdifConstants.Categories.ACL,
-                FlextLdifConstants.Categories.REJECTED,
-            ]:
-                cat_entries = filtered.get_entries(category)
-                if cat_entries:
-                    category_header = f"\n# ========================================\n# Category: {category} ({len(cat_entries)} entries)\n# ========================================\n\n"
-                    f.write(category_header)
-                    output_content_lines.append(category_header)
-
-                    for entry in cat_entries:
-                        dn = entry.dn.value if entry.dn else "N/A"
-                        f.write(f"dn: {dn}\n")
-                        output_content_lines.append(f"dn: {dn}\n")
-
-                        if entry.attributes and entry.attributes.attributes:
-                            for (
-                                attr_name,
-                                attr_values,
-                            ) in entry.attributes.attributes.items():
-                                if isinstance(attr_values, list):
-                                    for val in attr_values:
-                                        attr_line = f"{attr_name}: {val}\n"
-                                        f.write(attr_line)
-                                        output_content_lines.append(attr_line)
-
-                        if entry.metadata and entry.metadata.processing_stats:
-                            stats = entry.metadata.processing_stats
-                            if stats.rejected:
-                                rejected_line = f"# Rejected: {stats.rejected}\n"
-                                f.write(rejected_line)
-                                output_content_lines.append(rejected_line)
-                            if stats.filtered:
-                                filtered_line = f"# Filtered: {stats.filtered}\n"
-                                f.write(filtered_line)
-                                output_content_lines.append(filtered_line)
-
-                        f.write("\n")
-                        output_content_lines.append("\n")
+            _write_categories_to_file(
+                filtered,
+                f,
+                output_content_lines,
+                include_attributes=True,
+            )
 
         # Validate output file was created and has expected content
         assert output_file.exists(), "Output file should be created"

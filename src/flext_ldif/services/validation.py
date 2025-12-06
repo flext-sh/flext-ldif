@@ -1,108 +1,5 @@
 """LDIF Validation Service - RFC 2849/4512 Compliant Entry Validation.
 
-╔══════════════════════════════════════════════════════════════════════════╗
-║  RFC 2849/4512 COMPLIANT LDIF VALIDATION SERVICE                        ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║  ✅ Attribute name validation (RFC 4512 Section 2.5)                    ║
-║  ✅ ObjectClass name validation (RFC 4512 Section 2.4)                  ║
-║  ✅ Attribute value length validation                                    ║
-║  ✅ DN component validation (attribute=value pairs)                     ║
-║  ✅ Batch validation for multiple attribute names                       ║
-║  ✅ Replaces naive validation with proper LDAP rules                    ║
-║  ✅ 100% type-safe with FlextResult error handling                      ║
-║  ✅ Multiple API patterns: execute(), direct methods                   ║
-╚══════════════════════════════════════════════════════════════════════════╝
-
-═══════════════════════════════════════════════════════════════════════════
-RESPONSIBILITY (SRP)
-
-This service handles LDIF VALIDATION ONLY:
-- Validating LDAP attribute names against RFC 4512 rules
-- Validating objectClass names against RFC 4512 rules
-- Validating attribute value lengths and formats
-- Validating DN components (attribute=value pairs)
-- Batch validation operations
-
-What it does NOT do:
-- Parse LDIF entries (use FlextLdifParser)
-- Transform entries (use FlextLdifEntry)
-- Sort entries (use FlextLdifSorting)
-- Filter entries (use FlextLdifFilters)
-
-═══════════════════════════════════════════════════════════════════════════
-RFC COMPLIANCE
-
-RFC 2849: LDAP Data Interchange Format (LDIF)
-- Defines LDIF file format and structure
-- Specifies entry and attribute representation
-
-RFC 4512: Lightweight Directory Access Protocol (LDAP): Directory Information Models
-- Section 2.4: Object Class Definitions
-- Section 2.5: Attribute Type Definitions
-
-RFC 4512 Attribute Name Rules:
-- Must start with letter
-- Can contain letters, digits, hyphens
-- Case-insensitive
-- Length typically limited to 127 characters
-
-RFC 4512 Object Class Name Rules:
-- Same rules as attribute names
-- Must match structural, auxiliary, or abstract class
-
-═══════════════════════════════════════════════════════════════════════════
-REAL USAGE EXAMPLES
-
-# PATTERN 1: Direct Method API (Most Common)
-─────────────────────────────────────────────
-validation_service = FlextLdifValidation()
-
-# Validate attribute name
-result = validation_service.validate_attribute_name("cn")
-is_valid = result.unwrap()  # True
-
-result = validation_service.validate_attribute_name("2invalid")
-is_valid = result.unwrap()  # False (starts with digit)
-
-# Validate objectClass name
-result = validation_service.validate_objectclass_name("person")
-is_valid = result.unwrap()  # True
-
-# Validate attribute value length
-result = validation_service.validate_attribute_value("John Smith", max_length=1024)
-is_valid = result.unwrap()  # True
-
-# Validate DN component
-result = validation_service.validate_dn_component("cn", "John Smith")
-is_valid = result.unwrap()  # True
-
-# Batch validate multiple attribute names
-result = validation_service.validate_attribute_names([
-    "cn",
-    "mail",
-    "2invalid",
-    "objectClass",
-])
-validated = result.unwrap()
-# {"cn": True, "mail": True, "2invalid": False, "objectClass": True}
-
-# PATTERN 2: Execute Method (V1 FlextService Style)
-────────────────────────────────────────────────────
-result = FlextLdifValidation().execute()
-if result.is_success:
-    status = result.unwrap()
-    # {"service": "ValidationService", "status": "operational", ...}
-
-═══════════════════════════════════════════════════════════════════════════
-QUICK REFERENCE
-
-Most Common Use Cases:
-- validate_attribute_name(name) -> bool
-- validate_objectclass_name(name) -> bool
-- validate_attribute_value(value, max_length=None) -> bool
-- validate_dn_component(attr, value) -> bool
-- validate_attribute_names(names) -> dict[str, bool]
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -112,18 +9,17 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextDecorators, r, t
+from flext_core import d, r, t
 from pydantic import Field
 
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[FlextLdifModels.ValidationServiceStatus],
+    FlextLdifServiceBase[m.ValidationServiceStatus],
 ):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
@@ -158,6 +54,96 @@ class FlextLdifValidation(
     - Builder pattern for complex validation workflows
     - Pydantic fields for validation parameters
     - execute() method for health checks
+
+    ═══════════════════════════════════════════════════════════════════════════
+    RESPONSIBILITY (SRP)
+
+    This service handles LDIF VALIDATION ONLY:
+    - Validating LDAP attribute names against RFC 4512 rules
+    - Validating objectClass names against RFC 4512 rules
+    - Validating attribute value lengths and formats
+    - Validating DN components (attribute=value pairs)
+    - Batch validation operations
+
+    What it does NOT do:
+    - Parse LDIF entries (use FlextLdifParser)
+    - Transform entries (use FlextLdifEntry)
+    - Sort entries (use FlextLdifSorting)
+    - Filter entries (use FlextLdifFilters)
+
+    ═══════════════════════════════════════════════════════════════════════════
+    RFC COMPLIANCE
+
+    RFC 2849: LDAP Data Interchange Format (LDIF)
+    - Defines LDIF file format and structure
+    - Specifies entry and attribute representation
+
+    RFC 4512: Lightweight Directory Access Protocol (LDAP): Directory Information Models
+    - Section 2.4: Object Class Definitions
+    - Section 2.5: Attribute Type Definitions
+
+    RFC 4512 Attribute Name Rules:
+    - Must start with letter
+    - Can contain letters, digits, hyphens
+    - Case-insensitive
+    - Length typically limited to 127 characters
+
+    RFC 4512 Object Class Name Rules:
+    - Same rules as attribute names
+    - Must match structural, auxiliary, or abstract class
+
+    ═══════════════════════════════════════════════════════════════════════════
+    REAL USAGE EXAMPLES
+
+    # PATTERN 1: Direct Method API (Most Common)
+    ─────────────────────────────────────────────
+    validation_service = FlextLdifValidation()
+
+    # Validate attribute name
+    result = validation_service.validate_attribute_name("cn")
+    is_valid = result.unwrap()  # True
+
+    result = validation_service.validate_attribute_name("2invalid")
+    is_valid = result.unwrap()  # False (starts with digit)
+
+    # Validate objectClass name
+    result = validation_service.validate_objectclass_name("person")
+    is_valid = result.unwrap()  # True
+
+    # Validate attribute value length
+    result = validation_service.validate_attribute_value("John Smith", max_length=1024)
+    is_valid = result.unwrap()  # True
+
+    # Validate DN component
+    result = validation_service.validate_dn_component("cn", "John Smith")
+    is_valid = result.unwrap()  # True
+
+    # Batch validate multiple attribute names
+    result = validation_service.validate_attribute_names([
+        "cn",
+        "mail",
+        "2invalid",
+        "objectClass",
+    ])
+    validated = result.unwrap()
+    # {"cn": True, "mail": True, "2invalid": False, "objectClass": True}
+
+    # PATTERN 2: Execute Method (V1 FlextService Style)
+    ────────────────────────────────────────────────────
+    result = FlextLdifValidation().execute()
+    if result.is_success:
+        status = result.unwrap()
+        # {"service": "ValidationService", "status": "operational", ...}
+
+    ═══════════════════════════════════════════════════════════════════════════
+    QUICK REFERENCE
+
+    Most Common Use Cases:
+    - validate_attribute_name(name) -> bool
+    - validate_objectclass_name(name) -> bool
+    - validate_attribute_value(value, max_length=None) -> bool
+    - validate_dn_component(attr, value) -> bool
+    - validate_attribute_names(names) -> dict[str, bool]
     """
 
     # ════════════════════════════════════════════════════════════════════════
@@ -169,11 +155,11 @@ class FlextLdifValidation(
     max_attr_value_length: int | None = Field(default=None)
 
     @override
-    @FlextDecorators.log_operation("validation_service_check")
-    @FlextDecorators.track_performance()
+    @d.log_operation("validation_service_check")
+    @d.track_performance()
     def execute(
         self,
-    ) -> r[FlextLdifModels.ValidationServiceStatus]:
+    ) -> r[m.ValidationServiceStatus]:
         """Execute validation service self-check.
 
         Business Rule: Execute method provides service health check for protocol compliance.
@@ -187,8 +173,8 @@ class FlextLdifValidation(
             FlextResult with ValidationServiceStatus containing service metadata
 
         """
-        return r[FlextLdifModels.ValidationServiceStatus].ok(
-            FlextLdifModels.ValidationServiceStatus(
+        return r[m.ValidationServiceStatus].ok(
+            m.ValidationServiceStatus(
                 service="ValidationService",
                 status="operational",
                 rfc_compliance="RFC 2849, RFC 4512",
@@ -205,7 +191,7 @@ class FlextLdifValidation(
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def builder(cls) -> FlextLdifValidation:
+    def builder(cls) -> Self:
         """Create fluent builder for complex validation workflows.
 
         Returns:
@@ -228,12 +214,12 @@ class FlextLdifValidation(
         """Set objectClass names to validate (fluent builder)."""
         return self.model_copy(update={"objectclass_names": names})
 
-    def with_max_attr_value_length(self, length: int) -> FlextLdifValidation:
+    def with_max_attr_value_length(self, length: int) -> Self:
         """Set maximum attribute value length (fluent builder)."""
         return self.model_copy(update={"max_attr_value_length": length})
 
-    @FlextDecorators.track_performance()
-    def build(self) -> FlextLdifModels.ValidationBatchResult:
+    @d.track_performance()
+    def build(self) -> m.ValidationBatchResult:
         """Execute validation and return unwrapped result (fluent terminal).
 
         Validates all configured attribute names and objectClass names,
@@ -259,8 +245,8 @@ class FlextLdifValidation(
                 result[name] = obj_result.unwrap()
 
         # Convert dict[str, bool] to BooleanFlags for ValidationBatchResult
-        boolean_flags = FlextLdifModelsResults.BooleanFlags(**result)
-        return FlextLdifModels.ValidationBatchResult(results=boolean_flags)
+        boolean_flags = m.LdifResults.BooleanFlags(**result)
+        return m.ValidationBatchResult(results=boolean_flags)
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
@@ -270,9 +256,9 @@ class FlextLdifValidation(
         length typically limited to 127 characters. Invalid names result in False result.
 
         Implication: RFC-compliant validation ensures interoperability across LDAP servers.
-        Validation uses FlextLdifUtilities.Constants for core logic, ensuring consistency.
+        Validation uses u.Constants for core logic, ensuring consistency.
 
-        Uses FlextLdifUtilities.Constants.validate_attribute_name() for core validation logic.
+        Uses u.Constants.validate_attribute_name() for core validation logic.
 
         RFC 4512 Section 2.5: Attribute Type Definitions
         - AttributeType names must start with a letter
@@ -287,7 +273,7 @@ class FlextLdifValidation(
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_attribute_name(FlextLdifConstants.DictKeys.CN)
+            >>> result = service.validate_attribute_name(c.DictKeys.CN)
             >>> is_valid = result.unwrap()  # True
             >>>
             >>> result = service.validate_attribute_name("2invalid")
@@ -298,7 +284,7 @@ class FlextLdifValidation(
 
         """
         try:
-            is_valid = FlextLdifUtilities.Constants.validate_attribute_name(name)
+            is_valid = u.Constants.validate_attribute_name(name)
             return r[bool].ok(is_valid)
 
         except Exception as e:
@@ -312,7 +298,7 @@ class FlextLdifValidation(
         case-insensitive. Must match structural, auxiliary, or abstract class definitions.
 
         Implication: RFC-compliant validation ensures interoperability across LDAP servers.
-        Validation uses FlextLdifUtilities.Constants for core logic, ensuring consistency.
+        Validation uses u.Constants for core logic, ensuring consistency.
 
         RFC 4512 Section 2.4: Object Class Definitions
         - ObjectClass names follow same rules as attribute names
@@ -371,7 +357,7 @@ class FlextLdifValidation(
             max_len = (
                 max_length
                 if max_length is not None
-                else FlextLdifConstants.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
+                else c.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
                 return r[bool].ok(False)
@@ -398,9 +384,7 @@ class FlextLdifValidation(
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_dn_component(
-            ...     FlextLdifConstants.DictKeys.CN, "John Smith"
-            ... )
+            >>> result = service.validate_dn_component(c.DictKeys.CN, "John Smith")
             >>> is_valid = result.unwrap()  # True
 
         """

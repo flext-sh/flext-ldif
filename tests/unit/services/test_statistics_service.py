@@ -1,47 +1,22 @@
-"""Test suite for Statistics Service - LDIF processing statistics generation.
-
-Modules tested:
-- flext_ldif.services.statistics.FlextLdifStatistics (statistics generation service)
-
-Scope:
-- Service initialization and execute pattern
-- Basic statistics generation (empty, single category, multiple categories)
-- Statistics with rejections (rejection count, rejection rate, rejection reasons)
-- Output file path handling and generation
-- Error handling (empty data, missing attributes)
-- Edge cases (large rejection counts, complex paths, all rejected entries)
-- Entry-level statistics calculation (empty list, objectclass distribution,
-  server_type distribution, entries without metadata)
-
-Test Coverage:
-- All statistics service methods (generate_statistics, calculate_for_entries)
-- Edge cases (empty data, large counts, complex paths, all rejected)
-- Error handling paths
-- Parametrized tests for multiple scenarios
-
-Uses Python 3.13 features, factories, constants, dynamic tests, and extensive helper reuse
-to reduce code while maintaining 100% behavior coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
+from flext_tests.matchers import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
-from tests.helpers.test_assertions import TestAssertions
+from tests import c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
-class TestFlextLdifStatistics:
+class TestsTestFlextLdifStatistics(s):
     """Test FlextLdifStatistics service with consolidated parametrized tests.
 
     Uses nested classes for organization: Factories, TestServiceInitialization,
@@ -59,14 +34,14 @@ class TestFlextLdifStatistics:
         @staticmethod
         def create_entry_from_dict(
             entry_dict: dict[str, object],
-        ) -> FlextLdifModels.Entry:
+        ) -> m.Entry:
             """Create Entry model from dictionary for testing.
 
             Args:
                 entry_dict: Dictionary with 'dn' and optionally 'attributes' keys
 
             Returns:
-                FlextLdifModels.Entry instance
+                m.Entry instance
 
             """
             dn = str(entry_dict.get("dn", ""))
@@ -89,11 +64,12 @@ class TestFlextLdifStatistics:
 
             result = FlextLdifEntries().create_entry(dn=dn, attributes=attributes)
             if result.is_failure:
-                raise ValueError(f"Failed to create entry: {result.error}")
+                msg = f"Failed to create entry: {result.error}"
+                raise ValueError(msg)
 
             entry = result.unwrap()
             if rejection_reason is not None and entry.metadata:
-                processing_stats = FlextLdifModels.EntryStatistics(
+                processing_stats = m.EntryStatistics(
                     rejection_reason=rejection_reason,
                 )
                 entry = entry.model_copy(
@@ -109,21 +85,21 @@ class TestFlextLdifStatistics:
         @staticmethod
         def create_categories_from_dict(
             categorized_dict: Mapping[str, object],
-        ) -> FlextLdifModels.FlexibleCategories:
+        ) -> m.FlexibleCategories:
             """Create FlexibleCategories from dictionary for testing.
 
             Args:
                 categorized_dict: Dictionary mapping category names to entry dictionaries
 
             Returns:
-                FlextLdifModels.FlexibleCategories instance
+                m.FlexibleCategories instance
 
             """
             categories = _FlexibleCategories()
             for category, entries_value in categorized_dict.items():
                 if not isinstance(entries_value, list):
                     continue
-                entries: list[FlextLdifModels.Entry] = []
+                entries: list[m.Entry] = []
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
                         entry_obj: dict[str, object] = dict(entry_value)
@@ -133,8 +109,8 @@ class TestFlextLdifStatistics:
                             )
                         )
                         entries.append(entry)
-                categories[category] = entries  # type: ignore[assignment]
-            return categories  # type: ignore[return-value]
+                categories[category] = entries
+            return categories
 
     class TestServiceInitialization:
         """Test statistics service initialization and basic functionality."""
@@ -146,7 +122,7 @@ class TestFlextLdifStatistics:
         def test_execute_returns_status(self) -> None:
             """Test execute returns service operational status."""
             result = FlextLdifStatistics().execute()
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             status = result.unwrap()
             assert status["service"] == "StatisticsService"
             assert status["status"] == "operational"
@@ -172,7 +148,10 @@ class TestFlextLdifStatistics:
                 (
                     {
                         "users": [
-                            {"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}}
+                            {
+                                "dn": f"cn={c.Values.USER}{i},{c.DNs.EXAMPLE}",
+                                "attributes": {},
+                            }
                             for i in range(1, 4)
                         ],
                     },
@@ -184,15 +163,24 @@ class TestFlextLdifStatistics:
                 (
                     {
                         "users": [
-                            {"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}}
+                            {
+                                "dn": f"cn={c.Values.USER}{i},{c.DNs.EXAMPLE}",
+                                "attributes": {},
+                            }
                             for i in range(1, 3)
                         ],
                         "groups": [
-                            {"dn": f"cn=group{i},dc=example,dc=com", "attributes": {}}
+                            {
+                                "dn": f"cn={c.Values.TEST}{i},{c.DNs.EXAMPLE}",
+                                "attributes": {},
+                            }
                             for i in range(1, 4)
                         ],
                         "roles": [
-                            {"dn": "cn=superuser,dc=example,dc=com", "attributes": {}},
+                            {
+                                "dn": f"cn={c.Values.ADMIN},{c.DNs.EXAMPLE}",
+                                "attributes": {},
+                            },
                         ],
                     },
                     {"users": 2, "groups": 3, "roles": 1},
@@ -228,9 +216,9 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp/ldif"),
                 output_files=output_files_str,
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
-            assert isinstance(stats, FlextLdifModels.StatisticsResult)
+            assert isinstance(stats, m.StatisticsResult)
             assert stats.total_entries == expected_total
             # _DynamicCounts comparison: __eq__ handles dict comparison
             assert stats.categorized == expected_counts
@@ -252,18 +240,21 @@ class TestFlextLdifStatistics:
                 (
                     {
                         "valid": [
-                            {"dn": f"cn=valid{i},dc=example,dc=com", "attributes": {}}
+                            {
+                                "dn": f"cn={c.Values.TEST}{i},{c.DNs.EXAMPLE}",
+                                "attributes": {},
+                            }
                             for i in range(1, 3)
                         ],
                         "rejected": [
                             {
-                                "dn": "cn=invalid1,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}1,{c.DNs.EXAMPLE}",
                                 "attributes": {
                                     "rejectionReason": "Missing required attribute",
                                 },
                             },
                             {
-                                "dn": "cn=invalid2,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}2,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": "Invalid DN format"},
                             },
                         ],
@@ -277,12 +268,15 @@ class TestFlextLdifStatistics:
                 (
                     {
                         "valid": [
-                            {"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}}
+                            {
+                                "dn": f"cn={c.Values.USER}{i},{c.DNs.EXAMPLE}",
+                                "attributes": {},
+                            }
                             for i in range(1, 5)
                         ],
                         "rejected": [
                             {
-                                "dn": f"cn=invalid{i},dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}{i},{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": "Schema violation"},
                             }
                             for i in range(1, 3)
@@ -298,7 +292,7 @@ class TestFlextLdifStatistics:
                     {
                         "rejected": [
                             {
-                                "dn": f"cn=invalid{i},dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}{i},{c.DNs.EXAMPLE}",
                                 "attributes": {
                                     "rejectionReason": "Duplicate DN"
                                     if i % 2 == 1
@@ -335,7 +329,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp/ldif"),
                 output_files={cat: f"{cat}.ldif" for cat in written_counts},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == expected_total
             assert stats.rejection_count == expected_rejected
@@ -352,11 +346,11 @@ class TestFlextLdifStatistics:
                     {
                         "rejected": [
                             {
-                                "dn": "cn=test1,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}1,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": "Test reason 1"},
                             },
                             {
-                                "dn": "cn=test2,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}2,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": "Test reason 2"},
                             },
                         ],
@@ -368,15 +362,15 @@ class TestFlextLdifStatistics:
                     {
                         "rejected": [
                             {
-                                "dn": "cn=test1,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}1,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": "Valid reason"},
                             },
                             {
-                                "dn": "cn=test2,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}2,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": 123},
                             },
                             {
-                                "dn": "cn=test3,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}3,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": ["list", "value"]},
                             },
                         ],
@@ -388,11 +382,11 @@ class TestFlextLdifStatistics:
                     {
                         "rejected": [
                             {
-                                "dn": "cn=test1,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}1,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": "Valid reason"},
                             },
                             {
-                                "dn": "cn=test2,dc=example,dc=com",
+                                "dn": f"cn={c.Values.TEST}2,{c.DNs.EXAMPLE}",
                                 "attributes": {"rejectionReason": ""},
                             },
                         ],
@@ -418,7 +412,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={"rejected": "rejected.ldif"},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.rejection_count == expected_count
             assert all(reason in stats.rejection_reasons for reason in expected_reasons)
@@ -449,7 +443,7 @@ class TestFlextLdifStatistics:
         ) -> None:
             """Test output file handling with parametrized test cases."""
             categorized_dict: dict[str, list[dict[str, object]]] = {
-                cat: [{"dn": "cn=test,dc=example,dc=com", "attributes": {}}]
+                cat: [{"dn": c.DNs.TEST_USER, "attributes": {}}]
                 for cat in expected_paths
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
@@ -465,7 +459,7 @@ class TestFlextLdifStatistics:
                 output_dir=output_dir,
                 output_files=output_files_str,
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             for category, expected_path in expected_paths.items():
                 assert stats.output_files[category] == expected_path
@@ -482,7 +476,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 0
             assert stats.rejection_rate == 0.0
@@ -491,8 +485,8 @@ class TestFlextLdifStatistics:
             """Test handling of entries without attributes key."""
             categorized_dict = {
                 "entries": [
-                    {"dn": "cn=test1,dc=example,dc=com", "attributes": {}},
-                    {"dn": "cn=test2,dc=example,dc=com", "attributes": {}},
+                    {"dn": f"cn={c.Values.TEST}1,{c.DNs.EXAMPLE}", "attributes": {}},
+                    {"dn": f"cn={c.Values.TEST}2,{c.DNs.EXAMPLE}", "attributes": {}},
                 ],
             }
             categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
@@ -504,7 +498,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 2
             assert stats.rejection_count == 0
@@ -539,12 +533,12 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 1000
             assert stats.rejection_count == 900
             assert abs(stats.rejection_rate - 0.9) < 0.001
-            assert len(stats.rejection_reasons) == 5
+            FlextTestsMatchers.assert_length_equals(stats.rejection_reasons, 5)
 
         def test_statistics_with_complex_path_objects(self) -> None:
             """Test statistics generation with complex Path objects."""
@@ -561,7 +555,7 @@ class TestFlextLdifStatistics:
                 output_dir=output_dir,
                 output_files={"users": "exported_users.ldif"},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.output_files["users"] == str(
                 output_dir / "exported_users.ldif",
@@ -587,7 +581,7 @@ class TestFlextLdifStatistics:
                 output_dir=Path("/tmp"),
                 output_files={},
             )
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 10
             assert stats.rejection_count == 10
@@ -599,7 +593,7 @@ class TestFlextLdifStatistics:
         def test_calculate_for_entries_empty_list(self) -> None:
             """Test calculate_for_entries with empty entry list."""
             result = FlextLdifStatistics().calculate_for_entries([])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 0
             assert stats.object_class_distribution == {}
@@ -622,7 +616,7 @@ class TestFlextLdifStatistics:
                 }),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 3
             assert stats.object_class_distribution["person"] == 2
@@ -639,16 +633,14 @@ class TestFlextLdifStatistics:
                 new_extensions = (
                     entry1.metadata.extensions.model_copy(update={"server_type": "oid"})
                     if entry1.metadata.extensions
-                    else FlextLdifModels.DynamicMetadata.model_validate({
-                        "server_type": "oid"
-                    })
+                    else m.DynamicMetadata.model_validate({"server_type": "oid"})
                 )
                 entry1 = entry1.model_copy(
                     update={
                         "metadata": entry1.metadata.model_copy(
-                            update={"extensions": new_extensions}
-                        )
-                    }
+                            update={"extensions": new_extensions},
+                        ),
+                    },
                 )
             entry2 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry2,dc=example,dc=com",
@@ -658,16 +650,14 @@ class TestFlextLdifStatistics:
                 new_extensions = (
                     entry2.metadata.extensions.model_copy(update={"server_type": "oud"})
                     if entry2.metadata.extensions
-                    else FlextLdifModels.DynamicMetadata.model_validate({
-                        "server_type": "oud"
-                    })
+                    else m.DynamicMetadata.model_validate({"server_type": "oud"})
                 )
                 entry2 = entry2.model_copy(
                     update={
                         "metadata": entry2.metadata.model_copy(
-                            update={"extensions": new_extensions}
-                        )
-                    }
+                            update={"extensions": new_extensions},
+                        ),
+                    },
                 )
             entry3 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry3,dc=example,dc=com",
@@ -677,16 +667,14 @@ class TestFlextLdifStatistics:
                 new_extensions = (
                     entry3.metadata.extensions.model_copy(update={"server_type": "oid"})
                     if entry3.metadata.extensions
-                    else FlextLdifModels.DynamicMetadata.model_validate({
-                        "server_type": "oid"
-                    })
+                    else m.DynamicMetadata.model_validate({"server_type": "oid"})
                 )
                 entry3 = entry3.model_copy(
                     update={
                         "metadata": entry3.metadata.model_copy(
-                            update={"extensions": new_extensions}
-                        )
-                    }
+                            update={"extensions": new_extensions},
+                        ),
+                    },
                 )
 
             result = FlextLdifStatistics().calculate_for_entries([
@@ -694,7 +682,7 @@ class TestFlextLdifStatistics:
                 entry2,
                 entry3,
             ])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 3
             assert stats.server_type_distribution.get("oid") == 2
@@ -713,7 +701,7 @@ class TestFlextLdifStatistics:
                 }),
             ]
             result = FlextLdifStatistics().calculate_for_entries(entries)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             stats = result.unwrap()
             assert stats.total_entries == 2
             assert stats.server_type_distribution == {}

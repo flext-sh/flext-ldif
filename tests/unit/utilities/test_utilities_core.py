@@ -1,30 +1,15 @@
-"""Comprehensive tests for FlextLdifUtilities core classes.
-
-Consolidates tests for:
-- FlextLdifUtilities.DN: RFC 4514 DN operations
-- FlextLdifUtilities.DN: Advanced DN manipulation
-- FlextLdifUtilities.Schema: Attribute normalization (was AttributeFixer)
-- FlextLdifUtilities.Parser: LDIF parsing utilities (was LdifParser)
-- FlextLdifUtilities.ACL: ACL parsing utilities
-- FlextLdifConstants.ServerTypes: Server type normalization (moved from utilities)
-
-All tests use pure functions (returning primitives, not FlextResult).
-Tests validate RFC 4514 compliance with real LDIF fixtures.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import pytest
+from tests import m, s
 
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
 
 
 @pytest.mark.unit
-class TestDnOperationsPure:
+class TestsFlextLdifDnOperationsPure(s):
     """Test DN operations as pure functions returning primitives."""
 
     def test_norm_component_basic(self) -> None:
@@ -151,7 +136,7 @@ class TestDnObjectClassMethods:
     def test_fix_missing_sup(self) -> None:
         """Test fixing missing SUP in AUXILIARY classes."""
         # Create real SchemaObjectClass with missing SUP
-        obj = FlextLdifModels.SchemaObjectClass(
+        obj = m.SchemaObjectClass(
             oid="1.2.3.4",
             name="orcldasattrcategory",
             kind="AUXILIARY",
@@ -164,7 +149,7 @@ class TestDnObjectClassMethods:
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
         # Create real SchemaObjectClass with kind mismatch
-        obj = FlextLdifModels.SchemaObjectClass(
+        obj = m.SchemaObjectClass(
             oid="1.2.3.4",
             name="testOC",
             sup="orclpwdverifierprofile",
@@ -177,7 +162,7 @@ class TestDnObjectClassMethods:
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
         # Create real SchemaObjectClass with missing SUP
-        obj = FlextLdifModels.SchemaObjectClass(
+        obj = m.SchemaObjectClass(
             oid="1.2.3.4",
             name="testOC",
             kind="AUXILIARY",
@@ -236,32 +221,32 @@ class TestLdifParser:
     def test_extract_extensions_empty(self) -> None:
         """Test extracting extensions from empty schema definition."""
         definition = ""
-        result = FlextLdifUtilities.Parser.extract_extensions(definition)
+        result = FlextLdifUtilities.LdifParser.extract_extensions(definition)
         assert result == {}
 
     def test_extract_extensions_with_x_extension(self) -> None:
         """Test extracting X- extensions from schema definition."""
         definition = "( 1.2.3 NAME 'test' X-CUSTOM 'value' X-OTHER 'data' )"
-        result = FlextLdifUtilities.Parser.extract_extensions(definition)
+        result = FlextLdifUtilities.LdifParser.extract_extensions(definition)
         assert result.get("X-CUSTOM") == "value"
         assert result.get("X-OTHER") == "data"
 
     def test_extract_extensions_with_desc(self) -> None:
         """Test extracting DESC from schema definition."""
         definition = "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
-        result = FlextLdifUtilities.Parser.extract_extensions(definition)
+        result = FlextLdifUtilities.LdifParser.extract_extensions(definition)
         assert result.get("DESC") == "Test attribute"
 
     def test_parse_ldif_lines_empty(self) -> None:
         """Test parsing empty LDIF content."""
         content = ""
-        result = FlextLdifUtilities.Parser.parse_ldif_lines(content)
+        result = FlextLdifUtilities.LdifParser.parse_ldif_lines(content)
         assert result == []
 
     def test_parse_ldif_lines_single_entry(self) -> None:
         """Test parsing single LDIF entry."""
         content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
-        result = FlextLdifUtilities.Parser.parse_ldif_lines(content)
+        result = FlextLdifUtilities.LdifParser.parse_ldif_lines(content)
         assert len(result) == 1
         dn, attrs = result[0]
         assert dn == "cn=test,dc=example,dc=com"
@@ -280,7 +265,7 @@ class TestLdifParser:
             "cn: test2\n"
             "objectClass: person\n"
         )
-        result = FlextLdifUtilities.Parser.parse_ldif_lines(content)
+        result = FlextLdifUtilities.LdifParser.parse_ldif_lines(content)
         assert len(result) == 2, f"Expected 2 entries but got {len(result)}: {result}"
 
         # First entry
@@ -298,7 +283,7 @@ class TestLdifParser:
     def test_unfold_lines_basic(self) -> None:
         """Test unfolding RFC 2849 folded lines."""
         content = "dn: cn=verylongname\n withfoldedcontinuation,dc=example,dc=com\n"
-        result = FlextLdifUtilities.Parser.unfold_lines(content)
+        result = FlextLdifUtilities.LdifParser.unfold_lines(content)
         assert any("withfoldedcontinuation" in line for line in result)
 
 
@@ -349,7 +334,7 @@ class TestObjectClassUtilities:
     def test_fix_missing_sup_auxiliary_without_sup(self) -> None:
         """Test fixing missing SUP for known AUXILIARY classes."""
         # Create AUXILIARY class without SUP
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="orcldAsAttrCategory",
             oid="1.2.3.4.5",
             kind=FlextLdifConstants.Schema.AUXILIARY,
@@ -363,7 +348,7 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_auxiliary_with_sup(self) -> None:
         """Test that AUXILIARY with SUP is not modified."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.5",
             kind=FlextLdifConstants.Schema.AUXILIARY,
@@ -376,7 +361,7 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_structural_ignored(self) -> None:
         """Test that STRUCTURAL classes are ignored."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testStructural",
             oid="1.2.3.4.6",
             kind=FlextLdifConstants.Schema.STRUCTURAL,
@@ -389,7 +374,7 @@ class TestObjectClassUtilities:
 
     def test_ensure_sup_for_auxiliary_adds_sup(self) -> None:
         """Test ensure_sup_for_auxiliary adds SUP when missing."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.7",
             kind=FlextLdifConstants.Schema.AUXILIARY,
@@ -400,7 +385,7 @@ class TestObjectClassUtilities:
 
     def test_ensure_sup_for_auxiliary_custom_default(self) -> None:
         """Test ensure_sup_for_auxiliary with custom default SUP."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.8",
             kind=FlextLdifConstants.Schema.AUXILIARY,
@@ -414,7 +399,7 @@ class TestObjectClassUtilities:
 
     def test_fix_kind_mismatch_structural_superior(self) -> None:
         """Test fixing kind mismatch with STRUCTURAL superior."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.9",
             kind=FlextLdifConstants.Schema.AUXILIARY,
@@ -425,7 +410,7 @@ class TestObjectClassUtilities:
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fixing kind mismatch with AUXILIARY superior."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.10",
             kind=FlextLdifConstants.Schema.STRUCTURAL,
@@ -436,7 +421,7 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_structural(self) -> None:
         """Test aligning kind with STRUCTURAL superior."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.11",
             kind=FlextLdifConstants.Schema.AUXILIARY,
@@ -450,7 +435,7 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_auxiliary(self) -> None:
         """Test aligning kind with AUXILIARY superior."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.12",
             kind=FlextLdifConstants.Schema.STRUCTURAL,
@@ -464,7 +449,7 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_no_conflict(self) -> None:
         """Test that matching kinds are not changed."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.13",
             kind=FlextLdifConstants.Schema.STRUCTURAL,

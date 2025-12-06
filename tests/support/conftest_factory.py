@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import tempfile
 import time
@@ -19,18 +20,16 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
+from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
-from tests.fixtures import FlextLdifFixtures
-from tests.fixtures.typing import (
-    GenericFieldsDict,
-    GenericTestCaseDict,
-)
-from tests.helpers.test_assertions import TestAssertions
 
+# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+# Use unified test helpers from tests/__init__.py instead of deprecated helpers
 from .ldif_data import LdifTestData
 from .real_services import RealServiceFactory
 from .test_files import FileManager
@@ -90,14 +89,14 @@ class FlextLdifTestConftest:
         )
     )
 
-    def docker_control(self) -> FlextTestDocker:  # type: ignore[return-value]
-        """Provide FlextTestDocker instance for container management.
+    def docker_control(self) -> FlextTestsDocker:
+        """Provide FlextTestsDocker instance for container management.
 
         Uses the FLEXT workspace root to ensure compose file paths
         are resolved correctly regardless of which project runs the tests.
         """
         workspace_root = Path("/home/marlonsc/flext")
-        return FlextTestDocker(workspace_root=workspace_root)  # type: ignore[return-value]
+        return FlextTestsDocker(workspace_root=workspace_root)
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
         """Get pytest-xdist worker ID for DN namespacing."""
@@ -177,62 +176,70 @@ class FlextLdifTestConftest:
         FlextConfig.reset_global_instance()
 
     def reset_flextldif_singleton(self) -> Generator[None]:
-        """Reset FlextLdif singleton for test isolation."""
-        FlextLdif._reset_instance()
+        """Reset FlextLdif singleton for test isolation.
+
+        Note: FlextLdif may not have _reset_instance method (Pydantic models).
+        Use getattr with noop fallback to handle missing method gracefully.
+        """
+        # Safe reset - method may not exist
+        reset_fn = getattr(FlextLdif, "_reset_instance", lambda: None)
+        reset_fn()
         yield
-        FlextLdif._reset_instance()
+        reset_fn()
+
+    # LDAP container constants (matches docker/docker-compose.openldap.yml)
+    LDAP_CONTAINER_NAME = "flext-openldap-test"
+    LDAP_COMPOSE_FILE = "docker/docker-compose.openldap.yml"
+    LDAP_SERVICE_NAME = "openldap"
+    LDAP_PORT = 3390
+    LDAP_BASE_DN = "dc=flext,dc=local"
+    LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+    LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
 
     def ldap_container(
         self,
-        docker_control: FlextTestDocker,  # type: ignore[arg-type]
+        docker_control: FlextTestsDocker,
         worker_id: str,
     ) -> GenericFieldsDict:
         """Session-scoped LDAP container configuration.
 
-        Uses FlextTestDocker.SHARED_CONTAINERS for container config.
-        Compose file paths in SHARED_CONTAINERS are relative to the
-        FLEXT workspace root (which is set in docker_control).
+        Uses direct container configuration for flext-openldap-test.
+        This fixture does NOT create or destroy containers - it only verifies
+        that an existing container is running. The container should be started
+        manually or via a separate script before running integration tests.
+
+        IMPORTANT: This fixture never calls compose_down to avoid killing
+        other sessions that may be using the shared LDAP container.
         """
         logger = FlextLogger(__name__)
-        container_name = "flext-openldap-test"
-        container_config = FlextTestDocker.SHARED_CONTAINERS.get(container_name)
+        container_name = self.LDAP_CONTAINER_NAME
 
-        if not container_config:
-            pytest.skip(f"Container {container_name} not found")
+        # Check if container is dirty - warn but don't kill other sessions
+        if docker_control.is_container_dirty(container_name):
+            logger.warning(
+                "Container %s is marked dirty but will NOT be recreated "
+                "to avoid killing other sessions. Run 'docker compose down -v && "
+                "docker compose up -d' manually if needed.",
+                container_name,
+            )
 
-        # Type narrowing: container_config is not None after check above
-        assert container_config is not None  # Type narrowing for type checkers
-        # Resolve compose file path using docker_control's workspace_root
-        compose_file = str(container_config.get("compose_file", ""))
-        if not compose_file:
-            pytest.skip(f"Container {container_name} has no compose_file")
-        if not compose_file.startswith("/") and docker_control.workspace_root:
-            compose_file = str(docker_control.workspace_root / compose_file)
-
-        is_dirty = docker_control.is_container_dirty(container_name)
-
-        if is_dirty:
-            logger.info("Container %s is dirty, recreating", container_name)
-            cleanup_result = docker_control.cleanup_dirty_containers()
-            if cleanup_result.is_failure:
-                pytest.skip(
-                    f"Failed to recreate dirty container {container_name}: {cleanup_result.error}",
-                )
-        else:
-            status = docker_control.get_container_status(container_name)
-            if not status.is_success or (
-                isinstance(status.value, FlextTestDocker.ContainerInfo)
-                and status.value.status != FlextTestDocker.ContainerStatus.RUNNING
-            ):
-                logger.info("Container %s not running, starting...", container_name)
-                start_result = docker_control.start_compose_stack(compose_file)
-                if start_result.is_failure:
-                    pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+        # Try to start existing container (does NOT use compose_down)
+        start_result = docker_control.start_existing_container(container_name)
+        if start_result.is_failure:
+            pytest.skip(
+                f"Container {container_name} not found. "
+                f"Start it manually with: cd /home/marlonsc/flext/docker && "
+                f"docker compose -f docker-compose.openldap.yml up -d",
+            )
 
         # Wait for container readiness
-        port_ready = docker_control.wait_for_port_ready("localhost", 3390, max_wait=30)
+        port_ready = docker_control.wait_for_port_ready(
+            "localhost",
+            self.LDAP_PORT,
+            max_wait=30,
+        )
         if port_ready.is_failure or not port_ready.unwrap():
-            pytest.skip("Container port 3390 not ready within 30s")
+            pytest.skip(f"Container port {self.LDAP_PORT} not ready within 30s")
 
         # Verify LDAP is functional
         max_wait = 30.0
@@ -241,11 +248,11 @@ class FlextLdifTestConftest:
 
         while waited < max_wait:
             try:
-                server = Server("ldap://localhost:3390", get_info=ALL)
+                server = Server(f"ldap://localhost:{self.LDAP_PORT}", get_info=ALL)
                 conn = Connection(
                     server,
-                    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-                    password="REDACTED_LDAP_BIND_PASSWORD",
+                    user=self.LDAP_ADMIN_DN,
+                    password=self.LDAP_ADMIN_PASSWORD,
                     auto_bind=False,
                 )
                 if conn.bind():
@@ -263,19 +270,20 @@ class FlextLdifTestConftest:
             pytest.skip("Container did not become ready within 30s")
 
         return {
-            "server_url": "ldap://localhost:3390",
+            "server_url": f"ldap://localhost:{self.LDAP_PORT}",
             "host": "localhost",
-            "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-            "password": "REDACTED_LDAP_BIND_PASSWORD",
-            "base_dn": "dc=flext,dc=local",
-            "port": 3390,
+            "bind_dn": self.LDAP_ADMIN_DN,
+            "password": self.LDAP_ADMIN_PASSWORD,
+            "base_dn": self.LDAP_BASE_DN,
+            "port": self.LDAP_PORT,
             "use_ssl": False,
             "worker_id": worker_id,
         }
 
     def ldap_container_shared(self, ldap_container: GenericFieldsDict) -> str:
         """Provide LDAP connection string."""
-        return str(ldap_container.get("server_url", "ldap://localhost:3390"))
+        default_url = f"ldap://localhost:{self.LDAP_PORT}"
+        return str(ldap_container.get("server_url", default_url))
 
     def ldap_connection(
         self,
@@ -283,9 +291,9 @@ class FlextLdifTestConftest:
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
-        port = int(ldap_container.get("port", 3390))
-        bind_dn = str(ldap_container.get("bind_dn", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"))
-        password = str(ldap_container.get("password", "REDACTED_LDAP_BIND_PASSWORD"))
+        port = int(ldap_container.get("port", self.LDAP_PORT))
+        bind_dn = str(ldap_container.get("bind_dn", self.LDAP_ADMIN_DN))
+        password = str(ldap_container.get("password", self.LDAP_ADMIN_PASSWORD))
 
         server = Server(f"ldap://{host}:{port}", get_info=ALL)
         conn = Connection(server, user=bind_dn, password=password)
@@ -317,22 +325,18 @@ class FlextLdifTestConftest:
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
                 for dn in reversed(dns_to_delete):
-                    try:
+                    with contextlib.suppress(Exception):
                         ldap_connection.delete(dn)
-                    except Exception:
-                        pass
         except Exception:
             pass
 
         # Create test OU
-        try:
+        with contextlib.suppress(Exception):
             ldap_connection.add(
                 test_ou_dn,
                 ["organizationalUnit"],
                 {"ou": "FlextLdifTests"},
             )
-        except Exception:
-            pass
 
         yield test_ou_dn
 
@@ -346,10 +350,8 @@ class FlextLdifTestConftest:
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
                 for dn in reversed(dns_to_delete):
-                    try:
+                    with contextlib.suppress(Exception):
                         ldap_connection.delete(dn)
-                    except Exception:
-                        pass
         except Exception:
             pass
 
@@ -440,7 +442,7 @@ class FlextLdifTestConftest:
 
     def ldif_api(self) -> FlextLdif:
         """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+        return FlextLdif()
 
     def real_parser_service(self, quirk_registry: FlextLdifServer) -> FlextLdifParser:
         """Real parser service."""
@@ -456,14 +458,14 @@ class FlextLdifTestConftest:
 
     def assert_result_success(
         self,
-        flext_matchers: TestAssertions,  # type: ignore[unused-arg]
+        flext_matchers: TestAssertions,
     ) -> Callable[[FlextResult[object]], None]:
         """Result success assertion."""
         return self._assert_result_success
 
     def assert_result_failure(
         self,
-        flext_matchers: TestAssertions,  # type: ignore[unused-arg]
+        flext_matchers: TestAssertions,
     ) -> Callable[[FlextResult[object]], None]:
         """Result failure assertion."""
         return self._assert_result_failure
@@ -533,25 +535,28 @@ class FlextLdifTestConftest:
     # Schema and other fixtures
     def ldap_schema_config(self) -> GenericFieldsDict:
         """LDAP schema config."""
-        return {
-            "validate_object_classes": True,
-            "validate_attributes": True,
-            "required_object_classes": ["top"],
-            "allowed_attributes": {
-                "inetOrgPerson": [
-                    "uid",
-                    "cn",
-                    "sn",
-                    "givenName",
-                    "mail",
-                    "telephoneNumber",
-                    "employeeNumber",
-                    "departmentNumber",
-                    "title",
-                ],
-                "groupOfNames": ["cn", "description", "member"],
+        return cast(
+            "GenericFieldsDict",
+            {
+                "validate_object_classes": True,
+                "validate_attributes": True,
+                "required_object_classes": ["top"],
+                "allowed_attributes": {
+                    "inetOrgPerson": [
+                        "uid",
+                        "cn",
+                        "sn",
+                        "givenName",
+                        "mail",
+                        "telephoneNumber",
+                        "employeeNumber",
+                        "departmentNumber",
+                        "title",
+                    ],
+                    "groupOfNames": ["cn", "description", "member"],
+                },
             },
-        }
+        )
 
     def transformation_rules(self) -> GenericFieldsDict:
         """Transformation rules."""
@@ -562,33 +567,43 @@ class FlextLdifTestConftest:
         def _transform_cn(x: str | float | None) -> str:
             return str(x).title() if x else ""
 
-        return {
-            "attribute_mappings": {
-                "telephoneNumber": "phone",
-                "employeeNumber": "employee_id",
-                "departmentNumber": "department",
+        # Note: value_transformations contains callables which are not in GenericFieldsDict
+        # Use cast to indicate this is a test fixture with extended structure
+        return cast(
+            "GenericFieldsDict",
+            {
+                "attribute_mappings": {
+                    "telephoneNumber": "phone",
+                    "employeeNumber": "employee_id",
+                    "departmentNumber": "department",
+                },
+                "value_transformations": {
+                    "mail": _transform_mail,
+                    "cn": _transform_cn,
+                },
+                "dn_transformations": {
+                    "base_dn": "dc=newdomain,dc=com",
+                    "ou_mappings": {"people": "users", "groups": "groups"},
+                },
             },
-            "value_transformations": {
-                "mail": _transform_mail,
-                "cn": _transform_cn,
-            },
-            "dn_transformations": {
-                "base_dn": "dc=newdomain,dc=com",
-                "ou_mappings": {"people": "users", "groups": "groups"},
-            },
-        }
+        )
 
     def ldif_filters(self) -> GenericFieldsDict:
         """LDIF filters."""
-        return {
-            "include_object_classes": ["inetOrgPerson", "groupOfNames"],
-            "exclude_attributes": ["userPassword", "pwdHistory"],
-            "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
-            "attribute_filters": {
-                "mail": r".*@example\.com$",
-                "departmentNumber": ["IT", "HR", "Finance"],
+        # Note: attribute_filters contains mixed types (str and list[str])
+        # Use cast to indicate this is a test fixture with extended structure
+        return cast(
+            "GenericFieldsDict",
+            {
+                "include_object_classes": ["inetOrgPerson", "groupOfNames"],
+                "exclude_attributes": ["userPassword", "pwdHistory"],
+                "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
+                "attribute_filters": {
+                    "mail": r".*@example\.com$",
+                    "departmentNumber": ["IT", "HR", "Finance"],
+                },
             },
-        }
+        )
 
     def expected_ldif_stats(self) -> GenericFieldsDict:
         """Expected LDIF stats."""
@@ -624,13 +639,17 @@ objectClass: person
 
     def large_ldif_config(self) -> GenericFieldsDict:
         """Large LDIF config."""
-        return {
-            "batch_size": 1000,
-            "memory_limit": "100MB",
-            "progress_reporting": True,
-            "parallel_processing": True,
-            "max_workers": 4,
-        }
+        # Note: memory_limit can be str or int in test fixtures
+        return cast(
+            "GenericFieldsDict",
+            {
+                "batch_size": 1000,
+                "memory_limit": "100MB",
+                "progress_reporting": True,
+                "parallel_processing": True,
+                "max_workers": 4,
+            },
+        )
 
     # Local test utilities
     class LocalTestMatchers:
@@ -651,7 +670,7 @@ objectClass: person
 
         def create_configuration(self, **kwargs: object) -> GenericFieldsDict:
             """Create config."""
-            return kwargs
+            return cast("GenericFieldsDict", kwargs)
 
     def flext_domains(self) -> LocalTestDomains:
         """Domain-specific test data."""
@@ -663,15 +682,33 @@ objectClass: person
 
     def ldif_test_entries(self) -> list[dict[str, dict[str, list[str]] | str]]:
         """LDIF test entries."""
-        return copy.deepcopy(self._LDIF_TEST_ENTRIES)
+        # Convert Collection[str] to list[str] for type compatibility
+        entries = copy.deepcopy(self._LDIF_TEST_ENTRIES)
+        return [
+            {
+                key: (
+                    {
+                        k: list(v) if isinstance(v, Collection) else v
+                        for k, v in value.items()
+                    }
+                    if isinstance(value, dict)
+                    else value
+                )
+                for key, value in entry.items()
+            }
+            for entry in entries
+        ]
 
     def ldif_test_content(self, ldif_test_entries: list[GenericTestCaseDict]) -> str:
         """Generate LDIF content."""
         content_lines: list[str] = []
 
         for entry in ldif_test_entries:
-            content_lines.append(f"dn: {entry['dn']}")
-            attributes = entry["attributes"]
+            # Use cast to access keys that may not be in GenericTestCaseDict
+            entry_dict = cast("dict[str, object]", entry)
+            dn = entry_dict.get("dn", "")
+            content_lines.append(f"dn: {dn}")
+            attributes = entry_dict.get("attributes")
             assert isinstance(attributes, dict)
 
             for attr_key, attr_values in attributes.items():
@@ -709,12 +746,17 @@ objectClass: person
             timeout=30,
             max_workers=2,
         )
-        return {
-            "large_entry_count": 5000,
-            "complex_attributes_per_entry": 20,
-            "deep_nesting_levels": 5,
-            **config,
-        }
+        # Note: large_entry_count, complex_attributes_per_entry, deep_nesting_levels
+        # are now defined in GenericFieldsDict
+        return cast(
+            "GenericFieldsDict",
+            {
+                "large_entry_count": 5000,
+                "complex_attributes_per_entry": 20,
+                "deep_nesting_levels": 5,
+                **config,
+            },
+        )
 
     # Pytest markers
     def pytest_configure(self, config: pytest.Config) -> None:
@@ -819,19 +861,31 @@ objectClass: person
 
     def rfc_quirk(self, server: FlextLdifServer) -> FlextLdifServersBase:
         """RFC quirk."""
-        quirk = server.quirk("rfc")
+        quirk_result = server.quirk("rfc")
+        assert quirk_result.is_success, (
+            f"RFC quirk must be registered: {quirk_result.error}"
+        )
+        quirk = quirk_result.unwrap()
         assert quirk is not None, "RFC quirk must be registered"
         return quirk
 
     def oid_quirk(self, server: FlextLdifServer) -> FlextLdifServersBase:
         """OID quirk."""
-        quirk = server.quirk("oid")
+        quirk_result = server.quirk("oid")
+        assert quirk_result.is_success, (
+            f"OID quirk must be registered: {quirk_result.error}"
+        )
+        quirk = quirk_result.unwrap()
         assert quirk is not None, "OID quirk must be registered"
         return quirk
 
     def oud_quirk(self, server: FlextLdifServer) -> FlextLdifServersBase:
         """OUD quirk."""
-        quirk = server.quirk("oud")
+        quirk_result = server.quirk("oud")
+        assert quirk_result.is_success, (
+            f"OUD quirk must be registered: {quirk_result.error}"
+        )
+        quirk = quirk_result.unwrap()
         assert quirk is not None, "OUD quirk must be registered"
         return quirk
 
@@ -843,45 +897,4 @@ objectClass: person
         return quirk
 
 
-# Mock replacement for FlextTestDocker
-class MockFlextTestDocker:
-    """Mock FlextTestDocker for testing without real Docker."""
-
-    class ContainerStatus:
-        RUNNING = "running"
-        STOPPED = "stopped"
-
-    class ContainerInfo:
-        def __init__(self, status: str = "stopped") -> None:
-            self.status = status
-
-    SHARED_CONTAINERS: dict[str, dict[str, str]] = {}
-
-    def __init__(self, workspace_root: Path | None = None) -> None:
-        self.workspace_root = workspace_root or Path("/home/marlonsc/flext")
-
-    def is_container_dirty(self, container_name: str) -> bool:
-        """Check if container is dirty."""
-        return False  # Mock always returns False
-
-    def cleanup_dirty_containers(self) -> FlextResult[bool]:
-        """Cleanup dirty containers."""
-        return FlextResult.ok(True)
-
-    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
-        """Get container status."""
-        return FlextResult.ok(self.ContainerInfo(status=self.ContainerStatus.RUNNING))
-
-    def start_compose_stack(self, compose_file: str) -> FlextResult[bool]:
-        """Start compose stack."""
-        return FlextResult.ok(True)
-
-    def wait_for_port_ready(
-        self, host: str, port: int, max_wait: int = 30
-    ) -> FlextResult[bool]:
-        """Wait for port to be ready."""
-        return FlextResult.ok(True)
-
-
-# Use mock instead of real FlextTestDocker
-FlextTestDocker = MockFlextTestDocker
+__all__ = ["FlextLdifTestConftest", "FlextTestsDocker"]

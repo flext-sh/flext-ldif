@@ -36,13 +36,17 @@ Usage:
 
 from __future__ import annotations
 
+
 from collections.abc import Sequence
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from flext_core import FlextResult
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.configs import CaseFoldOption
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif._utilities.transformers import Normalize, Transform
+from flext_ldif.models import m
 
 # =========================================================================
 # DN FLUENT OPERATIONS
@@ -96,8 +100,6 @@ class DnOps:
         if self._error:
             return self
 
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
         result = FlextLdifUtilitiesDN.norm(self._dn)
         if result.is_failure:
             self._error = result.error
@@ -117,14 +119,14 @@ class DnOps:
     def clean(
         self,
         *,
-        spaces: bool = True,
-        escapes: bool = True,
+        _spaces: bool = True,
+        _escapes: bool = True,
     ) -> Self:
         """Clean the DN (remove extra whitespace, normalize escapes).
 
         Args:
-            spaces: Clean whitespace
-            escapes: Normalize escape sequences
+            _spaces: Clean whitespace (not yet implemented)
+            _escapes: Normalize escape sequences (not yet implemented)
 
         Returns:
             Self for chaining
@@ -132,8 +134,6 @@ class DnOps:
         """
         if self._error:
             return self
-
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
         # clean_dn returns str directly, not FlextResult
         try:
@@ -157,8 +157,6 @@ class DnOps:
         """
         if self._error:
             return self
-
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
         # Business Rule: Replace base DN in DN string for server migration
         # Uses transform_dn_attribute which handles single DN string transformation
@@ -190,8 +188,6 @@ class DnOps:
         if self._error:
             return FlextResult.fail(self._error)
 
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
         return FlextLdifUtilitiesDN.extract_rdn(self._dn)
 
     def extract_parent(self) -> FlextResult[str]:
@@ -203,8 +199,6 @@ class DnOps:
         """
         if self._error:
             return FlextResult.fail(self._error)
-
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
         return FlextLdifUtilitiesDN.extract_parent_dn(self._dn)
 
@@ -223,8 +217,6 @@ class DnOps:
         if self._error:
             return FlextResult.fail(self._error)
 
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
         # split() returns list[str] directly, wrap in FlextResult
         rdn_components = FlextLdifUtilitiesDN.split(self._dn)
         return FlextResult.ok(rdn_components)
@@ -242,11 +234,9 @@ class DnOps:
         if self._error:
             return False
 
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
         return FlextLdifUtilitiesDN.is_under_base(self._dn, base)
 
-    def compare(self, other: str, *, ignore_case: bool = True) -> bool:
+    def compare(self, other: str, *, _ignore_case: bool = True) -> bool:
         """Compare with another DN.
 
         Business Rule:
@@ -256,7 +246,7 @@ class DnOps:
 
         Args:
             other: DN to compare with
-            ignore_case: Ignore case differences (default: True per RFC 4514)
+            _ignore_case: Ignore case differences (default: True per RFC 4514)
 
         Returns:
             True if DNs are equivalent (compare_dns returns 0), False otherwise
@@ -264,8 +254,6 @@ class DnOps:
         """
         if self._error:
             return False
-
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
         compare_result = FlextLdifUtilitiesDN.compare_dns(self._dn, other)
         if compare_result.is_failure:
@@ -286,8 +274,6 @@ class DnOps:
         if self._error:
             return FlextResult.fail(self._error)
 
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
         # Validate each RDN value separately
         # is_valid_dn_string validates individual RDN values, not full DN strings
         components = FlextLdifUtilitiesDN.split(self._dn)
@@ -298,7 +284,8 @@ class DnOps:
                 continue
             _, _, value = comp.partition("=")
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                value.strip(), strict=strict
+                value.strip(),
+                strict=strict,
             )
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
@@ -366,7 +353,7 @@ class EntryOps:
 
     __slots__ = ("_entry", "_error")
 
-    def __init__(self, entry: FlextLdifModelsDomains.Entry) -> None:
+    def __init__(self, entry: m.Entry) -> None:
         """Initialize entry operations.
 
         Args:
@@ -394,8 +381,6 @@ class EntryOps:
         """
         if self._error:
             return self
-
-        from flext_ldif._utilities.transformers import Normalize
 
         transformer = Normalize.dn(case=case, validate=validate)
         result = transformer.apply(self._entry)
@@ -427,8 +412,6 @@ class EntryOps:
         """
         if self._error:
             return self
-
-        from flext_ldif._utilities.transformers import Normalize
 
         transformer = Normalize.attrs(
             case_fold_names=case_fold_names,
@@ -474,10 +457,10 @@ class EntryOps:
         else:
             new_attrs[name] = list(values)
 
-        from flext_ldif._models.domain import FlextLdifModelsDomains as Models
-
-        new_attributes = Models.LdifAttributes(attributes=new_attrs)
-        self._entry = self._entry.model_copy(update={"attributes": new_attributes})
+        # Use cast for model_copy update to avoid type checker strictness
+        new_attributes = m.LdifAttributes(attributes=new_attrs)
+        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        self._entry = self._entry.model_copy(update=update_dict)
 
         return self
 
@@ -493,8 +476,6 @@ class EntryOps:
         """
         if self._error:
             return self
-
-        from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
         # Business Rule: Remove specified attributes from entry for data sanitization
         # remove_attributes expects entry and attributes list (positional args)
@@ -538,10 +519,10 @@ class EntryOps:
             else:
                 new_attrs[key] = values
 
-        from flext_ldif._models.domain import FlextLdifModelsDomains as Models
-
-        new_attributes = Models.LdifAttributes(attributes=new_attrs)
-        self._entry = self._entry.model_copy(update={"attributes": new_attributes})
+        # Use cast for model_copy update to avoid type checker strictness
+        new_attributes = m.LdifAttributes(attributes=new_attrs)
+        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        self._entry = self._entry.model_copy(update=update_dict)
 
         return self
 
@@ -563,8 +544,6 @@ class EntryOps:
         """
         if self._error:
             return self
-
-        from flext_ldif._utilities.transformers import Transform
 
         transformer = Transform.filter_attrs(include=include, exclude=exclude)
         result = transformer.apply(self._entry)
@@ -594,8 +573,6 @@ class EntryOps:
         if self._error or not classes:
             return False
 
-        from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-
         if mode == "any":
             return any(
                 FlextLdifUtilitiesEntry.has_objectclass(self._entry, cls)
@@ -608,12 +585,12 @@ class EntryOps:
 
     def convert_booleans(
         self,
-        format: Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"] = "TRUE/FALSE",
+        format_str: Literal["TRUE/FALSE", "true/false", "1/0", "yes/no"] = "TRUE/FALSE",
     ) -> Self:
         """Convert boolean attribute values.
 
         Args:
-            format: Target boolean format
+            format_str: Target boolean format
 
         Returns:
             Self for chaining
@@ -622,9 +599,7 @@ class EntryOps:
         if self._error:
             return self
 
-        from flext_ldif._utilities.transformers import Transform
-
-        transformer = Transform.convert_booleans(format)
+        transformer = Transform.convert_booleans(boolean_format=format_str)
         result = transformer.apply(self._entry)
 
         if result.is_failure:
@@ -636,12 +611,12 @@ class EntryOps:
 
     def attach_metadata(
         self,
-        **metadata: str | float | bool | list[str] | None,
+        **_metadata: str | float | bool | list[str] | None,
     ) -> Self:
         """Attach metadata to the entry.
 
         Args:
-            **metadata: Key-value pairs to attach as metadata
+            **_metadata: Key-value pairs to attach as metadata (not yet implemented)
 
         Returns:
             Self for chaining
@@ -651,14 +626,10 @@ class EntryOps:
             return self
 
         # Business Rule: Attach metadata to entry for audit trail and transformation tracking
-        # TODO: Implement attach_metadata method in FlextLdifUtilitiesMetadata
-        # For now, metadata attachment is not yet implemented
+        # Note: Metadata attachment is not yet implemented
         # This would store metadata in entry.metadata field for round-trip conversions
-
-        # TODO: When attach_metadata is implemented, use it here
-        # FlextLdifUtilitiesMetadata.attach_metadata(
-        #     entry=self._entry,
-        #     metadata=dict(metadata),
+        # When implemented, use FlextLdifUtilitiesMetadata.attach_metadata() here
+        #     metadata=dict(_metadata),
         # )
         # For now, just store error to indicate not implemented
         self._error = "attach_metadata not yet implemented"
@@ -691,8 +662,6 @@ class EntryOps:
 
         # Validate DN - validate each RDN value separately
         # is_valid_dn_string validates individual RDN values, not full DN strings
-        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-
         dn_str = (
             self._entry.dn.value
             if hasattr(self._entry.dn, "value")
@@ -707,7 +676,8 @@ class EntryOps:
                 continue
             _, _, value = comp.partition("=")
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                value.strip(), strict=strict
+                value.strip(),
+                strict=strict,
             )
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
@@ -717,7 +687,7 @@ class EntryOps:
 
         return FlextResult.ok(True)
 
-    def build(self) -> FlextResult[FlextLdifModelsDomains.Entry]:
+    def build(self) -> FlextResult[m.Entry]:
         """Build and return the final entry.
 
         Returns:
@@ -730,7 +700,7 @@ class EntryOps:
         return FlextResult.ok(self._entry)
 
     @property
-    def entry(self) -> FlextLdifModelsDomains.Entry:
+    def entry(self) -> m.Entry:
         """Get current entry (may have errors).
 
         Returns:

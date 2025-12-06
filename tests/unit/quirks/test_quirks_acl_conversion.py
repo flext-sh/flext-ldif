@@ -1,65 +1,12 @@
-"""ACL conversion validation between OID and OUD formats using real fixtures.
-
-✅ STATUS: ACL CONVERSION FULLY WORKING (Architecture Fixed 2025-10-24)
-========================================================================
-
-ARCHITECTURE FIX IMPLEMENTED:
-- Added acl attribute to FlextLdifServersOid and FlextLdifServersOud
-- ACL quirk instances now accessible via oid.acl and oud.acl
-- Conversion matrix updated to use nested acl attribute instead of casting
-- Result: ALL ACL conversions now WORK correctly (OID ↔ OUD bidirectional)
-
-VALIDATED CONVERSIONS:
-1. ✅ OID orclaci → OUD aci (anonymous, group-based, attribute-level)
-2. ✅ OID orclentrylevelaci → OUD aci (entry-level ACLs)
-3. ✅ OUD aci → OID orclaci (REDACTED_LDAP_BIND_PASSWORD access, anonymous read, LDAP URLs)
-4. ✅ DN case normalization via DN registry
-5. ✅ Permission mapping between formats
-
-Tests validate real ACL conversions between Oracle Internet Directory (OID)
-and Oracle Unified Directory (OUD) formats using production fixture data.
-
-ACL Format Differences:
-======================
-
-OID Format:
------------
-- orclaci: Standard OID ACLs
-  Format: orclaci: access to entry/attr=(...) by <subject> (<perms>)
-  Example: orclaci: access to entry by * (browse)
-
-- orclentrylevelaci: Entry-level OID ACLs
-  Format: orclentrylevelaci: access to entry/attr=(...) by <subject> (<perms>)
-  Example: orclentrylevelaci: access to entry by * (browse,noadd,nodelete)
-
-OUD Format (Standard LDAP ACI):
--------------------------------
-- aci: Standard LDAP ACI format (RFC 4876-style)
-  Format: aci: (targetattr="...")(version 3.0; acl "name"; allow/deny (perms) userdn/groupdn="ldap:///...";)
-  Example: aci: (targetattr="*")(version 3.0; acl "Admin access"; allow (all) groupdn="ldap:///cn=Admins,...";)
-
-Key Conversion Challenges:
-==========================
-1. Attribute format: orclaci/orclentrylevelaci → aci
-2. Subject format: by group="dn" → groupdn="ldap:///dn"
-3. Subject format: by * → userdn="ldap:///anyone"
-4. Permission mapping: browse,add,delete → read,write,add,delete
-5. Multi-line ACI handling (OUD)
-6. DN case normalization (especially for OUD targets)
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests.fixtures.loader import FlextLdifFixtures
+from tests import s
 
 
+# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
 # ACL conversion test constants - defined at top of module without type checking
 class ACLConversionConstants:
     """Constants for ACL conversion tests."""
@@ -79,7 +26,7 @@ class ACLConversionConstants:
 ACL_CONVERSION_CONSTANTS = ACLConversionConstants()
 
 
-class TestOIDToOUDACLConversion:
+class TestsFlextLdifOIDToOUDACLConversion(s):
     """Test ACL conversion from OID format to OUD format (orclaci → aci)."""
 
     def test_oid_orclaci_simple_anonymous_access(

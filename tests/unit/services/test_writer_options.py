@@ -1,32 +1,3 @@
-"""Comprehensive unit tests for FlextLdifWriter format options via FlextLdifConfig.
-
-MODULES TESTED:
-- flext_ldif.services.writer (FlextLdifWriter, LdifSerializer)
-- flext_ldif.utilities (FlextLdifUtilities.ACL.sanitize_acl_name)
-
-SCOPE:
-- All WriteFormatOptions functionality via FlextLdifConfig
-- Boolean options (enabled/disabled)
-- Line width and folding (RFC 2849 compliance)
-- Base64 encoding for binary data
-- Attribute normalization and ordering
-- ACL format handling
-- Metadata and comment generation
-- File output with options
-- Edge cases (empty entries, invalid servers, minimal widths)
-
-ARCHITECTURE:
-- FlextLdifConfig (registered namespace) is source of truth for all LDIF settings
-- Tests use config.get_namespace() to access LDIF configuration
-- Parametrized tests dramatically reduce code duplication
-- Enum mappings centralize field name translations
-- Single class with nested classes for organization
-- Factories and helpers for code reduction
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import re
@@ -36,18 +7,22 @@ from typing import cast
 
 import pytest
 from flext_core import FlextConfig
+from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.utilities import FlextTestsUtilities
 
-from flext_ldif import FlextLdifModels, FlextLdifWriter
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
-from tests.fixtures.constants import Writer
+from tests import c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 def config_to_write_options(
     config: FlextLdifConfig,
-) -> FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions:
+) -> m.WriteFormatOptions | m.WriteOptions:
     """Convert FlextLdifConfig to WriteOptions or WriteFormatOptions."""
     # Check if WriteFormatOptions fields are present
     has_format_options = any(
@@ -74,13 +49,14 @@ def config_to_write_options(
             if hasattr(config, config_key):
                 value = getattr(config, config_key, None)
                 if value is not None and isinstance(
-                    value, (bool, int, str, list, frozenset, dict)
+                    value,
+                    (bool, int, str, list, frozenset, dict),
                 ):
                     format_opts_dict[model_key] = value
-        return FlextLdifModels.WriteFormatOptions.model_validate(format_opts_dict)
+        return m.WriteFormatOptions.model_validate(format_opts_dict)
 
     # Create basic WriteOptions
-    return FlextLdifModelsDomains.WriteOptions(
+    return m.WriteOptions(
         format="rfc2849",
         base_dn=None,
         hidden_attrs=[],
@@ -125,7 +101,7 @@ CONFIG_TO_MODEL_FIELD_MAP = {
 }
 
 
-class TestWriterFormatOptions:
+class TestsFlextLdifWriterFormatOptions(s):
     """Test all WriteFormatOptions functionality via FlextLdifConfig."""
 
     @pytest.fixture
@@ -141,18 +117,18 @@ class TestWriterFormatOptions:
         return FlextConfig.get_global_instance()
 
     @pytest.fixture
-    def sample_entry(self) -> FlextLdifModels.Entry:
+    def sample_entry(self) -> m.Entry:
         """Create a sample entry for testing."""
         return self._create_entry(
             dn="cn=John Doe,ou=people,dc=example,dc=com",
             attributes={
-                "objectClass": ["person", "organizationalPerson"],
-                "cn": ["John Doe"],
-                "sn": ["Doe"],
-                "givenName": ["John"],
-                "mail": ["john.doe@example.com"],
-                "telephoneNumber": ["+1-555-123-4567"],
-                "description": [
+                c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.ORGANIZATIONAL_PERSON],
+                c.Names.CN: ["John Doe"],
+                c.Names.SN: ["Doe"],
+                c.Names.GIVEN_NAME: ["John"],
+                c.Names.MAIL: ["john.doe@example.com"],
+                c.Names.TELEPHONE_NUMBER: ["+1-555-123-4567"],
+                c.Names.DESCRIPTION: [
                     "A very long description that should definitely exceed the normal "
                     "line width limit for LDIF formatting and trigger line folding "
                     "behavior according to RFC 2849 specifications",
@@ -161,20 +137,20 @@ class TestWriterFormatOptions:
         )
 
     @pytest.fixture
-    def entry_with_metadata(self) -> FlextLdifModels.Entry:
+    def entry_with_metadata(self) -> m.Entry:
         """Create an entry with metadata for testing."""
-        extensions = FlextLdifModels.DynamicMetadata.model_validate({
+        extensions = m.DynamicMetadata.model_validate({
             "attribute_order": [
                 "objectClass",
                 "cn",
                 "sn",
                 "mail",
-                "telephoneNumber",
+                c.Names.TELEPHONE_NUMBER,
             ],
-            "hidden_attributes": ["telephoneNumber"],
+            "hidden_attributes": [c.Names.TELEPHONE_NUMBER],
             "source_file": "test.ldif",
         })
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="rfc",
             target_server_type="rfc",
             extensions=extensions,
@@ -182,19 +158,19 @@ class TestWriterFormatOptions:
         return self._create_entry(
             dn="cn=Jane Smith,ou=people,dc=example,dc=com",
             attributes={
-                "objectClass": ["person"],
-                "cn": ["Jane Smith"],
-                "sn": ["Smith"],
-                "mail": ["jane.smith@example.com"],
-                "telephoneNumber": ["+1-555-987-6543"],
+                c.Names.OBJECTCLASS: [c.Names.PERSON],
+                c.Names.CN: ["Jane Smith"],
+                c.Names.SN: ["Smith"],
+                c.Names.MAIL: ["jane.smith@example.com"],
+                c.Names.TELEPHONE_NUMBER: ["+1-555-987-6543"],
                 "emptyAttr": [""],
-                "description": [""],
+                c.Names.DESCRIPTION: [""],
             },
             metadata=metadata,
         )
 
     @pytest.fixture
-    def entry_with_binary_data(self) -> FlextLdifModels.Entry:
+    def entry_with_binary_data(self) -> m.Entry:
         """Create an entry with binary/special data for base64 testing."""
         return self._create_entry(
             dn="cn=binary-test,dc=example,dc=com",
@@ -206,21 +182,21 @@ class TestWriterFormatOptions:
                 "jpegPhoto": [
                     "binary data with \x00 null bytes and \x01 control chars",
                 ],
-                "description": ["value\x00with\x01null"],
+                c.Names.DESCRIPTION: ["value\x00with\x01null"],
                 "comment": ["ends with null\x00"],
                 "specialChars": [": colon at start"],
             },
         )
 
     @pytest.fixture
-    def entry_with_aci_and_acl_metadata(self) -> FlextLdifModels.Entry:
+    def entry_with_aci_and_acl_metadata(self) -> m.Entry:
         """Create an entry with aci attribute and ACL_ORIGINAL_FORMAT metadata."""
-        extensions = FlextLdifModels.DynamicMetadata.model_validate({
+        extensions = m.DynamicMetadata.model_validate({
             FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: (
                 "access to attr=(cn,sn) by self (read) by * (search)"
             ),
         })
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="oud",
             target_server_type="oud",
             extensions=extensions,
@@ -242,18 +218,18 @@ class TestWriterFormatOptions:
     def _create_entry(
         dn: str,
         attributes: dict[str, list[str]],
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
-    ) -> FlextLdifModels.Entry:
+        metadata: m.QuirkMetadata | None = None,
+    ) -> m.Entry:
         """Factory method to create Entry with reduced boilerplate."""
-        dn_obj = FlextLdifModels.DistinguishedName(value=dn)
-        attrs_obj = FlextLdifModels.LdifAttributes(attributes=attributes)
+        dn_obj = m.DistinguishedName(value=dn)
+        attrs_obj = m.LdifAttributes(attributes=attributes)
         if metadata is not None:
-            return FlextLdifModels.Entry(
+            return m.Entry(
                 dn=dn_obj,
                 attributes=attrs_obj,
                 metadata=metadata,
             )
-        return FlextLdifModels.Entry(
+        return m.Entry(
             dn=dn_obj,
             attributes=attrs_obj,
         )
@@ -261,7 +237,7 @@ class TestWriterFormatOptions:
     def _write_with_config(
         self,
         writer: FlextLdifWriter,
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         config_overrides: dict[str, str | int | float | bool | list[str] | None],
         target_server: (
             FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str | None
@@ -288,9 +264,7 @@ class TestWriterFormatOptions:
             )
         )
 
-        options: (
-            FlextLdifModels.WriteFormatOptions | FlextLdifModelsDomains.WriteOptions
-        )
+        options: m.WriteFormatOptions | m.WriteOptions
         if has_format_options:
             # Create WriteFormatOptions from config_overrides
             format_opts_dict: dict[str, object] = {}
@@ -299,9 +273,7 @@ class TestWriterFormatOptions:
                     value = config_overrides[config_key]
                     if isinstance(value, (bool, int, str, list, frozenset, dict)):
                         format_opts_dict[model_key] = value
-            options = FlextLdifModels.WriteFormatOptions.model_validate(
-                format_opts_dict
-            )
+            options = m.WriteFormatOptions.model_validate(format_opts_dict)
         else:
             # Create basic WriteOptions
             sort_entries_raw = config_overrides.get("ldif_write_sort_attributes", False)
@@ -311,7 +283,8 @@ class TestWriterFormatOptions:
                 else False
             )
             include_comments_raw = config_overrides.get(
-                "ldif_write_include_dn_comments", False
+                "ldif_write_include_dn_comments",
+                False,
             )
             include_comments: bool = (
                 bool(include_comments_raw)
@@ -319,14 +292,15 @@ class TestWriterFormatOptions:
                 else False
             )
             base64_encode_binary_raw = config_overrides.get(
-                "ldif_write_base64_encode_binary", False
+                "ldif_write_base64_encode_binary",
+                False,
             )
             base64_encode_binary: bool = (
                 bool(base64_encode_binary_raw)
                 if isinstance(base64_encode_binary_raw, (bool, int))
                 else False
             )
-            options = FlextLdifModelsDomains.WriteOptions(
+            options = m.WriteOptions(
                 format="rfc2849",
                 sort_entries=sort_entries,
                 include_comments=include_comments,
@@ -396,8 +370,8 @@ class TestWriterFormatOptions:
         test_value: bool,
         expected_pattern: str,
         check_absence: bool,
-        sample_entry: FlextLdifModels.Entry,
-        entry_with_metadata: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
+        entry_with_metadata: m.Entry,
     ) -> None:
         """Test boolean options with parametrized enabled/disabled values."""
         # Use appropriate entry based on option
@@ -452,7 +426,7 @@ class TestWriterFormatOptions:
     def test_line_width(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
         line_width: int,
     ) -> None:
         """Test various line_width settings."""
@@ -468,14 +442,18 @@ class TestWriterFormatOptions:
             for line in lines
             if len(line) > line_width and not line.startswith(" ")
         ]
-        assert len(long_lines) == 0, f"Found unfolded lines longer than {line_width}"
+        FlextTestsMatchers.assert_length_equals(
+            long_lines,
+            0,
+            f"Found unfolded lines longer than {line_width}",
+        )
 
     def test_fold_long_lines_rfc_compliance(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
     ) -> None:
-        """Test that RFC 2849 compliance is maintained even with fold_long_lines=False."""
+        """Test RFC 2849 compliance maintained even with fold_long_lines=False."""
         output = self._write_with_config(
             writer_service,
             [sample_entry],
@@ -495,7 +473,7 @@ class TestWriterFormatOptions:
     def test_respect_attribute_order(
         self,
         writer_service: FlextLdifWriter,
-        entry_with_metadata: FlextLdifModels.Entry,
+        entry_with_metadata: m.Entry,
     ) -> None:
         """Test respect_attribute_order preserves metadata order."""
         output = self._write_with_config(
@@ -519,7 +497,13 @@ class TestWriterFormatOptions:
             if attr_name not in actual_order:
                 actual_order.append(attr_name)
 
-        expected_order = ["objectClass", "cn", "sn", "mail", "telephoneNumber"]
+        expected_order = [
+            c.Names.OBJECTCLASS,
+            c.Names.CN,
+            c.Names.SN,
+            c.Names.MAIL,
+            c.Names.TELEPHONE_NUMBER,
+        ]
         for i, expected_attr in enumerate(expected_order):
             if i < len(actual_order):
                 assert actual_order[i] == expected_attr
@@ -532,7 +516,7 @@ class TestWriterFormatOptions:
     def test_base64_encode_binary(
         self,
         writer_service: FlextLdifWriter,
-        entry_with_binary_data: FlextLdifModels.Entry,
+        entry_with_binary_data: m.Entry,
         encode_binary: bool,
     ) -> None:
         """Test base64_encode_binary option."""
@@ -605,7 +589,7 @@ class TestWriterFormatOptions:
     def test_use_original_acl_format_as_name(
         self,
         writer_service: FlextLdifWriter,
-        entry_with_aci_and_acl_metadata: FlextLdifModels.Entry,
+        entry_with_aci_and_acl_metadata: m.Entry,
         use_original: bool,
     ) -> None:
         """Test use_original_acl_format_as_name option."""
@@ -632,7 +616,7 @@ class TestWriterFormatOptions:
     def test_combined_options(
         self,
         writer_service: FlextLdifWriter,
-        entry_with_metadata: FlextLdifModels.Entry,
+        entry_with_metadata: m.Entry,
     ) -> None:
         """Test combination of multiple write options."""
         output = self._write_with_config(
@@ -664,7 +648,7 @@ class TestWriterFormatOptions:
             for line in lines
             if len(line) > 60 and not line.startswith(" ") and not line.startswith("#")
         ]
-        assert len(long_lines) == 0
+        FlextTestsMatchers.assert_length_equals(long_lines, 0)
 
     # =========================================================================
     # Output Target Tests
@@ -673,7 +657,7 @@ class TestWriterFormatOptions:
     def test_file_output_with_options(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
         tmp_path: Path,
     ) -> None:
         """Test writing to file with options."""
@@ -698,7 +682,8 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        assert output_file.exists()
+
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
 
         content = output_file.read_text(encoding="utf-8")
         assert "version: 1" in content
@@ -707,7 +692,7 @@ class TestWriterFormatOptions:
     def test_non_string_output_targets_ignored(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
     ) -> None:
         """Test that _output_target parameter is ignored (for compatibility only).
 
@@ -746,7 +731,7 @@ class TestWriterFormatOptions:
     def test_minimal_line_width(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
     ) -> None:
         """Test edge case with minimal line width."""
         output = self._write_with_config(
@@ -762,7 +747,11 @@ class TestWriterFormatOptions:
         # Note: With a minimal width of 10 bytes, some lines may still exceed if they cannot be folded
         # (e.g., attribute names like "objectClass: person" = 19 bytes cannot be folded below 10)
         # This test verifies that the writer handles minimal width configuration without errors
-        assert len(output) > 0, "Output should not be empty"
+        FlextTestsMatchers.assert_length_greater_than(
+            output,
+            0,
+            "Output should not be empty",
+        )
         assert "dn:" in output or "DN:" in output, "Output should contain DN line"
 
     def test_empty_entries_list(self, writer_service: FlextLdifWriter) -> None:
@@ -783,7 +772,7 @@ class TestWriterFormatOptions:
     def test_invalid_server_type_with_options(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
     ) -> None:
         """Test that options don't interfere with server type validation."""
         FlextConfig.reset_global_instance()
@@ -817,7 +806,7 @@ class TestWriterFormatOptions:
     def test_default_options_behavior(
         self,
         writer_service: FlextLdifWriter,
-        sample_entry: FlextLdifModels.Entry,
+        sample_entry: m.Entry,
     ) -> None:
         """Test that default options produce expected output."""
         result = writer_service.write(
@@ -889,7 +878,7 @@ class TestWriterFormatOptions:
                 max_length=50,
             )
 
-            assert len(sanitized) == 50
+            FlextTestsMatchers.assert_length_equals(sanitized, 50)
             assert sanitized.endswith("...")
             assert was_sanitized
 

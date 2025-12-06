@@ -1,17 +1,3 @@
-"""Test suite for Cross-Server Migration.
-
-Modules tested: FlextLdif (write, parse)
-Scope: Cross-server migrations, RFC-as-hub strategy, OID↔OUD↔RFC conversions,
-round-trip validation, entry preservation
-
-Tests migrations between all server types to ensure perfect conversions.
-Uses RFC-as-hub strategy for all conversions. Uses real fixtures and parametrized tests.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
+from tests import s
 
 from .test_utils import FlextLdifTestUtils
 
@@ -40,7 +27,7 @@ def ldif_api() -> FlextLdif:
     return FlextLdif()
 
 
-class TestCrossServerMigration:
+class TestsFlextLdifCrossServerMigration(s):
     """Test migrations between server types using RFC-as-hub strategy."""
 
     def test_oid_to_oud_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
@@ -179,8 +166,8 @@ class TestCrossServerMigration:
         oud_entries = oud_result.unwrap()
 
         # Validate DNs are preserved (no data loss)
-        oid_dns = {e.dn.value for e in oid_entries}
-        oud_dns = {e.dn.value for e in oud_entries}
+        oid_dns = {e.dn.value for e in oid_entries if e.dn is not None}
+        oud_dns = {e.dn.value for e in oud_entries if e.dn is not None}
 
         # DN count should match
         assert len(oud_dns) == len(oid_dns), (
@@ -201,9 +188,10 @@ class TestCrossServerMigration:
         )
 
         # Get all attribute names from OID
-        oid_attr_names = set()
+        oid_attr_names: set[str] = set()
         for entry in oid_entries[:5]:  # Sample first 5
-            oid_attr_names.update(entry.attributes.keys())
+            if entry.attributes is not None:
+                oid_attr_names.update(entry.attributes.keys())
 
         # Migrate to OUD
         output_path = tmp_path / "attr_preservation_test.ldif"
@@ -221,9 +209,10 @@ class TestCrossServerMigration:
         oud_entries = oud_result.unwrap()
 
         # Get all attribute names from OUD
-        oud_attr_names = set()
+        oud_attr_names: set[str] = set()
         for entry in oud_entries:
-            oud_attr_names.update(entry.attributes.keys())
+            if entry.attributes is not None:
+                oud_attr_names.update(entry.attributes.keys())
 
         # Should have attributes (transformed or preserved)
         assert len(oud_attr_names) > 0, "No attributes found in migrated entries"

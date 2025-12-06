@@ -1,30 +1,3 @@
-"""Test suite for FlextLdifWriter RFC compliance.
-
-Tests validate that FlextLdifWriter:
-1. Writes single and multiple entries correctly (RFC 2849)
-2. Supports string and file output targets
-3. Handles multi-value attributes correctly
-4. Provides entry statistics
-5. Validates server types
-6. Handles edge cases (empty lists, invalid servers)
-
-Modules tested:
-- flext_ldif.writer.FlextLdifWriter (RFC 2849 writing)
-- flext_ldif.models.FlextLdifModels.WriteFormatOptions (format options)
-- flext_ldif.models.FlextLdifModels.Entry (entry writing)
-
-Scope:
-- Single/multiple entry writing
-- String/file output targets
-- Statistics collection
-- Multi-value attributes
-- Empty entries handling
-- Server validation
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -33,11 +6,11 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers  # Mocked in conftest
+from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels, FlextLdifWriter
-from tests.fixtures.constants import DNs, Names, Values
-from tests.helpers.test_factories import FlextLdifTestFactories
+from flext_ldif import FlextLdifWriter
+from flext_ldif.models import m
+from tests import m, s
 
 
 class WriteTarget(StrEnum):
@@ -134,47 +107,47 @@ class WriterTestFactory:
     def create_format_options(
         *,
         base64_encode: bool = False,
-    ) -> FlextLdifModels.WriteFormatOptions:
+    ) -> m.WriteFormatOptions:
         """Create write format options."""
-        return FlextLdifModels.WriteFormatOptions(base64_encode_binary=base64_encode)
+        return m.WriteFormatOptions(base64_encode_binary=base64_encode)
 
     @classmethod
-    def create_simple_entry(cls) -> FlextLdifModels.Entry:
+    def create_simple_entry(cls) -> m.Entry:
         """Create a simple RFC-compliant entry."""
-        return FlextLdifTestFactories.create_entry(
-            dn=DNs.TEST_USER,
+        return m.Entry(
+            dn="cn=testuser,ou=people,dc=example,dc=com",
             attributes={
-                Names.CN: [Values.TEST],
-                Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
-                Names.SN: [f"{Values.TEST}-user"],
-                Names.MAIL: [Values.TEST_EMAIL],
+                "cn": ["testuser"],
+                "objectClass": ["person", "inetOrgPerson"],
+                "sn": ["testuser-user"],
+                "mail": ["testuser@example.com"],
             },
         )
 
     @classmethod
-    def create_multivalue_entry(cls) -> FlextLdifModels.Entry:
+    def create_multivalue_entry(cls) -> m.Entry:
         """Create entry with multiple values for same attribute."""
-        return FlextLdifTestFactories.create_entry(
-            dn=DNs.TEST_GROUP,
+        return m.Entry(
+            dn="cn=testgroup,ou=groups,dc=example,dc=com",
             attributes={
-                Names.CN: [Values.TEST],
-                Names.OBJECTCLASS: ["groupOfNames", Names.TOP],
+                "cn": ["testgroup"],
+                "objectClass": ["groupOfNames", "top"],
                 "member": [
-                    f"cn={Values.USER1},{DNs.EXAMPLE}",
-                    f"cn={Values.USER2},{DNs.EXAMPLE}",
-                    f"cn=user3,{DNs.EXAMPLE}",
+                    "cn=user1,dc=example,dc=com",
+                    "cn=user2,dc=example,dc=com",
+                    "cn=user3,dc=example,dc=com",
                 ],
             },
         )
 
     @classmethod
-    def create_second_entry(cls) -> FlextLdifModels.Entry:
+    def create_second_entry(cls) -> m.Entry:
         """Create a second RFC-compliant entry."""
-        return FlextLdifTestFactories.create_entry(
-            dn=f"cn=test2,{DNs.EXAMPLE}",
+        return m.Entry(
+            dn="cn=test2,dc=example,dc=com",
             attributes={
-                Names.CN: ["test2"],
-                Names.OBJECTCLASS: [Names.PERSON],
+                "cn": ["test2"],
+                "objectClass": ["person"],
             },
         )
 
@@ -184,7 +157,7 @@ def get_writer_tests() -> list[WriterTestCase]:
     return WRITER_TESTS
 
 
-class TestWriterRfc:
+class TestsFlextLdifsFlextLdifWriterRfc(s):
     """Comprehensive RFC writer tests.
 
     Tests all writer functionality using factories, parametrization, and helpers
@@ -229,10 +202,10 @@ class TestWriterRfc:
 
                 # Verify LDIF structure
                 assert content.startswith("version: 1\n")
-                assert f"dn: {DNs.TEST_USER}" in content
-                assert f"{Names.CN}: {Values.TEST}" in content
-                assert f"{Names.OBJECTCLASS}: {Names.PERSON}" in content
-                assert f"{Names.OBJECTCLASS}: {Names.INET_ORG_PERSON}" in content
+                assert "dn: cn=testuser,ou=people,dc=example,dc=com" in content
+                assert "cn: testuser" in content
+                assert "objectClass: person" in content
+                assert "objectClass: inetOrgPerson" in content
 
             case WriterTestType.MULTIPLE_ENTRIES:
                 # Test multiple entry writing
@@ -260,7 +233,7 @@ class TestWriterRfc:
                     f"Expected at least {expected_count} "
                     f"DN lines, found {len(dn_line_indices)}"
                 )
-                assert f"dn: {DNs.TEST_USER}" in content
+                assert "dn: cn=testuser,ou=people,dc=example,dc=com" in content
                 assert "dn: cn=test2,dc=example,dc=com" in content
 
             case WriterTestType.STATISTICS:
@@ -276,7 +249,7 @@ class TestWriterRfc:
                 unwrapped = FlextTestsMatchers.assert_success(result)
                 assert isinstance(unwrapped, str)
                 # Verify we have the entry in output
-                assert f"dn: {DNs.TEST_USER}" in unwrapped
+                assert "dn: cn=testuser,ou=people,dc=example,dc=com" in unwrapped
 
             case WriterTestType.MULTIVALUE:
                 # Test multi-value attributes
@@ -294,8 +267,8 @@ class TestWriterRfc:
 
                 # Check all member values are present
                 assert content.count("member: ") == test_case.expected_member_count
-                assert f"member: cn={Values.USER1},dc=example,dc=com" in content
-                assert f"member: cn={Values.USER2},dc=example,dc=com" in content
+                assert "member: cn=user1,dc=example,dc=com" in content
+                assert "member: cn=user2,dc=example,dc=com" in content
                 assert "member: cn=user3,dc=example,dc=com" in content
 
             case WriterTestType.EMPTY_LIST:
@@ -334,7 +307,7 @@ class TestWriterRfc:
 
 
 __all__ = [
-    "TestWriterRfc",
+    "TestsFlextLdifWriterRfc",
     "WriteTarget",
     "WriterTestFactory",
 ]

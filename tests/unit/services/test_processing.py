@@ -1,39 +1,12 @@
-"""Test suite for Processing Service - Batch and Parallel Entry Processing.
-
-Modules tested:
-- flext_ldif.services.processing.FlextLdifProcessing (batch and parallel entry processing)
-
-Scope:
-- Service initialization and execute pattern
-- Batch and parallel processing modes
-- Transform processor (with/without metadata, with processing stats)
-- Validate processor (valid entries, minimal attributes)
-- Custom batch size and max_workers configuration
-- Unknown processor error handling
-- Empty entry list handling
-
-Test Coverage:
-- All processing modes (batch, parallel)
-- All processor types (transform, validate)
-- Edge cases (empty lists, unknown processors, custom configuration)
-- Metadata handling (with/without metadata, processing stats)
-
-Uses Python 3.13 features, factories, constants, dynamic tests, and extensive helper reuse
-to reduce code while maintaining 100% behavior coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.processing import FlextLdifProcessing
-from tests.helpers.test_assertions import TestAssertions
+from tests import m, s
 
 
-class TestFlextLdifProcessing:
+class TestsTestFlextLdifProcessing(s):
     """Test FlextLdifProcessing service with consolidated parametrized tests.
 
     Uses nested classes for organization: TestServiceInitialization, TestProcessMethod,
@@ -64,7 +37,7 @@ class TestFlextLdifProcessing:
             """Test process with empty entry list."""
             service = FlextLdifProcessing()
             result = service.process("transform", [])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert processed == []
 
@@ -86,7 +59,7 @@ class TestFlextLdifProcessing:
             assert entry2.is_success
 
             result = service.process("transform", [entry1.unwrap(), entry2.unwrap()])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert len(processed) == 2
             # ProcessingResult is a Pydantic model, access attributes directly
@@ -110,7 +83,7 @@ class TestFlextLdifProcessing:
                 entries.append(entry_result.unwrap())
 
             result = service.process("transform", entries, parallel=True, max_workers=2)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert len(processed) == 5
             # ProcessingResult is a Pydantic model, access attributes directly
@@ -129,7 +102,7 @@ class TestFlextLdifProcessing:
             assert entry.is_success
 
             result = service.process("validate", [entry.unwrap()])
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert len(processed) == 1
             # ProcessingResult is a Pydantic model with dn and attributes
@@ -153,7 +126,7 @@ class TestFlextLdifProcessing:
                 entries.append(entry_result.unwrap())
 
             result = service.process("validate", entries, parallel=True, max_workers=3)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert len(processed) == 3
             # ProcessingResult is a Pydantic model with dn and attributes
@@ -194,7 +167,7 @@ class TestFlextLdifProcessing:
                 entries.append(entry_result.unwrap())
 
             result = service.process("transform", entries, batch_size=3)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert len(processed) == 10
 
@@ -213,7 +186,7 @@ class TestFlextLdifProcessing:
                 entries.append(entry_result.unwrap())
 
             result = service.process("transform", entries, parallel=True, max_workers=8)
-            TestAssertions.assert_success(result)
+            self.assert_success(result)
             processed = result.unwrap()
             assert len(processed) == 5
 
@@ -269,7 +242,7 @@ class TestFlextLdifProcessing:
             entry_obj = entry.unwrap()
 
             # Add processing_stats to metadata to test line 228
-            entry_obj.metadata.processing_stats = FlextLdifModels.EntryStatistics(
+            entry_obj.metadata.processing_stats = m.EntryStatistics(
                 rejection_reason=None,
             )
 

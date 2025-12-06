@@ -1,20 +1,3 @@
-"""Test suite for LDIF ACL Utilities.
-
-Modules tested: FlextLdifModels (AclTarget, AclSubject, AclPermissions, Acl)
-Scope: ACL component creation, unified ACL creation, error handling,
-type validation, server type variations
-
-Tests cover:
-- ComponentFactory.create_acl_components()
-- ComponentFactory.create_unified_acl() with various server types
-- Error handling and type validation
-Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from typing import cast
@@ -22,15 +5,16 @@ from typing import cast
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifConstants
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.models import m
+from tests import s
 
 
 # ===== ACL Component Factory Helpers (replaced FlextLdifUtilities) =====
 def create_acl_components_helper() -> FlextResult[
     tuple[
-        FlextLdifModelsDomains.AclTarget,
-        FlextLdifModelsDomains.AclSubject,
-        FlextLdifModelsDomains.AclPermissions,
+        m.AclTarget,
+        m.AclSubject,
+        m.AclPermissions,
     ]
 ]:
     """Create ACL components with proper validation using railway pattern.
@@ -44,7 +28,7 @@ def create_acl_components_helper() -> FlextResult[
 
     """
     # Create ACL components using direct instantiation
-    target = FlextLdifModelsDomains.AclTarget(
+    target = m.AclTarget(
         target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
     )
     # Type narrowing: cast subject_type to Literal type
@@ -52,29 +36,29 @@ def create_acl_components_helper() -> FlextResult[
         "FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral",
         FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
     )
-    subject = FlextLdifModelsDomains.AclSubject(
+    subject = m.AclSubject(
         subject_type=subject_type_literal,
         subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
     )
-    permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+    permissions = m.AclPermissions(read=True)
 
     return FlextResult[
         tuple[
-            FlextLdifModelsDomains.AclTarget,
-            FlextLdifModelsDomains.AclSubject,
-            FlextLdifModelsDomains.AclPermissions,
+            m.AclTarget,
+            m.AclSubject,
+            m.AclPermissions,
         ]
     ].ok((target, subject, permissions))
 
 
 def create_unified_acl_helper(
     name: str,
-    target: FlextLdifModelsDomains.AclTarget,
-    subject: FlextLdifModelsDomains.AclSubject,
-    permissions: FlextLdifModelsDomains.AclPermissions,
+    target: m.AclTarget,
+    subject: m.AclSubject,
+    permissions: m.AclPermissions,
     server_type: str,
     raw_acl: str,
-) -> FlextResult[FlextLdifModelsDomains.Acl]:
+) -> FlextResult[m.Acl]:
     """Create unified ACL with proper validation using railway pattern.
 
     Replaces create_unified_acl_helper()
@@ -123,7 +107,7 @@ def create_unified_acl_helper(
             )
 
         # Create ACL using consolidated Acl model
-        unified_acl = FlextLdifModelsDomains.Acl(
+        unified_acl = m.Acl(
             name=name,
             target=target,
             subject=subject,
@@ -132,14 +116,12 @@ def create_unified_acl_helper(
             raw_acl=raw_acl,
         )
 
-        return FlextResult[FlextLdifModelsDomains.Acl].ok(unified_acl)
+        return FlextResult[m.Acl].ok(unified_acl)
     except (ValueError, TypeError, AttributeError) as e:
-        return FlextResult[FlextLdifModelsDomains.Acl].fail(
-            f"Failed to create ACL: {e}"
-        )
+        return FlextResult[m.Acl].fail(f"Failed to create ACL: {e}")
 
 
-class TestComponentFactory:
+class TestsFlextLdifComponentFactory(s):
     """Test FlextLdifUtilities.AclUtils.ComponentFactory functionality."""
 
     def test_create_acl_components_success(self) -> None:
@@ -152,9 +134,9 @@ class TestComponentFactory:
         assert len(components) == 3
 
         target, subject, permissions = components
-        assert isinstance(target, FlextLdifModelsDomains.AclTarget)
-        assert isinstance(subject, FlextLdifModelsDomains.AclSubject)
-        assert isinstance(permissions, FlextLdifModelsDomains.AclPermissions)
+        assert isinstance(target, m.AclTarget)
+        assert isinstance(subject, m.AclSubject)
+        assert isinstance(permissions, m.AclPermissions)
 
     def test_create_acl_components_target_properties(self) -> None:
         """Test ACL target component properties."""
@@ -180,14 +162,12 @@ class TestComponentFactory:
 
     def test_create_unified_acl_openldap(self) -> None:
         """Test creating unified ACL for OpenLDAP server."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True, write=False)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True, write=False)
 
         result = create_unified_acl_helper(
             name="openldap_acl",
@@ -200,7 +180,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
         assert acl.name == "openldap_acl"
         # Note: normalize_server_type("openldap") returns "openldap2"
         assert acl.server_type in {
@@ -210,14 +190,12 @@ class TestComponentFactory:
 
     def test_create_unified_acl_openldap_2(self) -> None:
         """Test creating unified ACL for OpenLDAP 2.x server."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="openldap2_acl",
@@ -230,18 +208,16 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_openldap_1(self) -> None:
         """Test creating unified ACL for OpenLDAP 1.x server."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="openldap1_acl",
@@ -254,18 +230,16 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_oracle_oid(self) -> None:
         """Test creating unified ACL for Oracle OID server."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="oid_acl",
@@ -278,18 +252,16 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_oracle_oud(self) -> None:
         """Test creating unified ACL for Oracle OUD server."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="oud_acl",
@@ -302,18 +274,16 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_ds389(self) -> None:
         """Test creating unified ACL for 389 DS server."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="ds389_acl",
@@ -326,18 +296,16 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
         """Test that unsupported server types result in validation error."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="unknown_acl",
@@ -357,15 +325,15 @@ class TestComponentFactory:
 
     def test_create_unified_acl_preserves_properties(self) -> None:
         """Test that created ACL preserves all input properties."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=test,dc=example,dc=com")
+        target = m.AclTarget(target_dn="cn=test,dc=example,dc=com")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "group")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
+        subject = m.AclSubject(
             subject_type=subject_type_literal,
             subject_value="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
         )
-        permissions = FlextLdifModelsDomains.AclPermissions(
+        permissions = m.AclPermissions(
             read=True,
             write=True,
             delete=False,
@@ -388,15 +356,13 @@ class TestComponentFactory:
         assert acl.raw_acl == "original acl string"
 
     def test_create_unified_acl_returns_aclbase_instance(self) -> None:
-        """Test that created ACL is an FlextLdifModelsDomains.Acl instance."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        """Test that created ACL is an m.Acl instance."""
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
+        permissions = m.AclPermissions(read=True)
 
         result = create_unified_acl_helper(
             name="test_acl",
@@ -408,19 +374,17 @@ class TestComponentFactory:
         )
 
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModelsDomains.Acl)
+        assert isinstance(acl, m.Acl)
 
     def test_create_unified_acl_exception_handling_caught(self) -> None:
         """Test exception handling in create_unified_acl (line 140-143) via model validation error."""
-        target = FlextLdifModelsDomains.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
+        target = m.AclTarget(target_dn="cn=REDACTED_LDAP_BIND_PASSWORD")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "user")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD"
-        )
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="REDACTED_LDAP_BIND_PASSWORD")
         # Create invalid permissions that might cause issues
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        permissions = m.AclPermissions(read=True)
 
         # This should trigger exception handling when creating with invalid component
         result = create_unified_acl_helper(
@@ -438,14 +402,12 @@ class TestComponentFactory:
     def test_create_acl_components_with_invalid_data(self) -> None:
         """Test create_acl_components with invalid server type defaults to OpenLDAP."""
         # Use invalid server type - function should default to OpenLDAP
-        target = FlextLdifModelsDomains.AclTarget(target_dn="*")
+        target = m.AclTarget(target_dn="*")
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
             cast("FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral", "all")
         )
-        subject = FlextLdifModelsDomains.AclSubject(
-            subject_type=subject_type_literal, subject_value="*"
-        )
-        permissions = FlextLdifModelsDomains.AclPermissions(read=True)
+        subject = m.AclSubject(subject_type=subject_type_literal, subject_value="*")
+        permissions = m.AclPermissions(read=True)
 
         # Use invalid server type - should default to OpenLDAP
         result = create_unified_acl_helper(

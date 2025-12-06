@@ -1,13 +1,3 @@
-"""Test suite for Oracle Internet Directory (OID) quirks.
-
-Comprehensive testing for OID-specific LDIF parsing using real fixtures.
-Consolidates 8 test methods into 3 parametrized tests using helpers.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -17,6 +7,7 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import FlextLdif
+from tests import s
 
 from .test_utils import FlextLdifTestUtils
 
@@ -69,7 +60,7 @@ def ldif_api() -> FlextLdif:
 
 
 @pytest.mark.unit
-class TestOidQuirksWithRealFixtures:
+class TestsFlextLdifOidQuirksWithRealFixtures(s):
     """Test OID quirks with real fixture files.
 
     Consolidates 8 test methods into 3 parametrized tests using helpers.

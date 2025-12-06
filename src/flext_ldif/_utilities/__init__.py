@@ -19,10 +19,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal
 
-from flext_core import FlextConstants, FlextModels
-from flext_core.utilities import FlextUtilities
-
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.builders import (
@@ -119,15 +115,18 @@ from flext_ldif._utilities.transformers import (
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-from flext_ldif.constants import FlextLdifUtilitiesConstants
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import m
 
 # Aliases for static method calls and type references - after all imports
-u = FlextUtilities  # Utilities (from flext-core)
-c = FlextConstants  # Constants
-m = FlextModels  # Models
+# Note: u = FlextLdifUtilities is defined in utilities.py to avoid circular import
+# Use domain-specific classes that inherit from flext-core
+c = FlextLdifConstants  # Domain-specific constants (extends FlextConstants)
+
+# u is imported from utilities.py where FlextLdifUtilities is defined
 
 
-class FlextLdifUtilities(FlextUtilities):
+class FlextLdifUtilities:
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations.
 
     Extends flext-core utility functions building on
@@ -157,9 +156,9 @@ class FlextLdifUtilities(FlextUtilities):
 
     Inherited from u
         - Enum, Collection, Args, Model, Cache
-        - Validation, Generators, TextProcessor, TypeGuards
-        - Reliability, TypeChecker, Configuration, Context
-        - DataMapper, Domain, Pagination, StringParser
+        - Validation, Generators, Text, Guards
+        - Reliability, Checker, Configuration, Context
+        - Mapper, Domain, Pagination, Parser
 
     Usage:
         from flext_ldif._utilities import FlextLdifUtilities
@@ -177,36 +176,71 @@ class FlextLdifUtilities(FlextUtilities):
         result = FlextLdifUtilities.Validation.is_valid_email("test@example.com")
     """
 
-    # === Existing submodule references (preserved) ===
-    ACL = FlextLdifUtilitiesACL
-    Attribute = FlextLdifUtilitiesAttribute
-    Constants = FlextLdifUtilitiesConstants
-    Decorators = FlextLdifUtilitiesDecorators
-    Detection = FlextLdifUtilitiesDetection
-    DN = FlextLdifUtilitiesDN
-    Entry = FlextLdifUtilitiesEntry
-    Events = FlextLdifUtilitiesEvents
-    Metadata = FlextLdifUtilitiesMetadata
-    ObjectClass = FlextLdifUtilitiesObjectClass
-    OID = FlextLdifUtilitiesOID
-    Parser = FlextLdifUtilitiesParser
-    Parsers = FlextLdifUtilitiesParsers
-    Schema = FlextLdifUtilitiesSchema
-    Server = FlextLdifUtilitiesServer
-    Validation = FlextLdifUtilitiesValidation
-    Writer = FlextLdifUtilitiesWriter
-    Writers = FlextLdifUtilitiesWriters
+    # === Existing submodule classes (real inheritance instead of aliases) ===
+    class ACL(FlextLdifUtilitiesACL):
+        """ACL utilities for LDIF operations."""
+
+    class Attribute(FlextLdifUtilitiesAttribute):
+        """Attribute utilities for LDIF operations."""
+
+    class Constants(FlextLdifConstants):
+        """Constants for LDIF operations."""
+
+    class Decorators(FlextLdifUtilitiesDecorators):
+        """Decorator utilities for LDIF operations."""
+
+    class Detection(FlextLdifUtilitiesDetection):
+        """Detection utilities for LDIF operations."""
+
+    class DN(FlextLdifUtilitiesDN):
+        """DN utilities for LDIF operations."""
+
+    class Entry(FlextLdifUtilitiesEntry):
+        """Entry utilities for LDIF operations."""
+
+    class Events(FlextLdifUtilitiesEvents):
+        """Event utilities for LDIF operations."""
+
+    class Metadata(FlextLdifUtilitiesMetadata):
+        """Metadata utilities for LDIF operations."""
+
+    class ObjectClass(FlextLdifUtilitiesObjectClass):
+        """ObjectClass utilities for LDIF operations."""
+
+    class OID(FlextLdifUtilitiesOID):
+        """OID utilities for LDIF operations."""
+
+    class Parser(FlextLdifUtilitiesParser):
+        """LDIF parser utilities."""
+
+    class Parsers(FlextLdifUtilitiesParsers):
+        """Parser utilities for LDIF operations."""
+
+    class Schema(FlextLdifUtilitiesSchema):
+        """Schema utilities for LDIF operations."""
+
+    class Server(FlextLdifUtilitiesServer):
+        """Server utilities for LDIF operations."""
+
+    class Validation(FlextLdifUtilitiesValidation):
+        """LDIF validation utilities."""
+
+    class Writer(FlextLdifUtilitiesWriter):
+        """Writer utilities for LDIF operations."""
+
+    class Writers(FlextLdifUtilitiesWriters):
+        """Writers utilities for LDIF operations."""
 
     # === Power Methods (new) ===
 
     @classmethod
     def process(
         cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
+        entries: Sequence[m.Entry],
         *,
         config: ProcessConfig | None = None,
         **kwargs: object,
-    ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
+    ) -> FlextLdifResult[list[m.Entry]]:
         """Universal entry processor.
 
         Processes entries with DN normalization, attribute normalization,
@@ -215,8 +249,9 @@ class FlextLdifUtilities(FlextUtilities):
         Args:
             entries: Entries to process
             config: ProcessConfig for detailed configuration
-            **kwargs: Optional parameters for ProcessConfig (source_server, target_server,
-                normalize_dns, normalize_attrs) - used only if config is None
+            **kwargs: Optional ProcessConfig parameters (source_server,
+                target_server, normalize_dns, normalize_attrs) -
+                used only if config is None
 
         Returns:
             FlextLdifResult containing processed entries
@@ -235,7 +270,9 @@ class FlextLdifUtilities(FlextUtilities):
         """
         # Use provided config or build from kwargs
         if config is None:
-            config = ProcessConfig(**kwargs)  # type: ignore[arg-type]
+            # Use model_validate which accepts dict[str, object]
+            # and validates at runtime
+            config = ProcessConfig.model_validate(kwargs)
 
         pipeline = ProcessingPipeline(config)
         return FlextLdifResult.from_result(pipeline.execute(list(entries)))
@@ -243,10 +280,10 @@ class FlextLdifUtilities(FlextUtilities):
     @classmethod
     def transform(
         cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-        *transformers: EntryTransformer[FlextLdifModelsDomains.Entry],
+        entries: Sequence[m.Entry],
+        *transformers: EntryTransformer[m.Entry],
         fail_fast: bool = True,
-    ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
+    ) -> FlextLdifResult[list[m.Entry]]:
         """Apply transformation pipeline to entries.
 
         Args:
@@ -275,10 +312,10 @@ class FlextLdifUtilities(FlextUtilities):
     @classmethod
     def filter(
         cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
-        *filters: EntryFilter[FlextLdifModelsDomains.Entry],
+        entries: Sequence[m.Entry],
+        *filters: EntryFilter[m.Entry],
         mode: Literal["all", "any"] = "all",
-    ) -> FlextLdifResult[list[FlextLdifModelsDomains.Entry]]:
+    ) -> FlextLdifResult[list[m.Entry]]:
         """Filter entries using composable filter predicates.
 
         Args:
@@ -306,7 +343,7 @@ class FlextLdifUtilities(FlextUtilities):
             return FlextLdifResult.ok(list(entries))
 
         # Combine filters based on mode
-        combined: EntryFilter[FlextLdifModelsDomains.Entry] = filters[0]
+        combined: EntryFilter[m.Entry] = filters[0]
         for f in filters[1:]:
             combined = combined & f if mode == "all" else combined | f
 
@@ -316,7 +353,7 @@ class FlextLdifUtilities(FlextUtilities):
     @classmethod
     def validate(
         cls,
-        entries: Sequence[FlextLdifModelsDomains.Entry],
+        entries: Sequence[m.Entry],
         *,
         strict: bool = True,
         collect_all: bool = True,
@@ -370,7 +407,7 @@ class FlextLdifUtilities(FlextUtilities):
         return DnOps(dn)
 
     @classmethod
-    def entry(cls, entry: FlextLdifModelsDomains.Entry) -> EntryOps:
+    def entry(cls, entry: m.Entry) -> EntryOps:
         """Create fluent entry operations.
 
         Args:
@@ -391,6 +428,9 @@ class FlextLdifUtilities(FlextUtilities):
         """
         return EntryOps(entry)
 
+
+# Define u alias for FlextLdifUtilities (required for __all__ export)
+u = FlextLdifUtilities
 
 __all__ = [
     "AclConversionConfig",
@@ -421,11 +461,11 @@ __all__ = [
     "FilterConfigBuilder",
     "FilterPredicate",
     "FilterProtocol",
+    "FlextLdifConstants",
     "FlextLdifResult",
     "FlextLdifUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
-    "FlextLdifUtilitiesConstants",
     "FlextLdifUtilitiesDN",
     "FlextLdifUtilitiesDecorators",
     "FlextLdifUtilitiesDetection",
@@ -480,5 +520,6 @@ __all__ = [
     "WritableProtocol",
     "WriteConfig",
     "WriteConfigBuilder",
+    "m",
     "u",
 ]

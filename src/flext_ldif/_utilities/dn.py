@@ -8,38 +8,37 @@ from __future__ import annotations
 
 import re
 import string
-from collections.abc import Generator, Sequence
+from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 from flext_core import (
     FlextDecorators,
     FlextExceptions,
     FlextResult,
     FlextService,
+    FlextUtilities,
+    t,
 )
-from flext_core.constants import FlextConstants
-from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import t as FlextTypes  # noqa: N812
-from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.config import FlextLdifModelsConfig
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.models import m
+from flext_ldif.protocols import FlextLdifProtocols
 
 # Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
-t = FlextTypes  # Types (alias for flext_core.typings.t)
-c = FlextConstants  # Constants
-m = FlextModels  # Models
-p = FlextProtocols  # Protocols
-r = FlextResult  # Result
-e = FlextExceptions  # Exceptions
-d = FlextDecorators  # Decorators
-s = FlextService  # Service
+# Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
+# For LDIF-specific methods, use lazy import inside functions
+u = FlextUtilities  # Use base class to avoid circular dependency
+# Note: t is imported from flext_core.typings at top level (line 22)
+# Use FlextLdifTypes directly when domain-specific types are needed
+c = FlextLdifConstants  # Domain-specific constants (extends FlextConstants)
+
+p = FlextLdifProtocols  # Domain-specific protocols (extends FlextProtocols)
+r = FlextResult  # Shared from flext-core
+e = FlextExceptions  # Shared from flext-core
+d = FlextDecorators  # Shared from flext-core
+s = FlextService  # Shared from flext-core
 
 
 class FlextLdifUtilitiesDN:
@@ -103,7 +102,7 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - FlextLdifModelsDomains.DistinguishedName (DN model)
+    - m.DistinguishedName (DN model)
     - str (DN string value)
 
     """
@@ -291,7 +290,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def get_dn_value(
-        dn: FlextLdifModelsDomains.DistinguishedName | str | object,
+        dn: m.DistinguishedName | str | object,
     ) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
@@ -304,7 +303,7 @@ class FlextLdifUtilitiesDN:
         """
         # Check if it's a DistinguishedName model (local import to avoid circular dependency)
 
-        if isinstance(dn, FlextLdifModelsDomains.DistinguishedName):
+        if isinstance(dn, m.DistinguishedName):
             return dn.value
         if isinstance(dn, str):
             return dn
@@ -316,10 +315,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: FlextLdifModelsDomains.DistinguishedName) -> list[str]: ...
+    def split(dn: m.DistinguishedName) -> list[str]: ...
 
     @staticmethod
-    def split(dn: str | FlextLdifModelsDomains.DistinguishedName) -> list[str]:
+    def split(dn: str | m.DistinguishedName) -> list[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -377,16 +376,19 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: FlextLdifModelsDomains.DistinguishedName) -> str: ...
+    def norm_string(dn: m.DistinguishedName) -> str: ...
 
     @staticmethod
-    def norm_string(dn: str | FlextLdifModelsDomains.DistinguishedName) -> str:
+    def norm_string(dn: str | m.DistinguishedName) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
             return dn_str  # Return as-is if invalid (legacy method - returns str not FlextResult)
         components = FlextLdifUtilitiesDN.split(dn_str)
-        normalized = u.map(components, mapper=FlextLdifUtilitiesDN.norm_component)
+        normalized = u.Collection.map(
+            components,
+            mapper=FlextLdifUtilitiesDN.norm_component,
+        )
         return ",".join(normalized if isinstance(normalized, list) else components)
 
     @staticmethod
@@ -400,7 +402,7 @@ class FlextLdifUtilitiesDN:
             attr, _, value = comp.partition("=")
             return bool(attr.strip() and value.strip())
 
-        filtered = u.filter(components, predicate=is_valid_component)
+        filtered = u.Collection.filter(components, is_valid_component)
         return isinstance(filtered, list) and len(filtered) == len(components)
 
     @staticmethod
@@ -411,7 +413,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _validate_dn_structure(dn_str: str) -> bool:
         """Validate DN structure (commas, escape sequences, components)."""
-        checks = [
+        checks: list[Callable[[], bool]] = [
             lambda: FlextLdifUtilitiesDN._validate_escape_sequences(dn_str),
             lambda: not FlextLdifUtilitiesDN._has_double_unescaped_commas(dn_str),
             lambda: not dn_str.startswith(","),
@@ -426,7 +428,7 @@ class FlextLdifUtilitiesDN:
         return all(check() for check in checks)
 
     @staticmethod
-    def validate(dn: str | FlextLdifModelsDomains.DistinguishedName) -> bool:
+    def validate(dn: str | m.DistinguishedName) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -444,7 +446,7 @@ class FlextLdifUtilitiesDN:
         try:
             components = FlextLdifUtilitiesDN.split(dn_str)
             return bool(
-                components and FlextLdifUtilitiesDN._validate_components(components)
+                components and FlextLdifUtilitiesDN._validate_components(components),
             )
         except (ValueError, TypeError):
             return False
@@ -529,12 +531,12 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def parse(
-        dn: FlextLdifModelsDomains.DistinguishedName,
+        dn: m.DistinguishedName,
     ) -> FlextResult[list[tuple[str, str]]]: ...
 
     @staticmethod
     def parse(
-        dn: str | FlextLdifModelsDomains.DistinguishedName | None,
+        dn: str | m.DistinguishedName | None,
     ) -> FlextResult[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
@@ -571,7 +573,7 @@ class FlextLdifUtilitiesDN:
                 attr, _, value = comp.partition("=")
                 return (attr.strip(), value.strip())
 
-            process_result = u.process(
+            process_result = u.Collection.process(
                 components,
                 processor=parse_component,
                 predicate=lambda comp: "=" in comp,
@@ -602,11 +604,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: FlextLdifModelsDomains.DistinguishedName) -> FlextResult[str]: ...
+    def norm(dn: m.DistinguishedName) -> FlextResult[str]: ...
 
     @staticmethod
     def norm(
-        dn: str | FlextLdifModelsDomains.DistinguishedName | None,
+        dn: str | m.DistinguishedName | None,
     ) -> FlextResult[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
@@ -636,7 +638,7 @@ class FlextLdifUtilitiesDN:
                 # RFC 4514 normalization: lowercase attribute TYPE, preserve value case
                 return f"{attr.strip().lower()}={value.strip()}"
 
-            process_result = u.process(
+            process_result = u.Collection.process(
                 components,
                 processor=normalize_component,
                 predicate=lambda comp: "=" in comp,
@@ -644,20 +646,26 @@ class FlextLdifUtilitiesDN:
             )
             if process_result.is_failure:
                 return r.fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'"
+                    f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
             normalized_list = process_result.value
             if not isinstance(normalized_list, list):
                 return r.fail(f"Unexpected normalize result type from '{dn_str}'")
-            filtered_str = u.filter(
-                normalized_list, predicate=lambda x: isinstance(x, str)
+            filtered_str = u.Collection.filter(
+                normalized_list,
+                predicate=lambda x: isinstance(x, str),
             )
-            normalized = filtered_str if isinstance(filtered_str, list) else []
+            # Ensure we have a list of strings for join
+            normalized: list[str] = [
+                str(item)
+                for item in (filtered_str if isinstance(filtered_str, list) else [])
+                if item is not None
+            ]
             return (
                 r.ok(",".join(normalized))
                 if normalized
                 else r.fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'"
+                    f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
             )
         except Exception as e:
@@ -665,9 +673,9 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def norm_with_statistics(
-        dn: FlextLdifTypes.DN.DnInput,
+        dn: str,
         original_dn: str | None = None,
-    ) -> FlextResult[tuple[str, FlextLdifModelsDomains.DNStatistics]]:
+    ) -> FlextResult[tuple[str, m.DNStatistics]]:
         """Normalize DN with statistics tracking.
 
         Args:
@@ -699,7 +707,7 @@ class FlextLdifUtilitiesDN:
             transformations.append(FlextLdifConstants.TransformationType.DN_NORMALIZED)
 
         # Create statistics
-        stats = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
+        stats = m.DNStatistics.create_with_transformation(
             original_dn=orig,
             cleaned_dn=dn_str,
             normalized_dn=normalized,
@@ -719,16 +727,16 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: FlextLdifModelsDomains.DistinguishedName) -> str: ...
+    def clean_dn(dn: m.DistinguishedName) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | FlextLdifModelsDomains.DistinguishedName) -> str:
+    def clean_dn(dn: str | m.DistinguishedName) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,
         normalizes whitespace around commas.
 
-        **DRY Optimization**: Uses u.StringParser.apply_regex_pipeline()
+        **DRY Optimization**: Uses u.LdifParser.apply_regex_pipeline()
         to consolidate 5 sequential regex.sub() calls into one pipeline.
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
@@ -773,8 +781,8 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def clean_dn_with_statistics(
-        dn: FlextLdifTypes.DN.DnInput,
-    ) -> tuple[str, FlextLdifModelsDomains.DNStatistics]:
+        dn: str,
+    ) -> tuple[str, m.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -798,10 +806,10 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = FlextLdifModelsDomains.DNStatistics.create_minimal(
+            stats_domain = m.DNStatistics.create_minimal(
                 original_dn,
             )
-            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
+            stats = m.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
             return original_dn, stats
@@ -826,7 +834,7 @@ class FlextLdifUtilitiesDN:
             validation_errors_raw if isinstance(validation_errors_raw, list) else []
         )
 
-        stats_domain = FlextLdifModelsDomains.DNStatistics.create_with_transformation(
+        stats_domain = m.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
@@ -854,7 +862,7 @@ class FlextLdifUtilitiesDN:
 
         Returns:
             Tuple of (transformed_dn, transformations_list, flags_dict)
-            flags_dict follows FlextLdifModels.TransformationFlags structure
+            flags_dict follows m.TransformationFlags structure
 
         """
         transformations: list[str] = []
@@ -983,7 +991,7 @@ class FlextLdifUtilitiesDN:
             return char
 
         enumerated = list(enumerate(value))
-        mapped_result = u.map(enumerated, mapper=escape_char)
+        mapped_result = u.Collection.map(enumerated, mapper=escape_char)
         mapped = (
             mapped_result
             if isinstance(mapped_result, list)
@@ -1033,19 +1041,20 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _normalize_dns_for_comparison(
-        dn1: str, dn2: str
+        dn1: str,
+        dn2: str,
     ) -> FlextResult[tuple[str, str]]:
         """Normalize both DNs for comparison."""
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.is_success:
             return r.fail(
-                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}"
+                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
             )
 
         norm2_result = FlextLdifUtilitiesDN.norm(dn2)
         if not norm2_result.is_success:
             return r.fail(
-                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}"
+                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
 
         return r.ok((
@@ -1455,14 +1464,14 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: FlextLdifModelsDomains.DistinguishedName,
+        value: m.DistinguishedName,
         source_dn: str,
         target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | FlextLdifModelsDomains.DistinguishedName,
+        value: str | m.DistinguishedName,
         source_dn: str,
         target_dn: str,
     ) -> str:
@@ -1524,10 +1533,10 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def replace_base_dn(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         source_dn: str,
         target_dn: str,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Replace base DN in all entries and DN-valued attributes.
 
         Transforms:
@@ -1573,42 +1582,58 @@ class FlextLdifUtilitiesDN:
         }
 
         def transform_entry(
-            entry: FlextLdifModels.Entry,
-        ) -> FlextLdifModels.Entry | None:
+            entry: m.Entry,
+        ) -> m.Entry | r[m.Entry]:
             """Transform single entry."""
             if entry.dn is None or entry.attributes is None:
-                return None
+                return r[m.Entry].fail("Entry has no DN or attributes")
+            # Type narrowing: entry.dn is not None after check
+            # Use get_dn_value to handle str | DistinguishedName | None
+            dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
+            if not dn_value:
+                return r[m.Entry].fail("Entry DN is empty")
             transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
-                entry.dn, source_dn, target_dn
+                dn_value,
+                source_dn,
+                target_dn,
             )
             transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
-                dict(entry.attributes.items()), dn_attributes, source_dn, target_dn
+                dict(entry.attributes.items()),
+                dn_attributes,
+                source_dn,
+                target_dn,
             )
             return entry.model_copy(
                 update={
                     "dn": transformed_dn,
-                    "attributes": FlextLdifModels.LdifAttributes(
-                        attributes=transformed_attrs
-                    ),
-                }
+                    "attributes": m.LdifAttributes(attributes=transformed_attrs),
+                },
             )
 
-        batch_result = u.batch(list(entries), transform_entry, on_error="skip")
+        batch_result = u.Collection.batch(
+            list(entries),
+            transform_entry,
+            on_error="skip",
+        )
         if batch_result.is_failure:
             return entries
         batch_data = batch_result.value
-        return [
-            item
-            for item in batch_data["results"]
-            if isinstance(item, FlextLdifModels.Entry)
-        ]
+        # Type narrowing: batch_data["results"] is object, check if list
+        results_raw = batch_data.get("results", [])
+        if isinstance(results_raw, list):
+            return [
+                cast("m.Entry", item)
+                for item in results_raw
+                if isinstance(item, m.Entry)
+            ]
+        return entries
 
     @staticmethod
     def transform_ldif_files_in_directory(
         ldif_dir: Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Transform BaseDN in all LDIF files in directory.
 
         Reads all *.ldif files from directory, transforms BaseDN in entries,
@@ -1663,13 +1688,15 @@ class FlextLdifUtilitiesDN:
                         if is_dn_attr or is_dn_like:
                             transformed_value = (
                                 FlextLdifUtilitiesDN.transform_dn_attribute(
-                                    attr_value, source_basedn, target_basedn
+                                    attr_value,
+                                    source_basedn,
+                                    target_basedn,
                                 )
                             )
                             return f"{attr_name}: {transformed_value}"
                         return line
 
-                    mapped_result = u.map(lines, mapper=transform_line)
+                    mapped_result = u.Collection.map(lines, mapper=transform_line)
                     transformed_lines = (
                         mapped_result if isinstance(mapped_result, list) else lines
                     )
@@ -1705,13 +1732,15 @@ class FlextLdifUtilitiesDN:
             if k.lower() in dn_attributes:
                 return [
                     FlextLdifUtilitiesDN.transform_dn_attribute(
-                        val, source_dn, target_dn
+                        val,
+                        source_dn,
+                        target_dn,
                     )
                     for val in v
                 ]
             return v
 
-        mapped = u.map(attrs, mapper=map_attr)
+        mapped = u.Collection.map(attrs, mapper=map_attr)
         return mapped if isinstance(mapped, dict) else attrs
 
     @staticmethod
@@ -1720,8 +1749,8 @@ class FlextLdifUtilitiesDN:
         transformed: dict[str, list[str]],
         dn_attributes: set[str],
     ) -> list[str]:
-        """Get list of attribute names that changed using u.filter()."""
-        filtered_dict = u.filter(
+        """Get list of attribute names that changed using u.Collection.filter()."""
+        filtered_dict = u.Collection.filter(
             transformed,
             predicate=lambda k, v: (
                 k.lower() in dn_attributes and v != original.get(k, [])
@@ -1731,7 +1760,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _update_metadata_for_transformation(
-        metadata: FlextLdifModels.QuirkMetadata,
+        metadata: m.QuirkMetadata,
         config: FlextLdifModelsConfig.MetadataTransformationConfig,
     ) -> None:
         """Update metadata with transformation tracking."""
@@ -1753,7 +1782,11 @@ class FlextLdifUtilitiesDN:
                 reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
             )
 
-        u.process(config.transformed_attr_names, processor=track_attr, on_error="skip")
+        u.Collection.process(
+            config.transformed_attr_names,
+            processor=track_attr,
+            on_error="skip",
+        )
         metadata.add_conversion_note(
             operation="basedn_transform",
             description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
@@ -1767,10 +1800,10 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_dn_with_metadata(
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         source_dn: str,
         target_dn: str,
-    ) -> FlextLdifModels.Entry:
+    ) -> m.Entry:
         """Transform DN and DN-valued attributes with metadata tracking.
 
         RFC Compliant: Tracks all transformations in QuirkMetadata for round-trip support.
@@ -1785,7 +1818,7 @@ class FlextLdifUtilitiesDN:
             New Entry with transformed DN, attributes, and metadata tracking
 
         Example:
-            >>> entry = FlextLdifModels.Entry(
+            >>> entry = m.Entry(
             ...     dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example",
             ...     attributes={"member": ["cn=user,dc=example"]},
             ... )
@@ -1813,8 +1846,16 @@ class FlextLdifUtilitiesDN:
         }
 
         original_dn_str = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
+        # Type narrowing: entry.dn is not None (checked earlier)
+        # Use get_dn_value to handle str | DistinguishedName | None
+        dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
+        if not dn_value:
+            # Return original entry if DN is empty (early return pattern)
+            return entry
         transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
-            entry.dn, source_dn, target_dn
+            dn_value,
+            source_dn,
+            target_dn,
         )
         # Convert LdifAttributes to dict for processing
         attrs_dict = (
@@ -1823,17 +1864,26 @@ class FlextLdifUtilitiesDN:
             else dict(entry.attributes)
         )
         transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
-            attrs_dict, dn_attributes, source_dn, target_dn
+            attrs_dict,
+            dn_attributes,
+            source_dn,
+            target_dn,
         )
         transformed_attr_names = FlextLdifUtilitiesDN._get_changed_attr_names(
-            attrs_dict, transformed_attrs, dn_attributes
+            attrs_dict,
+            transformed_attrs,
+            dn_attributes,
         )
 
-        metadata = (
-            entry.metadata.model_copy(deep=True)
-            if entry.metadata
-            else FlextLdifModels.QuirkMetadata.create_for()
-        )
+        # Ensure metadata is always m.QuirkMetadata (public facade)
+        # Business Rule: entry.metadata can be domain or facade, but we need facade
+        if entry.metadata:
+            # Create new facade instance from domain metadata to ensure type compatibility
+            # Use model_validate to convert domain to facade if needed
+            metadata_dict = entry.metadata.model_dump()
+            metadata = m.QuirkMetadata.model_validate(metadata_dict)
+        else:
+            metadata = m.QuirkMetadata.create_for()
 
         transform_config = FlextLdifModelsConfig.MetadataTransformationConfig(
             original_dn=original_dn_str,
@@ -1853,15 +1903,15 @@ class FlextLdifUtilitiesDN:
                 "dn": transformed_dn,
                 "attributes": transformed_attrs,
                 "metadata": metadata,
-            }
+            },
         )
 
     @staticmethod
     def replace_base_dn_with_metadata(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         source_dn: str,
         target_dn: str,
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> list[m.Entry]:
         """Replace base DN in all entries with metadata tracking.
 
         RFC Compliant: Tracks all transformations for audit trail and round-trip support.
@@ -1884,20 +1934,29 @@ class FlextLdifUtilitiesDN:
         if not entries or not source_dn or not target_dn:
             return entries
 
-        def transform_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+        def transform_entry(entry: m.Entry) -> m.Entry:
             """Transform single entry."""
             return FlextLdifUtilitiesDN.transform_dn_with_metadata(
-                entry, source_dn, target_dn
+                entry,
+                source_dn,
+                target_dn,
             )
 
-        batch_result = u.batch(list(entries), transform_entry, on_error="skip")
+        batch_result = u.Collection.batch(
+            list(entries),
+            transform_entry,
+            on_error="skip",
+        )
         if batch_result.is_success:
             batch_data = batch_result.value
-            return [
-                item
-                for item in batch_data["results"]
-                if isinstance(item, FlextLdifModels.Entry)
-            ]
+            # Type narrowing: batch_data["results"] is object, check if list
+            results_raw = batch_data.get("results", [])
+            if isinstance(results_raw, list):
+                return [
+                    cast("m.Entry", item)
+                    for item in results_raw
+                    if isinstance(item, m.Entry)
+                ]
         return entries
 
     # =========================================================================
@@ -1913,11 +1972,15 @@ class FlextLdifUtilitiesDN:
         r"""Normalize DN or return fallback if normalization fails.
 
         Replaces the common 3-line pattern:
-            norm_result = FlextLdifUtilities.DN.norm(dn)
+            # Lazy import to avoid circular dependency
+            from flext_ldif.utilities import u as u_ldif
+            norm_result = u_ldif.DN.norm(dn)
             normalized = norm_result.unwrap() if norm_result.is_success else dn.lower()
 
         With a single call:
-            normalized = FlextLdifUtilities.DN.norm_or_fallback(dn)
+            # Lazy import to avoid circular dependency
+            from flext_ldif.utilities import u as u_ldif
+            normalized = u_ldif.DN.norm_or_fallback(dn)
 
         Args:
             dn: DN string to normalize (or None)
@@ -1992,21 +2055,25 @@ class FlextLdifUtilitiesDN:
 
         """
 
-        def normalize_dn(dn: str) -> str | None:
+        def normalize_dn(dn: str) -> FlextResult[str]:
             """Normalize single DN with fallback."""
             result = FlextLdifUtilitiesDN.norm(dn)
             if result.is_success:
-                return result.unwrap()
+                return result
             if fallback == "skip":
-                return None
+                return r.fail("Skipped")
             if fallback == "lower":
-                return dn.lower()
+                return r.ok(dn.lower())
             if fallback == "upper":
-                return dn.upper()
-            return dn
+                return r.ok(dn.upper())
+            return r.ok(dn)
 
         if fail_fast:
-            batch_result = u.batch(list(dns), normalize_dn, on_error="fail")
+            batch_result = u.Collection.batch(
+                list(dns),
+                cast("Callable[[str], r[str] | str]", normalize_dn),
+                on_error="fail",
+            )
             if batch_result.is_failure:
                 return r.fail(batch_result.error or "Normalization failed")
             batch_data = batch_result.value
@@ -2014,7 +2081,11 @@ class FlextLdifUtilitiesDN:
                 item for item in batch_data["results"] if isinstance(item, str)
             ])
 
-        batch_result = u.batch(list(dns), normalize_dn, on_error="skip")
+        batch_result = u.Collection.batch(
+            list(dns),
+            cast("Callable[[str], r[str] | str]", normalize_dn),
+            on_error="skip",
+        )
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Normalization failed")
         batch_data = batch_result.value
@@ -2050,7 +2121,7 @@ class FlextLdifUtilitiesDN:
             is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(dn)
             return (dn, is_valid, dn_errors)
 
-        batch_result = u.batch(list(dns), validate_dn, on_error="skip")
+        batch_result = u.Collection.batch(list(dns), validate_dn, on_error="skip")
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Validation failed")
         batch_data = batch_result.value
@@ -2111,7 +2182,7 @@ class FlextLdifUtilitiesDN:
                 return dn
 
         on_error_mode = "fail" if fail_fast else "skip"
-        batch_result = u.batch(list(dns), replace_dn, on_error=on_error_mode)
+        batch_result = u.Collection.batch(list(dns), replace_dn, on_error=on_error_mode)
         if batch_result.is_failure:
             return r.fail(batch_result.error or "Base replacement failed")
         batch_data = batch_result.value

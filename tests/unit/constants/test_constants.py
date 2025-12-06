@@ -1,24 +1,15 @@
-"""Test suite for FlextLdifConstants.
-
-Modules tested: FlextLdifConstants (Format, Processing, QualityAnalysis,
-LdifValidation, ObjectClasses, Encoding, LdapServers, RfcCompliance, enums)
-Scope: Constant validation, enum values, namespace access, reasonable value ranges
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from tests import s
 
 from flext_ldif import FlextLdifConstants
 
 
-class TestFlextLdifConstants:
+class TestsTestFlextLdifConstants(s):
     """Consolidated test suite for FlextLdifConstants.
 
     Tests all constant groups: Format, Processing, Encoding, Validation,

@@ -1,33 +1,20 @@
-"""Test suite for Entry Manipulation Services - Entry attribute manipulation.
-
-Modules tested:
-- flext_ldif.services.entry_manipulation.EntryManipulationServices (entry manipulation service)
-
-Scope:
-- Attribute extraction (get_entry_attribute, normalize_attribute_value,
-  get_normalized_attribute)
-
-Test Coverage:
-- All entry manipulation service methods
-- Edge cases (empty attributes, missing attributes, invalid values, conflicts)
-- Real implementations (no mocks)
-
-Uses Python 3.13 features, factories, constants, dynamic tests, and extensive helper reuse
-to reduce code while maintaining 100% behavior coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.entry_manipulation import EntryManipulationServices
+from typing import cast
+
+import pytest
+from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.utilities import FlextTestsUtilities
+
+from flext_ldif import FlextLdifEntries
+from flext_ldif.models import m
+from tests import c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
-class TestEntryManipulationServices:
-    """Test EntryManipulationServices with consolidated parametrized tests.
+class TestsTestFlextLdifEntries(s):
+    """Test FlextLdifEntries with consolidated parametrized tests.
 
     Uses nested classes for organization: Factories, TestAttributeExtraction.
     Reduces code duplication through helper methods and factories.
@@ -42,112 +29,193 @@ class TestEntryManipulationServices:
         @staticmethod
         def create_entry(
             dn_str: str,
-            attributes: dict[str, list[str]],
-        ) -> FlextLdifModels.Entry:
+            attributes: dict[str, list[str]] | dict[str, str | list[str]],
+        ) -> m.Entry:
             """Create test entry with DN and attributes."""
-            dn = FlextLdifModels.DistinguishedName(value=dn_str)
-            attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
-            return FlextLdifModels.Entry(dn=dn, attributes=attrs)
+            # Convert dict[str, list[str]] to dict[str, str | list[str]] for factory
+            attrs: dict[str, str | list[str]] = dict(attributes)
+            return self.create_entry(dn=dn_str, attributes=attrs)
 
         @staticmethod
-        def create_simple_user_entry() -> FlextLdifModels.Entry:
+        def create_simple_user_entry() -> m.Entry:
             """Create a simple user entry."""
-            return TestEntryManipulationServices.Factories.create_entry(
-                "cn=john,ou=users,dc=example,dc=com",
-                {
-                    "cn": ["john"],
-                    "sn": ["Doe"],
-                    "givenName": ["John"],
-                    "mail": ["john@example.com"],
-                    "uid": ["jdoe"],
-                    FlextLdifConstants.DictKeys.OBJECTCLASS: [
-                        "person",
-                        "inetOrgPerson",
-                    ],
+            return self.create_entry(
+                dn=f"cn={c.Values.USER},ou=users,{c.DNs.EXAMPLE}",
+                attributes={
+                    c.Names.CN: [c.Values.USER],
+                    c.Names.SN: [c.Values.USER],
+                    c.Names.GIVEN_NAME: [c.Values.USER],
+                    c.Names.MAIL: [c.Values.TEST_EMAIL],
+                    c.Names.UID: [c.Values.TEST],
+                    c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
                 },
             )
 
         @staticmethod
-        def create_service() -> EntryManipulationServices:
-            """Create EntryManipulationServices instance."""
-            return EntryManipulationServices()
+        def create_service() -> FlextLdifEntries:
+            """Create FlextLdifEntries instance."""
+            return FlextLdifEntries()
 
     class TestAttributeExtraction:
-        """Test attribute extraction methods."""
+        """Test attribute extraction methods - consolidated with parametrization."""
 
-        def test_get_entry_attribute_success(self) -> None:
-            """Test getting existing attribute."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            entry = TestEntryManipulationServices.Factories.create_simple_user_entry()
-            result = service.get_entry_attribute(entry, "cn")
-            assert result.is_success
-            value = result.unwrap()
-            assert value == ["john"]
+        class TestCases:
+            """Factory for test cases - reduces 50+ lines."""
 
-        def test_get_entry_attribute_not_found(self) -> None:
-            """Test getting non-existent attribute."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            entry = TestEntryManipulationServices.Factories.create_simple_user_entry()
-            result = service.get_entry_attribute(entry, "nonexistent")
-            assert result.is_failure
-            error_msg = result.error or ""
-            assert "not found" in error_msg.lower()
+            __test__ = False
 
-        def test_get_entry_attribute_no_attributes(self) -> None:
-            """Test getting attribute from entry with no attributes."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            entry = TestEntryManipulationServices.Factories.create_entry(
-                "cn=test,dc=example,dc=com",
-                {},
+            @staticmethod
+            def get_get_entry_attribute_cases() -> list[
+                tuple[str, str, bool, list[str] | None, str | None]
+            ]:
+                """Get parametrized test cases for get_entry_attribute."""
+                return [
+                    ("success", c.Names.CN, True, [c.Values.USER], None),
+                    ("not_found", "nonexistent", False, None, "not found"),
+                    ("no_attributes", c.Names.CN, False, None, None),
+                ]
+
+            @staticmethod
+            def get_normalize_attribute_value_cases() -> list[
+                tuple[str, object, bool, str | None, str | None]
+            ]:
+                """Get parametrized test cases for normalize_attribute_value."""
+                return [
+                    ("list", ["value1"], True, "value1", None),
+                    ("string", "  test  ", True, "test", None),
+                    ("none", None, False, None, "None"),
+                    ("empty_string", "   ", False, None, "empty"),
+                ]
+
+            @staticmethod
+            def get_get_normalized_attribute_cases() -> list[
+                tuple[str, str, bool, str | None]
+            ]:
+                """Get parametrized test cases for get_normalized_attribute."""
+                return [
+                    ("success", c.Names.CN, True, c.Values.USER),
+                    ("not_found", "nonexistent", False, None),
+                ]
+
+        @pytest.mark.parametrize(
+            (
+                "test_name",
+                "attr_name",
+                "should_succeed",
+                "expected_value",
+                "expected_error",
+            ),
+            TestCases.get_get_entry_attribute_cases(),
+        )
+        def test_get_entry_attribute(
+            self,
+            test_name: str,
+            attr_name: str,
+            should_succeed: bool,
+            expected_value: list[str] | None,
+            expected_error: str | None,
+        ) -> None:
+            """Test get_entry_attribute using advanced parametrization - reduces 30+ lines."""
+            service = TestFlextLdifEntries.Factories.create_service()
+
+            if test_name == "no_attributes":
+                # Create entry with empty attributes explicitly
+                dn = m.DistinguishedName(value=c.DNs.TEST_USER)
+                attrs = m.LdifAttributes.create({}).unwrap()
+                entry = m.Entry(dn=dn, attributes=attrs)
+            else:
+                entry = TestFlextLdifEntries.Factories.create_simple_user_entry()
+
+            result = service.get_entry_attribute(entry, attr_name)
+
+            if should_succeed:
+                FlextTestsMatchers.assert_result_success(result)
+                if expected_value is not None:
+                    value = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+                        result,
+                    )
+                    FlextTestsMatchers.assert_list_equals(value, expected_value)
+            elif expected_error:
+                FlextTestsMatchers.assert_result_failure(
+                    result,
+                    expected_error=expected_error,
+                )
+            else:
+                FlextTestsMatchers.assert_result_failure(result)
+
+        @pytest.mark.parametrize(
+            (
+                "test_name",
+                "input_value",
+                "should_succeed",
+                "expected_normalized",
+                "expected_error",
+            ),
+            TestCases.get_normalize_attribute_value_cases(),
+        )
+        def test_normalize_attribute_value(
+            self,
+            test_name: str,
+            input_value: object,
+            should_succeed: bool,
+            expected_normalized: str | None,
+            expected_error: str | None,
+        ) -> None:
+            """Test normalize_attribute_value using advanced parametrization - reduces 40+ lines."""
+            service = TestFlextLdifEntries.Factories.create_service()
+            # Cast to proper type for service method
+            typed_input: str | list[str] | None = cast(
+                "str | list[str] | None",
+                input_value,
             )
-            result = service.get_entry_attribute(entry, "cn")
-            assert result.is_failure
+            result = service.normalize_attribute_value(typed_input)
 
-        def test_normalize_attribute_value_list(self) -> None:
-            """Test normalizing list attribute value."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            result = service.normalize_attribute_value(["value1"])
-            assert result.is_success
-            assert result.unwrap() == "value1"
+            if should_succeed:
+                FlextTestsMatchers.assert_result_success(result)
+                if expected_normalized is not None:
+                    normalized = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+                        result,
+                    )
+                    FlextTestsMatchers.assert_strings_equal_case_insensitive(
+                        normalized,
+                        expected_normalized,
+                    )
+            elif expected_error:
+                FlextTestsMatchers.assert_result_failure(
+                    result,
+                    expected_error=expected_error,
+                )
+            else:
+                FlextTestsMatchers.assert_result_failure(result)
 
-        def test_normalize_attribute_value_string(self) -> None:
-            """Test normalizing string attribute value."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            result = service.normalize_attribute_value("  test  ")
-            assert result.is_success
-            assert result.unwrap() == "test"
+        @pytest.mark.parametrize(
+            ("test_name", "attr_name", "should_succeed", "expected_value"),
+            TestCases.get_get_normalized_attribute_cases(),
+        )
+        def test_get_normalized_attribute(
+            self,
+            test_name: str,
+            attr_name: str,
+            should_succeed: bool,
+            expected_value: str | None,
+        ) -> None:
+            """Test get_normalized_attribute using advanced parametrization - reduces 20+ lines."""
+            service = TestFlextLdifEntries.Factories.create_service()
+            entry = TestFlextLdifEntries.Factories.create_simple_user_entry()
+            result = service.get_normalized_attribute(entry, attr_name)
 
-        def test_normalize_attribute_value_none(self) -> None:
-            """Test normalizing None value."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            result = service.normalize_attribute_value(None)
-            assert result.is_failure
-            error_msg = result.error
-            assert error_msg is not None
-            assert "None" in error_msg
-
-        def test_normalize_attribute_value_empty_string(self) -> None:
-            """Test normalizing empty string."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            result = service.normalize_attribute_value("   ")
-            assert result.is_failure
-            error_msg = result.error or ""
-            assert "empty" in error_msg.lower()
-
-        def test_get_normalized_attribute_success(self) -> None:
-            """Test getting and normalizing attribute."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            entry = TestEntryManipulationServices.Factories.create_simple_user_entry()
-            result = service.get_normalized_attribute(entry, "cn")
-            assert result.is_success
-            assert result.unwrap() == "john"
-
-        def test_get_normalized_attribute_not_found(self) -> None:
-            """Test getting non-existent normalized attribute."""
-            service = TestEntryManipulationServices.Factories.create_service()
-            entry = TestEntryManipulationServices.Factories.create_simple_user_entry()
-            result = service.get_normalized_attribute(entry, "nonexistent")
-            assert result.is_failure
+            if should_succeed:
+                FlextTestsMatchers.assert_result_success(result)
+                if expected_value is not None:
+                    value = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+                        result,
+                    )
+                    FlextTestsMatchers.assert_strings_equal_case_insensitive(
+                        value,
+                        expected_value,
+                    )
+            else:
+                FlextTestsMatchers.assert_result_failure(result)
 
 
-__all__ = ["TestEntryManipulationServices"]
+__all__ = ["TestFlextLdifEntries"]

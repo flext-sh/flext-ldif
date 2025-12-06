@@ -1,16 +1,3 @@
-"""Comprehensive test coverage for DeduplicationHelpers - CONSOLIDATED.
-
-This test file ensures 100% coverage of all helper methods in
-tests/helpers/test_deduplication_helpers.py.
-
-Consolidated from 27 test classes into single TestFlextLdifDeduplicationHelpers
-class with 11 StrEnum scenario groups covering all 87 test methods.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -18,28 +5,557 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
+from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.utilities import FlextTestsUtilities
 
 from flext_ldif import (
     FlextLdif,
-    FlextLdifModels,
     FlextLdifParser,
     FlextLdifWriter,
 )
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.schema import FlextLdifSchema
-from tests.fixtures.typing import GenericFieldsDict
-from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_deduplication_helpers import (
-    DeduplicationHelpers,
-    ParseTestCaseDict,
-    ServiceWithExecute,
-)
+from tests import "Custom error", "STRUCTURAL"), c
+
+    def test_assert_metadata_quirk_type_equals(self) -> None:
+        """Test assert_metadata_quirk_type_equals."""
+        entry = s.create_entry_with_metadata_extensions(
+            c.DNs.TEST_USER, "Test description")
+
+    def test_assert_schema_kind_equals(self) -> None:
+        """Test assert_schema_kind_equals."""
+        # Factory creates with STRUCTURAL by default, "access")
 
 
-class TestFlextLdifDeduplicationHelpers:
+__all__ = [
+    "TestFlextLdifDeduplicationHelpers", "attr_name", "attributes", "attributes": {c.Names.CN: [c.Values.USER1]}, "attributes": {c.Names.CN: [c.Values.USER2]}, "dn")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # LIST ASSERTION TESTS (7 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_list_equals(self) -> None:
+        """Test assert_list_equals."""
+        lst: list[object] = [1, "dn")
+
+    def test_assert_dict_has_value(self) -> None:
+        """Test assert_dict_has_value."""
+        # Use keys that exist in GenericFieldsDict
+        d: GenericFieldsDict = {"dn": c.DNs.TEST_USER}
+        FlextTestsMatchers.assert_dict_has_value(d, "expected_count": 1, "expected_value"), "extension_value"), "foo")
+
+    def test_assert_string_startswith(self) -> None:
+        """Test assert_string_startswith."""
+        FlextTestsMatchers.assert_string_startswith("hello world", "hello")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # DICTIONARY ASSERTION TESTS (7 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_dict_get_equals(self) -> None:
+        """Test assert_dict_get_equals."""
+        d = {"key": "value"}
+        FlextTestsMatchers.assert_dict_get_equals(d, "hello")
+
+    def test_assert_string_endswith(self) -> None:
+        """Test assert_string_endswith."""
+        FlextTestsMatchers.assert_string_endswith("hello world", "key", "password")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSE AND ASSERT TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_parse_and_assert_success(self) -> None:
+        """Test parse_and_assert with success."""
+        parser = FlextLdifParser()
+        ldif_content = f"dn: {c.DNs.TEST_USER}
+{c.Names.CN}: {c.Values.TEST}
+"
+        entries = DeduplicationHelpers.parse_and_assert(
+            parser, "rfc")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # RESULT TYPE ASSERTION TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_result_success_and_type(self) -> None:
+        """Test assert_result_success_and_type."""
+        result = FlextResult[str].ok("test")
+        unwrapped = FlextTestsUtilities.ResultHelpers.assert_result_success_and_type(
+            result, "service")
+        assert hasattr(result, "status")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # METADATA ASSERTION TESTS (4 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_metadata_extensions_not_none(self) -> None:
+        """Test assert_metadata_extensions_not_none."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, "telephoneNumber", "value", "value")
+
+    def test_assert_dict_key_isinstance(self) -> None:
+        """Test assert_dict_key_isinstance."""
+        # Use keys that exist in GenericFieldsDict with appropriate types
+        d: GenericFieldsDict = {"attributes": {"cn": ["test"]}}
+        FlextTestsMatchers.assert_dict_key_isinstance(d, "world")
+
+    def test_assert_string_not_contains(self) -> None:
+        """Test assert_string_not_contains."""
+        FlextTestsMatchers.assert_string_not_contains("hello world", "world")
+
+    def test_assert_strings_equal_case_insensitive(self) -> None:
+        """Test assert_strings_equal_case_insensitive."""
+        FlextTestsMatchers.assert_strings_equal_case_insensitive("Hello", ')[0]}"], ("assert_entry_attribute_equals", ("assert_entry_dn_equals", ("assert_entry_not_has_attribute", ("assert_metadata_extension_equals", ("assert_schema_name_equals", ("assert_schema_syntax_equals", ), )
+
+    # ════════════════════════════════════════════════════════════════════════
+    # LENGTH ASSERTION TESTS (6 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_length_equals(self) -> None:
+        """Test assert_length_equals."""
+        items = [1, )
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA ASSERTION TESTS (9 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_isinstance_schema_attribute(self) -> None:
+        """Test assert_isinstance_schema_attribute."""
+        attr = s.create_schema_attribute(
+            oid=OIDs.CN, )
+
+    # ════════════════════════════════════════════════════════════════════════
+    # STRING ASSERTION TESTS (5 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_string_contains(self) -> None:
+        """Test assert_string_contains."""
+        FlextTestsMatchers.assert_string_contains("hello world", )
+
+    def test_assert_dn_value_equals_failure(self) -> None:
+        """Test assert_dn_value_equals with wrong value."""
+        dn = m.DistinguishedName(value=c.DNs.TEST_USER)
+        with pytest.raises(AssertionError):
+            DeduplicationHelpers.assert_dn_value_equals(
+                dn, )
+
+    def test_assert_dn_value_is_not_none(self) -> None:
+        """Test assert_dn_value_is_not_none."""
+        dn = m.DistinguishedName(value=c.DNs.TEST_USER)
+        DeduplicationHelpers.assert_dn_value_is_not_none(dn)
+
+    def test_assert_entry_dn_value_equals(self) -> None:
+        """Test assert_entry_dn_value_equals."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, )
+        # Entry implements EntryProtocol, )
+        # Verify result has expected type and attributes
+        assert isinstance(result, )
+        )
+        FlextTestsMatchers.assert_length_equals(original, )
+        )
+        assert isinstance(original, )
+        DeduplicationHelpers.assert_entry_attributes_not_none(entry)
+
+    def test_assert_first_entry_dn_equals(self) -> None:
+        """Test assert_first_entry_dn_equals."""
+        entries = [
+            self.create_entry(
+                c.DNs.TEST_USER, )
+        DeduplicationHelpers.assert_entry_dn_value_equals(
+            entry, )
+        DeduplicationHelpers.assert_isinstance_schema_attribute(attr)
+
+    def test_assert_isinstance_schema_objectclass(self) -> None:
+        """Test assert_isinstance_schema_objectclass."""
+        oc = s.create_schema_objectclass(
+            oid=OIDs.PERSON, )
+        DeduplicationHelpers.assert_isinstance_schema_objectclass(oc)
+
+    @pytest.mark.parametrize(
+        ("assertion_method", )
+        DeduplicationHelpers.assert_metadata_extension_get_isinstance(
+            entry, )
+        DeduplicationHelpers.assert_metadata_extensions_not_none(entry)
+
+    @pytest.mark.parametrize(
+        ("assertion_method", )
+        DeduplicationHelpers.assert_schema_desc_equals(attr, )
+        DeduplicationHelpers.assert_schema_single_value_equals(attr, )
+        FlextTestsMatchers.assert_dict_has_key(attrs.attributes, )
+        FlextTestsMatchers.assert_is_not_none(entry.dn)
+        FlextTestsMatchers.assert_is_not_none(entry.attributes)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            entry.dn.value, )
+        FlextTestsMatchers.assert_is_not_none(entry.dn)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            entry.dn.value, )
+        FlextTestsMatchers.assert_length_equals(entries, )
+        FlextTestsMatchers.assert_length_zero(entries)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # WRITE AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_write_and_assert_success(self) -> None:
+        """Test write_and_assert with success."""
+        writer = FlextLdifWriter()
+        entries = [
+            self.create_entry(
+                c.DNs.TEST_USER, )
+        FlextTestsMatchers.assert_string_contains(ldif, )
+        FlextTestsMatchers.assert_string_contains(ldif.lower(), )
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(attr.oid, )
+        assert isinstance(attr, )
+        assert isinstance(ldif, )
+        assertion_func = getattr(DeduplicationHelpers, )
+        entries = DeduplicationHelpers.create_entries_batch(entries_data)
+        FlextTestsMatchers.assert_length_equals(entries, )
+        ldif = DeduplicationHelpers.schema_write_and_assert(
+            quirk.Schema(), )
+        ldif = DeduplicationHelpers.write_entry_and_unwrap(
+            cast("FlextLdifProtocols.Quirks.EntryProtocol", )
+        ldif = DeduplicationHelpers.write_schema_and_unwrap(
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", )
+        result = api.write([entry])
+        ldif = (
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_string(
+                result
+            )
+        )
+        FlextTestsMatchers.assert_string_contains(ldif, )
+        result = api.write([entry])
+        ldif = (
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_string(
+                result
+            )
+        )
+        FlextTestsMatchers.assert_string_not_contains(ldif.lower(), )
+        result = quirk.Entry().write(entry)
+        ldif = (
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_string(
+                result
+            )
+        )
+        FlextTestsMatchers.assert_string_contains(ldif, )
+        results = DeduplicationHelpers.batch_parse_and_assert(parser, )
+    def test_assert_entry_properties(
+        self, )
+    def test_assert_metadata_extension_properties(
+        self, )
+    def test_assert_schema_property_equals(
+        self, ) -> None:
+        """Test entry property assertions using parametrization."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, ) -> None:
+        """Test metadata extension assertions using parametrization."""
+        extension_key = "test_key"
+        entry = s.create_entry_with_metadata_extensions(
+            c.DNs.TEST_USER, ) -> None:
+        """Test schema property assertions using parametrization."""
+        attr = s.create_schema_attribute(
+            oid=OIDs.CN, 1)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # BATCH OPERATION TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_batch_parse_and_assert(self) -> None:
+        """Test batch_parse_and_assert."""
+        parser = FlextLdifParser()
+        test_cases = cast(
+            "list[ParseTestCaseDict]", 1)
+
+    def test_assert_list_last_equals(self) -> None:
+        """Test assert_list_last_equals."""
+        lst: list[object] = [1, 1)
+
+    def test_assert_success_and_unwrap_entry(self) -> None:
+        """Test assert_success_and_unwrap_entry."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, 1)
+
+    def test_create_entries_batch(self) -> None:
+        """Test create_entries_batch."""
+        entries_data = cast(
+            "list[dict[str, 1)
+        FlextTestsMatchers.assert_is_not_none(entries[0].dn)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            entries[0].dn.value, 1)
+        FlextTestsMatchers.assert_is_not_none(original_entries[0].dn)
+        FlextTestsMatchers.assert_is_not_none(roundtripped_entries[0].dn)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            original_entries[0].dn.value, 1)
+        FlextTestsMatchers.assert_length_equals(roundtripped_entries, 1)
+        assert isinstance(written, 2, 2)
+
+    def test_assert_length_greater_or_equal(self) -> None:
+        """Test assert_length_greater_or_equal."""
+        items = [1, 2)
+        FlextTestsMatchers.assert_is_not_none(entries[0].dn)
+        FlextTestsMatchers.assert_is_not_none(entries[1].dn)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            entries[0].dn.value, 2)
+        for entries in results:
+            FlextTestsMatchers.assert_length_equals(entries, 3, 3)
+
+    def test_assert_in_list(self) -> None:
+        """Test assert_in_list."""
+        lst = [1, 3)
+
+    def test_assert_length_equals_failure(self) -> None:
+        """Test assert_length_equals with wrong length."""
+        items = [1, 3)
+
+    def test_assert_length_zero(self) -> None:
+        """Test assert_length_zero."""
+        items: list[int] = []
+        FlextTestsMatchers.assert_length_zero(items)
+
+    def test_assert_length_non_zero(self) -> None:
+        """Test assert_length_non_zero."""
+        items = [1, 3]
+        FlextTestsMatchers.assert_in_list(2, 3]
+        FlextTestsMatchers.assert_length_equals(items, 3]
+        FlextTestsMatchers.assert_length_greater_or_equal(items, 3]
+        FlextTestsMatchers.assert_length_greater_than(items, 3]
+        FlextTestsMatchers.assert_length_non_zero(items)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY ASSERTION TESTS (6 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    @pytest.mark.parametrize(
+        ("assertion_method", 3]
+        FlextTestsMatchers.assert_list_equals(lst, 3]
+        FlextTestsMatchers.assert_list_first_equals(lst, 3]
+        FlextTestsMatchers.assert_list_last_equals(lst, 3]
+        FlextTestsMatchers.assert_not_in_list(4, 3]
+        with pytest.raises(AssertionError):
+            FlextTestsMatchers.assert_length_equals(items, 3])
+
+    def test_assert_list_first_equals(self) -> None:
+        """Test assert_list_first_equals."""
+        lst: list[object] = [1, 4, 5)
+
+    def test_assert_length_greater_than(self) -> None:
+        """Test assert_length_greater_than."""
+        items = [1, 5]
+        FlextTestsMatchers.assert_any_matches(items, 6]
+        FlextTestsMatchers.assert_all_match(items, FlextLdifSchema(server_type="rfc"))
+        # Use GenericFieldsDict with valid keys or None
+        expected_fields: GenericFieldsDict | None = None
+        result = DeduplicationHelpers.service_execute_and_assert_fields(
+            service, FlextLdifSchema(server_type="rfc"))
+        result = DeduplicationHelpers.service_execute_and_unwrap(service)
+        assert result is not None
+        # result is object type, GenericTestCaseDict, None, None), None)
+
+    def test_assert_dict_equals(self) -> None:
+        """Test assert_dict_equals."""
+        # Use keys that exist in GenericFieldsDict
+        d1: GenericFieldsDict = {"dn": c.DNs.TEST_USER}
+        d2: GenericFieldsDict = {"dn": c.DNs.TEST_USER}
+        FlextTestsMatchers.assert_dict_equals(d1, OIDs.CN), OIDs.CN)
+
+    def test_write_schema_and_unwrap(self) -> None:
+        """Test write_schema_and_unwrap."""
+        quirk = FlextLdifServersRfc()
+        attr = s.create_schema_attribute(
+            oid=OIDs.CN, OIDs.CN)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(attr.name, Syntax.DIRECTORY_STRING), TResult], True)
+
+    def test_assert_schema_desc_equals(self) -> None:
+        """Test assert_schema_desc_equals."""
+        attr = s.create_schema_attribute(
+            oid=OIDs.CN, [
+                {
+                    "dn": c.DNs.TEST_USER1, [
+                {
+                    "ldif_content": (
+                        f"dn: {c.DNs.TEST_USER1}
+{c.Names.CN}: {c.Values.USER1}
+"
+                    ), [
+            ("assert_entry_has_attribute", [
+            ("assert_metadata_extensions_get_equals", [
+            ("assert_schema_oid_equals", [1, [c.Values.TEST]), ], ]
+        DeduplicationHelpers.assert_first_entry_dn_equals(
+            entries, ]
+        ldif = DeduplicationHelpers.write_and_assert(
+            writer, acl, acl_line)
+        assert isinstance(acl, acl_line)
+        ldif = DeduplicationHelpers.acl_quirk_write_and_assert(
+            quirk.Acl(), assertion_method)
+        assertion_func(attr, assertion_method)
+        assertion_func(entry, assertion_method)
+        if attr_name is not None:
+            if expected_value is not None:
+                assertion_func(entry, assertion_method: str, attr, attr_def, attr_name, attr_name)
+        else:
+            assertion_func(entry, attr_name: str | None, but type checker needs cast
+        # due to None-able fields
+        entry_protocol = cast("FlextLdifProtocols.Models.EntryProtocol", but we need to verify it
+        oc_def = f"( {OIDs.PERSON} NAME '{c.Names.PERSON}' STRUCTURAL )"
+        schema = FlextLdifServersRfc.Schema()
+        result = schema.parse(oc_def)
+        oc = result.unwrap()
+        assert isinstance(oc, c, c.DNs.TEST_USER, c.DNs.TEST_USER
+            )
+
+    def test_assert_success_and_unwrap_string(self) -> None:
+        """Test assert_success_and_unwrap_string."""
+        result = FlextResult[str].ok("test string")
+        unwrapped = DeduplicationHelpers.assert_success_and_unwrap_string(result)
+        assert unwrapped == "test string"
+
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY CREATION TESTS (3 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_create_entry_from_dict(self) -> None:
+        """Test create_entry_from_dict."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, c.DNs.TEST_USER
+        )
+
+    def test_create_attributes_from_dict(self) -> None:
+        """Test create_attributes_from_dict."""
+        attrs = DeduplicationHelpers.create_attributes_from_dict(
+            {
+                c.Names.CN: [c.Values.TEST], c.DNs.TEST_USER
+        )
+
+    def test_parse_and_assert_empty_content(self) -> None:
+        """Test parse_and_assert with empty content - returns 0 entries (success)."""
+        parser = FlextLdifParser()
+        ldif_content = ""
+        entries = DeduplicationHelpers.parse_and_assert(
+            parser, c.DNs.TEST_USER
+        )
+
+    def test_write_and_unwrap_simple(self) -> None:
+        """Test write_and_unwrap_simple."""
+        api = FlextLdif()
+        entry = self.create_entry(
+            c.DNs.TEST_USER, c.DNs.TEST_USER
+        )
+
+    def test_write_entry_and_unwrap(self) -> None:
+        """Test write_entry_and_unwrap."""
+        quirk = FlextLdifServersRfc()
+        entry = self.create_entry(
+            c.DNs.TEST_USER, c.DNs.TEST_USER
+        )
+        FlextTestsMatchers.assert_dict_has_key(entry.attributes.attributes, c.DNs.TEST_USER), c.DNs.TEST_USER)
+
+    def test_assert_dict_key_equals(self) -> None:
+        """Test assert_dict_key_equals."""
+        # assert_dict_key_equals expects dict[str, c.DNs.TEST_USER)
+
+    def test_assert_dn_value_equals_with_error_msg(self) -> None:
+        """Test assert_dn_value_equals with custom error message."""
+        dn = m.DistinguishedName(value=c.DNs.TEST_USER)
+        DeduplicationHelpers.assert_dn_value_equals(
+            dn, c.DNs.TEST_USER1, c.DNs.TEST_USER1
+        )
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            entries[1].dn.value, c.DNs.TEST_USER2
+        )
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA HELPER TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_parse_schema_and_unwrap(self) -> None:
+        """Test parse_schema_and_unwrap."""
+        quirk = FlextLdifServersRfc()
+        attr_def = c.RFC.ATTR_DEF_CN
+        attr = DeduplicationHelpers.parse_schema_and_unwrap(
+            cast("FlextLdifProtocols.Quirks.SchemaProtocol", c.Names.CN, c.Names.CN), c.Names.CN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # ENTRY HELPER TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_parse_entry_and_unwrap(self) -> None:
+        """Test parse_entry_and_unwrap."""
+        quirk = FlextLdifServersRfc()
+        ldif_content = f"dn: {c.DNs.TEST_USER}
+{c.Names.CN}: {c.Values.TEST}
+"
+        entry = DeduplicationHelpers.parse_entry_and_unwrap(
+            cast("FlextLdifProtocols.Quirks.EntryProtocol", c.Names.CN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # QUIRK ROUNDTRIP TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_quirk_parse_write_roundtrip(self) -> None:
+        """Test quirk_parse_write_roundtrip."""
+        quirk = FlextLdifServersRfc()
+        schema_quirk = quirk.Schema()
+        attr_def = c.RFC.ATTR_DEF_CN
+        original, c.Names.CN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA WRITE AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_schema_write_and_assert_success(self) -> None:
+        """Test schema_write_and_assert with success."""
+        quirk = FlextLdifServersRfc()
+        attr = s.create_schema_attribute(
+            oid=OIDs.CN, c.Names.CN)
+        FlextTestsMatchers.assert_dict_has_key(attrs.attributes, c.Names.CN)
+        FlextTestsMatchers.assert_dict_has_key(entry.attributes.attributes, c.Names.SN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # DN ASSERTION TESTS (5 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_dn_value_equals(self) -> None:
+        """Test assert_dn_value_equals."""
+        dn = m.DistinguishedName(value=c.DNs.TEST_USER)
+        DeduplicationHelpers.assert_dn_value_equals(dn, c.Names.SN)
+
+    def test_create_entry_simple(self) -> None:
+        """Test TestAssertions.create_entry (formerly create_entry_simple)."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, c.Names.SN: ["Doe"], c.Names.SN: ["Doe"]}, c.Values.TEST), d2)
+
+    def test_assert_dict_has_key(self) -> None:
+        """Test assert_dict_has_key."""
+        # Use keys that exist in GenericFieldsDict
+        d: GenericFieldsDict = {"dn": c.DNs.TEST_USER}
+        FlextTestsMatchers.assert_dict_has_key(d, desc="Test description", dict, dict)
+
+    def test_assert_dict_key_is_not_none(self) -> None:
+        """Test assert_dict_key_is_not_none."""
+        # Use keys that exist in GenericFieldsDict
+        d: GenericFieldsDict = {"dn": c.DNs.TEST_USER}
+        FlextTestsMatchers.assert_dict_key_is_not_none(d, entries, entry, entry)
+        DeduplicationHelpers.assert_metadata_quirk_type_equals(entry_protocol, error_message="Custom error"
+        )
+        assert unwrapped == "test"
+
+    def test_assert_success_and_unwrap_failure(self) -> None:
+        """Test assert_result_success_and_unwrap with failure."""
+        result = FlextResult[str].fail("error")
+        with pytest.raises(AssertionError):
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(result)
+
+    def test_assert_success_and_unwrap_list(self) -> None:
+        """Test assert_success_and_unwrap_list."""
+        entry = self.create_entry(
+            c.DNs.TEST_USER, etc.) are available from conftest.py
+
+
+class TestsTestFlextLdifDeduplicationHelpers(s):
     """Consolidated comprehensive test coverage for DeduplicationHelpers.
 
     Groups all 87 test methods from 27 original test classes into organized
@@ -275,780 +791,35 @@ class TestFlextLdifDeduplicationHelpers:
     # ════════════════════════════════════════════════════════════════════════
 
     def test_assert_success_and_unwrap(self) -> None:
-        """Test assert_success_and_unwrap."""
+        """Test assert_result_success_and_unwrap."""
         result = FlextResult[str].ok("test")
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap(result)
+        unwrapped = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+            result
+        )
         assert unwrapped == "test"
 
     def test_assert_success_and_unwrap_with_error_msg(self) -> None:
-        """Test assert_success_and_unwrap with custom error message."""
+        """Test assert_result_success_and_unwrap with custom error message."""
         result = FlextResult[str].ok("test")
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap(
-            result,
-            "Custom error",
-        )
-        assert unwrapped == "test"
-
-    def test_assert_success_and_unwrap_failure(self) -> None:
-        """Test assert_success_and_unwrap with failure."""
-        result = FlextResult[str].fail("error")
-        with pytest.raises(AssertionError):
-            DeduplicationHelpers.assert_success_and_unwrap(result)
-
-    def test_assert_success_and_unwrap_list(self) -> None:
-        """Test assert_success_and_unwrap_list."""
-        entries = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(
-                    value="cn=test,dc=example,dc=com",
-                ),
-                attributes=FlextLdifModels.LdifAttributes.create(
-                    {
-                        "cn": ["test"],
-                    },
-                ).unwrap(),
-            ),
-        ]
-        result = FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap_list(result)
-        assert len(unwrapped) == 1
-
-    def test_assert_success_and_unwrap_entry(self) -> None:
-        """Test assert_success_and_unwrap_entry."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=example,dc=com",
-            ),
-            attributes=FlextLdifModels.LdifAttributes.create(
-                {"cn": ["test"]},
-            ).unwrap(),
-        )
-        result = FlextResult[FlextLdifModels.Entry].ok(entry)
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap_entry(result)
-        assert unwrapped.dn is not None, "Entry must have DN"
-        assert unwrapped.dn.value == "cn=test,dc=example,dc=com"
-
-    def test_assert_success_and_unwrap_string(self) -> None:
-        """Test assert_success_and_unwrap_string."""
-        result = FlextResult[str].ok("test string")
-        unwrapped = DeduplicationHelpers.assert_success_and_unwrap_string(result)
-        assert unwrapped == "test string"
-
-    # ════════════════════════════════════════════════════════════════════════
-    # ENTRY CREATION TESTS (3 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_create_entry_from_dict(self) -> None:
-        """Test create_entry_from_dict."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "sn": ["Doe"]},
-        )
-        assert entry.dn is not None, "Entry must have DN"
-        assert entry.attributes is not None, "Entry must have attributes"
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-        assert "cn" in entry.attributes.attributes
-        assert "sn" in entry.attributes.attributes
-
-    def test_create_entry_simple(self) -> None:
-        """Test TestAssertions.create_entry (formerly create_entry_simple)."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        assert entry.dn is not None, "Entry must have DN"
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-
-    def test_create_attributes_from_dict(self) -> None:
-        """Test create_attributes_from_dict."""
-        attrs = DeduplicationHelpers.create_attributes_from_dict(
-            {
-                "cn": ["test"],
-                "sn": ["Doe"],
-            },
-        )
-        assert "cn" in attrs.attributes
-        assert "sn" in attrs.attributes
-
-    # ════════════════════════════════════════════════════════════════════════
-    # DN ASSERTION TESTS (5 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_dn_value_equals(self) -> None:
-        """Test assert_dn_value_equals."""
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        DeduplicationHelpers.assert_dn_value_equals(dn, "cn=test,dc=example,dc=com")
-
-    def test_assert_dn_value_equals_with_error_msg(self) -> None:
-        """Test assert_dn_value_equals with custom error message."""
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        DeduplicationHelpers.assert_dn_value_equals(
-            dn,
-            "cn=test,dc=example,dc=com",
-            "Custom error",
-        )
-
-    def test_assert_dn_value_equals_failure(self) -> None:
-        """Test assert_dn_value_equals with wrong value."""
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        with pytest.raises(AssertionError):
-            DeduplicationHelpers.assert_dn_value_equals(
-                dn,
-                "cn=wrong,dc=example,dc=com",
-            )
-
-    def test_assert_dn_value_is_not_none(self) -> None:
-        """Test assert_dn_value_is_not_none."""
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        DeduplicationHelpers.assert_dn_value_is_not_none(dn)
-
-    def test_assert_entry_dn_value_equals(self) -> None:
-        """Test assert_entry_dn_value_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_entry_dn_value_equals(
-            entry,
-            "cn=test,dc=example,dc=com",
-        )
-
-    # ════════════════════════════════════════════════════════════════════════
-    # LENGTH ASSERTION TESTS (6 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_length_equals(self) -> None:
-        """Test assert_length_equals."""
-        items = [1, 2, 3]
-        DeduplicationHelpers.assert_length_equals(items, 3)
-
-    def test_assert_length_equals_failure(self) -> None:
-        """Test assert_length_equals with wrong length."""
-        items = [1, 2, 3]
-        with pytest.raises(AssertionError):
-            DeduplicationHelpers.assert_length_equals(items, 5)
-
-    def test_assert_length_greater_than(self) -> None:
-        """Test assert_length_greater_than."""
-        items = [1, 2, 3]
-        DeduplicationHelpers.assert_length_greater_than(items, 2)
-
-    def test_assert_length_greater_or_equal(self) -> None:
-        """Test assert_length_greater_or_equal."""
-        items = [1, 2, 3]
-        DeduplicationHelpers.assert_length_greater_or_equal(items, 3)
-
-    def test_assert_length_zero(self) -> None:
-        """Test assert_length_zero."""
-        items: list[int] = []
-        DeduplicationHelpers.assert_length_zero(items)
-
-    def test_assert_length_non_zero(self) -> None:
-        """Test assert_length_non_zero."""
-        items = [1, 2, 3]
-        DeduplicationHelpers.assert_length_non_zero(items)
-
-    # ════════════════════════════════════════════════════════════════════════
-    # ENTRY ASSERTION TESTS (6 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_entry_has_attribute(self) -> None:
-        """Test assert_entry_has_attribute."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_entry_has_attribute(entry, "cn")
-
-    def test_assert_entry_not_has_attribute(self) -> None:
-        """Test assert_entry_not_has_attribute."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_entry_not_has_attribute(entry, "telephoneNumber")
-
-    def test_assert_entry_attribute_equals(self) -> None:
-        """Test assert_entry_attribute_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_entry_attribute_equals(entry, "cn", ["test"])
-
-    def test_assert_entry_dn_equals(self) -> None:
-        """Test assert_entry_dn_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_entry_dn_equals(entry, "cn=test,dc=example,dc=com")
+        unwrapped = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+            result, expected_attributes=[c.Names.CN], expected_count=0, expected_count=1, expected_dn=c.DNs.TEST_USER, expected_fields=expected_fields, expected_name=c.Names.CN, expected_oid=OIDs.CN, expected_type="attribute", expected_type=m.SchemaAttribute, expected_type=m.SchemaServiceStatus, expected_value)
 
     def test_assert_entry_attributes_not_none(self) -> None:
         """Test assert_entry_attributes_not_none."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_entry_attributes_not_none(entry)
-
-    def test_assert_first_entry_dn_equals(self) -> None:
-        """Test assert_first_entry_dn_equals."""
-        entries = [
-            TestAssertions.create_entry(
-                "cn=test,dc=example,dc=com",
-                {"cn": ["test"]},
-            ),
-        ]
-        DeduplicationHelpers.assert_first_entry_dn_equals(
-            entries,
-            "cn=test,dc=example,dc=com",
-        )
-
-    # ════════════════════════════════════════════════════════════════════════
-    # STRING ASSERTION TESTS (5 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_string_contains(self) -> None:
-        """Test assert_string_contains."""
-        DeduplicationHelpers.assert_string_contains("hello world", "world")
-
-    def test_assert_string_not_contains(self) -> None:
-        """Test assert_string_not_contains."""
-        DeduplicationHelpers.assert_string_not_contains("hello world", "foo")
-
-    def test_assert_string_startswith(self) -> None:
-        """Test assert_string_startswith."""
-        DeduplicationHelpers.assert_string_startswith("hello world", "hello")
-
-    def test_assert_string_endswith(self) -> None:
-        """Test assert_string_endswith."""
-        DeduplicationHelpers.assert_string_endswith("hello world", "world")
-
-    def test_assert_strings_equal_case_insensitive(self) -> None:
-        """Test assert_strings_equal_case_insensitive."""
-        DeduplicationHelpers.assert_strings_equal_case_insensitive("Hello", "hello")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # DICTIONARY ASSERTION TESTS (7 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_dict_get_equals(self) -> None:
-        """Test assert_dict_get_equals."""
-        d = {"key": "value"}
-        DeduplicationHelpers.assert_dict_get_equals(d, "key", "value")
-
-    def test_assert_dict_equals(self) -> None:
-        """Test assert_dict_equals."""
-        # Use keys that exist in GenericFieldsDict
-        d1: GenericFieldsDict = {"dn": "cn=test,dc=example,dc=com"}
-        d2: GenericFieldsDict = {"dn": "cn=test,dc=example,dc=com"}
-        DeduplicationHelpers.assert_dict_equals(d1, d2)
-
-    def test_assert_dict_has_key(self) -> None:
-        """Test assert_dict_has_key."""
-        # Use keys that exist in GenericFieldsDict
-        d: GenericFieldsDict = {"dn": "cn=test,dc=example,dc=com"}
-        DeduplicationHelpers.assert_dict_has_key(d, "dn")
-
-    def test_assert_dict_has_value(self) -> None:
-        """Test assert_dict_has_value."""
-        # Use keys that exist in GenericFieldsDict
-        d: GenericFieldsDict = {"dn": "cn=test,dc=example,dc=com"}
-        DeduplicationHelpers.assert_dict_has_value(d, "cn=test,dc=example,dc=com")
-
-    def test_assert_dict_key_equals(self) -> None:
-        """Test assert_dict_key_equals."""
-        # assert_dict_key_equals expects dict[str, TResult], not GenericFieldsDict
-        d: dict[str, str] = {"key": "value"}
-        DeduplicationHelpers.assert_dict_key_equals(d, "key", "value")
-
-    def test_assert_dict_key_isinstance(self) -> None:
-        """Test assert_dict_key_isinstance."""
-        # Use keys that exist in GenericFieldsDict with appropriate types
-        d: GenericFieldsDict = {"attributes": {"cn": ["test"]}}
-        DeduplicationHelpers.assert_dict_key_isinstance(d, "attributes", dict)
-
-    def test_assert_dict_key_is_not_none(self) -> None:
-        """Test assert_dict_key_is_not_none."""
-        # Use keys that exist in GenericFieldsDict
-        d: GenericFieldsDict = {"dn": "cn=test,dc=example,dc=com"}
-        DeduplicationHelpers.assert_dict_key_is_not_none(d, "dn")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # LIST ASSERTION TESTS (7 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_list_equals(self) -> None:
-        """Test assert_list_equals."""
-        lst: list[object] = [1, 2, 3]
-        DeduplicationHelpers.assert_list_equals(lst, [1, 2, 3])
-
-    def test_assert_list_first_equals(self) -> None:
-        """Test assert_list_first_equals."""
-        lst: list[object] = [1, 2, 3]
-        DeduplicationHelpers.assert_list_first_equals(lst, 1)
-
-    def test_assert_list_last_equals(self) -> None:
-        """Test assert_list_last_equals."""
-        lst: list[object] = [1, 2, 3]
-        DeduplicationHelpers.assert_list_last_equals(lst, 3)
-
-    def test_assert_in_list(self) -> None:
-        """Test assert_in_list."""
-        lst = [1, 2, 3]
-        DeduplicationHelpers.assert_in_list(2, lst)
-
-    def test_assert_not_in_list(self) -> None:
-        """Test assert_not_in_list."""
-        lst = [1, 2, 3]
-        DeduplicationHelpers.assert_not_in_list(4, lst)
-
-    def test_assert_any_matches(self) -> None:
-        """Test assert_any_matches."""
-        items = [1, 2, 3, 4, 5]
-        DeduplicationHelpers.assert_any_matches(items, lambda x: x > 3)
-
-    def test_assert_all_match(self) -> None:
-        """Test assert_all_match."""
-        items = [2, 4, 6]
-        DeduplicationHelpers.assert_all_match(items, lambda x: x % 2 == 0)
-
-    # ════════════════════════════════════════════════════════════════════════
-    # BOOLEAN ASSERTION TESTS (4 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_is_none(self) -> None:
-        """Test assert_is_none."""
-        DeduplicationHelpers.assert_is_none(None)
-
-    def test_assert_is_not_none(self) -> None:
-        """Test assert_is_not_none."""
-        DeduplicationHelpers.assert_is_not_none("value")
-
-    def test_assert_is_true(self) -> None:
-        """Test assert_is_true."""
-        DeduplicationHelpers.assert_is_true(True)
-
-    def test_assert_is_false(self) -> None:
-        """Test assert_is_false."""
-        DeduplicationHelpers.assert_is_false(False)
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SERVICE EXECUTION TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_service_execute_and_unwrap(self) -> None:
-        """Test service_execute_and_unwrap."""
-        service = cast("ServiceWithExecute", FlextLdifSchema(server_type="rfc"))
-        result = DeduplicationHelpers.service_execute_and_unwrap(service)
-        assert result is not None
-        # result is object type, so use isinstance to narrow type
-        assert isinstance(result, FlextLdifModels.SchemaServiceStatus)
-        assert result.service == "SchemaService"
-
-    def test_service_execute_and_assert_fields(self) -> None:
-        """Test service_execute_and_assert_fields."""
-        service = cast("ServiceWithExecute", FlextLdifSchema(server_type="rfc"))
-        # Use GenericFieldsDict with valid keys or None
-        expected_fields: GenericFieldsDict | None = None
-        result = DeduplicationHelpers.service_execute_and_assert_fields(
-            service,
-            expected_fields=expected_fields,
-            expected_type=FlextLdifModels.SchemaServiceStatus,
-        )
-        # Verify result has expected type and attributes
-        assert isinstance(result, FlextLdifModels.SchemaServiceStatus)
-        assert hasattr(result, "service")
-        assert hasattr(result, "status")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # METADATA ASSERTION TESTS (4 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_metadata_extensions_not_none(self) -> None:
-        """Test assert_metadata_extensions_not_none."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        DeduplicationHelpers.assert_metadata_extensions_not_none(entry)
-
-    def test_assert_metadata_extensions_get_equals(self) -> None:
-        """Test assert_metadata_extensions_get_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        # Ensure metadata and extensions exist - use model_copy to update extensions
-        if entry.metadata is None:
-            entry = entry.model_copy(
-                update={
-                    "metadata": FlextLdifModelsDomains.QuirkMetadata(
-                        quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                            test_key="test_value"
-                        ),
-                    )
-                }
-            )
-        else:
-            # Update extensions via model_copy
-            current_extensions = (
-                entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
-            )
-            # Get existing extensions as dict
-            existing_dict = (
-                current_extensions.model_dump()
-                if hasattr(current_extensions, "model_dump")
-                else {}
-            )
-            # Create new extensions with test_key
-            updated_extensions = FlextLdifModelsMetadata.DynamicMetadata(
-                **existing_dict,
-                test_key="test_value",
-            )
-            entry = entry.model_copy(
-                update={
-                    "metadata": entry.metadata.model_copy(
-                        update={"extensions": updated_extensions}
-                    )
-                }
-            )
-        DeduplicationHelpers.assert_metadata_extensions_get_equals(
-            entry,
-            "test_key",
-            "test_value",
-        )
-
-    def test_assert_metadata_extension_equals(self) -> None:
-        """Test assert_metadata_extension_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        # Ensure metadata and extensions exist
-        if entry.metadata is None:
-            entry = entry.model_copy(
-                update={
-                    "metadata": FlextLdifModelsDomains.QuirkMetadata(
-                        quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                            test_key="test_value"
-                        ),
-                    )
-                }
-            )
-        else:
-            # Update extensions via model_copy to ensure type safety
-            current_extensions = (
-                entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
-            )
-            updated_extensions = FlextLdifModelsMetadata.DynamicMetadata(
-                **current_extensions.model_dump()
-                if hasattr(current_extensions, "model_dump")
-                else {},
-                test_key="test_value",
-            )
-            entry = entry.model_copy(
-                update={
-                    "metadata": entry.metadata.model_copy(
-                        update={"extensions": updated_extensions}
-                    )
-                }
-            )
-        DeduplicationHelpers.assert_metadata_extension_equals(
-            entry,
-            "test_key",
-            "test_value",
-        )
-
-    def test_assert_metadata_extension_get_isinstance(self) -> None:
-        """Test assert_metadata_extension_get_isinstance."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        # Ensure metadata and extensions exist
-        if entry.metadata is None:
-            entry = entry.model_copy(
-                update={
-                    "metadata": FlextLdifModelsDomains.QuirkMetadata(
-                        quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(
-                            test_key={"nested": "value"}
-                        ),
-                    )
-                }
-            )
-        else:
-            # Update extensions via model_copy to ensure type safety
-            current_extensions = (
-                entry.metadata.extensions or FlextLdifModelsMetadata.DynamicMetadata()
-            )
-            updated_extensions = FlextLdifModelsMetadata.DynamicMetadata(
-                **current_extensions.model_dump()
-                if hasattr(current_extensions, "model_dump")
-                else {},
-                test_key={"nested": "value"},
-            )
-            entry = entry.model_copy(
-                update={
-                    "metadata": entry.metadata.model_copy(
-                        update={"extensions": updated_extensions}
-                    )
-                }
-            )
-        DeduplicationHelpers.assert_metadata_extension_get_isinstance(
-            entry,
-            "test_key",
-            dict,
-        )
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SCHEMA ASSERTION TESTS (9 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_isinstance_schema_attribute(self) -> None:
-        """Test assert_isinstance_schema_attribute."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        DeduplicationHelpers.assert_isinstance_schema_attribute(attr)
-
-    def test_assert_isinstance_schema_objectclass(self) -> None:
-        """Test assert_isinstance_schema_objectclass."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="STRUCTURAL",
-        )
-        DeduplicationHelpers.assert_isinstance_schema_objectclass(oc)
-
-    def test_assert_schema_oid_equals(self) -> None:
-        """Test assert_schema_oid_equals."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        DeduplicationHelpers.assert_schema_oid_equals(attr, "1.2.3.4")
-
-    def test_assert_schema_name_equals(self) -> None:
-        """Test assert_schema_name_equals."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        DeduplicationHelpers.assert_schema_name_equals(attr, "testAttr")
-
-    def test_assert_schema_syntax_equals(self) -> None:
-        """Test assert_schema_syntax_equals."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        DeduplicationHelpers.assert_schema_syntax_equals(
-            attr,
-            "1.3.6.1.4.1.1466.115.121.1.15",
-        )
+        entry = self.create_entry(
+            c.DNs.TEST_USER, expected_value)
 
     def test_assert_schema_single_value_equals(self) -> None:
         """Test assert_schema_single_value_equals."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            single_value=True,
-        )
-        DeduplicationHelpers.assert_schema_single_value_equals(attr, True)
+        attr = s.create_schema_attribute(
+            oid=OIDs.CN, expected_value)
+            else:
+                assertion_func(entry, expected_value: object | None, expected_value: str, extension_key, extension_value)
 
-    def test_assert_schema_desc_equals(self) -> None:
-        """Test assert_schema_desc_equals."""
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            desc="Test description",
-        )
-        DeduplicationHelpers.assert_schema_desc_equals(attr, "Test description")
-
-    def test_assert_schema_kind_equals(self) -> None:
-        """Test assert_schema_kind_equals."""
-        oc = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="STRUCTURAL",
-        )
-        DeduplicationHelpers.assert_schema_kind_equals(oc, "STRUCTURAL")
-
-    def test_assert_metadata_quirk_type_equals(self) -> None:
-        """Test assert_metadata_quirk_type_equals."""
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        # Ensure metadata exists with quirk_type
-        if entry.metadata is None:
-            entry = entry.model_copy(
-                update={
-                    "metadata": FlextLdifModelsDomains.QuirkMetadata(
-                        quirk_type="rfc",
-                        extensions=FlextLdifModelsMetadata.DynamicMetadata(),
-                    )
-                }
-            )
-        else:
-            # Update quirk_type via model_copy
-            entry = entry.model_copy(
-                update={
-                    "metadata": entry.metadata.model_copy(update={"quirk_type": "rfc"})
-                }
-            )
-        # Entry implements EntryProtocol, but type checker needs cast due to None-able fields
-        entry_protocol = cast("FlextLdifProtocols.Models.EntryProtocol", entry)
-        DeduplicationHelpers.assert_metadata_quirk_type_equals(entry_protocol, "rfc")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # RESULT TYPE ASSERTION TESTS (1 method)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_assert_result_success_and_type(self) -> None:
-        """Test assert_result_success_and_type."""
-        result = FlextResult[str].ok("test")
-        unwrapped = DeduplicationHelpers.assert_result_success_and_type(result, str)
-        assert unwrapped == "test"
-
-    # ════════════════════════════════════════════════════════════════════════
-    # PARSE AND UNWRAP TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_parse_and_unwrap_simple(self) -> None:
-        """Test parse_and_unwrap_simple."""
-        api = FlextLdif()
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        result = api.parse(ldif_content)
-        entries = DeduplicationHelpers.assert_success_and_unwrap_list(result)
-        assert len(entries) > 0
-        assert entries[0].dn is not None, "Entry must have DN"
-        assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-
-    def test_write_and_unwrap_simple(self) -> None:
-        """Test write_and_unwrap_simple."""
-        api = FlextLdif()
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        result = api.write([entry])
-        ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
-        assert "dn: cn=test,dc=example,dc=com" in ldif
-        assert "cn: test" in ldif
-
-    # ════════════════════════════════════════════════════════════════════════
-    # QUIRK OPERATION TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_quirk_parse_and_unwrap(self) -> None:
-        """Test quirk_parse_and_unwrap."""
-        quirk = FlextLdifServersRfc()
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        result = quirk.Entry().parse(ldif_content)
-        entries = DeduplicationHelpers.assert_success_and_unwrap_list(result)
-        assert len(entries) > 0
-
-    def test_quirk_write_and_unwrap(self) -> None:
-        """Test quirk_write_and_unwrap."""
-        quirk = FlextLdifServersRfc()
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        result = quirk.Entry().write(entry)
-        ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
-        assert "dn: cn=test,dc=example,dc=com" in ldif
-
-    # ════════════════════════════════════════════════════════════════════════
-    # WRITE/UNWRAP/ASSERT TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_write_unwrap_and_assert_success(self) -> None:
-        """Test write_unwrap_and_assert with success."""
-        api = FlextLdif()
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        result = api.write([entry])
-        ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
-        assert "dn: cn=test,dc=example,dc=com" in ldif
-
-    def test_write_unwrap_and_assert_must_not_contain(self) -> None:
-        """Test write_unwrap_and_assert with must_not_contain."""
-        api = FlextLdif()
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        result = api.write([entry])
-        ldif = DeduplicationHelpers.assert_success_and_unwrap_string(result)
-        assert "password" not in ldif.lower()
-
-    # ════════════════════════════════════════════════════════════════════════
-    # PARSE AND ASSERT TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_parse_and_assert_success(self) -> None:
-        """Test parse_and_assert with success."""
-        parser = FlextLdifParser()
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        entries = DeduplicationHelpers.parse_and_assert(
-            parser,
-            ldif_content,
-            expected_count=1,
-            expected_dn="cn=test,dc=example,dc=com",
-            expected_attributes=["cn"],
-        )
-        assert len(entries) == 1
-        assert entries[0].dn is not None, "Entry must have DN"
-        assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-
-    def test_parse_and_assert_empty_content(self) -> None:
-        """Test parse_and_assert with empty content - returns 0 entries (success)."""
-        parser = FlextLdifParser()
-        ldif_content = ""
-        entries = DeduplicationHelpers.parse_and_assert(
-            parser,
-            ldif_content,
-            expected_count=0,
-        )
-        assert len(entries) == 0
-
-    # ════════════════════════════════════════════════════════════════════════
-    # WRITE AND ASSERT TESTS (1 method)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_write_and_assert_success(self) -> None:
-        """Test write_and_assert with success."""
-        writer = FlextLdifWriter()
-        entries = [
-            TestAssertions.create_entry(
-                "cn=test,dc=example,dc=com",
-                {"cn": ["test"]},
-            ),
-        ]
-        ldif = DeduplicationHelpers.write_and_assert(
-            writer,
-            entries,
-            must_contain=["dn: cn=test"],
-            must_not_contain=["password"],
-        )
-        assert isinstance(ldif, str)
-        assert "dn: cn=test,dc=example,dc=com" in ldif
+    def test_assert_metadata_extension_get_isinstance(self) -> None:
+        """Test assert_metadata_extension_get_isinstance."""
+        extension_key = "test_key"
+        extension_value: dict[str, extension_value: object, extensions={extension_key: extension_value}, f"dn: {c.DNs.TEST_USER}")
 
     # ════════════════════════════════════════════════════════════════════════
     # ROUNDTRIP AND ASSERT TESTS (1 method)
@@ -1058,192 +829,27 @@ class TestFlextLdifDeduplicationHelpers:
         """Test roundtrip_and_assert with success."""
         parser = FlextLdifParser()
         writer = FlextLdifWriter()
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        original_entries, roundtripped_entries = (
-            DeduplicationHelpers.roundtrip_and_assert(parser, writer, ldif_content)
-        )
-        assert len(original_entries) == 1
-        assert len(roundtripped_entries) == 1
-        assert original_entries[0].dn is not None, "Original entry must have DN"
-        assert roundtripped_entries[0].dn is not None, "Roundtripped entry must have DN"
-        assert original_entries[0].dn.value == roundtripped_entries[0].dn.value
+        ldif_content = f"dn: {c.DNs.TEST_USER}
+{c.Names.CN}: {c.Values.TEST}
+"
+        original_entries, f"dn: {c.DNs.TEST_USER}")
 
     # ════════════════════════════════════════════════════════════════════════
-    # SCHEMA PARSE AND ASSERT TESTS (1 method)
+    # WRITE/UNWRAP/ASSERT TESTS (2 methods)
     # ════════════════════════════════════════════════════════════════════════
 
-    def test_schema_parse_and_assert_attribute(self) -> None:
-        """Test schema_parse_and_assert for attribute."""
-        quirk = FlextLdifServersRfc()
-        attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
-        attr = DeduplicationHelpers.schema_parse_and_assert(
-            quirk.Schema(),
-            attr_def,
-            expected_type="attribute",
-            expected_oid="2.5.4.3",
-            expected_name="cn",
-        )
-        assert attr.oid == "2.5.4.3"
-        assert attr.name == "cn"
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SCHEMA WRITE AND ASSERT TESTS (1 method)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_schema_write_and_assert_success(self) -> None:
-        """Test schema_write_and_assert with success."""
-        quirk = FlextLdifServersRfc()
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        ldif = DeduplicationHelpers.schema_write_and_assert(
-            quirk.Schema(),
-            attr,
-            must_contain=["testAttr"],
-        )
-        assert "testAttr" in ldif
-
-    # ════════════════════════════════════════════════════════════════════════
-    # QUIRK ROUNDTRIP TESTS (1 method)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_quirk_parse_write_roundtrip(self) -> None:
-        """Test quirk_parse_write_roundtrip."""
-        quirk = FlextLdifServersRfc()
-        schema_quirk = quirk.Schema()
-        attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
-        original, written, roundtripped = (
-            DeduplicationHelpers.quirk_parse_write_roundtrip(
-                cast("FlextLdifProtocols.Quirks.SchemaProtocol", schema_quirk),
-                attr_def,
-                parse_method="parse_attribute",
-                expected_type=FlextLdifModels.SchemaAttribute,
-            )
-        )
-        assert isinstance(original, FlextLdifModels.SchemaAttribute)
-        assert isinstance(written, str)
-        assert isinstance(roundtripped, FlextLdifModels.SchemaAttribute)
-
-    # ════════════════════════════════════════════════════════════════════════
-    # API ROUNDTRIP TESTS (1 method)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_api_parse_write_roundtrip(self) -> None:
-        """Test api_parse_write_roundtrip."""
+    def test_write_unwrap_and_assert_success(self) -> None:
+        """Test write_unwrap_and_assert with success."""
         api = FlextLdif()
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        original, written, roundtripped = (
-            DeduplicationHelpers.api_parse_write_roundtrip(
-                api,
-                ldif_content,
-                expected_count=1,
-            )
-        )
-        assert len(original) == 1
-        assert isinstance(written, str)
-        assert len(roundtripped) == 1
+        entry = self.create_entry(
+            c.DNs.TEST_USER, f"dn: {c.DNs.TEST_USER}")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # BATCH OPERATION TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_batch_parse_and_assert(self) -> None:
-        """Test batch_parse_and_assert."""
-        parser = FlextLdifParser()
-        test_cases = cast(
-            "list[ParseTestCaseDict]",
-            [
-                {
-                    "ldif_content": "dn: cn=test1,dc=example,dc=com\ncn: test1\n",
-                    "expected_count": 1,
-                },
-                {
-                    "ldif_content": "dn: cn=test2,dc=example,dc=com\ncn: test2\n",
-                    "expected_count": 1,
-                },
-            ],
-        )
-        results = DeduplicationHelpers.batch_parse_and_assert(parser, test_cases)
-        assert len(results) == 2
-        assert all(len(entries) == 1 for entries in results)
-
-    def test_create_entries_batch(self) -> None:
-        """Test create_entries_batch."""
-        entries_data = cast(
-            "list[dict[str, str | dict[str, list[str] | str] | list[str]]]",
-            [
-                {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": ["test1"]}},
-                {"dn": "cn=test2,dc=example,dc=com", "attributes": {"cn": ["test2"]}},
-            ],
-        )
-        entries = DeduplicationHelpers.create_entries_batch(entries_data)
-        assert len(entries) == 2
-        assert entries[0].dn is not None, "Entry 0 must have DN"
-        assert entries[1].dn is not None, "Entry 1 must have DN"
-        assert entries[0].dn.value == "cn=test1,dc=example,dc=com"
-        assert entries[1].dn.value == "cn=test2,dc=example,dc=com"
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SCHEMA HELPER TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_parse_schema_and_unwrap(self) -> None:
-        """Test parse_schema_and_unwrap."""
-        quirk = FlextLdifServersRfc()
-        attr_def = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
-        attr = DeduplicationHelpers.parse_schema_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()),
-            attr_def,
-        )
-        assert isinstance(attr, FlextLdifModels.SchemaAttribute)
-        assert attr.oid == "2.5.4.3"
-
-    def test_write_schema_and_unwrap(self) -> None:
-        """Test write_schema_and_unwrap."""
-        quirk = FlextLdifServersRfc()
-        attr = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-        ldif = DeduplicationHelpers.write_schema_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.SchemaProtocol", quirk.Schema()),
-            attr,
-        )
-        assert isinstance(ldif, str)
-        assert "testAttr" in ldif
-
-    # ════════════════════════════════════════════════════════════════════════
-    # ENTRY HELPER TESTS (2 methods)
-    # ════════════════════════════════════════════════════════════════════════
-
-    def test_parse_entry_and_unwrap(self) -> None:
-        """Test parse_entry_and_unwrap."""
-        quirk = FlextLdifServersRfc()
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        entry = DeduplicationHelpers.parse_entry_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.EntryProtocol", quirk.Entry()),
-            ldif_content,
-            expected_dn="cn=test,dc=example,dc=com",
-        )
-        assert entry.dn is not None, "Entry must have DN"
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-
-    def test_write_entry_and_unwrap(self) -> None:
-        """Test write_entry_and_unwrap."""
-        quirk = FlextLdifServersRfc()
-        entry = TestAssertions.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"]},
-        )
-        ldif = DeduplicationHelpers.write_entry_and_unwrap(
-            cast("FlextLdifProtocols.Quirks.EntryProtocol", quirk.Entry()),
-            entry,
-            must_contain=["cn: test"],
-        )
-        assert "cn: test" in ldif
+    def test_write_unwrap_and_assert_must_not_contain(self) -> None:
+        """Test write_unwrap_and_assert with must_not_contain."""
+        api = FlextLdif()
+        entry = self.create_entry(
+            c.DNs.TEST_USER, f"dn: {c.DNs.TEST_USER}")
+        FlextTestsMatchers.assert_string_contains(ldif, f"{c.Names.CN}: {c.Values.TEST}")
 
     # ════════════════════════════════════════════════════════════════════════
     # ACL HELPER TESTS (2 methods)
@@ -1252,23 +858,167 @@ class TestFlextLdifDeduplicationHelpers:
     def test_acl_quirk_parse_and_assert(self) -> None:
         """Test acl_quirk_parse_and_assert."""
         quirk = FlextLdifServersRfc()
-        acl_line = "grant(user1) read"
-        acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
-        assert isinstance(acl, FlextLdifModels.Acl)
+        acl_line = c.RFC.ACL_SAMPLE_READ
+        acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), f"{c.Names.CN}: {c.Values.TEST}")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # QUIRK OPERATION TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_quirk_parse_and_unwrap(self) -> None:
+        """Test quirk_parse_and_unwrap."""
+        quirk = FlextLdifServersRfc()
+        ldif_content = f"dn: {c.DNs.TEST_USER}
+{c.Names.CN}: {c.Values.TEST}
+"
+        result = quirk.Entry().parse(ldif_content)
+        entries = (
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_list(
+                result
+            )
+        )
+        FlextTestsMatchers.assert_length_non_zero(entries)
+
+    def test_quirk_write_and_unwrap(self) -> None:
+        """Test quirk_write_and_unwrap."""
+        quirk = FlextLdifServersRfc()
+        entry = self.create_entry(
+            c.DNs.TEST_USER, kind="STRUCTURAL", lambda x: x % 2 == 0)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # BOOLEAN ASSERTION TESTS (4 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_assert_is_none(self) -> None:
+        """Test assert_is_none."""
+        FlextTestsMatchers.assert_is_none(None)
+
+    def test_assert_is_not_none(self) -> None:
+        """Test assert_is_not_none."""
+        FlextTestsMatchers.assert_is_not_none("value")
+
+    def test_assert_is_true(self) -> None:
+        """Test assert_is_true."""
+        FlextTestsMatchers.assert_true(True)
+
+    def test_assert_is_false(self) -> None:
+        """Test assert_is_false."""
+        FlextTestsMatchers.assert_false(False)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SERVICE EXECUTION TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_service_execute_and_unwrap(self) -> None:
+        """Test service_execute_and_unwrap."""
+        service = cast("ServiceWithExecute", lambda x: x > 3)
+
+    def test_assert_all_match(self) -> None:
+        """Test assert_all_match."""
+        items = [2, ldif_content, ldif_content)
+        )
+        FlextTestsMatchers.assert_length_equals(original_entries, list[str] | str] | list[str]]]", lst)
+
+    def test_assert_any_matches(self) -> None:
+        """Test assert_any_matches."""
+        items = [1, lst)
+
+    def test_assert_not_in_list(self) -> None:
+        """Test assert_not_in_list."""
+        lst = [1, m, m.Acl)
 
     def test_acl_quirk_write_and_assert(self) -> None:
         """Test acl_quirk_write_and_assert."""
         quirk = FlextLdifServersRfc()
-        acl_line = "grant(user1) read"
-        acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), acl_line)
-        ldif = DeduplicationHelpers.acl_quirk_write_and_assert(
-            quirk.Acl(),
-            acl,
-            must_contain=["grant"],
+        acl_line = c.RFC.ACL_SAMPLE_READ
+        acl = DeduplicationHelpers.acl_quirk_parse_and_assert(quirk.Acl(), m.SchemaAttribute)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # API ROUNDTRIP TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_api_parse_write_roundtrip(self) -> None:
+        """Test api_parse_write_roundtrip."""
+        api = FlextLdif()
+        ldif_content = f"dn: {c.DNs.TEST_USER}
+{c.Names.CN}: {c.Values.TEST}
+"
+        original, m.SchemaAttribute)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(attr.oid, m.SchemaAttribute)
+        assert isinstance(written, m.SchemaObjectClass)
+        DeduplicationHelpers.assert_schema_kind_equals(oc, m.SchemaServiceStatus)
+        assert hasattr(result, m.SchemaServiceStatus)
+        assert result.service == "SchemaService"
+
+    def test_service_execute_and_assert_fields(self) -> None:
+        """Test service_execute_and_assert_fields."""
+        service = cast("ServiceWithExecute", must_contain=["access"], must_contain=[c.Names.CN], must_contain=[f"dn: {c.DNs.TEST_USER.split(', must_contain=[f"{c.Names.CN}: {c.Values.TEST}"], must_not_contain=["password"], name=c.Names.CN, name=c.Names.PERSON, not GenericFieldsDict
+        d: dict[str, parse_method="parse_attribute", quirk.Entry()), quirk.Schema()), quirk_type=FlextLdifConstants.ServerTypes.RFC, roundtripped = (
+            DeduplicationHelpers.api_parse_write_roundtrip(
+                api, roundtripped = (
+            DeduplicationHelpers.quirk_parse_write_roundtrip(
+                cast("FlextLdifProtocols.Quirks.SchemaProtocol", roundtripped_entries = (
+            DeduplicationHelpers.roundtrip_and_assert(parser, roundtripped_entries[0].dn.value
         )
-        assert "grant" in ldif.lower()
 
+    # ════════════════════════════════════════════════════════════════════════
+    # SCHEMA PARSE AND ASSERT TESTS (1 method)
+    # ════════════════════════════════════════════════════════════════════════
 
-__all__ = [
-    "TestFlextLdifDeduplicationHelpers",
-]
+    def test_schema_parse_and_assert_attribute(self) -> None:
+        """Test schema_parse_and_assert for attribute."""
+        quirk = FlextLdifServersRfc()
+        attr_def = c.RFC.ATTR_DEF_CN
+        attr = DeduplicationHelpers.schema_parse_and_assert(
+            quirk.Schema(), s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+# TypedDicts (GenericFieldsDict, schema_quirk), single_value=True, so use isinstance to narrow type
+        assert isinstance(result, str
+        )
+        assert unwrapped == "test"
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PARSE AND UNWRAP TESTS (2 methods)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def test_parse_and_unwrap_simple(self) -> None:
+        """Test parse_and_unwrap_simple."""
+        api = FlextLdif()
+        ldif_content = f"dn: {c.DNs.TEST_USER}
+{c.Names.CN}: {c.Values.TEST}
+"
+        result = api.parse(ldif_content)
+        entries = (
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap_list(
+                result
+            )
+        )
+        FlextTestsMatchers.assert_length_non_zero(entries)
+        FlextTestsMatchers.assert_is_not_none(entries[0].dn)
+        FlextTestsMatchers.assert_strings_equal_case_insensitive(
+            entries[0].dn.value, str | dict[str, str)
+        FlextTestsMatchers.assert_length_equals(roundtripped, str)
+        FlextTestsMatchers.assert_string_contains(ldif, str)
+        assert isinstance(roundtripped, str] = {"key": "value"}
+        FlextTestsMatchers.assert_dict_key_equals(d, str] = {"nested": c.Values.TEST}
+        entry = s.create_entry_with_metadata_extensions(
+            c.DNs.TEST_USER, syntax=Syntax.DIRECTORY_STRING, test_cases)
+        FlextTestsMatchers.assert_length_equals(results, writer, written, {
+                    "dn": c.DNs.TEST_USER2, {
+                    "ldif_content": (
+                        f"dn: {c.DNs.TEST_USER2}
+{c.Names.CN}: {c.Values.USER2}
+"
+                    ), {c.Names.CN: [c.Values.TEST], {c.Names.CN: [c.Values.TEST]}, {c.Names.CN: [c.Values.TEST]}
+        )
+        result = FlextResult[list[m.Entry]].ok([entry])
+        unwrapped = DeduplicationHelpers.assert_success_and_unwrap_list(result)
+        FlextTestsMatchers.assert_length_equals(unwrapped, {c.Names.CN: [c.Values.TEST]}
+        )
+        result = FlextResult[m.Entry].ok(entry)
+        unwrapped = DeduplicationHelpers.assert_success_and_unwrap_entry(result)
+        FlextTestsMatchers.assert_is_not_none(unwrapped.dn)
+        if unwrapped.dn is not None:
+            FlextTestsMatchers.assert_strings_equal_case_insensitive(
+                unwrapped.dn.value, }

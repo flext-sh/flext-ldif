@@ -9,7 +9,7 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Process batches of entries
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestDocker.ldap_container fixture.
+container management via FlextTestsDocker.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,7 +26,7 @@ from flext_core import FlextConfig
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from flext_ldif.config import FlextLdifConfigModule
+from flext_ldif.config import FlextLdifConfig
 
 # Skip if flext_ldap not available (integration dependency)
 flext_ldap_config = pytest.importorskip("flext_ldap.config")
@@ -59,7 +59,7 @@ class TestRealLdapConfigurationFromEnv:
         ldif_config = root_config.ldif if hasattr(root_config, "ldif") else None
         # If ldif namespace doesn't exist, try accessing FlextLdifConfig directly
         if ldif_config is None:
-            ldif_config = FlextLdifConfigModule.FlextLdifConfig.get_instance()
+            ldif_config = FlextLdifConfig.get_instance()
 
         # Verify configuration values (from .env or defaults)
         assert ldif_config.ldif_encoding in {"utf-8", "utf-16", "latin1"}

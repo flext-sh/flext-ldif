@@ -1,6 +1,6 @@
 """Shared service base that provides typed LDIF configuration access.
 
-This module provides the base class for all LDIF services, extending FlextService
+This module provides the base class for all LDIF services, extending s
 with LDIF-specific configuration access. All services inherit from this base to
 ensure consistent configuration handling across the codebase.
 
@@ -10,13 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextService
-from flext_core.typings import T
+from flext_core import T, s
 
 from flext_ldif.config import FlextLdifConfig
 
 
-class FlextLdifServiceBase(FlextService[T]):
+class FlextLdifServiceBase(s[T]):
     """Base class for LDIF services with typed config helper.
 
     Business Rule: All LDIF services inherit from this base class to ensure
@@ -56,3 +55,9 @@ class FlextLdifServiceBase(FlextService[T]):
 
         """
         return self.config.get_namespace("ldif", FlextLdifConfig)
+
+
+# Short alias for service base (s is FlextService from flext-core)
+# Export s for consistency with other modules (u, m, c, t, p)
+# s is already imported from flext_core, so we just need to export it
+__all__ = ["FlextLdifServiceBase", "s"]

@@ -17,10 +17,13 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsFactories  # Mocked in conftest
+from flext_tests import FlextTestsFactories
 
-from flext_ldif import FlextLdif, FlextLdifModels
-from tests.fixtures.constants import RFC, DNs, Names, Values
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
+from tests import c
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 class APIScenarios(StrEnum):
@@ -40,9 +43,9 @@ class APIScenarios(StrEnum):
 class TestData:
     """Test data constants for API integration tests."""
 
-    SIMPLE_LDIF: Final[str] = RFC.SAMPLE_LDIF_BASIC
-    MULTI_ENTRY_LDIF: Final[str] = RFC.SAMPLE_LDIF_MULTIPLE
-    COMPLEX_LDIF: Final[str] = f"""{RFC.SAMPLE_LDIF_MULTIPLE}
+    SIMPLE_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_BASIC
+    MULTI_ENTRY_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_MULTIPLE
+    COMPLEX_LDIF: Final[str] = f"""{c.RFC.SAMPLE_LDIF_MULTIPLE}
 dn: cn=Admin1,ou=Admins,dc=example,dc=com
 cn: Admin1
 mail: REDACTED_LDAP_BIND_PASSWORD1@example.com
@@ -88,8 +91,8 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
     """
 
     # Test data constants
-    _SIMPLE_LDIF: Final[str] = RFC.SAMPLE_LDIF_BASIC
-    _MULTI_ENTRY_LDIF: Final[str] = RFC.SAMPLE_LDIF_MULTIPLE
+    _SIMPLE_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_BASIC
+    _MULTI_ENTRY_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_MULTIPLE
     _COMPLEX_LDIF: Final[str] = TestData.COMPLEX_LDIF
 
     @pytest.mark.parametrize(
@@ -116,7 +119,7 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
 
         # Validate entry structure
         for entry in entries:
-            assert isinstance(entry, FlextLdifModels.Entry)
+            assert isinstance(entry, m.Entry)
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -179,20 +182,21 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
     def test_build_entry_programmatic(self) -> None:
         """Test building entries programmatically using models."""
         # Create entry using Entry model directly
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value=DNs.TEST_USER),
-            attributes=FlextLdifModels.LdifAttributes(
+        test_dn = c.RFC.TEST_DN
+        entry = m.Entry(
+            dn=m.DistinguishedName(value=test_dn),
+            attributes=m.LdifAttributes(
                 attributes={
-                    Names.CN: [Values.TEST],
-                    Names.SN: [Values.TEST],
-                    Names.OBJECTCLASS: [Names.PERSON],
+                    c.Names.CN: [c.General.ATTR_VALUE_TEST],
+                    c.Names.SN: [c.General.ATTR_VALUE_USER],
+                    c.Names.OBJECTCLASS: [c.SharedDomain.EntryType.PERSON],
                 },
             ),
         )
 
-        assert entry.dn.value == DNs.TEST_USER
-        assert Names.CN in entry.attributes.attributes
-        assert entry.attributes.attributes[Names.CN] == [Values.TEST]
+        assert entry.dn.value == test_dn
+        assert c.Names.CN in entry.attributes.attributes
+        assert entry.attributes.attributes[c.Names.CN] == [c.General.ATTR_VALUE_TEST]
 
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
@@ -213,7 +217,8 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
         result1 = ldif1.parse(self._SIMPLE_LDIF)
         result2 = ldif2.parse(self._SIMPLE_LDIF)
 
-        assert result1.is_success and result2.is_success
+        assert result1.is_success
+        assert result2.is_success
 
         entries1 = result1.unwrap()
         entries2 = result2.unwrap()
@@ -233,7 +238,7 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
         result = ldif.filter(
             entries,
             dn_pattern="ou=Admins",
-            attributes={Names.MAIL: None},  # Has mail attribute
+            attributes={c.Names.MAIL: None},  # Has mail attribute
         )
         assert result.is_success
 
@@ -273,7 +278,8 @@ class TestFlextLdifAPIIntegration(FlextTestsFactories):
         assert validate_result.is_success
 
         # Step 4: Filter
-        filter_result = ldif.filter(entries, objectclass=Names.PERSON)
+        person_oc = c.SharedDomain.EntryType.PERSON
+        filter_result = ldif.filter(entries, objectclass=person_oc)
         assert filter_result.is_success
         filtered = filter_result.unwrap()
         assert len(filtered) == 1

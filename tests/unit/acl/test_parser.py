@@ -1,17 +1,3 @@
-"""Test suite for FlextLdifAcl Parser.
-
-Modules tested: FlextLdifAcl
-Scope: ACL parsing, initialization, extraction, evaluation, OpenLDAP/OID formats,
-context evaluation, unsupported server types
-
-Tests all ACL operations with proper type safety and parametrization.
-Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -22,13 +8,13 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifConstants
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests.fixtures.constants import RFC, DNs, Fixtures
-from tests.fixtures.typing import GenericFieldsDict
-
-
+from tests import ), AclParserTestCase(, c
+        AclParserTestType.EXECUTE, AclParserTestCase(
+        AclParserTestType.PARSE_OID, AclParserTestCase(
+        AclParserTestType.PARSE_OPENLDAP, AclParserTestCase(
+        AclParserTestType.PARSE_OUD, GenericTestCaseDict, acl_line=f'access to * by dn.exact="{c.DNs.TEST_USER}" write', acl_line=f'aci: (targetattr="*")(version 3.0, acl_line=f'orclaci: access to entry by dn="{c.DNs.TEST_USER}" (read)', c, description="Execute ACL service (empty result)", description="Initialize ACL service", description="Parse OpenLDAP ACL format", description="Parse Oracle OID ACL format", etc.) are available from conftest.py
 class AclParserTestType(StrEnum):
     """Types of ACL parser tests."""
 
@@ -60,40 +46,22 @@ class AclParserTestCase:
 # Test cases for comprehensive coverage
 PARSER_TESTS: Final[list[AclParserTestCase]] = [
     AclParserTestCase(
-        AclParserTestType.INITIALIZATION,
-        description="Initialize ACL service",
-    ),
-    AclParserTestCase(
-        AclParserTestType.EXECUTE,
-        description="Execute ACL service (empty result)",
-    ),
-    AclParserTestCase(
-        AclParserTestType.PARSE_OPENLDAP,
-        server_type=Fixtures.OPENLDAP,
-        acl_line=f'access to * by dn.exact="{DNs.TEST_USER}" write',
-        description="Parse OpenLDAP ACL format",
-    ),
-    AclParserTestCase(
-        AclParserTestType.PARSE_OID,
-        server_type=Fixtures.OID,
-        acl_line=f'orclaci: access to entry by dn="{DNs.TEST_USER}" (read)',
-        description="Parse Oracle OID ACL format",
-    ),
-    AclParserTestCase(
-        AclParserTestType.PARSE_OUD,
-        server_type=Fixtures.OUD,
-        acl_line=f'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///{DNs.TEST_USER}";)',
+        AclParserTestType.INITIALIZATION, s
+
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+# TypedDicts (GenericFieldsDict, server_type=c.Fixtures.OID, server_type=c.Fixtures.OPENLDAP, server_type=c.Fixtures.OUD; acl "Test ACL"; allow (read,search) userdn="ldap:///{c.DNs.TEST_USER}";)',
         description="Parse Oracle OUD ACI format",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_REAL_OID_EXAMPLE,
-        server_type=Fixtures.OID,
+        server_type=c.Fixtures.OID,
         acl_line="orclaci: access to entry by * (browse,read) bindmode=(Simple)",
         description="Parse real OID ACL example with bindmode",
     ),
     AclParserTestCase(
         AclParserTestType.PARSE_REAL_OUD_EXAMPLE,
-        server_type=Fixtures.OUD,
+        server_type=c.Fixtures.OUD,
         acl_line='aci: (targetattr="*")(version 3.0; acl "Anonymous read"; allow (read,search) userdn="ldap:///anyone";)',
         description="Parse real OUD ACI example with anonymous access",
     ),
@@ -136,9 +104,9 @@ class AclParserTestFactory:
         read: bool = False,
         write: bool = False,
         delete: bool = False,
-        server_type: str = Fixtures.OPENLDAP,
-        raw_acl: str = RFC.ACL_SAMPLE_READ,
-    ) -> FlextLdifModelsDomains.Acl:
+        server_type: str = c.Fixtures.OPENLDAP,
+        raw_acl: str = c.RFC.ACL_SAMPLE_READ,
+    ) -> m.Acl:
         """Create test ACL model."""
         # Type narrowing: cast subject_type and server_type to Literal types
         subject_type_literal: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = (
@@ -148,14 +116,14 @@ class AclParserTestFactory:
             "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type
         )
 
-        return FlextLdifModelsDomains.Acl(
+        return m.Acl(
             name=name,
-            target=FlextLdifModelsDomains.AclTarget(target_dn=target_dn),
-            subject=FlextLdifModelsDomains.AclSubject(
+            target=m.AclTarget(target_dn=target_dn),
+            subject=m.AclSubject(
                 subject_type=subject_type_literal,
                 subject_value=subject_value,
             ),
-            permissions=FlextLdifModelsDomains.AclPermissions(
+            permissions=m.AclPermissions(
                 read=read,
                 write=write,
                 delete=delete,
@@ -181,7 +149,7 @@ class AclParserTestFactory:
             permissions["delete"] = True
         # Return dict compatible with GenericFieldsDict
         # Note: GenericFieldsDict may not include "permissions", but this is test code
-        return cast("GenericFieldsDict", {"permissions": permissions})  # type: ignore[typeddict-item]
+        return cast("GenericFieldsDict", {"permissions": permissions})
 
 
 def get_parser_tests() -> list[AclParserTestCase]:
@@ -189,7 +157,7 @@ def get_parser_tests() -> list[AclParserTestCase]:
     return PARSER_TESTS
 
 
-class TestFlextLdifAclParser:
+class TestsTestFlextLdifAclParser(s):
     """Comprehensive ACL parser tests with parametrization."""
 
     @pytest.fixture
@@ -216,13 +184,13 @@ class TestFlextLdifAclParser:
                 assert result.is_success
                 # ACL service returns AclResponse, not ServiceStatus
                 acl_response = result.unwrap()
-                assert isinstance(acl_response, FlextLdifModelsResults.AclResponse)
+                assert isinstance(acl_response, m.LdifResults.AclResponse)
                 assert len(acl_response.acls) == 0
                 assert isinstance(acl_response.acls, list)
 
             case AclParserTestType.PARSE_OPENLDAP:
                 # Test parsing OpenLDAP ACL format
-                parse_result_openldap: FlextResult[FlextLdifModelsDomains.Acl] = (
+                parse_result_openldap: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line, test_case.server_type
                     )
@@ -233,17 +201,15 @@ class TestFlextLdifAclParser:
                     f"OpenLDAP ACL parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_openldap.unwrap()
-                assert isinstance(parsed_acl, FlextLdifModelsDomains.Acl)
+                assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
                 # ACL server_type is determined by parsing, not input parameter
 
             case AclParserTestType.PARSE_OID:
                 # Test parsing Oracle OID ACL format
-                parse_result_oid: FlextResult[FlextLdifModelsDomains.Acl] = (
-                    acl_service.parse_acl_string(
-                        test_case.acl_line,
-                        test_case.server_type,
-                    )
+                parse_result_oid: FlextResult[m.Acl] = acl_service.parse_acl_string(
+                    test_case.acl_line,
+                    test_case.server_type,
                 )
                 assert isinstance(parse_result_oid, FlextResult)
                 # Validate successful parsing
@@ -251,17 +217,15 @@ class TestFlextLdifAclParser:
                     f"OID ACL parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_oid.unwrap()
-                assert isinstance(parsed_acl, FlextLdifModelsDomains.Acl)
+                assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
                 # ACL server_type is determined by parsing, not input parameter
 
             case AclParserTestType.PARSE_OUD:
                 # Test parsing Oracle OUD ACI format
-                parse_result_oud: FlextResult[FlextLdifModelsDomains.Acl] = (
-                    acl_service.parse_acl_string(
-                        test_case.acl_line,
-                        test_case.server_type,
-                    )
+                parse_result_oud: FlextResult[m.Acl] = acl_service.parse_acl_string(
+                    test_case.acl_line,
+                    test_case.server_type,
                 )
                 assert isinstance(parse_result_oud, FlextResult)
                 # Validate successful parsing
@@ -269,13 +233,13 @@ class TestFlextLdifAclParser:
                     f"OUD ACI parsing should succeed: {test_case.acl_line}"
                 )
                 parsed_acl = parse_result_oud.unwrap()
-                assert isinstance(parsed_acl, FlextLdifModelsDomains.Acl)
+                assert isinstance(parsed_acl, m.Acl)
                 assert parsed_acl.raw_acl == test_case.acl_line
                 # ACL server_type is determined by parsing, not input parameter
 
             case AclParserTestType.PARSE_REAL_OID_EXAMPLE:
                 # Test parsing real OID ACL example
-                parse_result_real_oid: FlextResult[FlextLdifModelsDomains.Acl] = (
+                parse_result_real_oid: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line,
                         test_case.server_type,
@@ -286,7 +250,7 @@ class TestFlextLdifAclParser:
                 # The important thing is that parsing either succeeds with valid ACL or fails with clear error
                 if parse_result_real_oid.is_success:
                     parsed_acl = parse_result_real_oid.unwrap()
-                    assert isinstance(parsed_acl, FlextLdifModelsDomains.Acl)
+                    assert isinstance(parsed_acl, m.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                     # ACL server_type is determined by parsing, not input parameter
                 else:
@@ -295,7 +259,7 @@ class TestFlextLdifAclParser:
 
             case AclParserTestType.PARSE_REAL_OUD_EXAMPLE:
                 # Test parsing real OUD ACI example
-                parse_result_real_oud: FlextResult[FlextLdifModelsDomains.Acl] = (
+                parse_result_real_oud: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         test_case.acl_line,
                         test_case.server_type,
@@ -306,7 +270,7 @@ class TestFlextLdifAclParser:
                 # The important thing is that parsing either succeeds with valid ACI or fails with clear error
                 if parse_result_real_oud.is_success:
                     parsed_acl = parse_result_real_oud.unwrap()
-                    assert isinstance(parsed_acl, FlextLdifModelsDomains.Acl)
+                    assert isinstance(parsed_acl, m.Acl)
                     assert parsed_acl.raw_acl == test_case.acl_line
                     # ACL server_type is determined by parsing, not input parameter
                 else:
@@ -317,10 +281,10 @@ class TestFlextLdifAclParser:
                 # Test parsing with unsupported server type
                 # FlextLdifAcl uses parse_acl_string() method (not parse())
                 # Invalid server types are validated before parsing
-                parse_result_unsupported: FlextResult[FlextLdifModelsDomains.Acl] = (
+                parse_result_unsupported: FlextResult[m.Acl] = (
                     acl_service.parse_acl_string(
                         acl_string=test_case.acl_line,
-                        server_type=test_case.server_type,  # type: ignore[arg-type]
+                        server_type=test_case.server_type,
                     )
                 )
                 assert isinstance(parse_result_unsupported, FlextResult)

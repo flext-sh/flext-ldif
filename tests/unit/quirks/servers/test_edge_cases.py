@@ -1,17 +1,3 @@
-"""Test suite for LDIF Edge Cases and Complex Scenarios.
-
-Modules tested: FlextLdif (parse, write)
-Scope: Unicode handling, binary data, size limits, special characters,
-deep DN hierarchies, large multivalue attributes, round-trip validation
-
-Tests unicode, binary data, size limits, and special characters using real fixtures.
-Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
+from tests import s
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +25,7 @@ def ldif_api() -> FlextLdif:
     return FlextLdif()
 
 
-class TestEdgeCases:
+class TestsFlextLdifEdgeCases(s):
     """Test edge cases with real fixture files."""
 
     def test_unicode_names(self, ldif_api: FlextLdif) -> None:
@@ -81,8 +68,9 @@ objectClass: person
         # Find the deepest DN
         max_depth = 0
         for entry in entries:
-            depth = entry.dn.value.count(",") + 1
-            max_depth = max(max_depth, depth)
+            if entry.dn is not None:
+                depth = entry.dn.value.count(",") + 1
+                max_depth = max(max_depth, depth)
 
         # Validate deep DNs are handled
         assert max_depth > 5, f"Expected deep DN, got depth {max_depth}"
@@ -110,6 +98,8 @@ objectClass: person
         # Find attributes with many values
         max_values = 0
         for entry in entries:
+            if entry.attributes is None:
+                continue
             for attr_value in entry.attributes.values():
                 if isinstance(attr_value, list):
                     values = attr_value

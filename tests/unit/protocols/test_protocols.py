@@ -1,30 +1,3 @@
-"""Tests for FlextLdifProtocols protocol definitions.
-
-**Modules Tested:**
-- `flext_ldif.protocols.FlextLdifProtocols` - Protocol definitions and namespace
-- `flext_ldif.servers.oid.FlextLdifServersOid` - OID server implementation
-- `flext_ldif.servers.oud.FlextLdifServersOud` - OUD server implementation
-- `flext_ldif.servers.openldap.FlextLdifServersOpenldap` - OpenLDAP server implementation
-- `flext_ldif.servers.relaxed.FlextLdifServersRelaxed` - Relaxed server implementation
-- `flext_ldif.services.server.FlextLdifServer` - Server registry service
-
-**Scope:**
-- Protocol accessibility and namespace organization
-- SchemaProtocol implementation across servers
-- Protocol satisfaction via structural typing (duck typing)
-- QuirkRegistryProtocol implementation
-- Protocol attribute definitions and method contracts
-- Common usage patterns and filtering
-
-**Test Coverage:**
-- Protocol definition existence and accessibility
-- Server implementations satisfying protocols
-- Method contracts and return types
-- Common usage patterns and filtering
-
-Uses nested classes, parametrized tests, and helpers to reduce code duplication.
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -33,6 +6,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextResult
+from tests import s
 
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -52,7 +26,7 @@ def _create_server_implementations() -> list[tuple[str, type, type]]:
     ]
 
 
-class TestFlextLdifProtocols:
+class TestsTestFlextLdifProtocols(s):
     """Test suite for FlextLdifProtocols protocol definitions.
 
     Uses nested classes for organization: ProtocolNames, ServerTypes, TestCase,

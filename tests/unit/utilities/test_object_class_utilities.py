@@ -1,18 +1,12 @@
-"""Comprehensive tests for FlextLdifUtilitiesObjectClass.
-
-Tests all methods with real SchemaObjectClass models, edge cases, and RFC 4512 compliance.
-Uses parametrized tests and factories for maximum coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from tests import m, s
+
+from flext_ldif import FlextLdifConstants
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
+from flext_ldif.models import m
 
 
 class ObjectClassTestCase(StrEnum):
@@ -30,7 +24,7 @@ class ObjectClassTestCase(StrEnum):
     NO_SUP_NO_KIND = "no_sup_no_kind"
 
 
-class TestFlextLdifUtilitiesObjectClass:
+class TestsTestFlextLdifUtilitiesObjectClass(s):
     """Comprehensive tests for objectClass utilities."""
 
     @staticmethod
@@ -38,9 +32,9 @@ class TestFlextLdifUtilitiesObjectClass:
         name: str,
         kind: str | None = None,
         sup: str | None = None,
-    ) -> FlextLdifModels.SchemaObjectClass:
+    ) -> m.SchemaObjectClass:
         """Factory to create SchemaObjectClass for testing."""
-        return FlextLdifModels.SchemaObjectClass(
+        return m.SchemaObjectClass(
             oid="1.2.3.4.5",
             name=name,
             kind=kind,
@@ -241,7 +235,8 @@ class TestFlextLdifUtilitiesObjectClass:
         )
 
         FlextLdifUtilitiesObjectClass.ensure_sup_for_auxiliary(
-            oc, default_sup="customSup"
+            oc,
+            default_sup="customSup",
         )
 
         assert oc.sup == "customSup"

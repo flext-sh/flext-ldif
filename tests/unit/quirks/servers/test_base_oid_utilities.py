@@ -1,15 +1,3 @@
-"""Test suite for FlextLdifUtilities OID extraction utilities.
-
-Modules tested: FlextLdifUtilities.OID
-Scope: OID extraction, validation, pattern matching, server type detection
-
-All tests use REAL implementations without mocks for authentic behavior validation.
-Uses parametrized test scenarios and factory patterns for reduced code size.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import re
@@ -18,13 +6,12 @@ from typing import ClassVar
 
 import pytest
 
-from flext_ldif import FlextLdifModels
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
+from tests import s
 
 
-class TestFlextLdifUtilitiesOid:
+class TestsTestFlextLdifUtilitiesOid(s):
     """Comprehensive test suite for FlextLdifUtilities OID functions.
 
     Tests OID extraction, validation, pattern matching, and server type detection
@@ -126,19 +113,18 @@ class TestFlextLdifUtilitiesOid:
         dict[
             str,
             tuple[
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass,
+                m.SchemaAttribute | m.SchemaObjectClass,
                 str,
             ],
         ]
     ] = {
         ExtractOidScenario.FROM_ORIGINAL_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.16.840.1.113894.1.1.1",
                 name="orclGUID",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format="( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )",
                     ),
                 ),
@@ -146,19 +132,19 @@ class TestFlextLdifUtilitiesOid:
             "2.16.840.1.113894.1.1.1",
         ),
         ExtractOidScenario.FALLBACK_TO_MODEL_OID: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
             ),
             "2.5.4.3",
         ),
         ExtractOidScenario.FROM_OBJECTCLASS: (
-            FlextLdifModels.SchemaObjectClass(
+            m.SchemaObjectClass(
                 oid="2.16.840.1.113894.1.1.5",
                 name="orcldASObject",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format="( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )",
                     ),
                 ),
@@ -166,12 +152,12 @@ class TestFlextLdifUtilitiesOid:
             "2.16.840.1.113894.1.1.5",
         ),
         ExtractOidScenario.WHITESPACE_IN_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.6.0",
                 name="top",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format="(   2.5.6.0   NAME 'top' ... )",
                     ),
                 ),
@@ -179,12 +165,12 @@ class TestFlextLdifUtilitiesOid:
             "2.5.6.0",
         ),
         ExtractOidScenario.NON_STRING_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format=12345,
                     ),
                 ),
@@ -192,12 +178,12 @@ class TestFlextLdifUtilitiesOid:
             "2.5.4.3",
         ),
         ExtractOidScenario.DICT_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format={"key": "value"},
                     ),
                 ),
@@ -205,12 +191,12 @@ class TestFlextLdifUtilitiesOid:
             "2.5.4.3",
         ),
         ExtractOidScenario.NONE_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format=None,
                     ),
                 ),
@@ -218,12 +204,12 @@ class TestFlextLdifUtilitiesOid:
             "2.5.4.3",
         ),
         ExtractOidScenario.EMPTY_STRING_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format="",
                     ),
                 ),
@@ -231,23 +217,23 @@ class TestFlextLdifUtilitiesOid:
             "2.5.4.3",
         ),
         ExtractOidScenario.METADATA_NO_EXTENSIONS: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(),
+                    extensions=m.DynamicMetadata(),
                 ),
             ),
             "2.5.4.3",
         ),
         ExtractOidScenario.OBJECTCLASS_NON_STRING: (
-            FlextLdifModels.SchemaObjectClass(
+            m.SchemaObjectClass(
                 oid="2.5.6.0",
                 name="top",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format=[],
                     ),
                 ),
@@ -255,12 +241,12 @@ class TestFlextLdifUtilitiesOid:
             "2.5.6.0",
         ),
         ExtractOidScenario.MALFORMED_FORMAT: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format="NAME 'cn' DESC 'test'",
                     ),
                 ),
@@ -268,12 +254,12 @@ class TestFlextLdifUtilitiesOid:
             "2.5.4.3",
         ),
         ExtractOidScenario.ORIGINAL_FORMAT_MISSING_OID: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
-                metadata=FlextLdifModelsDomains.QuirkMetadata(
+                metadata=m.QuirkMetadata(
                     quirk_type="oid",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(
+                    extensions=m.DynamicMetadata(
                         original_format="( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     ),
                 ),
@@ -281,7 +267,7 @@ class TestFlextLdifUtilitiesOid:
             "2.5.4.3",
         ),
         ExtractOidScenario.NO_METADATA: (
-            FlextLdifModelsDomains.SchemaAttribute(
+            m.SchemaAttribute(
                 oid="2.5.4.3",
                 name="cn",
             ),
@@ -434,8 +420,7 @@ class TestFlextLdifUtilitiesOid:
     def test_extract_oid_from_schema_object(
         self,
         scenario: str,
-        schema_obj: FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        schema_obj: m.SchemaAttribute | m.SchemaObjectClass,
         expected_oid: str,
     ) -> None:
         """Test extracting OID from schema objects with parametrized scenarios."""
@@ -542,7 +527,8 @@ class TestFlextLdifUtilitiesOid:
         elif server_type == "openldap":
             result = FlextLdifUtilities.OID.is_openldap_oid(input_value)
         else:
-            raise ValueError(f"Unknown server type: {server_type}")
+            msg = f"Unknown server type: {server_type}"
+            raise ValueError(msg)
 
         assert result is expected_result, (
             f"Server type check failed for {scenario}: expected {expected_result}, got {result}"

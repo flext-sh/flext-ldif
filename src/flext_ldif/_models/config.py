@@ -9,28 +9,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
+from flext_core import r
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.result import FlextResult as r
+from flext_core.typings import t as core_t
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.protocols import FlextLdifProtocols
 
-if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif.models import FlextLdifModels
+_Entry = FlextLdifProtocols.Models.EntryProtocol
+_SchemaObjectClass = FlextLdifProtocols.Models.SchemaObjectClassProtocol
+_QuirkMetadata = core_t.Metadata  # Use Metadata type from flext-core
+_Acl = FlextLdifProtocols.Models.AclProtocol
 
 
 class FlextLdifModelsConfig:
     """LDIF configuration models container class.
 
     This class acts as a namespace container for LDIF configuration models.
-    All nested classes are accessed via FlextLdifModels.* in the main models.py.
+    All nested classes are accessed via m.* in the main models.py.
     """
 
     # Configuration classes will be added here
@@ -42,7 +46,7 @@ class FlextLdifModelsConfig:
         Reduces function signature from 6 parameters to 1 model.
 
         Example:
-            config = FlextLdifModels.AclMetadataConfig(
+            config = m.AclMetadataConfig(
                 line_breaks=[10, 20],
                 dn_spaces=True,
                 targetscope="subtree",
@@ -89,7 +93,7 @@ class FlextLdifModelsConfig:
         Each server (OUD, OID, RFC) provides its Constants-based config.
 
         Example:
-            parser_config = FlextLdifModels.AciParserConfig(
+            parser_config = m.AciParserConfig(
                 server_type="oud",
                 aci_prefix="aci:",
                 version_acl_pattern=Constants.ACL_VERSION_ACL_PATTERN,
@@ -183,7 +187,7 @@ class FlextLdifModelsConfig:
         Each server (OUD, OID, RFC) provides its Constants-based config.
 
         Example:
-            writer_config = FlextLdifModels.AciWriterConfig(
+            writer_config = m.AciWriterConfig(
                 aci_prefix="aci:",
                 version="3.0",
                 ...
@@ -309,7 +313,10 @@ class FlextLdifModelsConfig:
 
         dn_patterns: tuple[tuple[str, ...], ...] = Field(
             default=(),
-            description="Tuple of DN pattern tuples - entry matches if ALL patterns in ANY tuple match",
+            description=(
+                "Tuple of DN pattern tuples - entry matches if "
+                "ALL patterns in ANY tuple match"
+            ),
         )
         attr_prefixes: tuple[str, ...] | frozenset[str] = Field(
             default=(),
@@ -489,7 +496,10 @@ class FlextLdifModelsConfig:
         )
         convert_booleans: tuple[str, str] | None = Field(
             default=None,
-            description='Tuple of (source_format, target_format) e.g., ("true/false", "TRUE/FALSE")',
+            description=(
+                "Tuple of (source_format, target_format) "
+                'e.g., ("true/false", "TRUE/FALSE")'
+            ),
         )
         remove_attrs: Sequence[str] | None = Field(
             default=None,
@@ -645,12 +655,14 @@ class FlextLdifModelsConfig:
             description="Mapping of attribute names to original case",
         )
 
-    class RdnProcessingConfig(FlextModelsEntity.Value):
-        """Configuration for RDN character processing.
+    class RdnProcessingConfig(FlextModelsCollections.Config):
+        """Mutable configuration for RDN character processing.
 
         Consolidates parameters for _process_rdn_char and _advance_rdn_position.
         Reduces function signature from 7 parameters to 1 model.
 
+        Note: This inherits from Config (mutable) instead of Value (frozen)
+        because the parsing logic mutates state during RDN processing.
         """
 
         model_config = ConfigDict(
@@ -724,7 +736,7 @@ class FlextLdifModelsConfig:
         Eliminates use of object and Any types in logging functions.
 
         Example:
-            extras = FlextLdifModels.LogContextExtras(
+            extras = m.LogContextExtras(
                 user_id="REDACTED_LDAP_BIND_PASSWORD",
                 session_id="abc123",
                 request_id="req-456",
@@ -822,7 +834,7 @@ class FlextLdifModelsConfig:
         - Categorized: Custom multi-file output (via categorization_rules)
         - Simple: Single output file (default)
 
-        Inherits from FlextModels.Value:
+        Inherits from FlextModelsEntity.Value:
         - Immutable (frozen=True)
         - Validates assignment
         - Extra fields forbidden
@@ -1701,22 +1713,19 @@ class FlextLdifModelsConfig:
         )
         transform_attrs_hook: (
             Callable[
-                [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
+                [str, Mapping[str, list[str]]],
+                tuple[str, Mapping[str, list[str]]],
             ]
             | None
         ) = Field(
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: (
-            Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None
-        ) = Field(
+        post_parse_hook: Callable[[_Entry], _Entry] | None = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: (
-            Callable[[FlextLdifModels.Entry, str, str], None] | None
-        ) = Field(
+        preserve_metadata_hook: Callable[[_Entry, str, str], None] | None = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -1758,22 +1767,19 @@ class FlextLdifModelsConfig:
         )
         transform_attrs_hook: (
             Callable[
-                [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
+                [str, Mapping[str, list[str]]],
+                tuple[str, Mapping[str, list[str]]],
             ]
             | None
         ) = Field(
             default=None,
             description="Optional hook to transform attrs before parsing",
         )
-        post_parse_hook: (
-            Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None
-        ) = Field(
+        post_parse_hook: Callable[[_Entry], _Entry] | None = Field(
             default=None,
             description="Optional hook to transform entry after parsing",
         )
-        preserve_metadata_hook: (
-            Callable[[FlextLdifModels.Entry, str, str], None] | None
-        ) = Field(
+        preserve_metadata_hook: Callable[[_Entry, str, str], None] | None = Field(
             default=None,
             description="Optional hook to preserve original LDIF",
         )
@@ -1815,9 +1821,7 @@ class FlextLdifModelsConfig:
             default=None,
             description="Optional SUP transformation",
         )
-        enrich_metadata_hook: (
-            Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None
-        ) = Field(
+        enrich_metadata_hook: Callable[[_SchemaObjectClass], None] | None = Field(
             default=None,
             description="Optional metadata enrichment",
         )
@@ -1847,16 +1851,14 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        create_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = (
-            Field(
-                ...,
-                description="Entry creation logic",
-            )
+        create_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = Field(
+            ...,
+            description="Entry creation logic",
         )
         build_metadata_hook: (
             Callable[
                 [str, Mapping[str, list[str]]],
-                FlextLdifModelsDomains.QuirkMetadata | None,
+                _QuirkMetadata | None,
             ]
             | None
         ) = Field(
@@ -1869,7 +1871,8 @@ class FlextLdifModelsConfig:
         )
         transform_attrs_hook: (
             Callable[
-                [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
+                [str, Mapping[str, list[str]]],
+                tuple[str, Mapping[str, list[str]]],
             ]
             | None
         ) = Field(
@@ -1890,7 +1893,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entry: FlextLdifModels.Entry = Field(
+        entry: _Entry = Field(
             ...,
             description="Entry model to write",
         )
@@ -1898,21 +1901,15 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_attributes_hook: Callable[[FlextLdifModels.Entry, list[str]], None] = (
-            Field(
-                ...,
-                description="Core attributes writing",
-            )
+        write_attributes_hook: Callable[[_Entry, list[str]], None] = Field(
+            ...,
+            description="Core attributes writing",
         )
-        write_comments_hook: (
-            Callable[[FlextLdifModels.Entry, list[str]], None] | None
-        ) = Field(
+        write_comments_hook: Callable[[_Entry, list[str]], None] | None = Field(
             default=None,
             description="Optional comments writing",
         )
-        transform_entry_hook: (
-            Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry] | None
-        ) = Field(
+        transform_entry_hook: Callable[[_Entry], _Entry] | None = Field(
             default=None,
             description="Optional entry transformation",
         )
@@ -1938,7 +1935,7 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        entries: list[FlextLdifModels.Entry] = Field(
+        entries: list[_Entry] = Field(
             ...,
             description="List of entries to write",
         )
@@ -1946,7 +1943,7 @@ class FlextLdifModelsConfig:
             ...,
             description="Server type identifier",
         )
-        write_entry_hook: Callable[[FlextLdifModels.Entry], r[str]] = Field(
+        write_entry_hook: Callable[[_Entry], r[str]] = Field(
             ...,
             description="Entry writing logic",
         )
@@ -2050,7 +2047,8 @@ class FlextLdifModelsConfig:
     class PermissionMappingConfig(FlextModelsEntity.Value):
         """Configuration for permission mapping during ACL conversion.
 
-        Consolidates parameters for FlextLdifConversion._apply_permission_mapping method.
+        Consolidates parameters for
+        FlextLdifConversion._apply_permission_mapping method.
         Reduces function signature from 6 parameters to 1 model.
 
         """
@@ -2060,11 +2058,11 @@ class FlextLdifModelsConfig:
             validate_assignment=True,
         )
 
-        original_acl: FlextLdifModelsDomains.Acl = Field(
+        original_acl: _Acl = Field(
             ...,
             description="Original ACL model",
         )
-        converted_acl: FlextLdifModelsDomains.Acl = Field(
+        converted_acl: _Acl = Field(
             ...,
             description="Converted ACL model (modified in-place)",
         )
@@ -2084,3 +2082,52 @@ class FlextLdifModelsConfig:
             default=False,
             description="Whether converted ACL has permissions",
         )
+
+
+# Rebuild models after all domain models are defined to resolve forward references
+# This is required because PermissionMappingConfig uses "FlextLdifModelsDomains.Acl"
+# and LdifContentParseConfig uses "FlextLdifModelsDomains.Entry"
+# which are defined in separate modules
+def _rebuild_config_models() -> None:
+    """Rebuild Pydantic models to resolve forward references."""
+    # Import domain models and main models at runtime to ensure they're loaded before rebuilding
+    # Rebuild config models after all dependencies are fully defined
+    # Pass the namespace explicitly to model_rebuild to resolve forward references
+    # NOTE: These imports are done at runtime inside the function to avoid circular imports
+    # during module initialization. Uses string forward references for type hints.
+    from flext_ldif._models.domain import FlextLdifModelsDomains  # noqa: PLC0415
+
+    current_module = sys.modules[__name__]
+    # Ensure dependencies are in the namespace for Pydantic
+    if "FlextLdifModelsDomains" not in current_module.__dict__:
+        current_module.__dict__["FlextLdifModelsDomains"] = FlextLdifModelsDomains
+
+    # Build types namespace for all config models that need forward references
+    # Use FlextLdifModelsDomains only - FlextLdifModels imports this module causing circular import
+    types_namespace = {
+        "FlextLdifModelsDomains": FlextLdifModelsDomains,
+    }
+
+    # Rebuild all config models that use forward references
+    FlextLdifModelsConfig.PermissionMappingConfig.model_rebuild(
+        _types_namespace=types_namespace,
+    )
+    FlextLdifModelsConfig.LdifContentParseConfig.model_rebuild(
+        _types_namespace=types_namespace,
+    )
+    FlextLdifModelsConfig.EntryProcessingConfig.model_rebuild(
+        _types_namespace=types_namespace,
+    )
+    FlextLdifModelsConfig.EntryParseConfig.model_rebuild(
+        _types_namespace=types_namespace,
+    )
+    FlextLdifModelsConfig.EntryWriteConfig.model_rebuild(
+        _types_namespace=types_namespace,
+    )
+    FlextLdifModelsConfig.BatchWriteConfig.model_rebuild(
+        _types_namespace=types_namespace,
+    )
+
+
+# Call rebuild at module import time
+_rebuild_config_models()

@@ -269,7 +269,6 @@ sn: User
         validate_entry,
         on_error="skip",
     )
-    )
 
     # Batch process - ONE LINE! (was 15+ lines)
     batch_result = api.process("transform", entries, parallel=False)

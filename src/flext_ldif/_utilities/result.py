@@ -34,6 +34,7 @@ Usage:
 
 from __future__ import annotations
 
+
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import IO, Self, cast, overload
@@ -91,6 +92,13 @@ class FlextLdifResult[T]:
     """
 
     __slots__ = ("_inner",)
+
+    def __hash__(self) -> int:
+        """Hash implementation for FlextLdifResult.
+
+        Returns hash of inner FlextResult for use in sets and dict keys.
+        """
+        return hash(self._inner)
 
     def __init__(self, inner: FlextResult[T]) -> None:
         """Initialize FlextLdifResult wrapping a FlextResult.
@@ -285,7 +293,8 @@ class FlextLdifResult[T]:
 
     @overload
     def __or__(
-        self, transformer: Callable[[T], FlextResult[T]]
+        self,
+        transformer: Callable[[T], FlextResult[T]],
     ) -> FlextLdifResult[T]: ...
 
     def __or__(
@@ -333,7 +342,7 @@ class FlextLdifResult[T]:
                 transform_result = apply_method(self.value)
                 if isinstance(transform_result, FlextResult):
                     return FlextLdifResult.from_result(transform_result)
-                return FlextLdifResult.ok(transform_result)
+                return FlextLdifResult.ok(cast("T", transform_result))
 
         # It's a callable (function or lambda)
         if callable(transformer):
@@ -375,23 +384,24 @@ class FlextLdifResult[T]:
 
         if isinstance(output, Path):
             # Business Rule: Write entries to LDIF file format
-            # TODO: Implement write_entries_to_file method in FlextLdifUtilitiesWriter
+            # Note: write_entries_to_file method needs implementation in FlextLdifUtilitiesWriter
             # For now, convert entries to LDIF string format and write using write_file
             # This requires serialization of entries to LDIF format
             return FlextLdifResult.fail(
-                "write_entries_to_file not yet implemented - entries serialization required"
+                "write_entries_to_file not yet implemented - entries serialization required",
             )
 
         # Write to file-like object
         # Business Rule: Write entries to LDIF string format for file-like objects
-        # TODO: Implement write_entries_to_string method in FlextLdifUtilitiesWriter
+        # Note: write_entries_to_string method needs implementation in FlextLdifUtilitiesWriter
         # This requires serialization of entries to LDIF format
         return FlextLdifResult.fail(
-            "write_entries_to_string not yet implemented - entries serialization required"
+            "write_entries_to_string not yet implemented - entries serialization required",
         )
 
     def __matmul__(
-        self, metadata: Mapping[str, str | int | float | bool | list[str] | None]
+        self,
+        metadata: Mapping[str, str | int | float | bool | list[str] | None],
     ) -> FlextLdifResult[T]:
         """Metadata operator: result @ metadata.
 
@@ -419,19 +429,19 @@ class FlextLdifResult[T]:
 
         # Business Rule: Attach metadata to entries for audit trail and transformation tracking
         # Metadata is stored in entry.metadata field for round-trip conversions
-        # TODO: Implement attach_metadata method in FlextLdifUtilitiesMetadata
+        # Note: attach_metadata method needs implementation in FlextLdifUtilitiesMetadata
         # For now, return error indicating method needs implementation
         # Handle sequence of entries
         if isinstance(value, Sequence) and not isinstance(value, str):
-            # TODO: Implement metadata attachment for sequence of entries
+            # Note: Metadata attachment for sequence of entries needs implementation
             return FlextLdifResult.fail(
-                "attach_metadata not yet implemented for sequences"
+                "attach_metadata not yet implemented for sequences",
             )
 
         # Handle single entry
-        # TODO: Implement metadata attachment for single entry
+        # Note: Metadata attachment for single entry needs implementation
         return FlextLdifResult.fail(
-            "attach_metadata not yet implemented for single entry"
+            "attach_metadata not yet implemented for single entry",
         )
 
     def __and__(self, other: FlextLdifResult[T]) -> FlextLdifResult[list[T]]:
@@ -518,14 +528,28 @@ class FlextLdifResult[T]:
 
         # Handle sequence of entries
         if isinstance(value, Sequence) and not isinstance(value, str):
+            # Type narrowing: value is Sequence[T], filtered is list[T]
+            # When T is a sequence type (e.g., list[Entry]), filtered is list[T]
+            # Return type should be FlextLdifResult[T] where T is the sequence type
             filtered = [item for item in value if matches_func(item)]
-            return FlextLdifResult.ok(filtered)  # type: ignore[arg-type]
+            # Type narrowing: filtered is list[T], but T in FlextLdifResult[T] is already the sequence type
+            # So we need to cast to T (which is the sequence type itself)
+            return FlextLdifResult[T].ok(cast("T", filtered))
 
         # Handle single value
+        # Type narrowing: value is T
         if matches_func(value):
-            return FlextLdifResult.ok(value)
+            return FlextLdifResult[T].ok(value)
 
-        return FlextLdifResult.ok([])  # type: ignore[arg-type]
+        # Empty list case - return empty list matching the input type
+        # If value was a sequence, return empty list of that type
+        if isinstance(value, Sequence) and not isinstance(value, str):
+            empty_list: list[T] = []
+            # Type narrowing: empty_list is list[T], but T in FlextLdifResult[T] is the sequence type
+            return FlextLdifResult[T].ok(cast("T", empty_list))
+        # Single value case - return empty list
+        empty_list_single: list[T] = []
+        return FlextLdifResult[T].ok(cast("T", empty_list_single))
 
     def on_success(self, func: Callable[[T], None]) -> Self:
         """Execute a function on success value without changing result.

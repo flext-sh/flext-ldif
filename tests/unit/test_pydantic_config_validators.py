@@ -1,41 +1,17 @@
-"""Test suite for FlextLdifConfig Pydantic validators.
-
-Tests validate that FlextLdifConfig models:
-1. Validate encoding, server_type, line_separators, version_string fields
-2. Use field_validator and model_validator correctly (Pydantic v2)
-3. Enforce RFC 2849 compliance for line separators and version strings
-4. Validate cross-field consistency for quirks_detection_mode
-
-Modules tested:
-- flext_ldif.config.FlextLdifConfig (field validators)
-- flext_ldif.config.FlextLdifConfig (model validators)
-
-Scope:
-- RFC 2849 compliance validation
-- Pydantic v2 @field_validator patterns
-- Cross-field model_validator testing
-- Encoding validation
-- Server type validation
-- Line separator validation
-- Version string validation
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, cast
 
 import pytest
 from pydantic import ValidationError
 
 from flext_ldif import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from tests import s
 
 
-class TestFlextLdifConfigValidators:
+class TestsTestFlextLdifConfigValidators(s):
     """Comprehensive test suite for FlextLdifConfig Pydantic validators.
 
     Tests field validators (encoding, server_type, line_separator, version_string)
@@ -188,19 +164,18 @@ class TestFlextLdifConfigValidators:
         should_succeed: bool,
     ) -> None:
         """Test ldif_encoding field_validator with parametrized scenarios."""
-        from typing import cast
-
         if should_succeed:
             config = FlextLdifConfig(
                 ldif_encoding=cast(
-                    "FlextLdifConstants.LiteralTypes.EncodingLiteral", encoding
+                    "FlextLdifConstants.LiteralTypes.EncodingLiteral",
+                    encoding,
                 ),
             )
             assert config.ldif_encoding == encoding
         else:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
-                    ldif_encoding=encoding,  # type: ignore[arg-type]
+                    ldif_encoding=encoding,
                 )
             error_str = str(exc_info.value).lower()
             assert encoding.lower() in error_str or "invalid encoding" in error_str, (
@@ -218,14 +193,11 @@ class TestFlextLdifConfigValidators:
         should_succeed: bool,
     ) -> None:
         """Test server_type field_validator with parametrized scenarios."""
-        from typing import cast
-
-        from flext_ldif.constants import FlextLdifConstants
-
         if should_succeed:
             config = FlextLdifConfig(
                 server_type=cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral", server_type
+                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                    server_type,
                 ),
             )
             # The validator normalizes aliases to canonical form
@@ -235,7 +207,7 @@ class TestFlextLdifConfigValidators:
         else:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
-                    server_type=server_type,  # type: ignore[arg-type]
+                    server_type=server_type,
                 )
             error_str = str(exc_info.value).lower()
             assert server_type.lower() in error_str or "invalid server" in error_str, (
@@ -315,8 +287,6 @@ class TestFlextLdifConfigValidators:
         mode uses Literal type matching FlextLdifConstants.LiteralTypes.DetectionMode.
         Pydantic validates the value at runtime.
         """
-        from typing import cast
-
         if should_succeed:
             config = FlextLdifConfig(
                 quirks_detection_mode=mode,
@@ -331,7 +301,7 @@ class TestFlextLdifConfigValidators:
             with pytest.raises(ValidationError) as exc_info:
                 FlextLdifConfig(
                     quirks_detection_mode=mode,
-                    quirks_server_type=server_type,  # type: ignore[arg-type]
+                    quirks_server_type=server_type,
                 )
             error_str = str(exc_info.value).lower()
             assert "quirks_server_type" in error_str and "manual" in error_str, (

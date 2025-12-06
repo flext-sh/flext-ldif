@@ -1,45 +1,19 @@
-"""Categorization Service Tests - Comprehensive test coverage for FlextLdifCategorization.
-
-Modules Tested:
-- flext_ldif.services.categorization: Entry categorization, DN validation, base DN filtering,
-  schema OID whitelisting, rejection tracking with statistics
-
-Scope:
-- Entry categorization into 6 categories (schema, hierarchy, users, groups, acl, rejected)
-- DN validation and normalization (RFC 4514)
-- Base DN filtering with metadata tracking
-- Schema OID whitelist filtering
-- Server-specific categorization via FlextLdifServer DI
-- Metadata operations using FlextLdifUtilities
-- Rejection tracking and statistics
-- Edge cases: invalid DNs, empty entries, server type variations
-
-Uses Python 3.13 features, factories, parametrization, and helpers for minimal code
-with maximum coverage. All tests use real implementations, no mocks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from typing import Final
 
 import pytest
-
-# from flext_tests import FlextTestsMatchers  # Mocked in conftest
 from flext_core._models.collections import FlextModelsCollections
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.server import FlextLdifServer
-from tests.fixtures.constants import DNs, Filters, Names, OIDs, Values
-from tests.helpers.test_assertions import TestAssertions
-from tests.helpers.test_factories import FlextLdifTestFactories
+from tests import Filters, TestCategorization, c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
-class TestCategorization:
+class TestsFlextLdifCategorization(s):
     """Comprehensive tests for FlextLdifCategorization service.
 
     Single class with nested test groups following project patterns.
@@ -63,15 +37,15 @@ class TestCategorization:
         CATEGORY_REJECTED: Final[str] = FlextLdifConstants.Categories.REJECTED
 
         # Test DNs
-        DN_BASE: Final[str] = DNs.EXAMPLE
+        DN_BASE: Final[str] = c.DNs.EXAMPLE
         DN_USER: Final[str] = Filters.DN_USER_JOHN
-        DN_GROUP: Final[str] = DNs.TEST_GROUP
+        DN_GROUP: Final[str] = c.DNs.TEST_GROUP
         DN_OU: Final[str] = Filters.DN_OU_USERS
-        DN_SCHEMA: Final[str] = DNs.SCHEMA
+        DN_SCHEMA: Final[str] = c.DNs.SCHEMA
 
         # ObjectClasses
-        OC_PERSON: Final[str] = Names.PERSON
-        OC_INET_ORG_PERSON: Final[str] = Names.INET_ORG_PERSON
+        OC_PERSON: Final[str] = c.Names.PERSON
+        OC_INET_ORG_PERSON: Final[str] = c.Names.INET_ORG_PERSON
         OC_GROUP_OF_NAMES: Final[str] = Filters.OC_GROUP_OF_NAMES
         OC_ORGANIZATIONAL_UNIT: Final[str] = Filters.OC_ORGANIZATIONAL_UNIT
 
@@ -82,79 +56,79 @@ class TestCategorization:
         def create_user_entry(
             dn: str = Filters.DN_USER_JOHN,
             **overrides: str | list[str],
-        ) -> FlextLdifModels.Entry:
+        ) -> m.Entry:
             """Create user entry for testing."""
             attrs: dict[str, str | list[str]] = {
-                Names.OBJECTCLASS: [
-                    Names.INET_ORG_PERSON,
-                    Names.ORGANIZATIONAL_PERSON,
-                    Names.PERSON,
-                    Names.TOP,
+                c.Names.OBJECTCLASS: [
+                    c.Names.INET_ORG_PERSON,
+                    c.Names.ORGANIZATIONAL_PERSON,
+                    c.Names.PERSON,
+                    c.Names.TOP,
                 ],
-                Names.CN: [Values.USER],
-                Names.SN: [Values.USER],
+                c.Names.CN: [c.Values.USER],
+                c.Names.SN: [c.Values.USER],
             }
             attrs.update(overrides)
-            return FlextLdifTestFactories.create_entry(dn, attrs)
+            return self.create_entry(dn, attrs)
 
         @staticmethod
         def create_group_entry(
-            dn: str = DNs.TEST_GROUP,
+            dn: str = c.DNs.TEST_GROUP,
             **overrides: str | list[str],
-        ) -> FlextLdifModels.Entry:
+        ) -> m.Entry:
             """Create group entry for testing."""
             attrs: dict[str, str | list[str]] = {
-                Names.OBJECTCLASS: [Filters.OC_GROUP_OF_NAMES, Names.TOP],
-                Names.CN: [Values.TEST],
+                c.Names.OBJECTCLASS: [Filters.OC_GROUP_OF_NAMES, c.Names.TOP],
+                c.Names.CN: [c.Values.TEST],
                 "member": [Filters.DN_USER_JOHN],
             }
             attrs.update(overrides)
-            return FlextLdifTestFactories.create_entry(dn, attrs)
+            return self.create_entry(dn, attrs)
 
         @staticmethod
         def create_hierarchy_entry(
             dn: str = Filters.DN_OU_USERS,
             **overrides: str | list[str],
-        ) -> FlextLdifModels.Entry:
+        ) -> m.Entry:
             """Create hierarchy entry for testing."""
             attrs: dict[str, str | list[str]] = {
-                Names.OBJECTCLASS: [
+                c.Names.OBJECTCLASS: [
                     Filters.OC_ORGANIZATIONAL_UNIT,
-                    Names.TOP,
+                    c.Names.TOP,
                 ],
-                "ou": [Values.USER],
+                "ou": [c.Values.USER],
             }
             attrs.update(overrides)
-            return FlextLdifTestFactories.create_entry(dn, attrs)
+            return self.create_entry(dn, attrs)
 
         @staticmethod
         def create_schema_entry(
-            dn: str = DNs.SCHEMA,
+            dn: str = c.DNs.SCHEMA,
             **overrides: str | list[str],
-        ) -> FlextLdifModels.Entry:
+        ) -> m.Entry:
             """Create schema entry for testing."""
             attrs: dict[str, str | list[str]] = {
-                Names.OBJECTCLASS: [Names.TOP, "subschema"],
+                c.Names.OBJECTCLASS: [c.Names.TOP, "subschema"],
                 "attributeTypes": [
-                    f"( {OIDs.CN} NAME '{Names.CN}' SYNTAX {OIDs.DIRECTORY_STRING} )",
+                    f"( {OIDs.CN} NAME '{c.Names.CN}' SYNTAX {OIDs.DIRECTORY_STRING} )",
                 ],
             }
             attrs.update(overrides)
-            return FlextLdifTestFactories.create_entry(dn, attrs)
+            return self.create_entry(dn, attrs)
 
         @staticmethod
         def create_acl_entry(
             dn: str = Filters.DN_ACL_POLICY,
             **overrides: str | list[str],
-        ) -> FlextLdifModels.Entry:
+        ) -> m.Entry:
             """Create ACL entry for testing."""
             attrs: dict[str, str | list[str]] = {
-                Names.OBJECTCLASS: [Names.TOP],
-                Names.CN: [Values.TEST],
+                c.Names.OBJECTCLASS: [c.Names.TOP],
+                c.Names.CN: [c.Values.TEST],
                 "aci": ['(targetattr="*")(version 3.0;acl "test";allow (all) )'],
             }
             attrs.update(overrides)
-            return FlextLdifTestFactories.create_entry(dn, attrs)
+            return self.create_entry(dn, attrs)
 
     class TestDNValidation:
         """Test DN validation and normalization."""
@@ -167,43 +141,43 @@ class TestCategorization:
             ]
             service = FlextLdifCategorization()
             result = service.validate_dns(entries)
-            validated = TestAssertions.assert_success(result)
+            validated = self.assert_success(result)
             assert len(validated) == 2
 
         def test_validate_dns_invalid_dn_rejected(self) -> None:
-            """Test validate_dns() rejects invalid DNs."""
-            invalid_entry = FlextLdifTestFactories.create_entry(
+            """Test validate_dns() rejects invalid c.DNs."""
+            invalid_entry = self.create_entry(
                 "invalid dn format",
-                {Names.CN: [Values.TEST]},
+                {c.Names.CN: [c.Values.TEST]},
             )
             service = FlextLdifCategorization()
             result = service.validate_dns([invalid_entry])
-            validated = TestAssertions.assert_success(result)
+            validated = self.assert_success(result)
             assert len(validated) == 0
             assert len(service.rejection_tracker["invalid_dn_rfc4514"]) == 1
 
         def test_validate_dns_normalizes_dn(self) -> None:
             """Test validate_dns() normalizes DN case."""
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 "CN=Test,DC=Example,DC=Com",
-                {Names.CN: [Values.TEST]},
+                {c.Names.CN: [c.Values.TEST]},
             )
             service = FlextLdifCategorization()
             result = service.validate_dns([entry])
-            validated = TestAssertions.assert_success(result)
+            validated = self.assert_success(result)
             assert len(validated) == 1
             # DN.norm() normalizes attribute names to lowercase but preserves value case
             assert validated[0].dn.value == "cn=Test,dc=Example,dc=Com"
 
         def test_validate_dns_tracks_rejection_metadata(self) -> None:
             """Test validate_dns() tracks rejection in metadata."""
-            invalid_entry = FlextLdifTestFactories.create_entry(
+            invalid_entry = self.create_entry(
                 "invalid dn",
-                {Names.CN: [Values.TEST]},
+                {c.Names.CN: [c.Values.TEST]},
             )
             # Add processing_stats to entry
-            stats = FlextLdifModels.EntryStatistics()
-            metadata = FlextLdifModels.QuirkMetadata(
+            stats = m.EntryStatistics()
+            metadata = m.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
             )
@@ -231,11 +205,11 @@ class TestCategorization:
 
         def test_is_schema_entry_with_objectclasses(self) -> None:
             """Test is_schema_entry() detects objectClasses."""
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 TestCategorization.Constants.DN_SCHEMA,
                 {
-                    Names.OBJECTCLASS: [Names.TOP],
-                    "objectClasses": [f"( {OIDs.PERSON} NAME '{Names.PERSON}' )"],
+                    c.Names.OBJECTCLASS: [c.Names.TOP],
+                    "objectClasses": [f"( {OIDs.PERSON} NAME '{c.Names.PERSON}' )"],
                 },
             )
             service = FlextLdifCategorization()
@@ -243,10 +217,10 @@ class TestCategorization:
 
         def test_is_schema_entry_with_ldapsyntaxes(self) -> None:
             """Test is_schema_entry() detects ldapSyntaxes."""
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 TestCategorization.Constants.DN_SCHEMA,
                 {
-                    Names.OBJECTCLASS: [Names.TOP],
+                    c.Names.OBJECTCLASS: [c.Names.TOP],
                     "ldapSyntaxes": [f"( {OIDs.DIRECTORY_STRING} )"],
                 },
             )
@@ -255,10 +229,10 @@ class TestCategorization:
 
         def test_is_schema_entry_with_matchingrules(self) -> None:
             """Test is_schema_entry() detects matchingRules."""
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 TestCategorization.Constants.DN_SCHEMA,
                 {
-                    Names.OBJECTCLASS: [Names.TOP],
+                    c.Names.OBJECTCLASS: [c.Names.TOP],
                     "matchingRules": ["( 2.5.13.2 NAME 'caseIgnoreMatch' )"],
                 },
             )
@@ -321,13 +295,13 @@ class TestCategorization:
         def test_categorize_entry_rejected_no_match(self) -> None:
             """Test categorize_entry() rejects entries with no match."""
             # Create entry with no objectClass that matches any category
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 "cn=unknown,dc=example,dc=com",
-                {Names.CN: [Values.TEST]},
+                {c.Names.CN: [c.Values.TEST]},
             )
             # Remove all objectClasses to ensure rejection
             attrs = entry.attributes.model_copy()
-            attrs.attributes.pop(Names.OBJECTCLASS, None)
+            attrs.attributes.pop(c.Names.OBJECTCLASS, None)
             entry = entry.model_copy(update={"attributes": attrs})
             service = FlextLdifCategorization()
             category, reason = service.categorize_entry(entry)
@@ -336,11 +310,11 @@ class TestCategorization:
 
         def test_categorize_entry_with_server_type_oid(self) -> None:
             """Test categorize_entry() with OID server type."""
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 "cn=test,dc=oracle",
                 {
-                    Names.OBJECTCLASS: ["orcluser"],
-                    Names.CN: [Values.TEST],
+                    c.Names.OBJECTCLASS: ["orcluser"],
+                    c.Names.CN: [c.Values.TEST],
                 },
             )
             service = FlextLdifCategorization(
@@ -367,14 +341,14 @@ class TestCategorization:
         def test_categorize_entry_hierarchy_priority(self) -> None:
             """Test categorize_entry() respects hierarchy priority."""
             # Entry with both hierarchy and group objectClasses
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 "cn=container,dc=oracle",
                 {
-                    Names.OBJECTCLASS: [
+                    c.Names.OBJECTCLASS: [
                         "orclContainer",
                         "orclprivilegegroup",
                     ],
-                    Names.CN: [Values.TEST],
+                    c.Names.CN: [c.Values.TEST],
                 },
             )
             service = FlextLdifCategorization(
@@ -397,7 +371,7 @@ class TestCategorization:
             ]
             service = FlextLdifCategorization()
             result = service.categorize_entries(entries)
-            categories = TestAssertions.assert_success(result)
+            categories = self.assert_success(result)
             assert len(categories[TestCategorization.Constants.CATEGORY_USERS]) == 1
             assert len(categories[TestCategorization.Constants.CATEGORY_GROUPS]) == 1
             assert len(categories[TestCategorization.Constants.CATEGORY_HIERARCHY]) == 1
@@ -407,8 +381,8 @@ class TestCategorization:
             """Test categorize_entries() tracks category in metadata."""
             entry = TestCategorization.Factories.create_user_entry()
             # Add processing_stats
-            stats = FlextLdifModels.EntryStatistics()
-            metadata = FlextLdifModels.QuirkMetadata(
+            stats = m.EntryStatistics()
+            metadata = m.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
             )
@@ -416,7 +390,7 @@ class TestCategorization:
 
             service = FlextLdifCategorization()
             result = service.categorize_entries([entry_with_stats])
-            categories = TestAssertions.assert_success(result)
+            categories = self.assert_success(result)
             categorized_entry = categories[TestCategorization.Constants.CATEGORY_USERS][
                 0
             ]
@@ -429,17 +403,17 @@ class TestCategorization:
 
         def test_categorize_entries_tracks_rejected_metadata(self) -> None:
             """Test categorize_entries() tracks rejected entries in metadata."""
-            entry = FlextLdifTestFactories.create_entry(
+            entry = self.create_entry(
                 "cn=unknown,dc=example,dc=com",
-                {Names.CN: [Values.TEST]},
+                {c.Names.CN: [c.Values.TEST]},
             )
             # Remove all objectClasses to ensure rejection
             attrs = entry.attributes.model_copy()
-            attrs.attributes.pop(Names.OBJECTCLASS, None)
+            attrs.attributes.pop(c.Names.OBJECTCLASS, None)
             entry = entry.model_copy(update={"attributes": attrs})
             # Add processing_stats
-            stats = FlextLdifModels.EntryStatistics()
-            metadata = FlextLdifModels.QuirkMetadata(
+            stats = m.EntryStatistics()
+            metadata = m.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
             )
@@ -447,7 +421,7 @@ class TestCategorization:
 
             service = FlextLdifCategorization()
             result = service.categorize_entries([entry_with_stats])
-            categories = TestAssertions.assert_success(result)
+            categories = self.assert_success(result)
             assert len(categories[TestCategorization.Constants.CATEGORY_REJECTED]) > 0
             rejected = categories[TestCategorization.Constants.CATEGORY_REJECTED][0]
             assert rejected.metadata is not None
@@ -475,7 +449,7 @@ class TestCategorization:
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
             assert len(filtered[TestCategorization.Constants.CATEGORY_USERS]) == 2
@@ -494,7 +468,7 @@ class TestCategorization:
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
             assert len(filtered[TestCategorization.Constants.CATEGORY_USERS]) == 1
@@ -504,8 +478,8 @@ class TestCategorization:
             """Test filter_by_base_dn() tracks filter results in metadata."""
             entry = TestCategorization.Factories.create_user_entry()
             # Add processing_stats
-            stats = FlextLdifModels.EntryStatistics()
-            metadata = FlextLdifModels.QuirkMetadata(
+            stats = m.EntryStatistics()
+            metadata = m.QuirkMetadata(
                 quirk_type=Filters.SERVER_RFC,
                 processing_stats=stats,
             )
@@ -515,7 +489,7 @@ class TestCategorization:
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = [entry_with_stats]
             filtered = service.filter_by_base_dn(categories)
             filtered_entry = filtered[TestCategorization.Constants.CATEGORY_USERS][0]
@@ -530,15 +504,15 @@ class TestCategorization:
         def test_filter_by_base_dn_skips_schema_rejected(self) -> None:
             """Test filter_by_base_dn() skips schema and rejected categories."""
             schema_entry = TestCategorization.Factories.create_schema_entry()
-            rejected_entry = FlextLdifTestFactories.create_entry(
+            rejected_entry = self.create_entry(
                 "cn=rejected,dc=example,dc=com",
-                {Names.CN: [Values.TEST]},
+                {c.Names.CN: [c.Values.TEST]},
             )
             service = FlextLdifCategorization(
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             categories[TestCategorization.Constants.CATEGORY_SCHEMA] = [schema_entry]
             categories[TestCategorization.Constants.CATEGORY_REJECTED] = [
                 rejected_entry,
@@ -552,7 +526,7 @@ class TestCategorization:
             entries = [TestCategorization.Factories.create_user_entry()]
             service = FlextLdifCategorization()
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = service.filter_by_base_dn(categories)
             assert len(filtered[TestCategorization.Constants.CATEGORY_USERS]) == 1
@@ -569,7 +543,7 @@ class TestCategorization:
                 },
             )
             result = service.filter_schema_by_oids([entry])
-            filtered = TestAssertions.assert_success(result)
+            filtered = self.assert_success(result)
             assert len(filtered) == 1
 
         def test_filter_schema_by_oids_filters_non_matching(self) -> None:
@@ -581,7 +555,7 @@ class TestCategorization:
                 },
             )
             result = service.filter_schema_by_oids([entry])
-            filtered = TestAssertions.assert_success(result)
+            filtered = self.assert_success(result)
             assert len(filtered) == 0
 
         def test_filter_schema_by_oids_no_rules_configured(self) -> None:
@@ -589,7 +563,7 @@ class TestCategorization:
             entry = TestCategorization.Factories.create_schema_entry()
             service = FlextLdifCategorization()
             result = service.filter_schema_by_oids([entry])
-            filtered = TestAssertions.assert_success(result)
+            filtered = self.assert_success(result)
             assert len(filtered) == 1
 
     class TestStaticMethods:
@@ -606,7 +580,7 @@ class TestCategorization:
                 ),
             ]
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             categories[TestCategorization.Constants.CATEGORY_USERS] = entries
             filtered = FlextLdifCategorization.filter_categories_by_base_dn(
                 categories,
@@ -676,7 +650,7 @@ class TestCategorization:
 
         def test_schema_whitelist_rules_property(self) -> None:
             """Test schema_whitelist_rules property."""
-            rules = FlextLdifModels.WhitelistRules(allowed_attribute_oids=[OIDs.CN])
+            rules = m.WhitelistRules(allowed_attribute_oids=[OIDs.CN])
             service = FlextLdifCategorization(schema_whitelist_rules=rules)
             assert service.schema_whitelist_rules == rules
 
@@ -687,7 +661,7 @@ class TestCategorization:
             """Test categorize_entries() with empty list."""
             service = FlextLdifCategorization()
             result = service.categorize_entries([])
-            categories = TestAssertions.assert_success(result)
+            categories = self.assert_success(result)
             # Check all predefined categories are empty
             assert len(categories[FlextLdifConstants.Categories.SCHEMA]) == 0
             assert len(categories[FlextLdifConstants.Categories.HIERARCHY]) == 0
@@ -702,7 +676,7 @@ class TestCategorization:
                 base_dn=TestCategorization.Constants.DN_BASE,
             )
             # FlexibleCategories is a type alias, use the actual class
-            categories = FlextModelsCollections.Categories[FlextLdifModels.Entry]()
+            categories = FlextModelsCollections.Categories[m.Entry]()
             filtered = service.filter_by_base_dn(categories)
             # Check all predefined categories are empty
             assert len(filtered[FlextLdifConstants.Categories.SCHEMA]) == 0
@@ -716,7 +690,7 @@ class TestCategorization:
             """Test execute() returns empty categories."""
             service = FlextLdifCategorization()
             result = service.execute()
-            categories = TestAssertions.assert_success(result)
+            categories = self.assert_success(result)
             # Check all predefined categories are empty
             assert len(categories[FlextLdifConstants.Categories.SCHEMA]) == 0
             assert len(categories[FlextLdifConstants.Categories.HIERARCHY]) == 0

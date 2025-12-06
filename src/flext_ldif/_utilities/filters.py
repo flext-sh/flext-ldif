@@ -553,7 +553,7 @@ class IsSchemaEntryFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
 
     __slots__ = ("_is_schema",)
 
-    def __init__(self, is_schema: bool = True) -> None:
+    def __init__(self, *, is_schema: bool = True) -> None:
         """Initialize schema entry filter.
 
         Args:
@@ -572,7 +572,7 @@ class IsSchemaEntryFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
             True if schema status matches expected value
 
         """
-        from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+        from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry  # noqa: PLC0415
 
         result = FlextLdifUtilitiesEntry.is_schema_entry(item)
         return result == self._is_schema
@@ -694,7 +694,9 @@ class Filter:
 
         """
         return ByObjectClassFilter(
-            *classes, mode=mode, case_insensitive=case_insensitive
+            *classes,
+            mode=mode,
+            case_insensitive=case_insensitive,
         )
 
     @staticmethod
@@ -756,7 +758,7 @@ class Filter:
         return ExcludeAttrsFilter(*attrs, case_insensitive=case_insensitive)
 
     @staticmethod
-    def is_schema(is_schema: bool = True) -> IsSchemaEntryFilter:
+    def is_schema(*, is_schema: bool = True) -> IsSchemaEntryFilter:
         """Create a schema entry filter.
 
         Args:

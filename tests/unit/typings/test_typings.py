@@ -1,17 +1,5 @@
-"""Test suite for LDIF type definitions.
-
-Modules tested: FlextLdifTypes (CommonDict, Entry, Models namespaces, type aliases)
-Scope: Type system validation with real LDIF data patterns. Tests namespace structure,
-type aliases for quirk instances, flexible I/O types, result types, and removal of
-over-engineered types. Validates SRP compliance (no functions in typings.py) and
-import restrictions.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
+from tests import c, p, s, t
 
 import ast
 import inspect
@@ -19,16 +7,8 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from tests.fixtures.constants import DNs, Names, OIDs
-from tests.fixtures.typing import GenericFieldsDict
-
-import flext_ldif.typings
-from flext_ldif.typings import FlextLdifTypes
-
-
-class TestFlextLdifTypesNamespace:
-    """Test FlextLdifTypes namespace structure and compliance."""
-
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
     def test_namespace_exists(self) -> None:
         """FlextLdifTypes class must be accessible."""
         assert FlextLdifTypes is not None
@@ -79,19 +59,18 @@ class TestFlextLdifTypesNamespace:
             f"typings.py must not import from internal modules: {internal_imports}"
         )
 
-
-class TestCommonDictionaryTypes:
+class TestsFlextLdifCommonDictionaryTypes(s):
     """Test common dictionary type definitions with REAL data."""
 
     SAMPLE_ATTR_DICT: ClassVar[dict[str, list[str]]] = {
-        Names.CN: ["John Doe"],
-        Names.SN: ["Doe"],
-        Names.MAIL: ["john@example.com", "john.doe@example.com"],
-        Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
+        c.Names.CN: ["John Doe"],
+        c.Names.SN: ["Doe"],
+        c.Names.MAIL: ["john@example.com", "john.doe@example.com"],
+        c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
     }
 
     SAMPLE_DISTRIBUTION: ClassVar[dict[str, int]] = {
-        Names.INET_ORG_PERSON: 1245,
+        c.Names.INET_ORG_PERSON: 1245,
         "groupOfNames": 89,
         "organizationalUnit": 34,
         "domain": 1,
@@ -103,8 +82,8 @@ class TestCommonDictionaryTypes:
         """AttributeDict must work with real LDIF entry attributes."""
         attr_dict: FlextLdifTypes.CommonDict.AttributeDict = self.SAMPLE_ATTR_DICT
         assert isinstance(attr_dict, dict)
-        assert attr_dict[Names.CN] == ["John Doe"]
-        assert len(attr_dict[Names.MAIL]) == 2
+        assert attr_dict[c.Names.CN] == ["John Doe"]
+        assert len(attr_dict[c.Names.MAIL]) == 2
 
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
@@ -114,7 +93,7 @@ class TestCommonDictionaryTypes:
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
         dist: FlextLdifTypes.CommonDict.DistributionDict = self.SAMPLE_DISTRIBUTION
-        assert dist[Names.INET_ORG_PERSON] == 1245
+        assert dist[c.Names.INET_ORG_PERSON] == 1245
         assert sum(dist.values()) == 1371
 
     def test_distribution_dict_from_schema_stats(self) -> None:
@@ -126,30 +105,29 @@ class TestCommonDictionaryTypes:
         }
         assert all(isinstance(v, int) for v in dist.values())
 
-
 class TestEntryTypes:
     """Test Entry namespace type definitions with REAL data."""
 
     def test_entry_create_data_with_real_ldif_entry(self) -> None:
         """EntryCreateData must accept real LDIF entry data."""
         data: FlextLdifTypes.Entry.EntryCreateData = {
-            Names.DN: f"cn=John Doe,ou=users,{DNs.EXAMPLE}",
-            Names.OBJECTCLASS: [
-                Names.INET_ORG_PERSON,
+            c.Names.DN: f"cn=John Doe,ou=users,{c.DNs.EXAMPLE}",
+            c.Names.OBJECTCLASS: [
+                c.Names.INET_ORG_PERSON,
                 "organizationalPerson",
-                Names.PERSON,
-                Names.TOP,
+                c.Names.PERSON,
+                c.Names.TOP,
             ],
-            Names.CN: "John Doe",
-            Names.SN: "Doe",
+            c.Names.CN: "John Doe",
+            c.Names.SN: "Doe",
             "givenName": "John",
-            Names.MAIL: "john@example.com",
-            Names.UID: "jdoe",
+            c.Names.MAIL: "john@example.com",
+            c.Names.UID: "jdoe",
             "userPassword": "{SSHA}encrypted_password_here",
         }
-        assert data[Names.DN] == f"cn=John Doe,ou=users,{DNs.EXAMPLE}"
+        assert data[c.Names.DN] == f"cn=John Doe,ou=users,{c.DNs.EXAMPLE}"
         # Type narrowing: EntryCreateData values can be ScalarValue | list[str] | dict[str, list[str]]
-        objectclass_value = data[Names.OBJECTCLASS]
+        objectclass_value = data[c.Names.OBJECTCLASS]
         assert isinstance(objectclass_value, list), "objectClass must be a list"
         assert len(objectclass_value) == 4
 
@@ -157,7 +135,7 @@ class TestEntryTypes:
         """EntryCreateData must support nested structures from LDIF."""
         # EntryCreateData nested dicts must be dict[str, list[str]], not dict[str, str]
         data: FlextLdifTypes.Entry.EntryCreateData = {
-            Names.DN: f"cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}",
+            c.Names.DN: f"cn=REDACTED_LDAP_BIND_PASSWORD,{c.DNs.EXAMPLE}",
             "permissions": ["read", "write"],
             "metadata": {
                 "source": ["oid"],
@@ -170,7 +148,6 @@ class TestEntryTypes:
         metadata_value = data["metadata"]
         assert isinstance(metadata_value, dict)
 
-
 class TestModelsNamespace:
     """Test Models namespace type definitions with REAL data patterns."""
 
@@ -180,24 +157,24 @@ class TestModelsNamespace:
         attrs: GenericFieldsDict = cast(
             "GenericFieldsDict",
             {
-                Names.CN: ["John Doe"],
-                Names.OBJECTCLASS: [Names.INET_ORG_PERSON, Names.PERSON, Names.TOP],
-                Names.SN: "Doe",
-                Names.MAIL: ["john@example.com"],
-                Names.UID: "jdoe",
+                c.Names.CN: ["John Doe"],
+                c.Names.OBJECTCLASS: [c.Names.INET_ORG_PERSON, c.Names.PERSON, c.Names.TOP],
+                c.Names.SN: "Doe",
+                c.Names.MAIL: ["john@example.com"],
+                c.Names.UID: "jdoe",
             },
         )
         # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        cn_value = cast("list[str]", attrs.get(Names.CN))
+        cn_value = cast("list[str]", attrs.get(c.Names.CN))
         assert cn_value == ["John Doe"]
-        objectclass_value = cast("list[str]", attrs.get(Names.OBJECTCLASS))
+        objectclass_value = cast("list[str]", attrs.get(c.Names.OBJECTCLASS))
         assert isinstance(objectclass_value, list)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
         # GenericFieldsDict doesn't have schema keys, use cast for type flexibility
         data: dict[str, GenericFieldsDict] = {
-            Names.CN: cast(
+            c.Names.CN: cast(
                 "GenericFieldsDict",
                 {
                     "oid": OIDs.CN,
@@ -206,7 +183,7 @@ class TestModelsNamespace:
                     "single_valued": False,
                 },
             ),
-            Names.UID: cast(
+            c.Names.UID: cast(
                 "GenericFieldsDict",
                 {
                     "oid": "0.9.2342.19200300.100.1.1",
@@ -216,31 +193,31 @@ class TestModelsNamespace:
             ),
         }
         # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        cn_oid = cast("str", data[Names.CN].get("oid"))
+        cn_oid = cast("str", data[c.Names.CN].get("oid"))
         assert cn_oid == OIDs.CN
-        uid_single_valued = cast("bool", data[Names.UID].get("single_valued"))
+        uid_single_valued = cast("bool", data[c.Names.UID].get("single_valued"))
         assert uid_single_valued is True
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
         # GenericFieldsDict doesn't have schema keys, use cast for type flexibility
         data: dict[str, GenericFieldsDict] = {
-            Names.INET_ORG_PERSON: cast(
+            c.Names.INET_ORG_PERSON: cast(
                 "GenericFieldsDict",
                 {
                     "oid": "2.16.840.1.113730.3.2.2",
                     "kind": "STRUCTURAL",
                     "sup": "organizationalPerson",
-                    "must": [Names.UID],
-                    "may": [Names.MAIL, "mobile"],
+                    "must": [c.Names.UID],
+                    "may": [c.Names.MAIL, "mobile"],
                 },
             ),
         }
         # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        oid_value = cast("str", data[Names.INET_ORG_PERSON].get("oid"))
+        oid_value = cast("str", data[c.Names.INET_ORG_PERSON].get("oid"))
         assert oid_value == "2.16.840.1.113730.3.2.2"
-        may_values = cast("list[str]", data[Names.INET_ORG_PERSON].get("may"))
-        assert Names.MAIL in may_values
+        may_values = cast("list[str]", data[c.Names.INET_ORG_PERSON].get("may"))
+        assert c.Names.MAIL in may_values
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
@@ -255,7 +232,6 @@ class TestModelsNamespace:
         # Type narrowing: access with cast since keys aren't in GenericFieldsDict
         supports_dn_case = cast("bool", extensions.get("supports_dn_case_registry"))
         assert supports_dn_case is True
-
 
 class TestRemovalOfOverEngineering:
     """Test that over-engineered types were properly removed."""
@@ -306,7 +282,6 @@ class TestRemovalOfOverEngineering:
         """Unused Entry types must be removed."""
         assert not hasattr(FlextLdifTypes.Entry, type_name)
 
-
 class TestPhase1StandardizationResults:
     """Test that Phase 1 standardization goals were achieved."""
 
@@ -330,14 +305,13 @@ class TestPhase1StandardizationResults:
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
-        attr_dict: FlextLdifTypes.CommonDict.AttributeDict = {Names.CN: ["test"]}
+        attr_dict: FlextLdifTypes.CommonDict.AttributeDict = {c.Names.CN: ["test"]}
         dist: FlextLdifTypes.CommonDict.DistributionDict = {"type": 100}
-        entry_data: FlextLdifTypes.Entry.EntryCreateData = {Names.DN: DNs.TEST_USER}
+        entry_data: FlextLdifTypes.Entry.EntryCreateData = {c.Names.DN: c.DNs.TEST_USER}
 
         assert isinstance(attr_dict, dict)
         assert isinstance(dist, dict)
         assert isinstance(entry_data, dict)
-
 
 class TestIntegrationWithLdifFixtures:
     """Integration tests using real LDIF fixture data."""
@@ -351,21 +325,21 @@ class TestIntegrationWithLdifFixtures:
         """Verify types work with real LDIF fixture files."""
         assert oid_ldif_path.exists()
         entry_attrs: FlextLdifTypes.CommonDict.AttributeDict = {
-            Names.CN: ["Test Entry"],
-            Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
+            c.Names.CN: ["Test Entry"],
+            c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
         }
-        assert Names.CN in entry_attrs
+        assert c.Names.CN in entry_attrs
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
         # GenericFieldsDict doesn't have schema keys, use dict[str, object] for flexibility
         schema_dict: dict[str, dict[str, object]] = {
-            Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
+            c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         # Cast to dict[str, GenericFieldsDict] for type compatibility
         schema_attrs: dict[str, GenericFieldsDict] = cast(
             "dict[str, GenericFieldsDict]", schema_dict
         )
         # Type narrowing: access with cast since keys aren't in GenericFieldsDict
-        cn_oid = cast("str", schema_attrs[Names.CN].get("oid"))
+        cn_oid = cast("str", schema_attrs[c.Names.CN].get("oid"))
         assert cn_oid == OIDs.CN

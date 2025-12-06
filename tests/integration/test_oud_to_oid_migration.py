@@ -20,9 +20,8 @@ import pytest
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 
-from ..fixtures.loader import FlextLdifFixtures
 
-
+# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
 class TestOudToOidSchemaMigration:
     """Test OUD to OID schema migration."""
 

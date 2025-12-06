@@ -1,97 +1,30 @@
-"""Entries Service Tests - Comprehensive test coverage for FlextLdifEntries.
-
-Modules Tested:
-- flext_ldif.services.entries: Entry CRUD operations, DN extraction, attribute extraction,
-  objectClass management, attribute value extraction from various protocols
-
-Scope:
-- Entry creation with validation
-- DN extraction from multiple formats (Entry model, dict, EntryWithDnProtocol)
-- Attribute extraction and normalization
-- ObjectClass management
-- Attribute value extraction from various protocols (string, list, AttributeValueProtocol)
-- Error handling and edge cases
-- Protocol compliance testing
-
-Uses Python 3.13 features, factories, parametrization, and helpers for minimal code
-with maximum coverage. All tests use real implementations, no mocks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
+from tests import c, m, s, t
 
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsMatchers  # Mocked in conftest
+from flext_tests import FlextTestsMatchers
 
-from flext_ldif import FlextLdifModels, FlextLdifProtocols
+from flext_ldif import FlextLdifProtocols
+from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
-from tests.fixtures.constants import DNs, Names, Values
-from tests.fixtures.typing import GenericFieldsDict
-from tests.helpers.test_factories import FlextLdifTestFactories
-
-
-class TestFlextLdifEntries:
-    """Comprehensive tests for FlextLdifEntries service.
-
-    Single class with nested test groups following project patterns.
-    Uses factories, parametrization, and helpers for DRY code.
-    """
-
-    class Constants:
-        """Test constants organized in nested class."""
-
-        # Test DNs
-        DN_TEST_USER: Final[str] = DNs.TEST_USER
-        DN_TEST_GROUP: Final[str] = DNs.TEST_GROUP
-
-        # Attribute names
-        ATTR_CN: Final[str] = Names.CN
-        ATTR_SN: Final[str] = Names.SN
-        ATTR_OBJECTCLASS: Final[str] = Names.OBJECTCLASS
-        ATTR_MAIL: Final[str] = Names.MAIL
-
-        # ObjectClass names
-        OC_PERSON: Final[str] = Names.PERSON
-        OC_TOP: Final[str] = Names.TOP
-        OC_INET_ORG_PERSON: Final[str] = Names.INET_ORG_PERSON
-
-        # Test values
-        VALUE_TEST: Final[str] = Values.TEST
-        VALUE_USER1: Final[str] = Values.USER1
-        VALUE_USER2: Final[str] = Values.USER2
-
-        # Error messages
-        ERROR_MISSING_DN: Final[str] = "missing DN"
-        ERROR_MISSING_ATTRIBUTES: Final[str] = "missing attributes"
-        ERROR_MISSING_OBJECTCLASS: Final[str] = "missing objectClass"
-        ERROR_UNSUPPORTED_TYPE: Final[str] = "Unsupported attribute type"
-        ERROR_DOES_NOT_IMPLEMENT: Final[str] = "does not implement EntryWithDnProtocol"
-
-    class Factories:
-        """Entry factories for testing."""
-
-        @staticmethod
-        def create_test_entry(
-            dn: str | None = None,
-            **overrides: str | list[str] | object,
-        ) -> FlextLdifModels.Entry:
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+        ) -> m.Entry:
             """Create test entry using factory."""
             if dn is None:
-                dn = DNs.TEST_USER
+                dn = c.DNs.TEST_USER
             attrs: dict[str, str | list[str]] = {
-                Names.OBJECTCLASS: [Names.PERSON],
-                Names.CN: [Values.TEST],
+                c.Names.OBJECTCLASS: [c.Names.PERSON],
+                c.Names.CN: [c.Values.TEST],
             }
             # Filter overrides to only include compatible types
             compatible_overrides: dict[str, str | list[str]] = {
                 k: v for k, v in overrides.items() if isinstance(v, (str, list))
             }
             attrs.update(compatible_overrides)
-            return FlextLdifTestFactories.create_entry(dn, attrs)
+            return self.create_entry(dn, attrs)
 
         @staticmethod
         def create_mock_entry_with_dn(
@@ -109,7 +42,7 @@ class TestFlextLdifEntries:
                     self.dn: object = dn_val
                     self.attributes: object = attrs or {}
 
-            return MockEntry(dn_value, attributes)  # type: ignore[return-value]
+            return MockEntry(dn_value, attributes)
 
         @staticmethod
         def create_mock_entry_with_dn_value(
@@ -134,7 +67,7 @@ class TestFlextLdifEntries:
                     self.dn: object = DnWithValue(dn_val)
                     self.attributes: object = attrs or {}
 
-            return MockEntry(dn_value, attributes)  # type: ignore[return-value]
+            return MockEntry(dn_value, attributes)
 
         @staticmethod
         def create_mock_attribute_value(
@@ -148,7 +81,7 @@ class TestFlextLdifEntries:
 
             return MockAttributeValue(values)
 
-    class TestServiceInitialization:
+    class TestsFlextLdifServiceInitialization(s):
         """Test service initialization and basic functionality."""
 
         def test_init_creates_service(self) -> None:
@@ -173,14 +106,14 @@ class TestFlextLdifEntries:
             service = FlextLdifEntries()
             result = service.get_entry_dn(entry)
             FlextTestsMatchers.assert_success(result)
-            assert result.unwrap() == DNs.TEST_USER
+            assert result.unwrap() == c.DNs.TEST_USER
 
         @pytest.mark.parametrize(
             ("entry_input", "expected_dn", "should_succeed"),
             [
                 (
-                    {"dn": "cn=test,dc=example,dc=com", "cn": ["test"]},
-                    "cn=test,dc=example,dc=com",
+                    {"dn": c.DNs.TEST_USER, c.Names.CN: [c.Values.TEST]},
+                    c.DNs.TEST_USER,
                     True,
                 ),
                 ({"cn": ["test"]}, None, False),
@@ -206,9 +139,9 @@ class TestFlextLdifEntries:
 
         def test_get_entry_dn_from_entry_missing_dn(self) -> None:
             """Test get_entry_dn with Entry model missing DN."""
-            entry = FlextLdifModels.Entry.model_construct(
+            entry = m.Entry.model_construct(
                 dn=None,
-                attributes=FlextLdifModels.LdifAttributes.model_construct(
+                attributes=m.LdifAttributes.model_construct(
                     attributes={},
                 ),
             )
@@ -255,8 +188,8 @@ class TestFlextLdifEntries:
         @pytest.mark.parametrize(
             ("has_value_attr", "dn_value"),
             [
-                (True, DNs.TEST_USER),
-                (False, DNs.TEST_USER),
+                (True, c.DNs.TEST_USER),
+                (False, c.DNs.TEST_USER),
             ],
         )
         def test_get_entry_dn_from_protocol(
@@ -285,54 +218,57 @@ class TestFlextLdifEntries:
             """Test create_entry with basic attributes using constants."""
             service = FlextLdifEntries()
             result = service.create_entry(
-                dn=DNs.TEST_USER,
+                dn=c.DNs.TEST_USER,
                 attributes={
-                    Names.CN: Values.TEST,
-                    Names.SN: Values.TEST,
+                    c.Names.CN: c.Values.TEST,
+                    c.Names.SN: c.Values.TEST,
                 },
             )
             FlextTestsMatchers.assert_success(result)
             entry = result.unwrap()
-            assert entry.dn.value == DNs.TEST_USER
-            assert Names.CN in entry.attributes.attributes
-            assert Names.SN in entry.attributes.attributes
+            assert entry.dn is not None
+            assert entry.attributes is not None
+            assert entry.dn.value == c.DNs.TEST_USER
+            assert c.Names.CN in entry.attributes.attributes
+            assert c.Names.SN in entry.attributes.attributes
 
         def test_create_entry_with_objectclasses(self) -> None:
             """Test create_entry with objectclasses parameter using constants."""
             service = FlextLdifEntries()
             result = service.create_entry(
-                dn=DNs.TEST_USER,
+                dn=c.DNs.TEST_USER,
                 attributes={
-                    Names.CN: Values.TEST,
+                    c.Names.CN: c.Values.TEST,
                 },
-                objectclasses=[Names.PERSON, Names.TOP],
+                objectclasses=[c.Names.PERSON, c.Names.TOP],
             )
             FlextTestsMatchers.assert_success(result)
             entry = result.unwrap()
-            assert Names.OBJECTCLASS in entry.attributes.attributes
-            objectclasses = entry.attributes.attributes[Names.OBJECTCLASS]
+            assert entry.attributes is not None
+            assert c.Names.OBJECTCLASS in entry.attributes.attributes
+            objectclasses = entry.attributes.attributes[c.Names.OBJECTCLASS]
             assert isinstance(objectclasses, list)
-            assert Names.PERSON in objectclasses
-            assert Names.TOP in objectclasses
+            assert c.Names.PERSON in objectclasses
+            assert c.Names.TOP in objectclasses
 
         @pytest.mark.parametrize(
             ("attributes", "expected_cn_count", "expected_cn_first"),
             [
                 (
                     {
-                        Names.CN: [Values.USER1, Values.USER2],
-                        Names.SN: Values.TEST,
+                        c.Names.CN: [c.Values.USER1, c.Values.USER2],
+                        c.Names.SN: c.Values.TEST,
                     },
                     2,
                     None,
                 ),
                 (
                     {
-                        Names.CN: Values.TEST,
-                        Names.SN: Values.TEST,
+                        c.Names.CN: c.Values.TEST,
+                        c.Names.SN: c.Values.TEST,
                     },
                     1,
-                    Values.TEST,
+                    c.Values.TEST,
                 ),
             ],
         )
@@ -345,14 +281,15 @@ class TestFlextLdifEntries:
             """Test create_entry with list and string attribute values."""
             service = FlextLdifEntries()
             result = service.create_entry(
-                dn=DNs.TEST_USER,
+                dn=c.DNs.TEST_USER,
                 attributes=attributes,
             )
             FlextTestsMatchers.assert_success(result)
             entry = result.unwrap()
-            cn_values = entry.attributes.attributes[Names.CN]
+            assert entry.attributes is not None
+            cn_values = entry.attributes.attributes[c.Names.CN]
             assert isinstance(cn_values, list)
-            assert len(cn_values) == expected_cn_count
+            FlextTestsMatchers.assert_length_equals(cn_values, expected_cn_count)
             if expected_cn_first:
                 assert cn_values[0] == expected_cn_first
 
@@ -360,7 +297,7 @@ class TestFlextLdifEntries:
             ("dn", "should_succeed"),
             [
                 ("", False),
-                (DNs.TEST_USER, True),
+                (c.DNs.TEST_USER, True),
             ],
         )
         def test_create_entry_validation(
@@ -373,7 +310,7 @@ class TestFlextLdifEntries:
             result = service.create_entry(
                 dn=dn,
                 attributes={
-                    Names.CN: Values.TEST,
+                    c.Names.CN: c.Values.TEST,
                 },
             )
             if should_succeed:
@@ -395,17 +332,17 @@ class TestFlextLdifEntries:
             entry = TestFlextLdifEntries.Factories.create_test_entry(
                 dn=None,
                 **{
-                    Names.OBJECTCLASS: [Names.PERSON],
-                    Names.CN: Values.TEST,
-                    Names.SN: Values.TEST,
+                    c.Names.OBJECTCLASS: [c.Names.PERSON],
+                    c.Names.CN: c.Values.TEST,
+                    c.Names.SN: c.Values.TEST,
                 },
             )
             result = service.get_entry_attributes(entry)
             FlextTestsMatchers.assert_success(result)
             attrs = result.unwrap()
-            assert Names.CN in attrs
-            assert Names.SN in attrs
-            assert Names.OBJECTCLASS in attrs
+            assert c.Names.CN in attrs
+            assert c.Names.SN in attrs
+            assert c.Names.OBJECTCLASS in attrs
 
         def test_get_entry_attributes_missing_attributes(self) -> None:
             """Test get_entry_attributes with entry missing attributes."""
@@ -414,7 +351,7 @@ class TestFlextLdifEntries:
                 """Mock entry without attributes for testing error handling."""
 
                 def __init__(self) -> None:
-                    self.dn: object = DNs.TEST_USER
+                    self.dn: object = c.DNs.TEST_USER
                     # Don't set attributes to test missing attributes case
 
             service = FlextLdifEntries()
@@ -448,17 +385,17 @@ class TestFlextLdifEntries:
             [
                 (
                     {
-                        Names.CN: [Values.TEST],
-                        Names.SN: Values.TEST,
+                        c.Names.CN: [c.Values.TEST],
+                        c.Names.SN: c.Values.TEST,
                     },
-                    [Names.CN, Names.SN],
+                    [c.Names.CN, c.Names.SN],
                 ),
                 (
                     {
-                        Names.CN: [123, 456],
-                        Names.SN: 789,
+                        c.Names.CN: [123, 456],
+                        c.Names.SN: 789,
                     },
-                    [Names.CN, Names.SN],
+                    [c.Names.CN, c.Names.SN],
                 ),
             ],
         )
@@ -472,7 +409,7 @@ class TestFlextLdifEntries:
             # Don't inherit from protocol - it defines dn as @property
             class EntryWithDictAttributes:
                 def __init__(self, attrs: GenericFieldsDict) -> None:
-                    self.dn: object = DNs.TEST_USER
+                    self.dn: object = c.DNs.TEST_USER
                     self.attributes: object = attrs
 
             service = FlextLdifEntries()
@@ -491,7 +428,7 @@ class TestFlextLdifEntries:
             # Don't inherit from protocol - it defines dn as @property
             class EntryWithUnknownAttributes:
                 def __init__(self) -> None:
-                    self.dn = "cn=test,dc=example,dc=com"
+                    self.dn = c.DNs.TEST_USER
                     self.attributes = 123
 
             service = FlextLdifEntries()
@@ -517,7 +454,7 @@ class TestFlextLdifEntries:
             # Don't inherit from protocol - it defines dn as @property
             class EntryThatRaises:
                 def __init__(self) -> None:
-                    self.dn: object = "cn=test,dc=example,dc=com"
+                    self.dn: object = c.DNs.TEST_USER
                     self.attributes: object = ExceptionAttribute(exception_msg)
 
             service = FlextLdifEntries()
@@ -536,24 +473,24 @@ class TestFlextLdifEntries:
             entry = TestFlextLdifEntries.Factories.create_test_entry(
                 dn=None,
                 **{
-                    Names.OBJECTCLASS: [Names.PERSON, Names.TOP],
-                    Names.CN: Values.TEST,
+                    c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.TOP],
+                    c.Names.CN: c.Values.TEST,
                 },
             )
             result = service.get_entry_objectclasses(entry)
             FlextTestsMatchers.assert_success(result)
             objectclasses = result.unwrap()
-            assert Names.PERSON in objectclasses
-            assert Names.TOP in objectclasses
+            assert c.Names.PERSON in objectclasses
+            assert c.Names.TOP in objectclasses
 
         def test_get_entry_objectclasses_missing_objectclass(self) -> None:
             """Test get_entry_objectclasses with entry missing objectClass."""
             service = FlextLdifEntries()
-            entry = FlextLdifModels.Entry.model_construct(
-                dn=FlextLdifModels.DistinguishedName(value=DNs.TEST_USER),
-                attributes=FlextLdifModels.LdifAttributes(
+            entry = m.Entry.model_construct(
+                dn=m.DistinguishedName(value=c.DNs.TEST_USER),
+                attributes=m.LdifAttributes(
                     attributes={
-                        Names.CN: [Values.TEST],
+                        c.Names.CN: [c.Values.TEST],
                     },
                 ),
             )
@@ -568,7 +505,7 @@ class TestFlextLdifEntries:
             # Don't inherit from protocol - it defines dn as @property
             class EntryWithLowercaseObjectclass:
                 def __init__(self) -> None:
-                    self.dn = "cn=test,dc=example,dc=com"
+                    self.dn = c.DNs.TEST_USER
                     self.attributes = {"objectclass": ["person", "top"]}
 
             service = FlextLdifEntries()
@@ -584,14 +521,14 @@ class TestFlextLdifEntries:
             service = FlextLdifEntries()
             entry = TestFlextLdifEntries.Factories.create_test_entry(
                 **{
-                    Names.OBJECTCLASS: Names.PERSON,
-                    Names.CN: Values.TEST,
+                    c.Names.OBJECTCLASS: c.Names.PERSON,
+                    c.Names.CN: c.Values.TEST,
                 },
             )
             result = service.get_entry_objectclasses(entry)
             FlextTestsMatchers.assert_success(result)
             objectclasses = result.unwrap()
-            assert Names.PERSON in objectclasses
+            assert c.Names.PERSON in objectclasses
 
         def test_get_entry_objectclasses_when_get_entry_attributes_fails(
             self,
@@ -627,7 +564,7 @@ class TestFlextLdifEntries:
             # Don't inherit from protocol - it defines dn as @property
             class EntryThatRaises:
                 def __init__(self) -> None:
-                    self.dn: object = "cn=test,dc=example,dc=com"
+                    self.dn: object = c.DNs.TEST_USER
                     self.attributes: object = ExceptionAttribute(exception_msg)
 
             service = FlextLdifEntries()
@@ -646,10 +583,10 @@ class TestFlextLdifEntries:
         @pytest.mark.parametrize(
             ("attr_input", "expected_values"),
             [
-                (Values.TEST, [Values.TEST]),
+                (c.Values.TEST, [c.Values.TEST]),
                 (
-                    [Values.USER1, Values.USER2],
-                    [Values.USER1, Values.USER2],
+                    [c.Values.USER1, c.Values.USER2],
+                    [c.Values.USER1, c.Values.USER2],
                 ),
             ],
         )
@@ -667,8 +604,8 @@ class TestFlextLdifEntries:
         @pytest.mark.parametrize(
             ("values", "expected_values"),
             [
-                ([Values.USER1, Values.USER2], [Values.USER1, Values.USER2]),
-                (Values.TEST, [Values.TEST]),
+                ([c.Values.USER1, c.Values.USER2], [c.Values.USER1, c.Values.USER2]),
+                (c.Values.TEST, [c.Values.TEST]),
             ],
         )
         def test_get_attribute_values_from_protocol(
@@ -699,6 +636,5 @@ class TestFlextLdifEntries:
             assert result.is_failure
             assert result.error is not None
             assert "Unsupported attribute type" in result.error
-
 
 __all__ = ["TestFlextLdifEntries"]

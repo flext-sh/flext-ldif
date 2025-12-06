@@ -9,7 +9,7 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Process batches of entries
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestDocker.ldap_container fixture.
+container management via FlextTestsDocker.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,13 +24,10 @@ import pytest
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from tests.fixtures.typing import GenericFieldsDict
-
-# Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
-# They use unique_dn_suffix for isolation and indepotency in parallel execution
+from tests import GenericFieldsDict
 
 
-@pytest.fixture
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 def flext_api() -> FlextLdif:
     """FlextLdif API instance."""
     return FlextLdif.get_instance()

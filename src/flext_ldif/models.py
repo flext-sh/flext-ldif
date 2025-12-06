@@ -775,5 +775,50 @@ class FlextLdifModels(FlextModels):
     # (acls, statistics) which is LDIF-specific. Use FlextLdifModelsResults.AclResponse
     # directly for LDIF ACL extraction operations.
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # LDIF RESULTS AGGREGATE - Unified namespace for all result types
+    # ═══════════════════════════════════════════════════════════════════════════
 
-__all__ = ["FlextLdifModels"]
+    class LdifResults:
+        """Aggregates all LDIF-specific result types for convenient access."""
+
+        # ACL-related results
+        AclResponse = FlextLdifModelsResults.AclResponse
+        AclEvaluationResult = FlextLdifModelsResults.AclEvaluationResult
+
+        # Statistics results
+        Statistics = FlextLdifModelsResults.Statistics
+        StatisticsResult = FlextLdifModelsResults.StatisticsResult
+        StatisticsSummary = FlextLdifModelsResults.StatisticsSummary
+        EntriesStatistics = FlextLdifModelsResults.EntriesStatistics
+        StatisticsServiceStatus = FlextLdifModelsResults.StatisticsServiceStatus
+
+        # Parsing and writing results
+        ParseResponse = FlextLdifModelsResults.ParseResponse
+        WriteResponse = FlextLdifModelsResults.WriteResponse
+
+        # Schema discovery
+        SchemaDiscoveryResult = FlextLdifModelsResults.SchemaDiscoveryResult
+        SchemaBuilderResult = FlextLdifModelsResults.SchemaBuilderResult
+        SyntaxLookupResult = FlextLdifModelsResults.SyntaxLookupResult
+
+        # Migration results
+        MigrationEntriesResult = FlextLdifModelsResults.MigrationEntriesResult
+        MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+
+        # Validation results
+        ValidationResult = FlextLdifModelsResults.ValidationResult
+        ValidationBatchResult = FlextLdifModelsResults.ValidationBatchResult
+        LdifValidationResult = FlextLdifModelsResults.LdifValidationResult
+
+        # Analysis and detection results
+        ServerDetectionResult = FlextLdifModelsResults.ServerDetectionResult
+        AnalysisResult = FlextLdifModelsResults.AnalysisResult
+        EntryAnalysisResult = FlextLdifModelsResults.EntryAnalysisResult
+        EntryResult = FlextLdifModelsResults.EntryResult
+
+
+# Short alias for concise usage throughout FLEXT ecosystem
+m = FlextLdifModels
+
+__all__ = ["FlextLdifModels", "m"]

@@ -17,15 +17,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import cast, override
 
 from flext_core import r
-from flext_core.utilities import FlextUtilities
 
 from flext_ldif._models.processing import ProcessingResult
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-
-# Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 
 
 class FlextLdifProcessing(
@@ -90,7 +87,7 @@ class FlextLdifProcessing(
     def process(
         self,
         processor_name: str,
-        entries: list[FlextLdifModels.Entry],
+        entries: list[m.Entry],
         *,
         parallel: bool = False,
         batch_size: int = 100,
@@ -159,7 +156,7 @@ class FlextLdifProcessing(
     def _get_processor_function(
         self,
         processor_name: str,
-    ) -> r[Callable[[FlextLdifModels.Entry], ProcessingResult]]:
+    ) -> r[Callable[[m.Entry], ProcessingResult]]:
         """Get processor function by name.
 
         Args:
@@ -171,24 +168,24 @@ class FlextLdifProcessing(
         """
         processor_map: dict[
             str,
-            Callable[[], Callable[[FlextLdifModels.Entry], ProcessingResult]],
+            Callable[[], Callable[[m.Entry], ProcessingResult]],
         ] = {
-            FlextLdifConstants.ProcessorTypes.TRANSFORM: self._create_transform_processor,
-            FlextLdifConstants.ProcessorTypes.VALIDATE: self._create_validate_processor,
+            c.ProcessorTypes.TRANSFORM: self._create_transform_processor,
+            c.ProcessorTypes.VALIDATE: self._create_validate_processor,
         }
         if processor_name in processor_map:
-            return r[Callable[[FlextLdifModels.Entry], ProcessingResult]].ok(
+            return r[Callable[[m.Entry], ProcessingResult]].ok(
                 processor_map[processor_name](),
             )
         supported = "'transform', 'validate'"
-        return r[Callable[[FlextLdifModels.Entry], ProcessingResult]].fail(
+        return r[Callable[[m.Entry], ProcessingResult]].fail(
             f"Unknown processor: '{processor_name}'. Supported: {supported}",
         )
 
     @staticmethod
     def _execute_parallel_processing(
-        entries: list[FlextLdifModels.Entry],
-        processor_func: Callable[[FlextLdifModels.Entry], ProcessingResult],
+        entries: list[m.Entry],
+        processor_func: Callable[[m.Entry], ProcessingResult],
         max_workers: int,
     ) -> r[list[ProcessingResult]]:
         """Execute parallel processing using ThreadPoolExecutor.
@@ -212,22 +209,24 @@ class FlextLdifProcessing(
 
     @staticmethod
     def _execute_batch_processing(
-        entries: list[FlextLdifModels.Entry],
-        processor_func: Callable[[FlextLdifModels.Entry], ProcessingResult],
-        batch_size: int,  # noqa: ARG004
+        entries: list[m.Entry],
+        processor_func: Callable[[m.Entry], ProcessingResult],
+        _batch_size: int,
     ) -> r[list[ProcessingResult]]:
         """Execute batch processing sequentially.
 
         Args:
             entries: List of entries to process
             processor_func: Processor function to apply
-            batch_size: Number of entries per batch (reserved for future chunking)
+            _batch_size: Number of entries per batch (reserved for future chunking, not yet implemented)
 
         Returns:
             FlextResult with list of processed results
 
         """
-        batch_result = u.process(
+        # Use u.process for batch processing with error handling
+        # FlextLdifUtilities may not have process() method with on_error, delegate to core
+        batch_result = u.Collection.process(
             entries,
             processor_func,
             on_error="collect",
@@ -242,7 +241,7 @@ class FlextLdifProcessing(
 
     @staticmethod
     def _create_transform_processor() -> Callable[
-        [FlextLdifModels.Entry],
+        [m.Entry],
         ProcessingResult,
     ]:
         """Create transform processor function.
@@ -253,7 +252,7 @@ class FlextLdifProcessing(
         """
 
         def _transform_func(
-            entry: FlextLdifModels.Entry,
+            entry: m.Entry,
         ) -> ProcessingResult:
             # Transform Entry to ProcessingResult with all metadata preserved
             if entry.dn is None:
@@ -263,11 +262,10 @@ class FlextLdifProcessing(
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
-            attrs_dict = (
-                dict(entry.attributes)
-                if not isinstance(entry.attributes, dict)
-                else entry.attributes
-            )
+            # entry.attributes is LdifAttributes, not dict
+            # Use .attributes property to get dict[str, list[str]]
+            # LdifAttributes has .attributes property that returns dict[str, list[str]]
+            attrs_dict = entry.attributes.attributes
             return ProcessingResult(
                 dn=dn_str,
                 attributes=attrs_dict,
@@ -277,7 +275,7 @@ class FlextLdifProcessing(
 
     @staticmethod
     def _create_validate_processor() -> Callable[
-        [FlextLdifModels.Entry],
+        [m.Entry],
         ProcessingResult,
     ]:
         """Create validate processor function.
@@ -288,7 +286,7 @@ class FlextLdifProcessing(
         """
 
         def _validate_func(
-            entry: FlextLdifModels.Entry,
+            entry: m.Entry,
         ) -> ProcessingResult:
             # Basic validation: entry has DN and attributes - required fields must be present
             # Return complete entry data for validation results
@@ -299,11 +297,10 @@ class FlextLdifProcessing(
             if entry.attributes is None:
                 msg = "Entry attributes cannot be None"
                 raise ValueError(msg)
-            attrs_dict = (
-                dict(entry.attributes)
-                if not isinstance(entry.attributes, dict)
-                else entry.attributes
-            )
+            # entry.attributes is LdifAttributes, not dict
+            # Use .attributes property to get dict[str, list[str]]
+            # LdifAttributes has .attributes property that returns dict[str, list[str]]
+            attrs_dict = entry.attributes.attributes
             return ProcessingResult(
                 dn=dn_str,
                 attributes=attrs_dict,

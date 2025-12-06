@@ -1,17 +1,3 @@
-"""Test suite for Schema Transformer Utility.
-
-Modules tested: FlextLdifUtilities.Schema
-Scope: Schema transformations, attribute name normalization, matching rule normalization,
-syntax OID normalization, field transformations, attribute and objectClass pipelines
-
-Tests for the new SchemaTransformer class that handles generic schema
-transformations used across OID, OUD, OpenLDAP, and other servers.
-Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -19,11 +5,12 @@ from collections.abc import Callable
 from flext_core import FlextResult
 from flext_core.typings import t
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
+from tests import t
 
 
-class TestSchemaTransformerNormalizeAttributeName:
+class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
     """Test normalize_attribute_name transformation."""
 
     def test_normalize_removes_binary_suffix(self) -> None:
@@ -157,7 +144,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
     def test_apply_all_transformations(self) -> None:
         """Test applying all three transformations to an attribute."""
-        attr = FlextLdifModels.SchemaAttribute(
+        attr = m.SchemaAttribute(
             oid="2.5.4.3",
             name="cn;binary",
             equality="caseIgnoreSubstringsMatch",
@@ -239,7 +226,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         assert result.is_success
         transformed = result.unwrap()
-        assert isinstance(transformed, FlextLdifModels.SchemaAttribute)
+        assert isinstance(transformed, m.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
         assert transformed.substr == "caseIgnoreSubstringsMatch"
@@ -247,7 +234,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
     def test_partial_transformations(self) -> None:
         """Test applying only some transformations."""
-        attr = FlextLdifModels.SchemaAttribute(
+        attr = m.SchemaAttribute(
             oid="2.5.4.3",
             name="cn;binary",
             equality="caseIgnoreMatch",
@@ -284,7 +271,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         assert result.is_success
         transformed = result.unwrap()
-        assert isinstance(transformed, FlextLdifModels.SchemaAttribute)
+        assert isinstance(transformed, m.SchemaAttribute)
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
 
@@ -294,7 +281,7 @@ class TestSchemaTransformerApplyObjectClassTransformations:
 
     def test_apply_objectclass_transformations(self) -> None:
         """Test transforming an objectClass."""
-        oc = FlextLdifModels.SchemaObjectClass(
+        oc = m.SchemaObjectClass(
             oid="2.5.6.0",
             name="top",
         )

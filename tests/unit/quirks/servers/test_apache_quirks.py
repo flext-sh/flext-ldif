@@ -1,12 +1,3 @@
-"""Test suite for Apache Directory Server quirks implementation.
-
-Modules tested: FlextLdifServersApache, FlextLdifServersApache.Schema,
-FlextLdifServersApache.Acl, FlextLdifServersApache.Entry
-Scope: Apache Directory Server-specific quirks, schema parsing/writing,
-ACL handling, and entry detection
-Uses parametrized tests and factory patterns with real implementations.
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -15,9 +6,10 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_ldif import FlextLdifConstants
+from flext_ldif.models import m
 from flext_ldif.servers.apache import FlextLdifServersApache
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from tests import TestDeduplicationHelpers, s
 
 
 class AttributeScenario(StrEnum):
@@ -215,7 +207,7 @@ ENTRY_TEST_CASES = (
 )
 
 
-class TestFlextLdifApacheQuirks:
+class TestsTestFlextLdifApacheQuirks(s):
     """Test Apache Directory Server quirks implementation."""
 
     ATTRIBUTE_DATA: ClassVar = ATTRIBUTE_TEST_CASES
@@ -249,7 +241,8 @@ class TestFlextLdifApacheQuirks:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
         schema: FlextLdifServersApache.Schema = cast(
-            "FlextLdifServersApache.Schema", server.schema_quirk
+            "FlextLdifServersApache.Schema",
+            server.schema_quirk,
         )
         result = schema.can_handle_attribute(test_case.attr_definition)
         assert result is test_case.expected_can_handle
@@ -263,9 +256,9 @@ class TestFlextLdifApacheQuirks:
             schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
-        assert isinstance(attr_data, FlextLdifModels.SchemaAttribute)
+        assert isinstance(attr_data, m.SchemaAttribute)
         assert attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
         assert attr_data.name == "ads-enabled"
         assert attr_data.desc == "Enable flag"
@@ -281,9 +274,9 @@ class TestFlextLdifApacheQuirks:
             schema,
             attr_def,
             parse_method="parse_attribute",
-            expected_type=FlextLdifModels.SchemaAttribute,
+            expected_type=m.SchemaAttribute,
         )
-        assert isinstance(attr_data, FlextLdifModels.SchemaAttribute)
+        assert isinstance(attr_data, m.SchemaAttribute)
         assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
         assert attr_data.length == 256
 
@@ -308,7 +301,8 @@ class TestFlextLdifApacheQuirks:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
         schema: FlextLdifServersApache.Schema = cast(
-            "FlextLdifServersApache.Schema", server.schema_quirk
+            "FlextLdifServersApache.Schema",
+            server.schema_quirk,
         )
         result = schema.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
@@ -322,9 +316,9 @@ class TestFlextLdifApacheQuirks:
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=FlextLdifModels.SchemaObjectClass,
+            expected_type=m.SchemaObjectClass,
         )
-        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
+        assert isinstance(oc_data, m.SchemaObjectClass)
         assert oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
         assert oc_data.name == "ads-directoryService"
         assert oc_data.kind == "STRUCTURAL"
@@ -346,9 +340,9 @@ class TestFlextLdifApacheQuirks:
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=FlextLdifModels.SchemaObjectClass,
+            expected_type=m.SchemaObjectClass,
         )
-        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
+        assert isinstance(oc_data, m.SchemaObjectClass)
         assert oc_data.kind == "AUXILIARY"
 
     def test_schema_objectclass_parse_abstract(self) -> None:
@@ -360,9 +354,9 @@ class TestFlextLdifApacheQuirks:
             schema,
             oc_def,
             parse_method="parse_objectclass",
-            expected_type=FlextLdifModels.SchemaObjectClass,
+            expected_type=m.SchemaObjectClass,
         )
-        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
+        assert isinstance(oc_data, m.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
     def test_schema_objectclass_parse_missing_oid(self) -> None:
@@ -381,7 +375,7 @@ class TestFlextLdifApacheQuirks:
         """Test writing attribute to RFC string format."""
         server = FlextLdifServersApache()
         schema = server.schema_quirk
-        attr_data = FlextLdifModels.SchemaAttribute(
+        attr_data = m.SchemaAttribute(
             oid="1.3.6.1.4.1.18060.0.4.1.2.100",
             name="ads-enabled",
             desc="Enable flag",
@@ -403,7 +397,7 @@ class TestFlextLdifApacheQuirks:
         """Test writing objectClass to RFC string format."""
         server = FlextLdifServersApache()
         schema = server.schema_quirk
-        oc_data = FlextLdifModels.SchemaObjectClass(
+        oc_data = m.SchemaObjectClass(
             oid="1.3.6.1.4.1.18060.0.4.1.3.100",
             name="ads-directoryService",
             kind="STRUCTURAL",
@@ -432,9 +426,9 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=FlextLdifModels.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_model, FlextLdifModels.Acl)
+        assert isinstance(acl_model, m.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -451,9 +445,9 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=FlextLdifModels.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_model, FlextLdifModels.Acl)
+        assert isinstance(acl_model, m.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -470,9 +464,9 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=FlextLdifModels.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_model, FlextLdifModels.Acl)
+        assert isinstance(acl_model, m.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -484,7 +478,8 @@ class TestFlextLdifApacheQuirks:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
         acl_quirk: FlextLdifServersApache.Acl = cast(
-            "FlextLdifServersApache.Acl", server.acl_quirk
+            "FlextLdifServersApache.Acl",
+            server.acl_quirk,
         )
         acl_line = "access to * by * read"
         # Test with string directly - can_handle_acl accepts str | AclProtocol
@@ -494,7 +489,8 @@ class TestFlextLdifApacheQuirks:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
         acl_quirk: FlextLdifServersApache.Acl = cast(
-            "FlextLdifServersApache.Acl", server.acl_quirk
+            "FlextLdifServersApache.Acl",
+            server.acl_quirk,
         )
         assert acl_quirk.can_handle_acl("") is False
 
@@ -507,9 +503,9 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=FlextLdifModels.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_data, FlextLdifModels.Acl)
+        assert isinstance(acl_data, m.Acl)
         assert acl_data.get_acl_format() == FlextLdifConstants.AclFormats.ACI
         assert acl_data.raw_acl == acl_line
         assert acl_data.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
@@ -523,19 +519,19 @@ class TestFlextLdifApacheQuirks:
             acl_quirk,
             acl_line,
             parse_method="parse",
-            expected_type=FlextLdifModels.Acl,
+            expected_type=m.Acl,
         )
-        assert isinstance(acl_data, FlextLdifModels.Acl)
+        assert isinstance(acl_data, m.Acl)
 
     def test_acl_write_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = FlextLdifModels.Acl(
+        acl_model = m.Acl(
             name="ads-aci",
-            target=FlextLdifModels.AclTarget(target_dn="", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value=""),
-            permissions=FlextLdifModels.AclPermissions(),
+            target=m.AclTarget(target_dn="", attributes=[]),
+            subject=m.AclSubject(subject_type="all", subject_value=""),
+            permissions=m.AclPermissions(),
             server_type="apache_directory",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
@@ -550,11 +546,11 @@ class TestFlextLdifApacheQuirks:
         """Test writing ACL with clauses only to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = FlextLdifModels.Acl(
+        acl_model = m.Acl(
             name="aci",
-            target=FlextLdifModels.AclTarget(target_dn="", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value=""),
-            permissions=FlextLdifModels.AclPermissions(),
+            target=m.AclTarget(target_dn="", attributes=[]),
+            subject=m.AclSubject(subject_type="all", subject_value=""),
+            permissions=m.AclPermissions(),
             server_type="apache_directory",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
@@ -569,11 +565,11 @@ class TestFlextLdifApacheQuirks:
         """Test writing empty ACL to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = FlextLdifModels.Acl(
+        acl_model = m.Acl(
             name="ads-aci",
-            target=FlextLdifModels.AclTarget(target_dn="", attributes=[]),
-            subject=FlextLdifModels.AclSubject(subject_type="all", subject_value=""),
-            permissions=FlextLdifModels.AclPermissions(),
+            target=m.AclTarget(target_dn="", attributes=[]),
+            subject=m.AclSubject(subject_type="all", subject_value=""),
+            permissions=m.AclPermissions(),
             server_type="apache_directory",
             raw_acl="",
         )
@@ -590,7 +586,8 @@ class TestFlextLdifApacheQuirks:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_quirk: FlextLdifServersApache.Entry = cast(
-            "FlextLdifServersApache.Entry", server.entry_quirk
+            "FlextLdifServersApache.Entry",
+            server.entry_quirk,
         )
         result = entry_quirk.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle
@@ -609,7 +606,7 @@ class TestFlextLdifApacheQuirks:
 
     @pytest.mark.parametrize(
         "test_case",
-        [tc for tc in ENTRY_TEST_CASES if tc.expected_can_handle],
+        [c for c in ENTRY_TEST_CASES if c.expected_can_handle],
     )
     def test_entry_parse_ldif(self, test_case: EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""

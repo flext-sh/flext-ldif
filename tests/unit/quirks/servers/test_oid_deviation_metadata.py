@@ -1,32 +1,18 @@
-"""Consolidated test suite for OID deviation metadata tracking.
-
-Consolidates 4 original test classes (20+ test methods) into a single parametrized class
-using modern pytest techniques (StrEnum, ClassVar, parametrize) for 65% code reduction.
-
-Modules tested: FlextLdifServersOid.Entry, FlextLdifModels.QuirkMetadata
-Scope: Zero data loss metadata tracking during OID→RFC conversions. Validates that
-original values (boolean conversions, DN spacing, schema quirks) are preserved in
-QuirkMetadata for round-trip support. Tests boolean_conversions, original_format_details,
-and schema_quirks_applied fields.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif import FlextLdifModels
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.models import m
+from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests.fixtures.typing import GenericFieldsDict
+from tests import m, s
 
 
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 def build_ldif_text(dn: str, attrs: Mapping[str, object]) -> str:
     """Build LDIF text from DN and attributes dict."""
     lines = [f"dn: {dn}"]
@@ -39,10 +25,10 @@ def build_ldif_text(dn: str, attrs: Mapping[str, object]) -> str:
 
 
 def parse_entry_and_unwrap(
-    entry_quirk: FlextLdifServersOid.Entry,
+    entry_quirk: FlextLdifServersBaseEntry,
     dn: str,
     attrs: Mapping[str, object],
-) -> FlextLdifModels.Entry:
+) -> m.Entry:
     """Parse entry using public API and unwrap result."""
     ldif_text = build_ldif_text(dn, attrs)
     result = entry_quirk.parse(ldif_text)
@@ -52,7 +38,7 @@ def parse_entry_and_unwrap(
     return entries[0]
 
 
-class TestFlextLdifOidMetadata:
+class TestsTestFlextLdifOidMetadata(s):
     """Consolidated test suite for OID metadata tracking.
 
     Replaces 4 original test classes with parametrized tests using StrEnum
@@ -136,9 +122,9 @@ class TestFlextLdifOidMetadata:
     # ═════════════════════════════════════════════════════════════════════════════
 
     @pytest.fixture
-    def oid_entry(self) -> FlextLdifServersOid.Entry:
+    def oid_entry(self) -> FlextLdifServersBaseEntry:
         """Create OID entry quirk instance."""
-        return FlextLdifServersOid().entry_quirk
+        return cast("FlextLdifServersBaseEntry", FlextLdifServersOid().entry_quirk)
 
     @pytest.fixture
     def oid_server(self) -> FlextLdifServersOid:
@@ -151,7 +137,7 @@ class TestFlextLdifOidMetadata:
 
     def test_boolean_conversions_field_populated(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test that boolean_conversions field is populated in metadata."""
         entry = parse_entry_and_unwrap(
@@ -199,19 +185,19 @@ class TestFlextLdifOidMetadata:
         attrs: Mapping[str, object],
         attr_name: str,
         original_value: str,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test boolean conversion values are tracked in metadata."""
         entry = parse_entry_and_unwrap(oid_entry, dn, attrs)
 
         assert entry is not None
         # Verify entry has the attribute
-        if attr_name in entry.attributes:
+        if entry.attributes is not None and attr_name in entry.attributes:
             assert entry.attributes[attr_name] is not None
 
     def test_multiple_boolean_attributes_metadata(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test metadata tracking for multiple boolean attributes."""
         entry = parse_entry_and_unwrap(
@@ -227,7 +213,7 @@ class TestFlextLdifOidMetadata:
 
         assert entry is not None
         # Multiple boolean attrs should be handled
-        if "orclEnabled" in entry.attributes:
+        if entry.attributes is not None and "orclEnabled" in entry.attributes:
             assert entry.attributes["orclEnabled"] is not None
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -236,7 +222,7 @@ class TestFlextLdifOidMetadata:
 
     def test_metadata_attached_to_entries(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test that metadata is attached to parsed entries."""
         entry = parse_entry_and_unwrap(
@@ -247,11 +233,12 @@ class TestFlextLdifOidMetadata:
 
         assert entry is not None
         # Entry should exist after parsing
+        assert entry.dn is not None
         assert entry.dn.value == "cn=metadata,dc=example,dc=com"
 
     def test_quirk_type_in_metadata(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test that quirk_type is set correctly in metadata."""
         entry = parse_entry_and_unwrap(
@@ -293,16 +280,17 @@ class TestFlextLdifOidMetadata:
         scenario: str,
         dn: str,
         attrs: Mapping[str, object],
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test various metadata scenarios."""
         entry = parse_entry_and_unwrap(oid_entry, dn, attrs)
         assert entry is not None
+        assert entry.dn is not None
         assert entry.dn.value == dn
 
     def test_original_format_stored_in_extensions(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test that original format is stored in metadata extensions."""
         ldif_text = (
@@ -324,7 +312,7 @@ class TestFlextLdifOidMetadata:
             assert (
                 isinstance(
                     entry.metadata.extensions,
-                    FlextLdifModelsMetadata.DynamicMetadata,
+                    m.DynamicMetadata,
                 )
                 or entry.metadata.extensions is None
             )
@@ -335,7 +323,7 @@ class TestFlextLdifOidMetadata:
 
     def test_metadata_preserved_through_parse_cycle(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test that metadata is preserved through parse cycle."""
         entry1 = parse_entry_and_unwrap(
@@ -345,6 +333,7 @@ class TestFlextLdifOidMetadata:
         )
 
         assert entry1 is not None
+        assert entry1.dn is not None
         assert entry1.dn.value == "cn=roundtrip1,dc=example,dc=com"
 
         # Verify metadata preservation
@@ -356,7 +345,7 @@ class TestFlextLdifOidMetadata:
 
     def test_metadata_through_multiple_operations(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test metadata survives multiple parse operations."""
         # First parse
@@ -391,7 +380,7 @@ class TestFlextLdifOidMetadata:
         oid_server: FlextLdifServersOid,
     ) -> None:
         """Test creating metadata with OID quirk type."""
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="oid",
             extensions={"test": "value"},
         )
@@ -401,7 +390,7 @@ class TestFlextLdifOidMetadata:
 
     def test_metadata_structure(self) -> None:
         """Test QuirkMetadata structure."""
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="oid",
             extensions={"key1": "value1", "key2": ["value2"]},
         )
@@ -409,14 +398,14 @@ class TestFlextLdifOidMetadata:
         assert metadata.quirk_type == "oid"
         assert isinstance(
             metadata.extensions,
-            FlextLdifModelsMetadata.DynamicMetadata,
+            m.DynamicMetadata,
         )
         assert "key1" in metadata.extensions
         assert "key2" in metadata.extensions
 
     def test_empty_metadata(self) -> None:
         """Test empty metadata initialization."""
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="oid",
             extensions={},
         )
@@ -424,7 +413,7 @@ class TestFlextLdifOidMetadata:
         assert metadata.quirk_type == "oid"
         assert isinstance(
             metadata.extensions,
-            FlextLdifModelsMetadata.DynamicMetadata,
+            m.DynamicMetadata,
         )
         assert len(metadata.extensions) == 0
 
@@ -450,7 +439,7 @@ class TestFlextLdifOidMetadata:
         extensions_dict: GenericFieldsDict,
     ) -> None:
         """Test creating metadata with various configurations."""
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=extensions_dict,
         )
@@ -464,7 +453,7 @@ class TestFlextLdifOidMetadata:
 
     def test_entry_with_oracle_attributes_and_metadata(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test entry with Oracle-specific attributes preserves metadata."""
         entry = parse_entry_and_unwrap(
@@ -479,6 +468,7 @@ class TestFlextLdifOidMetadata:
         )
 
         assert entry is not None
+        assert entry.attributes is not None
         assert "cn" in entry.attributes
         assert "objectClass" in entry.attributes
 
@@ -488,7 +478,7 @@ class TestFlextLdifOidMetadata:
 
     def test_metadata_consistency_across_entries(
         self,
-        oid_entry: FlextLdifServersOid.Entry,
+        oid_entry: FlextLdifServersBaseEntry,
     ) -> None:
         """Test metadata consistency across multiple entries."""
         entries = []

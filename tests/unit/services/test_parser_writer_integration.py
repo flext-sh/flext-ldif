@@ -1,15 +1,3 @@
-"""Comprehensive parser-writer integration tests using advanced Python 3.13 patterns.
-
-Tests roundtrip operations (parse → write → parse) with format options compatibility,
-input/output sources, schema/ACL processing, error propagation, and edge cases.
-
-Uses StrEnum for scenarios, Mapping for immutable configurations, dynamic parametrized tests,
-and factory patterns to reduce code by 70%+ while maintaining comprehensive integration coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import time
@@ -19,10 +7,15 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import FlextTestsFactories  # Mocked in conftest
+from flext_tests import FlextTestsFactories
+from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.utilities import FlextTestsUtilities
 
-from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifWriter
-from tests.fixtures.constants import DNs, Names, OIDs, Syntax
+from flext_ldif import FlextLdifParser, FlextLdifWriter
+from flext_ldif.models import m
+from tests import c, m
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
 class ParserWriterScenarios(StrEnum):
@@ -42,8 +35,8 @@ class IntegrationTestData:
     # Basic test content
     BASIC_LDIF: Final[str] = f"""version: 1
 
-dn: cn=test,{DNs.EXAMPLE}
-objectClass: {Names.PERSON}
+dn: cn=test,{c.DNs.EXAMPLE}
+objectClass: {c.Names.PERSON}
 cn: Test User
 sn: User
 mail: test@example.com
@@ -52,19 +45,19 @@ mail: test@example.com
     # Complex test content with schema and ACL
     COMPLEX_LDIF: Final[str] = f"""version: 1
 
-dn: {DNs.SCHEMA}
+dn: {c.DNs.SCHEMA}
 objectClass: ldapSubentry
 objectClass: subschema
 cn: schema
-attributeTypes: ( {OIDs.CN} NAME '{Names.CN}' EQUALITY caseIgnoreMatch SYNTAX {Syntax.DIRECTORY_STRING} )
+attributeTypes: ( {OIDs.CN} NAME '{c.Names.CN}' EQUALITY caseIgnoreMatch SYNTAX {Syntax.DIRECTORY_STRING} )
 
-dn: ou=people,{DNs.EXAMPLE}
+dn: ou=people,{c.DNs.EXAMPLE}
 objectClass: organizationalUnit
 ou: people
-aci: (targetattr="*")(version 3.0; acl "Admin Access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,{DNs.EXAMPLE}";)
+aci: (targetattr="*")(version 3.0; acl "Admin Access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,{c.DNs.EXAMPLE}";)
 
-dn: cn=John Doe,ou=people,{DNs.EXAMPLE}
-objectClass: {Names.PERSON}
+dn: cn=John Doe,ou=people,{c.DNs.EXAMPLE}
+objectClass: {c.Names.PERSON}
 cn: John Doe
 sn: Doe
 mail: john.doe@example.com
@@ -124,13 +117,17 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, f"Failed to parse content for {scenario}"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[FlextLdifModels.Entry] for write method
-        entries: list[FlextLdifModels.Entry] = [
-            entry for entry in entries_list if isinstance(entry, FlextLdifModels.Entry)
+        # Convert to list[m.Entry] for write method
+        entries: list[m.Entry] = [
+            entry for entry in entries_list if isinstance(entry, m.Entry)
         ]
 
         # Verify we got entries
-        assert len(entries) > 0, f"No entries parsed for {scenario}"
+        FlextTestsMatchers.assert_length_greater_than(
+            entries,
+            0,
+            f"No entries parsed for {scenario}",
+        )
 
         # Write the entries back
         write_result = writer_service.write(
@@ -139,7 +136,7 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
             output_target="string",
         )
 
-        assert write_result.is_success, f"Failed to write entries for {scenario}"
+        FlextTestsMatchers.assert_result_success(write_result)
         output_content_raw = write_result.unwrap()
         # Extract string from WriteResponse if needed
         if isinstance(output_content_raw, str):
@@ -192,11 +189,15 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, "Failed to parse from file"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[FlextLdifModels.Entry] for write method
-        entries: list[FlextLdifModels.Entry] = [
-            entry for entry in entries_list if isinstance(entry, FlextLdifModels.Entry)
+        # Convert to list[m.Entry] for write method
+        entries: list[m.Entry] = [
+            entry for entry in entries_list if isinstance(entry, m.Entry)
         ]
-        assert len(entries) == 1, "Should parse one entry from file"
+        FlextTestsMatchers.assert_length_equals(
+            entries,
+            1,
+            "Should parse one entry from file",
+        )
 
         # Write to another file
         output_file = tmp_path / "output.ldif"
@@ -210,9 +211,13 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert write_result.is_success, "Failed to write to file"
 
         # Verify file was created and has content
-        assert output_file.exists(), "Output file should exist"
+        FlextTestsUtilities.FileHelpers.assert_file_exists(output_file)
         output_content = output_file.read_text()
-        assert len(output_content) > 0, "Output file should not be empty"
+        FlextTestsMatchers.assert_length_greater_than(
+            output_content,
+            0,
+            "Output file should not be empty",
+        )
 
         # Re-parse from file to verify integrity
         reparse_result = parser_service.parse(
@@ -253,8 +258,10 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
             parse_response = parse_result.unwrap()
             entries = parse_response.entries
             # At minimum, we should have attempted to parse something
-            assert isinstance(entries, list), (
-                "Should return a list even for invalid content"
+            FlextTestsUtilities.Assertions.assert_result_matches_expected(
+                entries,
+                list,
+                description="parse response entries",
             )
 
     @pytest.mark.parametrize(
@@ -288,9 +295,9 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, f"Failed to parse {entry_count} entries"
         parse_response = parse_result.unwrap()
         entries_list = parse_response.entries
-        # Convert to list[FlextLdifModels.Entry] for write method
-        entries: list[FlextLdifModels.Entry] = [
-            entry for entry in entries_list if isinstance(entry, FlextLdifModels.Entry)
+        # Convert to list[m.Entry] for write method
+        entries: list[m.Entry] = [
+            entry for entry in entries_list if isinstance(entry, m.Entry)
         ]
         assert len(entries) == entry_count, (
             f"Expected {entry_count} entries, got {len(entries)}"
@@ -327,7 +334,11 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, "Empty content should parse successfully"
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
-        assert len(entries) == 0, "Empty content should produce no entries"
+        FlextTestsMatchers.assert_length_equals(
+            entries,
+            0,
+            "Empty content should produce no entries",
+        )
 
         # Test content with only version
         version_only = "version: 1\n"
@@ -339,7 +350,11 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
         assert parse_result.is_success, "Version-only content should parse successfully"
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
-        assert len(entries) == 0, "Version-only content should produce no entries"
+        FlextTestsMatchers.assert_length_equals(
+            entries,
+            0,
+            "Version-only content should produce no entries",
+        )
 
     def _generate_multi_entry_content(self, count: int) -> str:
         """Generate LDIF content with specified number of entries."""
@@ -347,8 +362,8 @@ class FlextLdifParserWriterIntegrationTests(FlextTestsFactories):
 
         for i in range(count):
             lines.extend([
-                f"dn: cn=user{i},{DNs.EXAMPLE}",
-                f"objectClass: {Names.PERSON}",
+                f"dn: cn=user{i},{c.DNs.EXAMPLE}",
+                f"objectClass: {c.Names.PERSON}",
                 f"cn: User {i}",
                 f"sn: User{i}",
                 f"mail: user{i}@example.com",

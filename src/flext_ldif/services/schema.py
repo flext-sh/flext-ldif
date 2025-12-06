@@ -3,44 +3,6 @@
 Centralizes all schema parsing, validation, transformation, and detection logic
 in a server-agnostic service using dependency injection via FlextLdifServer.
 
-Architecture:
-    - FlextLdifSchema: Core service for schema operations
-    - Uses FlextLdifServer via DI for server-specific behavior
-    - Provides r[T] for railway-oriented error handling
-    - Leverages FlextLdifUtilities extensively for metadata operations
-    - Uses Entry + Metadata patterns conforming to FlextLdifConstants
-    - Never knows about OID/OUD directly - all via FlextLdifServer
-
-Benefits:
-    - Single source of truth for schema logic
-    - Server-agnostic via DI (any server can use with different config)
-    - Independently testable
-    - No duplication across servers
-    - Clean separation of concerns (SRP)
-    - Zero knowledge of server types (OID, OUD, etc.) - all via FlextLdifServer
-
-Usage:
-    from flext_ldif.services.schema import FlextLdifSchema
-    from flext_ldif.services.server import FlextLdifServer
-
-    registry = FlextLdifServer()
-    schema_service = FlextLdifSchema(registry=registry)
-
-    # Parse attribute
-    result = schema_service.parse_attribute(attr_definition)
-    if result.is_success:
-        attr = result.unwrap()
-
-    # Detect schema entry
-    if schema_service.is_schema(entry):
-        print("Entry is a schema definition")
-
-References:
-    - RFC 4512: LDAP Schema Definitions
-    - FlextLdifUtilities: Schema utilities for metadata operations
-    - FlextLdifConstants: Metadata keys and schema constants
-    - FlextLdifServer: Server registry for DI
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -48,19 +10,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self, override
+from typing import Self, cast, override
 
 from flext_core import r
 from pydantic import PrivateAttr
 
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif.constants import c
+from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.utilities import u
 
 
-class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus]):
+class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service.
 
     Business Rule: Schema service centralizes all schema-related operations using
@@ -80,7 +42,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     Key Principles:
         - SRP: Each method has a single, well-defined responsibility
         - DI: Uses FlextLdifServer for server-specific behavior (never knows OID/OUD directly)
-        - Utilities: Leverages FlextLdifUtilities extensively for metadata operations
+        - Utilities: Leverages u extensively for metadata operations
         - Metadata: Uses Entry + Metadata patterns conforming to FlextLdifConstants
         - No Server Knowledge: Never imports or references server types directly
 
@@ -93,6 +55,28 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         - write_objectclass(): Write objectClass to LDIF format
         - is_schema(): Detect if entry is a schema definition
 
+    Usage:
+        from flext_ldif.services.schema import FlextLdifSchema
+        from flext_ldif.services.server import FlextLdifServer
+
+        registry = FlextLdifServer()
+        schema_service = FlextLdifSchema(registry=registry)
+
+        # Parse attribute
+        result = schema_service.parse_attribute(attr_definition)
+        if result.is_success:
+            attr = result.unwrap()
+
+        # Detect schema entry
+        if schema_service.is_schema(entry):
+            print("Entry is a schema definition")
+
+    References:
+        - RFC 4512: LDAP Schema Definitions
+        - u: Schema utilities for metadata operations
+        - FlextLdifConstants: Metadata keys and schema constants
+        - FlextLdifServer: Server registry for DI
+
     """
 
     # ════════════════════════════════════════════════════════════════════════
@@ -100,7 +84,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     # ════════════════════════════════════════════════════════════════════════
 
     _registry: FlextLdifServer = PrivateAttr(default_factory=FlextLdifServer)
-    _server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = PrivateAttr(
+    _server_type: c.LiteralTypes.ServerTypeLiteral = PrivateAttr(
         default="rfc",
     )
 
@@ -108,7 +92,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         self,
         *,
         registry: FlextLdifServer | None = None,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
+        server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> None:
         """Initialize schema service with dependency injection.
 
@@ -136,7 +120,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     # ════════════════════════════════════════════════════════════════════════
 
     @property
-    def server_type(self) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+    def server_type(self) -> c.LiteralTypes.ServerTypeLiteral:
         """Get configured server type."""
         return self._server_type
 
@@ -163,7 +147,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
     def with_server_type(
         self,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.LiteralTypes.ServerTypeLiteral,
     ) -> Self:
         """Set server type for schema operations (fluent builder).
 
@@ -194,15 +178,15 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     @override
     def execute(
         self,
-    ) -> r[FlextLdifModels.SchemaServiceStatus]:
+    ) -> r[m.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
             FlextResult containing service status
 
         """
-        return r[FlextLdifModels.SchemaServiceStatus].ok(
-            FlextLdifModels.SchemaServiceStatus(
+        return r[m.SchemaServiceStatus].ok(
+            m.SchemaServiceStatus(
                 service="SchemaService",
                 server_type=self._server_type,
                 status="operational",
@@ -227,11 +211,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         self,
         attr_definition: str,
         *,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[FlextLdifModels.SchemaAttribute]:
+        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.SchemaAttribute]:
         """Parse attribute type definition.
 
-        Uses FlextLdifUtilities.Parser for RFC parsing and FlextLdifServer
+        Uses u.Parser for RFC parsing and FlextLdifServer
         for server-specific enhancements via dependency injection.
 
         Args:
@@ -249,13 +233,14 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 return r.fail("Attribute definition is empty")
 
             # Use utilities for RFC parsing
-            parse_result = FlextLdifUtilities.Parser.parse_rfc_attribute(
+            parse_result = u.LdifParser.parse_rfc_attribute(
                 attr_definition,
             )
             if parse_result.is_failure:
-                return parse_result
+                # Cast failure result to correct type
+                return cast("r[m.SchemaAttribute]", parse_result)
 
-            attr = parse_result.unwrap()
+            attr_domain = parse_result.unwrap()
 
             # Apply server-specific enhancements via FlextLdifServer if requested
             if server_type:
@@ -264,9 +249,13 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                     # Use server quirk for server-specific parsing
                     server_result = server_quirk.parse_attribute(attr_definition)
                     if server_result.is_success:
-                        attr = server_result.unwrap()
+                        attr_domain = server_result.unwrap()
 
-            # Metadata is already built by FlextLdifUtilities.Parser
+            # Cast to m.SchemaAttribute for return type compatibility
+            # m.SchemaAttribute inherits from m.SchemaAttribute
+            attr = cast("m.SchemaAttribute", attr_domain)
+
+            # Metadata is already built by u.Parser
             # No additional metadata building needed here
 
             return r.ok(attr)
@@ -283,11 +272,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         self,
         oc_definition: str,
         *,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[FlextLdifModels.SchemaObjectClass]:
+        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.SchemaObjectClass]:
         """Parse objectClass definition.
 
-        Uses FlextLdifUtilities.Parser for RFC parsing and FlextLdifServer
+        Uses u.Parser for RFC parsing and FlextLdifServer
         for server-specific enhancements via dependency injection.
 
         Args:
@@ -305,13 +294,14 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 return r.fail("ObjectClass definition is empty")
 
             # Use utilities for RFC parsing
-            parse_result = FlextLdifUtilities.Parser.parse_rfc_objectclass(
+            parse_result = u.LdifParser.parse_rfc_objectclass(
                 oc_definition,
             )
             if parse_result.is_failure:
-                return parse_result
+                # Cast failure result to correct type
+                return cast("r[m.SchemaObjectClass]", parse_result)
 
-            oc = parse_result.unwrap()
+            oc_domain = parse_result.unwrap()
 
             # Apply server-specific enhancements via FlextLdifServer if requested
             if server_type:
@@ -320,9 +310,13 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                     # Use server quirk for server-specific parsing
                     server_result = server_quirk.parse_objectclass(oc_definition)
                     if server_result.is_success:
-                        oc = server_result.unwrap()
+                        oc_domain = server_result.unwrap()
 
-            # Metadata is already built by FlextLdifUtilities.Parser
+            # Cast to m.SchemaObjectClass for return type compatibility
+            # m.SchemaObjectClass inherits from m.SchemaObjectClass
+            oc = cast("m.SchemaObjectClass", oc_domain)
+
+            # Metadata is already built by u.Parser
             # No additional metadata building needed here
 
             return r.ok(oc)
@@ -341,11 +335,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
     def validate_attribute(
         self,
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: m.SchemaAttribute,
     ) -> r[bool]:
         """Validate attribute model syntax and constraints.
 
-        Uses FlextLdifUtilities for validation operations.
+        Uses u for validation operations.
 
         Args:
             attr: SchemaAttribute model to validate (guaranteed non-None by Pydantic)
@@ -356,7 +350,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         Note:
             - attr cannot be None (Pydantic Field(...) ensures this)
             - attr.name and attr.oid are required fields (Pydantic Field(...))
-            - Validates syntax OID format using FlextLdifUtilities.OID
+            - Validates syntax OID format using u.OID
 
         """
         try:
@@ -370,7 +364,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
             # Validate syntax OID format if present using utilities
             if attr.syntax:
-                validation_result = FlextLdifUtilities.OID.validate_format(attr.syntax)
+                validation_result = u.OID.validate_format(attr.syntax)
                 if validation_result.is_failure or not validation_result.unwrap():
                     return r.fail(f"Invalid SYNTAX OID: {attr.syntax}")
 
@@ -386,7 +380,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
     def validate_objectclass(
         self,
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: m.SchemaObjectClass,
     ) -> r[bool]:
         """Validate objectClass model syntax and constraints.
 
@@ -401,7 +395,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         Note:
             - oc cannot be None (Pydantic Field(...) ensures this)
             - oc.name and oc.oid are required fields (Pydantic Field(...))
-            - Validates objectclass kind using FlextLdifConstants.Schema
+            - Validates objectclass kind using c.Schema
 
         """
         try:
@@ -417,15 +411,15 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
             # Check objectclass kind using constants
             valid_kinds = {
-                FlextLdifConstants.Schema.ABSTRACT,
-                FlextLdifConstants.Schema.STRUCTURAL,
-                FlextLdifConstants.Schema.AUXILIARY,
+                c.Schema.ABSTRACT,
+                c.Schema.STRUCTURAL,
+                c.Schema.AUXILIARY,
             }
             if oc.kind not in valid_kinds:
                 valid_kinds_str = (
-                    f"{FlextLdifConstants.Schema.ABSTRACT}, "
-                    f"{FlextLdifConstants.Schema.STRUCTURAL}, or "
-                    f"{FlextLdifConstants.Schema.AUXILIARY}"
+                    f"{c.Schema.ABSTRACT}, "
+                    f"{c.Schema.STRUCTURAL}, or "
+                    f"{c.Schema.AUXILIARY}"
                 )
                 return r.fail(
                     f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}",
@@ -447,11 +441,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
     def write_attribute(
         self,
-        attr: FlextLdifModels.SchemaAttribute,
+        attr: m.SchemaAttribute,
     ) -> r[str]:
         """Convert attribute model to LDIF format.
 
-        Uses FlextLdifUtilities.Writer for writing operations.
+        Uses u.Writer for writing operations.
 
         Args:
             attr: SchemaAttribute model
@@ -467,7 +461,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 return r.fail(validation.error or "Unknown error")
 
             # Use utilities to write
-            return FlextLdifUtilities.Writer.write_rfc_attribute(attr)
+            return u.Writer.write_rfc_attribute(attr)
 
         except Exception as e:
             error_msg = f"Error writing attribute: {e}"
@@ -479,11 +473,11 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
 
     def write_objectclass(
         self,
-        oc: FlextLdifModels.SchemaObjectClass,
+        oc: m.SchemaObjectClass,
     ) -> r[str]:
         """Convert objectClass model to LDIF format.
 
-        Uses FlextLdifUtilities.Writer for writing operations.
+        Uses u.Writer for writing operations.
 
         Args:
             oc: SchemaObjectClass model
@@ -499,7 +493,7 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
                 return r.fail(validation.error or "Unknown error")
 
             # Use utilities to write
-            return FlextLdifUtilities.Writer.write_rfc_objectclass(oc)
+            return u.Writer.write_rfc_objectclass(oc)
 
         except Exception as e:
             error_msg = f"Error writing objectClass: {e}"
@@ -514,14 +508,14 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
     # ════════════════════════════════════════════════════════════════════════
 
     @staticmethod
-    def is_schema(entry: FlextLdifModels.Entry) -> bool:
+    def is_schema(entry: m.Entry) -> bool:
         """Check if entry is a schema definition.
 
         Schema entries are detected by presence of schema-related attributes
         (attributeTypes, objectClasses, ldapSyntaxes, or matchingRules)
         using case-insensitive matching.
 
-        Uses FlextLdifConstants.SchemaFields for schema field names.
+        Uses c.SchemaFields for schema field names.
 
         Args:
             entry: Entry to check
@@ -536,8 +530,8 @@ class FlextLdifSchema(FlextLdifServiceBase[FlextLdifModels.SchemaServiceStatus])
         """
         # Use constants for schema field names
         schema_attrs = {
-            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES_LOWER,
-            FlextLdifConstants.SchemaFields.OBJECT_CLASSES_LOWER,
+            c.SchemaFields.ATTRIBUTE_TYPES_LOWER,
+            c.SchemaFields.OBJECT_CLASSES_LOWER,
             "ldapsyntaxes",
             "matchingrules",
         }

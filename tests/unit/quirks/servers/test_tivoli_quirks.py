@@ -1,13 +1,3 @@
-"""Comprehensive tests for IBM Tivoli Directory Server quirks.
-
-This module provides complete test coverage for IBM Tivoli Directory Server
-schema, ACL, and entry quirks, including:
-- Server-specific OID patterns (1.3.18.*)
-- ibm-/ids- attribute prefixes
-- Structured ACL format with {} delimiters
-- Entry processing with base64 encoding for binary data
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -15,9 +5,10 @@ from typing import ClassVar
 
 import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+from tests import m, s
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EXTERNAL ENUMS (outside class)
@@ -90,7 +81,7 @@ def tivoli_server() -> FlextLdifServersTivoli:
     return FlextLdifServersTivoli()
 
 
-class TestFlextLdifTivoliQuirks:
+class TestsTestFlextLdifTivoliQuirks(s):
     """Consolidated tests for IBM Tivoli Directory Server quirks.
 
     Tests schema detection/parsing, ACL detection/parsing, and entry detection.
@@ -433,7 +424,7 @@ class TestFlextLdifTivoliQuirks:
         """Test Tivoli entry detection by various patterns."""
         # Reconstruct with proper typing for Entry.create
         typed_attributes: dict[str, str | list[str]] = dict(attributes.items())
-        entry_result = FlextLdifModels.Entry.create(
+        entry_result = m.Entry.create(
             dn=dn,
             attributes=typed_attributes,
         )

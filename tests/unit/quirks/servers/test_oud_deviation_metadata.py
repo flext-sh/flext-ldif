@@ -1,15 +1,3 @@
-"""Test suite for OUD deviation metadata tracking.
-
-Modules tested: FlextLdifServersOud.Entry, FlextLdifModels.QuirkMetadata
-Scope: Zero data loss metadata tracking during OUD→RFC conversions. Validates that
-original values (boolean conversions, DN spacing, schema quirks) are preserved in
-QuirkMetadata for round-trip support. Tests format_details, DN preservation, case
-handling, and integration scenarios.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -17,9 +5,10 @@ from typing import ClassVar
 
 import pytest
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.oud import FlextLdifServersOud
+from tests import s
 
 # =============================================================================
 # TEST SCENARIO ENUMS & CONSTANTS
@@ -53,7 +42,7 @@ def oud_entry() -> FlextLdifProtocols.Quirks.EntryProtocol:
 
 
 @pytest.mark.unit
-class TestOudDeviationMetadata:
+class TestsFlextLdifOudDeviationMetadata(s):
     """Test OUD metadata tracking for zero data loss during parsing.
 
     Consolidates three test classes into parametrized test scenarios.
@@ -130,7 +119,7 @@ class TestOudDeviationMetadata:
             assert entry.metadata is not None
             # Type narrowing: ensure metadata is QuirkMetadata with original_format_details
             if (
-                isinstance(entry.metadata, FlextLdifModels.QuirkMetadata)
+                isinstance(entry.metadata, m.QuirkMetadata)
                 and entry.metadata.original_format_details is not None
                 and (
                     hasattr(entry.metadata.original_format_details, "dn_line")
@@ -147,7 +136,7 @@ class TestOudDeviationMetadata:
             assert entry.metadata is not None
             # Type narrowing: ensure metadata is QuirkMetadata with DN preservation
             if (
-                isinstance(entry.metadata, FlextLdifModels.QuirkMetadata)
+                isinstance(entry.metadata, m.QuirkMetadata)
                 and entry.metadata.original_format_details is not None
                 and hasattr(entry.metadata.original_format_details, "dn_line")
             ):
@@ -161,7 +150,7 @@ class TestOudDeviationMetadata:
             assert entry.metadata is not None
             # Type narrowing: ensure metadata is QuirkMetadata with case preservation
             if (
-                isinstance(entry.metadata, FlextLdifModels.QuirkMetadata)
+                isinstance(entry.metadata, m.QuirkMetadata)
                 and "objectClass" in entry.metadata.original_attribute_case
             ):
                 # objectClass case is preserved in original_attribute_case
@@ -182,14 +171,14 @@ class TestOudDeviationMetadata:
     ) -> None:
         """Parametrized test for OUD metadata utilities integration."""
         if test_type == OudMetadataTestType.ATTRIBUTE_CASE_TYPE:
-            metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
+            metadata = m.QuirkMetadata(quirk_type="oud")
             metadata.original_attribute_case["objectClass"] = "objectclass"
             assert len(metadata.original_attribute_case) == 1
             assert metadata.original_attribute_case["objectClass"] == "objectclass"
 
         elif test_type == OudMetadataTestType.FORMAT_DETAILS_INTEGRATION:
-            metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
-            metadata.original_format_details = FlextLdifModels.FormatDetails(
+            metadata = m.QuirkMetadata(quirk_type="oud")
+            metadata.original_format_details = m.FormatDetails(
                 dn_line="cn=test, dc=example",
                 trailing_info="server=oud",
             )

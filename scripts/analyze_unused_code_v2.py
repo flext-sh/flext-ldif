@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+import contextlib
 from collections import defaultdict
 from pathlib import Path
 
@@ -171,8 +172,7 @@ def analyze_file(
             analyzer.imports,
             analyzer.import_froms,
         )
-    except Exception as e:
-        print(f"Error analyzing {file_path}: {e}")
+    except Exception:
         return {}, set(), {}, {}
 
 
@@ -274,22 +274,8 @@ def check_api_usage(
     return False
 
 
-def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:
-    """Find unused code across all projects."""
-    print("Collecting definitions from flext-ldif...")
-    all_defs = collect_all_definitions()
-
-    print("Collecting references and imports from all projects...")
-    all_refs, all_import_froms = collect_all_references_and_imports()
-
-    print("Analyzing usage...")
-    unused: dict[str, list[tuple[str, Path, int]]] = {
-        "class": [],
-        "method": [],
-        "function": [],
-    }
-
-    # Get server classes
+def _collect_server_classes_v2() -> set[str]:
+    """Collect server class names from server/*.py files."""
     server_files = list((FLEXT_LDIF_SRC / "servers").glob("*.py"))
     server_classes: set[str] = set()
     for server_file in server_files:
@@ -297,77 +283,105 @@ def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:
             continue
         defs, _, _, _ = analyze_file(server_file)
         server_classes.update(full_name for full_name, _, _ in defs.get("class", []))
+    return server_classes
+
+
+def _is_private_method_used(
+    def_type: str,
+    full_name: str,
+    short_name: str,
+    all_refs: list[str],
+) -> bool:
+    """Check if private method is used within its class."""
+    if def_type != "method":
+        return False
+
+    # Check if called within the same class
+    class_name = ".".join(full_name.split(".")[:-1])
+    return bool(class_name and f"{class_name}.{short_name}" in all_refs)
+
+
+def _check_unused_definition_v2(
+    def_type: str,
+    full_name: str,
+    file_path: Path,
+    lineno: int,
+    server_classes: set[str],
+    all_refs: list[str],
+    all_import_froms: dict[str, set[str]],
+) -> tuple[str, Path, int] | None:
+    """Check if a definition is unused. Returns tuple if unused, None otherwise."""
+    # Check usage based on type
+    if def_type == "class" and full_name in server_classes:
+        is_used = check_server_class_usage(full_name, all_import_froms)
+    else:
+        is_used = check_api_usage(full_name, all_refs, all_import_froms)
+
+    if is_used:
+        return None
+
+    # Handle private vs public code
+    short_name = full_name.rsplit(".", maxsplit=1)[-1]
+    if short_name.startswith("_"):
+        # Private code - check if actually referenced
+        if full_name in all_refs or short_name in all_refs:
+            return None
+
+        # For methods, check if called within class
+        if _is_private_method_used(def_type, full_name, short_name, all_refs):
+            return None
+
+        return (full_name, file_path, lineno)
+
+    # Public code - must be used
+    return (full_name, file_path, lineno)
+
+
+def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:
+    """Find unused code across all projects."""
+    all_defs = collect_all_definitions()
+    all_refs, all_import_froms = collect_all_references_and_imports()
+    server_classes = _collect_server_classes_v2()
+
+    unused: dict[str, list[tuple[str, Path, int]]] = {
+        "class": [],
+        "method": [],
+        "function": [],
+    }
 
     # Check each definition
     for def_type in ["class", "method", "function"]:
         for full_name, (file_path, lineno, _) in all_defs[def_type].items():
-            is_used = False
-
-            # Special handling for server classes
-            if def_type == "class" and full_name in server_classes:
-                is_used = check_server_class_usage(full_name, all_import_froms)
-            else:
-                # Regular check
-                is_used = check_api_usage(full_name, all_refs, all_import_froms)
-
-            # Skip private methods/functions (unless explicitly used)
-            if not is_used:
-                short_name = full_name.split(".")[-1]
-                if short_name.startswith("_"):
-                    # Private code - check if it's actually referenced
-                    if full_name not in all_refs and short_name not in all_refs:
-                        # Only mark as unused if it's truly not referenced
-                        # But be conservative - if it's a method, it might be called internally
-                        if def_type == "method":
-                            # Check if it's called within the same class
-                            class_name = ".".join(full_name.split(".")[:-1])
-                            if (
-                                class_name
-                                and f"{class_name}.{short_name}" not in all_refs
-                            ):
-                                unused[def_type].append((full_name, file_path, lineno))
-                        else:
-                            unused[def_type].append((full_name, file_path, lineno))
-                else:
-                    # Public code - must be used
-                    unused[def_type].append((full_name, file_path, lineno))
+            unused_item = _check_unused_definition_v2(
+                def_type,
+                full_name,
+                file_path,
+                lineno,
+                server_classes,
+                all_refs,
+                all_import_froms,
+            )
+            if unused_item:
+                unused[def_type].append(unused_item)
 
     return unused
 
 
 def main() -> None:
     """Main entry point."""
-    print("Starting comprehensive AST analysis for unused code...")
-    print(f"Analyzing: {FLEXT_LDIF_ROOT}")
-    print("Checking usage in: flext-ldif, flext-ldap, client-a-oud-mig")
-
     unused = find_unused_code()
-
-    print("\n" + "=" * 80)
-    print("UNUSED CODE REPORT")
-    print("=" * 80)
 
     total_unused = 0
     for def_type in ["class", "method", "function"]:
         items = unused[def_type]
         total_unused += len(items)
         if items:
-            print(f"\n{def_type.upper()}S ({len(items)}):")
-            for name, file_path, lineno in sorted(
+            for _name, file_path, _lineno in sorted(
                 items,
                 key=lambda x: (str(x[1]), x[2]),
             ):
-                try:
-                    rel_path = file_path.relative_to(FLEXT_LDIF_ROOT)
-                except ValueError:
-                    rel_path = file_path
-                print(f"  {name} - {rel_path}:{lineno}")
-        else:
-            print(f"\n{def_type.upper()}S: None found")
-
-    print("\n" + "=" * 80)
-    print(f"TOTAL UNUSED: {total_unused}")
-    print("=" * 80)
+                with contextlib.suppress(ValueError):
+                    file_path.relative_to(FLEXT_LDIF_ROOT)
 
 
 if __name__ == "__main__":

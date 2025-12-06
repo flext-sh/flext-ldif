@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+import contextlib
 from collections import defaultdict
 from pathlib import Path
 
@@ -123,8 +124,7 @@ def analyze_file(
         analyzer = CodeAnalyzer(file_path)
         analyzer.visit(tree)
         return analyzer.definitions, analyzer.references, analyzer.imports
-    except Exception as e:
-        print(f"Error analyzing {file_path}: {e}")
+    except Exception:
         return {}, set(), {}
 
 
@@ -193,22 +193,8 @@ def check_api_usage(def_name: str, all_refs: set[str], imports: dict[str, str]) 
     return False
 
 
-def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:  # noqa: C901
-    """Find unused code across all projects."""
-    print("Collecting definitions...")
-    all_defs = collect_all_definitions()
-
-    print("Collecting references...")
-    all_refs = collect_all_references()
-
-    print("Analyzing usage...")
-    unused: dict[str, list[tuple[str, Path, int]]] = {
-        "class": [],
-        "method": [],
-        "function": [],
-    }
-
-    # Special handling for server/*.py files - they use DI
+def _collect_server_classes() -> set[str]:
+    """Collect server class names from server/*.py files."""
     server_files = list(
         (FLEXT_LDIF_ROOT / "src" / "flext_ldif" / "servers").glob("*.py"),
     )
@@ -218,64 +204,93 @@ def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:  # noqa: C901
             continue
         defs, _, _ = analyze_file(server_file)
         server_classes.update(full_name for full_name, _, _ in defs.get("class", []))
+    return server_classes
+
+
+def _is_server_class_used(full_name: str, all_refs: list[str], file_path: Path) -> bool:
+    """Check if server class is used via imports or __init__.py exports."""
+    # Check if referenced in code
+    for ref in all_refs:
+        if full_name in ref or ref in full_name:
+            return True
+
+    # Check if exported in __init__.py
+    init_file = file_path.parent / "__init__.py"
+    if init_file.exists():
+        init_content = init_file.read_text(encoding="utf-8")
+        if full_name.rsplit(".", maxsplit=1)[-1] in init_content:
+            return True
+
+    return False
+
+
+def _check_unused_definition(
+    def_type: str,
+    full_name: str,
+    file_path: Path,
+    lineno: int,
+    server_classes: set[str],
+    all_refs: list[str],
+) -> tuple[str, Path, int] | None:
+    """Check if a definition is unused. Returns tuple if unused, None otherwise."""
+    # Handle server classes specially
+    if def_type == "class" and full_name in server_classes:
+        if not _is_server_class_used(full_name, all_refs, file_path):
+            return (full_name, file_path, lineno)
+        return None
+
+    # Regular check for non-server classes
+    if not check_api_usage(full_name, all_refs, {}) and not full_name.rsplit(
+        ".",
+        maxsplit=1,
+    )[-1].startswith("_"):
+        return (full_name, file_path, lineno)
+
+    return None
+
+
+def find_unused_code() -> dict[str, list[tuple[str, Path, int]]]:
+    """Find unused code across all projects."""
+    all_defs = collect_all_definitions()
+    all_refs = collect_all_references()
+    server_classes = _collect_server_classes()
+
+    unused: dict[str, list[tuple[str, Path, int]]] = {
+        "class": [],
+        "method": [],
+        "function": [],
+    }
 
     # Check each definition
     for def_type in ["class", "method", "function"]:
         for full_name, (file_path, lineno, _) in all_defs[def_type].items():
-            # Skip if it's a server class (DI handles these)
-            if def_type == "class" and full_name in server_classes:
-                # Check if server class is imported/used
-                is_used = False
-                for ref in all_refs:
-                    if full_name in ref or ref in full_name:
-                        is_used = True
-                        break
-                if not is_used:
-                    # Check if it's in __init__.py exports
-                    init_file = file_path.parent / "__init__.py"
-                    if init_file.exists():
-                        init_content = init_file.read_text(encoding="utf-8")
-                        if full_name.split(".")[-1] in init_content:
-                            is_used = True
-                if not is_used:
-                    unused[def_type].append((full_name, file_path, lineno))
-            # Regular check
-            elif not check_api_usage(full_name, all_refs, {}):
-                # Check if it's a private method/function (starts with _)
-                if not full_name.split(".")[-1].startswith("_"):
-                    unused[def_type].append((full_name, file_path, lineno))
+            unused_item = _check_unused_definition(
+                def_type,
+                full_name,
+                file_path,
+                lineno,
+                server_classes,
+                all_refs,
+            )
+            if unused_item:
+                unused[def_type].append(unused_item)
 
     return unused
 
 
 def main() -> None:
     """Main entry point."""
-    print("Starting AST analysis for unused code...")
-    print(f"Analyzing: {FLEXT_LDIF_ROOT}")
-
     unused = find_unused_code()
-
-    print("\n" + "=" * 80)
-    print("UNUSED CODE REPORT")
-    print("=" * 80)
 
     for def_type in ["class", "method", "function"]:
         items = unused[def_type]
         if items:
-            print(f"\n{def_type.upper()}S ({len(items)}):")
-            for name, file_path, lineno in sorted(
+            for _name, file_path, _lineno in sorted(
                 items,
                 key=lambda x: (str(x[1]), x[2]),
             ):
-                try:
-                    rel_path = file_path.relative_to(FLEXT_LDIF_ROOT)
-                except ValueError:
-                    rel_path = file_path
-                print(f"  {name} - {rel_path}:{lineno}")
-        else:
-            print(f"\n{def_type.upper()}S: None found")
-
-    print("\n" + "=" * 80)
+                with contextlib.suppress(ValueError):
+                    file_path.relative_to(FLEXT_LDIF_ROOT)
 
 
 if __name__ == "__main__":

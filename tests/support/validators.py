@@ -5,41 +5,41 @@ This module provides validation utilities for testing flext-ldif functionality.
 
 from __future__ import annotations
 
+from typing import Any
 
-# Mock replacements for flext_tests dependencies
-class MockResultHelpers:
-    @staticmethod
-    def validate_composition(*args, **kwargs) -> bool:
+from flext_core import FlextResult, u
+
+from flext_ldif.models import m
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+    def validate_composition(*args: object, **kwargs: object) -> bool:
+        """Validate composition."""
         return True
 
     @staticmethod
-    def validate_chain(*args, **kwargs) -> bool:
+    def validate_chain(*args: object, **kwargs: object) -> bool:
+        """Validate chain."""
         return True
 
     @staticmethod
-    def assert_composition(*args, **kwargs) -> None:
-        pass
+    def assert_composition(*args: object, **kwargs: object) -> None:
+        """Assert composition."""
 
     @staticmethod
-    def assert_chain_success(*args, **kwargs) -> None:
-        pass
+    def assert_chain_success(*args: object, **kwargs: object) -> None:
+        """Assert chain success."""
 
 
 class MockMatchers:
+    """Mock matchers for testing."""
+
     @staticmethod
-    def assert_success(*args, **kwargs) -> None:
-        pass
+    def assert_success(*args: object, **kwargs: object) -> None:
+        """Assert success."""
 
 
 # Global assignments
 ResultHelpers = MockResultHelpers
 Matchers = MockMatchers
-
-# Now import other modules
-from flext_core import FlextResult, u
-
-from flext_ldif.models import FlextLdifModels
-from tests.fixtures.typing import GenericFieldsDict
 
 
 class TestValidators:
@@ -53,7 +53,7 @@ class TestValidators:
     Validation = u
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: m.Entry) -> dict[str, bool]:
         """Validate a real LDIF entry object.
 
         Args:
@@ -63,12 +63,10 @@ class TestValidators:
             Dict with validation results.
 
         """
-        from flext_ldif import FlextLdifModels
-
         dn_value = entry.dn.value if entry.dn is not None else ""
         # entry.attributes is LdifAttributes, need to access .attributes dict
         if entry.attributes is not None:
-            if isinstance(entry.attributes, FlextLdifModels.LdifAttributes):
+            if isinstance(entry.attributes, m.LdifAttributes):
                 attributes_dict: dict[str, list[str]] = entry.attributes.attributes
             else:
                 attributes_dict = {}
@@ -109,7 +107,7 @@ class TestValidators:
             assert not chain_valid, "Expected failures but all succeeded"
 
     @staticmethod
-    def validate_result_success(result: FlextResult) -> GenericFieldsDict:
+    def validate_result_success(result: FlextResult[Any]) -> GenericFieldsDict:
         """Validate FlextResult success characteristics."""
         return {
             "is_success": result.is_success,

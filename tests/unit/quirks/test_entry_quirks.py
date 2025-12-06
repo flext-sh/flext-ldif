@@ -1,23 +1,14 @@
-"""Test suite for entry quirks module.
-
-Comprehensive testing for FlextLdifEntries which handles entry adaptation
-for server-specific quirks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entries import FlextLdifEntries
+from tests import m, s
 
 
-class TestFlextLdifEntriesInitialization:
+class TestsTestFlextLdifEntriesInitialization(s):
     """Test suite for entry quirks initialization."""
 
     def test_initialization_default(self) -> None:
@@ -79,11 +70,11 @@ class TestEntryAdaptation:
         self,
         dn_string: str,
         attributes: dict[str, list[str]],
-    ) -> FlextLdifModels.Entry:
+    ) -> m.Entry:
         """Helper to create entry with DN and attributes."""
-        dn = FlextLdifModels.DistinguishedName(value=dn_string)
-        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=attributes)
-        entry_result = FlextLdifModels.Entry.create(dn=dn, attributes=ldif_attributes)
+        dn = m.DistinguishedName(value=dn_string)
+        ldif_attributes = m.LdifAttributes(attributes=attributes)
+        entry_result = m.Entry.create(dn=dn, attributes=ldif_attributes)
         assert entry_result.is_success
         return entry_result.unwrap()
 

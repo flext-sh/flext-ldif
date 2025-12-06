@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import r, u
-from flext_core.utilities import u
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.results import FlextLdifModelsResults
@@ -427,7 +426,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             ),
         )
 
-    def execute(self) -> r[FlextLdifModelsResults.AclResponse]:  # noqa: PLR6301
+    def execute(self) -> r[FlextLdifModelsResults.AclResponse]:
         """Execute ACL service health check.
 
         Business Rule: Execute method provides service health check for protocol compliance.

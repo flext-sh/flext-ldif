@@ -172,7 +172,8 @@ class FlextLdifConstants(FlextConstants):
         ISO8859_1 = "iso-8859-1"
 
     # Encoding constants (referenced by tests and code)
-    DEFAULT_ENCODING: Final[str] = "utf-8"
+    # Reuse DEFAULT_ENCODING from flext-core (no duplication)
+    DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
     SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset(
         {
             "utf-8",
@@ -1026,10 +1027,11 @@ class FlextLdifConstants(FlextConstants):
     # Other thresholds
     ENCODING_CONFIDENCE_THRESHOLD: Final[float] = 0.7  # Encoding detection confidence
 
-    # Batch size configuration
-    DEFAULT_BATCH_SIZE: Final[int] = 1000  # Must be >= PERFORMANCE_MIN_CHUNK_SIZE
-    MIN_BATCH_SIZE: Final[int] = 1  # Minimum batch size
-    MAX_BATCH_SIZE: Final[int] = 10000  # Maximum batch size
+    # Batch size configuration - reuse from flext-core (no duplication)
+    # DEFAULT_BATCH_SIZE inherited from FlextConstants.Utilities.DEFAULT_BATCH_SIZE
+    # Use FlextConstants.Performance.BatchProcessing.MAX_ITEMS for max batch size
+    MIN_BATCH_SIZE: Final[int] = 1  # Minimum batch size (domain-specific)
+    MAX_BATCH_SIZE: Final[int] = FlextConstants.Performance.BatchProcessing.MAX_ITEMS
 
     # Additional constants for config validation
     PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = (
@@ -1081,7 +1083,8 @@ class FlextLdifConstants(FlextConstants):
         LDIF_STRICT_VALIDATION: Final[bool] = True
         LDIF_LINE_SEPARATOR: Final[str] = "\n"
         LDIF_VERSION_STRING: Final[str] = "version: 1"
-        LDIF_DEFAULT_ENCODING: Final[str] = "utf-8"
+        # Reuse DEFAULT_ENCODING from flext-core (no duplication)
+        LDIF_DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
 
         # Processing Configuration Defaults
         LDIF_MAX_ENTRIES: Final[int] = 1000000
@@ -1467,8 +1470,12 @@ class FlextLdifConstants(FlextConstants):
     # SHARED DOMAIN CONSTANTS - Cross-cutting enums for LDIF ecosystem
     # =============================================================================
 
-    class SharedDomain(FlextConstants.SharedDomain):
-        """Cross-cutting domain constants extending FlextConstants.SharedDomain."""
+    class SharedDomain:
+        """Cross-cutting domain constants for LDIF processing.
+
+        Provides LDIF-specific enums not in FlextConstants.Domain.
+        Maintains pattern: FlextConstants.Domain for base, SharedDomain for extensions.
+        """
 
         class ProcessingStage(StrEnum):
             """Processing stages for LDIF operations."""
@@ -2983,7 +2990,9 @@ class FlextLdifConstants(FlextConstants):
             "_skipped_attributes"  # Attributes removed during conversion
         )
         CONVERTED_ATTRIBUTES: Final[str] = (
-            "_converted_attributes"  # Attribute names that changed
+            "converted_attributes"  # Attribute names that changed
+            # (no underscore - Pydantic extra silently ignores
+            # underscore-prefixed keys)
         )
 
         # =========================
@@ -3204,7 +3213,7 @@ class FlextLdifConstants(FlextConstants):
             # (display/processing flag)
         )
 
-        METADATA: Final[str] = "_metadata"  # Root metadata container
+        METADATA: Final[str] = "_metadata"
         ACL_ATTRIBUTES: Final[str] = (
             "_acl_attributes"  # ACL-related attributes in entry
         )
@@ -3599,6 +3608,26 @@ class FlextLdifConstants(FlextConstants):
             },
         )
         return value in valid_values
+
+    @staticmethod
+    def to_category_literal(
+        category: FlextLdifConstants.Categories,
+    ) -> FlextLdifConstants.LiteralTypes.CategoryLiteral:
+        """Convert Categories enum to CategoryLiteral type.
+
+        Provides type-safe conversion from Categories StrEnum to CategoryLiteral.
+        This is necessary because StrEnum.value returns str, not the Literal type.
+
+        Args:
+            category: Categories enum member
+
+        Returns:
+            CategoryLiteral type (same runtime value, proper type annotation)
+
+        """
+        # Return category.value directly - type narrowing ensures CategoryLiteral type
+        # Categories enum values are defined to match CategoryLiteral values exactly
+        return category.value
 
     @staticmethod
     def is_valid_sort_target_literal(
@@ -4065,9 +4094,11 @@ class FlextLdifConstants(FlextConstants):
         LDIF_ENCODING: Final[str] = r"#\s*encoding:\s*([^\s\n]+)"
 
         # DN validation patterns (RFC 4514)
-        # attribute=value where attribute starts with letter, value can be anything (including escaped chars)
+        # attribute=value where attribute starts with letter,
+        # value can be anything (including escaped chars)
         # This pattern ensures each component has both attribute and = sign
-        # Full validation happens in DistinguishedName validator which parses escaped characters
+        # Full validation happens in DistinguishedName validator
+        # which parses escaped characters
         DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$"
         DN_SEPARATOR: Final[str] = r"(?<!\\),"
 
@@ -4135,13 +4166,20 @@ class FlextLdifConstants(FlextConstants):
         Higher weight values indicate more specific patterns.
         """
 
-        # NOTE: Server-specific detection patterns have been moved to their respective server Constants classes:
-        # - ORACLE_OID_PATTERN, ORACLE_OID_ATTRIBUTES, ORACLE_OID_WEIGHT → FlextLdifServersOid.Constants.DETECTION_*
-        # - ORACLE_OUD_PATTERN, ORACLE_OUD_ATTRIBUTES, ORACLE_OUD_WEIGHT → FlextLdifServersOud.Constants.DETECTION_*
-        # - OPENLDAP_PATTERN, OPENLDAP_ATTRIBUTES, OPENLDAP_WEIGHT → FlextLdifServersOpenldap.Constants.DETECTION_*
-        # - ACTIVE_DIRECTORY_PATTERN, ACTIVE_DIRECTORY_ATTRIBUTES, ACTIVE_DIRECTORY_WEIGHT → FlextLdifServersAd.Constants.DETECTION_*
-        # - NOVELL_EDIR_PATTERN, NOVELL_EDIR_WEIGHT → FlextLdifServersNovell.Constants.DETECTION_*
-        # - IBM_TIVOLI_PATTERN, IBM_TIVOLI_WEIGHT → FlextLdifServersTivoli.Constants.DETECTION_*
+        # NOTE: Server-specific detection patterns have been moved to
+        # their respective server Constants classes:
+        # - ORACLE_OID_PATTERN, ORACLE_OID_ATTRIBUTES, ORACLE_OID_WEIGHT →
+        #   FlextLdifServersOid.Constants.DETECTION_*
+        # - ORACLE_OUD_PATTERN, ORACLE_OUD_ATTRIBUTES, ORACLE_OUD_WEIGHT →
+        #   FlextLdifServersOud.Constants.DETECTION_*
+        # - OPENLDAP_PATTERN, OPENLDAP_ATTRIBUTES, OPENLDAP_WEIGHT →
+        #   FlextLdifServersOpenldap.Constants.DETECTION_*
+        # - ACTIVE_DIRECTORY_PATTERN, ACTIVE_DIRECTORY_ATTRIBUTES,
+        #   ACTIVE_DIRECTORY_WEIGHT → FlextLdifServersAd.Constants.DETECTION_*
+        # - NOVELL_EDIR_PATTERN, NOVELL_EDIR_WEIGHT →
+        #   FlextLdifServersNovell.Constants.DETECTION_*
+        # - IBM_TIVOLI_PATTERN, IBM_TIVOLI_WEIGHT →
+        #   FlextLdifServersTivoli.Constants.DETECTION_*
         # - DS_389_PATTERN, DS_389_WEIGHT → FlextLdifServersDs389.Constants.DETECTION_*
 
         # Detection thresholds
@@ -4238,16 +4276,34 @@ class FlextLdifConstants(FlextConstants):
         NO hardcoding in server implementations.
         """
 
-        # NOTE: Server-specific detection constants migrated to their respective server Constants classes:
-        # - AD: FlextLdifServersAd.Constants (DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_NAMES, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS, DETECTION_ATTRIBUTE_MARKERS)
-        # - Apache: FlextLdifServersApache.Constants (DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # - Novell: FlextLdifServersNovell.Constants (DETECTION_ATTRIBUTE_MARKERS, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # - Tivoli: FlextLdifServersTivoli.Constants (DETECTION_ATTRIBUTE_MARKERS, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # - OID: FlextLdifServersOid.Constants (DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # - OUD: FlextLdifServersOud.Constants (DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # - OpenLDAP: FlextLdifServersOpenldap.Constants (DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # - DS389: FlextLdifServersDs389.Constants (DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
-        # All server-specific constants should be defined in their respective server Constants classes
+        # NOTE: Server-specific detection constants migrated to their respective
+        # server Constants classes:
+        # - AD: FlextLdifServersAd.Constants (DETECTION_OID_PATTERN,
+        #   DETECTION_ATTRIBUTE_NAMES, DETECTION_OBJECTCLASS_NAMES,
+        #   DETECTION_DN_MARKERS, DETECTION_ATTRIBUTE_MARKERS)
+        # - Apache: FlextLdifServersApache.Constants (DETECTION_OID_PATTERN,
+        #   DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES,
+        #   DETECTION_DN_MARKERS)
+        # - Novell: FlextLdifServersNovell.Constants
+        #   (DETECTION_ATTRIBUTE_MARKERS, DETECTION_OBJECTCLASS_NAMES,
+        #   DETECTION_DN_MARKERS)
+        # - Tivoli: FlextLdifServersTivoli.Constants
+        #   (DETECTION_ATTRIBUTE_MARKERS, DETECTION_OBJECTCLASS_NAMES,
+        #   DETECTION_DN_MARKERS)
+        # - OID: FlextLdifServersOid.Constants (DETECTION_OID_PATTERN,
+        #   DETECTION_ATTRIBUTE_PREFIXES, DETECTION_OBJECTCLASS_NAMES,
+        #   DETECTION_DN_MARKERS)
+        # - OUD: FlextLdifServersOud.Constants (
+        #   DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES,
+        #   DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
+        # - OpenLDAP: FlextLdifServersOpenldap.Constants (
+        #   DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES,
+        #   DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
+        # - DS389: FlextLdifServersDs389.Constants (
+        #   DETECTION_OID_PATTERN, DETECTION_ATTRIBUTE_PREFIXES,
+        #   DETECTION_OBJECTCLASS_NAMES, DETECTION_DN_MARKERS)
+        # All server-specific constants should be defined in their respective
+        # server Constants classes
 
     # =============================================================================
     # VALIDATION RULES - Validation logic constants
@@ -4656,7 +4712,7 @@ class FlextLdifConstants(FlextConstants):
         # Detailed header template
         DETAILED_TEMPLATE: Final[
             str
-        ] = """# ============================================================================
+        ] = """# ============================================================
 # LDIF MIGRATION - {phase_name}
 # ============================================================================
 # Migration Phase: {phase}
@@ -4687,7 +4743,8 @@ class FlextLdifConstants(FlextConstants):
 
         **Algorithm**:
         1. Any→RFC: source.normalize_to_rfc() → RFC canonical format + metadata
-        2. RFC→Any: target.denormalize_from_rfc() → target format (metadata guides conversion)
+        2. RFC→Any: target.denormalize_from_rfc() → target format
+           (metadata guides conversion)
         3. Any→Any: source.normalize_to_rfc() → target.denormalize_from_rfc()
 
         **Benefits**:
@@ -4702,8 +4759,9 @@ class FlextLdifConstants(FlextConstants):
               2. oud.denormalize_from_rfc(rfc_entry) → oud_entry
 
         **Conversion Strategy**:
-        RFC is the universal intermediate format - no normalization/denormalization needed.
-        All conversions use: Source → RFC (via source quirks) → Target (via target quirks).
+        RFC is the universal intermediate format - no normalization/denormalization
+        needed. All conversions use: Source → RFC (via source quirks) → Target
+        (via target quirks).
         """
 
         # Canonical format - all conversions pass through this
@@ -4737,7 +4795,8 @@ class FlextLdifConstants(FlextConstants):
         Wildcard "*" matches any server for generic transformations.
         """
 
-        # NOTE: Server-specific ACL subject transformations moved to respective server Constants:
+        # NOTE: Server-specific ACL subject transformations moved to respective
+        # server Constants:
         # - OID_TO_RFC_SUBJECTS → FlextLdifServersOid.Constants.OID_TO_RFC_SUBJECTS
         # - RFC_TO_OID_SUBJECTS → FlextLdifServersOid.Constants.RFC_TO_OID_SUBJECTS
         # - RFC_TO_OUD_SUBJECTS → FlextLdifServersOud.Constants.RFC_TO_OUD_SUBJECTS
@@ -4761,7 +4820,8 @@ class FlextLdifConstants(FlextConstants):
 
         NOTE: Server-specific constants (SUPPORTED_PERMISSIONS, PERMISSION_ALTERNATIVES)
         have been migrated to each server's Constants class:
-        - OID: FlextLdifServersOid.Constants.SUPPORTED_PERMISSIONS, PERMISSION_ALTERNATIVES
+        - OID: FlextLdifServersOid.Constants.SUPPORTED_PERMISSIONS,
+          PERMISSION_ALTERNATIVES
         - OUD: FlextLdifServersOud.Constants.SUPPORTED_PERMISSIONS
         - RFC: FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
         - OpenLDAP: FlextLdifServersOpenldap.Constants.SUPPORTED_PERMISSIONS
@@ -4772,7 +4832,8 @@ class FlextLdifConstants(FlextConstants):
         - Apache: FlextLdifServersApache.Constants.SUPPORTED_PERMISSIONS
         - OpenLDAP1: FlextLdifServersOpenldap1.Constants.SUPPORTED_PERMISSIONS
 
-        This class is kept for backward compatibility but should not be used for new code.
+        This class is kept for backward compatibility but should not be used
+        for new code.
         Use the server-specific Constants classes instead.
         """
 
@@ -4783,16 +4844,23 @@ class FlextLdifConstants(FlextConstants):
         All mappings use RFC-as-hub strategy.
         """
 
-        # NOTE: SERVER_SPECIFIC_ATTRIBUTE_FIELDS and OBJECTCLASS_KIND_REQUIREMENTS have been removed.
-        # These constants have been migrated to each server's Constants class:
+        # NOTE: SERVER_SPECIFIC_ATTRIBUTE_FIELDS and OBJECTCLASS_KIND_REQUIREMENTS
+        # have been removed. These constants have been migrated to each server's
+        # Constants class:
         # - ATTRIBUTE_FIELDS → Each server's Constants.ATTRIBUTE_FIELDS
         # - OBJECTCLASS_REQUIREMENTS → Each server's Constants.OBJECTCLASS_REQUIREMENTS
-        # - OID: FlextLdifServersOid.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
-        # - OUD: FlextLdifServersOud.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
-        # - OpenLDAP: FlextLdifServersOpenldap.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
-        # - 389DS: FlextLdifServersDs389.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
-        # - RFC: FlextLdifServersRfc.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
-        # - AD, Novell, Tivoli, Apache, OpenLDAP1: Inherit RFC baseline (empty ATTRIBUTE_FIELDS, RFC OBJECTCLASS_REQUIREMENTS)
+        # - OID: FlextLdifServersOid.Constants.ATTRIBUTE_FIELDS,
+        #   OBJECTCLASS_REQUIREMENTS
+        # - OUD: FlextLdifServersOud.Constants.ATTRIBUTE_FIELDS,
+        #   OBJECTCLASS_REQUIREMENTS
+        # - OpenLDAP: FlextLdifServersOpenldap.Constants.ATTRIBUTE_FIELDS,
+        #   OBJECTCLASS_REQUIREMENTS
+        # - 389DS: FlextLdifServersDs389.Constants.ATTRIBUTE_FIELDS,
+        #   OBJECTCLASS_REQUIREMENTS
+        # - RFC: FlextLdifServersRfc.Constants.ATTRIBUTE_FIELDS,
+        #   OBJECTCLASS_REQUIREMENTS
+        # - AD, Novell, Tivoli, Apache, OpenLDAP1: Inherit RFC baseline
+        #   (empty ATTRIBUTE_FIELDS, RFC OBJECTCLASS_REQUIREMENTS)
         # Use the server-specific Constants classes instead.
 
         # Matching rule normalizations (moved from utilities)
@@ -4801,13 +4869,19 @@ class FlextLdifConstants(FlextConstants):
             "caseIgnoreOrdinalMatch": "caseIgnoreMatch",
         }
 
-        # NOTE: Server-specific attribute transformations moved to respective server Constants:
-        # - ATTRIBUTE_TRANSFORMATION_OID_TO_RFC → FlextLdifServersOid.Constants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
-        # - ATTRIBUTE_TRANSFORMATION_RFC_TO_OID → FlextLdifServersOid.Constants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
-        # - ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD → FlextLdifServersOud.Constants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD
-        # - ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC → FlextLdifServersOud.Constants.ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC
+        # NOTE: Server-specific attribute transformations moved to respective
+        # server Constants:
+        # - ATTRIBUTE_TRANSFORMATION_OID_TO_RFC →
+        #   FlextLdifServersOid.Constants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
+        # - ATTRIBUTE_TRANSFORMATION_RFC_TO_OID →
+        #   FlextLdifServersOid.Constants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
+        # - ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD →
+        #   FlextLdifServersOud.Constants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD
+        # - ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC →
+        #   FlextLdifServersOud.Constants.ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC
 
-        # NOTE: Server-specific attribute aliases have been migrated to each server's Constants class:
+        # NOTE: Server-specific attribute aliases have been migrated to each
+        # server's Constants class:
         # - OID: FlextLdifServersOid.Constants.ATTRIBUTE_ALIASES
         # - OUD: FlextLdifServersOud.Constants.ATTRIBUTE_ALIASES
         # Other servers have empty ATTRIBUTE_ALIASES (use RFC standard)
@@ -4819,13 +4893,20 @@ class FlextLdifConstants(FlextConstants):
     # - OID: FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
     # - OUD: FlextLdifServersOud.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
     # - RFC: FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - OpenLDAP: FlextLdifServersOpenldap.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - AD: FlextLdifServersAd.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - 389DS: FlextLdifServersDs389.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - Novell: FlextLdifServersNovell.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - Tivoli: FlextLdifServersTivoli.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - Apache: FlextLdifServersApache.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
-    # - OpenLDAP1: FlextLdifServersOpenldap1.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - OpenLDAP: FlextLdifServersOpenldap.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
+    # - AD: FlextLdifServersAd.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
+    # - 389DS: FlextLdifServersDs389.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
+    # - Novell: FlextLdifServersNovell.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
+    # - Tivoli: FlextLdifServersTivoli.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
+    # - Apache: FlextLdifServersApache.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
+    # - OpenLDAP1: FlextLdifServersOpenldap1.Constants.OPERATIONAL_ATTRIBUTES,
+    #   PRESERVE_ON_MIGRATION
     # Use the server-specific Constants classes instead.
 
     class AclAttributeRegistry:
@@ -4951,7 +5032,8 @@ class FlextLdifConstants(FlextConstants):
             msg_parts = []
             if missing_in_literal:
                 msg_parts.append(
-                    f"Missing in Literal (present in Enum): {sorted(missing_in_literal)}",
+                    f"Missing in Literal (present in Enum): "
+                    f"{sorted(missing_in_literal)}",
                 )
             if extra_in_literal:
                 msg_parts.append(
@@ -5226,12 +5308,108 @@ class FlextLdifConstants(FlextConstants):
                 re.match(FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME, name),
             )
 
+    # =========================================================================
+    # CONVENIENCE ATTRIBUTES (delegate to UtilitiesConstants for backward compatibility)
+    # =========================================================================
 
-# Backward compatibility alias (consolidated from _utilities/constants.py)
-FlextLdifUtilitiesConstants = FlextLdifConstants.UtilitiesConstants
+    # Expose VALID_VALUES for backward compatibility
+    VALID_VALUES: ClassVar[dict[str, set[str]]] = UtilitiesConstants.VALID_VALUES
+
+    # =========================================================================
+    # CONVENIENCE METHODS (delegate to UtilitiesConstants for backward compatibility)
+    # =========================================================================
+
+    @staticmethod
+    def get_valid_values(category: str | UtilitiesConstants.Category) -> set[str]:
+        """Get all valid values for a category (convenience method).
+
+        Delegates to UtilitiesConstants.get_valid_values().
+
+        Args:
+            category: Category name or Category enum value
+
+        Returns:
+            Set of valid values for the category
+
+        Raises:
+            KeyError: If category is not recognized
+
+        Example:
+            >>> FlextLdifConstants.get_valid_values("server_type")
+            {'rfc', 'oid', 'oud', ...}
+
+        """
+        return FlextLdifConstants.UtilitiesConstants.get_valid_values(category)
+
+    @staticmethod
+    def is_valid(value: str, category: str | UtilitiesConstants.Category) -> bool:
+        """Check if a value is valid for the given category (convenience method).
+
+        Delegates to UtilitiesConstants.is_valid().
+
+        Args:
+            value: Value to validate
+            category: Category to validate against
+
+        Returns:
+            True if value is valid, False otherwise
+
+        Example:
+            >>> FlextLdifConstants.is_valid("oid", "server_type")
+            True
+
+        """
+        return FlextLdifConstants.UtilitiesConstants.is_valid(value, category)
+
+    @staticmethod
+    def validate_many(
+        values: set[str],
+        category: str | UtilitiesConstants.Category,
+    ) -> tuple[bool, list[str]]:
+        """Validate multiple values against a category (convenience method).
+
+        Delegates to UtilitiesConstants.validate_many().
+
+        Args:
+            values: Set of values to validate
+            category: Category to validate against
+
+        Returns:
+            Tuple of (all_valid, list_of_invalid_values)
+
+        Example:
+            >>> is_valid, invalid = FlextLdifConstants.validate_many(
+            ...     {"read", "write", "invalid"}, "permission"
+            ... )
+
+        """
+        return FlextLdifConstants.UtilitiesConstants.validate_many(values, category)
+
+    @staticmethod
+    def validate_attribute_name(name: str) -> bool:
+        """Validate LDAP attribute name against RFC 4512 rules (convenience method).
+
+        Delegates to UtilitiesConstants.validate_attribute_name().
+
+        Args:
+            name: Attribute name to validate
+
+        Returns:
+            True if valid, False otherwise
+
+        Example:
+            >>> FlextLdifConstants.validate_attribute_name("cn")
+            True
+
+        """
+        return FlextLdifConstants.UtilitiesConstants.validate_attribute_name(name)
 
 
+# Direct access: use FlextLdifConstants directly
+# Tests helpers provide alias c = TestsConstants for test modules
+
+c = FlextLdifConstants
 __all__ = [
     "FlextLdifConstants",
-    "FlextLdifUtilitiesConstants",
+    "c",
 ]

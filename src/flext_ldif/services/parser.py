@@ -8,23 +8,19 @@ wrapped in ``FlextResult`` to keep error handling explicit.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 from flext_core import r
-from flext_core.utilities import FlextUtilities
 from pydantic import PrivateAttr
 
-from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif.constants import c
+from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
-
-# Aliases for simplified usage - after all imports
-u = FlextUtilities  # Utilities
+from flext_ldif.utilities import u
 
 
-class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
+class FlextLdifParser(FlextLdifServiceBase[m.ParseResponse]):
     """Parse LDIF sources using server-specific entry quirks.
 
     Business Rule: Parser service uses server-specific entry quirks for LDIF parsing.
@@ -58,8 +54,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
     def parse_string(
         self,
         content: str,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[FlextLdifModels.ParseResponse]:
+        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.ParseResponse]:
         """Parse LDIF content from a string using the requested server type.
 
         Business Rule: String parsing normalizes server type to canonical form before
@@ -82,13 +78,11 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         # Normalize server_type to canonical form (e.g., "openldap" → "openldap2")
         effective_server_type_raw = server_type or "rfc"
         try:
-            effective_server_type = FlextLdifConstants.normalize_server_type(
+            effective_server_type = c.normalize_server_type(
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
-            return r.fail(
-                f"Invalid server type: {effective_server_type_raw} - {e}"
-            )
+            return r.fail(f"Invalid server type: {effective_server_type_raw} - {e}")
 
         try:
             entry_quirk = self._server.entry(effective_server_type)
@@ -109,16 +103,15 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         # Extract entries from server response
         raw_entries = parse_result.unwrap()
 
-        # Convert to expected type (FlextLdifModels.Entry should be compatible with FlextLdifModelsDomains.Entry)
-        entries: list[FlextLdifModels.Entry] = list(raw_entries)
+        # Convert to expected type (m.Entry should be compatible with m.Entry)
+        entries: list[m.Entry] = list(raw_entries)
 
         # Create response with minimal metadata
-        # Statistics is a PEP 695 type alias - use the underlying class directly
-        # Access via FlextLdifModelsResults which is imported in models.py
+        # Use facade LdifResults.Statistics for LDIF-specific statistics
 
-        response = FlextLdifModels.ParseResponse(
+        response = m.ParseResponse(
             entries=entries,
-            statistics=FlextLdifModelsResults.Statistics(
+            statistics=m.LdifResults.Statistics(
                 total_entries=len(entries),
                 parse_errors=0,
             ),
@@ -130,9 +123,9 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
     def parse_ldif_file(
         self,
         path: Path,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-        encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = "utf-8",
-    ) -> r[FlextLdifModels.ParseResponse]:
+        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+        encoding: c.LiteralTypes.EncodingLiteral = "utf-8",
+    ) -> r[m.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override.
 
         Business Rule: File parsing reads content using specified encoding (defaults to UTF-8
@@ -163,8 +156,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
     def parse_ldap3_results(
         self,
         results: list[tuple[str, dict[str, list[str]]]],
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[FlextLdifModels.ParseResponse]:
+        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.ParseResponse]:
         """Parse ldap3 search results by converting them to LDIF text first.
 
         Business Rule: LDAP3 results are converted to RFC 2849 LDIF format before parsing.
@@ -200,17 +193,22 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
             entry_lines.append("")  # Empty line between entries
             return entry_lines
 
+        # Use FlextLdifUtilities.process for batch processing with error handling
+        # FlextLdifUtilities may not have process() method, delegate to core
         batch_result = u.process(
             results,
             convert_entry,
             on_error="skip",
         )
         if batch_result.is_success:
-            # u.process returns r[list[R]] when input is list, so value is list[list[str]]
-            processed_entries = cast("list[list[str]]", batch_result.value)
-            for entry_lines in processed_entries:
-                if entry_lines:
-                    ldif_lines.extend(cast("list[str]", entry_lines))
+            # FlextLdifUtilities.process returns r[list[R]] when input is list, so value is list[list[str]]
+            processed_value = batch_result.value
+            if isinstance(processed_value, list):
+                # Cast to ensure correct type for loop iteration
+                processed_list = cast("list[list[str]]", processed_value)
+                for entry_lines in processed_list:
+                    if isinstance(entry_lines, list):
+                        ldif_lines.extend(entry_lines)
 
         content = "\n".join(ldif_lines)
 
@@ -220,8 +218,8 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
     def parse(
         self,
         source: str | Path,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[FlextLdifModels.ParseResponse]:
+        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.ParseResponse]:
         """Parse LDIF from either raw text or a filesystem path.
 
         Business Rule: Unified parse method routes to appropriate parsing method based on
@@ -243,11 +241,11 @@ class FlextLdifParser(FlextLdifServiceBase[FlextLdifModels.ParseResponse]):
         # Direct type-based routing without complex heuristics
         if isinstance(source, Path):
             return self.parse_ldif_file(source, server_type)
-        if isinstance(source, str):
-            return self.parse_string(source, server_type)
-        return r.fail(f"Unsupported source type: {type(source)}")
+        # Type narrowing: source is str here (str | Path - Path already handled)
+        return self.parse_string(source, server_type)
 
-    def execute(self) -> r[FlextLdifModels.ParseResponse]:
+    @override
+    def execute(self) -> r[m.ParseResponse]:
         """Guard against invoking the service without input data.
 
         Business Rule: Parser service requires explicit input data via parse methods.

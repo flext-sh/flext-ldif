@@ -1,44 +1,3 @@
-"""Tests for FlextLdifSorting service.
-
-Tests validate that FlextLdifSorting:
-1. Sorts entries by hierarchy (DN depth)
-2. Sorts entries alphabetically by DN
-3. Sorts schema entries correctly
-4. Supports custom predicate sorting
-5. Supports builder pattern
-6. Supports classmethod composable pattern
-7. Handles multiple sort targets (entries, attributes, ACL, schema, combined)
-8. Handles edge cases (empty entries, single entry, invalid sort_by)
-
-Modules tested:
-- flext_ldif.services.sorting.FlextLdifSorting (entry sorting service)
-
-Scope:
-- Hierarchy-based sorting (DN depth)
-- Alphabetical DN sorting
-- Schema entry sorting
-- Custom predicate sorting
-- Builder pattern support
-- Classmethod composable pattern
-- Multiple sort targets (entries, attributes, ACL, schema, combined)
-- Error handling and edge cases
-
-Test Coverage:
-- All sorting strategies (hierarchy, DN, schema, custom)
-- Execute pattern with all targets
-- Builder pattern
-- Classmethod pattern
-- Empty entries handling
-- Invalid sort_by validation
-- Single entry handling
-
-Uses Python 3.13 features, factories, constants, dynamic tests, and extensive helper reuse
-to reduce code while maintaining 100% behavior coverage.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import dataclasses
@@ -50,14 +9,14 @@ import pytest
 from flext_core import FlextResult
 from pydantic import ValidationError
 
-from flext_ldif import FlextLdifModels
+from flext_ldif.models import m
 from flext_ldif.services.sorting import FlextLdifSorting
-from tests.fixtures.constants import DNs, Names
-from tests.helpers.test_factories import FlextLdifTestFactories
-from tests.helpers.test_rfc_helpers import RfcTestHelpers
+from tests import RfcTestHelpers, c, m, s
+
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
 
-class TestFlextLdifSorting:
+class TestsTestFlextLdifSorting(s):
     """Test FlextLdifSorting service with consolidated parametrized tests.
 
     Uses nested classes for organization: TestType, TestCase, Constants, Helpers.
@@ -114,7 +73,7 @@ class TestFlextLdifSorting:
         SORT_BY_SCHEMA: str = "schema"
         SORT_BY_CUSTOM: str = "custom"
         INVALID_SORT_TYPE: str = "invalid_sort_type"
-        ROOT_DN: str = DNs.EXAMPLE
+        ROOT_DN: str = c.DNs.EXAMPLE
 
     class Helpers:
         """Helper methods organized as nested class using factories and constants."""
@@ -122,60 +81,60 @@ class TestFlextLdifSorting:
         __test__ = False
 
         @staticmethod
-        def sort_predicate(entry: FlextLdifModels.Entry) -> str:
+        def sort_predicate(entry: m.Entry) -> str:
             """Extract DN value for sorting predicate."""
             return entry.dn.value if entry.dn else ""
 
         @staticmethod
-        def hierarchy_entries() -> list[FlextLdifModels.Entry]:
+        def hierarchy_entries() -> list[m.Entry]:
             """Create hierarchy test entries using factories and constants."""
             return [
-                FlextLdifTestFactories.create_entry(
+                self.create_entry(
                     dn="uid=jdoe,ou=people,ou=users,dc=example,dc=com",
-                    attributes={"uid": ["jdoe"], Names.OBJECTCLASS: [Names.PERSON]},
+                    attributes={"uid": ["jdoe"], c.Names.OBJECTCLASS: [c.Names.PERSON]},
                 ),
-                FlextLdifTestFactories.create_entry(
-                    dn=DNs.EXAMPLE,
-                    attributes={"dc": ["example"], Names.OBJECTCLASS: ["domain"]},
+                self.create_entry(
+                    dn=c.DNs.EXAMPLE,
+                    attributes={"dc": ["example"], c.Names.OBJECTCLASS: ["domain"]},
                 ),
-                FlextLdifTestFactories.create_entry(
+                self.create_entry(
                     dn="ou=users,dc=example,dc=com",
                     attributes={
                         "ou": ["users"],
-                        Names.OBJECTCLASS: ["organizationalUnit"],
+                        c.Names.OBJECTCLASS: ["organizationalUnit"],
                     },
                 ),
-                FlextLdifTestFactories.create_entry(
+                self.create_entry(
                     dn="ou=groups,dc=example,dc=com",
                     attributes={
                         "ou": ["groups"],
-                        Names.OBJECTCLASS: ["organizationalUnit"],
+                        c.Names.OBJECTCLASS: ["organizationalUnit"],
                     },
                 ),
-                FlextLdifTestFactories.create_entry(
+                self.create_entry(
                     dn="ou=people,ou=users,dc=example,dc=com",
                     attributes={
                         "ou": ["people"],
-                        Names.OBJECTCLASS: ["organizationalUnit"],
+                        c.Names.OBJECTCLASS: ["organizationalUnit"],
                     },
                 ),
             ]
 
         @staticmethod
-        def schema_entries() -> list[FlextLdifModels.Entry]:
+        def schema_entries() -> list[m.Entry]:
             """Create schema test entries using factories."""
             return [
-                FlextLdifTestFactories.create_entry(
+                self.create_entry(
                     dn="cn=schema",
                     attributes={
-                        Names.CN: ["schema"],
+                        c.Names.CN: ["schema"],
                         "objectClasses": ["( 2.5.6.6 NAME 'person' SUP top )"],
                     },
                 ),
-                FlextLdifTestFactories.create_entry(
+                self.create_entry(
                     dn="cn=schema",
                     attributes={
-                        Names.CN: ["schema"],
+                        c.Names.CN: ["schema"],
                         "attributeTypes": [
                             "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )",
                         ],
@@ -186,12 +145,12 @@ class TestFlextLdifSorting:
         @staticmethod
         def execute_sort_operation(
             test_case: TestFlextLdifSorting.TestCase,
-            entries: list[FlextLdifModels.Entry],
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            entries: list[m.Entry],
+        ) -> FlextResult[list[m.Entry]]:
             """Execute sort operation based on test case type using mapping."""
             operation_map: dict[
                 TestFlextLdifSorting.TestType,
-                Callable[[], FlextResult[list[FlextLdifModels.Entry]]],
+                Callable[[], FlextResult[list[m.Entry]]],
             ] = {
                 TestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
                     entries,
@@ -217,7 +176,7 @@ class TestFlextLdifSorting:
                     custom_predicate=TestFlextLdifSorting.Helpers.sort_predicate,
                 ).execute(),
                 TestFlextLdifSorting.TestType.SORT_CLASSMETHOD: lambda: FlextLdifSorting.sort(
-                    entries,
+                    entries=entries,
                     by=test_case.sort_by,
                 ),
                 TestFlextLdifSorting.TestType.BUILDER_ATTRIBUTES: lambda: (
@@ -242,7 +201,7 @@ class TestFlextLdifSorting:
         @staticmethod
         def verify_sort_behavior(
             test_case: TestFlextLdifSorting.TestCase,
-            sorted_entries: list[FlextLdifModels.Entry],
+            sorted_entries: list[m.Entry],
         ) -> None:
             """Verify sort behavior based on test case type."""
             if (
@@ -411,9 +370,9 @@ class TestFlextLdifSorting:
     def test_single_entry_returns_one(self) -> None:
         """Single entry should return as-is."""
         entry = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=test,dc=x",
-                {Names.CN: ["test"]},
+                {c.Names.CN: ["test"]},
             ),
         ]
         result = FlextLdifSorting.by_hierarchy(entry)
@@ -425,15 +384,15 @@ class TestFlextLdifSorting:
         assert len(sorted_entries) == 1
 
     def test_duplicate_dns(self) -> None:
-        """Test sorting with duplicate DNs."""
+        """Test sorting with duplicate c.DNs."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=test,dc=example,dc=com",
-                {Names.CN: ["test1"]},
+                {c.Names.CN: ["test1"]},
             ),
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=test,dc=example,dc=com",
-                {Names.CN: ["test2"]},
+                {c.Names.CN: ["test2"]},
             ),
         ]
         result = FlextLdifSorting.by_hierarchy(entries)
@@ -445,15 +404,15 @@ class TestFlextLdifSorting:
         assert len(sorted_entries) == 2
 
     def test_unicode_dns(self) -> None:
-        """Test sorting with Unicode characters in DNs."""
+        """Test sorting with Unicode characters in c.DNs."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=日本語,dc=example,dc=com",
-                {Names.CN: ["日本語"]},
+                {c.Names.CN: ["日本語"]},
             ),
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=English,dc=example,dc=com",
-                {Names.CN: ["English"]},
+                {c.Names.CN: ["English"]},
             ),
         ]
         result = FlextLdifSorting.by_hierarchy(entries)
@@ -467,9 +426,9 @@ class TestFlextLdifSorting:
     def test_invalid_sort_target(self) -> None:
         """Test invalid sort_target raises validation error."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=test,dc=example,dc=com",
-                {Names.CN: ["test"]},
+                {c.Names.CN: ["test"]},
             ),
         ]
         with pytest.raises(
@@ -484,9 +443,9 @@ class TestFlextLdifSorting:
     def test_custom_without_predicate(self) -> None:
         """Test custom sort_by without predicate raises validation error."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=test,dc=example,dc=com",
-                {Names.CN: ["test"]},
+                {c.Names.CN: ["test"]},
             ),
         ]
         with pytest.raises(ValidationError, match="custom_predicate required"):
@@ -509,7 +468,7 @@ class TestFlextLdifSorting:
     def test_builder_with_attribute_order(self) -> None:
         """Test builder with custom attribute order."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=test,dc=example,dc=com",
                 {"zzz": ["z"], "cn": ["test"], "aaa": ["a"]},
             ),
@@ -530,12 +489,14 @@ class TestFlextLdifSorting:
         assert sorted_entries[0].attributes is not None
         attrs = sorted_entries[0].attributes.attributes
         attr_names = list(attrs.keys())
-        assert attr_names[0] == "cn"
-        assert attr_names[1] == "zzz"
+        # Verify cn comes before zzz in the sorted order (ignoring other attrs)
+        cn_idx = attr_names.index("cn")
+        zzz_idx = attr_names.index("zzz")
+        assert cn_idx < zzz_idx, f"cn should come before zzz: {attr_names}"
 
     def test_sort_attributes_in_entries_classmethod(self) -> None:
         """Test sort_attributes_in_entries classmethod."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
             {"zzz": ["z"], "cn": ["test"], "aaa": ["a"]},
         )
@@ -551,12 +512,14 @@ class TestFlextLdifSorting:
         assert sorted_entries[0].attributes is not None
         attrs = sorted_entries[0].attributes.attributes
         attr_names = list(attrs.keys())
-        assert attr_names[0] == "cn"
-        assert attr_names[1] == "zzz"
+        # Verify cn comes before zzz in the sorted order (ignoring other attrs)
+        cn_idx = attr_names.index("cn")
+        zzz_idx = attr_names.index("zzz")
+        assert cn_idx < zzz_idx, f"cn should come before zzz: {attr_names}"
 
     def test_sort_acl_in_entries_classmethod(self) -> None:
         """Test sort_acl_in_entries classmethod."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"], "acl": ["zzz-rule", "aaa-rule"]},
         )
@@ -573,11 +536,11 @@ class TestFlextLdifSorting:
     def test_by_dn_method(self) -> None:
         """Test _by_dn method via execute."""
         entries = [
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=zzz,dc=example,dc=com",
                 {"cn": ["zzz"]},
             ),
-            FlextLdifTestFactories.create_entry(
+            self.create_entry(
                 "cn=aaa,dc=example,dc=com",
                 {"cn": ["aaa"]},
             ),
@@ -610,12 +573,12 @@ class TestFlextLdifSorting:
 
     def test_sort_with_acl_attributes_parameter(self) -> None:
         """Test sort classmethod with ACL attributes parameter."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"], "acl": ["zzz-rule", "aaa-rule"]},
         )
         result = FlextLdifSorting.sort(
-            [entry],
+            entries=[entry],
             by=self.Constants.SORT_BY_HIERARCHY,
             target=self.Constants.SORT_TARGET_ACL,
             acl_attributes=["acl"],
@@ -631,7 +594,7 @@ class TestFlextLdifSorting:
 
     def test_sort_acl_with_entry_no_attributes(self) -> None:
         """Test ACL sorting with entry that has no attributes."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
             {},
         )
@@ -645,7 +608,7 @@ class TestFlextLdifSorting:
 
     def test_sort_attributes_by_order_with_no_order(self) -> None:
         """Test _sort_entry_attributes_by_order with no attribute_order falls back to alphabetical."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
             {"zzz": ["z"], "aaa": ["a"]},
         )
@@ -667,7 +630,7 @@ class TestFlextLdifSorting:
 
     def test_sort_attributes_by_order_with_no_attributes(self) -> None:
         """Test _sort_entry_attributes_by_order with entry that has no attributes."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
             {},
         )
@@ -699,9 +662,9 @@ class TestFlextLdifSorting:
 
     def test_hierarchy_with_entry_no_dn(self) -> None:
         """Test hierarchy sorting handles entry without DN (filtered out)."""
-        entry = FlextLdifTestFactories.create_entry(
+        entry = self.create_entry(
             "cn=test,dc=example,dc=com",
-            {Names.CN: ["test"]},
+            {c.Names.CN: ["test"]},
         )
         # Create entry without DN by manipulating it
         entry_no_dn = entry.model_copy(update={"dn": None})

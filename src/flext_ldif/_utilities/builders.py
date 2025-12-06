@@ -266,7 +266,7 @@ class ProcessConfigBuilder:
         )
         return self
 
-    def enable_dn_normalization(self, enabled: bool = True) -> Self:
+    def enable_dn_normalization(self, *, enabled: bool = True) -> Self:
         """Enable or disable DN normalization.
 
         Args:
@@ -279,7 +279,7 @@ class ProcessConfigBuilder:
         self._normalize_dns = enabled
         return self
 
-    def enable_attr_normalization(self, enabled: bool = True) -> Self:
+    def enable_attr_normalization(self, *, enabled: bool = True) -> Self:
         """Enable or disable attribute normalization.
 
         Args:
@@ -292,7 +292,7 @@ class ProcessConfigBuilder:
         self._normalize_attrs = enabled
         return self
 
-    def enable_acl_conversion(self, enabled: bool = True) -> Self:
+    def enable_acl_conversion(self, *, enabled: bool = True) -> Self:
         """Enable or disable ACL conversion.
 
         Args:
@@ -354,7 +354,7 @@ class TransformConfigBuilder:
         self._preserve_order: bool = True
         self._track_changes: bool = True
 
-    def fail_fast(self, enabled: bool = True) -> Self:
+    def fail_fast(self, *, enabled: bool = True) -> Self:
         """Set fail-fast behavior.
 
         Args:
@@ -367,7 +367,7 @@ class TransformConfigBuilder:
         self._fail_fast = enabled
         return self
 
-    def preserve_order(self, enabled: bool = True) -> Self:
+    def preserve_order(self, *, enabled: bool = True) -> Self:
         """Set order preservation.
 
         Args:
@@ -380,7 +380,7 @@ class TransformConfigBuilder:
         self._preserve_order = enabled
         return self
 
-    def track_changes(self, enabled: bool = True) -> Self:
+    def track_changes(self, *, enabled: bool = True) -> Self:
         """Set change tracking.
 
         Args:
@@ -441,7 +441,7 @@ class FilterConfigBuilder:
         self._mode = mode
         return self
 
-    def case_sensitive(self, enabled: bool = True) -> Self:
+    def case_sensitive(self, *, enabled: bool = True) -> Self:
         """Set case sensitivity.
 
         Args:
@@ -454,7 +454,7 @@ class FilterConfigBuilder:
         self._case_sensitive = enabled
         return self
 
-    def include_metadata_matches(self, enabled: bool = True) -> Self:
+    def include_metadata_matches(self, *, enabled: bool = True) -> Self:
         """Include metadata in matching.
 
         Args:
@@ -549,7 +549,7 @@ class WriteConfigBuilder:
         self._line_width = width
         return self
 
-    def fold_lines(self, enabled: bool = True) -> Self:
+    def fold_lines(self, *, enabled: bool = True) -> Self:
         """Enable or disable line folding.
 
         Args:
@@ -601,7 +601,7 @@ class WriteConfigBuilder:
         self._attr_order = order
         return self
 
-    def include_metadata(self, enabled: bool = True) -> Self:
+    def include_metadata(self, *, enabled: bool = True) -> Self:
         """Include metadata in output.
 
         Args:

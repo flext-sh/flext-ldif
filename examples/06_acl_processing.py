@@ -161,7 +161,6 @@ sn: test
         process_entry_acls,
         on_error="skip",
     )
-    )
 
 
 def execute_acl_service() -> None:

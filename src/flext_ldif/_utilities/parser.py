@@ -10,20 +10,20 @@ import base64
 import contextlib
 import re
 from collections.abc import Callable
-from typing import TypedDict, cast
+from typing import TypedDict
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextLogger, FlextResult, FlextRuntime, t
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.models import m
 from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
+# Use FlextUtilities.Parser directly - no alias needed
+# Access via: FlextUtilities.Parser(...)
 
 # RFC 2849 LDIF format constants - use directly from FlextLdifConstants
 # (no local aliases)
@@ -60,6 +60,8 @@ Values can be strings (single-valued), lists (multi-valued), or sets (base64 tra
 
 class FlextLdifUtilitiesParser:
     """Generic LDIF parsing utilities - simple helper functions.
+
+    Extends FlextUtilities.Parser with LDIF-specific parsing methods.
 
     # LEGACY: Was FlextLdifUtilities.LdifParser
     # Now: Simple pure functions for schema/LDIF parsing
@@ -452,9 +454,7 @@ class FlextLdifUtilitiesParser:
             return True
         # For str and other types, check if list-like using FlextRuntime
         # Cast to GeneralValueType for type checker (set[str] already handled above)
-        if not FlextRuntime.is_list_like(
-            cast("t.GeneralValueType", existing),
-        ):
+        if not FlextRuntime.is_list_like(existing):
             # Type narrowing: existing is str, convert to list
             if isinstance(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
@@ -549,7 +549,7 @@ class FlextLdifUtilitiesParser:
         return (attr_name, [attr_value])
 
     @staticmethod
-    def parse(
+    def parse_ldif(
         ldif_lines: list[str],
     ) -> list[RawEntryDict]:
         """Parse list of LDIF lines into entries (simple version).
@@ -711,7 +711,7 @@ class FlextLdifUtilitiesParser:
         syntax: str | None,
         syntax_validation_error: str | None,
         server_type: str | None = None,
-    ) -> FlextLdifModelsDomains.QuirkMetadata | None:
+    ) -> m.QuirkMetadata | None:
         """Build metadata for attribute including extensions.
 
         Args:
@@ -725,6 +725,9 @@ class FlextLdifUtilitiesParser:
 
         """
         # Use build_attribute_metadata from base.py which handles server_type correctly
+        # Lazy import to avoid circular dependency: parser -> servers.base -> utilities -> parser
+        from flext_ldif.servers.base import FlextLdifServersBase
+
         return FlextLdifServersBase.Schema.build_attribute_metadata(
             attr_definition=attr_definition,
             syntax=syntax,
@@ -737,7 +740,7 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         *,
         case_insensitive: bool = False,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+    ) -> FlextResult[m.SchemaAttribute]:
         """Parse RFC 4512 attribute definition.
 
         Args:
@@ -825,7 +828,7 @@ class FlextLdifUtilitiesParser:
                 server_type="rfc",
             )
 
-            attribute = FlextLdifModelsDomains.SchemaAttribute(
+            attribute = m.SchemaAttribute(
                 oid=oid,
                 name=name or oid,
                 desc=desc,
@@ -860,7 +863,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_rfc_objectclass(
         oc_definition: str,
-    ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+    ) -> FlextResult[m.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition.
 
         Args:
@@ -948,7 +951,7 @@ class FlextLdifUtilitiesParser:
             )
 
             metadata = (
-                FlextLdifModelsDomains.QuirkMetadata(
+                m.QuirkMetadata(
                     quirk_type="rfc",
                     extensions=FlextLdifModelsMetadata.DynamicMetadata(
                         **metadata_extensions,
@@ -958,7 +961,7 @@ class FlextLdifUtilitiesParser:
                 else None
             )
 
-            objectclass = FlextLdifModelsDomains.SchemaObjectClass(
+            objectclass = m.SchemaObjectClass(
                 oid=oid,
                 name=name,
                 desc=desc,

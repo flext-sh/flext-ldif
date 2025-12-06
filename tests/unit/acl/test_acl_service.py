@@ -1,17 +1,3 @@
-"""Test suite for FlextLdifAcl Service with Real Fixtures.
-
-Modules tested: FlextLdifAcl
-Scope: ACL service functionality, ACL parsing, structure validation,
-content integrity, real-world fixture validation, OID/OUD ACL handling
-
-Tests FlextLdifAcl service operations using actual LDIF fixture data from
-OID and OUD servers. Validates ACL parsing, structure, and content integrity.
-Uses parametrized tests and factory patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -21,14 +7,9 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif.services.acl import FlextLdifAcl
-from tests.fixtures.constants import FixturePaths
+from tests import c, s
 
-
-class ServerType(StrEnum):
-    """Server types for ACL testing."""
-
-    OID = "oid"
-    OUD = "oud"
+# ServerType enum removed - use c.ServerTypes instead
 
 
 class ValidationCheckType(StrEnum):
@@ -46,7 +27,7 @@ class EdgeCaseType(StrEnum):
     MISSING_ATTRIBUTES = "missing_attributes"
 
 
-class TestFlextLdifAclWithRealFixtures:
+class TestsTestFlextLdifAclWithRealFixtures(s):
     """Test FlextLdifAcl with real ACL fixture data using factories and constants."""
 
     # ═════════════════════════════════════════════════════════════════════════
@@ -84,56 +65,56 @@ class TestFlextLdifAclWithRealFixtures:
     # TEST DATA MAPPINGS
     # ═════════════════════════════════════════════════════════════════════════
 
-    ACL_INDICATORS: ClassVar[dict[ServerType, list[str]]] = {
-        ServerType.OID: ["orclaci:", "aci:"],
-        ServerType.OUD: ["aci:"],
+    ACL_INDICATORS: ClassVar[dict[c.ServerTypes, list[str]]] = {
+        c.ServerTypes.OID: ["orclaci:", "aci:"],
+        c.ServerTypes.OUD: ["aci:"],
     }
 
-    ACL_REQUIRED_ATTRS: ClassVar[dict[ServerType, list[str]]] = {
-        ServerType.OID: ["orclaci:"],
-        ServerType.OUD: ["aci:"],
+    ACL_REQUIRED_ATTRS: ClassVar[dict[c.ServerTypes, list[str]]] = {
+        c.ServerTypes.OID: ["orclaci:"],
+        c.ServerTypes.OUD: ["aci:"],
     }
 
-    ACL_MIN_LINES: ClassVar[dict[ServerType, int]] = {
-        ServerType.OID: 5,
-        ServerType.OUD: 5,
+    ACL_MIN_LINES: ClassVar[dict[c.ServerTypes, int]] = {
+        c.ServerTypes.OID: 5,
+        c.ServerTypes.OUD: 5,
     }
 
-    BASIC_CHECK_DATA: ClassVar[dict[str, tuple[ServerType, ValidationCheckType]]] = {
+    BASIC_CHECK_DATA: ClassVar[dict[str, tuple[c.ServerTypes, ValidationCheckType]]] = {
         CheckScenario.OID_FIXTURE_ACCESS: (
-            ServerType.OID,
+            c.ServerTypes.OID,
             ValidationCheckType.FIXTURE_ACCESS,
         ),
         CheckScenario.OID_ACL_PRESENCE: (
-            ServerType.OID,
+            c.ServerTypes.OID,
             ValidationCheckType.ACL_PRESENCE,
         ),
         CheckScenario.OUD_FIXTURE_ACCESS: (
-            ServerType.OUD,
+            c.ServerTypes.OUD,
             ValidationCheckType.FIXTURE_ACCESS,
         ),
         CheckScenario.OUD_ACL_PRESENCE: (
-            ServerType.OUD,
+            c.ServerTypes.OUD,
             ValidationCheckType.ACL_PRESENCE,
         ),
     }
 
-    ENCODING_CHECK_DATA: ClassVar[dict[str, ServerType]] = {
-        EncodingScenario.OID_ENCODING: ServerType.OID,
-        EncodingScenario.OUD_ENCODING: ServerType.OUD,
+    ENCODING_CHECK_DATA: ClassVar[dict[str, c.ServerTypes]] = {
+        EncodingScenario.OID_ENCODING: c.ServerTypes.OID,
+        EncodingScenario.OUD_ENCODING: c.ServerTypes.OUD,
     }
 
-    STRUCTURE_CHECK_DATA: ClassVar[dict[str, ServerType]] = {
-        StructureScenario.OID_STRUCTURE: ServerType.OID,
-        StructureScenario.OUD_STRUCTURE: ServerType.OUD,
+    STRUCTURE_CHECK_DATA: ClassVar[dict[str, c.ServerTypes]] = {
+        StructureScenario.OID_STRUCTURE: c.ServerTypes.OID,
+        StructureScenario.OUD_STRUCTURE: c.ServerTypes.OUD,
     }
 
-    EDGE_CASE_DATA: ClassVar[dict[str, tuple[EdgeCaseType, ServerType]]] = {
-        EdgeCaseScenario.OID_EMPTY: (EdgeCaseType.EMPTY_ACL, ServerType.OID),
-        EdgeCaseScenario.OUD_MALFORMED: (EdgeCaseType.MALFORMED_ACL, ServerType.OUD),
+    EDGE_CASE_DATA: ClassVar[dict[str, tuple[EdgeCaseType, c.ServerTypes]]] = {
+        EdgeCaseScenario.OID_EMPTY: (EdgeCaseType.EMPTY_ACL, c.ServerTypes.OID),
+        EdgeCaseScenario.OUD_MALFORMED: (EdgeCaseType.MALFORMED_ACL, c.ServerTypes.OUD),
         EdgeCaseScenario.OID_MISSING_ATTRS: (
             EdgeCaseType.MISSING_ATTRIBUTES,
-            ServerType.OID,
+            c.ServerTypes.OID,
         ),
     }
 
@@ -142,16 +123,21 @@ class TestFlextLdifAclWithRealFixtures:
     # ═════════════════════════════════════════════════════════════════════════
 
     @staticmethod
-    def _get_fixture_path(server_type: ServerType) -> Path:
+    def _get_fixture_path(server_type: c.ServerTypes) -> Path:
         """Get fixture path for server type."""
-        fixture_rel_path = FixturePaths.ACL_FIXTURES[server_type]
+        # Map server types to fixture paths
+        fixture_map = {
+            c.ServerTypes.OID: "acl/oid_acl_fixture.ldif",
+            c.ServerTypes.OUD: "acl/oud_acl_fixture.ldif",
+        }
+        fixture_rel_path = fixture_map[server_type]
         return Path(__file__).parent.parent.parent / "fixtures" / fixture_rel_path
 
     def _get_content_lines(self, content: str) -> list[str]:
         """Get non-empty lines from content."""
         return [line for line in content.split("\n") if line.strip()]
 
-    def _get_acl_lines(self, content: str, server_type: ServerType) -> list[str]:
+    def _get_acl_lines(self, content: str, server_type: c.ServerTypes) -> list[str]:
         """Get ACL lines from content."""
         indicators = self.ACL_INDICATORS[server_type]
         return [
@@ -164,14 +150,14 @@ class TestFlextLdifAclWithRealFixtures:
         """Get LDIF entries from content."""
         return [e for e in content.split("dn:") if e.strip()]
 
-    def _check_fixture_access(self, content: str, server_type: ServerType) -> bool:
+    def _check_fixture_access(self, content: str, server_type: c.ServerTypes) -> bool:
         """Check if fixture has accessible content with minimum lines."""
         if not content or len(content) == 0:
             return False
         lines = self._get_content_lines(content)
         return len(lines) >= self.ACL_MIN_LINES[server_type]
 
-    def _check_acl_presence(self, content: str, server_type: ServerType) -> bool:
+    def _check_acl_presence(self, content: str, server_type: c.ServerTypes) -> bool:
         """Check if content has ACL indicators."""
         acl_lines = self._get_acl_lines(content, server_type)
         return len(acl_lines) > 0
@@ -193,10 +179,10 @@ class TestFlextLdifAclWithRealFixtures:
     def _validate_server_specific_acls(
         self,
         content: str,
-        server_type: ServerType,
+        server_type: c.ServerTypes,
     ) -> None:
         """Validate server-specific ACL attributes."""
-        if server_type == ServerType.OID:
+        if server_type == c.ServerTypes.OID:
             assert "orclaci:" in content, "OID fixture should have orclaci attributes"
             assert "aci:" in content, "OID fixture should have aci attributes"
         else:  # OUD
@@ -213,7 +199,7 @@ class TestFlextLdifAclWithRealFixtures:
     def test_acl_basic_validation(
         self,
         scenario: str,
-        server_type: ServerType,
+        server_type: c.ServerTypes,
         check_type: ValidationCheckType,
     ) -> None:
         """Test ACL basic validation with parametrized checks."""
@@ -240,7 +226,7 @@ class TestFlextLdifAclWithRealFixtures:
     def test_acl_structure_validation(
         self,
         scenario: str,
-        server_type: ServerType,
+        server_type: c.ServerTypes,
     ) -> None:
         """Test ACL fixture structure with comprehensive validation."""
         fixture_path = self._get_fixture_path(server_type)
@@ -290,7 +276,7 @@ class TestFlextLdifAclWithRealFixtures:
     def test_acl_encoding_validation(
         self,
         scenario: str,
-        server_type: ServerType,
+        server_type: c.ServerTypes,
     ) -> None:
         """Test that ACL fixtures have valid UTF-8 encoding."""
         fixture_path = self._get_fixture_path(server_type)
@@ -314,12 +300,12 @@ class TestFlextLdifAclWithRealFixtures:
         self,
         scenario: str,
         case_type: EdgeCaseType,
-        server_type: ServerType,
+        server_type: c.ServerTypes,
     ) -> None:
         """Test ACL service edge cases dynamically."""
         # Validate case and server type are valid
         assert case_type in EdgeCaseType
-        assert server_type in ServerType
+        assert server_type in c.ServerTypes
 
     def test_acl_service_initialization(self) -> None:
         """Test ACL service can be initialized."""

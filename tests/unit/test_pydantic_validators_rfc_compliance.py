@@ -1,29 +1,3 @@
-"""Expert tests for Pydantic v2 validators - RFC 2849/4512 compliance.
-
-Tests validate that Entry, LdifAttributes, and DistinguishedName models:
-1. Capture RFC violations in metadata (not reject entries)
-2. Use field_validator and model_validator correctly (Pydantic v2)
-3. Preserve non-compliant data for server conversions
-4. Follow lenient processing pattern (log violations, don't fail)
-
-Modules tested:
-- flext_ldif.models.FlextLdifModels.Entry (RFC 4512 compliance)
-- flext_ldif.models.FlextLdifModels.LdifAttributes (RFC 4512 § 2.5)
-- flext_ldif.models.FlextLdifModels.DistinguishedName (RFC 4514)
-- flext_ldif.models.FlextLdifModels.QuirkMetadata (violation tracking)
-
-Scope:
-- RFC violation capture without rejection (lenient processing)
-- Metadata preservation for server conversions
-- Pydantic v2 validators (field_validator, model_validator)
-- Attribute name validation (RFC 4512 § 2.5)
-- DN format validation (RFC 4514)
-- Extension data preservation
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from enum import StrEnum
@@ -31,12 +5,12 @@ from typing import ClassVar, TypedDict
 
 import pytest
 
-from flext_ldif import FlextLdifModels
-from tests.fixtures.constants import RFC, DNs, Names, OIDs, Values
-from tests.fixtures.typing import GenericFieldsDict
-from tests.helpers import FlextLdifTestFactories, TestAssertions
+from flext_ldif.models import m
+from tests import c, m, s
 
 
+# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 class RfcViolationType(StrEnum):
     """RFC violation types for testing."""
 
@@ -61,7 +35,7 @@ class EntryTestCase(TypedDict):
     expect_violations: bool
 
 
-class TestPydanticValidatorsRfcCompliance:
+class TestsFlextLdifPydanticValidatorsRfcCompliance(s):
     """Expert tests for Pydantic v2 validators - RFC 2849/4512 compliance.
 
     Uses advanced Python 3.13 patterns:
@@ -74,19 +48,19 @@ class TestPydanticValidatorsRfcCompliance:
     """
 
     # Test data constants using centralized constants
-    TEST_DN: ClassVar[str] = f"uid={Values.TEST},{DNs.EXAMPLE}"
-    SCHEMA_DN: ClassVar[str] = DNs.SCHEMA
+    TEST_DN: ClassVar[str] = f"uid={c.Values.TEST},{c.DNs.EXAMPLE}"
+    SCHEMA_DN: ClassVar[str] = c.DNs.SCHEMA
     INVALID_DN: ClassVar[str] = "invalid-dn-without-equals"
 
     # RFC compliant attributes mapping using constants
     RFC_COMPLIANT_ATTRS: ClassVar[dict[str, list[str]]] = {
-        Names.CN: [Values.TEST],
-        Names.SN: [Values.USER],
-        Names.MAIL: [Values.TEST_EMAIL],
-        Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
+        c.Names.CN: [c.Values.TEST],
+        c.Names.SN: [c.Values.USER],
+        c.Names.MAIL: [c.Values.TEST_EMAIL],
+        c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
         "userPassword": ["{SSHA}hash"],
         "employee-number": ["12345"],
-        "cn;lang-en": [Values.TEST],
+        "cn;lang-en": [c.Values.TEST],
     }
 
     # Server-specific attributes (non-RFC but allowed)
@@ -94,7 +68,7 @@ class TestPydanticValidatorsRfcCompliance:
         "ds-cfg-enabled": ["true"],
         "ds-cfg-java-class": ["org.opends.server.Example"],
         "orclGUID": ["12345678"],
-        "orclentrylevelaci": [RFC.ACL_SAMPLE_BROWSE],
+        "orclentrylevelaci": [c.RFC.ACL_SAMPLE_BROWSE],
     }
 
     # Numeric OID attributes using constants
@@ -109,25 +83,25 @@ class TestPydanticValidatorsRfcCompliance:
         EntryType.NORMAL: {
             "dn": TEST_DN,
             "attributes": {
-                Names.UID: [Values.TEST],
-                Names.CN: [f"{Values.TEST} {Values.USER}"],
-                Names.OBJECTCLASS: [Names.PERSON, Names.INET_ORG_PERSON],
+                c.Names.UID: [c.Values.TEST],
+                c.Names.CN: [f"{c.Values.TEST} {c.Values.USER}"],
+                c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
             },
             "expect_violations": False,
         },
         EntryType.SCHEMA: {
             "dn": SCHEMA_DN,
             "attributes": {
-                Names.CN: ["schema"],
-                "attributeTypes": [RFC.ATTR_DEF_CN],
+                c.Names.CN: ["schema"],
+                "attributeTypes": [c.RFC.ATTR_DEF_CN],
             },
             "expect_violations": False,
         },
         EntryType.VIOLATION: {
             "dn": TEST_DN,
             "attributes": {
-                Names.UID: [Values.TEST],
-                Names.OBJECTCLASS: [Names.PERSON],
+                c.Names.UID: [c.Values.TEST],
+                c.Names.OBJECTCLASS: [c.Names.PERSON],
                 "ds-cfg-enabled": ["true"],
                 "orclGUID": ["12345678"],
                 "_internal_id": ["999"],
@@ -138,8 +112,8 @@ class TestPydanticValidatorsRfcCompliance:
 
     @staticmethod
     def get_validation_metadata(
-        entry: FlextLdifModels.Entry,
-    ) -> FlextLdifModels.ValidationMetadata | None:
+        entry: m.Entry,
+    ) -> m.ValidationMetadata | None:
         """Helper to get validation_metadata from entry.metadata.validation_results."""
         if not entry.metadata or not entry.metadata.validation_results:
             return None
@@ -149,10 +123,10 @@ class TestPydanticValidatorsRfcCompliance:
     def create_test_entry(
         cls,
         entry_type: EntryType,
-    ) -> FlextLdifModels.Entry:
-        """Factory method for creating test entries using FlextLdifTestFactories."""
+    ) -> m.Entry:
+        """Factory method for creating test entries using s."""
         case = cls.ENTRY_TEST_CASES[entry_type]
-        return FlextLdifTestFactories.create_entry(
+        return self.create_entry(
             dn=case["dn"],
             attributes=case["attributes"],
         )
@@ -222,7 +196,7 @@ class TestPydanticValidatorsRfcCompliance:
     ) -> None:
         """Test LdifAttributes RFC 4512 § 2.5 compliance using parametrized approach."""
         attrs_dict = getattr(self, attr_dict)
-        ldif_attrs = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
+        ldif_attrs = m.LdifAttributes(attributes=attrs_dict)
         for attr_name in attrs_dict:
             assert attr_name in ldif_attrs.attributes, (
                 f"{description}: {attr_name} not found in attributes"
@@ -231,15 +205,18 @@ class TestPydanticValidatorsRfcCompliance:
     def test_ldif_attributes_combined_compliance(self) -> None:
         """Test LdifAttributes with combined RFC and server-specific attributes."""
         combined_attrs = {**self.RFC_COMPLIANT_ATTRS, **self.SERVER_SPECIFIC_ATTRS}
-        server_ldif_attrs = FlextLdifModels.LdifAttributes(attributes=combined_attrs)
+        server_ldif_attrs = m.LdifAttributes(attributes=combined_attrs)
         for attr_name in combined_attrs:
             assert attr_name in server_ldif_attrs.attributes
 
     @pytest.mark.parametrize(
         ("dn_value", "expected_components"),
         [
-            (f"uid={Values.TEST},ou=users,{DNs.EXAMPLE}", 4),
-            (f"uid={Values.TEST}, ou=users, {DNs.EXAMPLE}", 4),  # Spaces after comma
+            (f"uid={c.Values.TEST},ou=users,{c.DNs.EXAMPLE}", 4),
+            (
+                f"uid={c.Values.TEST}, ou=users, {c.DNs.EXAMPLE}",
+                4,
+            ),  # Spaces after comma
         ],
     )
     def test_distinguished_name_rfc_compliance(
@@ -248,7 +225,7 @@ class TestPydanticValidatorsRfcCompliance:
         expected_components: int,
     ) -> None:
         """Parametrized test for DistinguishedName RFC 4514 compliance."""
-        dn = FlextLdifModels.DistinguishedName(value=dn_value)
+        dn = m.DistinguishedName(value=dn_value)
 
         assert dn.value == dn_value
         components = dn.components
@@ -257,7 +234,7 @@ class TestPydanticValidatorsRfcCompliance:
 
     def test_dn_invalid_format_preserved(self) -> None:
         """Validate invalid DN format is preserved for server quirks."""
-        dn = FlextLdifModels.DistinguishedName(value=self.INVALID_DN)
+        dn = m.DistinguishedName(value=self.INVALID_DN)
         assert dn.value == self.INVALID_DN
 
     def test_dn_metadata_preservation(self) -> None:
@@ -266,7 +243,7 @@ class TestPydanticValidatorsRfcCompliance:
             "original_case": "UID=Test,DC=Example,DC=Com",
             "had_spaces": True,
         }
-        dn = FlextLdifModels.DistinguishedName(
+        dn = m.DistinguishedName(
             value=self.TEST_DN,
             metadata=test_metadata,
         )
@@ -291,7 +268,7 @@ class TestPydanticValidatorsRfcCompliance:
             "attribute_name_violations": attr_violations_list,
         }
 
-        metadata = FlextLdifModels.QuirkMetadata(
+        metadata = m.QuirkMetadata(
             quirk_type="rfc",
             extensions=test_extensions,
         )

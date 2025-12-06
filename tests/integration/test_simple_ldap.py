@@ -8,12 +8,10 @@ from collections.abc import Callable
 from ldap3 import Connection
 
 from flext_ldif import FlextLdif
-from tests.fixtures.typing import GenericFieldsDict
-
-# Note: ldap_connection fixture is provided by conftest.py
-# It uses unique_dn_suffix for isolation and indepotency in parallel execution
+from tests import GenericFieldsDict
 
 
+# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 def test_ldap_connection(ldap_connection: Connection) -> None:
     """Test basic LDAP connection."""
     assert ldap_connection.bound

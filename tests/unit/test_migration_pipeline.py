@@ -2,18 +2,16 @@
 
 Tests validate that FlextLdifMigrationPipeline:
 1. Initializes correctly with required and optional parameters
-2. Handles different migration modes (simple, categorized)
-3. Supports various server type combinations
-4. Validates input/output directories
-5. Executes migrations successfully
-6. Handles edge cases (empty input, nonexistent directories)
+2. Supports various server type combinations
+3. Validates input/output directories
+4. Executes migrations successfully
+5. Handles edge cases (empty input, nonexistent directories)
 
 Modules tested:
 - flext_ldif.services.migration.FlextLdifMigrationPipeline (migration pipeline)
 
 Scope:
-- Pipeline initialization with new API (individual parameters)
-- Simple and categorized migration modes
+- Pipeline initialization with current API (source_server_type, target_server_type)
 - Server-specific conversions (OID, OUD, OpenLDAP, RFC)
 - Input/output directory validation
 - Edge case handling
@@ -28,13 +26,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifConstants, FlextLdifMigrationPipeline
-from tests.fixtures.constants import DNs, Names
-from tests.fixtures.typing import GenericFieldsDict
+from flext_ldif import FlextLdifMigrationPipeline
+from tests import c, s
 
 
-class TestMigrationPipelineInitialization:
-    """Test suite for migration pipeline initialization with new API."""
+class TestsFlextLdifMigrationPipeline(s):
+    """Test LDIF migration pipeline initialization, validation, and execution."""
 
     def test_initialization_with_required_params(self, tmp_path: Path) -> None:
         """Test pipeline initializes with required parameters."""
@@ -46,14 +43,14 @@ class TestMigrationPipelineInitialization:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.OUD,
+            source_server_type="oid",
+            target_server_type="oud",
         )
 
         assert pipeline is not None
 
-    def test_initialization_simple_mode(self, tmp_path: Path) -> None:
-        """Test pipeline initialization for simple mode."""
+    def test_initialization_with_defaults(self, tmp_path: Path) -> None:
+        """Test pipeline initialization with default server types."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
@@ -62,66 +59,27 @@ class TestMigrationPipelineInitialization:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
-            output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.OUD,
         )
 
         assert pipeline is not None
-
-    def test_initialization_categorized_mode(self, tmp_path: Path) -> None:
-        """Test pipeline initialization for categorized mode."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-
-        categorization_rules: GenericFieldsDict = {
-            "hierarchy_objectclasses": ["organization"],
-            "user_objectclasses": [Names.INET_ORG_PERSON],
-            "group_objectclasses": ["groupOfNames"],
-            "acl_attributes": [],
-        }
-
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            mode="categorized",
-            categorization_rules=categorization_rules,
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.OUD,
-        )
-
-        assert pipeline is not None
+        assert pipeline.source_server_type == "rfc"
+        assert pipeline.target_server_type == "rfc"
 
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            (FlextLdifConstants.ServerTypes.OID, FlextLdifConstants.ServerTypes.OUD),
-            (
-                FlextLdifConstants.ServerTypes.OID,
-                FlextLdifConstants.ServerTypes.OPENLDAP,
-            ),
-            (
-                FlextLdifConstants.ServerTypes.OUD,
-                FlextLdifConstants.ServerTypes.OPENLDAP,
-            ),
-            (
-                FlextLdifConstants.ServerTypes.OPENLDAP,
-                FlextLdifConstants.ServerTypes.OID,
-            ),
-            (
-                FlextLdifConstants.ServerTypes.OPENLDAP,
-                FlextLdifConstants.ServerTypes.OUD,
-            ),
-            (FlextLdifConstants.ServerTypes.RFC, FlextLdifConstants.ServerTypes.RFC),
+            ("oid", "oud"),
+            ("oid", "openldap"),
+            ("oud", "openldap"),
+            ("openldap", "oid"),
+            ("openldap", "oud"),
+            ("rfc", "rfc"),
         ],
     )
     def test_initialization_with_different_server_types(
         self,
-        source: FlextLdifConstants.ServerTypeLiteral,
-        target: FlextLdifConstants.ServerTypeLiteral,
+        source: str,
+        target: str,
         tmp_path: Path,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
@@ -133,21 +91,17 @@ class TestMigrationPipelineInitialization:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=source,
-            target_server=target,
+            source_server_type=source,
+            target_server_type=target,
         )
 
         assert pipeline is not None
 
-
-class TestMigrationPipelineValidation:
-    """Test suite for parameter validation."""
-
-    def test_execute_with_nonexistent_input_dir_returns_empty_result(
+    def test_execute_with_nonexistent_input_dir_returns_failure(
         self,
         tmp_path: Path,
     ) -> None:
-        """Test pipeline succeeds but returns empty result when input directory doesn't exist."""
+        """Test pipeline returns failure when input directory doesn't exist."""
         nonexistent_input = tmp_path / "nonexistent"
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -155,24 +109,18 @@ class TestMigrationPipelineValidation:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=nonexistent_input,
             output_dir=output_dir,
-            source_server=FlextLdifConstants.ServerTypes.OID,
-            target_server=FlextLdifConstants.ServerTypes.OUD,
+            source_server_type="oid",
+            target_server_type="oud",
         )
 
         result = pipeline.execute()
 
-        # Pipeline handles nonexistent input gracefully (no files = empty result)
-        assert result.is_success
-        assert result.value is not None
-        assert result.value.statistics is not None
-        assert result.value.statistics.total_entries == 0
+        assert result.is_failure
+        assert result.error is not None
+        assert "not found" in str(result.error).lower()
 
-
-class TestMigrationPipelineSimpleMode:
-    """Test suite for simple migration mode."""
-
-    def test_simple_mode_with_empty_input(self, tmp_path: Path) -> None:
-        """Test simple mode handles empty input directory gracefully."""
+    def test_execution_with_empty_input(self, tmp_path: Path) -> None:
+        """Test pipeline handles empty input directory gracefully."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
@@ -181,62 +129,54 @@ class TestMigrationPipelineSimpleMode:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
-            source_server=FlextLdifConstants.ServerTypes.RFC,
-            target_server=FlextLdifConstants.ServerTypes.RFC,
+            source_server_type="rfc",
+            target_server_type="rfc",
         )
 
         result = pipeline.execute()
 
-        # Pipeline should handle gracefully
         assert result.is_success or result.is_failure
 
-    def test_simple_mode_basic_execution(self, tmp_path: Path) -> None:
-        """Test simple mode executes successfully."""
+    def test_basic_execution(self, tmp_path: Path) -> None:
+        """Test pipeline executes successfully with sample LDIF."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
 
-        # Create a simple LDIF file using constants
-        ldif_content = f"""dn: {DNs.TEST_USER}
-{Names.OBJECTCLASS}: {Names.PERSON}
-{Names.OBJECTCLASS}: {Names.TOP}
-{Names.CN}: test
-{Names.SN}: test
+        # Create a simple LDIF file using test constants
+        ldif_content = f"""dn: {c.TestData.SAMPLE_USER_DN}
+objectClass: person
+objectClass: top
+cn: testuser
+sn: test
 """
         (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
-            output_filename="migrated.ldif",
-            source_server=FlextLdifConstants.ServerTypes.RFC,
-            target_server=FlextLdifConstants.ServerTypes.RFC,
+            source_server_type="rfc",
+            target_server_type="rfc",
         )
 
         result = pipeline.execute()
 
         assert result.is_success or result.is_failure
 
-
-class TestMigrationPipelineServerConversions:
-    """Test suite for server-specific conversions."""
-
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            (FlextLdifConstants.ServerTypes.OID, FlextLdifConstants.ServerTypes.OUD),
-            (FlextLdifConstants.ServerTypes.OUD, FlextLdifConstants.ServerTypes.OID),
-            (FlextLdifConstants.ServerTypes.RFC, FlextLdifConstants.ServerTypes.OID),
-            (FlextLdifConstants.ServerTypes.RFC, FlextLdifConstants.ServerTypes.OUD),
+            ("oid", "oud"),
+            ("oud", "oid"),
+            ("rfc", "oid"),
+            ("rfc", "oud"),
         ],
     )
     def test_server_conversion_modes(
         self,
-        source: FlextLdifConstants.ServerTypeLiteral,
-        target: FlextLdifConstants.ServerTypeLiteral,
+        source: str,
+        target: str,
         tmp_path: Path,
     ) -> None:
         """Test server-specific conversion modes."""
@@ -245,18 +185,18 @@ class TestMigrationPipelineServerConversions:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        # Create a simple LDIF file using constants
-        ldif_content = f"""dn: {DNs.TEST_USER}
-{Names.OBJECTCLASS}: {Names.PERSON}
-{Names.CN}: test
+        # Create a simple LDIF file using test constants
+        ldif_content = f"""dn: {c.TestData.SAMPLE_USER_DN}
+objectClass: person
+cn: testuser
 """
         (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=source,
-            target_server=target,
+            source_server_type=source,
+            target_server_type=target,
         )
 
         result = pipeline.execute()
