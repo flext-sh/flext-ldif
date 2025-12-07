@@ -16,12 +16,26 @@ from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-from flext_ldif.utilities import u
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
+
 
 if TYPE_CHECKING:
     from flext_ldif.services.acl import FlextLdifAcl
@@ -144,7 +158,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """
 
     # =====================================================================
-    # PROTOCOL IMPLEMENTATION: FlextLdifProtocols.ServerAclProtocol
+    # PROTOCOL IMPLEMENTATION: p.ServerAclProtocol
     # =====================================================================
 
     # RFC Foundation - Standard LDAP attributes (all servers start here)
@@ -185,7 +199,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def __init__(
         self,
         acl_service: FlextLdifAcl | None = None,
-        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        _parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD ACL quirk.
@@ -207,19 +221,15 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         }
         # Business Rule: Acl.__init__ accepts acl_service and _parent_quirk
         # Cast acl_service to HasParseMethodProtocol for type compatibility
-        acl_service_typed: (
-            FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol | None
-        ) = (
-            cast("FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol", acl_service)
+        acl_service_typed: p.Ldif.Services.HasParseMethodProtocol | None = (
+            cast("p.Ldif.Services.HasParseMethodProtocol", acl_service)
             if acl_service is not None
             else None
         )
         # Call base class __init__ directly to avoid mypy inference issues through nested class
         # Business Rule: _parent_quirk must satisfy ParentQuirkProtocol
-        parent_quirk_typed: (
-            FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None
-        ) = (
-            cast("FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol", _parent_quirk)
+        parent_quirk_typed: p.Ldif.Quirks.ParentQuirkProtocol | None = (
+            cast("p.Ldif.Quirks.ParentQuirkProtocol", _parent_quirk)
             if _parent_quirk is not None
             else None
         )

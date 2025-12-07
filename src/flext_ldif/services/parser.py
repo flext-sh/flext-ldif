@@ -78,7 +78,7 @@ class FlextLdifParser(FlextLdifServiceBase[m.Ldif.ParseResponse]):
         # Normalize server_type to canonical form (e.g., "openldap" → "openldap2")
         effective_server_type_raw = server_type or "rfc"
         try:
-            effective_server_type = c.normalize_server_type(
+            effective_server_type = c.Ldif.normalize_server_type(
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:

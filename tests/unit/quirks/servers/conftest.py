@@ -80,13 +80,13 @@ def rfc_schema_quirk(
 @pytest.fixture
 def rfc_entry_quirk(
     rfc_quirk: FlextLdifServersBase,
-) -> FlextLdifTypes.EntryQuirkInstance:
+) -> FlextLdifTypes.Ldif.EntryQuirk:
     """Provides RFC Entry quirk instance for tests."""
     return rfc_quirk.entry_quirk
 
 
 @pytest.fixture
-def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> FlextLdifTypes.AclQuirkInstance:
+def rfc_acl_quirk(rfc_quirk: FlextLdifServersBase) -> FlextLdifTypes.Ldif.AclQuirk:
     """Provides RFC ACL quirk instance for tests."""
     return rfc_quirk.acl_quirk
 
@@ -280,7 +280,7 @@ def oid_schema_quirk(
 @pytest.fixture
 def oid_acl_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> FlextLdifTypes.AclQuirkInstance:
+) -> FlextLdifTypes.Ldif.AclQuirk:
     """Provides OID ACL quirk instance for tests."""
     return oid_quirk.acl_quirk
 
@@ -288,7 +288,7 @@ def oid_acl_quirk(
 @pytest.fixture
 def oid_entry_quirk(
     oid_quirk: FlextLdifServersBase,
-) -> FlextLdifTypes.EntryQuirkInstance:
+) -> FlextLdifTypes.Ldif.EntryQuirk:
     """Provides OID Entry quirk instance for tests."""
     return oid_quirk.entry_quirk
 

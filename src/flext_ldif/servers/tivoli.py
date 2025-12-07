@@ -10,10 +10,24 @@ from typing import Any, ClassVar, cast
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-from flext_ldif.utilities import u
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
 
 
 class FlextLdifServersTivoli(FlextLdifServersRfc):

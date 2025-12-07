@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, t
+from flext_core import FlextLogger, FlextTypes, t
 from flext_core._models.entity import FlextModelsEntity
 
 from flext_ldif._models.config import FlextLdifModelsConfig
@@ -181,7 +181,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def store_event_in_instance(
-        instance: t.GeneralValueType,
+        instance: FlextTypes.GeneralValueType,
         event: FlextModelsEntity.DomainEvent,
         attr_name: str = "_last_event",
     ) -> None:

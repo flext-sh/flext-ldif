@@ -84,7 +84,7 @@ docs/
 
 ### 🔗 Integration (`integration.md`)
 
-**[integration.md](integration.md)** - FLEXT ecosystem integration:
+**[Integration Guide](guides/integration.md)** - FLEXT ecosystem integration:
 
 - **FLEXT Core Patterns**: FlextResult, FlextContainer, FlextModels usage
 - **Project Integration**: Usage with client-a-oud-mig, flext-api, other projects
@@ -95,9 +95,6 @@ docs/
 
 Working code examples organized by complexity:
 
-- **[basic-usage.md](examples/basic-usage.md)**: Simple parsing, validation, writing
-- **[advanced-patterns.md](examples/advanced-patterns.md)**: Complex workflows and transformations
-- **[integration-examples.md](examples/integration-examples.md)**: FLEXT ecosystem integration patterns
 
 ### 🚨 Troubleshooting (`troubleshooting.md`)
 
@@ -177,20 +174,18 @@ Working code examples organized by complexity:
 ### 🚀 Quick Start Path (New Users)
 
 1. **[README.md](../README.md)** - Project overview and installation
-2. **[EXAMPLES.md](examples/EXAMPLES.md)** - Basic usage patterns and examples
-3. **[API.md](api/API.md)** - Core API interfaces and methods
+2. **[API Reference](api-reference.md)** - Core API interfaces and methods
 
 ### 🛠️ Developer Path (Contributors)
 
-1. **[Python-module-organization.md](standards/python-module-organization.md)** - Development standards
-2. **[ARCHITECTURE.md](architecture/ARCHITECTURE.md)** - Architectural patterns
-3. **[API.md](api/API.md)** - Complete API reference for implementation details
+1. **[Architecture](architecture.md)** - Architectural patterns
+2. **[API Reference](api-reference.md)** - Complete API reference for implementation details
 
 ### 🔧 Integration Path (FLEXT Ecosystem)
 
-1. **[ARCHITECTURE.md](architecture/ARCHITECTURE.md)** - FLEXT integration patterns
-2. **[EXAMPLES.md](examples/EXAMPLES.md)** - Integration examples and patterns
-3. **[API.md](api/API.md)** - FlextResult and service integration details
+1. **[Architecture](architecture.md)** - FLEXT integration patterns
+2. **[Integration Guide](guides/integration.md)** - Integration examples and patterns
+3. **[API Reference](api-reference.md)** - FlextResult and service integration details
 
 ## 📊 Documentation Quality Standards
 
@@ -217,7 +212,7 @@ Working code examples organized by complexity:
 
 ### FLEXT Ecosystem Documentation
 
-- **[flext-core Documentation](../../flext-core/docs/)** - Foundation patterns and utilities
+- **[flext-core Documentation](https://github.com/organization/flext/tree/main/flext-core/docs/)** - Foundation patterns and utilities
 - **[FLEXT Workspace Guide](../../README.md)** - Ecosystem-wide integration patterns
 
 ### External Standards and References

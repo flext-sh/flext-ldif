@@ -13,20 +13,34 @@ import re
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any, cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
-from flext_ldif.utilities import u
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
+
 
 if TYPE_CHECKING:
     from flext_ldif.services.entries import FlextLdifEntries
@@ -173,12 +187,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Implication: Call parent __init__ directly, parent handles FlextService call
         # Use same pattern as FlextLdifServersRfcEntry - call base class directly
         # Cast entry_service to protocol type for type compatibility
-        entry_service_typed: (
-            FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol | None
-        ) = (
-            cast(
-                "FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol", entry_service
-            )
+        entry_service_typed: p.Ldif.Services.HasParseMethodProtocol | None = (
+            cast("p.Ldif.Services.HasParseMethodProtocol", entry_service)
             if entry_service is not None
             else None
         )
@@ -995,7 +1005,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # Restore DN if differences detected
         # Uses c.MetadataKeys for consistent key access
-        mk = c.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         if (
             (original_dn := ext.get(mk.ORIGINAL_DN_COMPLETE))
             and isinstance(original_dn, str)
@@ -1581,7 +1591,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         current_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
-        mk = c.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         key_mapping: dict[str, str] = {
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
             "targetcontrol": mk.ACL_TARGET_CONTROL,
@@ -1735,7 +1745,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
-        mk = c.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         # Map source keys to destination MetadataKeys
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
@@ -1780,7 +1790,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        mk = c.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP,
@@ -1961,7 +1971,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     aci_count=len(aci_list),
                     aci_preview=[
                         s[:max_len]
-                        for s in aci_list[: c.ACI_LIST_PREVIEW_LIMIT]
+                        for s in aci_list[: c.Ldif.ACI_LIST_PREVIEW_LIMIT]
                         if isinstance(s, str)
                     ],
                 )
@@ -2241,7 +2251,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _finalize_and_parse_entry(
         self,
-        entry_dict: dict[str, t.GeneralValueType],
+        entry_dict: dict[str, FlextTypes.GeneralValueType],
         entries_list: list[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.

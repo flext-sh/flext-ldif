@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
 
 logger = FlextLogger(__name__)
@@ -75,7 +76,7 @@ class FlextLdifUtilitiesObjectClass:
 
         """
         # Only fix AUXILIARY classes without SUP
-        if schema_oc.sup or schema_oc.kind != c.Schema.AUXILIARY:
+        if schema_oc.sup or schema_oc.kind != c.Ldif.Schema.AUXILIARY:
             return
 
         # Known AUXILIARY classes from OID that are missing SUP top
@@ -135,12 +136,18 @@ class FlextLdifUtilitiesObjectClass:
         sup_lower = str(schema_oc.sup).lower() if isinstance(schema_oc.sup, str) else ""
 
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
-        if sup_lower in structural_superiors and schema_oc.kind == c.Schema.AUXILIARY:
-            schema_oc.kind = c.Schema.STRUCTURAL
+        if (
+            sup_lower in structural_superiors
+            and schema_oc.kind == c.Ldif.Schema.AUXILIARY
+        ):
+            schema_oc.kind = c.Ldif.Schema.STRUCTURAL
 
         # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
-        elif sup_lower in auxiliary_superiors and schema_oc.kind == c.Schema.STRUCTURAL:
-            schema_oc.kind = c.Schema.AUXILIARY
+        elif (
+            sup_lower in auxiliary_superiors
+            and schema_oc.kind == c.Ldif.Schema.STRUCTURAL
+        ):
+            schema_oc.kind = c.Ldif.Schema.AUXILIARY
 
     @staticmethod
     def ensure_sup_for_auxiliary(
@@ -163,7 +170,7 @@ class FlextLdifUtilitiesObjectClass:
             None - modifies schema_oc in-place
 
         """
-        if not schema_oc.sup and schema_oc.kind == c.Schema.AUXILIARY:
+        if not schema_oc.sup and schema_oc.kind == c.Ldif.Schema.AUXILIARY:
             schema_oc.sup = default_sup
 
     @staticmethod
@@ -189,15 +196,15 @@ class FlextLdifUtilitiesObjectClass:
             return
 
         if (
-            superior_kind == c.Schema.STRUCTURAL
-            and schema_oc.kind == c.Schema.AUXILIARY
+            superior_kind == c.Ldif.Schema.STRUCTURAL
+            and schema_oc.kind == c.Ldif.Schema.AUXILIARY
         ):
-            schema_oc.kind = c.Schema.STRUCTURAL
+            schema_oc.kind = c.Ldif.Schema.STRUCTURAL
         elif (
-            superior_kind == c.Schema.AUXILIARY
-            and schema_oc.kind == c.Schema.STRUCTURAL
+            superior_kind == c.Ldif.Schema.AUXILIARY
+            and schema_oc.kind == c.Ldif.Schema.STRUCTURAL
         ):
-            schema_oc.kind = c.Schema.AUXILIARY
+            schema_oc.kind = c.Ldif.Schema.AUXILIARY
 
 
 __all__ = [

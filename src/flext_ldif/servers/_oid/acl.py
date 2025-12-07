@@ -23,11 +23,26 @@ from typing import Any, ClassVar, Literal, cast
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import u
+from flext_ldif.typings import t
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
+
 
 logger = FlextLogger(__name__)
 
@@ -129,7 +144,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         subject='cn=Admins,dc=example,dc=com',
         permissions=['browse', 'add', 'delete'],
         scope='subtree',  # from orclaci
-        metadata={c.MetadataKeys.ACL_ORIGINAL_FORMAT: '...', c.MetadataKeys.ACL_SOURCE_SERVER: 'oid'}
+        metadata={c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: '...', c.Ldif.MetadataKeys.ACL_SOURCE_SERVER: 'oid'}
     )
 
     Acl(
@@ -154,7 +169,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     # No instance variable needed - use Constants directly
 
     # =====================================================================
-    # PROTOCOL IMPLEMENTATION: FlextLdifProtocols.ServerAclProtocol
+    # PROTOCOL IMPLEMENTATION: p.ServerAclProtocol
     # =====================================================================
 
     # RFC Foundation - Standard LDAP attributes (all servers start here)
@@ -298,7 +313,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             else m.QuirkMetadata.create_for(
                 server_type,
                 extensions=m.DynamicMetadata(**{
-                    c.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line.strip(),
+                    c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line.strip(),
                 }),
             )
         )
@@ -377,7 +392,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             metadata=m.QuirkMetadata(
                 server_type='oid',
                 extensions={
-                    c.MetadataKeys.ACL_ORIGINAL_FORMAT: 'orclaci: access to entry by...',
+                    c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: 'orclaci: access to entry by...',
                     'acl_type': 'orclaci',
                     ...
                 }
@@ -640,7 +655,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _format_oid_permissions(
-        permissions: FlextLdifTypes.MetadataDictMutable,
+        permissions: t.Ldif.MetadataDictMutable,
     ) -> str:
         """Format OID ACL permissions clause.
 
@@ -1011,8 +1026,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         # Convert and format permissions
         permissions_dict = self._normalize_permissions_to_dict(acl_permissions)
         # Convert dict[str, bool] to MetadataDictMutable for _format_oid_permissions
-        permissions_metadata: FlextLdifTypes.MetadataDictMutable = cast(
-            "FlextLdifTypes.MetadataDictMutable",
+        permissions_metadata: t.Ldif.MetadataDictMutable = cast(
+            "t.Ldif.MetadataDictMutable",
             permissions_dict,
         )
         permissions_clause = self._format_oid_permissions(permissions_metadata)
@@ -1086,7 +1101,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         # Store original OID subject type as source_subject_type for conversion
         if config.oid_subject_type:
-            metadata_dict[c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE] = (
+            metadata_dict[c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE] = (
                 config.oid_subject_type
             )
         return metadata_dict

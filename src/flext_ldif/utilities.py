@@ -72,7 +72,7 @@ from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
@@ -87,7 +87,7 @@ class FlextLdifUtilities(FlextUtilities):
     Business Rules:
     ───────────────
     1. All utility methods MUST be static (no instance state)
-    2. All operations MUST return FlextResult[T] for error handling
+    2. All operations MUST return r[T] for error handling
     3. LDIF-specific helpers MUST extend flext-core u
     4. Common patterns MUST be consolidated here (DRY principle)
 
@@ -111,6 +111,7 @@ class FlextLdifUtilities(FlextUtilities):
         - Validation, Generators, Text, Guards
         - Reliability, Checker, Configuration, Context
         - Mapper, Domain, Pagination, Parser
+        - Convenience shortcuts: is_enum_member, parse_enum, to_str, to_str_list
 
     Usage:
         from flext_ldif.utilities import FlextLdifUtilities
@@ -145,11 +146,15 @@ class FlextLdifUtilities(FlextUtilities):
         """
 
         # Type alias for variadic callable (Python 3.13+ compatible)
-        # Use FlextLdifProtocols.Utility.Callable from protocols to avoid Any
-        type VariadicCallable[T] = FlextLdifProtocols.Utility.Callable[T]
+        # Use p.Utility.Callable from protocols to avoid Any
+        type VariadicCallable[T] = p.Utility.Callable[T]
 
         class ConvBuilder:
-            """Conversion builder for type-safe value conversion (DSL pattern)."""
+            """Conversion builder for type-safe value conversion (DSL pattern).
+
+            This builder uses parent FlextUtilities.Conversion utilities for actual
+            conversion operations, providing a fluent DSL interface on top.
+            """
 
             def __init__(self, value: t.GeneralValueType) -> None:
                 """Initialize conversion builder with a value.
@@ -160,26 +165,31 @@ class FlextLdifUtilities(FlextUtilities):
                 """
                 self._value = value
                 self._default: t.GeneralValueType | None = None
+                self._target_type: str | None = None
                 self._safe_mode = False
 
             def to_str(self, default: str = "") -> Self:
-                """Convert to string."""
+                """Convert to string using parent Conversion utilities."""
                 self._default = default
+                self._target_type = "to_str"
                 return self
 
             def int(self, default: int = 0) -> Self:
                 """Convert to int."""
                 self._default = default
+                self._target_type = "int"
                 return self
 
             def bool(self, *, default: bool = False) -> Self:
                 """Convert to bool."""
                 self._default = default
+                self._target_type = "bool"
                 return self
 
             def str_list(self, default: list[str] | None = None) -> Self:
-                """Convert to string list."""
+                """Convert to string list using parent Conversion utilities."""
                 self._default = default or []
+                self._target_type = "to_str_list"
                 return self
 
             def safe(self) -> Self:
@@ -188,7 +198,36 @@ class FlextLdifUtilities(FlextUtilities):
                 return self
 
             def build(self) -> t.GeneralValueType:
-                """Build and return the value."""
+                """Build and return the converted value using parent utilities."""
+                if self._value is None:
+                    return self._default
+                if self._target_type == "to_str":
+                    # Use parent convenience shortcut with proper type narrowing
+                    str_default: str | None = (
+                        self._default if isinstance(self._default, str) else None
+                    )
+                    return FlextUtilities.to_str(self._value, default=str_default)
+                if self._target_type == "to_str_list":
+                    # Use parent convenience shortcut with proper type narrowing
+                    list_default: list[str] | None = None
+                    if isinstance(self._default, list) and all(
+                        isinstance(item, str) for item in self._default
+                    ):
+                        list_default = cast("list[str]", self._default)
+                    return FlextUtilities.to_str_list(self._value, default=list_default)
+                if self._target_type == "int":
+                    if self._safe_mode:
+                        try:
+                            return cast("t.GeneralValueType", int(self._value))
+                        except (ValueError, TypeError):
+                            return self._default
+                    return cast("t.GeneralValueType", int(self._value))
+                if self._target_type == "bool":
+                    if isinstance(self._value, bool):
+                        return self._value
+                    if isinstance(self._value, str):
+                        return self._value.lower() in {"true", "1", "yes", "on"}
+                    return bool(self._value)
                 return self._value if self._value is not None else self._default
 
         # === Static utility methods ===
@@ -2802,7 +2841,7 @@ class FlextLdifUtilities(FlextUtilities):
                     flow_ops.append(wrap_transform(transform))
                 elif isinstance(transform, dict):
                     # dict[str, object] is compatible with ConfigurationDict
-                    flow_ops.append(transform)  # type: ignore[arg-type]
+                    flow_ops.append(cast("t.Types.ConfigurationDict", transform))
             return cast(
                 "dict[str, object]",
                 FlextUtilities.Reliability.flow(obj, *flow_ops),
@@ -2842,7 +2881,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Get values from dict (mnemonic: vl).
 
             Different from base vals() which extracts values from FlextResult sequences.
-            This method extracts values from dicts or FlextResult[dict].
+            This method extracts values from dicts or r[dict].
             """
             if isinstance(items, r):
                 if items.is_success and isinstance(items.value, dict):

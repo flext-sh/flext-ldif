@@ -2,7 +2,7 @@
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
-LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](../../flext-core/README.md).
+LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md).
 
 ## LDIF Processing Integration
 
@@ -566,4 +566,4 @@ def process_large_ldif(file_path: Path) -> FlextResult[str]:
 
 ---
 
-This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](../../flext-core/README.md).
+This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md).

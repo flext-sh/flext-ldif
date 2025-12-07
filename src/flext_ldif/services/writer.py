@@ -316,7 +316,9 @@ class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.WriteResponse]):
         target_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
         if isinstance(target_server_type_raw, str):
             try:
-                target_server_type = c.normalize_server_type(target_server_type_raw)
+                target_server_type = c.Ldif.normalize_server_type(
+                    target_server_type_raw
+                )
             except ValueError:
                 # Invalid server type - use None (will default to RFC in write method)
                 target_server_type = None

@@ -86,7 +86,12 @@ class FlextLdifConstants(FlextConstants):
         # LdapServerType was duplicate of ServerTypeEnum - consolidated to ServerTypes
 
         class SortStrategy(StrEnum):
-            """Valid sorting strategies for LDIF entries (V2 type-safe enum)."""
+            """Valid sorting strategies for LDIF entries (V2 type-safe enum).
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SortStrategy.HIERARCHY.value
+                or SortStrategy.HIERARCHY directly - no base strings needed.
+            """
 
             HIERARCHY = "hierarchy"
             DN = "dn"
@@ -95,14 +100,24 @@ class FlextLdifConstants(FlextConstants):
             CUSTOM = "custom"
 
         class SortingStrategyType(StrEnum):
-            """Sorting strategy types for metadata tracking."""
+            """Sorting strategy types for metadata tracking.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SortingStrategyType.ALPHABETICAL_CASE_SENSITIVE.value
+                or SortingStrategyType.ALPHABETICAL_CASE_SENSITIVE directly - no base strings needed.
+            """
 
             ALPHABETICAL_CASE_SENSITIVE = "alphabetical_case_sensitive"
             ALPHABETICAL_CASE_INSENSITIVE = "alphabetical_case_insensitive"
             CUSTOM_ORDER = "custom_order"
 
         class SortTarget(StrEnum):
-            """What to sort in LDIF data (V2 type-safe enum)."""
+            """What to sort in LDIF data (V2 type-safe enum).
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SortTarget.ENTRIES.value
+                or SortTarget.ENTRIES directly - no base strings needed.
+            """
 
             ENTRIES = "entries"
             ATTRIBUTES = "attributes"
@@ -118,6 +133,10 @@ class FlextLdifConstants(FlextConstants):
             Server-specific extensions defined in respective server Constants classes:
             - OUD: FlextLdifServersOud.Constants.OudPermission
             - Other servers: Check respective server Constants classes
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use RfcAclPermission.READ.value
+                or RfcAclPermission.READ directly - no base strings needed.
             """
 
             READ = "read"
@@ -138,6 +157,10 @@ class FlextLdifConstants(FlextConstants):
             permission handling across all server types.
 
             Python 3.13+ StrEnum with Pydantic 2 compatibility.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use AclPermission.READ.value
+                or AclPermission.READ directly - no base strings needed.
             """
 
             # RFC 4876 base permissions
@@ -162,6 +185,10 @@ class FlextLdifConstants(FlextConstants):
             This enum consolidates all ACL action types from server implementations.
             Use this for type-safe ACL action handling across all server types.
 
+            DRY Pattern:
+                StrEnum is the single source of truth. Use AclAction.ALLOW.value
+                or AclAction.ALLOW directly - no base strings needed.
+
             Python 3.13+ StrEnum with Pydantic 2 compatibility.
             """
 
@@ -175,6 +202,10 @@ class FlextLdifConstants(FlextConstants):
             Maps to Python codec names for encoding/decoding operations.
             Server-specific encodings (if any) defined in respective server
             Constants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Encoding.UTF8.value
+                or Encoding.UTF8 directly - no base strings needed.
             """
 
             UTF8 = "utf-8"
@@ -214,6 +245,10 @@ class FlextLdifConstants(FlextConstants):
             Per RFC 2849 Section 2:
             - Use :: when value contains non-ASCII, leading/trailing space, or special chars
             - Base64 encoding preserves exact byte sequence for round-trip
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LdifFormat.REGULAR.value
+                or LdifFormat.REGULAR directly - no base strings needed.
             """
 
             REGULAR = ":"
@@ -238,6 +273,10 @@ class FlextLdifConstants(FlextConstants):
 
             Identifies what entity the ACL permission applies to.
             Server-specific extensions in respective server Constants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use AclSubjectType.USER.value
+                or AclSubjectType.USER directly - no base strings needed.
             """
 
             USER = "user"
@@ -256,6 +295,10 @@ class FlextLdifConstants(FlextConstants):
             IMPORTANT: This class contains ONLY core LDIF/entry keys.
             Server-specific keys → QuirkMetadataKeys
             ACL keys → AclKeys
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use DictKeys.DN.value
+                or DictKeys.DN directly - no base strings needed.
             """
 
             # Core entry and LDIF keys (63+ usages)
@@ -281,7 +324,12 @@ class FlextLdifConstants(FlextConstants):
             """
 
             class ServerType(StrEnum):
-                """Server type values for LDIF processing."""
+                """Server type values for LDIF processing.
+
+                DRY Pattern:
+                    StrEnum is the single source of truth. Use ServerType.OUD.value
+                    or ServerType.OUD directly - no base strings needed.
+                """
 
                 OUD = "oud"
                 OID = "oid"
@@ -297,7 +345,12 @@ class FlextLdifConstants(FlextConstants):
                 RELAXED = "relaxed"
 
             class ValidationStatus(StrEnum):
-                """Validation status values for LDIF entries."""
+                """Validation status values for LDIF entries.
+
+                DRY Pattern:
+                    StrEnum is the single source of truth. Use ValidationStatus.VALID.value
+                    or ValidationStatus.VALID directly - no base strings needed.
+                """
 
                 VALID = "valid"
                 INVALID = "invalid"
@@ -308,6 +361,10 @@ class FlextLdifConstants(FlextConstants):
 
                 Used in Entry.metadata.extensions for server-specific attributes.
                 Consolidates server-specific entry properties per SRP.
+
+                DRY Pattern:
+                    StrEnum is the single source of truth. Use QuirkMetadataKeys.SERVER_TYPE.value
+                    or QuirkMetadataKeys.SERVER_TYPE directly - no base strings needed.
                 """
 
                 # Quirk metadata keys (20 usages across server quirks)
@@ -320,6 +377,10 @@ class FlextLdifConstants(FlextConstants):
 
                 Used in ACL parsing, writing, and entry processing across server quirks.
                 Consolidates ACL-specific keys per SRP.
+
+                DRY Pattern:
+                    StrEnum is the single source of truth. Use AclKeys.ACL_ATTRIBUTE.value
+                    or AclKeys.ACL_ATTRIBUTE directly - no base strings needed.
                 """
 
                 # ACL attribute keys (11 usages across server ACL quirks)
@@ -1521,7 +1582,12 @@ class FlextLdifConstants(FlextConstants):
             # Error messages are now defined in appropriate validation modules
 
         class ProcessingStage(StrEnum):
-            """Processing stages for LDIF operations."""
+            """Processing stages for LDIF operations.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ProcessingStage.PARSING.value
+                or ProcessingStage.PARSING directly - no base strings needed.
+            """
 
             PARSING = "parsing"
             VALIDATION = "validation"
@@ -1529,14 +1595,24 @@ class FlextLdifConstants(FlextConstants):
             WRITING = "writing"
 
         class LdifHealthStatus(StrEnum):
-            """Health status for LDIF services."""
+            """Health status for LDIF services.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LdifHealthStatus.HEALTHY.value
+                or LdifHealthStatus.HEALTHY directly - no base strings needed.
+            """
 
             HEALTHY = "healthy"
             DEGRADED = "degraded"
             UNHEALTHY = "unhealthy"
 
         class EntryType(StrEnum):
-            """Types of LDIF entries."""
+            """Types of LDIF entries.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use EntryType.PERSON.value
+                or EntryType.PERSON directly - no base strings needed.
+            """
 
             PERSON = "person"
             GROUP = "group"
@@ -1545,7 +1621,12 @@ class FlextLdifConstants(FlextConstants):
             OTHER = "other"
 
         class EntryModification(StrEnum):
-            """LDIF entry modification types."""
+            """LDIF entry modification types.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use EntryModification.ADD.value
+                or EntryModification.ADD directly - no base strings needed.
+            """
 
             ADD = "add"
             MODIFY = "modify"
@@ -1557,6 +1638,10 @@ class FlextLdifConstants(FlextConstants):
 
             Used in EntryStatistics to track what conversions were applied.
             Follows FLEXT pattern of using constants instead of hard-coded strings.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use TransformationType.NORMALIZE.value
+                or TransformationType.NORMALIZE directly - no base strings needed.
             """
 
             # DN transformations
@@ -1586,6 +1671,10 @@ class FlextLdifConstants(FlextConstants):
             """Types of filters applied to entries.
 
             Used in EntryStatistics to track filtering decisions.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use FilterType.BASE_DN_FILTER.value
+                or FilterType.BASE_DN_FILTER directly - no base strings needed.
             """
 
             BASE_DN_FILTER = "base_dn_filter"
@@ -1600,6 +1689,10 @@ class FlextLdifConstants(FlextConstants):
             """Entry validation status levels.
 
             Used in EntryStatistics to indicate validation result.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ValidationStatus.VALID.value
+                or ValidationStatus.VALID directly - no base strings needed.
             """
 
             VALID = "valid"
@@ -1611,6 +1704,10 @@ class FlextLdifConstants(FlextConstants):
             """Categories for entry rejection.
 
             Used in EntryStatistics to classify why entry was rejected.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use RejectionCategory.INVALID_DN.value
+                or RejectionCategory.INVALID_DN directly - no base strings needed.
             """
 
             INVALID_DN = "invalid_dn"
@@ -1627,6 +1724,10 @@ class FlextLdifConstants(FlextConstants):
             """Categories of errors that can occur during processing.
 
             Used in EntryStatistics to categorize errors.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ErrorCategory.PARSING.value
+                or ErrorCategory.PARSING directly - no base strings needed.
             """
 
             PARSING = "parsing"
@@ -1647,6 +1748,10 @@ class FlextLdifConstants(FlextConstants):
                     - filters.py: MARKS attributes with this status (never removes)
                     - entry.py: REMOVES attributes based on this status
                     - writer.py: Uses status + WriteOutputOptions for output
+
+                DRY Pattern:
+                    StrEnum is the single source of truth. Use AttributeMarkerStatus.NORMAL.value
+                    or AttributeMarkerStatus.NORMAL directly - no base strings needed.
                 """
 
             NORMAL = "normal"
@@ -1679,6 +1784,10 @@ class FlextLdifConstants(FlextConstants):
 
             Zero Tolerance: All server type identifier strings MUST be defined here.
             Uses SHORT identifiers for code usage.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ServerTypes.OID.value
+                or ServerTypes.OID directly - no base strings needed.
             """
 
             # Short identifiers (used in code, configuration, and processing)
@@ -1866,22 +1975,24 @@ class FlextLdifConstants(FlextConstants):
             # Literal type definitions for type annotations
             # (Python 3.13+ PEP 695 best practices)
             # Using PEP 695 type statement for better type checking and IDE support
-            # These Literal types match their corresponding StrEnum classes above
-            # (ProcessingStage, LdifHealthStatus, etc.) for consistency and type safety
+            # NOTE: These Literal types match their corresponding StrEnum values exactly.
+            # Cannot reference StrEnum members directly due to Python class scoping rules
+            # (nested classes cannot reference sibling classes during class definition).
+            # The string values are kept here to match StrEnum values exactly - DRY at doc level.
             type ProcessingStageLiteral = Literal[
                 "parsing",
                 "validation",
                 "analytics",
                 "writing",
             ]
-            """Literal type matching ProcessingStage StrEnum for type annotations."""
+            """Literal type matching ProcessingStage StrEnum values exactly."""
 
             type HealthStatusLiteral = Literal[
                 "healthy",
                 "degraded",
                 "unhealthy",
             ]
-            """Literal type matching LdifHealthStatus StrEnum for type annotations."""
+            """Literal type matching LdifHealthStatus StrEnum values exactly."""
 
             type EntryTypeLiteral = Literal[
                 "person",
@@ -1890,10 +2001,10 @@ class FlextLdifConstants(FlextConstants):
                 "domain",
                 "other",
             ]
-            """Literal type matching EntryType StrEnum for type annotations."""
+            """Literal type matching EntryType StrEnum values exactly."""
 
             type ModificationTypeLiteral = Literal["add", "modify", "delete", "modrdn"]
-            """Literal type matching EntryModification StrEnum for type annotations."""
+            """Literal type matching EntryModification StrEnum values exactly."""
             type ServerTypeLiteral = Literal[
                 # Referencing StrEnum values directly (NO duplication!)
                 "oid",
@@ -1946,7 +2057,11 @@ class FlextLdifConstants(FlextConstants):
                 "hidden",
                 "renamed",
             ]
-            """Marker status for attribute processing metadata."""
+            """Marker status for attribute processing metadata.
+
+            NOTE: Matches ErrorCategory.AttributeMarkerStatus StrEnum values exactly.
+            Cannot reference directly due to Python class scoping rules.
+            """
 
             type ProjectTypeLiteral = Literal[
                 "library",
@@ -2001,7 +2116,7 @@ class FlextLdifConstants(FlextConstants):
                 "schema",
                 "custom",
             ]
-            """Sort strategy literals derived from SortStrategy StrEnum."""
+            """Sort strategy literals matching SortStrategy StrEnum values exactly."""
 
             type SortTargetLiteral = Literal[
                 "entries",
@@ -2010,7 +2125,7 @@ class FlextLdifConstants(FlextConstants):
                 "schema",
                 "combined",
             ]
-            """Sort target literals derived from SortTarget StrEnum."""
+            """Sort target literals matching SortTarget StrEnum values exactly."""
 
             type EncodingLiteral = Literal[
                 "utf-8",
@@ -2022,10 +2137,10 @@ class FlextLdifConstants(FlextConstants):
                 "cp1252",
                 "iso-8859-1",
             ]
-            """Encoding literals derived from Encoding StrEnum."""
+            """Encoding literals matching Encoding StrEnum values exactly."""
 
             type LdifFormatLiteral = Literal[":", "::", ":<"]
-            """LDIF format literals derived from LdifFormat StrEnum."""
+            """LDIF format literals matching LdifFormat StrEnum values exactly."""
 
             type QuirkOperationLiteral = Literal["parse", "write"]
             """Quirk operation literals for parse/write operations."""
@@ -2062,7 +2177,7 @@ class FlextLdifConstants(FlextConstants):
                 "all",
                 "none",
             ]
-            """RFC ACL permission literals derived from RfcAclPermission StrEnum."""
+            """RFC ACL permission literals matching RfcAclPermission StrEnum values exactly."""
 
             type AclPermissionLiteral = Literal[
                 "read",
@@ -2077,14 +2192,14 @@ class FlextLdifConstants(FlextConstants):
                 "create",
                 "control_access",
             ]
-            """Comprehensive ACL permission literals derived from AclPermission StrEnum.
+            """Comprehensive ACL permission literals matching AclPermission StrEnum values exactly.
 
             Includes RFC 4876 base permissions plus server-specific extensions.
             Use this for type-safe ACL permission handling across all server types.
             """
 
             type AclActionLiteral = Literal["allow", "deny"]
-            """ACL action literals derived from AclAction StrEnum.
+            """ACL action literals matching AclAction StrEnum values exactly.
 
             Use this for type-safe ACL action handling across all server types.
             """
@@ -2098,15 +2213,12 @@ class FlextLdifConstants(FlextConstants):
                 "public",
                 "anonymous",
                 "authenticated",
-                "dn",
-                "user_dn",
-                "userdn",
                 "sddl",
             ]
-            """ACL subject type literals derived from AclSubjectType StrEnum.
+            """ACL subject type literals matching AclSubjectType StrEnum values exactly.
 
-            Includes server-specific extensions like "sddl" for Active Directory
-            and "user_dn" for OID/OUD user DN subjects.
+            Includes server-specific extensions like "sddl" for Active Directory.
+            Note: "dn", "user_dn", "userdn" are not in the base enum - they may be server-specific.
             """
 
             type TransformationTypeLiteral = Literal[
@@ -3624,6 +3736,10 @@ class FlextLdifConstants(FlextConstants):
 
             Zero Tolerance: All filter type strings MUST be defined here.
             Used throughout filtering operations to avoid hardcoded strings.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use FilterTypes.OBJECTCLASS.value
+                or FilterTypes.OBJECTCLASS directly - no base strings needed.
             """
 
             OBJECTCLASS = "objectclass"
@@ -3638,6 +3754,10 @@ class FlextLdifConstants(FlextConstants):
 
             Zero Tolerance: All mode strings MUST be defined here.
             Used for filter modes, detection modes, and operation modes.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Modes.STRICT.value
+                or Modes.STRICT directly - no base strings needed.
             """
 
             INCLUDE = "include"
@@ -3651,6 +3771,10 @@ class FlextLdifConstants(FlextConstants):
 
             Zero Tolerance: All category strings MUST be defined here.
             Used for LDIF entry categorization in pipelines.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Categories.USER.value
+                or Categories.USER directly - no base strings needed.
             """
 
             ALL = "all"
@@ -3666,6 +3790,10 @@ class FlextLdifConstants(FlextConstants):
 
             Zero Tolerance: All data type strings MUST be defined here.
             Used in quirks conversion matrix and data processing.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use DataTypes.STRING.value
+                or DataTypes.STRING directly - no base strings needed.
             """
 
             ATTRIBUTE = "attribute"
@@ -3971,7 +4099,12 @@ class FlextLdifConstants(FlextConstants):
 
         # Change type enum
         class ChangeType(StrEnum):
-            """LDIF change types for entry operations."""
+            """LDIF change types for entry operations.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ChangeType.ADD.value
+                or ChangeType.ADD directly - no base strings needed.
+            """
 
             ADD = "add"
             DELETE = "delete"
@@ -4684,7 +4817,12 @@ class FlextLdifConstants(FlextConstants):
             # All functions removed - use utilities instead
 
         class ServiceType(StrEnum):
-            """Service types for internal management."""
+            """Service types for internal management.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ServiceType.PARSER.value
+                or ServiceType.PARSER directly - no base strings needed.
+            """
 
             PARSER = "parser"
             ACL = "acl"

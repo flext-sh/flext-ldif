@@ -21,6 +21,7 @@ from flext_core import r, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.constants import c
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
@@ -90,7 +91,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Store original server_type for fallback logic
         original_server_type = str(server_type)
         try:
-            normalized_server_type = c.normalize_server_type(
+            normalized_server_type = c.Ldif.normalize_server_type(
                 original_server_type,
             )
         except (ValueError, TypeError) as e:
@@ -191,7 +192,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         """
         # Get ACL attribute name for server type
-        acl_attr_name = c.AclAttributeRegistry.get_acl_attributes(
+        acl_attr_name = c.Ldif.AclAttributeRegistry.get_acl_attributes(
             server_type,
         )
 
@@ -292,7 +293,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Use default ACL attributes if not specified
         if acl_attributes is None:
             acl_attributes = list(
-                c.AclAttributeRegistry.get_acl_attributes(None),
+                c.Ldif.AclAttributeRegistry.get_acl_attributes(None),
             )
 
         # Filter entries that have at least one ACL attribute

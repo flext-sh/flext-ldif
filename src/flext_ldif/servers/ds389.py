@@ -23,10 +23,24 @@ from typing import ClassVar
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import u
+from flext_ldif.typings import t
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):
@@ -202,7 +216,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Server.matches_server_patterns(
+                u = _get_utilities()
+                return u.Server.matches_server_patterns(  # type: ignore[attr-defined]
                     value=attr_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -235,7 +250,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Server.matches_server_patterns(
+                u = _get_utilities()
+                return u.Server.matches_server_patterns(  # type: ignore[attr-defined]
                     value=oc_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -300,8 +316,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.unwrap()
                 # Fix common ObjectClass issues (RFC 4512 compliance)
-                u.ObjectClass.fix_missing_sup(oc_data)
-                u.ObjectClass.fix_kind_mismatch(oc_data)
+                u = _get_utilities()
+                u.ObjectClass.fix_missing_sup(oc_data)  # type: ignore[attr-defined]
+                u.ObjectClass.fix_kind_mismatch(oc_data)  # type: ignore[attr-defined]
                 metadata = m.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
@@ -313,7 +330,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
-        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
             """Check if this is a 389 Directory Server ACL (public method).
 
             Args:
@@ -325,7 +342,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: t.Ldif.AclOrString) -> bool:
             """Detect 389 DS ACI lines."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
@@ -358,7 +375,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
             """Parse 389 DS ACI definition."""
             try:
-                attr_name, content = u.ACL.split_acl_line(acl_line)
+                u = _get_utilities()
+                attr_name, content = u.ACL.split_acl_line(acl_line)  # type: ignore[attr-defined]
                 _ = attr_name  # Unused but required for tuple unpacking
                 acl_name_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_NAME_PATTERN,
@@ -612,7 +630,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDictGeneric,
+            attributes: t.Ldif.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Detect 389 DS-specific entries."""
             if not entry_dn:
@@ -673,7 +691,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata = entry.metadata or m.QuirkMetadata(
                     quirk_type=FlextLdifServersDs389.Constants.SERVER_TYPE,
                 )
-                metadata.extensions[c.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
+                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
                     marker in dn_lower
                     for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
                 )

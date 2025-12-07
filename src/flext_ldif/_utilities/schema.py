@@ -12,14 +12,14 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, t
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -247,8 +247,8 @@ class FlextLdifUtilitiesSchema:
         transformed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         field_name: str,
         transform_fn: Callable[
-            [t.GeneralValueType],
-            t.GeneralValueType | FlextResult[t.GeneralValueType],
+            [FlextTypes.GeneralValueType],
+            FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
         ],
     ) -> FlextResult[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Apply single field transformation with monadic error handling."""
@@ -335,8 +335,8 @@ class FlextLdifUtilitiesSchema:
         field_transforms: dict[
             str,
             Callable[
-                [t.GeneralValueType],
-                t.GeneralValueType | FlextResult[t.GeneralValueType],
+                [FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
             ]
             | str
             | list[str]
@@ -358,8 +358,8 @@ class FlextLdifUtilitiesSchema:
                 continue
             # After isinstance check, transform_fn is Callable
             transform_callable: Callable[
-                [t.GeneralValueType],
-                t.GeneralValueType | FlextResult[t.GeneralValueType],
+                [FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
             ] = transform_fn
             result = FlextLdifUtilitiesSchema._apply_field_transformation(
                 current,
@@ -419,8 +419,9 @@ class FlextLdifUtilitiesSchema:
             dict[
                 str,
                 Callable[
-                    [t.GeneralValueType],
-                    t.GeneralValueType | FlextResult[t.GeneralValueType],
+                    [FlextTypes.GeneralValueType],
+                    FlextTypes.GeneralValueType
+                    | FlextResult[FlextTypes.GeneralValueType],
                 ]
                 | str
                 | list[str]
@@ -833,7 +834,7 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> FlextLdifTypes.ModelMetadata.ParsedAttributeDict:
+    ) -> t.Ldif.ModelMetadata.ParsedAttributeDict:
         """Parse RFC 4512 attribute definition into structured data.
 
         Generic parsing method that extracts all fields from attribute definition.
@@ -929,8 +930,8 @@ class FlextLdifUtilitiesSchema:
         # Build parsed attribute dict
         # NOTE: Types are runtime-compatible, pyrefly sees recursion in nested dict conversion
         # Cast to ensure type compatibility - convert_metadata_value ensures max 2-level nesting
-        parsed_dict: FlextLdifTypes.ModelMetadata.ParsedAttributeDict = cast(
-            "FlextLdifTypes.ModelMetadata.ParsedAttributeDict",
+        parsed_dict: t.Ldif.ModelMetadata.ParsedAttributeDict = cast(
+            "t.Ldif.ModelMetadata.ParsedAttributeDict",
             {
                 "oid": oid,
                 "name": name,
@@ -1063,7 +1064,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> FlextLdifTypes.ModelMetadata.ParsedObjectClassDict:
+    ) -> t.Ldif.ModelMetadata.ParsedObjectClassDict:
         """Parse RFC 4512 objectClass definition into structured data.
 
         Generic parsing method that extracts all fields from objectClass definition.
@@ -1118,8 +1119,8 @@ class FlextLdifUtilitiesSchema:
         # Build parsed objectClass dict
         # NOTE: Types are runtime-compatible, pyrefly sees recursion in nested dict conversion
         # Cast to ensure type compatibility - _convert_metadata_for_objectclass ensures max 2-level nesting
-        parsed_dict: FlextLdifTypes.ModelMetadata.ParsedObjectClassDict = cast(
-            "FlextLdifTypes.ModelMetadata.ParsedObjectClassDict",
+        parsed_dict: t.Ldif.ModelMetadata.ParsedObjectClassDict = cast(
+            "t.Ldif.ModelMetadata.ParsedObjectClassDict",
             {
                 "oid": oid,
                 "name": name,

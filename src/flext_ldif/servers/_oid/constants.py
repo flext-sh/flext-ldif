@@ -20,6 +20,7 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
+from flext_ldif.constants import c
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)

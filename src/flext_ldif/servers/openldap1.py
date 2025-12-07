@@ -22,7 +22,7 @@ from flext_core import FlextResult, FlextRuntime
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import t
 
@@ -446,7 +446,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             if isinstance(acl_line, m.Ldif.Acl):
                 return self.can_handle_acl(acl_line)
             # For other AclProtocol implementations, extract raw_acl string if available
-            if isinstance(acl_line, FlextLdifProtocols.Ldif.Models.AclProtocol):
+            if isinstance(acl_line, p.Ldif.Models.AclProtocol):
                 raw_acl = getattr(acl_line, "raw_acl", None)
                 if isinstance(raw_acl, str):
                     return self.can_handle_acl(raw_acl)

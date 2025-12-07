@@ -10,12 +10,18 @@ import base64
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities, t
+from flext_core import (
+    FlextLogger,
+    FlextResult,
+    FlextRuntime,
+    FlextTypes,
+    FlextUtilities,
+)
 from jinja2 import Environment
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.typings import t
 
 # Aliases for simplified usage - after all imports
 # Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
@@ -196,7 +202,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def render_template(
         template_str: str,
-        context: FlextLdifTypes.MetadataDictMutable,
+        context: t.Ldif.MetadataDictMutable,
     ) -> FlextResult[str]:
         """Render Jinja2 template with context.
 
@@ -231,7 +237,7 @@ class FlextLdifUtilitiesWriter:
         content: str,
         file_path: Path,
         encoding: str = "utf-8",
-    ) -> FlextResult[FlextLdifTypes.MetadataDictMutable]:
+    ) -> FlextResult[t.Ldif.MetadataDictMutable]:
         """Write content to file (pure I/O operation).
 
         Args:
@@ -253,18 +259,18 @@ class FlextLdifUtilitiesWriter:
             # Create parent directories if they don't exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding=encoding)
-            stats: FlextLdifTypes.MetadataDictMutable = {
+            stats: t.Ldif.MetadataDictMutable = {
                 "bytes_written": len(content.encode(encoding)),
                 "path": str(file_path),
                 "encoding": encoding,
             }
-            return FlextResult[FlextLdifTypes.MetadataDictMutable].ok(stats)
+            return FlextResult[t.Ldif.MetadataDictMutable].ok(stats)
         except Exception as e:
             logger.exception(
                 "File write failed",
                 file_path=str(file_path),
             )
-            return FlextResult[FlextLdifTypes.MetadataDictMutable].fail(
+            return FlextResult[t.Ldif.MetadataDictMutable].fail(
                 f"File write failed: {e}",
             )
 
@@ -491,8 +497,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: dict[str, t.GeneralValueType],
-    ) -> list[tuple[str, t.GeneralValueType]] | None:
+        entry_data: dict[str, FlextTypes.GeneralValueType],
+    ) -> list[tuple[str, FlextTypes.GeneralValueType]] | None:
         """Determine attribute processing order from entry metadata.
 
         Args:
@@ -548,7 +554,7 @@ class FlextLdifUtilitiesWriter:
         }
 
         # Type narrowing: ensure tuple elements are (str, GeneralValueType) for return type
-        result: list[tuple[str, t.GeneralValueType]] = []
+        result: list[tuple[str, FlextTypes.GeneralValueType]] = []
         for key in attr_order:
             if key in entry_data and key not in skip_keys:
                 if not isinstance(key, str):
@@ -559,7 +565,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def extract_base64_attrs(
-        entry_data: dict[str, t.GeneralValueType],
+        entry_data: dict[str, FlextTypes.GeneralValueType],
     ) -> set[str]:
         """Extract set of attribute names that require base64 encoding.
 
@@ -811,7 +817,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_modify_operations(
-        entry_data: dict[str, t.GeneralValueType],
+        entry_data: dict[str, FlextTypes.GeneralValueType],
     ) -> list[str]:
         """Write LDIF modify operations for schema additions.
 
@@ -1052,7 +1058,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def extract_typed_attr_values(
-        attr_values: t.GeneralValueType,
+        attr_values: FlextTypes.GeneralValueType,
     ) -> list[str] | str:
         """Type-safe extraction of attribute values.
 
@@ -1144,7 +1150,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_modify_attributes(
-        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.CommonDict.AttributeDict,
         hidden: set[str],
         modify_operation: str,
         *,
@@ -1188,7 +1194,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_add_attributes(
-        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.CommonDict.AttributeDict,
         hidden: set[str],
         *,
         fold_long_lines: bool,
@@ -1253,7 +1259,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def build_entry_lines(
         dn_value: str,
-        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.CommonDict.AttributeDict,
         *,
         format_config: dict[str, object] | None = None,
         **kwargs: object,

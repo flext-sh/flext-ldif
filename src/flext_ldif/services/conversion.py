@@ -22,14 +22,14 @@ import traceback
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, cast, override
 
-from flext_core import r, s
+from flext_core import FlextTypes, r, s
 from flext_core.loggings import FlextLogger as l_core
 from flext_core.runtime import FlextRuntime
 from pydantic import Field
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
@@ -140,8 +140,8 @@ class FlextLdifConversion(
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
 
     # DN registry for tracking DN case consistency during conversions
-    dn_registry: m.DnRegistry = Field(
-        default_factory=m.DnRegistry,
+    dn_registry: m.Ldif.DnRegistry = Field(
+        default_factory=m.Ldif.DnRegistry,
     )
 
     def __new__(cls) -> Self:
@@ -404,7 +404,7 @@ class FlextLdifConversion(
         analysis: dict[str, dict[str, str]] = {}
         if not boolean_conversions:
             return analysis
-        boolean_conv_typed = cast("t.GeneralValueType", boolean_conversions)
+        boolean_conv_typed = cast("FlextTypes.GeneralValueType", boolean_conversions)
         if not FlextRuntime.is_dict_like(boolean_conv_typed):
             return analysis
 
@@ -413,7 +413,7 @@ class FlextLdifConversion(
         ) -> tuple[str, dict[str, str]]:
             """Process single conversion info."""
             attr_name, conv_info = item
-            conv_info_typed = cast("t.GeneralValueType", conv_info)
+            conv_info_typed = cast("FlextTypes.GeneralValueType", conv_info)
             # Type narrowing: batch expects R | r[R], so return tuple directly
             # Skip invalid items by returning empty dict (batch will filter via post_validate if needed)
             if not FlextRuntime.is_dict_like(conv_info_typed):
@@ -659,7 +659,7 @@ class FlextLdifConversion(
         # Step 3: Add conversion analysis
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, t.GeneralValueType] = {
+            extensions_update: dict[str, FlextTypes.GeneralValueType] = {
                 c.Ldif.MetadataKeys.CONVERTED_FROM_SERVER: source_quirk_name,
             }
             if conversion_analysis:
@@ -725,7 +725,7 @@ class FlextLdifConversion(
                 isinstance(target_server_type_raw, str)
                 and target_server_type_raw != "unknown"
             ):
-                normalized = c.normalize_server_type(target_server_type_raw)
+                normalized = c.Ldif.normalize_server_type(target_server_type_raw)
                 # Use cast to ensure type checker knows it's ServerTypeLiteral
                 target_server_type_str: c.LiteralTypes.ServerTypeLiteral = cast(
                     "c.LiteralTypes.ServerTypeLiteral",
@@ -735,10 +735,10 @@ class FlextLdifConversion(
                 # Use cast to ensure type checker knows RFC.value is ServerTypeLiteral
                 target_server_type_str = cast(
                     "c.LiteralTypes.ServerTypeLiteral",
-                    c.ServerTypes.RFC.value,
+                    c.Ldif.ServerTypes.RFC.value,
                 )
             # normalize_server_type returns canonical ServerTypeLiteral value (validated at runtime)
-            validated_quirk_type = c.normalize_server_type(
+            validated_quirk_type = c.Ldif.normalize_server_type(
                 str(target_server_type_str),
             )
 
@@ -925,8 +925,8 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
     ) -> r[
         tuple[
-            FlextLdifProtocols.Ldif.Quirks.AclProtocol,
-            FlextLdifProtocols.Ldif.Quirks.AclProtocol,
+            p.Ldif.Quirks.AclProtocol,
+            p.Ldif.Quirks.AclProtocol,
         ]
     ]:
         """Get and validate ACL classes from quirks."""
@@ -975,18 +975,14 @@ class FlextLdifConversion(
 
         # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
         # Business Rule: Structural typing ensures runtime correctness, cast satisfies type checker
-        source_acl_typed = cast(
-            "FlextLdifProtocols.Ldif.Quirks.AclProtocol", source_acl
-        )
-        target_acl_typed = cast(
-            "FlextLdifProtocols.Ldif.Quirks.AclProtocol", target_acl
-        )
+        source_acl_typed = cast("p.Ldif.Quirks.AclProtocol", source_acl)
+        target_acl_typed = cast("p.Ldif.Quirks.AclProtocol", target_acl)
         return r.ok((source_acl_typed, target_acl_typed))
 
     @staticmethod
     def _write_acl_to_string(
         acl: m.Ldif.Acl,
-        source_acl: FlextLdifProtocols.Ldif.Quirks.AclProtocol,
+        source_acl: p.Ldif.Quirks.AclProtocol,
     ) -> r[str]:
         """Write ACL to LDIF string."""
         # Business Rule: Validate ACL model satisfies AclProtocol before writing
@@ -1000,7 +996,7 @@ class FlextLdifConversion(
             )
         # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
         # Business Rule: Structural typing ensures runtime correctness, cast satisfies type checker
-        acl_protocol = cast("FlextLdifProtocols.Ldif.Models.AclProtocol", acl)
+        acl_protocol = cast("p.Ldif.Models.AclProtocol", acl)
         write_result = source_acl.write(acl_protocol)
         # Use u.unwrap_or(, default=None) for unified result value extraction (DSL pattern)
         write_value = u.unwrap_or(write_result, default=None)
@@ -1019,7 +1015,7 @@ class FlextLdifConversion(
     @staticmethod
     def _parse_acl_from_string(
         ldif_string: str,
-        target_acl: FlextLdifProtocols.Ldif.Quirks.AclProtocol,
+        target_acl: p.Ldif.Quirks.AclProtocol,
     ) -> r[m.Ldif.Acl]:
         """Parse ACL from LDIF string."""
         parse_result = target_acl.parse(ldif_string)
@@ -1168,11 +1164,11 @@ class FlextLdifConversion(
 
             config = m.Ldif.PermissionMappingConfig(
                 original_acl=cast(
-                    "FlextLdifProtocols.Ldif.Models.AclProtocol",
+                    "p.Ldif.Models.AclProtocol",
                     cast("m.Ldif.Acl", original_acl_raw),
                 ),
                 converted_acl=cast(
-                    "FlextLdifProtocols.Ldif.Models.AclProtocol",
+                    "p.Ldif.Models.AclProtocol",
                     cast("m.Ldif.Acl", converted_acl_raw),
                 ),
                 orig_perms_dict=cast("dict[str, bool]", orig_perms_dict_raw),
@@ -1185,7 +1181,7 @@ class FlextLdifConversion(
         def normalize_server_type_wrapper(value: object) -> object:
             """Wrapper for normalize_server_type to match maybe signature."""
             if isinstance(value, str):
-                return c.normalize_server_type(value)
+                return c.Ldif.normalize_server_type(value)
             return value
 
         normalized_source = u.maybe(
@@ -1423,12 +1419,12 @@ class FlextLdifConversion(
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
 
-        conv_ext_typed: Mapping[str, t.GeneralValueType] = cast(
-            "Mapping[str, t.GeneralValueType]",
+        conv_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
+            "Mapping[str, FlextTypes.GeneralValueType]",
             conv_ext,
         )
-        orig_ext_typed: Mapping[str, t.GeneralValueType] = cast(
-            "Mapping[str, t.GeneralValueType]",
+        orig_ext_typed: Mapping[str, FlextTypes.GeneralValueType] = cast(
+            "Mapping[str, FlextTypes.GeneralValueType]",
             orig_ext,
         )
         merge_result = u.merge_dicts(conv_ext_typed, orig_ext_typed)
@@ -1494,7 +1490,7 @@ class FlextLdifConversion(
             # Type narrowing: normalize_server_type returns ServerTypeLiteral, but we need ServerTypeLiteral | None
             source_server_type_raw = u.try_(
                 lambda: (
-                    c.normalize_server_type(str(server_type_attr))
+                    c.Ldif.normalize_server_type(str(server_type_attr))
                     if isinstance(server_type_attr, str)
                     else None
                 ),
@@ -1591,7 +1587,7 @@ class FlextLdifConversion(
             # Use normalize_server_type directly - it handles aliases and validation
             target_server_type = u.try_(
                 lambda: (
-                    c.normalize_server_type(target_server_type_raw)
+                    c.Ldif.normalize_server_type(target_server_type_raw)
                     if isinstance(target_server_type_raw, str)
                     and target_server_type_raw != "unknown"
                     else None
@@ -2271,7 +2267,7 @@ class FlextLdifConversion(
 
         Examples:
             >>> registry = FlextLdifServer()
-            >>> quirk = registry.quirk(c.ServerTypes.OUD)
+            >>> quirk = registry.quirk(c.Ldif.ServerTypes.OUD)
             >>> supported = matrix.get_supported_conversions(quirk)
             >>> print(supported)
             {'attribute': True, 'objectclass': True, 'acl': True, 'entry': True}
@@ -2306,7 +2302,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol | None:
+    ) -> p.Ldif.Quirks.SchemaProtocol | None:
         """Get schema quirk from base quirk for support checking.
 
         Args:
@@ -2333,7 +2329,7 @@ class FlextLdifConversion(
                 for method in required_methods
             ):
                 # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
-                return cast("FlextLdifProtocols.Ldif.Quirks.SchemaProtocol", quirk)
+                return cast("p.Ldif.Quirks.SchemaProtocol", quirk)
             return None
         # Check if quirk is a base quirk with schema_quirk attribute
         schema_quirk_raw = getattr(quirk, "schema_quirk", None)
@@ -2346,15 +2342,13 @@ class FlextLdifConversion(
                 for method in required_methods
             ):
                 # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
-                return cast(
-                    "FlextLdifProtocols.Ldif.Quirks.SchemaProtocol", schema_quirk_raw
-                )
+                return cast("p.Ldif.Quirks.SchemaProtocol", schema_quirk_raw)
             return None
         return None
 
     def _check_attribute_support(
         self,
-        quirk_schema: FlextLdifProtocols.Ldif.Quirks.SchemaProtocol,
+        quirk_schema: p.Ldif.Quirks.SchemaProtocol,
         test_attr_def: str,
         support: t.CommonDict.DistributionDict,
     ) -> t.CommonDict.DistributionDict:
@@ -2394,7 +2388,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: FlextLdifProtocols.Ldif.Quirks.SchemaProtocol,
+        quirk_schema: p.Ldif.Quirks.SchemaProtocol,
         test_oc_def: str,
         support: t.CommonDict.DistributionDict,
     ) -> t.CommonDict.DistributionDict:

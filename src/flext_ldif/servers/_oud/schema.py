@@ -10,11 +10,26 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.utilities import FlextLdifUtilities
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
+
 
 logger = FlextLogger(__name__)
 
@@ -106,8 +121,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def __init__(
         self,
-        schema_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
+        schema_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk.
@@ -158,7 +172,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             FlextResult with boolean indicating validity
 
         """
-        oid_validation_result = FlextLdifUtilities.OID.validate_format(oid)
+        u = _get_utilities()
+        oid_validation_result = u.OID.validate_format(oid)  # type: ignore[attr-defined]
         if oid_validation_result.is_failure:
             return FlextResult[bool].fail(
                 f"OID validation failed: {oid_validation_result.error}",
@@ -171,7 +186,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         if not is_valid_oud_oid and oid.endswith("-oid"):
             # Check if base OID (without -oid suffix) is valid
             base_oid = oid[:-4]
-            base_validation = FlextLdifUtilities.OID.validate_format(base_oid)
+            u = _get_utilities()
+            base_validation = u.OID.validate_format(base_oid)  # type: ignore[attr-defined]
             if base_validation.is_success:
                 is_valid_oud_oid = base_validation.unwrap()
 
@@ -300,7 +316,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
 
         # Track OID validation status using standardized MetadataKeys
-        current_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+        current_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
 
         # Track if OID uses OUD extension format (-oid suffix)
         if oid.endswith("-oid"):
@@ -391,7 +407,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 else {}
             )
 
-            oc_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+            oc_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
 
             if oid_str.endswith("-oid"):
                 oc_extensions["oid_format_extension"] = True
@@ -563,7 +579,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
         # Apply invalid SUBSTR rule replacements
         original_substr = fixed_substr
-        fixed_substr = FlextLdifUtilities.Schema.replace_invalid_substr_rule(
+        u = _get_utilities()
+        fixed_substr = u.Schema.replace_invalid_substr_rule(  # type: ignore[attr-defined]
             fixed_substr,
             FlextLdifServersOudConstants.INVALID_SUBSTR_RULES,
         )
@@ -610,7 +627,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
 
-        current_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+        current_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
 
         if oid_str.endswith("-oid"):
             current_extensions["oid_format_extension"] = True
@@ -693,7 +710,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
 
         # Check if this is a boolean attribute for special handling
-        is_boolean = FlextLdifUtilities.Schema.is_boolean_attribute(
+        u = _get_utilities()
+        is_boolean = u.Schema.is_boolean_attribute(  # type: ignore[attr-defined]
             attr_data.name,
             set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
         )

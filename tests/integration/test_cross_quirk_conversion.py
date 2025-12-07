@@ -49,8 +49,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_attribute_to_oud(
         self,
-        oid_schema_quirk: FlextLdifTypes.SchemaQuirkInstance,
-        oud_schema_quirk: FlextLdifTypes.SchemaQuirkInstance,
+        oid_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
+        oud_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         # OID attribute definition
@@ -96,8 +96,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid_schema_quirk: FlextLdifTypes.SchemaQuirkInstance,
-        oud_schema_quirk: FlextLdifTypes.SchemaQuirkInstance,
+        oid_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
+        oud_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         # OID objectClass definition
@@ -154,7 +154,7 @@ class TestOidToOudAclConversion:
 
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl_quirk: FlextLdifTypes.AclQuirkInstance,
+        oid_acl_quirk: FlextLdifTypes.Ldif.AclQuirk,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
@@ -178,7 +178,7 @@ class TestOidToOudAclConversion:
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
-        oud_acl_quirk: FlextLdifTypes.AclQuirkInstance,
+        oud_acl_quirk: FlextLdifTypes.Ldif.AclQuirk,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         # OUD ACI format
@@ -220,8 +220,8 @@ class TestOidToOudIntegrationConversion:
 
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid_schema_quirk: FlextLdifTypes.SchemaQuirkInstance,
-        oud_schema_quirk: FlextLdifTypes.SchemaQuirkInstance,
+        oid_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
+        oud_schema_quirk: FlextLdifTypes.Ldif.SchemaQuirk,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format.

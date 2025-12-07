@@ -20,13 +20,13 @@ from flext_core import FlextRuntime, r, u
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 logger = structlog.get_logger(__name__)
 
-# Use types directly from FlextLdifTypes (no local aliases)
-EntryAttrs = FlextLdifTypes.Ldif.Entry.EntryAttrs
+# Use types via t alias for consistency
+EntryAttrs = t.Ldif.Entry.EntryAttrs
 
 
 class FlextLdifUtilitiesWriters:
@@ -123,8 +123,8 @@ class FlextLdifUtilitiesWriters:
             # entry is m.Ldif.Entry which satisfies EntryProtocol structurally
             # Cast to EntryProtocol for hooks (structural typing)
             # Entry.metadata is QuirkMetadata | None, which satisfies t.Metadata | None structurally
-            entry_protocol: FlextLdifProtocols.Ldif.Models.EntryProtocol = cast(
-                "FlextLdifProtocols.Ldif.Models.EntryProtocol", entry
+            entry_protocol: p.Ldif.Models.EntryProtocol = cast(
+                "p.Ldif.Models.EntryProtocol", entry
             )
             # Write comments if hook provided and enabled
             if config.include_comments and config.write_comments_hook:
@@ -194,8 +194,8 @@ class FlextLdifUtilitiesWriters:
                     })
 
                 # Create entry_protocol for hooks
-                entry_protocol: FlextLdifProtocols.Ldif.Models.EntryProtocol = cast(
-                    "FlextLdifProtocols.Ldif.Models.EntryProtocol",
+                entry_protocol: p.Ldif.Models.EntryProtocol = cast(
+                    "p.Ldif.Models.EntryProtocol",
                     entry,
                 )
 
@@ -227,9 +227,7 @@ class FlextLdifUtilitiesWriters:
                             ),
                         })
                     # Update entry_protocol for hooks
-                    entry_protocol = cast(
-                        "FlextLdifProtocols.Ldif.Models.EntryProtocol", entry
-                    )
+                    entry_protocol = cast("p.Ldif.Models.EntryProtocol", entry)
 
                 # Write entry parts
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
@@ -594,7 +592,7 @@ class FlextLdifUtilitiesWriters:
                         return r[str].fail("Failed to write entry")
                     return r[str].ok(result)
 
-                # Type hint explícito para ajudar mypy com inferência de tipos genéricos
+                # Explicit type hint to help mypy with generic type inference
                 batch_result = u.Collection.batch(
                     entries_typed,
                     operation=cast(

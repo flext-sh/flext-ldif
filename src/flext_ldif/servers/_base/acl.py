@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Ldif.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> p.Ldif.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> p.Ldif.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> p.Ldif.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -34,18 +34,18 @@ from __future__ import annotations
 import re
 from typing import ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import (
     QuirkMethodsMixin,
     _get_utilities,
 )
 
-# ARCHITECTURE NOTE: Use FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
+# ARCHITECTURE NOTE: Use p.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
 # to avoid circular dependency (servers/base.py imports from _base/).
 from flext_ldif.typings import t
 
@@ -59,7 +59,7 @@ class FlextLdifServersBaseSchemaAcl(
     QuirkMethodsMixin,
     FlextService[m.Ldif.Acl | str],
 ):
-    """Base class for ACL quirks - satisfies FlextLdifProtocols.Ldif.Quirks.AclProtocol.
+    """Base class for ACL quirks - satisfies p.Ldif.Quirks.AclProtocol.
 
     NOTE: This is an implementation detail - DO NOT import directly.
     Use FlextLdifServersBase.Acl instead.
@@ -76,10 +76,10 @@ class FlextLdifServersBaseSchemaAcl(
     - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
 
     **Protocol Compliance**: All implementations MUST satisfy
-    FlextLdifProtocols.Ldif.Quirks.AclProtocol through structural typing.
+    p.Ldif.Quirks.AclProtocol through structural typing.
     This means all public methods must match protocol signatures exactly.
 
-    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Ldif.Quirks.AclProtocol)
+    **Validation**: Use isinstance(quirk, p.Ldif.Quirks.AclProtocol)
     to check protocol compliance at runtime.
 
     Common ACL patterns:
@@ -113,7 +113,7 @@ class FlextLdifServersBaseSchemaAcl(
     """Quirk priority (lower number = higher priority)."""
 
     # Parent quirk reference for accessing server-level configuration
-    parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = Field(
+    parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -122,10 +122,9 @@ class FlextLdifServersBaseSchemaAcl(
 
     def __init__(
         self,
-        acl_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
-        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
-        **kwargs: t.GeneralValueType,
+        acl_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
+        _parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection.
 
@@ -286,7 +285,7 @@ class FlextLdifServersBaseSchemaAcl(
             True if feature is supported, False otherwise.
 
         """
-        return feature_id in c.FeatureCapabilities.RFC_STANDARD_FEATURES
+        return feature_id in c.Ldif.FeatureCapabilities.RFC_STANDARD_FEATURES
 
     def _get_feature_fallback(self, feature_id: str) -> str | None:
         """Get RFC fallback value for unsupported vendor feature.
@@ -304,7 +303,7 @@ class FlextLdifServersBaseSchemaAcl(
             Fallback permission string, or None if no fallback.
 
         """
-        return c.FeatureCapabilities.RFC_FALLBACKS.get(feature_id)
+        return c.Ldif.FeatureCapabilities.RFC_FALLBACKS.get(feature_id)
 
     # =====================================================================
     # Public Interface Methods - Moved to rfc.py.Acl
@@ -414,7 +413,7 @@ class FlextLdifServersBaseSchemaAcl(
     def parse(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse ACL line to Acl model.
 
-        This satisfies FlextLdifProtocols.Ldif.Quirks.AclProtocol.
+        This satisfies p.Ldif.Quirks.AclProtocol.
 
         Args:
             acl_line: ACL definition line
@@ -428,7 +427,7 @@ class FlextLdifServersBaseSchemaAcl(
     def write(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
         """Write Acl model to string format.
 
-        This satisfies FlextLdifProtocols.Ldif.Quirks.AclProtocol.
+        This satisfies p.Ldif.Quirks.AclProtocol.
 
         Args:
             acl_data: Acl model
@@ -621,7 +620,7 @@ class FlextLdifServersBaseSchemaAcl(
 
         """
         all_extensions: t.MetadataDictMutable = {
-            c.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format,
+            c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: original_format,
         }
         if extensions:
             all_extensions.update(extensions)

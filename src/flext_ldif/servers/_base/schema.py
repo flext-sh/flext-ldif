@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Ldif.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> p.Ldif.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> p.Ldif.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> p.Ldif.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -33,18 +33,18 @@ from __future__ import annotations
 
 from typing import ClassVar, Self, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from pydantic import Field
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import (
     QuirkMethodsMixin,
     _get_utilities,
 )
 
-# ARCHITECTURE NOTE: Use FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
+# ARCHITECTURE NOTE: Use p.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
 # to avoid circular dependency (servers/base.py imports from _base/).
 from flext_ldif.typings import t
 
@@ -96,10 +96,10 @@ class FlextLdifServersBaseSchema(
         - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
 
         **Protocol Compliance**: All implementations MUST satisfy
-        FlextLdifProtocols.Ldif.Quirks.SchemaProtocol through structural typing.
+        p.Ldif.Quirks.SchemaProtocol through structural typing.
         This means all public methods must match protocol signatures exactly.
 
-        **Validation**: Use isinstance(quirk, FlextLdifProtocols.Ldif.Quirks.SchemaProtocol)
+        **Validation**: Use isinstance(quirk, p.Ldif.Quirks.SchemaProtocol)
         to check protocol compliance at runtime.
 
         Common schema extension patterns:
@@ -111,7 +111,7 @@ class FlextLdifServersBaseSchema(
         """
 
     # Parent quirk reference for accessing server-level configuration
-    parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = Field(
+    parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -132,13 +132,13 @@ class FlextLdifServersBaseSchema(
         repr=False,
         description="ObjectClass definition for auto-execute pattern",
     )
-    attr_model: FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol | None = Field(
+    attr_model: p.Ldif.Models.SchemaAttributeProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
         description="SchemaAttribute model for auto-execute pattern",
     )
-    oc_model: FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol | None = Field(
+    oc_model: p.Ldif.Models.SchemaObjectClassProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -153,10 +153,9 @@ class FlextLdifServersBaseSchema(
 
     def __new__(
         cls,
-        _schema_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
-        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
-        **kwargs: t.GeneralValueType,
+        _schema_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
+        _parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> Self:
         """Override __new__ to filter _parent_quirk before passing to FlextService.
 
@@ -187,10 +186,9 @@ class FlextLdifServersBaseSchema(
 
     def __init__(
         self,
-        _schema_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
-        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
-        **kwargs: t.GeneralValueType,
+        _schema_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
+        _parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize schema quirk service with optional DI service injection.
 
@@ -661,19 +659,19 @@ class FlextLdifServersBaseSchema(
         else:
             oid_validate_result = FlextResult.ok(True)
         if oid_validate_result.is_failure:
-            metadata_extensions[c.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
+            metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
                 f"{oid_name.capitalize()} OID validation failed: {oid_validate_result.error}"
             )
-            metadata_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = False
+            metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = False
         elif not oid_validate_result.unwrap():
-            metadata_extensions[c.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
+            metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
                 f"Invalid {oid_name} OID format: {oid_value} "
                 f"(must be numeric dot-separated format)"
             )
-            metadata_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = False
+            metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = False
         else:
             # OID is valid - track in metadata
-            metadata_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = True
+            metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = True
 
     @staticmethod
     def _extract_metadata_extensions(
@@ -701,11 +699,11 @@ class FlextLdifServersBaseSchema(
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Resolve server type to valid literal, defaulting to RFC."""
         if not server_type:
-            return c.normalize_server_type("rfc")
-        valid_types = {m.value for m in c.ServerTypes.__members__.values()}
+            return c.Ldif.normalize_server_type("rfc")
+        valid_types = {m.value for m in c.Ldif.ServerTypes.__members__.values()}
         if server_type in valid_types:
-            return c.normalize_server_type(server_type)
-        return c.normalize_server_type("rfc")
+            return c.Ldif.normalize_server_type(server_type)
+        return c.Ldif.normalize_server_type("rfc")
 
     @staticmethod
     def _preserve_formatting(
@@ -759,11 +757,11 @@ class FlextLdifServersBaseSchema(
 
         # Track syntax OID validation
         if syntax:
-            metadata_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = (
+            metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = (
                 syntax_validation_error is None
             )
             if syntax_validation_error:
-                metadata_extensions[c.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
+                metadata_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
                     syntax_validation_error
                 )
 
@@ -790,8 +788,10 @@ class FlextLdifServersBaseSchema(
         )
 
         # Preserve original format
-        metadata_extensions[c.MetadataKeys.ORIGINAL_FORMAT] = attr_definition.strip()
-        metadata_extensions[c.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE] = (
+        metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
+            attr_definition.strip()
+        )
+        metadata_extensions[c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE] = (
             attr_definition
         )
 
@@ -808,7 +808,7 @@ class FlextLdifServersBaseSchema(
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
 
         # Log preview
-        preview_len = c.DN_TRUNCATE_LENGTH
+        preview_len = c.Ldif.DN_TRUNCATE_LENGTH
         logger.debug(
             "Preserved schema formatting details",
             attr_definition_preview=attr_definition[:preview_len]
@@ -1013,7 +1013,7 @@ class FlextLdifServersBaseSchema(
                     schema_type = "attribute"
             else:
                 schema_type = "attribute"
-            if schema_type == c.Schema.OBJECTCLASS:
+            if schema_type == c.Ldif.Schema.OBJECTCLASS:
                 return self._handle_parse_operation(
                     attr_definition=None,
                     oc_definition=data,
@@ -1117,7 +1117,7 @@ class FlextLdifServersBaseSchema(
         """Write schema model to string format.
 
         Dispatches to write_attribute or write_objectclass based on model type.
-        This satisfies FlextLdifProtocols.Ldif.Quirks.SchemaProtocol.
+        This satisfies p.Ldif.Quirks.SchemaProtocol.
 
         Args:
             model: SchemaAttribute or SchemaObjectClass model to write

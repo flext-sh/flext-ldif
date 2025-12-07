@@ -18,9 +18,8 @@ from flext_core.utilities import FlextUtilities as u_core
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-
-# Import pure functional utilities that break circular dependency
 from flext_ldif._utilities.functional import FlextFunctional
+from flext_ldif.constants import c
 from flext_ldif.models import FlextLdifModels
 
 # Aliases for simplified usage - after all imports

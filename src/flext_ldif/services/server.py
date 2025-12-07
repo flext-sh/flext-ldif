@@ -10,7 +10,7 @@ from flext_core.loggings import FlextLogger as l_core
 
 import flext_ldif.servers as servers_package
 from flext_ldif.constants import c
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
@@ -273,19 +273,19 @@ class FlextLdifServer:
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Normalize server type to canonical short form.
 
-        Delegates to c.normalize_server_type() for proper
+        Delegates to c.Ldif.normalize_server_type() for proper
         normalization and validation with fast-fail on invalid types.
         """
-        return c.normalize_server_type(server_type)
+        return c.Ldif.normalize_server_type(server_type)
 
     def _get_attr(
         self,
         server_type: str,
         attr_name: str,
     ) -> r[
-        FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-        | FlextLdifProtocols.Ldif.Quirks.AclProtocol
-        | FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+        p.Ldif.Quirks.SchemaProtocol
+        | p.Ldif.Quirks.AclProtocol
+        | p.Ldif.Quirks.EntryProtocol
         | None
     ]:
         """Retrieve a quirk attribute (schema, ACL, or entry) for a server.
