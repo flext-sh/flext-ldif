@@ -1,3 +1,9 @@
+"""Tests for RFC entry validators in FlextLdif models.
+
+This module tests the RFC 2849/4512 validators for Entry model validation
+and RFC compliance checking.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,8 +11,6 @@ from typing import ClassVar
 
 import pytest
 from tests import m, s
-
-from flext_ldif.models import m
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 

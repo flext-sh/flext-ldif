@@ -1,3 +1,9 @@
+"""Tests for OID utility functions and OID-specific operations.
+
+This module tests utility functions for Oracle Internet Directory (OID)
+including OID extraction, validation, pattern matching, and server detection.
+"""
+
 from __future__ import annotations
 
 import re

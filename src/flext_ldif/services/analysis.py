@@ -85,7 +85,7 @@ class FlextLdifAnalysis(
 
     @staticmethod
     def analyze(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
     ) -> r[m.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
 
@@ -122,7 +122,7 @@ class FlextLdifAnalysis(
         objectclass_distribution: Counter[str] = Counter()
         patterns_detected: set[str] = set()
 
-        def process_entry(entry: m.Entry) -> None:
+        def process_entry(entry: m.Ldif.Entry) -> None:
             """Process entry for analysis."""
             for oc_name in entry.get_objectclass_names():
                 objectclass_distribution[oc_name] += 1
@@ -149,7 +149,7 @@ class FlextLdifAnalysis(
 
     @staticmethod
     def validate_entries(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         validation_service: FlextLdifValidation,
     ) -> r[m.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
@@ -189,7 +189,7 @@ class FlextLdifAnalysis(
         errors: list[str] = []
         valid_count = 0
 
-        def validate_entry(entry: m.Entry) -> bool:
+        def validate_entry(entry: m.Ldif.Entry) -> bool:
             """Validate single entry and collect errors."""
             is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
                 entry,
@@ -222,7 +222,7 @@ class FlextLdifAnalysis(
 
     @staticmethod
     @staticmethod
-    def _validate_entry_dn(entry: m.Entry) -> tuple[bool, str, list[str]]:
+    def _validate_entry_dn(entry: m.Ldif.Entry) -> tuple[bool, str, list[str]]:
         """Validate entry DN.
 
         Returns:
@@ -242,7 +242,7 @@ class FlextLdifAnalysis(
 
     @staticmethod
     def _validate_entry_attributes(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         dn_str: str,
         validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
@@ -267,7 +267,7 @@ class FlextLdifAnalysis(
 
     @staticmethod
     def _validate_entry_objectclasses(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         dn_str: str,
         validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
@@ -310,7 +310,7 @@ class FlextLdifAnalysis(
 
     @staticmethod
     def _validate_single_entry(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
         """Validate a single LDIF entry.

@@ -1,9 +1,15 @@
+"""Tests for LDIF writer integration with DN service.
+
+This module tests the FlextLdifWriter service integration with FlextLdifDn
+service for proper distinguished name parsing, normalization, and handling of
+escaped characters and complex DN structures during write operations.
+"""
+
 from __future__ import annotations
 
 import pytest
 
 from flext_ldif import FlextLdifWriter
-from flext_ldif.models import m
 from flext_ldif.services.dn import FlextLdifDn
 from tests import m
 

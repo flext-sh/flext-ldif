@@ -5,8 +5,6 @@ Phase 1 of EntryResult-centric refactoring: Test new helper methods.
 
 from tests import m, s
 
-from flext_ldif.models import m
-
 
 class TestsFlextLdifEntryResultHelpers(s):
     """Test EntryResult helper methods added in Phase 1."""

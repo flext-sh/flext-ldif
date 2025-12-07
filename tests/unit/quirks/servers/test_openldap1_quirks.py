@@ -1,8 +1,14 @@
+"""Tests for OpenLDAP 1.x server LDIF quirks handling.
+
+This module tests the OpenLDAP 1.x implementation for handling OpenLDAP 1.x-specific
+attributes, object classes, and entries in LDIF format.
+"""
+
 from __future__ import annotations
 
 from flext_ldif.models import m
 from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
-from tests import RfcTestHelpers, TestDeduplicationHelpers, m
+from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 
 class TestsTestFlextLdifOpenldap1Quirks(s):

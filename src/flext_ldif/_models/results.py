@@ -24,6 +24,9 @@ from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
 
+# Alias for simplified usage
+c = FlextLdifConstants
+
 # NOTE: This module uses FlextLdifModelsDomains.* internally to avoid circular imports.
 # The public facade models (m.*) are defined in models.py which imports this module.
 # When types from this module are exposed via FlextLdifModelsResults in models.py,
@@ -577,7 +580,7 @@ class FlextLdifModelsResults:
 
         attributes_count: int = Field(default=0)
         object_classes_count: int = Field(default=0)
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             default="generic",
         )
         entry_count: int = Field(default=0)
@@ -1144,9 +1147,7 @@ class FlextLdifModelsResults:
             ge=0,
             description="Parse errors encountered",
         )
-        detected_server_type: (
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
-        ) = Field(
+        detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = Field(
             default=None,
             description="Auto-detected LDAP server type",
         )
@@ -1166,7 +1167,7 @@ class FlextLdifModelsResults:
             ge=0,
             description="Written file size",
         )
-        encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
+        encoding: c.Ldif.LiteralTypes.EncodingLiteral = Field(
             default="utf-8",
             description="File encoding used",
         )
@@ -1301,8 +1302,7 @@ class FlextLdifModelsResults:
             schema: int = 0,
             data: int = 0,
             errors: int = 0,
-            detected_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-            | None = None,
+            detected_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
         ) -> FlextLdifModelsResults.Statistics:
             """Create statistics for parsing operations."""
             return cls(
@@ -1321,7 +1321,7 @@ class FlextLdifModelsResults:
             entries_written: int,
             output_file: str | None = None,
             file_size_bytes: int = 0,
-            encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = "utf-8",
+            encoding: c.Ldif.LiteralTypes.EncodingLiteral = "utf-8",
             processing_duration: float = 0.0,
         ) -> FlextLdifModelsResults.Statistics:
             """Create statistics for writing operations."""
@@ -1457,7 +1457,7 @@ class FlextLdifModelsResults:
             default_factory=_SchemaObjectClassMap,
             description="Object class definitions keyed by class name",
         )
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             default="generic",
             min_length=1,
             description="Target LDAP server type (generic, oid, oud, openldap, etc.)",
@@ -1741,10 +1741,10 @@ class FlextLdifModelsResults:
             ge=0,
             description="Number of successfully migrated entries",
         )
-        from_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        from_server: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Source server type",
         )
-        to_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        to_server: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Target server type",
         )
         success: bool = Field(description="Migration completion status")
@@ -1787,7 +1787,7 @@ class FlextLdifModelsResults:
             validate_default=True,
         )
 
-        detected_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Detected LDAP server type",
         )
         confidence: float = Field(
@@ -1958,7 +1958,7 @@ class FlextLdifModelsResults:
         service: str = Field(
             description="Service name identifier",
         )
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type configuration",
         )
         status: str = Field(
@@ -2109,9 +2109,7 @@ class FlextLdifModelsResults:
         statistics: FlextLdifModelsResults.Statistics = Field(
             description="Parse operation statistics",
         )
-        detected_server_type: (
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
-        ) = Field(None)
+        detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = Field(None)
 
         def get_entries(self) -> Sequence[FlextLdifModelsDomains.Entry]:
             """Get parsed entries.
@@ -2226,7 +2224,7 @@ class FlextLdifModelsResults:
             default=0,
             description="Total number of discovered object classes",
         )
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             default="generic",
             description="Server type for which schema was discovered",
         )

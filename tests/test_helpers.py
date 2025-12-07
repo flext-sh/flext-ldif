@@ -24,7 +24,6 @@ from flext_tests import (
     FlextTestsValidator as tv_base,
 )
 
-from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from tests import m
 
@@ -410,9 +409,133 @@ class TestsFlextLdifMatchers(tm_base):
                         or f"Index {idx} out of range (list has {len(entries)} entries)"
                     )
                     raise AssertionError(error_msg)
-                TestsFlextLdifMatchers.entry(entries[idx], msg=msg, **validation_params)
+                # Type-safe entry validation with explicit parameters
+                if isinstance(validation_params, dict):
+                    TestsFlextLdifMatchers.entry(
+                        entries[idx],
+                        msg=msg,
+                        dn=validation_params.get("dn"),
+                        has_attr=validation_params.get("has_attr"),
+                        not_has_attr=validation_params.get("not_has_attr"),
+                    )
+                else:
+                    TestsFlextLdifMatchers.entry(entries[idx], msg=msg)
 
         return list(entries)
+
+    @staticmethod
+    def ok_entry(
+        result: r[m.Entry],
+        *,
+        msg: str | None = None,
+        dn: str | None = None,
+        dn_contains: str | None = None,
+        dn_starts: str | None = None,
+        dn_ends: str | None = None,
+        has_attr: str | Sequence[str] | None = None,
+        not_has_attr: str | Sequence[str] | None = None,
+        attr_equals: dict[str, str | list[str]] | None = None,
+        attr_contains: dict[str, str | list[str]] | None = None,
+        has_oc: str | Sequence[str] | None = None,
+        not_has_oc: str | Sequence[str] | None = None,
+        attr_count: int | None = None,
+        attr_count_gt: int | None = None,
+        attr_count_gte: int | None = None,
+        attr_count_lt: int | None = None,
+        attr_count_lte: int | None = None,
+        oc_count: int | None = None,
+        oc_count_gt: int | None = None,
+        oc_count_gte: int | None = None,
+        oc_count_lt: int | None = None,
+        oc_count_lte: int | None = None,
+    ) -> m.Entry:
+        """Assert FlextResult success and validate entry.
+
+        Args:
+            result: FlextResult[Entry] to validate
+            msg: Custom error message
+            See entry() method for parameter documentation
+
+        Returns:
+            The validated Entry
+
+        """
+        entry = TestsFlextLdifMatchers.ok(result, msg=msg, is_=m.Entry)
+        return TestsFlextLdifMatchers.entry(
+            entry,
+            msg=msg,
+            dn=dn,
+            dn_contains=dn_contains,
+            dn_starts=dn_starts,
+            dn_ends=dn_ends,
+            has_attr=has_attr,
+            not_has_attr=not_has_attr,
+            attr_equals=attr_equals,
+            attr_contains=attr_contains,
+            has_oc=has_oc,
+            not_has_oc=not_has_oc,
+            attr_count=attr_count,
+            attr_count_gt=attr_count_gt,
+            attr_count_gte=attr_count_gte,
+            attr_count_lt=attr_count_lt,
+            attr_count_lte=attr_count_lte,
+            oc_count=oc_count,
+            oc_count_gt=oc_count_gt,
+            oc_count_gte=oc_count_gte,
+            oc_count_lt=oc_count_lt,
+            oc_count_lte=oc_count_lte,
+        )
+
+    @staticmethod
+    def ok_entries(
+        result: r[Sequence[m.Entry]] | r[list[m.Entry]],
+        *,
+        msg: str | None = None,
+        count: int | None = None,
+        count_gt: int | None = None,
+        count_gte: int | None = None,
+        count_lt: int | None = None,
+        count_lte: int | None = None,
+        empty: bool | None = None,
+        all_have_attr: str | Sequence[str] | None = None,
+        all_have_oc: str | Sequence[str] | None = None,
+        any_has_attr: str | Sequence[str] | None = None,
+        any_has_oc: str | Sequence[str] | None = None,
+        at_index: dict[int, dict[str, object]] | None = None,
+    ) -> list[m.Entry]:
+        """Assert FlextResult success and validate entries list.
+
+        Args:
+            result: FlextResult[Sequence[Entry]] or FlextResult[list[Entry]] to validate
+            msg: Custom error message
+            See entries() method for parameter documentation
+
+        Returns:
+            The validated list of entries
+
+        """
+        # Type narrowing for Sequence/list union
+        entries_result = TestsFlextLdifMatchers.ok(result, msg=msg, is_=list)
+        entries: list[m.Entry] = (
+            list(entries_result)
+            if not isinstance(entries_result, list)
+            else entries_result
+        )
+        return TestsFlextLdifMatchers.entries(
+            entries,
+            msg=msg,
+            count=count,
+            count_gt=count_gt,
+            count_gte=count_gte,
+            count_lt=count_lt,
+            count_lte=count_lte,
+            empty=empty,
+            all_have_attr=all_have_attr,
+            all_have_oc=all_have_oc,
+            any_has_attr=any_has_attr,
+            any_has_oc=any_has_oc,
+            at_index=at_index,
+        )
 
 
 class TestsFlextLdifValidators(tv_base):
@@ -499,7 +622,7 @@ class TestsFlextLdifFixtures(tf_base):
 
         """
         service = FlextLdifEntries()
-        attrs_dict = {
+        attrs_dict: dict[str, str | list[str]] = {
             k: [v] if isinstance(v, str) else v for k, v in attributes.items()
         }
         result = service.create_entry(dn=dn, attributes=attrs_dict)

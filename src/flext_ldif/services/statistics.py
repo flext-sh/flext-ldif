@@ -32,7 +32,7 @@ from flext_ldif.utilities import u
 
 
 class FlextLdifStatistics(
-    FlextLdifServiceBase[m.StatisticsServiceStatus],
+    FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus],
 ):
     """Statistics service for LDIF processing pipeline.
 
@@ -58,7 +58,7 @@ class FlextLdifStatistics(
     @d.track_performance()
     def execute(
         self,
-    ) -> r[m.StatisticsServiceStatus]:
+    ) -> r[m.Ldif.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Business Rule: Service health check validates statistics generation
@@ -73,8 +73,8 @@ class FlextLdifStatistics(
             r containing service status (health check)
 
         """
-        return r[m.StatisticsServiceStatus].ok(
-            m.StatisticsServiceStatus(
+        return r[m.Ldif.StatisticsServiceStatus].ok(
+            m.Ldif.StatisticsServiceStatus(
                 service="StatisticsService",
                 status="operational",
                 capabilities=[
@@ -148,8 +148,8 @@ class FlextLdifStatistics(
         # Access rejected entries directly from categorized dict
         # u.take() doesn't work correctly with _FlexibleCategories Pydantic models
         rejected_key = c.Categories.REJECTED
-        rejected_entries_raw: list[m.Entry] = cast(
-            "list[m.Entry]",
+        rejected_entries_raw: list[m.Ldif.Entry] = cast(
+            "list[m.Ldif.Entry]",
             categorized.get(rejected_key, []) if hasattr(categorized, "get") else [],
         )
         # Type narrowing: categorized is Categories[Entry], so get() returns list[Entry]
@@ -157,12 +157,12 @@ class FlextLdifStatistics(
 
         def is_entry(entry: object) -> bool:
             """Check if entry is Entry model."""
-            return isinstance(entry, m.Entry)
+            return isinstance(entry, m.Ldif.Entry)
 
         # Use list comprehension to avoid u.filter overload issues with object type
-        # Type narrowing: isinstance ensures list[m.Entry]
+        # Type narrowing: isinstance ensures list[m.Ldif.Entry]
         rejected_entries = [
-            entry for entry in rejected_entries_raw if isinstance(entry, m.Entry)
+            entry for entry in rejected_entries_raw if isinstance(entry, m.Ldif.Entry)
         ]
         rejection_count = u.Collection.count(rejected_entries)
         rejection_reasons = self._extract_rejection_reasons(rejected_entries)
@@ -203,7 +203,7 @@ class FlextLdifStatistics(
 
     def calculate_for_entries(
         self,
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[m.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 
@@ -217,7 +217,7 @@ class FlextLdifStatistics(
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
 
-        def process_entry(entry: m.Entry) -> None:
+        def process_entry(entry: m.Ldif.Entry) -> None:
             """Process entry to update distributions."""
             object_class_distribution.update(entry.get_objectclass_names())
 
@@ -261,7 +261,7 @@ class FlextLdifStatistics(
 
     def _extract_rejection_reasons(
         self,
-        rejected_entries: list[m.Entry],
+        rejected_entries: list[m.Ldif.Entry],
     ) -> list[str]:
         """Extract unique rejection reasons from rejected entries.
 
@@ -274,7 +274,7 @@ class FlextLdifStatistics(
         """
         reasons: set[str] = set()
 
-        def extract_reason(entry: m.Entry) -> str | r[str]:
+        def extract_reason(entry: m.Ldif.Entry) -> str | r[str]:
             """Extract rejection reason from entry."""
             if entry.metadata and entry.metadata.processing_stats:
                 reason = entry.metadata.processing_stats.rejection_reason

@@ -1,3 +1,9 @@
+"""Tests for RFC server LDIF quirks handling.
+
+This module tests the RFC 2849/4512 compliant implementation for handling
+standard LDIF format and schema definitions without server-specific extensions.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -9,7 +15,7 @@ import pytest
 from flext_ldif import FlextLdif, FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import m, s
+from tests import s
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 from .fixtures.general_constants import TestGeneralConstants

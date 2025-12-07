@@ -1,3 +1,9 @@
+"""Tests for FlextLdif constants and configuration values.
+
+This module tests all FlextLdifConstants groups including format,
+processing, encoding, validation, quality, and LDAP server constants.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

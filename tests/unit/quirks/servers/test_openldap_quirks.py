@@ -1,3 +1,9 @@
+"""Tests for OpenLDAP server LDIF quirks handling.
+
+This module tests the OpenLDAP implementation for handling OpenLDAP-specific
+attributes, object classes, and entries in LDIF format.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -9,7 +15,7 @@ import pytest
 from flext_ldif import FlextLdif, FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-from tests import RfcTestHelpers, s
+from tests import FlextLdifTestUtils, RfcTestHelpers, s
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py

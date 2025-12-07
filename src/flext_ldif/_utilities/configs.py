@@ -14,8 +14,9 @@ Python 3.13+ features:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -112,6 +113,9 @@ class DnNormalizationConfig(BaseModel):
     case_fold: CaseFoldOption = Field(default=CaseFoldOption.LOWER)
     space_handling: SpaceHandlingOption = Field(default=SpaceHandlingOption.TRIM)
     escape_handling: EscapeHandlingOption = Field(default=EscapeHandlingOption.PRESERVE)
+    validate_before: bool = Field(
+        default=True, description="Validate DN before normalization"
+    )
 
 
 class AttrNormalizationConfig(BaseModel):
@@ -122,6 +126,11 @@ class AttrNormalizationConfig(BaseModel):
     sort_attributes: SortOption = Field(default=SortOption.ALPHABETICAL)
     sort_values: bool = Field(default=True)
     normalize_whitespace: bool = Field(default=True)
+    case_fold_names: bool = Field(default=True, description="Lowercase attribute names")
+    trim_values: bool = Field(default=True, description="Trim whitespace from values")
+    remove_empty: bool = Field(
+        default=False, description="Remove empty attribute values"
+    )
 
 
 class AclConversionConfig(BaseModel):
@@ -162,6 +171,13 @@ class FilterConfig(BaseModel):
     filter_expression: str | None = Field(default=None)
     exclude_filter: str | None = Field(default=None)
     include_operational: bool = Field(default=False)
+    mode: Literal["all", "any"] = Field(
+        default="all", description="Filter combination mode (all=AND, any=OR)"
+    )
+    case_sensitive: bool = Field(default=False, description="Case-sensitive matching")
+    include_metadata_matches: bool = Field(
+        default=False, description="Match against metadata fields"
+    )
 
 
 class ProcessConfig(BaseModel):
@@ -190,6 +206,9 @@ class TransformConfig(BaseModel):
     normalize_dns: bool = Field(default=True)
     normalize_attrs: bool = Field(default=True)
     convert_acls: bool = Field(default=True)
+    fail_fast: bool = Field(default=True, description="Stop on first error")
+    preserve_order: bool = Field(default=True, description="Preserve entry order")
+    track_changes: bool = Field(default=True, description="Track changes in metadata")
 
 
 class WriteConfig(BaseModel):
@@ -201,6 +220,26 @@ class WriteConfig(BaseModel):
     version: int = Field(default=1, ge=1)
     wrap_lines: bool = Field(default=True)
     line_length: int = Field(default=76, ge=10)
+    format: OutputFormat = Field(
+        default=OutputFormat.LDIF, description="Alias for output_format"
+    )
+    line_width: int = Field(default=76, ge=10, description="Alias for line_length")
+    fold_lines: bool = Field(default=True, description="Alias for wrap_lines")
+    base64_attrs: Sequence[str] | Literal["auto"] = Field(
+        default="auto", description="Attributes to encode in base64"
+    )
+    sort_by: SortOption = Field(
+        default=SortOption.ALPHABETICAL, description="Sort entries by field"
+    )
+    attr_order: Sequence[str] | None = Field(
+        default=None, description="Preferred attribute order"
+    )
+    include_metadata: bool = Field(
+        default=False, description="Include metadata in output"
+    )
+    server: ServerType | None = Field(
+        default=None, description="Target server type for formatting"
+    )
 
 
 class LoadConfig(BaseModel):

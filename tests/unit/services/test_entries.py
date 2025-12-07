@@ -1,17 +1,30 @@
-from __future__ import annotations
-from tests import c, m, s, t
+"""Tests for FlextLdif Entries service functionality.
 
-from typing import Final
+This module tests the Entries service for entry operations including creation,
+manipulation, validation, and transformation of LDIF entries.
+"""
+
+from __future__ import annotations
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifProtocols
-from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
+from tests import c, m, s
+
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
-        ) -> m.Entry:
+
+
+class TestFlextLdifEntries(s):
+    """Test suite for FlextLdif entries service."""
+
+    class Factories:
+        """Factory methods for creating test entries."""
+
+        @staticmethod
+        def create_test_entry(dn: str | None = None, **overrides: object) -> m.Entry:
             """Create test entry using factory."""
             if dn is None:
                 dn = c.DNs.TEST_USER
@@ -24,7 +37,16 @@ from flext_ldif.services.entries import FlextLdifEntries
                 k: v for k, v in overrides.items() if isinstance(v, (str, list))
             }
             attrs.update(compatible_overrides)
-            return self.create_entry(dn, attrs)
+            # Use FlextLdifEntries service to create the entry
+            service = FlextLdifEntries()
+            result = service.create_entry(dn, attrs)
+            if result.is_success:
+                return result.unwrap()
+            # Fallback: construct manually
+            return m.Entry.model_construct(
+                dn=m.DistinguishedName(value=dn),
+                attributes=m.LdifAttributes(attributes=attrs),
+            )
 
         @staticmethod
         def create_mock_entry_with_dn(
@@ -636,5 +658,6 @@ from flext_ldif.services.entries import FlextLdifEntries
             assert result.is_failure
             assert result.error is not None
             assert "Unsupported attribute type" in result.error
+
 
 __all__ = ["TestFlextLdifEntries"]

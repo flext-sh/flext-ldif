@@ -1,7 +1,7 @@
 """Entries Service - Direct Entry Operations with flext-core APIs.
 
 This service provides direct entry operations using flext-core and flext-ldif APIs:
-- Direct use of m.Entry for entry operations
+- Direct use of m.Ldif.Entry for entry operations
 - Direct use of u for DN and attribute operations
 - No unnecessary validation wrappers or conversions
 - Railway-oriented error handling with r
@@ -22,16 +22,16 @@ from flext_core import r
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 
-class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
+class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     """Direct entry operations service using flext-core APIs.
 
     Business Rule: Entries service provides fluent builder pattern for entry operations.
-    All operations delegate directly to m.Entry and u,
+    All operations delegate directly to m.Ldif.Entry and u,
     ensuring consistent behavior across the codebase. Operations are immutable - each
     operation returns new entry instances.
 
@@ -40,13 +40,13 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
     enabling server-specific transformations via utilities.
 
     This service provides minimal, direct entry operations by delegating
-    to m.Entry and u for all logic.
+    to m.Ldif.Entry and u for all logic.
     No unnecessary abstraction layers or validation wrappers.
     """
 
     def __init__(
         self,
-        entries: list[m.Entry] | None = None,
+        entries: list[m.Ldif.Entry] | None = None,
         operation: str | None = None,
         attributes_to_remove: list[str] | None = None,
     ) -> None:
@@ -83,7 +83,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     def with_entries(
         self,
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
     ) -> Self:
         """Set entries for builder.
 
@@ -129,7 +129,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         self._attributes_to_remove = attributes_to_remove
         return self
 
-    def build(self) -> list[m.Entry]:
+    def build(self) -> list[m.Ldif.Entry]:
         """Build and execute the configured operation.
 
         Returns:
@@ -142,7 +142,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
             raise RuntimeError(error_msg)
         return result.unwrap()
 
-    def execute(self) -> r[list[m.Entry]]:
+    def execute(self) -> r[list[m.Ldif.Entry]]:
         """Execute the configured operation on entries.
 
         Business Rule: Execute method routes to appropriate batch operation based on
@@ -176,8 +176,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def remove_operational_attributes_batch(
-        entries: list[m.Entry],
-    ) -> r[list[m.Entry]]:
+        entries: list[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Remove operational attributes from all entries.
 
         Business Rule: Batch operation removes operational attributes (RFC 4512) from
@@ -201,14 +201,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         # When operation returns r[R], batch extracts .value to get R
         # So R = Entry (not r[Entry]), and batch returns r[BatchResultDict] with results: list[Entry]
         def remove_op_attrs_wrapper(
-            entry: m.Entry,
-        ) -> r[m.Entry]:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry]:
             """Wrapper for remove_operational_attributes."""
             return FlextLdifEntries.remove_operational_attributes(entry)
 
         # Type annotation helps mypy infer T = Entry, R = Entry
         # When operation returns r[Entry], batch extracts .value, so R = Entry
-        operation_fn: Callable[[m.Entry], m.Entry | r[m.Entry]] = (
+        operation_fn: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry]] = (
             remove_op_attrs_wrapper
         )
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
@@ -216,14 +216,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
             return r.fail(batch_result.error or "Batch processing failed")
         batch_data = batch_result.unwrap()
         # batch() returns BatchResultDict with results: list[R] where R = Entry (extracted from r[Entry].value)
-        results = cast("list[m.Entry]", batch_data["results"])
+        results = cast("list[m.Ldif.Entry]", batch_data["results"])
         return r.ok(results)
 
     def remove_attributes_batch(
         self,
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         attributes: list[str],
-    ) -> r[list[m.Entry]]:
+    ) -> r[list[m.Ldif.Entry]]:
         """Remove specified attributes from all entries.
 
         Business Rule: Batch operation removes specified attributes from all entries.
@@ -248,19 +248,21 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         # When operation returns r[R], batch extracts .value to get R
         # So R = Entry (not r[Entry]), and batch returns r[BatchResultDict] with results: list[Entry]
         def remove_attrs_wrapper(
-            entry: m.Entry,
-        ) -> r[m.Entry]:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry]:
             """Wrapper for remove_attributes."""
             return FlextLdifEntries.remove_attributes(entry, attributes)
 
         # Type annotation helps mypy infer T = Entry, R = Entry
         # When operation returns r[Entry], batch extracts .value, so R = Entry
-        operation_fn: Callable[[m.Entry], m.Entry | r[m.Entry]] = remove_attrs_wrapper
+        operation_fn: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry]] = (
+            remove_attrs_wrapper
+        )
         batch_result = u.Collection.batch(entries, operation_fn, on_error="fail")
         if not batch_result.is_success:
             return r.fail(batch_result.error or "Batch processing failed")
         batch_data = batch_result.unwrap()
-        results = cast("list[m.Entry]", batch_data["results"])
+        results = cast("list[m.Ldif.Entry]", batch_data["results"])
         return r.ok(results)
 
     @staticmethod
@@ -326,7 +328,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def get_entry_dn(
-        entry: m.Entry | dict[str, str | list[str]] | p.Models.EntryWithDnProtocol,
+        entry: m.Ldif.Entry
+        | dict[str, str | list[str]]
+        | FlextLdifProtocols.Ldif.Models.EntryWithDnProtocol,
     ) -> r[str]:
         """Extract DN from entry.
 
@@ -377,7 +381,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def get_entry_attributes(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
     ) -> r[dict[str, list[str]]]:
         """Extract attributes from entry.
 
@@ -420,7 +424,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def get_entry_objectclasses(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
     ) -> r[list[str]]:
         """Extract objectClass values from entry.
 
@@ -488,7 +492,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         dn: str,
         attributes: dict[str, str | list[str]],
         objectclasses: list[str] | None = None,
-    ) -> r[m.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Create a new entry.
 
         Args:
@@ -509,14 +513,14 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         if objectclasses:
             final_attrs["objectClass"] = objectclasses
 
-        # Use m.Entry.create directly
-        return m.Entry.create(dn=dn, attributes=final_attrs)
+        # Use m.Ldif.Entry.create directly
+        return m.Ldif.Entry.create(dn=dn, attributes=final_attrs)
 
     @staticmethod
     def remove_attributes(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attributes_to_remove: list[str],
-    ) -> r[m.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Remove attributes from entry.
 
         Args:
@@ -542,7 +546,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         }
 
         # Create new entry with modified attributes
-        modified_entry = m.Entry(
+        modified_entry = m.Ldif.Entry(
             dn=entry.dn,
             attributes=m.LdifAttributes(attributes=new_attrs),
             metadata=entry.metadata,
@@ -552,9 +556,9 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def remove_objectclasses(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         objectclasses_to_remove: list[str],
-    ) -> r[m.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Remove specific objectClass values from entry.
 
         Args:
@@ -595,7 +599,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         new_attrs["objectClass"] = new_ocs
 
         # Create new entry with modified attributes
-        modified_entry = m.Entry(
+        modified_entry = m.Ldif.Entry(
             dn=entry.dn,
             attributes=m.LdifAttributes(attributes=new_attrs),
             metadata=entry.metadata,
@@ -643,7 +647,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def get_entry_attribute(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attribute_name: str,
     ) -> r[list[str]]:
         """Get a specific attribute from entry.
@@ -722,7 +726,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     def get_normalized_attribute(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attribute_name: str,
     ) -> r[str]:
         """Get normalized (single string) value for attribute.
@@ -744,8 +748,8 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
 
     @staticmethod
     def remove_operational_attributes(
-        entry: m.Entry,
-    ) -> r[m.Entry]:
+        entry: m.Ldif.Entry,
+    ) -> r[m.Ldif.Entry]:
         """Remove operational attributes from entry.
 
         Business Rule: Operational attributes removal uses u.Entry
@@ -803,7 +807,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Entry]]):
         }
 
         # Create new entry with modified attributes
-        modified_entry = m.Entry(
+        modified_entry = m.Ldif.Entry(
             dn=entry.dn,
             attributes=m.LdifAttributes(attributes=new_attrs),
             metadata=entry.metadata,

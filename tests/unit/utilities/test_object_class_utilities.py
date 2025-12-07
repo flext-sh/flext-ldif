@@ -1,3 +1,10 @@
+"""Tests for LDIF objectClass utilities.
+
+This module tests objectClass utility functions for schema objectClass handling,
+including structural and auxiliary class validation, inheritance relationships,
+and objectClass conflict detection in LDIF entries.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -6,7 +13,6 @@ from tests import m, s
 
 from flext_ldif import FlextLdifConstants
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-from flext_ldif.models import m
 
 
 class ObjectClassTestCase(StrEnum):

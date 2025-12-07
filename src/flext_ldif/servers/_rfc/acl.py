@@ -26,7 +26,7 @@ from flext_core import FlextLogger, FlextResult, t
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
 
@@ -57,7 +57,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     """
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this quirk can handle the ACL definition.
 
         RFC quirk handles all ACLs as it's the baseline implementation.
@@ -155,7 +155,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         if isinstance(unsupported, dict):
             unsupported[feature_id] = original_value
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Acl]:
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method).
 
         Args:
@@ -167,7 +167,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         """
         # Type guard: ensure acl_line is a string
         if not isinstance(acl_line, str):
-            return FlextResult[m.Acl].fail(
+            return FlextResult[m.Ldif.Acl].fail(
                 f"ACL line must be a string, got {type(acl_line).__name__}",
             )
         if not acl_line or not acl_line.strip():
@@ -178,7 +178,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
         # RFC passthrough: store the raw line in the model.
         # server_type_value is already the correct type from _get_server_type()
-        acl_model = m.Acl(
+        acl_model = m.Ldif.Acl(
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.QuirkMetadata(
@@ -196,7 +196,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     # create_metadata(), convert_rfc_acl_to_aci(), format_acl_value()
     # are now in base.py - these methods delegate to parent without RFC-specific logic
 
-    def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
         """Write ACL to RFC-compliant string format (internal).
 
         RFC implementation of ACL writing using raw_acl or name fallback.
@@ -216,7 +216,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def can_handle_attribute(
         self,
-        attribute: m.SchemaAttribute,
+        attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if quirk handles schema attributes.
 
@@ -234,7 +234,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def can_handle_objectclass(
         self,
-        objectclass: m.SchemaObjectClass,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if quirk handles objectclasses.
 
@@ -259,31 +259,31 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         data: str,
         *,
-        operation: c.LiteralTypes.ParseOperationLiteral | None = None,
-    ) -> m.Acl: ...
+        operation: c.Ldif.LiteralTypes.ParseOperationLiteral | None = None,
+    ) -> m.Ldif.Acl: ...
 
     @overload
     def __call__(
         self,
-        data: m.Acl,
+        data: m.Ldif.Acl,
         *,
-        operation: c.LiteralTypes.WriteOperationLiteral | None = None,
+        operation: c.Ldif.LiteralTypes.WriteOperationLiteral | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        data: str | m.Acl | None = None,
+        data: str | m.Ldif.Acl | None = None,
         *,
-        operation: c.LiteralTypes.ParseWriteOperationLiteral | None = None,
-    ) -> m.Acl | str: ...
+        operation: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None,
+    ) -> m.Ldif.Acl | str: ...
 
     def __call__(
         self,
-        data: str | m.Acl | None = None,
+        data: str | m.Ldif.Acl | None = None,
         *,
-        operation: c.LiteralTypes.ParseWriteOperationLiteral | None = None,
-    ) -> m.Acl | str:
+        operation: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None,
+    ) -> m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor.
 
         Pass ACL line string for parsing or Acl model for writing.
@@ -294,8 +294,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __new__(
         cls,
-        _acl_service: p.Services.HasParseMethodProtocol | None = None,
-        parent_quirk: p.Quirks.ParentQuirkProtocol | None = None,
+        _acl_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
+        | None = None,
+        parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: dict[str, str | int | float | bool | list[str] | None],
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
@@ -311,9 +312,13 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         parent_quirk_raw = (
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
-        parent_quirk_value: p.Quirks.ParentQuirkProtocol | None = (
+        parent_quirk_value: (
+            FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None
+        ) = (
             parent_quirk_raw
-            if isinstance(parent_quirk_raw, p.Quirks.ParentQuirkProtocol)
+            if isinstance(
+                parent_quirk_raw, FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol
+            )
             else None
         )
         # Initialize using super() to avoid mypy error about accessing
@@ -334,11 +339,11 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         if cls.auto_execute:
             # Type-safe extraction of kwargs
             data_raw = kwargs.get("data")
-            data: str | m.Acl | None = None
-            if isinstance(data_raw, (str, m.Acl)):
+            data: str | m.Ldif.Acl | None = None
+            if isinstance(data_raw, (str, m.Ldif.Acl)):
                 data = data_raw
             op_raw = kwargs.get("operation")
-            op: c.LiteralTypes.ParseWriteOperationLiteral | None = None
+            op: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None
             if isinstance(op_raw, str) and op_raw == "parse":
                 op = "parse"
             elif isinstance(op_raw, str) and op_raw == "write":
@@ -346,7 +351,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             # Type narrowing: instance is Self (Acl subclass)
             # Use acl_instance from above
             result = acl_instance.execute(data=data, operation=op)
-            unwrapped: m.Acl | str = result.unwrap()
+            unwrapped: m.Ldif.Acl | str = result.unwrap()
             if isinstance(unwrapped, cls):
                 return unwrapped
             return instance
@@ -355,8 +360,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __init__(
         self,
-        acl_service: p.Services.HasParseMethodProtocol | None = None,
-        parent_quirk: p.Quirks.ParentQuirkProtocol | None = None,
+        acl_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
+        | None = None,
+        parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: t.GeneralValueType,
     ) -> None:
         """Initialize RFC ACL quirk service.
@@ -376,9 +382,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         }
         # Business Rule: Call parent Acl.__init__ which accepts acl_service and _parent_quirk
         # acl_service is already compatible with HasParseMethodProtocol
-        acl_service_typed: p.Services.HasParseMethodProtocol | None = (
-            acl_service if acl_service is not None else None
-        )
+        acl_service_typed: (
+            FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol | None
+        ) = acl_service if acl_service is not None else None
         # Call base class __init__ directly to avoid mypy inference issues through nested class
         FlextLdifServersBaseSchemaAcl.__init__(
             self,

@@ -1,3 +1,9 @@
+"""Tests for quirks registry and auto-discovery mechanism.
+
+This module tests the registry system that manages discovery and registration
+of server-specific quirks implementations across the system.
+"""
+
 from __future__ import annotations
 
 from flext_ldif.services.server import FlextLdifServer

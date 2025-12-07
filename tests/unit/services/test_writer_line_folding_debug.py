@@ -1,10 +1,16 @@
+"""Tests for LDIF writer line folding behavior.
+
+This module tests line folding functionality in the FlextLdifWriter service,
+validating RFC 2849 line length compliance, multi-line attribute handling, and
+proper continuation of long values across multiple LDIF lines.
+"""
+
 from __future__ import annotations
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
-from flext_ldif.models import m
 from tests import c, m
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

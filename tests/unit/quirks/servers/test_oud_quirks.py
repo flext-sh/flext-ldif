@@ -1,5 +1,12 @@
+"""Tests for OUD (Oracle Unified Directory) server LDIF quirks handling.
+
+This module tests the FlextLdifServersOud implementation for handling Oracle Unified
+Directory-specific attributes, object classes, and entries in LDIF format.
+"""
+
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -8,7 +15,8 @@ from flext_ldif import FlextLdif
 from flext_ldif.models import m
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests import m, s, tf, tm
+from tests import s, tf, tm
+from tests.conftest import FlextLdifFixtures
 
 from .test_utils import FlextLdifTestUtils
 
@@ -135,7 +143,7 @@ class OudTestHelpers:
         for entry in entries:
             # Use the correct write() API instead of execute()
             result = quirk.write([entry])
-            _ = self.assert_success(result, "Entry write should succeed")
+            assert result.is_success, "Entry write should succeed"
             written_str = result.unwrap()
             assert isinstance(written_str, str), "Write should return string"
             assert len(written_str) > 0, "Written string should not be empty"
@@ -157,11 +165,6 @@ class TestsTestFlextLdifOudQuirks(s):
     @pytest.mark.timeout(10)
     def test_parse_oud_entries_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD entries file."""
-        import tempfile
-        from pathlib import Path
-
-        from tests.conftest import FlextLdifFixtures
-
         # Load fixture using conftest
         fixture_content = FlextLdifFixtures.get_oud().entries()
         with tempfile.NamedTemporaryFile(
@@ -189,11 +192,6 @@ class TestsTestFlextLdifOudQuirks(s):
     @pytest.mark.timeout(10)
     def test_parse_oud_acl_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD ACL file."""
-        import tempfile
-        from pathlib import Path
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().acl()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -213,10 +211,6 @@ class TestsTestFlextLdifOudQuirks(s):
     @pytest.mark.timeout(10)
     def test_roundtrip_oud_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD entries."""
-        import tempfile
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().entries()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -235,10 +229,6 @@ class TestsTestFlextLdifOudQuirks(s):
     @pytest.mark.timeout(60)
     def test_roundtrip_oud_schema(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD schema."""
-        import tempfile
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().schema()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -257,10 +247,6 @@ class TestsTestFlextLdifOudQuirks(s):
     @pytest.mark.timeout(10)
     def test_roundtrip_oud_acl(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD ACL."""
-        import tempfile
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().acl()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -282,10 +268,6 @@ class TestsTestFlextLdifOudQuirks(s):
         ldif_api: FlextLdif,
     ) -> None:
         """Test that Oracle-specific attributes are properly preserved."""
-        import tempfile
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().entries()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -318,10 +300,6 @@ class TestsTestFlextLdifOudQuirks(s):
     @pytest.mark.timeout(10)
     def test_oud_password_hashes_preserved(self, ldif_api: FlextLdif) -> None:
         """Test that OUD password hashes are properly preserved."""
-        import tempfile
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().entries()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -355,10 +333,6 @@ class TestsTestFlextLdifOudQuirks(s):
         This test validates that the automatic write routing
         correctly processes OUD entries through the Entry quirk's write methods.
         """
-        import tempfile
-
-        from tests.conftest import FlextLdifFixtures
-
         fixture_content = FlextLdifFixtures.get_oud().entries()
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",

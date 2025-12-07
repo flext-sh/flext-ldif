@@ -1,13 +1,18 @@
+"""Tests for schema transformation utilities across LDAP servers.
+
+This module tests the schema transformation and attribute name normalization
+utilities that enhance RFC schema parsing with server-specific transformations.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
 
 from flext_core import FlextResult
-from flext_core.typings import t
 
 from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
-from tests import t
+from tests import s, t
 
 
 class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):

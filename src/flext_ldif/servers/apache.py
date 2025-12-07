@@ -9,7 +9,6 @@ from typing import ClassVar, override
 
 from flext_core import FlextResult
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
@@ -30,9 +29,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Standardized constants for Apache Directory Server quirk."""
 
         # Server identity and priority (defined at Constants level)
-        SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = (
-            "apache"
-        )
+        SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = "apache"
         PRIORITY: ClassVar[int] = 15
 
         # Server identification
@@ -53,7 +50,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
         # Detection constants (server-specific)
-        # Migrated from FlextLdifConstants.LdapServerDetection
+        # Migrated from c.LdapServerDetection
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.18060\."
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
             [
@@ -116,8 +113,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         # === ACL AND ENCODING CONSTANTS (Centralized) ===
         # Use centralized StrEnums from FlextLdifConstants directly
-        # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
-        # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
+        # No duplicate nested StrEnums - use c.AclPermission,
+        # c.AclAction, and c.Encoding directly
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -135,10 +132,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         def can_handle_attribute(
             self,
-            attr_definition: str | m.SchemaAttribute,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, m.SchemaAttribute):
+            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
                 return u.Server.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -171,10 +168,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.SchemaObjectClass,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, m.SchemaObjectClass):
+            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
                 return u.Server.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -200,7 +197,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> FlextResult[m.SchemaAttribute]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata.
 
             Args:
@@ -216,7 +213,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 metadata = m.QuirkMetadata.create_for(
                     "apache_directory",
                 )
-                return FlextResult[m.SchemaAttribute].ok(
+                return FlextResult[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -224,7 +221,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> FlextResult[m.SchemaObjectClass]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Apache metadata.
 
             Args:
@@ -249,7 +246,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 metadata = m.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                return FlextResult[m.SchemaObjectClass].ok(
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -291,7 +288,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return normalized.lower().startswith(
                     FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
                 )
-            if isinstance(acl_line, m.Acl):
+            if isinstance(acl_line, m.Ldif.Acl):
                 if not acl_line.raw_acl:
                     return False
                 normalized = acl_line.raw_acl.strip()
@@ -310,7 +307,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
             return False
 
-        def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
             """Write ACL data to Apache Directory Server ACI format.
 
             Apache Directory Server ACLs use ACI format with 'aci:' prefix.
@@ -347,7 +344,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             self,
             entry_dn: str,
             entry_attrs: dict[str, list[str | bytes]],
-        ) -> FlextResult[m.Entry]:
+        ) -> FlextResult[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model.
 
             Applies Apache-specific transformations.
@@ -375,7 +372,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             try:
                 # Check if entry has DN
                 if not entry.dn:
-                    return FlextResult[m.Entry].ok(entry)
+                    return FlextResult[m.Ldif.Entry].ok(entry)
 
                 # Store metadata in extensions
                 metadata = entry.metadata or m.QuirkMetadata(
@@ -384,16 +381,16 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
                     metadata.extensions = m.DynamicMetadata()
-                metadata.extensions[
-                    FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY
-                ] = FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
+                metadata.extensions[c.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
+                    FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
+                )
 
                 processed_entry = entry.model_copy(update={"metadata": metadata})
 
-                return FlextResult[m.Entry].ok(processed_entry)
+                return FlextResult[m.Ldif.Entry].ok(processed_entry)
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Entry].fail(
+                return FlextResult[m.Ldif.Entry].fail(
                     f"Apache Directory Server entry parsing failed: {exc}",
                 )
 

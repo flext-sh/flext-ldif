@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Filters service functionality.
+
+This module tests the Filters service for filtering, transforming, and
+deduplicating LDIF entries based on specified criteria.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -7,7 +13,6 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 
-from flext_ldif.models import m
 from flext_ldif.services.filters import FlextLdifFilters
 from tests import Filters, TestDeduplicationHelpers, c, m, s
 

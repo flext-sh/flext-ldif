@@ -1,3 +1,9 @@
+"""Tests for FlextLdif main API functionality.
+
+This module tests the primary FlextLdif API facade for LDIF parsing,
+validation, and processing operations.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -14,7 +20,7 @@ from flext_ldif import (
     FlextLdifConstants,
 )
 from flext_ldif.models import FlextLdifModels, m
-from tests import c, s
+from tests import TestDeduplicationHelpers, c, s
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 
@@ -25,7 +31,10 @@ def sample_entries() -> list[m.Entry]:
     return [
         s.create_entry(
             dn=f"cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}",
-            attributes={c.Names.CN: [f"{c.Values.USER}{i}"], c.Names.OBJECTCLASS: [c.Names.PERSON]},
+            attributes={
+                c.Names.CN: [f"{c.Values.USER}{i}"],
+                c.Names.OBJECTCLASS: [c.Names.PERSON],
+            },
         )
         for i in range(3)
     ]
@@ -40,9 +49,12 @@ def entry_with_acl() -> m.Entry:
             c.Names.CN: [f"{c.Values.TEST} ACL"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INET_ORG_PERSON],
             c.Names.MAIL: [c.Values.TEST_EMAIL],
-            "orclACI": ["(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)"],
+            "orclACI": [
+                "(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)"
+            ],
         },
     )
+
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
 
@@ -175,6 +187,7 @@ class CorePropertiesScenario(StrEnum):
     DETECT_OID = "detect_oid"
     DETECT_RFC = "detect_rfc"
 
+
 # ============================================================================
 # TEST DATA STRUCTURES
 # ============================================================================
@@ -248,9 +261,7 @@ OID_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
 """
 
-LARGE_ENTRIES_CONTENT = "
-
-".join(
+LARGE_ENTRIES_CONTENT = "\n\n".join([
     f"""dn: cn={c.Values.USER}{i}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
 # Another comment
@@ -258,6 +269,8 @@ objectClass: {c.Names.PERSON}
 description: This is a long description that
  continues on the next line with proper line folding
 """
+    for i in range(5)
+])
 
 MULTIPLE_VALUES_CONTENT = f"""dn: cn={c.Values.TEST}, {c.DNs.EXAMPLE}
 cn: {c.Values.TEST}
@@ -300,10 +313,8 @@ orclGUID: 550e8400-e29b-41d4-a716-446655440000
 """
 
 OUD_SPECIFIC_CONTENT = f"""dn: cn={c.Values.USER}, {c.DNs.EXAMPLE}
-cn: {c.Values.USER}{i}
+cn: {c.Values.USER}
 objectClass: {c.Names.PERSON}"""
-    for i in range(100)
-)
 
 # ============================================================================
 # MODULE-LEVEL FIXTURES
@@ -332,6 +343,7 @@ def sample_entry() -> m.Entry:
             c.Names.OBJECTCLASS: [c.Names.PERSON],
         },
     )
+
 
 # ============================================================================
 # TEST CLASSES - Consolidated and Parametrized

@@ -1,3 +1,9 @@
+"""Tests for edge cases in quirks server handling.
+
+This module tests boundary conditions, error cases, and unusual LDIF
+content patterns across different LDAP server implementations.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

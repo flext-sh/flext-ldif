@@ -1,3 +1,10 @@
+"""Tests for LDIF writer RFC compliance.
+
+This module tests the FlextLdifWriter service with RFC 2849 compliant test cases,
+validating proper LDIF generation for various entry types including single entries,
+multiple entries, multivalue attributes, and proper error handling for invalid inputs.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -9,7 +16,6 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
-from flext_ldif.models import m
 from tests import m, s
 
 

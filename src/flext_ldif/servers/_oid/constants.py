@@ -20,7 +20,6 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
@@ -197,7 +196,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     """
 
     # Server identity and priority (defined at Constants level)
-    SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "oid"
+    SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = "oid"
     PRIORITY: ClassVar[int] = 10
 
     # NOTE: DEFAULT_PORT, DEFAULT_SSL_PORT, DEFAULT_PAGE_SIZE
@@ -212,7 +211,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_FORMAT: ClassVar[str] = "orclaci"  # OID ACL format
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "orclaci"  # ACL attribute name
 
-    # NOTE: ACL metadata keys removed - use FlextLdifConstants.MetadataKeys
+    # NOTE: ACL metadata keys removed - use c.MetadataKeys
     # Servers communicate via GENERIC metadata keys (not server-specific)
 
     # Matching rule normalizations (OID proprietary → RFC 4517 standard)
@@ -301,7 +300,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     )
 
     # === SCHEMA PROCESSING CONFIGURATION ===
-    # Use FlextLdifConstants.SchemaKeys for field names
+    # Use c.SchemaKeys for field names
     # SCHEMA_FILTERABLE_FIELDS: fields processed with OID filtering
     SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset(
         [
@@ -414,14 +413,14 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
 
     # All OID metadata keys
     # NOTE: Entry metadata keys (CONVERTED_ATTRIBUTES, ORIGINAL_ATTRIBUTES_COMPLETE, etc.)
-    # are defined in FlextLdifConstants.MetadataKeys and should be used directly.
+    # are defined in c.MetadataKeys and should be used directly.
     ALL_OID_KEYS: ClassVar[frozenset[str]] = frozenset(
         [
             OID_SPECIFIC_RIGHTS,
             RFC_NORMALIZED,
             ORIGINAL_OID_PERMS,
             OID_ACL_SOURCE_TARGET,
-            # Entry metadata keys from FlextLdifConstants.MetadataKeys:
+            # Entry metadata keys from c.MetadataKeys:
             # CONVERTED_ATTRIBUTES, ORIGINAL_ATTRIBUTES_COMPLETE, etc.
         ],
     )
@@ -767,4 +766,4 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
 
     # NOTE: AclPermission and AclAction StrEnums REMOVED - unused dead code
     # Use SUPPORTED_PERMISSIONS frozenset and ACL_PERMISSION_MAPPING dict instead
-    # NOTE: Encoding enum removed - use FlextLdifConstants.Encoding instead
+    # NOTE: Encoding enum removed - use c.Encoding instead

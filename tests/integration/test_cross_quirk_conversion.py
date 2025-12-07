@@ -20,7 +20,6 @@ from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests import m
 
 
 # Cross-quirk conversion test constants - defined at top of module without type checking

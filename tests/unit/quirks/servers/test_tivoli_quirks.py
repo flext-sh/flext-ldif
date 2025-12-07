@@ -1,3 +1,9 @@
+"""Tests for IBM Tivoli Directory Server LDIF quirks handling.
+
+This module tests the IBM Tivoli Directory Server implementation for handling
+Tivoli-specific attributes, object classes, and entries in LDIF format.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -8,7 +14,7 @@ import pytest
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
-from tests import m, s
+from tests import s
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EXTERNAL ENUMS (outside class)

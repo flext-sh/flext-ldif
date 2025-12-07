@@ -29,7 +29,7 @@ Usage:
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from typing import Literal, Self
 
 from flext_ldif._utilities.configs import (
@@ -91,17 +91,13 @@ class ProcessConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._source_server: ServerType = "auto"
+        self._source_server: ServerType = ServerType.AUTO
         self._target_server: ServerType | None = None
         self._dn_config: DnNormalizationConfig | None = None
         self._attr_config: AttrNormalizationConfig | None = None
         self._acl_config: AclConversionConfig | None = None
         self._validation_config: ValidationConfig | None = None
         self._metadata_config: MetadataConfig | None = None
-        self._normalize_dns: bool = True
-        self._normalize_attrs: bool = True
-        self._convert_acls: bool = True
-        self._preserve_metadata: bool = True
 
     def source(self, server: ServerType) -> Self:
         """Set the source server type.
@@ -132,18 +128,16 @@ class ProcessConfigBuilder:
     def normalize_dn(
         self,
         *,
-        case: CaseFoldOption = "lower",
-        spaces: SpaceHandlingOption = "trim",
-        escapes: EscapeHandlingOption = "minimal",
-        validate: bool = True,
+        case: CaseFoldOption = CaseFoldOption.LOWER,
+        spaces: SpaceHandlingOption = SpaceHandlingOption.TRIM,
+        escapes: EscapeHandlingOption = EscapeHandlingOption.PRESERVE,
     ) -> Self:
         """Configure DN normalization.
 
         Args:
             case: Case folding option (lower, upper, preserve)
             spaces: Space handling (trim, preserve, normalize)
-            escapes: Escape handling (minimal, full)
-            validate: Validate DN before normalization
+            escapes: Escape handling (preserve, unescape, normalize)
 
         Returns:
             Self for method chaining
@@ -153,78 +147,72 @@ class ProcessConfigBuilder:
             case_fold=case,
             space_handling=spaces,
             escape_handling=escapes,
-            validate_before=validate,
         )
         return self
 
     def normalize_attrs(
         self,
         *,
-        case_fold_names: bool = True,
-        trim_values: bool = True,
-        normalize_binary: bool = True,
-        remove_empty: bool = False,
+        sort_attributes: SortOption = SortOption.ALPHABETICAL,
+        sort_values: bool = True,
+        normalize_whitespace: bool = True,
     ) -> Self:
         """Configure attribute normalization.
 
         Args:
-            case_fold_names: Lowercase attribute names
-            trim_values: Trim whitespace from values
-            normalize_binary: Normalize binary encoding
-            remove_empty: Remove empty values
+            sort_attributes: How to sort attributes (alphabetical, hierarchical, none)
+            sort_values: Sort attribute values
+            normalize_whitespace: Normalize whitespace in values
 
         Returns:
             Self for method chaining
 
         """
         self._attr_config = AttrNormalizationConfig(
-            case_fold_names=case_fold_names,
-            trim_values=trim_values,
-            normalize_binary=normalize_binary,
-            remove_empty=remove_empty,
+            sort_attributes=sort_attributes,
+            sort_values=sort_values,
+            normalize_whitespace=normalize_whitespace,
         )
         return self
 
-    def acl_mapping(
+    def acl_conversion(
         self,
         *,
-        permission_map: Mapping[str, str] | None = None,
-        preserve_comments: bool = True,
-        strict: bool = False,
+        convert_aci: bool = True,
+        preserve_original_aci: bool = False,
+        map_server_specific: bool = True,
     ) -> Self:
         """Configure ACL conversion.
 
         Args:
-            permission_map: Custom permission mappings
-            preserve_comments: Keep comments in ACLs
-            strict: Fail on unmapped permissions
+            convert_aci: Enable ACL conversion
+            preserve_original_aci: Preserve original ACL in metadata
+            map_server_specific: Map server-specific ACLs
 
         Returns:
             Self for method chaining
 
         """
         self._acl_config = AclConversionConfig(
-            permission_map=permission_map,
-            preserve_comments=preserve_comments,
-            strict_mapping=strict,
+            convert_aci=convert_aci,
+            preserve_original_aci=preserve_original_aci,
+            map_server_specific=map_server_specific,
         )
         return self
 
     def validation(
         self,
         *,
-        strict_rfc: bool = True,
-        collect_all: bool = True,
-        max_errors: int = 0,
-        warn_on_unknown: bool = True,
+        strict_rfc: bool = False,
+        allow_server_quirks: bool = True,
+        validate_dn_format: bool = True,
     ) -> Self:
         """Configure validation behavior.
 
         Args:
-            strict_rfc: Enforce strict RFC compliance
-            collect_all: Collect all errors
-            max_errors: Maximum errors (0 = unlimited)
-            warn_on_unknown: Warn on unknown attributes
+            strict_rfc: Enforce strict RFC 2849 compliance
+            allow_server_quirks: Allow server-specific quirks in validation
+            validate_dn_format: Validate DN format
 
         Returns:
             Self for method chaining
@@ -232,37 +220,33 @@ class ProcessConfigBuilder:
         """
         self._validation_config = ValidationConfig(
             strict_rfc=strict_rfc,
-            collect_all=collect_all,
-            max_errors=max_errors,
-            warn_on_unknown=warn_on_unknown,
+            allow_server_quirks=allow_server_quirks,
+            validate_dn_format=validate_dn_format,
         )
         return self
 
     def preserve_metadata(
         self,
         *,
-        original: bool = True,
-        tracking: bool = True,
-        timestamps: bool = False,
-        source_info: bool = False,
+        preserve_original: bool = True,
+        preserve_tracking: bool = True,
+        preserve_validation: bool = False,
     ) -> Self:
         """Configure metadata handling.
 
         Args:
-            original: Preserve original metadata
-            tracking: Track transformations
-            timestamps: Add timestamps
-            source_info: Include source server info
+            preserve_original: Preserve original metadata
+            preserve_tracking: Preserve transformation tracking
+            preserve_validation: Preserve validation results
 
         Returns:
             Self for method chaining
 
         """
         self._metadata_config = MetadataConfig(
-            preserve_original=original,
-            track_transformations=tracking,
-            include_timestamps=timestamps,
-            include_source_info=source_info,
+            preserve_original=preserve_original,
+            preserve_tracking=preserve_tracking,
+            preserve_validation=preserve_validation,
         )
         return self
 
@@ -314,16 +298,12 @@ class ProcessConfigBuilder:
         """
         return ProcessConfig(
             source_server=self._source_server,
-            target_server=self._target_server,
+            target_server=self._target_server or ServerType.RFC,
             dn_config=self._dn_config or DnNormalizationConfig(),
             attr_config=self._attr_config or AttrNormalizationConfig(),
             acl_config=self._acl_config or AclConversionConfig(),
             validation_config=self._validation_config or ValidationConfig(),
             metadata_config=self._metadata_config or MetadataConfig(),
-            normalize_dns=self._normalize_dns,
-            normalize_attrs=self._normalize_attrs,
-            convert_acls=self._convert_acls,
-            preserve_metadata=self._preserve_metadata,
         )
 
 
@@ -514,11 +494,11 @@ class WriteConfigBuilder:
 
     def __init__(self) -> None:
         """Initialize builder with default values."""
-        self._format: OutputFormat = "ldif"
+        self._format: OutputFormat = OutputFormat.LDIF
         self._line_width: int = 76
         self._fold_lines: bool = True
         self._base64_attrs: Sequence[str] | Literal["auto"] = "auto"
-        self._sort_by: SortOption = "dn"
+        self._sort_by: SortOption = SortOption.ALPHABETICAL
         self._attr_order: Sequence[str] | None = None
         self._include_metadata: bool = False
         self._server: ServerType | None = None

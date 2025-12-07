@@ -1,3 +1,9 @@
+"""Tests for OID schema writing and schema transformation.
+
+This module tests Oracle Internet Directory (OID) schema writing capabilities
+including objectClass transformations, attribute name mappings, and schema fixes.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,11 +11,10 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif.models import m
 from flext_ldif.servers.oid import FlextLdifServersOid
 from tests import m, s
-
-# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
+from tests.conftest import FlextLdifFixtures
+from tests.helpers.compat import TestDeduplicationHelpers
 
 
 class TestsTestFlextLdifOidSchemaWriting(s):

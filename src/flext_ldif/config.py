@@ -71,46 +71,46 @@ class FlextLdifConfig(FlextConfig):
     # LDIF Format Configuration using FlextLdifConstants for defaults
     # Note: Fields like max_workers, debug, trace, log_verbosity come from
 
-    ldif_encoding: c.LiteralTypes.EncodingLiteral = Field(
+    ldif_encoding: c.Ldif.LiteralTypes.EncodingLiteral = Field(
         default="utf-8",  # Use literal value instead of constant for
         # type compatibility
         description="Character encoding for LDIF files",
     )
 
     ldif_max_line_length: int = Field(
-        default=c.LdifFormatting.MAX_LINE_WIDTH,
-        ge=c.LdifFormatting.DEFAULT_LINE_WIDTH,
-        le=c.LdifFormatting.MAX_LINE_WIDTH,
+        default=c.Ldif.LdifFormatting.MAX_LINE_WIDTH,
+        ge=c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH,
+        le=c.Ldif.LdifFormatting.MAX_LINE_WIDTH,
         description="Maximum LDIF line length (RFC 2849 compliance)",
     )
 
     ldif_skip_comments: bool = Field(
-        default=c.ConfigDefaults.LDIF_SKIP_COMMENTS,
+        default=c.Ldif.ConfigDefaults.LDIF_SKIP_COMMENTS,
         description="Skip comment lines during parsing",
     )
 
     ldif_validate_dn_format: bool = Field(
-        default=c.ConfigDefaults.LDIF_VALIDATE_DN_FORMAT,
+        default=c.Ldif.ConfigDefaults.LDIF_VALIDATE_DN_FORMAT,
         description="Validate DN format during parsing",
     )
 
     ldif_strict_validation: bool = Field(
-        default=c.ConfigDefaults.LDIF_STRICT_VALIDATION,
+        default=c.Ldif.ConfigDefaults.LDIF_STRICT_VALIDATION,
         description="Enable strict LDIF validation",
     )
 
     # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
-        default=c.ConfigDefaults.LDIF_MAX_ENTRIES,
+        default=c.Ldif.ConfigDefaults.LDIF_MAX_ENTRIES,
         ge=c.Performance.BatchProcessing.DEFAULT_SIZE,
-        le=c.MAX_ENTRIES_ABSOLUTE,
+        le=c.Ldif.LdifProcessing.MAX_ENTRIES_ABSOLUTE,
         description="Maximum number of entries to process",
     )
 
     ldif_chunk_size: int = Field(
         default=c.DEFAULT_BATCH_SIZE,
-        ge=c.MIN_BATCH_SIZE,
-        le=c.MAX_BATCH_SIZE,
+        ge=c.Ldif.LdifProcessing.MIN_BATCH_SIZE,
+        le=c.Ldif.LdifProcessing.MAX_BATCH_SIZE,
         description="Chunk size for LDIF processing",
     )
 
@@ -119,79 +119,79 @@ class FlextLdifConfig(FlextConfig):
 
     # Memory and Performance Configuration - Fix default value
     memory_limit_mb: int = Field(
-        default=c.MIN_MEMORY_MB,
-        ge=c.MIN_MEMORY_MB,
-        le=c.MAX_MEMORY_MB,
+        default=c.Ldif.LdifProcessing.MIN_MEMORY_MB,
+        ge=c.Ldif.LdifProcessing.MIN_MEMORY_MB,
+        le=c.Ldif.LdifProcessing.MAX_MEMORY_MB,
         description="Memory limit in MB",
     )
 
     # Analytics Configuration
     ldif_enable_analytics: bool = Field(
-        default=c.ConfigDefaults.LDIF_ENABLE_ANALYTICS,
+        default=c.Ldif.ConfigDefaults.LDIF_ENABLE_ANALYTICS,
         description="Enable LDIF analytics collection",
     )
 
     ldif_analytics_cache_size: int = Field(
         default=c.DEFAULT_BATCH_SIZE,
-        ge=c.MIN_ANALYTICS_CACHE_SIZE,
-        le=c.MAX_ANALYTICS_CACHE_SIZE,
+        ge=c.Ldif.LdifProcessing.MIN_ANALYTICS_CACHE_SIZE,
+        le=c.Ldif.LdifProcessing.MAX_ANALYTICS_CACHE_SIZE,
         description="Cache size for LDIF analytics",
     )
 
-    analytics_detail_level: c.LiteralTypes.AnalyticsDetailLevelLiteral = Field(
+    analytics_detail_level: c.Ldif.LiteralTypes.AnalyticsDetailLevelLiteral = Field(
         default="medium",
         description="Analytics detail level (low, medium, high)",
     )
 
     # Additional LDIF processing configuration
     ldif_line_separator: str = Field(
-        default=c.ConfigDefaults.LDIF_LINE_SEPARATOR,
+        default=c.Ldif.ConfigDefaults.LDIF_LINE_SEPARATOR,
         description="Line separator for LDIF output",
     )
 
     ldif_version_string: str = Field(
-        default=c.ConfigDefaults.LDIF_VERSION_STRING,
+        default=c.Ldif.ConfigDefaults.LDIF_VERSION_STRING,
         description="LDIF version string",
     )
 
     ldif_batch_size: int = Field(
         default=c.DEFAULT_BATCH_SIZE,
-        ge=c.MIN_BATCH_SIZE,
-        le=c.MAX_BATCH_SIZE,
+        ge=c.Ldif.LdifProcessing.MIN_BATCH_SIZE,
+        le=c.Ldif.LdifProcessing.MAX_BATCH_SIZE,
         description="Batch size for LDIF processing",
     )
 
     ldif_fail_on_warnings: bool = Field(
-        default=c.ConfigDefaults.LDIF_FAIL_ON_WARNINGS,
+        default=c.Ldif.ConfigDefaults.LDIF_FAIL_ON_WARNINGS,
         description="Fail processing on warnings",
     )
 
     ldif_analytics_sample_rate: float = Field(
-        default=c.ConfigDefaults.LDIF_ANALYTICS_SAMPLE_RATE,
-        ge=c.MIN_SAMPLE_RATE,
-        le=c.MAX_SAMPLE_RATE,
+        default=c.Ldif.ConfigDefaults.LDIF_ANALYTICS_SAMPLE_RATE,
+        ge=c.Ldif.LdifProcessing.MIN_SAMPLE_RATE,
+        le=c.Ldif.LdifProcessing.MAX_SAMPLE_RATE,
         description="Analytics sampling rate (0.0 to 1.0)",
     )
 
     ldif_analytics_max_entries: int = Field(
-        default=c.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
+        default=c.Ldif.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
         ge=1,
-        le=c.MAX_ANALYTICS_ENTRIES_ABSOLUTE,
+        le=c.Ldif.LdifProcessing.MAX_ANALYTICS_ENTRIES_ABSOLUTE,
         description="Maximum entries for analytics processing",
     )
 
-    ldif_default_server_type: c.LiteralTypes.ServerTypeLiteral = Field(
+    ldif_default_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
         default="rfc",  # Use literal value instead of enum for type compatibility
         description="Default server type for LDIF processing",
     )
 
     ldif_server_specifics: bool = Field(
-        default=c.ConfigDefaults.LDIF_SERVER_SPECIFICS,
+        default=c.Ldif.ConfigDefaults.LDIF_SERVER_SPECIFICS,
         description="Enable server-specific quirk handling",
     )
 
     # Quirks Detection and Mode Configuration
-    quirks_detection_mode: c.LiteralTypes.DetectionModeLiteral = Field(
+    quirks_detection_mode: c.Ldif.LiteralTypes.DetectionModeLiteral = Field(
         default="auto",
         description=(
             "Quirks detection mode: auto (detect server type), "
@@ -199,7 +199,7 @@ class FlextLdifConfig(FlextConfig):
         ),
     )
 
-    quirks_server_type: c.LiteralTypes.ServerTypeLiteral | None = Field(
+    quirks_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = Field(
         default=None,
         description=("Override server type for quirks when detection_mode is 'manual'"),
     )
@@ -210,24 +210,24 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Validation Configuration using FlextLdifConstants for defaults
-    validation_level: c.LiteralTypes.ValidationLevelLiteral = Field(
+    validation_level: c.Ldif.LiteralTypes.ValidationLevelLiteral = Field(
         default="strict",
         description="Validation strictness level",
     )
 
     strict_rfc_compliance: bool = Field(
-        default=c.ConfigDefaults.STRICT_RFC_COMPLIANCE,
+        default=c.Ldif.ConfigDefaults.STRICT_RFC_COMPLIANCE,
         description="Enable strict RFC 2849 compliance",
     )
 
     # Server Configuration using FlextLdifConstants for defaults
-    server_type: c.LiteralTypes.ServerTypeLiteral = Field(
+    server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
         default="generic",
         description="Target LDAP server type",
     )
 
     # Error Handling Configuration
-    error_recovery_mode: c.LiteralTypes.ErrorRecoveryModeLiteral = Field(
+    error_recovery_mode: c.Ldif.LiteralTypes.ErrorRecoveryModeLiteral = Field(
         default="continue",
         description="Error recovery mode (continue, stop, skip)",
     )
@@ -368,7 +368,7 @@ class FlextLdifConfig(FlextConfig):
         ),
     )
 
-    ldif_write_changetype: c.LiteralTypes.ChangeTypeLiteral | None = Field(
+    ldif_write_changetype: c.Ldif.LiteralTypes.ChangeTypeLiteral | None = Field(
         default=None,
         description=(
             "If set to 'modify', writes entries in LDIF modify format "
@@ -376,7 +376,7 @@ class FlextLdifConfig(FlextConfig):
         ),
     )
 
-    ldif_write_modify_operation: c.LiteralTypes.ModifyOperationLiteral = Field(
+    ldif_write_modify_operation: c.Ldif.LiteralTypes.ModifyOperationLiteral = Field(
         default="add",
         description=(
             "LDIF modify operation: 'add' or 'replace'. "
@@ -393,7 +393,7 @@ class FlextLdifConfig(FlextConfig):
         ),
     )
 
-    ldif_write_entry_category: c.LiteralTypes.CategoryLiteral | None = Field(
+    ldif_write_entry_category: c.Ldif.LiteralTypes.CategoryLiteral | None = Field(
         default=None,
         description=(
             "Migration category (e.g., 'hierarchy', 'users', 'groups', "

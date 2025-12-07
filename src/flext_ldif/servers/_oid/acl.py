@@ -23,7 +23,6 @@ from typing import Any, ClassVar, Literal, cast
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -130,7 +129,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         subject='cn=Admins,dc=example,dc=com',
         permissions=['browse', 'add', 'delete'],
         scope='subtree',  # from orclaci
-        metadata={FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: '...', FlextLdifConstants.MetadataKeys.ACL_SOURCE_SERVER: 'oid'}
+        metadata={c.MetadataKeys.ACL_ORIGINAL_FORMAT: '...', c.MetadataKeys.ACL_SOURCE_SERVER: 'oid'}
     )
 
     Acl(
@@ -244,7 +243,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     # - write_acl(): Serializes RFC-compliant model to OID ACL format
     # - get_acl_attribute_name(): Returns "orclaci" (OID-specific, overridden)
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL.
 
         Detects Oracle OID ACL by checking for Oracle-specific ACL syntax patterns:
@@ -261,7 +260,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             True if this is Oracle OID ACL format
 
         """
-        if isinstance(acl_line, m.Acl):
+        if isinstance(acl_line, m.Ldif.Acl):
             # Check metadata for OID server type
             if acl_line.metadata and acl_line.metadata.quirk_type:
                 return acl_line.metadata.quirk_type == self._get_server_type()
@@ -288,9 +287,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _update_acl_with_oid_metadata(
         self,
-        acl_data: m.Acl,
+        acl_data: m.Ldif.Acl,
         acl_line: str,
-    ) -> m.Acl:
+    ) -> m.Ldif.Acl:
         """Update ACL with OID server type and metadata."""
         server_type = _OidConstants.SERVER_TYPE
         updated_metadata = (
@@ -299,7 +298,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             else m.QuirkMetadata.create_for(
                 server_type,
                 extensions=m.DynamicMetadata(**{
-                    FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line.strip(),
+                    c.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line.strip(),
                 }),
             )
         )
@@ -310,7 +309,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
         return acl_data.model_copy(update=update_dict)
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Acl]:
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         r"""Parse Oracle OID ACL string to RFC-compliant internal model.
 
         OID vs RFC ACL Parsing
@@ -378,7 +377,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             metadata=m.QuirkMetadata(
                 server_type='oid',
                 extensions={
-                    FlextLdifConstants.MetadataKeys.ACL_ORIGINAL_FORMAT: 'orclaci: access to entry by...',
+                    c.MetadataKeys.ACL_ORIGINAL_FORMAT: 'orclaci: access to entry by...',
                     'acl_type': 'orclaci',
                     ...
                 }
@@ -411,7 +410,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ):
             # Parent parser populated the model, use it with OID server_type
             updated_acl = self._update_acl_with_oid_metadata(acl_data, acl_line)
-            return FlextResult[m.Acl].ok(updated_acl)
+            return FlextResult[m.Ldif.Acl].ok(updated_acl)
 
         # Not an OID ACL - use parent result or fall through
         if (
@@ -419,7 +418,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             and (acl_data := parent_result.unwrap())
             and not self.can_handle_acl(acl_line)
         ):
-            return FlextResult[m.Acl].ok(acl_data)
+            return FlextResult[m.Ldif.Acl].ok(acl_data)
 
         # RFC parser failed - use OID-specific parsing
         return self._parse_oid_specific_acl(acl_line)
@@ -780,7 +779,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
         """
         extensions: list[str] = []
-        meta_keys = FlextLdifConstants.MetadataKeys
+        meta_keys = c.MetadataKeys
 
         # Generic extensions
         if acl_filter := meta_extensions.get(meta_keys.ACL_FILTER):
@@ -844,7 +843,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: (m.AclPermissions | dict[str, bool] | None),
+        permissions: (m.Ldif.AclPermissions | dict[str, bool] | None),
     ) -> dict[str, bool]:
         """Normalize permissions to dict for formatting.
 
@@ -936,7 +935,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _prepare_subject_and_permissions_for_write(
         self,
         acl_subject: (m.AclSubject | dict[str, str | int | bool]),
-        acl_permissions: (m.AclPermissions | dict[str, bool] | None),
+        acl_permissions: (m.Ldif.AclPermissions | dict[str, bool] | None),
         metadata: (
             m.QuirkMetadata
             | dict[
@@ -1087,7 +1086,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         # Store original OID subject type as source_subject_type for conversion
         if config.oid_subject_type:
-            metadata_dict[FlextLdifConstants.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE] = (
+            metadata_dict[c.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE] = (
                 config.oid_subject_type
             )
         return metadata_dict
@@ -1095,7 +1094,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _parse_oid_specific_acl(
         self,
         acl_line: str,
-    ) -> FlextResult[m.Acl]:
+    ) -> FlextResult[m.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails."""
         # OID ACL format: orclaci: access to [Union[entry, attr]=(...)]
         #   [by subject (permissions)] [filter=(...)] [added_object_constraint=()]
@@ -1203,12 +1202,12 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             # Create ACL model with parsed data (Python 3.13: cleaner dict creation)
             # Use RFC name (aci) for Entry model (OID → RFC conversion)
             # Use literal directly for type safety
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "oid"
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "oid"
 
             # Architecture: Filter permissions to RFC-compliant only
             # Server-specific permissions (like OID's "none") are preserved in metadata.extensions
             # via build_acl_metadata_complete(permissions=config.perms_dict) above
-            rfc_compliant_perms = m.AclPermissions.get_rfc_compliant_permissions(
+            rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
                 perms_dict,
             )
 
@@ -1238,7 +1237,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             # Create DynamicMetadata instance from dict
             extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata(**extensions)
 
-            acl_model = m.Acl(
+            acl_model = m.Ldif.Acl(
                 name=FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
                 target=m.AclTarget(
                     target_dn=target_dn,
@@ -1248,7 +1247,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                     subject_type=subject_type_literal,
                     subject_value=rfc_subject_value,
                 ),
-                permissions=m.AclPermissions(**rfc_compliant_perms),
+                permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),
                 server_type=server_type,
                 metadata=m.QuirkMetadata(
                     quirk_type=server_type,
@@ -1256,7 +1255,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 ),
                 raw_acl=acl_line,
             )
-            return FlextResult[m.Acl].ok(acl_model)
+            return FlextResult[m.Ldif.Acl].ok(acl_model)
         except Exception as e:
             # Python 3.13: Walrus operator for cleaner code
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
@@ -1269,7 +1268,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 acl_line_length=len(acl_line),
             )
             # Return error result
-            return FlextResult[m.Acl].fail(
+            return FlextResult[m.Ldif.Acl].fail(
                 f"OID ACL parsing failed: {e}",
             )
 
@@ -1298,7 +1297,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _write_acl(
         self,
-        acl_data: m.Acl,
+        acl_data: m.Ldif.Acl,
         _format_option: str | None = None,
     ) -> FlextResult[str]:
         r"""Write ACL to OID orclaci format (Phase 2: Denormalization).
@@ -1402,13 +1401,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 if not isinstance(acl_data.subject, m.AclSubject)
                 else acl_data.subject
             )
-            # Ensure permissions is always m.AclPermissions | None (public facade)
+            # Ensure permissions is always m.Ldif.AclPermissions | None (public facade)
             if acl_data.permissions:
-                if isinstance(acl_data.permissions, m.AclPermissions):
+                if isinstance(acl_data.permissions, m.Ldif.AclPermissions):
                     permissions_public = acl_data.permissions
                 else:
                     permissions_dict = acl_data.permissions.model_dump()
-                    permissions_public = m.AclPermissions.model_validate(
+                    permissions_public = m.Ldif.AclPermissions.model_validate(
                         permissions_dict,
                     )
             else:
@@ -1461,7 +1460,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if not metadata or not metadata.extensions:
             return None
 
-        meta_keys = FlextLdifConstants.MetadataKeys
+        meta_keys = c.MetadataKeys
         source_subject_type_raw = metadata.extensions.get(
             meta_keys.ACL_SOURCE_SUBJECT_TYPE,
         )

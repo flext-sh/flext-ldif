@@ -19,7 +19,6 @@ from typing import TextIO
 from flext_ldif import FlextLdif, FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
-from tests import m
 
 
 def _write_entry_to_file(

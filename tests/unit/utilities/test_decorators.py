@@ -1,10 +1,16 @@
+"""Tests for LDIF utility decorators.
+
+This module tests decorator utilities for extracting server type information from
+classes, validating schema quirk metadata, and handling server-specific attribute
+transformations through decorated methods.
+"""
+
 from __future__ import annotations
 
 from flext_core import FlextResult
 from tests import m, s
 
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
-from flext_ldif.models import m
 
 
 class MockSchemaQuirk:

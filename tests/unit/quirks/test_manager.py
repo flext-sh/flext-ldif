@@ -1,3 +1,9 @@
+"""Tests for quirks manager and quirks lifecycle management.
+
+This module tests the QuirksManager that handles discovery, registration,
+and lifecycle management of server-specific quirks implementations.
+"""
+
 from __future__ import annotations
 
 import dataclasses

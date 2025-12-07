@@ -1,3 +1,10 @@
+"""Tests for RFC 2849/4512 compliance Pydantic validators.
+
+This module tests Pydantic v2 validators for RFC 2849 (LDIF format) and RFC 4512
+(LDAP schema) compliance validation, including entry structure, attribute naming,
+DN format validation, and detection of RFC violations in LDIF data.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,7 +12,6 @@ from typing import ClassVar, TypedDict
 
 import pytest
 
-from flext_ldif.models import m
 from tests import c, m, s
 
 

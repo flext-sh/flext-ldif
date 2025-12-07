@@ -1,3 +1,9 @@
+"""Tests for FlextLdif DN (Distinguished Name) service functionality.
+
+This module tests the DN service for RFC 4514 operations including DN parsing,
+validation, normalization, comparison, and RDN extraction.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping

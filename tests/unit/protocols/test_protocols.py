@@ -1,3 +1,9 @@
+"""Tests for FlextLdif protocol definitions and implementations.
+
+This module tests the core protocols used across FlextLdif including
+server implementations, ACL handling, and service contracts.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -34,7 +40,7 @@ class TestsTestFlextLdifProtocols(s):
     """
 
     class ProtocolNames(StrEnum):
-        """Protocol names in FlextLdifProtocols.Quirks namespace organized as nested enum."""
+        """Protocol names in FlextLdifProtocols.Ldif.Quirks namespace organized as nested enum."""
 
         __test__ = False
 
@@ -98,32 +104,32 @@ class TestsTestFlextLdifProtocols(s):
         @staticmethod
         def verify_protocol_methods(schema: object) -> None:
             """Verify schema has all required protocol methods."""
-            assert hasattr(schema, TestFlextLdifProtocols.Constants.ATTR_PARSE)
+            assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
             assert callable(
-                getattr(schema, TestFlextLdifProtocols.Constants.ATTR_PARSE),
+                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
             )
-            assert hasattr(schema, TestFlextLdifProtocols.Constants.ATTR_WRITE)
+            assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
             assert callable(
-                getattr(schema, TestFlextLdifProtocols.Constants.ATTR_WRITE),
+                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE),
             )
             assert hasattr(
                 schema,
-                TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
             )
             assert callable(
                 getattr(
                     schema,
-                    TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                    TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
                 ),
             )
             assert hasattr(
                 schema,
-                TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
             )
             assert callable(
                 getattr(
                     schema,
-                    TestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                    TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
                 ),
             )
 
@@ -154,9 +160,9 @@ class TestsTestFlextLdifProtocols(s):
         def verify_registry_methods(registry: object) -> None:
             """Verify registry has required retrieval methods."""
             methods = [
-                TestFlextLdifProtocols.Constants.ATTR_SCHEMA,
-                TestFlextLdifProtocols.Constants.ATTR_ACL,
-                TestFlextLdifProtocols.Constants.ATTR_ENTRY,
+                TestsTestFlextLdifProtocols.Constants.ATTR_SCHEMA,
+                TestsTestFlextLdifProtocols.Constants.ATTR_ACL,
+                TestsTestFlextLdifProtocols.Constants.ATTR_ENTRY,
             ]
             for method in methods:
                 assert hasattr(registry, method)
@@ -180,8 +186,8 @@ class TestsTestFlextLdifProtocols(s):
     )
     def test_protocol_is_defined(self, protocol_name: str) -> None:
         """Test that protocol is defined and accessible."""
-        assert hasattr(FlextLdifProtocols.Quirks, protocol_name)
-        protocol = getattr(FlextLdifProtocols.Quirks, protocol_name)
+        assert hasattr(FlextLdifProtocols.Ldif.Quirks, protocol_name)
+        protocol = getattr(FlextLdifProtocols.Ldif.Quirks, protocol_name)
         assert protocol is not None
 
     def test_quirks_namespace_exists(self) -> None:
@@ -194,7 +200,7 @@ class TestsTestFlextLdifProtocols(s):
     )
     def test_protocol_in_namespace(self, protocol_name: str) -> None:
         """Test that protocol exists in Quirks namespace."""
-        assert hasattr(FlextLdifProtocols.Quirks, protocol_name)
+        assert hasattr(FlextLdifProtocols.Ldif.Quirks, protocol_name)
 
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies SchemaProtocol."""

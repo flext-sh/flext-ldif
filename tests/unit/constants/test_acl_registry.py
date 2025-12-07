@@ -1,3 +1,9 @@
+"""Tests for FlextLdif ACL attribute registry constants.
+
+This module tests the ACL attribute registry for server-specific ACL
+attribute mappings and validation.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

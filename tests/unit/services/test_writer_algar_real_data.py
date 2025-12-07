@@ -1,3 +1,10 @@
+"""Tests for LDIF writer with real ALGAR production data.
+
+This module tests the FlextLdifWriter service with real ALGAR configuration
+data, verifying RFC 2849 compliance, line folding behavior, and proper handling
+of production LDIF files from actual LDAP directory migrations.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -10,7 +17,6 @@ from flext_tests import tm
 from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import m
 from tests import m, s
 
 # =============================================================================

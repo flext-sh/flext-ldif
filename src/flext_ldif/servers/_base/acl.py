@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> p.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> p.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> p.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Ldif.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -39,13 +39,13 @@ from pydantic import Field
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers._base.constants import (
     QuirkMethodsMixin,
     _get_utilities,
 )
 
-# ARCHITECTURE NOTE: Use p.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
+# ARCHITECTURE NOTE: Use FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
 # to avoid circular dependency (servers/base.py imports from _base/).
 from flext_ldif.typings import t
 
@@ -57,9 +57,9 @@ logger = FlextLogger(__name__)
 
 class FlextLdifServersBaseSchemaAcl(
     QuirkMethodsMixin,
-    FlextService[m.Acl | str],
+    FlextService[m.Ldif.Acl | str],
 ):
-    """Base class for ACL quirks - satisfies p.Quirks.AclProtocol.
+    """Base class for ACL quirks - satisfies FlextLdifProtocols.Ldif.Quirks.AclProtocol.
 
     NOTE: This is an implementation detail - DO NOT import directly.
     Use FlextLdifServersBase.Acl instead.
@@ -76,10 +76,10 @@ class FlextLdifServersBaseSchemaAcl(
     - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
 
     **Protocol Compliance**: All implementations MUST satisfy
-    p.Quirks.AclProtocol through structural typing.
+    FlextLdifProtocols.Ldif.Quirks.AclProtocol through structural typing.
     This means all public methods must match protocol signatures exactly.
 
-    **Validation**: Use isinstance(quirk, p.Quirks.AclProtocol)
+    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Ldif.Quirks.AclProtocol)
     to check protocol compliance at runtime.
 
     Common ACL patterns:
@@ -106,14 +106,14 @@ class FlextLdifServersBaseSchemaAcl(
     # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
 
     # Protocol-required fields
-    server_type: c.LiteralTypes.ServerTypeLiteral = "rfc"
+    server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc"
     """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."""
 
     priority: int = 0
     """Quirk priority (lower number = higher priority)."""
 
     # Parent quirk reference for accessing server-level configuration
-    parent_quirk: p.Quirks.ParentQuirkProtocol | None = Field(
+    parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -122,8 +122,9 @@ class FlextLdifServersBaseSchemaAcl(
 
     def __init__(
         self,
-        acl_service: p.Services.HasParseMethodProtocol | None = None,
-        _parent_quirk: p.Quirks.ParentQuirkProtocol | None = None,
+        acl_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
+        | None = None,
+        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: t.GeneralValueType,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection.
@@ -201,8 +202,8 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _hook_post_parse_acl(
         self,
-        acl: m.Acl,
-    ) -> FlextResult[m.Acl]:
+        acl: m.Ldif.Acl,
+    ) -> FlextResult[m.Ldif.Acl]:
         """Hook called after parsing an ACL line.
 
         Override in subclasses for server-specific post-processing of parsed ACLs.
@@ -231,7 +232,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return FlextResult.ok(acl)
 
-    def can_handle_acl(self, acl_line: str | m.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this quirk can handle the ACL definition.
 
         Called BEFORE parsing to detect if this quirk should process the ACL line.
@@ -312,7 +313,7 @@ class FlextLdifServersBaseSchemaAcl(
     # FlextLdifServersRfc.Acl. Subclasses should override _parse_acl,
     # _write_acl, and can_handle_acl for server-specific logic.
 
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Acl]:
+    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         r"""REQUIRED: Parse server-specific ACL definition (internal).
 
         Parses an ACL (Access Control List) definition line into Acl model.
@@ -355,7 +356,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def can_handle_attribute(
         self,
-        attribute: m.SchemaAttribute,
+        attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if this ACL quirk should be aware of a specific attribute definition.
 
@@ -377,7 +378,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def can_handle_objectclass(
         self,
-        objectclass: m.SchemaObjectClass,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if this ACL quirk should be aware of a specific objectClass definition.
 
@@ -395,7 +396,7 @@ class FlextLdifServersBaseSchemaAcl(
             False  # Must be implemented by subclass  # Must be implemented by subclass
         )
 
-    def _write_acl(self, acl_data: m.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format (internal).
 
         Base class stub - must be implemented by subclass.
@@ -410,10 +411,10 @@ class FlextLdifServersBaseSchemaAcl(
         _ = acl_data
         return FlextResult[str].fail("Must be implemented by subclass")
 
-    def parse(self, acl_line: str) -> FlextResult[m.Acl]:
+    def parse(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
         """Parse ACL line to Acl model.
 
-        This satisfies p.Quirks.AclProtocol.
+        This satisfies FlextLdifProtocols.Ldif.Quirks.AclProtocol.
 
         Args:
             acl_line: ACL definition line
@@ -424,10 +425,10 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return self._parse_acl(acl_line)
 
-    def write(self, acl_data: m.Acl) -> FlextResult[str]:
+    def write(self, acl_data: m.Ldif.Acl) -> FlextResult[str]:
         """Write Acl model to string format.
 
-        This satisfies p.Quirks.AclProtocol.
+        This satisfies FlextLdifProtocols.Ldif.Quirks.AclProtocol.
 
         Args:
             acl_data: Acl model
@@ -451,8 +452,8 @@ class FlextLdifServersBaseSchemaAcl(
             | None,
         ],
     ) -> tuple[
-        str | m.Acl | None,
-        c.LiteralTypes.ParseWriteOperationLiteral | None,
+        str | m.Ldif.Acl | None,
+        c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None,
     ]:
         """Extract and validate ACL operation parameters from kwargs.
 
@@ -465,15 +466,15 @@ class FlextLdifServersBaseSchemaAcl(
         """
         # Extract data parameter
         data_raw = kwargs.get("data")
-        data: str | m.Acl | None = (
-            data_raw if isinstance(data_raw, (str, m.Acl, type(None))) else None
+        data: str | m.Ldif.Acl | None = (
+            data_raw if isinstance(data_raw, (str, m.Ldif.Acl, type(None))) else None
         )
 
         # Extract operation parameter with type narrowing
         # Business Rule: isinstance check with literal values provides type narrowing
         # Implication: No cast needed - type checker can infer the correct type from the guard
         operation_raw = kwargs.get("operation")
-        operation: c.LiteralTypes.ParseWriteOperationLiteral | None = None
+        operation: c.Ldif.LiteralTypes.ParseWriteOperationLiteral | None = None
         if isinstance(operation_raw, str) and operation_raw in {"parse", "write"}:
             # Type narrowing: pyrefly infers Literal['parse', 'write'] from the in-check
             # Direct assignment works because pyrefly narrows str to Literal after the in-check
@@ -484,7 +485,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _execute_acl_parse(
         self,
         data: str,
-    ) -> FlextResult[m.Acl | str]:
+    ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL parse operation.
 
         Args:
@@ -496,15 +497,15 @@ class FlextLdifServersBaseSchemaAcl(
         """
         parse_result = self.parse(data)
         if parse_result.is_success:
-            return FlextResult[m.Acl | str].ok(parse_result.unwrap())
-        return FlextResult[m.Acl | str].fail(
+            return FlextResult[m.Ldif.Acl | str].ok(parse_result.unwrap())
+        return FlextResult[m.Ldif.Acl | str].fail(
             parse_result.error or "Parse failed",
         )
 
     def _execute_acl_write(
         self,
-        data: m.Acl,
-    ) -> FlextResult[m.Acl | str]:
+        data: m.Ldif.Acl,
+    ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL write operation.
 
         Args:
@@ -516,21 +517,21 @@ class FlextLdifServersBaseSchemaAcl(
         """
         write_result = self.write(data)
         if write_result.is_success:
-            return FlextResult[m.Acl | str].ok(write_result.unwrap())
-        return FlextResult[m.Acl | str].fail(
+            return FlextResult[m.Ldif.Acl | str].ok(write_result.unwrap())
+        return FlextResult[m.Ldif.Acl | str].fail(
             write_result.error or "Write failed",
         )
 
     def _resolve_data(
         self,
-        data: str | m.Acl | None,
+        data: str | m.Ldif.Acl | None,
         kwargs: dict[str, t.Server.ServerInitKwargs],
-    ) -> str | m.Acl | None:
+    ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
             return data
         data_raw = kwargs.get("data")
-        if isinstance(data_raw, (str, m.Acl)):
+        if isinstance(data_raw, (str, m.Ldif.Acl)):
             return data_raw
         return None
 
@@ -550,8 +551,8 @@ class FlextLdifServersBaseSchemaAcl(
     def _detect_operation(
         self,
         operation: str | None,
-        data: str | m.Acl,
-    ) -> c.LiteralTypes.ParseWriteOperationLiteral:
+        data: str | m.Ldif.Acl,
+    ) -> c.Ldif.LiteralTypes.ParseWriteOperationLiteral:
         """Detect operation type from explicit param or data type."""
         if operation is not None and operation in {"parse", "write"}:
             # Type narrowing: return explicit literal based on value
@@ -561,10 +562,10 @@ class FlextLdifServersBaseSchemaAcl(
     def execute(
         self,
         *,
-        data: str | m.Acl | None = None,
+        data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: t.Server.ServerInitKwargs,
-    ) -> FlextResult[m.Acl | str]:
+    ) -> FlextResult[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write.
 
         Business Rule: Auto-detects operation from data type unless explicitly
@@ -584,19 +585,19 @@ class FlextLdifServersBaseSchemaAcl(
         operation = self._resolve_operation(operation, kwargs_dict)
 
         if data is None:
-            return FlextResult[m.Acl | str].ok(m.Acl())
+            return FlextResult[m.Ldif.Acl | str].ok(m.Ldif.Acl())
 
         detected_op = self._detect_operation(operation, data)
 
         if detected_op == "parse":
             if not isinstance(data, str):
-                return FlextResult[m.Acl | str].fail(
+                return FlextResult[m.Ldif.Acl | str].fail(
                     f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
 
-        if not isinstance(data, m.Acl):
-            return FlextResult[m.Acl | str].fail(
+        if not isinstance(data, m.Ldif.Acl):
+            return FlextResult[m.Ldif.Acl | str].fail(
                 f"write requires Acl, got {type(data).__name__}",
             )
         return self._execute_acl_write(data)

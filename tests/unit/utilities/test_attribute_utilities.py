@@ -1,3 +1,10 @@
+"""Tests for LDIF attribute utilities.
+
+This module tests attribute utility functions including attribute description parsing,
+option extraction, validation of attribute names and options, and handling of RFC 4512
+compliant attribute descriptions with language tags and binary options.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

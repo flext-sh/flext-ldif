@@ -1,5 +1,11 @@
+"""Tests for RFC 2849 LDIF parsing and writing with full coverage.
+
+This module consolidates comprehensive tests for RFC LDIF parsers and writers,
+covering basic parsing, edge cases, error handling, large file processing,
+and integration with server-specific quirks for ACL and entry handling.
+"""
+
 from __future__ import annotations
-from tests import c, m, s, t, RfcTestHelpers, TestDeduplicationHelpers
 
 import base64
 from enum import StrEnum
@@ -7,15 +13,13 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import tf
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
-from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-    ParseTestCaseDict,
-    TestDeduplicationHelpers,
-)
+from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
 
 class TestsTestFlextLdifRfcLdifParser(s):
     """Consolidated test suite for RFC LDIF parsers and writers.
@@ -762,7 +766,7 @@ description: {large_value}
         )
         assert result.is_success
 
-        FlextTestsUtilities.FileHelpers.assert_file_exists(empty_file)
+        tf.assert_file_exists(empty_file)
 
     # ════════════════════════════════════════════════════════════════════════
     # ENTRY QUIRK INTEGRATION TESTS
@@ -1005,6 +1009,7 @@ objectClass: person
         assert TestsRfcConstants.ATTR_NAME_CN == "cn"
         assert TestsRfcConstants.OC_OID_PERSON == "2.5.6.6"
         assert TestsRfcConstants.SCHEMA_DN_SCHEMA == "cn=schema"
+
 
 __all__ = [
     "TestFlextLdifRfcLdifParser",

@@ -17,7 +17,6 @@ import pytest
 from flext_ldif import FlextLdif, FlextLdifParser
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
-from tests import m
 
 
 class TestMinimalDifferencesOidOud:

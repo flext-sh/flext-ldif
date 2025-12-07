@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Entries service with real LDIF fixtures.
+
+This module tests the Entries service using actual LDIF files from fixtures,
+validating real-world LDAP entry processing scenarios.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif, FlextLdifUtilities
-from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from tests import m, s
 

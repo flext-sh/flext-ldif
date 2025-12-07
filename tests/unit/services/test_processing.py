@@ -1,6 +1,11 @@
+"""Tests for FlextLdif Processing service functionality.
+
+This module tests the Processing service for transforming and processing
+LDIF entries with custom processors and validation rules.
+"""
+
 from __future__ import annotations
 
-from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.processing import FlextLdifProcessing
 from tests import m, s

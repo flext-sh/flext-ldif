@@ -1,3 +1,10 @@
+"""Tests for LDIF writer integration with validation service.
+
+This module tests the FlextLdifWriter service integration with FlextLdifValidation
+service for validating entries before writing, using real validation logic and
+factories to reduce code duplication.
+"""
+
 from __future__ import annotations
 
 from typing import Literal
@@ -5,7 +12,6 @@ from typing import Literal
 import pytest
 
 from flext_ldif import FlextLdifTypes, FlextLdifWriter
-from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
 from tests import c, m, s
 

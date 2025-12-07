@@ -1,3 +1,9 @@
+"""Tests for server-to-server LDIF conversion matrix.
+
+This module tests the conversion matrix that maps LDIF content transformations
+between different LDAP server types (OID, OUD, OpenLDAP, etc.).
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -7,7 +13,6 @@ import pytest
 from flext_core import FlextResult
 from pydantic import Field
 
-from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid

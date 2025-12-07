@@ -1,3 +1,9 @@
+"""Tests for FlextLdif server detection functionality.
+
+This module tests automatic LDAP server type detection from LDIF content
+using pattern matching and confidence scoring.
+"""
+
 from __future__ import annotations
 
 import tempfile
@@ -11,7 +17,6 @@ from flext_tests import tm
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import m
 from flext_ldif.services.detector import FlextLdifDetector
 from tests import c, m, s
 

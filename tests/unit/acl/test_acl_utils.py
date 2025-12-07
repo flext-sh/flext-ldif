@@ -1,3 +1,9 @@
+"""Tests and utilities for FlextLdif ACL functionality.
+
+This module provides test utilities and helper classes for ACL component testing
+and validation in LDIF processing.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -8,7 +14,6 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifConstants
-from flext_ldif.models import m
 from tests import m, s
 
 

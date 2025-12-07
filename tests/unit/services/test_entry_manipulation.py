@@ -1,13 +1,17 @@
+"""Tests for FlextLdif entry manipulation functionality.
+
+This module tests entry manipulation operations including attribute modification,
+validation, and transformation of LDIF entries.
+"""
+
 from __future__ import annotations
 
 from typing import cast
 
 import pytest
-from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import tm, u
 
 from flext_ldif import FlextLdifEntries
-from flext_ldif.models import m
 from tests import c, m, s
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
@@ -129,19 +133,17 @@ class TestsTestFlextLdifEntries(s):
             result = service.get_entry_attribute(entry, attr_name)
 
             if should_succeed:
-                FlextTestsMatchers.assert_result_success(result)
+                tm.assert_result_success(result)
                 if expected_value is not None:
-                    value = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
-                        result,
-                    )
-                    FlextTestsMatchers.assert_list_equals(value, expected_value)
+                    value = u.Tests.Result.assert_success(result)
+                    tm.assert_list_equals(value, expected_value)
             elif expected_error:
-                FlextTestsMatchers.assert_result_failure(
+                tm.assert_result_failure(
                     result,
                     expected_error=expected_error,
                 )
             else:
-                FlextTestsMatchers.assert_result_failure(result)
+                tm.assert_result_failure(result)
 
         @pytest.mark.parametrize(
             (
@@ -171,22 +173,20 @@ class TestsTestFlextLdifEntries(s):
             result = service.normalize_attribute_value(typed_input)
 
             if should_succeed:
-                FlextTestsMatchers.assert_result_success(result)
+                tm.assert_result_success(result)
                 if expected_normalized is not None:
-                    normalized = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
-                        result,
-                    )
-                    FlextTestsMatchers.assert_strings_equal_case_insensitive(
+                    normalized = u.Tests.Result.assert_success(result)
+                    tm.assert_strings_equal_case_insensitive(
                         normalized,
                         expected_normalized,
                     )
             elif expected_error:
-                FlextTestsMatchers.assert_result_failure(
+                tm.assert_result_failure(
                     result,
                     expected_error=expected_error,
                 )
             else:
-                FlextTestsMatchers.assert_result_failure(result)
+                tm.assert_result_failure(result)
 
         @pytest.mark.parametrize(
             ("test_name", "attr_name", "should_succeed", "expected_value"),
@@ -205,17 +205,15 @@ class TestsTestFlextLdifEntries(s):
             result = service.get_normalized_attribute(entry, attr_name)
 
             if should_succeed:
-                FlextTestsMatchers.assert_result_success(result)
+                tm.assert_result_success(result)
                 if expected_value is not None:
-                    value = FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
-                        result,
-                    )
-                    FlextTestsMatchers.assert_strings_equal_case_insensitive(
+                    value = u.Tests.Result.assert_success(result)
+                    tm.assert_strings_equal_case_insensitive(
                         value,
                         expected_value,
                     )
             else:
-                FlextTestsMatchers.assert_result_failure(result)
+                tm.assert_result_failure(result)
 
 
 __all__ = ["TestFlextLdifEntries"]

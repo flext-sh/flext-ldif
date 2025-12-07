@@ -1,3 +1,9 @@
+"""Tests for FlextLdif configuration validation.
+
+This module tests the FlextLdifConfig model and its validation rules
+for LDIF processing configuration.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -197,11 +203,11 @@ class TestsTestFlextLdifConfig(s):
         ) -> None:
             """Test numeric validation with valid values."""
             for valid_value in validation_range.valid_values:
-                config = TestFlextLdifConfig.Helpers.create_config_with_field(
+                config = TestsTestFlextLdifConfig.Helpers.create_config_with_field(
                     validation_range.field_name,
                     valid_value,
                 )
-                TestFlextLdifConfig.Helpers.assert_config_field(
+                TestsTestFlextLdifConfig.Helpers.assert_config_field(
                     config,
                     validation_range.field_name,
                     valid_value,
@@ -214,7 +220,7 @@ class TestsTestFlextLdifConfig(s):
         ) -> None:
             """Test numeric validation with value below minimum."""
             with pytest.raises(ValidationError):
-                TestFlextLdifConfig.Helpers.create_config_with_field(
+                TestsTestFlextLdifConfig.Helpers.create_config_with_field(
                     validation_range.field_name,
                     validation_range.invalid_below,
                 )
@@ -226,7 +232,7 @@ class TestsTestFlextLdifConfig(s):
         ) -> None:
             """Test numeric validation with value above maximum."""
             with pytest.raises(ValidationError):
-                TestFlextLdifConfig.Helpers.create_config_with_field(
+                TestsTestFlextLdifConfig.Helpers.create_config_with_field(
                     validation_range.field_name,
                     validation_range.invalid_above,
                 )

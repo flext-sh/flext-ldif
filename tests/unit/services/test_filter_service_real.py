@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Filters service with real LDIF data.
+
+This module tests the Filters service using actual LDIF fixtures,
+validating filtering and deduplication on real-world LDAP data.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -9,7 +15,6 @@ import pytest
 from flext_tests import tt
 
 from flext_ldif import FlextLdif
-from flext_ldif.models import m
 from flext_ldif.services.filters import FlextLdifFilters
 from tests import Filters, TestDeduplicationHelpers, m
 

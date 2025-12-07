@@ -20,10 +20,15 @@ from typing import ClassVar, cast, override
 
 from flext_core import d, r
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.utilities import u
+
+# Type alias for Syntax to use in type annotations
+# m.Syntax is a variable assignment, not a type alias
+SyntaxType = FlextLdifModelsDomains.Syntax
 
 
 class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
@@ -191,8 +196,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         oid: str,
         name: str | None = None,
         desc: str | None = None,
-        server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
-    ) -> r[m.Syntax]:
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
+    ) -> r[SyntaxType]:
         """Resolve OID to complete Syntax model with validation.
 
         Args:
@@ -207,7 +212,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         """
         oid_valid = self.validate_oid(oid)
         if oid_valid.is_failure:
-            return r[m.Syntax].fail(
+            return r[SyntaxType].fail(
                 f"Invalid OID format: {oid}",
             )
 
@@ -217,11 +222,11 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
                 server_type=server_type,
             )
             if syntax is None:
-                return r[m.Syntax].fail(
+                return r[SyntaxType].fail(
                     f"Failed to resolve syntax OID: {oid}",
                 )
         except Exception as e:
-            return r[m.Syntax].fail(
+            return r[SyntaxType].fail(
                 f"Failed to create syntax: {oid} - {e}",
             )
 
@@ -230,14 +235,14 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.SyntaxServiceStatus]):
         if desc:
             syntax.desc = desc
 
-        return r[m.Syntax].ok(syntax)
+        return r[SyntaxType].ok(syntax)
 
     @d.track_performance()
     def validate_value(
         self,
         value: str,
         syntax_oid: str,
-        _server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
+        _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> r[bool]:
         """Validate a value against its syntax type.
 

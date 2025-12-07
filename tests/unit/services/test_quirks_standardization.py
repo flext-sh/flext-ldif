@@ -1,3 +1,10 @@
+"""Tests for standardized quirk implementations.
+
+This module verifies that all quirk implementations across different LDAP server
+types (RFC, OID, OUD, OpenLDAP, etc.) have standardized Constants with expected
+attributes like CANONICAL_NAME, ALIASES, and PRIORITY values.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

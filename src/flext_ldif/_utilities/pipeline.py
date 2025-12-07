@@ -35,7 +35,7 @@ from typing import Self
 
 from flext_core import r
 
-from flext_ldif._utilities.configs import ProcessConfig
+from flext_ldif._utilities.configs import TransformConfig
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer, Normalize
@@ -133,8 +133,8 @@ class Pipeline:
             tuple[
                 str,
                 Callable[
-                    [m.Entry],
-                    r[m.Entry | _Filtered],
+                    [m.Ldif.Entry],
+                    r[m.Ldif.Entry | _Filtered],
                 ],
             ]
         ] = []
@@ -142,7 +142,7 @@ class Pipeline:
 
     def add(
         self,
-        transformer: EntryTransformer[m.Entry],
+        transformer: EntryTransformer[m.Ldif.Entry],
         *,
         name: str | None = None,
     ) -> Self:
@@ -162,8 +162,8 @@ class Pipeline:
         step_name = name or transformer.__class__.__name__
 
         def wrapped_transformer(
-            entry: m.Entry,
-        ) -> r[m.Entry | _Filtered]:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry | _Filtered]:
             """Wrap transformer to match pipeline filter signature.
 
             Business Rule:
@@ -184,7 +184,7 @@ class Pipeline:
 
     def filter(
         self,
-        entry_filter: EntryFilter[m.Entry],
+        entry_filter: EntryFilter[m.Ldif.Entry],
         *,
         name: str | None = None,
     ) -> Self:
@@ -203,8 +203,8 @@ class Pipeline:
         step_name = name or entry_filter.__class__.__name__
 
         def filter_func(
-            entry: m.Entry,
-        ) -> r[m.Entry | _Filtered]:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry | _Filtered]:
             if entry_filter.matches(entry):
                 return r.ok(entry)
             # Use FILTERED sentinel instead of None (r.ok(None) is not allowed)
@@ -216,8 +216,8 @@ class Pipeline:
     def custom(
         self,
         func: Callable[
-            [m.Entry],
-            m.Entry | r[m.Entry] | None,
+            [m.Ldif.Entry],
+            m.Ldif.Entry | r[m.Ldif.Entry] | None,
         ],
         *,
         name: str = "custom",
@@ -234,8 +234,8 @@ class Pipeline:
         """
 
         def wrapped_func(
-            entry: m.Entry,
-        ) -> r[m.Entry | _Filtered]:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry | _Filtered]:
             """Wrap function to match pipeline filter signature.
 
             Business Rule:
@@ -264,8 +264,8 @@ class Pipeline:
 
     def execute_one(
         self,
-        entry: m.Entry,
-    ) -> r[m.Entry | _Filtered]:
+        entry: m.Ldif.Entry,
+    ) -> r[m.Ldif.Entry | _Filtered]:
         """Execute pipeline on a single entry.
 
         Args:
@@ -275,7 +275,7 @@ class Pipeline:
             r containing processed entry, FILTERED if filtered, or error
 
         """
-        current: m.Entry | _Filtered = entry
+        current: m.Ldif.Entry | _Filtered = entry
 
         for step_name, step_func in self._steps:
             if isinstance(current, _Filtered):
@@ -296,8 +296,8 @@ class Pipeline:
 
     def execute(
         self,
-        entries: Sequence[m.Entry],
-    ) -> r[list[m.Entry]]:
+        entries: Sequence[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Execute pipeline on a sequence of entries.
 
         Args:
@@ -309,8 +309,8 @@ class Pipeline:
         """
 
         def process_entry(
-            entry: m.Entry,
-        ) -> r[m.Entry] | None:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry] | None:
             """Process single entry through pipeline.
 
             Returns:
@@ -321,17 +321,17 @@ class Pipeline:
             if result.is_failure:
                 # For fail_fast, batch will stop on first error
                 # For collect mode, fail result signals skip
-                return r[m.Entry].fail(result.error or "Processing failed")
+                return r[m.Ldif.Entry].fail(result.error or "Processing failed")
             processed = result.unwrap()
             # Type narrowing: processed is Entry | _Filtered
             if isinstance(processed, _Filtered):
                 # Filtered entries return None (not an error, just skipped)
                 return None
             # Type narrowing: processed is Entry when not _Filtered
-            return r[m.Entry].ok(processed)
+            return r[m.Ldif.Entry].ok(processed)
 
         # Process entries: filtered entries return None (not an error)
-        results: list[m.Entry] = []
+        results: list[m.Ldif.Entry] = []
         for entry in entries:
             process_result = process_entry(entry)
             if process_result is None:
@@ -370,7 +370,7 @@ class ProcessingPipeline:
     ProcessConfig configuration.
 
     Examples:
-        >>> config = ProcessConfig(
+        >>> config = TransformConfig(
         ...     source_server="oid",
         ...     target_server="oud",
         ...     normalize_dns=True,
@@ -382,14 +382,14 @@ class ProcessingPipeline:
 
     __slots__ = ("_config", "_pipeline")
 
-    def __init__(self, config: ProcessConfig | None = None) -> None:
+    def __init__(self, config: TransformConfig | None = None) -> None:
         """Initialize processing pipeline.
 
         Args:
             config: Processing configuration (uses defaults if None)
 
         """
-        self._config = config or ProcessConfig()
+        self._config = config or TransformConfig()
         self._pipeline = self._build_pipeline()
 
     def _build_pipeline(self) -> Pipeline:
@@ -405,9 +405,9 @@ class ProcessingPipeline:
         if self._config.normalize_dns:
             pipeline.add(
                 Normalize.dn(
-                    case=self._config.dn_config.case_fold,
-                    spaces=self._config.dn_config.space_handling,
-                    validate=self._config.dn_config.validate_before,
+                    case=self._config.process_config.dn_config.case_fold,
+                    spaces=self._config.process_config.dn_config.space_handling,
+                    validate=self._config.process_config.dn_config.validate_before,
                 ),
                 name="normalize_dn",
             )
@@ -416,9 +416,9 @@ class ProcessingPipeline:
         if self._config.normalize_attrs:
             pipeline.add(
                 Normalize.attrs(
-                    case_fold_names=self._config.attr_config.case_fold_names,
-                    trim_values=self._config.attr_config.trim_values,
-                    remove_empty=self._config.attr_config.remove_empty,
+                    case_fold_names=self._config.process_config.attr_config.case_fold_names,
+                    trim_values=self._config.process_config.attr_config.trim_values,
+                    remove_empty=self._config.process_config.attr_config.remove_empty,
                 ),
                 name="normalize_attrs",
             )
@@ -427,8 +427,8 @@ class ProcessingPipeline:
 
     def execute(
         self,
-        entries: Sequence[m.Entry],
-    ) -> r[list[m.Entry]]:
+        entries: Sequence[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Execute the processing pipeline.
 
         Args:
@@ -441,7 +441,7 @@ class ProcessingPipeline:
         return self._pipeline.execute(entries)
 
     @property
-    def config(self) -> ProcessConfig:
+    def config(self) -> TransformConfig:
         """Get the processing configuration."""
         return self._config
 
@@ -486,7 +486,7 @@ class ValidationPipeline:
 
     def validate_one(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
     ) -> r[ValidationResult]:
         """Validate a single entry.
 
@@ -547,7 +547,7 @@ class ValidationPipeline:
 
     def validate(
         self,
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[list[ValidationResult]]:
         """Validate a sequence of entries.
 

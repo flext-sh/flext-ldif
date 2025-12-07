@@ -34,7 +34,7 @@ logger = FlextLogger(__name__)
 class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     """RFC baseline constants (RFC 4512 compliant). Inherited by all servers."""
 
-    SERVER_TYPE: ClassVar[c.LiteralTypes.ServerTypeLiteral] = "rfc"
+    SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = "rfc"
     PRIORITY: ClassVar[int] = 100
 
     # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
@@ -42,18 +42,18 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
     DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
 
-    CANONICAL_NAME: ClassVar[str] = c.ServerTypes.RFC
+    CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.RFC
     ALIASES: ClassVar[frozenset[str]] = frozenset([
-        c.ServerTypes.RFC,
-        c.ServerTypes.GENERIC,
+        c.Ldif.ServerTypes.RFC,
+        c.Ldif.ServerTypes.GENERIC,
     ])
 
     # Conversion capabilities
     CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset([
-        c.ServerTypes.RFC,
+        c.Ldif.ServerTypes.RFC,
     ])
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
-        c.ServerTypes.RFC,
+        c.Ldif.ServerTypes.RFC,
     ])
 
     # ACL configuration
@@ -63,7 +63,9 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     # ACL metadata keys (standardized for bidirectional conversion)
     ACL_METADATA_KEY_FILTER: ClassVar[str] = "filter"
     ACL_METADATA_KEY_CONSTRAINT: ClassVar[str] = "added_object_constraint"
-    ACL_METADATA_KEY_ORIGINAL_FORMAT: ClassVar[str] = c.MetadataKeys.ACL_ORIGINAL_FORMAT
+    ACL_METADATA_KEY_ORIGINAL_FORMAT: ClassVar[str] = (
+        c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT
+    )
 
     # ACL permission names (RFC 4876)
     PERMISSION_READ: ClassVar[str] = "read"

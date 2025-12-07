@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> p.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> p.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> p.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Ldif.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -38,13 +38,18 @@ from typing import ClassVar
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 from pydantic import Field
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
 
-# ARCHITECTURE NOTE: Use p.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
+# Type alias for WriteOptions to use in type annotations
+# m.Ldif.WriteOptions is a variable assignment, not a type alias
+WriteOptionsType = FlextLdifModelsDomains.WriteOptions
+
+# ARCHITECTURE NOTE: Use FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
 # to avoid circular dependency (servers/base.py imports from _base/).
 
 logger = FlextLogger(__name__)
@@ -52,9 +57,9 @@ logger = FlextLogger(__name__)
 
 class FlextLdifServersBaseEntry(
     QuirkMethodsMixin,
-    FlextService[m.Entry | str],
+    FlextService[m.Ldif.Entry | str],
 ):
-    """Base class for entry processing quirks - satisfies p.Quirks.EntryProtocol.
+    """Base class for entry processing quirks - satisfies FlextLdifProtocols.Ldif.Quirks.EntryProtocol.
 
     NOTE: This is an implementation detail - DO NOT import directly.
     Use FlextLdifServersBase.Entry instead.
@@ -72,10 +77,10 @@ class FlextLdifServersBaseEntry(
 
 
     **Protocol Compliance**: All implementations MUST satisfy
-    p.Quirks.EntryProtocol through structural typing.
+    FlextLdifProtocols.Ldif.Quirks.EntryProtocol through structural typing.
     This means all public methods must match protocol signatures exactly.
 
-    **Validation**: Use isinstance(quirk, p.Quirks.EntryProtocol)
+    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Ldif.Quirks.EntryProtocol)
     to check protocol compliance at runtime.
 
     Common entry transformation patterns:
@@ -101,7 +106,7 @@ class FlextLdifServersBaseEntry(
     # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
 
     # Parent quirk reference for accessing server-level configuration
-    parent_quirk: p.Quirks.ParentQuirkProtocol | None = Field(
+    parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -110,8 +115,9 @@ class FlextLdifServersBaseEntry(
 
     def __init__(
         self,
-        entry_service: p.Services.HasParseMethodProtocol | None = None,
-        _parent_quirk: p.Quirks.ParentQuirkProtocol | None = None,
+        entry_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
+        | None = None,
+        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize entry quirk service with optional DI service injection.
@@ -182,8 +188,8 @@ class FlextLdifServersBaseEntry(
 
     def _hook_post_parse_entry(
         self,
-        entry: m.Entry,
-    ) -> FlextResult[m.Entry]:
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
         """Hook called after parsing an entry.
 
         Override in subclasses for server-specific post-processing of parsed entries.
@@ -206,8 +212,8 @@ class FlextLdifServersBaseEntry(
 
     def _hook_pre_write_entry(
         self,
-        entry: m.Entry,
-    ) -> FlextResult[m.Entry]:
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
         """Hook called before writing an entry.
 
         Override in subclasses for server-specific pre-processing before write_entry_to_rfc().
@@ -230,7 +236,7 @@ class FlextLdifServersBaseEntry(
 
     def can_handle_attribute(
         self,
-        attribute: m.SchemaAttribute,
+        attribute: m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if this quirk can handle a schema attribute.
 
@@ -249,7 +255,7 @@ class FlextLdifServersBaseEntry(
 
     def can_handle_objectclass(
         self,
-        objectclass: m.SchemaObjectClass,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if this quirk can handle a schema objectClass.
 
@@ -384,7 +390,7 @@ class FlextLdifServersBaseEntry(
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> FlextResult[list[m.Entry]]:
+    ) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal).
 
         PRIMARY parsing entry point - called by framework with raw LDIF.
@@ -424,7 +430,7 @@ class FlextLdifServersBaseEntry(
 
     def _write_entry(
         self,
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
     ) -> FlextResult[str]:
         r"""Write Entry model to RFC-compliant LDIF string (internal).
 
@@ -453,10 +459,10 @@ class FlextLdifServersBaseEntry(
         _ = entry_data  # Explicitly mark as intentionally unused in base
         return FlextResult.fail("Must be implemented by subclass")
 
-    def parse(self, ldif_content: str) -> FlextResult[list[m.Entry]]:
+    def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models.
 
-        This satisfies p.Quirks.EntryProtocol.
+        This satisfies FlextLdifProtocols.Ldif.Quirks.EntryProtocol.
 
         Args:
             ldif_content: Raw LDIF content as string
@@ -469,7 +475,7 @@ class FlextLdifServersBaseEntry(
 
     def _build_header_lines(
         self,
-        write_options: m.WriteFormatOptions | None,
+        write_options: m.Ldif.WriteFormatOptions | None,
         entry_count: int,
     ) -> list[str]:
         """Build header lines based on write options."""
@@ -488,39 +494,39 @@ class FlextLdifServersBaseEntry(
 
     def _resolve_write_options_for_header(
         self,
-        write_options: m.WriteFormatOptions | None,
-    ) -> m.WriteFormatOptions | None:
+        write_options: m.Ldif.WriteFormatOptions | None,
+    ) -> m.Ldif.WriteFormatOptions | None:
         """Resolve write options for header generation."""
         if write_options is None:
             return None
-        if isinstance(write_options, m.WriteFormatOptions):
+        if isinstance(write_options, m.Ldif.WriteFormatOptions):
             return write_options
-        if isinstance(write_options, m.WriteOptions):
-            return m.WriteFormatOptions()
+        if isinstance(write_options, m.Ldif.WriteOptions):
+            return m.Ldif.WriteFormatOptions()
         return None
 
     def _convert_write_options(
         self,
-        write_options: m.WriteFormatOptions | m.WriteOptions | dict[str, object],
-    ) -> m.WriteFormatOptions | m.WriteOptions:
+        write_options: m.Ldif.WriteFormatOptions | WriteOptionsType | dict[str, object],
+    ) -> m.Ldif.WriteFormatOptions | WriteOptionsType:
         """Convert write options to appropriate typed model."""
-        if isinstance(write_options, m.WriteFormatOptions):
+        if isinstance(write_options, m.Ldif.WriteFormatOptions):
             return write_options
-        if isinstance(write_options, m.WriteOptions):
+        if isinstance(write_options, WriteOptionsType):
             return write_options
         if isinstance(write_options, dict):
             try:
-                return m.WriteFormatOptions.model_validate(write_options)
+                return m.Ldif.WriteFormatOptions.model_validate(write_options)
             except Exception:
-                return m.WriteOptions.model_validate(write_options)
+                return m.Ldif.WriteOptions.model_validate(write_options)
         msg = f"Expected WriteFormatOptions | WriteOptions | dict, got {type(write_options)}"
         raise TypeError(msg)
 
     def _inject_write_options(
         self,
-        entry: m.Entry,
-        write_options: m.WriteFormatOptions,
-    ) -> m.Entry:
+        entry: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions,
+    ) -> m.Ldif.Entry:
         """Inject write options into entry metadata."""
         write_options_typed = self._convert_write_options(write_options)
         new_write_opts: dict[str, object] = (
@@ -535,11 +541,11 @@ class FlextLdifServersBaseEntry(
                 update={"write_options": new_write_opts},
             )
         else:
-            write_opts_for_meta: m.WriteOptions | None = None
-            if isinstance(write_options_typed, m.WriteOptions):
+            write_opts_for_meta: WriteOptionsType | None = None
+            if isinstance(write_options_typed, WriteOptionsType):
                 write_opts_for_meta = write_options_typed
-            elif isinstance(write_options_typed, m.WriteFormatOptions):
-                write_opts_for_meta = m.WriteOptions.model_validate(
+            elif isinstance(write_options_typed, m.Ldif.WriteFormatOptions):
+                write_opts_for_meta = m.Ldif.WriteOptions.model_validate(
                     write_options_typed.model_dump(),
                 )
             updated_metadata = m.QuirkMetadata(
@@ -550,8 +556,8 @@ class FlextLdifServersBaseEntry(
 
     def write(
         self,
-        entry_data: m.Entry | list[m.Entry],
-        write_options: m.WriteFormatOptions | None = None,
+        entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> FlextResult[str]:
         """Write Entry model(s) to LDIF string format.
 
@@ -572,8 +578,8 @@ class FlextLdifServersBaseEntry(
 
     def _write_entry_list(
         self,
-        entries: list[m.Entry],
-        write_options: m.WriteFormatOptions | None,
+        entries: list[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> FlextResult[str]:
         """Write list of entries to LDIF."""
         opts = self._resolve_write_options_for_header(write_options)
@@ -594,8 +600,8 @@ class FlextLdifServersBaseEntry(
 
     def _write_single_entry(
         self,
-        entry: m.Entry,
-        write_options: m.WriteFormatOptions | None,
+        entry: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> FlextResult[str]:
         """Write single entry to LDIF."""
         if write_options is not None:
@@ -604,8 +610,8 @@ class FlextLdifServersBaseEntry(
 
     def _normalize_entry(
         self,
-        entry: m.Entry,
-    ) -> m.Entry:
+        entry: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
         """Normalize entry to RFC format with metadata tracking.
 
         Hook for server-specific normalization. Override in server quirks
@@ -631,9 +637,9 @@ class FlextLdifServersBaseEntry(
 
     def _denormalize_entry(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         target_server: str | None = None,
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Denormalize entry from RFC format to target server format.
 
         Hook for server-specific denormalization. Override in server quirks
@@ -662,7 +668,7 @@ class FlextLdifServersBaseEntry(
     def execute(
         self,
         **kwargs: t.FlexibleKwargsMutable,
-    ) -> FlextResult[m.Entry | str]:
+    ) -> FlextResult[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")
         entry_model = kwargs.get("entry_model")
@@ -671,23 +677,23 @@ class FlextLdifServersBaseEntry(
             entries_result = self._parse_content(ldif_content)
             if entries_result.is_success:
                 entries = entries_result.unwrap()
-                return FlextResult[m.Entry | str].ok(
+                return FlextResult[m.Ldif.Entry | str].ok(
                     entries[0] if entries else "",
                 )
-            return FlextResult[m.Entry | str].ok("")
-        if isinstance(entry_model, m.Entry):
+            return FlextResult[m.Ldif.Entry | str].ok("")
+        if isinstance(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
-            return FlextResult[m.Entry | str].ok(
+            return FlextResult[m.Ldif.Entry | str].ok(
                 str_result.unwrap() if str_result.is_success else "",
             )
 
-        return FlextResult[m.Entry | str].ok("")
+        return FlextResult[m.Ldif.Entry | str].ok("")
 
     def parse_entry(
         self,
         entry_dn: str,
         entry_attrs: dict[str, list[str]],
-    ) -> FlextResult[m.Entry]:
+    ) -> FlextResult[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes.
 
         Base implementation delegates to _parse_content() after constructing
@@ -738,10 +744,10 @@ class FlextLdifServersBaseEntry(
         # Parse using _parse_content and return first entry
         result = self._parse_content(ldif_content)
         if result.is_failure:
-            return FlextResult[m.Entry].fail(
+            return FlextResult[m.Ldif.Entry].fail(
                 result.error or "Failed to parse entry",
             )
         entries = result.unwrap()
         if not entries:
-            return FlextResult[m.Entry].fail("No entries parsed")
-        return FlextResult[m.Entry].ok(entries[0])
+            return FlextResult[m.Ldif.Entry].fail("No entries parsed")
+        return FlextResult[m.Ldif.Entry].ok(entries[0])

@@ -14,7 +14,7 @@ from collections.abc import Callable
 from typing import ClassVar, Final, cast
 
 from flext_ldif.constants import c
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 
 # Factory function types (PEP 695) - defined at module level for better type checking
 # Business Rule: Type aliases defined at module level for reuse across the class.
@@ -23,11 +23,11 @@ from flext_ldif.protocols import p
 # pyright issues with ClassVar assignment.
 type FilterFactoryType = Callable[
     [],
-    p.Services.FilterServiceProtocol,
+    FlextLdifProtocols.Ldif.Services.FilterServiceProtocol,
 ]
 type CategorizationFactoryType = Callable[
-    [c.LiteralTypes.ServerTypeLiteral | str],
-    p.Services.CategorizationServiceProtocol,
+    [c.Ldif.LiteralTypes.ServerTypeLiteral | str],
+    FlextLdifProtocols.Ldif.Services.CategorizationServiceProtocol,
 ]
 
 
@@ -128,7 +128,7 @@ class FlextLdifServiceRegistry:
     @classmethod
     def get_filter_service(
         cls,
-    ) -> p.Services.FilterServiceProtocol:
+    ) -> FlextLdifProtocols.Ldif.Services.FilterServiceProtocol:
         """Get filter service instance from registered factory.
 
         Business Rule: Service resolution follows fail-fast pattern - raises
@@ -158,8 +158,8 @@ class FlextLdifServiceRegistry:
     @classmethod
     def get_categorization_service(
         cls,
-        server_type: c.LiteralTypes.ServerTypeLiteral | str = "rfc",
-    ) -> p.Services.CategorizationServiceProtocol:
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | str = "rfc",
+    ) -> FlextLdifProtocols.Ldif.Services.CategorizationServiceProtocol:
         """Get categorization service instance from registered factory.
 
         Business Rule: Server type parameter enables server-specific categorization

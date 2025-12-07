@@ -1,6 +1,12 @@
+"""Tests for server-specific Pydantic validators.
+
+This module tests server-specific validation rules for entries and their metadata,
+including validation of ObjectClasses, ACL formats, DN case handling, and encoding
+rules specific to different LDAP server implementations.
+"""
+
 from __future__ import annotations
 
-from flext_ldif.models import m
 from tests import m, s
 
 

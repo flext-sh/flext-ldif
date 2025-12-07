@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Categorization service functionality.
+
+This module tests the Categorization service for organizing and classifying
+LDIF entries based on attributes, object classes, and server-specific rules.
+"""
+
 from __future__ import annotations
 
 from typing import Final

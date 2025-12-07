@@ -1,3 +1,9 @@
+"""Tests for 389 Directory Server (DS389) LDIF quirks handling.
+
+This module tests the FlextLdifServersDs389 implementation for handling 389
+Directory Server-specific attributes, object classes, and entries in LDIF format.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -9,7 +15,7 @@ import pytest
 from flext_ldif import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
-from tests import m, s
+from tests import RfcTestHelpers, s
 
 
 class AttributeScenario(StrEnum):

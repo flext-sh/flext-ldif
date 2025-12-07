@@ -1,3 +1,10 @@
+"""Tests for LDIF schema service.
+
+This module tests the FlextLdifSchema service functionality including attribute
+definition parsing, objectClass definition parsing, syntax validation, and
+server-specific schema quirk handling for different LDAP implementations.
+"""
+
 from __future__ import annotations
 
 from typing import cast

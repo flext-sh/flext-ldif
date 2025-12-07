@@ -30,7 +30,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
-    """Oracle OID server quirks - implements FlextLdifProtocols.Quirks.SchemaProtocol.
+    """Oracle OID server quirks - implements FlextLdifProtocols.Ldif.Quirks.SchemaProtocol.
 
     Extends RFC 4512 schema parsing with Oracle OID-specific features:
     - Oracle OID namespace (2.16.840.1.113894.*)
@@ -39,14 +39,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     - RFC compliance normalizations (OID proprietary → RFC standard)
 
     **Protocol Compliance**: Fully implements
-    FlextLdifProtocols.Quirks.SchemaProtocol through structural typing.
+    FlextLdifProtocols.Ldif.Quirks.SchemaProtocol through structural typing.
     All methods match protocol signatures exactly for type safety.
 
     **Validation**: Verify protocol compliance with:
         from flext_ldif.protocols import FlextLdifProtocols
         quirk = FlextLdifServersOid()
         # Protocol compliance verified via structural typing
-        if not isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol):
+        if not isinstance(quirk, FlextLdifProtocols.Ldif.Quirks.SchemaProtocol):
             raise TypeError("Quirk does not satisfy SchemaProtocol")
 
     Example:
@@ -97,7 +97,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     ) -> FlextResult[
         dict[
             str,
-            list[m.SchemaAttribute] | list[m.SchemaObjectClass] | int,
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.
@@ -114,7 +114,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             return FlextResult[
                 dict[
                     str,
-                    list[m.SchemaAttribute] | list[m.SchemaObjectClass] | int,
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
                 ]
             ].fail(
                 "Schema nested class not available",
@@ -128,7 +128,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Return schema extraction result with metadata
             converted_data: dict[
                 str,
-                list[m.SchemaAttribute] | list[m.SchemaObjectClass] | int,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
             ] = {
                 "attributes": data.get("attributes", []),
                 "objectclasses": data.get("objectclasses", []),
@@ -138,13 +138,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             return FlextResult[
                 dict[
                     str,
-                    list[m.SchemaAttribute] | list[m.SchemaObjectClass] | int,
+                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
                 ]
             ].ok(converted_data)
         return FlextResult[
             dict[
                 str,
-                list[m.SchemaAttribute] | list[m.SchemaObjectClass] | int,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
             ]
         ].fail(
             result.error or "Failed to extract schemas",

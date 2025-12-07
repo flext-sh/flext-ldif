@@ -27,7 +27,9 @@ from __future__ import annotations
 from tests.base import FlextLdifTestsServiceBase as s
 from tests.constants import (
     Filters,
+    OIDs,
     RfcTestHelpers,
+    Syntax,
     TestCategorization,
     TestDeduplicationHelpers,
     TestsFlextLdifConstants as c,
@@ -46,7 +48,9 @@ from tests.utilities import TestsFlextLdifUtilities as u
 __all__ = [
     "Filters",
     "GenericFieldsDict",
+    "OIDs",
     "RfcTestHelpers",
+    "Syntax",
     "TestCategorization",
     "TestDeduplicationHelpers",
     "c",

@@ -18,6 +18,9 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
+# Direct declaration, no alias
+c = FlextLdifConstants
+
 logger = FlextLogger(__name__)
 
 
@@ -35,7 +38,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     """
 
     # Server identity and priority (defined at Constants level)
-    SERVER_TYPE: ClassVar[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = "oud"
+    SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = "oud"
     PRIORITY: ClassVar[int] = 10  # High priority (OUD is well-known server)
 
     # LDAP Connection Defaults (RFC 4511 §4.1)
@@ -49,9 +52,9 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     # =====================================================================
     # CORE IDENTITY - Server identification and metadata
     # =====================================================================
-    CANONICAL_NAME: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD.value
+    CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.OUD.value
     ALIASES: ClassVar[frozenset[str]] = frozenset([
-        FlextLdifConstants.ServerTypes.OUD.value,
+        c.Ldif.ServerTypes.OUD.value,
         "oracle_oud",  # Backward compatibility alias
     ])
 
@@ -59,12 +62,12 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     # CONVERSION CAPABILITIES
     # =====================================================================
     CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset([
-        FlextLdifConstants.ServerTypes.OUD.value,
-        FlextLdifConstants.ServerTypes.RFC.value,
+        c.Ldif.ServerTypes.OUD.value,
+        c.Ldif.ServerTypes.RFC.value,
     ])
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
-        FlextLdifConstants.ServerTypes.OUD.value,
-        FlextLdifConstants.ServerTypes.RFC.value,
+        c.Ldif.ServerTypes.OUD.value,
+        c.Ldif.ServerTypes.RFC.value,
     ])
 
     # =====================================================================
@@ -74,10 +77,10 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # OUD uses standard ACI
 
     # === ACL METADATA KEYS (Standardized for cross-server conversion) ===
-    # Use centralized constants from FlextLdifConstants.MetadataKeys
+    # Use centralized constants from c.MetadataKeys
     # Servers MUST NOT know about each other - only communicate via
     # standardized metadata
-    # All metadata keys are defined in FlextLdifConstants.MetadataKeys
+    # All metadata keys are defined in c.MetadataKeys
     # for consistency
 
     # === ACL PERMISSIONS (OUD extends RFC) ===
@@ -162,7 +165,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
 
     # === ACL WRITE CONFIGURATIONS (for utility consolidation) ===
     # Bind rules config: (extension_key, format_template, operator_default)
-    # extension_key must match FlextLdifConstants.MetadataKeys values
+    # extension_key must match c.MetadataKeys values
     ACL_BIND_RULES_CONFIG: ClassVar[list[tuple[str, str, str | None]]] = [
         ("bind_ip", 'ip="{value}"', None),
         ("bind_dns", 'dns="{value}"', None),
@@ -173,7 +176,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ]
 
     # Target extensions config: (extension_key, format_template)
-    # extension_key must match FlextLdifConstants.MetadataKeys values
+    # extension_key must match c.MetadataKeys values
     ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[list[tuple[str, str]]] = [
         ("targattrfilters", '(targattrfilters="{value}")'),
         ("targetcontrol", '(targetcontrol="{value}")'),
@@ -197,8 +200,8 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_NORMALIZE_DNS_IN_VALUES: ClassVar[bool] = False
 
     # === OUD-SPECIFIC METADATA KEYS ===
-    # These are OUD-only extension keys (not in FlextLdifConstants.MetadataKeys)
-    # For generic/cross-server keys, use FlextLdifConstants.MetadataKeys instead
+    # These are OUD-only extension keys (not in c.MetadataKeys)
+    # For generic/cross-server keys, use c.MetadataKeys instead
     DS_PRIVILEGE_NAME_KEY: ClassVar[str] = "ds_privilege_name"
     FORMAT_TYPE_KEY: ClassVar[str] = "format_type"
     FORMAT_TYPE_DS_PRIVILEGE: ClassVar[str] = "ds-privilege-name"
@@ -322,9 +325,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "uniquemember": "uniqueMember",
         "displayname": "displayName",
         "distinguishedname": "distinguishedName",
-        FlextLdifConstants.DictKeys.OBJECTCLASS.lower(): (
-            FlextLdifConstants.DictKeys.OBJECTCLASS
-        ),
+        c.Ldif.DictKeys.OBJECTCLASS.lower(): (c.Ldif.DictKeys.OBJECTCLASS),
         "memberof": "memberOf",
         "seealsodescription": "seeAlsoDescription",
         "acl": "aci",  # Generic ACL → OUD RFC ACI (matches ACL_ATTRIBUTE_NAME)
@@ -527,8 +528,8 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
 
     # === ACL AND ENCODING CONSTANTS (Centralized) ===
     # Use centralized StrEnums from FlextLdifConstants directly
-    # No duplicate nested StrEnums - use FlextLdifConstants.AclPermission,
-    # FlextLdifConstants.AclAction, and FlextLdifConstants.Encoding directly
+    # No duplicate nested StrEnums - use c.AclPermission,
+    # c.AclAction, and c.Encoding directly
 
     # === PARSER CONFIG FACTORY ===
     @staticmethod

@@ -1,3 +1,9 @@
+"""Tests for FlextLdif ACL protocol validation.
+
+This module tests the ACL protocol definitions and their implementation
+across different LDAP server types (OID, OUD, etc.).
+"""
+
 from __future__ import annotations
 
 import dataclasses
