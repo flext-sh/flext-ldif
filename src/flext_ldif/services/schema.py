@@ -84,7 +84,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
     # ════════════════════════════════════════════════════════════════════════
 
     _registry: FlextLdifServer = PrivateAttr(default_factory=FlextLdifServer)
-    _server_type: c.LiteralTypes.ServerTypeLiteral = PrivateAttr(
+    _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(
         default="rfc",
     )
 
@@ -92,7 +92,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
         self,
         *,
         registry: FlextLdifServer | None = None,
-        server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
     ) -> None:
         """Initialize schema service with dependency injection.
 
@@ -120,7 +120,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
     # ════════════════════════════════════════════════════════════════════════
 
     @property
-    def server_type(self) -> c.LiteralTypes.ServerTypeLiteral:
+    def server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get configured server type."""
         return self._server_type
 
@@ -147,7 +147,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
 
     def with_server_type(
         self,
-        server_type: c.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> Self:
         """Set server type for schema operations (fluent builder).
 
@@ -211,8 +211,8 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
         self,
         attr_definition: str,
         *,
-        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[m.SchemaAttribute]:
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute type definition.
 
         Uses u.Parser for RFC parsing and FlextLdifServer
@@ -238,7 +238,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
             )
             if parse_result.is_failure:
                 # Cast failure result to correct type
-                return cast("r[m.SchemaAttribute]", parse_result)
+                return cast("r[m.Ldif.SchemaAttribute]", parse_result)
 
             attr_domain = parse_result.unwrap()
 
@@ -251,9 +251,9 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
                     if server_result.is_success:
                         attr_domain = server_result.unwrap()
 
-            # Cast to m.SchemaAttribute for return type compatibility
-            # m.SchemaAttribute inherits from m.SchemaAttribute
-            attr = cast("m.SchemaAttribute", attr_domain)
+            # Cast to m.Ldif.SchemaAttribute for return type compatibility
+            # m.Ldif.SchemaAttribute inherits from m.Ldif.SchemaAttribute
+            attr = cast("m.Ldif.SchemaAttribute", attr_domain)
 
             # Metadata is already built by u.Parser
             # No additional metadata building needed here
@@ -272,8 +272,8 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
         self,
         oc_definition: str,
         *,
-        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> r[m.SchemaObjectClass]:
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse objectClass definition.
 
         Uses u.Parser for RFC parsing and FlextLdifServer
@@ -299,7 +299,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
             )
             if parse_result.is_failure:
                 # Cast failure result to correct type
-                return cast("r[m.SchemaObjectClass]", parse_result)
+                return cast("r[m.Ldif.SchemaObjectClass]", parse_result)
 
             oc_domain = parse_result.unwrap()
 
@@ -312,9 +312,9 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
                     if server_result.is_success:
                         oc_domain = server_result.unwrap()
 
-            # Cast to m.SchemaObjectClass for return type compatibility
-            # m.SchemaObjectClass inherits from m.SchemaObjectClass
-            oc = cast("m.SchemaObjectClass", oc_domain)
+            # Cast to m.Ldif.SchemaObjectClass for return type compatibility
+            # m.Ldif.SchemaObjectClass inherits from m.Ldif.SchemaObjectClass
+            oc = cast("m.Ldif.SchemaObjectClass", oc_domain)
 
             # Metadata is already built by u.Parser
             # No additional metadata building needed here
@@ -335,7 +335,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
 
     def validate_attribute(
         self,
-        attr: m.SchemaAttribute,
+        attr: m.Ldif.SchemaAttribute,
     ) -> r[bool]:
         """Validate attribute model syntax and constraints.
 
@@ -380,7 +380,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
 
     def validate_objectclass(
         self,
-        oc: m.SchemaObjectClass,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> r[bool]:
         """Validate objectClass model syntax and constraints.
 
@@ -441,7 +441,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
 
     def write_attribute(
         self,
-        attr: m.SchemaAttribute,
+        attr: m.Ldif.SchemaAttribute,
     ) -> r[str]:
         """Convert attribute model to LDIF format.
 
@@ -473,7 +473,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
 
     def write_objectclass(
         self,
-        oc: m.SchemaObjectClass,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> r[str]:
         """Convert objectClass model to LDIF format.
 
@@ -508,7 +508,7 @@ class FlextLdifSchema(FlextLdifServiceBase[m.SchemaServiceStatus]):
     # ════════════════════════════════════════════════════════════════════════
 
     @staticmethod
-    def is_schema(entry: m.Entry) -> bool:
+    def is_schema(entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition.
 
         Schema entries are detected by presence of schema-related attributes

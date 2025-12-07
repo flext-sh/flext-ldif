@@ -1,3 +1,9 @@
+"""Tests for OID server deviation metadata handling.
+
+This module tests the Oracle Internet Directory (OID) server's metadata tracking
+for attribute and objectClass deviations from RFC standards.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -9,7 +15,7 @@ import pytest
 from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests import m, s
+from tests import GenericFieldsDict, s
 
 
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py

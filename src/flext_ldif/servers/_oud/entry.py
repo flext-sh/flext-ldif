@@ -19,7 +19,7 @@ from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
@@ -173,8 +173,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Implication: Call parent __init__ directly, parent handles FlextService call
         # Use same pattern as FlextLdifServersRfcEntry - call base class directly
         # Cast entry_service to protocol type for type compatibility
-        entry_service_typed: p.Services.HasParseMethodProtocol | None = (
-            cast("p.Services.HasParseMethodProtocol", entry_service)
+        entry_service_typed: (
+            FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol | None
+        ) = (
+            cast(
+                "FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol", entry_service
+            )
             if entry_service is not None
             else None
         )
@@ -276,7 +280,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 attributes,
                 patterns_config,
             )
-            or c.DictKeys.OBJECTCLASS.lower() in attributes
+            or c.Ldif.DictKeys.OBJECTCLASS.lower() in attributes
         )
 
     # ===== _parse_entry - SIMPLIFIED VIA HOOK-BASED ARCHITECTURE =====
@@ -289,8 +293,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: (t.CommonDict.AttributeDictGeneric | m.Entry),
-    ) -> FlextResult[m.Entry]:
+        entry_attrs: (t.CommonDict.AttributeDictGeneric | m.Ldif.Entry),
+    ) -> FlextResult[m.Ldif.Entry]:
         """Parse entry with OUD-specific metadata population.
 
         RFC vs OUD Behavior Differences
@@ -350,7 +354,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else:
                     entry_attrs_dict[key] = [str(values)]
         elif (
-            isinstance(entry_attrs, m.Entry)
+            isinstance(entry_attrs, m.Ldif.Entry)
             and entry_attrs.attributes
             and entry_attrs.attributes.attributes
         ):
@@ -392,14 +396,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return FlextResult.ok(entry)
 
-    def _is_schema_entry(self, entry: m.Entry) -> bool:
+    def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
         return u.Entry.is_schema_entry(entry, strict=False)
 
     def _add_original_entry_comments(
         self,
-        entry_data: m.Entry,
-        write_options: m.WriteFormatOptions | None,
+        entry_data: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> list[str]:
         """Add original entry as commented LDIF block.
 
@@ -465,9 +469,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         else:
             write_opts_dict = {}
         original_entry_obj = write_opts_dict.get(
-            c.MetadataKeys.ORIGINAL_ENTRY,
+            c.Ldif.MetadataKeys.ORIGINAL_ENTRY,
         )
-        if not (original_entry_obj and isinstance(original_entry_obj, m.Entry)):
+        if not (original_entry_obj and isinstance(original_entry_obj, m.Ldif.Entry)):
             return []
 
         ldif_parts: list[str] = []
@@ -496,9 +500,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _apply_phase_aware_acl_handling(
         self,
-        entry_data: m.Entry,
-        write_options: m.WriteFormatOptions | None,
-    ) -> m.Entry:
+        entry_data: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
+    ) -> m.Ldif.Entry:
         """Apply phase-aware ACL attribute commenting.
 
         RFC vs OUD Behavior Differences
@@ -601,9 +605,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: m.WriteOptions | dict[str, object] | None,
+        write_opts: m.Ldif.WriteOptions | dict[str, object] | None,
         hidden_attrs: set[str],
-    ) -> m.WriteOptions:
+    ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
 
         Args:
@@ -615,7 +619,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         if not write_opts:
-            return m.WriteOptions()
+            return m.Ldif.WriteOptions()
 
         # Extract existing hidden attrs
         hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
@@ -628,8 +632,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         # Handle Pydantic model with model_copy
         # Type narrowing: check if write_opts is a Pydantic model
-        # Business Rule: Always use public m.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
-        if isinstance(write_opts, m.WriteOptions):
+        # Business Rule: Always use public m.Ldif.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
+        if isinstance(write_opts, m.Ldif.WriteOptions):
             # Use dict[str, Any] for model_copy update to satisfy strict type checker
             update_dict: dict[str, Any] = {"hidden_attrs": list(hidden_attrs_set)}
             return write_opts.model_copy(update=update_dict)
@@ -642,21 +646,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             for field in ["line_width", "indent", "sort_attributes"]:
                 if field in write_opts:
                     write_opts_dict[field] = write_opts[field]
-            return m.WriteOptions.model_validate(write_opts_dict)
+            return m.Ldif.WriteOptions.model_validate(write_opts_dict)
 
         # Handle Pydantic model with model_dump (WriteFormatOptions or internal WriteOptions)
-        # Business Rule: Always convert to public m.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
+        # Business Rule: Always convert to public m.Ldif.WriteOptions, not internal FlextLdifModelsDomains.WriteOptions
         if hasattr(write_opts, "model_dump"):
             write_opts_dict_raw = write_opts.model_dump()
             filtered_dict: dict[str, object] = {"hidden_attrs": list(hidden_attrs_set)}
             for field in ["line_width", "indent", "sort_attributes"]:
                 if field in write_opts_dict_raw:
                     filtered_dict[field] = write_opts_dict_raw[field]
-            return m.WriteOptions.model_validate(filtered_dict)
+            return m.Ldif.WriteOptions.model_validate(filtered_dict)
 
         # Fallback: create new WriteOptions
-        # Business Rule: Always return public m.WriteOptions
-        return m.WriteOptions(hidden_attrs=list(hidden_attrs_set))
+        # Business Rule: Always return public m.Ldif.WriteOptions
+        return m.Ldif.WriteOptions(hidden_attrs=list(hidden_attrs_set))
 
     @staticmethod
     def update_metadata_with_commented_acls(
@@ -706,7 +710,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Store commented ACL values
         if commented_acl_values:
             converted_attrs: list[str] = list(commented_acl_values.keys())
-            current_extensions[c.MetadataKeys.CONVERTED_ATTRIBUTES] = converted_attrs
+            current_extensions[c.Ldif.MetadataKeys.CONVERTED_ATTRIBUTES] = (
+                converted_attrs
+            )
             # Business Rule: extensions expects MetadataAttributeValue (ScalarValue)
             # Implication: Convert dict to JSON string for storage
             current_extensions["commented_attribute_values"] = json.dumps(
@@ -739,9 +745,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _comment_acl_attributes(
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
         acl_attribute_names: list[str],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and storing in metadata.
 
         CRITICAL for client-a-oud-mig phase-aware ACL handling.
@@ -806,7 +812,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _extract_acl_metadata(
         self,
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
     ) -> tuple[str | None, m.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing.
 
@@ -854,8 +860,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _normalize_acl_dns(
         self,
-        entry_data: m.Entry,
-    ) -> m.Entry:
+        entry_data: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
         r"""Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings).
 
         RFC vs OUD Behavior Differences
@@ -934,8 +940,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _restore_entry_from_metadata(
         self,
-        entry_data: m.Entry,
-    ) -> m.Entry:
+        entry_data: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
         """Restore original DN and attributes using generic utilities.
 
         RFC vs OUD Behavior Differences
@@ -1060,7 +1066,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _write_entry(
         self,
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
     ) -> FlextResult[str]:
         """Write Entry to LDIF with OUD-specific formatting + phase-aware ACL handling.
 
@@ -1174,7 +1180,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _write_entry_as_comment(
         self,
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
     ) -> FlextResult[str]:
         """Write entry as commented LDIF (each line prefixed with '# ').
 
@@ -1198,8 +1204,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _add_transformation_comments(
         self,
         comment_lines: list[str],
-        entry: m.Entry,
-        format_options: m.WriteFormatOptions | None = None,
+        entry: m.Ldif.Entry,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
         """Add transformation comments for attribute changes, including OUD-specific ACL handling.
 
@@ -1299,7 +1305,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _collect_acl_from_transformations(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         acl_comments_dict: dict[str, list[str]],
         acl_attr_names_to_skip: set[str],
     ) -> None:
@@ -1328,7 +1334,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def _normalize_acl_values(
         acl_values_raw: object,
-    ) -> list[str] | str | m.Acl:
+    ) -> list[str] | str | m.Ldif.Acl:
         """Normalize ACL values to expected type for comment generation.
 
         Args:
@@ -1342,7 +1348,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return acl_values_raw
         if isinstance(acl_values_raw, list):
             return [str(v) for v in acl_values_raw]
-        if isinstance(acl_values_raw, m.Acl):
+        if isinstance(acl_values_raw, m.Ldif.Acl):
             return acl_values_raw
         return str(acl_values_raw)
 
@@ -1367,7 +1373,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _collect_acl_from_extensions(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         acl_comments_dict: dict[str, list[str]],
         acl_attr_names_to_skip: set[str],
     ) -> None:
@@ -1406,7 +1412,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         comments: list[str],
         original_attr: str,
         attr_name: str,
-        acl_values: list[str] | str | m.Acl,
+        acl_values: list[str] | str | m.Ldif.Acl,
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
         if isinstance(acl_values, list):
@@ -1425,8 +1431,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _add_oud_acl_comments(
         self,
         comment_lines: list[str],
-        entry: m.Entry,
-        format_options: m.WriteFormatOptions | None = None,
+        entry: m.Ldif.Entry,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> set[str]:
         """Add OUD-specific ACL comments for phases 01-03.
 
@@ -1463,7 +1469,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         return acl_attr_names_to_skip
 
-    def _get_original_acl_attr(self, entry: m.Entry) -> str:
+    def _get_original_acl_attr(self, entry: m.Ldif.Entry) -> str:
         """Get original ACL attribute name (orclaci) from transformations or metadata."""
         if entry.metadata and entry.metadata.attribute_transformations:
             for (
@@ -1480,7 +1486,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         # Try to find original ACL attribute name from metadata
         if entry.metadata and entry.metadata.extensions:
             acl_original_format = entry.metadata.extensions.get(
-                c.MetadataKeys.ACL_ORIGINAL_FORMAT,
+                c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT,
             )
             if acl_original_format and "orclaci:" in str(acl_original_format):
                 return "orclaci"
@@ -1490,8 +1496,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def generate_entry_comments(
         self,
-        entry: m.Entry,
-        format_options: m.WriteFormatOptions | None = None,
+        entry: m.Ldif.Entry,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> str:
         """Generate LDIF comments for transformations, including OUD-specific ACL handling.
 
@@ -1546,7 +1552,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _find_aci_values(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         original_attrs: t.CommonDict.AttributeDictGeneric,
     ) -> list[str] | str | None:
         """Find ACI values from entry or original_attrs."""
@@ -1677,9 +1683,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _merge_acl_metadata_to_entry(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         acl_metadata_extensions: dict[str, t.MetadataAttributeValue],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
             return entry
@@ -1850,8 +1856,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _hook_post_parse_entry(
         self,
-        entry: m.Entry,
-    ) -> FlextResult[m.Entry]:
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
         """Hook: Validate OUD ACI macros after parsing Entry.
 
         RFC vs OUD Behavior Differences
@@ -1935,7 +1941,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         acl_metadata_extensions,
                     )
                     if process_result.is_failure:
-                        return FlextResult[m.Entry].fail(
+                        return FlextResult[m.Ldif.Entry].fail(
                             process_result.error or "ACI processing failed",
                         )
                     if process_result.unwrap():
@@ -1964,7 +1970,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry = self._merge_acl_metadata_to_entry(entry, acl_metadata_extensions)
 
         # Entry is RFC-canonical - return unchanged
-        return FlextResult[m.Entry].ok(entry)
+        return FlextResult[m.Ldif.Entry].ok(entry)
 
     def _validate_aci_macros(self, _aci_value: str) -> FlextResult[bool]:
         """Validate OUD ACI macro consistency rules (no-op)."""
@@ -1973,13 +1979,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _hook_pre_write_entry_static(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         validate_aci_macros: Callable[[str], FlextResult[bool]],
         correct_rfc_syntax_in_attributes: Callable[
             [t.CommonDict.AttributeDict],
             FlextResult[t.CommonDict.AttributeDict],
         ],
-    ) -> FlextResult[m.Entry]:
+    ) -> FlextResult[m.Ldif.Entry]:
         """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper.
 
         This hook ensures that Entry data with RFC-valid syntax is properly
@@ -2005,7 +2011,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             validate_aci_macros,
         )
         if aci_validation_error:
-            return FlextResult[m.Entry].fail(aci_validation_error)
+            return FlextResult[m.Ldif.Entry].fail(aci_validation_error)
 
         return FlextLdifServersOudEntry.correct_syntax_and_return_entry(
             entry,
@@ -2030,17 +2036,17 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def correct_syntax_and_return_entry(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attrs_dict: t.CommonDict.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
             [t.CommonDict.AttributeDict],
             FlextResult[t.CommonDict.AttributeDict],
         ],
-    ) -> FlextResult[m.Entry]:
+    ) -> FlextResult[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.is_failure:
-            return FlextResult[m.Entry].fail(
+            return FlextResult[m.Ldif.Entry].fail(
                 corrected_result.error or "Unknown error",
             )
 
@@ -2089,21 +2095,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 syntax_corrections_typed,
             )
 
-        return FlextResult[m.Entry].ok(entry)
+        return FlextResult[m.Ldif.Entry].ok(entry)
 
     @staticmethod
     def apply_syntax_corrections(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         corrected_data: dict[
             str,
             str | int | float | bool | list[str] | dict[str, str | list[str]] | None,
         ],
         syntax_corrections: list[str] | dict[str, str] | None,
-    ) -> FlextResult[m.Entry]:
+    ) -> FlextResult[m.Ldif.Entry]:
         """Apply syntax corrections to entry."""
         corrected_attrs = corrected_data.get("corrected_attributes")
         if not FlextRuntime.is_dict_like(corrected_attrs):
-            return FlextResult[m.Entry].ok(entry)
+            return FlextResult[m.Ldif.Entry].ok(entry)
 
         attrs_for_model: dict[str, list[str]] = {}
         for k, v in corrected_attrs.items():
@@ -2134,14 +2140,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if FlextRuntime.is_dict_like(corrected_attrs)
             else None,
         )
-        return FlextResult[m.Entry].ok(corrected_entry)
+        return FlextResult[m.Ldif.Entry].ok(corrected_entry)
 
     def _hook_finalize_entry_parse(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         original_dn: str,
         original_attrs: t.CommonDict.AttributeDictGeneric,
-    ) -> FlextResult[m.Entry]:
+    ) -> FlextResult[m.Ldif.Entry]:
         """Hook: Process ACLs and propagate their extensions to entry metadata.
 
         This hook processes ACL attributes (aci) in the entry and extracts
@@ -2217,8 +2223,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _hook_pre_write_entry(
         self,
-        entry: m.Entry,
-    ) -> FlextResult[m.Entry]:
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
         """Hook: Pre-write entry validation (simplified).
 
         Entry is returned unchanged (RFC-valid format preserved).
@@ -2231,12 +2237,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         # Entry is RFC-canonical and already validated
-        return FlextResult[m.Entry].ok(entry)
+        return FlextResult[m.Ldif.Entry].ok(entry)
 
     def _finalize_and_parse_entry(
         self,
         entry_dict: dict[str, t.GeneralValueType],
-        entries_list: list[m.Entry],
+        entries_list: list[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.
 
@@ -2245,10 +2251,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entries_list: Target list to append parsed Entry models
 
         """
-        if c.DictKeys.DN not in entry_dict:
+        if c.Ldif.DictKeys.DN not in entry_dict:
             return
 
-        dn = str(entry_dict.pop(c.DictKeys.DN))
+        dn = str(entry_dict.pop(c.Ldif.DictKeys.DN))
         original_entry_dict = dict(entry_dict)
 
         # Convert entry_dict to proper type for _parse_entry

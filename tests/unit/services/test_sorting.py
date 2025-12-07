@@ -1,3 +1,10 @@
+"""Tests for LDIF entry sorting service.
+
+This module tests the FlextLdifSorting service with consolidated parametrized
+tests covering sorting by hierarchy, DN, schema, custom criteria, and direct
+method execution with various entry configurations and organizational modes.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -9,7 +16,6 @@ import pytest
 from flext_core import FlextResult
 from pydantic import ValidationError
 
-from flext_ldif.models import m
 from flext_ldif.services.sorting import FlextLdifSorting
 from tests import RfcTestHelpers, c, m, s
 
@@ -52,7 +58,7 @@ class TestsTestFlextLdifSorting(s):
 
         __test__ = False
 
-        test_type: TestFlextLdifSorting.TestType
+        test_type: TestsTestFlextLdifSorting.TestType
         sort_by: str
         sort_target: str = "entries"
         custom_predicate: bool = False
@@ -85,8 +91,7 @@ class TestsTestFlextLdifSorting(s):
             """Extract DN value for sorting predicate."""
             return entry.dn.value if entry.dn else ""
 
-        @staticmethod
-        def hierarchy_entries() -> list[m.Entry]:
+        def hierarchy_entries(self) -> list[m.Entry]:
             """Create hierarchy test entries using factories and constants."""
             return [
                 self.create_entry(
@@ -120,8 +125,7 @@ class TestsTestFlextLdifSorting(s):
                 ),
             ]
 
-        @staticmethod
-        def schema_entries() -> list[m.Entry]:
+        def schema_entries(self) -> list[m.Entry]:
             """Create schema test entries using factories."""
             return [
                 self.create_entry(
@@ -142,44 +146,44 @@ class TestsTestFlextLdifSorting(s):
                 ),
             ]
 
-        @staticmethod
         def execute_sort_operation(
-            test_case: TestFlextLdifSorting.TestCase,
+            self,
+            test_case: TestsTestFlextLdifSorting.TestCase,
             entries: list[m.Entry],
         ) -> FlextResult[list[m.Entry]]:
             """Execute sort operation based on test case type using mapping."""
             operation_map: dict[
-                TestFlextLdifSorting.TestType,
+                TestsTestFlextLdifSorting.TestType,
                 Callable[[], FlextResult[list[m.Entry]]],
             ] = {
-                TestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
+                TestsTestFlextLdifSorting.TestType.BY_HIERARCHY: lambda: FlextLdifSorting.by_hierarchy(
                     entries,
                 ),
-                TestFlextLdifSorting.TestType.BY_DN: lambda: FlextLdifSorting.by_dn(
+                TestsTestFlextLdifSorting.TestType.BY_DN: lambda: FlextLdifSorting.by_dn(
                     entries,
                 ),
-                TestFlextLdifSorting.TestType.BY_SCHEMA: lambda: FlextLdifSorting.by_schema(
+                TestsTestFlextLdifSorting.TestType.BY_SCHEMA: lambda: FlextLdifSorting.by_schema(
                     entries,
                 ),
-                TestFlextLdifSorting.TestType.BY_CUSTOM: lambda: FlextLdifSorting.by_custom(
+                TestsTestFlextLdifSorting.TestType.BY_CUSTOM: lambda: FlextLdifSorting.by_custom(
                     entries,
-                    TestFlextLdifSorting.Helpers.sort_predicate,
+                    TestsTestFlextLdifSorting.Helpers.sort_predicate,
                 ),
-                TestFlextLdifSorting.TestType.EXECUTE_EMPTY: lambda: FlextLdifSorting(
+                TestsTestFlextLdifSorting.TestType.EXECUTE_EMPTY: lambda: FlextLdifSorting(
                     entries=[],
                     sort_by=test_case.sort_by,
                 ).execute(),
-                TestFlextLdifSorting.TestType.EXECUTE_CUSTOM: lambda: FlextLdifSorting(
+                TestsTestFlextLdifSorting.TestType.EXECUTE_CUSTOM: lambda: FlextLdifSorting(
                     entries=entries,
                     sort_target=test_case.sort_target,
                     sort_by=test_case.sort_by,
-                    custom_predicate=TestFlextLdifSorting.Helpers.sort_predicate,
+                    custom_predicate=TestsTestFlextLdifSorting.Helpers.sort_predicate,
                 ).execute(),
-                TestFlextLdifSorting.TestType.SORT_CLASSMETHOD: lambda: FlextLdifSorting.sort(
+                TestsTestFlextLdifSorting.TestType.SORT_CLASSMETHOD: lambda: FlextLdifSorting.sort(
                     entries=entries,
                     by=test_case.sort_by,
                 ),
-                TestFlextLdifSorting.TestType.BUILDER_ATTRIBUTES: lambda: (
+                TestsTestFlextLdifSorting.TestType.BUILDER_ATTRIBUTES: lambda: (
                     FlextLdifSorting.builder()
                     .with_entries(entries)
                     .with_target(test_case.sort_target)
@@ -198,24 +202,25 @@ class TestsTestFlextLdifSorting(s):
                 sort_by=test_case.sort_by,
             ).execute()
 
-        @staticmethod
         def verify_sort_behavior(
-            test_case: TestFlextLdifSorting.TestCase,
+            self,
+            test_case: TestsTestFlextLdifSorting.TestCase,
             sorted_entries: list[m.Entry],
         ) -> None:
             """Verify sort behavior based on test case type."""
             if (
                 "dn" in test_case.sort_by
                 and test_case.sort_target
-                == TestFlextLdifSorting.Constants.SORT_TARGET_ENTRIES
+                == TestsTestFlextLdifSorting.Constants.SORT_TARGET_ENTRIES
             ):
                 dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
                 assert dns == sorted(dns), f"{test_case.description}: DNs not sorted"
 
-            if test_case.test_type == TestFlextLdifSorting.TestType.BY_HIERARCHY:
+            if test_case.test_type == TestsTestFlextLdifSorting.TestType.BY_HIERARCHY:
                 assert sorted_entries[0].dn is not None
                 assert (
-                    sorted_entries[0].dn.value == TestFlextLdifSorting.Constants.ROOT_DN
+                    sorted_entries[0].dn.value
+                    == TestsTestFlextLdifSorting.Constants.ROOT_DN
                 )
 
     # Test case definitions using constants and factories

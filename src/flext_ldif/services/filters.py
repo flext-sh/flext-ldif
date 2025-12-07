@@ -12,11 +12,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast
 
-from flext_core import FlextLogger, r
+from flext_core import r
+from flext_core.loggings import FlextLogger as l_core
 
 from flext_ldif.models import m
 
-logger: Final = FlextLogger(__name__)
+logger: Final = l_core(__name__)
 
 
 class FlextLdifFilters:
@@ -66,7 +67,7 @@ class FlextLdifFilters:
     @classmethod
     def _should_include_entry(
         cls,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         allowed_attr: frozenset[str],
         allowed_oc: frozenset[str],
         allowed_mr: frozenset[str],
@@ -114,9 +115,9 @@ class FlextLdifFilters:
     @classmethod
     def filter_schema_by_oids(
         cls,
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         allowed_oids: Mapping[str, frozenset[str]],
-    ) -> r[list[m.Entry]]:
+    ) -> r[list[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs.
 
         Filters schema entries based on OID whitelists for:
@@ -144,9 +145,9 @@ class FlextLdifFilters:
 
             # If no OID filters specified, return all entries
             if not any([allowed_attr, allowed_oc, allowed_mr, allowed_mru]):
-                return r[list[m.Entry]].ok(entries)
+                return r[list[m.Ldif.Entry]].ok(entries)
 
-            filtered: list[m.Entry] = [
+            filtered: list[m.Ldif.Entry] = [
                 entry
                 for entry in entries
                 if cls._should_include_entry(
@@ -164,11 +165,11 @@ class FlextLdifFilters:
                 filtered_count=len(filtered),
             )
 
-            return r[list[m.Entry]].ok(filtered)
+            return r[list[m.Ldif.Entry]].ok(filtered)
 
         except Exception as e:
             logger.exception("Failed to filter schema entries by OIDs")
-            return r[list[m.Entry]].fail(f"Schema OID filter failed: {e}")
+            return r[list[m.Ldif.Entry]].fail(f"Schema OID filter failed: {e}")
 
     @classmethod
     def _extract_oid_from_schema_attr(

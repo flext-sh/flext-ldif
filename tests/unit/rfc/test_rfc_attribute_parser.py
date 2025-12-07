@@ -1,3 +1,10 @@
+"""Tests for RFC 4512 attribute parser with RFC 4517 syntax integration.
+
+This module tests attribute parsing with syntax definition resolution,
+RFC 4517 syntax OID validation, type-specific validators, and schema
+quirk integration across different LDAP server implementations.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,7 +12,6 @@ from typing import ClassVar
 
 import pytest
 
-from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.syntax import FlextLdifSyntax
 from tests import m, s

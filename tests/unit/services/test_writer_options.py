@@ -1,3 +1,10 @@
+"""Tests for LDIF writer format options and configuration.
+
+This module tests all WriteFormatOptions and WriteOptions functionality for
+the FlextLdifWriter service including option parsing, configuration mapping,
+and behavior with different output modes and server types.
+"""
+
 from __future__ import annotations
 
 import re
@@ -7,12 +14,11 @@ from typing import cast
 
 import pytest
 from flext_core import FlextConfig
-from flext_tests import tm, u
+from flext_tests import tm
 
 from flext_ldif import FlextLdifWriter
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
 from tests import c, m, s
 

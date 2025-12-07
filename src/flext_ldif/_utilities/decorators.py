@@ -30,7 +30,6 @@ from functools import wraps
 
 from flext_core import FlextLogger, T, r
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 
@@ -43,17 +42,17 @@ logger = FlextLogger(__name__)
 # Use TypeVars from flext-core (no local aliases)
 # Type aliases for decorator functions to avoid Any
 ProtocolType = (
-    FlextLdifProtocols.Quirks.SchemaProtocol
-    | FlextLdifProtocols.Quirks.AclProtocol
-    | FlextLdifProtocols.Quirks.EntryProtocol
+    FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
+    | FlextLdifProtocols.Ldif.Quirks.AclProtocol
+    | FlextLdifProtocols.Ldif.Quirks.EntryProtocol
 )
 ParseMethodArg = str | float | bool | None
 WriteMethodArg = (
-    FlextLdifProtocols.Models.SchemaAttributeProtocol
-    | FlextLdifProtocols.Models.SchemaObjectClassProtocol
-    | FlextLdifProtocols.Models.AclProtocol
-    | FlextLdifProtocols.Models.EntryProtocol
-    | Sequence[FlextLdifProtocols.Models.EntryProtocol]
+    FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
+    | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
+    | FlextLdifProtocols.Ldif.Models.AclProtocol
+    | FlextLdifProtocols.Ldif.Models.EntryProtocol
+    | Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
     | str
 )
 
@@ -79,7 +78,14 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _get_server_type_from_class(
-        obj: (m.Entry | m.SchemaAttribute | m.SchemaObjectClass | m.Acl | str | float),
+        obj: (
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+            | str
+            | float
+        ),
     ) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal.
 
@@ -104,10 +110,10 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def _attach_metadata_if_present(
         result_value: (
-            m.Entry
-            | m.SchemaAttribute
-            | m.SchemaObjectClass
-            | m.Acl
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
             | str
             | float
             | None
@@ -139,9 +145,9 @@ class FlextLdifUtilitiesDecorators:
             "parsed_timestamp": generate_iso_timestamp(),
         }
         # Normalize quirk_type if provided, otherwise None
-        normalized_quirk_type: (
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
-        ) = FlextLdifConstants.normalize_server_type(quirk_type) if quirk_type else None
+        normalized_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = (
+            c.normalize_server_type(quirk_type) if quirk_type else None
+        )
         metadata = m.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
             extensions=m.DynamicMetadata(**extensions_dict),
@@ -152,9 +158,9 @@ class FlextLdifUtilitiesDecorators:
         if isinstance(
             result_value,
             (
-                m.Entry,
-                m.SchemaAttribute,
-                m.SchemaObjectClass,
+                m.Ldif.Entry,
+                m.Ldif.SchemaAttribute,
+                m.Ldif.SchemaObjectClass,
             ),
         ):
             result_value.metadata = metadata
@@ -206,10 +212,10 @@ class FlextLdifUtilitiesDecorators:
                     if isinstance(
                         unwrapped,
                         (
-                            m.Entry,
-                            m.SchemaAttribute,
-                            m.SchemaObjectClass,
-                            m.Acl,
+                            m.Ldif.Entry,
+                            m.Ldif.SchemaAttribute,
+                            m.Ldif.SchemaObjectClass,
+                            m.Ldif.Acl,
                         ),
                     ):
                         server_type = (

@@ -1,3 +1,9 @@
+"""Helper utilities for ACL testing.
+
+This module provides factory methods and helper utilities for creating ACL
+components and validating ACL-related test scenarios.
+"""
+
 from __future__ import annotations
 
 from typing import cast

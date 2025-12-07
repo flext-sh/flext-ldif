@@ -73,8 +73,8 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(
                 self,
-                entry: m.Entry,
-            ) -> m.Entry: ...
+                entry: m.Ldif.Entry,
+            ) -> m.Ldif.Entry: ...
 
         class ParseDnHook(Protocol):
             """Protocol for parsing DN line."""
@@ -104,7 +104,7 @@ class FlextLdifUtilitiesParsers:
             parse_dn_hook: ParseDnHook | None = None,
             transform_entry_hook: TransformEntryHook | None = None,
             parse_comments_hook: ParseCommentsHook | None = None,
-        ) -> r[m.Entry]:
+        ) -> r[m.Ldif.Entry]:
             """Parse LDIF entry from content using hooks.
 
             Args:
@@ -134,7 +134,7 @@ class FlextLdifUtilitiesParsers:
                         break
 
                 if dn is None:
-                    return r[m.Entry].fail("No DN found in LDIF content")
+                    return r[m.Ldif.Entry].fail("No DN found in LDIF content")
 
                 # Parse attributes
                 attributes = parse_attributes_hook(lines)
@@ -157,20 +157,20 @@ class FlextLdifUtilitiesParsers:
                     if isinstance(attributes, m.LdifAttributes)
                     else m.LdifAttributes(attributes=attributes)
                 )
-                entry = m.Entry(dn=dn_obj, attributes=attrs_obj)
+                entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
 
                 # Transform if hook provided
                 if transform_entry_hook:
                     entry = transform_entry_hook(entry)
 
-                return r[m.Entry].ok(entry)
+                return r[m.Ldif.Entry].ok(entry)
 
             except Exception as e:
                 logger.exception(
                     "Failed to parse entry",
                     server_type=server_type,
                 )
-                return r[m.Entry].fail(f"Failed to parse entry: {e}")
+                return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
     # =========================================================================
     # ATTRIBUTE PARSER - Parse attribute type definitions
@@ -194,8 +194,8 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(
                 self,
-                attribute: m.SchemaAttribute,
-            ) -> m.SchemaAttribute: ...
+                attribute: m.Ldif.SchemaAttribute,
+            ) -> m.Ldif.SchemaAttribute: ...
 
         class ParseOidHook(Protocol):
             """Protocol for OID parsing."""
@@ -212,7 +212,7 @@ class FlextLdifUtilitiesParsers:
             *,
             transform_hook: TransformHook | None = None,
             parse_oid_hook: ParseOidHook | None = None,
-        ) -> FlextResult[m.SchemaAttribute]:
+        ) -> FlextResult[m.Ldif.SchemaAttribute]:
             """Parse attribute definition using hooks.
 
             Args:
@@ -238,7 +238,7 @@ class FlextLdifUtilitiesParsers:
                         oid = parsed_oid
 
                 # Create attribute
-                attribute = m.SchemaAttribute(
+                attribute = m.Ldif.SchemaAttribute(
                     oid=str(oid) if oid else "",
                     name=str(parts.get("name", oid or "")),
                     desc=str(parts.get("desc")) if parts.get("desc") else None,
@@ -260,7 +260,7 @@ class FlextLdifUtilitiesParsers:
                 if transform_hook:
                     attribute = transform_hook(attribute)
 
-                return FlextResult[m.SchemaAttribute].ok(attribute)
+                return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
 
             except Exception as e:
                 logger.exception(
@@ -291,8 +291,8 @@ class FlextLdifUtilitiesParsers:
 
             def __call__(
                 self,
-                objectclass: m.SchemaObjectClass,
-            ) -> m.SchemaObjectClass: ...
+                objectclass: m.Ldif.SchemaObjectClass,
+            ) -> m.Ldif.SchemaObjectClass: ...
 
         # ===== STATIC METHODS =====
 
@@ -303,7 +303,7 @@ class FlextLdifUtilitiesParsers:
             parse_parts_hook: ParsePartsHook,
             *,
             transform_hook: TransformHook | None = None,
-        ) -> FlextResult[m.SchemaObjectClass]:
+        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition using hooks.
 
             Args:
@@ -330,7 +330,7 @@ class FlextLdifUtilitiesParsers:
                     may = [str(may)]
 
                 # Create objectClass
-                objectclass = m.SchemaObjectClass(
+                objectclass = m.Ldif.SchemaObjectClass(
                     oid=str(parts.get("oid", "")),
                     name=str(parts.get("name", parts.get("oid", ""))),
                     desc=str(parts.get("desc")) if parts.get("desc") else None,
@@ -344,7 +344,7 @@ class FlextLdifUtilitiesParsers:
                 if transform_hook:
                     objectclass = transform_hook(objectclass)
 
-                return FlextResult[m.SchemaObjectClass].ok(objectclass)
+                return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
 
             except Exception as e:
                 logger.exception(
@@ -365,7 +365,7 @@ class FlextLdifUtilitiesParsers:
         class ParseEntryHook(Protocol):
             """Protocol for parsing individual entries."""
 
-            def __call__(self, entry_content: str) -> r[m.Entry]: ...
+            def __call__(self, entry_content: str) -> r[m.Ldif.Entry]: ...
 
         class ParseHeaderHook(Protocol):
             """Protocol for parsing LDIF header."""
@@ -391,7 +391,7 @@ class FlextLdifUtilitiesParsers:
             parse_entry_hook: ParseEntryHook,
             *,
             _parse_header_hook: ParseHeaderHook | None = None,
-        ) -> r[list[m.Entry]]:
+        ) -> r[list[m.Ldif.Entry]]:
             """Parse multiple entries from LDIF content.
 
             Args:
@@ -405,7 +405,7 @@ class FlextLdifUtilitiesParsers:
 
             """
             try:
-                entries: list[m.Entry] = []
+                entries: list[m.Ldif.Entry] = []
                 stats = FlextLdifUtilitiesParsers.Content.Stats()
 
                 # Split content by empty lines
@@ -442,14 +442,14 @@ class FlextLdifUtilitiesParsers:
                             server_type=server_type,
                         )
 
-                return r[list[m.Entry]].ok(entries)
+                return r[list[m.Ldif.Entry]].ok(entries)
 
             except Exception as e:
                 logger.exception(
                     "Failed to parse content",
                     server_type=server_type,
                 )
-                return r[list[m.Entry]].fail(f"Failed to parse content: {e}")
+                return r[list[m.Ldif.Entry]].fail(f"Failed to parse content: {e}")
 
 
 __all__ = ["FlextLdifUtilitiesParsers"]

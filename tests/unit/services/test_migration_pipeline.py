@@ -1,13 +1,19 @@
+"""Tests for LDIF migration pipeline orchestration.
+
+This module tests the migration pipeline that handles transforming LDIF
+data between different LDAP server types, including initialization,
+validation, and execution with various server type combinations.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import tf
 
 from flext_ldif import FlextLdifMigrationPipeline
-from flext_ldif.models import m
 from tests import c, m, s
 
 
@@ -163,7 +169,7 @@ class TestsTestFlextLdifMigrationPipeline(s):
 
         # Pipeline should succeed and create the output directory
         assert result.is_success
-        FlextTestsUtilities.FileHelpers.assert_file_exists(nonexistent_output)
+        tf.assert_file_exists(nonexistent_output)
 
     # ════════════════════════════════════════════════════════════════════════
     # EMPTY INPUT TESTS

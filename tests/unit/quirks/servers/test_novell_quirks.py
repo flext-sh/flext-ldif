@@ -1,3 +1,9 @@
+"""Tests for Novell eDirectory (NDS) server-specific LDIF quirks handling.
+
+This module tests the FlextLdifServersNovell implementation for handling Novell
+eDirectory-specific attributes, object classes, and entries in LDIF format.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -8,7 +14,7 @@ import pytest
 
 from flext_ldif.models import m
 from flext_ldif.servers.novell import FlextLdifServersNovell
-from tests import m, s
+from tests import RfcTestHelpers, TestDeduplicationHelpers, s
 
 
 class AttributeScenario(StrEnum):
@@ -193,15 +199,17 @@ def novell_server() -> FlextLdifServersNovell:
 
 
 @pytest.fixture
-def schema_quirk(novell_server: FlextLdifServersNovell) -> QuirkInstance:
+def schema_quirk(
+    novell_server: FlextLdifServersNovell,
+) -> FlextLdifServersNovell.Schema:
     """Get schema quirk from Novell server."""
-    return cast("QuirkInstance", novell_server.schema_quirk)
+    return cast("FlextLdifServersNovell.Schema", novell_server.schema_quirk)
 
 
 @pytest.fixture
-def entry_quirk(novell_server: FlextLdifServersNovell) -> QuirkInstance:
+def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
     """Get entry quirk from Novell server."""
-    return cast("QuirkInstance", novell_server.entry_quirk)
+    return cast("FlextLdifServersNovell.Entry", novell_server.entry_quirk)
 
 
 class TestsFlextLdifNovellInitialization(s):
@@ -298,7 +306,7 @@ class TestNovellSchemaObjectClassParsing:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            cast("QuirkInstance", schema_quirk),
+            cast("FlextLdifServersNovell.Schema", schema_quirk),
             oc_def,
             expected_oid="2.16.840.1.113719.2.2.6.1",
             expected_name="ndsPerson",
@@ -315,7 +323,7 @@ class TestNovellSchemaObjectClassParsing:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            cast("QuirkInstance", schema_quirk),
+            cast("FlextLdifServersNovell.Schema", schema_quirk),
             oc_def,
             expected_kind="AUXILIARY",
         )
@@ -327,14 +335,14 @@ class TestNovellSchemaObjectClassParsing:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            cast("QuirkInstance", schema_quirk),
+            cast("FlextLdifServersNovell.Schema", schema_quirk),
             oc_def,
             expected_kind="ABSTRACT",
         )
 
     def test_parse_objectclass_missing_oid(
         self,
-        schema_quirk: QuirkInstance,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
@@ -408,7 +416,7 @@ class TestNovellEntryDetection:
     def test_can_handle_entry(
         self,
         test_case: EntryTestCase,
-        entry_quirk: QuirkInstance,
+        entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry detection for various scenarios."""
         quirk_entry = cast("FlextLdifServersNovell.Entry", entry_quirk)

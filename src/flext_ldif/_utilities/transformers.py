@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 from flext_core import FlextUtilities, r
 
@@ -125,7 +125,7 @@ class EntryTransformer[T](ABC):
 # =========================================================================
 
 
-class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
+class NormalizeDnTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer for DN normalization.
 
     Normalizes Distinguished Names according to specified options.
@@ -142,8 +142,8 @@ class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
     def __init__(
         self,
         *,
-        case: CaseFoldOption = "lower",
-        spaces: SpaceHandlingOption = "trim",
+        case: CaseFoldOption = CaseFoldOption.LOWER,
+        spaces: SpaceHandlingOption = SpaceHandlingOption.TRIM,
         validate: bool = True,
     ) -> None:
         """Initialize DN normalization transformer.
@@ -193,7 +193,7 @@ class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
             normalized_dn = ",".join(p.strip() for p in parts)
         return normalized_dn
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply DN normalization to an entry.
 
         Args:
@@ -214,7 +214,7 @@ class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
             validation_result = NormalizeDnTransformer._validate_dn_components(dn_str)
             if validation_result.is_failure:
                 # Return failure as r[Entry] by mapping error
-                return r[m.Entry].fail(
+                return r[m.Ldif.Entry].fail(
                     u.err(validation_result, default="DN validation failed"),
                 )
 
@@ -227,15 +227,15 @@ class NormalizeDnTransformer(EntryTransformer["m.Entry"]):
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
 
         # Update entry DN (create new DistinguishedName)
-        # Use cast for model_copy update to avoid type checker strictness
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
         new_dn = m.DistinguishedName(value=normalized_dn)
-        update_dict: dict[str, Any] = {"dn": new_dn}
+        update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class NormalizeAttrsTransformer(EntryTransformer["m.Entry"]):
+class NormalizeAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer for attribute normalization.
 
     Normalizes attribute names and optionally values.
@@ -268,7 +268,7 @@ class NormalizeAttrsTransformer(EntryTransformer["m.Entry"]):
         self._trim_values = trim_values
         self._remove_empty = remove_empty
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply attribute normalization to an entry.
 
         Args:
@@ -317,9 +317,9 @@ class NormalizeAttrsTransformer(EntryTransformer["m.Entry"]):
 
         # Update entry with processed attributes if anything changed
         if needs_update:
-            # Use cast for model_copy update to avoid type checker strictness
+            # Use dict[str, object] for model_copy update (Pydantic accepts object)
             new_attributes = m.LdifAttributes(attributes=new_attrs)
-            update_dict: dict[str, Any] = {"attributes": new_attributes}
+            update_dict: dict[str, object] = {"attributes": new_attributes}
             item = item.model_copy(update=update_dict)
 
         return r.ok(item)
@@ -342,8 +342,8 @@ class Normalize:
     @staticmethod
     def dn(
         *,
-        case: CaseFoldOption = "lower",
-        spaces: SpaceHandlingOption = "trim",
+        case: CaseFoldOption = CaseFoldOption.LOWER,
+        spaces: SpaceHandlingOption = SpaceHandlingOption.TRIM,
         validate: bool = True,
     ) -> NormalizeDnTransformer:
         """Create a DN normalization transformer.
@@ -389,7 +389,7 @@ class Normalize:
 # =========================================================================
 
 
-class ReplaceBaseDnTransformer(EntryTransformer["m.Entry"]):
+class ReplaceBaseDnTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer for replacing base DN in entries.
 
     Replaces the base DN suffix with a new one.
@@ -416,7 +416,7 @@ class ReplaceBaseDnTransformer(EntryTransformer["m.Entry"]):
         self._new_base = new_base
         self._case_insensitive = case_insensitive
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Replace base DN in an entry.
 
         Args:
@@ -443,15 +443,15 @@ class ReplaceBaseDnTransformer(EntryTransformer["m.Entry"]):
         )
 
         # Create new DN and update entry
-        # Use cast for model_copy update to avoid type checker strictness
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
         new_dn = m.DistinguishedName(value=new_dn_str)
-        update_dict: dict[str, Any] = {"dn": new_dn}
+        update_dict: dict[str, object] = {"dn": new_dn}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class ConvertBooleansTransformer(EntryTransformer["m.Entry"]):
+class ConvertBooleansTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer for converting boolean attribute values.
 
     Converts boolean values between different formats.
@@ -481,7 +481,7 @@ class ConvertBooleansTransformer(EntryTransformer["m.Entry"]):
         self._format = boolean_format
         self._attributes = attributes
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Convert boolean attributes in an entry.
 
         Args:
@@ -520,15 +520,15 @@ class ConvertBooleansTransformer(EntryTransformer["m.Entry"]):
         )
 
         # Create new entry with converted attributes
-        # Use cast for model_copy update to avoid type checker strictness
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
         new_attributes = m.LdifAttributes(attributes=converted_attrs)
-        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class FilterAttrsTransformer(EntryTransformer["m.Entry"]):
+class FilterAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer for filtering entry attributes.
 
     Includes or excludes specific attributes from entries.
@@ -552,7 +552,7 @@ class FilterAttrsTransformer(EntryTransformer["m.Entry"]):
         self._include = set(include) if include else None
         self._exclude = set(exclude) if exclude else set()
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Filter attributes in an entry.
 
         Args:
@@ -607,15 +607,15 @@ class FilterAttrsTransformer(EntryTransformer["m.Entry"]):
                 attrs = {}
 
         # Update entry with filtered attributes
-        # Use cast for model_copy update to avoid type checker strictness
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
         new_attributes = m.LdifAttributes(attributes=attrs)
-        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        update_dict: dict[str, object] = {"attributes": new_attributes}
         updated_entry = item.model_copy(update=update_dict)
 
         return r.ok(updated_entry)
 
 
-class RemoveAttrsTransformer(EntryTransformer["m.Entry"]):
+class RemoveAttrsTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer for removing specific attributes from entries."""
 
     __slots__ = ("_attributes",)
@@ -629,7 +629,7 @@ class RemoveAttrsTransformer(EntryTransformer["m.Entry"]):
         """
         self._attributes = {attr.lower() for attr in attributes}
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Remove attributes from an entry.
 
         Args:
@@ -649,7 +649,7 @@ class RemoveAttrsTransformer(EntryTransformer["m.Entry"]):
         return r.ok(updated_entry)
 
 
-class CustomTransformer(EntryTransformer["m.Entry"]):
+class CustomTransformer(EntryTransformer["m.Ldif.Entry"]):
     """Transformer using a custom function.
 
     Allows arbitrary transformations via a callable.
@@ -660,8 +660,8 @@ class CustomTransformer(EntryTransformer["m.Entry"]):
     def __init__(
         self,
         func: Callable[
-            [m.Entry],
-            m.Entry | r[m.Entry],
+            [m.Ldif.Entry],
+            m.Ldif.Entry | r[m.Ldif.Entry],
         ],
     ) -> None:
         """Initialize custom transformer.
@@ -672,7 +672,7 @@ class CustomTransformer(EntryTransformer["m.Entry"]):
         """
         self._func = func
 
-    def apply(self, item: m.Entry) -> r[m.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply custom transformation to an entry.
 
         Args:
@@ -778,8 +778,8 @@ class Transform:
     @staticmethod
     def custom(
         func: Callable[
-            [m.Entry],
-            m.Entry | r[m.Entry],
+            [m.Ldif.Entry],
+            m.Ldif.Entry | r[m.Ldif.Entry],
         ],
     ) -> CustomTransformer:
         """Create a custom transformer from a function.

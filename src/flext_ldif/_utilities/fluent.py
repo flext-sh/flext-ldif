@@ -37,7 +37,7 @@ Usage:
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Literal, Self
+from typing import Literal, Self
 
 from flext_core import FlextResult
 
@@ -85,7 +85,7 @@ class DnOps:
     def normalize(
         self,
         *,
-        case: CaseFoldOption = "lower",
+        case: CaseFoldOption = CaseFoldOption.LOWER,
     ) -> Self:
         """Normalize the DN.
 
@@ -352,7 +352,7 @@ class EntryOps:
 
     __slots__ = ("_entry", "_error")
 
-    def __init__(self, entry: m.Entry) -> None:
+    def __init__(self, entry: m.Ldif.Entry) -> None:
         """Initialize entry operations.
 
         Args:
@@ -365,7 +365,7 @@ class EntryOps:
     def normalize_dn(
         self,
         *,
-        case: CaseFoldOption = "lower",
+        case: CaseFoldOption = CaseFoldOption.LOWER,
         validate: bool = True,
     ) -> Self:
         """Normalize the entry's DN.
@@ -456,9 +456,9 @@ class EntryOps:
         else:
             new_attrs[name] = list(values)
 
-        # Use cast for model_copy update to avoid type checker strictness
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
         new_attributes = m.LdifAttributes(attributes=new_attrs)
-        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        update_dict: dict[str, object] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
         return self
@@ -518,9 +518,9 @@ class EntryOps:
             else:
                 new_attrs[key] = values
 
-        # Use cast for model_copy update to avoid type checker strictness
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
         new_attributes = m.LdifAttributes(attributes=new_attrs)
-        update_dict: dict[str, Any] = {"attributes": new_attributes}
+        update_dict: dict[str, object] = {"attributes": new_attributes}
         self._entry = self._entry.model_copy(update=update_dict)
 
         return self
@@ -686,7 +686,7 @@ class EntryOps:
 
         return FlextResult.ok(True)
 
-    def build(self) -> FlextResult[m.Entry]:
+    def build(self) -> FlextResult[m.Ldif.Entry]:
         """Build and return the final entry.
 
         Returns:
@@ -699,7 +699,7 @@ class EntryOps:
         return FlextResult.ok(self._entry)
 
     @property
-    def entry(self) -> m.Entry:
+    def entry(self) -> m.Ldif.Entry:
         """Get current entry (may have errors).
 
         Returns:

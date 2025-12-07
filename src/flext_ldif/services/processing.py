@@ -87,7 +87,7 @@ class FlextLdifProcessing(
     def process(
         self,
         processor_name: str,
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         *,
         parallel: bool = False,
         batch_size: int = 100,
@@ -156,7 +156,7 @@ class FlextLdifProcessing(
     def _get_processor_function(
         self,
         processor_name: str,
-    ) -> r[Callable[[m.Entry], ProcessingResult]]:
+    ) -> r[Callable[[m.Ldif.Entry], ProcessingResult]]:
         """Get processor function by name.
 
         Args:
@@ -168,24 +168,24 @@ class FlextLdifProcessing(
         """
         processor_map: dict[
             str,
-            Callable[[], Callable[[m.Entry], ProcessingResult]],
+            Callable[[], Callable[[m.Ldif.Entry], ProcessingResult]],
         ] = {
             c.ProcessorTypes.TRANSFORM: self._create_transform_processor,
             c.ProcessorTypes.VALIDATE: self._create_validate_processor,
         }
         if processor_name in processor_map:
-            return r[Callable[[m.Entry], ProcessingResult]].ok(
+            return r[Callable[[m.Ldif.Entry], ProcessingResult]].ok(
                 processor_map[processor_name](),
             )
         supported = "'transform', 'validate'"
-        return r[Callable[[m.Entry], ProcessingResult]].fail(
+        return r[Callable[[m.Ldif.Entry], ProcessingResult]].fail(
             f"Unknown processor: '{processor_name}'. Supported: {supported}",
         )
 
     @staticmethod
     def _execute_parallel_processing(
-        entries: list[m.Entry],
-        processor_func: Callable[[m.Entry], ProcessingResult],
+        entries: list[m.Ldif.Entry],
+        processor_func: Callable[[m.Ldif.Entry], ProcessingResult],
         max_workers: int,
     ) -> r[list[ProcessingResult]]:
         """Execute parallel processing using ThreadPoolExecutor.
@@ -209,8 +209,8 @@ class FlextLdifProcessing(
 
     @staticmethod
     def _execute_batch_processing(
-        entries: list[m.Entry],
-        processor_func: Callable[[m.Entry], ProcessingResult],
+        entries: list[m.Ldif.Entry],
+        processor_func: Callable[[m.Ldif.Entry], ProcessingResult],
         _batch_size: int,
     ) -> r[list[ProcessingResult]]:
         """Execute batch processing sequentially.
@@ -241,7 +241,7 @@ class FlextLdifProcessing(
 
     @staticmethod
     def _create_transform_processor() -> Callable[
-        [m.Entry],
+        [m.Ldif.Entry],
         ProcessingResult,
     ]:
         """Create transform processor function.
@@ -252,7 +252,7 @@ class FlextLdifProcessing(
         """
 
         def _transform_func(
-            entry: m.Entry,
+            entry: m.Ldif.Entry,
         ) -> ProcessingResult:
             # Transform Entry to ProcessingResult with all metadata preserved
             if entry.dn is None:
@@ -275,7 +275,7 @@ class FlextLdifProcessing(
 
     @staticmethod
     def _create_validate_processor() -> Callable[
-        [m.Entry],
+        [m.Ldif.Entry],
         ProcessingResult,
     ]:
         """Create validate processor function.
@@ -286,7 +286,7 @@ class FlextLdifProcessing(
         """
 
         def _validate_func(
-            entry: m.Entry,
+            entry: m.Ldif.Entry,
         ) -> ProcessingResult:
             # Basic validation: entry has DN and attributes - required fields must be present
             # Return complete entry data for validation results

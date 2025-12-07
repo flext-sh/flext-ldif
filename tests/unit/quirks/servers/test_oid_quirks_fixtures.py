@@ -1,3 +1,9 @@
+"""Tests for OID quirks using fixture LDIF files.
+
+This module tests Oracle Internet Directory (OID) quirks functionality
+with real LDIF fixture files to validate complete round-trip processing.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

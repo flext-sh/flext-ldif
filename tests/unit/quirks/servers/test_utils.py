@@ -1,11 +1,19 @@
+"""Tests for FlextLdif quirks utilities and test helper functions.
+
+This module tests utility functions and test helper classes used throughout
+the FlextLdif test suite for common operations and fixture management.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 from flext_ldif import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import m
-from tests import m
+from flext_ldif.models import FlextLdifModels
+
+# Use direct import to avoid circular dependency
+m = FlextLdifModels
 
 
 class FlextLdifTestUtils:
@@ -125,7 +133,11 @@ class FlextLdifTestUtils:
                 f"Expected at least {expected_min_count} entries, got {len(entries)}"
             )
 
-        TestAssertions.assert_entries_valid(entries)
+        # Validate entries structure
+        for entry in entries:
+            assert entry.dn is not None, "Entry must have DN"
+            assert entry.attributes is not None, "Entry must have attributes"
+
         return entries
 
     @staticmethod
@@ -213,13 +225,17 @@ class FlextLdifTestUtils:
             output_path=output_file,
             server_type=server_type,
         )
-        self.assert_success(write_result, "Write should succeed")
+        if not write_result.is_success:
+            msg = f"Write should succeed: {write_result.error}"
+            raise AssertionError(msg)
 
         parse_result = ldif_api.parse(
             output_file,
             server_type=server_type,
         )
-        self.assert_success(parse_result, "Re-parse should succeed")
+        if not parse_result.is_success:
+            msg = f"Re-parse should succeed: {parse_result.error}"
+            raise AssertionError(msg)
 
         parsed_data = parse_result.unwrap()
         if isinstance(parsed_data, list):

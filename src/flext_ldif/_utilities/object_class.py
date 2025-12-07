@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 
 logger = FlextLogger(__name__)
@@ -52,7 +51,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_missing_sup(
-        schema_oc: m.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix missing SUP for AUXILIARY objectClasses (server-specific fixes).
@@ -76,7 +75,7 @@ class FlextLdifUtilitiesObjectClass:
 
         """
         # Only fix AUXILIARY classes without SUP
-        if schema_oc.sup or schema_oc.kind != FlextLdifConstants.Schema.AUXILIARY:
+        if schema_oc.sup or schema_oc.kind != c.Schema.AUXILIARY:
             return
 
         # Known AUXILIARY classes from OID that are missing SUP top
@@ -95,7 +94,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: m.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
@@ -136,22 +135,16 @@ class FlextLdifUtilitiesObjectClass:
         sup_lower = str(schema_oc.sup).lower() if isinstance(schema_oc.sup, str) else ""
 
         # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
-        if (
-            sup_lower in structural_superiors
-            and schema_oc.kind == FlextLdifConstants.Schema.AUXILIARY
-        ):
-            schema_oc.kind = FlextLdifConstants.Schema.STRUCTURAL
+        if sup_lower in structural_superiors and schema_oc.kind == c.Schema.AUXILIARY:
+            schema_oc.kind = c.Schema.STRUCTURAL
 
         # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
-        elif (
-            sup_lower in auxiliary_superiors
-            and schema_oc.kind == FlextLdifConstants.Schema.STRUCTURAL
-        ):
-            schema_oc.kind = FlextLdifConstants.Schema.AUXILIARY
+        elif sup_lower in auxiliary_superiors and schema_oc.kind == c.Schema.STRUCTURAL:
+            schema_oc.kind = c.Schema.AUXILIARY
 
     @staticmethod
     def ensure_sup_for_auxiliary(
-        schema_oc: m.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass,
         default_sup: str = "top",
     ) -> None:
         """Ensure AUXILIARY objectClasses have a SUP clause.
@@ -170,12 +163,12 @@ class FlextLdifUtilitiesObjectClass:
             None - modifies schema_oc in-place
 
         """
-        if not schema_oc.sup and schema_oc.kind == FlextLdifConstants.Schema.AUXILIARY:
+        if not schema_oc.sup and schema_oc.kind == c.Schema.AUXILIARY:
             schema_oc.sup = default_sup
 
     @staticmethod
     def align_kind_with_superior(
-        schema_oc: m.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass,
         superior_kind: str | None,
     ) -> None:
         """Align ObjectClass kind with its superior class kind.
@@ -196,15 +189,15 @@ class FlextLdifUtilitiesObjectClass:
             return
 
         if (
-            superior_kind == FlextLdifConstants.Schema.STRUCTURAL
-            and schema_oc.kind == FlextLdifConstants.Schema.AUXILIARY
+            superior_kind == c.Schema.STRUCTURAL
+            and schema_oc.kind == c.Schema.AUXILIARY
         ):
-            schema_oc.kind = FlextLdifConstants.Schema.STRUCTURAL
+            schema_oc.kind = c.Schema.STRUCTURAL
         elif (
-            superior_kind == FlextLdifConstants.Schema.AUXILIARY
-            and schema_oc.kind == FlextLdifConstants.Schema.STRUCTURAL
+            superior_kind == c.Schema.AUXILIARY
+            and schema_oc.kind == c.Schema.STRUCTURAL
         ):
-            schema_oc.kind = FlextLdifConstants.Schema.AUXILIARY
+            schema_oc.kind = c.Schema.AUXILIARY
 
 
 __all__ = [

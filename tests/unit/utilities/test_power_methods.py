@@ -1,3 +1,10 @@
+"""Tests for LDIF power methods and fluent APIs.
+
+This module tests fluent API power methods for DN operations, entry transformations,
+filtering, and pipeline-based processing including ProcessingPipeline and ValidationPipeline
+for composable LDIF data transformation workflows.
+"""
+
 from __future__ import annotations
 
 from typing import cast
@@ -41,7 +48,6 @@ from flext_ldif._utilities import (
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif.models import m
 
 # =========================================================================
 # FIXTURES

@@ -245,7 +245,7 @@ class FlextLdifValidation(
                 result[name] = obj_result.unwrap()
 
         # Convert dict[str, bool] to BooleanFlags for ValidationBatchResult
-        boolean_flags = m.LdifResults.BooleanFlags(**result)
+        boolean_flags = m.Ldif.LdifResults.BooleanFlags(**result)
         return m.ValidationBatchResult(results=boolean_flags)
 
     def validate_attribute_name(self, name: str) -> r[bool]:
@@ -273,7 +273,7 @@ class FlextLdifValidation(
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_attribute_name(c.DictKeys.CN)
+            >>> result = service.validate_attribute_name(c.Ldif.DictKeys.CN)
             >>> is_valid = result.unwrap()  # True
             >>>
             >>> result = service.validate_attribute_name("2invalid")
@@ -384,7 +384,7 @@ class FlextLdifValidation(
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_dn_component(c.DictKeys.CN, "John Smith")
+            >>> result = service.validate_dn_component(c.Ldif.DictKeys.CN, "John Smith")
             >>> is_valid = result.unwrap()  # True
 
         """

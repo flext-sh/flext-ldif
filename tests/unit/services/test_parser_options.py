@@ -1,3 +1,10 @@
+"""Tests for LDIF parser format options and configuration.
+
+This module tests all ParseFormatOptions functionality including boolean
+options, format handling, auto-parsing of schema, and behavior with
+different input sources and fixture data.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

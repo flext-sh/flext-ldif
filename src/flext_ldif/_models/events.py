@@ -13,12 +13,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from flext_core._models.entity import FlextModelsEntity as m_entity
+from flext_core import FlextModels
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.config import FlextLdifModelsConfig
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 
 
 class FlextLdifModelsEvents:
@@ -196,7 +196,7 @@ class FlextLdifModelsEvents:
     # DOMAIN EVENTS - Processing events
     # =========================================================================
 
-    class FilterEvent(m_entity.DomainEvent):
+    class FilterEvent(FlextModels.DomainEvent):
         """Event emitted when LDIF entries are filtered.
 
         Tracks filtering operations including criteria applied and results.
@@ -228,7 +228,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class ParseEvent(m_entity.DomainEvent):
+    class ParseEvent(FlextModels.DomainEvent):
         """Event emitted when LDIF content is parsed.
 
         Tracks parsing operations including source type and results.
@@ -327,7 +327,7 @@ class FlextLdifModelsEvents:
                 error_details=error_details,
             )
 
-    class WriteEvent(m_entity.DomainEvent):
+    class WriteEvent(FlextModels.DomainEvent):
         """Event emitted when LDIF content is written.
 
         Tracks writing operations including target and results.
@@ -363,7 +363,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed entries",
         )
 
-    class CategoryEvent(m_entity.DomainEvent):
+    class CategoryEvent(FlextModels.DomainEvent):
         """Event emitted when entries are categorized.
 
         Tracks categorization operations including rules applied and results.
@@ -391,7 +391,7 @@ class FlextLdifModelsEvents:
             description="Duration in milliseconds",
         )
 
-    class AclEvent(m_entity.DomainEvent):
+    class AclEvent(FlextModels.DomainEvent):
         """Event emitted when ACLs are processed.
 
         Tracks ACL parsing, transformation, and validation operations.
@@ -427,7 +427,7 @@ class FlextLdifModelsEvents:
             description="Error information for failed ACLs",
         )
 
-    class DnEvent(m_entity.DomainEvent):
+    class DnEvent(FlextModels.DomainEvent):
         """Event emitted when DNs are processed.
 
         Tracks DN parsing, normalization, and validation operations.
@@ -467,7 +467,7 @@ class FlextLdifModelsEvents:
             description="Number of DN components parsed",
         )
 
-    class MigrationEvent(m_entity.DomainEvent):
+    class MigrationEvent(FlextModels.DomainEvent):
         """Event emitted during migration operations.
 
         Tracks server-to-server migration progress and results.
@@ -515,7 +515,7 @@ class FlextLdifModelsEvents:
             description="Migration throughput in entries per second",
         )
 
-    class ConversionEvent(m_entity.DomainEvent):
+    class ConversionEvent(FlextModels.DomainEvent):
         """Event emitted during conversion operations.
 
         Tracks format conversion progress and results.
@@ -563,7 +563,7 @@ class FlextLdifModelsEvents:
             description="Conversion throughput in items per second",
         )
 
-    class SchemaEvent(m_entity.DomainEvent):
+    class SchemaEvent(FlextModels.DomainEvent):
         """Event emitted during schema processing.
 
         Tracks schema parsing, validation, and transformation operations.
@@ -618,10 +618,10 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type",
         )
         schema_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.RFC,
+            default=c.Ldif.ServerTypes.RFC.value,
             description="Schema type",
         )

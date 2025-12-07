@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.utilities import FlextLdifUtilities
@@ -107,7 +106,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def __init__(
         self,
-        schema_service: p.Services.HasParseMethodProtocol | None = None,
+        schema_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
+        | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk.
@@ -184,7 +184,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _collect_attribute_extensions(
         self,
-        attr: m.SchemaAttribute,
+        attr: m.Ldif.SchemaAttribute,
     ) -> list[str]:
         """Collect OUD X-* extensions from attribute.
 
@@ -210,8 +210,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _hook_post_parse_attribute(
         self,
-        attr: m.SchemaAttribute,
-    ) -> FlextResult[m.SchemaAttribute]:
+        attr: m.Ldif.SchemaAttribute,
+    ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Hook: Validate OUD-specific attribute features after RFC parsing.
 
         RFC vs OUD Behavior Differences
@@ -276,14 +276,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
         """
         if not attr or not attr.oid:
-            return FlextResult[m.SchemaAttribute].ok(attr)
+            return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
 
         oid = str(attr.oid)
 
         # Validate OID format
         oid_validation = self._validate_attribute_oid(oid)
         if oid_validation.is_failure:
-            return FlextResult[m.SchemaAttribute].fail(
+            return FlextResult[m.Ldif.SchemaAttribute].fail(
                 oid_validation.error or "OID validation failed",
             )
 
@@ -300,9 +300,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
 
         # Track OID validation status using standardized MetadataKeys
-        current_extensions[FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID] = (
-            is_valid_oud_oid
-        )
+        current_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
 
         # Track if OID uses OUD extension format (-oid suffix)
         if oid.endswith("-oid"):
@@ -328,11 +326,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 extension_count=len(oud_extensions),
             )
 
-        return FlextResult[m.SchemaAttribute].ok(attr)
+        return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
 
     def _validate_objectclass_sup(
         self,
-        oc: m.SchemaObjectClass,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> FlextResult[bool]:
         """Validate objectClass SUP constraint for OUD.
 
@@ -358,8 +356,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _validate_objectclass_oid_and_sup(
         self,
-        oc: m.SchemaObjectClass,
-    ) -> FlextResult[m.SchemaObjectClass]:
+        oc: m.Ldif.SchemaObjectClass,
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Validate ObjectClass OID and SUP OID formats.
 
         Args:
@@ -374,7 +372,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             oid_str = str(oc.oid)
             oid_validation = self._validate_attribute_oid(oid_str)
             if oid_validation.is_failure:
-                return FlextResult[m.SchemaObjectClass].fail(
+                return FlextResult[m.Ldif.SchemaObjectClass].fail(
                     f"ObjectClass OID validation failed: {oid_validation.error}",
                 )
 
@@ -393,9 +391,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 else {}
             )
 
-            oc_extensions[FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID] = (
-                is_valid_oud_oid
-            )
+            oc_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
 
             if oid_str.endswith("-oid"):
                 oc_extensions["oid_format_extension"] = True
@@ -415,16 +411,16 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             if sup_str and "." in sup_str and sup_str[0].isdigit():
                 sup_validation = self._validate_attribute_oid(sup_str)
                 if sup_validation.is_failure:
-                    return FlextResult[m.SchemaObjectClass].fail(
+                    return FlextResult[m.Ldif.SchemaObjectClass].fail(
                         f"ObjectClass SUP OID validation failed: {sup_validation.error}",
                     )
 
-        return FlextResult[m.SchemaObjectClass].ok(oc)
+        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _hook_post_parse_objectclass(
         self,
-        oc: m.SchemaObjectClass,
-    ) -> FlextResult[m.SchemaObjectClass]:
+        oc: m.Ldif.SchemaObjectClass,
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Hook: Validate OUD-specific objectClass features after RFC parsing.
 
         RFC vs OUD Behavior Differences
@@ -493,21 +489,21 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
         """
         if not oc:
-            return FlextResult[m.SchemaObjectClass].fail(
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
                 "ObjectClass is None or empty",
             )
 
         # Validate SingleSUP constraint (OUD restriction)
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.is_failure:
-            return FlextResult[m.SchemaObjectClass].fail(
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
                 sup_validation.error or "SUP validation failed",
             )
 
         # Validate ObjectClass OID and SUP OID formats
         oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
         if oid_and_sup_validation.is_failure:
-            return FlextResult[m.SchemaObjectClass].fail(
+            return FlextResult[m.Ldif.SchemaObjectClass].fail(
                 oid_and_sup_validation.error or "OID validation failed",
             )
 
@@ -521,11 +517,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             sup_value=oc.sup,
         )
 
-        return FlextResult[m.SchemaObjectClass].ok(oc)
+        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _apply_attribute_matching_rule_transforms(
         self,
-        attr_data: m.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> tuple[str | None, str | None]:
         """Apply OUD-specific matching rule transformations.
 
@@ -584,8 +580,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _apply_attribute_oid_metadata(
         self,
-        attr: m.SchemaAttribute,
-    ) -> m.SchemaAttribute:
+        attr: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
         """Apply OID validation and tracking metadata to attribute.
 
         Args:
@@ -614,9 +610,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
 
-        current_extensions[FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID] = (
-            is_valid_oud_oid
-        )
+        current_extensions[c.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
 
         if oid_str.endswith("-oid"):
             current_extensions["oid_format_extension"] = True
@@ -631,8 +625,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _transform_attribute_for_write(
         self,
-        attr_data: m.SchemaAttribute,
-    ) -> m.SchemaAttribute:
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
         """Apply OUD-specific attribute transformations before writing.
 
         RFC vs OUD Behavior Differences
@@ -729,7 +723,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     ) -> FlextResult[
         dict[
             str,
-            list[m.SchemaAttribute] | list[m.SchemaObjectClass],
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.

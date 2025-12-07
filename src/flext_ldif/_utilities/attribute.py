@@ -14,6 +14,9 @@ from typing import Final
 
 from flext_ldif.constants import FlextLdifConstants
 
+# Alias for simplified usage
+c = FlextLdifConstants
+
 
 class FlextLdifUtilitiesAttribute:
     """Attribute utilities for RFC-compliant attribute operations.
@@ -31,10 +34,10 @@ class FlextLdifUtilitiesAttribute:
 
     # Compiled patterns (compile once at class level for performance)
     _ATTRIBUTE_NAME_PATTERN: Final[re.Pattern[str]] = re.compile(
-        FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME,
+        c.Ldif.LdifPatterns.ATTRIBUTE_NAME,
     )
     _ATTRIBUTE_OPTION_PATTERN: Final[re.Pattern[str]] = re.compile(
-        FlextLdifConstants.LdifPatterns.ATTRIBUTE_OPTION,
+        c.Ldif.LdifPatterns.ATTRIBUTE_OPTION,
     )
 
     @staticmethod
@@ -114,10 +117,7 @@ class FlextLdifUtilitiesAttribute:
             return False
 
         # RFC 4512 constraint: attribute names must not exceed 127 characters
-        if (
-            len(attribute_name)
-            > FlextLdifConstants.LdifPatterns.MAX_ATTRIBUTE_NAME_LENGTH
-        ):
+        if len(attribute_name) > c.Ldif.LdifPatterns.MAX_ATTRIBUTE_NAME_LENGTH:
             return False
 
         # Must match pattern: starts with letter, followed by letters/digits/hyphens

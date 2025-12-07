@@ -1,3 +1,9 @@
+"""Tests for FlextLdif ACL parser functionality.
+
+This module tests the ACL parser for parsing, validating, and executing
+ACL operations in LDIF entries.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -10,7 +16,7 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.services.acl import FlextLdifAcl
-from tests import c, s
+from tests import GenericFieldsDict, c, s
 
 
 class AclParserTestType(StrEnum):

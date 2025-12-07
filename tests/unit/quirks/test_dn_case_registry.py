@@ -1,3 +1,9 @@
+"""Tests for DN case handling registry across LDAP servers.
+
+This module tests the registry that manages Distinguished Name (DN) case
+conversion rules and normalization patterns for different LDAP server types.
+"""
+
 from __future__ import annotations
 
 from typing import cast

@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 
 from flext_ldif.models import m
-from tests import m, s
-
-# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+from tests import GenericFieldsDict, s
 
 
 class TestDnCaseRegistry(s):

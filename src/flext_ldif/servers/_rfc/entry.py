@@ -42,7 +42,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Initialize RFC LDIF Entry processor."""
         super().__init__()
 
-    def parse(self, dn: str, attributes: dict[str, list[str]]) -> r[m.Entry]:
+    def parse(self, dn: str, attributes: dict[str, list[str]]) -> r[m.Ldif.Entry]:
         """Parse LDIF entry from DN and attributes.
 
         Args:
@@ -59,12 +59,12 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r.fail(f"Invalid attributes: {attributes}")
 
         try:
-            entry = m.Entry(dn=dn.strip(), attributes=attributes)
+            entry = m.Ldif.Entry(dn=dn.strip(), attributes=attributes)
             return r.ok(entry)
         except Exception as e:
             return r.fail(f"Failed to parse entry {dn}: {e}")
 
-    def validate(self, entry: m.Entry) -> r[m.Entry]:
+    def validate(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Validate RFC 2849 compliance.
 
         Args:
@@ -74,7 +74,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             FlextResult containing validated Entry or error
 
         """
-        if not entry or not isinstance(entry, m.Entry):
+        if not entry or not isinstance(entry, m.Ldif.Entry):
             return r.fail(f"Invalid entry: {entry}")
         if not entry.dn or not isinstance(entry.dn, str):
             return r.fail(f"Invalid DN in entry: {entry.dn}")

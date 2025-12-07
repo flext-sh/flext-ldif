@@ -1,8 +1,13 @@
+"""Tests for entry-level quirks and server-specific transformations.
+
+This module tests the entry quirks that apply server-specific transformations
+and enhancements to LDIF entries during parsing and writing operations.
+"""
+
 from __future__ import annotations
 
 from flext_core import FlextResult
 
-from flext_ldif.models import m
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entries import FlextLdifEntries
 from tests import m, s

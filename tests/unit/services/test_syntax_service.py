@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Syntax service functionality.
+
+This module tests the Syntax service for validating LDIF attribute values
+against RFC 4517 standard syntaxes.
+"""
+
 from __future__ import annotations
 
 from flext_core import FlextResult

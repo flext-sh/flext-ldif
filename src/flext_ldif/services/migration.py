@@ -12,7 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final, cast, override
 
-from flext_core import FlextLogger, r
+from flext_core import r
+from flext_core.loggings import FlextLogger as l_core
 from pydantic import PrivateAttr
 
 from flext_ldif._utilities.configs import ProcessConfig, ServerType
@@ -23,10 +24,10 @@ from flext_ldif.models import m
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
 
-logger: Final = FlextLogger(__name__)
+logger: Final = l_core(__name__)
 
 
-class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]):
+class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineResult]):
     """Migration Pipeline for Server-to-Server LDIF Migration.
 
     Orchestrates the migration of LDIF data between different LDAP server types.
@@ -46,16 +47,16 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
     # Instance state (stored as PrivateAttr for frozen model compatibility)
     _input_dir: Path | None = PrivateAttr(default=None)
     _output_dir: Path | None = PrivateAttr(default=None)
-    _source_type: c.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
-    _target_type: c.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
+    _source_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
+    _target_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
     _processing_pipeline: ProcessingPipeline | None = PrivateAttr(default=None)
 
     def __init__(
         self,
         input_dir: Path | None = None,
         output_dir: Path | None = None,
-        source_server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
-        target_server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
+        source_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
+        target_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize migration pipeline.
@@ -87,18 +88,18 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
         return cast("Path | None", getattr(self, "_output_dir", None))
 
     @property
-    def source_server_type(self) -> c.LiteralTypes.ServerTypeLiteral:
+    def source_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get source server type."""
         return cast(
-            "c.LiteralTypes.ServerTypeLiteral",
+            "c.Ldif.LiteralTypes.ServerTypeLiteral",
             getattr(self, "_source_type", "rfc"),
         )
 
     @property
-    def target_server_type(self) -> c.LiteralTypes.ServerTypeLiteral:
+    def target_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get target server type."""
         return cast(
-            "c.LiteralTypes.ServerTypeLiteral",
+            "c.Ldif.LiteralTypes.ServerTypeLiteral",
             getattr(self, "_target_type", "rfc"),
         )
 
@@ -120,8 +121,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
 
     def migrate_entries(
         self,
-        entries: list[m.Entry],
-    ) -> r[list[m.Entry]]:
+        entries: list[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Migrate entries from source to target server format.
 
         Args:
@@ -135,12 +136,12 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
             pipeline = self._get_processing_pipeline()
             result = pipeline.execute(entries)
             if result.is_failure:
-                return r[list[m.Entry]].fail(str(result.error))
+                return r[list[m.Ldif.Entry]].fail(str(result.error))
 
-            # result.unwrap() already returns list[m.Entry] - entries are already m.Entry via inheritance
-            # Business Rule: pipeline.execute returns FlextResult[list[m.Entry]], so entries are already compatible
+            # result.unwrap() already returns list[m.Ldif.Entry] - entries are already m.Ldif.Entry via inheritance
+            # Business Rule: pipeline.execute returns FlextResult[list[m.Ldif.Entry]], so entries are already compatible
             migrated = result.unwrap()
-            return r[list[m.Entry]].ok(migrated)
+            return r[list[m.Ldif.Entry]].ok(migrated)
 
         except Exception as e:
             logger.exception(
@@ -148,13 +149,13 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
                 source=self.source_server_type,
                 target=self.target_server_type,
             )
-            return r[list[m.Entry]].fail(f"Migration failed: {e}")
+            return r[list[m.Ldif.Entry]].fail(f"Migration failed: {e}")
 
     def migrate_file(
         self,
         input_file: Path,
         output_file: Path | None = None,
-    ) -> r[m.MigrationPipelineResult]:
+    ) -> r[m.Ldif.MigrationPipelineResult]:
         """Migrate a single LDIF file.
 
         Args:
@@ -168,7 +169,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
         try:
             # Read input file
             if not input_file.exists():
-                return r[m.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Input file not found: {input_file}",
                 )
 
@@ -182,20 +183,20 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
             )
 
             if parse_result.is_failure:
-                return r[m.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Parse failed: {parse_result.error}",
                 )
 
             response = parse_result.unwrap()
-            # response.entries is Sequence[m.Entry] - entries are already m.Entry via inheritance
-            # Business Rule: m.Entry extends m.Entry, so entries are already compatible
+            # response.entries is Sequence[m.Ldif.Entry] - entries are already m.Ldif.Entry via inheritance
+            # Business Rule: m.Ldif.Entry extends m.Ldif.Entry, so entries are already compatible
             # Use cast for type checker - same model, public facade
-            entries = [cast("m.Entry", e) for e in response.entries]
+            entries = [cast("m.Ldif.Entry", e) for e in response.entries]
 
             # Migrate entries
             migrate_result = self.migrate_entries(entries)
             if migrate_result.is_failure:
-                return r[m.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Migration failed: {migrate_result.error}",
                 )
 
@@ -205,7 +206,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
             if output_file is None:
                 out_dir = self.output_dir
                 if out_dir is None:
-                    return r[m.MigrationPipelineResult].fail(
+                    return r[m.Ldif.MigrationPipelineResult].fail(
                         "No output file or output_dir specified",
                     )
                 output_file = out_dir / input_file.name
@@ -217,7 +218,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
             )
 
             if write_result.is_failure:
-                return r[m.MigrationPipelineResult].fail(
+                return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Write failed: {write_result.error}",
                 )
 
@@ -225,32 +226,32 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
             output_file.write_text(write_result.unwrap(), encoding="utf-8")
 
             # Return result using public model classes via m alias
-            # migrated is list[m.Entry] but MigrationPipelineResult.entries expects list[m.Entry]
-            # Business Rule: m.Entry extends m.Entry, so entries are compatible via inheritance
+            # migrated is list[m.Ldif.Entry] but MigrationPipelineResult.entries expects list[m.Ldif.Entry]
+            # Business Rule: m.Ldif.Entry extends m.Ldif.Entry, so entries are compatible via inheritance
             # Use cast for type checker - same model, public facade (using full module path to avoid import)
-            result = m.MigrationPipelineResult(
-                entries=cast("list[m.Entry]", migrated),
+            result = m.Ldif.MigrationPipelineResult(
+                entries=cast("list[m.Ldif.Entry]", migrated),
                 output_files=[str(output_file)],
-                stats=m.LdifResults.Statistics(
+                stats=m.Ldif.LdifResults.Statistics(
                     total_entries=len(entries),
                     processed_entries=len(migrated),
                 ),
             )
 
-            return r[m.MigrationPipelineResult].ok(result)
+            return r[m.Ldif.MigrationPipelineResult].ok(result)
 
         except Exception as e:
             logger.exception(
                 "File migration failed",
                 input_file=str(input_file),
             )
-            return r[m.MigrationPipelineResult].fail(f"File migration failed: {e}")
+            return r[m.Ldif.MigrationPipelineResult].fail(f"File migration failed: {e}")
 
     @override
     def execute(
         self,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.MigrationPipelineResult]:
+    ) -> r[m.Ldif.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir.
 
         Returns:
@@ -261,20 +262,20 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
         out_dir = self.output_dir
 
         if in_dir is None:
-            return r[m.MigrationPipelineResult].fail("No input_dir specified")
+            return r[m.Ldif.MigrationPipelineResult].fail("No input_dir specified")
 
         if out_dir is None:
-            return r[m.MigrationPipelineResult].fail("No output_dir specified")
+            return r[m.Ldif.MigrationPipelineResult].fail("No output_dir specified")
 
         if not in_dir.exists():
-            return r[m.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Input directory not found: {in_dir}",
             )
 
         try:
             total_processed = 0
             total_migrated = 0
-            all_entries: list[m.Entry] = []
+            all_entries: list[m.Ldif.Entry] = []
             output_files: list[str] = []
 
             for input_file in in_dir.glob("*.ldif"):
@@ -283,10 +284,10 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
                     res = result.unwrap()
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
-                    # res.entries is list[m.Entry] but all_entries is list[m.Entry]
-                    # Business Rule: m.Entry extends m.Entry, so entries are compatible via inheritance
+                    # res.entries is list[m.Ldif.Entry] but all_entries is list[m.Ldif.Entry]
+                    # Business Rule: m.Ldif.Entry extends m.Ldif.Entry, so entries are compatible via inheritance
                     # Use cast for type checker - same model, public facade
-                    all_entries.extend(cast("list[m.Entry]", res.entries))
+                    all_entries.extend(cast("list[m.Ldif.Entry]", res.entries))
                     output_files.extend(res.output_files)
                 else:
                     logger.warning(
@@ -295,23 +296,25 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.MigrationPipelineResult]
                         error=str(result.error),
                     )
 
-            # all_entries is list[m.Entry] but MigrationPipelineResult.entries expects list[m.Entry]
-            # Business Rule: m.Entry extends m.Entry, so entries are compatible via inheritance
+            # all_entries is list[m.Ldif.Entry] but MigrationPipelineResult.entries expects list[m.Ldif.Entry]
+            # Business Rule: m.Ldif.Entry extends m.Ldif.Entry, so entries are compatible via inheritance
             # Use cast for type checker - same model, public facade (using full module path to avoid import)
-            pipeline_result = m.MigrationPipelineResult(
-                entries=cast("list[m.Entry]", all_entries),
+            pipeline_result = m.Ldif.MigrationPipelineResult(
+                entries=cast("list[m.Ldif.Entry]", all_entries),
                 output_files=output_files,
-                stats=m.LdifResults.Statistics(
+                stats=m.Ldif.LdifResults.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
                 ),
             )
 
-            return r[m.MigrationPipelineResult].ok(pipeline_result)
+            return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
 
         except Exception as e:
             logger.exception("Migration pipeline failed")
-            return r[m.MigrationPipelineResult].fail(f"Migration pipeline failed: {e}")
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                f"Migration pipeline failed: {e}"
+            )
 
 
 __all__ = ["FlextLdifMigrationPipeline"]

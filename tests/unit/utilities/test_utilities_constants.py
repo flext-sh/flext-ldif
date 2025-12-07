@@ -1,3 +1,10 @@
+"""Tests for LDIF constants utilities and valid value retrieval.
+
+This module tests constants utility functions for retrieving valid values for different
+categories (server_type, encoding), validation of known values, and bulk validation of
+multiple constant values using parametrized test scenarios.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

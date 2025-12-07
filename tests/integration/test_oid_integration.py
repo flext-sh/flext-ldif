@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
-from tests import m
 
 
 class TestOidSchemaIntegration:

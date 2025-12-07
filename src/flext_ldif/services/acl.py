@@ -21,7 +21,6 @@ from flext_core import r, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
@@ -66,7 +65,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     def parse_acl_string(
         self,
         acl_string: str,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | str,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | str,
     ) -> r[FlextLdifModelsDomains.Acl]:
         """Parse ACL string using server-specific quirks.
 
@@ -91,7 +90,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Store original server_type for fallback logic
         original_server_type = str(server_type)
         try:
-            normalized_server_type = FlextLdifConstants.normalize_server_type(
+            normalized_server_type = c.normalize_server_type(
                 original_server_type,
             )
         except (ValueError, TypeError) as e:
@@ -131,7 +130,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
     def write_acl(
         self,
         acl: FlextLdifModelsDomains.Acl,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> r[str]:
         """Write ACL model to string format.
 
@@ -169,8 +168,8 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
     def extract_acls_from_entry(
         self,
-        entry: FlextLdifModels.Entry,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+        entry: FlextLdifModels.Ldif.Entry,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> r[FlextLdifModelsResults.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names.
 
@@ -192,7 +191,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
         """
         # Get ACL attribute name for server type
-        acl_attr_name = FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(
+        acl_attr_name = c.AclAttributeRegistry.get_acl_attributes(
             server_type,
         )
 
@@ -273,9 +272,9 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
 
     @staticmethod
     def extract_acl_entries(
-        entries: list[FlextLdifModels.Entry],
+        entries: list[FlextLdifModels.Ldif.Entry],
         acl_attributes: list[str] | None = None,
-    ) -> r[list[FlextLdifModels.Entry]]:
+    ) -> r[list[FlextLdifModels.Ldif.Entry]]:
         """Extract entries that contain ACL attributes.
 
         Args:
@@ -293,12 +292,14 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         # Use default ACL attributes if not specified
         if acl_attributes is None:
             acl_attributes = list(
-                FlextLdifConstants.AclAttributeRegistry.get_acl_attributes(None),
+                c.AclAttributeRegistry.get_acl_attributes(None),
             )
 
         # Filter entries that have at least one ACL attribute
         # Exclude schema entries even if they have ACL attributes
-        def filter_entry(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry | None:
+        def filter_entry(
+            entry: FlextLdifModels.Ldif.Entry,
+        ) -> FlextLdifModels.Ldif.Entry | None:
             """Filter entry if it has ACL attributes."""
             # Skip schema entries
             if FlextLdifAcl._is_schema_entry(entry):
@@ -316,8 +317,8 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
             filter_entry,
             on_error="skip",
         )
-        acl_entries: list[FlextLdifModels.Entry] = [
-            cast("FlextLdifModels.Entry", entry)
+        acl_entries: list[FlextLdifModels.Ldif.Entry] = [
+            cast("FlextLdifModels.Ldif.Entry", entry)
             for entry in (
                 batch_result.value.get("results", []) if batch_result.is_success else []
             )
@@ -327,7 +328,7 @@ class FlextLdifAcl(FlextLdifServiceBase[FlextLdifModelsResults.AclResponse]):
         return r.ok(acl_entries)
 
     @staticmethod
-    def _is_schema_entry(entry: FlextLdifModels.Entry) -> bool:
+    def _is_schema_entry(entry: FlextLdifModels.Ldif.Entry) -> bool:
         """Check if entry is a schema entry.
 
         Args:

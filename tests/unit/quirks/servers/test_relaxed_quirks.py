@@ -1,3 +1,9 @@
+"""Tests for Relaxed server LDIF quirks handling.
+
+This module tests the Relaxed implementation for lenient parsing of malformed LDIF,
+accepting entries that don't conform strictly to RFC standards while preserving content.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

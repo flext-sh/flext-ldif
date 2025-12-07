@@ -34,9 +34,11 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from re import Pattern
-from typing import Literal
+from typing import Literal, cast
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif.models import m
 
 # =========================================================================
 # BASE FILTER CLASS
@@ -572,9 +574,10 @@ class IsSchemaEntryFilter(EntryFilter["FlextLdifModelsDomains.Entry"]):
             True if schema status matches expected value
 
         """
-        from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry  # noqa: PLC0415
-
-        result = FlextLdifUtilitiesEntry.is_schema_entry(item)
+        # Convert FlextLdifModelsDomains.Entry to m.Ldif.Entry for is_schema_entry
+        # m.Ldif.Entry is the facade that extends FlextLdifModelsDomains.Entry
+        entry_facade: m.Ldif.Entry = cast("m.Ldif.Entry", item)
+        result = FlextLdifUtilitiesEntry.is_schema_entry(entry_facade)
         return result == self._is_schema
 
 
@@ -768,7 +771,7 @@ class Filter:
             IsSchemaEntryFilter instance
 
         """
-        return IsSchemaEntryFilter(is_schema)
+        return IsSchemaEntryFilter(is_schema=is_schema)
 
     @staticmethod
     def custom(

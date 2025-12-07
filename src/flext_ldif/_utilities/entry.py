@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 from flext_core import (
     FlextDecorators,
@@ -23,7 +23,6 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import FlextLdifTypes
 
 # Aliases for simplified usage - after all imports
@@ -32,7 +31,7 @@ from flext_ldif.typings import FlextLdifTypes
 t = FlextLdifTypes  # Domain-specific types (extends FlextTypes)
 c = FlextLdifConstants  # Domain-specific constants (extends FlextConstants)
 
-p = FlextLdifProtocols  # Domain-specific protocols (extends FlextProtocols)
+# Use FlextLdifProtocols directly - no aliases
 r = FlextResult  # Shared from flext-core
 e = FlextExceptions  # Shared from flext-core
 d = FlextDecorators  # Shared from flext-core
@@ -48,7 +47,7 @@ class FlextLdifUtilitiesEntry:
     Servers can use these for consistent attribute handling.
     """
 
-    # Minimum length for base64 pattern matching (use constant from FlextLdifConstants.Rfc directly in methods)
+    # Minimum length for base64 pattern matching (use constant from c.Ldif.Format.Rfc directly in methods)
     # Note: Cannot use class attribute assignment with constants due to import order
 
     @staticmethod
@@ -107,7 +106,7 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> FlextLdifTypes.CommonDict.AttributeDict:
+    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
         """Convert boolean attribute values between formats.
 
         Args:
@@ -124,7 +123,7 @@ class FlextLdifUtilitiesEntry:
             # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
                 return {}
-            normalized_result: FlextLdifTypes.CommonDict.AttributeDict = {}
+            normalized_result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
             for attr_name in attributes:
                 # Type-safe access - get values with explicit type
                 raw_values: list[str] | list[bytes] | bytes | str = attributes[
@@ -146,7 +145,7 @@ class FlextLdifUtilitiesEntry:
                     normalized_result[attr_name] = [str(raw_values)]
             return normalized_result
 
-        result: FlextLdifTypes.CommonDict.AttributeDict = {}
+        result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
 
         for attr_name in attributes:
             # Type-safe access - get values with explicit type
@@ -184,9 +183,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attribute_names(
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
+        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         case_map: dict[str, str],
-    ) -> FlextLdifTypes.CommonDict.AttributeDict:
+    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
         """Normalize attribute names using case mapping.
 
         Args:
@@ -220,7 +219,7 @@ class FlextLdifUtilitiesEntry:
         return result
 
     @staticmethod
-    def is_schema_entry(entry: m.Entry, *, strict: bool = True) -> bool:
+    def is_schema_entry(entry: m.Ldif.Entry, *, strict: bool = True) -> bool:
         """Check if entry is a REAL schema entry with schema definitions.
 
         CRITICAL: This method detects ONLY real LDAP schema entries that
@@ -229,7 +228,7 @@ class FlextLdifUtilitiesEntry:
         entries) are NOT schema in strict mode.
 
         Args:
-            entry: Entry to check (m.Entry)
+            entry: Entry to check (m.Ldif.Entry)
             strict: If True, requires BOTH schema attrs AND DN pattern (default).
                    If False, any of: DN pattern OR objectClass OR schema attrs.
 
@@ -271,7 +270,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_objectclass(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         objectclasses: str | tuple[str, ...],
     ) -> bool:
         """Check if entry has any of the specified objectClasses.
@@ -300,7 +299,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_all_attributes(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attributes: list[str],
     ) -> bool:
         """Check if entry has ALL specified attributes.
@@ -325,7 +324,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_any_attributes(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attributes: list[str],
     ) -> bool:
         """Check if entry has ANY of the specified attributes.
@@ -350,9 +349,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def remove_attributes(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         attributes: list[str],
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Remove specified attributes from entry.
 
         Args:
@@ -377,7 +376,7 @@ class FlextLdifUtilitiesEntry:
             else entry.attributes.attributes
         )
 
-        result = m.Entry.create(
+        result = m.Ldif.Entry.create(
             dn=entry.dn,
             attributes=m.LdifAttributes(attributes=filtered),
         )
@@ -390,7 +389,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def analyze_differences(
         entry_attrs: Mapping[str, t.GeneralValueType],
-        converted_attrs: FlextLdifTypes.CommonDict.AttributeDict,
+        converted_attrs: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
@@ -578,13 +577,13 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def denormalize_attributes_batch(
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
+        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         *,
         case_mappings: dict[str, str] | None = None,
         boolean_mappings: dict[str, str] | None = None,
         attr_name_mappings: dict[str, str] | None = None,
         value_transformations: dict[str, dict[str, str]] | None = None,
-    ) -> FlextLdifTypes.CommonDict.AttributeDict:
+    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
         """Batch denormalize attributes for output.
 
         Inverse of normalization - converts RFC-normalized attributes back to
@@ -652,7 +651,7 @@ class FlextLdifUtilitiesEntry:
                 output_name = attr_name_mappings.get(output_name, output_name)
             return output_name
 
-        result: FlextLdifTypes.CommonDict.AttributeDict = {}
+        result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
         for attr_name, values in attributes.items():
             output_name = get_output_name(attr_name)
             # Transform values using u.map with closure-safe function
@@ -675,11 +674,11 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attributes_batch(
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
+        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         *,
         config: FlextLdifModelsConfig.AttributeNormalizeConfig | None = None,
         **kwargs: object,
-    ) -> FlextLdifTypes.CommonDict.AttributeDict:
+    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
         """Batch normalize attributes from server format to RFC format.
 
         Consolidates normalization patterns from OID and OUD servers into
@@ -718,7 +717,7 @@ class FlextLdifUtilitiesEntry:
                 kwargs,
             )
 
-        result: FlextLdifTypes.CommonDict.AttributeDict = {}
+        result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
 
         operational_lower = (
             {a.lower() for a in config.operational_attrs}
@@ -762,13 +761,13 @@ class FlextLdifUtilitiesEntry:
     # =========================================================================
 
     @staticmethod
-    def _check_schema_criteria(entry: m.Entry, *, is_schema: bool) -> bool:
+    def _check_schema_criteria(entry: m.Ldif.Entry, *, is_schema: bool) -> bool:
         """Check schema criteria."""
         return FlextLdifUtilitiesEntry.is_schema_entry(entry) == is_schema
 
     @staticmethod
     def _check_objectclass_criteria(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         objectclasses: Sequence[str],
         mode: Literal["any", "all"],
     ) -> bool:
@@ -784,7 +783,7 @@ class FlextLdifUtilitiesEntry:
         )
 
     @staticmethod
-    def _check_dn_pattern(entry: m.Entry, pattern: str) -> bool:
+    def _check_dn_pattern(entry: m.Ldif.Entry, pattern: str) -> bool:
         """Check DN pattern match."""
         dn_value = (
             entry.dn.value
@@ -797,7 +796,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def matches_criteria(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         config: FlextLdifModelsConfig.EntryCriteriaConfig | None = None,
         **kwargs: object,
     ) -> bool:
@@ -885,10 +884,10 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def transform_batch(
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsConfig.EntryTransformConfig | None = None,
         **kwargs: object,
-    ) -> FlextResult[list[m.Entry]]:
+    ) -> FlextResult[list[m.Ldif.Entry]]:
         """Transform multiple entries with common operations.
 
         Applies transformations in order:
@@ -921,8 +920,8 @@ class FlextLdifUtilitiesEntry:
             config = FlextLdifModelsConfig.EntryTransformConfig.model_validate(kwargs)
 
         def transform_entry(
-            entry: m.Entry,
-        ) -> m.Entry:
+            entry: m.Ldif.Entry,
+        ) -> m.Ldif.Entry:
             """Transform single entry with all operations."""
             current = entry
             if config.normalize_dns and current.dn:
@@ -933,9 +932,9 @@ class FlextLdifUtilitiesEntry:
                 )
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
-                    # Use cast for model_copy update to avoid type checker strictness
+                    # Use dict[str, object] for model_copy update (Pydantic accepts object)
                     # m.DistinguishedName is compatible via inheritance
-                    dn_update: dict[str, Any] = {
+                    dn_update: dict[str, object] = {
                         "dn": m.DistinguishedName(value=norm_result.unwrap()),
                     }
                     current = current.model_copy(update=dn_update)
@@ -948,9 +947,9 @@ class FlextLdifUtilitiesEntry:
                     if config.attr_case == "upper"
                     else attrs
                 )
-                # Use cast for model_copy update to avoid type checker strictness
+                # Use dict[str, object] for model_copy update (Pydantic accepts object)
                 # m.LdifAttributes is compatible via inheritance
-                attrs_update: dict[str, Any] = {
+                attrs_update: dict[str, object] = {
                     "attributes": m.LdifAttributes(attributes=new_attrs),
                 }
                 current = current.model_copy(update=attrs_update)
@@ -970,9 +969,9 @@ class FlextLdifUtilitiesEntry:
                     source_format=source_format,
                     target_format=target_format,
                 )
-                # Use cast for model_copy update to avoid type checker strictness
+                # Use dict[str, object] for model_copy update (Pydantic accepts object)
                 # m.LdifAttributes is compatible via inheritance
-                converted_attrs_update: dict[str, Any] = {
+                converted_attrs_update: dict[str, object] = {
                     "attributes": m.LdifAttributes(attributes=converted),
                 }
                 current = current.model_copy(update=converted_attrs_update)
@@ -994,20 +993,20 @@ class FlextLdifUtilitiesEntry:
         # Type narrowing: batch_data["results"] is object, check if list
         results_raw = batch_data.get("results", [])
         if isinstance(results_raw, list):
-            filtered: list[m.Entry] = [
-                cast("m.Entry", item)
+            filtered: list[m.Ldif.Entry] = [
+                cast("m.Ldif.Entry", item)
                 for item in results_raw
-                if isinstance(item, m.Entry)
+                if isinstance(item, m.Ldif.Entry)
             ]
-            return r[list[m.Entry]].ok(filtered)
-        return r[list[m.Entry]].fail("Batch results is not a list")
+            return r[list[m.Ldif.Entry]].ok(filtered)
+        return r[list[m.Ldif.Entry]].fail("Batch results is not a list")
 
     @staticmethod
     def filter_batch(
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsConfig.EntryFilterConfig | None = None,
         **kwargs: object,
-    ) -> FlextResult[list[m.Entry]]:
+    ) -> FlextResult[list[m.Ldif.Entry]]:
         """Filter entries based on criteria.
 
         Args:

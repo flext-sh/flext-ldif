@@ -1,3 +1,10 @@
+"""Tests for parser-writer roundtrip integration.
+
+This module tests parser-writer roundtrip functionality including basic
+transformations, complex LDIF structures, file I/O, error handling, performance
+benchmarks, and edge cases with different LDAP server implementations.
+"""
+
 from __future__ import annotations
 
 import time
@@ -10,7 +17,6 @@ import pytest
 from flext_tests import tm, tt, u
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
-from flext_ldif.models import m
 from tests import c, m
 
 # FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)

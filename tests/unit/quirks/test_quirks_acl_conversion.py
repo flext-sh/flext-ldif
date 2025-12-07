@@ -1,3 +1,10 @@
+"""Tests for ACL conversion between different LDAP server formats.
+
+This module tests how Access Control Lists (ACLs) are converted between
+different LDAP server implementations, particularly from OID (orclaci)
+format to OUD (aci) format.
+"""
+
 from __future__ import annotations
 
 from flext_ldif.servers.oid import FlextLdifServersOid

@@ -1,3 +1,9 @@
+"""Tests for FlextLdif ACL service functionality.
+
+This module tests the ACL service for parsing, validating, and managing
+access control list entries in LDIF format.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

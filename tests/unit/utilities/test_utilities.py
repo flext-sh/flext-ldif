@@ -1,3 +1,10 @@
+"""Tests for LDIF service APIs and module imports.
+
+This module tests newer service APIs including FlextLdifDn and FlextLdifStatistics services,
+validating service instantiation, method availability, and proper import paths for models,
+constants, utilities, and services modules in the FlextLdif ecosystem.
+"""
+
 from __future__ import annotations
 
 import importlib.util

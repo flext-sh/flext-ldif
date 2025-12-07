@@ -1,3 +1,10 @@
+"""Tests for LDIF statistics service.
+
+This module tests the FlextLdifStatistics service functionality including
+statistics generation, rejection handling, entry categorization, and error
+handling with consolidated parametrized tests and helper methods.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -8,7 +15,6 @@ from flext_tests import tm
 
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import m
 from flext_ldif.services.entries import FlextLdifEntries
 from flext_ldif.services.statistics import FlextLdifStatistics
 from tests import c, m, s
@@ -103,10 +109,8 @@ class TestsTestFlextLdifStatistics(s):
                 for entry_value in entries_value:
                     if isinstance(entry_value, Mapping):
                         entry_obj: dict[str, object] = dict(entry_value)
-                        entry = (
-                            TestFlextLdifStatistics.Factories.create_entry_from_dict(
-                                entry_obj,
-                            )
+                        entry = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict(
+                            entry_obj,
                         )
                         entries.append(entry)
                 categories[category] = entries
@@ -203,8 +207,10 @@ class TestsTestFlextLdifStatistics(s):
             expected_counts: dict[str, int],
         ) -> None:
             """Test statistics generation with parametrized test cases."""
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized,
+                )
             )
             output_files_str = {
                 k: str(v) if isinstance(v, str) else f"{k}.ldif"
@@ -320,8 +326,10 @@ class TestsTestFlextLdifStatistics(s):
             expected_reasons: list[str],
         ) -> None:
             """Test statistics with rejected entries using parametrized test cases."""
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized,
+                )
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -403,8 +411,10 @@ class TestsTestFlextLdifStatistics(s):
             expected_reasons: list[str],
         ) -> None:
             """Test rejection reason extraction with parametrized test cases."""
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized,
+                )
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -446,8 +456,10 @@ class TestsTestFlextLdifStatistics(s):
                 cat: [{"dn": c.DNs.TEST_USER, "attributes": {}}]
                 for cat in expected_paths
             }
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized_dict,
+                )
             )
             output_files_str = {
                 k: str(v) if isinstance(v, str) else f"{k}.ldif"
@@ -489,8 +501,10 @@ class TestsTestFlextLdifStatistics(s):
                     {"dn": f"cn={c.Values.TEST}2,{c.DNs.EXAMPLE}", "attributes": {}},
                 ],
             }
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized_dict,
+                )
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -521,8 +535,10 @@ class TestsTestFlextLdifStatistics(s):
                     for i in range(900)
                 ],
             }
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized_dict,
+                )
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -546,8 +562,10 @@ class TestsTestFlextLdifStatistics(s):
             categorized_dict = {
                 "users": [{"dn": "cn=user1,dc=example,dc=com", "attributes": {}}],
             }
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized_dict,
+                )
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -572,8 +590,10 @@ class TestsTestFlextLdifStatistics(s):
                     for i in range(10)
                 ],
             }
-            categories = TestFlextLdifStatistics.Factories.create_categories_from_dict(
-                categorized_dict,
+            categories = (
+                TestsTestFlextLdifStatistics.Factories.create_categories_from_dict(
+                    categorized_dict,
+                )
             )
             result = FlextLdifStatistics().generate_statistics(
                 categorized=categories,
@@ -602,15 +622,15 @@ class TestsTestFlextLdifStatistics(s):
         def test_calculate_for_entries_with_objectclasses(self) -> None:
             """Test calculate_for_entries counts objectclass distribution."""
             entries = [
-                TestFlextLdifStatistics.Factories.create_entry_from_dict({
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                     "dn": "cn=user1,dc=example,dc=com",
                     "attributes": {"objectClass": ["person", "inetOrgPerson"]},
                 }),
-                TestFlextLdifStatistics.Factories.create_entry_from_dict({
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                     "dn": "cn=user2,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
                 }),
-                TestFlextLdifStatistics.Factories.create_entry_from_dict({
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                     "dn": "cn=group1,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"]},
                 }),
@@ -625,7 +645,7 @@ class TestsTestFlextLdifStatistics(s):
 
         def test_calculate_for_entries_with_server_type(self) -> None:
             """Test calculate_for_entries tracks server_type from metadata."""
-            entry1 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
+            entry1 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry1,dc=example,dc=com",
                 "attributes": {"objectClass": ["top"]},
             })
@@ -642,7 +662,7 @@ class TestsTestFlextLdifStatistics(s):
                         ),
                     },
                 )
-            entry2 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
+            entry2 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry2,dc=example,dc=com",
                 "attributes": {"objectClass": ["top"]},
             })
@@ -659,7 +679,7 @@ class TestsTestFlextLdifStatistics(s):
                         ),
                     },
                 )
-            entry3 = TestFlextLdifStatistics.Factories.create_entry_from_dict({
+            entry3 = TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                 "dn": "cn=entry3,dc=example,dc=com",
                 "attributes": {"objectClass": ["top"]},
             })
@@ -691,11 +711,11 @@ class TestsTestFlextLdifStatistics(s):
         def test_calculate_for_entries_without_metadata(self) -> None:
             """Test calculate_for_entries handles entries without metadata."""
             entries = [
-                TestFlextLdifStatistics.Factories.create_entry_from_dict({
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                     "dn": "cn=entry1,dc=example,dc=com",
                     "attributes": {"objectClass": ["top"]},
                 }),
-                TestFlextLdifStatistics.Factories.create_entry_from_dict({
+                TestsTestFlextLdifStatistics.Factories.create_entry_from_dict({
                     "dn": "cn=entry2,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
                 }),
@@ -707,4 +727,4 @@ class TestsTestFlextLdifStatistics(s):
             assert stats.server_type_distribution == {}
 
 
-__all__ = ["TestFlextLdifStatistics"]
+__all__ = ["TestsTestFlextLdifStatistics"]

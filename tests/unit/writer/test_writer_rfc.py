@@ -1,3 +1,10 @@
+"""Tests for FlextLdifWriter with RFC server type configuration.
+
+This module tests the FlextLdifWriter service configured with RFC (Internet Standard)
+server type, validating LDIF output generation, entry handling, and proper formatting
+according to RFC 2849 standards.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

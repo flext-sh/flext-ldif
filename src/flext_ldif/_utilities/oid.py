@@ -72,7 +72,7 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def extract_from_schema_object(
-        schema_obj: m.SchemaAttribute | m.SchemaObjectClass,
+        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> str | None:
         """Extract OID from schema object metadata or model.
 

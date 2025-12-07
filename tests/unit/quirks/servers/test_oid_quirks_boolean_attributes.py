@@ -1,3 +1,9 @@
+"""Tests for OID boolean attribute handling and transformations.
+
+This module tests Oracle Internet Directory (OID) specific handling
+of boolean and binary attributes in LDIF processing.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,7 +11,6 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers.oid import FlextLdifServersOid
 from tests import TestDeduplicationHelpers, m, s

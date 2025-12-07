@@ -84,7 +84,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     kind = "ABSTRACT" / "STRUCTURAL" / "AUXILIARY"  ; Rfc.SCHEMA_KIND_*
 
-    ABNF Syntax (FlextLdifConstants.Rfc):
+    ABNF Syntax (c.Rfc):
     =====================================
     WSP    = 0*SPACE                       ; Rfc.SCHEMA_WSP
     SP     = 1*SPACE
@@ -112,7 +112,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         - Character classes: Rfc.DN_LUTF1_EXCLUDE, DN_TUTF1_EXCLUDE, DN_SUTF1_EXCLUDE
         - Separators: Rfc.DN_RDN_SEPARATOR, DN_MULTIVALUE_SEPARATOR
 
-    Metadata Keys (FlextLdifConstants.Rfc):
+    Metadata Keys (c.Rfc):
     =======================================
     - META_RFC_*: Entry/LDIF metadata
     - META_SCHEMA_*: Schema parsing metadata
@@ -129,7 +129,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     def _handle_parse_operation(
         self,
         ldif_text: str,
-    ) -> FlextResult[m.Entry | str]:
+    ) -> FlextResult[m.Ldif.Entry | str]:
         """Handle parse operation for main quirk.
 
         Delegates to base class implementation.
@@ -138,8 +138,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     def _handle_write_operation(
         self,
-        entries: list[m.Entry],
-    ) -> FlextResult[m.Entry | str]:
+        entries: list[m.Ldif.Entry],
+    ) -> FlextResult[m.Ldif.Entry | str]:
         """Handle write operation for main quirk.
 
         Delegates to base class implementation.

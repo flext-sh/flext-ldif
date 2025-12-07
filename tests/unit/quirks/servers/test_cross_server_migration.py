@@ -1,3 +1,9 @@
+"""Tests for cross-server LDAP migration scenarios.
+
+This module tests the migration pipeline and quirks conversion matrix
+for transforming LDIF content between different LDAP server types.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

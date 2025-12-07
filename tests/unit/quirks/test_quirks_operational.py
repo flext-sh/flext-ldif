@@ -1,3 +1,9 @@
+"""Tests for quirks handling of operational attributes.
+
+This module tests how operational attributes (system-generated, non-user-modifiable)
+are handled across different LDAP server implementations.
+"""
+
 from __future__ import annotations
 
 import dataclasses

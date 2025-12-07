@@ -1,3 +1,10 @@
+"""Tests for RFC 4517 Syntax model.
+
+This module tests the RFC 4517 Syntax Pydantic model including instantiation,
+validation, computed fields, serialization, and edge cases with parametrized
+tests and DRY helper patterns.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,7 +12,6 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif.models import m
 from tests import m, s
 
 

@@ -24,7 +24,6 @@ from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import m
-from tests import m
 
 # Note: ldap_connection and clean_test_ou fixtures are provided by conftest.py
 # They use unique_dn_suffix for isolation and indepotency in parallel execution

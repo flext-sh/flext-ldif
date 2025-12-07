@@ -10,7 +10,13 @@ from typing import Any
 from flext_core import FlextResult, u
 
 from flext_ldif.models import m
-# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+from tests import GenericFieldsDict
+
+
+class MockResultHelpers:
+    """Mock result helpers for testing."""
+
+    @staticmethod
     def validate_composition(*args: object, **kwargs: object) -> bool:
         """Validate composition."""
         return True

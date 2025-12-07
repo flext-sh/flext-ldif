@@ -38,6 +38,12 @@ from flext_ldif._models.base import (
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
+
+# Alias for simplified usage
+c = FlextLdifConstants
+
+# Alias for simplified usage
+c = FlextLdifConstants
 from flext_ldif.protocols import FlextLdifProtocols
 
 logger = FlextLogger(__name__)
@@ -77,7 +83,7 @@ class FlextLdifModelsDomains:
         )
 
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            FlextLdifConstants.LdifPatterns.DN_COMPONENT,
+            c.Ldif.LdifPatterns.DN_COMPONENT,
             re.IGNORECASE,
         )
 
@@ -147,7 +153,7 @@ class FlextLdifModelsDomains:
                 dn = DistinguishedName(value="cn=test,dc=example,dc=com")
                 stats = dn.create_statistics(
                     original_dn="cn=test  ,dc=example,dc=com",
-                    transformations=[FlextLdifConstants.TransformationType.SPACE_CLEANED],
+                    transformations=[c.Ldif.TransformationType.SPACE_CLEANED],
                     had_extra_spaces=True,
                 )
 
@@ -422,7 +428,7 @@ class FlextLdifModelsDomains:
             default=True,
             description="Whether attributes using this syntax can be multivalued",
         )
-        encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral = Field(
+        encoding: c.Ldif.LiteralTypes.EncodingLiteral = Field(
             default="utf-8",
             description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
         )
@@ -465,7 +471,7 @@ class FlextLdifModelsDomains:
         def resolve_syntax_oid(
             cls,
             oid: str,
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
         ) -> Self | None:
             """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
 
@@ -495,12 +501,12 @@ class FlextLdifModelsDomains:
                     # Invalid OID format - return None per RFC 4512
                     return None
                 # Build lookup tables
-                oid_to_name = dict(FlextLdifConstants.RfcSyntaxOids.OID_TO_NAME)
+                oid_to_name = dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)
 
                 # Look up name from OID
                 name = oid_to_name.get(oid)
                 type_category = (
-                    FlextLdifConstants.RfcSyntaxOids.NAME_TO_TYPE_CATEGORY.get(
+                    c.Ldif.RfcSyntaxOids.NAME_TO_TYPE_CATEGORY.get(
                         name,
                         "string",
                     )
@@ -514,7 +520,7 @@ class FlextLdifModelsDomains:
                     FlextLdifModelsDomains.QuirkMetadata(
                         quirk_type=server_type,
                     )
-                    if server_type != FlextLdifConstants.ServerTypes.RFC.value
+                    if server_type != c.Ldif.ServerTypes.RFC.value
                     else None
                 )
 
@@ -1096,7 +1102,7 @@ class FlextLdifModelsDomains:
             Args:
                 data: Dictionary containing DN references
                 dn_fields: List of field names containing DNs or DN lists.
-                          If None, uses default DN fields from FlextLdifConstants.
+                          If None, uses default DN fields from c.
 
             Returns:
                 FlextResult with normalized data dict
@@ -1107,7 +1113,7 @@ class FlextLdifModelsDomains:
                 if dn_fields is None:
                     # Include 'dn' itself plus all DN-valued attributes
                     dn_fields = ["dn"] + list(
-                        FlextLdifConstants.DnValuedAttributes.ALL_DN_VALUED,
+                        c.Ldif.DnValuedAttributes.ALL_DN_VALUED,
                     )
 
                 normalized_data = dict(data)
@@ -1204,18 +1210,18 @@ class FlextLdifModelsDomains:
             validate_default=True,
         )
 
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type identifier (e.g., 'oid', 'oud')",
         )
-        schemas: list[FlextLdifProtocols.Quirks.SchemaProtocol] = Field(
+        schemas: list[FlextLdifProtocols.Ldif.Quirks.SchemaProtocol] = Field(
             default_factory=list,
             description="List of Schema quirk model instances",
         )
-        acls: list[FlextLdifProtocols.Quirks.AclProtocol] = Field(
+        acls: list[FlextLdifProtocols.Ldif.Quirks.AclProtocol] = Field(
             default_factory=list,
             description="List of ACL quirk model instances",
         )
-        entrys: list[FlextLdifProtocols.Quirks.EntryProtocol] = Field(
+        entrys: list[FlextLdifProtocols.Ldif.Quirks.EntryProtocol] = Field(
             default_factory=list,
             description="List of Entry quirk model instances",
         )
@@ -1340,7 +1346,7 @@ class FlextLdifModelsDomains:
     class AclSubject(FlextModelsBase.ArbitraryTypesModel):
         """ACL subject specification."""
 
-        subject_type: FlextLdifConstants.LiteralTypes.AclSubjectTypeLiteral = Field(
+        subject_type: c.Ldif.LiteralTypes.AclSubjectTypeLiteral = Field(
             ...,
             description="Subject type (user, group, etc.)",
         )
@@ -1423,10 +1429,10 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Business Rule: AclElement is frozen=True, so we must use setattr for mutation
-                # Implication: Direct assignment doesn't work for frozen models, must use setattr
+                # Business Rule: AclElement is frozen=True, so we must use object.__setattr__ for mutation
+                # Implication: Direct assignment doesn't work for frozen models, must use object.__setattr__
                 # This is the correct Pydantic 2 pattern for frozen models in validators
-                self.validation_violations = violations
+                object.__setattr__(self, "validation_violations", violations)
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
@@ -1442,7 +1448,7 @@ class FlextLdifModelsDomains:
                 Default ACL format string from constants.
 
             """
-            return FlextLdifConstants.AclFormats.DEFAULT_ACL_FORMAT
+            return c.Ldif.AclFormats.DEFAULT_ACL_FORMAT
 
         def get_acl_type(self) -> str:
             """Get ACL type identifier for this server.
@@ -1451,7 +1457,7 @@ class FlextLdifModelsDomains:
             (e.g., "oracle_oid" → "oid") to short-form canonical identifiers.
             """
             # Normalize to short form using FROM_LONG dict
-            short_server_type = FlextLdifConstants.ServerTypesMappings.FROM_LONG.get(
+            short_server_type = c.Ldif.ServerTypesMappings.FROM_LONG.get(
                 self.server_type,
                 self.server_type,
             )
@@ -1532,7 +1538,7 @@ class FlextLdifModelsDomains:
             if not extensions:
                 return cls()
 
-            keys = FlextLdifConstants.MetadataKeys
+            keys = c.Ldif.MetadataKeys
 
             original_format = extensions.get(keys.ACL_ORIGINAL_FORMAT)
             source_server = extensions.get(keys.ACL_SOURCE_SERVER)
@@ -1553,7 +1559,7 @@ class FlextLdifModelsDomains:
     class Entry(FlextModelsBase.ArbitraryTypesModel):
         """LDIF entry domain model.
 
-        Implements FlextLdifProtocols.Models.EntryProtocol through structural typing.
+        Implements FlextLdifProtocols.Ldif.Models.EntryProtocol through structural typing.
         The protocol requires:
         - dn: str
         - attributes: FlextLdifModelsMetadata.DynamicMetadata
@@ -1649,7 +1655,7 @@ class FlextLdifModelsDomains:
         # ===================================================================
         # - metadata: Initialized via ensure_metadata_initialized, maps to EntryMetadata
         # - All methods (get_objectclass_names, model_copy) match protocol specifications
-        changetype: FlextLdifConstants.LiteralTypes.ChangeTypeLiteral | None = Field(
+        changetype: c.Ldif.LiteralTypes.ChangeTypeLiteral | None = Field(
             default=None,
             description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
         )
@@ -1692,14 +1698,13 @@ class FlextLdifModelsDomains:
                 quirk_type_value = data.get("quirk_type")
                 if isinstance(quirk_type_value, str):
                     # Validate quirk_type is a valid ServerTypeLiteral
-                    quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = (
-                        cast(
-                            "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                            quirk_type_value,
-                        )
+                    quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = cast(
+                        "c.Ldif.LiteralTypes.ServerTypeLiteral",
+                        quirk_type_value,
                     )
                 else:
-                    quirk_type = FlextLdifConstants.ServerTypes.RFC.value
+                    # Use literal value directly for type safety
+                    quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc"
 
                 metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
                     quirk_type=quirk_type,
@@ -1788,7 +1793,7 @@ class FlextLdifModelsDomains:
                 return violations
 
             dn_component_pattern = re.compile(
-                FlextLdifConstants.LdifPatterns.DN_COMPONENT,
+                c.Ldif.LdifPatterns.DN_COMPONENT,
                 re.IGNORECASE,
             )
             for idx, comp in enumerate(components):
@@ -1923,10 +1928,10 @@ class FlextLdifModelsDomains:
                 for value in attr_values:
                     has_binary = any(
                         (
-                            ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
+                            ord(c) < c.Ldif.Format.Rfc.ASCII_SPACE_CHAR
                             and c not in "\t\n\r"
                         )
-                        or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
+                        or ord(c) > c.Ldif.Format.Rfc.ASCII_TILDE_CHAR
                         for c in value
                     )
                     if has_binary:
@@ -2096,8 +2101,8 @@ class FlextLdifModelsDomains:
                     continue
                 for value in attr_values:
                     if any(
-                        ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
-                        or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
+                        ord(c) < c.Ldif.Format.Rfc.ASCII_SPACE_CHAR
+                        or ord(c) > c.Ldif.Format.Rfc.ASCII_TILDE_CHAR
                         for c in value
                     ):
                         violations.append(
@@ -2227,9 +2232,7 @@ class FlextLdifModelsDomains:
                 self._validation_metadata: (
                     FlextLdifModelsDomains.ValidationMetadata | None
                 ) = None
-                self._server_type: (
-                    FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
-                ) = None
+                self._server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
                 self._source_entry: str | None = None
                 self._unconverted_attributes: (
                     FlextLdifModelsMetadata.DynamicMetadata | None
@@ -2287,7 +2290,7 @@ class FlextLdifModelsDomains:
 
             def server_type(
                 self,
-                server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+                server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
             ) -> Self:
                 self._server_type = server_type
                 return self
@@ -2347,7 +2350,7 @@ class FlextLdifModelsDomains:
             entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None,
             validation_metadata: FlextLdifModelsDomains.ValidationMetadata
             | None = None,
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
             | None = None,  # New parameter
             source_entry: str | None = None,  # New parameter
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
@@ -2426,7 +2429,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def _build_extension_kwargs(
             cls,
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None,
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
         ) -> dict[str, str | dict[str, list[str]]]:
@@ -2446,7 +2449,7 @@ class FlextLdifModelsDomains:
         def _update_existing_metadata(
             cls,
             metadata: FlextLdifModelsDomains.QuirkMetadata,
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None,
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
         ) -> None:
@@ -2465,7 +2468,7 @@ class FlextLdifModelsDomains:
         def _build_metadata(
             cls,
             metadata: FlextLdifModelsDomains.QuirkMetadata | None,
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None,
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
         ) -> FlextLdifModelsDomains.QuirkMetadata | None:
@@ -2485,7 +2488,7 @@ class FlextLdifModelsDomains:
                 }
                 extensions = FlextLdifModelsMetadata.DynamicMetadata(**ext_kwargs_typed)
                 return FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=FlextLdifConstants.ServerTypes.GENERIC.value,
+                    quirk_type=c.Ldif.ServerTypes.GENERIC.value,
                     extensions=extensions,
                 )
 
@@ -2514,7 +2517,7 @@ class FlextLdifModelsDomains:
             entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None,
             validation_metadata: FlextLdifModelsDomains.ValidationMetadata
             | None = None,
-            server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
             | None = None,  # New parameter
             source_entry: str | None = None,  # New parameter
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
@@ -2572,11 +2575,11 @@ class FlextLdifModelsDomains:
                         | FlextLdifModelsMetadata.EntryMetadata
                         | FlextLdifModelsDomains.ValidationMetadata
                         | FlextLdifModelsDomains.EntryStatistics
-                        | FlextLdifConstants.LiteralTypes.ChangeTypeLiteral
+                        | c.Ldif.LiteralTypes.ChangeTypeLiteral
                     ),
                 ] = {
-                    FlextLdifConstants.DictKeys.DN: dn_obj,
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: attrs_obj,
+                    c.Ldif.DictKeys.DN: dn_obj,
+                    c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
                 }
 
                 # Only add optional fields if they are not None
@@ -2720,7 +2723,7 @@ class FlextLdifModelsDomains:
 
             """
             return object_class in self.get_attribute_values(
-                FlextLdifConstants.DictKeys.OBJECTCLASS,
+                c.Ldif.DictKeys.OBJECTCLASS,
             )
 
         def get_all_attribute_names(self) -> list[str]:
@@ -2846,7 +2849,7 @@ class FlextLdifModelsDomains:
 
         def get_objectclass_names(self) -> list[str]:
             """Get list of objectClass attribute values from entry."""
-            return self.get_attribute_values(FlextLdifConstants.DictKeys.OBJECTCLASS)
+            return self.get_attribute_values(c.Ldif.DictKeys.OBJECTCLASS)
 
         def get_entries(self) -> list[Self]:
             """Get this entry as a list for unified protocol.
@@ -2905,7 +2908,7 @@ class FlextLdifModelsDomains:
         )
         # AttributeTransformation uses specific transformation types
         # Using centralized Literal type from constants for consistency
-        transformation_type: FlextLdifConstants.LiteralTypes.TransformationTypeLiteral = Field(
+        transformation_type: c.Ldif.LiteralTypes.TransformationTypeLiteral = Field(
             ...,
             description="Type of transformation applied to the attribute",
         )
@@ -3004,7 +3007,7 @@ class FlextLdifModelsDomains:
 
         # Validation status
         validation_status: str = Field(
-            default=FlextLdifConstants.ValidationStatus.VALID,
+            default=c.Ldif.ValidationStatus.VALID,
             description="Validation status (use ValidationStatus constants)",
         )
         validation_warnings: list[str] = Field(
@@ -3167,7 +3170,7 @@ class FlextLdifModelsDomains:
         )
 
         # Quirk metadata tracking
-        quirks_applied: list[FlextLdifConstants.LiteralTypes.ServerTypeLiteral] = Field(
+        quirks_applied: list[c.Ldif.LiteralTypes.ServerTypeLiteral] = Field(
             default_factory=list,
             description="List of quirk types applied to this entry",
         )
@@ -3383,7 +3386,7 @@ class FlextLdifModelsDomains:
 
         def apply_quirk(
             self,
-            quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+            quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
         ) -> Self:
             """Record quirk application.
 
@@ -3430,9 +3433,7 @@ class FlextLdifModelsDomains:
             default_factory=list,
             description="Server-specific validation violations",
         )
-        validation_server_type: (
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
-        ) = Field(
+        validation_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = Field(
             default=None,
             description="Server type used for validation",
         )
@@ -3496,7 +3497,7 @@ class FlextLdifModelsDomains:
             default=None,
             description="Original attribute syntax information",
         )
-        encoding: FlextLdifConstants.LiteralTypes.EncodingLiteral | None = Field(
+        encoding: c.Ldif.LiteralTypes.EncodingLiteral | None = Field(
             default=None,
             description="Original encoding (utf-8, etc.)",
         )
@@ -3581,7 +3582,7 @@ class FlextLdifModelsDomains:
 
         model_config = ConfigDict(extra="allow", frozen=False)
 
-        quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = Field(
+        quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             ...,
             description="Type of quirk this metadata represents",
         )
@@ -3627,17 +3628,13 @@ class FlextLdifModelsDomains:
             default_factory=FlextLdifModelsMetadata.EntryMetadata,
             description="Preservation of server-proprietary data for round-trip conversions",
         )
-        original_server_type: (
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None
-        ) = Field(
+        original_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = Field(
             default=None,
             description="Source LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
         )
-        target_server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = (
-            Field(
-                default=None,
-                description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
-            )
+        target_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = Field(
+            default=None,
+            description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
         )
 
         # =====================================================================
@@ -3709,9 +3706,7 @@ class FlextLdifModelsDomains:
                 "'cn': 'CN'}. Used to restore original case during reverse conversion."
             ),
         )
-        schema_quirks_applied: list[
-            FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-        ] = Field(
+        schema_quirks_applied: list[c.Ldif.LiteralTypes.ServerTypeLiteral] = Field(
             default_factory=list,
             description=(
                 "List of schema quirks applied during parsing: "
@@ -3786,7 +3781,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def create_for(
             cls,
-            quirk_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = None,
+            quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: (
                 FlextLdifModelsMetadata.DynamicMetadata
                 | dict[str, t.MetadataAttributeValue]
@@ -3805,9 +3800,7 @@ class FlextLdifModelsDomains:
             """
             # Use Constants default for quirk_type if not provided
             default_quirk_type = (
-                quirk_type
-                if quirk_type is not None
-                else FlextLdifConstants.ServerTypes.RFC.value
+                quirk_type if quirk_type is not None else c.Ldif.ServerTypes.RFC.value
             )
             # Convert dict to DynamicMetadata if needed
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
@@ -3826,9 +3819,7 @@ class FlextLdifModelsDomains:
             self,
             original_name: str,
             new_name: str | None,
-            transformation_type: (
-                FlextLdifConstants.LiteralTypes.TransformationTypeLiteral
-            ),
+            transformation_type: (c.Ldif.LiteralTypes.TransformationTypeLiteral),
             original_values: Sequence[str] | None = None,
             new_values: list[str] | None = None,
             reason: str | None = None,
@@ -3852,7 +3843,7 @@ class FlextLdifModelsDomains:
                 >>> metadata.track_attribute_transformation(
                 ...     original_name="orclPassword",
                 ...     new_name="userPassword",
-                ...     transformation_type=FlextLdifConstants.TransformationType.ATTRIBUTE_RENAMED,
+                ...     transformation_type=c.Ldif.TransformationType.ATTRIBUTE_RENAMED,
                 ...     reason="OID→OUD attribute mapping",
                 ... )
 
@@ -3883,7 +3874,7 @@ class FlextLdifModelsDomains:
             """Track an attribute removal in metadata.
 
             RFC Compliance: Preserves removed attribute data for round-trip conversions.
-            Uses FlextLdifConstants.MetadataKeys.SKIPPED_ATTRIBUTES tracking.
+            Uses c.Ldif.MetadataKeys.SKIPPED_ATTRIBUTES tracking.
 
             Args:
                 attribute_name: Name of removed attribute
@@ -3916,7 +3907,7 @@ class FlextLdifModelsDomains:
             original_dn: str,
             transformed_dn: str,
             transformation_type: (
-                FlextLdifConstants.LiteralTypes.TransformationTypeLiteral
+                c.Ldif.LiteralTypes.TransformationTypeLiteral
             ) = "dn_normalized",
             *,
             was_base64: bool = False,
@@ -3925,7 +3916,7 @@ class FlextLdifModelsDomains:
             """Track a DN transformation in metadata.
 
             RFC 4514 Compliance: Tracks DN normalization and transformations.
-            Uses FlextLdifConstants.Rfc.META_DN_* keys.
+            Uses c.Ldif.Format.Rfc.META_DN_* keys.
 
             Args:
                 original_dn: Original DN before transformation
@@ -3941,15 +3932,15 @@ class FlextLdifModelsDomains:
                 >>> metadata.track_dn_transformation(
                 ...     original_dn="cn=test, dc=example",
                 ...     transformed_dn="cn=test,dc=example",
-                ...     transformation_type=FlextLdifConstants.TransformationType.DN_NORMALIZED.value,
+                ...     transformation_type=c.Ldif.TransformationType.DN_NORMALIZED.value,
                 ... )
 
             """
-            self.original_strings[FlextLdifConstants.Rfc.META_DN_ORIGINAL] = original_dn
-            self.extensions[FlextLdifConstants.Rfc.META_DN_WAS_BASE64] = was_base64
+            self.original_strings[c.Ldif.Format.Rfc.META_DN_ORIGINAL] = original_dn
+            self.extensions[c.Ldif.Format.Rfc.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
                 # escapes_applied is Sequence[str] | None, compatible with MetadataAttributeValue
-                self.extensions[FlextLdifConstants.Rfc.META_DN_ESCAPES_APPLIED] = (
+                self.extensions[c.Ldif.Format.Rfc.META_DN_ESCAPES_APPLIED] = (
                     escapes_applied
                 )
 
@@ -4015,9 +4006,8 @@ class FlextLdifModelsDomains:
 
         def set_server_context(
             self,
-            source_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-            target_server: FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-            | None = None,
+            source_server: c.Ldif.LiteralTypes.ServerTypeLiteral,
+            target_server: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
         ) -> Self:
             """Set source and target server context.
 
@@ -4040,11 +4030,11 @@ class FlextLdifModelsDomains:
                 self.target_server_type = target_server
 
             # Also store in extensions for generic access
-            self.extensions[FlextLdifConstants.Rfc.META_TRANSFORMATION_SOURCE] = (
+            self.extensions[c.Ldif.Format.Rfc.META_TRANSFORMATION_SOURCE] = (
                 source_server
             )
             if target_server:
-                self.extensions[FlextLdifConstants.Rfc.META_TRANSFORMATION_TARGET] = (
+                self.extensions[c.Ldif.Format.Rfc.META_TRANSFORMATION_TARGET] = (
                     target_server
                 )
 

@@ -1,3 +1,9 @@
+"""Tests for OID syntax OID and matching rule transformations.
+
+This module tests Oracle Internet Directory (OID) specific syntax OID
+mappings and matching rule transformations during LDIF processing.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,10 +11,9 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_ldif.models import m
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers.oid import FlextLdifServersOid
-from tests import m, s
+from tests import TestDeduplicationHelpers, m, s
 
 
 class TestsTestFlextLdifOidSyntaxTransformations(s):

@@ -1,3 +1,9 @@
+"""Tests for Active Directory (AD) server quirks.
+
+This module tests the Active Directory-specific quirks and behavior
+deviations from standard RFC 2849/4512 LDIF processing.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

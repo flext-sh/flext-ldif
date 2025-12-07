@@ -26,7 +26,7 @@ from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
 
-class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
+class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.WriteResponse]):
     """Direct LDIF writing service using flext-core APIs.
 
     Business Rule: Writer service delegates directly to server-specific entry quirks
@@ -65,17 +65,21 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
     @staticmethod
     def _normalize_format_options(
         format_options: (
-            m.WriteFormatOptions | m.WriteOptions | type | dict[str, object] | None
+            m.Ldif.WriteFormatOptions
+            | m.Ldif.WriteOptions
+            | type
+            | dict[str, object]
+            | None
         ),
-    ) -> m.WriteFormatOptions:
+    ) -> m.Ldif.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
         result_raw = u.match(
             format_options,
-            (type(None), lambda _: m.WriteFormatOptions()),
+            (type(None), lambda _: m.Ldif.WriteFormatOptions()),
             (type, lambda t: t()),
-            (m.WriteFormatOptions, lambda opts: opts),
+            (m.Ldif.WriteFormatOptions, lambda opts: opts),
             (
-                m.WriteOptions,
+                m.Ldif.WriteOptions,
                 lambda opts: (
                     u.unwrap_or(
                         u.Reliability.pipe(
@@ -92,20 +96,20 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
                                 is not None
                                 else {}
                             ),
-                            m.WriteFormatOptions.model_validate,
+                            m.Ldif.WriteFormatOptions.model_validate,
                         ),
-                        default=m.WriteFormatOptions(),
+                        default=m.Ldif.WriteFormatOptions(),
                     )
                 ),
             ),
-            (dict, m.WriteFormatOptions.model_validate),
+            (dict, m.Ldif.WriteFormatOptions.model_validate),
             default=None,
         )
         if result_raw is None:
             msg = f"Expected WriteFormatOptions | WriteOptions | dict | None, got {type(format_options)}"
             raise TypeError(msg)
         # Type narrowing: result_raw is object, check if WriteFormatOptions
-        if isinstance(result_raw, m.WriteFormatOptions):
+        if isinstance(result_raw, m.Ldif.WriteFormatOptions):
             return result_raw
         # Fallback: should not happen, but handle gracefully
         msg = f"Unexpected type in match result: {type(result_raw)}"
@@ -113,9 +117,9 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
 
     def write_to_string(
         self,
-        entries: list[m.Entry],
-        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
-        format_options: (m.WriteFormatOptions | m.WriteOptions | None) = None,
+        entries: list[m.Ldif.Entry],
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
     ) -> r[str]:
         """Write entries to LDIF string format.
 
@@ -166,11 +170,11 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
 
     def write_to_file(
         self,
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         path: Path,
-        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
-        format_options: (m.WriteFormatOptions | m.WriteOptions | None) = None,
-    ) -> r[m.WriteResponse]:
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
+    ) -> r[m.Ldif.WriteResponse]:
         """Write entries to LDIF file.
 
         Business Rule: File writing delegates to write_to_string() then writes content
@@ -207,9 +211,9 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
 
         # Create response with basic statistics
         # Use facade Results.Statistics for LDIF-specific statistics
-        response = m.WriteResponse(
+        response = m.Ldif.WriteResponse(
             content=ldif_content,
-            statistics=m.LdifResults.Statistics(
+            statistics=m.Ldif.LdifResults.Statistics(
                 total_entries=u.count(entries),
                 processed_entries=u.count(entries),
             ),
@@ -219,13 +223,13 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
 
     def write(
         self,
-        entries: list[m.Entry],
-        target_server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
+        entries: list[m.Ldif.Entry],
+        target_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
         _output_target: str | None = None,
         output_path: Path | None = None,
-        format_options: (m.WriteFormatOptions | m.WriteOptions | None) = None,
+        format_options: (m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None) = None,
         _template_data: dict[str, t.TemplateValue] | None = None,
-    ) -> r[str | m.WriteResponse]:
+    ) -> r[str | m.Ldif.WriteResponse]:
         """Write entries to LDIF format (string or file).
 
         Business Rule: Unified write method routes to string or file writing based on
@@ -269,7 +273,9 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
             return r.fail(string_result.error or "String write failed")
         return r.ok(string_result.unwrap())
 
-    def execute(self, params: dict[str, object] | None = None) -> r[m.WriteResponse]:
+    def execute(
+        self, params: dict[str, object] | None = None
+    ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters.
 
         Business Rule: Execute method provides parameter-based write execution for
@@ -295,8 +301,8 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
         params = params or {}
         entries_raw = u.take(params, "entries", as_type=list, default=[])
         # Type narrowing: entries_raw is object, check if list[Entry]
-        entries: list[m.Entry] = (
-            [entry for entry in entries_raw if isinstance(entry, m.Entry)]
+        entries: list[m.Ldif.Entry] = (
+            [entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)]
             if isinstance(entries_raw, list)
             else []
         )
@@ -307,7 +313,7 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
             default="rfc",
         )
         # Normalize server type - normalize_server_type raises ValueError for invalid types
-        target_server_type: c.LiteralTypes.ServerTypeLiteral | None = None
+        target_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
         if isinstance(target_server_type_raw, str):
             try:
                 target_server_type = c.normalize_server_type(target_server_type_raw)
@@ -321,13 +327,13 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
         )
         format_options_raw: object = u.take(params, "format_options")
         # Type narrowing: format_options_raw is object, check if WriteFormatOptions or WriteOptions
-        format_options: m.WriteFormatOptions | m.WriteOptions | None = (
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = (
             format_options_raw
             if isinstance(
                 format_options_raw,
                 (
-                    m.WriteFormatOptions,
-                    m.WriteOptions,
+                    m.Ldif.WriteFormatOptions,
+                    m.Ldif.WriteOptions,
                 ),
             )
             else None
@@ -345,15 +351,15 @@ class FlextLdifWriter(FlextLdifServiceBase[m.WriteResponse]):
             return r.fail(write_result.error)
 
         result_value = write_result.unwrap()
-        if isinstance(result_value, m.WriteResponse):
+        if isinstance(result_value, m.Ldif.WriteResponse):
             return r.ok(result_value)
 
         # Convert string result to WriteResponse
         # Use facade LdifResults.Statistics for LDIF-specific statistics
         return r.ok(
-            m.WriteResponse(
+            m.Ldif.WriteResponse(
                 content=str(result_value),
-                statistics=m.LdifResults.Statistics(
+                statistics=m.Ldif.LdifResults.Statistics(
                     total_entries=len(entries),
                     processed_entries=len(entries),
                 ),

@@ -23,16 +23,21 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import cast
 
 from flext_core import FlextLogger, FlextModels, FlextRuntime, u
 
 from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.typings import ModelT, t
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.typings import LdifModelT, t
+
+# Type alias for EntryStatistics to use in type annotations
+# m.EntryStatistics is a variable assignment, not a type alias
+EntryStatisticsType = FlextLdifModelsDomains.EntryStatistics
 
 # Alias for simplified usage
 # Note: u is already imported directly, no need to reassign
@@ -110,7 +115,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _set_model_metadata(
-        model: p.Constants.ModelWithValidationMetadata,
+        model: FlextLdifProtocols.Ldif.Constants.ModelWithValidationMetadata,
         metadata: FlextLdifModelsMetadata.DynamicMetadata,
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models).
@@ -144,7 +149,7 @@ class FlextLdifUtilitiesMetadata:
     # =========================================================================
 
     @staticmethod
-    def _get_metadata_dict(model: ModelT) -> dict[str, object]:
+    def _get_metadata_dict(model: LdifModelT) -> dict[str, object]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -233,13 +238,13 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _track_metadata_item(
-        model: ModelT,
+        model: LdifModelT,
         metadata_key: str,
         item_data: t.MetadataAttributeValue,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
-    ) -> ModelT:
+    ) -> LdifModelT:
         """Generic helper to track items in model validation_metadata.
 
         Consolidates common pattern of get-or-init metadata, add item, set back.
@@ -288,7 +293,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _extract_source_metadata(
-        model: ModelT,
+        model: LdifModelT,
     ) -> FlextLdifModelsMetadata.DynamicMetadata | None:
         """Extract validation metadata from a model."""
         source_metadata_obj = getattr(model, "validation_metadata", None)
@@ -313,7 +318,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _get_or_create_target_metadata(
-        model: ModelT,
+        model: LdifModelT,
     ) -> FlextLdifModelsMetadata.DynamicMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
@@ -339,7 +344,7 @@ class FlextLdifUtilitiesMetadata:
         source_model: ModelT,
         target_model: ModelT,
         transformation: t.TransformationInfo,
-    ) -> ModelT:
+    ) -> LdifModelT:
         """Copy validation_metadata from source to target, adding transformation.
 
         Preserves RFC violations captured in FASE 1 validators and adds
@@ -403,7 +408,10 @@ class FlextLdifUtilitiesMetadata:
                 # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
                 # Type narrowing: transformations_obj is list, create new list with transformation_dict
                 # Use list comprehension to create new list with proper type
-                existing_items = [cast("Any", item) for item in transformations_obj]
+                existing_items: list[Mapping[str, t.ScalarValue]] = [
+                    cast("Mapping[str, t.ScalarValue]", item)
+                    for item in transformations_obj
+                ]
                 existing_items.append(transformation_dict)
                 target_metadata["transformations"] = cast(
                     "t.MetadataAttributeValue",
@@ -429,7 +437,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def extract_rfc_violations(
-        model: p.Constants.ModelWithValidationMetadata,
+        model: FlextLdifProtocols.Ldif.Constants.ModelWithValidationMetadata,
     ) -> list[str]:
         """Extract all RFC violations from model validation_metadata.
 
@@ -493,11 +501,11 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_conversion_step(
-        model: ModelT,
+        model: LdifModelT,
         step: str,
         server: str,
         changes: list[str],
-    ) -> ModelT:
+    ) -> LdifModelT:
         """Add conversion step to model transformation history.
 
         Tracks each step in the conversion pipeline for audit trail and debugging.
@@ -1079,7 +1087,7 @@ class FlextLdifUtilitiesMetadata:
 
         """
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
-        preview_len = c.LdifFormatting.DEFAULT_LINE_WIDTH
+        preview_len = c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
             definition_preview=(
@@ -1211,65 +1219,63 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _apply_category_update(
-        stats: m.EntryStatistics,
-        category: c.LiteralTypes.CategoryLiteral,
-    ) -> m.EntryStatistics:
+        stats: EntryStatisticsType,
+        category: c.Ldif.LiteralTypes.CategoryLiteral,
+    ) -> EntryStatisticsType:
         """Apply category update to stats using model_copy."""
-        # Ensure return type is m.EntryStatistics (public facade)
+        # Ensure return type is EntryStatisticsType
         return stats.model_copy(update={"category_assigned": category})
 
     @staticmethod
     def _apply_filter_update(
-        stats: m.EntryStatistics,
+        stats: EntryStatisticsType,
         filter_type: str,
         *,
         passed: bool,
-    ) -> m.EntryStatistics:
+    ) -> EntryStatisticsType:
         """Apply filter marking to stats."""
-        # Ensure return type is m.EntryStatistics (public facade)
+        # Ensure return type is EntryStatisticsType
         return stats.mark_filtered(filter_type, passed=passed)
 
     @staticmethod
     def _apply_rejection_update(
-        stats: m.EntryStatistics,
+        stats: EntryStatisticsType,
         rejection_category: str,
         reason: str,
-    ) -> m.EntryStatistics:
+    ) -> EntryStatisticsType:
         """Apply rejection marking to stats."""
-        # Ensure return type is m.EntryStatistics (public facade)
+        # Ensure return type is EntryStatisticsType
         return stats.mark_rejected(rejection_category, reason)
 
     @staticmethod
     def _update_entry_with_stats(
-        entry: m.Entry,
-        updated_stats: m.EntryStatistics,
-    ) -> m.Entry:
+        entry: m.Ldif.Entry,
+        updated_stats: EntryStatisticsType,
+    ) -> m.Ldif.Entry:
         """Update entry with new processing stats using model_copy."""
         if entry.metadata is None:
             # Create new metadata if None
             entry.metadata = m.QuirkMetadata.create_for(
                 c.normalize_server_type(c.ServerTypes.RFC.value),
             )
-        # Ensure updated_stats is m.EntryStatistics for model_copy
+        # updated_stats is EntryStatisticsType (FlextLdifModelsDomains.EntryStatistics)
         # Use model_dump and model_validate to ensure facade type
-        # Business Rule: m.EntryStatistics extends FlextLdifModelsDomains.EntryStatistics
-        # so it's compatible, but type checker needs explicit cast
         stats_dict = updated_stats.model_dump()
+        # m.EntryStatistics is the facade alias, use it for validation
         stats_facade = m.EntryStatistics.model_validate(stats_dict)
-        # Cast to Any for model_copy update to avoid type checker strictness
-        # m.EntryStatistics is compatible with FlextLdifModelsDomains.EntryStatistics via inheritance
-        update_dict: dict[str, Any] = {"processing_stats": stats_facade}
+        # Use dict[str, object] for model_copy update (Pydantic accepts object)
+        update_dict: dict[str, object] = {"processing_stats": stats_facade}
         updated_metadata = entry.metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
     @staticmethod
     def update_entry_statistics(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         *,
-        category: c.LiteralTypes.CategoryLiteral | None = None,
+        category: c.Ldif.LiteralTypes.CategoryLiteral | None = None,
         mark_rejected: tuple[str, str] | None = None,
         mark_filtered: tuple[str, bool] | None = None,
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Update entry processing statistics using FlextLdifUtilities.
 
         Centralized helper for updating EntryStatistics in entry metadata.
@@ -1378,8 +1384,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def extract_write_options(
-        entry_data: m.Entry,
-    ) -> m.WriteFormatOptions | None:
+        entry_data: m.Ldif.Entry,
+    ) -> m.Ldif.WriteFormatOptions | None:
         """Extract write options from entry metadata.
 
         Retrieves WriteFormatOptions from entry.metadata.write_options if present.
@@ -1412,7 +1418,7 @@ class FlextLdifUtilitiesMetadata:
         if key not in extras:
             return None
         opt = extras.get(key)
-        if isinstance(opt, m.WriteFormatOptions):
+        if isinstance(opt, m.Ldif.WriteFormatOptions):
             return opt
         return None
 

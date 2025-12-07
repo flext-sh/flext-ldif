@@ -27,9 +27,10 @@ from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
 
-# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
 # TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
 # Use unified test helpers from tests/__init__.py instead of deprecated helpers
+from ..conftest import FlextLdifFixtures
+from ..helpers.compat import TestAssertions
 from .ldif_data import LdifTestData
 from .real_services import RealServiceFactory
 from .test_files import FileManager
@@ -125,7 +126,7 @@ class FlextLdifTestConftest:
     def make_user_dn(
         self,
         unique_dn_suffix: str,
-        ldap_container: GenericFieldsDict,
+        ldap_container: dict[str, object],
     ) -> Callable[[str], str]:
         """Factory for unique user DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -138,7 +139,7 @@ class FlextLdifTestConftest:
     def make_group_dn(
         self,
         unique_dn_suffix: str,
-        ldap_container: GenericFieldsDict,
+        ldap_container: dict[str, object],
     ) -> Callable[[str], str]:
         """Factory for unique group DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -151,7 +152,7 @@ class FlextLdifTestConftest:
     def make_test_base_dn(
         self,
         unique_dn_suffix: str,
-        ldap_container: GenericFieldsDict,
+        ldap_container: dict[str, object],
     ) -> Callable[[str], str]:
         """Factory for unique base DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -200,7 +201,7 @@ class FlextLdifTestConftest:
         self,
         docker_control: FlextTestsDocker,
         worker_id: str,
-    ) -> GenericFieldsDict:
+    ) -> dict[str, object]:
         """Session-scoped LDAP container configuration.
 
         Uses direct container configuration for flext-openldap-test.
@@ -280,14 +281,14 @@ class FlextLdifTestConftest:
             "worker_id": worker_id,
         }
 
-    def ldap_container_shared(self, ldap_container: GenericFieldsDict) -> str:
+    def ldap_container_shared(self, ldap_container: dict[str, object]) -> str:
         """Provide LDAP connection string."""
         default_url = f"ldap://localhost:{self.LDAP_PORT}"
         return str(ldap_container.get("server_url", default_url))
 
     def ldap_connection(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: dict[str, object],
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
@@ -356,7 +357,7 @@ class FlextLdifTestConftest:
             pass
 
     # LDIF processing fixtures
-    def ldif_processor_config(self) -> GenericFieldsDict:
+    def ldif_processor_config(self) -> dict[str, object]:
         """LDIF processor configuration."""
         return {
             "encoding": FlextConstants.Mixins.DEFAULT_ENCODING,
@@ -366,15 +367,15 @@ class FlextLdifTestConftest:
             "normalize_attributes": True,
         }
 
-    def real_ldif_api(self) -> GenericFieldsDict:
+    def real_ldif_api(self) -> dict[str, object]:
         """Real LDIF API services."""
         return RealServiceFactory.create_api()
 
-    def strict_ldif_api(self) -> GenericFieldsDict:
+    def strict_ldif_api(self) -> dict[str, object]:
         """Strict LDIF API services."""
         return RealServiceFactory.create_strict_api()
 
-    def lenient_ldif_api(self) -> GenericFieldsDict:
+    def lenient_ldif_api(self) -> dict[str, object]:
         """Lenient LDIF API services."""
         return RealServiceFactory.create_lenient_api()
 
@@ -452,7 +453,7 @@ class FlextLdifTestConftest:
         """Real writer service."""
         return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
-    def integration_services(self) -> GenericFieldsDict:
+    def integration_services(self) -> dict[str, object]:
         """Integration services."""
         return RealServiceFactory.services_for_integration_test()
 
@@ -514,10 +515,10 @@ class FlextLdifTestConftest:
 
     def flext_result_composition_helper(
         self,
-    ) -> Callable[[list[FlextResult[object]]], GenericFieldsDict]:
+    ) -> Callable[[list[FlextResult[object]]], dict[str, object]]:
         """Result composition helper."""
 
-        def helper(results: list[FlextResult[object]]) -> GenericFieldsDict:
+        def helper(results: list[FlextResult[object]]) -> dict[str, object]:
             successes = [r for r in results if r.is_success]
             failures = [r for r in results if r.is_failure]
             return {
@@ -533,10 +534,10 @@ class FlextLdifTestConftest:
         return helper
 
     # Schema and other fixtures
-    def ldap_schema_config(self) -> GenericFieldsDict:
+    def ldap_schema_config(self) -> dict[str, object]:
         """LDAP schema config."""
         return cast(
-            "GenericFieldsDict",
+            "dict[str, object]",
             {
                 "validate_object_classes": True,
                 "validate_attributes": True,
@@ -558,7 +559,7 @@ class FlextLdifTestConftest:
             },
         )
 
-    def transformation_rules(self) -> GenericFieldsDict:
+    def transformation_rules(self) -> dict[str, object]:
         """Transformation rules."""
 
         def _transform_mail(x: str | float | None) -> str:
@@ -567,10 +568,10 @@ class FlextLdifTestConftest:
         def _transform_cn(x: str | float | None) -> str:
             return str(x).title() if x else ""
 
-        # Note: value_transformations contains callables which are not in GenericFieldsDict
+        # Note: value_transformations contains callables which are not in dict[str, object]
         # Use cast to indicate this is a test fixture with extended structure
         return cast(
-            "GenericFieldsDict",
+            "dict[str, object]",
             {
                 "attribute_mappings": {
                     "telephoneNumber": "phone",
@@ -588,12 +589,12 @@ class FlextLdifTestConftest:
             },
         )
 
-    def ldif_filters(self) -> GenericFieldsDict:
+    def ldif_filters(self) -> dict[str, object]:
         """LDIF filters."""
         # Note: attribute_filters contains mixed types (str and list[str])
         # Use cast to indicate this is a test fixture with extended structure
         return cast(
-            "GenericFieldsDict",
+            "dict[str, object]",
             {
                 "include_object_classes": ["inetOrgPerson", "groupOfNames"],
                 "exclude_attributes": ["userPassword", "pwdHistory"],
@@ -605,7 +606,7 @@ class FlextLdifTestConftest:
             },
         )
 
-    def expected_ldif_stats(self) -> GenericFieldsDict:
+    def expected_ldif_stats(self) -> dict[str, object]:
         """Expected LDIF stats."""
         return {
             "total_entries": 4,
@@ -637,11 +638,11 @@ dn: uid=test,ou=people,dc=example,dc=com
 objectClass: person
 # Missing required attributes for person class"""
 
-    def large_ldif_config(self) -> GenericFieldsDict:
+    def large_ldif_config(self) -> dict[str, object]:
         """Large LDIF config."""
         # Note: memory_limit can be str or int in test fixtures
         return cast(
-            "GenericFieldsDict",
+            "dict[str, object]",
             {
                 "batch_size": 1000,
                 "memory_limit": "100MB",
@@ -668,9 +669,9 @@ objectClass: person
     class LocalTestDomains:
         """Local test domains."""
 
-        def create_configuration(self, **kwargs: object) -> GenericFieldsDict:
+        def create_configuration(self, **kwargs: object) -> dict[str, object]:
             """Create config."""
-            return cast("GenericFieldsDict", kwargs)
+            return cast("dict[str, object]", kwargs)
 
     def flext_domains(self) -> LocalTestDomains:
         """Domain-specific test data."""
@@ -699,12 +700,12 @@ objectClass: person
             for entry in entries
         ]
 
-    def ldif_test_content(self, ldif_test_entries: list[GenericTestCaseDict]) -> str:
+    def ldif_test_content(self, ldif_test_entries: list[dict[str, object]]) -> str:
         """Generate LDIF content."""
         content_lines: list[str] = []
 
         for entry in ldif_test_entries:
-            # Use cast to access keys that may not be in GenericTestCaseDict
+            # Use cast to access keys that may not be in dict[str, object]
             entry_dict = cast("dict[str, object]", entry)
             dn = entry_dict.get("dn", "")
             content_lines.append(f"dn: {dn}")
@@ -738,7 +739,7 @@ objectClass: person
     def ldif_performance_config(
         self,
         flext_domains: LocalTestDomains,
-    ) -> GenericFieldsDict:
+    ) -> dict[str, object]:
         """Performance config."""
         config = flext_domains.create_configuration(
             batch_size=1000,
@@ -747,9 +748,9 @@ objectClass: person
             max_workers=2,
         )
         # Note: large_entry_count, complex_attributes_per_entry, deep_nesting_levels
-        # are now defined in GenericFieldsDict
+        # are now defined in dict[str, object]
         return cast(
-            "GenericFieldsDict",
+            "dict[str, object]",
             {
                 "large_entry_count": 5000,
                 "complex_attributes_per_entry": 20,

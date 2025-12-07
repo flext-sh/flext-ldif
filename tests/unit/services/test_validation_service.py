@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Validation service functionality.
+
+This module tests the Validation service for RFC 2849/4512 compliance checking
+and attribute/DN component validation.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -5,7 +11,6 @@ from enum import StrEnum
 import pytest
 from flext_tests import tm
 
-from flext_ldif.models import m
 from flext_ldif.services.validation import FlextLdifValidation
 from tests import c, m, s
 

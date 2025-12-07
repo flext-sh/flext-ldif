@@ -16,7 +16,7 @@ from flext_core import FlextLogger, FlextResult, FlextRuntime, t
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import FlextLdifTypes
 
@@ -27,7 +27,7 @@ logger = FlextLogger(__name__)
 
 # RFC 2849 LDIF format constants - use directly from FlextLdifConstants
 # (no local aliases)
-# Use FlextLdifConstants.LDIF_BASE64_INDICATOR, LDIF_REGULAR_INDICATOR,
+# Use c.LDIF_BASE64_INDICATOR, LDIF_REGULAR_INDICATOR,
 # LDIF_DEFAULT_ENCODING directly
 
 
@@ -222,9 +222,9 @@ class FlextLdifUtilitiesParser:
         """
         lines: list[str] = []
         current_line = ""
-        continuation_space = FlextLdifConstants.Rfc.LINE_CONTINUATION_SPACE
+        continuation_space = c.Ldif.Format.LINE_CONTINUATION_SPACE
 
-        for raw_line in ldif_content.split(FlextLdifConstants.Rfc.LINE_SEPARATOR):
+        for raw_line in ldif_content.split(c.Ldif.Format.LINE_SEPARATOR):
             if raw_line.startswith(continuation_space) and current_line:
                 # Continuation line - append to current (skip leading space)
                 current_line += raw_line[1:]
@@ -285,7 +285,7 @@ class FlextLdifUtilitiesParser:
         if line.startswith("#"):
             return current_dn, current_attrs
 
-        if FlextLdifConstants.LDIF_REGULAR_INDICATOR not in line:
+        if c.Ldif.LDIF_REGULAR_INDICATOR not in line:
             return current_dn, current_attrs
 
         # ZERO DATA LOSS: Store original line string for metadata preservation
@@ -293,10 +293,10 @@ class FlextLdifUtilitiesParser:
 
         # RFC 2849: Detect base64 (::) vs regular (:) indicator
         is_base64 = False
-        if FlextLdifConstants.LDIF_BASE64_INDICATOR in line:
+        if c.Ldif.LDIF_BASE64_INDICATOR in line:
             # Base64-encoded value (RFC 2849 Section 2)
             # Split on :: to get key and base64 value
-            key, value = line.split(FlextLdifConstants.LDIF_BASE64_INDICATOR, 1)
+            key, value = line.split(c.Ldif.LDIF_BASE64_INDICATOR, 1)
             key = key.strip()
             value = value.strip()
             is_base64 = True
@@ -304,11 +304,11 @@ class FlextLdifUtilitiesParser:
             # Decode base64 to UTF-8 string
             with contextlib.suppress(ValueError, UnicodeDecodeError):
                 value = base64.b64decode(value).decode(
-                    FlextLdifConstants.LDIF_DEFAULT_ENCODING,
+                    c.Ldif.LDIF_DEFAULT_ENCODING,
                 )
         else:
             # Regular text value (RFC 2849 Section 2)
-            key, _, value = line.partition(FlextLdifConstants.LDIF_REGULAR_INDICATOR)
+            key, _, value = line.partition(c.Ldif.LDIF_REGULAR_INDICATOR)
             key = key.strip()
             value = value.lstrip()  # Preserve trailing spaces per RFC 2849
 
@@ -665,7 +665,7 @@ class FlextLdifUtilitiesParser:
 
         """
         syntax_match = re.search(
-            FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+            c.Ldif.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
             definition,
         )
         if not syntax_match:
@@ -726,7 +726,7 @@ class FlextLdifUtilitiesParser:
         """
         # Use build_attribute_metadata from base.py which handles server_type correctly
         # Circular dependency: parser -> servers.base -> utilities -> parser (justified)
-        from flext_ldif.servers.base import FlextLdifServersBase  # noqa: PLC0415
+        from flext_ldif.servers.base import FlextLdifServersBase
 
         return FlextLdifServersBase.Schema.build_attribute_metadata(
             attr_definition=attr_definition,
@@ -740,7 +740,7 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         *,
         case_insensitive: bool = False,
-    ) -> FlextResult[m.SchemaAttribute]:
+    ) -> FlextResult[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition.
 
         Args:
@@ -750,7 +750,7 @@ class FlextLdifUtilitiesParser:
         """
         try:
             oid_match = re.match(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION,
+                c.Ldif.LdifPatterns.SCHEMA_OID_EXTRACTION,
                 attr_definition,
             )
             if not oid_match:
@@ -760,32 +760,32 @@ class FlextLdifUtilitiesParser:
             # Extract all string fields using helper
             name = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
+                c.Ldif.LdifPatterns.SCHEMA_NAME,
                 default=oid,
             )
             desc = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+                c.Ldif.LdifPatterns.SCHEMA_DESC,
             )
             equality = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
+                c.Ldif.LdifPatterns.SCHEMA_EQUALITY,
             )
             substr = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
+                c.Ldif.LdifPatterns.SCHEMA_SUBSTR,
             )
             ordering = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
+                c.Ldif.LdifPatterns.SCHEMA_ORDERING,
             )
             sup = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
+                c.Ldif.LdifPatterns.SCHEMA_SUP,
             )
             usage = FlextLdifUtilitiesParser.extract_regex_field(
                 attr_definition,
-                FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
+                c.Ldif.LdifPatterns.SCHEMA_USAGE,
             )
 
             # Extract syntax and length using helper
@@ -801,7 +801,7 @@ class FlextLdifUtilitiesParser:
             # Extract boolean flags
             single_value = (
                 re.search(
-                    FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE,
+                    c.Ldif.LdifPatterns.SCHEMA_SINGLE_VALUE,
                     attr_definition,
                 )
                 is not None
@@ -811,7 +811,7 @@ class FlextLdifUtilitiesParser:
             if case_insensitive:
                 no_user_modification = (
                     re.search(
-                        FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+                        c.Ldif.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
                         attr_definition,
                     )
                     is not None
@@ -828,7 +828,7 @@ class FlextLdifUtilitiesParser:
                 server_type="rfc",
             )
 
-            attribute = m.SchemaAttribute(
+            attribute = m.Ldif.SchemaAttribute(
                 oid=oid,
                 name=name or oid,
                 desc=desc,
@@ -863,7 +863,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_rfc_objectclass(
         oc_definition: str,
-    ) -> FlextResult[m.SchemaObjectClass]:
+    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition.
 
         Args:
@@ -872,7 +872,7 @@ class FlextLdifUtilitiesParser:
         """
         try:
             oid_match = re.match(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION,
+                c.Ldif.LdifPatterns.SCHEMA_OID_EXTRACTION,
                 oc_definition,
             )
             if not oid_match:
@@ -882,20 +882,20 @@ class FlextLdifUtilitiesParser:
             oid = oid_match.group(1)
 
             name_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
+                c.Ldif.LdifPatterns.SCHEMA_NAME,
                 oc_definition,
             )
             name = name_match.group(1) if name_match else oid
 
             desc_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+                c.Ldif.LdifPatterns.SCHEMA_DESC,
                 oc_definition,
             )
             desc = desc_match.group(1) if desc_match else None
 
             sup = None
             sup_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
+                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
                 oc_definition,
             )
             if sup_match:
@@ -907,18 +907,17 @@ class FlextLdifUtilitiesParser:
                     sup = sup_value
 
             kind_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
+                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
                 oc_definition,
                 re.IGNORECASE,
             )
-            if kind_match:
-                kind = kind_match.group(1).upper()
-            else:
-                kind = FlextLdifConstants.Schema.STRUCTURAL
+            kind = (
+                kind_match.group(1).upper() if kind_match else c.Ldif.Schema.STRUCTURAL
+            )
 
             must = None
             must_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
                 oc_definition,
             )
             if must_match:
@@ -931,7 +930,7 @@ class FlextLdifUtilitiesParser:
 
             may = None
             may_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
+                c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
                 oc_definition,
             )
             if may_match:
@@ -946,7 +945,7 @@ class FlextLdifUtilitiesParser:
                 oc_definition,
             )
 
-            metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+            metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
                 oc_definition.strip()
             )
 
@@ -961,7 +960,7 @@ class FlextLdifUtilitiesParser:
                 else None
             )
 
-            objectclass = m.SchemaObjectClass(
+            objectclass = m.Ldif.SchemaObjectClass(
                 oid=oid,
                 name=name,
                 desc=desc,

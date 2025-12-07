@@ -13,32 +13,19 @@ from pathlib import Path
 from typing import Literal, cast, overload
 
 from flext_core import (
-    FlextDecorators,
-    FlextExceptions,
-    FlextResult,
-    FlextService,
-    FlextUtilities,
+    r,
     t,
+    u,
 )
 
 from flext_ldif._models.config import FlextLdifModelsConfig
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
 
-# Aliases for simplified usage - after all imports
-# Use flext-core utilities directly (FlextLdifUtilities extends FlextUtilities)
-# For LDIF-specific methods, use lazy import inside functions
-u = FlextUtilities  # Use base class to avoid circular dependency
-# Note: t is imported from flext_core.typings at top level (line 22)
-# Use FlextLdifTypes directly when domain-specific types are needed
-c = FlextLdifConstants  # Domain-specific constants (extends FlextConstants)
-
-p = FlextLdifProtocols  # Domain-specific protocols (extends FlextProtocols)
-r = FlextResult  # Shared from flext-core
-e = FlextExceptions  # Shared from flext-core
-d = FlextDecorators  # Shared from flext-core
-s = FlextService  # Shared from flext-core
+# Type alias for DNStatistics to use in type annotations
+# m.DNStatistics is a variable assignment, not a type alias
+DNStatisticsType = FlextLdifModelsDomains.DNStatistics
 
 
 class FlextLdifUtilitiesDN:
@@ -71,7 +58,7 @@ class FlextLdifUtilitiesDN:
     hexstring = SHARP 1*hexpair
     hexpair = HEX HEX
 
-    Character Classes (FlextLdifConstants.Rfc):
+    Character Classes (c.Rfc):
     ============================================
     LUTF1  = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
              ; Rfc.DN_LUTF1_EXCLUDE
@@ -86,13 +73,13 @@ class FlextLdifUtilitiesDN:
     SHARP  = %x23  ; '#'
     ESC    = %x5C  ; '\'
 
-    Escaping Rules (FlextLdifConstants.Rfc):
+    Escaping Rules (c.Rfc):
     ========================================
     - Characters always requiring escaping: Rfc.DN_ESCAPE_CHARS
     - Characters requiring escaping at start: Rfc.DN_ESCAPE_AT_START
     - Characters requiring escaping at end: Rfc.DN_ESCAPE_AT_END
 
-    Metadata Keys (FlextLdifConstants.Rfc):
+    Metadata Keys (c.Rfc):
     =======================================
     - META_DN_ORIGINAL: Original DN before normalization
     - META_DN_WAS_BASE64: DN was base64 encoded
@@ -108,8 +95,8 @@ class FlextLdifUtilitiesDN:
     """
 
     # Minimum length for valid DN strings (to check trailing escape)
-    # Use constant from FlextLdifConstants.Rfc
-    MIN_DN_LENGTH: int = FlextLdifConstants.Rfc.MIN_DN_LENGTH
+    # Use constant from c.Rfc
+    MIN_DN_LENGTH: int = c.Ldif.Format.MIN_DN_LENGTH
 
     # ==========================================================================
     # RFC 4514 Character Class Validation (ABNF-based)
@@ -122,7 +109,7 @@ class FlextLdifUtilitiesDN:
         LUTF1 = %x01-1F / %x21 / %x24-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
         (excludes NUL, SPACE, DQUOTE, SHARP, PLUS, COMMA, SEMI, LANGLE, RANGLE, ESC)
 
-        Uses FlextLdifConstants.Rfc.DN_LUTF1_EXCLUDE for exclusion set.
+        Uses c.Ldif.Format.DN_LUTF1_EXCLUDE for exclusion set.
 
         Args:
             char: Single character to validate
@@ -135,11 +122,11 @@ class FlextLdifUtilitiesDN:
             return False
         code = ord(char)
         # Must be in ASCII range 0x01-0x7F and not in exclusion set
-        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
-        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        safe_min = c.Ldif.Format.Rfc.SAFE_CHAR_MIN
+        safe_max = c.Ldif.Format.Rfc.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
-        return code not in FlextLdifConstants.Rfc.DN_LUTF1_EXCLUDE
+        return code not in c.Ldif.Format.DN_LUTF1_EXCLUDE
 
     @staticmethod
     def is_tutf1_char(char: str) -> bool:
@@ -148,7 +135,7 @@ class FlextLdifUtilitiesDN:
         TUTF1 = %x01-1F / %x21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
         (excludes NUL, SPACE, and special chars but allows SHARP)
 
-        Uses FlextLdifConstants.Rfc.DN_TUTF1_EXCLUDE for exclusion set.
+        Uses c.Ldif.Format.DN_TUTF1_EXCLUDE for exclusion set.
 
         Args:
             char: Single character to validate
@@ -160,11 +147,11 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
-        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        safe_min = c.Ldif.Format.Rfc.SAFE_CHAR_MIN
+        safe_max = c.Ldif.Format.Rfc.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
-        return code not in FlextLdifConstants.Rfc.DN_TUTF1_EXCLUDE
+        return code not in c.Ldif.Format.DN_TUTF1_EXCLUDE
 
     @staticmethod
     def is_sutf1_char(char: str) -> bool:
@@ -173,7 +160,7 @@ class FlextLdifUtilitiesDN:
         SUTF1 = %x01-21 / %x23-2A / %x2D-3A / %x3D / %x3F-5B / %x5D-7F
         (excludes special chars but allows SPACE and SHARP)
 
-        Uses FlextLdifConstants.Rfc.DN_SUTF1_EXCLUDE for exclusion set.
+        Uses c.Ldif.Format.DN_SUTF1_EXCLUDE for exclusion set.
 
         Args:
             char: Single character to validate
@@ -185,11 +172,11 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
-        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
+        safe_min = c.Ldif.Format.Rfc.SAFE_CHAR_MIN
+        safe_max = c.Ldif.Format.Rfc.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
-        return code not in FlextLdifConstants.Rfc.DN_SUTF1_EXCLUDE
+        return code not in c.Ldif.Format.DN_SUTF1_EXCLUDE
 
     @staticmethod
     def needs_escaping_at_position(char: str, position: int, total_len: int) -> bool:
@@ -213,16 +200,16 @@ class FlextLdifUtilitiesDN:
             return False
 
         # Always escape these characters
-        if char in FlextLdifConstants.Rfc.DN_ESCAPE_CHARS:
+        if char in c.Ldif.Format.DN_ESCAPE_CHARS:
             return True
 
         # Escape at start
-        if position == 0 and char in FlextLdifConstants.Rfc.DN_ESCAPE_AT_START:
+        if position == 0 and char in c.Ldif.Format.DN_ESCAPE_AT_START:
             return True
 
         # Escape at end
         is_last = position == total_len - 1
-        return is_last and char in FlextLdifConstants.Rfc.DN_ESCAPE_AT_END
+        return is_last and char in c.Ldif.Format.DN_ESCAPE_AT_END
 
     @staticmethod
     def is_valid_dn_string(
@@ -383,7 +370,7 @@ class FlextLdifUtilitiesDN:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
-            return dn_str  # Return as-is if invalid (legacy method - returns str not FlextResult)
+            return dn_str  # Return as-is if invalid (legacy method - returns str not r)
         components = FlextLdifUtilitiesDN.split(dn_str)
         normalized = u.Collection.map(
             components,
@@ -526,18 +513,18 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse(dn: str) -> FlextResult[list[tuple[str, str]]]: ...
+    def parse(dn: str) -> r[list[tuple[str, str]]]: ...
 
     @overload
     @staticmethod
     def parse(
         dn: m.DistinguishedName,
-    ) -> FlextResult[list[tuple[str, str]]]: ...
+    ) -> r[list[tuple[str, str]]]: ...
 
     @staticmethod
     def parse(
         dn: str | m.DistinguishedName | None,
-    ) -> FlextResult[list[tuple[str, str]]]:
+    ) -> r[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
         RFC 4514 Section 3 - Parsing a String Back to DN:
@@ -548,7 +535,7 @@ class FlextLdifUtilitiesDN:
         4. Unescape the attributeValue
 
         Returns:
-            FlextResult with [(attr1, value1), (attr2, value2), ...] or failure.
+            r with [(attr1, value1), (attr2, value2), ...] or failure.
 
         """
         # Early validation - consolidate returns
@@ -600,20 +587,20 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: str) -> FlextResult[str]: ...
+    def norm(dn: str) -> r[str]: ...
 
     @overload
     @staticmethod
-    def norm(dn: m.DistinguishedName) -> FlextResult[str]: ...
+    def norm(dn: m.DistinguishedName) -> r[str]: ...
 
     @staticmethod
     def norm(
         dn: str | m.DistinguishedName | None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Pure implementation without external dependencies.
-        Returns FlextResult with normalized DN string or failure.
+        Returns r with normalized DN string or failure.
         """
         # Early validation - consolidate returns
         if dn is None:
@@ -675,7 +662,7 @@ class FlextLdifUtilitiesDN:
     def norm_with_statistics(
         dn: str,
         original_dn: str | None = None,
-    ) -> FlextResult[tuple[str, m.DNStatistics]]:
+    ) -> r[tuple[str, DNStatisticsType]]:
         """Normalize DN with statistics tracking.
 
         Args:
@@ -683,7 +670,7 @@ class FlextLdifUtilitiesDN:
             original_dn: Original DN before any transformations (optional)
 
         Returns:
-            FlextResult with tuple of (normalized_dn, DNStatistics) or failure
+            r with tuple of (normalized_dn, DNStatistics) or failure
 
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
@@ -704,7 +691,7 @@ class FlextLdifUtilitiesDN:
         # Track if normalization changed the DN
         transformations: list[str] = []
         if dn_str != normalized:
-            transformations.append(FlextLdifConstants.TransformationType.DN_NORMALIZED)
+            transformations.append(c.TransformationType.DN_NORMALIZED)
 
         # Create statistics
         stats = m.DNStatistics.create_with_transformation(
@@ -754,20 +741,20 @@ class FlextLdifUtilitiesDN:
             # Fix trailing backslash+space before commas
             # MUST come BEFORE general space removal to handle escaped spaces correctly
             (
-                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                FlextLdifConstants.DnPatterns.DN_COMMA,
+                c.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.DnPatterns.DN_COMMA,
             ),
             # Remove spaces BEFORE commas (OID quirk: "cn=user ,ou=..." -> "cn=user,ou=...")
             (r"\s+,", ","),
             # Normalize spaces around commas: ", cn=..." -> ",cn=..."
             (
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
-                FlextLdifConstants.DnPatterns.DN_COMMA,
+                c.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.DnPatterns.DN_COMMA,
             ),
             # Remove unnecessary character escapes (RFC 4514 compliance)
-            (FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1"),
+            (c.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1"),
             # Normalize multiple spaces to single space
-            (FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, " "),
+            (c.DnPatterns.DN_MULTIPLE_SPACES, " "),
         ]
 
         # Apply regex pipeline using sequential processing
@@ -782,7 +769,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def clean_dn_with_statistics(
         dn: str,
-    ) -> tuple[str, m.DNStatistics]:
+    ) -> tuple[str, DNStatisticsType]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -888,7 +875,7 @@ class FlextLdifUtilitiesDN:
                 r"[\t\r\n\x0b\x0c]",
                 r"[\t\r\n\x0b\x0c]",
                 " ",
-                FlextLdifConstants.TransformationType.TAB_NORMALIZED,
+                c.TransformationType.TAB_NORMALIZED,
                 "had_tab_chars",
             ),
             # 2. Spaces before equals
@@ -896,7 +883,7 @@ class FlextLdifUtilitiesDN:
                 r"\s+=",
                 r"\s+=",
                 "=",
-                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                c.TransformationType.SPACE_CLEANED,
                 "had_leading_spaces",
             ),
             # 3. Spaces before commas
@@ -904,39 +891,39 @@ class FlextLdifUtilitiesDN:
                 r"\s+,",
                 r"\s+,",
                 ",",
-                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                c.TransformationType.SPACE_CLEANED,
                 "had_trailing_spaces",
             ),
             # 4. Trailing backslash+space
             (
-                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                FlextLdifConstants.DnPatterns.DN_COMMA,
-                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED,
+                c.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.DnPatterns.DN_COMMA,
+                c.TransformationType.ESCAPE_NORMALIZED,
                 "had_escape_sequences",
             ),
             # 5. Spaces around commas
             (
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
-                FlextLdifConstants.DnPatterns.DN_COMMA,
-                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                c.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.DnPatterns.DN_COMMA,
+                c.TransformationType.SPACE_CLEANED,
                 "",
             ),
             # 6. Unnecessary escapes
             (
-                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                c.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                c.DnPatterns.DN_UNNECESSARY_ESCAPES,
                 r"\1",
-                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED,
+                c.TransformationType.ESCAPE_NORMALIZED,
                 "",
             ),
             # 7. Multiple spaces
             (
-                FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES,
-                FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES,
+                c.DnPatterns.DN_MULTIPLE_SPACES,
+                c.DnPatterns.DN_MULTIPLE_SPACES,
                 " ",
-                FlextLdifConstants.TransformationType.SPACE_CLEANED,
+                c.TransformationType.SPACE_CLEANED,
                 "had_extra_spaces",
             ),
         ]
@@ -977,7 +964,7 @@ class FlextLdifUtilitiesDN:
         if not value:
             return value
 
-        escape_chars = FlextLdifConstants.Rfc.DN_ESCAPE_CHARS
+        escape_chars = c.Ldif.Format.DN_ESCAPE_CHARS
 
         def escape_char(item: tuple[int, str]) -> str:
             """Escape single character if needed."""
@@ -1043,7 +1030,7 @@ class FlextLdifUtilitiesDN:
     def _normalize_dns_for_comparison(
         dn1: str,
         dn2: str,
-    ) -> FlextResult[tuple[str, str]]:
+    ) -> r[tuple[str, str]]:
         """Normalize both DNs for comparison."""
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.is_success:
@@ -1066,10 +1053,10 @@ class FlextLdifUtilitiesDN:
     def compare_dns(
         dn1: str | None,
         dn2: str | None,
-    ) -> FlextResult[int]:
+    ) -> r[int]:
         """Compare two DNs per RFC 4514 (case-insensitive).
 
-        Returns: FlextResult with -1 if dn1 < dn2, 0 if equal, 1 if dn1 > dn2, or failure
+        Returns: r with -1 if dn1 < dn2, 0 if equal, 1 if dn1 > dn2, or failure
         """
         try:
             if not dn1 or not dn2:
@@ -1168,10 +1155,10 @@ class FlextLdifUtilitiesDN:
         return (attr, val, in_val, next_pos)
 
     @staticmethod
-    def parse_rdn(rdn: str) -> FlextResult[list[tuple[str, str]]]:
+    def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514.
 
-        Returns FlextResult with list of (attr, value) pairs or failure.
+        Returns r with list of (attr, value) pairs or failure.
         """
         if not rdn or not isinstance(rdn, str):
             return r.fail(
@@ -1236,7 +1223,7 @@ class FlextLdifUtilitiesDN:
             return r.fail(f"RDN parsing error: {e}")
 
     @staticmethod
-    def extract_rdn(dn: str) -> FlextResult[str]:
+    def extract_rdn(dn: str) -> r[str]:
         """Extract leftmost RDN from DN.
 
         For DN "cn=John,ou=Users,dc=example,dc=com", returns "cn=John".
@@ -1245,7 +1232,7 @@ class FlextLdifUtilitiesDN:
             dn: Distinguished Name string
 
         Returns:
-            FlextResult with leftmost RDN (attr=value) or failure
+            r with leftmost RDN (attr=value) or failure
 
         """
         if not dn or "=" not in dn:
@@ -1264,7 +1251,7 @@ class FlextLdifUtilitiesDN:
             return r.fail(f"RDN extraction error: {e}")
 
     @staticmethod
-    def extract_parent_dn(dn: str) -> FlextResult[str]:
+    def extract_parent_dn(dn: str) -> r[str]:
         """Extract parent DN (remove leftmost RDN).
 
         For DN "cn=John,ou=Users,dc=example,dc=com",
@@ -1274,7 +1261,7 @@ class FlextLdifUtilitiesDN:
             dn: Distinguished Name string
 
         Returns:
-            FlextResult with parent DN (without leftmost RDN) or failure if DN has ≤1 component
+            r with parent DN (without leftmost RDN) or failure if DN has ≤1 component
 
         """
         if not dn or "=" not in dn:
@@ -1394,7 +1381,7 @@ class FlextLdifUtilitiesDN:
         dn_value: str | None,
         context_dn: str | None,
         dn_label: str = "DN",
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate DN format and compare against context DN if provided.
 
         Generic DN validation combining RFC 4514 format check and context comparison.
@@ -1406,7 +1393,7 @@ class FlextLdifUtilitiesDN:
             dn_label: Label for error messages (e.g., "subject DN", "target DN")
 
         Returns:
-            FlextResult[bool]: Success if valid, failure with descriptive error
+            r[bool]: Success if valid, failure with descriptive error
 
         Example:
             # Validate subject DN
@@ -1418,11 +1405,11 @@ class FlextLdifUtilitiesDN:
 
             # Wildcard DN (always valid)
             result = validate_dn_with_context("*", None, "target DN")
-            # Returns: FlextResult.ok(True)
+            # Returns: r.ok(True)
 
             # Invalid DN format
             result = validate_dn_with_context("invalid", None, "DN")
-            # Returns: FlextResult.fail("Invalid DN format per RFC 4514: invalid")
+            # Returns: r.fail("Invalid DN format per RFC 4514: invalid")
 
         """
         # Wildcard or None is always valid
@@ -1633,7 +1620,7 @@ class FlextLdifUtilitiesDN:
         ldif_dir: Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> FlextResult[dict[str, t.GeneralValueType]]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Transform BaseDN in all LDIF files in directory.
 
         Reads all *.ldif files from directory, transforms BaseDN in entries,
@@ -1645,7 +1632,7 @@ class FlextLdifUtilitiesDN:
             target_basedn: Target base DN replacement
 
         Returns:
-            FlextResult with dict containing:
+            r with dict containing:
             - transformed_count: Number of successfully transformed files
             - failed_count: Number of files that failed
             - total_count: Total LDIF files processed
@@ -1791,12 +1778,8 @@ class FlextLdifUtilitiesDN:
             operation="basedn_transform",
             description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
         )
-        metadata.extensions[FlextLdifConstants.MetadataKeys.ENTRY_SOURCE_DN_CASE] = (
-            config.original_dn
-        )
-        metadata.extensions[FlextLdifConstants.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
-            config.transformed_dn
-        )
+        metadata.extensions[c.MetadataKeys.ENTRY_SOURCE_DN_CASE] = config.original_dn
+        metadata.extensions[c.MetadataKeys.ENTRY_TARGET_DN_CASE] = config.transformed_dn
 
     @staticmethod
     def transform_dn_with_metadata(
@@ -1807,7 +1790,7 @@ class FlextLdifUtilitiesDN:
         """Transform DN and DN-valued attributes with metadata tracking.
 
         RFC Compliant: Tracks all transformations in QuirkMetadata for round-trip support.
-        Uses FlextLdifConstants.Rfc.META_DN_* and MetadataKeys for standardized tracking.
+        Uses c.Ldif.Format.Rfc.META_DN_* and MetadataKeys for standardized tracking.
 
         Args:
             entry: Entry to transform
@@ -2024,7 +2007,7 @@ class FlextLdifUtilitiesDN:
         *,
         fallback: Literal["lower", "upper", "original", "skip"] = "lower",
         fail_fast: bool = False,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Normalize multiple DNs in one call.
 
         Args:
@@ -2037,7 +2020,7 @@ class FlextLdifUtilitiesDN:
             fail_fast: If True, return error on first failure (ignores fallback)
 
         Returns:
-            FlextResult containing list of normalized DNs
+            r containing list of normalized DNs
 
         Examples:
             >>> result = FlextLdifUtilitiesDN.norm_batch([
@@ -2055,7 +2038,7 @@ class FlextLdifUtilitiesDN:
 
         """
 
-        def normalize_dn(dn: str) -> FlextResult[str]:
+        def normalize_dn(dn: str) -> r[str]:
             """Normalize single DN with fallback."""
             result = FlextLdifUtilitiesDN.norm(dn)
             if result.is_success:
@@ -2096,7 +2079,7 @@ class FlextLdifUtilitiesDN:
         dns: Sequence[str],
         *,
         collect_errors: bool = True,
-    ) -> FlextResult[list[tuple[str, bool, list[str]]]]:
+    ) -> r[list[tuple[str, bool, list[str]]]]:
         """Validate multiple DNs, returning validation status for each.
 
         Args:
@@ -2104,7 +2087,7 @@ class FlextLdifUtilitiesDN:
             collect_errors: Collect all errors (vs. fail on first)
 
         Returns:
-            FlextResult containing list of (dn, is_valid, errors) tuples
+            r containing list of (dn, is_valid, errors) tuples
 
         Examples:
             >>> result = FlextLdifUtilitiesDN.validate_batch([
@@ -2144,7 +2127,7 @@ class FlextLdifUtilitiesDN:
         new_base: str,
         *,
         fail_fast: bool = False,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Replace base DN in multiple DNs.
 
         Args:
@@ -2154,7 +2137,7 @@ class FlextLdifUtilitiesDN:
             fail_fast: Stop on first error
 
         Returns:
-            FlextResult containing list of DNs with replaced bases
+            r containing list of DNs with replaced bases
 
         Examples:
             >>> result = FlextLdifUtilitiesDN.replace_base_batch(
@@ -2197,7 +2180,7 @@ class FlextLdifUtilitiesDN:
         validate: bool = True,
         normalize: bool = True,
         parse: bool = False,
-    ) -> FlextResult[str | list[tuple[str, str]]]:
+    ) -> r[str | list[tuple[str, str]]]:
         """Complete DN processing pipeline in one call.
 
         Applies processing steps in order: clean → validate → normalize → parse.
@@ -2210,7 +2193,7 @@ class FlextLdifUtilitiesDN:
             parse: If True, return parsed components instead of string
 
         Returns:
-            FlextResult containing:
+            r containing:
                 - Processed DN string if parse=False
                 - List of (attribute, value) tuples if parse=True
 
@@ -2257,7 +2240,7 @@ class FlextLdifUtilitiesDN:
             current_dn = norm_result.unwrap()
 
         # Step 4: Parse (optional)
-        # Business Rule: When parse=True, use parse() method which returns FlextResult[list[tuple[str, str]]]
+        # Business Rule: When parse=True, use parse() method which returns r[list[tuple[str, str]]]
         # This provides RFC 4514 compliant parsing into (attribute, value) pairs for audit trail
         # split() only returns list[str] and doesn't parse attribute/value pairs
         if parse:

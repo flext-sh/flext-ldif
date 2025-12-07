@@ -22,7 +22,6 @@ from typing import Any, cast
 from flext_core import FlextLogger, FlextResult, FlextRuntime
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -199,11 +198,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         metadata=QuirkMetadata(
             server_type="oid",
             extensions={
-                FlextLdifConstants.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS: {
-                    "orclIsEnabled": {FlextLdifConstants.MetadataKeys.CONVERSION_ORIGINAL_VALUE: ["1"], FlextLdifConstants.MetadataKeys.CONVERSION_CONVERTED_VALUE: ["TRUE"]},
-                    "orclAccountLocked": {FlextLdifConstants.MetadataKeys.CONVERSION_ORIGINAL_VALUE: ["0"], FlextLdifConstants.MetadataKeys.CONVERSION_CONVERTED_VALUE: ["FALSE"]},
+                c.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS: {
+                    "orclIsEnabled": {c.MetadataKeys.CONVERSION_ORIGINAL_VALUE: ["1"], c.MetadataKeys.CONVERSION_CONVERTED_VALUE: ["TRUE"]},
+                    "orclAccountLocked": {c.MetadataKeys.CONVERSION_ORIGINAL_VALUE: ["0"], c.MetadataKeys.CONVERSION_CONVERTED_VALUE: ["FALSE"]},
                 },
-                FlextLdifConstants.MetadataKeys.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: {"orclaci": "aci"},
+                c.MetadataKeys.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: {"orclaci": "aci"},
                 ...
             }
         )
@@ -324,7 +323,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # - source_format "0/1" or "TRUE/FALSE"
         # - target_format "0/1" or "TRUE/FALSE"
         source_format = f"{FlextLdifServersOidConstants.ZERO_OID}/{FlextLdifServersOidConstants.ONE_OID}"
-        target_format = f"{FlextLdifConstants.BooleanFormats.TRUE_RFC}/{FlextLdifConstants.BooleanFormats.FALSE_RFC}"
+        target_format = f"{c.BooleanFormats.TRUE_RFC}/{c.BooleanFormats.FALSE_RFC}"
         converted_attributes = u.Entry.convert_boolean_attributes(
             converted_attrs_for_util,
             boolean_attr_names,
@@ -350,14 +349,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     # Use constants for format strings (DRY: avoid hardcoding)
                     # Format: "TRUE_VALUE/FALSE_VALUE" (matches utility expectations)
                     original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
-                    converted_format_str = f"{FlextLdifConstants.BooleanFormats.TRUE_RFC}/{FlextLdifConstants.BooleanFormats.FALSE_RFC}"
+                    converted_format_str = (
+                        f"{c.BooleanFormats.TRUE_RFC}/{c.BooleanFormats.FALSE_RFC}"
+                    )
                     # Use standardized nested metadata keys (DRY: avoid hardcoding)
-                    mk_conv = FlextLdifConstants.MetadataKeys
+                    mk_conv = c.MetadataKeys
                     boolean_conversions[attr_name] = {
                         mk_conv.CONVERSION_ORIGINAL_VALUE: original_values,
                         mk_conv.CONVERSION_CONVERTED_VALUE: converted_values,
                         "conversion_type": "boolean_oid_to_rfc",
-                        FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT: original_format_str,
+                        c.MetadataKeys.ORIGINAL_FORMAT: original_format_str,
                         "converted_format": converted_format_str,
                     }
                     logger.debug(
@@ -369,7 +370,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _detect_entry_acl_transformations(
         self,
-        entry_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
+        entry_attrs: FlextLdifTypes.Ldif.CommonDict.AttributeDictGeneric,
         converted_attributes: dict[str, list[str]],
     ) -> dict[str, m.AttributeTransformation]:
         """Detect ACL attribute transformations (orclaci→aci).
@@ -473,8 +474,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def normalize_schema_strings_inline(
         self,
-        entry: m.Entry,
-    ) -> m.Entry:
+        entry: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
         """Normalize schema attribute strings (attributetypes, objectclasses).
 
         Applies OID-specific normalizations to schema definition strings stored
@@ -593,10 +594,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         Restores original attribute names from metadata if available,
         otherwise applies OID denormalization rules (e.g., aci → orclaci).
 
-        Uses FlextLdifConstants.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE
+        Uses c.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE
         for metadata key standardization.
         """
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.MetadataKeys
         original_attrs_raw = (
             metadata.extensions.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE)
             if metadata and metadata.extensions
@@ -625,7 +626,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _extract_boolean_conversions_from_metadata(
         self,
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
     ) -> dict[str, dict[str, str | list[str]]]:
         """Extract boolean conversions from entry metadata.
 
@@ -638,7 +639,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             Dictionary of boolean conversions by attribute name
 
         """
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.MetadataKeys
         boolean_conversions: dict[str, dict[str, str | list[str]]] = {}
 
         if not (entry_data.metadata and entry_data.metadata.extensions):
@@ -681,7 +682,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             True if restoration was successful, False otherwise
 
         """
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.MetadataKeys
 
         converted_val_list = conv_data.get(mk.CONVERSION_CONVERTED_VALUE, [])
         if not converted_val_list:
@@ -747,8 +748,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _restore_boolean_values_to_oid(
         self,
-        entry_data: m.Entry,
-    ) -> m.Entry:
+        entry_data: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
         """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1).
 
         Overrides RFC's _restore_boolean_values() to convert RFC 4517 boolean format
@@ -827,8 +828,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _restore_entry_from_metadata(
         self,
-        entry_data: m.Entry,
-    ) -> m.Entry:
+        entry_data: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization).
 
         Overrides RFC's _restore_entry_from_metadata() to apply OID-specific
@@ -840,7 +841,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         This hook is called by RFC._write_entry() before formatting the entry
         for LDIF output. Enables perfect round-trip OID→RFC→OID conversion.
 
-        Uses FlextLdifConstants.MetadataKeys for standardized metadata keys.
+        Uses c.MetadataKeys for standardized metadata keys.
 
         Args:
             entry_data: RFC-normalized Entry model to restore
@@ -868,7 +869,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _extract_original_extensions(
         self,
-        original_entry: m.Entry,
+        original_entry: m.Ldif.Entry,
     ) -> dict[str, str | int | bool | list[str]]:
         """Extract compatible extensions from original entry metadata."""
         original_extensions: dict[str, str | int | bool | list[str]] = {}
@@ -900,7 +901,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attribute_conflicts: list[dict[str, str]],
         boolean_conversions: dict[str, dict[str, str | list[str]]],
         converted_attributes: dict[str, list[str]],
-        original_entry: m.Entry,
+        original_entry: m.Ldif.Entry,
     ) -> tuple[str | None, str | None, str | None, str | None, str | None]:
         """Serialize complex metadata to JSON strings for MetadataAttributeValue."""
         rfc_violations_str = json.dumps(rfc_violations) if rfc_violations else None
@@ -926,7 +927,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _create_entry_result_with_metadata(
         self,
-        _entry: m.Entry,  # Unused: kept for signature
+        _entry: m.Ldif.Entry,  # Unused: kept for signature
         cleaned_dn: str,
         original_dn: str,
         _dn_stats: m.DNStatistics,
@@ -936,8 +937,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         rfc_violations: list[str],
         attribute_conflicts: list[dict[str, str]],
         converted_attributes: dict[str, list[str]],
-        original_entry: m.Entry,
-    ) -> FlextResult[m.Entry]:
+        original_entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
         """Create entry result with complete metadata.
 
         CONSOLIDATED: Uses u.Metadata utilities for DRY code.
@@ -951,7 +952,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         # INLINE: _build_conversion_metadata (18 lines → 2 lines)
         # Use constants for metadata keys (DRY: avoid hardcoding)
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.MetadataKeys
         conversion_metadata: dict[str, list[str]] = (
             {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
             if converted_attrs
@@ -960,7 +961,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         # INLINE: _build_dn_metadata (27 lines → 3 lines)
         # Use constants for metadata keys (DRY: avoid hardcoding)
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.MetadataKeys
         dn_metadata: dict[str, str | bool] = (
             {
                 mk.ORIGINAL_DN_COMPLETE: original_dn,
@@ -1007,7 +1008,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # MetadataKeys is a class, not an instance - convert class attributes to dict
         metadata_keys_dict = {
             k: v
-            for k, v in FlextLdifConstants.MetadataKeys.__dict__.items()
+            for k, v in c.MetadataKeys.__dict__.items()
             if not k.startswith("_") and isinstance(v, str)
         }
         metadata_keys_str: str | None = (
@@ -1028,7 +1029,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             operational_attributes=operational_attributes_str,
         )
         # OID-specific: conversions, target DN, format message
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.MetadataKeys
         # Store boolean conversions and attribute name conversions
         # Use typed structure for ConvertedAttributesData
         attr_name_conversions: FlextLdifTypes.AttributeNameConversionsMap = (
@@ -1050,10 +1051,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         # Convert ConvertedAttributesData to JSON string for MetadataAttributeValue compatibility
         converted_attrs_data_str: str = json.dumps(converted_attrs_data)
         generic_metadata[mk.CONVERTED_ATTRIBUTES] = converted_attrs_data_str
-        generic_metadata[FlextLdifConstants.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
-            cleaned_dn
-        )
-        generic_metadata[FlextLdifConstants.MetadataKeys.ENTRY_ORIGINAL_FORMAT] = (
+        generic_metadata[c.MetadataKeys.ENTRY_TARGET_DN_CASE] = cleaned_dn
+        generic_metadata[c.MetadataKeys.ENTRY_ORIGINAL_FORMAT] = (
             f"OID Entry with {len(converted_attrs)} boolean conversions"
         )
 
@@ -1079,7 +1078,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         extensions_data.update(
             cast("dict[str, t.MetadataAttributeValue]", original_extensions),
         )
-        extensions_data[FlextLdifConstants.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
+        extensions_data[c.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
             original_entry.dn,
         )
 
@@ -1176,8 +1175,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
         # Create final Entry
         ldif_attrs = m.LdifAttributes(attributes=converted_attributes)
-        return FlextResult[m.Entry].ok(
-            m.Entry(
+        return FlextResult[m.Ldif.Entry].ok(
+            m.Ldif.Entry(
                 dn=m.DistinguishedName(value=cleaned_dn),
                 attributes=ldif_attrs,
                 metadata=metadata,
@@ -1192,8 +1191,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _hook_post_parse_entry(
         self,
-        entry: m.Entry,
-    ) -> FlextResult[m.Entry]:
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldif.Entry]:
         r"""Hook: Transform parsed entry using OID-specific enhancements.
 
         OID vs RFC Transformations Applied
@@ -1269,7 +1268,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             entry.attributes.attributes = normalized_attributes
 
             # Store transformation metadata for later use in _parse_entry()
-            mk = FlextLdifConstants.MetadataKeys
+            mk = c.MetadataKeys
             if entry.metadata:
                 if not entry.metadata.extensions:
                     entry.metadata.extensions = m.DynamicMetadata()
@@ -1313,21 +1312,19 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             group=1,
         )
         if bindmode:
-            current_extensions[FlextLdifConstants.MetadataKeys.ACL_BINDMODE] = bindmode
+            current_extensions[c.MetadataKeys.ACL_BINDMODE] = bindmode
 
         if u.ACL.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
         ):
-            current_extensions[
-                FlextLdifConstants.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
-            ] = True
+            current_extensions[c.MetadataKeys.ACL_DENY_GROUP_OVERRIDE] = True
 
         if u.ACL.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
         ):
-            current_extensions[FlextLdifConstants.MetadataKeys.ACL_APPEND_TO_ALL] = True
+            current_extensions[c.MetadataKeys.ACL_APPEND_TO_ALL] = True
 
         bind_ip_filter = u.ACL.extract_component(
             acl_value,
@@ -1335,9 +1332,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             group=1,
         )
         if bind_ip_filter:
-            current_extensions[FlextLdifConstants.MetadataKeys.ACL_BIND_IP_FILTER] = (
-                bind_ip_filter
-            )
+            current_extensions[c.MetadataKeys.ACL_BIND_IP_FILTER] = bind_ip_filter
 
         constrain_to_added = u.ACL.extract_component(
             acl_value,
@@ -1345,9 +1340,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             group=1,
         )
         if constrain_to_added:
-            current_extensions[
-                FlextLdifConstants.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
-            ] = constrain_to_added
+            current_extensions[c.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT] = (
+                constrain_to_added
+            )
 
     def _merge_parsed_acl_extensions(
         self,
@@ -1381,7 +1376,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 else dict(acl_model.metadata.extensions)
             )
             # Map pattern names to MetadataKeys
-            mk = FlextLdifConstants.MetadataKeys
+            mk = c.MetadataKeys
             key_mapping = {
                 "bindmode": mk.ACL_BINDMODE,
                 "deny_group_override": mk.ACL_DENY_GROUP_OVERRIDE,
@@ -1423,10 +1418,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _hook_finalize_entry_parse(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         original_dn: str,
-        original_attrs: FlextLdifTypes.CommonDict.AttributeDictGeneric,
-    ) -> FlextResult[m.Entry]:
+        original_attrs: FlextLdifTypes.Ldif.CommonDict.AttributeDictGeneric,
+    ) -> FlextResult[m.Ldif.Entry]:
         """Finalize OID entry with ACL and RFC violation metadata.
 
         This hook adds OID-specific metadata without duplicating the
@@ -1539,7 +1534,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _get_current_attrs_with_acl_equivalence(
         self,
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
     ) -> set[str]:
         """Get current attribute names with OID ACL equivalence.
 
@@ -1568,7 +1563,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         original_line: str,
         current_attrs: set[str],
-        write_options: m.WriteFormatOptions | None,
+        write_options: m.Ldif.WriteFormatOptions | None,
         *,
         write_empty_values: bool,
     ) -> bool:
@@ -1655,9 +1650,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _write_original_attr_lines(
         self,
         ldif_lines: list[str],
-        entry_data: m.Entry,
+        entry_data: m.Ldif.Entry,
         original_attr_lines_complete: list[str],
-        write_options: m.WriteFormatOptions | None,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> set[str]:
         """Write original attribute lines preserving exact formatting.
 

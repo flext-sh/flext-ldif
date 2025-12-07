@@ -21,7 +21,6 @@ from flext_ldif import (
 )
 from flext_ldif.models import m
 from flext_ldif.services.server import FlextLdifServer
-from tests import m
 
 
 class TestRfcDockerRealData:

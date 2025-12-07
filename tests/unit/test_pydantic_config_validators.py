@@ -1,3 +1,10 @@
+"""Tests for FlextLdifConfig Pydantic validators.
+
+This module tests field validators (encoding, server_type, line_separator, version_string)
+and cross-field model validators for FlextLdifConfig using parametrized test scenarios
+to ensure proper validation of all configuration options.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

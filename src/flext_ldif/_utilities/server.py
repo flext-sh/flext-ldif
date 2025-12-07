@@ -20,7 +20,6 @@ from typing import cast
 
 from flext_core import FlextUtilities
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
 
 # Aliases for simplified usage - after all imports
@@ -57,7 +56,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _get_type_from_nested_class(
         target_cls: type[object],
-    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
         if not (hasattr(target_cls, "__qualname__") and "." in target_cls.__qualname__):
             return None
@@ -77,7 +76,7 @@ class FlextLdifUtilitiesServer:
             if server_type is not None:
                 # Type narrowing: server_type is from ClassVar[ServerTypeLiteral]
                 return cast(
-                    "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                    "c.Ldif.LiteralTypes.ServerTypeLiteral",
                     server_type,
                 )
         except (AttributeError, ImportError):
@@ -87,7 +86,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _get_type_from_independent_class(
         target_cls: type[object],
-    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from independent class naming pattern."""
         class_name = target_cls.__name__
         if not class_name.startswith("FlextLdifServers"):
@@ -109,7 +108,7 @@ class FlextLdifUtilitiesServer:
             # Type narrowing: server_type_lower is in valid server types
             # Cast to ServerTypeLiteral for type compatibility
             return cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
+                "c.Ldif.LiteralTypes.ServerTypeLiteral",
                 server_type_lower,
             )
         return None
@@ -126,7 +125,7 @@ class FlextLdifUtilitiesServer:
     def _import_server_type(
         server_name: str,
         server_type_lower: str,
-    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Import and return SERVER_TYPE from server constants module."""
         try:
             constants_module = __import__(
@@ -147,7 +146,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_parent_server_type(
         nested_class_instance_or_type: type[object] | object,
-    ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__.
 
         For nested classes like FlextLdifServersAd.Schema, extracts parent
@@ -168,14 +167,14 @@ class FlextLdifUtilitiesServer:
         Example:
             >>> class MyServer:
             ...     class Constants:
-            ...         SERVER_TYPE: ClassVar[
-            ...             FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-            ...         ] = "oid"
+            ...         SERVER_TYPE: ClassVar[c.Ldif.LiteralTypes.ServerTypeLiteral] = (
+            ...             "oid"
+            ...         )
             ...
             ...     class Schema:
             ...         def get_type(
             ...             self,
-            ...         ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral:
+            ...         ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
             ...             return FlextLdifUtilitiesServer.get_parent_server_type(self)
             >>> schema = MyServer.Schema()
             >>> schema.get_type()
@@ -226,7 +225,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: str | m.SchemaAttribute | m.SchemaObjectClass,
+        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         oid_pattern: str,
         detection_names: frozenset[str],
         detection_string: str | None = None,
@@ -269,7 +268,7 @@ class FlextLdifUtilitiesServer:
             return bool(name and name.lower() in detection_names)
 
         def check_model_patterns(
-            model: m.SchemaAttribute | m.SchemaObjectClass,
+            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check patterns for model types."""
             if check_oid_pattern(model.oid) or check_name_in_set(model.name):
@@ -292,10 +291,10 @@ class FlextLdifUtilitiesServer:
                 use_prefix_match=use_prefix_match,
             )
 
-        if isinstance(value, m.SchemaAttribute):
+        if isinstance(value, m.Ldif.SchemaAttribute):
             return check_model_patterns(value)
 
-        if isinstance(value, m.SchemaObjectClass):
+        if isinstance(value, m.Ldif.SchemaObjectClass):
             return check_model_patterns(value)
 
         return False

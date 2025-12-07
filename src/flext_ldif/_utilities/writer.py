@@ -13,7 +13,7 @@ from typing import cast
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextUtilities, t
 from jinja2 import Environment
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.typings import FlextLdifTypes
 
@@ -96,7 +96,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def fold(
         line: str,
-        width: int = FlextLdifConstants.Rfc.LINE_FOLD_WIDTH,
+        width: int = c.Ldif.Format.LINE_FOLD_WIDTH,
     ) -> list[str]:
         """Fold long LDIF line according to RFC 2849 §3.
 
@@ -157,7 +157,7 @@ class FlextLdifUtilitiesWriter:
             if folded:
                 # Continuation line: prefix with space (RFC 2849 §3)
                 folded.append(
-                    FlextLdifConstants.Rfc.LINE_CONTINUATION_SPACE + chunk,
+                    c.Ldif.Format.LINE_CONTINUATION_SPACE + chunk,
                 )
             else:
                 # First line: no prefix
@@ -270,7 +270,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: m.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
@@ -283,7 +283,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: m.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add syntax and length to attribute parts list.
@@ -302,14 +302,14 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: m.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute,
         parts: list[str],
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.COLLECTIVE,
+            c.Ldif.MetadataKeys.COLLECTIVE,
         ):
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
@@ -317,7 +317,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_attribute_parts(
-        attr_data: m.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> list[str]:
         """Build RFC attribute definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -329,7 +329,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{attr_data.desc}'")
 
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.OBSOLETE,
+            c.Ldif.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -351,7 +351,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_attribute(
-        attr_data: m.SchemaAttribute,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> FlextResult[str]:
         """Write attribute data to RFC 4512 format."""
         try:
@@ -394,7 +394,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_objectclass_parts(
-        oc_data: m.SchemaObjectClass,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> list[str]:
         """Build RFC objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -406,7 +406,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{oc_data.desc}'")
 
         if oc_data.metadata and oc_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.OBSOLETE,
+            c.Ldif.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -424,7 +424,7 @@ class FlextLdifUtilitiesWriter:
                 # Single SUP value
                 parts.append(f"SUP {oc_data.sup}")
 
-        kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
+        kind = oc_data.kind or c.Ldif.Schema.STRUCTURAL
         parts.append(str(kind))
 
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")
@@ -439,7 +439,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_objectclass(
-        objectclass: m.SchemaObjectClass,
+        objectclass: m.Ldif.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC 4512 format."""
         try:
@@ -541,7 +541,7 @@ class FlextLdifUtilitiesWriter:
 
         # Build ordered list from attr_order
         skip_keys = {
-            FlextLdifConstants.DictKeys.DN,
+            c.Ldif.DictKeys.DN,
             "_metadata",
             "server_type",
             "_acl_attributes",
@@ -597,7 +597,7 @@ class FlextLdifUtilitiesWriter:
 
         """
         # Skip DN (written separately)
-        if attr_name.lower() == FlextLdifConstants.DictKeys.DN:
+        if attr_name.lower() == c.Ldif.DictKeys.DN:
             return True
 
         # Skip internal metadata attributes
@@ -661,7 +661,7 @@ class FlextLdifUtilitiesWriter:
         SAFE-CHAR = %x01-09 / %x0B-0C / %x0E-7F
         (excludes NUL, LF, CR)
 
-        Uses FlextLdifConstants.Rfc.SAFE_CHAR_* for validation.
+        Uses c.Ldif.Format.SAFE_CHAR_* for validation.
 
         Args:
             char: Single character to validate
@@ -673,9 +673,9 @@ class FlextLdifUtilitiesWriter:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
-        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
-        safe_exclude = FlextLdifConstants.Rfc.SAFE_CHAR_EXCLUDE
+        safe_min = c.Ldif.Format.SAFE_CHAR_MIN
+        safe_max = c.Ldif.Format.SAFE_CHAR_MAX
+        safe_exclude = c.Ldif.Format.SAFE_CHAR_EXCLUDE
         return safe_min <= code <= safe_max and code not in safe_exclude
 
     @staticmethod
@@ -685,7 +685,7 @@ class FlextLdifUtilitiesWriter:
         SAFE-INIT-CHAR = %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B / %x3D-7F
         (SAFE-CHAR excluding SPACE, COLON, LESS-THAN)
 
-        Uses FlextLdifConstants.Rfc.SAFE_INIT_CHAR_EXCLUDE for exclusion set.
+        Uses c.Ldif.Format.SAFE_INIT_CHAR_EXCLUDE for exclusion set.
 
         Args:
             char: Single character to validate
@@ -701,7 +701,7 @@ class FlextLdifUtilitiesWriter:
         if not FlextLdifUtilitiesWriter.is_safe_char(char):
             return False
         # Then check SAFE-INIT-CHAR exclusions
-        return code not in FlextLdifConstants.Rfc.SAFE_INIT_CHAR_EXCLUDE
+        return code not in c.Ldif.Format.SAFE_INIT_CHAR_EXCLUDE
 
     @staticmethod
     def is_base64_char(char: str) -> bool:
@@ -710,7 +710,7 @@ class FlextLdifUtilitiesWriter:
         BASE64-CHAR = %x2B / %x2F / %x30-39 / %x3D / %x41-5A / %x61-7A
         (+ / 0-9 = A-Z a-z)
 
-        Uses FlextLdifConstants.Rfc.BASE64_CHARS for validation.
+        Uses c.Ldif.Format.BASE64_CHARS for validation.
 
         Args:
             char: Single character to validate
@@ -721,7 +721,7 @@ class FlextLdifUtilitiesWriter:
         """
         if not char or len(char) != 1:
             return False
-        return char in FlextLdifConstants.Rfc.BASE64_CHARS
+        return char in c.Ldif.Format.BASE64_CHARS
 
     @staticmethod
     def is_valid_safe_string(value: str) -> bool:
@@ -787,7 +787,7 @@ class FlextLdifUtilitiesWriter:
             return False
 
         # RFC 2849 §2 - Unsafe characters at start (SAFE-INIT-CHAR exclusions)
-        if value[0] in FlextLdifConstants.Rfc.BASE64_START_CHARS:
+        if value[0] in c.Ldif.Format.BASE64_START_CHARS:
             return True
 
         # RFC 2849 - Value ending with space requires base64 (parameterizable)
@@ -796,9 +796,9 @@ class FlextLdifUtilitiesWriter:
 
         # Use the optimized is_valid_safe_string for full validation
         # but we need char-by-char check for performance
-        safe_min = FlextLdifConstants.Rfc.SAFE_CHAR_MIN
-        safe_max = FlextLdifConstants.Rfc.SAFE_CHAR_MAX
-        safe_exclude = FlextLdifConstants.Rfc.SAFE_CHAR_EXCLUDE
+        safe_min = c.Ldif.Format.SAFE_CHAR_MIN
+        safe_max = c.Ldif.Format.SAFE_CHAR_MAX
+        safe_exclude = c.Ldif.Format.SAFE_CHAR_EXCLUDE
 
         # Check for control characters or non-printable ASCII
         for char in value:
@@ -939,7 +939,7 @@ class FlextLdifUtilitiesWriter:
         # Handle based on status - extracted to reduce complexity
         status_raw = attr_info.get(
             "status",
-            FlextLdifConstants.AttributeMarkerStatus.NORMAL.value,
+            c.Ldif.AttributeMarkerStatus.NORMAL.value,
         )
         # Validate status is AttributeMarkerStatusLiteral
         valid_statuses = {
@@ -951,8 +951,8 @@ class FlextLdifUtilitiesWriter:
             "renamed",
         }
         if isinstance(status_raw, str) and status_raw in valid_statuses:
-            status: FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral = cast(
-                "FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral",
+            status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral = cast(
+                "c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral",
                 status_raw,
             )
         else:
@@ -980,24 +980,24 @@ class FlextLdifUtilitiesWriter:
     def _handle_attribute_status(
         attr_name: str,
         attr_values: list[str],
-        status: FlextLdifConstants.LiteralTypes.AttributeMarkerStatusLiteral,
+        status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral,
         output_options: m.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
         status_handlers = {
-            FlextLdifConstants.AttributeMarkerStatus.OPERATIONAL.value: (
+            c.Ldif.AttributeMarkerStatus.OPERATIONAL.value: (
                 output_options.show_operational_attributes,
                 attr_name,
             ),
-            FlextLdifConstants.AttributeMarkerStatus.FILTERED.value: (
+            c.Ldif.AttributeMarkerStatus.FILTERED.value: (
                 output_options.show_filtered_attributes,
                 f"# {attr_name}",
             ),
-            FlextLdifConstants.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value: (
+            c.Ldif.AttributeMarkerStatus.MARKED_FOR_REMOVAL.value: (
                 output_options.show_removed_attributes,
                 f"# {attr_name}",
             ),
-            FlextLdifConstants.AttributeMarkerStatus.HIDDEN.value: (False, None),
+            c.Ldif.AttributeMarkerStatus.HIDDEN.value: (False, None),
         }
 
         handler_config = status_handlers.get(status)
@@ -1032,7 +1032,7 @@ class FlextLdifUtilitiesWriter:
             False if no restoration needed (caller should continue writing)
 
         """
-        mk = FlextLdifConstants.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         # Check for minimal differences using both possible keys
         attr_diff = minimal_differences_attrs.get(
             attr_name,
@@ -1117,8 +1117,7 @@ class FlextLdifUtilitiesWriter:
 
         # Check if binary attribute (RFC 4522) or needs base64
         is_binary_attr = (
-            attr_name.lower()
-            in FlextLdifConstants.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
+            attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
         )
         needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
             str_value,
@@ -1145,7 +1144,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_modify_attributes(
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
+        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         hidden: set[str],
         modify_operation: str,
         *,
@@ -1189,7 +1188,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_add_attributes(
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
+        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         hidden: set[str],
         *,
         fold_long_lines: bool,
@@ -1254,7 +1253,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def build_entry_lines(
         dn_value: str,
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
+        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
         *,
         format_config: dict[str, object] | None = None,
         **kwargs: object,
@@ -1294,7 +1293,7 @@ class FlextLdifUtilitiesWriter:
         width = (
             int(line_width_raw)
             if isinstance(line_width_raw, int | str)
-            else FlextLdifConstants.Rfc.LINE_FOLD_WIDTH
+            else c.Ldif.Format.LINE_FOLD_WIDTH
         )
 
         # DN line (required for both formats)

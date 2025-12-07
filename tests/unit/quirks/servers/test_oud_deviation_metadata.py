@@ -1,3 +1,9 @@
+"""Tests for OUD server deviation metadata handling.
+
+This module tests the Oracle Unified Directory (OUD) server's metadata tracking
+for attribute and objectClass deviations from RFC standards.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

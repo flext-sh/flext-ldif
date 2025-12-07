@@ -16,11 +16,10 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.models import m
 from tests import m
+from tests.conftest import FlextLdifFixtures
 
 
-# FlextLdifFixtures is available from conftest.py (pytest auto-imports)
 def _verify_soft_deleted_attributes(entry: m.Entry) -> None:
     """Verify soft-deleted attributes are preserved in removed_attributes."""
     if not entry.metadata:

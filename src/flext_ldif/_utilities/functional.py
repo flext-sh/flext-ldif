@@ -17,10 +17,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, TypeVar
-
-from flext_core.typings import t
+from typing import Literal, TypeVar, cast
 
 # TypeVars for generic methods
 T = TypeVar("T")
@@ -213,7 +212,7 @@ class FlextFunctional:
     md = map_dict
 
     @staticmethod
-    def reduce_dict(
+    def reduce_dict[T, U](
         data: dict[str, T] | T,
         *,
         processor: Callable[[str, T], U] | None = None,
@@ -235,7 +234,7 @@ class FlextFunctional:
             >>> FlextFunctional.reduce_dict(
             ...     {"a": 1, "b": 2, "c": 3},
             ...     predicate=lambda k, v: v > 1,
-            ...     processor=lambda k, v: v * 10
+            ...     processor=lambda k, v: v * 10,
             ... )
             {'b': 20, 'c': 30}
 
@@ -249,7 +248,9 @@ class FlextFunctional:
                 if processor is not None:
                     result[new_key] = processor(key, value)
                 else:
-                    result[new_key] = value  # type: ignore[assignment]
+                    # When processor is None, T must be compatible with U
+                    # Use cast to help mypy understand this relationship
+                    result[new_key] = cast("U", value)
         return result
 
     rd = reduce_dict
@@ -372,7 +373,7 @@ class FlextFunctional:
     fd = fold
 
     @staticmethod
-    def map_filter(
+    def map_filter[T, U](
         items: Sequence[T] | T,
         mapper: Callable[[T], U] | None = None,
         predicate: Callable[[object], bool] = lambda x: x is not None,
@@ -388,7 +389,9 @@ class FlextFunctional:
             List of mapped and filtered items
 
         Example:
-            >>> FlextFunctional.map_filter([1, 2, 3], lambda x: x * 2 if x > 1 else None)
+            >>> FlextFunctional.map_filter(
+            ...     [1, 2, 3], lambda x: x * 2 if x > 1 else None
+            ... )
             [4, 6]
 
         """
@@ -442,14 +445,16 @@ class FlextFunctional:
                 processed = processor(item)
                 if isinstance(processed, (list, tuple)):
                     result.extend([
-                        sub_item for sub_item in processed if predicate(sub_item)
+                        cast("U", sub_item)
+                        for sub_item in processed
+                        if predicate(sub_item)
                     ])
-                else:
-                    # Single value (not list/tuple), predicate checks it
-                    # Type narrowing: isinstance(processed, (list, tuple)) is False
-                    # so processed is U in this branch, but mypy can't infer it
-                    if predicate(processed):
-                        result.append(processed)  # type: ignore[arg-type]
+                # Single value (not list/tuple), predicate checks it
+                # Type narrowing: isinstance(processed, (list, tuple)) is False
+                # so processed is U in this branch
+                elif predicate(processed):
+                    # processed is U when not a sequence
+                    result.append(cast("U", processed))
             except Exception:
                 if on_error == "stop":
                     raise
@@ -473,10 +478,9 @@ class FlextFunctional:
             Result after applying all operations
 
         Example:
-            >>> FlextFunctional.build("hello", {
-            ...     "upper": str.upper,
-            ...     "exclaim": lambda s: s + "!"
-            ... })
+            >>> FlextFunctional.build(
+            ...     "hello", {"upper": str.upper, "exclaim": lambda s: s + "!"}
+            ... )
             'HELLO!'
 
         """
@@ -548,7 +552,7 @@ class FlextFunctional:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def get(
+    def get[T](
         data: dict[str, T] | T,
         key: str,
         default: T | None = None,
@@ -577,7 +581,7 @@ class FlextFunctional:
     gt = get
 
     @staticmethod
-    def merge(
+    def merge[T](
         *dicts: dict[str, T] | T,
     ) -> dict[str, T]:
         """Merge multiple dicts (mnemonic: mg).
@@ -606,7 +610,7 @@ class FlextFunctional:
     mg = merge
 
     @staticmethod
-    def evolve(
+    def evolve[T](
         data: dict[str, T] | T,
         updates: dict[str, T] | T,
     ) -> dict[str, T]:
@@ -714,33 +718,49 @@ class FlextFunctional:
         def evaluator(value: T | None = None) -> U | None:
             for condition_fn, result_fn in cases:
                 # Dynamic callable inspection - mypy can't verify signature at compile time
+                # Use cast to help mypy understand the dynamic nature
+                condition_result: bool
                 try:
-                    import inspect
-
                     sig = inspect.signature(condition_fn)
                     if len(sig.parameters) == 0:
-                        condition_result = condition_fn()  # type: ignore[call-arg]
+                        condition_result = cast("Callable[[], bool]", condition_fn)()
                     else:
-                        condition_result = condition_fn(value)  # type: ignore[call-arg,arg-type]
+                        condition_result = (
+                            cast("Callable[[T], bool]", condition_fn)(value)
+                            if value is not None
+                            else False
+                        )
                 except (TypeError, ValueError):
                     # Fallback: try with value, then without
                     try:
-                        condition_result = condition_fn(value)  # type: ignore[call-arg,arg-type]
+                        condition_result = (
+                            cast("Callable[[T], bool]", condition_fn)(value)
+                            if value is not None
+                            else False
+                        )
                     except TypeError:
-                        condition_result = condition_fn()  # type: ignore[call-arg]
+                        condition_result = cast("Callable[[], bool]", condition_fn)()
 
                 if condition_result:
                     # Dynamic result callable - same pattern
                     try:
                         sig = inspect.signature(result_fn)
                         if len(sig.parameters) == 0:
-                            return result_fn()  # type: ignore[call-arg]
-                        return result_fn(value)  # type: ignore[call-arg,arg-type]
+                            return cast("Callable[[], U]", result_fn)()
+                        return (
+                            cast("Callable[[T], U]", result_fn)(value)
+                            if value is not None
+                            else default
+                        )
                     except (TypeError, ValueError):
                         try:
-                            return result_fn(value)  # type: ignore[call-arg,arg-type]
+                            return (
+                                cast("Callable[[T], U]", result_fn)(value)
+                                if value is not None
+                                else default
+                            )
                         except TypeError:
-                            return result_fn()  # type: ignore[call-arg]
+                            return cast("Callable[[], U]", result_fn)()
 
             return default
 
@@ -797,9 +817,7 @@ class FlextFunctional:
         cls,
         value: T,
         *cases: tuple[
-            type[T]
-            | T
-            | Callable[[T], bool],
+            type[T] | T | Callable[[T], bool],
             U,
         ],
         default: U | None = None,
@@ -822,10 +840,7 @@ class FlextFunctional:
 
         Example:
             >>> FlextFunctional.match(
-            ...     42,
-            ...     (str, "it's a string"),
-            ...     (int, "it's an int"),
-            ...     default="unknown"
+            ...     42, (str, "it's a string"), (int, "it's an int"), default="unknown"
             ... )
             "it's an int"
 
@@ -849,7 +864,7 @@ class FlextFunctional:
     mt = match
 
     @classmethod
-    def switch(
+    def switch[T, U](
         cls,
         value: T,
         cases: dict[T, U | Callable[[T], U]],
@@ -866,11 +881,7 @@ class FlextFunctional:
             Matched result or default
 
         Example:
-            >>> FlextFunctional.switch(
-            ...     "a",
-            ...     {"a": 1, "b": 2, "c": 3},
-            ...     default=0
-            ... )
+            >>> FlextFunctional.switch("a", {"a": 1, "b": 2, "c": 3}, default=0)
             1
 
         """
@@ -979,39 +990,73 @@ class FlextFunctional:
         # Already the right type
         if isinstance(value, target_type):
             # Value is T, but isinstance proves it matches target_type (which is U)
-            return value  # type: ignore[return-value]
+            # Use cast to help mypy understand this relationship
+            return cast("U", value)
 
         # Try to cast - each branch returns U | None where U is the target type
         # mypy can't verify this at compile time since U is a generic type parameter
         try:
             if target_type is str:
-                return str(value)  # type: ignore[return-value]
+                return cast("U", str(value))
             if target_type is int:
-                return int(value)  # type: ignore[call-overload,no-any-return]
+                # int() requires value to be convertible to int
+                if isinstance(value, (str, bytes, bytearray)):
+                    return cast("U", int(value))
+                # For objects with __int__ or __index__, use cast to help mypy
+                # Runtime will raise TypeError if conversion fails
+                try:
+                    if hasattr(value, "__int__"):
+                        return cast("U", int(value))
+                    if hasattr(value, "__index__"):
+                        return cast("U", int(value))
+                except (TypeError, ValueError):
+                    pass
+                return default
             if target_type is float:
-                return float(value)  # type: ignore[return-value,arg-type]
+                # float() requires value to be convertible to float
+                if isinstance(value, (str, bytes, bytearray)):
+                    return cast("U", float(value))
+                # For objects with __float__ or __index__, use cast to help mypy
+                # Runtime will raise TypeError if conversion fails
+                try:
+                    if hasattr(value, "__float__"):
+                        return cast("U", float(value))
+                    if hasattr(value, "__index__"):
+                        return cast("U", float(value))
+                except (TypeError, ValueError):
+                    pass
+                return default
             if target_type is bool:
                 if isinstance(value, str):
-                    return value.lower() in {"true", "1", "yes", "on"}  # type: ignore[return-value]
-                return bool(value)  # type: ignore[return-value]
+                    return cast("U", value.lower() in {"true", "1", "yes", "on"})
+                return cast("U", bool(value))
             if target_type is list:
                 if isinstance(value, (list, tuple, set)):
-                    return list(value)  # type: ignore[return-value]
-                return [value]  # type: ignore[return-value]
+                    return cast("U", list(value))
+                return cast("U", [value])
             if target_type is tuple:
                 if isinstance(value, (list, tuple, set)):
-                    return tuple(value)  # type: ignore[return-value]
-                return (value,)  # type: ignore[return-value]
+                    return cast("U", tuple(value))
+                return cast("U", (value,))
             if target_type is set:
                 if isinstance(value, (list, tuple, set)):
-                    return set(value)  # type: ignore[return-value]
-                return {value}  # type: ignore[return-value]
+                    return cast("U", set(value))
+                return cast("U", {value})
             if target_type is dict:
                 if isinstance(value, dict):
-                    return value  # type: ignore[return-value]
+                    return cast("U", value)
                 return default
-            # Generic type cast attempt
-            return target_type(value)  # type: ignore[call-arg,return-value]
+            # Generic type cast attempt - only if target_type is callable
+            # object() doesn't accept arguments, so check if it's a proper type constructor
+            # Use cast to help mypy understand that target_type is callable
+            if target_type is not object:
+                try:
+                    # Cast target_type to Callable to help mypy
+                    constructor = cast("Callable[[object], object]", target_type)
+                    return cast("U", constructor(value))
+                except (TypeError, ValueError):
+                    return default
+            return default
         except (TypeError, ValueError):
             return default
 
@@ -1044,9 +1089,13 @@ class FlextFunctional:
         def getter(obj: T) -> T | None:
             """Get value from object by key."""
             if isinstance(obj, Mapping):
-                return obj.get(key)
+                # Mapping.get returns Any, need to cast
+                result = obj.get(key)
+                return cast("T | None", result)
             if hasattr(obj, key):
-                return getattr(obj, key)  # type: ignore[no-any-return]
+                # getattr returns Any, need to cast
+                result = getattr(obj, key)
+                return cast("T | None", result)
             return None
 
         return getter
@@ -1127,9 +1176,7 @@ class FlextFunctional:
             return getter_fn
 
         # Create getters for each key in path
-        getters: list[Callable[[T], T | None]] = [
-            make_getter(k) for k in keys
-        ]
+        getters: list[Callable[[T], T | None]] = [make_getter(k) for k in keys]
 
         def path_getter(obj: T) -> T | None:
             """Get value at path."""

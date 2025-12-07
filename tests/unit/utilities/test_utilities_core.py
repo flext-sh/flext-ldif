@@ -1,10 +1,16 @@
+"""Tests for LDIF DN operations as pure functions.
+
+This module tests DN (Distinguished Name) utility functions as pure functions returning
+primitives, including DN component normalization, full DN normalization, DN parsing,
+splitting, component extraction, and handling of special characters and escaped values.
+"""
+
 from __future__ import annotations
 
 import pytest
 from tests import m, s
 
 from flext_ldif import FlextLdifConstants
-from flext_ldif.models import m
 from flext_ldif.utilities import FlextLdifUtilities
 
 

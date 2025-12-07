@@ -665,6 +665,73 @@ class Filters:
     OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
 
 
+class OIDs:
+    """OID constant namespace for cleaner test access.
+
+    Aliases constants from TestsFlextLdifConstants.Rfc for convenient access.
+    Used by test files to reference OID constants with short names.
+    """
+
+    # Attribute OIDs
+    CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN  # "2.5.4.3"
+    SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN  # "2.5.4.4"
+    ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST  # "2.5.4.8"
+    MAIL: Final[str] = (
+        TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
+    )  # "0.9.2342.19200300.100.1.3"
+    MODIFY_TIMESTAMP: Final[str] = (
+        TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
+    )  # "2.5.18.2"
+    OID_O: Final[str] = (
+        TestsFlextLdifConstants.Rfc.ATTR_OID_O
+    )  # "2.5.4.10" (Organization attribute)
+    OBJECTCLASS: Final[str] = (
+        TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
+    )  # "2.5.4.0"
+
+    # ObjectClass OIDs
+    PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON  # "2.5.6.6"
+
+    # Syntax OIDs (for convenience)
+    DIRECTORY_STRING: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
+    )
+    BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
+    INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
+    IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
+    GENERALIZED_TIME: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
+    )
+    OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
+
+
+class Syntax:
+    """Syntax OID constant namespace for cleaner test access.
+
+    Aliases syntax constants from TestsFlextLdifConstants.Rfc for convenient access.
+    Used by test files to reference syntax OIDs with short names.
+    """
+
+    DIRECTORY_STRING: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
+    )  # "1.3.6.1.4.1.1466.115.121.1.15"
+    BOOLEAN: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
+    )  # "1.3.6.1.4.1.1466.115.121.1.7"
+    INTEGER: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
+    )  # "1.3.6.1.4.1.1466.115.121.1.27"
+    IA5_STRING: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
+    )  # "1.3.6.1.4.1.1466.115.121.1.26"
+    GENERALIZED_TIME: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
+    )  # "1.3.6.1.4.1.1466.115.121.1.24"
+    OID: Final[str] = (
+        TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
+    )  # "1.3.6.1.4.1.1466.115.121.1.38"
+
+
 class RfcTestHelpers:
     """RFC test helper utilities for LDIF testing."""
 
@@ -688,7 +755,9 @@ c = TestsFlextLdifConstants
 
 __all__ = [
     "Filters",
+    "OIDs",
     "RfcTestHelpers",
+    "Syntax",
     "TestCategorization",
     "TestDeduplicationHelpers",
     "TestsFlextLdifConstants",

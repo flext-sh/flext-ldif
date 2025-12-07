@@ -236,11 +236,11 @@ class FlextLdifUtilities:
     @classmethod
     def process(
         cls,
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
         *,
         config: ProcessConfig | None = None,
         **kwargs: object,
-    ) -> FlextLdifResult[list[m.Entry]]:
+    ) -> FlextLdifResult[list[m.Ldif.Entry]]:
         """Universal entry processor.
 
         Processes entries with DN normalization, attribute normalization,
@@ -280,10 +280,10 @@ class FlextLdifUtilities:
     @classmethod
     def transform(
         cls,
-        entries: Sequence[m.Entry],
-        *transformers: EntryTransformer[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
+        *transformers: EntryTransformer[m.Ldif.Entry],
         fail_fast: bool = True,
-    ) -> FlextLdifResult[list[m.Entry]]:
+    ) -> FlextLdifResult[list[m.Ldif.Entry]]:
         """Apply transformation pipeline to entries.
 
         Args:
@@ -312,10 +312,10 @@ class FlextLdifUtilities:
     @classmethod
     def filter(
         cls,
-        entries: Sequence[m.Entry],
-        *filters: EntryFilter[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
+        *filters: EntryFilter[m.Ldif.Entry],
         mode: Literal["all", "any"] = "all",
-    ) -> FlextLdifResult[list[m.Entry]]:
+    ) -> FlextLdifResult[list[m.Ldif.Entry]]:
         """Filter entries using composable filter predicates.
 
         Args:
@@ -343,7 +343,7 @@ class FlextLdifUtilities:
             return FlextLdifResult.ok(list(entries))
 
         # Combine filters based on mode
-        combined: EntryFilter[m.Entry] = filters[0]
+        combined: EntryFilter[m.Ldif.Entry] = filters[0]
         for f in filters[1:]:
             combined = combined & f if mode == "all" else combined | f
 
@@ -353,7 +353,7 @@ class FlextLdifUtilities:
     @classmethod
     def validate(
         cls,
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
         *,
         strict: bool = True,
         collect_all: bool = True,
@@ -407,7 +407,7 @@ class FlextLdifUtilities:
         return DnOps(dn)
 
     @classmethod
-    def entry(cls, entry: m.Entry) -> EntryOps:
+    def entry(cls, entry: m.Ldif.Entry) -> EntryOps:
         """Create fluent entry operations.
 
         Args:

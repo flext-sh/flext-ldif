@@ -1,3 +1,9 @@
+"""Tests for FlextLdifServersBase and LDIF server implementations.
+
+This module tests the base class and RFC-compliant LDIF server implementations,
+including initialization, schema handling, and quirk integration.
+"""
+
 from __future__ import annotations
 
 from typing import cast
@@ -9,7 +15,7 @@ from flext_ldif.models import m
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import RfcTestHelpers, m, s
+from tests import RfcTestHelpers, s
 
 from .fixtures.rfc_constants import TestsRfcConstants
 

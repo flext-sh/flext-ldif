@@ -16,7 +16,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Final, cast, override
 
-from flext_core import FlextLogger, r
+from flext_core import r
+from flext_core.loggings import FlextLogger as l_core
 
 from flext_ldif._models.results import _FlexibleCategories
 from flext_ldif.base import FlextLdifServiceBase
@@ -27,18 +28,18 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
-logger: Final = FlextLogger(__name__)
+logger: Final = l_core(__name__)
 
 
 def _cat(
-    category: c.Categories,
-) -> c.LiteralTypes.CategoryLiteral:
+    category: c.Ldif.Categories,
+) -> c.Ldif.LiteralTypes.CategoryLiteral:
     """Convert Categories enum to CategoryLiteral type (local shorthand)."""
-    return c.to_category_literal(category)
+    return c.Ldif.to_category_literal(category)
 
 
 def _merge_one_category(
-    category_map: dict[c.LiteralTypes.CategoryLiteral, frozenset[str]],
+    category_map: dict[c.Ldif.LiteralTypes.CategoryLiteral, frozenset[str]],
     key_str: str,
     value: frozenset[str] | str,
     *,
@@ -49,7 +50,7 @@ def _merge_one_category(
     This helper avoids pyrefly's cycle-breaking limitation with TypeIs + loops
     by processing one key at a time without a loop context.
     """
-    if not c.is_valid_category_literal(key_str):
+    if not c.Ldif.is_valid_category_literal(key_str):
         return
     # After TypeIs check, key_str is narrowed to CategoryLiteral
     if override_existing or key_str not in category_map:
@@ -59,7 +60,7 @@ def _merge_one_category(
 
 
 def _merge_category_from_constants(
-    category_map: dict[c.LiteralTypes.CategoryLiteral, frozenset[str]],
+    category_map: dict[c.Ldif.LiteralTypes.CategoryLiteral, frozenset[str]],
     server_map: dict[str, frozenset[str] | str],
     *,
     override_existing: bool,
@@ -82,7 +83,7 @@ def _merge_category_from_constants(
 
 
 class FlextLdifCategorization(
-    FlextLdifServiceBase[m.FlexibleCategories],
+    FlextLdifServiceBase[m.Ldif.FlexibleCategories],
 ):
     """LDIF Entry Categorization Service.
 
@@ -91,7 +92,7 @@ class FlextLdifCategorization(
 
     Public API for categorizing LDIF entries into 6 categories:
     - schema: Structural schema definitions
-    - hierarchy: Organizational hierarchy (OUs, etc.)
+    - hierarchy: Organizational hierarchy (OUs, etc.Ldif.)
     - users: User account entries
     - groups: Group/role entries
     - acl: Access control list entries
@@ -111,12 +112,12 @@ class FlextLdifCategorization(
             schema_whitelist_rules={
                 "allowed_attribute_oids": ["1.3.6.1.*"],
             },
-            server_type=c.ServerTypes.OID,
+            server_type=c.Ldif.ServerTypes.OID,
         )
 
         # Parse and categorize entries
         result = (
-            parser.parse_ldif_file(file_path, c.ServerTypes.OID)
+            parser.parse_ldif_file(file_path, c.Ldif.ServerTypes.OID)
             .flat_map(service.validate_dns)
             .flat_map(service.categorize_entries)
             .flat_map(service.filter_by_base_dn(base_dn="dc=example,dc=com"))
@@ -135,7 +136,7 @@ class FlextLdifCategorization(
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
         base_dn: str | None = None,
-        server_type: c.LiteralTypes.ServerTypeLiteral = "rfc",
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
         server_registry: FlextLdifServer | None = None,
     ) -> None:
         """Initialize categorization service.
@@ -146,7 +147,7 @@ class FlextLdifCategorization(
             forbidden_attributes: Attributes to remove from all entries
             forbidden_objectclasses: ObjectClasses to remove
             base_dn: Base DN for filtering (optional, used by filter_by_base_dn)
-            server_type: LDAP server type (oid, oud, rfc, etc.) for server-specific categorization
+            server_type: LDAP server type (oid, oud, rfc, etc.Ldif.) for server-specific categorization
             server_registry: FlextLdifServer instance for DI (defaults to global instance)
 
         """
@@ -157,8 +158,8 @@ class FlextLdifCategorization(
         self._forbidden_attributes: list[str]
         self._forbidden_objectclasses: list[str]
         self._base_dn: str | None
-        self._server_type: c.LiteralTypes.ServerTypeLiteral
-        self._rejection_tracker: dict[str, list[m.Entry]]
+        self._server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+        self._rejection_tracker: dict[str, list[m.Ldif.Entry]]
         self._server_registry: FlextLdifServer
 
         # Initialize server registry via DI (use object.__setattr__ for frozen model)
@@ -220,11 +221,11 @@ class FlextLdifCategorization(
     @override
     def execute(
         self,
-    ) -> r[m.FlexibleCategories]:
+    ) -> r[m.Ldif.FlexibleCategories]:
         """Execute empty categorization (placeholder - use individual methods).
 
         This service provides multiple public methods for categorization steps.
-        Use validate_dns(), categorize_entries(), etc. instead of execute().
+        Use validate_dns(), categorize_entries(), etc.Ldif. instead of execute().
 
         Returns:
             FlextResult with empty FlexibleCategories
@@ -233,17 +234,19 @@ class FlextLdifCategorization(
         # Create FlexibleCategories (_FlexibleCategories extends Categories[Entry])
         # Use _FlexibleCategories directly for type compatibility
         categories = _FlexibleCategories()
-        categories[c.Categories.SCHEMA] = []
-        categories[c.Categories.HIERARCHY] = []
-        categories[c.Categories.USERS] = []
-        categories[c.Categories.GROUPS] = []
-        categories[c.Categories.ACL] = []
-        categories[c.Categories.REJECTED] = []
-        # Cast to m.FlexibleCategories for return type compatibility
-        return r[m.FlexibleCategories].ok(cast("m.FlexibleCategories", categories))
+        categories[c.Ldif.Categories.SCHEMA] = []
+        categories[c.Ldif.Categories.HIERARCHY] = []
+        categories[c.Ldif.Categories.USERS] = []
+        categories[c.Ldif.Categories.GROUPS] = []
+        categories[c.Ldif.Categories.ACL] = []
+        categories[c.Ldif.Categories.REJECTED] = []
+        # Cast to m.Ldif.FlexibleCategories for return type compatibility
+        return r[m.Ldif.FlexibleCategories].ok(
+            cast("m.Ldif.FlexibleCategories", categories)
+        )
 
     @property
-    def rejection_tracker(self) -> dict[str, list[m.Entry]]:
+    def rejection_tracker(self) -> dict[str, list[m.Ldif.Entry]]:
         """Get rejection tracker (read-only access to rejected entries by reason).
 
         Returns:
@@ -294,8 +297,8 @@ class FlextLdifCategorization(
 
     def validate_dns(
         self,
-        entries: list[m.Entry],
-    ) -> r[list[m.Entry]]:
+        entries: list[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 
         Business Rule: DN validation follows RFC 4514 specification. Invalid DNs are
@@ -318,8 +321,8 @@ class FlextLdifCategorization(
         """
 
         def validate_entry(
-            entry: m.Entry,
-        ) -> m.Entry | r[m.Entry]:
+            entry: m.Ldif.Entry,
+        ) -> m.Ldif.Entry | r[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
             dn_str = u.DN.get_dn_value(entry.dn)
 
@@ -328,7 +331,7 @@ class FlextLdifCategorization(
                 rejected_entry = u.Metadata.update_entry_statistics(
                     entry,
                     mark_rejected=(
-                        c.RejectionCategory.INVALID_DN,
+                        c.Ldif.RejectionCategory.INVALID_DN,
                         f"DN validation failed (RFC 4514): {dn_str[:80]}",
                     ),
                 )
@@ -337,7 +340,7 @@ class FlextLdifCategorization(
                     "Entry DN failed RFC 4514 validation",
                     entry_dn=dn_str,
                 )
-                return r[m.Entry].fail(f"DN validation failed: {dn_str[:80]}")
+                return r[m.Ldif.Entry].fail(f"DN validation failed: {dn_str[:80]}")
 
             norm_result = u.DN.norm(dn_str)
             # Use u.unwrap_or(, default=None) for unified result value extraction (DSL pattern)
@@ -347,12 +350,14 @@ class FlextLdifCategorization(
                 rejected_entry = u.Metadata.update_entry_statistics(
                     entry,
                     mark_rejected=(
-                        c.RejectionCategory.INVALID_DN,
+                        c.Ldif.RejectionCategory.INVALID_DN,
                         f"DN normalization failed: {u.err(norm_result)}",
                     ),
                 )
                 self._rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
-                return r[m.Entry].fail(f"DN normalization failed: {u.err(norm_result)}")
+                return r[m.Ldif.Entry].fail(
+                    f"DN normalization failed: {u.err(norm_result)}"
+                )
             # Create new Entry with normalized DN
             # Use model_copy with DN string value, not DistinguishedName object
             dn_obj = m.DistinguishedName(value=normalized_dn)
@@ -369,7 +374,7 @@ class FlextLdifCategorization(
         batch_data = u.unwrap_or(batch_result, default=None)
         validated = (
             [
-                cast("m.Entry", entry)
+                cast("m.Ldif.Entry", entry)
                 for entry in batch_data["results"]
                 if entry is not None
             ]
@@ -387,8 +392,8 @@ class FlextLdifCategorization(
         # Log sample rejected DNs for diagnostic purposes
         if self._rejection_tracker["invalid_dn_rfc4514"]:
             sample_rejected_dns = [
-                entry.dn.value[: c.DN_LOG_PREVIEW_LENGTH]
-                if entry.dn and len(entry.dn.value) > c.DN_LOG_PREVIEW_LENGTH
+                entry.dn.value[: c.Ldif.DN_LOG_PREVIEW_LENGTH]
+                if entry.dn and len(entry.dn.value) > c.Ldif.DN_LOG_PREVIEW_LENGTH
                 else (entry.dn.value if entry.dn else "")
                 for entry in self._rejection_tracker["invalid_dn_rfc4514"][:5]
             ]
@@ -398,9 +403,9 @@ class FlextLdifCategorization(
                 rejected_dns_preview=sample_rejected_dns,
             )
 
-        return r[list[m.Entry]].ok(validated)
+        return r[list[m.Ldif.Entry]].ok(validated)
 
-    def is_schema_entry(self, entry: m.Entry) -> bool:
+    def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition.
 
         Schema entries are detected by presence of attributeTypes or objectClasses
@@ -437,15 +442,15 @@ class FlextLdifCategorization(
 
     def _get_server_constants(
         self,
-        server_type: c.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> r[type]:
         """Get and validate server constants via FlextLdifServer registry.
 
         DELEGATED TO: FlextLdifServer.get_constants() for SRP compliance.
-        No direct knowledge of OID, OUD, etc. - all via server registry.
+        No direct knowledge of OID, OUD, etc.Ldif. - all via server registry.
 
         Args:
-            server_type: Server type identifier (oid, oud, rfc, etc.)
+            server_type: Server type identifier (oid, oud, rfc, etc.Ldif.)
 
         Returns:
             FlextResult with constants class or error message
@@ -455,7 +460,7 @@ class FlextLdifCategorization(
 
     def _check_hierarchy_priority(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         constants: type,
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES.
@@ -480,7 +485,7 @@ class FlextLdifCategorization(
 
     def _get_default_priority_order(
         self,
-    ) -> list[c.LiteralTypes.CategoryLiteral]:
+    ) -> list[c.Ldif.LiteralTypes.CategoryLiteral]:
         """Get default category priority order.
 
         Returns:
@@ -489,16 +494,16 @@ class FlextLdifCategorization(
         """
         # Using _cat helper for type-safe conversion from enum to literal
         return [
-            _cat(c.Categories.USERS),
-            _cat(c.Categories.HIERARCHY),
-            _cat(c.Categories.GROUPS),
-            _cat(c.Categories.ACL),
+            _cat(c.Ldif.Categories.USERS),
+            _cat(c.Ldif.Categories.HIERARCHY),
+            _cat(c.Ldif.Categories.GROUPS),
+            _cat(c.Ldif.Categories.ACL),
         ]
 
     def _get_priority_order_from_constants(
         self,
         constants: type | None,
-    ) -> list[c.LiteralTypes.CategoryLiteral]:
+    ) -> list[c.Ldif.LiteralTypes.CategoryLiteral]:
         """Get priority order from constants or use default.
 
         Args:
@@ -513,7 +518,7 @@ class FlextLdifCategorization(
             # Wrap TypeIs function to return bool for filter predicate
             def is_valid_category(value: str) -> bool:
                 """Wrapper for TypeIs function to use as filter predicate."""
-                return bool(c.is_valid_category_literal(value))
+                return bool(c.Ldif.is_valid_category_literal(value))
 
             priority_list = getattr(constants, "CATEGORIZATION_PRIORITY", [])
             # Type narrowing: priority_list should be list[str] or similar
@@ -527,10 +532,10 @@ class FlextLdifCategorization(
                 filtered = []
 
             # Explicit cast for type checker - is_valid_category_literal is TypeIs
-            result: list[c.LiteralTypes.CategoryLiteral] = [
+            result: list[c.Ldif.LiteralTypes.CategoryLiteral] = [
                 item
                 for item in filtered
-                if isinstance(item, str) and c.is_valid_category_literal(item)
+                if isinstance(item, str) and c.Ldif.is_valid_category_literal(item)
             ]
             return result
         return self._get_default_priority_order()
@@ -538,7 +543,7 @@ class FlextLdifCategorization(
     def _build_category_map_from_rules(
         self,
         rules: m.CategoryRules,
-    ) -> dict[c.LiteralTypes.CategoryLiteral, frozenset[str]]:
+    ) -> dict[c.Ldif.LiteralTypes.CategoryLiteral, frozenset[str]]:
         """Build category map from rules.
 
         Args:
@@ -549,7 +554,7 @@ class FlextLdifCategorization(
 
         """
         category_map: dict[
-            c.LiteralTypes.CategoryLiteral,
+            c.Ldif.LiteralTypes.CategoryLiteral,
             frozenset[str],
         ] = {}
 
@@ -560,7 +565,7 @@ class FlextLdifCategorization(
                 rules.hierarchy_objectclasses,
                 mapper=lambda oc: oc.lower(),
             )
-            category_map[_cat(c.Categories.HIERARCHY)] = frozenset(
+            category_map[_cat(c.Ldif.Categories.HIERARCHY)] = frozenset(
                 mapped if isinstance(mapped, list) else [],
             )
         if rules.user_objectclasses:
@@ -568,7 +573,7 @@ class FlextLdifCategorization(
                 rules.user_objectclasses,
                 mapper=lambda oc: oc.lower(),
             )
-            category_map[_cat(c.Categories.USERS)] = frozenset(
+            category_map[_cat(c.Ldif.Categories.USERS)] = frozenset(
                 mapped if isinstance(mapped, list) else [],
             )
         if rules.group_objectclasses:
@@ -576,7 +581,7 @@ class FlextLdifCategorization(
                 rules.group_objectclasses,
                 mapper=lambda oc: oc.lower(),
             )
-            category_map[_cat(c.Categories.GROUPS)] = frozenset(
+            category_map[_cat(c.Ldif.Categories.GROUPS)] = frozenset(
                 mapped if isinstance(mapped, list) else [],
             )
         if rules.acl_attributes:
@@ -584,7 +589,7 @@ class FlextLdifCategorization(
                 rules.acl_attributes,
                 mapper=lambda attr: f"attr:{attr.lower()}",
             )
-            category_map[_cat(c.Categories.ACL)] = frozenset(
+            category_map[_cat(c.Ldif.Categories.ACL)] = frozenset(
                 mapped if isinstance(mapped, list) else [],
             )
 
@@ -593,13 +598,13 @@ class FlextLdifCategorization(
     def _merge_server_constants_to_map(
         self,
         category_map: dict[
-            c.LiteralTypes.CategoryLiteral,
+            c.Ldif.LiteralTypes.CategoryLiteral,
             frozenset[str],
         ],
         constants: type,
         *,
         override_existing: bool = False,
-    ) -> dict[c.LiteralTypes.CategoryLiteral, frozenset[str]]:
+    ) -> dict[c.Ldif.LiteralTypes.CategoryLiteral, frozenset[str]]:
         """Merge server constants into category map.
 
         Args:
@@ -622,7 +627,7 @@ class FlextLdifCategorization(
         if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
             acl_attrs = constants.CATEGORIZATION_ACL_ATTRIBUTES
             if acl_attrs:
-                acl_category = _cat(c.Categories.ACL)
+                acl_category = _cat(c.Ldif.Categories.ACL)
                 # Respect override_existing flag for ACL attributes
                 if override_existing or acl_category not in category_map:
                     # Use u.map to transform attributes to lowercase with prefix
@@ -681,13 +686,13 @@ class FlextLdifCategorization(
 
     def _match_entry_to_category(
         self,
-        entry: m.Entry,
-        priority_order: list[c.LiteralTypes.CategoryLiteral],
+        entry: m.Ldif.Entry,
+        priority_order: list[c.Ldif.LiteralTypes.CategoryLiteral],
         category_map: dict[
-            c.LiteralTypes.CategoryLiteral,
+            c.Ldif.LiteralTypes.CategoryLiteral,
             frozenset[str],
         ],
-    ) -> tuple[c.LiteralTypes.CategoryLiteral, str | None]:
+    ) -> tuple[c.Ldif.LiteralTypes.CategoryLiteral, str | None]:
         """Match entry to category using priority order and category map.
 
         Args:
@@ -710,28 +715,28 @@ class FlextLdifCategorization(
             category_ocs_lower = {oc.lower() for oc in category_ocs}
 
             # Check for attribute-based categories (ACL)
-            if category == _cat(c.Categories.ACL):
+            if category == _cat(c.Ldif.Categories.ACL):
                 for attr_marker in category_ocs:
                     if attr_marker.startswith("attr:"):
                         attr_name = attr_marker[5:]
                         if entry.has_attribute(attr_name):
-                            return (_cat(c.Categories.ACL), None)
+                            return (_cat(c.Ldif.Categories.ACL), None)
             # Check for objectClass-based categories
             elif any(oc in category_ocs_lower for oc in entry_ocs):
                 return (category, None)
 
-        return (_cat(c.Categories.REJECTED), "No category match")
+        return (_cat(c.Ldif.Categories.REJECTED), "No category match")
 
     def _categorize_by_priority(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         constants: type,
-        priority_order: list[c.LiteralTypes.CategoryLiteral],
+        priority_order: list[c.Ldif.LiteralTypes.CategoryLiteral],
         category_map: dict[
-            c.LiteralTypes.CategoryLiteral,
+            c.Ldif.LiteralTypes.CategoryLiteral,
             frozenset[str],
         ],
-    ) -> tuple[c.LiteralTypes.CategoryLiteral, str | None]:
+    ) -> tuple[c.Ldif.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize entry by iterating through priority order.
 
         Args:
@@ -744,7 +749,7 @@ class FlextLdifCategorization(
             Tuple of (category, rejection_reason)
 
         """
-        acl_literal = _cat(c.Categories.ACL)
+        acl_literal = _cat(c.Ldif.Categories.ACL)
         for category in priority_order:
             if category == acl_literal:
                 if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
@@ -768,15 +773,15 @@ class FlextLdifCategorization(
                 # priority_order is list[CategoryLiteral] - no cast needed
                 return (category, None)
 
-        return (_cat(c.Categories.REJECTED), "No category match")
+        return (_cat(c.Ldif.Categories.REJECTED), "No category match")
 
     def _update_metadata_for_filtered_entries(
         self,
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         *,
         passed: bool,
         rejection_reason: str | None = None,
-    ) -> list[m.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Update metadata for filtered entries using u.
 
         Args:
@@ -788,17 +793,17 @@ class FlextLdifCategorization(
             Updated entries with metadata
 
         """
-        updated_entries: list[m.Entry] = []
+        updated_entries: list[m.Ldif.Entry] = []
         for entry in entries:
             updated_entry = u.Metadata.update_entry_statistics(
                 entry,
                 mark_filtered=(
-                    c.FilterType.BASE_DN_FILTER,
+                    c.Ldif.FilterType.BASE_DN_FILTER,
                     passed,
                 ),
                 mark_rejected=(
                     (
-                        c.RejectionCategory.BASE_DN_FILTER,
+                        c.Ldif.RejectionCategory.BASE_DN_FILTER,
                         rejection_reason,
                     )
                     if not passed and rejection_reason
@@ -810,10 +815,10 @@ class FlextLdifCategorization(
 
     def categorize_entry(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         rules: (m.CategoryRules | Mapping[str, t.MetadataAttributeValue] | None) = None,
-        server_type: c.LiteralTypes.ServerTypeLiteral | None = None,
-    ) -> tuple[c.LiteralTypes.CategoryLiteral, str | None]:
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
+    ) -> tuple[c.Ldif.LiteralTypes.CategoryLiteral, str | None]:
         """Categorize single entry using provided or instance categorization rules.
 
         Business Rule: Entry categorization follows priority order: schema → hierarchy →
@@ -834,21 +839,23 @@ class FlextLdifCategorization(
         # Use u.unwrap_or(, default=None) for unified result value extraction (DSL pattern)
         normalized_rules = u.unwrap_or(rules_result, default=None)
         if normalized_rules is None:
-            return (_cat(c.Categories.REJECTED), u.err(rules_result))
+            return (_cat(c.Ldif.Categories.REJECTED), u.err(rules_result))
 
         # Normalize server_type
         effective_server_type_raw = server_type or self._server_type
         try:
-            effective_server_type = c.normalize_server_type(effective_server_type_raw)
+            effective_server_type = c.Ldif.normalize_server_type(
+                effective_server_type_raw
+            )
         except (ValueError, TypeError) as e:
             return (
-                _cat(c.Categories.REJECTED),
+                _cat(c.Ldif.Categories.REJECTED),
                 f"Unknown server type: {effective_server_type_raw} - {e}",
             )
 
         # Schema detection first (universal across servers)
         if self.is_schema_entry(entry):
-            return (_cat(c.Categories.SCHEMA), None)
+            return (_cat(c.Ldif.Categories.SCHEMA), None)
 
         # Build category map from rules
         merged_category_map = self._build_category_map_from_rules(normalized_rules)
@@ -863,7 +870,7 @@ class FlextLdifCategorization(
         elif not merged_category_map:
             # No rules and no constants = fail
             return (
-                _cat(c.Categories.REJECTED),
+                _cat(c.Ldif.Categories.REJECTED),
                 constants_result.error,
             )
 
@@ -880,15 +887,15 @@ class FlextLdifCategorization(
 
         # Check hierarchy priority first
         if constants is not None and self._check_hierarchy_priority(entry, constants):
-            return (_cat(c.Categories.HIERARCHY), None)
+            return (_cat(c.Ldif.Categories.HIERARCHY), None)
 
         # Match entry to category
         return self._match_entry_to_category(entry, priority_order, merged_category_map)
 
     def categorize_entries(
         self,
-        entries: list[m.Entry],
-    ) -> r[m.FlexibleCategories]:
+        entries: list[m.Ldif.Entry],
+    ) -> r[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories.
 
         Business Rule: Batch categorization processes all entries and organizes them into
@@ -912,16 +919,16 @@ class FlextLdifCategorization(
         # Create FlexibleCategories (_FlexibleCategories extends Categories[Entry])
         # Use _FlexibleCategories directly for type compatibility
         categories = _FlexibleCategories()
-        categories[c.Categories.SCHEMA] = []
-        categories[c.Categories.HIERARCHY] = []
-        categories[c.Categories.USERS] = []
-        categories[c.Categories.GROUPS] = []
-        categories[c.Categories.ACL] = []
-        categories[c.Categories.REJECTED] = []
+        categories[c.Ldif.Categories.SCHEMA] = []
+        categories[c.Ldif.Categories.HIERARCHY] = []
+        categories[c.Ldif.Categories.USERS] = []
+        categories[c.Ldif.Categories.GROUPS] = []
+        categories[c.Ldif.Categories.ACL] = []
+        categories[c.Ldif.Categories.REJECTED] = []
 
         def categorize_single_entry(
-            entry: m.Entry,
-        ) -> tuple[str, m.Entry]:
+            entry: m.Ldif.Entry,
+        ) -> tuple[str, m.Ldif.Entry]:
             """Categorize single entry."""
             category, reason = self.categorize_entry(entry)
 
@@ -932,10 +939,10 @@ class FlextLdifCategorization(
                 category=category,
                 mark_rejected=(
                     (
-                        c.RejectionCategory.NO_CATEGORY_MATCH,
+                        c.Ldif.RejectionCategory.NO_CATEGORY_MATCH,
                         rejection_reason,
                     )
-                    if category == c.Categories.REJECTED.value
+                    if category == c.Ldif.Categories.REJECTED.value
                     else None
                 ),
             )
@@ -951,8 +958,10 @@ class FlextLdifCategorization(
         if batch_data is not None:
             for result_item in batch_data["results"]:
                 if result_item is not None:
-                    category, entry_to_append = cast("tuple[str, m.Entry]", result_item)
-                    if category == c.Categories.REJECTED.value:
+                    category, entry_to_append = cast(
+                        "tuple[str, m.Ldif.Entry]", result_item
+                    )
+                    if category == c.Ldif.Categories.REJECTED.value:
                         self._rejection_tracker["categorization_rejected"].append(
                             entry_to_append,
                         )
@@ -976,15 +985,15 @@ class FlextLdifCategorization(
                     category=category,
                     mark_rejected=(
                         (
-                            c.RejectionCategory.NO_CATEGORY_MATCH,
+                            c.Ldif.RejectionCategory.NO_CATEGORY_MATCH,
                             rejection_reason,
                         )
-                        if category == c.Categories.REJECTED.value
+                        if category == c.Ldif.Categories.REJECTED.value
                         else None
                     ),
                 )
 
-                if category == c.Categories.REJECTED.value:
+                if category == c.Ldif.Categories.REJECTED.value:
                     self._rejection_tracker["categorization_rejected"].append(
                         entry_to_append,
                     )
@@ -996,7 +1005,7 @@ class FlextLdifCategorization(
                         rejection_reason=reason,
                     )
 
-                # Append entry directly (categories is Categories[m.Entry])
+                # Append entry directly (categories is Categories[m.Ldif.Entry])
                 categories[category].append(entry_to_append)
 
         # Log category statistics
@@ -1015,13 +1024,15 @@ class FlextLdifCategorization(
                     entries_count=entries_count,
                 )
 
-        # Cast to m.FlexibleCategories for return type compatibility
-        return r[m.FlexibleCategories].ok(cast("m.FlexibleCategories", categories))
+        # Cast to m.Ldif.FlexibleCategories for return type compatibility
+        return r[m.Ldif.FlexibleCategories].ok(
+            cast("m.Ldif.FlexibleCategories", categories)
+        )
 
     def filter_by_base_dn(
         self,
-        categories: m.FlexibleCategories,
-    ) -> m.FlexibleCategories:
+        categories: m.Ldif.FlexibleCategories,
+    ) -> m.Ldif.FlexibleCategories:
         """Filter entries by base DN (if configured).
 
         Applies to data categories only (not schema/rejected).
@@ -1042,15 +1053,15 @@ class FlextLdifCategorization(
         # Use _FlexibleCategories directly for type compatibility
         filtered = _FlexibleCategories()
         # Initialize all categories to ensure they exist even if empty
-        filtered[c.Categories.SCHEMA] = []
-        filtered[c.Categories.HIERARCHY] = []
-        filtered[c.Categories.USERS] = []
-        filtered[c.Categories.GROUPS] = []
-        filtered[c.Categories.ACL] = []
-        filtered[c.Categories.REJECTED] = []
+        filtered[c.Ldif.Categories.SCHEMA] = []
+        filtered[c.Ldif.Categories.HIERARCHY] = []
+        filtered[c.Ldif.Categories.USERS] = []
+        filtered[c.Ldif.Categories.GROUPS] = []
+        filtered[c.Ldif.Categories.ACL] = []
+        filtered[c.Ldif.Categories.REJECTED] = []
 
         # Collect all excluded entries from all categories
-        all_excluded_entries: list[m.Entry] = []
+        all_excluded_entries: list[m.Ldif.Entry] = []
 
         # Categories is Categories[Entry], use .items() directly (not u.pairs which requires dict/Mapping)
         for category, entries in categories.items():
@@ -1059,18 +1070,15 @@ class FlextLdifCategorization(
 
             # Apply base DN filter to data categories only
             if category in {
-                c.Categories.HIERARCHY,
-                c.Categories.USERS,
-                c.Categories.GROUPS,
-                c.Categories.ACL,
+                c.Ldif.Categories.HIERARCHY,
+                c.Ldif.Categories.USERS,
+                c.Ldif.Categories.GROUPS,
+                c.Ldif.Categories.ACL,
             }:
-                # entries is list[m.Entry] from categories.items()
-                # Convert to list[m.Entry] for type compatibility
-                entries_typed: list[m.Entry] = [
-                    cast("m.Entry", entry) for entry in entries
-                ]
+                # entries is list[m.Ldif.Entry] from categories.items()
+                # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    entries_typed,
+                    list(entries),
                     self._base_dn,
                 )
                 # Track filter results in metadata
@@ -1083,14 +1091,12 @@ class FlextLdifCategorization(
                     passed=False,
                     rejection_reason=f"DN not under base DN: {self._base_dn}",
                 )
-                # Convert back to m.Entry for filtered assignment
-                # included_updated is list[m.Entry], convert to m.Entry for filtered
-                filtered[category] = [
-                    cast("m.Entry", entry) for entry in included_updated
-                ]
-                # excluded_updated is list[m.Entry] - add directly to all_excluded_entries (which is list[m.Entry])
+                # Convert to list[FlextLdifModelsDomains.Entry] for _FlexibleCategories
+                # _FlexibleCategories uses FlextLdifModelsDomains.Entry internally
+                filtered[category] = list(included_updated)
+                # excluded_updated is list[m.Ldif.Entry] - add directly to all_excluded_entries
                 all_excluded_entries.extend(excluded_updated)
-                # Rejection tracker uses m.Entry - no conversion needed
+                # Rejection tracker uses m.Ldif.Entry - no conversion needed
                 self._rejection_tracker["base_dn_filter"].extend(excluded_updated)
 
                 if excluded_updated:
@@ -1102,30 +1108,27 @@ class FlextLdifCategorization(
                         rejected_entries=u.Collection.count(excluded_updated),
                     )
             else:
-                filtered[category] = entries
+                # Convert to list[FlextLdifModelsDomains.Entry] for _FlexibleCategories
+                filtered[category] = list(entries)
 
         # Add all excluded entries to the rejected category
         # Business Rule: Entries filtered out by base DN must be added to REJECTED category
         # Implication: Preserves audit trail and allows downstream processing to see rejected entries
         if all_excluded_entries:
-            # filtered.get returns list[m.Entry], convert to list[m.Entry] for concatenation
-            existing_rejected_raw = filtered.get(c.Categories.REJECTED, [])
-            existing_rejected: list[m.Entry] = [
-                cast("m.Entry", entry) for entry in existing_rejected_raw
-            ]
-            # Convert result back to m.Entry for filtered assignment
-            filtered[c.Categories.REJECTED] = [
-                cast("m.Entry", entry)
-                for entry in existing_rejected + all_excluded_entries
-            ]
+            # filtered.get returns list[FlextLdifModelsDomains.Entry] from _FlexibleCategories
+            existing_rejected = filtered.get(c.Ldif.Categories.REJECTED, [])
+            # Convert both lists to same type for concatenation
+            filtered[c.Ldif.Categories.REJECTED] = list(existing_rejected) + list(
+                all_excluded_entries
+            )
 
-        # Cast to m.FlexibleCategories for return type compatibility
-        return cast("m.FlexibleCategories", filtered)
+        # Cast to m.Ldif.FlexibleCategories for return type compatibility
+        return cast("m.Ldif.FlexibleCategories", filtered)
 
     def filter_schema_by_oids(
         self,
-        schema_entries: list[m.Entry],
-    ) -> r[list[m.Entry]]:
+        schema_entries: list[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist.
 
         Public method using FlextLdifFilters.filter_schema_by_oids service.
@@ -1138,7 +1141,7 @@ class FlextLdifCategorization(
 
         """
         if not self._schema_whitelist_rules:
-            return r[list[m.Entry]].ok(schema_entries)
+            return r[list[m.Ldif.Entry]].ok(schema_entries)
 
         # Build Mapping[str, frozenset[str]] from WhitelistRules model fields
         # Convert list[str] to frozenset[str] for type compatibility
@@ -1166,7 +1169,7 @@ class FlextLdifCategorization(
         if result.is_success:
             filtered = u.unwrap_or(result, default=None)
             if filtered is not None:
-                # filtered is already list[m.Entry] after None check
+                # filtered is already list[m.Ldif.Entry] after None check
                 logger.info(
                     "Applied schema OID whitelist filter",
                     total_entries=u.Collection.count(schema_entries),
@@ -1174,18 +1177,18 @@ class FlextLdifCategorization(
                     removed_entries=u.Collection.count(schema_entries)
                     - u.Collection.count(filtered),
                 )
-                return r[list[m.Entry]].ok(filtered)
+                return r[list[m.Ldif.Entry]].ok(filtered)
 
         # Error handling: result.error might be None
         # Use u.err() for unified error extraction (DSL pattern)
         error_msg = u.err(result)
-        return r[list[m.Entry]].fail(error_msg)
+        return r[list[m.Ldif.Entry]].fail(error_msg)
 
     @staticmethod
     def filter_categories_by_base_dn(
-        categories: m.FlexibleCategories,
+        categories: m.Ldif.FlexibleCategories,
         base_dn: str,
-    ) -> m.FlexibleCategories:
+    ) -> m.Ldif.FlexibleCategories:
         """Filter categorized entries by base DN.
 
         Applies base DN filtering to HIERARCHY, USERS, GROUPS, and ACL categories.
@@ -1205,14 +1208,14 @@ class FlextLdifCategorization(
         # Create FlexibleCategories (_FlexibleCategories extends Categories[Entry])
         # Use _FlexibleCategories directly for type compatibility
         filtered = _FlexibleCategories()
-        # excluded_entries must be list[m.Entry] to match filtered type
-        excluded_entries: list[m.Entry] = []
+        # excluded_entries must be list[m.Ldif.Entry] to match filtered type
+        excluded_entries: list[m.Ldif.Entry] = []
 
         filterable_categories = {
-            c.Categories.HIERARCHY,
-            c.Categories.USERS,
-            c.Categories.GROUPS,
-            c.Categories.ACL,
+            c.Ldif.Categories.HIERARCHY,
+            c.Ldif.Categories.USERS,
+            c.Ldif.Categories.GROUPS,
+            c.Ldif.Categories.ACL,
         }
 
         # Categories is Categories[Entry], use .items() directly (not u.pairs which requires dict/Mapping)
@@ -1222,53 +1225,47 @@ class FlextLdifCategorization(
                 continue
 
             if category in filterable_categories:
-                # Type narrowing: entries is list[m.Entry] from categories.items()
-                # Convert to list[m.Entry] for _filter_entries_by_base_dn
-                entries_list: list[m.Entry] = [
-                    cast("m.Entry", entry)
-                    for entry in (entries if isinstance(entries, list) else [])
-                ]
+                # entries is list[m.Ldif.Entry] from categories.items()
+                # _filter_entries_by_base_dn expects list[m.Ldif.Entry]
+                entries_list = list(entries) if isinstance(entries, list) else []
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
                     base_dn,
                 )
-                # Convert back to m.Entry for filtered assignment
-                filtered[category] = [cast("m.Entry", entry) for entry in included]
+                # Convert to list[FlextLdifModelsDomains.Entry] for _FlexibleCategories
+                filtered[category] = list(included)
 
                 # Update metadata for excluded entries
                 excluded_updated = [
                     FlextLdifCategorization._mark_entry_rejected(
                         entry,
-                        c.RejectionCategory.BASE_DN_FILTER,
+                        c.Ldif.RejectionCategory.BASE_DN_FILTER,
                         f"DN not under base DN: {base_dn}",
                     )
                     for entry in excluded
                 ]
-                # excluded_updated is list[m.Entry], excluded_entries is list[m.Entry]
-                # Convert to m.Entry before extending
-                excluded_entries_converted: list[m.Entry] = [
-                    cast("m.Entry", entry) for entry in excluded_updated
-                ]
-                excluded_entries.extend(excluded_entries_converted)
+                # excluded_updated is list[m.Ldif.Entry], excluded_entries is list[m.Ldif.Entry]
+                excluded_entries.extend(excluded_updated)
             else:
-                # Type narrowing: entries is list[m.Entry] from categories.items()
-                # No conversion needed - direct assignment to filtered
-                filtered[category] = entries if isinstance(entries, list) else []
+                # Convert to list[FlextLdifModelsDomains.Entry] for _FlexibleCategories
+                filtered[category] = list(entries) if isinstance(entries, list) else []
 
         if excluded_entries:
-            # filtered.get returns list[m.Entry], excluded_entries is also list[m.Entry]
-            # No conversion needed - direct concatenation
-            existing_rejected = filtered.get(c.Categories.REJECTED, [])
-            filtered[c.Categories.REJECTED] = existing_rejected + excluded_entries
+            # filtered.get returns list[FlextLdifModelsDomains.Entry] from _FlexibleCategories
+            existing_rejected = filtered.get(c.Ldif.Categories.REJECTED, [])
+            # Convert both lists to same type for concatenation
+            filtered[c.Ldif.Categories.REJECTED] = list(existing_rejected) + list(
+                excluded_entries
+            )
 
-        # Cast to m.FlexibleCategories for return type compatibility
-        return cast("m.FlexibleCategories", filtered)
+        # Cast to m.Ldif.FlexibleCategories for return type compatibility
+        return cast("m.Ldif.FlexibleCategories", filtered)
 
     @staticmethod
     def _filter_entries_by_base_dn(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         base_dn: str,
-    ) -> tuple[list[m.Entry], list[m.Entry]]:
+    ) -> tuple[list[m.Ldif.Entry], list[m.Ldif.Entry]]:
         """Filter entries by base DN using u.DN.
 
         Args:
@@ -1279,9 +1276,9 @@ class FlextLdifCategorization(
             Tuple of (included_entries, excluded_entries)
 
         """
-        model_entries: list[m.Entry] = list(entries)
-        included: list[m.Entry] = []
-        excluded: list[m.Entry] = []
+        model_entries: list[m.Ldif.Entry] = list(entries)
+        included: list[m.Ldif.Entry] = []
+        excluded: list[m.Ldif.Entry] = []
 
         for entry in model_entries:
             dn_str = entry.dn.value if entry.dn else None
@@ -1294,10 +1291,10 @@ class FlextLdifCategorization(
 
     @staticmethod
     def _mark_entry_rejected(
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         category: str,
         reason: str,
-    ) -> m.Entry:
+    ) -> m.Ldif.Entry:
         """Mark entry as rejected in metadata using u.
 
         Args:

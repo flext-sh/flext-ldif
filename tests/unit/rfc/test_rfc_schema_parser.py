@@ -1,3 +1,9 @@
+"""Tests for FlextLdif RFC schema parser functionality.
+
+This module tests the RFC 2849/4512 compliant schema parser for LDIF format
+parsing, validation, and schema definition extraction.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

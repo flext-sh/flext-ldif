@@ -1,3 +1,10 @@
+"""Tests for migration pipeline server-specific quirks.
+
+This module tests the FlextLdifMigrationPipeline with server-specific quirk
+handling, validating server-to-server transformations including boolean value
+conversions and other server-specific attribute transformations during migrations.
+"""
+
 from __future__ import annotations
 
 import re

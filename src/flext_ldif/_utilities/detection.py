@@ -65,7 +65,7 @@ class FlextLdifUtilitiesDetection:
         def _get_constants(
             self,
             required_attr: str | None = None,
-        ) -> type[FlextLdifProtocols.Constants.ServerConstantsProtocol] | None:
+        ) -> type[FlextLdifProtocols.Ldif.Constants.ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal.
 
             Args:
@@ -120,10 +120,10 @@ class FlextLdifUtilitiesDetection:
             *,
             data: (
                 str
-                | FlextLdifProtocols.Models.SchemaAttributeProtocol
-                | FlextLdifProtocols.Models.SchemaObjectClassProtocol
-                | FlextLdifProtocols.Models.EntryProtocol
-                | FlextLdifProtocols.Models.AclProtocol
+                | FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.Models.EntryProtocol
+                | FlextLdifProtocols.Ldif.Models.AclProtocol
                 | None
             ),
         ) -> bool:
@@ -170,10 +170,10 @@ class FlextLdifUtilitiesDetection:
         def can_handle_prefix(
             data: (
                 str
-                | FlextLdifProtocols.Models.SchemaAttributeProtocol
-                | FlextLdifProtocols.Models.SchemaObjectClassProtocol
-                | FlextLdifProtocols.Models.EntryProtocol
-                | FlextLdifProtocols.Models.AclProtocol
+                | FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.Models.EntryProtocol
+                | FlextLdifProtocols.Ldif.Models.AclProtocol
                 | None
             ),
             prefixes: frozenset[str],
@@ -277,8 +277,8 @@ class FlextLdifUtilitiesDetection:
             self,
             schema_item: (
                 str
-                | FlextLdifProtocols.Models.SchemaAttributeProtocol
-                | FlextLdifProtocols.Models.SchemaObjectClassProtocol
+                | FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
+                | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
             ),
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern.
@@ -305,7 +305,8 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifProtocols.Models.SchemaAttributeProtocol,
+            attr_definition: str
+            | FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol,
         ) -> bool:
             """Check if attribute matches OID detection pattern.
 
@@ -322,7 +323,8 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | FlextLdifProtocols.Models.SchemaObjectClassProtocol,
+            oc_definition: str
+            | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
@@ -420,7 +422,7 @@ class FlextLdifUtilitiesDetection:
             # Get objectClass from attributes
             objectclasses: Sequence[str] | str | None = None
             # Check for EntryProtocol first (has get_objectclass_names method)
-            if isinstance(attributes, FlextLdifProtocols.Models.EntryProtocol):
+            if isinstance(attributes, FlextLdifProtocols.Ldif.Models.EntryProtocol):
                 # Entry protocol has get_objectclass_names method
                 objectclasses = list(attributes.get_objectclass_names())
             elif isinstance(attributes, Mapping):
@@ -506,7 +508,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_acl(
             self,
-            acl_line: str | FlextLdifProtocols.Models.AclProtocol,
+            acl_line: str | FlextLdifProtocols.Ldif.Models.AclProtocol,
         ) -> bool:
             """Check if ACL uses the expected ACL attribute.
 

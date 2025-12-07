@@ -1,3 +1,9 @@
+"""Tests for FlextLdif Conversion service functionality.
+
+This module tests the Conversion service for transforming LDIF entries
+between different LDAP server formats using the quirks system.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -8,7 +14,6 @@ import pytest
 from flext_core import FlextResult
 from flext_tests import tm
 
-from flext_ldif.models import m
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud

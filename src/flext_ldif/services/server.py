@@ -5,19 +5,17 @@ from __future__ import annotations
 import inspect
 from typing import cast
 
-from flext_core import (
-    FlextLogger,
-    r,
-)
+from flext_core import r
+from flext_core.loggings import FlextLogger as l_core
 
 import flext_ldif.servers as servers_package
 from flext_ldif.constants import c
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import t
 from flext_ldif.utilities import u
 
-logger = FlextLogger(__name__)
+logger = l_core(__name__)
 
 # Local type alias for quirks dict including concrete types from FlextLdifServersBase
 # Note: Protocols are compatible with concrete types via structural subtyping
@@ -272,7 +270,7 @@ class FlextLdifServer:
     def _normalize_server_type(
         self,
         server_type: str,
-    ) -> c.LiteralTypes.ServerTypeLiteral:
+    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Normalize server type to canonical short form.
 
         Delegates to c.normalize_server_type() for proper
@@ -285,7 +283,10 @@ class FlextLdifServer:
         server_type: str,
         attr_name: str,
     ) -> r[
-        p.Quirks.SchemaProtocol | p.Quirks.AclProtocol | p.Quirks.EntryProtocol | None
+        FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
+        | FlextLdifProtocols.Ldif.Quirks.AclProtocol
+        | FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+        | None
     ]:
         """Retrieve a quirk attribute (schema, ACL, or entry) for a server.
 
@@ -317,7 +318,7 @@ class FlextLdifServer:
 
     def quirk(
         self,
-        server_type: c.LiteralTypes.ServerTypeLiteral | str,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | str,
     ) -> r[FlextLdifServersBase]:
         """Get base quirk for a server type.
 
@@ -484,7 +485,7 @@ class FlextLdifServer:
 
     def get_constants(
         self,
-        server_type: c.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> r[type]:
         """Get Constants class from server quirk.
 
@@ -534,7 +535,7 @@ class FlextLdifServer:
 
     def get_detection_constants(
         self,
-        server_type: c.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> r[type]:
         """Get Constants class with detection attributes from server quirk.
 

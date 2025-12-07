@@ -108,7 +108,7 @@ class TestAssertions:
         """Assert parse success - use tm.ok() instead."""
         value = tm.ok(result, msg=msg)
         if expected_count is not None and hasattr(value, "__len__"):
-            tm.len(value, expected=expected_count, msg=msg)
+            tm.that(value, length=expected_count)
         return value
 
     @staticmethod

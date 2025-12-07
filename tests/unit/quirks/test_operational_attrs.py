@@ -1,3 +1,9 @@
+"""Tests for operational attribute handling across LDAP servers.
+
+This module tests the handling of operational attributes (system-generated,
+non-user-modifiable attributes) across different LDAP server implementations.
+"""
+
 from __future__ import annotations
 
 import dataclasses
