@@ -13,4 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# Import all model modules
+# All type references use direct imports or protocols - no forward references
+# No model_rebuild() needed - models work without rebuilding
+from flext_ldif._models import config, domain  # noqa: F401
+
 __all__: list[str] = []

@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Literal, cast, overload
 
 from flext_core import (
+    FlextTypes,
     r,
-    t,
     u,
 )
 
@@ -277,7 +277,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def get_dn_value(
-        dn: m.DistinguishedName | str | object,
+        dn: m.Ldif.DistinguishedName | str | object,
     ) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
@@ -290,7 +290,7 @@ class FlextLdifUtilitiesDN:
         """
         # Check if it's a DistinguishedName model (local import to avoid circular dependency)
 
-        if isinstance(dn, m.DistinguishedName):
+        if isinstance(dn, m.Ldif.DistinguishedName):
             return dn.value
         if isinstance(dn, str):
             return dn
@@ -302,10 +302,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: m.DistinguishedName) -> list[str]: ...
+    def split(dn: m.Ldif.DistinguishedName) -> list[str]: ...
 
     @staticmethod
-    def split(dn: str | m.DistinguishedName) -> list[str]:
+    def split(dn: str | m.Ldif.DistinguishedName) -> list[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -363,10 +363,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: m.DistinguishedName) -> str: ...
+    def norm_string(dn: m.Ldif.DistinguishedName) -> str: ...
 
     @staticmethod
-    def norm_string(dn: str | m.DistinguishedName) -> str:
+    def norm_string(dn: str | m.Ldif.DistinguishedName) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
@@ -691,10 +691,10 @@ class FlextLdifUtilitiesDN:
         # Track if normalization changed the DN
         transformations: list[str] = []
         if dn_str != normalized:
-            transformations.append(c.TransformationType.DN_NORMALIZED)
+            transformations.append(c.Ldif.TransformationType.DN_NORMALIZED)
 
         # Create statistics
-        stats = m.DNStatistics.create_with_transformation(
+        stats = m.Ldif.DNStatistics.create_with_transformation(
             original_dn=orig,
             cleaned_dn=dn_str,
             normalized_dn=normalized,
@@ -741,20 +741,20 @@ class FlextLdifUtilitiesDN:
             # Fix trailing backslash+space before commas
             # MUST come BEFORE general space removal to handle escaped spaces correctly
             (
-                c.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.DnPatterns.DN_COMMA,
+                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DnPatterns.DN_COMMA,
             ),
             # Remove spaces BEFORE commas (OID quirk: "cn=user ,ou=..." -> "cn=user,ou=...")
             (r"\s+,", ","),
             # Normalize spaces around commas: ", cn=..." -> ",cn=..."
             (
-                c.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.DnPatterns.DN_COMMA,
+                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DnPatterns.DN_COMMA,
             ),
             # Remove unnecessary character escapes (RFC 4514 compliance)
-            (c.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1"),
+            (c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1"),
             # Normalize multiple spaces to single space
-            (c.DnPatterns.DN_MULTIPLE_SPACES, " "),
+            (c.Ldif.DnPatterns.DN_MULTIPLE_SPACES, " "),
         ]
 
         # Apply regex pipeline using sequential processing
@@ -793,10 +793,10 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = m.DNStatistics.create_minimal(
+            stats_domain = m.Ldif.DNStatistics.create_minimal(
                 original_dn,
             )
-            stats = m.DNStatistics.model_validate(
+            stats = m.Ldif.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
             return original_dn, stats
@@ -821,7 +821,7 @@ class FlextLdifUtilitiesDN:
             validation_errors_raw if isinstance(validation_errors_raw, list) else []
         )
 
-        stats_domain = m.DNStatistics.create_with_transformation(
+        stats_domain = m.Ldif.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
@@ -875,7 +875,7 @@ class FlextLdifUtilitiesDN:
                 r"[\t\r\n\x0b\x0c]",
                 r"[\t\r\n\x0b\x0c]",
                 " ",
-                c.TransformationType.TAB_NORMALIZED,
+                c.Ldif.TransformationType.TAB_NORMALIZED,
                 "had_tab_chars",
             ),
             # 2. Spaces before equals
@@ -883,7 +883,7 @@ class FlextLdifUtilitiesDN:
                 r"\s+=",
                 r"\s+=",
                 "=",
-                c.TransformationType.SPACE_CLEANED,
+                c.Ldif.TransformationType.SPACE_CLEANED,
                 "had_leading_spaces",
             ),
             # 3. Spaces before commas
@@ -891,39 +891,39 @@ class FlextLdifUtilitiesDN:
                 r"\s+,",
                 r"\s+,",
                 ",",
-                c.TransformationType.SPACE_CLEANED,
+                c.Ldif.TransformationType.SPACE_CLEANED,
                 "had_trailing_spaces",
             ),
             # 4. Trailing backslash+space
             (
-                c.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.DnPatterns.DN_COMMA,
-                c.TransformationType.ESCAPE_NORMALIZED,
+                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DnPatterns.DN_COMMA,
+                c.Ldif.TransformationType.ESCAPE_NORMALIZED,
                 "had_escape_sequences",
             ),
             # 5. Spaces around commas
             (
-                c.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.DnPatterns.DN_COMMA,
-                c.TransformationType.SPACE_CLEANED,
+                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DnPatterns.DN_COMMA,
+                c.Ldif.TransformationType.SPACE_CLEANED,
                 "",
             ),
             # 6. Unnecessary escapes
             (
-                c.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                c.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
                 r"\1",
-                c.TransformationType.ESCAPE_NORMALIZED,
+                c.Ldif.TransformationType.ESCAPE_NORMALIZED,
                 "",
             ),
             # 7. Multiple spaces
             (
-                c.DnPatterns.DN_MULTIPLE_SPACES,
-                c.DnPatterns.DN_MULTIPLE_SPACES,
+                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
+                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
                 " ",
-                c.TransformationType.SPACE_CLEANED,
+                c.Ldif.TransformationType.SPACE_CLEANED,
                 "had_extra_spaces",
             ),
         ]
@@ -1520,7 +1520,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def replace_base_dn(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         source_dn: str,
         target_dn: str,
     ) -> list[m.Entry]:
@@ -1569,16 +1569,16 @@ class FlextLdifUtilitiesDN:
         }
 
         def transform_entry(
-            entry: m.Entry,
-        ) -> m.Entry | r[m.Entry]:
+            entry: m.Ldif.Entry,
+        ) -> m.Ldif.Entry | r[m.Ldif.Entry]:
             """Transform single entry."""
             if entry.dn is None or entry.attributes is None:
-                return r[m.Entry].fail("Entry has no DN or attributes")
+                return r[m.Ldif.Entry].fail("Entry has no DN or attributes")
             # Type narrowing: entry.dn is not None after check
             # Use get_dn_value to handle str | DistinguishedName | None
             dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
             if not dn_value:
-                return r[m.Entry].fail("Entry DN is empty")
+                return r[m.Ldif.Entry].fail("Entry DN is empty")
             transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
                 dn_value,
                 source_dn,
@@ -1593,7 +1593,7 @@ class FlextLdifUtilitiesDN:
             return entry.model_copy(
                 update={
                     "dn": transformed_dn,
-                    "attributes": m.LdifAttributes(attributes=transformed_attrs),
+                    "attributes": m.Ldif.LdifAttributes(attributes=transformed_attrs),
                 },
             )
 
@@ -1620,7 +1620,7 @@ class FlextLdifUtilitiesDN:
         ldif_dir: Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> r[dict[str, t.GeneralValueType]]:
+    ) -> r[dict[str, FlextTypes.GeneralValueType]]:
         """Transform BaseDN in all LDIF files in directory.
 
         Reads all *.ldif files from directory, transforms BaseDN in entries,
@@ -1747,7 +1747,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _update_metadata_for_transformation(
-        metadata: m.QuirkMetadata,
+        metadata: m.Ldif.QuirkMetadata,
         config: FlextLdifModelsConfig.MetadataTransformationConfig,
     ) -> None:
         """Update metadata with transformation tracking."""
@@ -1778,8 +1778,12 @@ class FlextLdifUtilitiesDN:
             operation="basedn_transform",
             description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
         )
-        metadata.extensions[c.MetadataKeys.ENTRY_SOURCE_DN_CASE] = config.original_dn
-        metadata.extensions[c.MetadataKeys.ENTRY_TARGET_DN_CASE] = config.transformed_dn
+        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_SOURCE_DN_CASE] = (
+            config.original_dn
+        )
+        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
+            config.transformed_dn
+        )
 
     @staticmethod
     def transform_dn_with_metadata(
@@ -1891,7 +1895,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def replace_base_dn_with_metadata(
-        entries: list[m.Entry],
+        entries: list[m.Ldif.Entry],
         source_dn: str,
         target_dn: str,
     ) -> list[m.Entry]:

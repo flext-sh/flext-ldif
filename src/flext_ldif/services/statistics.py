@@ -88,7 +88,7 @@ class FlextLdifStatistics(
 
     def generate_statistics(
         self,
-        categorized: m.FlexibleCategories | _FlexibleCategories,
+        categorized: m.Ldif.FlexibleCategories | _FlexibleCategories,
         written_counts: dict[str, int],
         output_dir: Path,
         output_files: dict[str, str],
@@ -147,7 +147,7 @@ class FlextLdifStatistics(
 
         # Access rejected entries directly from categorized dict
         # u.take() doesn't work correctly with _FlexibleCategories Pydantic models
-        rejected_key = c.Categories.REJECTED
+        rejected_key = c.Ldif.Categories.REJECTED
         rejected_entries_raw: list[m.Ldif.Entry] = cast(
             "list[m.Ldif.Entry]",
             categorized.get(rejected_key, []) if hasattr(categorized, "get") else [],

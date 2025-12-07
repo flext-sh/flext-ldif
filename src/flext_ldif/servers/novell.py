@@ -27,10 +27,24 @@ from typing import Any, ClassVar, cast
 
 from flext_core import FlextResult, FlextRuntime
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes, t
-from flext_ldif.utilities import u
+from flext_ldif.typings import t
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
@@ -196,7 +210,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if not isinstance(attr_definition, str):
                 # Check using protocol/structural typing
                 if hasattr(attr_definition, "oid") and hasattr(attr_definition, "name"):
-                    return u.Server.matches_server_patterns(
+                    u = _get_utilities()
+                    return u.Server.matches_server_patterns(  # type: ignore[attr-defined]
                         value=attr_definition,
                         oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                         detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -248,7 +263,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Detect eDirectory objectClass definitions using Constants."""
             if not isinstance(oc_definition, str):
                 if hasattr(oc_definition, "oid") and hasattr(oc_definition, "name"):
-                    return u.Server.matches_server_patterns(
+                    u = _get_utilities()
+                    return u.Server.matches_server_patterns(  # type: ignore[attr-defined]
                         value=oc_definition,
                         oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                         detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -407,12 +423,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Implication: Character-by-character parsing is required for remote
                 # auditing to track which permissions were granted/denied
                 char_mapping: dict[str, list[str]] = {
-                    "B": [c.PermissionNames.SEARCH],
-                    "C": [c.PermissionNames.COMPARE],
-                    "D": [c.PermissionNames.DELETE],
-                    "R": [c.PermissionNames.READ],
-                    "W": [c.PermissionNames.WRITE],
-                    "A": [c.PermissionNames.ADD],
+                    "B": [c.Ldif.PermissionNames.SEARCH],
+                    "C": [c.Ldif.PermissionNames.COMPARE],
+                    "D": [c.Ldif.PermissionNames.DELETE],
+                    "R": [c.Ldif.PermissionNames.READ],
+                    "W": [c.Ldif.PermissionNames.WRITE],
+                    "A": [c.Ldif.PermissionNames.ADD],
                     "S": ["supervisor"],  # Novell-specific
                     "E": ["entry"],  # Novell-specific
                 }
@@ -439,7 +455,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             # Add if it looks like an attribute name (not a permission)
                             if (
                                 attr_name.lower()
-                                not in c.PermissionNames.ALL_PERMISSIONS
+                                not in c.Ldif.PermissionNames.ALL_PERMISSIONS
                             ):
                                 attributes.append(attr_name)
 
@@ -464,12 +480,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         **self._build_novell_permissions_from_rights(
                             rights,
                             {
-                                "read": c.PermissionNames.READ,
-                                "write": c.PermissionNames.WRITE,
-                                "add": c.PermissionNames.ADD,
-                                "delete": c.PermissionNames.DELETE,
-                                "search": c.PermissionNames.SEARCH,
-                                "compare": c.PermissionNames.COMPARE,
+                                "read": c.Ldif.PermissionNames.READ,
+                                "write": c.Ldif.PermissionNames.WRITE,
+                                "add": c.Ldif.PermissionNames.ADD,
+                                "delete": c.Ldif.PermissionNames.DELETE,
+                                "search": c.Ldif.PermissionNames.SEARCH,
+                                "compare": c.Ldif.PermissionNames.COMPARE,
                             },
                         ),
                     ),
@@ -557,12 +573,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Add rights - collect active permissions from permissions dict
                 # Map canonical permission names to Novell format
                 permission_map = {
-                    "read": c.PermissionNames.READ,
-                    "write": c.PermissionNames.WRITE,
-                    "add": c.PermissionNames.ADD,
-                    "delete": c.PermissionNames.DELETE,
-                    "search": c.PermissionNames.SEARCH,
-                    "compare": c.PermissionNames.COMPARE,
+                    "read": c.Ldif.PermissionNames.READ,
+                    "write": c.Ldif.PermissionNames.WRITE,
+                    "add": c.Ldif.PermissionNames.ADD,
+                    "delete": c.Ldif.PermissionNames.DELETE,
+                    "search": c.Ldif.PermissionNames.SEARCH,
+                    "compare": c.Ldif.PermissionNames.COMPARE,
                 }
                 active_perms: list[str] = []
                 if acl_data.permissions:
@@ -610,7 +626,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDictGeneric,
+            attributes: t.Ldif.CommonDict.AttributeDictGeneric,
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:

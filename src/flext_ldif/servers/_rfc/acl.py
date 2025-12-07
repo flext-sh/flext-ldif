@@ -22,11 +22,11 @@ from __future__ import annotations
 
 from typing import Self, overload
 
-from flext_core import FlextLogger, FlextResult, t
+from flext_core import FlextLogger, FlextResult, FlextTypes, t
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
 
@@ -148,7 +148,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             metadata: Metadata dict to store preservation info
 
         """
-        meta_key = c.FeatureCapabilities.META_UNSUPPORTED_FEATURES
+        meta_key = c.Ldif.FeatureCapabilities.META_UNSUPPORTED_FEATURES
         if meta_key not in metadata:
             metadata[meta_key] = {}
         unsupported = metadata[meta_key]
@@ -184,7 +184,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             metadata=m.QuirkMetadata(
                 quirk_type=server_type_value,
                 extensions=m.DynamicMetadata(**{
-                    c.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line,
+                    c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT: acl_line,
                 }),
             ),
         )
@@ -294,9 +294,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __new__(
         cls,
-        _acl_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
-        parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        _acl_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
+        parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: dict[str, str | int | float | bool | list[str] | None],
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
@@ -312,13 +311,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         parent_quirk_raw = (
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
-        parent_quirk_value: (
-            FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None
-        ) = (
+        parent_quirk_value: p.Ldif.Quirks.ParentQuirkProtocol | None = (
             parent_quirk_raw
-            if isinstance(
-                parent_quirk_raw, FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol
-            )
+            if isinstance(parent_quirk_raw, p.Ldif.Quirks.ParentQuirkProtocol)
             else None
         )
         # Initialize using super() to avoid mypy error about accessing
@@ -360,10 +355,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __init__(
         self,
-        acl_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
-        parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
-        **kwargs: t.GeneralValueType,
+        acl_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
+        parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize RFC ACL quirk service.
 
@@ -375,16 +369,16 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         """
         # Business Rule: Filter parent_quirk from kwargs to avoid type errors
         # Implication: parent_quirk is handled separately, not via Pydantic fields
-        filtered_kwargs: dict[str, t.GeneralValueType] = {
+        filtered_kwargs: dict[str, FlextTypes.GeneralValueType] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "parent_quirk"}
         }
         # Business Rule: Call parent Acl.__init__ which accepts acl_service and _parent_quirk
         # acl_service is already compatible with HasParseMethodProtocol
-        acl_service_typed: (
-            FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol | None
-        ) = acl_service if acl_service is not None else None
+        acl_service_typed: p.Ldif.Services.HasParseMethodProtocol | None = (
+            acl_service if acl_service is not None else None
+        )
         # Call base class __init__ directly to avoid mypy inference issues through nested class
         FlextLdifServersBaseSchemaAcl.__init__(
             self,

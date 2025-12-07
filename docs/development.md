@@ -11,7 +11,7 @@ This guide covers LDIF-specific development workflows and technical consideratio
 - Python 3.13 or higher
 - Poetry for dependency management
 - Understanding of LDIF format (RFC 2849)
-- Familiarity with FLEXT ecosystem patterns (see [flext-core documentation](../../flext-core/README.md))
+- Familiarity with FLEXT ecosystem patterns (see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md))
 
 ### Initial Setup
 
@@ -278,7 +278,7 @@ top -p $(pgrep -f python)
 
 ## Integration with FLEXT Ecosystem
 
-For FLEXT ecosystem integration patterns, see [flext-core documentation](../../flext-core/CLAUDE.md). FLEXT-LDIF follows standard patterns for:
+For FLEXT ecosystem integration patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/CLAUDE.md). FLEXT-LDIF follows standard patterns for:
 
 - FlextResult error handling
 - FlextContainer dependency injection

@@ -25,15 +25,15 @@ import re
 from collections.abc import Mapping
 from typing import cast
 
-from flext_core import FlextLogger, FlextModels, FlextRuntime, u
+from flext_core import FlextLogger, FlextModels, FlextRuntime, FlextTypes, u
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.typings import LdifModelT, t
+from flext_ldif.protocols import p
+from flext_ldif.typings import FlextLdifModelT, t
 
 # Type alias for EntryStatistics to use in type annotations
 # m.EntryStatistics is a variable assignment, not a type alias
@@ -58,8 +58,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _convert_transformation_to_metadata_value(
-        transformation: t.TransformationInfo,
-    ) -> Mapping[str, t.ScalarValue]:
+        transformation: t.Ldif.TransformationInfo,
+    ) -> Mapping[str, FlextTypes.ScalarValue]:
         """Convert TransformationInfo TypedDict to MetadataAttributeValue-compatible dict.
 
         TransformationInfo has changes: list[str], which needs to be converted
@@ -115,7 +115,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _set_model_metadata(
-        model: FlextLdifProtocols.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.Constants.ModelWithValidationMetadata,
         metadata: FlextLdifModelsMetadata.DynamicMetadata,
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models).
@@ -149,7 +149,7 @@ class FlextLdifUtilitiesMetadata:
     # =========================================================================
 
     @staticmethod
-    def _get_metadata_dict(model: LdifModelT) -> dict[str, object]:
+    def _get_metadata_dict(model: FlextLdifModelT) -> dict[str, object]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -171,11 +171,11 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_list_metadata(
         metadata: dict[str, object],
         metadata_key: str,
-        item_data: t.MetadataAttributeValue,
+        item_data: FlextTypes.MetadataAttributeValue,
     ) -> None:
         """Add item to list metadata."""
         value = metadata[metadata_key]
-        value_for_check: t.GeneralValueType = (
+        value_for_check: FlextTypes.GeneralValueType = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -195,11 +195,11 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_dict_metadata(
         metadata: dict[str, object],
         metadata_key: str,
-        item_data: t.MetadataAttributeValue,
+        item_data: FlextTypes.MetadataAttributeValue,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata[metadata_key]
-        value_for_dict_check: t.GeneralValueType = (
+        value_for_dict_check: FlextTypes.GeneralValueType = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -238,13 +238,13 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _track_metadata_item(
-        model: LdifModelT,
+        model: FlextLdifModelT,
         metadata_key: str,
-        item_data: t.MetadataAttributeValue,
+        item_data: FlextTypes.MetadataAttributeValue,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
-    ) -> LdifModelT:
+    ) -> FlextLdifModelT:
         """Generic helper to track items in model validation_metadata.
 
         Consolidates common pattern of get-or-init metadata, add item, set back.
@@ -293,7 +293,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _extract_source_metadata(
-        model: LdifModelT,
+        model: FlextLdifModelT,
     ) -> FlextLdifModelsMetadata.DynamicMetadata | None:
         """Extract validation metadata from a model."""
         source_metadata_obj = getattr(model, "validation_metadata", None)
@@ -318,7 +318,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _get_or_create_target_metadata(
-        model: LdifModelT,
+        model: FlextLdifModelT,
     ) -> FlextLdifModelsMetadata.DynamicMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
@@ -341,10 +341,10 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_validation_metadata(
-        source_model: ModelT,
-        target_model: ModelT,
-        transformation: t.TransformationInfo,
-    ) -> LdifModelT:
+        source_model: FlextLdifModelT,
+        target_model: FlextLdifModelT,
+        transformation: t.Ldif.TransformationInfo,
+    ) -> FlextLdifModelT:
         """Copy validation_metadata from source to target, adding transformation.
 
         Preserves RFC violations captured in FASE 1 validators and adds
@@ -396,9 +396,9 @@ class FlextLdifUtilitiesMetadata:
 
         if "transformations" not in target_metadata:
             # Create new list with transformation
-            new_list: list[Mapping[str, t.ScalarValue]] = [transformation_dict]
+            new_list: list[Mapping[str, FlextTypes.ScalarValue]] = [transformation_dict]
             target_metadata["transformations"] = cast(
-                "t.MetadataAttributeValue",
+                "FlextTypes.MetadataAttributeValue",
                 new_list,
             )
         else:
@@ -408,20 +408,20 @@ class FlextLdifUtilitiesMetadata:
                 # Business Rule: transformations list accepts Mapping[str, ScalarValue] as dict
                 # Type narrowing: transformations_obj is list, create new list with transformation_dict
                 # Use list comprehension to create new list with proper type
-                existing_items: list[Mapping[str, t.ScalarValue]] = [
-                    cast("Mapping[str, t.ScalarValue]", item)
+                existing_items: list[Mapping[str, FlextTypes.ScalarValue]] = [
+                    cast("Mapping[str, FlextTypes.ScalarValue]", item)
                     for item in transformations_obj
                 ]
                 existing_items.append(transformation_dict)
                 target_metadata["transformations"] = cast(
-                    "t.MetadataAttributeValue",
+                    "FlextTypes.MetadataAttributeValue",
                     existing_items,
                 )
             else:
                 # Create new list if current value is not a list (should not happen for transformations)
                 new_list = [transformation_dict]
                 target_metadata["transformations"] = cast(
-                    "t.MetadataAttributeValue",
+                    "FlextTypes.MetadataAttributeValue",
                     new_list,
                 )
 
@@ -437,7 +437,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def extract_rfc_violations(
-        model: FlextLdifProtocols.Ldif.Constants.ModelWithValidationMetadata,
+        model: p.Ldif.Constants.ModelWithValidationMetadata,
     ) -> list[str]:
         """Extract all RFC violations from model validation_metadata.
 
@@ -501,11 +501,11 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_conversion_step(
-        model: LdifModelT,
+        model: FlextLdifModelT,
         step: str,
         server: str,
         changes: list[str],
-    ) -> LdifModelT:
+    ) -> FlextLdifModelT:
         """Add conversion step to model transformation history.
 
         Tracks each step in the conversion pipeline for audit trail and debugging.
@@ -530,7 +530,7 @@ class FlextLdifUtilitiesMetadata:
 
         """
         # Create TransformationInfo dict (TypedDict compatible with MetadataAttributeValue)
-        transformation_info: t.TransformationInfo = {
+        transformation_info: t.Ldif.TransformationInfo = {
             "step": step,
             "server": server,
             "changes": changes,
@@ -1200,7 +1200,7 @@ class FlextLdifUtilitiesMetadata:
             Dictionary with difference analysis
 
         """
-        mk = c.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         differences: dict[str, t.MetadataAttributeValue] = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
@@ -1256,7 +1256,7 @@ class FlextLdifUtilitiesMetadata:
         if entry.metadata is None:
             # Create new metadata if None
             entry.metadata = m.QuirkMetadata.create_for(
-                c.normalize_server_type(c.ServerTypes.RFC.value),
+                c.Ldif.normalize_server_type(c.Ldif.ServerTypes.RFC.value),
             )
         # updated_stats is EntryStatisticsType (FlextLdifModelsDomains.EntryStatistics)
         # Use model_dump and model_validate to ensure facade type
@@ -1408,7 +1408,7 @@ class FlextLdifUtilitiesMetadata:
             return None
         # Handle both dict and Pydantic model with extra="allow"
         write_opts = entry_data.metadata.write_options
-        key = c.MetadataKeys.WRITE_OPTIONS
+        key = c.Ldif.MetadataKeys.WRITE_OPTIONS
         if hasattr(write_opts, "model_extra"):
             extras = write_opts.model_extra or {}
         elif isinstance(write_opts, dict):
@@ -1639,7 +1639,7 @@ class FlextLdifUtilitiesMetadata:
 
         # Build extensions dict with original_dn_complete for round-trip support
         extensions_dict: dict[str, t.MetadataAttributeValue] = {}
-        mk = c.MetadataKeys
+        mk = c.Ldif.MetadataKeys
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
 
         # Create QuirkMetadata with original_strings populated

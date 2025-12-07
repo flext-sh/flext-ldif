@@ -83,7 +83,7 @@ else:
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 - **[Architecture](docs/architecture.md)** - System design and patterns
 - **[Configuration](docs/configuration.md)** - Configuration options and customization
-- **[Integration Guide](docs/integration.md)** - Integration with other systems
+- **[Integration Guide](docs/guides/integration.md)** - Integration with other systems
 - **[Migration Guide](docs/migration/v0.9-to-v1.0-migration.md)** - Upgrade from v0.9 to v1.0
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
@@ -366,7 +366,7 @@ See [CLAUDE.md](CLAUDE.md) for complete test helper documentation.
 
 ### Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+See [Development Guide](docs/development.md) for development guidelines.
 
 ---
 
@@ -955,13 +955,13 @@ See TODO.md for detailed development priorities.
 
 ## 📚 Documentation
 
-- **[Architecture Standards](ARCHITECTURE_STANDARDS.md)** - LDIF operations responsibility, import rules, compliance verification
+- **[Architecture](docs/architecture.md)** - LDIF operations responsibility, import rules, compliance verification
 - **[Getting Started](docs/getting-started.md)** - Installation and setup
 - **[Architecture](docs/architecture.md)** - Service design and patterns
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 - **[Configuration](docs/configuration.md)** - Settings and environment management
 - **[Development](docs/development.md)** - Contributing and workflows
-- **[Integration](docs/integration.md)** - FLEXT ecosystem integration patterns
+- **[Integration](docs/guides/integration.md)** - FLEXT ecosystem integration patterns
 - **[Examples](docs/examples/)** - Working code examples
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 

@@ -12,13 +12,14 @@ import re
 from collections.abc import Callable
 from typing import TypedDict
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, t
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextTypes
 
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -34,7 +35,7 @@ logger = FlextLogger(__name__)
 class MetadataDict(TypedDict, total=False):
     """Type-safe dictionary for parsed metadata structures."""
 
-    extensions: FlextLdifTypes.Extensions.ExtensionsDict | None
+    extensions: t.Ldif.Extensions.ExtensionsDict | None
     # Other metadata fields
 
 
@@ -71,11 +72,11 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def ext(
         metadata: MetadataDict,
-    ) -> FlextLdifTypes.Extensions.ExtensionsDict:
+    ) -> t.Ldif.Extensions.ExtensionsDict:
         """Extract extension information from parsed metadata."""
         result = metadata.get("extensions")
         if result is None or not isinstance(result, dict):
-            empty: FlextLdifTypes.Extensions.ExtensionsDict = {}
+            empty: t.Ldif.Extensions.ExtensionsDict = {}
             return empty
         return result
 
@@ -157,7 +158,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_extensions(
         definition: str,
-    ) -> FlextLdifTypes.Extensions.ExtensionsDict:
+    ) -> t.Ldif.Extensions.ExtensionsDict:
         """Extract extension information from schema definition string.
 
         Simple helper to extract X- extensions, DESC, ORDERING, SUBSTR from
@@ -168,7 +169,7 @@ class FlextLdifUtilitiesParser:
         if not definition or not isinstance(definition, str):
             return {}
 
-        extensions: FlextLdifTypes.Extensions.ExtensionsDict = {}
+        extensions: t.Ldif.Extensions.ExtensionsDict = {}
 
         # Extract X- extensions (custom properties)
         x_pattern = re.compile(
@@ -580,8 +581,8 @@ class FlextLdifUtilitiesParser:
     def extract_schema_definitions(
         ldif_content: str,
         definition_type: str = "attributeTypes",
-        parse_callback: Callable[[str], t.GeneralValueType] | None = None,
-    ) -> list[t.GeneralValueType]:
+        parse_callback: Callable[[str], FlextTypes.GeneralValueType] | None = None,
+    ) -> list[FlextTypes.GeneralValueType]:
         """Extract and parse schema definitions from LDIF content.
 
         Generic line-by-line parser that:
@@ -599,7 +600,7 @@ class FlextLdifUtilitiesParser:
             List of successfully parsed schema objects
 
         """
-        definitions: list[t.GeneralValueType] = []
+        definitions: list[FlextTypes.GeneralValueType] = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
@@ -725,9 +726,6 @@ class FlextLdifUtilitiesParser:
 
         """
         # Use build_attribute_metadata from base.py which handles server_type correctly
-        # Circular dependency: parser -> servers.base -> utilities -> parser (justified)
-        from flext_ldif.servers.base import FlextLdifServersBase
-
         return FlextLdifServersBase.Schema.build_attribute_metadata(
             attr_definition=attr_definition,
             syntax=syntax,

@@ -15,8 +15,7 @@ from typing import ClassVar, cast
 from flext_core import FlextLogger
 
 from flext_ldif.constants import c
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.protocols import p
 
 logger = FlextLogger(__name__)
 
@@ -83,6 +82,8 @@ def _get_utilities() -> type:
         FlextLdifUtilities class type
 
     """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
     return FlextLdifUtilities
 
 
@@ -141,7 +142,7 @@ def _get_priority_from_parent(parent: object | None) -> int:
 
 def _get_parent_quirk_safe_impl(
     instance: object,
-) -> FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None:
+) -> p.Ldif.Quirks.ParentQuirkProtocol | None:
     """Get _parent_quirk attribute safely with type narrowing.
 
     Business Rule: Consolidates the common pattern of getting and
@@ -156,7 +157,7 @@ def _get_parent_quirk_safe_impl(
     """
     parent_raw = getattr(instance, "_parent_quirk", None)
     # Use protocol isinstance check for type narrowing
-    if isinstance(parent_raw, FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol):
+    if isinstance(parent_raw, p.Ldif.Quirks.ParentQuirkProtocol):
         return parent_raw
     return None
 
@@ -193,7 +194,7 @@ class QuirkMethodsMixin:
 
     def _get_parent_quirk_safe(
         self,
-    ) -> FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None:
+    ) -> p.Ldif.Quirks.ParentQuirkProtocol | None:
         """Get _parent_quirk attribute safely with type narrowing.
 
         Returns:

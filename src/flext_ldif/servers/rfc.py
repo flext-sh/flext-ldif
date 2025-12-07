@@ -30,7 +30,7 @@ from flext_ldif.servers._rfc import (
     FlextLdifServersRfcSchema,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -148,7 +148,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     def _route_model_to_write(
         self,
-        model: FlextLdifTypes.ConvertibleModel,
+        model: t.Ldif.ConvertibleModel,
     ) -> FlextResult[str]:
         """Route a single model to appropriate write method.
 

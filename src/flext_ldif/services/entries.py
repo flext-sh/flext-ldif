@@ -18,12 +18,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self, cast
 
-from flext_core import r
+from flext_core import FlextTypes, r
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.typings import t
+from flext_ldif.protocols import p
 from flext_ldif.utilities import u
 
 
@@ -330,7 +329,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     def get_entry_dn(
         entry: m.Ldif.Entry
         | dict[str, str | list[str]]
-        | FlextLdifProtocols.Ldif.Models.EntryWithDnProtocol,
+        | p.Ldif.Models.EntryWithDnProtocol,
     ) -> r[str]:
         """Extract DN from entry.
 
@@ -608,7 +607,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def get_attribute_values(
-        attribute: t.GeneralValueType,
+        attribute: FlextTypes.GeneralValueType,
     ) -> r[list[str]]:
         """Extract values from attribute.
 

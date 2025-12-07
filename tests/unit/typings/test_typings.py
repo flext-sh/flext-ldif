@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-# FlextLdifFixtures and TypedDicts are available from conftest.py (pytest auto-imports)
-# TypedDicts (GenericFieldsDict, GenericTestCaseDict, etc.) are available from conftest.py
+
+
+class TestFlextLdifTypesStructure:
     def test_namespace_exists(self) -> None:
         """FlextLdifTypes class must be accessible."""
         assert FlextLdifTypes is not None
@@ -59,6 +60,7 @@ import pytest
             f"typings.py must not import from internal modules: {internal_imports}"
         )
 
+
 class TestsFlextLdifCommonDictionaryTypes(s):
     """Test common dictionary type definitions with REAL data."""
 
@@ -105,6 +107,7 @@ class TestsFlextLdifCommonDictionaryTypes(s):
         }
         assert all(isinstance(v, int) for v in dist.values())
 
+
 class TestEntryTypes:
     """Test Entry namespace type definitions with REAL data."""
 
@@ -148,6 +151,7 @@ class TestEntryTypes:
         metadata_value = data["metadata"]
         assert isinstance(metadata_value, dict)
 
+
 class TestModelsNamespace:
     """Test Models namespace type definitions with REAL data patterns."""
 
@@ -158,7 +162,11 @@ class TestModelsNamespace:
             "GenericFieldsDict",
             {
                 c.Names.CN: ["John Doe"],
-                c.Names.OBJECTCLASS: [c.Names.INET_ORG_PERSON, c.Names.PERSON, c.Names.TOP],
+                c.Names.OBJECTCLASS: [
+                    c.Names.INET_ORG_PERSON,
+                    c.Names.PERSON,
+                    c.Names.TOP,
+                ],
                 c.Names.SN: "Doe",
                 c.Names.MAIL: ["john@example.com"],
                 c.Names.UID: "jdoe",
@@ -233,6 +241,7 @@ class TestModelsNamespace:
         supports_dn_case = cast("bool", extensions.get("supports_dn_case_registry"))
         assert supports_dn_case is True
 
+
 class TestRemovalOfOverEngineering:
     """Test that over-engineered types were properly removed."""
 
@@ -282,6 +291,7 @@ class TestRemovalOfOverEngineering:
         """Unused Entry types must be removed."""
         assert not hasattr(FlextLdifTypes.Entry, type_name)
 
+
 class TestPhase1StandardizationResults:
     """Test that Phase 1 standardization goals were achieved."""
 
@@ -312,6 +322,7 @@ class TestPhase1StandardizationResults:
         assert isinstance(attr_dict, dict)
         assert isinstance(dist, dict)
         assert isinstance(entry_data, dict)
+
 
 class TestIntegrationWithLdifFixtures:
     """Integration tests using real LDIF fixture data."""

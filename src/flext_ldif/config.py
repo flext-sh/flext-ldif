@@ -554,7 +554,7 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Normalize aliases to canonical form (ad → active_directory, etc)
-        normalized = c.normalize_server_type(v)
+        normalized = c.Ldif.normalize_server_type(v)
 
         valid_servers = [
             c.ServerTypes.RFC,
@@ -710,7 +710,7 @@ class FlextLdifConfig(FlextConfig):
             return v
 
         # Normalize aliases to canonical form (ad → active_directory, etc)
-        normalized = c.normalize_server_type(v)
+        normalized = c.Ldif.normalize_server_type(v)
 
         # Use same validation logic as server_type field
         valid_servers = [

@@ -30,8 +30,9 @@ from functools import wraps
 
 from flext_core import FlextLogger, T, r
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 
 # Use flext-core utilities directly to avoid circular dependency
 # For decorators that need FlextLdifUtilities, use lazy import inside decorator functions
@@ -42,17 +43,17 @@ logger = FlextLogger(__name__)
 # Use TypeVars from flext-core (no local aliases)
 # Type aliases for decorator functions to avoid Any
 ProtocolType = (
-    FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-    | FlextLdifProtocols.Ldif.Quirks.AclProtocol
-    | FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+    p.Ldif.Quirks.SchemaProtocol
+    | p.Ldif.Quirks.AclProtocol
+    | p.Ldif.Quirks.EntryProtocol
 )
 ParseMethodArg = str | float | bool | None
 WriteMethodArg = (
-    FlextLdifProtocols.Ldif.Models.SchemaAttributeProtocol
-    | FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
-    | FlextLdifProtocols.Ldif.Models.AclProtocol
-    | FlextLdifProtocols.Ldif.Models.EntryProtocol
-    | Sequence[FlextLdifProtocols.Ldif.Models.EntryProtocol]
+    p.Ldif.Models.SchemaAttributeProtocol
+    | p.Ldif.Models.SchemaObjectClassProtocol
+    | p.Ldif.Models.AclProtocol
+    | p.Ldif.Models.EntryProtocol
+    | Sequence[p.Ldif.Models.EntryProtocol]
     | str
 )
 
@@ -146,7 +147,7 @@ class FlextLdifUtilitiesDecorators:
         }
         # Normalize quirk_type if provided, otherwise None
         normalized_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = (
-            c.normalize_server_type(quirk_type) if quirk_type else None
+            c.Ldif.normalize_server_type(quirk_type) if quirk_type else None
         )
         metadata = m.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,

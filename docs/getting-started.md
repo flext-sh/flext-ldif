@@ -17,7 +17,7 @@ This guide provides step-by-step instructions for installing and using FLEXT-LDI
 
 FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 
-- **[flext-core](../flext-core/README.md)**: Foundation library providing FlextResult, FlextContainer, and logging patterns
+- **[flext-core](https://github.com/organization/flext/tree/main/flext-core/README.md)**: Foundation library providing FlextResult, FlextContainer, and logging patterns
 - **Poetry**: Dependency management and virtual environment handling
 - **Python 3.13+**: Modern Python features including improved type annotations
 

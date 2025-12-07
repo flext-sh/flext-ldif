@@ -38,13 +38,13 @@ from flext_ldif._models.base import (
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.protocols import p
 
 # Alias for simplified usage
 c = FlextLdifConstants
 
 # Alias for simplified usage
 c = FlextLdifConstants
-from flext_ldif.protocols import FlextLdifProtocols
 
 logger = FlextLogger(__name__)
 
@@ -1213,15 +1213,15 @@ class FlextLdifModelsDomains:
         server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
             description="Server type identifier (e.g., 'oid', 'oud')",
         )
-        schemas: list[FlextLdifProtocols.Ldif.Quirks.SchemaProtocol] = Field(
+        schemas: list[p.Ldif.Quirks.SchemaProtocol] = Field(
             default_factory=list,
             description="List of Schema quirk model instances",
         )
-        acls: list[FlextLdifProtocols.Ldif.Quirks.AclProtocol] = Field(
+        acls: list[p.Ldif.Quirks.AclProtocol] = Field(
             default_factory=list,
             description="List of ACL quirk model instances",
         )
-        entrys: list[FlextLdifProtocols.Ldif.Quirks.EntryProtocol] = Field(
+        entrys: list[p.Ldif.Quirks.EntryProtocol] = Field(
             default_factory=list,
             description="List of Entry quirk model instances",
         )
@@ -1429,10 +1429,10 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Business Rule: AclElement is frozen=True, so we must use object.__setattr__ for mutation
-                # Implication: Direct assignment doesn't work for frozen models, must use object.__setattr__
+                # Business Rule: AclElement is frozen=True, so we must use setattr() for mutation
+                # Implication: Direct assignment doesn't work for frozen models, must use setattr()
                 # This is the correct Pydantic 2 pattern for frozen models in validators
-                object.__setattr__(self, "validation_violations", violations)
+                self.validation_violations = violations
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
@@ -1559,7 +1559,7 @@ class FlextLdifModelsDomains:
     class Entry(FlextModelsBase.ArbitraryTypesModel):
         """LDIF entry domain model.
 
-        Implements FlextLdifProtocols.Ldif.Models.EntryProtocol through structural typing.
+        Implements p.Ldif.Models.EntryProtocol through structural typing.
         The protocol requires:
         - dn: str
         - attributes: FlextLdifModelsMetadata.DynamicMetadata

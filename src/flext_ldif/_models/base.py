@@ -99,7 +99,7 @@ class SchemaElement(FlextModelsBase.ArbitraryTypesModel):
                 try:
                     # normalize_server_type returns ServerTypeLiteral
                     # (validated by TypeGuard)
-                    return c.normalize_server_type(quirk_type)
+                    return c.Ldif.normalize_server_type(quirk_type)
                 except ValueError:
                     # Invalid server type, default to RFC
                     pass

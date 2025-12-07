@@ -9,10 +9,24 @@ from typing import ClassVar, override
 
 from flext_core import FlextResult
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import u
+from flext_ldif.typings import t
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
+
+
+def _get_utilities() -> type[object]:
+    """Lazy import of FlextLdifUtilities to avoid circular dependency.
+
+    Returns:
+        FlextLdifUtilities class type
+
+    """
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -136,7 +150,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Server.matches_server_patterns(
+                u = _get_utilities()
+                return u.Server.matches_server_patterns(  # type: ignore[attr-defined]
                     value=attr_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -172,7 +187,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Server.matches_server_patterns(
+                u = _get_utilities()
+                return u.Server.matches_server_patterns(  # type: ignore[attr-defined]
                     value=oc_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -235,11 +251,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.unwrap()
                 # Fix common ObjectClass issues (RFC 4512 compliance)
-                u.ObjectClass.fix_missing_sup(
+                u = _get_utilities()
+                u.ObjectClass.fix_missing_sup(  # type: ignore[attr-defined]
                     oc_data,
                     _server_type=self._get_server_type(),
                 )
-                u.ObjectClass.fix_kind_mismatch(
+                u.ObjectClass.fix_kind_mismatch(  # type: ignore[attr-defined]
                     oc_data,
                     _server_type=self._get_server_type(),
                 )
@@ -259,7 +276,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Handles ApacheDS ACI (Access Control Instruction) format.
         """
 
-        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle(self, acl_line: t.Ldif.AclOrString) -> bool:
             """Check if this is an ApacheDS ACI.
 
             Override RFC's always-true behavior to check Apache-specific markers.
@@ -273,7 +290,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: t.Ldif.AclOrString) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():
@@ -381,7 +398,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
                     metadata.extensions = m.DynamicMetadata()
-                metadata.extensions[c.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
+                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
                 )
 

@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Ldif.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> p.Ldif.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> p.Ldif.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> p.Ldif.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -46,14 +46,15 @@ from pydantic import ConfigDict
 
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.typings import t
-from flext_ldif.utilities import u
+
+# Lazy import to avoid circular dependency - use _get_utilities() function
 
 
 # Business Rule: Lazy import to avoid circular dependency between servers/base.py
@@ -73,7 +74,9 @@ def _get_utilities() -> type[object]:
         u class type (inferred as type[object] for type safety)
 
     """
-    return u
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
 
 
 def _get_server_type_from_utilities(
@@ -82,7 +85,7 @@ def _get_server_type_from_utilities(
     """Get server type from utilities using type-safe access pattern.
 
     Business Rule: Server type is determined by inspecting the class hierarchy
-    and accessing u.Server.get_parent_server_type().
+    and accessing FlextLdifUtilities.Server.get_parent_server_type().
     This helper function encapsulates the type-safe access pattern to avoid
     repetition and ensure consistent error handling.
 
@@ -128,11 +131,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         Allows arbitrary types and extra attributes for nested quirk classes.
 
     This class defines the complete contract for a server quirk implementation
-    that satisfies `FlextLdifProtocols.Ldif.Quirks.QuirksPort` through structural typing.
+    that satisfies `p.Ldif.Quirks.QuirksPort` through structural typing.
     It uses the `ABC` helper class to define all methods as abstract,
     ensuring that any concrete subclass must implement the full interface.
 
-    Note: This class satisfies FlextLdifProtocols.Ldif.Quirks.QuirksPort through
+    Note: This class satisfies p.Ldif.Quirks.QuirksPort through
     structural typing (duck typing), not through inheritance, to avoid
     metaclass conflicts between ABC and Protocol.
 
@@ -302,7 +305,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def get_schema_quirk(
         self,
-    ) -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol:
+    ) -> p.Ldif.Quirks.SchemaProtocol:
         """Get schema quirk instance.
 
         Returns:
@@ -314,7 +317,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def acl(
         self,
-    ) -> FlextLdifProtocols.Ldif.Quirks.AclProtocol:
+    ) -> p.Ldif.Quirks.AclProtocol:
         """Get ACL quirk instance.
 
         Returns:
@@ -325,7 +328,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     def entry(
         self,
-    ) -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol:
+    ) -> p.Ldif.Quirks.EntryProtocol:
         """Get entry quirk instance.
 
         Returns:
@@ -602,7 +605,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     # =========================================================================
 
     @property
-    def schema_quirk(self) -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol:
+    def schema_quirk(self) -> p.Ldif.Quirks.SchemaProtocol:
         """Get the Schema quirk instance."""
         # Type narrowing: _schema_quirk implements SchemaProtocol structurally
         # The concrete Schema class implements all protocol methods
@@ -634,22 +637,22 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             raise TypeError(msg)
         # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
 
-        return cast("FlextLdifProtocols.Ldif.Quirks.SchemaProtocol", schema_instance)
+        return cast("p.Ldif.Quirks.SchemaProtocol", schema_instance)
 
     @property
-    def acl_quirk(self) -> FlextLdifProtocols.Ldif.Quirks.AclProtocol:
+    def acl_quirk(self) -> p.Ldif.Quirks.AclProtocol:
         """Get the Acl quirk instance."""
         # Type narrowing: _acl_quirk implements AclProtocol structurally
         # Acl class implements AclProtocol structurally (all methods match)
         # Mypy doesn't recognize structural typing, so we use cast
         acl_instance = self._acl_quirk
-        return cast("FlextLdifProtocols.Ldif.Quirks.AclProtocol", acl_instance)
+        return cast("p.Ldif.Quirks.AclProtocol", acl_instance)
 
     @property
-    def entry_quirk(self) -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol:
+    def entry_quirk(self) -> p.Ldif.Quirks.EntryProtocol:
         """Get the Entry quirk instance."""
         # Type narrowing: _entry_quirk implements EntryProtocol structurally
-        return cast("FlextLdifProtocols.Ldif.Quirks.EntryProtocol", self._entry_quirk)
+        return cast("p.Ldif.Quirks.EntryProtocol", self._entry_quirk)
 
     # =========================================================================
     # Core Quirk Methods - Parsing and Writing (Primary Interface)
@@ -777,8 +780,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         if isinstance(model, m.Ldif.Entry):
             # Cast to EntryProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
-            entry_protocol: FlextLdifProtocols.Ldif.Models.EntryProtocol = cast(
-                "FlextLdifProtocols.Ldif.Models.EntryProtocol",
+            entry_protocol: p.Ldif.Models.EntryProtocol = cast(
+                "p.Ldif.Models.EntryProtocol",
                 model,
             )
             return self.entry_quirk.write(entry_protocol)
@@ -793,8 +796,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         if isinstance(model, m.Ldif.Acl):
             # Cast to AclProtocol after isinstance check for type narrowing
             # Mypy needs explicit narrowing for complex union types
-            acl_protocol: FlextLdifProtocols.Ldif.Models.AclProtocol = cast(
-                "FlextLdifProtocols.Ldif.Models.AclProtocol",
+            acl_protocol: p.Ldif.Models.AclProtocol = cast(
+                "p.Ldif.Models.AclProtocol",
                 model,
             )
             return self.acl_quirk.write(acl_protocol)
@@ -913,7 +916,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if server_type and isinstance(server_type, str):
                 # Type narrowing: ensure server_type is a valid ServerTypeLiteral
                 # Use normalize_server_type for proper validation and type narrowing
-                return c.normalize_server_type(server_type)
+                return c.Ldif.normalize_server_type(server_type)
         except StopIteration:
             pass
 
@@ -974,12 +977,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     def _register_in_registry(
         cls,
         quirk_instance: (
-            FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-            | FlextLdifProtocols.Ldif.Quirks.AclProtocol
-            | FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+            p.Ldif.Quirks.SchemaProtocol
+            | p.Ldif.Quirks.AclProtocol
+            | p.Ldif.Quirks.EntryProtocol
             | FlextLdifServersBase
         ),
-        registry: FlextLdifProtocols.Ldif.Registry.QuirkRegistryProtocol,
+        registry: p.Ldif.Registry.QuirkRegistryProtocol,
     ) -> None:
         """Helper method to register a quirk instance in the registry.
 
@@ -997,12 +1000,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
         # Functional composition: validate + register
         def validate_registry(
-            registry_obj: FlextLdifProtocols.Ldif.Registry.QuirkRegistryProtocol,
+            registry_obj: p.Ldif.Registry.QuirkRegistryProtocol,
         ) -> (
             Callable[
                 [
                     c.Ldif.LiteralTypes.ServerTypeLiteral | str,
-                    FlextLdifProtocols.Ldif.Quirks.SchemaProtocol,
+                    p.Ldif.Quirks.SchemaProtocol,
                 ],
                 None,
             ]
@@ -1018,7 +1021,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
             if method and callable(method):
                 # Type narrowing: method is callable, cast to expected signature
                 return cast(
-                    "Callable[[c.Ldif.LiteralTypes.ServerTypeLiteral | str, FlextLdifProtocols.Ldif.Quirks.SchemaProtocol], None]",
+                    "Callable[[c.Ldif.LiteralTypes.ServerTypeLiteral | str, p.Ldif.Quirks.SchemaProtocol], None]",
                     method,
                 )
             return None
@@ -1028,16 +1031,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 Callable[
                     [
                         c.Ldif.LiteralTypes.ServerTypeLiteral | str,
-                        FlextLdifProtocols.Ldif.Quirks.SchemaProtocol,
+                        p.Ldif.Quirks.SchemaProtocol,
                     ],
                     None,
                 ]
                 | None
             ),
             instance: (
-                FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-                | FlextLdifProtocols.Ldif.Quirks.AclProtocol
-                | FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+                p.Ldif.Quirks.SchemaProtocol
+                | p.Ldif.Quirks.AclProtocol
+                | p.Ldif.Quirks.EntryProtocol
                 | FlextLdifServersBase
             ),
         ) -> None:
@@ -1054,9 +1057,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
                 ):
                     # Use cast after structural validation - satisfies pyright without Protocol overlap warnings
 
-                    schema_quirk = cast(
-                        "FlextLdifProtocols.Ldif.Quirks.SchemaProtocol", instance
-                    )
+                    schema_quirk = cast("p.Ldif.Quirks.SchemaProtocol", instance)
                     register_func("auto", schema_quirk)
                 # If not SchemaProtocol, skip registration (schema_quirk would be None)
 

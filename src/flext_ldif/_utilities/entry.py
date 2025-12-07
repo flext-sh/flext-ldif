@@ -15,6 +15,7 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextService,
+    FlextTypes,
     FlextUtilities as u,
 )
 
@@ -23,12 +24,12 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import m
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.typings import t
 
 # Aliases for simplified usage - after all imports
 # Use domain-specific classes that inherit from flext-core
 # u = FlextUtilities (from flext-core, avoids circular import)
-t = FlextLdifTypes  # Domain-specific types (extends FlextTypes)
+# t is already imported from flext_ldif.typings (FlextLdifTypes alias)
 c = FlextLdifConstants  # Domain-specific constants (extends FlextConstants)
 
 # Use FlextLdifProtocols directly - no aliases
@@ -106,7 +107,7 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
+    ) -> t.Ldif.CommonDict.AttributeDict:
         """Convert boolean attribute values between formats.
 
         Args:
@@ -123,7 +124,7 @@ class FlextLdifUtilitiesEntry:
             # Convert bytes to str in return value - fast-fail if attributes is empty
             if not attributes:
                 return {}
-            normalized_result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
+            normalized_result: t.Ldif.CommonDict.AttributeDict = {}
             for attr_name in attributes:
                 # Type-safe access - get values with explicit type
                 raw_values: list[str] | list[bytes] | bytes | str = attributes[
@@ -145,7 +146,7 @@ class FlextLdifUtilitiesEntry:
                     normalized_result[attr_name] = [str(raw_values)]
             return normalized_result
 
-        result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
+        result: t.Ldif.CommonDict.AttributeDict = {}
 
         for attr_name in attributes:
             # Type-safe access - get values with explicit type
@@ -183,9 +184,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attribute_names(
-        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.CommonDict.AttributeDict,
         case_map: dict[str, str],
-    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
+    ) -> t.Ldif.CommonDict.AttributeDict:
         """Normalize attribute names using case mapping.
 
         Args:
@@ -388,8 +389,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: Mapping[str, t.GeneralValueType],
-        converted_attrs: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        entry_attrs: Mapping[str, FlextTypes.GeneralValueType],
+        converted_attrs: t.Ldif.CommonDict.AttributeDict,
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
@@ -511,7 +512,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_server_patterns(
         entry_dn: str,
-        attributes: Mapping[str, t.GeneralValueType],
+        attributes: Mapping[str, FlextTypes.GeneralValueType],
         config: FlextLdifModelsConfig.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns.
@@ -577,13 +578,13 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def denormalize_attributes_batch(
-        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.CommonDict.AttributeDict,
         *,
         case_mappings: dict[str, str] | None = None,
         boolean_mappings: dict[str, str] | None = None,
         attr_name_mappings: dict[str, str] | None = None,
         value_transformations: dict[str, dict[str, str]] | None = None,
-    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
+    ) -> t.Ldif.CommonDict.AttributeDict:
         """Batch denormalize attributes for output.
 
         Inverse of normalization - converts RFC-normalized attributes back to
@@ -651,7 +652,7 @@ class FlextLdifUtilitiesEntry:
                 output_name = attr_name_mappings.get(output_name, output_name)
             return output_name
 
-        result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
+        result: t.Ldif.CommonDict.AttributeDict = {}
         for attr_name, values in attributes.items():
             output_name = get_output_name(attr_name)
             # Transform values using u.map with closure-safe function
@@ -674,11 +675,11 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attributes_batch(
-        attributes: FlextLdifTypes.Ldif.CommonDict.AttributeDict,
+        attributes: t.Ldif.CommonDict.AttributeDict,
         *,
         config: FlextLdifModelsConfig.AttributeNormalizeConfig | None = None,
         **kwargs: object,
-    ) -> FlextLdifTypes.Ldif.CommonDict.AttributeDict:
+    ) -> t.Ldif.CommonDict.AttributeDict:
         """Batch normalize attributes from server format to RFC format.
 
         Consolidates normalization patterns from OID and OUD servers into
@@ -717,7 +718,7 @@ class FlextLdifUtilitiesEntry:
                 kwargs,
             )
 
-        result: FlextLdifTypes.Ldif.CommonDict.AttributeDict = {}
+        result: t.Ldif.CommonDict.AttributeDict = {}
 
         operational_lower = (
             {a.lower() for a in config.operational_attrs}

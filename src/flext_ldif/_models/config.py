@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
@@ -22,15 +21,15 @@ from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 
 # Alias for simplified usage
 c = FlextLdifConstants
 
-_Entry = FlextLdifProtocols.Ldif.Models.EntryProtocol
-_SchemaObjectClass = FlextLdifProtocols.Ldif.Models.SchemaObjectClassProtocol
+_Entry = p.Ldif.Models.EntryProtocol
+_SchemaObjectClass = p.Ldif.Models.SchemaObjectClassProtocol
 _QuirkMetadata = core_t.Metadata  # Use Metadata type from flext-core
-_Acl = FlextLdifProtocols.Ldif.Models.AclProtocol
+_Acl = p.Ldif.Models.AclProtocol
 
 
 class FlextLdifModelsConfig:
@@ -2083,52 +2082,6 @@ class FlextLdifModelsConfig:
             default=False,
             description="Whether converted ACL has permissions",
         )
-
-
-# Rebuild models after all domain models are defined to resolve forward references
-# This is required because PermissionMappingConfig uses "FlextLdifModelsDomains.Acl"
-# and LdifContentParseConfig uses "FlextLdifModelsDomains.Entry"
-# which are defined in separate modules
-def _rebuild_config_models() -> None:
-    """Rebuild Pydantic models to resolve forward references."""
-    # Import domain models and main models at runtime to ensure they're loaded before rebuilding
-    # Rebuild config models after all dependencies are fully defined
-    # Pass the namespace explicitly to model_rebuild to resolve forward references
-    # NOTE: These imports are done at runtime inside the function to avoid circular imports
-    # during module initialization. Uses string forward references for type hints.
-    from flext_ldif._models.domain import FlextLdifModelsDomains
-
-    current_module = sys.modules[__name__]
-    # Ensure dependencies are in the namespace for Pydantic
-    if "FlextLdifModelsDomains" not in current_module.__dict__:
-        current_module.__dict__["FlextLdifModelsDomains"] = FlextLdifModelsDomains
-
-    # Build types namespace for all config models that need forward references
-    # Use FlextLdifModelsDomains only - FlextLdifModels imports this module causing circular import
-    types_namespace = {
-        "FlextLdifModelsDomains": FlextLdifModelsDomains,
-    }
-
-    # Rebuild all config models that use forward references
-    FlextLdifModelsConfig.PermissionMappingConfig.model_rebuild(
-        _types_namespace=types_namespace,
-    )
-    FlextLdifModelsConfig.LdifContentParseConfig.model_rebuild(
-        _types_namespace=types_namespace,
-    )
-    FlextLdifModelsConfig.EntryProcessingConfig.model_rebuild(
-        _types_namespace=types_namespace,
-    )
-    FlextLdifModelsConfig.EntryParseConfig.model_rebuild(
-        _types_namespace=types_namespace,
-    )
-    FlextLdifModelsConfig.EntryWriteConfig.model_rebuild(
-        _types_namespace=types_namespace,
-    )
-    FlextLdifModelsConfig.BatchWriteConfig.model_rebuild(
-        _types_namespace=types_namespace,
-    )
-
-
-# Call rebuild at module import time
-_rebuild_config_models()
+# Note: All type references use direct imports or protocols (_Entry, _Acl, etc.)
+# No string-quoted forward references - models work without rebuilding
+# No model_rebuild() calls needed - architectural requirement

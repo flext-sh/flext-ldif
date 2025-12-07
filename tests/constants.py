@@ -628,9 +628,9 @@ class Filters:
     """Test filter constants and server types for categorization tests."""
 
     # Server types
-    SERVER_RFC: Final[str] = TestsFlextLdifConstants.LdapServers.GENERIC
-    SERVER_OID: Final[str] = TestsFlextLdifConstants.LdapServers.ORACLE_OID
-    SERVER_OUD: Final[str] = TestsFlextLdifConstants.LdapServers.ORACLE_OUD
+    SERVER_RFC: Final[str] = TestsFlextLdifConstants.Ldif.ServerTypes.RFC.value
+    SERVER_OID: Final[str] = TestsFlextLdifConstants.Ldif.ServerTypes.OID.value
+    SERVER_OUD: Final[str] = TestsFlextLdifConstants.Ldif.ServerTypes.OUD.value
 
     # Test DNs
     DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"

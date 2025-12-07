@@ -22,9 +22,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Ldif.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Ldif.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Ldif.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> p.Ldif.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> p.Ldif.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> p.Ldif.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -41,7 +41,7 @@ from pydantic import Field
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import c
 from flext_ldif.models import m
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.protocols import p
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 from flext_ldif.typings import t
 
@@ -49,7 +49,7 @@ from flext_ldif.typings import t
 # m.Ldif.WriteOptions is a variable assignment, not a type alias
 WriteOptionsType = FlextLdifModelsDomains.WriteOptions
 
-# ARCHITECTURE NOTE: Use FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
+# ARCHITECTURE NOTE: Use p.Ldif.Quirks.ParentQuirkProtocol instead of FlextLdifServersBase
 # to avoid circular dependency (servers/base.py imports from _base/).
 
 logger = FlextLogger(__name__)
@@ -59,7 +59,7 @@ class FlextLdifServersBaseEntry(
     QuirkMethodsMixin,
     FlextService[m.Ldif.Entry | str],
 ):
-    """Base class for entry processing quirks - satisfies FlextLdifProtocols.Ldif.Quirks.EntryProtocol.
+    """Base class for entry processing quirks - satisfies p.Ldif.Quirks.EntryProtocol.
 
     NOTE: This is an implementation detail - DO NOT import directly.
     Use FlextLdifServersBase.Entry instead.
@@ -77,10 +77,10 @@ class FlextLdifServersBaseEntry(
 
 
     **Protocol Compliance**: All implementations MUST satisfy
-    FlextLdifProtocols.Ldif.Quirks.EntryProtocol through structural typing.
+    p.Ldif.Quirks.EntryProtocol through structural typing.
     This means all public methods must match protocol signatures exactly.
 
-    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Ldif.Quirks.EntryProtocol)
+    **Validation**: Use isinstance(quirk, p.Ldif.Quirks.EntryProtocol)
     to check protocol compliance at runtime.
 
     Common entry transformation patterns:
@@ -106,7 +106,7 @@ class FlextLdifServersBaseEntry(
     # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
 
     # Parent quirk reference for accessing server-level configuration
-    parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = Field(
+    parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = Field(
         default=None,
         exclude=True,
         repr=False,
@@ -115,9 +115,8 @@ class FlextLdifServersBaseEntry(
 
     def __init__(
         self,
-        entry_service: FlextLdifProtocols.Ldif.Services.HasParseMethodProtocol
-        | None = None,
-        _parent_quirk: FlextLdifProtocols.Ldif.Quirks.ParentQuirkProtocol | None = None,
+        entry_service: p.Ldif.Services.HasParseMethodProtocol | None = None,
+        _parent_quirk: p.Ldif.Quirks.ParentQuirkProtocol | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize entry quirk service with optional DI service injection.
@@ -462,7 +461,7 @@ class FlextLdifServersBaseEntry(
     def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models.
 
-        This satisfies FlextLdifProtocols.Ldif.Quirks.EntryProtocol.
+        This satisfies p.Ldif.Quirks.EntryProtocol.
 
         Args:
             ldif_content: Raw LDIF content as string
@@ -534,7 +533,7 @@ class FlextLdifServersBaseEntry(
             if entry.metadata and entry.metadata.write_options
             else {}
         )
-        new_write_opts[c.MetadataKeys.WRITE_OPTIONS] = write_options_typed
+        new_write_opts[c.Ldif.MetadataKeys.WRITE_OPTIONS] = write_options_typed
 
         if entry.metadata:
             updated_metadata = entry.metadata.model_copy(

@@ -25,11 +25,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
 from typing import TypeAlias
 
 from flext_core import FlextModels
 from flext_core._models.collections import FlextModelsCollections
+from flext_core.utilities import u
 
 from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -63,10 +63,9 @@ class FlextLdifModels(FlextModels):
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Warn when FlextLdifModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
-        warnings.warn(
-            "FlextLdifModels is deprecated. Use FlextModels.Ldif instead.",
-            DeprecationWarning,
-            stacklevel=2,
+        u.Deprecation.warn_once(
+            f"subclass:{cls.__name__}",
+            "Subclassing FlextLdifModels is deprecated. Use FlextModels.Ldif instead.",
         )
 
     class Ldif:
@@ -841,57 +840,5 @@ class FlextLdifModels(FlextModels):
 
 
 m = FlextLdifModels
-
-# =============================================================================
-# POPULATE FlextModels.Ldif NAMESPACE
-# =============================================================================
-# Copy all models from FlextLdifModels.Ldif to FlextModels.Ldif namespace
-# This allows access via both:
-# - FlextLdifModels.Ldif.* (project-specific namespace)
-# - FlextModels.Ldif.* (global namespace)
-# - m.Ldif.* (convenience alias)
-# =============================================================================
-# Note: FlextModels is imported at top of file
-
-# Get all attributes from FlextLdifModels.Ldif that are models, classes, or type aliases
-# Exclude private attributes and special methods
-_ldif_model_attrs = {
-    name: attr
-    for name, attr in vars(FlextLdifModels.Ldif).items()
-    if not name.startswith("_")
-    and (
-        isinstance(attr, type)
-        or hasattr(attr, "__origin__")  # TypeAlias
-        or (
-            callable(attr) and not isinstance(attr, type(FlextLdifModels.Ldif.__init__))
-        )
-    )
-}
-
-# Create and populate FlextModels.Ldif namespace dynamically
-# Create namespace if it doesn't exist (no empty class in flext-core)
-if not hasattr(FlextModels, "Ldif"):
-
-    class Ldif:
-        """LDIF project namespace - populated by flext-ldif."""
-
-    FlextModels.Ldif = Ldif
-
-# Create FlextModels.Ldif namespace dynamically if it doesn't exist
-# Use direct class declaration, no aliases
-if not hasattr(FlextModels, "Ldif"):
-
-    class Ldif:
-        """LDIF project namespace - populated by flext-ldif.
-
-        This namespace contains all LDIF-specific models from flext-ldif.
-        Access via: FlextModels.Ldif.Entry, FlextModels.Ldif.ParseResponse, etc.
-        """
-
-    FlextModels.Ldif = Ldif
-
-# Populate FlextModels.Ldif namespace with direct declarations
-for name, attr in _ldif_model_attrs.items():
-    setattr(FlextModels.Ldif, name, attr)
 
 __all__ = ["FlextLdifModels", "m"]

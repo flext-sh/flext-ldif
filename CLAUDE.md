@@ -22,7 +22,7 @@
 - ✅ Mock Tests: 0 remaining (all use REAL implementations)
 - ✅ Test Structure: Unified Tests[FlextLdif]* classes with short name aliases
 
-**Server Implementation Status** (see [SERVER_IMPLEMENTATIONS.md](SERVER_IMPLEMENTATIONS.md)):
+**Server Implementation Status**: See project documentation for server implementation details.
 - ✅ **RFC Stub Servers** (Detection + RFC Baseline): Apache, 389DS, Novell, Tivoli, AD - **174 tests passing**
 - ✅ **Real Implementations**: OpenLDAP 2.x (olc* format), OpenLDAP 1.x, OID, OUD
 - ✅ **Tests**: All stub servers 100% passing. OpenLDAP fixture tests blocked by RFC refactoring (other agents)
@@ -366,4 +366,4 @@ if FlextRuntime.is_list_like(values):
 
 ---
 
-**Additional Resources**: [../CLAUDE.md](../CLAUDE.md) (workspace), [README.md](README.md) (overview), [HOOK_PATTERNS.md](HOOK_PATTERNS.md) (hook patterns)
+**Additional Resources**: [../CLAUDE.md](../CLAUDE.md) (workspace), [README.md](README.md) (overview)

@@ -20,6 +20,7 @@ from typing import cast
 
 from flext_core import FlextUtilities
 
+from flext_ldif.constants import c
 from flext_ldif.models import m
 
 # Aliases for simplified usage - after all imports
