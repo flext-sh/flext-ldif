@@ -73,6 +73,10 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 
 ---
 
+## Regra 0 — Alinhamento Cruzado
+- Este arquivo espelha o `../CLAUDE.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `CLAUDE.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `client-a-oud-mig/`.
+- Todos os agentes aceitam mudanças cruzadas e resolvem conflitos no `CLAUDE.md` raiz antes de codar.
+
 ## Project Overview
 
 **FLEXT-LDIF** provides RFC 2849/4512 compliant LDIF processing with server-specific quirks for FLEXT ecosystem projects working with LDAP directory data.
@@ -108,11 +112,10 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 4. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry)
 5. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo
 6. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código
-
-### Minimização Obrigatória
-
-7. **cast()**: ⚠️ SUBSTITUIR TODAS - Substituir todas as ocorrências por Models/Protocols/TypeGuards imediatamente
-8. **Any**: ❌ PROIBIDO - Substituir todas as ocorrências por tipos específicos, incluindo docstrings/comentários
+7. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta
+8. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários)
+9. **Importação**: ❌ Sem root aliases, lazy imports ou fallbacks de ImportError; imports sempre no topo
+10. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade
 
 ### Exemplos de Correções
 
